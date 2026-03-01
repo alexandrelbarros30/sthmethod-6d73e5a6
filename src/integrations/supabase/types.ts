@@ -112,6 +112,144 @@ export type Database = {
         }
         Relationships: []
       }
+      landing_evolutions: {
+        Row: {
+          active: boolean
+          caption: string
+          created_at: string
+          id: string
+          image_url: string
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          caption?: string
+          created_at?: string
+          id?: string
+          image_url: string
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          caption?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      landing_sections: {
+        Row: {
+          active: boolean
+          id: string
+          key: string
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          id?: string
+          key: string
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          id?: string
+          key?: string
+          label?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      landing_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string
+          value?: string
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      landing_steps: {
+        Row: {
+          active: boolean
+          created_at: string
+          footer: string
+          icon: string
+          id: string
+          is_optional: boolean
+          items: string[]
+          sort_order: number
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          footer?: string
+          icon?: string
+          id?: string
+          is_optional?: boolean
+          items?: string[]
+          sort_order?: number
+          title: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          footer?: string
+          icon?: string
+          id?: string
+          is_optional?: boolean
+          items?: string[]
+          sort_order?: number
+          title?: string
+        }
+        Relationships: []
+      }
+      landing_testimonials: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          tag: string
+          text: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          tag?: string
+          text: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          tag?: string
+          text?: string
+        }
+        Relationships: []
+      }
       plans: {
         Row: {
           active: boolean

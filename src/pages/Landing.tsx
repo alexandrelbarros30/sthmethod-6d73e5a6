@@ -1,20 +1,78 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import heroBg from "@/assets/hero-clients.jpg";
+import heroBgFallback from "@/assets/hero-clients.jpg";
 import { Button } from "@/components/ui/button";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import ResultsSection from "@/components/landing/ResultsSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import PlansSection from "@/components/landing/PlansSection";
 import EthicsSection from "@/components/landing/EthicsSection";
+import EvolutionsSection from "@/components/landing/EvolutionsSection";
+import { useLandingSettings, useLandingSections } from "@/hooks/useLandingData";
+
+const sectionComponents: Record<string, React.ReactNode> = {
+  how_it_works: <HowItWorksSection key="how_it_works" />,
+  results: <ResultsSection key="results" />,
+  evolutions: <EvolutionsSection key="evolutions" />,
+  testimonials: <TestimonialsSection key="testimonials" />,
+  plans: <PlansSection key="plans" />,
+  ethics: <EthicsSection key="ethics" />,
+};
 
 const Landing = () => {
+  const { data: settings } = useLandingSettings();
+  const { data: sections } = useLandingSections();
+
+  const s = (key: string, fallback = "") => settings?.find((x) => x.key === key)?.value || fallback;
+
+  const logoUrl = s("logo_url");
+  const bgImageUrl = s("bg_image_url");
+  const bgEnabled = s("bg_enabled", "true") === "true";
+  const bgOpacity = parseFloat(s("bg_opacity", "0.25"));
+  const heroTitle = s("hero_title", "Transforme seu corpo com ciência, estratégia e acompanhamento real.");
+  const heroSubtitle = s("hero_subtitle", "Consultoria online personalizada para quem busca emagrecimento, definição, saúde hormonal e evolução no shape.");
+  const ctaText = s("hero_cta_text", "Quero evoluir meu shape");
+  const ctaLink = s("hero_cta_link", "/login");
+  const cta2Text = s("hero_cta2_text", "Conhecer os planos");
+  const cta2Link = s("hero_cta2_link", "#planos");
+
+  const stats = [
+    { value: s("hero_stat1_value", "12k+"), label: s("hero_stat1_label", "Alunos ativos") },
+    { value: s("hero_stat2_value", "98%"), label: s("hero_stat2_label", "Satisfação") },
+    { value: s("hero_stat3_value", "340+"), label: s("hero_stat3_label", "Transformações") },
+  ];
+
+  const ctaFinalTitle = s("cta_final_title", "Seu corpo não muda sozinho.");
+  const ctaFinalSubtitle = s("cta_final_subtitle", "Com método e acompanhamento, muda de verdade.");
+  const ctaFinalBtn1Text = s("cta_final_btn1_text", "Começar agora");
+  const ctaFinalBtn1Link = s("cta_final_btn1_link", "/login");
+  const ctaFinalBtn2Text = s("cta_final_btn2_text", "Falar com a consultoria");
+  const ctaFinalBtn2Link = s("cta_final_btn2_link", "https://wa.me/");
+
+  const activeSections = sections?.filter((sec) => sec.active).sort((a, b) => a.sort_order - b.sort_order) ?? [];
+
+  const bgSrc = bgEnabled && bgImageUrl ? bgImageUrl : heroBgFallback;
+
+  const isInternal = (link: string) => link.startsWith("/") || link.startsWith("#");
+
+  const LinkOrA = ({ to, children, ...props }: { to: string; children: React.ReactNode; [k: string]: any }) => {
+    if (to.startsWith("#")) return <a href={to} {...props}>{children}</a>;
+    if (isInternal(to)) return <Link to={to} {...props}>{children}</Link>;
+    return <a href={to} target="_blank" rel="noopener noreferrer" {...props}>{children}</a>;
+  };
+
   return (
     <div className="min-h-screen bg-background overflow-hidden">
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 glass">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <span className="font-display text-xl font-bold gradient-text">ST&H</span>
+          <Link to="/" className="flex items-center gap-2">
+            {logoUrl ? (
+              <img src={logoUrl} alt="Logo" className="h-8 object-contain" />
+            ) : (
+              <span className="font-display text-xl font-bold gradient-text">ST&H</span>
+            )}
+          </Link>
           <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
             <a href="#como-funciona" className="hover:text-foreground transition-colors">Como Funciona</a>
             <a href="#resultados" className="hover:text-foreground transition-colors">Resultados</a>
@@ -32,11 +90,15 @@ const Landing = () => {
       {/* Hero */}
       <section className="relative min-h-screen flex items-center justify-center px-6 pt-20">
         <div className="absolute inset-0 grid-pattern opacity-20" />
-        <img
-          src={heroBg}
-          alt="Transformação corporal"
-          className="absolute inset-0 w-full h-full object-cover opacity-25 mix-blend-lighten"
-        />
+        {bgEnabled && (
+          <img
+            src={bgSrc}
+            alt="Background"
+            className="absolute inset-0 w-full h-full object-cover mix-blend-lighten"
+            style={{ opacity: bgOpacity }}
+            loading="lazy"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/70 to-background" />
 
         <motion.div
@@ -56,25 +118,24 @@ const Landing = () => {
           </motion.div>
 
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-display font-bold text-foreground leading-tight mb-6">
-            Transforme seu corpo com{" "}
-            <span className="gradient-text">ciência, estratégia e acompanhamento real.</span>
+            {heroTitle}
           </h1>
 
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-            Consultoria online personalizada para quem busca emagrecimento, definição, saúde hormonal e evolução no shape.
+            {heroSubtitle}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/login">
+            <LinkOrA to={ctaLink}>
               <Button size="lg" className="gradient-bg text-primary-foreground hover:opacity-90 px-8 text-base">
-                Quero evoluir meu shape
+                {ctaText}
               </Button>
-            </Link>
-            <a href="#planos">
+            </LinkOrA>
+            <LinkOrA to={cta2Link}>
               <Button size="lg" variant="outline" className="px-8 text-base">
-                Conhecer os planos
+                {cta2Text}
               </Button>
-            </a>
+            </LinkOrA>
           </div>
 
           <motion.div
@@ -83,26 +144,18 @@ const Landing = () => {
             transition={{ delay: 0.6 }}
             className="flex items-center justify-center gap-8 md:gap-16 mt-16"
           >
-            {[
-              { value: "12k+", label: "Alunos ativos" },
-              { value: "98%", label: "Satisfação" },
-              { value: "340+", label: "Transformações" },
-            ].map((s) => (
-              <div key={s.label} className="text-center">
-                <div className="text-2xl md:text-3xl font-display font-bold gradient-text">{s.value}</div>
-                <div className="text-xs text-muted-foreground mt-1">{s.label}</div>
+            {stats.map((stat) => (
+              <div key={stat.label} className="text-center">
+                <div className="text-2xl md:text-3xl font-display font-bold gradient-text">{stat.value}</div>
+                <div className="text-xs text-muted-foreground mt-1">{stat.label}</div>
               </div>
             ))}
           </motion.div>
         </motion.div>
       </section>
 
-      {/* Sections */}
-      <HowItWorksSection />
-      <ResultsSection />
-      <TestimonialsSection />
-      <PlansSection />
-      <EthicsSection />
+      {/* Dynamic Sections */}
+      {activeSections.map((sec) => sectionComponents[sec.key] ?? null)}
 
       {/* Final CTA */}
       <section className="py-24 px-6">
@@ -113,23 +166,22 @@ const Landing = () => {
           className="max-w-4xl mx-auto text-center glass rounded-3xl p-12 md:p-16 glow-border"
         >
           <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
-            Seu corpo não muda{" "}
-            <span className="gradient-text">sozinho.</span>
+            {ctaFinalTitle}
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto mb-8 text-lg">
-            Com método e acompanhamento, muda de verdade.
+            {ctaFinalSubtitle}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/login">
+            <LinkOrA to={ctaFinalBtn1Link}>
               <Button size="lg" className="gradient-bg text-primary-foreground hover:opacity-90 px-10 text-base">
-                Começar agora
+                {ctaFinalBtn1Text}
               </Button>
-            </Link>
-            <a href="https://wa.me/" target="_blank" rel="noopener noreferrer">
+            </LinkOrA>
+            <LinkOrA to={ctaFinalBtn2Link}>
               <Button size="lg" variant="outline" className="px-10 text-base">
-                Falar com a consultoria
+                {ctaFinalBtn2Text}
               </Button>
-            </a>
+            </LinkOrA>
           </div>
         </motion.div>
       </section>
@@ -137,7 +189,11 @@ const Landing = () => {
       {/* Footer */}
       <footer className="border-t border-border py-8 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <span className="font-display font-bold gradient-text">ST&H</span>
+          {logoUrl ? (
+            <img src={logoUrl} alt="Logo" className="h-6 object-contain" />
+          ) : (
+            <span className="font-display font-bold gradient-text">ST&H</span>
+          )}
           <p>© 2026 ST&H — Consultoria Científica em Performance e Saúde. Todos os direitos reservados.</p>
         </div>
       </footer>
