@@ -2,16 +2,43 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
-import { mockPlans } from "@/lib/mock-data";
+import { useAuth } from "@/contexts/AuthContext";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const StudentSubscription = () => {
-  const currentPlan = "Trimestral";
+  const { user } = useAuth();
+
+  const { data: plans } = useQuery({
+    queryKey: ["plans"],
+    queryFn: async () => {
+      const { data } = await supabase.from("plans").select("*").eq("active", true).order("duration_days");
+      return data || [];
+    },
+  });
+
+  const { data: subscription } = useQuery({
+    queryKey: ["my-subscription", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("subscriptions")
+        .select("*, plans(*)")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const currentPlanId = subscription?.plan_id;
 
   return (
     <DashboardLayout role="student" title="Assinatura" subtitle="Gerencie seu plano e veja os benefícios.">
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl">
-        {mockPlans.map((plan, i) => {
-          const isCurrent = plan.name === currentPlan;
+        {plans?.map((plan, i) => {
+          const isCurrent = plan.id === currentPlanId;
           return (
             <Card
               key={plan.id}
@@ -30,7 +57,7 @@ const StudentSubscription = () => {
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
-                  {plan.benefits.map((b, j) => (
+                  {plan.benefits?.map((b, j) => (
                     <li key={j} className="flex items-start gap-2 text-sm font-body">
                       <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                       <span className="text-muted-foreground">{b}</span>
