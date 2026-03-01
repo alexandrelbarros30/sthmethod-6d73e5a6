@@ -1,63 +1,85 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Clock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
+import SubscriptionBlock from "@/components/SubscriptionBlock";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { FileText } from "lucide-react";
 
 const StudentDiet = () => {
   const { user } = useAuth();
+  const { isActive, isLoading: subLoading } = useSubscriptionGuard();
 
-  const { data: meals, isLoading } = useQuery({
-    queryKey: ["diet", user?.id],
+  const { data: diet, isLoading } = useQuery({
+    queryKey: ["student-diet", user?.id],
     queryFn: async () => {
-      const { data: mealsData } = await supabase
-        .from("diet_meals")
-        .select("*, diet_foods(*)")
+      const { data } = await supabase
+        .from("student_diets" as any)
+        .select("*")
         .eq("user_id", user!.id)
-        .order("sort_order");
-      return mealsData || [];
+        .maybeSingle();
+      return data;
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && isActive,
   });
 
+  if (subLoading || isLoading) {
+    return (
+      <DashboardLayout role="student" title="Dieta" subtitle="Seu plano alimentar personalizado.">
+        <p className="text-muted-foreground font-body text-sm">Carregando...</p>
+      </DashboardLayout>
+    );
+  }
+
+  if (!isActive) {
+    return (
+      <DashboardLayout role="student" title="Dieta" subtitle="Seu plano alimentar personalizado.">
+        <SubscriptionBlock />
+      </DashboardLayout>
+    );
+  }
+
+  if (!diet) {
+    return (
+      <DashboardLayout role="student" title="Dieta" subtitle="Seu plano alimentar personalizado.">
+        <Card><CardContent className="py-8 text-center">
+          <p className="text-muted-foreground font-body">Nenhuma dieta configurada ainda. Aguarde seu consultor.</p>
+        </CardContent></Card>
+      </DashboardLayout>
+    );
+  }
+
   return (
-    <DashboardLayout role="student" title="Dieta Personalizada" subtitle="Seu plano alimentar estruturado por refeições.">
-      <div className="space-y-4 max-w-3xl">
-        {isLoading && <p className="text-muted-foreground font-body text-sm">Carregando...</p>}
-        {!isLoading && (!meals || meals.length === 0) && (
+    <DashboardLayout role="student" title={(diet as any).title || "Dieta"} subtitle="Seu plano alimentar personalizado.">
+      <div className="space-y-6 max-w-4xl">
+        {(diet as any).pdf_url && (
           <Card>
-            <CardContent className="py-8 text-center">
-              <p className="text-muted-foreground font-body">Nenhuma dieta cadastrada ainda. Aguarde seu consultor configurar.</p>
+            <CardHeader>
+              <CardTitle className="text-base font-display flex items-center gap-2">
+                <FileText className="w-4 h-4" /> Documento PDF
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <iframe
+                src={(diet as any).pdf_url}
+                className="w-full h-[600px] rounded-lg border border-border"
+                title="Dieta PDF"
+              />
             </CardContent>
           </Card>
         )}
-        {meals?.map((meal, i) => (
-          <Card key={meal.id} className="animate-fade-in" style={{ animationDelay: `${i * 80}ms` }}>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-display">{meal.name}</CardTitle>
-                <Badge variant="secondary" className="gap-1">
-                  <Clock className="w-3 h-3" /> {meal.time}
-                </Badge>
-              </div>
-            </CardHeader>
+
+        {(diet as any).content && (
+          <Card>
+            <CardHeader><CardTitle className="text-base font-display">Detalhes</CardTitle></CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                {(meal.diet_foods as any[])?.sort((a: any, b: any) => a.sort_order - b.sort_order).map((food: any) => (
-                  <div key={food.id} className="flex items-start justify-between py-1.5 border-b border-border/50 last:border-0">
-                    <div>
-                      <span className="text-sm font-medium text-foreground font-body">{food.item}</span>
-                      {food.notes && <p className="text-xs text-muted-foreground font-body">{food.notes}</p>}
-                    </div>
-                    <span className="text-sm text-muted-foreground font-body whitespace-nowrap ml-4">{food.quantity}</span>
-                  </div>
-                ))}
+              <div className="whitespace-pre-wrap text-sm text-foreground font-body leading-relaxed">
+                {(diet as any).content}
               </div>
             </CardContent>
           </Card>
-        ))}
+        )}
       </div>
     </DashboardLayout>
   );
