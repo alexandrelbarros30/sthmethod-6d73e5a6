@@ -6,22 +6,41 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, CreditCard } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Pencil, Trash2, CreditCard, Eye, FileText, Upload } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+const phoneMask = (v: string) => {
+  const d = v.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 2) return `(${d}`;
+  if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+};
+
+const emptyForm = {
+  full_name: "", email: "", password: "", phone: "",
+  birth_date: "", height: "", weight: "",
+  physical_activity: "", objective: "", current_protocol: "",
+  comorbidities: "", lab_exam_url: "", medical_prescription_url: "",
+};
 
 const AdminStudents = () => {
   const qc = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [subOpen, setSubOpen] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false);
   const [selected, setSelected] = useState<any>(null);
-  const [form, setForm] = useState({ full_name: "", email: "", password: "", phone: "" });
+  const [form, setForm] = useState({ ...emptyForm });
   const [subForm, setSubForm] = useState({ plan_id: "", start_date: "", end_date: "", status: "active" });
+  const [uploading, setUploading] = useState<string | null>(null);
 
   const { data: students, isLoading } = useQuery({
     queryKey: ["admin-students-list"],
@@ -29,8 +48,8 @@ const AdminStudents = () => {
       const { data: profiles } = await supabase.from("profiles").select("*");
       if (!profiles) return [];
       const { data: subs } = await supabase.from("subscriptions").select("*, plans(name)");
-      return profiles.map((p) => {
-        const sub = subs?.find((s) => s.user_id === p.user_id);
+      return profiles.map((p: any) => {
+        const sub = subs?.find((s: any) => s.user_id === p.user_id);
         return {
           ...p,
           plan: (sub as any)?.plans?.name || "—",
@@ -52,41 +71,90 @@ const AdminStudents = () => {
     },
   });
 
+  const uploadPdf = async (file: File, folder: string): Promise<string> => {
+    const ext = file.name.split(".").pop();
+    const path = `${folder}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("documents").upload(path, file);
+    if (error) throw error;
+    const { data } = supabase.storage.from("documents").getPublicUrl(path);
+    return data.publicUrl;
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: "lab_exam_url" | "medical_prescription_url") => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") { toast.error("Apenas arquivos PDF são aceitos."); return; }
+    setUploading(field);
+    try {
+      const url = await uploadPdf(file, field === "lab_exam_url" ? "exames" : "receitas");
+      setForm({ ...form, [field]: url });
+      toast.success("Arquivo enviado!");
+    } catch { toast.error("Erro no upload"); }
+    setUploading(null);
+  };
+
+  const validateForm = (isCreate: boolean) => {
+    if (!form.full_name.trim()) { toast.error("Nome completo é obrigatório"); return false; }
+    if (!form.email.trim()) { toast.error("Email é obrigatório"); return false; }
+    if (isCreate && form.password.length < 6) { toast.error("Senha deve ter no mínimo 6 caracteres"); return false; }
+    if (!form.phone.trim() || form.phone.replace(/\D/g, "").length < 10) { toast.error("Telefone é obrigatório (formato válido)"); return false; }
+    if (!form.birth_date) { toast.error("Data de nascimento é obrigatória"); return false; }
+    if (!form.height || Number(form.height) <= 0) { toast.error("Altura é obrigatória"); return false; }
+    if (!form.weight || Number(form.weight) <= 0) { toast.error("Peso é obrigatório"); return false; }
+    if (!form.physical_activity.trim()) { toast.error("Atividade física é obrigatória"); return false; }
+    if (!form.objective.trim()) { toast.error("Objetivo é obrigatório"); return false; }
+    if (!form.current_protocol.trim()) { toast.error("Protocolo atual é obrigatório"); return false; }
+    if (!form.comorbidities.trim()) { toast.error("Comorbidades é obrigatório"); return false; }
+    return true;
+  };
+
+  const profilePayload = () => ({
+    full_name: form.full_name,
+    email: form.email,
+    phone: form.phone,
+    birth_date: form.birth_date || null,
+    height: form.height ? Number(form.height) : null,
+    weight: form.weight ? Number(form.weight) : null,
+    physical_activity: form.physical_activity,
+    objective: form.objective,
+    current_protocol: form.current_protocol,
+    comorbidities: form.comorbidities,
+    lab_exam_url: form.lab_exam_url,
+    medical_prescription_url: form.medical_prescription_url,
+  });
+
   const createMutation = useMutation({
     mutationFn: async () => {
+      if (!validateForm(true)) throw new Error("Validação falhou");
       const { data, error } = await supabase.functions.invoke("admin-manage-students", {
         body: { action: "create", email: form.email, password: form.password, full_name: form.full_name },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      // Update phone if provided
-      if (form.phone && data?.user?.id) {
-        await supabase.from("profiles").update({ phone: form.phone }).eq("user_id", data.user.id);
+      if (data?.user?.id) {
+        await supabase.from("profiles").update(profilePayload()).eq("user_id", data.user.id);
       }
     },
     onSuccess: () => {
       toast.success("Aluno criado com sucesso!");
       qc.invalidateQueries({ queryKey: ["admin-students-list"] });
       setCreateOpen(false);
-      setForm({ full_name: "", email: "", password: "", phone: "" });
+      setForm({ ...emptyForm });
     },
-    onError: (e: any) => toast.error(e.message || "Erro ao criar aluno"),
+    onError: (e: any) => { if (e.message !== "Validação falhou") toast.error(e.message || "Erro ao criar aluno"); },
   });
 
   const editMutation = useMutation({
     mutationFn: async () => {
-      await supabase.from("profiles").update({
-        full_name: form.full_name,
-        email: form.email,
-        phone: form.phone,
-      }).eq("user_id", selected.user_id);
+      if (!validateForm(false)) throw new Error("Validação falhou");
+      await supabase.from("profiles").update(profilePayload()).eq("user_id", selected.user_id);
     },
     onSuccess: () => {
       toast.success("Aluno atualizado!");
       qc.invalidateQueries({ queryKey: ["admin-students-list"] });
       setEditOpen(false);
     },
-    onError: () => toast.error("Erro ao atualizar"),
+    onError: (e: any) => { if (e.message !== "Validação falhou") toast.error("Erro ao atualizar"); },
   });
 
   const deleteMutation = useMutation({
@@ -97,10 +165,7 @@ const AdminStudents = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
     },
-    onSuccess: () => {
-      toast.success("Aluno excluído!");
-      qc.invalidateQueries({ queryKey: ["admin-students-list"] });
-    },
+    onSuccess: () => { toast.success("Aluno excluído!"); qc.invalidateQueries({ queryKey: ["admin-students-list"] }); },
     onError: (e: any) => toast.error(e.message || "Erro ao excluir"),
   });
 
@@ -108,39 +173,35 @@ const AdminStudents = () => {
     mutationFn: async () => {
       if (selected?.subscription) {
         await supabase.from("subscriptions").update({
-          plan_id: subForm.plan_id,
-          start_date: subForm.start_date,
-          end_date: subForm.end_date,
-          status: subForm.status,
+          plan_id: subForm.plan_id, start_date: subForm.start_date, end_date: subForm.end_date, status: subForm.status,
         }).eq("id", selected.subscription.id);
       } else {
         await supabase.from("subscriptions").insert({
-          user_id: selected.user_id,
-          plan_id: subForm.plan_id,
-          start_date: subForm.start_date,
-          end_date: subForm.end_date,
-          status: subForm.status,
+          user_id: selected.user_id, plan_id: subForm.plan_id, start_date: subForm.start_date, end_date: subForm.end_date, status: subForm.status,
         });
       }
     },
-    onSuccess: () => {
-      toast.success("Assinatura atualizada!");
-      qc.invalidateQueries({ queryKey: ["admin-students-list"] });
-      setSubOpen(false);
-    },
+    onSuccess: () => { toast.success("Assinatura atualizada!"); qc.invalidateQueries({ queryKey: ["admin-students-list"] }); setSubOpen(false); },
     onError: () => toast.error("Erro ao atualizar assinatura"),
   });
 
   const openEdit = (s: any) => {
     setSelected(s);
-    setForm({ full_name: s.full_name || "", email: s.email || "", password: "", phone: s.phone || "" });
+    setForm({
+      full_name: s.full_name || "", email: s.email || "", password: "", phone: s.phone || "",
+      birth_date: s.birth_date || "", height: s.height?.toString() || "", weight: s.weight?.toString() || "",
+      physical_activity: s.physical_activity || "", objective: s.objective || "",
+      current_protocol: s.current_protocol || "", comorbidities: s.comorbidities || "",
+      lab_exam_url: s.lab_exam_url || "", medical_prescription_url: s.medical_prescription_url || "",
+    });
     setEditOpen(true);
   };
+
+  const openView = (s: any) => { setSelected(s); setViewOpen(true); };
 
   const openSub = (s: any) => {
     setSelected(s);
     const sub = s.subscription;
-    const selectedPlan = plans?.find((p) => p.id === sub?.plan_id);
     setSubForm({
       plan_id: sub?.plan_id || plans?.[0]?.id || "",
       start_date: sub?.start_date || new Date().toISOString().split("T")[0],
@@ -157,27 +218,120 @@ const AdminStudents = () => {
     setSubForm({ ...subForm, plan_id: planId, end_date: end });
   };
 
+  const StudentFormFields = ({ isCreate = false }: { isCreate?: boolean }) => (
+    <ScrollArea className="max-h-[70vh] pr-4">
+      <Tabs defaultValue="dados" className="w-full">
+        <TabsList className="grid grid-cols-3 w-full mb-4">
+          <TabsTrigger value="dados">Dados Pessoais</TabsTrigger>
+          <TabsTrigger value="saude">Saúde & Objetivo</TabsTrigger>
+          <TabsTrigger value="docs">Documentos</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dados" className="space-y-3">
+          <div><Label className="font-body">Nome completo *</Label><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
+          <div><Label className="font-body">Email *</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+          {isCreate && (
+            <div><Label className="font-body">Senha *</Label><Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Mínimo 6 caracteres" /></div>
+          )}
+          <div><Label className="font-body">Telefone *</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: phoneMask(e.target.value) })} placeholder="(xx) xxxxx-xxxx" /></div>
+          <div><Label className="font-body">Data de nascimento *</Label><Input type="date" value={form.birth_date} onChange={(e) => setForm({ ...form, birth_date: e.target.value })} /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label className="font-body">Altura (cm) *</Label><Input type="number" value={form.height} onChange={(e) => setForm({ ...form, height: e.target.value })} placeholder="Ex: 175" /></div>
+            <div><Label className="font-body">Peso (kg) *</Label><Input type="number" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} placeholder="Ex: 80" /></div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="saude" className="space-y-3">
+          <div>
+            <Label className="font-body">Atividade Física *</Label>
+            <Textarea
+              value={form.physical_activity}
+              onChange={(e) => setForm({ ...form, physical_activity: e.target.value })}
+              rows={4}
+              placeholder={"Descreva suas atividades:\n• Força: tipo, frequência semanal, duração por sessão\n• Aeróbico: tipo, frequência semanal, duração por sessão\nEx: Musculação 5x/semana, 60min | Corrida 3x/semana, 30min"}
+            />
+          </div>
+          <div>
+            <Label className="font-body">Objetivo *</Label>
+            <Textarea
+              value={form.objective}
+              onChange={(e) => setForm({ ...form, objective: e.target.value })}
+              rows={3}
+              placeholder="Descreva seu objetivo principal e se há prazo para resultado."
+            />
+          </div>
+          <div>
+            <Label className="font-body">Protocolo Atual (medicamentos/suplementos) *</Label>
+            <Textarea
+              value={form.current_protocol}
+              onChange={(e) => setForm({ ...form, current_protocol: e.target.value })}
+              rows={3}
+              placeholder="Liste medicamentos hormonais, peptídeos e suplementos em uso."
+            />
+          </div>
+          <div>
+            <Label className="font-body">Comorbidades *</Label>
+            <Textarea
+              value={form.comorbidities}
+              onChange={(e) => setForm({ ...form, comorbidities: e.target.value })}
+              rows={3}
+              placeholder="Informe patologias pré-existentes e condições clínicas relevantes."
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="docs" className="space-y-4">
+          <div>
+            <Label className="font-body">Exames Laboratoriais (PDF, opcional)</Label>
+            <div className="flex items-center gap-2 mt-1">
+              <label className="flex items-center gap-2 px-3 py-2 border border-input rounded-md cursor-pointer hover:bg-accent text-sm">
+                <Upload className="w-4 h-4" />
+                {uploading === "lab_exam_url" ? "Enviando..." : "Selecionar PDF"}
+                <input type="file" accept=".pdf" className="hidden" onChange={(e) => handleFileUpload(e, "lab_exam_url")} />
+              </label>
+              {form.lab_exam_url && (
+                <a href={form.lab_exam_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline flex items-center gap-1">
+                  <FileText className="w-3 h-3" /> Ver arquivo
+                </a>
+              )}
+            </div>
+          </div>
+          <div>
+            <Label className="font-body">Receita Médica (PDF, opcional)</Label>
+            <div className="flex items-center gap-2 mt-1">
+              <label className="flex items-center gap-2 px-3 py-2 border border-input rounded-md cursor-pointer hover:bg-accent text-sm">
+                <Upload className="w-4 h-4" />
+                {uploading === "medical_prescription_url" ? "Enviando..." : "Selecionar PDF"}
+                <input type="file" accept=".pdf" className="hidden" onChange={(e) => handleFileUpload(e, "medical_prescription_url")} />
+              </label>
+              {form.medical_prescription_url && (
+                <a href={form.medical_prescription_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline flex items-center gap-1">
+                  <FileText className="w-3 h-3" /> Ver arquivo
+                </a>
+              )}
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </ScrollArea>
+  );
+
   return (
     <DashboardLayout role="admin" title="Gestão de Alunos" subtitle="Crie, edite e gerencie todos os alunos.">
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="font-display">Alunos cadastrados</CardTitle>
-            <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+            <Dialog open={createOpen} onOpenChange={(o) => { setCreateOpen(o); if (!o) setForm({ ...emptyForm }); }}>
               <DialogTrigger asChild>
                 <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Criar Aluno</Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-2xl">
                 <DialogHeader><DialogTitle className="font-display">Novo Aluno</DialogTitle></DialogHeader>
-                <div className="space-y-3">
-                  <div><Label className="font-body">Nome completo</Label><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
-                  <div><Label className="font-body">Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-                  <div><Label className="font-body">Senha</Label><Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Mínimo 6 caracteres" /></div>
-                  <div><Label className="font-body">Telefone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
-                </div>
+                <StudentFormFields isCreate />
                 <DialogFooter>
                   <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
-                    {createMutation.isPending ? "Criando..." : "Criar"}
+                    {createMutation.isPending ? "Criando..." : "Criar Aluno"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -200,7 +354,7 @@ const AdminStudents = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {students?.map((s) => (
+                {students?.map((s: any) => (
                   <TableRow key={s.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -214,12 +368,8 @@ const AdminStudents = () => {
                       </div>
                     </TableCell>
                     <TableCell className="font-body text-sm">{s.plan}</TableCell>
-                    <TableCell className="font-body text-sm">
-                      {s.startDate ? new Date(s.startDate).toLocaleDateString("pt-BR") : "—"}
-                    </TableCell>
-                    <TableCell className="font-body text-sm">
-                      {s.endDate ? new Date(s.endDate).toLocaleDateString("pt-BR") : "—"}
-                    </TableCell>
+                    <TableCell className="font-body text-sm">{s.startDate ? new Date(s.startDate).toLocaleDateString("pt-BR") : "—"}</TableCell>
+                    <TableCell className="font-body text-sm">{s.endDate ? new Date(s.endDate).toLocaleDateString("pt-BR") : "—"}</TableCell>
                     <TableCell>
                       <Badge variant={s.status === "active" ? "secondary" : s.status === "suspended" ? "outline" : "destructive"} className="text-xs">
                         {s.status === "active" ? "Ativo" : s.status === "suspended" ? "Suspenso" : s.status === "expired" ? "Vencido" : "Sem plano"}
@@ -227,24 +377,15 @@ const AdminStudents = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => openSub(s)} title="Assinatura">
-                          <CreditCard className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(s)} title="Editar">
-                          <Pencil className="w-4 h-4" />
-                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => openView(s)} title="Visualizar"><Eye className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => openSub(s)} title="Assinatura"><CreditCard className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(s)} title="Editar"><Pencil className="w-4 h-4" /></Button>
                         <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" title="Excluir">
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </Button>
-                          </AlertDialogTrigger>
+                          <AlertDialogTrigger asChild><Button variant="ghost" size="icon" title="Excluir"><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>Excluir aluno?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Esta ação é irreversível. Todos os dados de {s.full_name || "este aluno"} serão removidos.
-                              </AlertDialogDescription>
+                              <AlertDialogDescription>Esta ação é irreversível. Todos os dados de {s.full_name || "este aluno"} serão removidos.</AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancelar</AlertDialogCancel>
@@ -257,11 +398,7 @@ const AdminStudents = () => {
                   </TableRow>
                 ))}
                 {(!students || students.length === 0) && (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground font-body">
-                      Nenhum aluno cadastrado.
-                    </TableCell>
-                  </TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground font-body">Nenhum aluno cadastrado.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -269,15 +406,66 @@ const AdminStudents = () => {
         </CardContent>
       </Card>
 
+      {/* View Dialog */}
+      <Dialog open={viewOpen} onOpenChange={setViewOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle className="font-display">Ficha do Aluno</DialogTitle></DialogHeader>
+          {selected && (
+            <ScrollArea className="max-h-[70vh] pr-4">
+              <div className="space-y-6">
+                <section>
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Dados Pessoais</h3>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div><span className="text-muted-foreground">Nome:</span> <span className="font-medium">{selected.full_name}</span></div>
+                    <div><span className="text-muted-foreground">Email:</span> <span className="font-medium">{selected.email}</span></div>
+                    <div><span className="text-muted-foreground">Telefone:</span> <span className="font-medium">{selected.phone || "—"}</span></div>
+                    <div><span className="text-muted-foreground">Nascimento:</span> <span className="font-medium">{selected.birth_date ? new Date(selected.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</span></div>
+                    <div><span className="text-muted-foreground">Altura:</span> <span className="font-medium">{selected.height ? `${selected.height} cm` : "—"}</span></div>
+                    <div><span className="text-muted-foreground">Peso:</span> <span className="font-medium">{selected.weight ? `${selected.weight} kg` : "—"}</span></div>
+                  </div>
+                </section>
+                <section>
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Atividade Física</h3>
+                  <p className="text-sm whitespace-pre-wrap">{selected.physical_activity || "Não informado"}</p>
+                </section>
+                <section>
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Objetivo</h3>
+                  <p className="text-sm whitespace-pre-wrap">{selected.objective || "Não informado"}</p>
+                </section>
+                <section>
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Protocolo Atual</h3>
+                  <p className="text-sm whitespace-pre-wrap">{selected.current_protocol || "Não informado"}</p>
+                </section>
+                <section>
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Comorbidades</h3>
+                  <p className="text-sm whitespace-pre-wrap">{selected.comorbidities || "Não informado"}</p>
+                </section>
+                <section>
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Documentos</h3>
+                  <div className="flex flex-col gap-2">
+                    {selected.lab_exam_url ? (
+                      <a href={selected.lab_exam_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline flex items-center gap-1">
+                        <FileText className="w-4 h-4" /> Exames Laboratoriais
+                      </a>
+                    ) : <p className="text-sm text-muted-foreground">Exames: não enviado</p>}
+                    {selected.medical_prescription_url ? (
+                      <a href={selected.medical_prescription_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline flex items-center gap-1">
+                        <FileText className="w-4 h-4" /> Receita Médica
+                      </a>
+                    ) : <p className="text-sm text-muted-foreground">Receita: não enviada</p>}
+                  </div>
+                </section>
+              </div>
+            </ScrollArea>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Edit Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle className="font-display">Editar Aluno</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div><Label className="font-body">Nome completo</Label><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
-            <div><Label className="font-body">Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-            <div><Label className="font-body">Telefone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
-          </div>
+          <StudentFormFields />
           <DialogFooter>
             <Button onClick={() => editMutation.mutate()} disabled={editMutation.isPending}>
               {editMutation.isPending ? "Salvando..." : "Salvar"}
@@ -296,11 +484,7 @@ const AdminStudents = () => {
               <Label className="font-body">Plano</Label>
               <Select value={subForm.plan_id} onValueChange={handlePlanChange}>
                 <SelectTrigger><SelectValue placeholder="Selecione um plano" /></SelectTrigger>
-                <SelectContent>
-                  {plans?.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.name} — {p.price}</SelectItem>
-                  ))}
-                </SelectContent>
+                <SelectContent>{plans?.map((p) => (<SelectItem key={p.id} value={p.id}>{p.name} — {p.price}</SelectItem>))}</SelectContent>
               </Select>
             </div>
             <div><Label className="font-body">Data de início</Label><Input type="date" value={subForm.start_date} onChange={(e) => setSubForm({ ...subForm, start_date: e.target.value })} /></div>
