@@ -20,6 +20,9 @@ const adminLinks = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/admin/students", icon: User, label: "Alunos" },
   { to: "/admin/plans", icon: CreditCard, label: "Planos" },
+  { to: "/admin/diet", icon: Salad, label: "Dietas" },
+  { to: "/admin/training", icon: Dumbbell, label: "Treinos" },
+  { to: "/admin/protocol", icon: FlaskConical, label: "Protocolos" },
 ];
 
 const DashboardSidebar = ({ role }: SidebarProps) => {

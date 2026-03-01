@@ -122,6 +122,7 @@ export type Database = {
           id: string
           name: string
           price: string
+          subtitle: string
         }
         Insert: {
           active?: boolean
@@ -132,6 +133,7 @@ export type Database = {
           id?: string
           name: string
           price: string
+          subtitle?: string
         }
         Update: {
           active?: boolean
@@ -142,6 +144,7 @@ export type Database = {
           id?: string
           name?: string
           price?: string
+          subtitle?: string
         }
         Relationships: []
       }
@@ -211,6 +214,99 @@ export type Database = {
           notes?: string | null
           sort_order?: number
           user_id?: string
+        }
+        Relationships: []
+      }
+      student_diets: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          pdf_url: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          pdf_url?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          pdf_url?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      student_protocols: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          pdf_url: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          pdf_url?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          pdf_url?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      student_trainings: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          pdf_url: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          video_url: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          pdf_url?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+          video_url?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          pdf_url?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          video_url?: string | null
         }
         Relationships: []
       }
