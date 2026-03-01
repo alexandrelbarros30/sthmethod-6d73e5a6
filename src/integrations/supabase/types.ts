@@ -244,6 +244,36 @@ export type Database = {
         }
         Relationships: []
       }
+      site_content: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          id: string
+          key: string
+          label: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          key: string
+          label?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          key?: string
+          label?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       student_diets: {
         Row: {
           content: string | null

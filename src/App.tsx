@@ -19,6 +19,7 @@ import AdminPlans from "./pages/admin/AdminPlans";
 import AdminDiet from "./pages/admin/AdminDiet";
 import AdminProtocol from "./pages/admin/AdminProtocol";
 import AdminTraining from "./pages/admin/AdminTraining";
+import AdminContent from "./pages/admin/AdminContent";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +48,7 @@ const App = () => (
             <Route path="/admin/diet" element={<ProtectedRoute requiredRole="admin"><AdminDiet /></ProtectedRoute>} />
             <Route path="/admin/protocol" element={<ProtectedRoute requiredRole="admin"><AdminProtocol /></ProtectedRoute>} />
             <Route path="/admin/training" element={<ProtectedRoute requiredRole="admin"><AdminTraining /></ProtectedRoute>} />
+            <Route path="/admin/content" element={<ProtectedRoute requiredRole="admin"><AdminContent /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
