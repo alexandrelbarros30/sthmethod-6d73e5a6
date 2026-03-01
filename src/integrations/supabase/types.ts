@@ -151,33 +151,60 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          birth_date: string | null
+          comorbidities: string | null
           created_at: string
+          current_protocol: string | null
           email: string
           full_name: string
+          height: number | null
           id: string
+          lab_exam_url: string | null
+          medical_prescription_url: string | null
+          objective: string | null
           phone: string | null
+          physical_activity: string | null
           updated_at: string
           user_id: string
+          weight: number | null
         }
         Insert: {
           avatar_url?: string | null
+          birth_date?: string | null
+          comorbidities?: string | null
           created_at?: string
+          current_protocol?: string | null
           email?: string
           full_name?: string
+          height?: number | null
           id?: string
+          lab_exam_url?: string | null
+          medical_prescription_url?: string | null
+          objective?: string | null
           phone?: string | null
+          physical_activity?: string | null
           updated_at?: string
           user_id: string
+          weight?: number | null
         }
         Update: {
           avatar_url?: string | null
+          birth_date?: string | null
+          comorbidities?: string | null
           created_at?: string
+          current_protocol?: string | null
           email?: string
           full_name?: string
+          height?: number | null
           id?: string
+          lab_exam_url?: string | null
+          medical_prescription_url?: string | null
+          objective?: string | null
           phone?: string | null
+          physical_activity?: string | null
           updated_at?: string
           user_id?: string
+          weight?: number | null
         }
         Relationships: []
       }
