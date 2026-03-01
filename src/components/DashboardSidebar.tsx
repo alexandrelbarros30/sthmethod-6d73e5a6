@@ -1,6 +1,7 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SidebarProps {
   role: "student" | "admin";
@@ -23,7 +24,14 @@ const adminLinks = [
 
 const DashboardSidebar = ({ role }: SidebarProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut, profile } = useAuth();
   const links = role === "admin" ? adminLinks : studentLinks;
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/login");
+  };
 
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-64 bg-sidebar flex flex-col border-r border-sidebar-border z-40">
@@ -38,6 +46,11 @@ const DashboardSidebar = ({ role }: SidebarProps) => {
         <p className="text-xs text-sidebar-foreground/50 mt-1 font-body">
           {role === "admin" ? "Painel Administrativo" : "Área do Aluno"}
         </p>
+        {profile?.full_name && (
+          <p className="text-xs text-sidebar-foreground/70 mt-1 font-body truncate">
+            {profile.full_name}
+          </p>
+        )}
       </div>
 
       {/* Links */}
@@ -64,13 +77,13 @@ const DashboardSidebar = ({ role }: SidebarProps) => {
 
       {/* Logout */}
       <div className="p-4 border-t border-sidebar-border">
-        <Link
-          to="/"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors font-body"
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors font-body w-full"
         >
           <LogOut className="w-4 h-4" />
           Sair
-        </Link>
+        </button>
       </div>
     </aside>
   );

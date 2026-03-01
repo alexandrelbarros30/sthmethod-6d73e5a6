@@ -1,23 +1,56 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Lock, Mail, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Lock, Mail, ArrowLeft, User } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Login = () => {
   const navigate = useNavigate();
+  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Demo: route based on email
-    if (email.includes("admin")) {
-      navigate("/admin");
-    } else {
-      navigate("/dashboard");
+    setLoading(true);
+
+    try {
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { full_name: fullName },
+            emailRedirectTo: window.location.origin,
+          },
+        });
+        if (error) throw error;
+        toast.success("Conta criada! Verifique seu email para confirmar.");
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+
+        // Check role to redirect
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: roleData } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", user.id)
+            .single();
+
+          navigate(roleData?.role === "admin" ? "/admin" : "/dashboard");
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao processar");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -54,11 +87,32 @@ const Login = () => {
               </div>
               <span className="font-display text-xl font-bold text-foreground">ST&H</span>
             </div>
-            <h2 className="text-2xl font-bold text-foreground font-display">Entrar na plataforma</h2>
-            <p className="text-muted-foreground mt-2 font-body">Digite suas credenciais para acessar</p>
+            <h2 className="text-2xl font-bold text-foreground font-display">
+              {isSignUp ? "Criar conta" : "Entrar na plataforma"}
+            </h2>
+            <p className="text-muted-foreground mt-2 font-body">
+              {isSignUp ? "Preencha os dados para criar sua conta" : "Digite suas credenciais para acessar"}
+            </p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor="fullName" className="font-body">Nome completo</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="Seu nome completo"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="pl-10"
+                    required
+                  />
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email" className="font-body">Email</Label>
               <div className="relative">
@@ -86,22 +140,23 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10"
                   required
+                  minLength={6}
                 />
               </div>
             </div>
-            <Button type="submit" className="w-full" size="lg">Entrar</Button>
+            <Button type="submit" className="w-full" size="lg" disabled={loading}>
+              {loading ? "Processando..." : isSignUp ? "Criar conta" : "Entrar"}
+            </Button>
           </form>
 
-          <div className="bg-muted rounded-lg p-4 space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground font-body">Demo — acesso rápido:</p>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => { setEmail("aluno@sth.com"); setPassword("demo"); }}>
-                Aluno
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => { setEmail("admin@sth.com"); setPassword("demo"); }}>
-                Admin
-              </Button>
-            </div>
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors font-body"
+            >
+              {isSignUp ? "Já tem conta? Entrar" : "Não tem conta? Criar conta"}
+            </button>
           </div>
         </div>
       </div>

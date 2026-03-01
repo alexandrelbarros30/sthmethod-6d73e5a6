@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import StudentOverview from "./pages/student/StudentOverview";
@@ -24,22 +26,24 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          {/* Student routes */}
-          <Route path="/dashboard" element={<StudentOverview />} />
-          <Route path="/dashboard/diet" element={<StudentDiet />} />
-          <Route path="/dashboard/training" element={<StudentTraining />} />
-          <Route path="/dashboard/protocol" element={<StudentProtocol />} />
-          <Route path="/dashboard/content" element={<StudentContent />} />
-          <Route path="/dashboard/subscription" element={<StudentSubscription />} />
-          {/* Admin routes */}
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/students" element={<AdminStudents />} />
-          <Route path="/admin/plans" element={<AdminPlans />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            {/* Student routes */}
+            <Route path="/dashboard" element={<ProtectedRoute requiredRole="student"><StudentOverview /></ProtectedRoute>} />
+            <Route path="/dashboard/diet" element={<ProtectedRoute requiredRole="student"><StudentDiet /></ProtectedRoute>} />
+            <Route path="/dashboard/training" element={<ProtectedRoute requiredRole="student"><StudentTraining /></ProtectedRoute>} />
+            <Route path="/dashboard/protocol" element={<ProtectedRoute requiredRole="student"><StudentProtocol /></ProtectedRoute>} />
+            <Route path="/dashboard/content" element={<ProtectedRoute requiredRole="student"><StudentContent /></ProtectedRoute>} />
+            <Route path="/dashboard/subscription" element={<ProtectedRoute requiredRole="student"><StudentSubscription /></ProtectedRoute>} />
+            {/* Admin routes */}
+            <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/students" element={<ProtectedRoute requiredRole="admin"><AdminStudents /></ProtectedRoute>} />
+            <Route path="/admin/plans" element={<ProtectedRoute requiredRole="admin"><AdminPlans /></ProtectedRoute>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

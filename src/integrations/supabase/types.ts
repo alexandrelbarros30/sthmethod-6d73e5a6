@@ -14,16 +14,345 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      content: {
+        Row: {
+          body: string | null
+          created_at: string
+          description: string | null
+          id: string
+          min_plan_level: number
+          published: boolean
+          title: string
+          type: string
+          url: string | null
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          min_plan_level?: number
+          published?: boolean
+          title: string
+          type: string
+          url?: string | null
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          min_plan_level?: number
+          published?: boolean
+          title?: string
+          type?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
+      diet_foods: {
+        Row: {
+          id: string
+          item: string
+          meal_id: string
+          notes: string | null
+          quantity: string
+          sort_order: number
+        }
+        Insert: {
+          id?: string
+          item: string
+          meal_id: string
+          notes?: string | null
+          quantity: string
+          sort_order?: number
+        }
+        Update: {
+          id?: string
+          item?: string
+          meal_id?: string
+          notes?: string | null
+          quantity?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diet_foods_meal_id_fkey"
+            columns: ["meal_id"]
+            isOneToOne: false
+            referencedRelation: "diet_meals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      diet_meals: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          time: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          time: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          time?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      plans: {
+        Row: {
+          active: boolean
+          benefits: string[]
+          created_at: string
+          duration: string
+          duration_days: number
+          id: string
+          name: string
+          price: string
+        }
+        Insert: {
+          active?: boolean
+          benefits?: string[]
+          created_at?: string
+          duration: string
+          duration_days?: number
+          id?: string
+          name: string
+          price: string
+        }
+        Update: {
+          active?: boolean
+          benefits?: string[]
+          created_at?: string
+          duration?: string
+          duration_days?: number
+          id?: string
+          name?: string
+          price?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      protocols: {
+        Row: {
+          category: string
+          created_at: string
+          dosage: string
+          frequency: string
+          id: string
+          name: string
+          notes: string | null
+          sort_order: number
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          dosage?: string
+          frequency?: string
+          id?: string
+          name: string
+          notes?: string | null
+          sort_order?: number
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          dosage?: string
+          frequency?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          sort_order?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          plan_id: string
+          start_date: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          plan_id: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          plan_id?: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_exercises: {
+        Row: {
+          id: string
+          name: string
+          notes: string | null
+          reps: string
+          sets: string
+          sort_order: number
+          video_url: string | null
+          week_id: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          notes?: string | null
+          reps?: string
+          sets?: string
+          sort_order?: number
+          video_url?: string | null
+          week_id: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          notes?: string | null
+          reps?: string
+          sets?: string
+          sort_order?: number
+          video_url?: string | null
+          week_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_exercises_week_id_fkey"
+            columns: ["week_id"]
+            isOneToOne: false
+            referencedRelation: "training_weeks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_weeks: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "student"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +479,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "student"],
+    },
   },
 } as const
