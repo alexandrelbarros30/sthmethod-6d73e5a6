@@ -93,10 +93,12 @@ const StudentTraining = () => {
             </CardHeader>
             <CardContent>
               <iframe
-                src={(training as any).pdf_url}
-                className="w-full h-[600px] rounded-lg border border-border"
-                title="Treino PDF"
-              />
+                  src={`${(training as any).pdf_url}#toolbar=0&navpanes=0&scrollbar=1`}
+                  className="w-full h-[600px] rounded-lg border border-border"
+                  title="Treino PDF"
+                  style={{ pointerEvents: "auto" }}
+                  sandbox="allow-same-origin allow-scripts"
+                />
             </CardContent>
           </Card>
         )}
