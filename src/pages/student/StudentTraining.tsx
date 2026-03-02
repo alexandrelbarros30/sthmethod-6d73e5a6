@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,6 +20,43 @@ const getEmbedUrl = (url: string) => {
 const StudentTraining = () => {
   const { user } = useAuth();
   const { isActive, isLoading: subLoading } = useSubscriptionGuard();
+
+  // Prevent screenshots, print screen, and right-click
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "PrintScreen" || (e.ctrlKey && e.key === "p") || (e.metaKey && e.key === "p")) {
+        e.preventDefault();
+        document.body.style.filter = "blur(20px)";
+        setTimeout(() => { document.body.style.filter = "none"; }, 1500);
+      }
+    };
+    const handleContextMenu = (e: MouseEvent) => e.preventDefault();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        document.body.style.filter = "blur(20px)";
+      } else {
+        document.body.style.filter = "none";
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keyup", (e) => {
+      if (e.key === "PrintScreen") {
+        document.body.style.filter = "blur(20px)";
+        navigator.clipboard.writeText("").catch(() => {});
+        setTimeout(() => { document.body.style.filter = "none"; }, 1500);
+      }
+    });
+    document.addEventListener("contextmenu", handleContextMenu);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("contextmenu", handleContextMenu);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.body.style.filter = "none";
+    };
+  }, []);
 
   const { data: training, isLoading } = useQuery({
     queryKey: ["student-training", user?.id],
@@ -63,7 +101,11 @@ const StudentTraining = () => {
 
   return (
     <DashboardLayout role="student" title={(training as any).title || "Treino"} subtitle="Seu plano de treino personalizado.">
-      <div className="space-y-6 max-w-4xl">
+      <style>{`
+        @media print { .training-protected { display: none !important; } body::after { content: "Impressão não permitida"; display: flex; align-items: center; justify-content: center; font-size: 2rem; height: 100vh; } }
+        .training-protected { user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; -webkit-touch-callout: none; }
+      `}</style>
+      <div className="space-y-6 max-w-4xl training-protected">
         {embedUrl && (
           <Card>
             <CardHeader>
