@@ -6,7 +6,8 @@ import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, Video } from "lucide-react";
+import { Download, FileText, Video } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const getEmbedUrl = (url: string) => {
   if (!url) return null;
@@ -128,10 +129,15 @@ const StudentTraining = () => {
 
         {(training as any).pdf_url && (
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base font-display flex items-center gap-2">
                 <FileText className="w-4 h-4" /> Documento PDF
               </CardTitle>
+              <a href={(training as any).pdf_url} download target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Download className="w-4 h-4" /> Baixar PDF
+                </Button>
+              </a>
             </CardHeader>
             <CardContent>
               <iframe
