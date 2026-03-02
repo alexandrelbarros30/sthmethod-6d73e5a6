@@ -7,10 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Settings, History, CreditCard, QrCode, Landmark } from "lucide-react";
+import { Settings, History, CreditCard, QrCode, Landmark, Link2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import PaymentLinksTab from "@/components/admin/PaymentLinksTab";
 
 const AdminPayments = () => {
   const qc = useQueryClient();
@@ -111,6 +112,7 @@ const AdminPayments = () => {
         <TabsList className="bg-muted">
           <TabsTrigger value="settings" className="gap-1.5"><Settings className="w-4 h-4" />Configurações</TabsTrigger>
           <TabsTrigger value="history" className="gap-1.5"><History className="w-4 h-4" />Histórico</TabsTrigger>
+          <TabsTrigger value="links" className="gap-1.5"><Link2 className="w-4 h-4" />Links de Pagamento</TabsTrigger>
         </TabsList>
 
         {/* ─── CONFIGURAÇÕES ─── */}
@@ -221,6 +223,11 @@ const AdminPayments = () => {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ─── LINKS DE PAGAMENTO ─── */}
+        <TabsContent value="links" className="mt-4">
+          <PaymentLinksTab />
         </TabsContent>
       </Tabs>
     </DashboardLayout>
