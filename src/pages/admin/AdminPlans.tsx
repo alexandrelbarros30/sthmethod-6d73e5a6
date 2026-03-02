@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -14,7 +15,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const emptyForm = { name: "", subtitle: "", price: "", duration: "", duration_days: 30, benefits: "", active: true };
+const emptyForm = { name: "", subtitle: "", price: "", duration: "", duration_days: 30, benefits: "", active: true, discount_type: "none", discount_value: 0 };
 
 const AdminPlans = () => {
   const qc = useQueryClient();
@@ -40,6 +41,8 @@ const AdminPlans = () => {
         duration_days: Number(form.duration_days),
         benefits: form.benefits.split("\n").filter(Boolean),
         active: form.active,
+        discount_type: form.discount_type,
+        discount_value: Number(form.discount_value),
       };
       if (editing) {
         await supabase.from("plans").update(payload).eq("id", editing.id);
@@ -84,6 +87,8 @@ const AdminPlans = () => {
       duration_days: plan.duration_days,
       benefits: (plan.benefits || []).join("\n"),
       active: plan.active,
+      discount_type: plan.discount_type || "none",
+      discount_value: plan.discount_value || 0,
     });
     setDialogOpen(true);
   };
@@ -148,6 +153,20 @@ const AdminPlans = () => {
             <div><Label className="font-body">Duração (texto)</Label><Input value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} placeholder="30 dias" /></div>
             <div><Label className="font-body">Duração (dias)</Label><Input type="number" value={form.duration_days} onChange={(e) => setForm({ ...form, duration_days: Number(e.target.value) })} /></div>
             <div><Label className="font-body">Características (uma por linha, máx 7)</Label><Textarea value={form.benefits} onChange={(e) => setForm({ ...form, benefits: e.target.value })} rows={5} placeholder="Acesso ao treino&#10;Dieta personalizada&#10;..." /></div>
+            <div>
+              <Label className="font-body">Tipo de Desconto</Label>
+              <Select value={form.discount_type} onValueChange={(v) => setForm({ ...form, discount_type: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sem desconto</SelectItem>
+                  <SelectItem value="percentage">Percentual (%)</SelectItem>
+                  <SelectItem value="fixed">Valor fixo (R$)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {form.discount_type !== "none" && (
+              <div><Label className="font-body">Valor do Desconto {form.discount_type === "percentage" ? "(%)" : "(R$)"}</Label><Input type="number" value={form.discount_value} onChange={(e) => setForm({ ...form, discount_value: Number(e.target.value) })} /></div>
+            )}
             <div className="flex items-center gap-2">
               <Switch checked={form.active} onCheckedChange={(v) => setForm({ ...form, active: v })} />
               <Label className="font-body">Plano ativo</Label>

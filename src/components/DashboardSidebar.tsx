@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop } from "lucide-react";
+import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -20,6 +20,7 @@ const adminLinks = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/admin/students", icon: User, label: "Alunos" },
   { to: "/admin/plans", icon: CreditCard, label: "Planos" },
+  { to: "/admin/payments", icon: Wallet, label: "Pagamentos" },
   { to: "/admin/diet", icon: Salad, label: "Dietas" },
   { to: "/admin/training", icon: Dumbbell, label: "Treinos" },
   { to: "/admin/protocol", icon: FlaskConical, label: "Protocolos" },
