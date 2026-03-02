@@ -1,1 +1,10 @@
 project_id = "tthahgwkkdyvxdbhsgyb"
+
+[functions.create-payment]
+verify_jwt = false
+
+[functions.mercado-pago-webhook]
+verify_jwt = false
+
+[functions.admin-manage-students]
+verify_jwt = false
