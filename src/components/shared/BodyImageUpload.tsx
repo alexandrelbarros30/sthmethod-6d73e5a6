@@ -60,6 +60,13 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
   const allUploaded = IMAGE_TYPES.every(({ key }) => images[key]?.file || images[key]?.url);
 
   const handleUpload = async () => {
+    // Verify authentication before upload
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      toast.error("Sessão expirada. Faça login novamente.");
+      return;
+    }
+
     if (!allUploaded) {
       toast.error("Envie as 3 imagens obrigatórias.");
       return;
