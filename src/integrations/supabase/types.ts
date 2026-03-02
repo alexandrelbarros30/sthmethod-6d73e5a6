@@ -47,6 +47,36 @@ export type Database = {
         }
         Relationships: []
       }
+      body_images: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string
+          is_current: boolean
+          type: string
+          uploaded_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url: string
+          is_current?: boolean
+          type: string
+          uploaded_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string
+          is_current?: boolean
+          type?: string
+          uploaded_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       content: {
         Row: {
           body: string | null
@@ -457,6 +487,7 @@ export type Database = {
           lab_exam_url: string | null
           medical_prescription_url: string | null
           objective: string | null
+          onboarding_complete: boolean
           phone: string | null
           physical_activity: string | null
           updated_at: string
@@ -476,6 +507,7 @@ export type Database = {
           lab_exam_url?: string | null
           medical_prescription_url?: string | null
           objective?: string | null
+          onboarding_complete?: boolean
           phone?: string | null
           physical_activity?: string | null
           updated_at?: string
@@ -495,6 +527,7 @@ export type Database = {
           lab_exam_url?: string | null
           medical_prescription_url?: string | null
           objective?: string | null
+          onboarding_complete?: boolean
           phone?: string | null
           physical_activity?: string | null
           updated_at?: string

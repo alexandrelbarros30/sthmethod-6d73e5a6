@@ -1,7 +1,8 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, AlertCircle, Clock, UserPlus } from "lucide-react";
+import { Users, UserCheck, AlertCircle, Clock, UserPlus, Bell, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminReminders from "@/components/admin/AdminReminders";
@@ -20,6 +21,21 @@ const AdminDashboard = () => {
     queryFn: async () => {
       const { data } = await supabase.from("subscriptions").select("*, plans(*), profiles!subscriptions_user_id_fkey(full_name, email)");
       return data || [];
+    },
+  });
+
+  // Recent completed onboardings (onboarding_complete + active subscription in last 7 days)
+  const { data: recentOnboardings } = useQuery({
+    queryKey: ["admin-recent-onboardings"],
+    queryFn: async () => {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+      const { data: subs } = await supabase
+        .from("subscriptions")
+        .select("*, plans(name), profiles:user_id(full_name, email, onboarding_complete)")
+        .gte("created_at", sevenDaysAgo)
+        .eq("status", "active")
+        .order("created_at", { ascending: false });
+      return (subs || []).filter((s: any) => s.profiles?.onboarding_complete);
     },
   });
 
@@ -57,6 +73,34 @@ const AdminDashboard = () => {
           </Card>
         ))}
       </div>
+
+      {/* Onboarding Alerts */}
+      {recentOnboardings && recentOnboardings.length > 0 && (
+        <Card className="mb-6 border-primary/20 bg-primary/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-display flex items-center gap-2">
+              <Bell className="w-4 h-4 text-primary" /> Novos Cadastros Completos
+              <Badge variant="default" className="ml-2">{recentOnboardings.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {recentOnboardings.map((s: any) => (
+              <div key={s.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="w-4 h-4 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium">{(s as any).profiles?.full_name || "Aluno"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {(s as any).plans?.name} • Cadastro completo em {new Date(s.created_at).toLocaleDateString("pt-BR")}
+                    </p>
+                  </div>
+                </div>
+                <Badge variant="outline" className="text-xs">Ativo</Badge>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <AdminReminders />
 

@@ -12,10 +12,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, CreditCard, Eye, FileText, Upload } from "lucide-react";
+import { Plus, Pencil, Trash2, CreditCard, Eye, FileText, Upload, Camera, Image } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import BodyImageUpload from "@/components/shared/BodyImageUpload";
 
 const phoneMask = (v: string) => {
   const d = v.replace(/\D/g, "").slice(0, 11);
@@ -37,6 +38,7 @@ const AdminStudents = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [subOpen, setSubOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
+  const [imagesOpen, setImagesOpen] = useState(false);
   const [selected, setSelected] = useState<any>(null);
   const [form, setForm] = useState({ ...emptyForm });
   const [subForm, setSubForm] = useState({ plan_id: "", start_date: "", end_date: "", status: "active" });
@@ -69,6 +71,15 @@ const AdminStudents = () => {
       const { data } = await supabase.from("plans").select("*").eq("active", true).order("duration_days");
       return data || [];
     },
+  });
+
+  const { data: selectedBodyImages, refetch: refetchBodyImages } = useQuery({
+    queryKey: ["admin-body-images", selected?.user_id],
+    queryFn: async () => {
+      const { data } = await supabase.from("body_images").select("*").eq("user_id", selected!.user_id).eq("is_current", true);
+      return data || [];
+    },
+    enabled: !!selected?.user_id,
   });
 
   const uploadPdf = async (file: File, folder: string): Promise<string> => {
@@ -378,6 +389,7 @@ const AdminStudents = () => {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Button variant="ghost" size="icon" onClick={() => openView(s)} title="Visualizar"><Eye className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => { setSelected(s); setImagesOpen(true); }} title="Fotos corporais"><Image className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => openSub(s)} title="Assinatura"><CreditCard className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => openEdit(s)} title="Editar"><Pencil className="w-4 h-4" /></Button>
                         <AlertDialog>
@@ -455,6 +467,31 @@ const AdminStudents = () => {
                     ) : <p className="text-sm text-muted-foreground">Receita: não enviada</p>}
                   </div>
                 </section>
+                {/* Body Images in View */}
+                <section>
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Imagens Corporais</h3>
+                  {selectedBodyImages && selectedBodyImages.length > 0 ? (
+                    <div className="grid grid-cols-3 gap-3">
+                      {["front", "back", "profile"].map((type) => {
+                        const img = selectedBodyImages.find((i: any) => i.type === type);
+                        const labels: Record<string, string> = { front: "Frente", back: "Costas", profile: "Perfil" };
+                        return (
+                          <div key={type} className="text-center">
+                            <p className="text-xs text-muted-foreground mb-1">{labels[type]}</p>
+                            {img ? (
+                              <img src={img.image_url} alt={labels[type]} className="w-full aspect-[3/4] object-cover rounded-lg border" />
+                            ) : (
+                              <div className="w-full aspect-[3/4] bg-muted rounded-lg flex items-center justify-center text-muted-foreground text-xs">Não enviada</div>
+                            )}
+                            {img && <p className="text-xs text-muted-foreground mt-1">{new Date(img.uploaded_at).toLocaleDateString("pt-BR")}</p>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Nenhuma imagem enviada.</p>
+                  )}
+                </section>
               </div>
             </ScrollArea>
           )}
@@ -506,6 +543,26 @@ const AdminStudents = () => {
               {subMutation.isPending ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Body Images Management Dialog */}
+      <Dialog open={imagesOpen} onOpenChange={setImagesOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <Camera className="w-5 h-5" /> Imagens Corporais — {selected?.full_name}
+            </DialogTitle>
+          </DialogHeader>
+          {selected && (
+            <BodyImageUpload
+              userId={selected.user_id}
+              existingImages={selectedBodyImages || []}
+              onComplete={() => {
+                refetchBodyImages();
+                toast.success("Imagens atualizadas!");
+              }}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </DashboardLayout>
