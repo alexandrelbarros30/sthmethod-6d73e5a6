@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Link } from "react-router-dom";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -154,21 +155,19 @@ const StudentSubscription = () => {
           ))}
         </div>
 
-        {/* Step 1: Profile */}
+        {/* Step 1: Profile — redirect to Overview */}
         {effectiveOnboardingStep === 1 && (
           <Card className="max-w-2xl mx-auto">
             <CardHeader>
-              <CardTitle className="font-display">Complete seu perfil</CardTitle>
-              <p className="text-sm text-muted-foreground">Preencha todos os campos obrigatórios para continuar.</p>
+              <CardTitle className="font-display">Complete seu cadastro</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Para liberar totalmente seu acesso, acesse a Visão Geral e complete os dados do seu cadastro.
+              </p>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Acesse <strong>Visão Geral</strong> no menu lateral para preencher seus dados pessoais, saúde e objetivos. Após completar, volte aqui.
-              </p>
-              <Button onClick={() => refetchProfile()}>Verificar Cadastro</Button>
-              {!profileComplete && (
-                <p className="text-xs text-destructive mt-2">⚠️ Cadastro incompleto. Preencha todos os campos obrigatórios.</p>
-              )}
+              <Link to="/dashboard#status-cadastro">
+                <Button className="w-full">Verificar cadastro</Button>
+              </Link>
             </CardContent>
           </Card>
         )}
