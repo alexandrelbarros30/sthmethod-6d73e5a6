@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, CreditCard, Eye, FileText, Upload, Camera, Image } from "lucide-react";
+import { Plus, Pencil, Trash2, CreditCard, Eye, FileText, Upload, Camera, Image, Search, ClipboardList } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -43,6 +43,9 @@ const AdminStudents = () => {
   const [form, setForm] = useState({ ...emptyForm });
   const [subForm, setSubForm] = useState({ plan_id: "", start_date: "", end_date: "", status: "active" });
   const [uploading, setUploading] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [anamneseOpen, setAnamneseOpen] = useState(false);
+  const [anamneseText, setAnamneseText] = useState("");
 
   const { data: students, isLoading } = useQuery({
     queryKey: ["admin-students-list"],
@@ -82,6 +85,57 @@ const AdminStudents = () => {
     enabled: !!selected?.user_id,
   });
 
+  const { data: anamneseEntries, refetch: refetchAnamnese } = useQuery({
+    queryKey: ["admin-anamnese", selected?.user_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("anamnesis_entries")
+        .select("*")
+        .eq("user_id", selected!.user_id)
+        .order("created_at", { ascending: false });
+      return data || [];
+    },
+    enabled: !!selected?.user_id && anamneseOpen,
+  });
+
+  const { data: anamneseBodyImages } = useQuery({
+    queryKey: ["admin-anamnese-all-images", selected?.user_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("body_images")
+        .select("*")
+        .eq("user_id", selected!.user_id)
+        .order("uploaded_at", { ascending: false });
+      return data || [];
+    },
+    enabled: !!selected?.user_id && anamneseOpen,
+  });
+
+  const filteredStudents = students?.filter((s: any) => {
+    if (!searchTerm.trim()) return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      s.full_name?.toLowerCase().includes(term) ||
+      s.email?.toLowerCase().includes(term) ||
+      s.phone?.toLowerCase().includes(term)
+    );
+  });
+
+  const saveAnamneseMutation = useMutation({
+    mutationFn: async () => {
+      if (!anamneseText.trim()) { toast.error("Texto da anamnese não pode ser vazio"); throw new Error("empty"); }
+      await supabase.from("anamnesis_entries").insert({
+        user_id: selected.user_id,
+        notes: anamneseText,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Anamnese salva!");
+      setAnamneseText("");
+      refetchAnamnese();
+    },
+    onError: (e: any) => { if (e.message !== "empty") toast.error("Erro ao salvar anamnese"); },
+  });
   const uploadPdf = async (file: File, folder: string): Promise<string> => {
     const ext = file.name.split(".").pop();
     const path = `${folder}/${Date.now()}.${ext}`;
@@ -348,6 +402,16 @@ const AdminStudents = () => {
               </DialogContent>
             </Dialog>
           </div>
+          {/* Search Filter */}
+          <div className="relative mt-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome, email ou telefone..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -365,7 +429,7 @@ const AdminStudents = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {students?.map((s: any) => (
+                {filteredStudents?.map((s: any) => (
                   <TableRow key={s.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -389,6 +453,7 @@ const AdminStudents = () => {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Button variant="ghost" size="icon" onClick={() => openView(s)} title="Visualizar"><Eye className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => { setSelected(s); setAnamneseOpen(true); }} title="Anamnese"><ClipboardList className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => { setSelected(s); setImagesOpen(true); }} title="Fotos corporais"><Image className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => openSub(s)} title="Assinatura"><CreditCard className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => openEdit(s)} title="Editar"><Pencil className="w-4 h-4" /></Button>
@@ -409,8 +474,10 @@ const AdminStudents = () => {
                     </TableCell>
                   </TableRow>
                 ))}
-                {(!students || students.length === 0) && (
-                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground font-body">Nenhum aluno cadastrado.</TableCell></TableRow>
+                {(!filteredStudents || filteredStudents.length === 0) && (
+                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground font-body">
+                    {searchTerm ? "Nenhum aluno encontrado." : "Nenhum aluno cadastrado."}
+                  </TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -562,6 +629,120 @@ const AdminStudents = () => {
                 toast.success("Imagens atualizadas!");
               }}
             />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Anamnese Dialog */}
+      <Dialog open={anamneseOpen} onOpenChange={setAnamneseOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <ClipboardList className="w-5 h-5" /> Anamnese — {selected?.full_name}
+            </DialogTitle>
+          </DialogHeader>
+          {selected && (
+            <ScrollArea className="max-h-[75vh] pr-4">
+              <div className="space-y-6">
+                {/* New entry */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-display">Nova Anotação</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Textarea
+                      value={anamneseText}
+                      onChange={(e) => setAnamneseText(e.target.value)}
+                      rows={4}
+                      placeholder="Observações clínicas, evolução, ajustes de protocolo..."
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => saveAnamneseMutation.mutate()}
+                        disabled={saveAnamneseMutation.isPending}
+                      >
+                        {saveAnamneseMutation.isPending ? "Salvando..." : "Salvar Anotação"}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Body Images Upload */}
+                <BodyImageUpload
+                  userId={selected.user_id}
+                  existingImages={selectedBodyImages || []}
+                  onComplete={() => {
+                    refetchBodyImages();
+                    refetchAnamnese();
+                    toast.success("Imagens atualizadas!");
+                  }}
+                />
+
+                {/* Image History */}
+                {anamneseBodyImages && anamneseBodyImages.length > 0 && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-display">Histórico de Imagens</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {(() => {
+                        const grouped = anamneseBodyImages.reduce((acc: Record<string, any[]>, img: any) => {
+                          const date = new Date(img.uploaded_at).toLocaleDateString("pt-BR");
+                          if (!acc[date]) acc[date] = [];
+                          acc[date].push(img);
+                          return acc;
+                        }, {});
+                        const labels: Record<string, string> = { front: "Frente", back: "Costas", profile: "Perfil" };
+                        return Object.entries(grouped).map(([date, imgs]) => (
+                          <div key={date} className="mb-4 last:mb-0">
+                            <p className="text-xs font-semibold text-muted-foreground mb-2">{date} {(imgs as any[])[0]?.is_current && <Badge variant="secondary" className="ml-1 text-[10px]">Atual</Badge>}</p>
+                            <div className="grid grid-cols-3 gap-2">
+                              {["front", "back", "profile"].map((type) => {
+                                const img = (imgs as any[]).find((i: any) => i.type === type);
+                                return (
+                                  <div key={type} className="text-center">
+                                    <p className="text-[10px] text-muted-foreground mb-0.5">{labels[type]}</p>
+                                    {img ? (
+                                      <img src={img.image_url} alt={labels[type]} className="w-full aspect-[3/4] object-cover rounded border" />
+                                    ) : (
+                                      <div className="w-full aspect-[3/4] bg-muted rounded flex items-center justify-center text-muted-foreground text-[10px]">—</div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ));
+                      })()}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Notes History */}
+                {anamneseEntries && anamneseEntries.length > 0 && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-display">Histórico de Anotações</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {anamneseEntries.map((entry: any) => (
+                        <div key={entry.id} className="border-b border-border/50 pb-3 last:border-0 last:pb-0">
+                          <p className="text-xs text-muted-foreground mb-1">
+                            {new Date(entry.created_at).toLocaleDateString("pt-BR")} às {new Date(entry.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                          <p className="text-sm whitespace-pre-wrap">{entry.notes}</p>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {(!anamneseEntries || anamneseEntries.length === 0) && (!anamneseBodyImages || anamneseBodyImages.length === 0) && (
+                  <p className="text-sm text-muted-foreground text-center py-4">Nenhum registro de anamnese ainda.</p>
+                )}
+              </div>
+            </ScrollArea>
           )}
         </DialogContent>
       </Dialog>
