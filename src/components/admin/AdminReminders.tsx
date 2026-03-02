@@ -79,11 +79,12 @@ const AdminReminders = () => {
           }
         }
 
-        // Renewal reminder (3 days before end)
+        // Renewal reminder (3 days before end, or today if already past that window but plan still active)
         if (!existingUserTypes.has(`${sub.user_id}_renewal`)) {
           const renewalDate = addDays(endDate, -3);
-          if (renewalDate > now) {
-            toInsert.push({ user_id: sub.user_id, type: "renewal", due_date: format(renewalDate, "yyyy-MM-dd"), status: "pending" });
+          const dueDate = renewalDate > now ? renewalDate : now;
+          if (endDate > now || differenceInDays(endDate, now) >= -1) {
+            toInsert.push({ user_id: sub.user_id, type: "renewal", due_date: format(dueDate, "yyyy-MM-dd"), status: "pending" });
           }
         }
       }
