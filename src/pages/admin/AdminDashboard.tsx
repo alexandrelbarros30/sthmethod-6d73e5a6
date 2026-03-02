@@ -4,6 +4,7 @@ import { Users, UserCheck, AlertCircle, Clock, UserPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import AdminReminders from "@/components/admin/AdminReminders";
 
 const AdminDashboard = () => {
   const { data: profiles } = useQuery({
@@ -57,7 +58,9 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      <Card>
+      <AdminReminders />
+
+      <Card className="mt-6">
         <CardHeader>
           <CardTitle className="font-display">Alunos recentes</CardTitle>
         </CardHeader>
