@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,7 +8,42 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { FileText } from "lucide-react";
 
+const useContentProtection = () => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "PrintScreen" || (e.ctrlKey && e.key === "p") || (e.metaKey && e.key === "p") || (e.ctrlKey && e.key === "c") || (e.metaKey && e.key === "c")) {
+        e.preventDefault();
+        document.body.style.filter = "blur(20px)";
+        setTimeout(() => { document.body.style.filter = "none"; }, 1500);
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "PrintScreen") {
+        document.body.style.filter = "blur(20px)";
+        navigator.clipboard.writeText("").catch(() => {});
+        setTimeout(() => { document.body.style.filter = "none"; }, 1500);
+      }
+    };
+    const handleContextMenu = (e: MouseEvent) => e.preventDefault();
+    const handleVisibilityChange = () => {
+      document.body.style.filter = document.visibilityState === "hidden" ? "blur(20px)" : "none";
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keyup", handleKeyUp);
+    document.addEventListener("contextmenu", handleContextMenu);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keyup", handleKeyUp);
+      document.removeEventListener("contextmenu", handleContextMenu);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.body.style.filter = "none";
+    };
+  }, []);
+};
+
 const StudentDiet = () => {
+  useContentProtection();
   const { user } = useAuth();
   const { isActive, isLoading: subLoading } = useSubscriptionGuard();
 
@@ -52,7 +88,11 @@ const StudentDiet = () => {
 
   return (
     <DashboardLayout role="student" title={(diet as any).title || "Dieta"} subtitle="Seu plano alimentar personalizado.">
-      <div className="space-y-6 max-w-4xl">
+      <style>{`
+        @media print { .content-protected { display: none !important; } body::after { content: "Impressão não permitida"; display: flex; align-items: center; justify-content: center; font-size: 2rem; height: 100vh; } }
+        .content-protected { user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; -webkit-touch-callout: none; }
+      `}</style>
+      <div className="space-y-6 max-w-4xl content-protected">
         {(diet as any).pdf_url && (
           <Card>
             <CardHeader>
