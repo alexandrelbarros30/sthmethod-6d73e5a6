@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import SubscriptionAlerts from "@/components/student/SubscriptionAlerts";
 
 const modules = [
   { to: "/dashboard/diet", icon: Salad, title: "Dieta", desc: "Plano alimentar", color: "text-success" },
@@ -42,6 +43,8 @@ const StudentOverview = () => {
 
   return (
     <DashboardLayout role="student" title={`Bem-vindo, ${firstName}!`} subtitle="Acompanhe seu progresso e acesse seus módulos.">
+      {/* Expiration / renewal alerts */}
+      <SubscriptionAlerts subscription={subscription ? { ...subscription, plans: (subscription as any)?.plans } : null} />
       {/* Status card */}
       {subscription ? (
         <Card className={`mb-6 ${isActive ? "border-primary/20 bg-primary/5" : "border-destructive/20 bg-destructive/5"}`}>
