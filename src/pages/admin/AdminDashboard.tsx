@@ -19,7 +19,7 @@ const AdminDashboard = () => {
   const { data: subscriptions } = useQuery({
     queryKey: ["admin-subscriptions"],
     queryFn: async () => {
-      const { data } = await supabase.from("subscriptions").select("*, plans(*), profiles!subscriptions_user_id_fkey(full_name, email)");
+      const { data } = await supabase.from("subscriptions").select("*, plans(*)");
       return data || [];
     },
   });
@@ -31,11 +31,24 @@ const AdminDashboard = () => {
       const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
       const { data: subs } = await supabase
         .from("subscriptions")
-        .select("*, plans(name), profiles:user_id(full_name, email, onboarding_complete)")
+        .select("*, plans(name)")
         .gte("created_at", sevenDaysAgo)
         .eq("status", "active")
         .order("created_at", { ascending: false });
-      return (subs || []).filter((s: any) => s.profiles?.onboarding_complete);
+      
+      if (!subs || subs.length === 0) return [];
+      
+      // Fetch profiles separately
+      const userIds = subs.map((s: any) => s.user_id);
+      const { data: profilesData } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, email, onboarding_complete")
+        .in("user_id", userIds);
+      
+      const profileMap = new Map((profilesData || []).map((p: any) => [p.user_id, p]));
+      return subs
+        .map((s: any) => ({ ...s, profiles: profileMap.get(s.user_id) }))
+        .filter((s: any) => s.profiles?.onboarding_complete);
     },
   });
 

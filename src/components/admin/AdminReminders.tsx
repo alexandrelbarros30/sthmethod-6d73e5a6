@@ -39,7 +39,7 @@ const AdminReminders = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("subscriptions")
-        .select("*, plans(*), profiles:user_id(full_name, email)")
+        .select("*, plans(*)")
         .eq("status", "active");
       return data || [];
     },
@@ -112,12 +112,35 @@ const AdminReminders = () => {
     },
   });
 
+  // Fetch profiles for enrichment
+  const allUserIds = [
+    ...new Set([
+      ...(reminders || []).map((r) => r.user_id),
+      ...(subscriptions || []).map((s: any) => s.user_id),
+    ]),
+  ];
+
+  const { data: profilesData } = useQuery({
+    queryKey: ["admin-reminders-profiles", allUserIds.join(",")],
+    queryFn: async () => {
+      if (allUserIds.length === 0) return [];
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, email")
+        .in("user_id", allUserIds);
+      return data || [];
+    },
+    enabled: allUserIds.length > 0,
+  });
+
+  const profileMap = new Map((profilesData || []).map((p: any) => [p.user_id, p]));
+
   // Enrich reminders with profile/subscription data
   const enriched = (reminders || []).map((r) => {
     const sub = subscriptions?.find((s: any) => s.user_id === r.user_id);
     return {
       ...r,
-      profile: sub ? (sub as any).profiles : undefined,
+      profile: profileMap.get(r.user_id),
       subscription: sub ? { end_date: sub.end_date, plans: (sub as any).plans } : undefined,
     };
   });
