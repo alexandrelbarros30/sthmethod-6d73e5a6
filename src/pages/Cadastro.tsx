@@ -1,0 +1,476 @@
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  ArrowLeft, ArrowRight, Check, Mail, Lock, User, Phone, Loader2,
+  QrCode, CreditCard, ExternalLink, Copy, CheckCircle2, CheckCircle, AlertCircle,
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+import BodyImageUpload from "@/components/shared/BodyImageUpload";
+
+const phoneMask = (v: string) => {
+  const d = v.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 2) return `(${d}`;
+  if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+};
+
+const steps = [
+  { n: 1, label: "Conta" },
+  { n: 2, label: "Perfil" },
+  { n: 3, label: "Fotos" },
+  { n: 4, label: "Plano" },
+];
+
+const Cadastro = () => {
+  const navigate = useNavigate();
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<any>(null);
+  const [pixCopied, setPixCopied] = useState(false);
+
+  // Step 1 - Account
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [phoneVal, setPhoneVal] = useState("");
+
+  // Step 2 - Profile
+  const [profileForm, setProfileForm] = useState({
+    birth_date: "", height: "", weight: "",
+    physical_activity: "", objective: "", current_protocol: "", comorbidities: "",
+  });
+
+  // Step 3 - Body images
+  const [imagesComplete, setImagesComplete] = useState(false);
+
+  // Check if user is already logged in (e.g. returning after email confirm)
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUserId(session.user.id);
+        // Check profile completion to determine step
+        supabase.from("profiles").select("*").eq("user_id", session.user.id).single().then(({ data: p }) => {
+          if (p) {
+            setFullName(p.full_name || "");
+            setPhoneVal(p.phone || "");
+            setProfileForm({
+              birth_date: p.birth_date || "",
+              height: p.height?.toString() || "",
+              weight: p.weight?.toString() || "",
+              physical_activity: p.physical_activity || "",
+              objective: p.objective || "",
+              current_protocol: p.current_protocol || "",
+              comorbidities: p.comorbidities || "",
+            });
+            const profileDone = p.full_name && p.phone && p.height && p.weight && p.physical_activity && p.objective && p.current_protocol && p.comorbidities;
+            if (p.onboarding_complete) {
+              // Already onboarded, check subscription
+              supabase.from("subscriptions").select("*").eq("user_id", session.user.id).eq("status", "active").limit(1).maybeSingle().then(({ data: sub }) => {
+                if (sub && new Date(sub.end_date) > new Date()) {
+                  navigate("/dashboard");
+                } else {
+                  setStep(4);
+                }
+              });
+            } else if (profileDone) {
+              setStep(3);
+            } else {
+              setStep(2);
+            }
+          } else {
+            setStep(2);
+          }
+        });
+      }
+    });
+  }, []);
+
+  const { data: plans } = useQuery({
+    queryKey: ["public-plans"],
+    queryFn: async () => {
+      const { data } = await supabase.from("plans").select("*").eq("active", true).order("duration_days");
+      return data || [];
+    },
+  });
+
+  const { data: paymentLinks } = useQuery({
+    queryKey: ["public-payment-links"],
+    queryFn: async () => {
+      const { data } = await supabase.from("plan_payment_links").select("*");
+      return data || [];
+    },
+  });
+
+  const { data: bodyImages, refetch: refetchImages } = useQuery({
+    queryKey: ["cadastro-body-images", userId],
+    queryFn: async () => {
+      const { data } = await supabase.from("body_images").select("*").eq("user_id", userId!).eq("is_current", true);
+      return data || [];
+    },
+    enabled: !!userId,
+  });
+
+  const calculateFinalPrice = (plan: any) => {
+    const priceStr = plan.price.replace(/[^\d,\.]/g, "").replace(",", ".");
+    let amount = parseFloat(priceStr) || 0;
+    if (plan.discount_type === "percentage" && plan.discount_value > 0) {
+      amount = amount * (1 - plan.discount_value / 100);
+    } else if (plan.discount_type === "fixed" && plan.discount_value > 0) {
+      amount = Math.max(0, amount - plan.discount_value);
+    }
+    return Math.round(amount * 100) / 100;
+  };
+
+  const getPlanLink = (planId: string) => paymentLinks?.find((l: any) => l.plan_id === planId);
+
+  const copyPixCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setPixCopied(true);
+    toast.success("Código PIX copiado!");
+    setTimeout(() => setPixCopied(false), 3000);
+  };
+
+  // Step 1: Create account
+  const handleCreateAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fullName.trim() || !email.trim() || !password || !phoneVal.trim()) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+    const phoneClean = phoneVal.replace(/\D/g, "");
+    if (phoneClean.length < 10) {
+      toast.error("Telefone inválido. Use (xx) xxxxx-xxxx");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: fullName },
+          emailRedirectTo: `${window.location.origin}/cadastro`,
+        },
+      });
+      if (error) throw error;
+      if (data.user) {
+        setUserId(data.user.id);
+        // Update profile with phone
+        await supabase.from("profiles").update({ phone: phoneVal }).eq("user_id", data.user.id);
+        toast.success("Conta criada! Vamos ao próximo passo.");
+        setStep(2);
+      }
+    } catch (error: any) {
+      if (error.message?.includes("already registered")) {
+        toast.error("Este email já está cadastrado. Faça login.");
+      } else {
+        toast.error(error.message || "Erro ao criar conta");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Step 2: Save profile
+  const handleSaveProfile = async () => {
+    const { height, weight, physical_activity, objective, current_protocol, comorbidities } = profileForm;
+    if (!height || !weight || !physical_activity || !objective || !current_protocol || !comorbidities) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.from("profiles").update({
+        birth_date: profileForm.birth_date || null,
+        height: Number(height),
+        weight: Number(weight),
+        physical_activity,
+        objective,
+        current_protocol,
+        comorbidities,
+      }).eq("user_id", userId!);
+      if (error) throw error;
+      toast.success("Dados salvos!");
+      setStep(3);
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao salvar dados");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Step 3 → 4 transition
+  const handleImagesComplete = () => {
+    setImagesComplete(true);
+    refetchImages();
+    // Mark onboarding complete
+    supabase.from("profiles").update({ onboarding_complete: true }).eq("user_id", userId!);
+    toast.success("Fotos enviadas! Agora escolha seu plano.");
+    setStep(4);
+  };
+
+  // After payment notification
+  const handlePaymentNotified = () => {
+    setCheckoutOpen(false);
+    toast.success("Pagamento registrado! Seu acesso será liberado após confirmação.");
+    setTimeout(() => navigate("/login"), 2000);
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-sm">ST</span>
+            </div>
+            <span className="font-display text-xl font-bold text-foreground">ST&H</span>
+          </Link>
+          <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors font-body">
+            Já tem conta? Entrar
+          </Link>
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        {/* Step indicator */}
+        <div className="flex items-center justify-center gap-1 sm:gap-2 mb-8">
+          {steps.map(({ n, label }) => (
+            <div key={n} className="flex items-center gap-1 sm:gap-2">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
+                step > n ? "bg-primary text-primary-foreground" : step === n ? "bg-primary text-primary-foreground ring-2 ring-primary/30 ring-offset-2 ring-offset-background" : "bg-muted text-muted-foreground"
+              }`}>
+                {step > n ? <Check className="w-4 h-4" /> : n}
+              </div>
+              <span className={`text-xs sm:text-sm font-body hidden sm:inline ${step >= n ? "text-foreground" : "text-muted-foreground"}`}>{label}</span>
+              {n < 4 && <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />}
+            </div>
+          ))}
+        </div>
+
+        {/* STEP 1: Create Account */}
+        {step === 1 && (
+          <Card className="animate-fade-in">
+            <CardHeader>
+              <CardTitle className="font-display text-xl">Crie sua conta</CardTitle>
+              <p className="text-sm text-muted-foreground font-body">
+                Preencha seus dados para começar sua jornada na ST&H.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleCreateAccount} className="space-y-4">
+                <div>
+                  <Label className="font-body">Nome completo *</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input value={fullName} onChange={(e) => setFullName(e.target.value)} className="pl-10" placeholder="Seu nome completo" required />
+                  </div>
+                </div>
+                <div>
+                  <Label className="font-body">Email *</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" placeholder="seu@email.com" required />
+                  </div>
+                </div>
+                <div>
+                  <Label className="font-body">Telefone *</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input value={phoneVal} onChange={(e) => setPhoneVal(phoneMask(e.target.value))} className="pl-10" placeholder="(00) 00000-0000" required />
+                  </div>
+                </div>
+                <div>
+                  <Label className="font-body">Senha *</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10" placeholder="Mínimo 6 caracteres" required minLength={6} />
+                  </div>
+                </div>
+                <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                  {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Criando conta...</> : <>Criar conta e continuar <ArrowRight className="w-4 h-4 ml-2" /></>}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* STEP 2: Profile Data */}
+        {step === 2 && userId && (
+          <Card className="animate-fade-in">
+            <CardHeader>
+              <CardTitle className="font-display text-xl">Complete seu perfil</CardTitle>
+              <p className="text-sm text-muted-foreground font-body">
+                Essas informações são essenciais para montar seu plano personalizado.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="font-body">Data de nascimento</Label>
+                  <Input type="date" value={profileForm.birth_date} onChange={(e) => setProfileForm({ ...profileForm, birth_date: e.target.value })} />
+                </div>
+                <div>
+                  <Label className="font-body">Altura (cm) *</Label>
+                  <Input type="number" value={profileForm.height} onChange={(e) => setProfileForm({ ...profileForm, height: e.target.value })} placeholder="175" />
+                </div>
+                <div>
+                  <Label className="font-body">Peso (kg) *</Label>
+                  <Input type="number" value={profileForm.weight} onChange={(e) => setProfileForm({ ...profileForm, weight: e.target.value })} placeholder="80" />
+                </div>
+              </div>
+              <div>
+                <Label className="font-body">Atividade física praticada *</Label>
+                <Textarea value={profileForm.physical_activity} onChange={(e) => setProfileForm({ ...profileForm, physical_activity: e.target.value })} rows={2} placeholder="Descreva suas atividades atuais" />
+              </div>
+              <div>
+                <Label className="font-body">Objetivo *</Label>
+                <Textarea value={profileForm.objective} onChange={(e) => setProfileForm({ ...profileForm, objective: e.target.value })} rows={2} placeholder="Qual seu principal objetivo?" />
+              </div>
+              <div>
+                <Label className="font-body">Protocolo atual *</Label>
+                <Textarea value={profileForm.current_protocol} onChange={(e) => setProfileForm({ ...profileForm, current_protocol: e.target.value })} rows={2} placeholder="Descreva medicamentos ou suplementos que usa" />
+              </div>
+              <div>
+                <Label className="font-body">Comorbidades *</Label>
+                <Textarea value={profileForm.comorbidities} onChange={(e) => setProfileForm({ ...profileForm, comorbidities: e.target.value })} rows={2} placeholder="Possui alguma condição de saúde? Se não, escreva 'Nenhuma'" />
+              </div>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setStep(1)} className="flex-1"><ArrowLeft className="w-4 h-4 mr-2" /> Voltar</Button>
+                <Button onClick={handleSaveProfile} disabled={loading} className="flex-1">
+                  {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</> : <>Continuar <ArrowRight className="w-4 h-4 ml-2" /></>}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* STEP 3: Body Images */}
+        {step === 3 && userId && (
+          <div className="animate-fade-in space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-display text-xl">Fotos corporais</CardTitle>
+                <p className="text-sm text-muted-foreground font-body">
+                  Envie 3 fotos obrigatórias: frente, costas e perfil. Aceitos: .jpg e .png
+                </p>
+              </CardHeader>
+              <CardContent>
+                <BodyImageUpload
+                  userId={userId}
+                  existingImages={bodyImages || []}
+                  required
+                  onComplete={handleImagesComplete}
+                />
+              </CardContent>
+            </Card>
+            <Button variant="outline" onClick={() => setStep(2)} className="w-full"><ArrowLeft className="w-4 h-4 mr-2" /> Voltar ao perfil</Button>
+          </div>
+        )}
+
+        {/* STEP 4: Choose Plan & Pay */}
+        {step === 4 && userId && (
+          <div className="animate-fade-in space-y-4">
+            <Card className="border-primary/20 bg-primary/5">
+              <CardContent className="py-4 flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-primary" />
+                <p className="text-sm font-body text-foreground">
+                  Cadastro completo! Escolha seu plano para ativar o acesso.
+                </p>
+              </CardContent>
+            </Card>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              {plans?.map((plan: any, i: number) => {
+                const finalPrice = calculateFinalPrice(plan);
+                const originalPrice = parseFloat(plan.price.replace(/[^\d,\.]/g, "").replace(",", ".")) || 0;
+                const hasDiscount = plan.discount_type !== "none" && plan.discount_value > 0;
+                return (
+                  <Card key={plan.id} className="animate-fade-in hover:border-primary/30 transition-all" style={{ animationDelay: `${i * 100}ms` }}>
+                    <CardHeader className="text-center pb-2 pt-6">
+                      <CardTitle className="text-lg font-display">{plan.name}</CardTitle>
+                      {plan.subtitle && <p className="text-xs text-muted-foreground font-body">{plan.subtitle}</p>}
+                      {hasDiscount && <p className="text-sm line-through text-muted-foreground/60">R$ {originalPrice.toFixed(2)}</p>}
+                      <p className="text-2xl font-bold text-foreground mt-1">R$ {finalPrice.toFixed(2)}</p>
+                      {hasDiscount && <Badge variant="outline" className="text-xs text-primary border-primary/30">{plan.discount_type === "percentage" ? `${plan.discount_value}% OFF` : `R$ ${plan.discount_value} OFF`}</Badge>}
+                      <p className="text-xs text-muted-foreground font-body">{plan.duration}</p>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <ul className="space-y-2">
+                        {plan.benefits?.map((b: string, j: number) => (
+                          <li key={j} className="flex items-start gap-2 text-sm font-body"><Check className="w-4 h-4 text-primary shrink-0 mt-0.5" /><span className="text-muted-foreground">{b}</span></li>
+                        ))}
+                      </ul>
+                      <Button className="w-full" onClick={() => { setSelectedPlan(plan); setPixCopied(false); setCheckoutOpen(true); }}>
+                        Assinar agora
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Checkout Dialog */}
+      <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display">Realizar Pagamento</DialogTitle>
+          </DialogHeader>
+          {selectedPlan && (() => {
+            const link = getPlanLink(selectedPlan.id);
+            const hasPix = link?.pix_enabled && link?.pix_code;
+            const hasCard = link?.card_enabled && link?.card_link;
+            const hasAny = hasPix || hasCard;
+            return (
+              <div className="space-y-4">
+                <div className="text-center p-4 rounded-lg bg-muted/50">
+                  <p className="text-sm text-muted-foreground">Plano selecionado</p>
+                  <p className="text-lg font-bold text-foreground">{selectedPlan.name}</p>
+                  <p className="text-2xl font-bold text-primary mt-1">R$ {calculateFinalPrice(selectedPlan).toFixed(2)}</p>
+                </div>
+                {!hasAny && <p className="text-sm text-muted-foreground text-center py-4">Nenhum método de pagamento disponível. Entre em contato com o suporte.</p>}
+                {hasPix && (
+                  <div className="space-y-2 p-3 rounded-lg border border-border">
+                    <div className="flex items-center gap-2 mb-2"><QrCode className="w-5 h-5 text-primary" /><span className="text-sm font-medium text-foreground">PIX</span></div>
+                    <Button variant="outline" className="w-full" onClick={() => copyPixCode(link!.pix_code!)}>
+                      {pixCopied ? <><CheckCircle2 className="w-4 h-4 mr-2 text-primary" />Código Copiado!</> : <><Copy className="w-4 h-4 mr-2" />Copiar código PIX</>}
+                    </Button>
+                    <p className="text-xs text-muted-foreground text-center">Após o pagamento, seu plano será ativado automaticamente.</p>
+                  </div>
+                )}
+                {hasCard && (
+                  <div className="space-y-2 p-3 rounded-lg border border-border">
+                    <div className="flex items-center gap-2 mb-2"><CreditCard className="w-5 h-5 text-primary" /><span className="text-sm font-medium text-foreground">Cartão</span></div>
+                    <a href={link!.card_link!} target="_blank" rel="noopener noreferrer">
+                      <Button className="w-full"><ExternalLink className="w-4 h-4 mr-2" />Pagar com Cartão</Button>
+                    </a>
+                  </div>
+                )}
+                <Button variant="outline" className="w-full mt-2" onClick={handlePaymentNotified}>
+                  ✅ Já realizei o pagamento
+                </Button>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default Cadastro;

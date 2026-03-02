@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
+import Cadastro from "./pages/Cadastro";
 import StudentOverview from "./pages/student/StudentOverview";
 import StudentDiet from "./pages/student/StudentDiet";
 import StudentTraining from "./pages/student/StudentTraining";
@@ -36,6 +37,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/cadastro" element={<Cadastro />} />
             {/* Student routes */}
             <Route path="/dashboard" element={<ProtectedRoute requiredRole="student"><StudentOverview /></ProtectedRoute>} />
             <Route path="/dashboard/diet" element={<ProtectedRoute requiredRole="student"><StudentDiet /></ProtectedRoute>} />
