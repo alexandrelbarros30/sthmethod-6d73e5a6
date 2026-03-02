@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import heroBgFallback from "@/assets/hero-clients.jpg";
@@ -26,9 +27,45 @@ const Landing = () => {
   const s = (key: string, fallback = "") => settings?.find((x) => x.key === key)?.value || fallback;
 
   const logoUrl = s("logo_url");
+  const logoSize = parseInt(s("logo_size", "48"));
   const bgImageUrl = s("bg_image_url");
   const bgEnabled = s("bg_enabled", "true") === "true";
   const bgOpacity = parseFloat(s("bg_opacity", "0.25"));
+
+  // Apply dynamic colors
+  useEffect(() => {
+    const root = document.documentElement;
+    const ph = s("color_primary_h"), ps = s("color_primary_s"), pl = s("color_primary_l");
+    const ah = s("color_accent_h"), as_ = s("color_accent_s"), al = s("color_accent_l");
+    const bh = s("color_background_h"), bs = s("color_background_s"), bl = s("color_background_l");
+
+    if (ph) {
+      root.style.setProperty("--primary", `${ph} ${ps}% ${pl}%`);
+      root.style.setProperty("--ring", `${ph} ${ps}% ${pl}%`);
+      root.style.setProperty("--gradient-start", `${ph} ${ps}% ${pl}%`);
+      root.style.setProperty("--glow", `${ph} ${ps}% ${pl}%`);
+      root.style.setProperty("--sidebar-primary", `${ph} ${ps}% ${pl}%`);
+    }
+    if (ah) {
+      root.style.setProperty("--accent", `${ah} ${as_}% ${al}%`);
+      root.style.setProperty("--gradient-end", `${ah} ${as_}% ${al}%`);
+    }
+    if (bh) {
+      root.style.setProperty("--background", `${bh} ${bs}% ${bl}%`);
+    }
+
+    return () => {
+      // Reset on unmount
+      root.style.removeProperty("--primary");
+      root.style.removeProperty("--ring");
+      root.style.removeProperty("--gradient-start");
+      root.style.removeProperty("--glow");
+      root.style.removeProperty("--sidebar-primary");
+      root.style.removeProperty("--accent");
+      root.style.removeProperty("--gradient-end");
+      root.style.removeProperty("--background");
+    };
+  }, [settings]);
   const heroTitle = s("hero_title", "Transforme seu corpo com ciência, estratégia e acompanhamento real.");
   const heroSubtitle = s("hero_subtitle", "Consultoria online personalizada para quem busca emagrecimento, definição, saúde hormonal e evolução no shape.");
   const ctaText = s("hero_cta_text", "Quero evoluir meu shape");
@@ -68,7 +105,7 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             {logoUrl ? (
-              <img src={logoUrl} alt="Logo" className="h-8 object-contain" />
+              <img src={logoUrl} alt="Logo" style={{ height: `${logoSize}px` }} className="object-contain" />
             ) : (
               <span className="font-display text-xl font-bold gradient-text">ST&H</span>
             )}

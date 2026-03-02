@@ -20,8 +20,9 @@ import {
 } from "@/hooks/useLandingData";
 import {
   Save, Upload, Trash2, Plus, Image, Type, Layout, MessageCircle,
-  GripVertical, Eye, EyeOff, ArrowUp, ArrowDown, ImagePlus,
+  GripVertical, Eye, EyeOff, ArrowUp, ArrowDown, ImagePlus, Palette,
 } from "lucide-react";
+import ColorEditor from "@/components/admin/ColorEditor";
 
 // ─── Helper: setting value from loaded data ───
 const getSetting = (data: any[] | undefined, key: string, fallback = "") =>
@@ -116,6 +117,7 @@ const AdminLayoutExterno = () => {
             <TabsTrigger value="evolutions" className="gap-1.5"><ImagePlus className="w-4 h-4" />Evoluções</TabsTrigger>
             <TabsTrigger value="sections" className="gap-1.5"><GripVertical className="w-4 h-4" />Seções</TabsTrigger>
             <TabsTrigger value="cta" className="gap-1.5"><Type className="w-4 h-4" />CTA Final</TabsTrigger>
+            <TabsTrigger value="cores" className="gap-1.5"><Palette className="w-4 h-4" />Cores</TabsTrigger>
           </TabsList>
 
           {/* ─── MARCA (Logo + Background) ─── */}
@@ -319,6 +321,11 @@ const AdminLayoutExterno = () => {
                 </CardContent>
               </Card>
             ))}
+          </TabsContent>
+
+          {/* ─── CORES ─── */}
+          <TabsContent value="cores" className="space-y-4 mt-4">
+            <ColorEditor />
           </TabsContent>
         </Tabs>
       </div>
