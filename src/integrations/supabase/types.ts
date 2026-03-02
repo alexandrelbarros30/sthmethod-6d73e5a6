@@ -250,11 +250,90 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string
+          value?: string
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          action_type: string
+          amount: number
+          created_at: string
+          id: string
+          installments: number
+          method: string
+          mp_payment_id: string | null
+          mp_preference_id: string | null
+          original_amount: number
+          plan_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_type?: string
+          amount: number
+          created_at?: string
+          id?: string
+          installments?: number
+          method?: string
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
+          original_amount: number
+          plan_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          amount?: number
+          created_at?: string
+          id?: string
+          installments?: number
+          method?: string
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
+          original_amount?: number
+          plan_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plans: {
         Row: {
           active: boolean
           benefits: string[]
           created_at: string
+          discount_type: string
+          discount_value: number
           duration: string
           duration_days: number
           id: string
@@ -266,6 +345,8 @@ export type Database = {
           active?: boolean
           benefits?: string[]
           created_at?: string
+          discount_type?: string
+          discount_value?: number
           duration: string
           duration_days?: number
           id?: string
@@ -277,6 +358,8 @@ export type Database = {
           active?: boolean
           benefits?: string[]
           created_at?: string
+          discount_type?: string
+          discount_value?: number
           duration?: string
           duration_days?: number
           id?: string
