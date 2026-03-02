@@ -327,6 +327,47 @@ export type Database = {
           },
         ]
       }
+      plan_payment_links: {
+        Row: {
+          card_enabled: boolean
+          card_link: string | null
+          created_at: string
+          id: string
+          pix_code: string | null
+          pix_enabled: boolean
+          plan_id: string
+          updated_at: string
+        }
+        Insert: {
+          card_enabled?: boolean
+          card_link?: string | null
+          created_at?: string
+          id?: string
+          pix_code?: string | null
+          pix_enabled?: boolean
+          plan_id: string
+          updated_at?: string
+        }
+        Update: {
+          card_enabled?: boolean
+          card_link?: string | null
+          created_at?: string
+          id?: string
+          pix_code?: string | null
+          pix_enabled?: boolean
+          plan_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_payment_links_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: true
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plans: {
         Row: {
           active: boolean
