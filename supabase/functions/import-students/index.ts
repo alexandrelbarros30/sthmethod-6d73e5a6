@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
         }
 
         // Create new auth user with default password
-        const defaultPassword = "STH@2025!" + Math.random().toString(36).slice(-4);
+        const defaultPassword = "123456";
         const { data: userData, error: createError } = await adminClient.auth.admin.createUser({
           email,
           password: defaultPassword,
