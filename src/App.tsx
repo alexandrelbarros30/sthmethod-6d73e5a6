@@ -23,6 +23,7 @@ import AdminProtocol from "./pages/admin/AdminProtocol";
 import AdminTraining from "./pages/admin/AdminTraining";
 import AdminContent from "./pages/admin/AdminContent";
 import AdminLayoutExterno from "./pages/admin/AdminLayoutExterno";
+import AdminMessages from "./pages/admin/AdminMessages";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/admin/protocol" element={<ProtectedRoute requiredRole="admin"><AdminProtocol /></ProtectedRoute>} />
             <Route path="/admin/training" element={<ProtectedRoute requiredRole="admin"><AdminTraining /></ProtectedRoute>} />
             <Route path="/admin/content" element={<ProtectedRoute requiredRole="admin"><AdminContent /></ProtectedRoute>} />
+            <Route path="/admin/messages" element={<ProtectedRoute requiredRole="admin"><AdminMessages /></ProtectedRoute>} />
             <Route path="/admin/layout" element={<ProtectedRoute requiredRole="admin"><AdminLayoutExterno /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

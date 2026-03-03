@@ -337,6 +337,134 @@ export type Database = {
         }
         Relationships: []
       }
+      message_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      message_history: {
+        Row: {
+          category_id: string | null
+          content: string
+          created_at: string
+          error_message: string | null
+          id: string
+          image_url: string | null
+          recipient_name: string | null
+          recipient_phone: string | null
+          scheduled_at: string | null
+          sent_at: string | null
+          status: string
+          template_id: string | null
+          user_id: string
+        }
+        Insert: {
+          category_id?: string | null
+          content: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          image_url?: string | null
+          recipient_name?: string | null
+          recipient_phone?: string | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+          user_id: string
+        }
+        Update: {
+          category_id?: string | null
+          content?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          image_url?: string | null
+          recipient_name?: string | null
+          recipient_phone?: string | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_history_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "message_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_history_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "message_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_templates: {
+        Row: {
+          category_id: string
+          content: string
+          created_at: string
+          id: string
+          image_url: string | null
+          is_reusable: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          content?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_reusable?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_reusable?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_templates_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "message_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_settings: {
         Row: {
           id: string
