@@ -11,7 +11,7 @@ const AdminDashboard = () => {
   const { data: profiles } = useQuery({
     queryKey: ["admin-profiles"],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("id, user_id, full_name, email, onboarding_complete");
+      const { data } = await supabase.from("profiles").select("id, user_id, full_name, email, onboarding_complete, created_at").order("created_at", { ascending: false });
       return data || [];
     },
   });
