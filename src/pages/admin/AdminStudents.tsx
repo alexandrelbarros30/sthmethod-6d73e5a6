@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -17,7 +17,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
-import { getSpreadsheetStudents } from "@/lib/spreadsheet-students";
+import * as XLSX from "xlsx";
 
 const phoneMask = (v: string) => {
   const d = v.replace(/\D/g, "").slice(0, 11);
@@ -48,6 +48,9 @@ const AdminStudents = () => {
   const [anamneseOpen, setAnamneseOpen] = useState(false);
   const [anamneseText, setAnamneseText] = useState("");
   const [importingStudents, setImportingStudents] = useState(false);
+  const [importPreview, setImportPreview] = useState<any[] | null>(null);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: students, isLoading } = useQuery({
     queryKey: ["admin-students-list"],
@@ -390,43 +393,135 @@ const AdminStudents = () => {
           <div className="flex items-center justify-between">
             <CardTitle className="font-display">Alunos cadastrados</CardTitle>
             <div className="flex gap-2">
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button size="sm" variant="outline" disabled={importingStudents}>
-                    <Download className="w-4 h-4 mr-1" /> {importingStudents ? "Importando..." : "Importar Planilha"}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Importar alunos da planilha Google?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Serão importados {getSpreadsheetStudents().length} alunos da planilha. Alunos com email já existente serão atualizados. Novos alunos serão criados com senha temporária. Deseja continuar?
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={async () => {
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept=".xlsx,.xls,.csv"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = (evt) => {
+                    try {
+                      const data = new Uint8Array(evt.target?.result as ArrayBuffer);
+                      const workbook = XLSX.read(data, { type: "array" });
+                      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                      const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+                      
+                      const mapped = rows.map((row) => {
+                        // Try to find columns by common names
+                        const get = (keys: string[]) => {
+                          for (const k of keys) {
+                            const found = Object.keys(row).find((rk) => rk.toLowerCase().trim() === k.toLowerCase());
+                            if (found && row[found] !== "") return String(row[found]);
+                          }
+                          return "...";
+                        };
+                        
+                        const rawHeight = get(["altura", "height"]);
+                        const height = rawHeight !== "..." ? String(parseFloat(rawHeight.replace(",", ".")) || "") : "...";
+                        
+                        const rawWeight = get(["peso", "weight"]);
+                        const weight = rawWeight !== "..." ? String(parseFloat(rawWeight.replace(",", ".")) || "") : "...";
+
+                        let birthDate = get(["data de nascimento", "nascimento", "birth_date", "data nascimento", "dt nascimento"]);
+                        if (birthDate !== "...") {
+                          // Handle Excel serial date numbers
+                          const num = Number(birthDate);
+                          if (!isNaN(num) && num > 10000) {
+                            const d = new Date((num - 25569) * 86400000);
+                            birthDate = d.toISOString().split("T")[0];
+                          } else {
+                            // Try dd/mm/yyyy
+                            const parts = birthDate.split("/");
+                            if (parts.length === 3) {
+                              birthDate = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
+                            }
+                          }
+                        }
+
+                        let phone = get(["telefone", "phone", "celular", "tel"]);
+                        if (phone !== "...") {
+                          phone = phone.replace(/\D/g, "");
+                          if (phone.length === 13 && phone.startsWith("55")) phone = phone.slice(2);
+                        }
+                        
+                        return {
+                          full_name: get(["nome completo", "nome", "name", "full_name"]),
+                          email: get(["email", "e-mail"]).toLowerCase().trim(),
+                          phone,
+                          birth_date: birthDate,
+                          height,
+                          weight,
+                        };
+                      }).filter((s) => s.email !== "..." && s.email.includes("@"));
+                      
+                      setImportPreview(mapped);
+                      setImportDialogOpen(true);
+                    } catch {
+                      toast.error("Erro ao ler o arquivo. Verifique o formato.");
+                    }
+                  };
+                  reader.readAsArrayBuffer(file);
+                  e.target.value = "";
+                }}
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={importingStudents}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="w-4 h-4 mr-1" /> {importingStudents ? "Importando..." : "Importar Planilha"}
+              </Button>
+              <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle className="font-display">Importar alunos da planilha?</DialogTitle>
+                  </DialogHeader>
+                  <p className="text-sm text-muted-foreground">
+                    Serão importados <strong>{importPreview?.length || 0}</strong> alunos. Alunos com email já existente serão atualizados. Novos alunos serão criados com senha temporária <code>123456</code>.
+                  </p>
+                  {importPreview && importPreview.length > 0 && (
+                    <ScrollArea className="max-h-48 border rounded-md p-2">
+                      <div className="text-xs space-y-1">
+                        {importPreview.slice(0, 20).map((s, i) => (
+                          <div key={i} className="flex justify-between">
+                            <span className="truncate max-w-[200px]">{s.full_name}</span>
+                            <span className="text-muted-foreground truncate max-w-[180px]">{s.email}</span>
+                          </div>
+                        ))}
+                        {importPreview.length > 20 && <p className="text-muted-foreground">... e mais {importPreview.length - 20} alunos</p>}
+                      </div>
+                    </ScrollArea>
+                  )}
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setImportDialogOpen(false)}>Cancelar</Button>
+                    <Button disabled={importingStudents} onClick={async () => {
+                      if (!importPreview) return;
                       setImportingStudents(true);
                       try {
-                        const students = getSpreadsheetStudents();
                         const { data, error } = await supabase.functions.invoke("import-students", {
-                          body: { students },
+                          body: { students: importPreview },
                         });
                         if (error) throw error;
                         if (data?.error) throw new Error(data.error);
                         const s = data.summary;
                         toast.success(`Importação concluída! ${s.created} criados, ${s.updated} atualizados, ${s.errors} erros, ${s.skipped} ignorados`);
                         qc.invalidateQueries({ queryKey: ["admin-students-list"] });
+                        setImportDialogOpen(false);
+                        setImportPreview(null);
                       } catch (e: any) {
                         toast.error(e.message || "Erro na importação");
                       }
                       setImportingStudents(false);
                     }}>
-                      Importar
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                      {importingStudents ? "Importando..." : "Confirmar Importação"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             <Dialog open={createOpen} onOpenChange={(o) => { setCreateOpen(o); if (!o) setForm({ ...emptyForm }); }}>
               <DialogTrigger asChild>
                 <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Criar Aluno</Button>
