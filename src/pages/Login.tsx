@@ -30,7 +30,13 @@ const Login = () => {
           },
         });
         if (error) throw error;
-        toast.success("Conta criada! Verifique seu email para confirmar.");
+        toast.success("Conta criada com sucesso! Complete seu cadastro para liberar o acesso.", {
+          action: {
+            label: "Completar cadastro",
+            onClick: () => window.location.href = "/cadastro",
+          },
+          duration: 8000,
+        });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
