@@ -1,6 +1,6 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, AlertCircle, Clock, UserPlus, Bell, CheckCircle } from "lucide-react";
+import { Users, UserCheck, AlertCircle, Clock, UserPlus, Bell, CheckCircle, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -123,21 +123,32 @@ const AdminDashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {profiles?.slice(0, 10).map((p) => (
+            {profiles?.slice(0, 10).map((p) => {
+              const createdAt = new Date(p.created_at);
+              const sevenDaysAgo = new Date(Date.now() - 7 * 86400000);
+              const isRecent = createdAt > sevenDaysAgo;
+              return (
               <div key={p.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-xs font-bold text-primary">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center ${isRecent ? "bg-success/20" : "bg-primary/10"}`}>
+                    <span className={`text-xs font-bold ${isRecent ? "text-success" : "text-primary"}`}>
                       {p.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "?"}
                     </span>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-foreground font-body">{p.full_name || "Sem nome"}</p>
+                    <p className={`text-sm font-medium font-body ${isRecent ? "text-success" : "text-foreground"}`}>{p.full_name || "Sem nome"}</p>
                     <p className="text-xs text-muted-foreground font-body">{p.email}</p>
                   </div>
                 </div>
+                <div className="flex items-center gap-2">
+                  {isRecent && <Badge variant="outline" className="text-xs border-success/30 text-success">Novo</Badge>}
+                  <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => window.location.href = `/admin/students`}>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
               </div>
-            ))}
+              );
+            })}
             {(!profiles || profiles.length === 0) && (
               <p className="text-sm text-muted-foreground font-body">Nenhum aluno cadastrado ainda.</p>
             )}
