@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -34,6 +35,7 @@ const emptyForm = {
 };
 
 const AdminStudents = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const qc = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -72,6 +74,7 @@ const AdminStudents = () => {
       });
     },
   });
+
 
   const { data: plans } = useQuery({
     queryKey: ["admin-plans-list"],
@@ -267,7 +270,21 @@ const AdminStudents = () => {
     setEditOpen(true);
   };
 
+  // Auto-open edit dialog when ?edit=USER_ID is present
+  useEffect(() => {
+    const editUserId = searchParams.get("edit");
+    if (editUserId && students && students.length > 0) {
+      const student = students.find((s: any) => s.user_id === editUserId);
+      if (student) {
+        openEdit(student);
+        searchParams.delete("edit");
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+  }, [students, searchParams]);
+
   const openView = (s: any) => { setSelected(s); setViewOpen(true); };
+
 
   const openSub = (s: any) => {
     setSelected(s);

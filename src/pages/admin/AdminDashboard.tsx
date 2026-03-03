@@ -142,7 +142,7 @@ const AdminDashboard = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   {isRecent && <Badge variant="outline" className="text-xs border-success/30 text-success">Novo</Badge>}
-                  <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => window.location.href = `/admin/students`}>
+                  <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => window.location.href = `/admin/students?edit=${p.user_id}`}>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </Button>
                 </div>
