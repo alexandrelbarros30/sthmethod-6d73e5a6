@@ -501,19 +501,34 @@ const AdminStudents = () => {
                     <Button disabled={importingStudents} onClick={async () => {
                       if (!importPreview) return;
                       setImportingStudents(true);
+                      const BATCH_SIZE = 10;
+                      let totalCreated = 0, totalUpdated = 0, totalErrors = 0, totalSkipped = 0;
                       try {
-                        const { data, error } = await supabase.functions.invoke("import-students", {
-                          body: { students: importPreview },
-                        });
-                        if (error) throw error;
-                        if (data?.error) throw new Error(data.error);
-                        const s = data.summary;
-                        toast.success(`Importação concluída! ${s.created} criados, ${s.updated} atualizados, ${s.errors} erros, ${s.skipped} ignorados`);
+                        for (let i = 0; i < importPreview.length; i += BATCH_SIZE) {
+                          const batch = importPreview.slice(i, i + BATCH_SIZE);
+                          toast.info(`Importando lote ${Math.floor(i / BATCH_SIZE) + 1} de ${Math.ceil(importPreview.length / BATCH_SIZE)}...`);
+                          const { data, error } = await supabase.functions.invoke("import-students", {
+                            body: { students: batch },
+                          });
+                          if (error) throw error;
+                          if (data?.error) throw new Error(data.error);
+                          if (data?.summary) {
+                            totalCreated += data.summary.created || 0;
+                            totalUpdated += data.summary.updated || 0;
+                            totalErrors += data.summary.errors || 0;
+                            totalSkipped += data.summary.skipped || 0;
+                          }
+                        }
+                        toast.success(`Importação concluída! ${totalCreated} criados, ${totalUpdated} atualizados, ${totalErrors} erros, ${totalSkipped} ignorados`);
                         qc.invalidateQueries({ queryKey: ["admin-students-list"] });
                         setImportDialogOpen(false);
                         setImportPreview(null);
                       } catch (e: any) {
                         toast.error(e.message || "Erro na importação");
+                        if (totalCreated + totalUpdated > 0) {
+                          toast.info(`Parcial: ${totalCreated} criados, ${totalUpdated} atualizados antes do erro.`);
+                          qc.invalidateQueries({ queryKey: ["admin-students-list"] });
+                        }
                       }
                       setImportingStudents(false);
                     }}>
