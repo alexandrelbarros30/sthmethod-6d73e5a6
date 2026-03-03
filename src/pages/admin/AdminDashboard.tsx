@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, UserCheck, AlertCircle, Clock, UserPlus, Bell, CheckCircle, ExternalLink } from "lucide-react";
@@ -8,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import AdminReminders from "@/components/admin/AdminReminders";
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
+
   const { data: profiles } = useQuery({
     queryKey: ["admin-profiles"],
     queryFn: async () => {
@@ -142,7 +145,7 @@ const AdminDashboard = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   {isRecent && <Badge variant="outline" className="text-xs border-success/30 text-success">Novo</Badge>}
-                  <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => window.location.href = `/admin/students?edit=${p.user_id}`}>
+                  <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => navigate(`/admin/students?edit=${p.user_id}`)}>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </Button>
                 </div>
