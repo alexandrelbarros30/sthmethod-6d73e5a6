@@ -125,8 +125,8 @@ const AdminDashboard = () => {
           <div className="space-y-3">
             {profiles?.slice(0, 10).map((p) => {
               const createdAt = new Date(p.created_at);
-              const sevenDaysAgo = new Date(Date.now() - 7 * 86400000);
-              const isRecent = createdAt > sevenDaysAgo;
+              const threeDaysAgo = new Date(Date.now() - 3 * 86400000);
+              const isRecent = createdAt > threeDaysAgo;
               return (
               <div key={p.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
                 <div className="flex items-center gap-3">
