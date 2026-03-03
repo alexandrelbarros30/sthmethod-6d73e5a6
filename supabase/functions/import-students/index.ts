@@ -60,18 +60,24 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (existingProfile) {
-          // Update existing profile
-          await adminClient.from("profiles").update({
-            full_name: student.full_name || undefined,
-            phone: student.phone || undefined,
-            weight: student.weight || undefined,
-            height: student.height || undefined,
-            birth_date: student.birth_date || undefined,
-            physical_activity: student.physical_activity || undefined,
-            objective: student.objective || undefined,
-            current_protocol: student.current_protocol || undefined,
-            comorbidities: student.comorbidities || undefined,
-          }).eq("user_id", existingProfile.user_id);
+          // Update existing profile with real values only
+          const updateData: Record<string, any> = {};
+          if (student.full_name && student.full_name !== "...") updateData.full_name = student.full_name;
+          if (student.phone && student.phone !== "...") updateData.phone = student.phone;
+          if (student.birth_date && student.birth_date !== "...") updateData.birth_date = student.birth_date;
+          if (student.physical_activity && student.physical_activity !== "...") updateData.physical_activity = student.physical_activity;
+          if (student.objective && student.objective !== "...") updateData.objective = student.objective;
+          if (student.current_protocol && student.current_protocol !== "...") updateData.current_protocol = student.current_protocol;
+          if (student.comorbidities && student.comorbidities !== "...") updateData.comorbidities = student.comorbidities;
+          
+          const h = parseFloat(student.height);
+          if (!isNaN(h) && h > 0) updateData.height = h;
+          const w = parseFloat(student.weight);
+          if (!isNaN(w) && w > 0) updateData.weight = w;
+
+          if (Object.keys(updateData).length > 0) {
+            await adminClient.from("profiles").update(updateData).eq("user_id", existingProfile.user_id);
+          }
 
           results.push({ email, status: "updated" });
           continue;
@@ -92,18 +98,28 @@ Deno.serve(async (req) => {
         }
 
         if (userData?.user?.id) {
-          // Update profile with additional data (profile is auto-created by trigger)
-          await adminClient.from("profiles").update({
+          // Wait a moment for the trigger to create the profile
+          await new Promise((r) => setTimeout(r, 500));
+          
+          const profileData: Record<string, any> = {
             full_name: student.full_name || "",
-            phone: student.phone || "",
-            weight: student.weight || null,
-            height: student.height || null,
-            birth_date: student.birth_date || null,
             physical_activity: student.physical_activity || "...",
             objective: student.objective || "...",
             current_protocol: student.current_protocol || "...",
             comorbidities: student.comorbidities || "...",
-          }).eq("user_id", userData.user.id);
+          };
+          
+          // Only set fields that have real values (not "...")
+          if (student.phone && student.phone !== "...") profileData.phone = student.phone;
+          if (student.birth_date && student.birth_date !== "...") profileData.birth_date = student.birth_date;
+          
+          const h = parseFloat(student.height);
+          if (!isNaN(h) && h > 0) profileData.height = h;
+          
+          const w = parseFloat(student.weight);
+          if (!isNaN(w) && w > 0) profileData.weight = w;
+
+          await adminClient.from("profiles").update(profileData).eq("user_id", userData.user.id);
         }
 
         results.push({ email, status: "created" });
