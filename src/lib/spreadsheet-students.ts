@@ -261,10 +261,33 @@ const rawData: RawRow[] = [
   { timestamp: "6/10/2025", email: "ursulla.almeida@gmail.com", full_name: "Ursulla Mendonça", peso: "64", nascimento: "11/19/1992", altura: "", atividade: "Musculação 60-70min 5x. Caminhada 20-30min 2-3x", medicamentos: "Oxandrolona, espironolactona", comorbidades: "Rotura total LCA esquerdo e parcial direito", objetivo: "Diminuir gordura e aumentar massa magra", telefone: "21994742604" },
   { timestamp: "6/10/2025", email: "alepeze@gmail.com", full_name: "ALEXANDRE SILVA PEZENATO", peso: "84.3", nascimento: "11/5/1974", altura: "", atividade: "Futebol 60-90min 3-4x", medicamentos: "Para glicose", comorbidades: "Diabetes", objetivo: "Melhorar saúde", telefone: "21985314231" },
   { timestamp: "6/12/2025", email: "danibabyniel@hotmail.com", full_name: "Danielle Silva Marins Lopes", peso: "", nascimento: "8/27/1982", altura: "161", atividade: "Musculação/cardio 2h 5x", medicamentos: "Puran 125 t4", comorbidades: "Não", objetivo: "Resultado avançado", telefone: "" },
+  { timestamp: "6/12/2025", email: "sheillamorena.37@gmail.com", full_name: "Sheila de jesus jardim", peso: "60", nascimento: "5/9/1975", altura: "149", atividade: "Musculação e pilates 1:40h 5x", medicamentos: "Vitamina D, omega3, livoid (tireoide)", comorbidades: "Não", objetivo: "Resultados e parceria", telefone: "11940410783" },
+  { timestamp: "6/16/2025", email: "claudinei.2226@gmail.com", full_name: "Claudinei Antônio Pereira Pinto", peso: "88", nascimento: "12/26/1990", altura: "170", atividade: "Não", medicamentos: "Nunca fiz", comorbidades: "Não", objetivo: "Chegar no objetivo", telefone: "" },
+  { timestamp: "6/17/2025", email: "jorgeeduardomjesus25@gmail.com", full_name: "Jorge Eduardo Marcuzzo de Jesus", peso: "77", nascimento: "6/14/2002", altura: "", atividade: "Basquete 1-1:30h 3x. Bicicleta 40min-1h 5x", medicamentos: "Poderá XR (ansiolítico)", comorbidades: "Não", objetivo: "Melhorar condicionamento e massa", telefone: "67996468333" },
+  { timestamp: "6/17/2025", email: "jorgeeduardomjesus78@gmail.com", full_name: "Jorge Eduardo Marcuzzo de Jesus", peso: "77", nascimento: "6/14/2002", altura: "", atividade: "Basquete 1-1:30h 3x. Bicicleta 40min-1h 4x", medicamentos: "Pondera XR (ansiolítico)", comorbidades: "Não", objetivo: "Ganho de massa e qualidade de vida", telefone: "67996468332" },
+  { timestamp: "6/17/2025", email: "abreuthales693@gmail.com", full_name: "Thales de Abreu", peso: "98", nascimento: "10/12/1992", altura: "", atividade: "Musculação 55min-1:20h 6x. Aeróbico 30min 6x", medicamentos: "Blend de testo, enantato trembolona, enantato testosterona", comorbidades: "Lesão ombro esquerdo", objetivo: "Saúde física e forma apresentável", telefone: "21974480367" },
+  { timestamp: "6/17/2025", email: "carolzinha.carol.castros@gmail.com", full_name: "Ana Caroline de Castro Santos", peso: "", nascimento: "11/23/1986", altura: "1.75", atividade: "Musculação 1h 5x. Elíptico 20min 2x", medicamentos: "Anticoncepcional", comorbidades: "Não", objetivo: "Definição", telefone: "21966788827" },
+  { timestamp: "6/25/2025", email: "mariapdamata@gmail.com", full_name: "María da Paz de Freitas Mata", peso: "67", nascimento: "7/6/1976", altura: "", atividade: "Musculação e Pilates 1h 4x. Corrida/bike 30min 3x", medicamentos: "Creatina", comorbidades: "Dor na lombar", objetivo: "Resultados positivos", telefone: "" },
+  { timestamp: "6/28/2025", email: "vitorino_marcelo@icloud.com", full_name: "Marcelo de Oliveira Vitorino", peso: "128", nascimento: "5/23/1981", altura: "", atividade: "Musculação 90min 4x. Caminhada 60min 4x", medicamentos: "Pressão e diabetes", comorbidades: "Pressão alta e diabetes", objetivo: "Depende de mim", telefone: "" },
+  { timestamp: "6/30/2025", email: "mostraremail@gmail.com", full_name: "Osmar Araujo", peso: "", nascimento: "6/15/1976", altura: "172", atividade: "Musculação 50min 6x. Spinning bike 1h 7x", medicamentos: "Enantato bratva 10/10 dias", comorbidades: "Não", objetivo: "Ganhar peso com acompanhamento hormonal", telefone: "61999881675" },
+  { timestamp: "6/30/2025", email: "luiztorres22@yahoo.com.br", full_name: "LUIZ CLAUDIO TORRES", peso: "85", nascimento: "4/11/1978", altura: "168", atividade: "Corrida 1h 3x", medicamentos: "Sim", comorbidades: "Não", objetivo: "Perda de peso e massa magra", telefone: "" },
+  { timestamp: "6/30/2025", email: "menezes108228@gmail.com", full_name: "FELIPE DE MENEZES JANUARIO", peso: "100", nascimento: "5/7/1992", altura: "1.72", atividade: "Vai começar academia e futebol", medicamentos: "Não", comorbidades: "Não", objetivo: "Perda de peso", telefone: "21983001932" },
+  { timestamp: "7/2/2025", email: "vitoriaabrs@icloud.com", full_name: "Vitória Abreu Silva", peso: "90", nascimento: "4/13/2001", altura: "1.75", atividade: "Musculação 1-1:30h 6x. Bicicleta 30-60min 4-5x", medicamentos: "Creatina, multivitamínico, omega 3", comorbidades: "Não", objetivo: "Ser grande e perder barriga", telefone: "21967326231" },
+  { timestamp: "7/5/2025", email: "karinapereiracamelo@gmail.com", full_name: "Maria Carina Pereira camelo", peso: "72", nascimento: "5/22/2001", altura: "", atividade: "Musculação 2h 5x. Caminhada esteira 40-50min 3x", medicamentos: "Não", comorbidades: "Não", objetivo: "Resultado bom", telefone: "21992108626" },
+  { timestamp: "7/7/2025", email: "rafcape@gmail.com", full_name: "Rafael Carvalho Pereira", peso: "", nascimento: "4/7/1983", altura: "", atividade: "Musculação 1h 6x. Caminhada esteira 30min 2x", medicamentos: "Enantato de testosterona, Masteron", comorbidades: "Não", objetivo: "...", telefone: "" },
 ];
 
 export function getSpreadsheetStudents(): ParsedStudent[] {
-  return rawData.map((r) => ({
+  // Deduplicate by email, keeping the most recent entry (last in the array)
+  const emailMap = new Map<string, RawRow>();
+  for (const r of rawData) {
+    const email = r.email?.trim()?.toLowerCase();
+    if (email) {
+      emailMap.set(email, r); // overwrites older entries, keeping latest
+    }
+  }
+
+  return Array.from(emailMap.values()).map((r) => ({
     full_name: r.full_name,
     email: r.email,
     phone: cleanPhone(r.telefone),
