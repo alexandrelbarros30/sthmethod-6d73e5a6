@@ -26,7 +26,7 @@ const AdminDiet = () => {
   const { data: students } = useQuery({
     queryKey: ["admin-students-diets"],
     queryFn: async () => {
-      const { data: profiles } = await supabase.from("profiles").select("*");
+      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, email");
       const { data: diets } = await supabase.from("student_diets" as any).select("*");
       return (profiles || []).map((p: any) => {
         const diet = (diets as any[])?.find((d: any) => d.user_id === p.user_id);

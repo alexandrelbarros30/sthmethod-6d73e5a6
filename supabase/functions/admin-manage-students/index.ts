@@ -1,11 +1,21 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const allowedOrigins = [
+  "https://sthconsultoria.lovable.app",
+  "https://id-preview--b584eea6-c842-4d93-86ab-554e2c58d9fb.lovable.app",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  const allowed = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
+}
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -51,7 +61,8 @@ Deno.serve(async (req) => {
         user_metadata: { full_name },
       });
       if (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
+        console.error("Error creating user:", error.message);
+        return new Response(JSON.stringify({ error: "Erro ao criar aluno. Verifique os dados e tente novamente." }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -80,7 +91,8 @@ Deno.serve(async (req) => {
 
       const { error } = await adminClient.auth.admin.deleteUser(user_id);
       if (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
+        console.error("Error deleting user:", error.message);
+        return new Response(JSON.stringify({ error: "Erro ao excluir aluno. Tente novamente." }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -93,8 +105,9 @@ Deno.serve(async (req) => {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    console.error("Admin manage students error:", err);
+    return new Response(JSON.stringify({ error: "Operação falhou. Tente novamente." }), {
+      status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   }
 });
