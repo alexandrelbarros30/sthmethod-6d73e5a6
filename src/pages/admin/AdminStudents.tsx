@@ -17,7 +17,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 
 const phoneMask = (v: string) => {
   const d = v.replace(/\D/g, "").slice(0, 11);
@@ -402,15 +402,35 @@ const AdminStudents = () => {
                   const file = e.target.files?.[0];
                   if (!file) return;
                   const reader = new FileReader();
-                  reader.onload = (evt) => {
+                   reader.onload = async (evt) => {
                     try {
-                      const data = new Uint8Array(evt.target?.result as ArrayBuffer);
-                      const workbook = XLSX.read(data, { type: "array" });
-                      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                      const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+                      const buffer = evt.target?.result as ArrayBuffer;
+                      const workbook = new ExcelJS.Workbook();
+                      await workbook.xlsx.load(buffer);
+                      const sheet = workbook.worksheets[0];
+                      if (!sheet) throw new Error("No sheet");
+                      
+                      // Convert ExcelJS sheet to array of objects
+                      const headers: string[] = [];
+                      const rows: Record<string, string>[] = [];
+                      sheet.eachRow((row, rowNumber) => {
+                        if (rowNumber === 1) {
+                          row.eachCell((cell, colNumber) => {
+                            headers[colNumber] = String(cell.value ?? "");
+                          });
+                        } else {
+                          const obj: Record<string, string> = {};
+                          headers.forEach((h, idx) => {
+                            if (h) {
+                              const cellVal = row.getCell(idx).value;
+                              obj[h] = cellVal != null ? String(cellVal) : "";
+                            }
+                          });
+                          rows.push(obj);
+                        }
+                      });
                       
                       const mapped = rows.map((row) => {
-                        // Try to find columns by common names
                         const get = (keys: string[]) => {
                           for (const k of keys) {
                             const found = Object.keys(row).find((rk) => rk.toLowerCase().trim() === k.toLowerCase());
@@ -427,13 +447,11 @@ const AdminStudents = () => {
 
                         let birthDate = get(["data de nascimento", "nascimento", "birth_date", "data nascimento", "dt nascimento"]);
                         if (birthDate !== "...") {
-                          // Handle Excel serial date numbers
                           const num = Number(birthDate);
                           if (!isNaN(num) && num > 10000) {
                             const d = new Date((num - 25569) * 86400000);
                             birthDate = d.toISOString().split("T")[0];
                           } else {
-                            // Try dd/mm/yyyy
                             const parts = birthDate.split("/");
                             if (parts.length === 3) {
                               birthDate = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
