@@ -12,11 +12,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, CreditCard, Eye, FileText, Upload, Camera, Image, Search, ClipboardList } from "lucide-react";
+import { Plus, Pencil, Trash2, CreditCard, Eye, FileText, Upload, Camera, Image, Search, ClipboardList, Download } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
+import { getSpreadsheetStudents } from "@/lib/spreadsheet-students";
 
 const phoneMask = (v: string) => {
   const d = v.replace(/\D/g, "").slice(0, 11);
@@ -46,6 +47,7 @@ const AdminStudents = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [anamneseOpen, setAnamneseOpen] = useState(false);
   const [anamneseText, setAnamneseText] = useState("");
+  const [importingStudents, setImportingStudents] = useState(false);
 
   const { data: students, isLoading } = useQuery({
     queryKey: ["admin-students-list"],
@@ -387,6 +389,44 @@ const AdminStudents = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="font-display">Alunos cadastrados</CardTitle>
+            <div className="flex gap-2">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="outline" disabled={importingStudents}>
+                    <Download className="w-4 h-4 mr-1" /> {importingStudents ? "Importando..." : "Importar Planilha"}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Importar alunos da planilha Google?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Serão importados {getSpreadsheetStudents().length} alunos da planilha. Alunos com email já existente serão atualizados. Novos alunos serão criados com senha temporária. Deseja continuar?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={async () => {
+                      setImportingStudents(true);
+                      try {
+                        const students = getSpreadsheetStudents();
+                        const { data, error } = await supabase.functions.invoke("import-students", {
+                          body: { students },
+                        });
+                        if (error) throw error;
+                        if (data?.error) throw new Error(data.error);
+                        const s = data.summary;
+                        toast.success(`Importação concluída! ${s.created} criados, ${s.updated} atualizados, ${s.errors} erros, ${s.skipped} ignorados`);
+                        qc.invalidateQueries({ queryKey: ["admin-students-list"] });
+                      } catch (e: any) {
+                        toast.error(e.message || "Erro na importação");
+                      }
+                      setImportingStudents(false);
+                    }}>
+                      Importar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             <Dialog open={createOpen} onOpenChange={(o) => { setCreateOpen(o); if (!o) setForm({ ...emptyForm }); }}>
               <DialogTrigger asChild>
                 <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Criar Aluno</Button>
@@ -401,6 +441,7 @@ const AdminStudents = () => {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
           {/* Search Filter */}
           <div className="relative mt-3">
