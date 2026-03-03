@@ -9,16 +9,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, CreditCard, Eye, FileText, Upload, Camera, Image, Search, ClipboardList, Download } from "lucide-react";
+import { Plus, Pencil, Trash2, CreditCard, Eye, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
 import ExcelJS from "exceljs";
+import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
 
 const phoneMask = (v: string) => {
   const d = v.replace(/\D/g, "").slice(0, 11);
@@ -27,11 +29,27 @@ const phoneMask = (v: string) => {
   return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
 };
 
+const objectiveLabels: Record<string, string> = {
+  perder_gordura: "Perder gordura",
+  hipertrofia: "Hipertrofia",
+  manter_peso: "Manter peso",
+};
+
+const activityLabels: Record<string, string> = {
+  musculacao: "Musculação",
+  crossfit: "CrossFit",
+  nenhuma: "Nenhuma",
+};
+
 const emptyForm = {
   full_name: "", email: "", password: "", phone: "",
   birth_date: "", height: "", weight: "",
-  physical_activity: "", objective: "", current_protocol: "",
-  comorbidities: "", lab_exam_url: "", medical_prescription_url: "",
+  gender: "", activity_type: "", does_cardio: "",
+  objective: "", current_protocol: "",
+  comorbidities: "", additional_info: "",
+  lab_exam_url: "", medical_prescription_url: "",
+  // macro fields
+  bmr: "", tdee: "", daily_calories: "", protein_g: "", carbs_g: "", fat_g: "",
 };
 
 const AdminStudents = () => {
@@ -74,7 +92,6 @@ const AdminStudents = () => {
       });
     },
   });
-
 
   const { data: plans } = useQuery({
     queryKey: ["admin-plans-list"],
@@ -119,6 +136,16 @@ const AdminStudents = () => {
     enabled: !!selected?.user_id && anamneseOpen,
   });
 
+  // Fetch full profile with new fields when editing/viewing
+  const { data: selectedFullProfile } = useQuery({
+    queryKey: ["admin-full-profile", selected?.user_id],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("*").eq("user_id", selected!.user_id).single();
+      return data;
+    },
+    enabled: !!selected?.user_id,
+  });
+
   const filteredStudents = students?.filter((s: any) => {
     if (!searchTerm.trim()) return true;
     const term = searchTerm.toLowerCase();
@@ -144,6 +171,7 @@ const AdminStudents = () => {
     },
     onError: (e: any) => { if (e.message !== "empty") toast.error("Erro ao salvar anamnese"); },
   });
+
   const uploadPdf = async (file: File, folder: string): Promise<string> => {
     const ext = file.name.split(".").pop();
     const path = `${folder}/${Date.now()}.${ext}`;
@@ -171,14 +199,47 @@ const AdminStudents = () => {
     if (!form.email.trim()) { toast.error("Email é obrigatório"); return false; }
     if (isCreate && form.password.length < 6) { toast.error("Senha deve ter no mínimo 6 caracteres"); return false; }
     if (!form.phone.trim() || form.phone.replace(/\D/g, "").length < 10) { toast.error("Telefone é obrigatório (formato válido)"); return false; }
+    if (!form.gender) { toast.error("Gênero é obrigatório"); return false; }
     if (!form.birth_date) { toast.error("Data de nascimento é obrigatória"); return false; }
     if (!form.height || Number(form.height) <= 0) { toast.error("Altura é obrigatória"); return false; }
     if (!form.weight || Number(form.weight) <= 0) { toast.error("Peso é obrigatório"); return false; }
-    if (!form.physical_activity.trim()) { toast.error("Atividade física é obrigatória"); return false; }
-    if (!form.objective.trim()) { toast.error("Objetivo é obrigatório"); return false; }
+    if (!form.activity_type) { toast.error("Tipo de atividade é obrigatório"); return false; }
+    if (form.does_cardio === "") { toast.error("Informe se faz cardio"); return false; }
+    if (!form.objective) { toast.error("Objetivo é obrigatório"); return false; }
     if (!form.current_protocol.trim()) { toast.error("Protocolo atual é obrigatório"); return false; }
     if (!form.comorbidities.trim()) { toast.error("Comorbidades é obrigatório"); return false; }
     return true;
+  };
+
+  // Recalculate macros from form
+  const recalculateMacros = () => {
+    const { gender, weight, height, birth_date, activity_type, does_cardio, objective } = form;
+    if (gender && weight && height && birth_date && activity_type && does_cardio !== "" && objective) {
+      const age = calculateAge(birth_date);
+      if (age > 0 && age < 120) {
+        const result = calculateMacros({
+          gender: gender as "masculino" | "feminino",
+          age,
+          weight: Number(weight),
+          height: Number(height),
+          activityType: activity_type,
+          doesCardio: does_cardio === "sim",
+          objective,
+        });
+        setForm(prev => ({
+          ...prev,
+          bmr: result.bmr.toString(),
+          tdee: result.tdee.toString(),
+          daily_calories: result.dailyCalories.toString(),
+          protein_g: result.proteinG.toString(),
+          carbs_g: result.carbsG.toString(),
+          fat_g: result.fatG.toString(),
+        }));
+        toast.success("Macros recalculados!");
+      }
+    } else {
+      toast.error("Preencha todos os campos para recalcular");
+    }
   };
 
   const profilePayload = () => ({
@@ -188,12 +249,22 @@ const AdminStudents = () => {
     birth_date: form.birth_date || null,
     height: form.height ? Number(form.height) : null,
     weight: form.weight ? Number(form.weight) : null,
-    physical_activity: form.physical_activity,
+    gender: form.gender,
+    activity_type: form.activity_type,
+    does_cardio: form.does_cardio === "sim",
+    physical_activity: `${activityLabels[form.activity_type] || form.activity_type}${form.does_cardio === "sim" ? " + Cardio" : ""}`,
     objective: form.objective,
     current_protocol: form.current_protocol,
     comorbidities: form.comorbidities,
+    additional_info: form.additional_info,
     lab_exam_url: form.lab_exam_url,
     medical_prescription_url: form.medical_prescription_url,
+    bmr: form.bmr ? Number(form.bmr) : null,
+    tdee: form.tdee ? Number(form.tdee) : null,
+    daily_calories: form.daily_calories ? Number(form.daily_calories) : null,
+    protein_g: form.protein_g ? Number(form.protein_g) : null,
+    carbs_g: form.carbs_g ? Number(form.carbs_g) : null,
+    fat_g: form.fat_g ? Number(form.fat_g) : null,
   });
 
   const createMutation = useMutation({
@@ -225,6 +296,7 @@ const AdminStudents = () => {
     onSuccess: () => {
       toast.success("Aluno atualizado!");
       qc.invalidateQueries({ queryKey: ["admin-students-list"] });
+      qc.invalidateQueries({ queryKey: ["admin-full-profile", selected?.user_id] });
       setEditOpen(false);
     },
     onError: (e: any) => { if (e.message !== "Validação falhou") toast.error("Erro ao atualizar"); },
@@ -260,12 +332,27 @@ const AdminStudents = () => {
 
   const openEdit = (s: any) => {
     setSelected(s);
-    setForm({
-      full_name: s.full_name || "", email: s.email || "", password: "", phone: s.phone || "",
-      birth_date: s.birth_date || "", height: s.height?.toString() || "", weight: s.weight?.toString() || "",
-      physical_activity: s.physical_activity || "", objective: s.objective || "",
-      current_protocol: s.current_protocol || "", comorbidities: s.comorbidities || "",
-      lab_exam_url: s.lab_exam_url || "", medical_prescription_url: s.medical_prescription_url || "",
+    // Load full profile data including new fields
+    supabase.from("profiles").select("*").eq("user_id", s.user_id).single().then(({ data: p }) => {
+      if (p) {
+        setForm({
+          full_name: p.full_name || "", email: p.email || "", password: "", phone: p.phone || "",
+          birth_date: p.birth_date || "", height: p.height?.toString() || "", weight: p.weight?.toString() || "",
+          gender: (p as any).gender || "",
+          activity_type: (p as any).activity_type || "",
+          does_cardio: (p as any).does_cardio === true ? "sim" : (p as any).does_cardio === false ? "nao" : "",
+          objective: p.objective || "",
+          current_protocol: p.current_protocol || "", comorbidities: p.comorbidities || "",
+          additional_info: (p as any).additional_info || "",
+          lab_exam_url: p.lab_exam_url || "", medical_prescription_url: p.medical_prescription_url || "",
+          bmr: (p as any).bmr?.toString() || "",
+          tdee: (p as any).tdee?.toString() || "",
+          daily_calories: (p as any).daily_calories?.toString() || "",
+          protein_g: (p as any).protein_g?.toString() || "",
+          carbs_g: (p as any).carbs_g?.toString() || "",
+          fat_g: (p as any).fat_g?.toString() || "",
+        });
+      }
     });
     setEditOpen(true);
   };
@@ -284,7 +371,6 @@ const AdminStudents = () => {
   }, [students, searchParams]);
 
   const openView = (s: any) => { setSelected(s); setViewOpen(true); };
-
 
   const openSub = (s: any) => {
     setSelected(s);
@@ -305,13 +391,16 @@ const AdminStudents = () => {
     setSubForm({ ...subForm, plan_id: planId, end_date: end });
   };
 
+  const formAge = form.birth_date ? calculateAge(form.birth_date) : null;
+
   const renderStudentFormFields = (isCreate = false) => (
     <ScrollArea className="max-h-[70vh] pr-4">
       <Tabs defaultValue="dados" className="w-full">
-        <TabsList className="grid grid-cols-3 w-full mb-4">
-          <TabsTrigger value="dados">Dados Pessoais</TabsTrigger>
-          <TabsTrigger value="saude">Saúde & Objetivo</TabsTrigger>
-          <TabsTrigger value="docs">Documentos</TabsTrigger>
+        <TabsList className="grid grid-cols-4 w-full mb-4">
+          <TabsTrigger value="dados">Dados</TabsTrigger>
+          <TabsTrigger value="saude">Saúde</TabsTrigger>
+          <TabsTrigger value="macros">Macros</TabsTrigger>
+          <TabsTrigger value="docs">Docs</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dados" className="space-y-3">
@@ -321,7 +410,30 @@ const AdminStudents = () => {
             <div><Label className="font-body">Senha *</Label><Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Mínimo 6 caracteres" /></div>
           )}
           <div><Label className="font-body">Telefone *</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: phoneMask(e.target.value) })} placeholder="(xx) xxxxx-xxxx" /></div>
-          <div><Label className="font-body">Data de nascimento *</Label><Input type="date" value={form.birth_date} onChange={(e) => setForm({ ...form, birth_date: e.target.value })} /></div>
+          
+          {/* Gender */}
+          <div>
+            <Label className="font-body">Gênero *</Label>
+            <RadioGroup
+              value={form.gender}
+              onValueChange={(v) => setForm({ ...form, gender: v })}
+              className="flex gap-4 mt-1"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="masculino" id="edit-gender-m" />
+                <Label htmlFor="edit-gender-m" className="font-body cursor-pointer">Masculino</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="feminino" id="edit-gender-f" />
+                <Label htmlFor="edit-gender-f" className="font-body cursor-pointer">Feminino</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label className="font-body">Data de nascimento *</Label><Input type="date" value={form.birth_date} onChange={(e) => setForm({ ...form, birth_date: e.target.value })} /></div>
+            <div><Label className="font-body">Idade</Label><Input value={formAge !== null && formAge > 0 ? `${formAge} anos` : ""} disabled className="bg-muted" /></div>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label className="font-body">Altura (cm) *</Label><Input type="number" value={form.height} onChange={(e) => setForm({ ...form, height: e.target.value })} placeholder="Ex: 175" /></div>
             <div><Label className="font-body">Peso (kg) *</Label><Input type="number" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} placeholder="Ex: 80" /></div>
@@ -329,24 +441,51 @@ const AdminStudents = () => {
         </TabsContent>
 
         <TabsContent value="saude" className="space-y-3">
+          {/* Activity Type */}
           <div>
-            <Label className="font-body">Atividade Física *</Label>
-            <Textarea
-              value={form.physical_activity}
-              onChange={(e) => setForm({ ...form, physical_activity: e.target.value })}
-              rows={4}
-              placeholder={"Descreva suas atividades:\n• Força: tipo, frequência semanal, duração por sessão\n• Aeróbico: tipo, frequência semanal, duração por sessão\nEx: Musculação 5x/semana, 60min | Corrida 3x/semana, 30min"}
-            />
+            <Label className="font-body">Atividade física *</Label>
+            <Select value={form.activity_type} onValueChange={(v) => setForm({ ...form, activity_type: v })}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="musculacao">Musculação</SelectItem>
+                <SelectItem value="crossfit">CrossFit</SelectItem>
+                <SelectItem value="nenhuma">Nenhuma</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+          
+          {/* Cardio */}
+          <div>
+            <Label className="font-body">Faz cardio? *</Label>
+            <RadioGroup
+              value={form.does_cardio}
+              onValueChange={(v) => setForm({ ...form, does_cardio: v })}
+              className="flex gap-4 mt-1"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="sim" id="edit-cardio-s" />
+                <Label htmlFor="edit-cardio-s" className="font-body cursor-pointer">Sim</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="nao" id="edit-cardio-n" />
+                <Label htmlFor="edit-cardio-n" className="font-body cursor-pointer">Não</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          {/* Objective */}
           <div>
             <Label className="font-body">Objetivo *</Label>
-            <Textarea
-              value={form.objective}
-              onChange={(e) => setForm({ ...form, objective: e.target.value })}
-              rows={3}
-              placeholder="Descreva seu objetivo principal e se há prazo para resultado."
-            />
+            <Select value={form.objective} onValueChange={(v) => setForm({ ...form, objective: v })}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="perder_gordura">Perder gordura</SelectItem>
+                <SelectItem value="hipertrofia">Hipertrofia</SelectItem>
+                <SelectItem value="manter_peso">Manter peso</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
           <div>
             <Label className="font-body">Protocolo Atual (medicamentos/suplementos) *</Label>
             <Textarea
@@ -365,6 +504,62 @@ const AdminStudents = () => {
               placeholder="Informe patologias pré-existentes e condições clínicas relevantes."
             />
           </div>
+          <div>
+            <Label className="font-body">Mais informações</Label>
+            <Textarea
+              value={form.additional_info}
+              onChange={(e) => setForm({ ...form, additional_info: e.target.value })}
+              rows={3}
+              placeholder="Informações adicionais relevantes (opcional)"
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="macros" className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Calculator className="w-4 h-4 text-primary" /> Cálculo de Macronutrientes
+            </h3>
+            <Button size="sm" variant="outline" onClick={recalculateMacros}>
+              <Calculator className="w-3 h-3 mr-1" /> Recalcular
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Os macros são calculados automaticamente com base nos dados do perfil (Mifflin-St Jeor). Você pode editar manualmente abaixo.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="font-body text-xs">TMB (kcal)</Label>
+              <Input type="number" value={form.bmr} onChange={(e) => setForm({ ...form, bmr: e.target.value })} placeholder="—" />
+            </div>
+            <div>
+              <Label className="font-body text-xs">TDEE (kcal)</Label>
+              <Input type="number" value={form.tdee} onChange={(e) => setForm({ ...form, tdee: e.target.value })} placeholder="—" />
+            </div>
+          </div>
+          <div>
+            <Label className="font-body text-xs">Calorias diárias (kcal)</Label>
+            <Input type="number" value={form.daily_calories} onChange={(e) => setForm({ ...form, daily_calories: e.target.value })} placeholder="—" className="text-lg font-bold" />
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Label className="font-body text-xs">Proteína (g)</Label>
+              <Input type="number" value={form.protein_g} onChange={(e) => setForm({ ...form, protein_g: e.target.value })} placeholder="—" />
+            </div>
+            <div>
+              <Label className="font-body text-xs">Carboidratos (g)</Label>
+              <Input type="number" value={form.carbs_g} onChange={(e) => setForm({ ...form, carbs_g: e.target.value })} placeholder="—" />
+            </div>
+            <div>
+              <Label className="font-body text-xs">Gordura (g)</Label>
+              <Input type="number" value={form.fat_g} onChange={(e) => setForm({ ...form, fat_g: e.target.value })} placeholder="—" />
+            </div>
+          </div>
+          {form.objective && (
+            <Badge variant="outline" className="text-xs">
+              Objetivo: {objectiveLabels[form.objective] || form.objective}
+            </Badge>
+          )}
         </TabsContent>
 
         <TabsContent value="docs" className="space-y-4">
@@ -419,7 +614,7 @@ const AdminStudents = () => {
                   const file = e.target.files?.[0];
                   if (!file) return;
                   const reader = new FileReader();
-                   reader.onload = async (evt) => {
+                  reader.onload = async (evt) => {
                     try {
                       const buffer = evt.target?.result as ArrayBuffer;
                       const workbook = new ExcelJS.Workbook();
@@ -427,7 +622,6 @@ const AdminStudents = () => {
                       const sheet = workbook.worksheets[0];
                       if (!sheet) throw new Error("No sheet");
                       
-                      // Convert ExcelJS sheet to array of objects
                       const headers: string[] = [];
                       const rows: Record<string, string>[] = [];
                       sheet.eachRow((row, rowNumber) => {
@@ -616,7 +810,7 @@ const AdminStudents = () => {
               </TableHeader>
               <TableBody>
                 {filteredStudents?.map((s: any) => (
-                  <TableRow key={s.id}>
+                  <TableRow key={s.user_id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -684,19 +878,57 @@ const AdminStudents = () => {
                     <div><span className="text-muted-foreground">Nome:</span> <span className="font-medium">{selected.full_name}</span></div>
                     <div><span className="text-muted-foreground">Email:</span> <span className="font-medium">{selected.email}</span></div>
                     <div><span className="text-muted-foreground">Telefone:</span> <span className="font-medium">{selected.phone || "—"}</span></div>
+                    <div><span className="text-muted-foreground">Gênero:</span> <span className="font-medium capitalize">{(selectedFullProfile as any)?.gender || "—"}</span></div>
                     <div><span className="text-muted-foreground">Nascimento:</span> <span className="font-medium">{selected.birth_date ? new Date(selected.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</span></div>
+                    <div><span className="text-muted-foreground">Idade:</span> <span className="font-medium">{selected.birth_date ? `${calculateAge(selected.birth_date)} anos` : "—"}</span></div>
                     <div><span className="text-muted-foreground">Altura:</span> <span className="font-medium">{selected.height ? `${selected.height} cm` : "—"}</span></div>
                     <div><span className="text-muted-foreground">Peso:</span> <span className="font-medium">{selected.weight ? `${selected.weight} kg` : "—"}</span></div>
                   </div>
                 </section>
                 <section>
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Atividade Física</h3>
-                  <p className="text-sm whitespace-pre-wrap">{selected.physical_activity || "Não informado"}</p>
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Atividade & Objetivo</h3>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div><span className="text-muted-foreground">Atividade:</span> <span className="font-medium">{activityLabels[(selectedFullProfile as any)?.activity_type] || selected.physical_activity || "—"}</span></div>
+                    <div><span className="text-muted-foreground">Cardio:</span> <span className="font-medium">{(selectedFullProfile as any)?.does_cardio === true ? "Sim" : (selectedFullProfile as any)?.does_cardio === false ? "Não" : "—"}</span></div>
+                    <div className="col-span-2"><span className="text-muted-foreground">Objetivo:</span> <span className="font-medium">{objectiveLabels[selected.objective] || selected.objective || "—"}</span></div>
+                  </div>
                 </section>
-                <section>
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Objetivo</h3>
-                  <p className="text-sm whitespace-pre-wrap">{selected.objective || "Não informado"}</p>
-                </section>
+
+                {/* Macros Section */}
+                {(selectedFullProfile as any)?.daily_calories && (
+                  <section>
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <Calculator className="w-4 h-4" /> Macronutrientes
+                    </h3>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="bg-muted/50 rounded-lg p-3 text-center">
+                        <p className="text-xs text-muted-foreground">TMB</p>
+                        <p className="font-bold text-sm">{(selectedFullProfile as any)?.bmr || "—"} kcal</p>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-3 text-center">
+                        <p className="text-xs text-muted-foreground">TDEE</p>
+                        <p className="font-bold text-sm">{(selectedFullProfile as any)?.tdee || "—"} kcal</p>
+                      </div>
+                      <div className="bg-primary/10 rounded-lg p-3 text-center border border-primary/20">
+                        <p className="text-xs text-muted-foreground">Cal/dia</p>
+                        <p className="font-bold text-primary">{(selectedFullProfile as any)?.daily_calories || "—"} kcal</p>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-3 text-center">
+                        <p className="text-xs text-muted-foreground">Proteína</p>
+                        <p className="font-bold text-sm">{(selectedFullProfile as any)?.protein_g || "—"}g</p>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-3 text-center">
+                        <p className="text-xs text-muted-foreground">Carbos</p>
+                        <p className="font-bold text-sm">{(selectedFullProfile as any)?.carbs_g || "—"}g</p>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-3 text-center">
+                        <p className="text-xs text-muted-foreground">Gordura</p>
+                        <p className="font-bold text-sm">{(selectedFullProfile as any)?.fat_g || "—"}g</p>
+                      </div>
+                    </div>
+                  </section>
+                )}
+
                 <section>
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Protocolo Atual</h3>
                   <p className="text-sm whitespace-pre-wrap">{selected.current_protocol || "Não informado"}</p>
@@ -705,6 +937,12 @@ const AdminStudents = () => {
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Comorbidades</h3>
                   <p className="text-sm whitespace-pre-wrap">{selected.comorbidities || "Não informado"}</p>
                 </section>
+                {(selectedFullProfile as any)?.additional_info && (
+                  <section>
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Mais Informações</h3>
+                    <p className="text-sm whitespace-pre-wrap">{(selectedFullProfile as any).additional_info}</p>
+                  </section>
+                )}
                 <section>
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Documentos</h3>
                   <div className="flex flex-col gap-2">
@@ -798,6 +1036,7 @@ const AdminStudents = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
       {/* Body Images Management Dialog */}
       <Dialog open={imagesOpen} onOpenChange={setImagesOpen}>
         <DialogContent className="max-w-lg">

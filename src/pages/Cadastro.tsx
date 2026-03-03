@@ -7,14 +7,17 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   ArrowLeft, ArrowRight, Check, Mail, Lock, User, Phone, Loader2,
-  QrCode, CreditCard, ExternalLink, Copy, CheckCircle2, CheckCircle, AlertCircle,
+  QrCode, CreditCard, ExternalLink, Copy, CheckCircle2, CheckCircle, Calculator,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
+import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
 
 const phoneMask = (v: string) => {
   const d = v.replace(/\D/g, "").slice(0, 11);
@@ -30,6 +33,18 @@ const steps = [
   { n: 4, label: "Plano" },
 ];
 
+const objectiveLabels: Record<string, string> = {
+  perder_gordura: "Perder gordura",
+  hipertrofia: "Hipertrofia",
+  manter_peso: "Manter peso",
+};
+
+const activityLabels: Record<string, string> = {
+  musculacao: "Musculação",
+  crossfit: "CrossFit",
+  nenhuma: "Nenhuma",
+};
+
 const Cadastro = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
@@ -38,6 +53,7 @@ const Cadastro = () => {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [pixCopied, setPixCopied] = useState(false);
+  const [macroResult, setMacroResult] = useState<MacroResult | null>(null);
 
   // Step 1 - Account
   const [email, setEmail] = useState("");
@@ -48,18 +64,43 @@ const Cadastro = () => {
   // Step 2 - Profile
   const [profileForm, setProfileForm] = useState({
     birth_date: "", height: "", weight: "",
-    physical_activity: "", objective: "", current_protocol: "", comorbidities: "",
+    gender: "", activity_type: "", does_cardio: "",
+    objective: "", current_protocol: "", comorbidities: "", additional_info: "",
   });
 
   // Step 3 - Body images
   const [imagesComplete, setImagesComplete] = useState(false);
 
-  // Check if user is already logged in (e.g. returning after email confirm)
+  // Auto-calculate age
+  const age = profileForm.birth_date ? calculateAge(profileForm.birth_date) : null;
+
+  // Auto-calculate macros when all required fields are filled
+  useEffect(() => {
+    const { gender, weight, height, birth_date, activity_type, does_cardio, objective } = profileForm;
+    if (gender && weight && height && birth_date && activity_type && does_cardio !== "" && objective) {
+      const a = calculateAge(birth_date);
+      if (a > 0 && a < 120) {
+        const result = calculateMacros({
+          gender: gender as "masculino" | "feminino",
+          age: a,
+          weight: Number(weight),
+          height: Number(height),
+          activityType: activity_type,
+          doesCardio: does_cardio === "sim",
+          objective,
+        });
+        setMacroResult(result);
+      }
+    } else {
+      setMacroResult(null);
+    }
+  }, [profileForm]);
+
+  // Check if user is already logged in
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUserId(session.user.id);
-        // Check profile completion to determine step
         supabase.from("profiles").select("*").eq("user_id", session.user.id).single().then(({ data: p }) => {
           if (p) {
             setFullName(p.full_name || "");
@@ -68,14 +109,16 @@ const Cadastro = () => {
               birth_date: p.birth_date || "",
               height: p.height?.toString() || "",
               weight: p.weight?.toString() || "",
-              physical_activity: p.physical_activity || "",
+              gender: (p as any).gender || "",
+              activity_type: (p as any).activity_type || "",
+              does_cardio: (p as any).does_cardio === true ? "sim" : (p as any).does_cardio === false ? "nao" : "",
               objective: p.objective || "",
               current_protocol: p.current_protocol || "",
               comorbidities: p.comorbidities || "",
+              additional_info: (p as any).additional_info || "",
             });
-            const profileDone = p.full_name && p.phone && p.height && p.weight && p.physical_activity && p.objective && p.current_protocol && p.comorbidities;
+            const profileDone = p.full_name && p.phone && p.height && p.weight && (p as any).gender && (p as any).activity_type && p.objective && p.current_protocol && p.comorbidities;
             if (p.onboarding_complete) {
-              // Already onboarded, check subscription
               supabase.from("subscriptions").select("*").eq("user_id", session.user.id).eq("status", "active").limit(1).maybeSingle().then(({ data: sub }) => {
                 if (sub && new Date(sub.end_date) > new Date()) {
                   navigate("/dashboard");
@@ -166,7 +209,6 @@ const Cadastro = () => {
       if (error) throw error;
       if (data.user) {
         setUserId(data.user.id);
-        // Update profile with phone
         await supabase.from("profiles").update({ phone: phoneVal }).eq("user_id", data.user.id);
         toast.success("Conta criada! Vamos ao próximo passo.");
         setStep(2);
@@ -184,22 +226,44 @@ const Cadastro = () => {
 
   // Step 2: Save profile
   const handleSaveProfile = async () => {
-    const { height, weight, physical_activity, objective, current_protocol, comorbidities } = profileForm;
-    if (!height || !weight || !physical_activity || !objective || !current_protocol || !comorbidities) {
-      toast.error("Preencha todos os campos obrigatórios");
-      return;
-    }
+    const { height, weight, gender, activity_type, does_cardio, objective, current_protocol, comorbidities, birth_date } = profileForm;
+    if (!gender) { toast.error("Selecione o gênero"); return; }
+    if (!birth_date) { toast.error("Data de nascimento é obrigatória"); return; }
+    if (!height || Number(height) <= 0) { toast.error("Altura é obrigatória"); return; }
+    if (!weight || Number(weight) <= 0) { toast.error("Peso é obrigatório"); return; }
+    if (!activity_type) { toast.error("Selecione o tipo de atividade física"); return; }
+    if (does_cardio === "") { toast.error("Informe se faz cardio"); return; }
+    if (!objective) { toast.error("Selecione o objetivo"); return; }
+    if (!current_protocol.trim()) { toast.error("Protocolo atual é obrigatório"); return; }
+    if (!comorbidities.trim()) { toast.error("Comorbidades é obrigatório"); return; }
+
     setLoading(true);
     try {
-      const { error } = await supabase.from("profiles").update({
-        birth_date: profileForm.birth_date || null,
+      const updateData: any = {
+        birth_date: birth_date || null,
         height: Number(height),
         weight: Number(weight),
-        physical_activity,
+        gender,
+        activity_type,
+        does_cardio: does_cardio === "sim",
         objective,
+        physical_activity: `${activityLabels[activity_type] || activity_type}${does_cardio === "sim" ? " + Cardio" : ""}`,
         current_protocol,
         comorbidities,
-      }).eq("user_id", userId!);
+        additional_info: profileForm.additional_info,
+      };
+
+      // Save macro results
+      if (macroResult) {
+        updateData.bmr = macroResult.bmr;
+        updateData.tdee = macroResult.tdee;
+        updateData.daily_calories = macroResult.dailyCalories;
+        updateData.protein_g = macroResult.proteinG;
+        updateData.carbs_g = macroResult.carbsG;
+        updateData.fat_g = macroResult.fatG;
+      }
+
+      const { error } = await supabase.from("profiles").update(updateData).eq("user_id", userId!);
       if (error) throw error;
       toast.success("Dados salvos!");
       setStep(3);
@@ -214,13 +278,11 @@ const Cadastro = () => {
   const handleImagesComplete = () => {
     setImagesComplete(true);
     refetchImages();
-    // Mark onboarding complete
     supabase.from("profiles").update({ onboarding_complete: true }).eq("user_id", userId!);
     toast.success("Fotos enviadas! Agora escolha seu plano.");
     setStep(4);
   };
 
-  // After payment notification
   const handlePaymentNotified = () => {
     setCheckoutOpen(false);
     toast.success("Pagamento registrado! Seu acesso será liberado após confirmação.");
@@ -317,11 +379,37 @@ const Cadastro = () => {
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Gender */}
+              <div>
+                <Label className="font-body">Gênero *</Label>
+                <RadioGroup
+                  value={profileForm.gender}
+                  onValueChange={(v) => setProfileForm({ ...profileForm, gender: v })}
+                  className="flex gap-4 mt-1"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="masculino" id="gender-m" />
+                    <Label htmlFor="gender-m" className="font-body cursor-pointer">Masculino</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="feminino" id="gender-f" />
+                    <Label htmlFor="gender-f" className="font-body cursor-pointer">Feminino</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="font-body">Data de nascimento</Label>
+                  <Label className="font-body">Data de nascimento *</Label>
                   <Input type="date" value={profileForm.birth_date} onChange={(e) => setProfileForm({ ...profileForm, birth_date: e.target.value })} />
                 </div>
+                <div>
+                  <Label className="font-body">Idade</Label>
+                  <Input value={age !== null && age > 0 ? `${age} anos` : ""} disabled className="bg-muted" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="font-body">Altura (cm) *</Label>
                   <Input type="number" value={profileForm.height} onChange={(e) => setProfileForm({ ...profileForm, height: e.target.value })} placeholder="175" />
@@ -331,22 +419,106 @@ const Cadastro = () => {
                   <Input type="number" value={profileForm.weight} onChange={(e) => setProfileForm({ ...profileForm, weight: e.target.value })} placeholder="80" />
                 </div>
               </div>
+
+              {/* Activity Type */}
               <div>
                 <Label className="font-body">Atividade física praticada *</Label>
-                <Textarea value={profileForm.physical_activity} onChange={(e) => setProfileForm({ ...profileForm, physical_activity: e.target.value })} rows={2} placeholder="Descreva suas atividades atuais" />
+                <Select value={profileForm.activity_type} onValueChange={(v) => setProfileForm({ ...profileForm, activity_type: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="musculacao">Musculação</SelectItem>
+                    <SelectItem value="crossfit">CrossFit</SelectItem>
+                    <SelectItem value="nenhuma">Nenhuma</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+
+              {/* Cardio */}
+              <div>
+                <Label className="font-body">Faz cardio (aeróbico)? *</Label>
+                <RadioGroup
+                  value={profileForm.does_cardio}
+                  onValueChange={(v) => setProfileForm({ ...profileForm, does_cardio: v })}
+                  className="flex gap-4 mt-1"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="sim" id="cardio-s" />
+                    <Label htmlFor="cardio-s" className="font-body cursor-pointer">Sim</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="nao" id="cardio-n" />
+                    <Label htmlFor="cardio-n" className="font-body cursor-pointer">Não</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {/* Objective */}
               <div>
                 <Label className="font-body">Objetivo *</Label>
-                <Textarea value={profileForm.objective} onChange={(e) => setProfileForm({ ...profileForm, objective: e.target.value })} rows={2} placeholder="Qual seu principal objetivo?" />
+                <Select value={profileForm.objective} onValueChange={(v) => setProfileForm({ ...profileForm, objective: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione seu objetivo" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="perder_gordura">Perder gordura</SelectItem>
+                    <SelectItem value="hipertrofia">Hipertrofia</SelectItem>
+                    <SelectItem value="manter_peso">Manter peso</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+
+              {/* Macro Calculator Result */}
+              {macroResult && (
+                <Card className="border-primary/20 bg-primary/5">
+                  <CardContent className="py-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Calculator className="w-5 h-5 text-primary" />
+                      <h3 className="font-display text-sm font-semibold text-foreground">Cálculo de Macros</h3>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+                      <div className="bg-background rounded-lg p-3 text-center">
+                        <p className="text-muted-foreground text-xs">TMB</p>
+                        <p className="font-bold text-foreground">{macroResult.bmr} kcal</p>
+                      </div>
+                      <div className="bg-background rounded-lg p-3 text-center">
+                        <p className="text-muted-foreground text-xs">TDEE</p>
+                        <p className="font-bold text-foreground">{macroResult.tdee} kcal</p>
+                      </div>
+                      <div className="bg-background rounded-lg p-3 text-center border-2 border-primary/30">
+                        <p className="text-muted-foreground text-xs">Calorias/dia</p>
+                        <p className="font-bold text-primary text-lg">{macroResult.dailyCalories} kcal</p>
+                      </div>
+                      <div className="bg-background rounded-lg p-3 text-center">
+                        <p className="text-muted-foreground text-xs">Proteína</p>
+                        <p className="font-bold text-foreground">{macroResult.proteinG}g</p>
+                      </div>
+                      <div className="bg-background rounded-lg p-3 text-center">
+                        <p className="text-muted-foreground text-xs">Carboidratos</p>
+                        <p className="font-bold text-foreground">{macroResult.carbsG}g</p>
+                      </div>
+                      <div className="bg-background rounded-lg p-3 text-center">
+                        <p className="text-muted-foreground text-xs">Gordura</p>
+                        <p className="font-bold text-foreground">{macroResult.fatG}g</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Objetivo: {objectiveLabels[profileForm.objective] || profileForm.objective} • Fórmula Mifflin-St Jeor
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
               <div>
-                <Label className="font-body">Protocolo atual *</Label>
+                <Label className="font-body">Protocolo atual (medicamentos/suplementos) *</Label>
                 <Textarea value={profileForm.current_protocol} onChange={(e) => setProfileForm({ ...profileForm, current_protocol: e.target.value })} rows={2} placeholder="Descreva medicamentos ou suplementos que usa" />
               </div>
               <div>
                 <Label className="font-body">Comorbidades *</Label>
                 <Textarea value={profileForm.comorbidities} onChange={(e) => setProfileForm({ ...profileForm, comorbidities: e.target.value })} rows={2} placeholder="Possui alguma condição de saúde? Se não, escreva 'Nenhuma'" />
               </div>
+              <div>
+                <Label className="font-body">Mais informações</Label>
+                <Textarea value={profileForm.additional_info} onChange={(e) => setProfileForm({ ...profileForm, additional_info: e.target.value })} rows={2} placeholder="Informações adicionais que queira compartilhar (opcional)" />
+              </div>
+
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setStep(1)} className="flex-1"><ArrowLeft className="w-4 h-4 mr-2" /> Voltar</Button>
                 <Button onClick={handleSaveProfile} disabled={loading} className="flex-1">

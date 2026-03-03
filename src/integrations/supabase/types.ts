@@ -627,13 +627,21 @@ export type Database = {
       }
       profiles: {
         Row: {
+          activity_type: string | null
+          additional_info: string | null
           avatar_url: string | null
           birth_date: string | null
+          bmr: number | null
+          carbs_g: number | null
           comorbidities: string | null
           created_at: string
           current_protocol: string | null
+          daily_calories: number | null
+          does_cardio: boolean | null
           email: string
+          fat_g: number | null
           full_name: string
+          gender: string | null
           height: number | null
           id: string
           lab_exam_url: string | null
@@ -642,18 +650,28 @@ export type Database = {
           onboarding_complete: boolean
           phone: string | null
           physical_activity: string | null
+          protein_g: number | null
+          tdee: number | null
           updated_at: string
           user_id: string
           weight: number | null
         }
         Insert: {
+          activity_type?: string | null
+          additional_info?: string | null
           avatar_url?: string | null
           birth_date?: string | null
+          bmr?: number | null
+          carbs_g?: number | null
           comorbidities?: string | null
           created_at?: string
           current_protocol?: string | null
+          daily_calories?: number | null
+          does_cardio?: boolean | null
           email?: string
+          fat_g?: number | null
           full_name?: string
+          gender?: string | null
           height?: number | null
           id?: string
           lab_exam_url?: string | null
@@ -662,18 +680,28 @@ export type Database = {
           onboarding_complete?: boolean
           phone?: string | null
           physical_activity?: string | null
+          protein_g?: number | null
+          tdee?: number | null
           updated_at?: string
           user_id: string
           weight?: number | null
         }
         Update: {
+          activity_type?: string | null
+          additional_info?: string | null
           avatar_url?: string | null
           birth_date?: string | null
+          bmr?: number | null
+          carbs_g?: number | null
           comorbidities?: string | null
           created_at?: string
           current_protocol?: string | null
+          daily_calories?: number | null
+          does_cardio?: boolean | null
           email?: string
+          fat_g?: number | null
           full_name?: string
+          gender?: string | null
           height?: number | null
           id?: string
           lab_exam_url?: string | null
@@ -682,6 +710,8 @@ export type Database = {
           onboarding_complete?: boolean
           phone?: string | null
           physical_activity?: string | null
+          protein_g?: number | null
+          tdee?: number | null
           updated_at?: string
           user_id?: string
           weight?: number | null
