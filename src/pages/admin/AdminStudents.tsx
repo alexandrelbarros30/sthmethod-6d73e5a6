@@ -288,7 +288,7 @@ const AdminStudents = () => {
     setSubForm({ ...subForm, plan_id: planId, end_date: end });
   };
 
-  const StudentFormFields = ({ isCreate = false }: { isCreate?: boolean }) => (
+  const renderStudentFormFields = (isCreate = false) => (
     <ScrollArea className="max-h-[70vh] pr-4">
       <Tabs defaultValue="dados" className="w-full">
         <TabsList className="grid grid-cols-3 w-full mb-4">
@@ -543,7 +543,7 @@ const AdminStudents = () => {
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader><DialogTitle className="font-display">Novo Aluno</DialogTitle></DialogHeader>
-                <StudentFormFields isCreate />
+                {renderStudentFormFields(true)}
                 <DialogFooter>
                   <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
                     {createMutation.isPending ? "Criando..." : "Criar Aluno"}
@@ -720,7 +720,7 @@ const AdminStudents = () => {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle className="font-display">Editar Aluno</DialogTitle></DialogHeader>
-          <StudentFormFields />
+          {renderStudentFormFields(false)}
           <DialogFooter>
             <Button onClick={() => editMutation.mutate()} disabled={editMutation.isPending}>
               {editMutation.isPending ? "Salvando..." : "Salvar"}
