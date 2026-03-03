@@ -1,11 +1,21 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const allowedOrigins = [
+  "https://sthconsultoria.lovable.app",
+  "https://id-preview--b584eea6-c842-4d93-86ab-554e2c58d9fb.lovable.app",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  const allowed = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
+}
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -93,7 +103,8 @@ Deno.serve(async (req) => {
         });
 
         if (createError) {
-          results.push({ email, status: "error", error: createError.message });
+          console.error(`Error creating user ${email}:`, createError.message);
+          results.push({ email, status: "error", error: "Falha ao criar conta" });
           continue;
         }
 
@@ -124,7 +135,8 @@ Deno.serve(async (req) => {
 
         results.push({ email, status: "created" });
       } catch (err: any) {
-        results.push({ email, status: "error", error: err.message });
+        console.error(`Error processing student ${email}:`, err.message);
+        results.push({ email, status: "error", error: "Falha no processamento" });
       }
     }
 
@@ -140,8 +152,9 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    console.error("Import students error:", err.message);
+    return new Response(JSON.stringify({ error: "Falha na importação. Tente novamente." }), {
+      status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   }
 });

@@ -26,7 +26,7 @@ const AdminProtocol = () => {
   const { data: students } = useQuery({
     queryKey: ["admin-students-protocols"],
     queryFn: async () => {
-      const { data: profiles } = await supabase.from("profiles").select("*");
+      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, email");
       const { data: protocols } = await supabase.from("student_protocols" as any).select("*");
       return (profiles || []).map((p: any) => {
         const protocol = (protocols as any[])?.find((d: any) => d.user_id === p.user_id);

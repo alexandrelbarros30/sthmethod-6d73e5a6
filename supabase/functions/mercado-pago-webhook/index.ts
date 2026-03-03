@@ -36,7 +36,10 @@ serve(async (req) => {
       headers: { Authorization: `Bearer ${MP_ACCESS_TOKEN}` },
     });
     const mpPayment = await mpRes.json();
-    if (!mpRes.ok) throw new Error(`MP fetch error [${mpRes.status}]: ${JSON.stringify(mpPayment)}`);
+    if (!mpRes.ok) {
+      console.error(`MP fetch error [${mpRes.status}]:`, JSON.stringify(mpPayment));
+      throw new Error("Failed to fetch payment from provider");
+    }
 
     console.log("MP Payment status:", mpPayment.status, "external_reference:", mpPayment.external_reference);
 
@@ -116,7 +119,6 @@ serve(async (req) => {
     });
   } catch (error: unknown) {
     console.error("Webhook error:", error);
-    const msg = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: msg }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: "Webhook processing failed" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
