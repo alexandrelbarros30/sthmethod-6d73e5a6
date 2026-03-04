@@ -61,12 +61,14 @@ const AdminDashboard = () => {
   const { data: incompleteOnboardings } = useQuery({
     queryKey: ["admin-incomplete-onboardings"],
     queryFn: async () => {
-      const fourteenDaysAgo = new Date(Date.now() - 14 * 86400000).toISOString();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayIso = today.toISOString();
       const { data } = await supabase
         .from("profiles")
         .select("id, user_id, full_name, email, onboarding_complete, created_at")
         .eq("onboarding_complete", false)
-        .gte("created_at", fourteenDaysAgo)
+        .gte("created_at", todayIso)
         .order("created_at", { ascending: false });
       return data || [];
     },
