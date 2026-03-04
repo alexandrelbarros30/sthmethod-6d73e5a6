@@ -77,7 +77,7 @@ const AdminStudents = () => {
   const { data: students, isLoading } = useQuery({
     queryKey: ["admin-students-list"],
     queryFn: async () => {
-      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, email, phone, birth_date, height, weight, physical_activity, objective, current_protocol, comorbidities, lab_exam_url, medical_prescription_url, avatar_url, onboarding_complete");
+      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, email, phone, birth_date, height, weight, physical_activity, objective, current_protocol, comorbidities, lab_exam_url, medical_prescription_url, avatar_url, onboarding_complete, created_at");
       if (!profiles) return [];
       const { data: subs } = await supabase.from("subscriptions").select("*, plans(name, duration_days)");
       return profiles.map((p: any) => {
@@ -991,6 +991,8 @@ const AdminStudents = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead className="font-body">Aluno</TableHead>
+                  <TableHead className="font-body">Telefone</TableHead>
+                  <TableHead className="font-body">Cadastro</TableHead>
                   <TableHead className="font-body">Plano</TableHead>
                   <TableHead className="font-body">Início</TableHead>
                   <TableHead className="font-body">Vencimento</TableHead>
@@ -1011,6 +1013,16 @@ const AdminStudents = () => {
                           <p className="text-xs text-muted-foreground font-body">{s.email}</p>
                         </div>
                       </div>
+                    </TableCell>
+                    <TableCell className="font-body text-sm">{s.phone || "—"}</TableCell>
+                    <TableCell className="font-body text-xs text-muted-foreground">
+                      {s.created_at ? (
+                        <>
+                          {new Date(s.created_at).toLocaleDateString("pt-BR")}
+                          <br />
+                          <span className="text-[10px]">{new Date(s.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+                        </>
+                      ) : "—"}
                     </TableCell>
                     <TableCell className="font-body text-sm">
                       {s.plan !== "—" ? (
@@ -1053,7 +1065,7 @@ const AdminStudents = () => {
                   </TableRow>
                 ))}
                 {(!filteredStudents || filteredStudents.length === 0) && (
-                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground font-body">
+                  <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground font-body">
                     {searchTerm ? "Nenhum aluno encontrado." : "Nenhum aluno cadastrado."}
                   </TableCell></TableRow>
                 )}
