@@ -18,6 +18,7 @@ import { calculateAge } from "@/lib/macro-calculator";
 import {
   objectiveLabels, activityLabels,
   trainingIntensityOptions, cardioIntensityOptions,
+  physicalActivityLevelOptions,
 } from "@/lib/form-constants";
 
 const phoneMask = (v: string) => {
@@ -330,6 +331,10 @@ const StudentOverview = () => {
 
             {/* Activity details */}
             <div className="mt-4 space-y-3 border-t pt-4">
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Nível de Atividade Física (NEAT)</p>
+                <p className="text-sm">{physicalActivityLevelOptions.find(o => o.value === (p as any).physical_activity_level)?.label || "—"}</p>
+              </div>
               <div>
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Atividade Física</p>
                 <p className="text-sm">{activityLabels[p.activity_type] || p.physical_activity || "—"}</p>
