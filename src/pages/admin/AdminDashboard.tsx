@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminReminders from "@/components/admin/AdminReminders";
 import { toast } from "sonner";
+import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -122,17 +123,22 @@ const AdminDashboard = () => {
 
       <AdminReminders />
 
-      <RecentStudents profiles={profiles} navigate={navigate} queryClient={queryClient} />
+      <RecentStudents profiles={profiles} subscriptions={subscriptions} navigate={navigate} queryClient={queryClient} />
     </DashboardLayout>
   );
 };
 
-const RecentStudents = ({ profiles, navigate, queryClient }: { profiles: any[] | undefined; navigate: any; queryClient: any }) => {
+const RecentStudents = ({ profiles, subscriptions, navigate, queryClient }: { profiles: any[] | undefined; subscriptions: any[] | undefined; navigate: any; queryClient: any }) => {
   const now = Date.now();
   const recentProfiles = profiles?.filter((p) => {
     const days = Math.floor((now - new Date(p.created_at).getTime()) / 86400000);
     return days <= 3 && !p.admin_confirmed;
   }) || [];
+
+  // Map user_id -> subscription with plan info
+  const subMap = new Map(
+    (subscriptions || []).map((s: any) => [s.user_id, s])
+  );
 
   const confirmMutation = useMutation({
     mutationFn: async (profileId: string) => {
@@ -167,6 +173,11 @@ const RecentStudents = ({ profiles, navigate, queryClient }: { profiles: any[] |
         <div className="space-y-3">
           {recentProfiles.map((p) => {
             const color = getDayColor(p.created_at);
+            const sub = subMap.get(p.user_id);
+            const planName = sub?.plans?.name || null;
+            const durationDays = sub?.plans?.duration_days || null;
+            const tierClasses = getPlanTierClasses(getPlanTier(durationDays));
+
             return (
               <div key={p.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
                 <div className="flex items-center gap-3">
@@ -181,6 +192,11 @@ const RecentStudents = ({ profiles, navigate, queryClient }: { profiles: any[] |
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  {planName && (
+                    <Badge variant="outline" className={`text-xs font-medium ${tierClasses.badge}`}>
+                      {planName}
+                    </Badge>
+                  )}
                   <Badge variant="outline" className={`text-xs ${color.border} ${color.text}`}>{color.label}</Badge>
                   <Button
                     variant="ghost"

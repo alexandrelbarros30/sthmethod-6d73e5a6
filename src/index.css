@@ -58,6 +58,11 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
     --info: 210 80% 52%;
+
+    /* Plan tier colors */
+    --plan-entry: 185 65% 45%;
+    --plan-mid: 42 88% 52%;
+    --plan-premium: 270 55% 62%;
     --info-foreground: 0 0% 100%;
   }
 }
