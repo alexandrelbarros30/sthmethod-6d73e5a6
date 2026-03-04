@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN admin_confirmed boolean NOT NULL DEFAULT false;

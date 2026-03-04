@@ -629,6 +629,7 @@ export type Database = {
         Row: {
           activity_type: string | null
           additional_info: string | null
+          admin_confirmed: boolean
           avatar_url: string | null
           birth_date: string | null
           bmr: number | null
@@ -666,6 +667,7 @@ export type Database = {
         Insert: {
           activity_type?: string | null
           additional_info?: string | null
+          admin_confirmed?: boolean
           avatar_url?: string | null
           birth_date?: string | null
           bmr?: number | null
@@ -703,6 +705,7 @@ export type Database = {
         Update: {
           activity_type?: string | null
           additional_info?: string | null
+          admin_confirmed?: boolean
           avatar_url?: string | null
           birth_date?: string | null
           bmr?: number | null
