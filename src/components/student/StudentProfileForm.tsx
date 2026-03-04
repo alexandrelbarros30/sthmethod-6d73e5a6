@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
+import DocumentUpload from "@/components/shared/DocumentUpload";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -114,9 +115,12 @@ interface Props {
   editing: boolean;
   onSaved: () => void;
   onCancel?: () => void;
+  labExamUrl?: string | null;
+  prescriptionUrl?: string | null;
+  onDocumentUploaded?: () => void;
 }
 
-export default function StudentProfileForm({ form, onChange, userId, isOnboarded, editing, onSaved, onCancel }: Props) {
+export default function StudentProfileForm({ form, onChange, userId, isOnboarded, editing, onSaved, onCancel, labExamUrl, prescriptionUrl, onDocumentUploaded }: Props) {
   const [saving, setSaving] = useState(false);
 
   const set = (field: keyof ProfileFormData, value: string) => {
@@ -421,6 +425,14 @@ export default function StudentProfileForm({ form, onChange, userId, isOnboarded
           <Label className="font-body">Informações adicionais</Label>
           <Textarea value={form.additional_info} onChange={(e) => set("additional_info", e.target.value)} rows={2} placeholder="Alergias, preferências alimentares, etc." />
         </div>
+
+        {/* Document uploads */}
+        <DocumentUpload
+          userId={userId}
+          labExamUrl={labExamUrl}
+          prescriptionUrl={prescriptionUrl}
+          onUploaded={onDocumentUploaded || (() => {})}
+        />
 
         <Button onClick={handleSave} disabled={saving} className="w-full">
           {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</> : <><Save className="w-4 h-4 mr-2" /> Salvar dados</>}

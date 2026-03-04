@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
+import DocumentUpload from "@/components/shared/DocumentUpload";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
 import {
   objectiveLabels, activityLabels,
@@ -668,6 +669,12 @@ const Cadastro = () => {
                 <Label className="font-body">Mais informações</Label>
                 <Textarea value={profileForm.additional_info} onChange={(e) => setProfileForm({ ...profileForm, additional_info: e.target.value })} rows={2} placeholder="Informações adicionais que queira compartilhar (opcional)" />
               </div>
+
+              {/* Document uploads */}
+              <DocumentUpload
+                userId={userId!}
+                onUploaded={() => {}}
+              />
 
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setStep(1)} className="flex-1"><ArrowLeft className="w-4 h-4 mr-2" /> Voltar</Button>
