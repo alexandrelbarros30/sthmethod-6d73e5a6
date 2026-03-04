@@ -8,13 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Upload, Trash2, FileText } from "lucide-react";
+import { Pencil, Upload, Trash2, FileText, Search } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const AdminDiet = () => {
   const qc = useQueryClient();
+  const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selected, setSelected] = useState<any>(null);
   const [title, setTitle] = useState("Dieta");
@@ -84,7 +85,13 @@ const AdminDiet = () => {
   return (
     <DashboardLayout role="admin" title="Gestão de Dietas" subtitle="Gerencie as dietas dos alunos com PDF e texto.">
       <Card>
-        <CardHeader><CardTitle className="font-display">Alunos</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="font-display">Alunos</CardTitle>
+          <div className="relative mt-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input placeholder="Buscar por nome ou e-mail..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          </div>
+        </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
@@ -95,7 +102,11 @@ const AdminDiet = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {students?.map((s: any) => (
+              {students?.filter((s: any) => {
+                if (!search.trim()) return true;
+                const q = search.toLowerCase();
+                return s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q);
+              }).map((s: any) => (
                 <TableRow key={s.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
