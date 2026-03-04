@@ -619,46 +619,7 @@ const Cadastro = () => {
                 </Select>
               </div>
 
-              {/* Macro Calculator Result */}
-              {macroResult && (
-                <Card className="border-primary/20 bg-primary/5">
-                  <CardContent className="py-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Calculator className="w-5 h-5 text-primary" />
-                      <h3 className="font-display text-sm font-semibold text-foreground">Cálculo de Macros</h3>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-                      <div className="bg-background rounded-lg p-3 text-center">
-                        <p className="text-muted-foreground text-xs">TMB</p>
-                        <p className="font-bold text-foreground">{macroResult.bmr} kcal</p>
-                      </div>
-                      <div className="bg-background rounded-lg p-3 text-center">
-                        <p className="text-muted-foreground text-xs">TDEE</p>
-                        <p className="font-bold text-foreground">{macroResult.tdee} kcal</p>
-                      </div>
-                      <div className="bg-background rounded-lg p-3 text-center border-2 border-primary/30">
-                        <p className="text-muted-foreground text-xs">Calorias/dia</p>
-                        <p className="font-bold text-primary text-lg">{macroResult.dailyCalories} kcal</p>
-                      </div>
-                      <div className="bg-background rounded-lg p-3 text-center">
-                        <p className="text-muted-foreground text-xs">Proteína</p>
-                        <p className="font-bold text-foreground">{macroResult.proteinG}g</p>
-                      </div>
-                      <div className="bg-background rounded-lg p-3 text-center">
-                        <p className="text-muted-foreground text-xs">Carboidratos</p>
-                        <p className="font-bold text-foreground">{macroResult.carbsG}g</p>
-                      </div>
-                      <div className="bg-background rounded-lg p-3 text-center">
-                        <p className="text-muted-foreground text-xs">Gordura</p>
-                        <p className="font-bold text-foreground">{macroResult.fatG}g</p>
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Objetivo: {objectiveLabels[profileForm.objective] || profileForm.objective} • Fórmula Mifflin-St Jeor
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+              {/* Macros são calculados automaticamente mas não exibidos ao aluno */}
 
               <div>
                 <Label className="font-body">Protocolo atual (medicamentos/suplementos) *</Label>
