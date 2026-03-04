@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, CreditCard, Eye, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator } from "lucide-react";
+import { Plus, Pencil, Trash2, CreditCard, Eye, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -69,6 +69,9 @@ const AdminStudents = () => {
   const [importPreview, setImportPreview] = useState<any[] | null>(null);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeTab, setActiveTab] = useState("dados");
+  const [savedTabs, setSavedTabs] = useState<Set<string>>(new Set());
+  const [tabSaving, setTabSaving] = useState(false);
 
   const { data: students, isLoading } = useQuery({
     queryKey: ["admin-students-list"],
@@ -192,22 +195,89 @@ const AdminStudents = () => {
     setUploading(null);
   };
 
+  const tabOrder = ["dados", "saude", "macros", "docs"];
+
+  const validateTab = (tab: string, isCreate: boolean): boolean => {
+    switch (tab) {
+      case "dados":
+        if (!form.full_name.trim()) { toast.error("Nome completo é obrigatório"); return false; }
+        if (!form.email.trim()) { toast.error("Email é obrigatório"); return false; }
+        if (isCreate && form.password.length < 6) { toast.error("Senha deve ter no mínimo 6 caracteres"); return false; }
+        if (!form.phone.trim() || form.phone.replace(/\D/g, "").length < 10) { toast.error("Telefone é obrigatório (formato válido)"); return false; }
+        if (!form.gender) { toast.error("Gênero é obrigatório"); return false; }
+        if (!form.birth_date) { toast.error("Data de nascimento é obrigatória"); return false; }
+        if (!form.height || Number(form.height) <= 0) { toast.error("Altura é obrigatória"); return false; }
+        if (!form.weight || Number(form.weight) <= 0) { toast.error("Peso é obrigatório"); return false; }
+        return true;
+      case "saude":
+        if (!form.physical_activity_level) { toast.error("Nível de atividade física é obrigatório"); return false; }
+        if (!form.activity_type) { toast.error("Tipo de atividade é obrigatório"); return false; }
+        if (form.does_cardio === "") { toast.error("Informe se faz cardio"); return false; }
+        if (!form.objective) { toast.error("Objetivo é obrigatório"); return false; }
+        if (!form.current_protocol.trim()) { toast.error("Protocolo atual é obrigatório"); return false; }
+        if (!form.comorbidities.trim()) { toast.error("Comorbidades é obrigatório"); return false; }
+        return true;
+      case "macros":
+        return true;
+      case "docs":
+        return true;
+      default:
+        return true;
+    }
+  };
+
   const validateForm = (isCreate: boolean) => {
-    if (!form.full_name.trim()) { toast.error("Nome completo é obrigatório"); return false; }
-    if (!form.email.trim()) { toast.error("Email é obrigatório"); return false; }
-    if (isCreate && form.password.length < 6) { toast.error("Senha deve ter no mínimo 6 caracteres"); return false; }
-    if (!form.phone.trim() || form.phone.replace(/\D/g, "").length < 10) { toast.error("Telefone é obrigatório (formato válido)"); return false; }
-    if (!form.gender) { toast.error("Gênero é obrigatório"); return false; }
-    if (!form.birth_date) { toast.error("Data de nascimento é obrigatória"); return false; }
-    if (!form.height || Number(form.height) <= 0) { toast.error("Altura é obrigatória"); return false; }
-    if (!form.weight || Number(form.weight) <= 0) { toast.error("Peso é obrigatório"); return false; }
-    if (!form.activity_type) { toast.error("Tipo de atividade é obrigatório"); return false; }
-    if (!form.physical_activity_level) { toast.error("Nível de atividade física é obrigatório"); return false; }
-    if (form.does_cardio === "") { toast.error("Informe se faz cardio"); return false; }
-    if (!form.objective) { toast.error("Objetivo é obrigatório"); return false; }
-    if (!form.current_protocol.trim()) { toast.error("Protocolo atual é obrigatório"); return false; }
-    if (!form.comorbidities.trim()) { toast.error("Comorbidades é obrigatório"); return false; }
+    for (const tab of tabOrder) {
+      if (!validateTab(tab, isCreate)) return false;
+    }
     return true;
+  };
+
+  const isTabUnlocked = (tab: string, isCreate: boolean): boolean => {
+    if (!isCreate) return true; // edit mode: all unlocked
+    const idx = tabOrder.indexOf(tab);
+    if (idx === 0) return true;
+    // Previous tab must be saved
+    const prevTab = tabOrder[idx - 1];
+    return savedTabs.has(prevTab);
+  };
+
+  const saveTabData = async (tab: string, isCreate: boolean) => {
+    if (!validateTab(tab, isCreate)) return;
+    setTabSaving(true);
+    try {
+      if (isCreate) {
+        // For create: on first tab, create the user; subsequent tabs update profile
+        if (tab === "dados" && !selected?.user_id) {
+          const { data, error } = await supabase.functions.invoke("admin-manage-students", {
+            body: { action: "create", email: form.email, password: form.password, full_name: form.full_name },
+          });
+          if (error) throw error;
+          if (data?.error) throw new Error(data.error);
+          if (data?.user?.id) {
+            await supabase.from("profiles").update(profilePayload()).eq("user_id", data.user.id);
+            setSelected({ user_id: data.user.id });
+            qc.invalidateQueries({ queryKey: ["admin-students-list"] });
+          }
+        } else if (selected?.user_id) {
+          await supabase.from("profiles").update(profilePayload()).eq("user_id", selected.user_id);
+        }
+      } else {
+        // Edit mode: always update
+        await supabase.from("profiles").update(profilePayload()).eq("user_id", selected.user_id);
+        qc.invalidateQueries({ queryKey: ["admin-students-list"] });
+        qc.invalidateQueries({ queryKey: ["admin-full-profile", selected?.user_id] });
+      }
+      setSavedTabs(prev => new Set(prev).add(tab));
+      const nextIdx = tabOrder.indexOf(tab) + 1;
+      if (nextIdx < tabOrder.length) {
+        setActiveTab(tabOrder[nextIdx]);
+      }
+      toast.success(`Página "${tab === "dados" ? "Dados" : tab === "saude" ? "Saúde" : tab === "macros" ? "Macros" : "Docs"}" salva!`);
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao salvar");
+    }
+    setTabSaving(false);
   };
 
   // Recalculate macros from form
@@ -373,6 +443,8 @@ const AdminStudents = () => {
         });
       }
     });
+    setActiveTab("dados");
+    setSavedTabs(new Set());
     setEditOpen(true);
   };
 
@@ -412,14 +484,42 @@ const AdminStudents = () => {
 
   const formAge = form.birth_date ? calculateAge(form.birth_date) : null;
 
+  const tabLabel = (tab: string) => tab === "dados" ? "Dados" : tab === "saude" ? "Saúde" : tab === "macros" ? "Macros" : "Docs";
+
+  const renderTabTrigger = (tab: string, isCreate: boolean) => {
+    const unlocked = isTabUnlocked(tab, isCreate);
+    const saved = savedTabs.has(tab);
+    return (
+      <TabsTrigger
+        value={tab}
+        disabled={!unlocked}
+        className="relative gap-1.5"
+        onClick={(e) => { if (!unlocked) e.preventDefault(); }}
+      >
+        {!unlocked && <Lock className="w-3 h-3" />}
+        {saved && <Check className="w-3 h-3 text-primary" />}
+        {tabLabel(tab)}
+      </TabsTrigger>
+    );
+  };
+
+  const renderSaveTabButton = (tab: string, isCreate: boolean) => (
+    <div className="flex justify-end pt-4 border-t border-border/50 mt-4">
+      <Button
+        onClick={() => saveTabData(tab, isCreate)}
+        disabled={tabSaving}
+        size="sm"
+      >
+        {tabSaving ? "Salvando..." : savedTabs.has(tab) ? "Atualizar e avançar" : "Salvar e avançar"}
+      </Button>
+    </div>
+  );
+
   const renderStudentFormFields = (isCreate = false) => (
     <ScrollArea className="max-h-[70vh] pr-4">
-      <Tabs defaultValue="dados" className="w-full">
+      <Tabs value={activeTab} onValueChange={(v) => { if (isTabUnlocked(v, isCreate)) setActiveTab(v); }} className="w-full">
         <TabsList className="grid grid-cols-4 w-full mb-4">
-          <TabsTrigger value="dados">Dados</TabsTrigger>
-          <TabsTrigger value="saude">Saúde</TabsTrigger>
-          <TabsTrigger value="macros">Macros</TabsTrigger>
-          <TabsTrigger value="docs">Docs</TabsTrigger>
+          {tabOrder.map(tab => renderTabTrigger(tab, isCreate))}
         </TabsList>
 
         <TabsContent value="dados" className="space-y-3">
@@ -430,14 +530,9 @@ const AdminStudents = () => {
           )}
           <div><Label className="font-body">Telefone *</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: phoneMask(e.target.value) })} placeholder="(xx) xxxxx-xxxx" /></div>
           
-          {/* Gender */}
           <div>
             <Label className="font-body">Gênero *</Label>
-            <RadioGroup
-              value={form.gender}
-              onValueChange={(v) => setForm({ ...form, gender: v })}
-              className="flex gap-4 mt-1"
-            >
+            <RadioGroup value={form.gender} onValueChange={(v) => setForm({ ...form, gender: v })} className="flex gap-4 mt-1">
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="masculino" id="edit-gender-m" />
                 <Label htmlFor="edit-gender-m" className="font-body cursor-pointer">Masculino</Label>
@@ -457,10 +552,10 @@ const AdminStudents = () => {
             <div><Label className="font-body">Altura (cm) *</Label><Input type="number" value={form.height} onChange={(e) => setForm({ ...form, height: e.target.value })} placeholder="Ex: 175" /></div>
             <div><Label className="font-body">Peso (kg) *</Label><Input type="number" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} placeholder="Ex: 80" /></div>
           </div>
+          {renderSaveTabButton("dados", isCreate)}
         </TabsContent>
 
         <TabsContent value="saude" className="space-y-3">
-          {/* Physical Activity Level (NEAT) */}
           <div>
             <Label className="font-body">Nível de atividade física (sem exercícios) *</Label>
             <Select value={form.physical_activity_level} onValueChange={(v) => setForm({ ...form, physical_activity_level: v })}>
@@ -473,7 +568,6 @@ const AdminStudents = () => {
             </Select>
           </div>
 
-          {/* Activity Type */}
           <div>
             <Label className="font-body">Atividade física *</Label>
             <Select value={form.activity_type} onValueChange={(v) => setForm({ ...form, activity_type: v, ...(v === "nenhuma" ? { training_days_per_week: "", training_duration_minutes: "", training_intensity: "" } : {}) })}>
@@ -486,7 +580,6 @@ const AdminStudents = () => {
             </Select>
           </div>
 
-          {/* Conditional Training Details */}
           {(form.activity_type === "musculacao" || form.activity_type === "crossfit") && (
             <Card className="border-border/50 bg-muted/30">
               <CardContent className="pt-4 space-y-3">
@@ -521,7 +614,6 @@ const AdminStudents = () => {
             </Card>
           )}
           
-          {/* Cardio */}
           <div>
             <Label className="font-body">Faz cardio? *</Label>
             <RadioGroup
@@ -540,7 +632,6 @@ const AdminStudents = () => {
             </RadioGroup>
           </div>
 
-          {/* Conditional Cardio Details */}
           {form.does_cardio === "sim" && (
             <Card className="border-border/50 bg-muted/30">
               <CardContent className="pt-4 space-y-3">
@@ -575,7 +666,6 @@ const AdminStudents = () => {
             </Card>
           )}
 
-          {/* Objective */}
           <div>
             <Label className="font-body">Objetivo *</Label>
             <Select value={form.objective} onValueChange={(v) => setForm({ ...form, objective: v })}>
@@ -590,31 +680,17 @@ const AdminStudents = () => {
 
           <div>
             <Label className="font-body">Protocolo Atual (medicamentos/suplementos) *</Label>
-            <Textarea
-              value={form.current_protocol}
-              onChange={(e) => setForm({ ...form, current_protocol: e.target.value })}
-              rows={3}
-              placeholder="Liste medicamentos hormonais, peptídeos e suplementos em uso."
-            />
+            <Textarea value={form.current_protocol} onChange={(e) => setForm({ ...form, current_protocol: e.target.value })} rows={3} placeholder="Liste medicamentos hormonais, peptídeos e suplementos em uso." />
           </div>
           <div>
             <Label className="font-body">Comorbidades *</Label>
-            <Textarea
-              value={form.comorbidities}
-              onChange={(e) => setForm({ ...form, comorbidities: e.target.value })}
-              rows={3}
-              placeholder="Informe patologias pré-existentes e condições clínicas relevantes."
-            />
+            <Textarea value={form.comorbidities} onChange={(e) => setForm({ ...form, comorbidities: e.target.value })} rows={3} placeholder="Informe patologias pré-existentes e condições clínicas relevantes." />
           </div>
           <div>
             <Label className="font-body">Mais informações</Label>
-            <Textarea
-              value={form.additional_info}
-              onChange={(e) => setForm({ ...form, additional_info: e.target.value })}
-              rows={3}
-              placeholder="Informações adicionais relevantes (opcional)"
-            />
+            <Textarea value={form.additional_info} onChange={(e) => setForm({ ...form, additional_info: e.target.value })} rows={3} placeholder="Informações adicionais relevantes (opcional)" />
           </div>
+          {renderSaveTabButton("saude", isCreate)}
         </TabsContent>
 
         <TabsContent value="macros" className="space-y-3">
@@ -662,6 +738,7 @@ const AdminStudents = () => {
               Objetivo: {objectiveLabels[form.objective] || form.objective}
             </Badge>
           )}
+          {renderSaveTabButton("macros", isCreate)}
         </TabsContent>
 
         <TabsContent value="docs" className="space-y-4">
@@ -695,6 +772,7 @@ const AdminStudents = () => {
               )}
             </div>
           </div>
+          {renderSaveTabButton("docs", isCreate)}
         </TabsContent>
       </Tabs>
     </ScrollArea>
@@ -868,18 +946,13 @@ const AdminStudents = () => {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-            <Dialog open={createOpen} onOpenChange={(o) => { setCreateOpen(o); if (!o) setForm({ ...emptyForm }); }}>
+            <Dialog open={createOpen} onOpenChange={(o) => { setCreateOpen(o); if (!o) { setForm({ ...emptyForm }); setActiveTab("dados"); setSavedTabs(new Set()); setSelected(null); } }}>
               <DialogTrigger asChild>
                 <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Criar Aluno</Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader><DialogTitle className="font-display">Novo Aluno</DialogTitle></DialogHeader>
                 {renderStudentFormFields(true)}
-                <DialogFooter>
-                  <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
-                    {createMutation.isPending ? "Criando..." : "Criar Aluno"}
-                  </Button>
-                </DialogFooter>
               </DialogContent>
             </Dialog>
             </div>
@@ -1115,15 +1188,10 @@ const AdminStudents = () => {
       </Dialog>
 
       {/* Edit Dialog */}
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+      <Dialog open={editOpen} onOpenChange={(o) => { setEditOpen(o); if (!o) { setActiveTab("dados"); setSavedTabs(new Set()); } }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle className="font-display">Editar Aluno</DialogTitle></DialogHeader>
           {renderStudentFormFields(false)}
-          <DialogFooter>
-            <Button onClick={() => editMutation.mutate()} disabled={editMutation.isPending}>
-              {editMutation.isPending ? "Salvando..." : "Salvar"}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
