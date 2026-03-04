@@ -220,8 +220,12 @@ const RecentStudents = ({ profiles, subscriptions, navigate, queryClient }: { pr
                     </Badge>
                   )}
                   {paymentStatus === "pending" && (
-                    <Badge variant="outline" className="text-xs border-warning/30 text-warning">
-                      Pgto pendente
+                    <Badge
+                      variant="outline"
+                      className="text-xs border-warning/30 text-warning cursor-pointer hover:bg-warning/10 transition-colors"
+                      onClick={() => navigate(`/admin/students?sub=${p.user_id}`)}
+                    >
+                      Pgto pendente →
                     </Badge>
                   )}
                   <Badge variant="outline" className={`text-xs ${color.border} ${color.text}`}>{color.label}</Badge>
@@ -307,9 +311,15 @@ const PendingPayments = () => {
                     {p.plans.name}
                   </Badge>
                 )}
-                <Badge variant="outline" className="text-xs border-warning/30 text-warning">Pendente</Badge>
-                <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => navigate(`/admin/students?edit=${p.user_id}`)}>
-                  <ExternalLink className="w-3.5 h-3.5" />
+                <Badge
+                  variant="outline"
+                  className="text-xs border-warning/30 text-warning cursor-pointer hover:bg-warning/10 transition-colors"
+                  onClick={() => navigate(`/admin/students?sub=${p.user_id}`)}
+                >
+                  Pendente →
+                </Badge>
+                <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => navigate(`/admin/students?sub=${p.user_id}`)} title="Gerenciar assinatura">
+                  <CreditCard className="w-3.5 h-3.5" />
                 </Button>
               </div>
             </div>

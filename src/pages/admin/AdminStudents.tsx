@@ -463,6 +463,19 @@ const AdminStudents = () => {
     }
   }, [students, searchParams]);
 
+  // Auto-open subscription dialog when ?sub=USER_ID is present
+  useEffect(() => {
+    const subUserId = searchParams.get("sub");
+    if (subUserId && students && students.length > 0) {
+      const student = students.find((s: any) => s.user_id === subUserId);
+      if (student) {
+        openSub(student);
+        searchParams.delete("sub");
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+  }, [students, searchParams]);
+
   const openView = (s: any) => { setSelected(s); setViewOpen(true); };
 
   const openSub = (s: any) => {
