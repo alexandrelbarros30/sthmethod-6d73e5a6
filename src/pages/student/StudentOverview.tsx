@@ -158,19 +158,17 @@ const StudentOverview = () => {
       )}
 
       {/* ===== UPLOAD DE IMAGENS ===== */}
-      {(!hasImages || !isOnboarded) && (
-        <div className="mb-6">
-          <BodyImageUpload
-            userId={user!.id}
-            existingImages={bodyImages || []}
-            required
-            onComplete={() => {
-              refetchImages();
-              qc.invalidateQueries({ queryKey: ["body-images"] });
-            }}
-          />
-        </div>
-      )}
+      <div className="mb-6">
+        <BodyImageUpload
+          userId={user!.id}
+          existingImages={bodyImages || []}
+          required={!hasImages}
+          onComplete={() => {
+            refetchImages();
+            qc.invalidateQueries({ queryKey: ["body-images"] });
+          }}
+        />
+      </div>
 
       {/* Status card (subscription) */}
       {subscription ? (
@@ -200,9 +198,20 @@ const StudentOverview = () => {
           </CardContent>
         </Card>
       ) : (
-        <Card className="mb-6 border-muted">
-          <CardContent className="py-4">
-            <p className="text-muted-foreground font-body text-sm">Nenhuma assinatura encontrada. Fale com seu consultor.</p>
+        <Card className="mb-6 border-warning/20 bg-warning/5">
+          <CardContent className="py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-warning" />
+              <div>
+                <p className="font-semibold text-foreground font-body">Nenhum plano ativo</p>
+                <p className="text-sm text-muted-foreground font-body">Escolha um plano para ativar seu acesso completo.</p>
+              </div>
+            </div>
+            <Link to="/cadastro">
+              <Button size="sm" variant="outline" className="border-warning/30 text-warning hover:bg-warning/10">
+                Escolher plano
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       )}
