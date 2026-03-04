@@ -246,16 +246,27 @@ const AdminLayoutExterno = () => {
           <TabsContent value="evolutions" className="space-y-4 mt-4">
             <p className="text-sm text-muted-foreground">Adicione imagens de evolução real (antes/depois). Até 20 imagens no carrossel.</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {evolutions?.map((ev) => (
+              {evolutions?.map((ev, i) => (
                 <div key={ev.id} className="relative group rounded-lg overflow-hidden border border-border">
                   <img src={ev.image_url} alt={ev.caption} className="w-full h-40 object-cover" />
-                  <div className="absolute inset-0 bg-background/70 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
-                    <Button size="icon" variant="outline" onClick={() => upsertEvolution.mutateAsync({ id: ev.id, active: !ev.active })}>
-                      {ev.active ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                    </Button>
-                    <Button size="icon" variant="destructive" onClick={() => deleteEvolution.mutateAsync(ev.id)}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                  <div className="absolute inset-0 bg-background/70 opacity-0 group-hover:opacity-100 transition flex flex-col items-center justify-center gap-2">
+                    <div className="flex gap-1">
+                      <Button size="icon" variant="outline" className="h-8 w-8" disabled={i === 0} onClick={() => moveItem(evolutions, i, "up", upsertEvolution)}>
+                        <ArrowUp className="w-3 h-3" />
+                      </Button>
+                      <Button size="icon" variant="outline" className="h-8 w-8" disabled={i === evolutions.length - 1} onClick={() => moveItem(evolutions, i, "down", upsertEvolution)}>
+                        <ArrowDown className="w-3 h-3" />
+                      </Button>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => upsertEvolution.mutateAsync({ id: ev.id, active: !ev.active })}>
+                        {ev.active ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                      </Button>
+                      <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => deleteEvolution.mutateAsync(ev.id)}>
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                    <span className="text-xs text-muted-foreground font-mono">Posição {i + 1}</span>
                   </div>
                   {!ev.active && <div className="absolute top-1 left-1 bg-destructive text-destructive-foreground text-xs px-2 py-0.5 rounded">Oculto</div>}
                 </div>
