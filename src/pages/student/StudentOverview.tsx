@@ -3,15 +3,11 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Salad, Dumbbell, FlaskConical, BookOpen, CalendarDays, CheckCircle, AlertCircle, User, FileText, Camera, Save, Loader2, Calculator } from "lucide-react";
+import { Salad, Dumbbell, FlaskConical, BookOpen, CalendarDays, CheckCircle, AlertCircle, User, FileText, Calculator } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import SubscriptionAlerts from "@/components/student/SubscriptionAlerts";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
 import { calculateAge } from "@/lib/macro-calculator";
@@ -20,13 +16,7 @@ import {
   trainingIntensityOptions, cardioIntensityOptions,
   physicalActivityLevelOptions,
 } from "@/lib/form-constants";
-
-const phoneMask = (v: string) => {
-  const d = v.replace(/\D/g, "").slice(0, 11);
-  if (d.length <= 2) return `(${d}`;
-  if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
-  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
-};
+import StudentProfileForm, { profileFromDb, getPendingFields, type ProfileFormData } from "@/components/student/StudentProfileForm";
 
 const modules = [
   { to: "/dashboard/diet", icon: Salad, title: "Dieta", desc: "Plano alimentar", color: "text-success" },
@@ -71,90 +61,24 @@ const StudentOverview = () => {
   const p = fullProfile as any;
   const isOnboarded = p?.onboarding_complete;
   const hasImages = bodyImages && bodyImages.length >= 3;
-  const profileComplete = p?.full_name && p?.phone && p?.height && p?.weight && p?.physical_activity && p?.objective && p?.current_protocol && p?.comorbidities;
-  const allComplete = profileComplete && hasImages;
 
-  const isActive = subscription?.status === "active" && new Date(subscription.end_date) > new Date();
-  const daysLeft = subscription ? Math.max(0, Math.ceil((new Date(subscription.end_date).getTime() - Date.now()) / 86400000)) : 0;
-  const firstName = profile?.full_name?.split(" ")[0] || "Aluno";
-
-  // Form state for editable profile
-  const [form, setForm] = useState({
-    full_name: "", phone: "", birth_date: "", height: "", weight: "",
-    physical_activity: "", objective: "", current_protocol: "", comorbidities: "",
-  });
+  // Form state synced from DB
+  const [form, setForm] = useState<ProfileFormData>(profileFromDb({}));
   const [editing, setEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
 
-  // Sync form with profile data
   useEffect(() => {
-    if (p) {
-      setForm({
-        full_name: p.full_name || "",
-        phone: p.phone || "",
-        birth_date: p.birth_date || "",
-        height: p.height?.toString() || "",
-        weight: p.weight?.toString() || "",
-        physical_activity: p.physical_activity || "",
-        objective: p.objective || "",
-        current_protocol: p.current_protocol || "",
-        comorbidities: p.comorbidities || "",
-      });
-    }
+    if (p) setForm(profileFromDb(p));
   }, [p]);
 
-  // Scroll to status section when redirected from subscription
+  // Scroll to status section when redirected
   useEffect(() => {
     if (location.hash === "#status-cadastro" && statusRef.current) {
       setTimeout(() => statusRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 300);
     }
   }, [location.hash, fullProfile]);
 
-  const pendingFields: string[] = [];
-  if (!form.full_name) pendingFields.push("Nome completo");
-  if (!form.phone) pendingFields.push("Telefone");
-  if (!form.height) pendingFields.push("Altura");
-  if (!form.weight) pendingFields.push("Peso");
-  if (!form.physical_activity) pendingFields.push("Atividade física");
-  if (!form.objective) pendingFields.push("Objetivo");
-  if (!form.current_protocol) pendingFields.push("Protocolo atual");
-  if (!form.comorbidities) pendingFields.push("Comorbidades");
-  if (!hasImages) pendingFields.push("Imagens corporais (3 fotos)");
-
-  const saveProfile = useMutation({
-    mutationFn: async () => {
-      if (!form.full_name || !form.phone || !form.height || !form.weight || !form.physical_activity || !form.objective || !form.current_protocol || !form.comorbidities) {
-        throw new Error("Preencha todos os campos obrigatórios");
-      }
-      const phoneClean = form.phone.replace(/\D/g, "");
-      if (phoneClean.length < 10) throw new Error("Telefone inválido. Use (xx) xxxxx-xxxx");
-
-      const { error } = await supabase.from("profiles").update({
-        full_name: form.full_name,
-        phone: form.phone,
-        birth_date: form.birth_date || null,
-        height: Number(form.height),
-        weight: Number(form.weight),
-        physical_activity: form.physical_activity,
-        objective: form.objective,
-        current_protocol: form.current_protocol,
-        comorbidities: form.comorbidities,
-      }).eq("user_id", user!.id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Dados salvos com sucesso!");
-      setEditing(false);
-      refetchProfile();
-      qc.invalidateQueries({ queryKey: ["student-profile-onboard"] });
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
-
-  const handleSave = () => {
-    setSaving(true);
-    saveProfile.mutate(undefined, { onSettled: () => setSaving(false) });
-  };
+  const pendingFields = getPendingFields(form, !!hasImages);
+  const allComplete = pendingFields.length === 0;
 
   // Check if onboarding should be marked complete
   useEffect(() => {
@@ -166,11 +90,14 @@ const StudentOverview = () => {
     }
   }, [allComplete, isOnboarded, p]);
 
+  const isActive = subscription?.status === "active" && new Date(subscription.end_date) > new Date();
+  const daysLeft = subscription ? Math.max(0, Math.ceil((new Date(subscription.end_date).getTime() - Date.now()) / 86400000)) : 0;
+  const firstName = profile?.full_name?.split(" ")[0] || "Aluno";
+
   const showEditableForm = !isOnboarded || editing;
 
   return (
     <DashboardLayout role="student" title={`Bem-vindo, ${firstName}!`} subtitle="Acompanhe seu progresso e acesse seus módulos.">
-      {/* Expiration / renewal alerts */}
       <SubscriptionAlerts subscription={subscription ? { ...subscription, plans: (subscription as any)?.plans } : null} />
 
       {/* ===== STATUS DO CADASTRO ===== */}
@@ -184,9 +111,7 @@ const StudentOverview = () => {
               <Badge variant="outline" className="border-destructive/30 text-destructive w-fit">Incompleto</Badge>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground mb-3">
-                Complete os itens abaixo para liberar totalmente seu acesso:
-              </p>
+              <p className="text-sm text-muted-foreground mb-3">Complete os itens abaixo para liberar totalmente seu acesso:</p>
               <ul className="space-y-1 mb-4">
                 {pendingFields.map((f) => (
                   <li key={f} className="text-sm flex items-center gap-2">
@@ -214,57 +139,19 @@ const StudentOverview = () => {
 
       {/* ===== FORMULÁRIO EDITÁVEL ===== */}
       {showEditableForm && (
-        <Card className="mb-6 animate-fade-in">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-display flex items-center gap-2">
-              <User className="w-4 h-4" /> {isOnboarded ? "Editar Minha Ficha" : "Complete seus dados"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <Label className="font-body">Nome completo *</Label>
-                <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
-              </div>
-              <div>
-                <Label className="font-body">Telefone *</Label>
-                <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: phoneMask(e.target.value) })} placeholder="(00) 00000-0000" />
-              </div>
-              <div>
-                <Label className="font-body">Data de nascimento</Label>
-                <Input type="date" value={form.birth_date} onChange={(e) => setForm({ ...form, birth_date: e.target.value })} />
-              </div>
-              <div>
-                <Label className="font-body">Altura (cm) *</Label>
-                <Input type="number" value={form.height} onChange={(e) => setForm({ ...form, height: e.target.value })} />
-              </div>
-              <div>
-                <Label className="font-body">Peso (kg) *</Label>
-                <Input type="number" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} />
-              </div>
-            </div>
-            <div>
-              <Label className="font-body">Atividade física *</Label>
-              <Textarea value={form.physical_activity} onChange={(e) => setForm({ ...form, physical_activity: e.target.value })} rows={2} />
-            </div>
-            <div>
-              <Label className="font-body">Objetivo *</Label>
-              <Textarea value={form.objective} onChange={(e) => setForm({ ...form, objective: e.target.value })} rows={2} />
-            </div>
-            <div>
-              <Label className="font-body">Protocolo atual *</Label>
-              <Textarea value={form.current_protocol} onChange={(e) => setForm({ ...form, current_protocol: e.target.value })} rows={2} />
-            </div>
-            <div>
-              <Label className="font-body">Comorbidades *</Label>
-              <Textarea value={form.comorbidities} onChange={(e) => setForm({ ...form, comorbidities: e.target.value })} rows={2} />
-            </div>
-
-            <Button onClick={handleSave} disabled={saving} className="w-full">
-              {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</> : <><Save className="w-4 h-4 mr-2" /> Salvar dados</>}
-            </Button>
-          </CardContent>
-        </Card>
+        <StudentProfileForm
+          form={form}
+          onChange={setForm}
+          userId={user!.id}
+          isOnboarded={!!isOnboarded}
+          editing={editing}
+          onSaved={() => {
+            setEditing(false);
+            refetchProfile();
+            qc.invalidateQueries({ queryKey: ["student-profile-onboard"] });
+          }}
+          onCancel={isOnboarded ? () => setEditing(false) : undefined}
+        />
       )}
 
       {/* ===== UPLOAD DE IMAGENS ===== */}
@@ -310,7 +197,7 @@ const StudentOverview = () => {
         </Card>
       )}
 
-      {/* Profile summary (read-only, shown only when onboarded and not editing) */}
+      {/* Profile summary (read-only) */}
       {p && isOnboarded && !editing && (
         <Card className="mb-6">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
@@ -329,11 +216,10 @@ const StudentOverview = () => {
               <div><span className="text-muted-foreground">Objetivo:</span> <span className="font-medium">{objectiveLabels[p.objective] || p.objective || "—"}</span></div>
             </div>
 
-            {/* Activity details */}
             <div className="mt-4 space-y-3 border-t pt-4">
               <div>
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Nível de Atividade Física (NEAT)</p>
-                <p className="text-sm">{physicalActivityLevelOptions.find(o => o.value === (p as any).physical_activity_level)?.label || "—"}</p>
+                <p className="text-sm">{physicalActivityLevelOptions.find(o => o.value === p.physical_activity_level)?.label || "—"}</p>
               </div>
               <div>
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Atividade Física</p>
@@ -358,42 +244,6 @@ const StudentOverview = () => {
               {p.current_protocol && <div><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Protocolo Atual</p><p className="text-sm whitespace-pre-wrap">{p.current_protocol}</p></div>}
               {p.comorbidities && <div><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Comorbidades</p><p className="text-sm whitespace-pre-wrap">{p.comorbidities}</p></div>}
             </div>
-
-            {/* Macros (read-only) */}
-            {p.daily_calories && (
-              <div className="mt-4 border-t pt-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Calculator className="w-4 h-4 text-primary" />
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Macronutrientes</p>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="bg-muted/50 rounded-lg p-2 text-center">
-                    <p className="text-[10px] text-muted-foreground">TMB</p>
-                    <p className="font-bold text-xs">{p.bmr || "—"} kcal</p>
-                  </div>
-                  <div className="bg-muted/50 rounded-lg p-2 text-center">
-                    <p className="text-[10px] text-muted-foreground">TDEE</p>
-                    <p className="font-bold text-xs">{p.tdee || "—"} kcal</p>
-                  </div>
-                  <div className="bg-primary/10 rounded-lg p-2 text-center border border-primary/20">
-                    <p className="text-[10px] text-muted-foreground">Cal/dia</p>
-                    <p className="font-bold text-primary text-sm">{p.daily_calories} kcal</p>
-                  </div>
-                  <div className="bg-muted/50 rounded-lg p-2 text-center">
-                    <p className="text-[10px] text-muted-foreground">Proteína</p>
-                    <p className="font-bold text-xs">{p.protein_g || "—"}g</p>
-                  </div>
-                  <div className="bg-muted/50 rounded-lg p-2 text-center">
-                    <p className="text-[10px] text-muted-foreground">Carbos</p>
-                    <p className="font-bold text-xs">{p.carbs_g || "—"}g</p>
-                  </div>
-                  <div className="bg-muted/50 rounded-lg p-2 text-center">
-                    <p className="text-[10px] text-muted-foreground">Gordura</p>
-                    <p className="font-bold text-xs">{p.fat_g || "—"}g</p>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {(p.lab_exam_url || p.medical_prescription_url) && (
               <div className="mt-4 border-t pt-4 flex gap-4">
