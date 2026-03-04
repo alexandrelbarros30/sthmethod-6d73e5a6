@@ -30,7 +30,7 @@ const AdminDashboard = () => {
     },
   });
 
-  // Recent completed onboardings (onboarding_complete + active subscription in last 7 days)
+  // Recent completed onboardings (last 7 days)
   const { data: recentOnboardings } = useQuery({
     queryKey: ["admin-recent-onboardings"],
     queryFn: async () => {
@@ -44,7 +44,6 @@ const AdminDashboard = () => {
       
       if (!subs || subs.length === 0) return [];
       
-      // Fetch profiles separately
       const userIds = subs.map((s: any) => s.user_id);
       const { data: profilesData } = await supabase
         .from("profiles")
@@ -55,6 +54,21 @@ const AdminDashboard = () => {
       return subs
         .map((s: any) => ({ ...s, profiles: profileMap.get(s.user_id) }))
         .filter((s: any) => s.profiles?.onboarding_complete);
+    },
+  });
+
+  // Recent INCOMPLETE onboardings (last 14 days, onboarding_complete = false)
+  const { data: incompleteOnboardings } = useQuery({
+    queryKey: ["admin-incomplete-onboardings"],
+    queryFn: async () => {
+      const fourteenDaysAgo = new Date(Date.now() - 14 * 86400000).toISOString();
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, user_id, full_name, email, onboarding_complete, created_at")
+        .eq("onboarding_complete", false)
+        .gte("created_at", fourteenDaysAgo)
+        .order("created_at", { ascending: false });
+      return data || [];
     },
   });
 
@@ -93,30 +107,70 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      {/* Onboarding Alerts */}
+      {/* Completed Onboardings */}
       {recentOnboardings && recentOnboardings.length > 0 && (
         <Card className="mb-6 border-primary/20 bg-primary/5">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-display flex items-center gap-2">
-              <Bell className="w-4 h-4 text-primary" /> Novos Cadastros Completos
+              <CheckCircle className="w-4 h-4 text-primary" /> Cadastros Completos
               <Badge variant="default" className="ml-2">{recentOnboardings.length}</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {recentOnboardings.map((s: any) => (
               <div key={s.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-                <div className="flex items-center gap-3">
-                  <CheckCircle className="w-4 h-4 text-primary" />
-                  <div>
-                    <p className="text-sm font-medium">{(s as any).profiles?.full_name || "Aluno"}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {(s as any).plans?.name} • Cadastro completo em {new Date(s.created_at).toLocaleDateString("pt-BR")}
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{(s as any).profiles?.full_name || "Aluno"}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {(s as any).plans?.name} • {new Date(s.created_at).toLocaleDateString("pt-BR")}
                     </p>
                   </div>
                 </div>
-                <Badge variant="outline" className="text-xs">Ativo</Badge>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Badge variant="outline" className="text-xs text-primary border-primary/30">Completo</Badge>
+                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => navigate(`/admin/students?edit=${s.user_id}`)}>
+                    <ExternalLink className="w-3.5 h-3.5" /> Ficha
+                  </Button>
+                </div>
               </div>
             ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Incomplete Onboardings */}
+      {incompleteOnboardings && incompleteOnboardings.length > 0 && (
+        <Card className="mb-6 border-warning/20 bg-warning/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-display flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-warning" /> Cadastros Incompletos
+              <Badge variant="default" className="ml-2 bg-warning text-warning-foreground">{incompleteOnboardings.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {incompleteOnboardings.map((p: any) => {
+              const days = Math.floor((Date.now() - new Date(p.created_at).getTime()) / 86400000);
+              const dayLabel = days === 0 ? "Hoje" : `${days}d atrás`;
+              return (
+                <div key={p.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <Clock className="w-4 h-4 text-warning shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{p.full_name || "Sem nome"}</p>
+                      <p className="text-xs text-muted-foreground truncate">{p.email} • {dayLabel}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Badge variant="outline" className="text-xs text-warning border-warning/30">Incompleto</Badge>
+                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => navigate(`/admin/students?edit=${p.user_id}`)}>
+                      <ExternalLink className="w-3.5 h-3.5" /> Ficha
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
           </CardContent>
         </Card>
       )}
