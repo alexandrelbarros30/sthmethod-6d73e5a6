@@ -1,7 +1,10 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare } from "lucide-react";
+import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useState } from "react";
 
 interface SidebarProps {
   role: "student" | "admin";
@@ -29,11 +32,10 @@ const adminLinks = [
   { to: "/admin/layout", icon: PanelTop, label: "Layout Externo" },
 ];
 
-const DashboardSidebar = ({ role }: SidebarProps) => {
+const SidebarContent = ({ role, links, onNavClick }: { role: string; links: typeof studentLinks; onNavClick?: () => void }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile } = useAuth();
-  const links = role === "admin" ? adminLinks : studentLinks;
 
   const handleLogout = async () => {
     await signOut();
@@ -41,10 +43,10 @@ const DashboardSidebar = ({ role }: SidebarProps) => {
   };
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-64 bg-sidebar flex flex-col border-r border-sidebar-border z-40">
+    <>
       {/* Logo */}
       <div className="p-6 border-b border-sidebar-border">
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2" onClick={onNavClick}>
           <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
             <span className="text-sidebar-primary-foreground font-bold text-sm">ST</span>
           </div>
@@ -61,13 +63,14 @@ const DashboardSidebar = ({ role }: SidebarProps) => {
       </div>
 
       {/* Links */}
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {links.map((link) => {
           const isActive = location.pathname === link.to;
           return (
             <Link
               key={link.to}
               to={link.to}
+              onClick={onNavClick}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 font-body",
                 isActive
@@ -92,6 +95,46 @@ const DashboardSidebar = ({ role }: SidebarProps) => {
           Sair
         </button>
       </div>
+    </>
+  );
+};
+
+const DashboardSidebar = ({ role }: SidebarProps) => {
+  const isMobile = useIsMobile();
+  const links = role === "admin" ? adminLinks : studentLinks;
+  const [open, setOpen] = useState(false);
+
+  if (isMobile) {
+    return (
+      <>
+        {/* Mobile top bar */}
+        <div className="fixed top-0 left-0 right-0 h-14 bg-sidebar border-b border-sidebar-border z-50 flex items-center px-4 gap-3">
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <button className="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground transition-colors">
+                <Menu className="w-5 h-5" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-64 p-0 bg-sidebar border-sidebar-border">
+              <div className="flex flex-col h-full">
+                <SidebarContent role={role} links={links} onNavClick={() => setOpen(false)} />
+              </div>
+            </SheetContent>
+          </Sheet>
+          <Link to="/" className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-sidebar-primary flex items-center justify-center">
+              <span className="text-sidebar-primary-foreground font-bold text-xs">ST</span>
+            </div>
+            <span className="font-display text-lg font-bold text-sidebar-foreground">ST&H</span>
+          </Link>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <aside className="fixed left-0 top-0 bottom-0 w-64 bg-sidebar flex flex-col border-r border-sidebar-border z-40">
+      <SidebarContent role={role} links={links} />
     </aside>
   );
 };

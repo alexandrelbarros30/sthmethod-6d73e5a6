@@ -190,62 +190,68 @@ const StudentOverview = () => {
       {/* Status card (subscription) */}
       {subscription ? (
         <Card className={`mb-6 ${isActive ? `${tierClasses.border} ${tierClasses.bg} ${tierClasses.glow}` : "border-destructive/20 bg-destructive/5"}`}>
-          <CardContent className="flex items-center justify-between py-4">
-            <div className="flex items-center gap-3">
-              {isActive ? <CheckCircle className={`w-5 h-5 ${tierClasses.text}`} /> : <AlertCircle className="w-5 h-5 text-destructive" />}
-              <div>
-                <p className="font-semibold text-foreground font-body">{isActive ? "Assinatura ativa" : "Assinatura vencida"}</p>
-                <p className="text-sm text-muted-foreground font-body">
-                  Plano {(subscription as any)?.plans?.name} • Vence em {new Date(subscription.end_date).toLocaleDateString("pt-BR")}
-                </p>
+          <CardContent className="py-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-3">
+                {isActive ? <CheckCircle className={`w-5 h-5 shrink-0 ${tierClasses.text}`} /> : <AlertCircle className="w-5 h-5 shrink-0 text-destructive" />}
+                <div className="min-w-0">
+                  <p className="font-semibold text-foreground font-body text-sm sm:text-base">{isActive ? "Assinatura ativa" : "Assinatura vencida"}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground font-body truncate">
+                    Plano {(subscription as any)?.plans?.name} • Vence em {new Date(subscription.end_date).toLocaleDateString("pt-BR")}
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {isActive && (subscription as any)?.plans?.name && (
-                <Badge variant="outline" className={`${tierClasses.badge} font-medium`}>
-                  {(subscription as any)?.plans?.name}
-                </Badge>
-              )}
-              {isActive && (
-                <Badge variant="outline" className={`${tierClasses.border} ${tierClasses.text}`}>
-                  <CalendarDays className="w-3 h-3 mr-1" /> {daysLeft} dias
-                </Badge>
-              )}
+              <div className="flex items-center gap-2 ml-8 sm:ml-0">
+                {isActive && (subscription as any)?.plans?.name && (
+                  <Badge variant="outline" className={`${tierClasses.badge} font-medium text-xs`}>
+                    {(subscription as any)?.plans?.name}
+                  </Badge>
+                )}
+                {isActive && (
+                  <Badge variant="outline" className={`${tierClasses.border} ${tierClasses.text} text-xs`}>
+                    <CalendarDays className="w-3 h-3 mr-1" /> {daysLeft} dias
+                  </Badge>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
       ) : pendingPayment ? (
         <Card className="mb-6 border-warning/20 bg-warning/5">
-          <CardContent className="py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-warning" />
-              <div>
-                <p className="font-semibold text-foreground font-body">Pagamento pendente</p>
-                <p className="text-sm text-muted-foreground font-body">
-                  Plano {(pendingPayment as any)?.plans?.name || "selecionado"} • Aguardando confirmação do administrador
-                </p>
+          <CardContent className="py-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 shrink-0 text-warning" />
+                <div className="min-w-0">
+                  <p className="font-semibold text-foreground font-body text-sm sm:text-base">Pagamento pendente</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground font-body">
+                    Plano {(pendingPayment as any)?.plans?.name || "selecionado"} • Aguardando confirmação
+                  </p>
+                </div>
               </div>
+              <Badge variant="outline" className="border-warning/30 text-warning font-medium ml-8 sm:ml-0 w-fit text-xs">
+                Pendente
+              </Badge>
             </div>
-            <Badge variant="outline" className="border-warning/30 text-warning font-medium">
-              Pendente
-            </Badge>
           </CardContent>
         </Card>
       ) : (
         <Card className="mb-6 border-warning/20 bg-warning/5">
-          <CardContent className="py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-warning" />
-              <div>
-                <p className="font-semibold text-foreground font-body">Nenhum plano ativo</p>
-                <p className="text-sm text-muted-foreground font-body">Escolha um plano para ativar seu acesso completo.</p>
+          <CardContent className="py-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 shrink-0 text-warning" />
+                <div className="min-w-0">
+                  <p className="font-semibold text-foreground font-body text-sm sm:text-base">Nenhum plano ativo</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground font-body">Escolha um plano para ativar seu acesso.</p>
+                </div>
               </div>
+              <Link to="/cadastro" className="ml-8 sm:ml-0">
+                <Button size="sm" variant="outline" className="border-warning/30 text-warning hover:bg-warning/10 text-xs">
+                  Escolher plano
+                </Button>
+              </Link>
             </div>
-            <Link to="/cadastro">
-              <Button size="sm" variant="outline" className="border-warning/30 text-warning hover:bg-warning/10">
-                Escolher plano
-              </Button>
-            </Link>
           </CardContent>
         </Card>
       )}
@@ -258,7 +264,7 @@ const StudentOverview = () => {
             <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>Editar</Button>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-sm">
               <div><span className="text-muted-foreground">Nome:</span> <span className="font-medium">{p.full_name}</span></div>
               <div><span className="text-muted-foreground">Email:</span> <span className="font-medium">{p.email}</span></div>
               <div><span className="text-muted-foreground">Telefone:</span> <span className="font-medium">{p.phone || "—"}</span></div>
@@ -309,7 +315,7 @@ const StudentOverview = () => {
       )}
 
       {/* Module cards */}
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-4">
         {modules.map((mod) => (
           <Link key={mod.to} to={mod.to}>
             <Card className="hover:shadow-card-hover hover:border-primary/20 transition-all duration-300 cursor-pointer group">

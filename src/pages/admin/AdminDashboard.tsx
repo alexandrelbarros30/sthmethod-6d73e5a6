@@ -77,16 +77,16 @@ const AdminDashboard = () => {
 
   return (
     <DashboardLayout role="admin" title="Dashboard" subtitle="Visão geral da consultoria.">
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
         {metrics.map((m, i) => (
           <Card key={i} className="animate-fade-in" style={{ animationDelay: `${i * 80}ms` }}>
-            <CardContent className="flex items-center gap-4 py-5">
-              <div className="w-11 h-11 rounded-lg bg-secondary flex items-center justify-center">
-                <m.icon className={`w-5 h-5 ${m.color}`} />
+            <CardContent className="flex items-center gap-3 py-4 md:py-5">
+              <div className="w-9 h-9 md:w-11 md:h-11 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                <m.icon className={`w-4 h-4 md:w-5 md:h-5 ${m.color}`} />
               </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground font-body">{m.value}</p>
-                <p className="text-sm text-muted-foreground font-body">{m.label}</p>
+              <div className="min-w-0">
+                <p className="text-xl md:text-2xl font-bold text-foreground font-body">{m.value}</p>
+                <p className="text-xs md:text-sm text-muted-foreground font-body truncate">{m.label}</p>
               </div>
             </CardContent>
           </Card>
@@ -201,53 +201,47 @@ const RecentStudents = ({ profiles, subscriptions, navigate, queryClient }: { pr
             const paymentStatus = !sub && payment ? payment.status : null;
 
             return (
-              <div key={p.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-                <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center ${color.bg}`}>
-                    <span className={`text-xs font-bold ${color.text}`}>
-                      {p.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "?"}
-                    </span>
+              <div key={p.id} className="py-3 border-b border-border/50 last:border-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${color.bg}`}>
+                      <span className={`text-xs font-bold ${color.text}`}>
+                        {p.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "?"}
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className={`text-sm font-medium font-body ${color.text} truncate`}>{p.full_name || "Sem nome"}</p>
+                      <p className="text-xs text-muted-foreground font-body truncate">{p.email}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className={`text-sm font-medium font-body ${color.text}`}>{p.full_name || "Sem nome"}</p>
-                    <p className="text-xs text-muted-foreground font-body">{p.email}</p>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Badge variant="outline" className={`text-[10px] ${color.border} ${color.text}`}>{color.label}</Badge>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => navigate(`/admin/students?edit=${p.user_id}`)}>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 w-7 p-0 text-green-600 border-green-300 hover:bg-green-50" onClick={() => confirmMutation.mutate(p.id)} disabled={confirmMutation.isPending} title="Confirmar registro">
+                      <Check className="w-3.5 h-3.5" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {planName && (
-                    <Badge variant="outline" className={`text-xs font-medium ${tierClasses.badge}`}>
-                      {planName}
-                    </Badge>
-                  )}
-                  {paymentStatus === "pending" && (
-                    <Badge
-                      variant="outline"
-                      className="text-xs border-warning/30 text-warning cursor-pointer hover:bg-warning/10 transition-colors"
-                      onClick={() => navigate(`/admin/students?sub=${p.user_id}`)}
-                    >
-                      Pgto pendente →
-                    </Badge>
-                  )}
-                  <Badge variant="outline" className={`text-xs ${color.border} ${color.text}`}>{color.label}</Badge>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2"
-                    onClick={() => navigate(`/admin/students?edit=${p.user_id}`)}
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 px-2 text-green-600 border-green-300 hover:bg-green-50"
-                    onClick={() => confirmMutation.mutate(p.id)}
-                    disabled={confirmMutation.isPending}
-                    title="Confirmar registro"
-                  >
-                    <Check className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
+                {(planName || paymentStatus === "pending") && (
+                  <div className="flex items-center gap-2 mt-2 ml-12">
+                    {planName && (
+                      <Badge variant="outline" className={`text-[10px] font-medium ${tierClasses.badge}`}>
+                        {planName}
+                      </Badge>
+                    )}
+                    {paymentStatus === "pending" && (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] border-warning/30 text-warning cursor-pointer hover:bg-warning/10 transition-colors"
+                        onClick={() => navigate(`/admin/students?sub=${p.user_id}`)}
+                      >
+                        Pgto pendente →
+                      </Badge>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -295,32 +289,31 @@ const PendingPayments = () => {
         {pendingPayments.map((p: any) => {
           const tierClasses = getPlanTierClasses(getPlanTier(p.plans?.duration_days));
           return (
-            <div key={p.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-              <div className="flex items-center gap-3">
-                <CreditCard className="w-4 h-4 text-warning" />
-                <div>
-                  <p className="text-sm font-medium">{p.profile?.full_name || "Aluno"}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {p.profile?.email} • R$ {Number(p.amount).toFixed(2)} • {p.method === "manual" ? "Pagamento manual" : p.method}
-                  </p>
+            <div key={p.id} className="py-3 border-b border-border/50 last:border-0">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <CreditCard className="w-4 h-4 text-warning shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{p.profile?.full_name || "Aluno"}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      R$ {Number(p.amount).toFixed(2)} • {p.method === "manual" ? "Manual" : p.method}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {p.plans?.name && (
-                  <Badge variant="outline" className={`text-xs font-medium ${tierClasses.badge}`}>
-                    {p.plans.name}
+                <div className="flex items-center gap-1 shrink-0">
+                  {p.plans?.name && (
+                    <Badge variant="outline" className={`text-[10px] font-medium ${tierClasses.badge}`}>
+                      {p.plans.name}
+                    </Badge>
+                  )}
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] border-warning/30 text-warning cursor-pointer hover:bg-warning/10 transition-colors"
+                    onClick={() => navigate(`/admin/students?sub=${p.user_id}`)}
+                  >
+                    Pendente →
                   </Badge>
-                )}
-                <Badge
-                  variant="outline"
-                  className="text-xs border-warning/30 text-warning cursor-pointer hover:bg-warning/10 transition-colors"
-                  onClick={() => navigate(`/admin/students?sub=${p.user_id}`)}
-                >
-                  Pendente →
-                </Badge>
-                <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => navigate(`/admin/students?sub=${p.user_id}`)} title="Gerenciar assinatura">
-                  <CreditCard className="w-3.5 h-3.5" />
-                </Button>
+                </div>
               </div>
             </div>
           );
