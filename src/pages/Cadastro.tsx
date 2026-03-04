@@ -151,7 +151,8 @@ const Cadastro = () => {
             if (p.onboarding_complete) {
               supabase.from("subscriptions").select("*").eq("user_id", session.user.id).eq("status", "active").limit(1).maybeSingle().then(({ data: sub }) => {
                 if (sub && new Date(sub.end_date) > new Date()) {
-                  navigate("/dashboard");
+                  // Has active subscription — let them fix profile/photos, start at step 2
+                  setStep(2);
                 } else {
                   setStep(4);
                 }
