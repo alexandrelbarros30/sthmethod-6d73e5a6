@@ -50,6 +50,23 @@ const StudentOverview = () => {
     enabled: !!user?.id,
   });
 
+  // Fetch pending payment to show chosen plan before admin confirms
+  const { data: pendingPayment } = useQuery({
+    queryKey: ["pending-payment", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("payments")
+        .select("*, plans(name, duration_days)")
+        .eq("user_id", user!.id)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user?.id && !subscription,
+  });
+
   const { data: bodyImages, refetch: refetchImages } = useQuery({
     queryKey: ["body-images", user?.id],
     queryFn: async () => {
@@ -195,6 +212,23 @@ const StudentOverview = () => {
                 </Badge>
               )}
             </div>
+          </CardContent>
+        </Card>
+      ) : pendingPayment ? (
+        <Card className="mb-6 border-warning/20 bg-warning/5">
+          <CardContent className="py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-warning" />
+              <div>
+                <p className="font-semibold text-foreground font-body">Pagamento pendente</p>
+                <p className="text-sm text-muted-foreground font-body">
+                  Plano {(pendingPayment as any)?.plans?.name || "selecionado"} • Aguardando confirmação do administrador
+                </p>
+              </div>
+            </div>
+            <Badge variant="outline" className="border-warning/30 text-warning font-medium">
+              Pendente
+            </Badge>
           </CardContent>
         </Card>
       ) : (
