@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS physical_activity_level text DEFAULT '' NULL;

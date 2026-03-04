@@ -9,6 +9,7 @@ export interface MacroInput {
   activityType: string; // musculacao, crossfit, nenhuma
   doesCardio: boolean;
   objective: string; // perder_gordura, hipertrofia, manter_peso
+  physicalActivityLevel?: string; // NEAT level
   // New detailed fields
   trainingDaysPerWeek?: number;
   trainingDurationMinutes?: number;
@@ -59,6 +60,17 @@ function getCardioMET(intensity: string | undefined): number {
     default: return 5.0;
   }
 }
+// NEAT multiplier based on daily physical activity level (excluding exercise)
+function getNeatMultiplier(level: string | undefined): number {
+  switch (level) {
+    case "sedentario": return 1.2;
+    case "levemente_ativo": return 1.375;
+    case "moderadamente_ativo": return 1.55;
+    case "bastante_ativo": return 1.725;
+    case "extremamente_ativo": return 1.9;
+    default: return 1.2;
+  }
+}
 
 export function calculateMacros(input: MacroInput): MacroResult {
   // Mifflin-St Jeor BMR
@@ -70,8 +82,8 @@ export function calculateMacros(input: MacroInput): MacroResult {
   }
 
   // Calculate TDEE using activity-based EAT (Exercise Activity Thermogenesis)
-  // Base NEAT multiplier (non-exercise activity) - sedentary baseline
-  const neatMultiplier = 1.2;
+  // NEAT multiplier based on physical activity level (non-exercise)
+  const neatMultiplier = getNeatMultiplier(input.physicalActivityLevel);
   let dailyTDEE = bmr * neatMultiplier;
 
   // Add training calories if applicable

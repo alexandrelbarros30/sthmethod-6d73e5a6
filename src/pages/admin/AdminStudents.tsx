@@ -25,6 +25,7 @@ import {
   objectiveLabels, activityLabels,
   trainingIntensityOptions, cardioIntensityOptions,
   trainingIntensityLabels, cardioIntensityLabels,
+  physicalActivityLevelOptions, physicalActivityLevelLabels,
 } from "@/lib/form-constants";
 
 const phoneMask = (v: string) => {
@@ -38,6 +39,7 @@ const emptyForm = {
   full_name: "", email: "", password: "", phone: "",
   birth_date: "", height: "", weight: "",
   gender: "", activity_type: "", does_cardio: "",
+  physical_activity_level: "",
   objective: "", current_protocol: "",
   comorbidities: "", additional_info: "",
   lab_exam_url: "", medical_prescription_url: "",
@@ -200,6 +202,7 @@ const AdminStudents = () => {
     if (!form.height || Number(form.height) <= 0) { toast.error("Altura é obrigatória"); return false; }
     if (!form.weight || Number(form.weight) <= 0) { toast.error("Peso é obrigatório"); return false; }
     if (!form.activity_type) { toast.error("Tipo de atividade é obrigatório"); return false; }
+    if (!form.physical_activity_level) { toast.error("Nível de atividade física é obrigatório"); return false; }
     if (form.does_cardio === "") { toast.error("Informe se faz cardio"); return false; }
     if (!form.objective) { toast.error("Objetivo é obrigatório"); return false; }
     if (!form.current_protocol.trim()) { toast.error("Protocolo atual é obrigatório"); return false; }
@@ -221,6 +224,7 @@ const AdminStudents = () => {
           activityType: activity_type,
           doesCardio: does_cardio === "sim",
           objective,
+          physicalActivityLevel: form.physical_activity_level || undefined,
           trainingDaysPerWeek: form.training_days_per_week ? Number(form.training_days_per_week) : undefined,
           trainingDurationMinutes: form.training_duration_minutes ? Number(form.training_duration_minutes) : undefined,
           trainingIntensity: form.training_intensity || undefined,
@@ -253,6 +257,7 @@ const AdminStudents = () => {
     weight: form.weight ? Number(form.weight) : null,
     gender: form.gender,
     activity_type: form.activity_type,
+    physical_activity_level: form.physical_activity_level || null,
     does_cardio: form.does_cardio === "sim",
     physical_activity: `${activityLabels[form.activity_type] || form.activity_type}${form.does_cardio === "sim" ? " + Cardio" : ""}`,
     objective: form.objective,
@@ -348,6 +353,7 @@ const AdminStudents = () => {
           gender: (p as any).gender || "",
           activity_type: (p as any).activity_type || "",
           does_cardio: (p as any).does_cardio === true ? "sim" : (p as any).does_cardio === false ? "nao" : "",
+          physical_activity_level: (p as any).physical_activity_level || "",
           objective: p.objective || "",
           current_protocol: p.current_protocol || "", comorbidities: p.comorbidities || "",
           additional_info: (p as any).additional_info || "",
@@ -454,6 +460,19 @@ const AdminStudents = () => {
         </TabsContent>
 
         <TabsContent value="saude" className="space-y-3">
+          {/* Physical Activity Level (NEAT) */}
+          <div>
+            <Label className="font-body">Nível de atividade física (sem exercícios) *</Label>
+            <Select value={form.physical_activity_level} onValueChange={(v) => setForm({ ...form, physical_activity_level: v })}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                {physicalActivityLevelOptions.map(o => (
+                  <SelectItem key={o.value} value={o.value}>{o.label} — {o.desc}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Activity Type */}
           <div>
             <Label className="font-body">Atividade física *</Label>
@@ -971,6 +990,7 @@ const AdminStudents = () => {
                 <section>
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Atividade & Objetivo</h3>
                   <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="col-span-2"><span className="text-muted-foreground">Nível atividade (NEAT):</span> <span className="font-medium">{physicalActivityLevelOptions.find(o => o.value === (selectedFullProfile as any)?.physical_activity_level)?.label || "—"}</span></div>
                     <div><span className="text-muted-foreground">Atividade:</span> <span className="font-medium">{activityLabels[(selectedFullProfile as any)?.activity_type] || selected.physical_activity || "—"}</span></div>
                     <div><span className="text-muted-foreground">Cardio:</span> <span className="font-medium">{(selectedFullProfile as any)?.does_cardio === true ? "Sim" : (selectedFullProfile as any)?.does_cardio === false ? "Não" : "—"}</span></div>
                     <div className="col-span-2"><span className="text-muted-foreground">Objetivo:</span> <span className="font-medium">{objectiveLabels[selected.objective] || selected.objective || "—"}</span></div>

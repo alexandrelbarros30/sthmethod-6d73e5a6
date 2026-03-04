@@ -22,6 +22,7 @@ import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-cal
 import {
   objectiveLabels, activityLabels,
   trainingIntensityOptions, cardioIntensityOptions,
+  physicalActivityLevelOptions,
 } from "@/lib/form-constants";
 
 const phoneMask = (v: string) => {
@@ -58,6 +59,7 @@ const Cadastro = () => {
   const [profileForm, setProfileForm] = useState({
     birth_date: "", height: "", weight: "",
     gender: "", activity_type: "", does_cardio: "",
+    physical_activity_level: "",
     objective: "", current_protocol: "", comorbidities: "", additional_info: "",
     training_days_per_week: "", training_duration_minutes: "", training_intensity: "",
     cardio_days_per_week: "", cardio_duration_minutes: "", cardio_intensity: "",
@@ -102,6 +104,7 @@ const Cadastro = () => {
           activityType: activity_type,
           doesCardio: does_cardio === "sim",
           objective,
+          physicalActivityLevel: profileForm.physical_activity_level || undefined,
           trainingDaysPerWeek: profileForm.training_days_per_week ? Number(profileForm.training_days_per_week) : undefined,
           trainingDurationMinutes: profileForm.training_duration_minutes ? Number(profileForm.training_duration_minutes) : undefined,
           trainingIntensity: profileForm.training_intensity || undefined,
@@ -132,6 +135,7 @@ const Cadastro = () => {
               gender: (p as any).gender || "",
               activity_type: (p as any).activity_type || "",
               does_cardio: (p as any).does_cardio === true ? "sim" : (p as any).does_cardio === false ? "nao" : "",
+              physical_activity_level: (p as any).physical_activity_level || "",
               objective: p.objective || "",
               current_protocol: p.current_protocol || "",
               comorbidities: p.comorbidities || "",
@@ -258,6 +262,7 @@ const Cadastro = () => {
     if (!height || Number(height) <= 0) { toast.error("Altura é obrigatória"); return; }
     if (!weight || Number(weight) <= 0) { toast.error("Peso é obrigatório"); return; }
     if (!activity_type) { toast.error("Selecione o tipo de atividade física"); return; }
+    if (!profileForm.physical_activity_level) { toast.error("Selecione o nível de atividade física"); return; }
     // Validate training details if applicable
     if (activity_type !== "nenhuma") {
       if (!profileForm.training_days_per_week) { toast.error("Informe os dias de treino por semana"); return; }
@@ -289,6 +294,7 @@ const Cadastro = () => {
         current_protocol,
         comorbidities,
         additional_info: profileForm.additional_info,
+        physical_activity_level: profileForm.physical_activity_level || null,
         training_days_per_week: profileForm.training_days_per_week ? Number(profileForm.training_days_per_week) : null,
         training_duration_minutes: profileForm.training_duration_minutes ? Number(profileForm.training_duration_minutes) : null,
         training_intensity: profileForm.training_intensity || null,
@@ -465,6 +471,19 @@ const Cadastro = () => {
                   <Label className="font-body">Peso (kg) *</Label>
                   <Input type="number" value={profileForm.weight} onChange={(e) => setProfileForm({ ...profileForm, weight: e.target.value })} placeholder="80" />
                 </div>
+              </div>
+
+              {/* Physical Activity Level (NEAT) */}
+              <div>
+                <Label className="font-body">Nível de atividade física (sem exercícios) *</Label>
+                <Select value={profileForm.physical_activity_level} onValueChange={(v) => setProfileForm({ ...profileForm, physical_activity_level: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {physicalActivityLevelOptions.map(o => (
+                      <SelectItem key={o.value} value={o.value}>{o.label} — {o.desc}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Activity Type */}

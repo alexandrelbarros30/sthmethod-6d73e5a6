@@ -653,6 +653,7 @@ export type Database = {
           onboarding_complete: boolean
           phone: string | null
           physical_activity: string | null
+          physical_activity_level: string | null
           protein_g: number | null
           tdee: number | null
           training_days_per_week: number | null
@@ -689,6 +690,7 @@ export type Database = {
           onboarding_complete?: boolean
           phone?: string | null
           physical_activity?: string | null
+          physical_activity_level?: string | null
           protein_g?: number | null
           tdee?: number | null
           training_days_per_week?: number | null
@@ -725,6 +727,7 @@ export type Database = {
           onboarding_complete?: boolean
           phone?: string | null
           physical_activity?: string | null
+          physical_activity_level?: string | null
           protein_g?: number | null
           tdee?: number | null
           training_days_per_week?: number | null
