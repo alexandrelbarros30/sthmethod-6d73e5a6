@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Salad, Dumbbell, FlaskConical, BookOpen, CalendarDays, CheckCircle, AlertCircle, User, FileText, Camera, Save, Loader2 } from "lucide-react";
+import { Salad, Dumbbell, FlaskConical, BookOpen, CalendarDays, CheckCircle, AlertCircle, User, FileText, Camera, Save, Loader2, Calculator } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,6 +14,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import SubscriptionAlerts from "@/components/student/SubscriptionAlerts";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
+import { calculateAge } from "@/lib/macro-calculator";
+import {
+  objectiveLabels, activityLabels,
+  trainingIntensityOptions, cardioIntensityOptions,
+} from "@/lib/form-constants";
 
 const phoneMask = (v: string) => {
   const d = v.replace(/\D/g, "").slice(0, 11);
@@ -316,17 +321,72 @@ const StudentOverview = () => {
               <div><span className="text-muted-foreground">Nome:</span> <span className="font-medium">{p.full_name}</span></div>
               <div><span className="text-muted-foreground">Email:</span> <span className="font-medium">{p.email}</span></div>
               <div><span className="text-muted-foreground">Telefone:</span> <span className="font-medium">{p.phone || "—"}</span></div>
-              <div><span className="text-muted-foreground">Nascimento:</span> <span className="font-medium">{p.birth_date ? new Date(p.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</span></div>
+              <div><span className="text-muted-foreground">Nascimento:</span> <span className="font-medium">{p.birth_date ? new Date(p.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}{p.birth_date ? ` (${calculateAge(p.birth_date)} anos)` : ""}</span></div>
+              <div><span className="text-muted-foreground">Gênero:</span> <span className="font-medium capitalize">{p.gender || "—"}</span></div>
               <div><span className="text-muted-foreground">Altura:</span> <span className="font-medium">{p.height ? `${p.height} cm` : "—"}</span></div>
               <div><span className="text-muted-foreground">Peso:</span> <span className="font-medium">{p.weight ? `${p.weight} kg` : "—"}</span></div>
+              <div><span className="text-muted-foreground">Objetivo:</span> <span className="font-medium">{objectiveLabels[p.objective] || p.objective || "—"}</span></div>
             </div>
 
-            {(p.physical_activity || p.objective || p.current_protocol || p.comorbidities) && (
-              <div className="mt-4 space-y-3 border-t pt-4">
-                {p.physical_activity && <div><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Atividade Física</p><p className="text-sm whitespace-pre-wrap">{p.physical_activity}</p></div>}
-                {p.objective && <div><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Objetivo</p><p className="text-sm whitespace-pre-wrap">{p.objective}</p></div>}
-                {p.current_protocol && <div><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Protocolo Atual</p><p className="text-sm whitespace-pre-wrap">{p.current_protocol}</p></div>}
-                {p.comorbidities && <div><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Comorbidades</p><p className="text-sm whitespace-pre-wrap">{p.comorbidities}</p></div>}
+            {/* Activity details */}
+            <div className="mt-4 space-y-3 border-t pt-4">
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Atividade Física</p>
+                <p className="text-sm">{activityLabels[p.activity_type] || p.physical_activity || "—"}</p>
+                {(p.activity_type === "musculacao" || p.activity_type === "crossfit") && p.training_days_per_week && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {p.training_days_per_week}x/sem • {p.training_duration_minutes} min • {trainingIntensityOptions.find(o => o.value === p.training_intensity)?.label || "—"}
+                  </p>
+                )}
+              </div>
+              {p.does_cardio && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Cardio</p>
+                  <p className="text-sm">Sim</p>
+                  {p.cardio_days_per_week && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {p.cardio_days_per_week}x/sem • {p.cardio_duration_minutes} min • {cardioIntensityOptions.find(o => o.value === p.cardio_intensity)?.label || "—"}
+                    </p>
+                  )}
+                </div>
+              )}
+              {p.current_protocol && <div><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Protocolo Atual</p><p className="text-sm whitespace-pre-wrap">{p.current_protocol}</p></div>}
+              {p.comorbidities && <div><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Comorbidades</p><p className="text-sm whitespace-pre-wrap">{p.comorbidities}</p></div>}
+            </div>
+
+            {/* Macros (read-only) */}
+            {p.daily_calories && (
+              <div className="mt-4 border-t pt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Calculator className="w-4 h-4 text-primary" />
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Macronutrientes</p>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-muted/50 rounded-lg p-2 text-center">
+                    <p className="text-[10px] text-muted-foreground">TMB</p>
+                    <p className="font-bold text-xs">{p.bmr || "—"} kcal</p>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-2 text-center">
+                    <p className="text-[10px] text-muted-foreground">TDEE</p>
+                    <p className="font-bold text-xs">{p.tdee || "—"} kcal</p>
+                  </div>
+                  <div className="bg-primary/10 rounded-lg p-2 text-center border border-primary/20">
+                    <p className="text-[10px] text-muted-foreground">Cal/dia</p>
+                    <p className="font-bold text-primary text-sm">{p.daily_calories} kcal</p>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-2 text-center">
+                    <p className="text-[10px] text-muted-foreground">Proteína</p>
+                    <p className="font-bold text-xs">{p.protein_g || "—"}g</p>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-2 text-center">
+                    <p className="text-[10px] text-muted-foreground">Carbos</p>
+                    <p className="font-bold text-xs">{p.carbs_g || "—"}g</p>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-2 text-center">
+                    <p className="text-[10px] text-muted-foreground">Gordura</p>
+                    <p className="font-bold text-xs">{p.fat_g || "—"}g</p>
+                  </div>
+                </div>
               </div>
             )}
 

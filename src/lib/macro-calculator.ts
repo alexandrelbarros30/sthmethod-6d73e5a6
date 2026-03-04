@@ -1,4 +1,5 @@
-// Macro calculator based on Mifflin-St Jeor equation (same as hipertrofia.org)
+// Macro calculator based on Mifflin-St Jeor equation
+// Mirrors hipertrofia.org calculator: NEAT + training MET + cardio MET approach
 
 export interface MacroInput {
   gender: "masculino" | "feminino";
@@ -8,6 +9,13 @@ export interface MacroInput {
   activityType: string; // musculacao, crossfit, nenhuma
   doesCardio: boolean;
   objective: string; // perder_gordura, hipertrofia, manter_peso
+  // New detailed fields
+  trainingDaysPerWeek?: number;
+  trainingDurationMinutes?: number;
+  trainingIntensity?: string;
+  cardioDaysPerWeek?: number;
+  cardioDurationMinutes?: number;
+  cardioIntensity?: string;
 }
 
 export interface MacroResult {
@@ -28,6 +36,30 @@ export function calculateAge(birthDate: string): number {
   return age;
 }
 
+// MET values for weight training intensity
+function getTrainingMET(intensity: string | undefined): number {
+  switch (intensity) {
+    case "muito_leve": return 3.0;
+    case "leve": return 3.5;
+    case "moderado": return 5.0;
+    case "pesado": return 6.0;
+    case "muito_pesado": return 7.0;
+    default: return 5.0;
+  }
+}
+
+// MET values for cardio intensity
+function getCardioMET(intensity: string | undefined): number {
+  switch (intensity) {
+    case "muito_leve": return 2.5;
+    case "leve": return 3.5;
+    case "moderado": return 5.0;
+    case "intenso": return 7.0;
+    case "muito_intenso": return 10.0;
+    default: return 5.0;
+  }
+}
+
 export function calculateMacros(input: MacroInput): MacroResult {
   // Mifflin-St Jeor BMR
   let bmr: number;
@@ -37,20 +69,42 @@ export function calculateMacros(input: MacroInput): MacroResult {
     bmr = 10 * input.weight + 6.25 * input.height - 5 * input.age - 161;
   }
 
-  // Activity multiplier
-  let multiplier = 1.2; // sedentário base
-  if (input.activityType === "musculacao") {
-    multiplier = 1.55; // moderadamente ativo
-  } else if (input.activityType === "crossfit") {
-    multiplier = 1.725; // bastante ativo
+  // Calculate TDEE using activity-based EAT (Exercise Activity Thermogenesis)
+  // Base NEAT multiplier (non-exercise activity) - sedentary baseline
+  const neatMultiplier = 1.2;
+  let dailyTDEE = bmr * neatMultiplier;
+
+  // Add training calories if applicable
+  if (input.activityType !== "nenhuma" && input.trainingDaysPerWeek && input.trainingDurationMinutes) {
+    const met = getTrainingMET(input.trainingIntensity);
+    // Calories per session = MET * weight * hours
+    const hoursPerSession = input.trainingDurationMinutes / 60;
+    const calPerSession = met * input.weight * hoursPerSession;
+    // Spread weekly training calories across 7 days
+    const dailyTrainingCal = (calPerSession * input.trainingDaysPerWeek) / 7;
+    dailyTDEE += dailyTrainingCal;
+  } else if (input.activityType !== "nenhuma") {
+    // Fallback: use simple multiplier if no detailed data
+    if (input.activityType === "musculacao") {
+      dailyTDEE = bmr * 1.55;
+    } else if (input.activityType === "crossfit") {
+      dailyTDEE = bmr * 1.725;
+    }
   }
 
-  // Add cardio bonus
-  if (input.doesCardio) {
-    multiplier += 0.1;
+  // Add cardio calories if applicable
+  if (input.doesCardio && input.cardioDaysPerWeek && input.cardioDurationMinutes) {
+    const met = getCardioMET(input.cardioIntensity);
+    const hoursPerSession = input.cardioDurationMinutes / 60;
+    const calPerSession = met * input.weight * hoursPerSession;
+    const dailyCardioCal = (calPerSession * input.cardioDaysPerWeek) / 7;
+    dailyTDEE += dailyCardioCal;
+  } else if (input.doesCardio) {
+    // Fallback: add a small bonus
+    dailyTDEE += bmr * 0.1;
   }
 
-  const tdee = Math.round(bmr * multiplier);
+  const tdee = Math.round(dailyTDEE);
 
   // Adjust calories based on objective
   let dailyCalories: number;

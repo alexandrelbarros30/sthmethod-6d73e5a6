@@ -21,24 +21,17 @@ import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
 import ExcelJS from "exceljs";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
+import {
+  objectiveLabels, activityLabels,
+  trainingIntensityOptions, cardioIntensityOptions,
+  trainingIntensityLabels, cardioIntensityLabels,
+} from "@/lib/form-constants";
 
 const phoneMask = (v: string) => {
   const d = v.replace(/\D/g, "").slice(0, 11);
   if (d.length <= 2) return `(${d}`;
   if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
   return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
-};
-
-const objectiveLabels: Record<string, string> = {
-  perder_gordura: "Perder gordura",
-  hipertrofia: "Hipertrofia",
-  manter_peso: "Manter peso",
-};
-
-const activityLabels: Record<string, string> = {
-  musculacao: "Musculação",
-  crossfit: "CrossFit",
-  nenhuma: "Nenhuma",
 };
 
 const emptyForm = {
@@ -48,6 +41,9 @@ const emptyForm = {
   objective: "", current_protocol: "",
   comorbidities: "", additional_info: "",
   lab_exam_url: "", medical_prescription_url: "",
+  // training/cardio detail fields
+  training_days_per_week: "", training_duration_minutes: "", training_intensity: "",
+  cardio_days_per_week: "", cardio_duration_minutes: "", cardio_intensity: "",
   // macro fields
   bmr: "", tdee: "", daily_calories: "", protein_g: "", carbs_g: "", fat_g: "",
 };
@@ -225,6 +221,12 @@ const AdminStudents = () => {
           activityType: activity_type,
           doesCardio: does_cardio === "sim",
           objective,
+          trainingDaysPerWeek: form.training_days_per_week ? Number(form.training_days_per_week) : undefined,
+          trainingDurationMinutes: form.training_duration_minutes ? Number(form.training_duration_minutes) : undefined,
+          trainingIntensity: form.training_intensity || undefined,
+          cardioDaysPerWeek: form.cardio_days_per_week ? Number(form.cardio_days_per_week) : undefined,
+          cardioDurationMinutes: form.cardio_duration_minutes ? Number(form.cardio_duration_minutes) : undefined,
+          cardioIntensity: form.cardio_intensity || undefined,
         });
         setForm(prev => ({
           ...prev,
@@ -259,6 +261,12 @@ const AdminStudents = () => {
     additional_info: form.additional_info,
     lab_exam_url: form.lab_exam_url,
     medical_prescription_url: form.medical_prescription_url,
+    training_days_per_week: form.training_days_per_week ? Number(form.training_days_per_week) : null,
+    training_duration_minutes: form.training_duration_minutes ? Number(form.training_duration_minutes) : null,
+    training_intensity: form.training_intensity || null,
+    cardio_days_per_week: form.cardio_days_per_week ? Number(form.cardio_days_per_week) : null,
+    cardio_duration_minutes: form.cardio_duration_minutes ? Number(form.cardio_duration_minutes) : null,
+    cardio_intensity: form.cardio_intensity || null,
     bmr: form.bmr ? Number(form.bmr) : null,
     tdee: form.tdee ? Number(form.tdee) : null,
     daily_calories: form.daily_calories ? Number(form.daily_calories) : null,
@@ -332,7 +340,6 @@ const AdminStudents = () => {
 
   const openEdit = (s: any) => {
     setSelected(s);
-    // Load full profile data including new fields
     supabase.from("profiles").select("*").eq("user_id", s.user_id).single().then(({ data: p }) => {
       if (p) {
         setForm({
@@ -345,6 +352,12 @@ const AdminStudents = () => {
           current_protocol: p.current_protocol || "", comorbidities: p.comorbidities || "",
           additional_info: (p as any).additional_info || "",
           lab_exam_url: p.lab_exam_url || "", medical_prescription_url: p.medical_prescription_url || "",
+          training_days_per_week: (p as any).training_days_per_week?.toString() || "",
+          training_duration_minutes: (p as any).training_duration_minutes?.toString() || "",
+          training_intensity: (p as any).training_intensity || "",
+          cardio_days_per_week: (p as any).cardio_days_per_week?.toString() || "",
+          cardio_duration_minutes: (p as any).cardio_duration_minutes?.toString() || "",
+          cardio_intensity: (p as any).cardio_intensity || "",
           bmr: (p as any).bmr?.toString() || "",
           tdee: (p as any).tdee?.toString() || "",
           daily_calories: (p as any).daily_calories?.toString() || "",
@@ -444,7 +457,7 @@ const AdminStudents = () => {
           {/* Activity Type */}
           <div>
             <Label className="font-body">Atividade física *</Label>
-            <Select value={form.activity_type} onValueChange={(v) => setForm({ ...form, activity_type: v })}>
+            <Select value={form.activity_type} onValueChange={(v) => setForm({ ...form, activity_type: v, ...(v === "nenhuma" ? { training_days_per_week: "", training_duration_minutes: "", training_intensity: "" } : {}) })}>
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="musculacao">Musculação</SelectItem>
@@ -453,13 +466,48 @@ const AdminStudents = () => {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Conditional Training Details */}
+          {(form.activity_type === "musculacao" || form.activity_type === "crossfit") && (
+            <Card className="border-border/50 bg-muted/30">
+              <CardContent className="pt-4 space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Detalhes do treino</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="font-body text-xs">Dias por semana *</Label>
+                    <Select value={form.training_days_per_week} onValueChange={(v) => setForm({ ...form, training_days_per_week: v })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {[1,2,3,4,5,6,7].map(d => <SelectItem key={d} value={d.toString()}>{d}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="font-body text-xs">Duração (min) *</Label>
+                    <Input type="number" min="10" max="180" value={form.training_duration_minutes} onChange={(e) => setForm({ ...form, training_duration_minutes: e.target.value })} placeholder="60" />
+                  </div>
+                </div>
+                <div>
+                  <Label className="font-body text-xs">Intensidade *</Label>
+                  <Select value={form.training_intensity} onValueChange={(v) => setForm({ ...form, training_intensity: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      {trainingIntensityOptions.map(o => (
+                        <SelectItem key={o.value} value={o.value}>{o.label} — {o.desc}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           
           {/* Cardio */}
           <div>
             <Label className="font-body">Faz cardio? *</Label>
             <RadioGroup
               value={form.does_cardio}
-              onValueChange={(v) => setForm({ ...form, does_cardio: v })}
+              onValueChange={(v) => setForm({ ...form, does_cardio: v, ...(v === "nao" ? { cardio_days_per_week: "", cardio_duration_minutes: "", cardio_intensity: "" } : {}) })}
               className="flex gap-4 mt-1"
             >
               <div className="flex items-center space-x-2">
@@ -472,6 +520,41 @@ const AdminStudents = () => {
               </div>
             </RadioGroup>
           </div>
+
+          {/* Conditional Cardio Details */}
+          {form.does_cardio === "sim" && (
+            <Card className="border-border/50 bg-muted/30">
+              <CardContent className="pt-4 space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Detalhes do cardio</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="font-body text-xs">Dias por semana *</Label>
+                    <Select value={form.cardio_days_per_week} onValueChange={(v) => setForm({ ...form, cardio_days_per_week: v })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {[1,2,3,4,5,6,7].map(d => <SelectItem key={d} value={d.toString()}>{d}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="font-body text-xs">Duração (min) *</Label>
+                    <Input type="number" min="10" max="180" value={form.cardio_duration_minutes} onChange={(e) => setForm({ ...form, cardio_duration_minutes: e.target.value })} placeholder="30" />
+                  </div>
+                </div>
+                <div>
+                  <Label className="font-body text-xs">Intensidade *</Label>
+                  <Select value={form.cardio_intensity} onValueChange={(v) => setForm({ ...form, cardio_intensity: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      {cardioIntensityOptions.map(o => (
+                        <SelectItem key={o.value} value={o.value}>{o.label} — {o.desc}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Objective */}
           <div>
@@ -892,6 +975,28 @@ const AdminStudents = () => {
                     <div><span className="text-muted-foreground">Cardio:</span> <span className="font-medium">{(selectedFullProfile as any)?.does_cardio === true ? "Sim" : (selectedFullProfile as any)?.does_cardio === false ? "Não" : "—"}</span></div>
                     <div className="col-span-2"><span className="text-muted-foreground">Objetivo:</span> <span className="font-medium">{objectiveLabels[selected.objective] || selected.objective || "—"}</span></div>
                   </div>
+                  {/* Training details */}
+                  {((selectedFullProfile as any)?.activity_type === "musculacao" || (selectedFullProfile as any)?.activity_type === "crossfit") && (
+                    <div className="mt-3 p-3 rounded-lg bg-muted/30 border border-border/50">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Detalhes do treino</p>
+                      <div className="grid grid-cols-3 gap-2 text-sm">
+                        <div><span className="text-muted-foreground text-xs">Dias/sem:</span> <span className="font-medium">{(selectedFullProfile as any)?.training_days_per_week || "—"}</span></div>
+                        <div><span className="text-muted-foreground text-xs">Duração:</span> <span className="font-medium">{(selectedFullProfile as any)?.training_duration_minutes ? `${(selectedFullProfile as any).training_duration_minutes} min` : "—"}</span></div>
+                        <div><span className="text-muted-foreground text-xs">Intensidade:</span> <span className="font-medium">{trainingIntensityOptions.find(o => o.value === (selectedFullProfile as any)?.training_intensity)?.label || "—"}</span></div>
+                      </div>
+                    </div>
+                  )}
+                  {/* Cardio details */}
+                  {(selectedFullProfile as any)?.does_cardio === true && (
+                    <div className="mt-3 p-3 rounded-lg bg-muted/30 border border-border/50">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Detalhes do cardio</p>
+                      <div className="grid grid-cols-3 gap-2 text-sm">
+                        <div><span className="text-muted-foreground text-xs">Dias/sem:</span> <span className="font-medium">{(selectedFullProfile as any)?.cardio_days_per_week || "—"}</span></div>
+                        <div><span className="text-muted-foreground text-xs">Duração:</span> <span className="font-medium">{(selectedFullProfile as any)?.cardio_duration_minutes ? `${(selectedFullProfile as any).cardio_duration_minutes} min` : "—"}</span></div>
+                        <div><span className="text-muted-foreground text-xs">Intensidade:</span> <span className="font-medium">{cardioIntensityOptions.find(o => o.value === (selectedFullProfile as any)?.cardio_intensity)?.label || "—"}</span></div>
+                      </div>
+                    </div>
+                  )}
                 </section>
 
                 {/* Macros Section */}

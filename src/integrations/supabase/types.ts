@@ -633,6 +633,9 @@ export type Database = {
           birth_date: string | null
           bmr: number | null
           carbs_g: number | null
+          cardio_days_per_week: number | null
+          cardio_duration_minutes: number | null
+          cardio_intensity: string | null
           comorbidities: string | null
           created_at: string
           current_protocol: string | null
@@ -652,6 +655,9 @@ export type Database = {
           physical_activity: string | null
           protein_g: number | null
           tdee: number | null
+          training_days_per_week: number | null
+          training_duration_minutes: number | null
+          training_intensity: string | null
           updated_at: string
           user_id: string
           weight: number | null
@@ -663,6 +669,9 @@ export type Database = {
           birth_date?: string | null
           bmr?: number | null
           carbs_g?: number | null
+          cardio_days_per_week?: number | null
+          cardio_duration_minutes?: number | null
+          cardio_intensity?: string | null
           comorbidities?: string | null
           created_at?: string
           current_protocol?: string | null
@@ -682,6 +691,9 @@ export type Database = {
           physical_activity?: string | null
           protein_g?: number | null
           tdee?: number | null
+          training_days_per_week?: number | null
+          training_duration_minutes?: number | null
+          training_intensity?: string | null
           updated_at?: string
           user_id: string
           weight?: number | null
@@ -693,6 +705,9 @@ export type Database = {
           birth_date?: string | null
           bmr?: number | null
           carbs_g?: number | null
+          cardio_days_per_week?: number | null
+          cardio_duration_minutes?: number | null
+          cardio_intensity?: string | null
           comorbidities?: string | null
           created_at?: string
           current_protocol?: string | null
@@ -712,6 +727,9 @@ export type Database = {
           physical_activity?: string | null
           protein_g?: number | null
           tdee?: number | null
+          training_days_per_week?: number | null
+          training_duration_minutes?: number | null
+          training_intensity?: string | null
           updated_at?: string
           user_id?: string
           weight?: number | null
