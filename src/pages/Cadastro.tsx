@@ -364,12 +364,20 @@ const Cadastro = () => {
         <div className="flex items-center justify-center gap-1 sm:gap-2 mb-8">
           {steps.map(({ n, label }) => (
             <div key={n} className="flex items-center gap-1 sm:gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
-                step > n ? "bg-primary text-primary-foreground" : step === n ? "bg-primary text-primary-foreground ring-2 ring-primary/30 ring-offset-2 ring-offset-background" : "bg-muted text-muted-foreground"
-              }`}>
+              <button
+                type="button"
+                disabled={n > step}
+                onClick={() => { if (n <= step) setStep(n); }}
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
+                  step > n ? "bg-primary text-primary-foreground cursor-pointer hover:ring-2 hover:ring-primary/30 hover:ring-offset-2 hover:ring-offset-background" : step === n ? "bg-primary text-primary-foreground ring-2 ring-primary/30 ring-offset-2 ring-offset-background" : "bg-muted text-muted-foreground cursor-not-allowed"
+                }`}
+              >
                 {step > n ? <Check className="w-4 h-4" /> : n}
-              </div>
-              <span className={`text-xs sm:text-sm font-body hidden sm:inline ${step >= n ? "text-foreground" : "text-muted-foreground"}`}>{label}</span>
+              </button>
+              <span
+                onClick={() => { if (n <= step) setStep(n); }}
+                className={`text-xs sm:text-sm font-body hidden sm:inline ${step >= n ? "text-foreground cursor-pointer hover:underline" : "text-muted-foreground"}`}
+              >{label}</span>
               {n < 4 && <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />}
             </div>
           ))}
