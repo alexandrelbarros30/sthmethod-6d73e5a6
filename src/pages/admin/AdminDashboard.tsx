@@ -1,20 +1,22 @@
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, AlertCircle, Clock, UserPlus, Bell, CheckCircle, ExternalLink } from "lucide-react";
+import { Users, UserCheck, AlertCircle, Clock, Bell, CheckCircle, ExternalLink, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminReminders from "@/components/admin/AdminReminders";
+import { toast } from "sonner";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: profiles } = useQuery({
     queryKey: ["admin-profiles"],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("id, user_id, full_name, email, onboarding_complete, created_at").order("created_at", { ascending: false });
+      const { data } = await supabase.from("profiles").select("id, user_id, full_name, email, onboarding_complete, admin_confirmed, created_at").order("created_at", { ascending: false });
       return data || [];
     },
   });
@@ -120,45 +122,91 @@ const AdminDashboard = () => {
 
       <AdminReminders />
 
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="font-display">Alunos recentes</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {profiles?.slice(0, 10).map((p) => {
-              const createdAt = new Date(p.created_at);
-              const threeDaysAgo = new Date(Date.now() - 3 * 86400000);
-              const isRecent = createdAt > threeDaysAgo;
-              return (
+      <RecentStudents profiles={profiles} navigate={navigate} queryClient={queryClient} />
+    </DashboardLayout>
+  );
+};
+
+const RecentStudents = ({ profiles, navigate, queryClient }: { profiles: any[] | undefined; navigate: any; queryClient: any }) => {
+  const now = Date.now();
+  const recentProfiles = profiles?.filter((p) => {
+    const days = Math.floor((now - new Date(p.created_at).getTime()) / 86400000);
+    return days <= 3 && !p.admin_confirmed;
+  }) || [];
+
+  const confirmMutation = useMutation({
+    mutationFn: async (profileId: string) => {
+      const { error } = await supabase.from("profiles").update({ admin_confirmed: true }).eq("id", profileId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
+      toast.success("Aluno confirmado!");
+    },
+  });
+
+  const getDayColor = (createdAt: string) => {
+    const days = Math.floor((now - new Date(createdAt).getTime()) / 86400000);
+    if (days <= 0) return { bg: "bg-green-100", text: "text-green-700", border: "border-green-300", label: "Hoje" };
+    if (days === 1) return { bg: "bg-green-100", text: "text-green-700", border: "border-green-300", label: "1 dia" };
+    if (days === 2) return { bg: "bg-yellow-100", text: "text-yellow-700", border: "border-yellow-300", label: "2 dias" };
+    return { bg: "bg-red-100", text: "text-red-700", border: "border-red-300", label: "3 dias" };
+  };
+
+  if (recentProfiles.length === 0) return null;
+
+  return (
+    <Card className="mt-6">
+      <CardHeader>
+        <CardTitle className="font-display flex items-center gap-2">
+          Alunos recentes
+          <Badge variant="default" className="ml-2">{recentProfiles.length}</Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {recentProfiles.map((p) => {
+            const color = getDayColor(p.created_at);
+            return (
               <div key={p.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
                 <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center ${isRecent ? "bg-success/20" : "bg-primary/10"}`}>
-                    <span className={`text-xs font-bold ${isRecent ? "text-success" : "text-primary"}`}>
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center ${color.bg}`}>
+                    <span className={`text-xs font-bold ${color.text}`}>
                       {p.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "?"}
                     </span>
                   </div>
                   <div>
-                    <p className={`text-sm font-medium font-body ${isRecent ? "text-success" : "text-foreground"}`}>{p.full_name || "Sem nome"}</p>
+                    <p className={`text-sm font-medium font-body ${color.text}`}>{p.full_name || "Sem nome"}</p>
                     <p className="text-xs text-muted-foreground font-body">{p.email}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {isRecent && <Badge variant="outline" className="text-xs border-success/30 text-success">Novo</Badge>}
-                  <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => navigate(`/admin/students?edit=${p.user_id}`)}>
+                  <Badge variant="outline" className={`text-xs ${color.border} ${color.text}`}>{color.label}</Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2"
+                    onClick={() => navigate(`/admin/students?edit=${p.user_id}`)}
+                  >
                     <ExternalLink className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2 text-green-600 border-green-300 hover:bg-green-50"
+                    onClick={() => confirmMutation.mutate(p.id)}
+                    disabled={confirmMutation.isPending}
+                    title="Confirmar registro"
+                  >
+                    <Check className="w-3.5 h-3.5" />
                   </Button>
                 </div>
               </div>
-              );
-            })}
-            {(!profiles || profiles.length === 0) && (
-              <p className="text-sm text-muted-foreground font-body">Nenhum aluno cadastrado ainda.</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </DashboardLayout>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
