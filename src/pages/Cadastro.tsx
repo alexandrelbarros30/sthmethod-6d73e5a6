@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Slider } from "@/components/ui/slider";
 import {
   ArrowLeft, ArrowRight, Check, Mail, Lock, User, Phone, Loader2,
   QrCode, CreditCard, ExternalLink, Copy, CheckCircle2, CheckCircle, Calculator,
@@ -18,6 +19,10 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
+import {
+  objectiveLabels, activityLabels,
+  trainingIntensityOptions, cardioIntensityOptions,
+} from "@/lib/form-constants";
 
 const phoneMask = (v: string) => {
   const d = v.replace(/\D/g, "").slice(0, 11);
@@ -32,18 +37,6 @@ const steps = [
   { n: 3, label: "Fotos" },
   { n: 4, label: "Plano" },
 ];
-
-const objectiveLabels: Record<string, string> = {
-  perder_gordura: "Perder gordura",
-  hipertrofia: "Hipertrofia",
-  manter_peso: "Manter peso",
-};
-
-const activityLabels: Record<string, string> = {
-  musculacao: "Musculação",
-  crossfit: "CrossFit",
-  nenhuma: "Nenhuma",
-};
 
 const Cadastro = () => {
   const navigate = useNavigate();
@@ -66,6 +59,8 @@ const Cadastro = () => {
     birth_date: "", height: "", weight: "",
     gender: "", activity_type: "", does_cardio: "",
     objective: "", current_protocol: "", comorbidities: "", additional_info: "",
+    training_days_per_week: "", training_duration_minutes: "", training_intensity: "",
+    cardio_days_per_week: "", cardio_duration_minutes: "", cardio_intensity: "",
   });
 
   // Step 3 - Body images
@@ -73,6 +68,25 @@ const Cadastro = () => {
 
   // Auto-calculate age
   const age = profileForm.birth_date ? calculateAge(profileForm.birth_date) : null;
+
+  // Reset conditional fields when activity/cardio changes
+  useEffect(() => {
+    if (profileForm.activity_type === "nenhuma") {
+      setProfileForm(prev => ({
+        ...prev,
+        training_days_per_week: "", training_duration_minutes: "", training_intensity: "",
+      }));
+    }
+  }, [profileForm.activity_type]);
+
+  useEffect(() => {
+    if (profileForm.does_cardio === "nao") {
+      setProfileForm(prev => ({
+        ...prev,
+        cardio_days_per_week: "", cardio_duration_minutes: "", cardio_intensity: "",
+      }));
+    }
+  }, [profileForm.does_cardio]);
 
   // Auto-calculate macros when all required fields are filled
   useEffect(() => {
@@ -88,6 +102,12 @@ const Cadastro = () => {
           activityType: activity_type,
           doesCardio: does_cardio === "sim",
           objective,
+          trainingDaysPerWeek: profileForm.training_days_per_week ? Number(profileForm.training_days_per_week) : undefined,
+          trainingDurationMinutes: profileForm.training_duration_minutes ? Number(profileForm.training_duration_minutes) : undefined,
+          trainingIntensity: profileForm.training_intensity || undefined,
+          cardioDaysPerWeek: profileForm.cardio_days_per_week ? Number(profileForm.cardio_days_per_week) : undefined,
+          cardioDurationMinutes: profileForm.cardio_duration_minutes ? Number(profileForm.cardio_duration_minutes) : undefined,
+          cardioIntensity: profileForm.cardio_intensity || undefined,
         });
         setMacroResult(result);
       }
@@ -116,6 +136,12 @@ const Cadastro = () => {
               current_protocol: p.current_protocol || "",
               comorbidities: p.comorbidities || "",
               additional_info: (p as any).additional_info || "",
+              training_days_per_week: (p as any).training_days_per_week?.toString() || "",
+              training_duration_minutes: (p as any).training_duration_minutes?.toString() || "",
+              training_intensity: (p as any).training_intensity || "",
+              cardio_days_per_week: (p as any).cardio_days_per_week?.toString() || "",
+              cardio_duration_minutes: (p as any).cardio_duration_minutes?.toString() || "",
+              cardio_intensity: (p as any).cardio_intensity || "",
             });
             const profileDone = p.full_name && p.phone && p.height && p.weight && (p as any).gender && (p as any).activity_type && p.objective && p.current_protocol && p.comorbidities;
             if (p.onboarding_complete) {
@@ -232,7 +258,19 @@ const Cadastro = () => {
     if (!height || Number(height) <= 0) { toast.error("Altura é obrigatória"); return; }
     if (!weight || Number(weight) <= 0) { toast.error("Peso é obrigatório"); return; }
     if (!activity_type) { toast.error("Selecione o tipo de atividade física"); return; }
+    // Validate training details if applicable
+    if (activity_type !== "nenhuma") {
+      if (!profileForm.training_days_per_week) { toast.error("Informe os dias de treino por semana"); return; }
+      if (!profileForm.training_duration_minutes) { toast.error("Informe a duração do treino"); return; }
+      if (!profileForm.training_intensity) { toast.error("Selecione a intensidade do treino"); return; }
+    }
     if (does_cardio === "") { toast.error("Informe se faz cardio"); return; }
+    // Validate cardio details if applicable
+    if (does_cardio === "sim") {
+      if (!profileForm.cardio_days_per_week) { toast.error("Informe os dias de cardio por semana"); return; }
+      if (!profileForm.cardio_duration_minutes) { toast.error("Informe a duração do cardio"); return; }
+      if (!profileForm.cardio_intensity) { toast.error("Selecione a intensidade do cardio"); return; }
+    }
     if (!objective) { toast.error("Selecione o objetivo"); return; }
     if (!current_protocol.trim()) { toast.error("Protocolo atual é obrigatório"); return; }
     if (!comorbidities.trim()) { toast.error("Comorbidades é obrigatório"); return; }
@@ -251,6 +289,12 @@ const Cadastro = () => {
         current_protocol,
         comorbidities,
         additional_info: profileForm.additional_info,
+        training_days_per_week: profileForm.training_days_per_week ? Number(profileForm.training_days_per_week) : null,
+        training_duration_minutes: profileForm.training_duration_minutes ? Number(profileForm.training_duration_minutes) : null,
+        training_intensity: profileForm.training_intensity || null,
+        cardio_days_per_week: profileForm.cardio_days_per_week ? Number(profileForm.cardio_days_per_week) : null,
+        cardio_duration_minutes: profileForm.cardio_duration_minutes ? Number(profileForm.cardio_duration_minutes) : null,
+        cardio_intensity: profileForm.cardio_intensity || null,
       };
 
       // Save macro results
@@ -288,6 +332,9 @@ const Cadastro = () => {
     toast.success("Pagamento registrado! Seu acesso será liberado após confirmação.");
     setTimeout(() => navigate("/login"), 2000);
   };
+
+  const showTrainingDetails = profileForm.activity_type === "musculacao" || profileForm.activity_type === "crossfit";
+  const showCardioDetails = profileForm.does_cardio === "sim";
 
   return (
     <div className="min-h-screen bg-background">
@@ -433,6 +480,50 @@ const Cadastro = () => {
                 </Select>
               </div>
 
+              {/* Conditional Training Details */}
+              {showTrainingDetails && (
+                <Card className="border-border/50 bg-muted/30">
+                  <CardContent className="pt-4 space-y-3">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Detalhes do treino de {activityLabels[profileForm.activity_type]}</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="font-body text-xs">Dias por semana *</Label>
+                        <Select value={profileForm.training_days_per_week} onValueChange={(v) => setProfileForm({ ...profileForm, training_days_per_week: v })}>
+                          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectContent>
+                            {[1,2,3,4,5,6,7].map(d => <SelectItem key={d} value={d.toString()}>{d} {d === 1 ? "dia" : "dias"}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="font-body text-xs">Duração por treino (min) *</Label>
+                        <Input
+                          type="number"
+                          min="10"
+                          max="180"
+                          value={profileForm.training_duration_minutes}
+                          onChange={(e) => setProfileForm({ ...profileForm, training_duration_minutes: e.target.value })}
+                          placeholder="Ex: 60"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="font-body text-xs">Intensidade dos treinos *</Label>
+                      <Select value={profileForm.training_intensity} onValueChange={(v) => setProfileForm({ ...profileForm, training_intensity: v })}>
+                        <SelectTrigger><SelectValue placeholder="Selecione a intensidade" /></SelectTrigger>
+                        <SelectContent>
+                          {trainingIntensityOptions.map(o => (
+                            <SelectItem key={o.value} value={o.value}>
+                              {o.label} — {o.desc}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Cardio */}
               <div>
                 <Label className="font-body">Faz cardio (aeróbico)? *</Label>
@@ -451,6 +542,50 @@ const Cadastro = () => {
                   </div>
                 </RadioGroup>
               </div>
+
+              {/* Conditional Cardio Details */}
+              {showCardioDetails && (
+                <Card className="border-border/50 bg-muted/30">
+                  <CardContent className="pt-4 space-y-3">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Detalhes do cardio</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="font-body text-xs">Dias por semana *</Label>
+                        <Select value={profileForm.cardio_days_per_week} onValueChange={(v) => setProfileForm({ ...profileForm, cardio_days_per_week: v })}>
+                          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectContent>
+                            {[1,2,3,4,5,6,7].map(d => <SelectItem key={d} value={d.toString()}>{d} {d === 1 ? "dia" : "dias"}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="font-body text-xs">Duração por sessão (min) *</Label>
+                        <Input
+                          type="number"
+                          min="10"
+                          max="180"
+                          value={profileForm.cardio_duration_minutes}
+                          onChange={(e) => setProfileForm({ ...profileForm, cardio_duration_minutes: e.target.value })}
+                          placeholder="Ex: 30"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="font-body text-xs">Intensidade do cardio *</Label>
+                      <Select value={profileForm.cardio_intensity} onValueChange={(v) => setProfileForm({ ...profileForm, cardio_intensity: v })}>
+                        <SelectTrigger><SelectValue placeholder="Selecione a intensidade" /></SelectTrigger>
+                        <SelectContent>
+                          {cardioIntensityOptions.map(o => (
+                            <SelectItem key={o.value} value={o.value}>
+                              {o.label} — {o.desc}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Objective */}
               <div>
