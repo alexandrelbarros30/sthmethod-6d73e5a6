@@ -15,6 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Pencil, Trash2, CreditCard, Eye, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock } from "lucide-react";
+import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -78,12 +79,13 @@ const AdminStudents = () => {
     queryFn: async () => {
       const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, email, phone, birth_date, height, weight, physical_activity, objective, current_protocol, comorbidities, lab_exam_url, medical_prescription_url, avatar_url, onboarding_complete");
       if (!profiles) return [];
-      const { data: subs } = await supabase.from("subscriptions").select("*, plans(name)");
+      const { data: subs } = await supabase.from("subscriptions").select("*, plans(name, duration_days)");
       return profiles.map((p: any) => {
         const sub = subs?.find((s: any) => s.user_id === p.user_id);
         return {
           ...p,
           plan: (sub as any)?.plans?.name || "—",
+          planDurationDays: (sub as any)?.plans?.duration_days || null,
           subscription: sub || null,
           startDate: sub?.start_date || null,
           endDate: sub?.end_date || null,
@@ -997,7 +999,15 @@ const AdminStudents = () => {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="font-body text-sm">{s.plan}</TableCell>
+                    <TableCell className="font-body text-sm">
+                      {s.plan !== "—" ? (
+                        <Badge variant="outline" className={`text-xs font-medium ${getPlanTierClasses(getPlanTier(s.planDurationDays)).badge}`}>
+                          {s.plan}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                     <TableCell className="font-body text-sm">{s.startDate ? new Date(s.startDate).toLocaleDateString("pt-BR") : "—"}</TableCell>
                     <TableCell className="font-body text-sm">{s.endDate ? new Date(s.endDate).toLocaleDateString("pt-BR") : "—"}</TableCell>
                     <TableCell>

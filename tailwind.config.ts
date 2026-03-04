@@ -75,6 +75,9 @@ export default {
           DEFAULT: "hsl(var(--info))",
           foreground: "hsl(var(--info-foreground))",
         },
+        "plan-entry": "hsl(var(--plan-entry))",
+        "plan-mid": "hsl(var(--plan-mid))",
+        "plan-premium": "hsl(var(--plan-premium))",
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -17,6 +17,7 @@ import {
   physicalActivityLevelOptions,
 } from "@/lib/form-constants";
 import StudentProfileForm, { profileFromDb, getPendingFields, type ProfileFormData } from "@/components/student/StudentProfileForm";
+import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
 
 const modules = [
   { to: "/dashboard/diet", icon: Salad, title: "Dieta", desc: "Plano alimentar", color: "text-success" },
@@ -43,7 +44,7 @@ const StudentOverview = () => {
   const { data: subscription } = useQuery({
     queryKey: ["subscription", user?.id],
     queryFn: async () => {
-      const { data } = await supabase.from("subscriptions").select("*, plans(*)").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(1).single();
+      const { data } = await supabase.from("subscriptions").select("*, plans(*, duration_days)").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(1).single();
       return data;
     },
     enabled: !!user?.id,
@@ -93,6 +94,8 @@ const StudentOverview = () => {
   const isActive = subscription?.status === "active" && new Date(subscription.end_date) > new Date();
   const daysLeft = subscription ? Math.max(0, Math.ceil((new Date(subscription.end_date).getTime() - Date.now()) / 86400000)) : 0;
   const firstName = profile?.full_name?.split(" ")[0] || "Aluno";
+  const planDurationDays = (subscription as any)?.plans?.duration_days || null;
+  const tierClasses = getPlanTierClasses(getPlanTier(planDurationDays));
 
   const showEditableForm = !isOnboarded || editing;
 
@@ -171,10 +174,10 @@ const StudentOverview = () => {
 
       {/* Status card (subscription) */}
       {subscription ? (
-        <Card className={`mb-6 ${isActive ? "border-primary/20 bg-primary/5" : "border-destructive/20 bg-destructive/5"}`}>
+        <Card className={`mb-6 ${isActive ? `${tierClasses.border} ${tierClasses.bg} ${tierClasses.glow}` : "border-destructive/20 bg-destructive/5"}`}>
           <CardContent className="flex items-center justify-between py-4">
             <div className="flex items-center gap-3">
-              {isActive ? <CheckCircle className="w-5 h-5 text-primary" /> : <AlertCircle className="w-5 h-5 text-destructive" />}
+              {isActive ? <CheckCircle className={`w-5 h-5 ${tierClasses.text}`} /> : <AlertCircle className="w-5 h-5 text-destructive" />}
               <div>
                 <p className="font-semibold text-foreground font-body">{isActive ? "Assinatura ativa" : "Assinatura vencida"}</p>
                 <p className="text-sm text-muted-foreground font-body">
@@ -182,11 +185,18 @@ const StudentOverview = () => {
                 </p>
               </div>
             </div>
-            {isActive && (
-              <Badge variant="outline" className="border-primary text-primary">
-                <CalendarDays className="w-3 h-3 mr-1" /> {daysLeft} dias restantes
-              </Badge>
-            )}
+            <div className="flex items-center gap-2">
+              {isActive && (subscription as any)?.plans?.name && (
+                <Badge variant="outline" className={`${tierClasses.badge} font-medium`}>
+                  {(subscription as any)?.plans?.name}
+                </Badge>
+              )}
+              {isActive && (
+                <Badge variant="outline" className={`${tierClasses.border} ${tierClasses.text}`}>
+                  <CalendarDays className="w-3 h-3 mr-1" /> {daysLeft} dias
+                </Badge>
+              )}
+            </div>
           </CardContent>
         </Card>
       ) : (
