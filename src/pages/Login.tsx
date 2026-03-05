@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,8 @@ import { toast } from "sonner";
 
 const Login = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -50,7 +52,7 @@ const Login = () => {
             .eq("user_id", user.id)
             .single();
 
-          navigate(roleData?.role === "admin" ? "/admin" : "/dashboard");
+          navigate(redirectTo || (roleData?.role === "admin" ? "/admin" : "/dashboard"));
         }
       }
     } catch (error: any) {

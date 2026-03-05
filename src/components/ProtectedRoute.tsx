@@ -24,7 +24,11 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
   }
 
   if (!session) {
-    return <Navigate to="/login" replace />;
+    const currentPath = window.location.pathname + window.location.search;
+    const loginUrl = currentPath !== "/dashboard" && currentPath !== "/admin"
+      ? `/login?redirect=${encodeURIComponent(currentPath)}`
+      : "/login";
+    return <Navigate to={loginUrl} replace />;
   }
 
   if (requiredRole && role !== requiredRole) {
