@@ -241,7 +241,21 @@ const Cadastro = () => {
       if (error) throw error;
       if (data.user) {
         setUserId(data.user.id);
-        await supabase.from("profiles").update({ phone: phoneVal }).eq("user_id", data.user.id);
+        // Wait for handle_new_user trigger to create profile, then save phone
+        let retries = 0;
+        const savePhone = async () => {
+          const { data: updated, error: phoneErr } = await supabase
+            .from("profiles")
+            .update({ phone: phoneVal, full_name: fullName })
+            .eq("user_id", data.user!.id)
+            .select("id");
+          if ((!updated || updated.length === 0) && retries < 5) {
+            retries++;
+            await new Promise(r => setTimeout(r, 500));
+            return savePhone();
+          }
+        };
+        await savePhone();
         toast.success("Conta criada! Vamos ao próximo passo.");
         setStep(2);
       }
@@ -285,6 +299,7 @@ const Cadastro = () => {
     setLoading(true);
     try {
       const updateData: any = {
+        phone: phoneVal || undefined,
         birth_date: birth_date || null,
         height: Number(height),
         weight: Number(weight),
