@@ -1,38 +1,67 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, X } from "lucide-react";
+import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 
+type AppRole = "student" | "admin" | "consultor" | "assistente" | "financeiro";
+
 interface SidebarProps {
-  role: "student" | "admin";
+  role: AppRole;
 }
 
-const studentLinks = [
-  { to: "/dashboard", icon: LayoutDashboard, label: "Visão Geral" },
-  { to: "/dashboard/diet", icon: Salad, label: "Dieta" },
-  { to: "/dashboard/training", icon: Dumbbell, label: "Treino" },
-  { to: "/dashboard/protocol", icon: FlaskConical, label: "Protocolo" },
-  { to: "/dashboard/content", icon: BookOpen, label: "Conteúdo" },
-  { to: "/dashboard/subscription", icon: CreditCard, label: "Assinatura" },
-];
+const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> = {
+  student: [
+    { to: "/dashboard", icon: LayoutDashboard, label: "Visão Geral" },
+    { to: "/dashboard/diet", icon: Salad, label: "Dieta" },
+    { to: "/dashboard/training", icon: Dumbbell, label: "Treino" },
+    { to: "/dashboard/protocol", icon: FlaskConical, label: "Protocolo" },
+    { to: "/dashboard/content", icon: BookOpen, label: "Conteúdo" },
+    { to: "/dashboard/subscription", icon: CreditCard, label: "Assinatura" },
+  ],
+  admin: [
+    { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
+    { to: "/admin/students", icon: User, label: "Alunos" },
+    { to: "/admin/plans", icon: CreditCard, label: "Planos" },
+    { to: "/admin/payments", icon: Wallet, label: "Pagamentos" },
+    { to: "/admin/diet", icon: Salad, label: "Dietas" },
+    { to: "/admin/training", icon: Dumbbell, label: "Treinos" },
+    { to: "/admin/protocol", icon: FlaskConical, label: "Protocolos" },
+    { to: "/admin/messages", icon: MessageSquare, label: "Mensagens" },
+    { to: "/admin/content", icon: Palette, label: "Personalização" },
+    { to: "/admin/layout", icon: PanelTop, label: "Layout Externo" },
+  ],
+  consultor: [
+    { to: "/consultor", icon: LayoutDashboard, label: "Dashboard" },
+    { to: "/consultor/students", icon: Users, label: "Meus Alunos" },
+    { to: "/consultor/diet", icon: Salad, label: "Dietas" },
+    { to: "/consultor/training", icon: Dumbbell, label: "Treinos" },
+    { to: "/consultor/protocol", icon: FlaskConical, label: "Protocolos" },
+  ],
+  assistente: [
+    { to: "/assistente", icon: LayoutDashboard, label: "Dashboard" },
+    { to: "/assistente/students", icon: Users, label: "Alunos" },
+    { to: "/assistente/register", icon: ClipboardList, label: "Cadastrar Aluno" },
+  ],
+  financeiro: [
+    { to: "/financeiro", icon: LayoutDashboard, label: "Dashboard" },
+    { to: "/financeiro/payments", icon: Wallet, label: "Pagamentos" },
+    { to: "/financeiro/plans", icon: CreditCard, label: "Planos" },
+    { to: "/financeiro/revenue", icon: TrendingUp, label: "Receita" },
+  ],
+};
 
-const adminLinks = [
-  { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/admin/students", icon: User, label: "Alunos" },
-  { to: "/admin/plans", icon: CreditCard, label: "Planos" },
-  { to: "/admin/payments", icon: Wallet, label: "Pagamentos" },
-  { to: "/admin/diet", icon: Salad, label: "Dietas" },
-  { to: "/admin/training", icon: Dumbbell, label: "Treinos" },
-  { to: "/admin/protocol", icon: FlaskConical, label: "Protocolos" },
-  { to: "/admin/messages", icon: MessageSquare, label: "Mensagens" },
-  { to: "/admin/content", icon: Palette, label: "Personalização" },
-  { to: "/admin/layout", icon: PanelTop, label: "Layout Externo" },
-];
+const roleLabelMap: Record<AppRole, string> = {
+  admin: "Painel Administrativo",
+  consultor: "Painel do Consultor",
+  assistente: "Painel do Assistente",
+  financeiro: "Painel Financeiro",
+  student: "Área do Aluno",
+};
 
-const SidebarContent = ({ role, links, onNavClick }: { role: string; links: typeof studentLinks; onNavClick?: () => void }) => {
+const SidebarContent = ({ role, links, onNavClick }: { role: string; links: { to: string; icon: any; label: string }[]; onNavClick?: () => void }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile } = useAuth();
@@ -44,7 +73,6 @@ const SidebarContent = ({ role, links, onNavClick }: { role: string; links: type
 
   return (
     <>
-      {/* Logo */}
       <div className="p-6 border-b border-sidebar-border">
         <Link to="/" className="flex items-center gap-2" onClick={onNavClick}>
           <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
@@ -53,7 +81,7 @@ const SidebarContent = ({ role, links, onNavClick }: { role: string; links: type
           <span className="font-display text-xl font-bold text-sidebar-foreground">ST&H</span>
         </Link>
         <p className="text-xs text-sidebar-foreground/50 mt-1 font-body">
-          {role === "admin" ? "Painel Administrativo" : "Área do Aluno"}
+          {roleLabelMap[role as AppRole] || "Painel"}
         </p>
         {profile?.full_name && (
           <p className="text-xs text-sidebar-foreground/70 mt-1 font-body truncate">
@@ -62,7 +90,6 @@ const SidebarContent = ({ role, links, onNavClick }: { role: string; links: type
         )}
       </div>
 
-      {/* Links */}
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {links.map((link) => {
           const isActive = location.pathname === link.to;
@@ -85,7 +112,6 @@ const SidebarContent = ({ role, links, onNavClick }: { role: string; links: type
         })}
       </nav>
 
-      {/* Logout */}
       <div className="p-4 border-t border-sidebar-border">
         <button
           onClick={handleLogout}
@@ -101,13 +127,12 @@ const SidebarContent = ({ role, links, onNavClick }: { role: string; links: type
 
 const DashboardSidebar = ({ role }: SidebarProps) => {
   const isMobile = useIsMobile();
-  const links = role === "admin" ? adminLinks : studentLinks;
+  const links = linksByRole[role] || linksByRole.student;
   const [open, setOpen] = useState(false);
 
   if (isMobile) {
     return (
       <>
-        {/* Mobile top bar */}
         <div className="fixed top-0 left-0 right-0 h-14 bg-sidebar border-b border-sidebar-border z-50 flex items-center px-4 gap-3">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>

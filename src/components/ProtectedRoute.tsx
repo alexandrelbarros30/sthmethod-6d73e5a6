@@ -4,11 +4,24 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface ProtectedRouteProps {
   children: ReactNode;
+  allowedRoles?: Array<"admin" | "consultor" | "assistente" | "financeiro" | "student">;
+  /** @deprecated use allowedRoles */
   requiredRole?: "admin" | "student";
 }
 
-const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
+const roleHomeMap: Record<string, string> = {
+  admin: "/admin",
+  consultor: "/consultor",
+  assistente: "/assistente",
+  financeiro: "/financeiro",
+  student: "/dashboard",
+};
+
+const ProtectedRoute = ({ children, allowedRoles, requiredRole }: ProtectedRouteProps) => {
   const { session, role, loading } = useAuth();
+
+  // Backwards compat: convert requiredRole to allowedRoles
+  const roles = allowedRoles ?? (requiredRole ? [requiredRole] : undefined);
 
   if (loading) {
     return (
@@ -31,9 +44,8 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
     return <Navigate to={loginUrl} replace />;
   }
 
-  if (requiredRole && role !== requiredRole) {
-    // Redirect to the correct dashboard
-    return <Navigate to={role === "admin" ? "/admin" : "/dashboard"} replace />;
+  if (roles && role && !roles.includes(role)) {
+    return <Navigate to={roleHomeMap[role] || "/dashboard"} replace />;
   }
 
   return <>{children}</>;
