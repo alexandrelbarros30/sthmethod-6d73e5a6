@@ -14,9 +14,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-type StaffRole = "consultor" | "assistente" | "financeiro";
+type StaffRole = "admin" | "consultor" | "assistente" | "financeiro";
 
 const staffRoleConfig: Record<StaffRole, { label: string; color: string; icon: typeof Shield; desc: string }> = {
+  admin: { label: "Admin", color: "bg-red-500/10 text-red-500 border-red-500/20", icon: ShieldCheck, desc: "Acesso total ao sistema" },
   consultor: { label: "Consultor", color: "bg-blue-500/10 text-blue-500 border-blue-500/20", icon: ShieldCheck, desc: "Gerencia dieta/treino dos alunos vinculados" },
   assistente: { label: "Assistente", color: "bg-amber-500/10 text-amber-500 border-amber-500/20", icon: UserCog, desc: "Cadastro de alunos e suporte" },
   financeiro: { label: "Financeiro", color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20", icon: Shield, desc: "Gestão de pagamentos e planos" },
@@ -34,7 +35,7 @@ const AdminStaff = () => {
   const [form, setForm] = useState({ ...emptyForm });
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
-  const staffRoles: StaffRole[] = ["consultor", "assistente", "financeiro"];
+  const staffRoles: StaffRole[] = ["admin", "consultor", "assistente", "financeiro"];
 
   const { data: staffUsers, isLoading } = useQuery({
     queryKey: ["admin-staff-list"],
@@ -199,7 +200,7 @@ const AdminStaff = () => {
     <DashboardLayout role="admin" title="Equipe" subtitle="Gerencie consultores, assistentes e financeiros">
       <div className="space-y-6">
         {/* Role summary cards */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {staffRoles.map((role) => {
             const config = staffRoleConfig[role];
             const Icon = config.icon;
