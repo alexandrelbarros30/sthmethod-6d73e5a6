@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 interface DashboardLayoutProps {
   children: ReactNode;
-  role: "student" | "admin";
+  role: "student" | "admin" | "consultor" | "assistente" | "financeiro";
   title: string;
   subtitle?: string;
 }

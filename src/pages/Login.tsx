@@ -52,7 +52,15 @@ const Login = () => {
             .eq("user_id", user.id)
             .single();
 
-          navigate(redirectTo || (roleData?.role === "admin" ? "/admin" : "/dashboard"));
+          const roleHomeMap: Record<string, string> = {
+            admin: "/admin",
+            consultor: "/consultor",
+            assistente: "/assistente",
+            financeiro: "/financeiro",
+            student: "/dashboard",
+          };
+          const role = roleData?.role || "student";
+          navigate(redirectTo || roleHomeMap[role] || "/dashboard");
         }
       }
     } catch (error: any) {

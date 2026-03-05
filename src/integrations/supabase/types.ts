@@ -101,6 +101,27 @@ export type Database = {
         }
         Relationships: []
       }
+      consultant_students: {
+        Row: {
+          consultant_id: string
+          created_at: string
+          id: string
+          student_id: string
+        }
+        Insert: {
+          consultant_id: string
+          created_at?: string
+          id?: string
+          student_id: string
+        }
+        Update: {
+          consultant_id?: string
+          created_at?: string
+          id?: string
+          student_id?: string
+        }
+        Relationships: []
+      }
       content: {
         Row: {
           body: string | null
@@ -1037,9 +1058,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_consultant_of: {
+        Args: { _consultant_id: string; _student_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      app_role: "admin" | "student"
+      app_role: "admin" | "student" | "consultor" | "assistente" | "financeiro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1167,7 +1192,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "student"],
+      app_role: ["admin", "student", "consultor", "assistente", "financeiro"],
     },
   },
 } as const

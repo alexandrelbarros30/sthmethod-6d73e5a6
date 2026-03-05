@@ -25,6 +25,9 @@ import AdminTraining from "./pages/admin/AdminTraining";
 import AdminContent from "./pages/admin/AdminContent";
 import AdminLayoutExterno from "./pages/admin/AdminLayoutExterno";
 import AdminMessages from "./pages/admin/AdminMessages";
+import ConsultorDashboard from "./pages/consultor/ConsultorDashboard";
+import AssistenteDashboard from "./pages/assistente/AssistenteDashboard";
+import FinanceiroDashboard from "./pages/financeiro/FinanceiroDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,24 +44,39 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/cadastro" element={<Cadastro />} />
             {/* Student routes */}
-            <Route path="/dashboard" element={<ProtectedRoute requiredRole="student"><StudentOverview /></ProtectedRoute>} />
-            <Route path="/dashboard/diet" element={<ProtectedRoute requiredRole="student"><StudentDiet /></ProtectedRoute>} />
-            <Route path="/dashboard/training" element={<ProtectedRoute requiredRole="student"><StudentTraining /></ProtectedRoute>} />
-            <Route path="/dashboard/protocol" element={<ProtectedRoute requiredRole="student"><StudentProtocol /></ProtectedRoute>} />
-            <Route path="/dashboard/content" element={<ProtectedRoute requiredRole="student"><StudentContent /></ProtectedRoute>} />
-            <Route path="/dashboard/subscription" element={<ProtectedRoute requiredRole="student"><StudentSubscription /></ProtectedRoute>} />
-            <Route path="/dashboard/renew" element={<ProtectedRoute requiredRole="student"><StudentRenew /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["student"]}><StudentOverview /></ProtectedRoute>} />
+            <Route path="/dashboard/diet" element={<ProtectedRoute allowedRoles={["student"]}><StudentDiet /></ProtectedRoute>} />
+            <Route path="/dashboard/training" element={<ProtectedRoute allowedRoles={["student"]}><StudentTraining /></ProtectedRoute>} />
+            <Route path="/dashboard/protocol" element={<ProtectedRoute allowedRoles={["student"]}><StudentProtocol /></ProtectedRoute>} />
+            <Route path="/dashboard/content" element={<ProtectedRoute allowedRoles={["student"]}><StudentContent /></ProtectedRoute>} />
+            <Route path="/dashboard/subscription" element={<ProtectedRoute allowedRoles={["student"]}><StudentSubscription /></ProtectedRoute>} />
+            <Route path="/dashboard/renew" element={<ProtectedRoute allowedRoles={["student"]}><StudentRenew /></ProtectedRoute>} />
             {/* Admin routes */}
-            <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/admin/students" element={<ProtectedRoute requiredRole="admin"><AdminStudents /></ProtectedRoute>} />
-            <Route path="/admin/plans" element={<ProtectedRoute requiredRole="admin"><AdminPlans /></ProtectedRoute>} />
-            <Route path="/admin/payments" element={<ProtectedRoute requiredRole="admin"><AdminPayments /></ProtectedRoute>} />
-            <Route path="/admin/diet" element={<ProtectedRoute requiredRole="admin"><AdminDiet /></ProtectedRoute>} />
-            <Route path="/admin/protocol" element={<ProtectedRoute requiredRole="admin"><AdminProtocol /></ProtectedRoute>} />
-            <Route path="/admin/training" element={<ProtectedRoute requiredRole="admin"><AdminTraining /></ProtectedRoute>} />
-            <Route path="/admin/content" element={<ProtectedRoute requiredRole="admin"><AdminContent /></ProtectedRoute>} />
-            <Route path="/admin/messages" element={<ProtectedRoute requiredRole="admin"><AdminMessages /></ProtectedRoute>} />
-            <Route path="/admin/layout" element={<ProtectedRoute requiredRole="admin"><AdminLayoutExterno /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/students" element={<ProtectedRoute allowedRoles={["admin"]}><AdminStudents /></ProtectedRoute>} />
+            <Route path="/admin/plans" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPlans /></ProtectedRoute>} />
+            <Route path="/admin/payments" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPayments /></ProtectedRoute>} />
+            <Route path="/admin/diet" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDiet /></ProtectedRoute>} />
+            <Route path="/admin/protocol" element={<ProtectedRoute allowedRoles={["admin"]}><AdminProtocol /></ProtectedRoute>} />
+            <Route path="/admin/training" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTraining /></ProtectedRoute>} />
+            <Route path="/admin/content" element={<ProtectedRoute allowedRoles={["admin"]}><AdminContent /></ProtectedRoute>} />
+            <Route path="/admin/messages" element={<ProtectedRoute allowedRoles={["admin"]}><AdminMessages /></ProtectedRoute>} />
+            <Route path="/admin/layout" element={<ProtectedRoute allowedRoles={["admin"]}><AdminLayoutExterno /></ProtectedRoute>} />
+            {/* Consultor routes */}
+            <Route path="/consultor" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
+            <Route path="/consultor/students" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
+            <Route path="/consultor/diet" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminDiet /></ProtectedRoute>} />
+            <Route path="/consultor/training" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminTraining /></ProtectedRoute>} />
+            <Route path="/consultor/protocol" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminProtocol /></ProtectedRoute>} />
+            {/* Assistente routes */}
+            <Route path="/assistente" element={<ProtectedRoute allowedRoles={["assistente"]}><AssistenteDashboard /></ProtectedRoute>} />
+            <Route path="/assistente/students" element={<ProtectedRoute allowedRoles={["assistente"]}><AdminStudents /></ProtectedRoute>} />
+            <Route path="/assistente/register" element={<ProtectedRoute allowedRoles={["assistente"]}><AdminStudents /></ProtectedRoute>} />
+            {/* Financeiro routes */}
+            <Route path="/financeiro" element={<ProtectedRoute allowedRoles={["financeiro"]}><FinanceiroDashboard /></ProtectedRoute>} />
+            <Route path="/financeiro/payments" element={<ProtectedRoute allowedRoles={["financeiro"]}><AdminPayments /></ProtectedRoute>} />
+            <Route path="/financeiro/plans" element={<ProtectedRoute allowedRoles={["financeiro"]}><AdminPlans /></ProtectedRoute>} />
+            <Route path="/financeiro/revenue" element={<ProtectedRoute allowedRoles={["financeiro"]}><FinanceiroDashboard /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
