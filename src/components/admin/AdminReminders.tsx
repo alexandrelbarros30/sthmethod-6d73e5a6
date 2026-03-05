@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { CheckCircle, Clock, Salad, RefreshCw, XCircle, Bell, User, Mail, Phone, CreditCard, Ban, PauseCircle, ExternalLink } from "lucide-react";
+import { CheckCircle, Clock, Salad, RefreshCw, XCircle, Bell, User, Mail, Phone, CreditCard, Ban, PauseCircle, ExternalLink, Trash2 } from "lucide-react";
 import { format, addDays, differenceInDays, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
@@ -43,6 +43,7 @@ const AdminReminders = () => {
   const [subTarget, setSubTarget] = useState<Reminder | null>(null);
   const [subForm, setSubForm] = useState({ plan_id: "", start_date: "", end_date: "", status: "active" });
   const [confirmDoneId, setConfirmDoneId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   // Fetch plans for subscription dialog
   const { data: plans } = useQuery({
@@ -128,6 +129,17 @@ const AdminReminders = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-reminders"] });
       toast({ title: "Status atualizado." });
+    },
+  });
+
+  const deleteReminder = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("admin_reminders").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-reminders"] });
+      toast({ title: "Lembrete removido da lista." });
     },
   });
 
@@ -279,6 +291,9 @@ const AdminReminders = () => {
                 </Button>
               </>
             )}
+            <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive hover:text-destructive" onClick={() => setConfirmDeleteId(r.id)}>
+              <Trash2 className="w-3 h-3 mr-1" /> Remover
+            </Button>
           </div>
         </div>
       </div>
@@ -412,6 +427,23 @@ const AdminReminders = () => {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={() => { if (confirmDoneId) { updateStatus.mutate({ id: confirmDoneId, status: "done" }); setConfirmDoneId(null); } }}>
               Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!confirmDeleteId} onOpenChange={(open) => { if (!open) setConfirmDeleteId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover lembrete</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover este lembrete da lista? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => { if (confirmDeleteId) { deleteReminder.mutate(confirmDeleteId); setConfirmDeleteId(null); } }}>
+              Remover
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
