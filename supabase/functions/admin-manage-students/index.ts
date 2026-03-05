@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     const { action, ...payload } = await req.json();
 
     if (action === "create") {
-      const { email, password, full_name } = payload;
+      const { email, password, full_name, role } = payload;
       if (!email || !password || !full_name) {
         return new Response(JSON.stringify({ error: "Email, senha e nome são obrigatórios" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -62,9 +62,13 @@ Deno.serve(async (req) => {
       });
       if (error) {
         console.error("Error creating user:", error.message);
-        return new Response(JSON.stringify({ error: "Erro ao criar aluno. Verifique os dados e tente novamente." }), {
+        return new Response(JSON.stringify({ error: "Erro ao criar usuário. Verifique os dados e tente novamente." }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
+      }
+      // If a specific role was requested, update from default 'student'
+      if (role && role !== "student" && data.user) {
+        await adminClient.from("user_roles").update({ role }).eq("user_id", data.user.id);
       }
       return new Response(JSON.stringify({ user: data.user }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -79,6 +83,8 @@ Deno.serve(async (req) => {
         });
       }
       // Delete related data first
+      await adminClient.from("consultant_students").delete().eq("consultant_id", user_id);
+      await adminClient.from("consultant_students").delete().eq("student_id", user_id);
       await adminClient.from("student_diets").delete().eq("user_id", user_id);
       await adminClient.from("student_protocols").delete().eq("user_id", user_id);
       await adminClient.from("student_trainings").delete().eq("user_id", user_id);
@@ -86,13 +92,18 @@ Deno.serve(async (req) => {
       await adminClient.from("protocols").delete().eq("user_id", user_id);
       await adminClient.from("diet_meals").delete().eq("user_id", user_id);
       await adminClient.from("training_weeks").delete().eq("user_id", user_id);
+      await adminClient.from("body_images").delete().eq("user_id", user_id);
+      await adminClient.from("anamnesis_entries").delete().eq("user_id", user_id);
+      await adminClient.from("payments").delete().eq("user_id", user_id);
+      await adminClient.from("admin_reminders").delete().eq("user_id", user_id);
+      await adminClient.from("message_history").delete().eq("user_id", user_id);
       await adminClient.from("profiles").delete().eq("user_id", user_id);
       await adminClient.from("user_roles").delete().eq("user_id", user_id);
 
       const { error } = await adminClient.auth.admin.deleteUser(user_id);
       if (error) {
         console.error("Error deleting user:", error.message);
-        return new Response(JSON.stringify({ error: "Erro ao excluir aluno. Tente novamente." }), {
+        return new Response(JSON.stringify({ error: "Erro ao excluir usuário. Tente novamente." }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -105,7 +116,7 @@ Deno.serve(async (req) => {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("Admin manage students error:", err);
+    console.error("Admin manage error:", err);
     return new Response(JSON.stringify({ error: "Operação falhou. Tente novamente." }), {
       status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
