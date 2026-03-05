@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, AlertCircle, Clock, Bell, CheckCircle, ExternalLink, Check, CreditCard, DollarSign } from "lucide-react";
+import { Users, UserCheck, AlertCircle, Clock, Bell, CheckCircle, ExternalLink, Check, CreditCard, DollarSign, Link2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -9,6 +9,12 @@ import { supabase } from "@/integrations/supabase/client";
 import AdminReminders from "@/components/admin/AdminReminders";
 import { toast } from "sonner";
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
+
+const copyRenewLink = (userId: string) => {
+  const url = `${window.location.origin}/dashboard/renew?uid=${userId}`;
+  navigator.clipboard.writeText(url);
+  toast.success("Link de renovação copiado!");
+};
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -274,6 +280,9 @@ const RecentStudents = ({ profiles, subscriptions, navigate, queryClient }: { pr
                     <Badge variant="outline" className={`text-[10px] ${color.border} ${color.text}`}>{color.label}</Badge>
                     <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => navigate(`/admin/students?edit=${p.user_id}`)}>
                       <ExternalLink className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="Copiar link de renovação" onClick={() => copyRenewLink(p.user_id)}>
+                      <Link2 className="w-3.5 h-3.5" />
                     </Button>
                     <Button variant="outline" size="sm" className="h-7 w-7 p-0 text-green-600 border-green-300 hover:bg-green-50" onClick={() => confirmMutation.mutate(p.id)} disabled={confirmMutation.isPending} title="Confirmar registro">
                       <Check className="w-3.5 h-3.5" />
