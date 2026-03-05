@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, UserCheck, AlertCircle, Clock, Bell, CheckCircle, ExternalLink, Check, CreditCard, DollarSign, Link2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminReminders from "@/components/admin/AdminReminders";
@@ -252,8 +253,9 @@ const RecentStudents = ({ profiles, subscriptions, navigate, queryClient }: { pr
         </CardTitle>
       </CardHeader>
       <CardContent>
+        <ScrollArea className="max-h-[520px]">
         <div className="space-y-3">
-          {recentProfiles.map((p) => {
+          {recentProfiles.slice(0, 10).map((p) => {
             const color = getDayColor(p.created_at);
             const sub = subMap.get(p.user_id);
             const payment = paymentMap.get(p.user_id);
@@ -311,6 +313,7 @@ const RecentStudents = ({ profiles, subscriptions, navigate, queryClient }: { pr
             );
           })}
         </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );
@@ -331,12 +334,29 @@ const PendingPayments = () => {
         .order("created_at", { ascending: false });
       if (!data || data.length === 0) return [];
       const userIds = data.map((p: any) => p.user_id);
+      
+      // Filter out users who already have active subscriptions
+      const { data: activeSubs } = await supabase
+        .from("subscriptions")
+        .select("user_id, status, end_date")
+        .in("user_id", userIds)
+        .eq("status", "active");
+      const activeUserIds = new Set(
+        (activeSubs || [])
+          .filter((s: any) => new Date(s.end_date) > new Date())
+          .map((s: any) => s.user_id)
+      );
+      
+      const filteredData = data.filter((p: any) => !activeUserIds.has(p.user_id));
+      if (filteredData.length === 0) return [];
+      
+      const filteredUserIds = filteredData.map((p: any) => p.user_id);
       const { data: profilesData } = await supabase
         .from("profiles")
         .select("user_id, full_name, email")
-        .in("user_id", userIds);
+        .in("user_id", filteredUserIds);
       const profileMap = new Map((profilesData || []).map((p: any) => [p.user_id, p]));
-      return data.map((p: any) => ({ ...p, profile: profileMap.get(p.user_id) }));
+      return filteredData.map((p: any) => ({ ...p, profile: profileMap.get(p.user_id) }));
     },
   });
 
