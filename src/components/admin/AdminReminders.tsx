@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,6 +42,7 @@ const AdminReminders = () => {
   const [subDialogOpen, setSubDialogOpen] = useState(false);
   const [subTarget, setSubTarget] = useState<Reminder | null>(null);
   const [subForm, setSubForm] = useState({ plan_id: "", start_date: "", end_date: "", status: "active" });
+  const [confirmDoneId, setConfirmDoneId] = useState<string | null>(null);
 
   // Fetch plans for subscription dialog
   const { data: plans } = useQuery({
@@ -266,7 +268,7 @@ const AdminReminders = () => {
 
             {r.status === "pending" && (
               <>
-                <Button size="sm" variant="default" className="h-7 text-xs" onClick={() => updateStatus.mutate({ id: r.id, status: "done" })}>
+                <Button size="sm" variant="default" className="h-7 text-xs" onClick={() => setConfirmDoneId(r.id)}>
                   <CheckCircle className="w-3 h-3 mr-1" /> Feito
                 </Button>
                 <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => updateStatus.mutate({ id: r.id, status: "postponed" })}>
@@ -397,6 +399,23 @@ const AdminReminders = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!confirmDoneId} onOpenChange={(open) => { if (!open) setConfirmDoneId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar ação</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja marcar este lembrete como feito? O aluno será removido da lista de pendentes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (confirmDoneId) { updateStatus.mutate({ id: confirmDoneId, status: "done" }); setConfirmDoneId(null); } }}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
