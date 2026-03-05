@@ -14,6 +14,7 @@ import StudentTraining from "./pages/student/StudentTraining";
 import StudentProtocol from "./pages/student/StudentProtocol";
 import StudentContent from "./pages/student/StudentContent";
 import StudentSubscription from "./pages/student/StudentSubscription";
+import StudentRenew from "./pages/student/StudentRenew";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminStudents from "./pages/admin/AdminStudents";
 import AdminPlans from "./pages/admin/AdminPlans";
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/dashboard/protocol" element={<ProtectedRoute requiredRole="student"><StudentProtocol /></ProtectedRoute>} />
             <Route path="/dashboard/content" element={<ProtectedRoute requiredRole="student"><StudentContent /></ProtectedRoute>} />
             <Route path="/dashboard/subscription" element={<ProtectedRoute requiredRole="student"><StudentSubscription /></ProtectedRoute>} />
+            <Route path="/dashboard/renew" element={<ProtectedRoute requiredRole="student"><StudentRenew /></ProtectedRoute>} />
             {/* Admin routes */}
             <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/students" element={<ProtectedRoute requiredRole="admin"><AdminStudents /></ProtectedRoute>} />

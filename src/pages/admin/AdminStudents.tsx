@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, CreditCard, Eye, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock } from "lucide-react";
+import { Plus, Pencil, Trash2, CreditCard, Eye, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2 } from "lucide-react";
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -1047,6 +1047,7 @@ const AdminStudents = () => {
                         <Button variant="ghost" size="icon" onClick={() => { setSelected(s); setImagesOpen(true); }} title="Fotos corporais"><Image className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => openSub(s)} title="Assinatura"><CreditCard className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => openEdit(s)} title="Editar"><Pencil className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="icon" title="Copiar link de renovação" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/dashboard/renew?uid=${s.user_id}`); toast.success("Link de renovação copiado!"); }}><Link2 className="w-4 h-4" /></Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild><Button variant="ghost" size="icon" title="Excluir"><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
                           <AlertDialogContent>
