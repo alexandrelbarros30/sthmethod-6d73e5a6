@@ -19,6 +19,76 @@ const IMAGE_TYPES = [
   { key: "profile", label: "Perfil", icon: "👤" },
 ] as const;
 
+const MAX_SIZE_MB = 2; // Compress to max 2MB for reliable mobile uploads
+const MAX_DIMENSION = 1200;
+
+/**
+ * Compress an image file using canvas.
+ * Returns a Blob (JPEG) that is <= maxSizeMB.
+ */
+async function compressImage(file: File, maxSizeMB = MAX_SIZE_MB, maxDim = MAX_DIMENSION): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      // Scale down if larger than maxDim
+      if (width > maxDim || height > maxDim) {
+        const ratio = Math.min(maxDim / width, maxDim / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Try decreasing quality until under maxSizeMB
+      let quality = 0.85;
+      const tryCompress = () => {
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return reject(new Error("Falha ao comprimir imagem"));
+            if (blob.size > maxSizeMB * 1024 * 1024 && quality > 0.3) {
+              quality -= 0.15;
+              tryCompress();
+            } else {
+              resolve(blob);
+            }
+          },
+          "image/jpeg",
+          quality,
+        );
+      };
+      tryCompress();
+    };
+    img.onerror = () => reject(new Error("Falha ao carregar imagem"));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+/**
+ * Upload with retry logic for flaky mobile connections.
+ */
+async function uploadWithRetry(
+  bucket: string,
+  path: string,
+  blob: Blob,
+  retries = 3,
+): Promise<void> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    const { error } = await supabase.storage.from(bucket).upload(path, blob, {
+      contentType: "image/jpeg",
+      upsert: true,
+    });
+    if (!error) return;
+    console.warn(`Upload attempt ${attempt} failed:`, error.message);
+    if (attempt === retries) throw error;
+    // Wait before retry (exponential backoff)
+    await new Promise((r) => setTimeout(r, 1000 * attempt));
+  }
+}
+
 const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = false }: BodyImageUploadProps) => {
   const [images, setImages] = useState<Record<string, { file?: File; preview?: string; url?: string }>>(() => {
     const initial: Record<string, any> = {};
@@ -35,12 +105,13 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
     const file = e.target.files?.[0];
     if (!file) return;
     
-    if (!["image/jpeg", "image/png"].includes(file.type)) {
-      toast.error("Apenas arquivos .jpg e .png são aceitos.");
+    if (!["image/jpeg", "image/png", "image/webp", "image/heic"].includes(file.type) && 
+        !file.name.match(/\.(jpg|jpeg|png|webp|heic)$/i)) {
+      toast.error("Apenas arquivos de imagem são aceitos.");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Arquivo muito grande. Máximo 5MB.");
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("Arquivo muito grande. Máximo 15MB.");
       return;
     }
 
@@ -80,10 +151,13 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
       for (const { key } of IMAGE_TYPES) {
         const img = images[key];
         if (img?.file) {
-          const ext = img.file.name.split(".").pop();
-          const path = `${userId}/${key}_${Date.now()}.${ext}`;
-          const { error: uploadError } = await supabase.storage.from("body-images").upload(path, img.file);
-          if (uploadError) throw uploadError;
+          toast.info(`Comprimindo imagem: ${key}...`);
+          const compressed = await compressImage(img.file);
+          const path = `${userId}/${key}_${Date.now()}.jpg`;
+          
+          toast.info(`Enviando imagem: ${key}...`);
+          await uploadWithRetry("body-images", path, compressed);
+          
           const { data: urlData } = supabase.storage.from("body-images").getPublicUrl(path);
 
           await supabase.from("body_images").insert({
@@ -104,7 +178,8 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
       toast.success("Imagens salvas com sucesso!");
       onComplete();
     } catch (err: any) {
-      toast.error("Erro ao enviar imagens: " + (err.message || ""));
+      console.error("Upload error:", err);
+      toast.error("Erro ao enviar imagens: " + (err.message || "Verifique sua conexão e tente novamente."));
     }
     setUploading(false);
   };
@@ -156,7 +231,8 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
                   <input
                     ref={(el) => { fileRefs.current[key] = el; }}
                     type="file"
-                    accept=".jpg,.jpeg,.png"
+                    accept="image/*"
+                    capture="environment"
                     className="hidden"
                     onChange={(e) => handleFileSelect(key, e)}
                   />
