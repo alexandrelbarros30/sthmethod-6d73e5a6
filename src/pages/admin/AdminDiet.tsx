@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Pencil, Upload, Trash2, FileText, Search } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +24,7 @@ const AdminDiet = () => {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [existingPdf, setExistingPdf] = useState("");
   const [dietId, setDietId] = useState<string | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const { data: students } = useQuery({
     queryKey: ["admin-students-diets"],
@@ -154,7 +156,7 @@ const AdminDiet = () => {
           </div>
           <DialogFooter className="flex gap-2">
             {dietId && (
-              <Button variant="destructive" size="sm" onClick={() => deleteMutation.mutate()}>
+              <Button variant="destructive" size="sm" onClick={() => setConfirmDeleteOpen(true)}>
                 <Trash2 className="w-3 h-3 mr-1" /> Excluir
               </Button>
             )}
@@ -164,6 +166,23 @@ const AdminDiet = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a dieta de <strong>{selected?.full_name}</strong>? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => deleteMutation.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
