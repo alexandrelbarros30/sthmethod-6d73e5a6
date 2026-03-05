@@ -33,6 +33,7 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/admin/content", icon: Palette, label: "Personalização" },
     { to: "/admin/layout", icon: PanelTop, label: "Layout Externo" },
     { to: "/admin/roles", icon: Users, label: "Permissões" },
+    { to: "/admin/staff", icon: ClipboardList, label: "Equipe" },
   ],
   consultor: [
     { to: "/consultor", icon: LayoutDashboard, label: "Dashboard" },
