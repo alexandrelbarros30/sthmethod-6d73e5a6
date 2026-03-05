@@ -27,26 +27,47 @@ const roleConfig: Record<AppRole, { label: string; color: string; icon: typeof S
 };
 
 // ─── Roles Tab ───
+type SubStatus = "active" | "expired" | "suspended" | "none";
+
+const subStatusConfig: Record<SubStatus, { label: string; color: string }> = {
+  active: { label: "Ativo", color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
+  expired: { label: "Vencido", color: "bg-red-500/10 text-red-500 border-red-500/20" },
+  suspended: { label: "Suspenso", color: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
+  none: { label: "Sem plano", color: "bg-muted text-muted-foreground border-border" },
+};
+
 const RolesTab = () => {
   const qc = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
   const [confirmDialog, setConfirmDialog] = useState<{ userId: string; name: string; currentRole: AppRole; newRole: AppRole } | null>(null);
 
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-roles-users"],
     queryFn: async () => {
-      const [profilesRes, rolesRes] = await Promise.all([
+      const [profilesRes, rolesRes, subsRes] = await Promise.all([
         supabase.from("profiles").select("user_id, full_name, email, avatar_url, created_at"),
         supabase.from("user_roles").select("user_id, role"),
+        supabase.from("subscriptions").select("user_id, status, end_date, plans(name)"),
       ]);
       const profiles = profilesRes.data || [];
       const roles = rolesRes.data || [];
+      const subs = subsRes.data || [];
       return profiles.map((p) => {
         const roleEntry = roles.find((r) => r.user_id === p.user_id);
+        const sub = subs.find((s) => s.user_id === p.user_id);
+        let subStatus: SubStatus = "none";
+        if (sub) {
+          if (sub.status === "suspended") subStatus = "suspended";
+          else if (sub.status === "active" && new Date(sub.end_date) > new Date()) subStatus = "active";
+          else subStatus = "expired";
+        }
         return {
           ...p,
           role: (roleEntry?.role || "student") as AppRole,
+          subStatus,
+          planName: (sub as any)?.plans?.name || null,
           initials: p.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "?",
         };
       });
@@ -69,7 +90,8 @@ const RolesTab = () => {
   const filtered = users?.filter((u) => {
     const matchSearch = !searchTerm.trim() || u.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) || u.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchRole = filterRole === "all" || u.role === filterRole;
-    return matchSearch && matchRole;
+    const matchStatus = filterStatus === "all" || u.subStatus === filterStatus;
+    return matchSearch && matchRole && matchStatus;
   });
 
   const roleCounts = users?.reduce((acc, u) => { acc[u.role] = (acc[u.role] || 0) + 1; return acc; }, {} as Record<string, number>) || {};
@@ -97,9 +119,22 @@ const RolesTab = () => {
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
             <CardTitle className="font-display">Usuários</CardTitle>
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="Buscar por nome ou email..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-full sm:w-[150px]">
+                  <SelectValue placeholder="Status assinatura" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os status</SelectItem>
+                  {(Object.entries(subStatusConfig) as [SubStatus, { label: string }][]).map(([key, cfg]) => (
+                    <SelectItem key={key} value={key}>{cfg.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="relative w-full sm:w-72">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input placeholder="Buscar por nome ou email..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -113,6 +148,7 @@ const RolesTab = () => {
                   <TableRow>
                     <TableHead>Usuário</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Assinatura</TableHead>
                     <TableHead>Role Atual</TableHead>
                     <TableHead>Alterar Role</TableHead>
                   </TableRow>
@@ -120,6 +156,7 @@ const RolesTab = () => {
                 <TableBody>
                   {filtered?.map((user) => {
                     const config = roleConfig[user.role];
+                    const statusCfg = subStatusConfig[user.subStatus];
                     return (
                       <TableRow key={user.user_id}>
                         <TableCell>
@@ -129,6 +166,12 @@ const RolesTab = () => {
                           </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground">{user.email}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-0.5">
+                            <Badge variant="outline" className={statusCfg.color}>{statusCfg.label}</Badge>
+                            {user.planName && <span className="text-xs text-muted-foreground">{user.planName}</span>}
+                          </div>
+                        </TableCell>
                         <TableCell><Badge variant="outline" className={config.color}>{config.label}</Badge></TableCell>
                         <TableCell>
                           <Select value={user.role} onValueChange={(newRole: string) => { if (newRole !== user.role) setConfirmDialog({ userId: user.user_id, name: user.full_name || user.email, currentRole: user.role, newRole: newRole as AppRole }); }}>
@@ -144,7 +187,7 @@ const RolesTab = () => {
                     );
                   })}
                   {filtered?.length === 0 && (
-                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Nenhum usuário encontrado</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum usuário encontrado</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
