@@ -147,7 +147,7 @@ const AdminStaff = () => {
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
-  const FormFields = ({ isCreate }: { isCreate: boolean }) => (
+  const renderFormFields = (isCreate: boolean) => (
     <div className="space-y-4">
       <div className="space-y-2">
         <Label className="font-body">Nome completo *</Label>
@@ -299,7 +299,7 @@ const AdminStaff = () => {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Novo membro da equipe</DialogTitle></DialogHeader>
-          <FormFields isCreate />
+          {renderFormFields(true)}
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancelar</Button>
             <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
@@ -313,7 +313,7 @@ const AdminStaff = () => {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Editar membro</DialogTitle></DialogHeader>
-          <FormFields isCreate={false} />
+          {renderFormFields(false)}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>Cancelar</Button>
             <Button onClick={() => editMutation.mutate()} disabled={editMutation.isPending}>
