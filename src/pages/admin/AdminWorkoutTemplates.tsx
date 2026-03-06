@@ -165,7 +165,7 @@ const AdminWorkoutTemplates = () => {
 
   const openEditTemplate = (t: any) => {
     setEditingTemplate(t.id);
-    setForm({ title: t.title, description: t.description || "", weeks: t.weeks, days_per_week: t.days_per_week, minutes_per_day: t.minutes_per_day });
+    setForm({ title: t.title, description: t.description || "", weeks: t.weeks?.toString() || "", days_per_week: t.days_per_week?.toString() || "", minutes_per_day: t.minutes_per_day?.toString() || "" });
     const exs = (templateExercisesMap?.[t.id] || []).map((e: any) => ({
       id: e.id, exercise_id: e.exercise_id, custom_name: e.custom_name || "",
       custom_description: e.custom_description || "", sets: e.sets || "", reps: e.reps || "",
