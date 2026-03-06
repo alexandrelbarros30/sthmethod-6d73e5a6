@@ -65,6 +65,30 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "reset_password") {
+      const { user_id, new_password } = payload;
+      if (!user_id || !new_password) {
+        return new Response(JSON.stringify({ error: "user_id e nova senha são obrigatórios" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (new_password.length < 6) {
+        return new Response(JSON.stringify({ error: "A senha deve ter no mínimo 6 caracteres" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { error } = await adminClient.auth.admin.updateUserById(user_id, { password: new_password });
+      if (error) {
+        console.error("Error resetting password:", error.message);
+        return new Response(JSON.stringify({ error: "Erro ao alterar senha. Tente novamente." }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (action === "delete") {
       const { user_id } = payload;
       if (!user_id) {
