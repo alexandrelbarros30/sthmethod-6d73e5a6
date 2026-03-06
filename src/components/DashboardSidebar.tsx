@@ -45,7 +45,7 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/consultor/training", icon: Dumbbell, label: "Treinos" },
     { to: "/consultor/protocol", icon: FlaskConical, label: "Protocolos" },
     { to: "/consultor/exercise-library", icon: BookOpen, label: "Biblioteca" },
-    { to: "/consultor/workout-templates", icon: ClipbLayers, label: "ProgramaTreino" },
+    { to: "/consultor/workout-templates", icon: Layers, label: "Programas de Treino" },
   ],
   assistente: [
     { to: "/assistente", icon: LayoutDashboard, label: "Dashboard" },
