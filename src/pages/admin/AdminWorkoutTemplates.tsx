@@ -28,7 +28,7 @@ interface TemplateForm {
 const emptyTemplate: TemplateForm = { title: "", description: "", weeks: 1, days_per_week: 3, minutes_per_day: 60 };
 
 const AdminWorkoutTemplates = () => {
-  const { user, role } = useAuth();
+  const { user, role, role } = useAuth();
   const queryClient = useQueryClient();
   const [templateDialog, setTemplateDialog] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<string | null>(null);
@@ -214,7 +214,7 @@ const AdminWorkoutTemplates = () => {
     (assignments || []).filter((a: any) => a.template_id === templateId && a.active).length;
 
   return (
-    <DashboardLayout role="admin" title="Modelos de Treino" subtitle="Crie treinos reutilizáveis e atribua aos alunos.">
+    <DashboardLayout{(role as any) || "admin"}admin" title="Modelos de Treino" subtitle="Crie treinos reutilizáveis e atribua aos alunos.">
       <div className="space-y-4 max-w-5xl">
         <div className="flex justify-between items-center">
           <p className="text-sm text-muted-foreground">{(templates || []).length} modelo(s)</p>
