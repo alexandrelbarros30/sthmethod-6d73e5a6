@@ -37,6 +37,7 @@ const AdminWorkoutTemplates = () => {
   const [exerciseRows, setExerciseRows] = useState<ExerciseRow[]>([]);
   const [assignDialog, setAssignDialog] = useState<string | null>(null);
   const [selectedStudent, setSelectedStudent] = useState("");
+  const [studentSearch, setStudentSearch] = useState("");
 
   const { data: templates, isLoading } = useQuery({
     queryKey: ["workout-templates"],
