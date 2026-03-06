@@ -8,6 +8,8 @@ import { useLandingSetting } from "@/hooks/useLandingData";
 export const useDynamicFavicon = () => {
   const faviconUrl = useLandingSetting("favicon_url");
   const ogImageUrl = useLandingSetting("og_image_url");
+  const siteTitle = useLandingSetting("site_title");
+  const siteDescription = useLandingSetting("site_description");
 
   useEffect(() => {
     if (!faviconUrl) return;
@@ -22,7 +24,6 @@ export const useDynamicFavicon = () => {
   }, [faviconUrl]);
 
   useEffect(() => {
-    if (!ogImageUrl) return;
     const updateMeta = (attr: string, key: string, value: string) => {
       let el = document.querySelector(`meta[${attr}='${key}']`) as HTMLMetaElement | null;
       if (!el) {
@@ -32,7 +33,19 @@ export const useDynamicFavicon = () => {
       }
       el.setAttribute("content", value);
     };
-    updateMeta("property", "og:image", ogImageUrl);
-    updateMeta("name", "twitter:image", ogImageUrl);
-  }, [ogImageUrl]);
+    if (ogImageUrl) {
+      updateMeta("property", "og:image", ogImageUrl);
+      updateMeta("name", "twitter:image", ogImageUrl);
+    }
+    if (siteTitle) {
+      document.title = siteTitle;
+      updateMeta("property", "og:title", siteTitle);
+      updateMeta("name", "twitter:title", siteTitle);
+    }
+    if (siteDescription) {
+      updateMeta("name", "description", siteDescription);
+      updateMeta("property", "og:description", siteDescription);
+      updateMeta("name", "twitter:description", siteDescription);
+    }
+  }, [ogImageUrl, siteTitle, siteDescription]);
 };

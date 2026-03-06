@@ -145,6 +145,28 @@ const AdminLayoutExterno = () => {
               </CardContent>
             </Card>
 
+            {/* Site Title & Description */}
+            <Card className="bg-card border-border">
+              <CardHeader><CardTitle className="text-sm">Título e Descrição do Site</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-xs text-muted-foreground">Título e descrição exibidos na aba do navegador e ao compartilhar o link em redes sociais.</p>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Título do Site (og:title)</Label>
+                  <div className="flex items-end gap-2">
+                    <Input value={val("site_title", "Consultoria STH")} onChange={(e) => setVal("site_title", e.target.value)} className="bg-background flex-1" placeholder="Ex: Consultoria STH" />
+                    <Button size="sm" onClick={() => saveSetting("site_title")} className="gradient-bg shrink-0"><Save className="w-4 h-4" /></Button>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Descrição do Site (og:description)</Label>
+                  <div className="flex items-end gap-2">
+                    <Textarea value={val("site_description", "Performance e Saúde")} onChange={(e) => setVal("site_description", e.target.value)} className="bg-background flex-1" rows={2} placeholder="Ex: Performance e Saúde" />
+                    <Button size="sm" onClick={() => saveSetting("site_description")} className="gradient-bg shrink-0"><Save className="w-4 h-4" /></Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Favicon */}
             <Card className="bg-card border-border">
               <CardHeader><CardTitle className="text-sm">Favicon</CardTitle></CardHeader>
