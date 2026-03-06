@@ -28,6 +28,8 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/admin/payments", icon: Wallet, label: "Pagamentos" },
     { to: "/admin/diet", icon: Salad, label: "Dietas" },
     { to: "/admin/training", icon: Dumbbell, label: "Treinos" },
+    { to: "/admin/exercise-library", icon: BookOpen, label: "Biblioteca" },
+    { to: "/admin/workout-templates", icon: ClipboardList, label: "Modelos de Treino" },
     { to: "/admin/protocol", icon: FlaskConical, label: "Protocolos" },
     { to: "/admin/messages", icon: MessageSquare, label: "Mensagens" },
     { to: "/admin/content", icon: Palette, label: "Personalização" },
