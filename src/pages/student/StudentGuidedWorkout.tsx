@@ -171,7 +171,7 @@ const StudentGuidedWorkout = () => {
                             <div className="flex flex-wrap gap-2 mt-0.5 text-xs text-muted-foreground">
                               {ex.sets && ex.reps && <span className="text-primary font-semibold">{ex.sets}x{ex.reps}</span>}
                               {ex.rest_interval && <span>Int: {ex.rest_interval}</span>}
-                              {lastLog && <span className="text-green-600">Última carga: {lastLog.load_used}</span>}
+                              {lastLog && <span className="text-primary">Última carga: {lastLog.load_used}</span>}
                             </div>
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0">
