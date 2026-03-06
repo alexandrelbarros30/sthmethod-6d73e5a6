@@ -1123,6 +1123,36 @@ export type Database = {
           },
         ]
       }
+      training_programs: {
+        Row: {
+          created_at: string
+          created_by: string
+          details: string | null
+          id: string
+          poster_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          details?: string | null
+          id?: string
+          poster_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          details?: string | null
+          id?: string
+          poster_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       training_weeks: {
         Row: {
           created_at: string
@@ -1230,6 +1260,10 @@ export type Database = {
           description: string | null
           id: string
           minutes_per_day: number | null
+          program_id: string | null
+          released: boolean
+          sort_order: number | null
+          subtitle: string | null
           title: string
           updated_at: string
           weeks: number | null
@@ -1241,6 +1275,10 @@ export type Database = {
           description?: string | null
           id?: string
           minutes_per_day?: number | null
+          program_id?: string | null
+          released?: boolean
+          sort_order?: number | null
+          subtitle?: string | null
           title: string
           updated_at?: string
           weeks?: number | null
@@ -1252,11 +1290,23 @@ export type Database = {
           description?: string | null
           id?: string
           minutes_per_day?: number | null
+          program_id?: string | null
+          released?: boolean
+          sort_order?: number | null
+          subtitle?: string | null
           title?: string
           updated_at?: string
           weeks?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "workout_templates_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "training_programs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
