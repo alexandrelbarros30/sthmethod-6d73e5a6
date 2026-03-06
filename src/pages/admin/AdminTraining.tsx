@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Plus, Search, GripVertical, Video, ChevronDown, ChevronUp } from "lucide-react";
+import { Pencil, Trash2, Plus, Search, GripVertical, Video, ChevronDown, ChevronUp, Copy } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -53,6 +54,8 @@ const AdminTraining = () => {
   const [editingWeekId, setEditingWeekId] = useState<string | null>(null);
   const [expandedWeeks, setExpandedWeeks] = useState<Set<string>>(new Set());
   const [activeWeekId, setActiveWeekId] = useState<string | null>(null);
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [duplicateTargetId, setDuplicateTargetId] = useState<string | null>(null);
 
   const { data: students } = useQuery({
     queryKey: ["admin-students-training-list"],
@@ -196,7 +199,45 @@ const AdminTraining = () => {
     qc.invalidateQueries({ queryKey: ["admin-training-exercises"] });
   };
 
-  const openNewExercise = (weekId: string) => {
+  const duplicateTrainingMutation = useMutation({
+    mutationFn: async () => {
+      if (!duplicateTargetId || !weeks?.length) return;
+      for (const week of weeks) {
+        const { data: newWeek } = await supabase
+          .from("training_weeks")
+          .insert({ user_id: duplicateTargetId, name: week.name, sort_order: week.sort_order })
+          .select()
+          .single();
+        if (!newWeek) continue;
+        const weekExercises = (exercises || []).filter((e: any) => e.week_id === week.id);
+        if (weekExercises.length > 0) {
+          await supabase.from("training_exercises").insert(
+            weekExercises.map((ex: any) => ({
+              week_id: newWeek.id,
+              name: ex.name,
+              video_url: ex.video_url || "",
+              description: ex.description || "",
+              sets: ex.sets || "",
+              reps: ex.reps || "",
+              rest_interval: ex.rest_interval || "",
+              load_suggestion: ex.load_suggestion || "",
+              notes: ex.notes || "",
+              sort_order: ex.sort_order,
+            }))
+          );
+        }
+      }
+    },
+    onSuccess: () => {
+      toast.success("Treino duplicado com sucesso!");
+      qc.invalidateQueries({ queryKey: ["admin-students-training-list"] });
+      setDuplicateDialogOpen(false);
+      setDuplicateTargetId(null);
+    },
+    onError: () => toast.error("Erro ao duplicar treino"),
+  });
+
+
     setActiveWeekId(weekId);
     setEditingExercise(emptyExercise());
     setExerciseDialogOpen(true);
@@ -273,9 +314,16 @@ const AdminTraining = () => {
               </Button>
               <h2 className="font-display text-lg font-semibold mt-1">{selectedStudent?.full_name}</h2>
             </div>
-            <Button size="sm" onClick={() => { setEditingWeekId(null); setWeekName(""); setWeekDialogOpen(true); }}>
-              <Plus className="w-4 h-4 mr-1" /> Novo Treino
-            </Button>
+            <div className="flex gap-2">
+              {weeks && weeks.length > 0 && (
+                <Button variant="outline" size="sm" onClick={() => { setDuplicateTargetId(null); setDuplicateDialogOpen(true); }}>
+                  <Copy className="w-4 h-4 mr-1" /> Duplicar para outro aluno
+                </Button>
+              )}
+              <Button size="sm" onClick={() => { setEditingWeekId(null); setWeekName(""); setWeekDialogOpen(true); }}>
+                <Plus className="w-4 h-4 mr-1" /> Novo Treino
+              </Button>
+            </div>
           </div>
 
           {(!weeks || weeks.length === 0) && (
@@ -417,6 +465,35 @@ const AdminTraining = () => {
             )}
             <Button onClick={() => saveExerciseMutation.mutate()} disabled={!editingExercise?.name.trim() || saveExerciseMutation.isPending}>
               {saveExerciseMutation.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Duplicate dialog */}
+      <Dialog open={duplicateDialogOpen} onOpenChange={setDuplicateDialogOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="font-display">Duplicar Treino</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground font-body">
+            Copiar todos os treinos e exercícios de <strong>{selectedStudent?.full_name}</strong> para outro aluno.
+          </p>
+          <div>
+            <Label className="font-body">Selecionar aluno destino</Label>
+            <Select value={duplicateTargetId || ""} onValueChange={setDuplicateTargetId}>
+              <SelectTrigger><SelectValue placeholder="Escolha um aluno..." /></SelectTrigger>
+              <SelectContent>
+                {students?.filter((s: any) => s.user_id !== selectedStudent?.user_id).map((s: any) => (
+                  <SelectItem key={s.user_id} value={s.user_id}>
+                    {s.full_name || s.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDuplicateDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={() => duplicateTrainingMutation.mutate()} disabled={!duplicateTargetId || duplicateTrainingMutation.isPending}>
+              {duplicateTrainingMutation.isPending ? "Duplicando..." : "Duplicar"}
             </Button>
           </DialogFooter>
         </DialogContent>
