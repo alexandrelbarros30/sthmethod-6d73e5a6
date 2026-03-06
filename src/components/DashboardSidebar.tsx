@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp } from "lucide-react";
+import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -17,6 +17,7 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/dashboard", icon: LayoutDashboard, label: "Visão Geral" },
     { to: "/dashboard/diet", icon: Salad, label: "Dieta" },
     { to: "/dashboard/training", icon: Dumbbell, label: "Treino" },
+    { to: "/dashboard/guided-workout", icon: ListChecks, label: "Treino Guiado" },
     { to: "/dashboard/protocol", icon: FlaskConical, label: "Protocolo" },
     { to: "/dashboard/content", icon: BookOpen, label: "Conteúdo" },
     { to: "/dashboard/subscription", icon: CreditCard, label: "Assinatura" },
@@ -28,6 +29,8 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/admin/payments", icon: Wallet, label: "Pagamentos" },
     { to: "/admin/diet", icon: Salad, label: "Dietas" },
     { to: "/admin/training", icon: Dumbbell, label: "Treinos" },
+    { to: "/admin/exercise-library", icon: BookOpen, label: "Biblioteca" },
+    { to: "/admin/workout-templates", icon: ClipboardList, label: "Modelos de Treino" },
     { to: "/admin/protocol", icon: FlaskConical, label: "Protocolos" },
     { to: "/admin/messages", icon: MessageSquare, label: "Mensagens" },
     { to: "/admin/content", icon: Palette, label: "Personalização" },

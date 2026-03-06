@@ -220,6 +220,36 @@ export type Database = {
         }
         Relationships: []
       }
+      exercise_library: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          muscle_group: string | null
+          name: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          muscle_group?: string | null
+          name: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          muscle_group?: string | null
+          name?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       landing_evolutions: {
         Row: {
           active: boolean
@@ -859,6 +889,51 @@ export type Database = {
         }
         Relationships: []
       }
+      student_exercise_logs: {
+        Row: {
+          assignment_id: string
+          id: string
+          load_used: string | null
+          logged_at: string
+          notes: string | null
+          template_exercise_id: string
+          user_id: string
+        }
+        Insert: {
+          assignment_id: string
+          id?: string
+          load_used?: string | null
+          logged_at?: string
+          notes?: string | null
+          template_exercise_id: string
+          user_id: string
+        }
+        Update: {
+          assignment_id?: string
+          id?: string
+          load_used?: string | null
+          logged_at?: string
+          notes?: string | null
+          template_exercise_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_exercise_logs_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "student_workout_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_exercise_logs_template_exercise_id_fkey"
+            columns: ["template_exercise_id"]
+            isOneToOne: false
+            referencedRelation: "workout_template_exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_protocols: {
         Row: {
           content: string | null
@@ -921,6 +996,41 @@ export type Database = {
           video_url?: string | null
         }
         Relationships: []
+      }
+      student_workout_assignments: {
+        Row: {
+          active: boolean | null
+          assigned_at: string
+          assigned_by: string
+          id: string
+          template_id: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean | null
+          assigned_at?: string
+          assigned_by: string
+          id?: string
+          template_id: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean | null
+          assigned_at?: string
+          assigned_by?: string
+          id?: string
+          template_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_workout_assignments_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "workout_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscriptions: {
         Row: {
@@ -1052,6 +1162,99 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      workout_template_exercises: {
+        Row: {
+          custom_description: string | null
+          custom_name: string | null
+          exercise_id: string | null
+          id: string
+          load_suggestion: string | null
+          reps: string | null
+          rest_interval: string | null
+          sets: string | null
+          sort_order: number | null
+          template_id: string
+          video_url: string | null
+        }
+        Insert: {
+          custom_description?: string | null
+          custom_name?: string | null
+          exercise_id?: string | null
+          id?: string
+          load_suggestion?: string | null
+          reps?: string | null
+          rest_interval?: string | null
+          sets?: string | null
+          sort_order?: number | null
+          template_id: string
+          video_url?: string | null
+        }
+        Update: {
+          custom_description?: string | null
+          custom_name?: string | null
+          exercise_id?: string | null
+          id?: string
+          load_suggestion?: string | null
+          reps?: string | null
+          rest_interval?: string | null
+          sets?: string | null
+          sort_order?: number | null
+          template_id?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_template_exercises_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercise_library"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_template_exercises_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "workout_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_templates: {
+        Row: {
+          created_at: string
+          created_by: string
+          days_per_week: number | null
+          description: string | null
+          id: string
+          minutes_per_day: number | null
+          title: string
+          updated_at: string
+          weeks: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          days_per_week?: number | null
+          description?: string | null
+          id?: string
+          minutes_per_day?: number | null
+          title: string
+          updated_at?: string
+          weeks?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          days_per_week?: number | null
+          description?: string | null
+          id?: string
+          minutes_per_day?: number | null
+          title?: string
+          updated_at?: string
+          weeks?: number | null
         }
         Relationships: []
       }

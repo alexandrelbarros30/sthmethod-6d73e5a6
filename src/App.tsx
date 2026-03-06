@@ -11,6 +11,7 @@ import Cadastro from "./pages/Cadastro";
 import StudentOverview from "./pages/student/StudentOverview";
 import StudentDiet from "./pages/student/StudentDiet";
 import StudentTraining from "./pages/student/StudentTraining";
+import StudentGuidedWorkout from "./pages/student/StudentGuidedWorkout";
 import StudentProtocol from "./pages/student/StudentProtocol";
 import StudentContent from "./pages/student/StudentContent";
 import StudentSubscription from "./pages/student/StudentSubscription";
@@ -22,6 +23,8 @@ import AdminPayments from "./pages/admin/AdminPayments";
 import AdminDiet from "./pages/admin/AdminDiet";
 import AdminProtocol from "./pages/admin/AdminProtocol";
 import AdminTraining from "./pages/admin/AdminTraining";
+import AdminExerciseLibrary from "./pages/admin/AdminExerciseLibrary";
+import AdminWorkoutTemplates from "./pages/admin/AdminWorkoutTemplates";
 import AdminContent from "./pages/admin/AdminContent";
 import AdminLayoutExterno from "./pages/admin/AdminLayoutExterno";
 import AdminMessages from "./pages/admin/AdminMessages";
@@ -53,6 +56,7 @@ const App = () => (
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["student"]}><StudentOverview /></ProtectedRoute>} />
             <Route path="/dashboard/diet" element={<ProtectedRoute allowedRoles={["student"]}><StudentDiet /></ProtectedRoute>} />
             <Route path="/dashboard/training" element={<ProtectedRoute allowedRoles={["student"]}><StudentTraining /></ProtectedRoute>} />
+            <Route path="/dashboard/guided-workout" element={<ProtectedRoute allowedRoles={["student"]}><StudentGuidedWorkout /></ProtectedRoute>} />
             <Route path="/dashboard/protocol" element={<ProtectedRoute allowedRoles={["student"]}><StudentProtocol /></ProtectedRoute>} />
             <Route path="/dashboard/content" element={<ProtectedRoute allowedRoles={["student"]}><StudentContent /></ProtectedRoute>} />
             <Route path="/dashboard/subscription" element={<ProtectedRoute allowedRoles={["student"]}><StudentSubscription /></ProtectedRoute>} />
@@ -65,6 +69,8 @@ const App = () => (
             <Route path="/admin/diet" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDiet /></ProtectedRoute>} />
             <Route path="/admin/protocol" element={<ProtectedRoute allowedRoles={["admin"]}><AdminProtocol /></ProtectedRoute>} />
             <Route path="/admin/training" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTraining /></ProtectedRoute>} />
+            <Route path="/admin/exercise-library" element={<ProtectedRoute allowedRoles={["admin"]}><AdminExerciseLibrary /></ProtectedRoute>} />
+            <Route path="/admin/workout-templates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminWorkoutTemplates /></ProtectedRoute>} />
             <Route path="/admin/content" element={<ProtectedRoute allowedRoles={["admin"]}><AdminContent /></ProtectedRoute>} />
             <Route path="/admin/messages" element={<ProtectedRoute allowedRoles={["admin"]}><AdminMessages /></ProtectedRoute>} />
             <Route path="/admin/layout" element={<ProtectedRoute allowedRoles={["admin"]}><AdminLayoutExterno /></ProtectedRoute>} />
