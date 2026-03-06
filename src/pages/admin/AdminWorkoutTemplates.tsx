@@ -240,15 +240,15 @@ const AdminWorkoutTemplates = () => {
                 <div className="grid grid-cols-3 gap-3">
                   <div>
                     <Label>Semanas</Label>
-                    <Input type="number" min={1} value={form.weeks} onChange={e => setForm(p => ({ ...p, weeks: +e.target.value }))} />
+                    <Input type="number" min={1} value={form.weeks} onChange={e => setForm(p => ({ ...p, weeks: e.target.value }))} placeholder="Ex: 4" />
                   </div>
                   <div>
                     <Label>Dias/semana</Label>
-                    <Input type="number" min={1} max={7} value={form.days_per_week} onChange={e => setForm(p => ({ ...p, days_per_week: +e.target.value }))} />
+                    <Input type="number" min={1} max={7} value={form.days_per_week} onChange={e => setForm(p => ({ ...p, days_per_week: e.target.value }))} placeholder="Ex: 3" />
                   </div>
                   <div>
                     <Label>Min/dia</Label>
-                    <Input type="number" min={1} value={form.minutes_per_day} onChange={e => setForm(p => ({ ...p, minutes_per_day: +e.target.value }))} />
+                    <Input type="number" min={1} value={form.minutes_per_day} onChange={e => setForm(p => ({ ...p, minutes_per_day: e.target.value }))} placeholder="Ex: 60" />
                   </div>
                 </div>
 
