@@ -34,6 +34,8 @@ const AdminStaff = () => {
   const [deleteConfirm, setDeleteConfirm] = useState<{ userId: string; name: string } | null>(null);
   const [passwordReset, setPasswordReset] = useState<{ userId: string; name: string } | null>(null);
   const [newPassword, setNewPassword] = useState("");
+  const [showCreatePassword, setShowCreatePassword] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
   const [form, setForm] = useState({ ...emptyForm });
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
