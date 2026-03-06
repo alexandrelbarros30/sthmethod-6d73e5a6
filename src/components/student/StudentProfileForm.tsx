@@ -250,6 +250,15 @@ export default function StudentProfileForm({ form, onChange, userId, isOnboarded
             <Label className="font-body">Nome completo *</Label>
             <Input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} />
           </div>
+          {email && (
+            <div>
+              <Label className="font-body">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input value={email} disabled className="pl-10 opacity-70 cursor-not-allowed" />
+              </div>
+            </div>
+          )}
           <div>
             <Label className="font-body">Telefone *</Label>
             <Input value={form.phone} onChange={(e) => set("phone", phoneMask(e.target.value))} placeholder="(00) 00000-0000" />
