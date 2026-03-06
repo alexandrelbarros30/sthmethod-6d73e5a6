@@ -32,6 +32,8 @@ const AdminStaff = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ userId: string; name: string } | null>(null);
+  const [passwordReset, setPasswordReset] = useState<{ userId: string; name: string } | null>(null);
+  const [newPassword, setNewPassword] = useState("");
   const [form, setForm] = useState({ ...emptyForm });
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
