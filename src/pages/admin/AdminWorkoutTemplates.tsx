@@ -20,12 +20,12 @@ import SortableExerciseRow, { ExerciseRow } from "@/components/admin/SortableExe
 interface TemplateForm {
   title: string;
   description: string;
-  weeks: number;
-  days_per_week: number;
-  minutes_per_day: number;
+  weeks: string;
+  days_per_week: string;
+  minutes_per_day: string;
 }
 
-const emptyTemplate: TemplateForm = { title: "", description: "", weeks: 1, days_per_week: 3, minutes_per_day: 60 };
+const emptyTemplate: TemplateForm = { title: "", description: "", weeks: "", days_per_week: "", minutes_per_day: "" };
 
 const AdminWorkoutTemplates = () => {
   const { user, role } = useAuth();
@@ -37,6 +37,7 @@ const AdminWorkoutTemplates = () => {
   const [exerciseRows, setExerciseRows] = useState<ExerciseRow[]>([]);
   const [assignDialog, setAssignDialog] = useState<string | null>(null);
   const [selectedStudent, setSelectedStudent] = useState("");
+  const [studentSearch, setStudentSearch] = useState("");
 
   const { data: templates, isLoading } = useQuery({
     queryKey: ["workout-templates"],
@@ -85,19 +86,20 @@ const AdminWorkoutTemplates = () => {
   const saveTemplateMutation = useMutation({
     mutationFn: async () => {
       if (!form.title.trim()) throw new Error("Título obrigatório");
+      const weeks = form.weeks ? Number(form.weeks) : null;
+      const days_per_week = form.days_per_week ? Number(form.days_per_week) : null;
+      const minutes_per_day = form.minutes_per_day ? Number(form.minutes_per_day) : null;
       let templateId = editingTemplate;
       if (editingTemplate) {
         const { error } = await supabase.from("workout_templates").update({
           title: form.title, description: form.description,
-          weeks: form.weeks, days_per_week: form.days_per_week,
-          minutes_per_day: form.minutes_per_day, updated_at: new Date().toISOString(),
+          weeks, days_per_week, minutes_per_day, updated_at: new Date().toISOString(),
         }).eq("id", editingTemplate);
         if (error) throw error;
       } else {
         const { data, error } = await supabase.from("workout_templates").insert({
           title: form.title, description: form.description,
-          weeks: form.weeks, days_per_week: form.days_per_week,
-          minutes_per_day: form.minutes_per_day, created_by: user!.id,
+          weeks, days_per_week, minutes_per_day, created_by: user!.id,
         }).select("id").single();
         if (error) throw error;
         templateId = data.id;
@@ -163,7 +165,7 @@ const AdminWorkoutTemplates = () => {
 
   const openEditTemplate = (t: any) => {
     setEditingTemplate(t.id);
-    setForm({ title: t.title, description: t.description || "", weeks: t.weeks, days_per_week: t.days_per_week, minutes_per_day: t.minutes_per_day });
+    setForm({ title: t.title, description: t.description || "", weeks: t.weeks?.toString() || "", days_per_week: t.days_per_week?.toString() || "", minutes_per_day: t.minutes_per_day?.toString() || "" });
     const exs = (templateExercisesMap?.[t.id] || []).map((e: any) => ({
       id: e.id, exercise_id: e.exercise_id, custom_name: e.custom_name || "",
       custom_description: e.custom_description || "", sets: e.sets || "", reps: e.reps || "",
@@ -238,15 +240,15 @@ const AdminWorkoutTemplates = () => {
                 <div className="grid grid-cols-3 gap-3">
                   <div>
                     <Label>Semanas</Label>
-                    <Input type="number" min={1} value={form.weeks} onChange={e => setForm(p => ({ ...p, weeks: +e.target.value }))} />
+                    <Input type="number" min={1} value={form.weeks} onChange={e => setForm(p => ({ ...p, weeks: e.target.value }))} placeholder="Ex: 4" />
                   </div>
                   <div>
                     <Label>Dias/semana</Label>
-                    <Input type="number" min={1} max={7} value={form.days_per_week} onChange={e => setForm(p => ({ ...p, days_per_week: +e.target.value }))} />
+                    <Input type="number" min={1} max={7} value={form.days_per_week} onChange={e => setForm(p => ({ ...p, days_per_week: e.target.value }))} placeholder="Ex: 3" />
                   </div>
                   <div>
                     <Label>Min/dia</Label>
-                    <Input type="number" min={1} value={form.minutes_per_day} onChange={e => setForm(p => ({ ...p, minutes_per_day: +e.target.value }))} />
+                    <Input type="number" min={1} value={form.minutes_per_day} onChange={e => setForm(p => ({ ...p, minutes_per_day: e.target.value }))} placeholder="Ex: 60" />
                   </div>
                 </div>
 
@@ -315,7 +317,7 @@ const AdminWorkoutTemplates = () => {
                           <div>
                             <p className="font-medium text-sm">{t.title}</p>
                             <div className="flex gap-2 mt-0.5 text-xs text-muted-foreground">
-                              <span>{t.weeks}sem • {t.days_per_week}x/sem • {t.minutes_per_day}min</span>
+                              <span>{t.weeks ? `${t.weeks}sem` : ""}{t.days_per_week ? ` • ${t.days_per_week}x/sem` : ""}{t.minutes_per_day ? ` • ${t.minutes_per_day}min` : ""}</span>
                               <Badge variant="outline" className="text-xs">{exs.length} exercício(s)</Badge>
                               {assignedCount > 0 && <Badge variant="secondary" className="text-xs"><Users className="w-3 h-3 mr-0.5" />{assignedCount}</Badge>}
                             </div>
@@ -350,18 +352,31 @@ const AdminWorkoutTemplates = () => {
         )}
 
         {/* Assign Dialog */}
-        <Dialog open={!!assignDialog} onOpenChange={v => { if (!v) { setAssignDialog(null); setSelectedStudent(""); } }}>
+        <Dialog open={!!assignDialog} onOpenChange={v => { if (!v) { setAssignDialog(null); setSelectedStudent(""); setStudentSearch(""); } }}>
           <DialogContent>
             <DialogHeader><DialogTitle>Atribuir Treino ao Aluno</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div>
+                <Label>Buscar Aluno</Label>
+                <Input
+                  placeholder="Filtrar por nome ou email..."
+                  value={studentSearch}
+                  onChange={e => setStudentSearch(e.target.value)}
+                  className="mb-2"
+                />
                 <Label>Selecionar Aluno</Label>
                 <Select value={selectedStudent} onValueChange={setSelectedStudent}>
                   <SelectTrigger><SelectValue placeholder="Escolha um aluno..." /></SelectTrigger>
                   <SelectContent>
-                    {(students || []).map((s: any) => (
-                      <SelectItem key={s.user_id} value={s.user_id}>{s.full_name || s.email}</SelectItem>
-                    ))}
+                    {(students || [])
+                      .filter((s: any) => {
+                        if (!studentSearch) return true;
+                        const q = studentSearch.toLowerCase();
+                        return (s.full_name || "").toLowerCase().includes(q) || (s.email || "").toLowerCase().includes(q);
+                      })
+                      .map((s: any) => (
+                        <SelectItem key={s.user_id} value={s.user_id}>{s.full_name || s.email}</SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
