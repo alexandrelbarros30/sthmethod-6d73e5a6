@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp } from "lucide-react";
+import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
