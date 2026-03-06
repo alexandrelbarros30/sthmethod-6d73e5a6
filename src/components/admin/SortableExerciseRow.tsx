@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, GripVertical } from "lucide-react";
+import { Trash2, GripVertical, Search } from "lucide-react";
 
 export interface ExerciseRow {
   id?: string;
@@ -19,7 +20,7 @@ export interface ExerciseRow {
   load_suggestion: string;
   video_url: string;
   sort_order: number;
-  _uid: string; // local unique id for dnd
+  _uid: string;
 }
 
 interface Props {
@@ -31,14 +32,27 @@ interface Props {
   onSelectFromLibrary: (idx: number, exerciseId: string) => void;
 }
 
+const MUSCLE_GROUPS = [
+  "Peito", "Costas", "Ombros", "Bíceps", "Tríceps", "Quadríceps",
+  "Posterior", "Glúteos", "Panturrilha", "Abdômen", "Cardio", "Outro"
+];
+
 const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, onSelectFromLibrary }: Props) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row._uid });
+  const [libSearch, setLibSearch] = useState("");
+  const [libGroup, setLibGroup] = useState("all");
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
+
+  const filteredLibrary = (libraryExercises || []).filter((e: any) => {
+    const matchSearch = !libSearch || e.name.toLowerCase().includes(libSearch.toLowerCase());
+    const matchGroup = libGroup === "all" || e.muscle_group === libGroup;
+    return matchSearch && matchGroup;
+  });
 
   return (
     <div ref={setNodeRef} style={style} className="border rounded-lg p-3 space-y-3 bg-muted/20">
@@ -53,12 +67,30 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
           <Trash2 className="w-3.5 h-3.5 text-destructive" />
         </Button>
       </div>
-      <div>
+      <div className="space-y-2">
         <Label className="text-xs">Da Biblioteca</Label>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Filtrar exercício..."
+              value={libSearch}
+              onChange={e => setLibSearch(e.target.value)}
+              className="pl-7 h-8 text-xs"
+            />
+          </div>
+          <Select value={libGroup} onValueChange={setLibGroup}>
+            <SelectTrigger className="w-28 h-8 text-xs"><SelectValue placeholder="Grupo" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              {MUSCLE_GROUPS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
         <Select value={row.exercise_id || ""} onValueChange={v => onSelectFromLibrary(idx, v)}>
           <SelectTrigger><SelectValue placeholder="Selecionar exercício..." /></SelectTrigger>
           <SelectContent>
-            {(libraryExercises || []).map((e: any) => (
+            {filteredLibrary.map((e: any) => (
               <SelectItem key={e.id} value={e.id}>{e.name} {e.muscle_group ? `(${e.muscle_group})` : ""}</SelectItem>
             ))}
           </SelectContent>
@@ -75,19 +107,19 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <div>
           <Label className="text-xs">Séries</Label>
-          <Input value={row.sets} onChange={e => onUpdate(idx, "sets", e.target.value)} placeholder="4" />
+          <Input value={row.sets} onChange={e => onUpdate(idx, "sets", e.target.value)} />
         </div>
         <div>
           <Label className="text-xs">Repetições</Label>
-          <Input value={row.reps} onChange={e => onUpdate(idx, "reps", e.target.value)} placeholder="12" />
+          <Input value={row.reps} onChange={e => onUpdate(idx, "reps", e.target.value)} />
         </div>
         <div>
           <Label className="text-xs">Intervalo</Label>
-          <Input value={row.rest_interval} onChange={e => onUpdate(idx, "rest_interval", e.target.value)} placeholder="60s" />
+          <Input value={row.rest_interval} onChange={e => onUpdate(idx, "rest_interval", e.target.value)} />
         </div>
         <div>
           <Label className="text-xs">Carga</Label>
-          <Input value={row.load_suggestion} onChange={e => onUpdate(idx, "load_suggestion", e.target.value)} placeholder="20kg" />
+          <Input value={row.load_suggestion} onChange={e => onUpdate(idx, "load_suggestion", e.target.value)} />
         </div>
       </div>
       <div>
