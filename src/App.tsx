@@ -31,8 +31,11 @@ import ConsultorDashboard from "./pages/consultor/ConsultorDashboard";
 import AssistenteDashboard from "./pages/assistente/AssistenteDashboard";
 import FinanceiroDashboard from "./pages/financeiro/FinanceiroDashboard";
 import NotFound from "./pages/NotFound";
+import { useDynamicFavicon } from "@/hooks/useDynamicFavicon";
 
 const queryClient = new QueryClient();
+
+const DynamicHead = () => { useDynamicFavicon(); return null; };
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
