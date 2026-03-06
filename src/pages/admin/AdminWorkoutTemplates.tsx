@@ -20,12 +20,12 @@ import SortableExerciseRow, { ExerciseRow } from "@/components/admin/SortableExe
 interface TemplateForm {
   title: string;
   description: string;
-  weeks: number;
-  days_per_week: number;
-  minutes_per_day: number;
+  weeks: string;
+  days_per_week: string;
+  minutes_per_day: string;
 }
 
-const emptyTemplate: TemplateForm = { title: "", description: "", weeks: 1, days_per_week: 3, minutes_per_day: 60 };
+const emptyTemplate: TemplateForm = { title: "", description: "", weeks: "", days_per_week: "", minutes_per_day: "" };
 
 const AdminWorkoutTemplates = () => {
   const { user, role } = useAuth();
