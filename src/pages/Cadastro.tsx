@@ -13,6 +13,7 @@ import { Slider } from "@/components/ui/slider";
 import {
   ArrowLeft, ArrowRight, Check, Mail, Lock, User, Phone, Loader2,
   QrCode, CreditCard, ExternalLink, Copy, CheckCircle2, CheckCircle, Calculator,
+  Eye, EyeOff,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
