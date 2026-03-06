@@ -28,7 +28,7 @@ interface TemplateForm {
 const emptyTemplate: TemplateForm = { title: "", description: "", weeks: 1, days_per_week: 3, minutes_per_day: 60 };
 
 const AdminWorkoutTemplates = () => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const queryClient = useQueryClient();
   const [templateDialog, setTemplateDialog] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<string | null>(null);
