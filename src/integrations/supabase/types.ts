@@ -965,30 +965,39 @@ export type Database = {
       }
       training_exercises: {
         Row: {
+          description: string | null
           id: string
+          load_suggestion: string | null
           name: string
           notes: string | null
           reps: string
+          rest_interval: string | null
           sets: string
           sort_order: number
           video_url: string | null
           week_id: string
         }
         Insert: {
+          description?: string | null
           id?: string
+          load_suggestion?: string | null
           name: string
           notes?: string | null
           reps?: string
+          rest_interval?: string | null
           sets?: string
           sort_order?: number
           video_url?: string | null
           week_id: string
         }
         Update: {
+          description?: string | null
           id?: string
+          load_suggestion?: string | null
           name?: string
           notes?: string | null
           reps?: string
+          rest_interval?: string | null
           sets?: string
           sort_order?: number
           video_url?: string | null

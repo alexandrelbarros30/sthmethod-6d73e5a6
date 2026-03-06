@@ -6,14 +6,15 @@ import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Download, FileText, Video } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Video, Dumbbell, Timer, ChevronDown, ChevronUp } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
 
 const getEmbedUrl = (url: string) => {
   if (!url) return null;
   const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
   if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
-  const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+  const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
   if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
   return url;
 };
@@ -21,8 +22,9 @@ const getEmbedUrl = (url: string) => {
 const StudentTraining = () => {
   const { user } = useAuth();
   const { isActive, isLoading: subLoading } = useSubscriptionGuard();
+  const [expandedExercises, setExpandedExercises] = useState<Set<string>>(new Set());
 
-  // Prevent screenshots, print screen, and right-click
+  // Prevent screenshots
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "PrintScreen" || (e.ctrlKey && e.key === "p") || (e.metaKey && e.key === "p")) {
@@ -33,24 +35,11 @@ const StudentTraining = () => {
     };
     const handleContextMenu = (e: MouseEvent) => e.preventDefault();
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        document.body.style.filter = "blur(20px)";
-      } else {
-        document.body.style.filter = "none";
-      }
+      document.body.style.filter = document.visibilityState === "hidden" ? "blur(20px)" : "none";
     };
-
     document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("keyup", (e) => {
-      if (e.key === "PrintScreen") {
-        document.body.style.filter = "blur(20px)";
-        navigator.clipboard.writeText("").catch(() => {});
-        setTimeout(() => { document.body.style.filter = "none"; }, 1500);
-      }
-    });
     document.addEventListener("contextmenu", handleContextMenu);
     document.addEventListener("visibilitychange", handleVisibilityChange);
-
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("contextmenu", handleContextMenu);
@@ -59,20 +48,45 @@ const StudentTraining = () => {
     };
   }, []);
 
-  const { data: training, isLoading } = useQuery({
-    queryKey: ["student-training", user?.id],
+  const { data: weeks, isLoading: weeksLoading } = useQuery({
+    queryKey: ["student-training-weeks", user?.id],
     queryFn: async () => {
       const { data } = await supabase
-        .from("student_trainings" as any)
+        .from("training_weeks")
         .select("*")
         .eq("user_id", user!.id)
-        .maybeSingle();
-      return data;
+        .order("sort_order");
+      return data || [];
     },
     enabled: !!user?.id && isActive,
   });
 
-  if (subLoading || isLoading) {
+  const { data: exercises, isLoading: exLoading } = useQuery({
+    queryKey: ["student-training-exercises", user?.id],
+    queryFn: async () => {
+      if (!weeks?.length) return [];
+      const weekIds = weeks.map((w: any) => w.id);
+      const { data } = await supabase
+        .from("training_exercises")
+        .select("*")
+        .in("week_id", weekIds)
+        .order("sort_order");
+      return data || [];
+    },
+    enabled: !!weeks?.length,
+  });
+
+  const isLoading = subLoading || weeksLoading || exLoading;
+
+  const toggleExercise = (id: string) => {
+    setExpandedExercises(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  if (isLoading) {
     return (
       <DashboardLayout role="student" title="Treino" subtitle="Seu plano de treino personalizado.">
         <p className="text-muted-foreground font-body text-sm">Carregando...</p>
@@ -88,7 +102,7 @@ const StudentTraining = () => {
     );
   }
 
-  if (!training) {
+  if (!weeks || weeks.length === 0) {
     return (
       <DashboardLayout role="student" title="Treino" subtitle="Seu plano de treino personalizado.">
         <Card><CardContent className="py-8 text-center">
@@ -98,69 +112,116 @@ const StudentTraining = () => {
     );
   }
 
-  const embedUrl = getEmbedUrl((training as any).video_url || "");
-
   return (
-    <DashboardLayout role="student" title={(training as any).title || "Treino"} subtitle="Seu plano de treino personalizado.">
+    <DashboardLayout role="student" title="Treino" subtitle="Seu plano de treino personalizado.">
       <style>{`
         @media print { .training-protected { display: none !important; } body::after { content: "Impressão não permitida"; display: flex; align-items: center; justify-content: center; font-size: 2rem; height: 100vh; } }
         .training-protected { user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; -webkit-touch-callout: none; }
       `}</style>
       <div className="space-y-6 max-w-4xl training-protected">
-        {embedUrl && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base font-display flex items-center gap-2">
-                <Video className="w-4 h-4" /> Vídeo
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="aspect-video">
-                <iframe
-                  src={embedUrl}
-                  className="w-full h-full rounded-lg"
-                  allowFullScreen
-                  title="Vídeo do treino"
-                />
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {weeks.map((week: any) => {
+          const weekExercises = (exercises || [])
+            .filter((e: any) => e.week_id === week.id)
+            .sort((a: any, b: any) => a.sort_order - b.sort_order);
 
-        {(training as any).pdf_url && (
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base font-display flex items-center gap-2">
-                <FileText className="w-4 h-4" /> Documento PDF
-              </CardTitle>
-              <a href={(training as any).pdf_url} download target="_blank" rel="noopener noreferrer">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Download className="w-4 h-4" /> Baixar PDF
-                </Button>
-              </a>
-            </CardHeader>
-            <CardContent>
-              <iframe
-                  src={`${(training as any).pdf_url}#toolbar=0&navpanes=0&scrollbar=1`}
-                  className="w-full h-[600px] rounded-lg border border-border"
-                  title="Treino PDF"
-                  style={{ pointerEvents: "auto" }}
-                  sandbox="allow-same-origin allow-scripts"
-                />
-            </CardContent>
-          </Card>
-        )}
+          return (
+            <Card key={week.id}>
+              <CardHeader>
+                <CardTitle className="font-display flex items-center gap-2">
+                  <Dumbbell className="w-5 h-5 text-primary" />
+                  {week.name}
+                  <Badge variant="outline" className="text-xs ml-2">{weekExercises.length} exercício(s)</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {weekExercises.map((ex: any, idx: number) => {
+                  const embedUrl = getEmbedUrl(ex.video_url || "");
+                  const isExpanded = expandedExercises.has(ex.id);
 
-        {(training as any).content && (
-          <Card>
-            <CardHeader><CardTitle className="text-base font-display">Detalhes</CardTitle></CardHeader>
-            <CardContent>
-              <div className="whitespace-pre-wrap text-sm text-foreground font-body leading-relaxed">
-                {(training as any).content}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                  return (
+                    <div key={ex.id} className="rounded-lg border border-border overflow-hidden">
+                      {/* Exercise header - always visible */}
+                      <button
+                        className="w-full flex items-center gap-3 p-4 text-left hover:bg-muted/50 transition-colors"
+                        onClick={() => toggleExercise(ex.id)}
+                      >
+                        <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-sm font-bold shrink-0">
+                          {idx + 1}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm font-body">{ex.name}</p>
+                          <div className="flex flex-wrap gap-2 mt-0.5 text-xs text-muted-foreground">
+                            {ex.reps && <span className="text-primary font-semibold">{ex.reps}</span>}
+                            {ex.rest_interval && <span>Intervalo: {ex.rest_interval}</span>}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {ex.video_url && <Video className="w-4 h-4 text-primary" />}
+                          {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                        </div>
+                      </button>
+
+                      {/* Expanded content */}
+                      {isExpanded && (
+                        <div className="border-t border-border p-4 space-y-4 bg-muted/20">
+                          {embedUrl && (
+                            <div className="aspect-video rounded-lg overflow-hidden">
+                              <iframe
+                                src={embedUrl}
+                                className="w-full h-full"
+                                allowFullScreen
+                                title={`Vídeo - ${ex.name}`}
+                              />
+                            </div>
+                          )}
+
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+                            {ex.reps && (
+                              <div className="rounded-lg bg-background p-3 border border-border">
+                                <p className="text-xs text-muted-foreground mb-1">Séries x Reps</p>
+                                <p className="font-semibold text-primary">{ex.reps}</p>
+                              </div>
+                            )}
+                            {ex.rest_interval && (
+                              <div className="rounded-lg bg-background p-3 border border-border">
+                                <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><Timer className="w-3 h-3" /> Intervalo</p>
+                                <p className="font-semibold">{ex.rest_interval}</p>
+                              </div>
+                            )}
+                            {ex.load_suggestion && (
+                              <div className="rounded-lg bg-background p-3 border border-border">
+                                <p className="text-xs text-muted-foreground mb-1">Carga</p>
+                                <p className="font-semibold">{ex.load_suggestion}</p>
+                              </div>
+                            )}
+                          </div>
+
+                          {ex.description && (
+                            <div>
+                              <p className="text-xs font-semibold text-muted-foreground mb-1">Descrição da execução</p>
+                              <p className="text-sm text-foreground font-body leading-relaxed whitespace-pre-wrap">{ex.description}</p>
+                            </div>
+                          )}
+
+                          {ex.notes && (
+                            <div>
+                              <p className="text-xs font-semibold text-muted-foreground mb-1">Observações</p>
+                              <p className="text-sm text-muted-foreground font-body whitespace-pre-wrap">{ex.notes}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {weekExercises.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">Nenhum exercício neste treino.</p>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </DashboardLayout>
   );

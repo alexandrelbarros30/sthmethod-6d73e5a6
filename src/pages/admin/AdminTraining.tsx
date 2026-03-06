@@ -8,164 +8,415 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, FileText, Video, Search } from "lucide-react";
+import { Pencil, Trash2, Plus, Search, GripVertical, Video, ChevronDown, ChevronUp } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+interface Exercise {
+  id?: string;
+  name: string;
+  video_url: string;
+  description: string;
+  sets: string;
+  reps: string;
+  rest_interval: string;
+  load_suggestion: string;
+  notes: string;
+  sort_order: number;
+  week_id?: string;
+}
+
+const emptyExercise = (): Exercise => ({
+  name: "", video_url: "", description: "", sets: "", reps: "",
+  rest_interval: "", load_suggestion: "", notes: "", sort_order: 0,
+});
+
+const getEmbedUrl = (url: string) => {
+  if (!url) return null;
+  const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+  const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+  return url;
+};
+
 const AdminTraining = () => {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [selected, setSelected] = useState<any>(null);
-  const [title, setTitle] = useState("Treino");
-  const [content, setContent] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [existingPdf, setExistingPdf] = useState("");
-  const [recordId, setRecordId] = useState<string | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [manageOpen, setManageOpen] = useState(false);
+  const [exerciseDialogOpen, setExerciseDialogOpen] = useState(false);
+  const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
+  const [weekName, setWeekName] = useState("");
+  const [weekDialogOpen, setWeekDialogOpen] = useState(false);
+  const [editingWeekId, setEditingWeekId] = useState<string | null>(null);
+  const [expandedWeeks, setExpandedWeeks] = useState<Set<string>>(new Set());
+  const [activeWeekId, setActiveWeekId] = useState<string | null>(null);
 
   const { data: students } = useQuery({
-    queryKey: ["admin-students-trainings"],
+    queryKey: ["admin-students-training-list"],
     queryFn: async () => {
       const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, email");
-      const { data: trainings } = await supabase.from("student_trainings" as any).select("*");
-      return (profiles || []).map((p: any) => {
-        const training = (trainings as any[])?.find((d: any) => d.user_id === p.user_id);
-        return { ...p, training, initials: p.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "?" };
-      });
+      const { data: weeks } = await supabase.from("training_weeks").select("user_id");
+      const weekCounts: Record<string, number> = {};
+      (weeks || []).forEach((w: any) => { weekCounts[w.user_id] = (weekCounts[w.user_id] || 0) + 1; });
+      return (profiles || []).map((p: any) => ({
+        ...p,
+        weekCount: weekCounts[p.user_id] || 0,
+        initials: p.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "?",
+      }));
     },
   });
 
+  const { data: weeks } = useQuery({
+    queryKey: ["admin-training-weeks", selectedStudent?.user_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("training_weeks")
+        .select("*")
+        .eq("user_id", selectedStudent!.user_id)
+        .order("sort_order");
+      return data || [];
+    },
+    enabled: !!selectedStudent?.user_id && manageOpen,
+  });
+
+  const { data: exercises } = useQuery({
+    queryKey: ["admin-training-exercises", selectedStudent?.user_id],
+    queryFn: async () => {
+      if (!weeks?.length) return [];
+      const weekIds = weeks.map((w: any) => w.id);
+      const { data } = await supabase
+        .from("training_exercises")
+        .select("*")
+        .in("week_id", weekIds)
+        .order("sort_order");
+      return data || [];
+    },
+    enabled: !!weeks?.length,
+  });
+
   const openManage = (student: any) => {
-    setSelected(student);
-    const r = student.training;
-    setRecordId(r?.id || null);
-    setTitle(r?.title || "Treino");
-    setContent(r?.content || "");
-    setVideoUrl(r?.video_url || "");
-    setExistingPdf(r?.pdf_url || "");
-    setPdfFile(null);
-    setDialogOpen(true);
+    setSelectedStudent(student);
+    setManageOpen(true);
+    setExpandedWeeks(new Set());
   };
 
-  const saveMutation = useMutation({
+  const toggleWeek = (weekId: string) => {
+    setExpandedWeeks(prev => {
+      const next = new Set(prev);
+      next.has(weekId) ? next.delete(weekId) : next.add(weekId);
+      return next;
+    });
+  };
+
+  // Week mutations
+  const saveWeekMutation = useMutation({
     mutationFn: async () => {
-      let pdfUrl = existingPdf;
-      if (pdfFile) {
-        const path = `${selected.user_id}/training/${pdfFile.name}`;
-        await supabase.storage.from("documents").upload(path, pdfFile, { upsert: true });
-        const { data } = supabase.storage.from("documents").getPublicUrl(path);
-        pdfUrl = data.publicUrl;
-      }
-      const payload = { user_id: selected.user_id, title, content, pdf_url: pdfUrl, video_url: videoUrl };
-      if (recordId) {
-        await supabase.from("student_trainings" as any).update(payload).eq("id", recordId);
+      if (editingWeekId) {
+        await supabase.from("training_weeks").update({ name: weekName }).eq("id", editingWeekId);
       } else {
-        await supabase.from("student_trainings" as any).insert(payload);
+        const maxOrder = (weeks || []).reduce((m: number, w: any) => Math.max(m, w.sort_order), -1);
+        await supabase.from("training_weeks").insert({ user_id: selectedStudent.user_id, name: weekName, sort_order: maxOrder + 1 });
       }
     },
     onSuccess: () => {
       toast.success("Treino salvo!");
-      qc.invalidateQueries({ queryKey: ["admin-students-trainings"] });
-      setDialogOpen(false);
+      qc.invalidateQueries({ queryKey: ["admin-training-weeks"] });
+      qc.invalidateQueries({ queryKey: ["admin-students-training-list"] });
+      setWeekDialogOpen(false);
     },
-    onError: () => toast.error("Erro ao salvar treino"),
+    onError: () => toast.error("Erro ao salvar"),
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async () => {
-      if (recordId) await supabase.from("student_trainings" as any).delete().eq("id", recordId);
+  const deleteWeekMutation = useMutation({
+    mutationFn: async (weekId: string) => {
+      await supabase.from("training_exercises").delete().eq("week_id", weekId);
+      await supabase.from("training_weeks").delete().eq("id", weekId);
     },
     onSuccess: () => {
       toast.success("Treino removido!");
-      qc.invalidateQueries({ queryKey: ["admin-students-trainings"] });
-      setDialogOpen(false);
+      qc.invalidateQueries({ queryKey: ["admin-training-weeks"] });
+      qc.invalidateQueries({ queryKey: ["admin-training-exercises"] });
+      qc.invalidateQueries({ queryKey: ["admin-students-training-list"] });
     },
   });
 
-  return (
-    <DashboardLayout role="admin" title="Gestão de Treinos" subtitle="Gerencie os treinos dos alunos com PDF, texto e vídeo.">
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-display">Alunos</CardTitle>
-          <div className="relative mt-2">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Buscar por nome ou e-mail..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="font-body">Aluno</TableHead>
-                <TableHead className="font-body">Status</TableHead>
-                <TableHead className="font-body text-right">Ação</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {students?.filter((s: any) => {
-                if (!search.trim()) return true;
-                const q = search.toLowerCase();
-                return s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q);
-              }).map((s: any) => (
-                <TableRow key={s.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <span className="text-xs font-bold text-primary">{s.initials}</span>
-                      </div>
-                      <p className="font-medium text-sm font-body">{s.full_name || "Sem nome"}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={s.training ? "secondary" : "outline"} className="text-xs">
-                      {s.training ? "Configurado" : "Pendente"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" onClick={() => openManage(s)}>
-                      <Pencil className="w-3 h-3 mr-1" /> Gerenciar
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+  // Exercise mutations
+  const saveExerciseMutation = useMutation({
+    mutationFn: async () => {
+      if (!editingExercise || !activeWeekId) return;
+      const payload = {
+        name: editingExercise.name,
+        video_url: editingExercise.video_url,
+        description: editingExercise.description,
+        sets: editingExercise.sets,
+        reps: editingExercise.reps,
+        rest_interval: editingExercise.rest_interval,
+        load_suggestion: editingExercise.load_suggestion,
+        notes: editingExercise.notes,
+        sort_order: editingExercise.sort_order,
+        week_id: activeWeekId,
+      };
+      if (editingExercise.id) {
+        await supabase.from("training_exercises").update(payload).eq("id", editingExercise.id);
+      } else {
+        const weekExercises = (exercises || []).filter((e: any) => e.week_id === activeWeekId);
+        const maxOrder = weekExercises.reduce((m: number, e: any) => Math.max(m, e.sort_order), -1);
+        await supabase.from("training_exercises").insert({ ...payload, sort_order: maxOrder + 1 });
+      }
+    },
+    onSuccess: () => {
+      toast.success("Exercício salvo!");
+      qc.invalidateQueries({ queryKey: ["admin-training-exercises"] });
+      setExerciseDialogOpen(false);
+    },
+    onError: () => toast.error("Erro ao salvar exercício"),
+  });
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle className="font-display">Treino — {selected?.full_name}</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div><Label className="font-body">Título</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} /></div>
-            <div>
-              <Label className="font-body">Upload PDF</Label>
-              <Input type="file" accept=".pdf" onChange={(e) => setPdfFile(e.target.files?.[0] || null)} />
-              {existingPdf && (
-                <a href={existingPdf} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mt-1">
-                  <FileText className="w-3 h-3" /> Ver PDF atual
-                </a>
-              )}
+  const deleteExerciseMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await supabase.from("training_exercises").delete().eq("id", id);
+    },
+    onSuccess: () => {
+      toast.success("Exercício removido!");
+      qc.invalidateQueries({ queryKey: ["admin-training-exercises"] });
+    },
+  });
+
+  const moveExercise = async (exerciseId: string, weekId: string, direction: "up" | "down") => {
+    const weekExercises = (exercises || []).filter((e: any) => e.week_id === weekId).sort((a: any, b: any) => a.sort_order - b.sort_order);
+    const idx = weekExercises.findIndex((e: any) => e.id === exerciseId);
+    if ((direction === "up" && idx === 0) || (direction === "down" && idx === weekExercises.length - 1)) return;
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    const a = weekExercises[idx], b = weekExercises[swapIdx];
+    await supabase.from("training_exercises").update({ sort_order: b.sort_order }).eq("id", a.id);
+    await supabase.from("training_exercises").update({ sort_order: a.sort_order }).eq("id", b.id);
+    qc.invalidateQueries({ queryKey: ["admin-training-exercises"] });
+  };
+
+  const openNewExercise = (weekId: string) => {
+    setActiveWeekId(weekId);
+    setEditingExercise(emptyExercise());
+    setExerciseDialogOpen(true);
+  };
+
+  const openEditExercise = (exercise: any) => {
+    setActiveWeekId(exercise.week_id);
+    setEditingExercise({ ...exercise });
+    setExerciseDialogOpen(true);
+  };
+
+  const embedUrl = editingExercise?.video_url ? getEmbedUrl(editingExercise.video_url) : null;
+
+  return (
+    <DashboardLayout role="admin" title="Gestão de Treinos" subtitle="Gerencie fichas de treino com exercícios, vídeos e séries.">
+      {!manageOpen ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-display">Alunos</CardTitle>
+            <div className="relative mt-2">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input placeholder="Buscar por nome ou e-mail..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
             </div>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="font-body">Aluno</TableHead>
+                  <TableHead className="font-body">Treinos</TableHead>
+                  <TableHead className="font-body text-right">Ação</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {students?.filter((s: any) => {
+                  if (!search.trim()) return true;
+                  const q = search.toLowerCase();
+                  return s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q);
+                }).map((s: any) => (
+                  <TableRow key={s.user_id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="text-xs font-bold text-primary">{s.initials}</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm font-body">{s.full_name || "Sem nome"}</p>
+                          <p className="text-xs text-muted-foreground">{s.email}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={s.weekCount > 0 ? "secondary" : "outline"} className="text-xs">
+                        {s.weekCount > 0 ? `${s.weekCount} treino(s)` : "Pendente"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm" onClick={() => openManage(s)}>
+                        <Pencil className="w-3 h-3 mr-1" /> Gerenciar
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
             <div>
-              <Label className="font-body">Link de vídeo</Label>
-              <Input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://youtube.com/watch?v=..." />
+              <Button variant="ghost" size="sm" onClick={() => { setManageOpen(false); setSelectedStudent(null); }}>
+                ← Voltar
+              </Button>
+              <h2 className="font-display text-lg font-semibold mt-1">{selectedStudent?.full_name}</h2>
             </div>
-            <div>
-              <Label className="font-body">Conteúdo (texto)</Label>
-              <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={10} placeholder="Escreva o conteúdo do treino aqui..." />
-            </div>
+            <Button size="sm" onClick={() => { setEditingWeekId(null); setWeekName(""); setWeekDialogOpen(true); }}>
+              <Plus className="w-4 h-4 mr-1" /> Novo Treino
+            </Button>
           </div>
+
+          {(!weeks || weeks.length === 0) && (
+            <Card><CardContent className="py-8 text-center">
+              <p className="text-muted-foreground font-body text-sm">Nenhum treino configurado. Clique em "Novo Treino" para começar.</p>
+            </CardContent></Card>
+          )}
+
+          {weeks?.map((week: any) => {
+            const weekExercises = (exercises || []).filter((e: any) => e.week_id === week.id).sort((a: any, b: any) => a.sort_order - b.sort_order);
+            const isExpanded = expandedWeeks.has(week.id);
+            return (
+              <Card key={week.id}>
+                <CardHeader className="cursor-pointer" onClick={() => toggleWeek(week.id)}>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base font-display flex items-center gap-2">
+                      {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      {week.name}
+                      <Badge variant="outline" className="text-xs ml-2">{weekExercises.length} exercício(s)</Badge>
+                    </CardTitle>
+                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                      <Button variant="ghost" size="sm" onClick={() => { setEditingWeekId(week.id); setWeekName(week.name); setWeekDialogOpen(true); }}>
+                        <Pencil className="w-3 h-3" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => { if (confirm("Remover este treino e todos os exercícios?")) deleteWeekMutation.mutate(week.id); }}>
+                        <Trash2 className="w-3 h-3 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                {isExpanded && (
+                  <CardContent className="space-y-3">
+                    {weekExercises.map((ex: any, idx: number) => (
+                      <div key={ex.id} className="flex items-start gap-3 p-3 rounded-lg border border-border bg-muted/30">
+                        <div className="flex flex-col gap-1 mt-1">
+                          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => moveExercise(ex.id, week.id, "up")} disabled={idx === 0}>
+                            <ChevronUp className="w-3 h-3" />
+                          </Button>
+                          <GripVertical className="w-4 h-4 text-muted-foreground mx-auto" />
+                          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => moveExercise(ex.id, week.id, "down")} disabled={idx === weekExercises.length - 1}>
+                            <ChevronDown className="w-3 h-3" />
+                          </Button>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-primary">{idx + 1}.</span>
+                            <p className="font-medium text-sm font-body">{ex.name}</p>
+                            {ex.video_url && <Video className="w-3 h-3 text-primary" />}
+                          </div>
+                          <div className="flex flex-wrap gap-2 mt-1 text-xs text-muted-foreground">
+                            {ex.sets && <span>Séries: {ex.sets}</span>}
+                            {ex.reps && <span>• Reps: {ex.reps}</span>}
+                            {ex.rest_interval && <span>• Intervalo: {ex.rest_interval}</span>}
+                          </div>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="sm" onClick={() => openEditExercise(ex)}><Pencil className="w-3 h-3" /></Button>
+                          <Button variant="ghost" size="sm" onClick={() => { if (confirm("Remover exercício?")) deleteExerciseMutation.mutate(ex.id); }}>
+                            <Trash2 className="w-3 h-3 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                    <Button variant="outline" size="sm" className="w-full" onClick={() => openNewExercise(week.id)}>
+                      <Plus className="w-4 h-4 mr-1" /> Adicionar Exercício
+                    </Button>
+                  </CardContent>
+                )}
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Week dialog */}
+      <Dialog open={weekDialogOpen} onOpenChange={setWeekDialogOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="font-display">{editingWeekId ? "Editar Treino" : "Novo Treino"}</DialogTitle></DialogHeader>
+          <div><Label className="font-body">Nome do treino</Label><Input value={weekName} onChange={(e) => setWeekName(e.target.value)} placeholder="Ex: Treino A - Peito e Tríceps" /></div>
+          <DialogFooter>
+            <Button onClick={() => saveWeekMutation.mutate()} disabled={!weekName.trim() || saveWeekMutation.isPending}>
+              {saveWeekMutation.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Exercise dialog */}
+      <Dialog open={exerciseDialogOpen} onOpenChange={setExerciseDialogOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle className="font-display">{editingExercise?.id ? "Editar Exercício" : "Novo Exercício"}</DialogTitle></DialogHeader>
+          {editingExercise && (
+            <div className="space-y-4">
+              <div>
+                <Label className="font-body">Nome do exercício *</Label>
+                <Input value={editingExercise.name} onChange={(e) => setEditingExercise({ ...editingExercise, name: e.target.value })} placeholder="Ex: Supino Barra Reta" maxLength={40} />
+                <p className="text-xs text-muted-foreground text-right mt-1">{editingExercise.name.length}/40</p>
+              </div>
+              <div>
+                <Label className="font-body">Endereço do vídeo</Label>
+                <Input value={editingExercise.video_url} onChange={(e) => setEditingExercise({ ...editingExercise, video_url: e.target.value })} placeholder="https://player.vimeo.com/video/..." maxLength={200} />
+                <p className="text-xs text-muted-foreground mt-1">Utilize vídeos do YouTube ou Vimeo</p>
+                {embedUrl && (
+                  <div className="aspect-video mt-2 rounded-lg overflow-hidden border border-border">
+                    <iframe src={embedUrl} className="w-full h-full" allowFullScreen title="Preview" />
+                  </div>
+                )}
+              </div>
+              <div>
+                <Label className="font-body">Descrição da execução</Label>
+                <Textarea value={editingExercise.description} onChange={(e) => setEditingExercise({ ...editingExercise, description: e.target.value })} rows={5} placeholder="Descreva a técnica de execução..." maxLength={800} />
+                <p className="text-xs text-muted-foreground text-right mt-1">{editingExercise.description.length}/800</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="font-body">Séries x Repetições</Label>
+                  <Input value={editingExercise.reps} onChange={(e) => setEditingExercise({ ...editingExercise, reps: e.target.value })} placeholder="4x15/12/10/8" maxLength={100} />
+                </div>
+                <div>
+                  <Label className="font-body">Intervalo</Label>
+                  <Input value={editingExercise.rest_interval} onChange={(e) => setEditingExercise({ ...editingExercise, rest_interval: e.target.value })} placeholder="60s" maxLength={20} />
+                </div>
+              </div>
+              <div>
+                <Label className="font-body">Sugestão de carga (opcional)</Label>
+                <Input value={editingExercise.load_suggestion} onChange={(e) => setEditingExercise({ ...editingExercise, load_suggestion: e.target.value })} placeholder="Progressão de carga..." maxLength={100} />
+              </div>
+              <div>
+                <Label className="font-body">Observações</Label>
+                <Textarea value={editingExercise.notes} onChange={(e) => setEditingExercise({ ...editingExercise, notes: e.target.value })} rows={2} placeholder="Notas adicionais..." />
+              </div>
+            </div>
+          )}
           <DialogFooter className="flex gap-2">
-            {recordId && (
-              <Button variant="destructive" size="sm" onClick={() => deleteMutation.mutate()}>
+            {editingExercise?.id && (
+              <Button variant="destructive" size="sm" onClick={() => { deleteExerciseMutation.mutate(editingExercise.id!); setExerciseDialogOpen(false); }}>
                 <Trash2 className="w-3 h-3 mr-1" /> Excluir
               </Button>
             )}
-            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
-              {saveMutation.isPending ? "Salvando..." : "Salvar"}
+            <Button onClick={() => saveExerciseMutation.mutate()} disabled={!editingExercise?.name.trim() || saveExerciseMutation.isPending}>
+              {saveExerciseMutation.isPending ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
         </DialogContent>
