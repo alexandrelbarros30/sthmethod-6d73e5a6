@@ -120,7 +120,7 @@ const AdminLayoutExterno = () => {
             <TabsTrigger value="cores" className="gap-1.5"><Palette className="w-4 h-4" />Cores</TabsTrigger>
           </TabsList>
 
-          {/* ─── MARCA (Logo + Background) ─── */}
+          {/* ─── MARCA (Logo + Background + Favicon + OG Image) ─── */}
           <TabsContent value="brand" className="space-y-4 mt-4">
             <Card className="bg-card border-border">
               <CardHeader><CardTitle className="text-sm">Logo</CardTitle></CardHeader>
@@ -136,6 +136,55 @@ const AdminLayoutExterno = () => {
                   </Button>
                   {val("logo_url") && (
                     <Button size="sm" variant="destructive" onClick={() => { updateSetting.mutateAsync({ key: "logo_url", value: "" }); setVal("logo_url", ""); }}>
+                      <Trash2 className="w-4 h-4 mr-1" />Remover
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Favicon */}
+            <Card className="bg-card border-border">
+              <CardHeader><CardTitle className="text-sm">Favicon</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-xs text-muted-foreground">Ícone que aparece na aba do navegador. Recomendado: PNG ou SVG, 32×32 ou 64×64 pixels.</p>
+                {val("favicon_url") && (
+                  <div className="flex items-center gap-3">
+                    <img src={val("favicon_url")} alt="Favicon" className="w-10 h-10 object-contain rounded bg-muted p-1 border border-border" />
+                    <span className="text-xs text-muted-foreground truncate max-w-[200px]">{val("favicon_url")}</span>
+                  </div>
+                )}
+                <input ref={faviconRef} type="file" accept="image/png,image/jpg,image/jpeg,image/svg+xml,image/x-icon" className="hidden"
+                  onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], "favicon_url", "favicon")} />
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => faviconRef.current?.click()}>
+                    <Upload className="w-4 h-4 mr-1" />Upload Favicon
+                  </Button>
+                  {val("favicon_url") && (
+                    <Button size="sm" variant="destructive" onClick={() => { updateSetting.mutateAsync({ key: "favicon_url", value: "" }); setVal("favicon_url", ""); }}>
+                      <Trash2 className="w-4 h-4 mr-1" />Remover
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Project Image / OG Image */}
+            <Card className="bg-card border-border">
+              <CardHeader><CardTitle className="text-sm">Imagem de Compartilhamento (OG Image)</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-xs text-muted-foreground">Thumbnail exibida ao compartilhar o link em redes sociais e WhatsApp. Recomendado: 1200×630 pixels.</p>
+                {val("og_image_url") && (
+                  <img src={val("og_image_url")} alt="OG Image" className="w-full max-w-md h-40 object-cover rounded border border-border" />
+                )}
+                <input ref={ogImageRef} type="file" accept="image/png,image/jpg,image/jpeg" className="hidden"
+                  onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], "og_image_url", "og-image")} />
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => ogImageRef.current?.click()}>
+                    <Upload className="w-4 h-4 mr-1" />Upload Imagem
+                  </Button>
+                  {val("og_image_url") && (
+                    <Button size="sm" variant="destructive" onClick={() => { updateSetting.mutateAsync({ key: "og_image_url", value: "" }); setVal("og_image_url", ""); }}>
                       <Trash2 className="w-4 h-4 mr-1" />Remover
                     </Button>
                   )}

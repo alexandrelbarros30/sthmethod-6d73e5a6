@@ -28,11 +28,23 @@ export const useUpdateLandingSetting = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ key, value }: { key: string; value: string }) => {
-      const { error } = await supabase
+      const { data: existing } = await supabase
         .from("landing_settings")
-        .update({ value, updated_at: new Date().toISOString() })
-        .eq("key", key);
-      if (error) throw error;
+        .select("id")
+        .eq("key", key)
+        .maybeSingle();
+      if (existing) {
+        const { error } = await supabase
+          .from("landing_settings")
+          .update({ value, updated_at: new Date().toISOString() })
+          .eq("key", key);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("landing_settings")
+          .insert({ key, value, updated_at: new Date().toISOString() });
+        if (error) throw error;
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["landing-settings"] }),
   });
