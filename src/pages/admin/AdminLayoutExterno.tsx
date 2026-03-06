@@ -46,6 +46,8 @@ const AdminLayoutExterno = () => {
   const [localSettings, setLocalSettings] = useState<Record<string, string>>({});
   const logoRef = useRef<HTMLInputElement>(null);
   const bgRef = useRef<HTMLInputElement>(null);
+  const faviconRef = useRef<HTMLInputElement>(null);
+  const ogImageRef = useRef<HTMLInputElement>(null);
 
   const val = (key: string, fallback = "") => localSettings[key] ?? getSetting(settings, key, fallback);
 
