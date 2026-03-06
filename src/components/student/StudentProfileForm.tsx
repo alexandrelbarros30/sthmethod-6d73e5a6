@@ -121,7 +121,7 @@ interface Props {
   email?: string;
 }
 
-export default function StudentProfileForm({ form, onChange, userId, isOnboarded, editing, onSaved, onCancel, labExamUrl, prescriptionUrl, onDocumentUploaded }: Props) {
+export default function StudentProfileForm({ form, onChange, userId, isOnboarded, editing, onSaved, onCancel, labExamUrl, prescriptionUrl, onDocumentUploaded, email }: Props) {
   const [saving, setSaving] = useState(false);
 
   const set = (field: keyof ProfileFormData, value: string) => {
