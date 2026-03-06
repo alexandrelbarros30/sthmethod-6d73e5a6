@@ -56,6 +56,7 @@ const Cadastro = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phoneVal, setPhoneVal] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   // Step 2 - Profile
   const [profileForm, setProfileForm] = useState({
