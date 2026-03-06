@@ -73,6 +73,8 @@ const AdminStudents = () => {
   const [activeTab, setActiveTab] = useState("dados");
   const [savedTabs, setSavedTabs] = useState<Set<string>>(new Set());
   const [tabSaving, setTabSaving] = useState(false);
+  const [passwordReset, setPasswordReset] = useState<{ userId: string; name: string } | null>(null);
+  const [newPassword, setNewPassword] = useState("");
 
   const { data: students, isLoading } = useQuery({
     queryKey: ["admin-students-list"],
