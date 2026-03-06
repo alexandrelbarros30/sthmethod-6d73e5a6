@@ -232,7 +232,7 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
                     ref={(el) => { fileRefs.current[key] = el; }}
                     type="file"
                     accept="image/*"
-                    capture="environment"
+                    
                     className="hidden"
                     onChange={(e) => handleFileSelect(key, e)}
                   />
