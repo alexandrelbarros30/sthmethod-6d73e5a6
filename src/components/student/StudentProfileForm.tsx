@@ -118,6 +118,7 @@ interface Props {
   labExamUrl?: string | null;
   prescriptionUrl?: string | null;
   onDocumentUploaded?: () => void;
+  email?: string;
 }
 
 export default function StudentProfileForm({ form, onChange, userId, isOnboarded, editing, onSaved, onCancel, labExamUrl, prescriptionUrl, onDocumentUploaded }: Props) {
