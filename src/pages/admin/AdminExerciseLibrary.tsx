@@ -111,7 +111,7 @@ const AdminExerciseLibrary = () => {
   });
 
   return (
-    <DashboardLayout role="admin" title="Biblioteca de Exercícios" subtitle="Cadastro e gerenciamento de exercícios reutilizáveis.">
+    <DashboardLayout role={(role as any) || "admin"} title="Biblioteca de Exercícios" subtitle="Cadastro e gerenciamento de exercícios reutilizáveis.">
       <div className="space-y-4 max-w-5xl">
         {/* Toolbar */}
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
