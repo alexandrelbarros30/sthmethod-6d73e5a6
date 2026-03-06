@@ -11,8 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Dumbbell, Users, ChevronDown, ChevronUp, Video, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Dumbbell, Users, Video } from "lucide-react";
 import { toast } from "sonner";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+import SortableExerciseRow, { ExerciseRow } from "@/components/admin/SortableExerciseRow";
 
 interface TemplateForm {
   title: string;
@@ -23,19 +26,6 @@ interface TemplateForm {
 }
 
 const emptyTemplate: TemplateForm = { title: "", description: "", weeks: 1, days_per_week: 3, minutes_per_day: 60 };
-
-interface ExerciseRow {
-  id?: string;
-  exercise_id: string | null;
-  custom_name: string;
-  custom_description: string;
-  sets: string;
-  reps: string;
-  rest_interval: string;
-  load_suggestion: string;
-  video_url: string;
-  sort_order: number;
-}
 
 const AdminWorkoutTemplates = () => {
   const { user } = useAuth();
