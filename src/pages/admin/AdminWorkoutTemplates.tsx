@@ -169,6 +169,7 @@ const AdminWorkoutTemplates = () => {
       custom_description: e.custom_description || "", sets: e.sets || "", reps: e.reps || "",
       rest_interval: e.rest_interval || "", load_suggestion: e.load_suggestion || "",
       video_url: e.video_url || "", sort_order: e.sort_order,
+      _uid: e.id || crypto.randomUUID(),
     }));
     setExerciseRows(exs);
     setTemplateDialog(true);
@@ -178,7 +179,20 @@ const AdminWorkoutTemplates = () => {
     setExerciseRows(prev => [...prev, {
       exercise_id: null, custom_name: "", custom_description: "",
       sets: "", reps: "", rest_interval: "", load_suggestion: "", video_url: "", sort_order: prev.length,
+      _uid: crypto.randomUUID(),
     }]);
+  };
+
+  const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    setExerciseRows(prev => {
+      const oldIndex = prev.findIndex(r => r._uid === active.id);
+      const newIndex = prev.findIndex(r => r._uid === over.id);
+      return arrayMove(prev, oldIndex, newIndex);
+    });
   };
 
   const removeExerciseRow = (idx: number) => setExerciseRows(prev => prev.filter((_, i) => i !== idx));
