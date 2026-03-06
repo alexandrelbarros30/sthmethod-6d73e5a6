@@ -30,7 +30,7 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/admin/diet", icon: Salad, label: "Dietas" },
     { to: "/admin/training", icon: Dumbbell, label: "Treinos" },
     { to: "/admin/exercise-library", icon: BookOpen, label: "Biblioteca" },
-    { to: "/admin/workout-templates", icon: Layers, label: "Programas de Treino" },
+    { to: "/admin/workout-templates", icon: Layers, label: "ProgramaTreino" },
     { to: "/admin/protocol", icon: FlaskConical, label: "Protocolos" },
     { to: "/admin/messages", icon: MessageSquare, label: "Mensagens" },
     { to: "/admin/content", icon: Palette, label: "Personalização" },
@@ -45,7 +45,7 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/consultor/training", icon: Dumbbell, label: "Treinos" },
     { to: "/consultor/protocol", icon: FlaskConical, label: "Protocolos" },
     { to: "/consultor/exercise-library", icon: BookOpen, label: "Biblioteca" },
-    { to: "/consultor/workout-templates", icon: ClipboardList, label: "Modelos de Treino" },
+    { to: "/consultor/workout-templates", icon: ClipbLayers, label: "ProgramaTreino" },
   ],
   assistente: [
     { to: "/assistente", icon: LayoutDashboard, label: "Dashboard" },
