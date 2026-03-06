@@ -401,6 +401,23 @@ const AdminStudents = () => {
     onError: (e: any) => toast.error(e.message || "Erro ao excluir"),
   });
 
+  const resetPasswordMutation = useMutation({
+    mutationFn: async () => {
+      if (!passwordReset || newPassword.length < 6) throw new Error("Senha deve ter no mínimo 6 caracteres");
+      const { data, error } = await supabase.functions.invoke("admin-manage-students", {
+        body: { action: "reset_password", user_id: passwordReset.userId, new_password: newPassword },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+    },
+    onSuccess: () => {
+      toast.success("Senha alterada com sucesso!");
+      setPasswordReset(null);
+      setNewPassword("");
+    },
+    onError: (e: any) => toast.error(e.message || "Erro ao alterar senha"),
+  });
+
   const subMutation = useMutation({
     mutationFn: async () => {
       if (selected?.subscription) {
