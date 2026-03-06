@@ -86,19 +86,20 @@ const AdminWorkoutTemplates = () => {
   const saveTemplateMutation = useMutation({
     mutationFn: async () => {
       if (!form.title.trim()) throw new Error("Título obrigatório");
+      const weeks = form.weeks ? Number(form.weeks) : null;
+      const days_per_week = form.days_per_week ? Number(form.days_per_week) : null;
+      const minutes_per_day = form.minutes_per_day ? Number(form.minutes_per_day) : null;
       let templateId = editingTemplate;
       if (editingTemplate) {
         const { error } = await supabase.from("workout_templates").update({
           title: form.title, description: form.description,
-          weeks: form.weeks, days_per_week: form.days_per_week,
-          minutes_per_day: form.minutes_per_day, updated_at: new Date().toISOString(),
+          weeks, days_per_week, minutes_per_day, updated_at: new Date().toISOString(),
         }).eq("id", editingTemplate);
         if (error) throw error;
       } else {
         const { data, error } = await supabase.from("workout_templates").insert({
           title: form.title, description: form.description,
-          weeks: form.weeks, days_per_week: form.days_per_week,
-          minutes_per_day: form.minutes_per_day, created_by: user!.id,
+          weeks, days_per_week, minutes_per_day, created_by: user!.id,
         }).select("id").single();
         if (error) throw error;
         templateId = data.id;
