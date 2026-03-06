@@ -352,18 +352,31 @@ const AdminWorkoutTemplates = () => {
         )}
 
         {/* Assign Dialog */}
-        <Dialog open={!!assignDialog} onOpenChange={v => { if (!v) { setAssignDialog(null); setSelectedStudent(""); } }}>
+        <Dialog open={!!assignDialog} onOpenChange={v => { if (!v) { setAssignDialog(null); setSelectedStudent(""); setStudentSearch(""); } }}>
           <DialogContent>
             <DialogHeader><DialogTitle>Atribuir Treino ao Aluno</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div>
+                <Label>Buscar Aluno</Label>
+                <Input
+                  placeholder="Filtrar por nome ou email..."
+                  value={studentSearch}
+                  onChange={e => setStudentSearch(e.target.value)}
+                  className="mb-2"
+                />
                 <Label>Selecionar Aluno</Label>
                 <Select value={selectedStudent} onValueChange={setSelectedStudent}>
                   <SelectTrigger><SelectValue placeholder="Escolha um aluno..." /></SelectTrigger>
                   <SelectContent>
-                    {(students || []).map((s: any) => (
-                      <SelectItem key={s.user_id} value={s.user_id}>{s.full_name || s.email}</SelectItem>
-                    ))}
+                    {(students || [])
+                      .filter((s: any) => {
+                        if (!studentSearch) return true;
+                        const q = studentSearch.toLowerCase();
+                        return (s.full_name || "").toLowerCase().includes(q) || (s.email || "").toLowerCase().includes(q);
+                      })
+                      .map((s: any) => (
+                        <SelectItem key={s.user_id} value={s.user_id}>{s.full_name || s.email}</SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
