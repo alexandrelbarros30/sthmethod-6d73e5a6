@@ -214,7 +214,7 @@ const AdminWorkoutTemplates = () => {
     (assignments || []).filter((a: any) => a.template_id === templateId && a.active).length;
 
   return (
-    <DashboardLayout{(role as any) || "admin"}admin" title="Modelos de Treino" subtitle="Crie treinos reutilizáveis e atribua aos alunos.">
+    <DashboardLayout role={(role as any) || "admin"} title="Modelos de Treino" subtitle="Crie treinos reutilizáveis e atribua aos alunos.">
       <div className="space-y-4 max-w-5xl">
         <div className="flex justify-between items-center">
           <p className="text-sm text-muted-foreground">{(templates || []).length} modelo(s)</p>
