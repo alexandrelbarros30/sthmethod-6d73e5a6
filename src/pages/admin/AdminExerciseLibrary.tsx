@@ -28,6 +28,7 @@ interface ExerciseForm {
 const emptyForm: ExerciseForm = { name: "", description: "", muscle_group: "", video_url: "" };
 
 const AdminExerciseLibrary = () => {
+  const { role } = useAuth();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
