@@ -237,7 +237,7 @@ const AdminTraining = () => {
     onError: () => toast.error("Erro ao duplicar treino"),
   });
 
-
+  const openNewExercise = (weekId: string) => {
     setActiveWeekId(weekId);
     setEditingExercise(emptyExercise());
     setExerciseDialogOpen(true);
