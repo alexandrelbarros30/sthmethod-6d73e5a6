@@ -22,6 +22,8 @@ import AdminPayments from "./pages/admin/AdminPayments";
 import AdminDiet from "./pages/admin/AdminDiet";
 import AdminProtocol from "./pages/admin/AdminProtocol";
 import AdminTraining from "./pages/admin/AdminTraining";
+import AdminExerciseLibrary from "./pages/admin/AdminExerciseLibrary";
+import AdminWorkoutTemplates from "./pages/admin/AdminWorkoutTemplates";
 import AdminContent from "./pages/admin/AdminContent";
 import AdminLayoutExterno from "./pages/admin/AdminLayoutExterno";
 import AdminMessages from "./pages/admin/AdminMessages";
