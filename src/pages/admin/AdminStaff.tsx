@@ -361,6 +361,27 @@ const AdminStaff = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Password reset dialog */}
+      <Dialog open={!!passwordReset} onOpenChange={(open) => { if (!open) { setPasswordReset(null); setNewPassword(""); } }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Alterar senha</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">Definir nova senha para <strong>{passwordReset?.name}</strong></p>
+          <div className="space-y-2">
+            <Label>Nova senha *</Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input type="password" placeholder="Mínimo 6 caracteres" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="pl-10" minLength={6} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setPasswordReset(null); setNewPassword(""); }}>Cancelar</Button>
+            <Button onClick={() => resetPasswordMutation.mutate()} disabled={resetPasswordMutation.isPending || newPassword.length < 6}>
+              {resetPasswordMutation.isPending ? "Alterando..." : "Alterar senha"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
