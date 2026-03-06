@@ -11,8 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Dumbbell, Users, ChevronDown, ChevronUp, Video, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Dumbbell, Users, Video } from "lucide-react";
 import { toast } from "sonner";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+import SortableExerciseRow, { ExerciseRow } from "@/components/admin/SortableExerciseRow";
 
 interface TemplateForm {
   title: string;
@@ -23,19 +26,6 @@ interface TemplateForm {
 }
 
 const emptyTemplate: TemplateForm = { title: "", description: "", weeks: 1, days_per_week: 3, minutes_per_day: 60 };
-
-interface ExerciseRow {
-  id?: string;
-  exercise_id: string | null;
-  custom_name: string;
-  custom_description: string;
-  sets: string;
-  reps: string;
-  rest_interval: string;
-  load_suggestion: string;
-  video_url: string;
-  sort_order: number;
-}
 
 const AdminWorkoutTemplates = () => {
   const { user } = useAuth();
@@ -179,6 +169,7 @@ const AdminWorkoutTemplates = () => {
       custom_description: e.custom_description || "", sets: e.sets || "", reps: e.reps || "",
       rest_interval: e.rest_interval || "", load_suggestion: e.load_suggestion || "",
       video_url: e.video_url || "", sort_order: e.sort_order,
+      _uid: e.id || crypto.randomUUID(),
     }));
     setExerciseRows(exs);
     setTemplateDialog(true);
@@ -188,7 +179,20 @@ const AdminWorkoutTemplates = () => {
     setExerciseRows(prev => [...prev, {
       exercise_id: null, custom_name: "", custom_description: "",
       sets: "", reps: "", rest_interval: "", load_suggestion: "", video_url: "", sort_order: prev.length,
+      _uid: crypto.randomUUID(),
     }]);
+  };
+
+  const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    setExerciseRows(prev => {
+      const oldIndex = prev.findIndex(r => r._uid === active.id);
+      const newIndex = prev.findIndex(r => r._uid === over.id);
+      return arrayMove(prev, oldIndex, newIndex);
+    });
   };
 
   const removeExerciseRow = (idx: number) => setExerciseRows(prev => prev.filter((_, i) => i !== idx));
@@ -257,59 +261,23 @@ const AdminWorkoutTemplates = () => {
                   {exerciseRows.length === 0 && (
                     <p className="text-sm text-muted-foreground text-center py-4">Nenhum exercício. Clique em "Adicionar".</p>
                   )}
-                  <div className="space-y-4">
-                    {exerciseRows.map((row, idx) => (
-                      <div key={idx} className="border rounded-lg p-3 space-y-3 bg-muted/20">
-                        <div className="flex items-center gap-2 justify-between">
-                          <Badge variant="outline" className="text-xs">#{idx + 1}</Badge>
-                          <Button size="icon" variant="ghost" onClick={() => removeExerciseRow(idx)}>
-                            <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                          </Button>
-                        </div>
-                        <div>
-                          <Label className="text-xs">Da Biblioteca</Label>
-                          <Select value={row.exercise_id || ""} onValueChange={v => selectFromLibrary(idx, v)}>
-                            <SelectTrigger><SelectValue placeholder="Selecionar exercício..." /></SelectTrigger>
-                            <SelectContent>
-                              {(libraryExercises || []).map((e: any) => (
-                                <SelectItem key={e.id} value={e.id}>{e.name} {e.muscle_group ? `(${e.muscle_group})` : ""}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label className="text-xs">Nome</Label>
-                          <Input value={row.custom_name} onChange={e => updateExerciseRow(idx, "custom_name", e.target.value)} placeholder="Nome do exercício" />
-                        </div>
-                        <div>
-                          <Label className="text-xs">Descrição</Label>
-                          <Textarea value={row.custom_description} onChange={e => updateExerciseRow(idx, "custom_description", e.target.value)} rows={2} />
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                          <div>
-                            <Label className="text-xs">Séries</Label>
-                            <Input value={row.sets} onChange={e => updateExerciseRow(idx, "sets", e.target.value)} placeholder="4" />
-                          </div>
-                          <div>
-                            <Label className="text-xs">Repetições</Label>
-                            <Input value={row.reps} onChange={e => updateExerciseRow(idx, "reps", e.target.value)} placeholder="12" />
-                          </div>
-                          <div>
-                            <Label className="text-xs">Intervalo</Label>
-                            <Input value={row.rest_interval} onChange={e => updateExerciseRow(idx, "rest_interval", e.target.value)} placeholder="60s" />
-                          </div>
-                          <div>
-                            <Label className="text-xs">Carga</Label>
-                            <Input value={row.load_suggestion} onChange={e => updateExerciseRow(idx, "load_suggestion", e.target.value)} placeholder="20kg" />
-                          </div>
-                        </div>
-                        <div>
-                          <Label className="text-xs">URL Vídeo</Label>
-                          <Input value={row.video_url} onChange={e => updateExerciseRow(idx, "video_url", e.target.value)} placeholder="https://..." />
-                        </div>
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                    <SortableContext items={exerciseRows.map(r => r._uid)} strategy={verticalListSortingStrategy}>
+                      <div className="space-y-4">
+                        {exerciseRows.map((row, idx) => (
+                          <SortableExerciseRow
+                            key={row._uid}
+                            row={row}
+                            idx={idx}
+                            libraryExercises={libraryExercises || []}
+                            onRemove={removeExerciseRow}
+                            onUpdate={updateExerciseRow}
+                            onSelectFromLibrary={selectFromLibrary}
+                          />
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </SortableContext>
+                  </DndContext>
                 </div>
 
                 <div className="flex gap-2 justify-end pt-2">
