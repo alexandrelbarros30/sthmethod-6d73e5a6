@@ -24,7 +24,7 @@ import AdminDiet from "./pages/admin/AdminDiet";
 import AdminProtocol from "./pages/admin/AdminProtocol";
 import AdminTraining from "./pages/admin/AdminTraining";
 import AdminExerciseLibrary from "./pages/admin/AdminExerciseLibrary";
-import AdminWorkoutTemplates from "./pages/admin/AdminWorkoutTemplates";
+import AdminTrainingPrograms from "./pages/admin/AdminTrainingPrograms";
 import AdminContent from "./pages/admin/AdminContent";
 import AdminLayoutExterno from "./pages/admin/AdminLayoutExterno";
 import AdminMessages from "./pages/admin/AdminMessages";
@@ -70,7 +70,7 @@ const App = () => (
             <Route path="/admin/protocol" element={<ProtectedRoute allowedRoles={["admin"]}><AdminProtocol /></ProtectedRoute>} />
             <Route path="/admin/training" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTraining /></ProtectedRoute>} />
             <Route path="/admin/exercise-library" element={<ProtectedRoute allowedRoles={["admin"]}><AdminExerciseLibrary /></ProtectedRoute>} />
-            <Route path="/admin/workout-templates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminWorkoutTemplates /></ProtectedRoute>} />
+            <Route path="/admin/workout-templates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTrainingPrograms /></ProtectedRoute>} />
             <Route path="/admin/content" element={<ProtectedRoute allowedRoles={["admin"]}><AdminContent /></ProtectedRoute>} />
             <Route path="/admin/messages" element={<ProtectedRoute allowedRoles={["admin"]}><AdminMessages /></ProtectedRoute>} />
             <Route path="/admin/layout" element={<ProtectedRoute allowedRoles={["admin"]}><AdminLayoutExterno /></ProtectedRoute>} />
@@ -83,7 +83,7 @@ const App = () => (
             <Route path="/consultor/training" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminTraining /></ProtectedRoute>} />
             <Route path="/consultor/protocol" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminProtocol /></ProtectedRoute>} />
             <Route path="/consultor/exercise-library" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminExerciseLibrary /></ProtectedRoute>} />
-            <Route path="/consultor/workout-templates" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminWorkoutTemplates /></ProtectedRoute>} />
+            <Route path="/consultor/workout-templates" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminTrainingPrograms /></ProtectedRoute>} />
             {/* Assistente routes */}
             <Route path="/assistente" element={<ProtectedRoute allowedRoles={["assistente"]}><AssistenteDashboard /></ProtectedRoute>} />
             <Route path="/assistente/students" element={<ProtectedRoute allowedRoles={["assistente"]}><AdminStudents /></ProtectedRoute>} />

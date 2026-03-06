@@ -36,7 +36,8 @@ const StudentGuidedWorkout = () => {
         .select("*, workout_templates(*)")
         .eq("user_id", user!.id)
         .eq("active", true);
-      return data || [];
+      // Filter out workouts that are not released
+      return (data || []).filter((a: any) => a.workout_templates?.released !== false);
     },
     enabled: !!user?.id && isActive,
   });
