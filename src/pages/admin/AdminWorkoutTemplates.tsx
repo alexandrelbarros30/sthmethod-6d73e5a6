@@ -317,7 +317,7 @@ const AdminWorkoutTemplates = () => {
                           <div>
                             <p className="font-medium text-sm">{t.title}</p>
                             <div className="flex gap-2 mt-0.5 text-xs text-muted-foreground">
-                              <span>{t.weeks}sem • {t.days_per_week}x/sem • {t.minutes_per_day}min</span>
+                              <span>{t.weeks ? `${t.weeks}sem` : ""}{t.days_per_week ? ` • ${t.days_per_week}x/sem` : ""}{t.minutes_per_day ? ` • ${t.minutes_per_day}min` : ""}</span>
                               <Badge variant="outline" className="text-xs">{exs.length} exercício(s)</Badge>
                               {assignedCount > 0 && <Badge variant="secondary" className="text-xs"><Users className="w-3 h-3 mr-0.5" />{assignedCount}</Badge>}
                             </div>
