@@ -299,6 +299,7 @@ const AdminStaff = () => {
                           <TableCell>
                             <div className="flex gap-1">
                               <Button variant="ghost" size="icon" onClick={() => openEdit(user)}><Pencil className="w-4 h-4" /></Button>
+                              <Button variant="ghost" size="icon" title="Alterar senha" onClick={() => { setPasswordReset({ userId: user.user_id, name: user.full_name || user.email }); setNewPassword(""); }}><Lock className="w-4 h-4" /></Button>
                               <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => setDeleteConfirm({ userId: user.user_id, name: user.full_name || user.email })}>
                                 <Trash2 className="w-4 h-4" />
                               </Button>
