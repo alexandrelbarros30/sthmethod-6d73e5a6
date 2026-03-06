@@ -11,6 +11,7 @@ import Cadastro from "./pages/Cadastro";
 import StudentOverview from "./pages/student/StudentOverview";
 import StudentDiet from "./pages/student/StudentDiet";
 import StudentTraining from "./pages/student/StudentTraining";
+import StudentGuidedWorkout from "./pages/student/StudentGuidedWorkout";
 import StudentProtocol from "./pages/student/StudentProtocol";
 import StudentContent from "./pages/student/StudentContent";
 import StudentSubscription from "./pages/student/StudentSubscription";
