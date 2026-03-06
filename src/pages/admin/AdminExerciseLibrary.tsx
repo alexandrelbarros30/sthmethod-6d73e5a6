@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Video, Search, Dumbbell } from "lucide-react";
 import { toast } from "sonner";
@@ -28,6 +29,7 @@ interface ExerciseForm {
 const emptyForm: ExerciseForm = { name: "", description: "", muscle_group: "", video_url: "" };
 
 const AdminExerciseLibrary = () => {
+  const { role } = useAuth();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -109,7 +111,7 @@ const AdminExerciseLibrary = () => {
   });
 
   return (
-    <DashboardLayout role="admin" title="Biblioteca de Exercícios" subtitle="Cadastro e gerenciamento de exercícios reutilizáveis.">
+    <DashboardLayout role={(role as any) || "admin"} title="Biblioteca de Exercícios" subtitle="Cadastro e gerenciamento de exercícios reutilizáveis.">
       <div className="space-y-4 max-w-5xl">
         {/* Toolbar */}
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
