@@ -32,6 +32,8 @@ const AdminStaff = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ userId: string; name: string } | null>(null);
+  const [passwordReset, setPasswordReset] = useState<{ userId: string; name: string } | null>(null);
+  const [newPassword, setNewPassword] = useState("");
   const [form, setForm] = useState({ ...emptyForm });
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
@@ -130,6 +132,23 @@ const AdminStaff = () => {
       setDeleteConfirm(null);
     },
     onError: (e: any) => toast.error(e.message || "Erro ao excluir"),
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: async () => {
+      if (!passwordReset || newPassword.length < 6) throw new Error("Senha deve ter no mínimo 6 caracteres");
+      const { data, error } = await supabase.functions.invoke("admin-manage-students", {
+        body: { action: "reset_password", user_id: passwordReset.userId, new_password: newPassword },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+    },
+    onSuccess: () => {
+      toast.success("Senha alterada com sucesso!");
+      setPasswordReset(null);
+      setNewPassword("");
+    },
+    onError: (e: any) => toast.error(e.message || "Erro ao alterar senha"),
   });
 
   const filtered = staffUsers?.filter((u) => {
@@ -280,6 +299,7 @@ const AdminStaff = () => {
                           <TableCell>
                             <div className="flex gap-1">
                               <Button variant="ghost" size="icon" onClick={() => openEdit(user)}><Pencil className="w-4 h-4" /></Button>
+                              <Button variant="ghost" size="icon" title="Alterar senha" onClick={() => { setPasswordReset({ userId: user.user_id, name: user.full_name || user.email }); setNewPassword(""); }}><Lock className="w-4 h-4" /></Button>
                               <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => setDeleteConfirm({ userId: user.user_id, name: user.full_name || user.email })}>
                                 <Trash2 className="w-4 h-4" />
                               </Button>
@@ -341,6 +361,27 @@ const AdminStaff = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Password reset dialog */}
+      <Dialog open={!!passwordReset} onOpenChange={(open) => { if (!open) { setPasswordReset(null); setNewPassword(""); } }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Alterar senha</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">Definir nova senha para <strong>{passwordReset?.name}</strong></p>
+          <div className="space-y-2">
+            <Label>Nova senha *</Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input type="password" placeholder="Mínimo 6 caracteres" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="pl-10" minLength={6} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setPasswordReset(null); setNewPassword(""); }}>Cancelar</Button>
+            <Button onClick={() => resetPasswordMutation.mutate()} disabled={resetPasswordMutation.isPending || newPassword.length < 6}>
+              {resetPasswordMutation.isPending ? "Alterando..." : "Alterar senha"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
