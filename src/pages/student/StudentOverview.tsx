@@ -165,6 +165,7 @@ const StudentOverview = () => {
           userId={user!.id}
           isOnboarded={!!isOnboarded}
           editing={editing}
+          email={p?.email || user?.email || ""}
           labExamUrl={p?.lab_exam_url}
           prescriptionUrl={p?.medical_prescription_url}
           onDocumentUploaded={() => {

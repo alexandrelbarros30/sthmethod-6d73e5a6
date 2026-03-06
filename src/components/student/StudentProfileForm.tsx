@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
-import { Loader2, Save, User } from "lucide-react";
+import { Loader2, Save, User, Mail } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -118,9 +118,10 @@ interface Props {
   labExamUrl?: string | null;
   prescriptionUrl?: string | null;
   onDocumentUploaded?: () => void;
+  email?: string;
 }
 
-export default function StudentProfileForm({ form, onChange, userId, isOnboarded, editing, onSaved, onCancel, labExamUrl, prescriptionUrl, onDocumentUploaded }: Props) {
+export default function StudentProfileForm({ form, onChange, userId, isOnboarded, editing, onSaved, onCancel, labExamUrl, prescriptionUrl, onDocumentUploaded, email }: Props) {
   const [saving, setSaving] = useState(false);
 
   const set = (field: keyof ProfileFormData, value: string) => {
@@ -249,6 +250,15 @@ export default function StudentProfileForm({ form, onChange, userId, isOnboarded
             <Label className="font-body">Nome completo *</Label>
             <Input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} />
           </div>
+          {email && (
+            <div>
+              <Label className="font-body">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input value={email} disabled className="pl-10 opacity-70 cursor-not-allowed" />
+              </div>
+            </div>
+          )}
           <div>
             <Label className="font-body">Telefone *</Label>
             <Input value={form.phone} onChange={(e) => set("phone", phoneMask(e.target.value))} placeholder="(00) 00000-0000" />
