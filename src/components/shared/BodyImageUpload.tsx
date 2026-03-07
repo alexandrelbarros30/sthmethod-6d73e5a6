@@ -116,7 +116,7 @@ async function uploadWithRetry(
   }
 }
 
-const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = false }: BodyImageUploadProps) => {
+const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = false, canDeleteExisting = true }: BodyImageUploadProps) => {
   const [images, setImages] = useState<Record<string, { file?: File; preview?: string; url?: string }>>(() => {
     const initial: Record<string, any> = {};
     IMAGE_TYPES.forEach(({ key }) => {
