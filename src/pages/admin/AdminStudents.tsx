@@ -1420,10 +1420,19 @@ const AdminStudents = () => {
                   existingImages={selectedBodyImages || []}
                   onComplete={() => {
                     refetchBodyImages();
+                    refetchAllBodyImages();
                     refetchAnamnese();
                     toast.success("Imagens atualizadas!");
                   }}
                 />
+
+                {/* Evolution Generator */}
+                {anamneseBodyImages && anamneseBodyImages.length > 0 && (
+                  <EvolutionGenerator
+                    allImages={anamneseBodyImages}
+                    studentName={selected.full_name}
+                  />
+                )}
 
                 {/* Image History */}
                 {anamneseBodyImages && anamneseBodyImages.length > 0 && (
