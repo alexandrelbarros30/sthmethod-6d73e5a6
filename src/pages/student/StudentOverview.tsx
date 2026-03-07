@@ -15,6 +15,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import SubscriptionAlerts from "@/components/student/SubscriptionAlerts";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
+import EvolutionUpdateCard from "@/components/student/EvolutionUpdateCard";
 import { calculateAge } from "@/lib/macro-calculator";
 import {
   objectiveLabels, activityLabels,
@@ -227,18 +228,36 @@ const StudentOverview = () => {
         />
       )}
 
-      {/* ===== UPLOAD DE IMAGENS ===== */}
-      <div className="mb-6">
-        <BodyImageUpload
-          userId={user!.id}
-          existingImages={bodyImages || []}
-          canDeleteExisting={false}
-          onComplete={() => {
-            refetchImages();
-            qc.invalidateQueries({ queryKey: ["body-images"] });
-          }}
-        />
-      </div>
+      {/* ===== UPLOAD DE IMAGENS (onboarding) ===== */}
+      {!hasImages && (
+        <div className="mb-6">
+          <BodyImageUpload
+            userId={user!.id}
+            existingImages={bodyImages || []}
+            canDeleteExisting={false}
+            onComplete={() => {
+              refetchImages();
+              qc.invalidateQueries({ queryKey: ["body-images"] });
+            }}
+          />
+        </div>
+      )}
+
+      {/* ===== ATUALIZAÇÃO DE EVOLUÇÃO ===== */}
+      {isOnboarded && hasImages && (
+        <div className="mb-6">
+          <EvolutionUpdateCard
+            userId={user!.id}
+            currentWeight={p?.weight}
+            existingImages={bodyImages || []}
+            onComplete={() => {
+              refetchImages();
+              refetchProfile();
+              qc.invalidateQueries({ queryKey: ["body-images"] });
+            }}
+          />
+        </div>
+      )}
 
       {/* ===== ASSINATURA + PROGRESSO ===== */}
       {subscription ? (

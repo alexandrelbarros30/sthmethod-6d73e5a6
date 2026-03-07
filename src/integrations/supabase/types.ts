@@ -1289,6 +1289,33 @@ export type Database = {
         }
         Relationships: []
       }
+      weight_logs: {
+        Row: {
+          created_at: string
+          id: string
+          logged_at: string
+          notes: string | null
+          user_id: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          logged_at?: string
+          notes?: string | null
+          user_id: string
+          weight: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logged_at?: string
+          notes?: string | null
+          user_id?: string
+          weight?: number
+        }
+        Relationships: []
+      }
       workout_template_exercises: {
         Row: {
           custom_description: string | null
