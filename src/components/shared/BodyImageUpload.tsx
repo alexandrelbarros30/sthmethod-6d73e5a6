@@ -239,12 +239,15 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
                   {src ? (
                     <>
                       <img src={src} alt={label} className="w-full h-full object-cover" />
-                      <button
-                        className="absolute top-1 right-1 p-1 bg-destructive/80 rounded-full text-white hover:bg-destructive"
-                        onClick={(e) => { e.stopPropagation(); removeImage(key); }}
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
+                      {/* Show remove button only for new files, or if canDeleteExisting is true */}
+                      {(img?.file || canDeleteExisting) && (
+                        <button
+                          className="absolute top-1 right-1 p-1 bg-destructive/80 rounded-full text-white hover:bg-destructive"
+                          onClick={(e) => { e.stopPropagation(); removeImage(key); }}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
                       <div className="absolute bottom-1 left-1">
                         <CheckCircle2 className="w-4 h-4 text-primary" />
                       </div>
