@@ -191,6 +191,7 @@ const AdminPlans = () => {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="public">Público (visível no site)</SelectItem>
+                  <SelectItem value="internal">Interno (ativo apenas na plataforma)</SelectItem>
                   <SelectItem value="selected">Selecionado (oculto do site, apenas admin/consultor)</SelectItem>
                 </SelectContent>
               </Select>
