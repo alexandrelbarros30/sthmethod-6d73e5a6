@@ -1,23 +1,29 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, ChevronLeft, Plus, Trash2, Save, Copy, FileDown, Apple, Flame, Beef, Wheat, Droplets } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Search, ChevronLeft, Apple, FileDown } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import NutritionMealBuilder from "@/components/nutrition/NutritionMealBuilder";
-import NutritionSummaryPanel from "@/components/nutrition/NutritionSummaryPanel";
+import NutritionMealBuilder, { type MealData, computeTotalsFromMeals } from "@/components/nutrition/NutritionMealBuilder";
+import NutritionSummaryPanel, { type NutritionTotals } from "@/components/nutrition/NutritionSummaryPanel";
+import NutritionPdfPreview from "@/components/nutrition/NutritionPdfPreview";
 
 const AdminNutrition = () => {
   const { role } = useAuth();
   const displayRole = role === "consultor" ? "consultor" : "admin";
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [search, setSearch] = useState("");
+  const [localMeals, setLocalMeals] = useState<MealData[]>([]);
+  const [localTotals, setLocalTotals] = useState<NutritionTotals | null>(null);
+  const [pdfOpen, setPdfOpen] = useState(false);
+
+  const handleMealsChange = useCallback((meals: MealData[]) => {
+    setLocalMeals(meals);
+    setLocalTotals(meals.length > 0 ? computeTotalsFromMeals(meals) : null);
+  }, []);
 
   const { data: students = [] } = useQuery({
     queryKey: ["nutrition-students", displayRole],
@@ -41,12 +47,21 @@ const AdminNutrition = () => {
   if (selectedStudent) {
     return (
       <DashboardLayout role={displayRole} title="Cardápio Nutricional" subtitle={selectedStudent.full_name}>
-        <Button variant="ghost" size="sm" className="mb-4" onClick={() => setSelectedStudent(null)}>
-          <ChevronLeft className="w-4 h-4 mr-1" /> Voltar
-        </Button>
+        <div className="flex items-center justify-between mb-4">
+          <Button variant="ghost" size="sm" onClick={() => setSelectedStudent(null)}>
+            <ChevronLeft className="w-4 h-4 mr-1" /> Voltar
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setPdfOpen(true)} disabled={localMeals.every(m => m.foods.length === 0)}>
+            <FileDown className="w-4 h-4 mr-1" /> Gerar PDF
+          </Button>
+        </div>
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <div className="xl:col-span-2">
-            <NutritionMealBuilder studentId={selectedStudent.user_id} studentName={selectedStudent.full_name} />
+            <NutritionMealBuilder
+              studentId={selectedStudent.user_id}
+              studentName={selectedStudent.full_name}
+              onMealsChange={handleMealsChange}
+            />
           </div>
           <div>
             <NutritionSummaryPanel
@@ -54,9 +69,19 @@ const AdminNutrition = () => {
               weight={selectedStudent.weight}
               tdee={selectedStudent.tdee}
               objective={selectedStudent.objective}
+              totals={localTotals}
             />
           </div>
         </div>
+        <NutritionPdfPreview
+          open={pdfOpen}
+          onOpenChange={setPdfOpen}
+          meals={localMeals}
+          totals={localTotals}
+          studentName={selectedStudent.full_name}
+          weight={selectedStudent.weight}
+          tdee={selectedStudent.tdee}
+        />
       </DashboardLayout>
     );
   }
@@ -76,20 +101,15 @@ const AdminNutrition = () => {
         <CardContent>
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             {filtered.map((s: any) => (
-              <button
-                key={s.user_id}
-                onClick={() => setSelectedStudent(s)}
-                className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors text-left"
-              >
+              <button key={s.user_id} onClick={() => setSelectedStudent(s)}
+                className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors text-left">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <span className="text-sm font-bold text-primary">{s.initials}</span>
                 </div>
                 <div className="min-w-0">
                   <p className="font-medium text-sm font-body truncate">{s.full_name || "Sem nome"}</p>
                   <p className="text-xs text-muted-foreground font-body truncate">{s.email}</p>
-                  {s.weight && (
-                    <p className="text-xs text-muted-foreground mt-0.5">{s.weight}kg</p>
-                  )}
+                  {s.weight && <p className="text-xs text-muted-foreground mt-0.5">{s.weight}kg</p>}
                 </div>
               </button>
             ))}

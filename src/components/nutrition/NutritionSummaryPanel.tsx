@@ -2,55 +2,29 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Flame, Beef, Wheat, Droplets, Activity, Target, TrendingDown, TrendingUp, Minus, Apple, AlertCircle } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useState, useMemo } from "react";
+
+export interface NutritionTotals {
+  energy_kcal: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  fiber_g: number;
+  sugar_g: number;
+  sodium_mg: number;
+  cholesterol_mg: number;
+}
 
 interface Props {
   studentId: string;
   weight: number | null;
   tdee: number | null;
   objective: string | null;
+  totals: NutritionTotals | null;
 }
 
-const NutritionSummaryPanel = ({ studentId, weight, tdee, objective }: Props) => {
+const NutritionSummaryPanel = ({ studentId, weight, tdee, objective, totals }: Props) => {
   const [manualStrategy, setManualStrategy] = useState<string | null>(null);
-
-  // Load current meal data to calculate totals
-  const { data: totals } = useQuery({
-    queryKey: ["nutrition-totals", studentId],
-    queryFn: async () => {
-      const { data: meals } = await supabase
-        .from("diet_meals")
-        .select("id")
-        .eq("user_id", studentId);
-
-      if (!meals?.length) return null;
-
-      const mealIds = meals.map((m) => m.id);
-      const { data: foods } = await supabase
-        .from("diet_foods")
-        .select("energy_kcal, protein_g, carbs_g, fat_g, fiber_g, sugar_g, sodium_mg, cholesterol_mg")
-        .in("meal_id", mealIds);
-
-      if (!foods?.length) return null;
-
-      return foods.reduce(
-        (acc, f: any) => ({
-          energy_kcal: acc.energy_kcal + (f.energy_kcal || 0),
-          protein_g: acc.protein_g + (f.protein_g || 0),
-          carbs_g: acc.carbs_g + (f.carbs_g || 0),
-          fat_g: acc.fat_g + (f.fat_g || 0),
-          fiber_g: acc.fiber_g + (f.fiber_g || 0),
-          sugar_g: acc.sugar_g + (f.sugar_g || 0),
-          sodium_mg: acc.sodium_mg + (f.sodium_mg || 0),
-          cholesterol_mg: acc.cholesterol_mg + (f.cholesterol_mg || 0),
-        }),
-        { energy_kcal: 0, protein_g: 0, carbs_g: 0, fat_g: 0, fiber_g: 0, sugar_g: 0, sodium_mg: 0, cholesterol_mg: 0 }
-      );
-    },
-    refetchInterval: 2000, // Auto-refresh to stay synced with builder
-  });
 
   const autoStrategy = useMemo(() => {
     if (!totals || !tdee) return null;
@@ -63,24 +37,9 @@ const NutritionSummaryPanel = ({ studentId, weight, tdee, objective }: Props) =>
   const strategy = manualStrategy || autoStrategy;
 
   const strategyConfig: Record<string, { label: string; color: string; icon: any; description: string }> = {
-    deficit: {
-      label: "Déficit Calórico",
-      color: "text-blue-500",
-      icon: TrendingDown,
-      description: "Perda de peso",
-    },
-    manutencao: {
-      label: "Manutenção",
-      color: "text-yellow-500",
-      icon: Minus,
-      description: "Manter peso",
-    },
-    superavit: {
-      label: "Superávit Calórico",
-      color: "text-green-500",
-      icon: TrendingUp,
-      description: "Hipertrofia",
-    },
+    deficit: { label: "Déficit Calórico", color: "text-blue-500", icon: TrendingDown, description: "Perda de peso" },
+    manutencao: { label: "Manutenção", color: "text-yellow-500", icon: Minus, description: "Manter peso" },
+    superavit: { label: "Superávit Calórico", color: "text-green-500", icon: TrendingUp, description: "Hipertrofia" },
   };
 
   const currentStrategy = strategy ? strategyConfig[strategy] : null;
@@ -93,7 +52,6 @@ const NutritionSummaryPanel = ({ studentId, weight, tdee, objective }: Props) =>
 
   return (
     <div className="space-y-4">
-      {/* Totais Nutricionais */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-display flex items-center gap-2">
@@ -123,7 +81,6 @@ const NutritionSummaryPanel = ({ studentId, weight, tdee, objective }: Props) =>
               <p className="text-[10px] text-muted-foreground">Gordura (g)</p>
             </div>
           </div>
-
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="flex justify-between bg-muted/30 rounded px-3 py-2">
               <span className="text-muted-foreground">Fibras</span>
@@ -145,7 +102,6 @@ const NutritionSummaryPanel = ({ studentId, weight, tdee, objective }: Props) =>
         </CardContent>
       </Card>
 
-      {/* Análise Metabólica */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-display flex items-center gap-2">
@@ -159,7 +115,6 @@ const NutritionSummaryPanel = ({ studentId, weight, tdee, objective }: Props) =>
               <span>Peso não cadastrado na ficha do aluno</span>
             </div>
           )}
-
           <div className="space-y-2">
             <div className="flex justify-between items-center bg-muted/50 rounded-lg px-3 py-2.5">
               <span className="text-xs text-muted-foreground">Proteína / kg</span>
@@ -174,7 +129,6 @@ const NutritionSummaryPanel = ({ studentId, weight, tdee, objective }: Props) =>
               <span className="font-bold text-sm">{fatPerKg} g/kg</span>
             </div>
           </div>
-
           {tdee && (
             <div className="border-t pt-3 space-y-2">
               <div className="flex justify-between items-center text-xs">
@@ -196,7 +150,6 @@ const NutritionSummaryPanel = ({ studentId, weight, tdee, objective }: Props) =>
         </CardContent>
       </Card>
 
-      {/* Estratégia Nutricional */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-display flex items-center gap-2">
