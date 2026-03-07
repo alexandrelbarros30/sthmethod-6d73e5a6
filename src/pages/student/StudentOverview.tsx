@@ -24,7 +24,13 @@ import {
 import StudentProfileForm, { profileFromDb, getPendingFields, type ProfileFormData } from "@/components/student/StudentProfileForm";
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
 
-const modules = [
+const basicModules = [
+  { to: "/dashboard/diet", icon: Salad, title: "Dieta", desc: "Plano alimentar", color: "text-success", bgColor: "bg-success/10" },
+  { to: "/dashboard/training", icon: Dumbbell, title: "Treino", desc: "Periodização", color: "text-info", bgColor: "bg-info/10" },
+  { to: "/dashboard/content", icon: BookOpen, title: "Conteúdo", desc: "Materiais educativos", color: "text-accent-foreground", bgColor: "bg-accent/50" },
+];
+
+const premiumModules = [
   { to: "/dashboard/diet", icon: Salad, title: "Plano Alimentar", desc: "Sua rotina alimentar personalizada", color: "text-success", bgColor: "bg-success/10" },
   { to: "/dashboard/training", icon: Dumbbell, title: "Treino", desc: "Periodização e exercícios", color: "text-info", bgColor: "bg-info/10" },
   { to: "/dashboard/guided-workout", icon: ListChecks, title: "Treino Guiado", desc: "Execute seu treino passo a passo", color: "text-primary", bgColor: "bg-primary/10" },
@@ -91,7 +97,7 @@ const StudentOverview = () => {
         .eq("user_id", user!.id);
       return meals || [];
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && ((subscription as any)?.plans?.duration_days || 0) >= 180,
   });
 
   const p = fullProfile as any;
@@ -129,6 +135,7 @@ const StudentOverview = () => {
   const progressPercent = totalDays > 0 ? Math.min(100, Math.round(((totalDays - daysLeft) / totalDays) * 100)) : 0;
   const firstName = profile?.full_name?.split(" ")[0] || "Aluno";
   const planDurationDays = (subscription as any)?.plans?.duration_days || null;
+  const isPremium = planDurationDays !== null && planDurationDays >= 180;
   const tierClasses = getPlanTierClasses(getPlanTier(planDurationDays));
 
   // Compute nutritional totals from diet
@@ -308,7 +315,7 @@ const StudentOverview = () => {
       )}
 
       {/* ===== INDICADORES METABÓLICOS ===== */}
-      {p && isOnboarded && (weight || tdee || nutritionTotals.kcal > 0) && (
+      {isPremium && p && isOnboarded && (weight || tdee || nutritionTotals.kcal > 0) && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           {weight && (
             <Card className="border-border/50">
@@ -366,7 +373,7 @@ const StudentOverview = () => {
       )}
 
       {/* ===== MACROS POR KG ===== */}
-      {p && isOnboarded && nutritionTotals.kcal > 0 && weight && (
+      {isPremium && p && isOnboarded && nutritionTotals.kcal > 0 && weight && (
         <Card className="mb-6 border-border/50">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-display flex items-center gap-2">
@@ -459,7 +466,7 @@ const StudentOverview = () => {
 
       {/* ===== MÓDULOS ===== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-        {modules.map((mod) => (
+        {(isPremium ? premiumModules : basicModules).map((mod) => (
           <Link key={mod.to} to={mod.to}>
             <Card className="hover:shadow-card-hover hover:border-primary/20 transition-all duration-300 cursor-pointer group h-full">
               <CardContent className="py-5 flex items-center gap-4">
