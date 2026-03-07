@@ -1,15 +1,16 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Save, Copy, Search, GripVertical, Clock, ChevronDown, ChevronUp } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Plus, Trash2, Save, Search, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import FoodSearchDialog from "./FoodSearchDialog";
+import type { NutritionTotals } from "./NutritionSummaryPanel";
 
-interface MealData {
+export interface MealData {
   id?: string;
   name: string;
   time: string;
@@ -18,7 +19,7 @@ interface MealData {
   collapsed?: boolean;
 }
 
-interface FoodItem {
+export interface FoodItem {
   id?: string;
   food_id: string | null;
   item: string;
@@ -47,9 +48,29 @@ const DEFAULT_MEALS: Omit<MealData, "foods">[] = [
 interface Props {
   studentId: string;
   studentName: string;
+  onMealsChange?: (meals: MealData[]) => void;
 }
 
-const NutritionMealBuilder = ({ studentId, studentName }: Props) => {
+export function computeTotalsFromMeals(meals: MealData[]): NutritionTotals {
+  return meals.reduce(
+    (acc, meal) => {
+      meal.foods.forEach((f) => {
+        acc.energy_kcal += f.energy_kcal || 0;
+        acc.protein_g += f.protein_g || 0;
+        acc.carbs_g += f.carbs_g || 0;
+        acc.fat_g += f.fat_g || 0;
+        acc.fiber_g += f.fiber_g || 0;
+        acc.sugar_g += f.sugar_g || 0;
+        acc.sodium_mg += f.sodium_mg || 0;
+        acc.cholesterol_mg += f.cholesterol_mg || 0;
+      });
+      return acc;
+    },
+    { energy_kcal: 0, protein_g: 0, carbs_g: 0, fat_g: 0, fiber_g: 0, sugar_g: 0, sodium_mg: 0, cholesterol_mg: 0 }
+  );
+}
+
+const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) => {
   const qc = useQueryClient();
   const [meals, setMeals] = useState<MealData[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -57,15 +78,16 @@ const NutritionMealBuilder = ({ studentId, studentName }: Props) => {
   const [activeMealIndex, setActiveMealIndex] = useState<number>(0);
   const [saving, setSaving] = useState(false);
 
-  // Load existing meals
+  // Notify parent of meals changes
+  useEffect(() => {
+    onMealsChange?.(meals);
+  }, [meals, onMealsChange]);
+
   const { isLoading } = useQuery({
     queryKey: ["nutrition-meals", studentId],
     queryFn: async () => {
       const { data: mealsData } = await supabase
-        .from("diet_meals")
-        .select("*")
-        .eq("user_id", studentId)
-        .order("sort_order");
+        .from("diet_meals").select("*").eq("user_id", studentId).order("sort_order");
 
       if (!mealsData?.length) {
         setMeals(DEFAULT_MEALS.map((m) => ({ ...m, foods: [] })));
@@ -75,34 +97,18 @@ const NutritionMealBuilder = ({ studentId, studentName }: Props) => {
 
       const mealIds = mealsData.map((m) => m.id);
       const { data: foodsData } = await supabase
-        .from("diet_foods")
-        .select("*")
-        .in("meal_id", mealIds)
-        .order("sort_order");
+        .from("diet_foods").select("*").in("meal_id", mealIds).order("sort_order");
 
       const mealsWithFoods: MealData[] = mealsData.map((m) => ({
-        id: m.id,
-        name: m.name,
-        time: m.time,
-        sort_order: m.sort_order,
-        foods: (foodsData || [])
-          .filter((f: any) => f.meal_id === m.id)
-          .map((f: any) => ({
-            id: f.id,
-            food_id: f.food_id,
-            item: f.item,
-            quantity: f.quantity,
-            quantity_grams: f.quantity_grams || parseFloat(f.quantity) || 100,
-            energy_kcal: f.energy_kcal || 0,
-            protein_g: f.protein_g || 0,
-            carbs_g: f.carbs_g || 0,
-            fat_g: f.fat_g || 0,
-            fiber_g: f.fiber_g || 0,
-            sugar_g: f.sugar_g || 0,
-            sodium_mg: f.sodium_mg || 0,
-            cholesterol_mg: f.cholesterol_mg || 0,
-            sort_order: f.sort_order,
-          })),
+        id: m.id, name: m.name, time: m.time, sort_order: m.sort_order,
+        foods: (foodsData || []).filter((f: any) => f.meal_id === m.id).map((f: any) => ({
+          id: f.id, food_id: f.food_id, item: f.item, quantity: f.quantity,
+          quantity_grams: f.quantity_grams || parseFloat(f.quantity) || 100,
+          energy_kcal: f.energy_kcal || 0, protein_g: f.protein_g || 0,
+          carbs_g: f.carbs_g || 0, fat_g: f.fat_g || 0, fiber_g: f.fiber_g || 0,
+          sugar_g: f.sugar_g || 0, sodium_mg: f.sodium_mg || 0, cholesterol_mg: f.cholesterol_mg || 0,
+          sort_order: f.sort_order,
+        })),
       }));
 
       setMeals(mealsWithFoods);
@@ -111,8 +117,8 @@ const NutritionMealBuilder = ({ studentId, studentName }: Props) => {
     },
   });
 
-  const getMealTotals = (foods: FoodItem[]) => {
-    return foods.reduce(
+  const getMealTotals = (foods: FoodItem[]) =>
+    foods.reduce(
       (acc, f) => ({
         energy_kcal: acc.energy_kcal + (f.energy_kcal || 0),
         protein_g: acc.protein_g + (f.protein_g || 0),
@@ -125,13 +131,9 @@ const NutritionMealBuilder = ({ studentId, studentName }: Props) => {
       }),
       { energy_kcal: 0, protein_g: 0, carbs_g: 0, fat_g: 0, fiber_g: 0, sugar_g: 0, sodium_mg: 0, cholesterol_mg: 0 }
     );
-  };
 
   const addMeal = () => {
-    setMeals((prev) => [
-      ...prev,
-      { name: `Refeição ${prev.length + 1}`, time: "12:00", sort_order: prev.length, foods: [] },
-    ]);
+    setMeals((prev) => [...prev, { name: `Refeição ${prev.length + 1}`, time: "12:00", sort_order: prev.length, foods: [] }]);
   };
 
   const removeMeal = (index: number) => {
@@ -154,10 +156,7 @@ const NutritionMealBuilder = ({ studentId, studentName }: Props) => {
   const addFoodToMeal = (food: any, quantityGrams: number) => {
     const ratio = quantityGrams / 100;
     const newFood: FoodItem = {
-      food_id: food.id,
-      item: food.name,
-      quantity: `${quantityGrams}g`,
-      quantity_grams: quantityGrams,
+      food_id: food.id, item: food.name, quantity: `${quantityGrams}g`, quantity_grams: quantityGrams,
       energy_kcal: Math.round(food.energy_kcal * ratio * 10) / 10,
       protein_g: Math.round(food.protein_g * ratio * 10) / 10,
       carbs_g: Math.round(food.carbs_g * ratio * 10) / 10,
@@ -168,17 +167,11 @@ const NutritionMealBuilder = ({ studentId, studentName }: Props) => {
       cholesterol_mg: Math.round(food.cholesterol_mg * ratio * 10) / 10,
       sort_order: meals[activeMealIndex]?.foods.length || 0,
     };
-    setMeals((prev) =>
-      prev.map((m, i) => (i === activeMealIndex ? { ...m, foods: [...m.foods, newFood] } : m))
-    );
+    setMeals((prev) => prev.map((m, i) => (i === activeMealIndex ? { ...m, foods: [...m.foods, newFood] } : m)));
   };
 
   const removeFood = (mealIndex: number, foodIndex: number) => {
-    setMeals((prev) =>
-      prev.map((m, i) =>
-        i === mealIndex ? { ...m, foods: m.foods.filter((_, fi) => fi !== foodIndex) } : m
-      )
-    );
+    setMeals((prev) => prev.map((m, i) => (i === mealIndex ? { ...m, foods: m.foods.filter((_, fi) => fi !== foodIndex) } : m)));
   };
 
   const updateFoodQuantity = (mealIndex: number, foodIndex: number, newQuantity: number) => {
@@ -189,14 +182,10 @@ const NutritionMealBuilder = ({ studentId, studentName }: Props) => {
           ...m,
           foods: m.foods.map((f, fi) => {
             if (fi !== foodIndex || !f.food_id) return f;
-            // We need to recalculate based on the original food data
-            // For now, proportionally scale from current values
             const currentQ = f.quantity_grams || 100;
             const ratio = newQuantity / currentQ;
             return {
-              ...f,
-              quantity: `${newQuantity}g`,
-              quantity_grams: newQuantity,
+              ...f, quantity: `${newQuantity}g`, quantity_grams: newQuantity,
               energy_kcal: Math.round(f.energy_kcal * ratio * 10) / 10,
               protein_g: Math.round(f.protein_g * ratio * 10) / 10,
               carbs_g: Math.round(f.carbs_g * ratio * 10) / 10,
@@ -215,58 +204,32 @@ const NutritionMealBuilder = ({ studentId, studentName }: Props) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Delete existing meals and foods for this student
-      const { data: existingMeals } = await supabase
-        .from("diet_meals")
-        .select("id")
-        .eq("user_id", studentId);
-
+      const { data: existingMeals } = await supabase.from("diet_meals").select("id").eq("user_id", studentId);
       if (existingMeals?.length) {
         const mealIds = existingMeals.map((m) => m.id);
         await supabase.from("diet_foods").delete().in("meal_id", mealIds);
         await supabase.from("diet_meals").delete().eq("user_id", studentId);
       }
-
-      // Insert new meals
       for (let i = 0; i < meals.length; i++) {
         const meal = meals[i];
         const { data: insertedMeal } = await supabase
-          .from("diet_meals")
-          .insert({ user_id: studentId, name: meal.name, time: meal.time, sort_order: i })
-          .select("id")
-          .single();
-
+          .from("diet_meals").insert({ user_id: studentId, name: meal.name, time: meal.time, sort_order: i }).select("id").single();
         if (insertedMeal && meal.foods.length > 0) {
           const foodInserts = meal.foods.map((f, fi) => ({
-            meal_id: insertedMeal.id,
-            food_id: f.food_id || undefined,
-            item: f.item,
-            quantity: f.quantity,
-            quantity_grams: f.quantity_grams,
-            energy_kcal: f.energy_kcal,
-            protein_g: f.protein_g,
-            carbs_g: f.carbs_g,
-            fat_g: f.fat_g,
-            fiber_g: f.fiber_g,
-            sugar_g: f.sugar_g,
-            sodium_mg: f.sodium_mg,
-            cholesterol_mg: f.cholesterol_mg,
-            sort_order: fi,
+            meal_id: insertedMeal.id, food_id: f.food_id || undefined, item: f.item, quantity: f.quantity,
+            quantity_grams: f.quantity_grams, energy_kcal: f.energy_kcal, protein_g: f.protein_g,
+            carbs_g: f.carbs_g, fat_g: f.fat_g, fiber_g: f.fiber_g, sugar_g: f.sugar_g,
+            sodium_mg: f.sodium_mg, cholesterol_mg: f.cholesterol_mg, sort_order: fi,
           }));
           await supabase.from("diet_foods").insert(foodInserts);
         }
       }
-
       toast.success("Cardápio salvo com sucesso!");
       qc.invalidateQueries({ queryKey: ["nutrition-meals", studentId] });
     } catch (err) {
       toast.error("Erro ao salvar cardápio");
     }
     setSaving(false);
-  };
-
-  const handleDuplicate = () => {
-    toast.info("Cardápio duplicado na memória. Selecione outro aluno e salve.");
   };
 
   if (isLoading) {
@@ -292,27 +255,17 @@ const NutritionMealBuilder = ({ studentId, studentName }: Props) => {
           const totals = getMealTotals(meal.foods);
           return (
             <Card key={mealIndex} className="overflow-hidden">
-              <div
-                className="flex items-center justify-between px-4 py-3 bg-muted/30 cursor-pointer"
-                onClick={() => toggleCollapse(mealIndex)}
-              >
+              <div className="flex items-center justify-between px-4 py-3 bg-muted/30 cursor-pointer" onClick={() => toggleCollapse(mealIndex)}>
                 <div className="flex items-center gap-3">
                   <Badge variant="secondary" className="text-xs font-mono">{mealIndex + 1}</Badge>
-                  <Input
-                    value={meal.name}
-                    onChange={(e) => updateMeal(mealIndex, "name", e.target.value)}
+                  <Input value={meal.name} onChange={(e) => updateMeal(mealIndex, "name", e.target.value)}
                     className="h-7 w-40 text-sm font-medium border-none bg-transparent p-0 focus-visible:ring-0"
-                    onClick={(e) => e.stopPropagation()}
-                  />
+                    onClick={(e) => e.stopPropagation()} />
                   <div className="flex items-center gap-1 text-muted-foreground">
                     <Clock className="w-3 h-3" />
-                    <Input
-                      type="time"
-                      value={meal.time}
-                      onChange={(e) => updateMeal(mealIndex, "time", e.target.value)}
+                    <Input type="time" value={meal.time} onChange={(e) => updateMeal(mealIndex, "time", e.target.value)}
                       className="h-7 w-24 text-xs border-none bg-transparent p-0 focus-visible:ring-0"
-                      onClick={(e) => e.stopPropagation()}
-                    />
+                      onClick={(e) => e.stopPropagation()} />
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -328,7 +281,6 @@ const NutritionMealBuilder = ({ studentId, studentName }: Props) => {
                   {meal.collapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
                 </div>
               </div>
-
               {!meal.collapsed && (
                 <CardContent className="p-4 space-y-2">
                   {meal.foods.length > 0 && (
@@ -347,13 +299,9 @@ const NutritionMealBuilder = ({ studentId, studentName }: Props) => {
                         <div key={foodIndex} className="grid grid-cols-12 gap-2 items-center text-sm bg-muted/20 rounded px-1 py-1.5">
                           <div className="col-span-4 truncate font-body">{food.item}</div>
                           <div className="col-span-2">
-                            <Input
-                              type="number"
-                              value={food.quantity_grams}
+                            <Input type="number" value={food.quantity_grams}
                               onChange={(e) => updateFoodQuantity(mealIndex, foodIndex, Number(e.target.value) || 0)}
-                              className="h-7 text-xs w-full"
-                              min={1}
-                            />
+                              className="h-7 text-xs w-full" min={1} />
                           </div>
                           <div className="col-span-1 text-right text-xs">{food.energy_kcal.toFixed(0)}</div>
                           <div className="col-span-1 text-right text-xs">{food.protein_g.toFixed(1)}</div>
@@ -389,11 +337,7 @@ const NutritionMealBuilder = ({ studentId, studentName }: Props) => {
         })}
       </div>
 
-      <FoodSearchDialog
-        open={foodSearchOpen}
-        onOpenChange={setFoodSearchOpen}
-        onSelect={addFoodToMeal}
-      />
+      <FoodSearchDialog open={foodSearchOpen} onOpenChange={setFoodSearchOpen} onSelect={addFoodToMeal} />
     </>
   );
 };
