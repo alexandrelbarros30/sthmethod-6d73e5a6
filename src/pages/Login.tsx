@@ -174,6 +174,7 @@ const Login = () => {
                   />
                 </div>
               </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email" className="font-body">Email</Label>
               <div className="relative">
