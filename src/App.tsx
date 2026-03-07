@@ -16,6 +16,7 @@ import StudentProtocol from "./pages/student/StudentProtocol";
 import StudentContent from "./pages/student/StudentContent";
 import StudentSubscription from "./pages/student/StudentSubscription";
 import StudentRenew from "./pages/student/StudentRenew";
+import StudentEvolution from "./pages/student/StudentEvolution";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminStudents from "./pages/admin/AdminStudents";
 import AdminPlans from "./pages/admin/AdminPlans";
@@ -62,6 +63,7 @@ const App = () => (
             <Route path="/dashboard/content" element={<ProtectedRoute allowedRoles={["student"]}><StudentContent /></ProtectedRoute>} />
             <Route path="/dashboard/subscription" element={<ProtectedRoute allowedRoles={["student"]}><StudentSubscription /></ProtectedRoute>} />
             <Route path="/dashboard/renew" element={<ProtectedRoute allowedRoles={["student"]}><StudentRenew /></ProtectedRoute>} />
+            <Route path="/dashboard/evolution" element={<ProtectedRoute allowedRoles={["student"]}><StudentEvolution /></ProtectedRoute>} />
             {/* Admin routes */}
             <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/students" element={<ProtectedRoute allowedRoles={["admin"]}><AdminStudents /></ProtectedRoute>} />
