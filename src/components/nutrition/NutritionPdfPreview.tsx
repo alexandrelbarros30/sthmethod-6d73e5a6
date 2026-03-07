@@ -19,7 +19,7 @@ interface Props {
 
 const NutritionPdfPreview = ({ open, onOpenChange, meals, totals, studentName, weight, tdee }: Props) => {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [title, setTitle] = useState("Plano Alimentar Personalizado");
+  const [title, setTitle] = useState("Rotina Alimentar");
   const [headerNote, setHeaderNote] = useState("");
   const [footerNote, setFooterNote] = useState("Observações: Beber no mínimo 2L de água por dia. Seguir horários das refeições.");
   const [generating, setGenerating] = useState(false);
