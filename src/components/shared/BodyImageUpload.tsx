@@ -27,11 +27,18 @@ const MAX_DIMENSION = 1200;
  * Returns a Blob (JPEG) that is <= maxSizeMB.
  */
 async function compressImage(file: File, maxSizeMB = MAX_SIZE_MB, maxDim = MAX_DIMENSION): Promise<Blob> {
+  // Use FileReader for better mobile compatibility
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error("Falha ao ler arquivo"));
+    reader.readAsDataURL(file);
+  });
+
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
       let { width, height } = img;
-      // Scale down if larger than maxDim
       if (width > maxDim || height > maxDim) {
         const ratio = Math.min(maxDim / width, maxDim / height);
         width = Math.round(width * ratio);
@@ -43,7 +50,6 @@ async function compressImage(file: File, maxSizeMB = MAX_SIZE_MB, maxDim = MAX_D
       const ctx = canvas.getContext("2d")!;
       ctx.drawImage(img, 0, 0, width, height);
 
-      // Try decreasing quality until under maxSizeMB
       let quality = 0.85;
       const tryCompress = () => {
         canvas.toBlob(
@@ -62,8 +68,8 @@ async function compressImage(file: File, maxSizeMB = MAX_SIZE_MB, maxDim = MAX_D
       };
       tryCompress();
     };
-    img.onerror = () => reject(new Error("Falha ao carregar imagem"));
-    img.src = URL.createObjectURL(file);
+    img.onerror = () => reject(new Error("Falha ao carregar imagem. Tente outro formato (JPG ou PNG)."));
+    img.src = dataUrl;
   });
 }
 
