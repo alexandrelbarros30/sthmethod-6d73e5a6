@@ -373,7 +373,7 @@ const StudentOverview = () => {
       )}
 
       {/* ===== MACROS POR KG ===== */}
-      {p && isOnboarded && nutritionTotals.kcal > 0 && weight && (
+      {isPremium && p && isOnboarded && nutritionTotals.kcal > 0 && weight && (
         <Card className="mb-6 border-border/50">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-display flex items-center gap-2">
