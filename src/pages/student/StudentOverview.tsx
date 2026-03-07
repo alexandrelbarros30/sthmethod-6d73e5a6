@@ -24,7 +24,13 @@ import {
 import StudentProfileForm, { profileFromDb, getPendingFields, type ProfileFormData } from "@/components/student/StudentProfileForm";
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
 
-const modules = [
+const basicModules = [
+  { to: "/dashboard/diet", icon: Salad, title: "Dieta", desc: "Plano alimentar", color: "text-success", bgColor: "bg-success/10" },
+  { to: "/dashboard/training", icon: Dumbbell, title: "Treino", desc: "Periodização", color: "text-info", bgColor: "bg-info/10" },
+  { to: "/dashboard/content", icon: BookOpen, title: "Conteúdo", desc: "Materiais educativos", color: "text-accent-foreground", bgColor: "bg-accent/50" },
+];
+
+const premiumModules = [
   { to: "/dashboard/diet", icon: Salad, title: "Plano Alimentar", desc: "Sua rotina alimentar personalizada", color: "text-success", bgColor: "bg-success/10" },
   { to: "/dashboard/training", icon: Dumbbell, title: "Treino", desc: "Periodização e exercícios", color: "text-info", bgColor: "bg-info/10" },
   { to: "/dashboard/guided-workout", icon: ListChecks, title: "Treino Guiado", desc: "Execute seu treino passo a passo", color: "text-primary", bgColor: "bg-primary/10" },
