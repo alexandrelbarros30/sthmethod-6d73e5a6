@@ -314,56 +314,56 @@ const StudentOverview = () => {
         </Card>
       )}
 
-      {/* ===== INDICADORES METABÓLICOS ===== */}
+      {/* ===== INDICADORES METABÓLICOS (Premium Gold) ===== */}
       {isPremium && p && isOnboarded && (weight || tdee || nutritionTotals.kcal > 0) && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           {weight && (
-            <Card className="border-border/50">
+            <Card className="border-gold/20 bg-gold/[0.03] shadow-[0_0_16px_-6px_hsl(var(--gold)/0.15)]">
               <CardContent className="py-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-info/10 flex items-center justify-center shrink-0">
-                  <Scale className="w-5 h-5 text-info" />
+                <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center shrink-0 ring-1 ring-gold/20">
+                  <Scale className="w-5 h-5 text-gold" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Peso</p>
+                  <p className="text-xs text-gold-dark dark:text-gold-light/70">Peso</p>
                   <p className="text-lg font-bold text-foreground font-display">{weight} <span className="text-xs font-normal text-muted-foreground">kg</span></p>
                 </div>
               </CardContent>
             </Card>
           )}
           {tdee && (
-            <Card className="border-border/50">
+            <Card className="border-gold/20 bg-gold/[0.03] shadow-[0_0_16px_-6px_hsl(var(--gold)/0.15)]">
               <CardContent className="py-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center shrink-0">
-                  <Flame className="w-5 h-5 text-warning" />
+                <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center shrink-0 ring-1 ring-gold/20">
+                  <Flame className="w-5 h-5 text-gold" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Gasto (TDEE)</p>
+                  <p className="text-xs text-gold-dark dark:text-gold-light/70">Gasto (TDEE)</p>
                   <p className="text-lg font-bold text-foreground font-display">{Math.round(tdee)} <span className="text-xs font-normal text-muted-foreground">kcal</span></p>
                 </div>
               </CardContent>
             </Card>
           )}
           {nutritionTotals.kcal > 0 && (
-            <Card className="border-border/50">
+            <Card className="border-gold/20 bg-gold/[0.03] shadow-[0_0_16px_-6px_hsl(var(--gold)/0.15)]">
               <CardContent className="py-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center shrink-0">
-                  <Zap className="w-5 h-5 text-success" />
+                <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center shrink-0 ring-1 ring-gold/20">
+                  <Zap className="w-5 h-5 text-gold" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Consumo</p>
+                  <p className="text-xs text-gold-dark dark:text-gold-light/70">Consumo</p>
                   <p className="text-lg font-bold text-foreground font-display">{Math.round(nutritionTotals.kcal)} <span className="text-xs font-normal text-muted-foreground">kcal</span></p>
                 </div>
               </CardContent>
             </Card>
           )}
           {strategy && (
-            <Card className="border-border/50">
+            <Card className="border-gold/20 bg-gold/[0.03] shadow-[0_0_16px_-6px_hsl(var(--gold)/0.15)]">
               <CardContent className="py-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <Target className="w-5 h-5 text-primary" />
+                <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center shrink-0 ring-1 ring-gold/20">
+                  <Target className="w-5 h-5 text-gold" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Estratégia</p>
+                  <p className="text-xs text-gold-dark dark:text-gold-light/70">Estratégia</p>
                   <p className={`text-base font-bold font-display ${strategyColor}`}>{strategy}</p>
                 </div>
               </CardContent>
