@@ -3,9 +3,16 @@ import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Lock, Mail, ArrowLeft, User, Eye, EyeOff } from "lucide-react";
+import { Lock, Mail, ArrowLeft, User, Phone, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+const phoneMask = (v: string) => {
+  const d = v.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 2) return `(${d}`;
+  if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+};
 
 const Login = () => {
   const navigate = useNavigate();
@@ -15,6 +22,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [phoneVal, setPhoneVal] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -24,7 +32,10 @@ const Login = () => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        if (!fullName.trim()) { toast.error("Nome completo é obrigatório"); setLoading(false); return; }
+        const phoneClean = phoneVal.replace(/\D/g, "");
+        if (phoneClean.length < 10) { toast.error("Telefone inválido. Use (xx) xxxxx-xxxx"); setLoading(false); return; }
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -33,6 +44,23 @@ const Login = () => {
           },
         });
         if (error) throw error;
+        // Save phone to profile
+        if (data.user) {
+          let retries = 0;
+          const savePhone = async () => {
+            const { data: updated } = await supabase
+              .from("profiles")
+              .update({ phone: phoneVal, full_name: fullName })
+              .eq("user_id", data.user!.id)
+              .select("id");
+            if ((!updated || updated.length === 0) && retries < 5) {
+              retries++;
+              await new Promise(r => setTimeout(r, 500));
+              return savePhone();
+            }
+          };
+          await savePhone();
+        }
         toast.success("Conta criada com sucesso! Complete seu cadastro para liberar o acesso.", {
           action: {
             label: "Completar cadastro",
@@ -124,6 +152,23 @@ const Login = () => {
                     placeholder="Seu nome completo"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
+                    className="pl-10"
+                    required
+                  />
+                </div>
+              </div>
+            )}
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="font-body">Telefone</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="(00) 00000-0000"
+                    value={phoneVal}
+                    onChange={(e) => setPhoneVal(phoneMask(e.target.value))}
                     className="pl-10"
                     required
                   />
