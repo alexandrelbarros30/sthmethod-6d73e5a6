@@ -136,6 +136,7 @@ const StudentOverview = () => {
   const firstName = profile?.full_name?.split(" ")[0] || "Aluno";
   const planDurationDays = (subscription as any)?.plans?.duration_days || null;
   const isPremium = planDurationDays !== null && planDurationDays >= 180;
+  const tierClasses = getPlanTierClasses(getPlanTier(planDurationDays));
 
   // Compute nutritional totals from diet
   const nutritionTotals = dietMeals?.reduce((acc, meal: any) => {
