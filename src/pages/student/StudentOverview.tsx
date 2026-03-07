@@ -372,26 +372,26 @@ const StudentOverview = () => {
         </div>
       )}
 
-      {/* ===== MACROS POR KG ===== */}
+      {/* ===== MACROS POR KG (Premium Gold) ===== */}
       {isPremium && p && isOnboarded && nutritionTotals.kcal > 0 && weight && (
-        <Card className="mb-6 border-border/50">
+        <Card className="mb-6 border-gold/20 bg-gold/[0.02] shadow-[0_0_20px_-8px_hsl(var(--gold)/0.12)]">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-display flex items-center gap-2">
-              <Activity className="w-4 h-4 text-primary" /> Macros por kg de Peso Corporal
+              <Activity className="w-4 h-4 text-gold" /> Macros por kg de Peso Corporal
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-3 rounded-xl bg-info/5 border border-info/10">
-                <p className="text-2xl font-bold text-info font-display">{proteinPerKg}</p>
+              <div className="text-center p-3 rounded-xl bg-gold/[0.06] border border-gold/15">
+                <p className="text-2xl font-bold text-gold font-display">{proteinPerKg}</p>
                 <p className="text-xs text-muted-foreground mt-1">Proteína (g/kg)</p>
               </div>
-              <div className="text-center p-3 rounded-xl bg-warning/5 border border-warning/10">
-                <p className="text-2xl font-bold text-warning font-display">{carbsPerKg}</p>
+              <div className="text-center p-3 rounded-xl bg-gold/[0.06] border border-gold/15">
+                <p className="text-2xl font-bold text-gold font-display">{carbsPerKg}</p>
                 <p className="text-xs text-muted-foreground mt-1">Carboidrato (g/kg)</p>
               </div>
-              <div className="text-center p-3 rounded-xl bg-destructive/5 border border-destructive/10">
-                <p className="text-2xl font-bold text-destructive font-display">{fatPerKg}</p>
+              <div className="text-center p-3 rounded-xl bg-gold/[0.06] border border-gold/15">
+                <p className="text-2xl font-bold text-gold font-display">{fatPerKg}</p>
                 <p className="text-xs text-muted-foreground mt-1">Gordura (g/kg)</p>
               </div>
             </div>
