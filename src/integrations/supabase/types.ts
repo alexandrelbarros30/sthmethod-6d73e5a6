@@ -738,6 +738,7 @@ export type Database = {
           name: string
           price: string
           subtitle: string
+          visibility: string
         }
         Insert: {
           active?: boolean
@@ -751,6 +752,7 @@ export type Database = {
           name: string
           price: string
           subtitle?: string
+          visibility?: string
         }
         Update: {
           active?: boolean
@@ -764,6 +766,7 @@ export type Database = {
           name?: string
           price?: string
           subtitle?: string
+          visibility?: string
         }
         Relationships: []
       }
