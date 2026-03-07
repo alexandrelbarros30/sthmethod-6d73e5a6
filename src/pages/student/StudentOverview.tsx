@@ -97,7 +97,7 @@ const StudentOverview = () => {
         .eq("user_id", user!.id);
       return meals || [];
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && planDurationDays !== null && planDurationDays >= 180,
   });
 
   const p = fullProfile as any;
