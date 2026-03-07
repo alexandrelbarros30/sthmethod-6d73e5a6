@@ -118,6 +118,15 @@ const AdminStudents = () => {
     enabled: !!selected?.user_id,
   });
 
+  const { data: allBodyImages, refetch: refetchAllBodyImages } = useQuery({
+    queryKey: ["admin-all-body-images", selected?.user_id],
+    queryFn: async () => {
+      const { data } = await supabase.from("body_images").select("*").eq("user_id", selected!.user_id).order("uploaded_at", { ascending: false });
+      return data || [];
+    },
+    enabled: !!selected?.user_id,
+  });
+
   const { data: anamneseEntries, refetch: refetchAnamnese } = useQuery({
     queryKey: ["admin-anamnese", selected?.user_id],
     queryFn: async () => {
