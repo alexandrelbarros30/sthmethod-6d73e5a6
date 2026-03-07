@@ -20,6 +20,7 @@ const PlansSection = () => {
         .from("plans")
         .select("*")
         .eq("active", true)
+        .eq("visibility", "public")
         .order("duration_days");
       if (error) throw error;
       return data || [];

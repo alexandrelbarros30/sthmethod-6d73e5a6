@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect: (food: any, quantityGrams: number) => void;
+  onSelect: (food: any, quantityGrams: number, unit: "g" | "ml") => void;
 }
 
 const CATEGORIES = [
@@ -32,6 +32,7 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("Todos");
   const [quantity, setQuantity] = useState(100);
+  const [unit, setUnit] = useState<"g" | "ml">("g");
   const [selectedFood, setSelectedFood] = useState<any>(null);
 
   const { data: foods = [] } = useQuery({
@@ -49,18 +50,27 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
     return matchSearch && matchCat;
   });
 
+  const handleSelectFood = (food: any) => {
+    setSelectedFood(food);
+    // Auto-detect unit from serving_unit
+    if (food.serving_unit?.toLowerCase().includes("ml")) {
+      setUnit("ml");
+    } else {
+      setUnit("g");
+    }
+  };
+
   const handleAdd = () => {
     if (selectedFood) {
-      onSelect(selectedFood, quantity);
+      onSelect(selectedFood, quantity, unit);
       setSelectedFood(null);
       setQuantity(100);
-      // Keep dialog open for adding more items
     }
   };
 
   const handleAddAndClose = () => {
     if (selectedFood) {
-      onSelect(selectedFood, quantity);
+      onSelect(selectedFood, quantity, unit);
       setSelectedFood(null);
       setQuantity(100);
       onOpenChange(false);
@@ -117,7 +127,15 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
                 className="w-24 h-8"
                 min={1}
               />
-              <span className="text-sm text-muted-foreground">{selectedFood.serving_unit}</span>
+              <Select value={unit} onValueChange={(v) => setUnit(v as "g" | "ml")}>
+                <SelectTrigger className="w-20 h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="g">g</SelectItem>
+                  <SelectItem value="ml">ml</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-4 gap-2 text-xs">
               <div className="bg-muted/50 rounded p-2 text-center">
@@ -156,7 +174,7 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
               filtered.map((food: any) => (
                 <button
                   key={food.id}
-                  onClick={() => setSelectedFood(food)}
+                  onClick={() => handleSelectFood(food)}
                   className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-accent/50 transition-colors text-left"
                 >
                   <div className="min-w-0">
