@@ -232,7 +232,7 @@ const StudentOverview = () => {
         <BodyImageUpload
           userId={user!.id}
           existingImages={bodyImages || []}
-          required={!hasImages}
+          canDeleteExisting={false}
           onComplete={() => {
             refetchImages();
             qc.invalidateQueries({ queryKey: ["body-images"] });
