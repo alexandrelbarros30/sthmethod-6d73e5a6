@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Students delete own body images" ON public.body_images;
