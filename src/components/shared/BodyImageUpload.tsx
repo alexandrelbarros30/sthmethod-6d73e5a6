@@ -11,6 +11,8 @@ interface BodyImageUploadProps {
   existingImages?: { type: string; image_url: string; id: string }[];
   onComplete: () => void;
   required?: boolean;
+  /** When true, existing (already saved) images cannot be removed — only new uploads allowed */
+  canDeleteExisting?: boolean;
 }
 
 const IMAGE_TYPES = [
