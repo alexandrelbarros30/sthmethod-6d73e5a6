@@ -153,6 +153,19 @@ const AdminStudents = () => {
     enabled: !!selected?.user_id && anamneseOpen,
   });
 
+  const { data: weightLogs } = useQuery({
+    queryKey: ["admin-weight-logs", selected?.user_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("weight_logs")
+        .select("*")
+        .eq("user_id", selected!.user_id)
+        .order("logged_at", { ascending: false });
+      return data || [];
+    },
+    enabled: !!selected?.user_id && anamneseOpen,
+  });
+
   // Fetch full profile with new fields when editing/viewing
   const { data: selectedFullProfile } = useQuery({
     queryKey: ["admin-full-profile", selected?.user_id],
