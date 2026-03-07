@@ -15,6 +15,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import SubscriptionAlerts from "@/components/student/SubscriptionAlerts";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
+import EvolutionUpdateCard from "@/components/student/EvolutionUpdateCard";
 import { calculateAge } from "@/lib/macro-calculator";
 import {
   objectiveLabels, activityLabels,
