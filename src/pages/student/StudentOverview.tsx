@@ -468,16 +468,16 @@ const StudentOverview = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
         {(isPremium ? premiumModules : basicModules).map((mod) => (
           <Link key={mod.to} to={mod.to}>
-            <Card className="hover:shadow-card-hover hover:border-primary/20 transition-all duration-300 cursor-pointer group h-full">
+            <Card className={`hover:shadow-card-hover transition-all duration-300 cursor-pointer group h-full ${isPremium ? "border-gold/10 hover:border-gold/30 hover:shadow-[0_0_20px_-6px_hsl(var(--gold)/0.15)]" : "hover:border-primary/20"}`}>
               <CardContent className="py-5 flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-xl ${mod.bgColor} flex items-center justify-center group-hover:scale-105 transition-transform shrink-0`}>
-                  <mod.icon className={`w-6 h-6 ${mod.color}`} />
+                <div className={`w-12 h-12 rounded-xl ${isPremium ? "bg-gold/10 ring-1 ring-gold/15" : mod.bgColor} flex items-center justify-center group-hover:scale-105 transition-transform shrink-0`}>
+                  <mod.icon className={`w-6 h-6 ${isPremium ? "text-gold" : mod.color}`} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-foreground font-display text-sm">{mod.title}</p>
                   <p className="text-xs text-muted-foreground font-body">{mod.desc}</p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors shrink-0" />
+                <ChevronRight className={`w-4 h-4 text-muted-foreground/50 transition-colors shrink-0 ${isPremium ? "group-hover:text-gold" : "group-hover:text-primary"}`} />
               </CardContent>
             </Card>
           </Link>
