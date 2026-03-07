@@ -153,6 +153,19 @@ const AdminStudents = () => {
     enabled: !!selected?.user_id && anamneseOpen,
   });
 
+  const { data: weightLogs } = useQuery({
+    queryKey: ["admin-weight-logs", selected?.user_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("weight_logs")
+        .select("*")
+        .eq("user_id", selected!.user_id)
+        .order("logged_at", { ascending: false });
+      return data || [];
+    },
+    enabled: !!selected?.user_id && anamneseOpen,
+  });
+
   // Fetch full profile with new fields when editing/viewing
   const { data: selectedFullProfile } = useQuery({
     queryKey: ["admin-full-profile", selected?.user_id],
@@ -1474,6 +1487,32 @@ const AdminStudents = () => {
                   </Card>
                 )}
 
+                {/* Weight History */}
+                {weightLogs && weightLogs.length > 0 && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-display flex items-center gap-2">
+                        <Calculator className="w-4 h-4" /> Histórico de Peso
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {weightLogs.map((log: any) => (
+                          <div key={log.id} className="flex items-center justify-between border-b border-border/50 pb-2 last:border-0 last:pb-0">
+                            <div>
+                              <p className="text-sm font-bold text-foreground">{Number(log.weight).toFixed(1)} kg</p>
+                              {log.notes && <p className="text-xs text-muted-foreground">{log.notes}</p>}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(log.logged_at).toLocaleDateString("pt-BR")}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* Notes History */}
                 {anamneseEntries && anamneseEntries.length > 0 && (
                   <Card>
@@ -1493,7 +1532,7 @@ const AdminStudents = () => {
                   </Card>
                 )}
 
-                {(!anamneseEntries || anamneseEntries.length === 0) && (!anamneseBodyImages || anamneseBodyImages.length === 0) && (
+                {(!anamneseEntries || anamneseEntries.length === 0) && (!anamneseBodyImages || anamneseBodyImages.length === 0) && (!weightLogs || weightLogs.length === 0) && (
                   <p className="text-sm text-muted-foreground text-center py-4">Nenhum registro de anamnese ainda.</p>
                 )}
               </div>
