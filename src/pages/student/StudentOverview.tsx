@@ -135,7 +135,7 @@ const StudentOverview = () => {
   const progressPercent = totalDays > 0 ? Math.min(100, Math.round(((totalDays - daysLeft) / totalDays) * 100)) : 0;
   const firstName = profile?.full_name?.split(" ")[0] || "Aluno";
   const planDurationDays = (subscription as any)?.plans?.duration_days || null;
-  const tierClasses = getPlanTierClasses(getPlanTier(planDurationDays));
+  const isPremium = planDurationDays !== null && planDurationDays >= 180;
 
   // Compute nutritional totals from diet
   const nutritionTotals = dietMeals?.reduce((acc, meal: any) => {
