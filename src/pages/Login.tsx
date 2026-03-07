@@ -158,9 +158,23 @@ const Login = () => {
                 </div>
               </div>
             )}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="font-body">Email</Label>
-              <div className="relative">
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="font-body">Telefone</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="(00) 00000-0000"
+                    value={phoneVal}
+                    onChange={(e) => setPhoneVal(phoneMask(e.target.value))}
+                    className="pl-10"
+                    required
+                  />
+                </div>
+              </div>
+            )}
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="email"
