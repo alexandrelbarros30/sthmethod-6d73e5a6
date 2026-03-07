@@ -7,15 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Check, Plus, Pencil, Trash2 } from "lucide-react";
+import { Check, Plus, Pencil, Trash2, EyeOff } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const emptyForm = { name: "", subtitle: "", price: "", duration: "", duration_days: 30, benefits: "", active: true, discount_type: "none", discount_value: 0 };
+const emptyForm = { name: "", subtitle: "", price: "", duration: "", duration_days: 30, benefits: "", active: true, discount_type: "none", discount_value: 0, visibility: "public" };
 
 const AdminPlans = () => {
   const qc = useQueryClient();
@@ -43,6 +43,7 @@ const AdminPlans = () => {
         active: form.active,
         discount_type: form.discount_type,
         discount_value: Number(form.discount_value),
+        visibility: form.visibility,
       };
       if (editing) {
         await supabase.from("plans").update(payload).eq("id", editing.id);
@@ -89,9 +90,12 @@ const AdminPlans = () => {
       active: plan.active,
       discount_type: plan.discount_type || "none",
       discount_value: plan.discount_value || 0,
+      visibility: plan.visibility || "public",
     });
     setDialogOpen(true);
   };
+
+  const isSelected = (plan: any) => plan.visibility === "selected";
 
   return (
     <DashboardLayout role="admin" title="Gestão de Planos" subtitle="Configure e gerencie os planos oferecidos.">
@@ -101,30 +105,44 @@ const AdminPlans = () => {
 
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl">
         {plans?.map((plan, i) => (
-          <Card key={plan.id} className={`animate-fade-in relative ${!plan.active ? "opacity-60" : ""}`} style={{ animationDelay: `${i * 100}ms` }}>
+          <Card key={plan.id}
+            className={`animate-fade-in relative ${!plan.active ? "opacity-60" : ""} ${isSelected(plan) ? "border-neutral-900 dark:border-neutral-100 bg-neutral-950 dark:bg-neutral-50" : ""}`}
+            style={{ animationDelay: `${i * 100}ms` }}
+          >
             {!plan.active && (
               <div className="absolute top-2 right-2"><Badge variant="outline" className="text-xs">Inativo</Badge></div>
             )}
-            <CardHeader className="text-center pb-2">
-              <CardTitle className="text-lg font-display">{plan.name}</CardTitle>
-              {(plan as any).subtitle && <p className="text-xs text-muted-foreground font-body">{(plan as any).subtitle}</p>}
-              <p className="text-2xl font-bold text-foreground mt-2 font-body">{plan.price}</p>
-              <p className="text-xs text-muted-foreground font-body">{plan.duration}</p>
+            {isSelected(plan) && (
+              <div className="absolute top-2 left-2 flex items-center gap-1">
+                <Badge className="text-xs bg-neutral-800 text-neutral-100 dark:bg-neutral-200 dark:text-neutral-900 border-0">
+                  <EyeOff className="w-3 h-3 mr-1" /> Selecionado
+                </Badge>
+              </div>
+            )}
+            <CardHeader className={`text-center pb-2 ${isSelected(plan) ? "pt-10" : ""}`}>
+              <CardTitle className={`text-lg font-display ${isSelected(plan) ? "text-neutral-100 dark:text-neutral-900" : ""}`}>{plan.name}</CardTitle>
+              {(plan as any).subtitle && <p className={`text-xs font-body ${isSelected(plan) ? "text-neutral-400 dark:text-neutral-600" : "text-muted-foreground"}`}>{(plan as any).subtitle}</p>}
+              <p className={`text-2xl font-bold mt-2 font-body ${isSelected(plan) ? "text-neutral-100 dark:text-neutral-900" : "text-foreground"}`}>{plan.price}</p>
+              <p className={`text-xs font-body ${isSelected(plan) ? "text-neutral-400 dark:text-neutral-600" : "text-muted-foreground"}`}>{plan.duration}</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <ul className="space-y-2">
                 {plan.benefits?.map((b, j) => (
                   <li key={j} className="flex items-start gap-2 text-sm font-body">
-                    <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">{b}</span>
+                    <Check className={`w-4 h-4 shrink-0 mt-0.5 ${isSelected(plan) ? "text-neutral-300 dark:text-neutral-700" : "text-primary"}`} />
+                    <span className={isSelected(plan) ? "text-neutral-300 dark:text-neutral-700" : "text-muted-foreground"}>{b}</span>
                   </li>
                 ))}
               </ul>
               <div className="flex gap-1 justify-center pt-2">
-                <Button variant="ghost" size="sm" onClick={() => openEdit(plan)}><Pencil className="w-3 h-3 mr-1" /> Editar</Button>
+                <Button variant="ghost" size="sm" onClick={() => openEdit(plan)} className={isSelected(plan) ? "text-neutral-300 hover:text-neutral-100 dark:text-neutral-700 dark:hover:text-neutral-900" : ""}>
+                  <Pencil className="w-3 h-3 mr-1" /> Editar
+                </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="sm"><Trash2 className="w-3 h-3 mr-1 text-destructive" /> Excluir</Button>
+                    <Button variant="ghost" size="sm" className={isSelected(plan) ? "text-neutral-300 hover:text-neutral-100 dark:text-neutral-700 dark:hover:text-neutral-900" : ""}>
+                      <Trash2 className="w-3 h-3 mr-1 text-destructive" /> Excluir
+                    </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
@@ -167,6 +185,16 @@ const AdminPlans = () => {
             {form.discount_type !== "none" && (
               <div><Label className="font-body">Valor do Desconto {form.discount_type === "percentage" ? "(%)" : "(R$)"}</Label><Input type="number" value={form.discount_value} onChange={(e) => setForm({ ...form, discount_value: Number(e.target.value) })} /></div>
             )}
+            <div>
+              <Label className="font-body">Visibilidade</Label>
+              <Select value={form.visibility} onValueChange={(v) => setForm({ ...form, visibility: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="public">Público (visível no site)</SelectItem>
+                  <SelectItem value="selected">Selecionado (oculto do site, apenas admin/consultor)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex items-center gap-2">
               <Switch checked={form.active} onCheckedChange={(v) => setForm({ ...form, active: v })} />
               <Label className="font-body">Plano ativo</Label>

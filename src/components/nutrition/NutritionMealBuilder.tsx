@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Save, Search, Clock, ChevronDown, ChevronUp } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +26,8 @@ export interface FoodItem {
   item: string;
   quantity: string;
   quantity_grams: number;
+  unit: "g" | "ml";
+  // displayed (computed) values
   energy_kcal: number;
   protein_g: number;
   carbs_g: number;
@@ -33,6 +36,15 @@ export interface FoodItem {
   sugar_g: number;
   sodium_mg: number;
   cholesterol_mg: number;
+  // base per 100g/ml values (for recalculation)
+  base_energy_kcal: number;
+  base_protein_g: number;
+  base_carbs_g: number;
+  base_fat_g: number;
+  base_fiber_g: number;
+  base_sugar_g: number;
+  base_sodium_mg: number;
+  base_cholesterol_mg: number;
   sort_order: number;
 }
 
@@ -49,6 +61,23 @@ interface Props {
   studentId: string;
   studentName: string;
   onMealsChange?: (meals: MealData[]) => void;
+}
+
+function recalcFromBase(f: FoodItem, newQty: number): FoodItem {
+  const ratio = newQty / 100;
+  return {
+    ...f,
+    quantity: `${newQty}${f.unit}`,
+    quantity_grams: newQty,
+    energy_kcal: Math.round(f.base_energy_kcal * ratio * 10) / 10,
+    protein_g: Math.round(f.base_protein_g * ratio * 10) / 10,
+    carbs_g: Math.round(f.base_carbs_g * ratio * 10) / 10,
+    fat_g: Math.round(f.base_fat_g * ratio * 10) / 10,
+    fiber_g: Math.round(f.base_fiber_g * ratio * 10) / 10,
+    sugar_g: Math.round(f.base_sugar_g * ratio * 10) / 10,
+    sodium_mg: Math.round(f.base_sodium_mg * ratio * 10) / 10,
+    cholesterol_mg: Math.round(f.base_cholesterol_mg * ratio * 10) / 10,
+  };
 }
 
 export function computeTotalsFromMeals(meals: MealData[]): NutritionTotals {
@@ -78,7 +107,6 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
   const [activeMealIndex, setActiveMealIndex] = useState<number>(0);
   const [saving, setSaving] = useState(false);
 
-  // Notify parent of meals changes
   useEffect(() => {
     onMealsChange?.(meals);
   }, [meals, onMealsChange]);
@@ -101,14 +129,28 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
 
       const mealsWithFoods: MealData[] = mealsData.map((m) => ({
         id: m.id, name: m.name, time: m.time, sort_order: m.sort_order,
-        foods: (foodsData || []).filter((f: any) => f.meal_id === m.id).map((f: any) => ({
-          id: f.id, food_id: f.food_id, item: f.item, quantity: f.quantity,
-          quantity_grams: f.quantity_grams || parseFloat(f.quantity) || 100,
-          energy_kcal: f.energy_kcal || 0, protein_g: f.protein_g || 0,
-          carbs_g: f.carbs_g || 0, fat_g: f.fat_g || 0, fiber_g: f.fiber_g || 0,
-          sugar_g: f.sugar_g || 0, sodium_mg: f.sodium_mg || 0, cholesterol_mg: f.cholesterol_mg || 0,
-          sort_order: f.sort_order,
-        })),
+        foods: (foodsData || []).filter((f: any) => f.meal_id === m.id).map((f: any) => {
+          const qGrams = f.quantity_grams || parseFloat(f.quantity) || 100;
+          const baseRatio = qGrams > 0 ? 100 / qGrams : 1;
+          const detectedUnit: "g" | "ml" = f.quantity?.includes("ml") ? "ml" : "g";
+          return {
+            id: f.id, food_id: f.food_id, item: f.item, quantity: f.quantity,
+            quantity_grams: qGrams,
+            unit: detectedUnit,
+            energy_kcal: f.energy_kcal || 0, protein_g: f.protein_g || 0,
+            carbs_g: f.carbs_g || 0, fat_g: f.fat_g || 0, fiber_g: f.fiber_g || 0,
+            sugar_g: f.sugar_g || 0, sodium_mg: f.sodium_mg || 0, cholesterol_mg: f.cholesterol_mg || 0,
+            base_energy_kcal: Math.round((f.energy_kcal || 0) * baseRatio * 10) / 10,
+            base_protein_g: Math.round((f.protein_g || 0) * baseRatio * 10) / 10,
+            base_carbs_g: Math.round((f.carbs_g || 0) * baseRatio * 10) / 10,
+            base_fat_g: Math.round((f.fat_g || 0) * baseRatio * 10) / 10,
+            base_fiber_g: Math.round((f.fiber_g || 0) * baseRatio * 10) / 10,
+            base_sugar_g: Math.round((f.sugar_g || 0) * baseRatio * 10) / 10,
+            base_sodium_mg: Math.round((f.sodium_mg || 0) * baseRatio * 10) / 10,
+            base_cholesterol_mg: Math.round((f.cholesterol_mg || 0) * baseRatio * 10) / 10,
+            sort_order: f.sort_order,
+          };
+        }),
       }));
 
       setMeals(mealsWithFoods);
@@ -153,10 +195,11 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
     setFoodSearchOpen(true);
   };
 
-  const addFoodToMeal = (food: any, quantityGrams: number) => {
+  const addFoodToMeal = (food: any, quantityGrams: number, unit: "g" | "ml") => {
     const ratio = quantityGrams / 100;
     const newFood: FoodItem = {
-      food_id: food.id, item: food.name, quantity: `${quantityGrams}g`, quantity_grams: quantityGrams,
+      food_id: food.id, item: food.name, quantity: `${quantityGrams}${unit}`, quantity_grams: quantityGrams,
+      unit,
       energy_kcal: Math.round(food.energy_kcal * ratio * 10) / 10,
       protein_g: Math.round(food.protein_g * ratio * 10) / 10,
       carbs_g: Math.round(food.carbs_g * ratio * 10) / 10,
@@ -165,6 +208,15 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
       sugar_g: Math.round(food.sugar_g * ratio * 10) / 10,
       sodium_mg: Math.round(food.sodium_mg * ratio * 10) / 10,
       cholesterol_mg: Math.round(food.cholesterol_mg * ratio * 10) / 10,
+      // store base per 100g
+      base_energy_kcal: food.energy_kcal,
+      base_protein_g: food.protein_g,
+      base_carbs_g: food.carbs_g,
+      base_fat_g: food.fat_g,
+      base_fiber_g: food.fiber_g,
+      base_sugar_g: food.sugar_g,
+      base_sodium_mg: food.sodium_mg,
+      base_cholesterol_mg: food.cholesterol_mg,
       sort_order: meals[activeMealIndex]?.foods.length || 0,
     };
     setMeals((prev) => prev.map((m, i) => (i === activeMealIndex ? { ...m, foods: [...m.foods, newFood] } : m)));
@@ -181,20 +233,23 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
         return {
           ...m,
           foods: m.foods.map((f, fi) => {
-            if (fi !== foodIndex || !f.food_id) return f;
-            const currentQ = f.quantity_grams || 100;
-            const ratio = newQuantity / currentQ;
-            return {
-              ...f, quantity: `${newQuantity}g`, quantity_grams: newQuantity,
-              energy_kcal: Math.round(f.energy_kcal * ratio * 10) / 10,
-              protein_g: Math.round(f.protein_g * ratio * 10) / 10,
-              carbs_g: Math.round(f.carbs_g * ratio * 10) / 10,
-              fat_g: Math.round(f.fat_g * ratio * 10) / 10,
-              fiber_g: Math.round(f.fiber_g * ratio * 10) / 10,
-              sugar_g: Math.round(f.sugar_g * ratio * 10) / 10,
-              sodium_mg: Math.round(f.sodium_mg * ratio * 10) / 10,
-              cholesterol_mg: Math.round(f.cholesterol_mg * ratio * 10) / 10,
-            };
+            if (fi !== foodIndex) return f;
+            return recalcFromBase(f, newQuantity);
+          }),
+        };
+      })
+    );
+  };
+
+  const updateFoodUnit = (mealIndex: number, foodIndex: number, newUnit: "g" | "ml") => {
+    setMeals((prev) =>
+      prev.map((m, i) => {
+        if (i !== mealIndex) return m;
+        return {
+          ...m,
+          foods: m.foods.map((f, fi) => {
+            if (fi !== foodIndex) return f;
+            return { ...f, unit: newUnit, quantity: `${f.quantity_grams}${newUnit}` };
           }),
         };
       })
@@ -286,8 +341,9 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
                   {meal.foods.length > 0 && (
                     <div className="space-y-1">
                       <div className="grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground px-1">
-                        <div className="col-span-4">Alimento</div>
-                        <div className="col-span-2">Qtd (g)</div>
+                        <div className="col-span-3">Alimento</div>
+                        <div className="col-span-1">Qtd</div>
+                        <div className="col-span-1">Un.</div>
                         <div className="col-span-1 text-right">Kcal</div>
                         <div className="col-span-1 text-right">Prot</div>
                         <div className="col-span-1 text-right">Carb</div>
@@ -297,11 +353,22 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
                       </div>
                       {meal.foods.map((food, foodIndex) => (
                         <div key={foodIndex} className="grid grid-cols-12 gap-2 items-center text-sm bg-muted/20 rounded px-1 py-1.5">
-                          <div className="col-span-4 truncate font-body">{food.item}</div>
-                          <div className="col-span-2">
+                          <div className="col-span-3 truncate font-body">{food.item}</div>
+                          <div className="col-span-1">
                             <Input type="number" value={food.quantity_grams}
                               onChange={(e) => updateFoodQuantity(mealIndex, foodIndex, Number(e.target.value) || 0)}
-                              className="h-7 text-xs w-full" min={1} />
+                              className="h-7 text-xs w-full" min={0} />
+                          </div>
+                          <div className="col-span-1">
+                            <Select value={food.unit} onValueChange={(v) => updateFoodUnit(mealIndex, foodIndex, v as "g" | "ml")}>
+                              <SelectTrigger className="h-7 text-xs px-1.5 w-full">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="g">g</SelectItem>
+                                <SelectItem value="ml">ml</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                           <div className="col-span-1 text-right text-xs">{food.energy_kcal.toFixed(0)}</div>
                           <div className="col-span-1 text-right text-xs">{food.protein_g.toFixed(1)}</div>
@@ -316,8 +383,9 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
                         </div>
                       ))}
                       <div className="grid grid-cols-12 gap-2 items-center text-xs font-semibold bg-primary/5 rounded px-1 py-2 mt-1">
-                        <div className="col-span-4">Subtotal</div>
-                        <div className="col-span-2"></div>
+                        <div className="col-span-3">Subtotal</div>
+                        <div className="col-span-1"></div>
+                        <div className="col-span-1"></div>
                         <div className="col-span-1 text-right">{totals.energy_kcal.toFixed(0)}</div>
                         <div className="col-span-1 text-right">{totals.protein_g.toFixed(1)}</div>
                         <div className="col-span-1 text-right">{totals.carbs_g.toFixed(1)}</div>
