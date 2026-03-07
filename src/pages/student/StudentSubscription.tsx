@@ -178,7 +178,7 @@ const StudentSubscription = () => {
             <BodyImageUpload
               userId={user!.id}
               existingImages={bodyImages || []}
-              required
+              canDeleteExisting={false}
               onComplete={() => {
                 qc.invalidateQueries({ queryKey: ["body-images"] });
                 setOnboardingStep(3);
