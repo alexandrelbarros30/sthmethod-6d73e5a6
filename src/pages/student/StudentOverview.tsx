@@ -465,7 +465,7 @@ const StudentOverview = () => {
 
       {/* ===== MÓDULOS ===== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-        {modules.map((mod) => (
+        {(isPremium ? premiumModules : basicModules).map((mod) => (
           <Link key={mod.to} to={mod.to}>
             <Card className="hover:shadow-card-hover hover:border-primary/20 transition-all duration-300 cursor-pointer group h-full">
               <CardContent className="py-5 flex items-center gap-4">
