@@ -228,20 +228,18 @@ const StudentOverview = () => {
         />
       )}
 
-      {/* ===== UPLOAD DE IMAGENS (onboarding) ===== */}
-      {!hasImages && (
-        <div className="mb-6">
-          <BodyImageUpload
-            userId={user!.id}
-            existingImages={bodyImages || []}
-            canDeleteExisting={false}
-            onComplete={() => {
-              refetchImages();
-              qc.invalidateQueries({ queryKey: ["body-images"] });
-            }}
-          />
-        </div>
-      )}
+      {/* ===== IMAGENS CORPORAIS ATUAIS ===== */}
+      <div className="mb-6">
+        <BodyImageUpload
+          userId={user!.id}
+          existingImages={bodyImages || []}
+          canDeleteExisting={false}
+          onComplete={() => {
+            refetchImages();
+            qc.invalidateQueries({ queryKey: ["body-images"] });
+          }}
+        />
+      </div>
 
       {/* ===== ATUALIZAÇÃO DE EVOLUÇÃO ===== */}
       {isOnboarded && hasImages && (
