@@ -64,6 +64,11 @@
     --plan-mid: 42 88% 52%;
     --plan-premium: 270 55% 62%;
     --info-foreground: 0 0% 100%;
+
+    /* Premium gold accent */
+    --gold: 42 78% 55%;
+    --gold-light: 42 70% 70%;
+    --gold-dark: 38 80% 40%;
   }
 
   /* ── Light theme ── */
