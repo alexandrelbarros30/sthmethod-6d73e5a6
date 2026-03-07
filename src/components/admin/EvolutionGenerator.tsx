@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { ImagePlus, Download, Loader2 } from "lucide-react";
+import evolutionFrame from "@/assets/evolution-frame.png";
 
 interface BodyImage {
   id: string;
@@ -22,12 +23,9 @@ interface EvolutionGeneratorProps {
 const TYPE_LABELS: Record<string, string> = { front: "Frente", back: "Costas", profile: "Perfil" };
 const IMAGE_TYPES = ["front", "back", "profile"] as const;
 
-// Canvas dimensions for the output
+// Canvas dimensions matching the frame aspect ratio
 const CANVAS_WIDTH = 1080;
-const CANVAS_HEIGHT = 1350; // 4:5 aspect ratio
-const HALF_WIDTH = CANVAS_WIDTH / 2;
-const PADDING = 4; // gap between images
-const LABEL_HEIGHT = 60;
+const CANVAS_HEIGHT = 1350;
 
 function groupByDate(images: BodyImage[]): { date: string; label: string; images: BodyImage[] }[] {
   const grouped: Record<string, BodyImage[]> = {};
@@ -107,6 +105,9 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
     setPreviews([]);
 
     try {
+      // Load the frame image
+      const frameImg = await loadImage(evolutionFrame);
+
       const results: string[] = [];
 
       for (const type of IMAGE_TYPES) {
@@ -125,49 +126,71 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
         canvas.height = CANVAS_HEIGHT;
         const ctx = canvas.getContext("2d")!;
 
-        // Black background
-        ctx.fillStyle = "#000000";
-        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        // Draw the frame first (it becomes the background)
+        // Scale frame to fill canvas
+        const frameRatio = frameImg.width / frameImg.height;
+        const canvasRatio = CANVAS_WIDTH / CANVAS_HEIGHT;
+        let fw = CANVAS_WIDTH, fh = CANVAS_HEIGHT;
+        if (frameRatio > canvasRatio) {
+          fh = CANVAS_HEIGHT;
+          fw = fh * frameRatio;
+        } else {
+          fw = CANVAS_WIDTH;
+          fh = fw / frameRatio;
+        }
+        ctx.drawImage(frameImg, (CANVAS_WIDTH - fw) / 2, (CANVAS_HEIGHT - fh) / 2, fw, fh);
 
-        // Image area (below label)
-        const imgY = LABEL_HEIGHT;
-        const imgH = CANVAS_HEIGHT - LABEL_HEIGHT;
+        // Calculate photo areas - the black area in the frame
+        // Frame has header (~8%) and footer (~10%), photos fill the middle black area
+        const headerHeight = Math.round(CANVAS_HEIGHT * 0.075);
+        const footerHeight = Math.round(CANVAS_HEIGHT * 0.085);
+        const photoAreaY = headerHeight;
+        const photoAreaH = CANVAS_HEIGHT - headerHeight - footerHeight;
+        const halfWidth = CANVAS_WIDTH / 2;
+        const gap = 3; // small gap at center divider
 
-        // Draw old image on left
-        drawImageCover(ctx, oldEl, 0, imgY, HALF_WIDTH - PADDING / 2, imgH);
+        // Draw old image on left half
+        drawImageCover(ctx, oldEl, 0, photoAreaY, halfWidth - gap, photoAreaH);
 
-        // Draw new image on right
-        drawImageCover(ctx, newEl, HALF_WIDTH + PADDING / 2, imgY, HALF_WIDTH - PADDING / 2, imgH);
+        // Draw new image on right half
+        drawImageCover(ctx, newEl, halfWidth + gap, photoAreaY, halfWidth - gap, photoAreaH);
 
-        // Top label bar
-        ctx.fillStyle = "#000000";
-        ctx.fillRect(0, 0, CANVAS_WIDTH, LABEL_HEIGHT);
+        // Re-draw header and footer over the photos to keep frame intact
+        // Header
+        ctx.drawImage(
+          frameImg,
+          0, 0, frameImg.width, Math.round(frameImg.height * 0.075),
+          0, 0, CANVAS_WIDTH, headerHeight
+        );
+        // Footer
+        const footerSrcY = Math.round(frameImg.height * 0.915);
+        ctx.drawImage(
+          frameImg,
+          0, footerSrcY, frameImg.width, frameImg.height - footerSrcY,
+          0, CANVAS_HEIGHT - footerHeight, CANVAS_WIDTH, footerHeight
+        );
 
-        // Center divider line
-        ctx.strokeStyle = "#ffffff";
+        // Thin divider line at center
+        ctx.strokeStyle = "rgba(255,255,255,0.3)";
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(HALF_WIDTH, 0);
-        ctx.lineTo(HALF_WIDTH, CANVAS_HEIGHT);
+        ctx.moveTo(halfWidth, photoAreaY);
+        ctx.lineTo(halfWidth, photoAreaY + photoAreaH);
         ctx.stroke();
 
-        // Labels
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 24px Arial, sans-serif";
-        ctx.textAlign = "center";
-
-        const oldLabel = `ANTES — ${oldGroup.label}`;
-        const newLabel = `DEPOIS — ${newGroup.label}`;
-
-        ctx.fillText(oldLabel, HALF_WIDTH / 2, LABEL_HEIGHT / 2 + 8);
-        ctx.fillText(newLabel, HALF_WIDTH + HALF_WIDTH / 2, LABEL_HEIGHT / 2 + 8);
-
-        // Type label at bottom
+        // Type label badge at bottom of photo area
+        const badgeW = 160;
+        const badgeH = 36;
+        const badgeX = halfWidth - badgeW / 2;
+        const badgeY = photoAreaY + photoAreaH - badgeH - 12;
         ctx.fillStyle = "rgba(0,0,0,0.7)";
-        ctx.fillRect(CANVAS_WIDTH / 2 - 80, CANVAS_HEIGHT - 50, 160, 40);
+        ctx.beginPath();
+        ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 6);
+        ctx.fill();
         ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 20px Arial, sans-serif";
-        ctx.fillText(TYPE_LABELS[type].toUpperCase(), CANVAS_WIDTH / 2, CANVAS_HEIGHT - 25);
+        ctx.font = "bold 18px Arial, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(TYPE_LABELS[type].toUpperCase(), halfWidth, badgeY + badgeH / 2 + 6);
 
         results.push(canvas.toDataURL("image/jpeg", 0.92));
       }
