@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Layers } from "lucide-react";
+import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Layers, Apple } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,6 +29,7 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/admin/plans", icon: CreditCard, label: "Planos" },
     { to: "/admin/payments", icon: Wallet, label: "Pagamentos" },
     { to: "/admin/diet", icon: Salad, label: "Dietas" },
+    { to: "/admin/nutrition", icon: Apple, label: "Cardápio" },
     { to: "/admin/training", icon: Dumbbell, label: "Treinos" },
     { to: "/admin/exercise-library", icon: BookOpen, label: "Biblioteca" },
     { to: "/admin/workout-templates", icon: Layers, label: "ProgramaTreino" },
@@ -43,6 +44,7 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/consultor", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/consultor/students", icon: Users, label: "Meus Alunos" },
     { to: "/consultor/diet", icon: Salad, label: "Dietas" },
+    { to: "/consultor/nutrition", icon: Apple, label: "Cardápio" },
     { to: "/consultor/training", icon: Dumbbell, label: "Treinos" },
     { to: "/consultor/protocol", icon: FlaskConical, label: "Protocolos" },
     { to: "/consultor/exercise-library", icon: BookOpen, label: "Biblioteca" },

@@ -1,0 +1,106 @@
+import { useState } from "react";
+import DashboardLayout from "@/components/DashboardLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, ChevronLeft, Plus, Trash2, Save, Copy, FileDown, Apple, Flame, Beef, Wheat, Droplets } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import NutritionMealBuilder from "@/components/nutrition/NutritionMealBuilder";
+import NutritionSummaryPanel from "@/components/nutrition/NutritionSummaryPanel";
+
+const AdminNutrition = () => {
+  const { role } = useAuth();
+  const displayRole = role === "consultor" ? "consultor" : "admin";
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [search, setSearch] = useState("");
+
+  const { data: students = [] } = useQuery({
+    queryKey: ["nutrition-students", displayRole],
+    queryFn: async () => {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, email, weight, tdee, daily_calories, objective, protein_g, carbs_g, fat_g");
+      return (profiles || []).map((p: any) => ({
+        ...p,
+        initials: p.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "?",
+      }));
+    },
+  });
+
+  const filtered = students.filter((s: any) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q);
+  });
+
+  if (selectedStudent) {
+    return (
+      <DashboardLayout role={displayRole} title="Cardápio Nutricional" subtitle={selectedStudent.full_name}>
+        <Button variant="ghost" size="sm" className="mb-4" onClick={() => setSelectedStudent(null)}>
+          <ChevronLeft className="w-4 h-4 mr-1" /> Voltar
+        </Button>
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <div className="xl:col-span-2">
+            <NutritionMealBuilder studentId={selectedStudent.user_id} studentName={selectedStudent.full_name} />
+          </div>
+          <div>
+            <NutritionSummaryPanel
+              studentId={selectedStudent.user_id}
+              weight={selectedStudent.weight}
+              tdee={selectedStudent.tdee}
+              objective={selectedStudent.objective}
+            />
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <DashboardLayout role={displayRole} title="Cardápio Nutricional" subtitle="Monte cardápios com dados TACO/TBCA">
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-display flex items-center gap-2">
+            <Apple className="w-5 h-5 text-primary" /> Selecione um Aluno
+          </CardTitle>
+          <div className="relative mt-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input placeholder="Buscar por nome ou e-mail..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((s: any) => (
+              <button
+                key={s.user_id}
+                onClick={() => setSelectedStudent(s)}
+                className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors text-left"
+              >
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <span className="text-sm font-bold text-primary">{s.initials}</span>
+                </div>
+                <div className="min-w-0">
+                  <p className="font-medium text-sm font-body truncate">{s.full_name || "Sem nome"}</p>
+                  <p className="text-xs text-muted-foreground font-body truncate">{s.email}</p>
+                  {s.weight && (
+                    <p className="text-xs text-muted-foreground mt-0.5">{s.weight}kg</p>
+                  )}
+                </div>
+              </button>
+            ))}
+            {filtered.length === 0 && (
+              <p className="text-muted-foreground text-sm col-span-full text-center py-8">Nenhum aluno encontrado.</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </DashboardLayout>
+  );
+};
+
+export default AdminNutrition;

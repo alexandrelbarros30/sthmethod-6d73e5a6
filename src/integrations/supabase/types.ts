@@ -160,30 +160,67 @@ export type Database = {
       }
       diet_foods: {
         Row: {
+          carbs_g: number
+          cholesterol_mg: number
+          energy_kcal: number
+          fat_g: number
+          fiber_g: number
+          food_id: string | null
           id: string
           item: string
           meal_id: string
           notes: string | null
+          protein_g: number
           quantity: string
+          quantity_grams: number | null
+          sodium_mg: number
           sort_order: number
+          sugar_g: number
         }
         Insert: {
+          carbs_g?: number
+          cholesterol_mg?: number
+          energy_kcal?: number
+          fat_g?: number
+          fiber_g?: number
+          food_id?: string | null
           id?: string
           item: string
           meal_id: string
           notes?: string | null
+          protein_g?: number
           quantity: string
+          quantity_grams?: number | null
+          sodium_mg?: number
           sort_order?: number
+          sugar_g?: number
         }
         Update: {
+          carbs_g?: number
+          cholesterol_mg?: number
+          energy_kcal?: number
+          fat_g?: number
+          fiber_g?: number
+          food_id?: string | null
           id?: string
           item?: string
           meal_id?: string
           notes?: string | null
+          protein_g?: number
           quantity?: string
+          quantity_grams?: number | null
+          sodium_mg?: number
           sort_order?: number
+          sugar_g?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "diet_foods_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "diet_foods_meal_id_fkey"
             columns: ["meal_id"]
@@ -247,6 +284,60 @@ export type Database = {
           name?: string
           updated_at?: string
           video_url?: string | null
+        }
+        Relationships: []
+      }
+      foods: {
+        Row: {
+          carbs_g: number
+          category: string
+          cholesterol_mg: number
+          created_at: string
+          energy_kcal: number
+          fat_g: number
+          fiber_g: number
+          id: string
+          name: string
+          protein_g: number
+          serving_size: number
+          serving_unit: string
+          sodium_mg: number
+          source: string
+          sugar_g: number
+        }
+        Insert: {
+          carbs_g?: number
+          category?: string
+          cholesterol_mg?: number
+          created_at?: string
+          energy_kcal?: number
+          fat_g?: number
+          fiber_g?: number
+          id?: string
+          name: string
+          protein_g?: number
+          serving_size?: number
+          serving_unit?: string
+          sodium_mg?: number
+          source?: string
+          sugar_g?: number
+        }
+        Update: {
+          carbs_g?: number
+          category?: string
+          cholesterol_mg?: number
+          created_at?: string
+          energy_kcal?: number
+          fat_g?: number
+          fiber_g?: number
+          id?: string
+          name?: string
+          protein_g?: number
+          serving_size?: number
+          serving_unit?: string
+          sodium_mg?: number
+          source?: string
+          sugar_g?: number
         }
         Relationships: []
       }
