@@ -78,6 +78,11 @@ export default {
         "plan-entry": "hsl(var(--plan-entry))",
         "plan-mid": "hsl(var(--plan-mid))",
         "plan-premium": "hsl(var(--plan-premium))",
+        gold: {
+          DEFAULT: "hsl(var(--gold))",
+          light: "hsl(var(--gold-light))",
+          dark: "hsl(var(--gold-dark))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

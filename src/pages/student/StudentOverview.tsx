@@ -314,56 +314,56 @@ const StudentOverview = () => {
         </Card>
       )}
 
-      {/* ===== INDICADORES METABÓLICOS ===== */}
+      {/* ===== INDICADORES METABÓLICOS (Premium Gold) ===== */}
       {isPremium && p && isOnboarded && (weight || tdee || nutritionTotals.kcal > 0) && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           {weight && (
-            <Card className="border-border/50">
+            <Card className="border-gold/20 bg-gold/[0.03] shadow-[0_0_16px_-6px_hsl(var(--gold)/0.15)]">
               <CardContent className="py-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-info/10 flex items-center justify-center shrink-0">
-                  <Scale className="w-5 h-5 text-info" />
+                <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center shrink-0 ring-1 ring-gold/20">
+                  <Scale className="w-5 h-5 text-gold" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Peso</p>
+                  <p className="text-xs text-gold-dark dark:text-gold-light/70">Peso</p>
                   <p className="text-lg font-bold text-foreground font-display">{weight} <span className="text-xs font-normal text-muted-foreground">kg</span></p>
                 </div>
               </CardContent>
             </Card>
           )}
           {tdee && (
-            <Card className="border-border/50">
+            <Card className="border-gold/20 bg-gold/[0.03] shadow-[0_0_16px_-6px_hsl(var(--gold)/0.15)]">
               <CardContent className="py-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center shrink-0">
-                  <Flame className="w-5 h-5 text-warning" />
+                <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center shrink-0 ring-1 ring-gold/20">
+                  <Flame className="w-5 h-5 text-gold" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Gasto (TDEE)</p>
+                  <p className="text-xs text-gold-dark dark:text-gold-light/70">Gasto (TDEE)</p>
                   <p className="text-lg font-bold text-foreground font-display">{Math.round(tdee)} <span className="text-xs font-normal text-muted-foreground">kcal</span></p>
                 </div>
               </CardContent>
             </Card>
           )}
           {nutritionTotals.kcal > 0 && (
-            <Card className="border-border/50">
+            <Card className="border-gold/20 bg-gold/[0.03] shadow-[0_0_16px_-6px_hsl(var(--gold)/0.15)]">
               <CardContent className="py-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center shrink-0">
-                  <Zap className="w-5 h-5 text-success" />
+                <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center shrink-0 ring-1 ring-gold/20">
+                  <Zap className="w-5 h-5 text-gold" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Consumo</p>
+                  <p className="text-xs text-gold-dark dark:text-gold-light/70">Consumo</p>
                   <p className="text-lg font-bold text-foreground font-display">{Math.round(nutritionTotals.kcal)} <span className="text-xs font-normal text-muted-foreground">kcal</span></p>
                 </div>
               </CardContent>
             </Card>
           )}
           {strategy && (
-            <Card className="border-border/50">
+            <Card className="border-gold/20 bg-gold/[0.03] shadow-[0_0_16px_-6px_hsl(var(--gold)/0.15)]">
               <CardContent className="py-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <Target className="w-5 h-5 text-primary" />
+                <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center shrink-0 ring-1 ring-gold/20">
+                  <Target className="w-5 h-5 text-gold" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Estratégia</p>
+                  <p className="text-xs text-gold-dark dark:text-gold-light/70">Estratégia</p>
                   <p className={`text-base font-bold font-display ${strategyColor}`}>{strategy}</p>
                 </div>
               </CardContent>
@@ -372,26 +372,26 @@ const StudentOverview = () => {
         </div>
       )}
 
-      {/* ===== MACROS POR KG ===== */}
+      {/* ===== MACROS POR KG (Premium Gold) ===== */}
       {isPremium && p && isOnboarded && nutritionTotals.kcal > 0 && weight && (
-        <Card className="mb-6 border-border/50">
+        <Card className="mb-6 border-gold/20 bg-gold/[0.02] shadow-[0_0_20px_-8px_hsl(var(--gold)/0.12)]">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-display flex items-center gap-2">
-              <Activity className="w-4 h-4 text-primary" /> Macros por kg de Peso Corporal
+              <Activity className="w-4 h-4 text-gold" /> Macros por kg de Peso Corporal
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-3 rounded-xl bg-info/5 border border-info/10">
-                <p className="text-2xl font-bold text-info font-display">{proteinPerKg}</p>
+              <div className="text-center p-3 rounded-xl bg-gold/[0.06] border border-gold/15">
+                <p className="text-2xl font-bold text-gold font-display">{proteinPerKg}</p>
                 <p className="text-xs text-muted-foreground mt-1">Proteína (g/kg)</p>
               </div>
-              <div className="text-center p-3 rounded-xl bg-warning/5 border border-warning/10">
-                <p className="text-2xl font-bold text-warning font-display">{carbsPerKg}</p>
+              <div className="text-center p-3 rounded-xl bg-gold/[0.06] border border-gold/15">
+                <p className="text-2xl font-bold text-gold font-display">{carbsPerKg}</p>
                 <p className="text-xs text-muted-foreground mt-1">Carboidrato (g/kg)</p>
               </div>
-              <div className="text-center p-3 rounded-xl bg-destructive/5 border border-destructive/10">
-                <p className="text-2xl font-bold text-destructive font-display">{fatPerKg}</p>
+              <div className="text-center p-3 rounded-xl bg-gold/[0.06] border border-gold/15">
+                <p className="text-2xl font-bold text-gold font-display">{fatPerKg}</p>
                 <p className="text-xs text-muted-foreground mt-1">Gordura (g/kg)</p>
               </div>
             </div>
@@ -468,16 +468,16 @@ const StudentOverview = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
         {(isPremium ? premiumModules : basicModules).map((mod) => (
           <Link key={mod.to} to={mod.to}>
-            <Card className="hover:shadow-card-hover hover:border-primary/20 transition-all duration-300 cursor-pointer group h-full">
+            <Card className={`hover:shadow-card-hover transition-all duration-300 cursor-pointer group h-full ${isPremium ? "border-gold/10 hover:border-gold/30 hover:shadow-[0_0_20px_-6px_hsl(var(--gold)/0.15)]" : "hover:border-primary/20"}`}>
               <CardContent className="py-5 flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-xl ${mod.bgColor} flex items-center justify-center group-hover:scale-105 transition-transform shrink-0`}>
-                  <mod.icon className={`w-6 h-6 ${mod.color}`} />
+                <div className={`w-12 h-12 rounded-xl ${isPremium ? "bg-gold/10 ring-1 ring-gold/15" : mod.bgColor} flex items-center justify-center group-hover:scale-105 transition-transform shrink-0`}>
+                  <mod.icon className={`w-6 h-6 ${isPremium ? "text-gold" : mod.color}`} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-foreground font-display text-sm">{mod.title}</p>
                   <p className="text-xs text-muted-foreground font-body">{mod.desc}</p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors shrink-0" />
+                <ChevronRight className={`w-4 h-4 text-muted-foreground/50 transition-colors shrink-0 ${isPremium ? "group-hover:text-gold" : "group-hover:text-primary"}`} />
               </CardContent>
             </Card>
           </Link>
