@@ -27,49 +27,68 @@ const MAX_DIMENSION = 1200;
  * Returns a Blob (JPEG) that is <= maxSizeMB.
  */
 async function compressImage(file: File, maxSizeMB = MAX_SIZE_MB, maxDim = MAX_DIMENSION): Promise<Blob> {
-  // Use FileReader for better mobile compatibility
-  const dataUrl = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error("Falha ao ler arquivo"));
-    reader.readAsDataURL(file);
-  });
+  // Try createImageBitmap first (faster, better mobile support), fallback to FileReader+Image
+  let width: number, height: number;
+  let drawSource: ImageBitmap | HTMLImageElement;
+
+  try {
+    const bitmap = await createImageBitmap(file);
+    width = bitmap.width;
+    height = bitmap.height;
+    drawSource = bitmap;
+  } catch {
+    // Fallback: FileReader → data URL → Image
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error("Falha ao ler arquivo"));
+      reader.readAsDataURL(file);
+    });
+
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error("Formato de imagem não suportado. Use JPG ou PNG."));
+      i.src = dataUrl;
+    });
+    width = img.width;
+    height = img.height;
+    drawSource = img;
+  }
+
+  if (width > maxDim || height > maxDim) {
+    const ratio = Math.min(maxDim / width, maxDim / height);
+    width = Math.round(width * ratio);
+    height = Math.round(height * ratio);
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(drawSource, 0, 0, width, height);
+
+  // Close bitmap to free memory
+  if ("close" in drawSource) (drawSource as ImageBitmap).close();
 
   return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      let { width, height } = img;
-      if (width > maxDim || height > maxDim) {
-        const ratio = Math.min(maxDim / width, maxDim / height);
-        width = Math.round(width * ratio);
-        height = Math.round(height * ratio);
-      }
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(img, 0, 0, width, height);
-
-      let quality = 0.85;
-      const tryCompress = () => {
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) return reject(new Error("Falha ao comprimir imagem"));
-            if (blob.size > maxSizeMB * 1024 * 1024 && quality > 0.3) {
-              quality -= 0.15;
-              tryCompress();
-            } else {
-              resolve(blob);
-            }
-          },
-          "image/jpeg",
-          quality,
-        );
-      };
-      tryCompress();
+    let quality = 0.85;
+    const tryCompress = () => {
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) return reject(new Error("Falha ao comprimir imagem"));
+          if (blob.size > maxSizeMB * 1024 * 1024 && quality > 0.3) {
+            quality -= 0.15;
+            tryCompress();
+          } else {
+            resolve(blob);
+          }
+        },
+        "image/jpeg",
+        quality,
+      );
     };
-    img.onerror = () => reject(new Error("Falha ao carregar imagem. Tente outro formato (JPG ou PNG)."));
-    img.src = dataUrl;
+    tryCompress();
   });
 }
 
