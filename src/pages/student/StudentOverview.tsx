@@ -315,7 +315,7 @@ const StudentOverview = () => {
       )}
 
       {/* ===== INDICADORES METABÓLICOS ===== */}
-      {p && isOnboarded && (weight || tdee || nutritionTotals.kcal > 0) && (
+      {isPremium && p && isOnboarded && (weight || tdee || nutritionTotals.kcal > 0) && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           {weight && (
             <Card className="border-border/50">
