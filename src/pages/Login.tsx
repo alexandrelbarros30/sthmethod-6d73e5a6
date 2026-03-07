@@ -32,7 +32,10 @@ const Login = () => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        if (!fullName.trim()) { toast.error("Nome completo é obrigatório"); setLoading(false); return; }
+        const phoneClean = phoneVal.replace(/\D/g, "");
+        if (phoneClean.length < 10) { toast.error("Telefone inválido. Use (xx) xxxxx-xxxx"); setLoading(false); return; }
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -41,6 +44,23 @@ const Login = () => {
           },
         });
         if (error) throw error;
+        // Save phone to profile
+        if (data.user) {
+          let retries = 0;
+          const savePhone = async () => {
+            const { data: updated } = await supabase
+              .from("profiles")
+              .update({ phone: phoneVal, full_name: fullName })
+              .eq("user_id", data.user!.id)
+              .select("id");
+            if ((!updated || updated.length === 0) && retries < 5) {
+              retries++;
+              await new Promise(r => setTimeout(r, 500));
+              return savePhone();
+            }
+          };
+          await savePhone();
+        }
         toast.success("Conta criada com sucesso! Complete seu cadastro para liberar o acesso.", {
           action: {
             label: "Completar cadastro",
