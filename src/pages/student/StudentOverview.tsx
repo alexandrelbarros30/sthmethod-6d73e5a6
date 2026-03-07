@@ -228,18 +228,36 @@ const StudentOverview = () => {
         />
       )}
 
-      {/* ===== UPLOAD DE IMAGENS ===== */}
-      <div className="mb-6">
-        <BodyImageUpload
-          userId={user!.id}
-          existingImages={bodyImages || []}
-          canDeleteExisting={false}
-          onComplete={() => {
-            refetchImages();
-            qc.invalidateQueries({ queryKey: ["body-images"] });
-          }}
-        />
-      </div>
+      {/* ===== UPLOAD DE IMAGENS (onboarding) ===== */}
+      {!hasImages && (
+        <div className="mb-6">
+          <BodyImageUpload
+            userId={user!.id}
+            existingImages={bodyImages || []}
+            canDeleteExisting={false}
+            onComplete={() => {
+              refetchImages();
+              qc.invalidateQueries({ queryKey: ["body-images"] });
+            }}
+          />
+        </div>
+      )}
+
+      {/* ===== ATUALIZAÇÃO DE EVOLUÇÃO ===== */}
+      {isOnboarded && hasImages && (
+        <div className="mb-6">
+          <EvolutionUpdateCard
+            userId={user!.id}
+            currentWeight={p?.weight}
+            existingImages={bodyImages || []}
+            onComplete={() => {
+              refetchImages();
+              refetchProfile();
+              qc.invalidateQueries({ queryKey: ["body-images"] });
+            }}
+          />
+        </div>
+      )}
 
       {/* ===== ASSINATURA + PROGRESSO ===== */}
       {subscription ? (
