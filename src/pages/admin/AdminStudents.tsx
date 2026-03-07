@@ -20,6 +20,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
+import EvolutionGenerator from "@/components/admin/EvolutionGenerator";
 import ExcelJS from "exceljs";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
 import {
