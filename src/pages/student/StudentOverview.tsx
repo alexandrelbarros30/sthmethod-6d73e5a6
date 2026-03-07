@@ -241,21 +241,6 @@ const StudentOverview = () => {
         />
       </div>
 
-      {/* ===== ATUALIZAÇÃO DE EVOLUÇÃO ===== */}
-      {isOnboarded && hasImages && (
-        <div className="mb-6">
-          <EvolutionUpdateCard
-            userId={user!.id}
-            currentWeight={p?.weight}
-            existingImages={bodyImages || []}
-            onComplete={() => {
-              refetchImages();
-              refetchProfile();
-              qc.invalidateQueries({ queryKey: ["body-images"] });
-            }}
-          />
-        </div>
-      )}
 
       {/* ===== ASSINATURA + PROGRESSO ===== */}
       {subscription ? (
