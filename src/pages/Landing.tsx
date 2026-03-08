@@ -370,6 +370,7 @@ const Landing = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      <WhatsAppButton />
     </div>
   );
 };
