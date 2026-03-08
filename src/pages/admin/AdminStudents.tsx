@@ -459,14 +459,26 @@ const AdminStudents = () => {
   const checkOrphan = async (email: string) => {
     setOrphanLoading(true);
     try {
-      const { data } = await supabase.functions.invoke("admin-manage-students", {
+      const { data, error } = await supabase.functions.invoke("admin-manage-students", {
         body: { action: "check_orphan", email },
       });
+      console.log("checkOrphan result:", { data, error });
+      if (error) {
+        console.error("checkOrphan invoke error:", error);
+        // Even if check fails, show orphan dialog with basic info so user can act
+        setOrphanData({ orphan: true, email, user_id: null, has_profile: false, has_role: false });
+        return;
+      }
       if (data?.orphan) {
         setOrphanData(data);
+      } else if (data?.user_id) {
+        // User exists with complete profile — still show dialog to allow delete+recreate
+        setOrphanData({ ...data, orphan: true });
       }
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("checkOrphan error:", e);
+      // Show dialog with basic info
+      setOrphanData({ orphan: true, email, user_id: null, has_profile: false, has_role: false });
     }
     setOrphanLoading(false);
   };

@@ -133,17 +133,25 @@ Deno.serve(async (req) => {
       const { email } = payload;
       if (!email) {
         return new Response(JSON.stringify({ error: "Email é obrigatório" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      // List users by email
-      const { data: listData, error: listError } = await adminClient.auth.admin.listUsers();
-      if (listError) {
-        return new Response(JSON.stringify({ error: "Erro ao buscar usuários" }), {
-          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      // Search through pages to find user by email
+      let found: any = null;
+      let page = 1;
+      const perPage = 500;
+      while (!found) {
+        const { data: listData, error: listError } = await adminClient.auth.admin.listUsers({ page, perPage });
+        if (listError) {
+          return new Response(JSON.stringify({ error: "Erro ao buscar usuários" }), {
+            status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        found = listData.users.find((u: any) => u.email === email);
+        if (found) break;
+        if (listData.users.length < perPage) break; // no more pages
+        page++;
       }
-      const found = listData.users.find((u: any) => u.email === email);
       if (!found) {
         return new Response(JSON.stringify({ orphan: false }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
