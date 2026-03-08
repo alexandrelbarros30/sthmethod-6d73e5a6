@@ -6,15 +6,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Scale, Camera, CheckCircle2, History } from "lucide-react";
+import { TrendingUp, Scale, Camera, CheckCircle2, History, Flame, Droplets, Zap, Activity } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
+import { calculateAge, calculateMacros } from "@/lib/macro-calculator";
+import EvolutionMacroDisplay from "@/components/student/EvolutionMacroDisplay";
+import EvolutionWeightHistory from "@/components/student/EvolutionWeightHistory";
+import EvolutionImageHistory from "@/components/student/EvolutionImageHistory";
 
 const StudentEvolution = () => {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const qc = useQueryClient();
   const [weight, setWeight] = useState("");
   const [notes, setNotes] = useState("");
@@ -24,7 +28,7 @@ const StudentEvolution = () => {
   const { data: fullProfile } = useQuery({
     queryKey: ["student-profile-evo", user?.id],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("weight").eq("user_id", user!.id).single();
+      const { data } = await supabase.from("profiles").select("*").eq("user_id", user!.id).single();
       return data;
     },
     enabled: !!user?.id,
@@ -71,7 +75,6 @@ const StudentEvolution = () => {
   });
 
   const currentWeight = fullProfile?.weight;
-  const labels: Record<string, string> = { front: "Frente", back: "Costas", profile: "Perfil" };
 
   const handleSaveWeight = async () => {
     if (!weight) {
@@ -81,16 +84,87 @@ const StudentEvolution = () => {
 
     setSaving(true);
     try {
+      const newWeight = Number(weight);
+
+      // Insert weight log
       const { error } = await supabase.from("weight_logs").insert({
         user_id: user!.id,
-        weight: Number(weight),
+        weight: newWeight,
         notes: notes || "",
       });
       if (error) throw error;
 
-      await supabase.from("profiles").update({ weight: Number(weight) }).eq("user_id", user!.id);
+      // Recalculate macros with new weight
+      let macroUpdate: Record<string, any> = { weight: newWeight };
 
-      toast.success("Evolução registrada com sucesso!");
+      if (fullProfile?.birth_date && fullProfile?.height && fullProfile?.gender) {
+        const age = calculateAge(fullProfile.birth_date);
+        const macros = calculateMacros({
+          gender: fullProfile.gender as "masculino" | "feminino",
+          age,
+          weight: newWeight,
+          height: Number(fullProfile.height),
+          activityType: fullProfile.activity_type || "nenhuma",
+          doesCardio: fullProfile.does_cardio || false,
+          objective: fullProfile.objective || "manter_peso",
+          physicalActivityLevel: fullProfile.physical_activity_level || "sedentario",
+          trainingDaysPerWeek: fullProfile.training_days_per_week || undefined,
+          trainingDurationMinutes: fullProfile.training_duration_minutes || undefined,
+          trainingIntensity: fullProfile.training_intensity || undefined,
+          cardioDaysPerWeek: fullProfile.cardio_days_per_week || undefined,
+          cardioDurationMinutes: fullProfile.cardio_duration_minutes || undefined,
+          cardioIntensity: fullProfile.cardio_intensity || undefined,
+        });
+
+        macroUpdate = {
+          ...macroUpdate,
+          bmr: macros.bmr,
+          tdee: macros.tdee,
+          daily_calories: macros.dailyCalories,
+          protein_g: macros.proteinG,
+          carbs_g: macros.carbsG,
+          fat_g: macros.fatG,
+        };
+      }
+
+      // Update profile with new weight and macros
+      await supabase.from("profiles").update(macroUpdate).eq("user_id", user!.id);
+
+      // Create anamnesis entry with evolution summary
+      const timestamp = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+      const prevWeight = currentWeight ? Number(currentWeight) : null;
+      const weightDiff = prevWeight ? (newWeight - prevWeight).toFixed(1) : null;
+      const weightDirection = weightDiff && Number(weightDiff) > 0 ? "+" : "";
+
+      let anamnesisNote = `📊 ATUALIZAÇÃO DE EVOLUÇÃO — ${timestamp}\n\n`;
+      anamnesisNote += `⚖️ Peso: ${newWeight.toFixed(1)} kg`;
+      if (prevWeight) {
+        anamnesisNote += ` (anterior: ${prevWeight.toFixed(1)} kg | variação: ${weightDirection}${weightDiff} kg)`;
+      }
+      anamnesisNote += "\n";
+
+      if (macroUpdate.bmr) {
+        anamnesisNote += `\n🔥 Macros recalculados:\n`;
+        anamnesisNote += `  • TMB: ${macroUpdate.bmr} kcal\n`;
+        anamnesisNote += `  • TDEE: ${macroUpdate.tdee} kcal\n`;
+        anamnesisNote += `  • Meta calórica: ${macroUpdate.daily_calories} kcal\n`;
+        anamnesisNote += `  • Proteína: ${macroUpdate.protein_g}g | Carbos: ${macroUpdate.carbs_g}g | Gordura: ${macroUpdate.fat_g}g\n`;
+      }
+
+      if (notes) {
+        anamnesisNote += `\n📝 Observações do aluno: ${notes}\n`;
+      }
+
+      if (imagesSaved) {
+        anamnesisNote += `\n📸 Novas fotos corporais enviadas.\n`;
+      }
+
+      await supabase.from("anamnesis_entries").insert({
+        user_id: user!.id,
+        notes: anamnesisNote,
+      });
+
+      toast.success("Evolução registrada com sucesso! Macros atualizados.");
       setWeight("");
       setNotes("");
       setImagesSaved(false);
@@ -104,16 +178,13 @@ const StudentEvolution = () => {
     setSaving(false);
   };
 
-  // Group images by date
-  const imagesByDate = allImages?.reduce((acc: Record<string, any[]>, img: any) => {
-    const date = new Date(img.uploaded_at).toLocaleDateString("pt-BR");
-    if (!acc[date]) acc[date] = [];
-    acc[date].push(img);
-    return acc;
-  }, {}) || {};
-
   return (
     <DashboardLayout role="student" title="Atualização" subtitle="Registre seu progresso para acompanhamento profissional.">
+      {/* ===== MACROS ATUAIS ===== */}
+      {fullProfile && (
+        <EvolutionMacroDisplay profile={fullProfile} />
+      )}
+
       {/* ===== NOVA ATUALIZAÇÃO ===== */}
       <Card className="mb-6 border-primary/20 bg-primary/[0.03]">
         <CardHeader>
@@ -122,7 +193,7 @@ const StudentEvolution = () => {
             Nova Atualização de Evolução
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Envie novas fotos corporais e registre seu peso atual. As fotos e pesos anteriores são preservados para comparação.
+            Envie novas fotos corporais e registre seu peso atual. Os macros serão recalculados automaticamente.
           </p>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -189,82 +260,16 @@ const StudentEvolution = () => {
             onClick={handleSaveWeight}
             disabled={saving || !weight}
           >
-            {saving ? "Salvando..." : "Registrar Peso"}
+            {saving ? "Salvando..." : "Registrar Evolução e Atualizar Macros"}
           </Button>
         </CardContent>
       </Card>
 
       {/* ===== HISTÓRICO DE PESO ===== */}
-      {weightLogs && weightLogs.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-base font-display flex items-center gap-2">
-              <Scale className="w-4 h-4" /> Histórico de Peso
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {weightLogs.map((log: any, i: number) => (
-                <div key={log.id} className="flex items-center justify-between border-b border-border/50 pb-2 last:border-0 last:pb-0">
-                  <div className="flex items-center gap-3">
-                    <span className={`text-sm font-bold ${i === 0 ? "text-primary" : "text-foreground"}`}>
-                      {Number(log.weight).toFixed(1)} kg
-                    </span>
-                    {i === 0 && <Badge variant="secondary" className="text-[10px]">Atual</Badge>}
-                    {i > 0 && weightLogs[i - 1] && (
-                      <span className={`text-xs ${Number(log.weight) > Number(weightLogs[i - 1].weight) ? "text-destructive" : "text-success"}`}>
-                        {Number(log.weight) > Number(weightLogs[i - 1].weight) ? "↑" : "↓"}{" "}
-                        {Math.abs(Number(log.weight) - Number(weightLogs[i - 1].weight)).toFixed(1)} kg
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-muted-foreground">{new Date(log.logged_at).toLocaleDateString("pt-BR")}</p>
-                    {log.notes && <p className="text-xs text-muted-foreground/70 max-w-[200px] truncate">{log.notes}</p>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <EvolutionWeightHistory weightLogs={weightLogs || []} />
 
       {/* ===== HISTÓRICO DE IMAGENS ===== */}
-      {Object.keys(imagesByDate).length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base font-display flex items-center gap-2">
-              <History className="w-4 h-4" /> Histórico de Fotos Corporais
-            </CardTitle>
-            <p className="text-xs text-muted-foreground">Todas as suas fotos são preservadas para acompanhamento da evolução.</p>
-          </CardHeader>
-          <CardContent>
-            {Object.entries(imagesByDate).map(([date, imgs]) => (
-              <div key={date} className="mb-5 last:mb-0">
-                <div className="flex items-center gap-2 mb-2">
-                  <p className="text-xs font-semibold text-muted-foreground">{date}</p>
-                  {(imgs as any[])[0]?.is_current && <Badge variant="secondary" className="text-[10px]">Atual</Badge>}
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {["front", "back", "profile"].map((type) => {
-                    const img = (imgs as any[]).find((i: any) => i.type === type);
-                    return (
-                      <div key={type} className="text-center">
-                        <p className="text-[10px] text-muted-foreground mb-0.5">{labels[type]}</p>
-                        {img ? (
-                          <img src={img.image_url} alt={labels[type]} className="w-full aspect-[3/4] object-cover rounded border" />
-                        ) : (
-                          <div className="w-full aspect-[3/4] bg-muted rounded flex items-center justify-center text-muted-foreground text-[10px]">—</div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      <EvolutionImageHistory allImages={allImages || []} />
     </DashboardLayout>
   );
 };
