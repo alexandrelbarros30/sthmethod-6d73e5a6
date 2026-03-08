@@ -278,6 +278,13 @@ const Landing = () => {
       {/* Dynamic Sections */}
       {activeSections.map((sec) => sectionComponents[sec.key] ?? null)}
 
+      {/* Static interactive sections */}
+      <BMICalculatorSection />
+      <FoodGuideSection />
+      <NutritionQuizSection />
+      <MealPlanSection />
+      <BodySimulatorSection />
+
       {/* Final CTA */}
       <section className="py-24 px-6">
         <motion.div
