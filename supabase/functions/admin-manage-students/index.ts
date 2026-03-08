@@ -129,6 +129,67 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "check_orphan") {
+      const { email } = payload;
+      if (!email) {
+        return new Response(JSON.stringify({ error: "Email é obrigatório" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // List users by email
+      const { data: listData, error: listError } = await adminClient.auth.admin.listUsers();
+      if (listError) {
+        return new Response(JSON.stringify({ error: "Erro ao buscar usuários" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const found = listData.users.find((u: any) => u.email === email);
+      if (!found) {
+        return new Response(JSON.stringify({ orphan: false }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: profile } = await adminClient.from("profiles").select("user_id").eq("user_id", found.id).maybeSingle();
+      const { data: role } = await adminClient.from("user_roles").select("role").eq("user_id", found.id).maybeSingle();
+      const isOrphan = !profile || !role;
+      return new Response(JSON.stringify({
+        orphan: isOrphan,
+        user_id: found.id,
+        email: found.email,
+        has_profile: !!profile,
+        has_role: !!role,
+        created_at: found.created_at,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "repair_orphan") {
+      const { user_id, full_name, email } = payload;
+      if (!user_id) {
+        return new Response(JSON.stringify({ error: "user_id é obrigatório" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Ensure profile exists
+      const { data: existingProfile } = await adminClient.from("profiles").select("id").eq("user_id", user_id).maybeSingle();
+      if (!existingProfile) {
+        await adminClient.from("profiles").insert({
+          user_id,
+          full_name: full_name || "",
+          email: email || "",
+        });
+      }
+      // Ensure role exists
+      const { data: existingRole } = await adminClient.from("user_roles").select("id").eq("user_id", user_id).maybeSingle();
+      if (!existingRole) {
+        await adminClient.from("user_roles").insert({ user_id, role: "student" });
+      }
+      return new Response(JSON.stringify({ success: true, user_id }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify({ error: "Ação inválida" }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
