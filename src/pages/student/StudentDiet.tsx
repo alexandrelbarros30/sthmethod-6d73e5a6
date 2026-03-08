@@ -6,7 +6,8 @@ import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText } from "lucide-react";
+import { FileText, Clock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 const useContentProtection = () => {
   useEffect(() => {
@@ -47,15 +48,15 @@ const StudentDiet = () => {
   const { user } = useAuth();
   const { isActive, isLoading: subLoading } = useSubscriptionGuard();
 
-  const { data: diet, isLoading } = useQuery({
-    queryKey: ["student-diet", user?.id],
+  const { data: diets, isLoading } = useQuery({
+    queryKey: ["student-diets", user?.id],
     queryFn: async () => {
       const { data } = await supabase
-        .from("student_diets" as any)
+        .from("student_diets")
         .select("*")
         .eq("user_id", user!.id)
-        .maybeSingle();
-      return data;
+        .order("created_at", { ascending: false });
+      return data || [];
     },
     enabled: !!user?.id && isActive,
   });
@@ -76,7 +77,7 @@ const StudentDiet = () => {
     );
   }
 
-  if (!diet) {
+  if (!diets || diets.length === 0) {
     return (
       <DashboardLayout role="student" title="Dieta" subtitle="Seu plano alimentar personalizado.">
         <Card><CardContent className="py-8 text-center">
@@ -87,39 +88,48 @@ const StudentDiet = () => {
   }
 
   return (
-    <DashboardLayout role="student" title={(diet as any).title || "Dieta"} subtitle="Seu plano alimentar personalizado.">
+    <DashboardLayout role="student" title="Dieta" subtitle="Seu plano alimentar personalizado.">
       <style>{`
         @media print { .content-protected { display: none !important; } body::after { content: "Impressão não permitida"; display: flex; align-items: center; justify-content: center; font-size: 2rem; height: 100vh; } }
         .content-protected { user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; -webkit-touch-callout: none; }
       `}</style>
-      <div className="space-y-6 max-w-4xl content-protected">
-        {(diet as any).pdf_url && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base font-display flex items-center gap-2">
-                <FileText className="w-4 h-4" /> Documento PDF
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <iframe
-                src={(diet as any).pdf_url}
-                className="w-full h-[600px] rounded-lg border border-border"
-                title="Dieta PDF"
-              />
-            </CardContent>
-          </Card>
-        )}
+      <div className="space-y-4 max-w-4xl content-protected">
+        <h3 className="text-sm font-semibold text-muted-foreground font-display flex items-center gap-2">
+          <Clock className="w-4 h-4" /> Histórico de Dietas ({diets.length})
+        </h3>
 
-        {(diet as any).content && (
-          <Card>
-            <CardHeader><CardTitle className="text-base font-display">Detalhes</CardTitle></CardHeader>
-            <CardContent>
-              <div className="whitespace-pre-wrap text-sm text-foreground font-body leading-relaxed">
-                {(diet as any).content}
+        {diets.map((diet: any) => (
+          <Card key={diet.id}>
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <CardTitle className="text-base font-display">{diet.title}</CardTitle>
+                <Badge variant="outline" className="text-[10px]">
+                  {new Date(diet.created_at).toLocaleDateString("pt-BR")} às{" "}
+                  {new Date(diet.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                </Badge>
               </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {diet.pdf_url && (
+                <div>
+                  <p className="text-xs text-primary flex items-center gap-1 mb-2">
+                    <FileText className="w-3 h-3" /> Documento PDF
+                  </p>
+                  <iframe
+                    src={diet.pdf_url}
+                    className="w-full h-[500px] rounded-lg border border-border"
+                    title="Dieta PDF"
+                  />
+                </div>
+              )}
+              {diet.content && (
+                <div className="whitespace-pre-wrap text-sm text-foreground font-body leading-relaxed">
+                  {diet.content}
+                </div>
+              )}
             </CardContent>
           </Card>
-        )}
+        ))}
       </div>
     </DashboardLayout>
   );

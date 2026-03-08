@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Pencil, Trash2, FileText, Search, Plus, Clock } from "lucide-react";
+import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -26,6 +26,16 @@ const AdminDiet = () => {
   const [newContent, setNewContent] = useState("");
   const [newPdfFile, setNewPdfFile] = useState<File | null>(null);
   const [showNewForm, setShowNewForm] = useState(false);
+
+  // Edit state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [editTime, setEditTime] = useState("");
+
+  // Preview
+  const [previewDiet, setPreviewDiet] = useState<any>(null);
 
   // Delete
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -64,6 +74,8 @@ const AdminDiet = () => {
   const openManage = (student: any) => {
     setSelected(student);
     setShowNewForm(false);
+    setEditingId(null);
+    setPreviewDiet(null);
     resetNewForm();
     setDialogOpen(true);
   };
@@ -72,6 +84,24 @@ const AdminDiet = () => {
     setNewTitle("Dieta");
     setNewContent("");
     setNewPdfFile(null);
+  };
+
+  const startEdit = (diet: any) => {
+    const d = new Date(diet.created_at);
+    setEditingId(diet.id);
+    setEditTitle(diet.title || "");
+    setEditContent(diet.content || "");
+    setEditDate(d.toISOString().slice(0, 10));
+    setEditTime(d.toTimeString().slice(0, 5));
+    setPreviewDiet(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditTitle("");
+    setEditContent("");
+    setEditDate("");
+    setEditTime("");
   };
 
   const saveMutation = useMutation({
@@ -99,6 +129,27 @@ const AdminDiet = () => {
       resetNewForm();
     },
     onError: () => toast.error("Erro ao salvar dieta"),
+  });
+
+  const editMutation = useMutation({
+    mutationFn: async () => {
+      const newCreatedAt = new Date(`${editDate}T${editTime}:00`).toISOString();
+      await supabase
+        .from("student_diets")
+        .update({
+          title: editTitle,
+          content: editContent,
+          created_at: newCreatedAt,
+        })
+        .eq("id", editingId!);
+    },
+    onSuccess: () => {
+      toast.success("Dieta atualizada!");
+      qc.invalidateQueries({ queryKey: ["admin-students-diets"] });
+      refetchDiets();
+      cancelEdit();
+    },
+    onError: () => toast.error("Erro ao atualizar dieta"),
   });
 
   const deleteMutation = useMutation({
@@ -180,7 +231,7 @@ const AdminDiet = () => {
           <ScrollArea className="flex-1 pr-4">
             <div className="space-y-4">
               {/* Add new diet button */}
-              {!showNewForm && (
+              {!showNewForm && !editingId && (
                 <Button onClick={() => setShowNewForm(true)} className="w-full" variant="outline">
                   <Plus className="w-4 h-4 mr-2" /> Adicionar Nova Dieta
                 </Button>
@@ -228,32 +279,99 @@ const AdminDiet = () => {
                   {studentDiets.map((diet: any) => (
                     <Card key={diet.id} className="relative">
                       <CardContent className="pt-4 pb-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <p className="font-medium text-sm font-body">{diet.title}</p>
-                              <Badge variant="outline" className="text-[10px] shrink-0">
-                                {new Date(diet.created_at).toLocaleDateString("pt-BR")} às {new Date(diet.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                              </Badge>
+                        {editingId === diet.id ? (
+                          /* Edit mode */
+                          <div className="space-y-3">
+                            <div>
+                              <Label className="font-body text-xs">Título</Label>
+                              <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
                             </div>
-                            {diet.pdf_url && (
-                              <a href={diet.pdf_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mb-1">
-                                <FileText className="w-3 h-3" /> Ver PDF
-                              </a>
-                            )}
-                            {diet.content && (
-                              <p className="text-xs text-muted-foreground line-clamp-3 whitespace-pre-wrap">{diet.content}</p>
-                            )}
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <Label className="font-body text-xs">Data</Label>
+                                <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />
+                              </div>
+                              <div>
+                                <Label className="font-body text-xs">Horário</Label>
+                                <Input type="time" value={editTime} onChange={(e) => setEditTime(e.target.value)} />
+                              </div>
+                            </div>
+                            <div>
+                              <Label className="font-body text-xs">Conteúdo</Label>
+                              <Textarea value={editContent} onChange={(e) => setEditContent(e.target.value)} rows={6} />
+                            </div>
+                            <div className="flex gap-2 justify-end">
+                              <Button variant="ghost" size="sm" onClick={cancelEdit}>Cancelar</Button>
+                              <Button size="sm" onClick={() => editMutation.mutate()} disabled={editMutation.isPending}>
+                                {editMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                              </Button>
+                            </div>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                            onClick={() => confirmDelete(diet.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
+                        ) : (
+                          /* View mode */
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <p className="font-medium text-sm font-body">{diet.title}</p>
+                                <Badge variant="outline" className="text-[10px] shrink-0">
+                                  {new Date(diet.created_at).toLocaleDateString("pt-BR")} às {new Date(diet.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                                </Badge>
+                              </div>
+                              {diet.pdf_url && (
+                                <a href={diet.pdf_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mb-1">
+                                  <FileText className="w-3 h-3" /> Ver PDF
+                                </a>
+                              )}
+                              {diet.content && (
+                                <p className="text-xs text-muted-foreground line-clamp-3 whitespace-pre-wrap">{diet.content}</p>
+                              )}
+
+                              {/* Preview toggle */}
+                              {previewDiet === diet.id && diet.content && (
+                                <div className="mt-3 p-3 rounded-md bg-muted/50 border border-border">
+                                  <p className="text-xs font-semibold text-foreground mb-1">Visualização completa:</p>
+                                  <div className="whitespace-pre-wrap text-sm text-foreground font-body leading-relaxed">
+                                    {diet.content}
+                                  </div>
+                                </div>
+                              )}
+                              {previewDiet === diet.id && diet.pdf_url && (
+                                <div className="mt-3">
+                                  <iframe src={diet.pdf_url} className="w-full h-[400px] rounded-lg border border-border" title="Dieta PDF" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex flex-col gap-1 shrink-0">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-muted-foreground hover:text-primary"
+                                onClick={() => setPreviewDiet(previewDiet === diet.id ? null : diet.id)}
+                                title="Visualizar"
+                              >
+                                {previewDiet === diet.id ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-muted-foreground hover:text-primary"
+                                onClick={() => startEdit(diet)}
+                                title="Editar"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => confirmDelete(diet.id)}
+                                title="Excluir"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   ))}
