@@ -9,6 +9,7 @@ import {
   AlertCircle, User, FileText, TrendingUp, Activity, Flame, Scale,
   Target, ChevronRight, Zap, Droplets, ListChecks
 } from "lucide-react";
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
