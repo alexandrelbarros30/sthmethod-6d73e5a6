@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2 } from "lucide-react";
+import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2, RotateCcw } from "lucide-react";
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -756,6 +756,62 @@ const AdminStudents = () => {
             <Label className="font-body">Mais informações</Label>
             <Textarea value={form.additional_info} onChange={(e) => setForm({ ...form, additional_info: e.target.value })} rows={3} placeholder="Informações adicionais relevantes (opcional)" />
           </div>
+          {!isCreate && selected?.user_id && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10">
+                  <RotateCcw className="w-4 h-4 mr-1" /> Limpar dados de saúde
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Limpar dados de saúde?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Isso vai apagar todos os campos de saúde (atividade física, cardio, objetivo, protocolo, comorbidades e informações adicionais) deste aluno. O aluno poderá preencher novamente. Esta ação não pode ser desfeita.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={async () => {
+                      try {
+                        await supabase.from("profiles").update({
+                          physical_activity_level: null,
+                          activity_type: null,
+                          does_cardio: null,
+                          training_days_per_week: null,
+                          training_duration_minutes: null,
+                          training_intensity: null,
+                          cardio_days_per_week: null,
+                          cardio_duration_minutes: null,
+                          cardio_intensity: null,
+                          objective: null,
+                          current_protocol: null,
+                          comorbidities: null,
+                          additional_info: null,
+                        }).eq("user_id", selected.user_id);
+                        setForm(prev => ({
+                          ...prev,
+                          physical_activity_level: "", activity_type: "", does_cardio: "",
+                          training_days_per_week: "", training_duration_minutes: "", training_intensity: "",
+                          cardio_days_per_week: "", cardio_duration_minutes: "", cardio_intensity: "",
+                          objective: "", current_protocol: "", comorbidities: "", additional_info: "",
+                        }));
+                        qc.invalidateQueries({ queryKey: ["admin-students-list"] });
+                        qc.invalidateQueries({ queryKey: ["admin-full-profile", selected.user_id] });
+                        toast.success("Dados de saúde limpos com sucesso!");
+                      } catch {
+                        toast.error("Erro ao limpar dados de saúde");
+                      }
+                    }}
+                  >
+                    Sim, limpar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
           {renderSaveTabButton("saude", isCreate)}
         </TabsContent>
 
@@ -1338,6 +1394,57 @@ const AdminStudents = () => {
                     toast.success("Imagens atualizadas!");
                   }}
                 />
+
+                {/* Clear all images button */}
+                {allBodyImages && allBodyImages.length > 0 && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="w-full text-destructive border-destructive/30 hover:bg-destructive/10">
+                        <Trash2 className="w-4 h-4 mr-1" /> Limpar todas as imagens ({allBodyImages.length})
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Limpar todas as imagens?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Isso vai excluir permanentemente todas as {allBodyImages.length} imagens corporais deste aluno (incluindo histórico). Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          onClick={async () => {
+                            try {
+                              // Delete storage files
+                              const filePaths = allBodyImages
+                                .map((img: any) => {
+                                  try {
+                                    const url = new URL(img.image_url);
+                                    const match = url.pathname.match(/\/body-images\/(.+)$/);
+                                    return match ? match[1] : null;
+                                  } catch { return null; }
+                                })
+                                .filter(Boolean) as string[];
+                              if (filePaths.length > 0) {
+                                await supabase.storage.from("body-images").remove(filePaths);
+                              }
+                              // Delete DB records
+                              await supabase.from("body_images").delete().eq("user_id", selected!.user_id);
+                              refetchBodyImages();
+                              refetchAllBodyImages();
+                              toast.success("Todas as imagens foram excluídas!");
+                            } catch {
+                              toast.error("Erro ao excluir imagens");
+                            }
+                          }}
+                        >
+                          Sim, excluir tudo
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
 
                 {/* Image History */}
                 {allBodyImages && allBodyImages.length > 0 && (
