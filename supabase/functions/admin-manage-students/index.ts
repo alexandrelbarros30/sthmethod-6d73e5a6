@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
           ? "Este email já está cadastrado no sistema. Use outro email ou edite o aluno existente."
           : "Erro ao criar usuário. Verifique os dados e tente novamente.";
         return new Response(JSON.stringify({ error: msg }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       // If a specific role was requested, update from default 'student'
