@@ -1769,6 +1769,48 @@ const AdminStudents = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Orphan user dialog */}
+      <Dialog open={!!orphanData} onOpenChange={(open) => { if (!open) setOrphanData(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-warning">
+              <AlertTriangle className="h-5 w-5" /> Cadastro Incompleto Detectado
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p className="text-muted-foreground">
+              O email <strong className="text-foreground">{orphanData?.email}</strong> existe no sistema de autenticação, mas está com cadastro incompleto (sem perfil ou permissão).
+            </p>
+            <div className="rounded-lg border border-border p-3 space-y-1 text-xs">
+              <p>Perfil: {orphanData?.has_profile ? <Badge variant="outline" className="text-xs">OK</Badge> : <Badge variant="destructive" className="text-xs">Ausente</Badge>}</p>
+              <p>Permissão: {orphanData?.has_role ? <Badge variant="outline" className="text-xs">OK</Badge> : <Badge variant="destructive" className="text-xs">Ausente</Badge>}</p>
+              <p className="text-muted-foreground">Criado em: {orphanData?.created_at ? new Date(orphanData.created_at).toLocaleDateString("pt-BR") : "—"}</p>
+            </div>
+            <p className="text-muted-foreground">Escolha uma ação:</p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Button
+              onClick={handleOrphanDelete}
+              disabled={orphanLoading}
+              variant="destructive"
+              className="w-full justify-start gap-2"
+            >
+              <UserX className="h-4 w-4" />
+              {orphanLoading ? "Processando..." : "Excluir e recadastrar do zero"}
+            </Button>
+            <Button
+              onClick={handleOrphanRepair}
+              disabled={orphanLoading}
+              variant="outline"
+              className="w-full justify-start gap-2"
+            >
+              <UserCheck className="h-4 w-4" />
+              {orphanLoading ? "Processando..." : "Reparar cadastro (criar perfil e permissão)"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
