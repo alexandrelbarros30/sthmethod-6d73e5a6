@@ -1597,10 +1597,46 @@ const AdminStudents = () => {
                 {/* Weight History */}
                 {weightLogs && weightLogs.length > 0 && (
                   <Card>
-                    <CardHeader className="pb-2">
+                    <CardHeader className="pb-2 flex flex-row items-center justify-between">
                       <CardTitle className="text-sm font-display flex items-center gap-2">
                         <Calculator className="w-4 h-4" /> Histórico de Peso
                       </CardTitle>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10 h-7 text-xs">
+                            <Trash2 className="w-3 h-3 mr-1" /> Limpar registros ({weightLogs.length})
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Limpar histórico de peso?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Isso vai excluir permanentemente todos os {weightLogs.length} registros de peso deste aluno. O peso atual no perfil será mantido. Esta ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              onClick={async () => {
+                                try {
+                                  const { error } = await supabase
+                                    .from("weight_logs")
+                                    .delete()
+                                    .eq("user_id", selected!.user_id);
+                                  if (error) throw error;
+                                  qc.invalidateQueries({ queryKey: ["admin-weight-logs", selected!.user_id] });
+                                  toast.success("Registros de peso limpos com sucesso!");
+                                } catch {
+                                  toast.error("Erro ao limpar registros de peso");
+                                }
+                              }}
+                            >
+                              Sim, limpar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
