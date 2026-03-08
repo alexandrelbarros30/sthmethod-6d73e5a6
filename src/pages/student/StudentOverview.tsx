@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import SubscriptionAlerts from "@/components/student/SubscriptionAlerts";
+import ChangePasswordDialog from "@/components/student/ChangePasswordDialog";
 import EvolutionWeightHistory from "@/components/student/EvolutionWeightHistory";
 import { calculateAge } from "@/lib/macro-calculator";
 import {
@@ -561,6 +562,20 @@ const StudentOverview = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* ===== ALTERAR SENHA ===== */}
+      <Card className="mb-6">
+        <CardContent className="py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <User className="w-5 h-5 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-medium text-foreground">Segurança da conta</p>
+              <p className="text-xs text-muted-foreground">Altere sua senha de acesso</p>
+            </div>
+          </div>
+          <ChangePasswordDialog />
+        </CardContent>
+      </Card>
 
       {/* ===== MÓDULOS ===== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
