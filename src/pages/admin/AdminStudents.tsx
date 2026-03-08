@@ -1579,15 +1579,14 @@ const AdminStudents = () => {
                   </CardContent>
                 </Card>
 
-                {/* Body Images Upload */}
-                <BodyImageUpload
+                {/* Body Images Upload (admin append mode) */}
+                <AdminBodyImageUpload
                   userId={selected.user_id}
-                  existingImages={selectedBodyImages || []}
                   onComplete={() => {
                     refetchBodyImages();
                     refetchAllBodyImages();
                     refetchAnamnese();
-                    toast.success("Imagens atualizadas!");
+                    toast.success("Imagens adicionadas!");
                   }}
                 />
 
@@ -1599,44 +1598,16 @@ const AdminStudents = () => {
                   />
                 )}
 
-                {/* Image History */}
+                {/* Image History with editable dates */}
                 {anamneseBodyImages && anamneseBodyImages.length > 0 && (
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-display">Histórico de Imagens</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {(() => {
-                        const grouped = anamneseBodyImages.reduce((acc: Record<string, any[]>, img: any) => {
-                          const date = new Date(img.uploaded_at).toLocaleDateString("pt-BR");
-                          if (!acc[date]) acc[date] = [];
-                          acc[date].push(img);
-                          return acc;
-                        }, {});
-                        const labels: Record<string, string> = { front: "Frente", back: "Costas", profile: "Perfil" };
-                        return Object.entries(grouped).map(([date, imgs]) => (
-                          <div key={date} className="mb-4 last:mb-0">
-                            <p className="text-xs font-semibold text-muted-foreground mb-2">{date} {(imgs as any[])[0]?.is_current && <Badge variant="secondary" className="ml-1 text-[10px]">Atual</Badge>}</p>
-                            <div className="grid grid-cols-3 gap-2">
-                              {["front", "back", "profile"].map((type) => {
-                                const img = (imgs as any[]).find((i: any) => i.type === type);
-                                return (
-                                  <div key={type} className="text-center">
-                                    <p className="text-[10px] text-muted-foreground mb-0.5">{labels[type]}</p>
-                                    {img ? (
-                                      <img src={img.image_url} alt={labels[type]} className="w-full aspect-[3/4] object-cover rounded border" />
-                                    ) : (
-                                      <div className="w-full aspect-[3/4] bg-muted rounded flex items-center justify-center text-muted-foreground text-[10px]">—</div>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        ));
-                      })()}
-                    </CardContent>
-                  </Card>
+                  <AdminImageHistory
+                    allImages={anamneseBodyImages}
+                    onUpdate={() => {
+                      refetchBodyImages();
+                      refetchAllBodyImages();
+                      refetchAnamnese();
+                    }}
+                  />
                 )}
 
                 {/* Weight History */}
