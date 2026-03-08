@@ -115,6 +115,7 @@ const Landing = () => {
             <a href="#resultados" className="hover:text-foreground transition-colors">Resultados</a>
             <a href="#depoimentos" className="hover:text-foreground transition-colors">Depoimentos</a>
             <a href="#planos" className="hover:text-foreground transition-colors">Planos</a>
+            <Link to="/questionario" className="hover:text-foreground transition-colors font-medium gradient-text">Calcule seus Macros</Link>
           </div>
           <Link to="/login">
             <Button size="sm" className="gradient-bg text-primary-foreground hover:opacity-90">
