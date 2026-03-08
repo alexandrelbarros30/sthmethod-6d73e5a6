@@ -24,6 +24,7 @@ const sectionComponents: Record<string, React.ReactNode> = {
 const Landing = () => {
   const { data: settings } = useLandingSettings();
   const { data: sections } = useLandingSections();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const s = (key: string, fallback = "") => settings?.find((x) => x.key === key)?.value || fallback;
 
