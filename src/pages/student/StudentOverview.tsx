@@ -14,8 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import SubscriptionAlerts from "@/components/student/SubscriptionAlerts";
-import BodyImageUpload from "@/components/shared/BodyImageUpload";
-import EvolutionUpdateCard from "@/components/student/EvolutionUpdateCard";
+import EvolutionWeightHistory from "@/components/student/EvolutionWeightHistory";
 import { calculateAge } from "@/lib/macro-calculator";
 import {
   objectiveLabels, activityLabels,
@@ -79,11 +78,20 @@ const StudentOverview = () => {
     enabled: !!user?.id && !subscription,
   });
 
-  const { data: bodyImages, refetch: refetchImages } = useQuery({
+  const { data: bodyImages } = useQuery({
     queryKey: ["body-images", user?.id],
     queryFn: async () => {
       const { data } = await supabase.from("body_images").select("*").eq("user_id", user!.id).eq("is_current", true);
       return data || [];
+    },
+    enabled: !!user?.id,
+  });
+
+  const { data: latestWeightLog } = useQuery({
+    queryKey: ["latest-weight-log", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("weight_logs").select("*").eq("user_id", user!.id).order("logged_at", { ascending: false }).limit(1).maybeSingle();
+      return data;
     },
     enabled: !!user?.id,
   });
@@ -228,18 +236,68 @@ const StudentOverview = () => {
         />
       )}
 
-      {/* ===== IMAGENS CORPORAIS ATUAIS ===== */}
-      <div className="mb-6">
-        <BodyImageUpload
-          userId={user!.id}
-          existingImages={bodyImages || []}
-          canDeleteExisting={false}
-          onComplete={() => {
-            refetchImages();
-            qc.invalidateQueries({ queryKey: ["body-images"] });
-          }}
-        />
-      </div>
+      {/* ===== ÚLTIMO PESO E FOTOS (somente leitura) ===== */}
+      {isOnboarded && (
+        <Card className="mb-6">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-base font-display flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-primary" /> Última Evolução
+            </CardTitle>
+            <Link to="/dashboard/evolution">
+              <Button variant="outline" size="sm" className="text-xs gap-1">
+                <TrendingUp className="w-3 h-3" /> Atualizar
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Último peso */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <Scale className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  {latestWeightLog ? `${Number(latestWeightLog.weight).toFixed(1)} kg` : p?.weight ? `${Number(p.weight).toFixed(1)} kg` : "—"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {latestWeightLog
+                    ? `Registrado em ${new Date(latestWeightLog.logged_at).toLocaleDateString("pt-BR")} às ${new Date(latestWeightLog.logged_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
+                    : "Nenhum registro de peso"}
+                </p>
+              </div>
+            </div>
+
+            {/* Últimas fotos */}
+            {bodyImages && bodyImages.length > 0 ? (
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">Fotos corporais atuais</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {["front", "back", "profile"].map((type) => {
+                    const img = bodyImages.find((i: any) => i.type === type);
+                    const labels: Record<string, string> = { front: "Frente", back: "Costas", profile: "Perfil" };
+                    return (
+                      <div key={type} className="text-center">
+                        <p className="text-[10px] text-muted-foreground mb-0.5">{labels[type]}</p>
+                        {img ? (
+                          <img src={img.image_url} alt={labels[type]} className="w-full aspect-[3/4] object-cover rounded border" />
+                        ) : (
+                          <div className="w-full aspect-[3/4] bg-muted rounded flex items-center justify-center text-muted-foreground text-[10px]">—</div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">Nenhuma foto corporal registrada.</p>
+            )}
+
+            <p className="text-xs text-muted-foreground text-center pt-1 border-t">
+              Para registrar novo peso e fotos, acesse <Link to="/dashboard/evolution" className="text-primary underline font-medium">Atualização</Link>.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
 
       {/* ===== ASSINATURA + PROGRESSO ===== */}
