@@ -3,11 +3,11 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Settings, History, CreditCard, QrCode, Landmark, Link2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Settings, History, CreditCard, QrCode, Landmark, Link2, Eye, ShieldCheck, ShieldAlert, Loader2, CheckCircle, XCircle, Image } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import PaymentLinksTab from "@/components/admin/PaymentLinksTab";
 
 const AdminPayments = () => {
   const qc = useQueryClient();
+  const [receiptDialog, setReceiptDialog] = useState<any>(null);
 
   const { data: paymentSettings } = useQuery({
     queryKey: ["payment-settings"],
@@ -29,7 +30,7 @@ const AdminPayments = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("payments")
-        .select("*, plans(name)")
+        .select("*, plans(name, duration_days)")
         .order("created_at", { ascending: false })
         .limit(100);
       return data || [];
@@ -55,6 +56,70 @@ const AdminPayments = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["payment-settings"] }),
   });
 
+  const approvePayment = useMutation({
+    mutationFn: async (payment: any) => {
+      // Update payment status
+      const { error: payErr } = await supabase
+        .from("payments")
+        .update({ status: "approved", ai_verification_status: "approved" })
+        .eq("id", payment.id);
+      if (payErr) throw payErr;
+
+      // Activate subscription
+      const startDate = new Date();
+      const endDate = new Date();
+      const durationDays = (payment as any).plans?.duration_days || 30;
+      endDate.setDate(endDate.getDate() + durationDays);
+
+      const { data: existingSub } = await supabase
+        .from("subscriptions")
+        .select("id")
+        .eq("user_id", payment.user_id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (existingSub) {
+        await supabase.from("subscriptions").update({
+          plan_id: payment.plan_id,
+          status: "active",
+          start_date: startDate.toISOString().split("T")[0],
+          end_date: endDate.toISOString().split("T")[0],
+        }).eq("id", existingSub.id);
+      } else {
+        await supabase.from("subscriptions").insert({
+          user_id: payment.user_id,
+          plan_id: payment.plan_id,
+          status: "active",
+          start_date: startDate.toISOString().split("T")[0],
+          end_date: endDate.toISOString().split("T")[0],
+        });
+      }
+    },
+    onSuccess: () => {
+      toast.success("Pagamento aprovado e assinatura ativada!");
+      qc.invalidateQueries({ queryKey: ["admin-payments-history"] });
+      setReceiptDialog(null);
+    },
+    onError: () => toast.error("Erro ao aprovar pagamento"),
+  });
+
+  const rejectPayment = useMutation({
+    mutationFn: async (paymentId: string) => {
+      const { error } = await supabase
+        .from("payments")
+        .update({ status: "rejected", ai_verification_status: "rejected" })
+        .eq("id", paymentId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Pagamento rejeitado.");
+      qc.invalidateQueries({ queryKey: ["admin-payments-history"] });
+      setReceiptDialog(null);
+    },
+    onError: () => toast.error("Erro ao rejeitar pagamento"),
+  });
+
   const getSetting = (key: string, fallback = "") =>
     paymentSettings?.find((s: any) => s.key === key)?.value ?? fallback;
 
@@ -75,6 +140,13 @@ const AdminPayments = () => {
     rejected: "Recusado",
     cancelled: "Cancelado",
     refunded: "Reembolsado",
+  };
+
+  const aiStatusLabels: Record<string, string> = {
+    approved: "✅ IA Aprovado",
+    review: "⚠️ Revisão Manual",
+    analyzing: "🔄 Analisando...",
+    rejected: "❌ Rejeitado",
   };
 
   const actionLabels: Record<string, string> = {
@@ -183,15 +255,18 @@ const AdminPayments = () => {
                         <TableHead>Método</TableHead>
                         <TableHead>Ação</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Verificação</TableHead>
                         <TableHead>Data</TableHead>
-                        <TableHead>WhatsApp</TableHead>
+                        <TableHead>Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {payments.map((p: any) => {
                         const profile = getProfile(p.user_id);
+                        const hasReceipt = !!p.receipt_url;
+                        const needsReview = p.status === "pending" && p.ai_verification_status === "review";
                         return (
-                          <TableRow key={p.id}>
+                          <TableRow key={p.id} className={needsReview ? "bg-yellow-500/5" : ""}>
                             <TableCell className="text-sm">{profile?.full_name || "—"}</TableCell>
                             <TableCell className="text-sm">{(p as any).plans?.name || "—"}</TableCell>
                             <TableCell className="text-sm">R$ {Number(p.amount).toFixed(2)}</TableCell>
@@ -202,15 +277,36 @@ const AdminPayments = () => {
                                 {statusLabels[p.status] || p.status}
                               </Badge>
                             </TableCell>
+                            <TableCell>
+                              {p.ai_verification_status ? (
+                                <span className="text-xs">{aiStatusLabels[p.ai_verification_status] || p.ai_verification_status}</span>
+                              ) : hasReceipt ? (
+                                <span className="text-xs text-muted-foreground">Com comprovante</span>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
                             <TableCell className="text-xs text-muted-foreground">
                               {new Date(p.created_at).toLocaleDateString("pt-BR")}
                             </TableCell>
                             <TableCell>
-                              {p.status === "approved" && (
-                                <a href={generateWhatsAppLink(p)} target="_blank" rel="noopener noreferrer">
-                                  <Button size="sm" variant="ghost" className="text-primary text-xs">📲 Enviar</Button>
-                                </a>
-                              )}
+                              <div className="flex items-center gap-1">
+                                {hasReceipt && (
+                                  <Button size="sm" variant="ghost" className="text-xs" onClick={() => setReceiptDialog(p)}>
+                                    <Eye className="w-3.5 h-3.5 mr-1" />Ver
+                                  </Button>
+                                )}
+                                {needsReview && (
+                                  <Button size="sm" variant="default" className="text-xs" onClick={() => setReceiptDialog(p)}>
+                                    <ShieldAlert className="w-3.5 h-3.5 mr-1" />Revisar
+                                  </Button>
+                                )}
+                                {p.status === "approved" && (
+                                  <a href={generateWhatsAppLink(p)} target="_blank" rel="noopener noreferrer">
+                                    <Button size="sm" variant="ghost" className="text-primary text-xs">📲</Button>
+                                  </a>
+                                )}
+                              </div>
                             </TableCell>
                           </TableRow>
                         );
@@ -230,6 +326,79 @@ const AdminPayments = () => {
           <PaymentLinksTab />
         </TabsContent>
       </Tabs>
+
+      {/* Receipt Review Dialog */}
+      <Dialog open={!!receiptDialog} onOpenChange={(v) => !v && setReceiptDialog(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-display">Revisão de Comprovante</DialogTitle>
+          </DialogHeader>
+          {receiptDialog && (() => {
+            const profile = getProfile(receiptDialog.user_id);
+            return (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Aluno:</span>
+                    <p className="font-medium text-foreground">{profile?.full_name || "—"}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Plano:</span>
+                    <p className="font-medium text-foreground">{(receiptDialog as any).plans?.name || "—"}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Valor esperado:</span>
+                    <p className="font-medium text-foreground">R$ {Number(receiptDialog.amount).toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Status IA:</span>
+                    <p className="font-medium text-foreground">{aiStatusLabels[receiptDialog.ai_verification_status] || "—"}</p>
+                  </div>
+                </div>
+
+                {receiptDialog.ai_verification_notes && (
+                  <div className="p-3 rounded-lg bg-muted/50 text-xs text-muted-foreground">
+                    <p className="font-medium text-foreground mb-1">Análise da IA:</p>
+                    {receiptDialog.ai_verification_notes}
+                  </div>
+                )}
+
+                {receiptDialog.receipt_url && (
+                  <div className="rounded-lg border border-border overflow-hidden">
+                    <img
+                      src={receiptDialog.receipt_url}
+                      alt="Comprovante PIX"
+                      className="w-full max-h-96 object-contain bg-muted"
+                    />
+                  </div>
+                )}
+
+                {receiptDialog.status === "pending" && (
+                  <div className="flex gap-2">
+                    <Button
+                      className="flex-1"
+                      onClick={() => approvePayment.mutate(receiptDialog)}
+                      disabled={approvePayment.isPending || rejectPayment.isPending}
+                    >
+                      {approvePayment.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-1" />}
+                      Aprovar e Ativar
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      className="flex-1"
+                      onClick={() => rejectPayment.mutate(receiptDialog.id)}
+                      disabled={approvePayment.isPending || rejectPayment.isPending}
+                    >
+                      {rejectPayment.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <XCircle className="w-4 h-4 mr-1" />}
+                      Rejeitar
+                    </Button>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
