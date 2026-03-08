@@ -45,7 +45,7 @@ const StudentSubscription = () => {
   const { data: plans } = useQuery({
     queryKey: ["plans"],
     queryFn: async () => {
-      const { data } = await supabase.from("plans").select("*").eq("active", true).order("duration_days");
+      const { data } = await supabase.from("plans").select("*").eq("active", true).eq("visibility", "public").order("duration_days");
       return data || [];
     },
   });
