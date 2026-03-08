@@ -20,6 +20,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
+import AdminBodyImageUpload from "@/components/admin/AdminBodyImageUpload";
+import AdminImageHistory from "@/components/admin/AdminImageHistory";
 import EvolutionGenerator from "@/components/admin/EvolutionGenerator";
 import ExcelJS from "exceljs";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
@@ -1459,9 +1461,9 @@ const AdminStudents = () => {
           {selected && (
             <ScrollArea className="max-h-[75vh] pr-4">
               <div className="space-y-4">
-                <BodyImageUpload
+                {/* Admin append-only upload with editable date */}
+                <AdminBodyImageUpload
                   userId={selected.user_id}
-                  existingImages={selectedBodyImages || []}
                   onComplete={() => {
                     refetchBodyImages();
                     refetchAllBodyImages();
@@ -1490,7 +1492,6 @@ const AdminStudents = () => {
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           onClick={async () => {
                             try {
-                              // Delete storage files
                               const filePaths = allBodyImages
                                 .map((img: any) => {
                                   try {
@@ -1503,7 +1504,6 @@ const AdminStudents = () => {
                               if (filePaths.length > 0) {
                                 await supabase.storage.from("body-images").remove(filePaths);
                               }
-                              // Delete DB records
                               await supabase.from("body_images").delete().eq("user_id", selected!.user_id);
                               refetchBodyImages();
                               refetchAllBodyImages();
@@ -1520,44 +1520,15 @@ const AdminStudents = () => {
                   </AlertDialog>
                 )}
 
-                {/* Image History */}
+                {/* Image History with editable dates */}
                 {allBodyImages && allBodyImages.length > 0 && (
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-display">Histórico de Imagens</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {(() => {
-                        const grouped = allBodyImages.reduce((acc: Record<string, any[]>, img: any) => {
-                          const date = new Date(img.uploaded_at).toLocaleDateString("pt-BR");
-                          if (!acc[date]) acc[date] = [];
-                          acc[date].push(img);
-                          return acc;
-                        }, {});
-                        const labels: Record<string, string> = { front: "Frente", back: "Costas", profile: "Perfil" };
-                        return Object.entries(grouped).map(([date, imgs]) => (
-                          <div key={date} className="mb-4 last:mb-0">
-                            <p className="text-xs font-semibold text-muted-foreground mb-2">{date} {(imgs as any[])[0]?.is_current && <Badge variant="secondary" className="ml-1 text-[10px]">Atual</Badge>}</p>
-                            <div className="grid grid-cols-3 gap-2">
-                              {["front", "back", "profile"].map((type) => {
-                                const img = (imgs as any[]).find((i: any) => i.type === type);
-                                return (
-                                  <div key={type} className="text-center">
-                                    <p className="text-[10px] text-muted-foreground mb-0.5">{labels[type]}</p>
-                                    {img ? (
-                                      <img src={img.image_url} alt={labels[type]} className="w-full aspect-[3/4] object-cover rounded border" />
-                                    ) : (
-                                      <div className="w-full aspect-[3/4] bg-muted rounded flex items-center justify-center text-muted-foreground text-[10px]">—</div>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        ));
-                      })()}
-                    </CardContent>
-                  </Card>
+                  <AdminImageHistory
+                    allImages={allBodyImages}
+                    onUpdate={() => {
+                      refetchBodyImages();
+                      refetchAllBodyImages();
+                    }}
+                  />
                 )}
 
                 {/* Evolution Generator */}
@@ -1608,15 +1579,14 @@ const AdminStudents = () => {
                   </CardContent>
                 </Card>
 
-                {/* Body Images Upload */}
-                <BodyImageUpload
+                {/* Body Images Upload (admin append mode) */}
+                <AdminBodyImageUpload
                   userId={selected.user_id}
-                  existingImages={selectedBodyImages || []}
                   onComplete={() => {
                     refetchBodyImages();
                     refetchAllBodyImages();
                     refetchAnamnese();
-                    toast.success("Imagens atualizadas!");
+                    toast.success("Imagens adicionadas!");
                   }}
                 />
 
@@ -1628,44 +1598,16 @@ const AdminStudents = () => {
                   />
                 )}
 
-                {/* Image History */}
+                {/* Image History with editable dates */}
                 {anamneseBodyImages && anamneseBodyImages.length > 0 && (
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-display">Histórico de Imagens</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {(() => {
-                        const grouped = anamneseBodyImages.reduce((acc: Record<string, any[]>, img: any) => {
-                          const date = new Date(img.uploaded_at).toLocaleDateString("pt-BR");
-                          if (!acc[date]) acc[date] = [];
-                          acc[date].push(img);
-                          return acc;
-                        }, {});
-                        const labels: Record<string, string> = { front: "Frente", back: "Costas", profile: "Perfil" };
-                        return Object.entries(grouped).map(([date, imgs]) => (
-                          <div key={date} className="mb-4 last:mb-0">
-                            <p className="text-xs font-semibold text-muted-foreground mb-2">{date} {(imgs as any[])[0]?.is_current && <Badge variant="secondary" className="ml-1 text-[10px]">Atual</Badge>}</p>
-                            <div className="grid grid-cols-3 gap-2">
-                              {["front", "back", "profile"].map((type) => {
-                                const img = (imgs as any[]).find((i: any) => i.type === type);
-                                return (
-                                  <div key={type} className="text-center">
-                                    <p className="text-[10px] text-muted-foreground mb-0.5">{labels[type]}</p>
-                                    {img ? (
-                                      <img src={img.image_url} alt={labels[type]} className="w-full aspect-[3/4] object-cover rounded border" />
-                                    ) : (
-                                      <div className="w-full aspect-[3/4] bg-muted rounded flex items-center justify-center text-muted-foreground text-[10px]">—</div>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        ));
-                      })()}
-                    </CardContent>
-                  </Card>
+                  <AdminImageHistory
+                    allImages={anamneseBodyImages}
+                    onUpdate={() => {
+                      refetchBodyImages();
+                      refetchAllBodyImages();
+                      refetchAnamnese();
+                    }}
+                  />
                 )}
 
                 {/* Weight History */}
