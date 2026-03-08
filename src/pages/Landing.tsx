@@ -25,6 +25,42 @@ const Landing = () => {
   const { data: settings } = useLandingSettings();
   const { data: sections } = useLandingSections();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [popupDismissed, setPopupDismissed] = useState(false);
+
+  const showPopup = useCallback(() => {
+    if (!popupDismissed) setPopupOpen(true);
+  }, [popupDismissed]);
+
+  const dismissPopup = () => {
+    setPopupOpen(false);
+    setPopupDismissed(true);
+  };
+
+  // Timer trigger: 10 seconds
+  useEffect(() => {
+    const timer = setTimeout(showPopup, 10000);
+    return () => clearTimeout(timer);
+  }, [showPopup]);
+
+  // Scroll trigger: 40% of page
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+      if (scrollPercent >= 0.4) showPopup();
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [showPopup]);
+
+  // Exit intent trigger (mouse leaves viewport top)
+  useEffect(() => {
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (e.clientY <= 0) showPopup();
+    };
+    document.addEventListener("mouseleave", handleMouseLeave);
+    return () => document.removeEventListener("mouseleave", handleMouseLeave);
+  }, [showPopup]);
 
   const s = (key: string, fallback = "") => settings?.find((x) => x.key === key)?.value || fallback;
 
