@@ -1395,6 +1395,57 @@ const AdminStudents = () => {
                   }}
                 />
 
+                {/* Clear all images button */}
+                {allBodyImages && allBodyImages.length > 0 && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="w-full text-destructive border-destructive/30 hover:bg-destructive/10">
+                        <Trash2 className="w-4 h-4 mr-1" /> Limpar todas as imagens ({allBodyImages.length})
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Limpar todas as imagens?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Isso vai excluir permanentemente todas as {allBodyImages.length} imagens corporais deste aluno (incluindo histórico). Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          onClick={async () => {
+                            try {
+                              // Delete storage files
+                              const filePaths = allBodyImages
+                                .map((img: any) => {
+                                  try {
+                                    const url = new URL(img.image_url);
+                                    const match = url.pathname.match(/\/body-images\/(.+)$/);
+                                    return match ? match[1] : null;
+                                  } catch { return null; }
+                                })
+                                .filter(Boolean) as string[];
+                              if (filePaths.length > 0) {
+                                await supabase.storage.from("body-images").remove(filePaths);
+                              }
+                              // Delete DB records
+                              await supabase.from("body_images").delete().eq("user_id", selected!.user_id);
+                              refetchBodyImages();
+                              refetchAllBodyImages();
+                              toast.success("Todas as imagens foram excluídas!");
+                            } catch {
+                              toast.error("Erro ao excluir imagens");
+                            }
+                          }}
+                        >
+                          Sim, excluir tudo
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+
                 {/* Image History */}
                 {allBodyImages && allBodyImages.length > 0 && (
                   <Card>
