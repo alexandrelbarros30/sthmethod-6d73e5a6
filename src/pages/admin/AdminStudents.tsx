@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2, RotateCcw } from "lucide-react";
+import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2, RotateCcw, AlertTriangle, UserX, UserCheck } from "lucide-react";
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -78,6 +78,8 @@ const AdminStudents = () => {
   const [newPassword, setNewPassword] = useState("");
   const [showCreatePassword, setShowCreatePassword] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
+  const [orphanData, setOrphanData] = useState<any>(null);
+  const [orphanLoading, setOrphanLoading] = useState(false);
 
   const { data: students, isLoading } = useQuery({
     queryKey: ["admin-students-list"],
@@ -281,7 +283,13 @@ const AdminStudents = () => {
           const { data, error } = await supabase.functions.invoke("admin-manage-students", {
             body: { action: "create", email: form.email, password: form.password, full_name: form.full_name },
           });
-          if (data?.error) throw new Error(data.error);
+          if (data?.error) {
+            if (data.error.includes("já está cadastrado")) {
+              await checkOrphan(form.email);
+              throw new Error(data.error);
+            }
+            throw new Error(data.error);
+          }
           if (error) throw new Error("Erro ao criar aluno. Tente novamente.");
           if (data?.user?.id) {
             await supabase.from("profiles").update(profilePayload()).eq("user_id", data.user.id);
@@ -385,7 +393,12 @@ const AdminStudents = () => {
       const { data, error } = await supabase.functions.invoke("admin-manage-students", {
         body: { action: "create", email: form.email, password: form.password, full_name: form.full_name },
       });
-      if (data?.error) throw new Error(data.error);
+      if (data?.error) {
+        if (data.error.includes("já está cadastrado")) {
+          await checkOrphan(form.email);
+        }
+        throw new Error(data.error);
+      }
       if (error) throw new Error("Erro ao criar aluno. Tente novamente.");
       if (data?.user?.id) {
         await supabase.from("profiles").update(profilePayload()).eq("user_id", data.user.id);
@@ -442,6 +455,55 @@ const AdminStudents = () => {
     },
     onError: (e: any) => toast.error(e.message || "Erro ao alterar senha"),
   });
+
+  const checkOrphan = async (email: string) => {
+    setOrphanLoading(true);
+    try {
+      const { data } = await supabase.functions.invoke("admin-manage-students", {
+        body: { action: "check_orphan", email },
+      });
+      if (data?.orphan) {
+        setOrphanData(data);
+      }
+    } catch {
+      // ignore
+    }
+    setOrphanLoading(false);
+  };
+
+  const handleOrphanDelete = async () => {
+    if (!orphanData?.user_id) return;
+    setOrphanLoading(true);
+    try {
+      const { data } = await supabase.functions.invoke("admin-manage-students", {
+        body: { action: "delete", user_id: orphanData.user_id },
+      });
+      if (data?.error) throw new Error(data.error);
+      toast.success("Cadastro órfão removido! Agora você pode cadastrar novamente.");
+      setOrphanData(null);
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao excluir");
+    }
+    setOrphanLoading(false);
+  };
+
+  const handleOrphanRepair = async () => {
+    if (!orphanData?.user_id) return;
+    setOrphanLoading(true);
+    try {
+      const { data } = await supabase.functions.invoke("admin-manage-students", {
+        body: { action: "repair_orphan", user_id: orphanData.user_id, full_name: form.full_name, email: orphanData.email },
+      });
+      if (data?.error) throw new Error(data.error);
+      toast.success("Cadastro reparado com sucesso! O aluno agora aparecerá na lista.");
+      setOrphanData(null);
+      setCreateOpen(false);
+      qc.invalidateQueries({ queryKey: ["admin-students-list"] });
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao reparar");
+    }
+    setOrphanLoading(false);
+  };
 
   const subMutation = useMutation({
     mutationFn: async () => {
@@ -1705,6 +1767,48 @@ const AdminStudents = () => {
               {resetPasswordMutation.isPending ? "Alterando..." : "Alterar senha"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Orphan user dialog */}
+      <Dialog open={!!orphanData} onOpenChange={(open) => { if (!open) setOrphanData(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-warning">
+              <AlertTriangle className="h-5 w-5" /> Cadastro Incompleto Detectado
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p className="text-muted-foreground">
+              O email <strong className="text-foreground">{orphanData?.email}</strong> existe no sistema de autenticação, mas está com cadastro incompleto (sem perfil ou permissão).
+            </p>
+            <div className="rounded-lg border border-border p-3 space-y-1 text-xs">
+              <p>Perfil: {orphanData?.has_profile ? <Badge variant="outline" className="text-xs">OK</Badge> : <Badge variant="destructive" className="text-xs">Ausente</Badge>}</p>
+              <p>Permissão: {orphanData?.has_role ? <Badge variant="outline" className="text-xs">OK</Badge> : <Badge variant="destructive" className="text-xs">Ausente</Badge>}</p>
+              <p className="text-muted-foreground">Criado em: {orphanData?.created_at ? new Date(orphanData.created_at).toLocaleDateString("pt-BR") : "—"}</p>
+            </div>
+            <p className="text-muted-foreground">Escolha uma ação:</p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Button
+              onClick={handleOrphanDelete}
+              disabled={orphanLoading}
+              variant="destructive"
+              className="w-full justify-start gap-2"
+            >
+              <UserX className="h-4 w-4" />
+              {orphanLoading ? "Processando..." : "Excluir e recadastrar do zero"}
+            </Button>
+            <Button
+              onClick={handleOrphanRepair}
+              disabled={orphanLoading}
+              variant="outline"
+              className="w-full justify-start gap-2"
+            >
+              <UserCheck className="h-4 w-4" />
+              {orphanLoading ? "Processando..." : "Reparar cadastro (criar perfil e permissão)"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </DashboardLayout>
