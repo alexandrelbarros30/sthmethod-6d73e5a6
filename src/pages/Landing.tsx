@@ -104,7 +104,7 @@ const Landing = () => {
     <div className="min-h-screen bg-background overflow-hidden">
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 glass">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             {logoUrl ? (
               <img src={logoUrl} alt="Logo" style={{ height: `${logoSize}px` }} className="object-contain" />
@@ -119,12 +119,46 @@ const Landing = () => {
             <a href="#planos" className="hover:text-foreground transition-colors">Planos</a>
             <Link to="/questionario" className="hover:text-foreground transition-colors font-medium gradient-text">Calcule seus Macros</Link>
           </div>
-          <Link to="/login">
-            <Button size="sm" className="gradient-bg text-primary-foreground hover:opacity-90">
-              Acessar Plataforma
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link to="/login" className="hidden sm:block">
+              <Button size="sm" className="gradient-bg text-primary-foreground hover:opacity-90">
+                Acessar Plataforma
+              </Button>
+            </Link>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors text-foreground"
+              aria-label="Menu"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="md:hidden border-t border-border overflow-hidden"
+            >
+              <div className="px-4 py-4 flex flex-col gap-3 text-sm">
+                <a href="#como-funciona" onClick={() => setMobileMenuOpen(false)} className="py-2 text-muted-foreground hover:text-foreground transition-colors">Como Funciona</a>
+                <a href="#resultados" onClick={() => setMobileMenuOpen(false)} className="py-2 text-muted-foreground hover:text-foreground transition-colors">Resultados</a>
+                <a href="#depoimentos" onClick={() => setMobileMenuOpen(false)} className="py-2 text-muted-foreground hover:text-foreground transition-colors">Depoimentos</a>
+                <a href="#planos" onClick={() => setMobileMenuOpen(false)} className="py-2 text-muted-foreground hover:text-foreground transition-colors">Planos</a>
+                <Link to="/questionario" onClick={() => setMobileMenuOpen(false)} className="py-2 font-medium gradient-text">Calcule seus Macros</Link>
+                <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="mt-1">
+                  <Button size="sm" className="w-full gradient-bg text-primary-foreground hover:opacity-90">
+                    Acessar Plataforma
+                  </Button>
+                </Link>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
       {/* Hero */}
