@@ -10,6 +10,12 @@ import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import PlansSection from "@/components/landing/PlansSection";
 import EthicsSection from "@/components/landing/EthicsSection";
 import EvolutionsSection from "@/components/landing/EvolutionsSection";
+import BMICalculatorSection from "@/components/landing/BMICalculatorSection";
+import FoodGuideSection from "@/components/landing/FoodGuideSection";
+import NutritionQuizSection from "@/components/landing/NutritionQuizSection";
+import MealPlanSection from "@/components/landing/MealPlanSection";
+import BodySimulatorSection from "@/components/landing/BodySimulatorSection";
+import WhatsAppButton from "@/components/landing/WhatsAppButton";
 import { useLandingSettings, useLandingSections } from "@/hooks/useLandingData";
 
 const sectionComponents: Record<string, React.ReactNode> = {
@@ -19,6 +25,11 @@ const sectionComponents: Record<string, React.ReactNode> = {
   testimonials: <TestimonialsSection key="testimonials" />,
   plans: <PlansSection key="plans" />,
   ethics: <EthicsSection key="ethics" />,
+  bmi_calculator: <BMICalculatorSection key="bmi_calculator" />,
+  food_guide: <FoodGuideSection key="food_guide" />,
+  nutrition_quiz: <NutritionQuizSection key="nutrition_quiz" />,
+  meal_plan: <MealPlanSection key="meal_plan" />,
+  body_simulator: <BodySimulatorSection key="body_simulator" />,
 };
 
 const Landing = () => {
@@ -267,6 +278,13 @@ const Landing = () => {
       {/* Dynamic Sections */}
       {activeSections.map((sec) => sectionComponents[sec.key] ?? null)}
 
+      {/* Static interactive sections */}
+      <BMICalculatorSection />
+      <FoodGuideSection />
+      <NutritionQuizSection />
+      <MealPlanSection />
+      <BodySimulatorSection />
+
       {/* Final CTA */}
       <section className="py-24 px-6">
         <motion.div
@@ -359,6 +377,7 @@ const Landing = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      <WhatsAppButton />
     </div>
   );
 };
