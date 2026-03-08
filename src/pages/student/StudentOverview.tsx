@@ -79,11 +79,20 @@ const StudentOverview = () => {
     enabled: !!user?.id && !subscription,
   });
 
-  const { data: bodyImages, refetch: refetchImages } = useQuery({
+  const { data: bodyImages } = useQuery({
     queryKey: ["body-images", user?.id],
     queryFn: async () => {
       const { data } = await supabase.from("body_images").select("*").eq("user_id", user!.id).eq("is_current", true);
       return data || [];
+    },
+    enabled: !!user?.id,
+  });
+
+  const { data: latestWeightLog } = useQuery({
+    queryKey: ["latest-weight-log", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("weight_logs").select("*").eq("user_id", user!.id).order("logged_at", { ascending: false }).limit(1).maybeSingle();
+      return data;
     },
     enabled: !!user?.id,
   });
