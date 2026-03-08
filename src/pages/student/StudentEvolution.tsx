@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Scale, Camera, CheckCircle2, History, Flame, Droplets, Zap, Activity } from "lucide-react";
+import { TrendingUp, Scale, Camera, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +15,7 @@ import { calculateAge, calculateMacros } from "@/lib/macro-calculator";
 import EvolutionMacroDisplay from "@/components/student/EvolutionMacroDisplay";
 import EvolutionWeightHistory from "@/components/student/EvolutionWeightHistory";
 import EvolutionImageHistory from "@/components/student/EvolutionImageHistory";
+import EvolutionActivityChange, { type ActivityData } from "@/components/student/EvolutionActivityChange";
 
 const StudentEvolution = () => {
   const { user } = useAuth();
@@ -24,6 +24,7 @@ const StudentEvolution = () => {
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [imagesSaved, setImagesSaved] = useState(false);
+  const [activityChange, setActivityChange] = useState<ActivityData | null>(null);
 
   const { data: fullProfile } = useQuery({
     queryKey: ["student-profile-evo", user?.id],
@@ -86,7 +87,6 @@ const StudentEvolution = () => {
     try {
       const newWeight = Number(weight);
 
-      // Insert weight log
       const { error } = await supabase.from("weight_logs").insert({
         user_id: user!.id,
         weight: newWeight,
@@ -94,8 +94,36 @@ const StudentEvolution = () => {
       });
       if (error) throw error;
 
-      // Recalculate macros with new weight
+      // Use activity change data if provided, otherwise use profile values
+      const act = activityChange || {
+        physicalActivityLevel: fullProfile?.physical_activity_level || "sedentario",
+        activityType: fullProfile?.activity_type || "nenhuma",
+        trainingDaysPerWeek: fullProfile?.training_days_per_week ?? undefined,
+        trainingDurationMinutes: fullProfile?.training_duration_minutes ?? undefined,
+        trainingIntensity: fullProfile?.training_intensity ?? undefined,
+        doesCardio: fullProfile?.does_cardio || false,
+        cardioDaysPerWeek: fullProfile?.cardio_days_per_week ?? undefined,
+        cardioDurationMinutes: fullProfile?.cardio_duration_minutes ?? undefined,
+        cardioIntensity: fullProfile?.cardio_intensity ?? undefined,
+      };
+
       let macroUpdate: Record<string, any> = { weight: newWeight };
+
+      // If activity changed, also persist the new activity fields
+      if (activityChange) {
+        macroUpdate = {
+          ...macroUpdate,
+          physical_activity_level: activityChange.physicalActivityLevel,
+          activity_type: activityChange.activityType,
+          training_days_per_week: activityChange.trainingDaysPerWeek,
+          training_duration_minutes: activityChange.trainingDurationMinutes,
+          training_intensity: activityChange.trainingIntensity,
+          does_cardio: activityChange.doesCardio,
+          cardio_days_per_week: activityChange.cardioDaysPerWeek,
+          cardio_duration_minutes: activityChange.cardioDurationMinutes,
+          cardio_intensity: activityChange.cardioIntensity,
+        };
+      }
 
       if (fullProfile?.birth_date && fullProfile?.height && fullProfile?.gender) {
         const age = calculateAge(fullProfile.birth_date);
@@ -104,16 +132,16 @@ const StudentEvolution = () => {
           age,
           weight: newWeight,
           height: Number(fullProfile.height),
-          activityType: fullProfile.activity_type || "nenhuma",
-          doesCardio: fullProfile.does_cardio || false,
+          activityType: act.activityType,
+          doesCardio: act.doesCardio,
           objective: fullProfile.objective || "manter_peso",
-          physicalActivityLevel: fullProfile.physical_activity_level || "sedentario",
-          trainingDaysPerWeek: fullProfile.training_days_per_week || undefined,
-          trainingDurationMinutes: fullProfile.training_duration_minutes || undefined,
-          trainingIntensity: fullProfile.training_intensity || undefined,
-          cardioDaysPerWeek: fullProfile.cardio_days_per_week || undefined,
-          cardioDurationMinutes: fullProfile.cardio_duration_minutes || undefined,
-          cardioIntensity: fullProfile.cardio_intensity || undefined,
+          physicalActivityLevel: act.physicalActivityLevel,
+          trainingDaysPerWeek: act.trainingDaysPerWeek || undefined,
+          trainingDurationMinutes: act.trainingDurationMinutes || undefined,
+          trainingIntensity: act.trainingIntensity || undefined,
+          cardioDaysPerWeek: act.cardioDaysPerWeek || undefined,
+          cardioDurationMinutes: act.cardioDurationMinutes || undefined,
+          cardioIntensity: act.cardioIntensity || undefined,
         });
 
         macroUpdate = {
@@ -127,10 +155,9 @@ const StudentEvolution = () => {
         };
       }
 
-      // Update profile with new weight and macros
       await supabase.from("profiles").update(macroUpdate).eq("user_id", user!.id);
 
-      // Create anamnesis entry with evolution summary
+      // Anamnesis entry
       const timestamp = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
       const prevWeight = currentWeight ? Number(currentWeight) : null;
       const weightDiff = prevWeight ? (newWeight - prevWeight).toFixed(1) : null;
@@ -142,6 +169,10 @@ const StudentEvolution = () => {
         anamnesisNote += ` (anterior: ${prevWeight.toFixed(1)} kg | variação: ${weightDirection}${weightDiff} kg)`;
       }
       anamnesisNote += "\n";
+
+      if (activityChange) {
+        anamnesisNote += `\n🏃 Rotina de atividade física alterada pelo aluno\n`;
+      }
 
       if (macroUpdate.bmr) {
         anamnesisNote += `\n🔥 Macros recalculados:\n`;
@@ -168,6 +199,7 @@ const StudentEvolution = () => {
       setWeight("");
       setNotes("");
       setImagesSaved(false);
+      setActivityChange(null);
       qc.invalidateQueries({ queryKey: ["student-weight-logs"] });
       qc.invalidateQueries({ queryKey: ["student-profile-evo"] });
       qc.invalidateQueries({ queryKey: ["student-full-profile"] });
@@ -180,12 +212,8 @@ const StudentEvolution = () => {
 
   return (
     <DashboardLayout role="student" title="Atualização" subtitle="Registre seu progresso para acompanhamento profissional.">
-      {/* ===== MACROS ATUAIS ===== */}
-      {fullProfile && (
-        <EvolutionMacroDisplay profile={fullProfile} />
-      )}
+      {fullProfile && <EvolutionMacroDisplay profile={fullProfile} />}
 
-      {/* ===== NOVA ATUALIZAÇÃO ===== */}
       <Card className="mb-6 border-primary/20 bg-primary/[0.03]">
         <CardHeader>
           <CardTitle className="text-base font-display flex items-center gap-2">
@@ -211,6 +239,11 @@ const StudentEvolution = () => {
               onChange={(e) => setWeight(e.target.value)}
             />
           </div>
+
+          {/* Activity Change */}
+          {fullProfile && (
+            <EvolutionActivityChange profile={fullProfile} onChange={setActivityChange} />
+          )}
 
           {/* Notes */}
           <div className="space-y-2">
@@ -254,7 +287,6 @@ const StudentEvolution = () => {
             </div>
           )}
 
-          {/* Save weight */}
           <Button
             className="w-full"
             onClick={handleSaveWeight}
@@ -265,10 +297,7 @@ const StudentEvolution = () => {
         </CardContent>
       </Card>
 
-      {/* ===== HISTÓRICO DE PESO ===== */}
       <EvolutionWeightHistory weightLogs={weightLogs || []} />
-
-      {/* ===== HISTÓRICO DE IMAGENS ===== */}
       <EvolutionImageHistory allImages={allImages || []} />
     </DashboardLayout>
   );
