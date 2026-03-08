@@ -25,6 +25,11 @@ const sectionComponents: Record<string, React.ReactNode> = {
   testimonials: <TestimonialsSection key="testimonials" />,
   plans: <PlansSection key="plans" />,
   ethics: <EthicsSection key="ethics" />,
+  bmi_calculator: <BMICalculatorSection key="bmi_calculator" />,
+  food_guide: <FoodGuideSection key="food_guide" />,
+  nutrition_quiz: <NutritionQuizSection key="nutrition_quiz" />,
+  meal_plan: <MealPlanSection key="meal_plan" />,
+  body_simulator: <BodySimulatorSection key="body_simulator" />,
 };
 
 const Landing = () => {
