@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +42,7 @@ const emptyForm: QuizForm = {
 };
 
 export default function Questionario() {
+  const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<QuizForm>(emptyForm);
   const [result, setResult] = useState<MacroResult | null>(null);
@@ -415,11 +416,10 @@ export default function Questionario() {
                           Cadastre-se e tenha acesso a acompanhamento profissional com dieta, treino e protocolos sob medida.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                          <Link to="/cadastro">
-                            <Button size="lg" className="gradient-bg text-primary-foreground hover:opacity-90 px-8">
-                              Quero me cadastrar <ArrowRight className="w-4 h-4 ml-2" />
-                            </Button>
-                          </Link>
+                          <Button size="lg" className="gradient-bg text-primary-foreground hover:opacity-90 px-8"
+                            onClick={() => navigate("/cadastro", { state: { quizData: form } })}>
+                            Quero me cadastrar <ArrowRight className="w-4 h-4 ml-2" />
+                          </Button>
                           <Link to="/#planos">
                             <Button size="lg" variant="outline" className="px-8">
                               Ver planos disponíveis

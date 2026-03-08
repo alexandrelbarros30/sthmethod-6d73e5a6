@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +43,8 @@ const steps = [
 
 const Cadastro = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const quizData = (location.state as any)?.quizData || null;
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -59,13 +61,34 @@ const Cadastro = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   // Step 2 - Profile
-  const [profileForm, setProfileForm] = useState({
-    birth_date: "", height: "", weight: "",
-    gender: "", activity_type: "", does_cardio: "",
-    physical_activity_level: "",
-    objective: "", current_protocol: "", comorbidities: "", additional_info: "",
-    training_days_per_week: "", training_duration_minutes: "", training_intensity: "",
-    cardio_days_per_week: "", cardio_duration_minutes: "", cardio_intensity: "",
+  const [profileForm, setProfileForm] = useState(() => {
+    if (quizData) {
+      return {
+        birth_date: quizData.birth_date || "",
+        height: quizData.height || "",
+        weight: quizData.weight || "",
+        gender: quizData.gender || "",
+        activity_type: quizData.activity_type || "",
+        does_cardio: quizData.does_cardio || "",
+        physical_activity_level: quizData.physical_activity_level || "",
+        objective: quizData.objective || "",
+        current_protocol: "", comorbidities: "", additional_info: "",
+        training_days_per_week: quizData.training_days_per_week || "",
+        training_duration_minutes: quizData.training_duration_minutes || "",
+        training_intensity: quizData.training_intensity || "",
+        cardio_days_per_week: quizData.cardio_days_per_week || "",
+        cardio_duration_minutes: quizData.cardio_duration_minutes || "",
+        cardio_intensity: quizData.cardio_intensity || "",
+      };
+    }
+    return {
+      birth_date: "", height: "", weight: "",
+      gender: "", activity_type: "", does_cardio: "",
+      physical_activity_level: "",
+      objective: "", current_protocol: "", comorbidities: "", additional_info: "",
+      training_days_per_week: "", training_duration_minutes: "", training_intensity: "",
+      cardio_days_per_week: "", cardio_duration_minutes: "", cardio_intensity: "",
+    };
   });
 
   // Step 3 - Body images
@@ -243,23 +266,77 @@ const Cadastro = () => {
       if (error) throw error;
       if (data.user) {
         setUserId(data.user.id);
-        // Wait for handle_new_user trigger to create profile, then save phone
+        // Wait for handle_new_user trigger to create profile, then save data
         let retries = 0;
-        const savePhone = async () => {
-          const { data: updated, error: phoneErr } = await supabase
+        const saveInitialProfile = async () => {
+          const updateData: any = { phone: phoneVal, full_name: fullName };
+          
+          // If quiz data exists, save all profile fields from the quiz
+          if (quizData) {
+            updateData.birth_date = profileForm.birth_date || null;
+            updateData.height = profileForm.height ? Number(profileForm.height) : null;
+            updateData.weight = profileForm.weight ? Number(profileForm.weight) : null;
+            updateData.gender = profileForm.gender || null;
+            updateData.activity_type = profileForm.activity_type || null;
+            updateData.does_cardio = profileForm.does_cardio === "sim";
+            updateData.objective = profileForm.objective || null;
+            updateData.physical_activity_level = profileForm.physical_activity_level || null;
+            updateData.physical_activity = `${activityLabels[profileForm.activity_type] || profileForm.activity_type}${profileForm.does_cardio === "sim" ? " + Cardio" : ""}`;
+            updateData.training_days_per_week = profileForm.training_days_per_week ? Number(profileForm.training_days_per_week) : null;
+            updateData.training_duration_minutes = profileForm.training_duration_minutes ? Number(profileForm.training_duration_minutes) : null;
+            updateData.training_intensity = profileForm.training_intensity || null;
+            updateData.cardio_days_per_week = profileForm.cardio_days_per_week ? Number(profileForm.cardio_days_per_week) : null;
+            updateData.cardio_duration_minutes = profileForm.cardio_duration_minutes ? Number(profileForm.cardio_duration_minutes) : null;
+            updateData.cardio_intensity = profileForm.cardio_intensity || null;
+
+            // Calculate and save macros
+            if (profileForm.gender && profileForm.weight && profileForm.height && profileForm.birth_date && profileForm.objective) {
+              const a = calculateAge(profileForm.birth_date);
+              if (a > 0 && a < 120) {
+                const macros = calculateMacros({
+                  gender: profileForm.gender as "masculino" | "feminino",
+                  age: a, weight: Number(profileForm.weight), height: Number(profileForm.height),
+                  activityType: profileForm.activity_type,
+                  doesCardio: profileForm.does_cardio === "sim",
+                  objective: profileForm.objective,
+                  physicalActivityLevel: profileForm.physical_activity_level || undefined,
+                  trainingDaysPerWeek: profileForm.training_days_per_week ? Number(profileForm.training_days_per_week) : undefined,
+                  trainingDurationMinutes: profileForm.training_duration_minutes ? Number(profileForm.training_duration_minutes) : undefined,
+                  trainingIntensity: profileForm.training_intensity || undefined,
+                  cardioDaysPerWeek: profileForm.cardio_days_per_week ? Number(profileForm.cardio_days_per_week) : undefined,
+                  cardioDurationMinutes: profileForm.cardio_duration_minutes ? Number(profileForm.cardio_duration_minutes) : undefined,
+                  cardioIntensity: profileForm.cardio_intensity || undefined,
+                });
+                updateData.bmr = macros.bmr;
+                updateData.tdee = macros.tdee;
+                updateData.daily_calories = macros.dailyCalories;
+                updateData.protein_g = macros.proteinG;
+                updateData.carbs_g = macros.carbsG;
+                updateData.fat_g = macros.fatG;
+              }
+            }
+          }
+
+          const { data: updated } = await supabase
             .from("profiles")
-            .update({ phone: phoneVal, full_name: fullName })
+            .update(updateData)
             .eq("user_id", data.user!.id)
             .select("id");
           if ((!updated || updated.length === 0) && retries < 5) {
             retries++;
             await new Promise(r => setTimeout(r, 500));
-            return savePhone();
+            return saveInitialProfile();
           }
         };
-        await savePhone();
-        toast.success("Conta criada! Vamos ao próximo passo.");
-        setStep(2);
+        await saveInitialProfile();
+        
+        if (quizData) {
+          toast.success("Conta criada! Dados do questionário salvos. Complete seu cadastro.");
+          setStep(3);
+        } else {
+          toast.success("Conta criada! Vamos ao próximo passo.");
+          setStep(2);
+        }
       }
     } catch (error: any) {
       if (error.message?.includes("already registered")) {
