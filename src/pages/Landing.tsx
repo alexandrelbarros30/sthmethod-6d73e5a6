@@ -159,12 +159,15 @@ const Landing = () => {
               <span className="font-display text-xl font-bold gradient-text">ST&H</span>
             )}
           </Link>
-          <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
+          <div className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
             <a href="#como-funciona" className="hover:text-foreground transition-colors">Como Funciona</a>
             <a href="#resultados" className="hover:text-foreground transition-colors">Resultados</a>
-            <a href="#depoimentos" className="hover:text-foreground transition-colors">Depoimentos</a>
             <a href="#planos" className="hover:text-foreground transition-colors">Planos</a>
-            <Link to="/questionario" className="hover:text-foreground transition-colors font-medium gradient-text">Calcule seus Macros</Link>
+            <a href="#imc" className="hover:text-foreground transition-colors">IMC</a>
+            <a href="#guia-alimentar" className="hover:text-foreground transition-colors">Guia</a>
+            <a href="#diagnostico" className="hover:text-foreground transition-colors">Diagnóstico</a>
+            <a href="#simulador" className="hover:text-foreground transition-colors">Simulador</a>
+            <Link to="/questionario" className="hover:text-foreground transition-colors font-medium gradient-text">Macros</Link>
           </div>
           <div className="flex items-center gap-2">
             <Link to="/login" className="hidden sm:block">
