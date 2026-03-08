@@ -385,8 +385,8 @@ const AdminStudents = () => {
       const { data, error } = await supabase.functions.invoke("admin-manage-students", {
         body: { action: "create", email: form.email, password: form.password, full_name: form.full_name },
       });
-      if (error) throw error;
       if (data?.error) throw new Error(data.error);
+      if (error) throw new Error("Erro ao criar aluno. Tente novamente.");
       if (data?.user?.id) {
         await supabase.from("profiles").update(profilePayload()).eq("user_id", data.user.id);
       }
