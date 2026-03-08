@@ -631,6 +631,8 @@ export type Database = {
       payments: {
         Row: {
           action_type: string
+          ai_verification_notes: string | null
+          ai_verification_status: string | null
           amount: number
           created_at: string
           id: string
@@ -640,12 +642,15 @@ export type Database = {
           mp_preference_id: string | null
           original_amount: number
           plan_id: string
+          receipt_url: string | null
           status: string
           updated_at: string
           user_id: string
         }
         Insert: {
           action_type?: string
+          ai_verification_notes?: string | null
+          ai_verification_status?: string | null
           amount: number
           created_at?: string
           id?: string
@@ -655,12 +660,15 @@ export type Database = {
           mp_preference_id?: string | null
           original_amount: number
           plan_id: string
+          receipt_url?: string | null
           status?: string
           updated_at?: string
           user_id: string
         }
         Update: {
           action_type?: string
+          ai_verification_notes?: string | null
+          ai_verification_status?: string | null
           amount?: number
           created_at?: string
           id?: string
@@ -670,6 +678,7 @@ export type Database = {
           mp_preference_id?: string | null
           original_amount?: number
           plan_id?: string
+          receipt_url?: string | null
           status?: string
           updated_at?: string
           user_id?: string

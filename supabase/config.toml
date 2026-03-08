@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.admin-manage-students]
 verify_jwt = false
+
+[functions.verify-pix-receipt]
+verify_jwt = false
+
+[functions.import-students]
+verify_jwt = false
