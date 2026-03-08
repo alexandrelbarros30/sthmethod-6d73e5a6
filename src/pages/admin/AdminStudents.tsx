@@ -756,6 +756,62 @@ const AdminStudents = () => {
             <Label className="font-body">Mais informações</Label>
             <Textarea value={form.additional_info} onChange={(e) => setForm({ ...form, additional_info: e.target.value })} rows={3} placeholder="Informações adicionais relevantes (opcional)" />
           </div>
+          {!isCreate && selected?.user_id && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10">
+                  <RotateCcw className="w-4 h-4 mr-1" /> Limpar dados de saúde
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Limpar dados de saúde?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Isso vai apagar todos os campos de saúde (atividade física, cardio, objetivo, protocolo, comorbidades e informações adicionais) deste aluno. O aluno poderá preencher novamente. Esta ação não pode ser desfeita.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={async () => {
+                      try {
+                        await supabase.from("profiles").update({
+                          physical_activity_level: null,
+                          activity_type: null,
+                          does_cardio: null,
+                          training_days_per_week: null,
+                          training_duration_minutes: null,
+                          training_intensity: null,
+                          cardio_days_per_week: null,
+                          cardio_duration_minutes: null,
+                          cardio_intensity: null,
+                          objective: null,
+                          current_protocol: null,
+                          comorbidities: null,
+                          additional_info: null,
+                        }).eq("user_id", selected.user_id);
+                        setForm(prev => ({
+                          ...prev,
+                          physical_activity_level: "", activity_type: "", does_cardio: "",
+                          training_days_per_week: "", training_duration_minutes: "", training_intensity: "",
+                          cardio_days_per_week: "", cardio_duration_minutes: "", cardio_intensity: "",
+                          objective: "", current_protocol: "", comorbidities: "", additional_info: "",
+                        }));
+                        qc.invalidateQueries({ queryKey: ["admin-students-list"] });
+                        qc.invalidateQueries({ queryKey: ["admin-full-profile", selected.user_id] });
+                        toast.success("Dados de saúde limpos com sucesso!");
+                      } catch {
+                        toast.error("Erro ao limpar dados de saúde");
+                      }
+                    }}
+                  >
+                    Sim, limpar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
           {renderSaveTabButton("saude", isCreate)}
         </TabsContent>
 
