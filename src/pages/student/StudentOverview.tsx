@@ -250,7 +250,7 @@ const StudentOverview = () => {
       )}
 
       {/* ===== ÚLTIMO PESO E FOTOS (somente leitura) ===== */}
-      {isOnboarded && (
+      {(p?.weight || latestWeightLog || (bodyImages && bodyImages.length > 0)) && (
         <Card className="mb-6">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-base font-display flex items-center gap-2">
