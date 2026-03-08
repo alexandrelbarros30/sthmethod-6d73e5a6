@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import heroBgFallback from "@/assets/hero-clients.jpg";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Calculator, Sparkles } from "lucide-react";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import ResultsSection from "@/components/landing/ResultsSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
