@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import heroBgFallback from "@/assets/hero-clients.jpg";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Calculator, Sparkles } from "lucide-react";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import ResultsSection from "@/components/landing/ResultsSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
@@ -25,6 +25,42 @@ const Landing = () => {
   const { data: settings } = useLandingSettings();
   const { data: sections } = useLandingSections();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [popupDismissed, setPopupDismissed] = useState(false);
+
+  const showPopup = useCallback(() => {
+    if (!popupDismissed) setPopupOpen(true);
+  }, [popupDismissed]);
+
+  const dismissPopup = () => {
+    setPopupOpen(false);
+    setPopupDismissed(true);
+  };
+
+  // Timer trigger: 10 seconds
+  useEffect(() => {
+    const timer = setTimeout(showPopup, 10000);
+    return () => clearTimeout(timer);
+  }, [showPopup]);
+
+  // Scroll trigger: 40% of page
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+      if (scrollPercent >= 0.4) showPopup();
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [showPopup]);
+
+  // Exit intent trigger (mouse leaves viewport top)
+  useEffect(() => {
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (e.clientY <= 0) showPopup();
+    };
+    document.addEventListener("mouseleave", handleMouseLeave);
+    return () => document.removeEventListener("mouseleave", handleMouseLeave);
+  }, [showPopup]);
 
   const s = (key: string, fallback = "") => settings?.find((x) => x.key === key)?.value || fallback;
 
@@ -271,6 +307,58 @@ const Landing = () => {
           <p>© 2026 ST&H — Consultoria Científica em Performance e Saúde. Todos os direitos reservados.</p>
         </div>
       </footer>
+      {/* Macro Calculator Popup */}
+      <AnimatePresence>
+        {popupOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center px-4"
+          >
+            <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" onClick={dismissPopup} />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative glass rounded-2xl p-8 max-w-md w-full glow-border text-center"
+            >
+              <button
+                onClick={dismissPopup}
+                className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.15, type: "spring" }}
+                className="w-14 h-14 rounded-2xl gradient-bg flex items-center justify-center mx-auto mb-4"
+              >
+                <Calculator className="w-7 h-7 text-primary-foreground" />
+              </motion.div>
+              <h3 className="text-xl font-display font-bold text-foreground mb-2">
+                Descubra seus Macros ideais
+              </h3>
+              <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+                Calcule gratuitamente sua meta de calorias, proteínas, carboidratos e gorduras com base no seu perfil e objetivos.
+              </p>
+              <div className="flex flex-col gap-3">
+                <Link to="/questionario" onClick={dismissPopup}>
+                  <Button size="lg" className="w-full gradient-bg text-primary-foreground hover:opacity-90">
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Calcular meus Macros
+                  </Button>
+                </Link>
+                <button onClick={dismissPopup} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                  Agora não, obrigado
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
