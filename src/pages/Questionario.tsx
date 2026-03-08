@@ -416,11 +416,10 @@ export default function Questionario() {
                           Cadastre-se e tenha acesso a acompanhamento profissional com dieta, treino e protocolos sob medida.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                          <Link to="/cadastro">
-                            <Button size="lg" className="gradient-bg text-primary-foreground hover:opacity-90 px-8">
-                              Quero me cadastrar <ArrowRight className="w-4 h-4 ml-2" />
-                            </Button>
-                          </Link>
+                          <Button size="lg" className="gradient-bg text-primary-foreground hover:opacity-90 px-8"
+                            onClick={() => navigate("/cadastro", { state: { quizData: form } })}>
+                            Quero me cadastrar <ArrowRight className="w-4 h-4 ml-2" />
+                          </Button>
                           <Link to="/#planos">
                             <Button size="lg" variant="outline" className="px-8">
                               Ver planos disponíveis
