@@ -78,6 +78,8 @@ const AdminStudents = () => {
   const [newPassword, setNewPassword] = useState("");
   const [showCreatePassword, setShowCreatePassword] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
+  const [orphanData, setOrphanData] = useState<any>(null);
+  const [orphanLoading, setOrphanLoading] = useState(false);
 
   const { data: students, isLoading } = useQuery({
     queryKey: ["admin-students-list"],
