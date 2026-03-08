@@ -9,6 +9,7 @@ import {
   AlertCircle, User, FileText, TrendingUp, Activity, Flame, Scale,
   Target, ChevronRight, Zap, Droplets, ListChecks
 } from "lucide-react";
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -92,6 +93,18 @@ const StudentOverview = () => {
     queryFn: async () => {
       const { data } = await supabase.from("weight_logs").select("*").eq("user_id", user!.id).order("logged_at", { ascending: false }).limit(1).maybeSingle();
       return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const { data: weightChartData } = useQuery({
+    queryKey: ["weight-chart-overview", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("weight_logs").select("weight, logged_at").eq("user_id", user!.id).order("logged_at", { ascending: true }).limit(20);
+      return (data || []).map((d: any) => ({
+        date: new Date(d.logged_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+        peso: Number(d.weight),
+      }));
     },
     enabled: !!user?.id,
   });
@@ -266,6 +279,31 @@ const StudentOverview = () => {
                 </p>
               </div>
             </div>
+
+            {/* Mini gráfico de evolução */}
+            {weightChartData && weightChartData.length >= 2 && (
+              <div className="pt-2">
+                <p className="text-xs text-muted-foreground mb-2">Evolução de peso</p>
+                <ResponsiveContainer width="100%" height={120}>
+                  <AreaChart data={weightChartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="weightGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.02} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
+                    <YAxis domain={["dataMin - 1", "dataMax + 1"]} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
+                    <Tooltip
+                      contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }}
+                      formatter={(value: number) => [`${value.toFixed(1)} kg`, "Peso"]}
+                    />
+                    <Area type="monotone" dataKey="peso" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#weightGradient)" dot={{ r: 3, fill: "hsl(var(--primary))" }} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
 
             {/* Últimas fotos */}
             {bodyImages && bodyImages.length > 0 ? (
