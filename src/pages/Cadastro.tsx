@@ -61,13 +61,34 @@ const Cadastro = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   // Step 2 - Profile
-  const [profileForm, setProfileForm] = useState({
-    birth_date: "", height: "", weight: "",
-    gender: "", activity_type: "", does_cardio: "",
-    physical_activity_level: "",
-    objective: "", current_protocol: "", comorbidities: "", additional_info: "",
-    training_days_per_week: "", training_duration_minutes: "", training_intensity: "",
-    cardio_days_per_week: "", cardio_duration_minutes: "", cardio_intensity: "",
+  const [profileForm, setProfileForm] = useState(() => {
+    if (quizData) {
+      return {
+        birth_date: quizData.birth_date || "",
+        height: quizData.height || "",
+        weight: quizData.weight || "",
+        gender: quizData.gender || "",
+        activity_type: quizData.activity_type || "",
+        does_cardio: quizData.does_cardio || "",
+        physical_activity_level: quizData.physical_activity_level || "",
+        objective: quizData.objective || "",
+        current_protocol: "", comorbidities: "", additional_info: "",
+        training_days_per_week: quizData.training_days_per_week || "",
+        training_duration_minutes: quizData.training_duration_minutes || "",
+        training_intensity: quizData.training_intensity || "",
+        cardio_days_per_week: quizData.cardio_days_per_week || "",
+        cardio_duration_minutes: quizData.cardio_duration_minutes || "",
+        cardio_intensity: quizData.cardio_intensity || "",
+      };
+    }
+    return {
+      birth_date: "", height: "", weight: "",
+      gender: "", activity_type: "", does_cardio: "",
+      physical_activity_level: "",
+      objective: "", current_protocol: "", comorbidities: "", additional_info: "",
+      training_days_per_week: "", training_duration_minutes: "", training_intensity: "",
+      cardio_days_per_week: "", cardio_duration_minutes: "", cardio_intensity: "",
+    };
   });
 
   // Step 3 - Body images
