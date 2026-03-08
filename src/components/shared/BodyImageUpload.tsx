@@ -132,9 +132,12 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
     const file = e.target.files?.[0];
     if (!file) return;
     
-    if (!["image/jpeg", "image/png", "image/webp", "image/heic"].includes(file.type) && 
-        !file.name.match(/\.(jpg|jpeg|png|webp|heic)$/i)) {
-      toast.error("Apenas arquivos de imagem são aceitos.");
+    // On many mobile browsers file.type can be empty or unexpected — accept liberally
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "image/jpg", ""];
+    const allowedExt = /\.(jpg|jpeg|png|webp|heic|heif)$/i;
+    
+    if (!allowedTypes.includes(file.type) && !allowedExt.test(file.name)) {
+      toast.error("Apenas arquivos de imagem são aceitos (JPG, PNG).");
       return;
     }
     if (file.size > 15 * 1024 * 1024) {
