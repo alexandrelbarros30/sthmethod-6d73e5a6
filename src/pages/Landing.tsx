@@ -10,6 +10,12 @@ import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import PlansSection from "@/components/landing/PlansSection";
 import EthicsSection from "@/components/landing/EthicsSection";
 import EvolutionsSection from "@/components/landing/EvolutionsSection";
+import BMICalculatorSection from "@/components/landing/BMICalculatorSection";
+import FoodGuideSection from "@/components/landing/FoodGuideSection";
+import NutritionQuizSection from "@/components/landing/NutritionQuizSection";
+import MealPlanSection from "@/components/landing/MealPlanSection";
+import BodySimulatorSection from "@/components/landing/BodySimulatorSection";
+import WhatsAppButton from "@/components/landing/WhatsAppButton";
 import { useLandingSettings, useLandingSections } from "@/hooks/useLandingData";
 
 const sectionComponents: Record<string, React.ReactNode> = {
