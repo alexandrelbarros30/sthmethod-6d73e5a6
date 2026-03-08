@@ -39,23 +39,23 @@ async function compressImage(file: File, maxSizeMB = MAX_SIZE_MB, maxDim = MAX_D
     height = bitmap.height;
     drawSource = bitmap;
   } catch {
-    // Fallback: FileReader → data URL → Image
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => reject(new Error("Falha ao ler arquivo"));
-      reader.readAsDataURL(file);
-    });
-
-    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const i = new Image();
-      i.onload = () => resolve(i);
-      i.onerror = () => reject(new Error("Formato de imagem não suportado. Use JPG ou PNG."));
-      i.src = dataUrl;
-    });
-    width = img.width;
-    height = img.height;
-    drawSource = img;
+    // Fallback: use object URL (more reliable on mobile than FileReader)
+    const objectUrl = URL.createObjectURL(file);
+    try {
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = () => reject(new Error("Formato de imagem não suportado. Use JPG ou PNG."));
+        i.src = objectUrl;
+      });
+      width = img.width;
+      height = img.height;
+      drawSource = img;
+    } catch (e) {
+      URL.revokeObjectURL(objectUrl);
+      throw e;
+    }
+    URL.revokeObjectURL(objectUrl);
   }
 
   if (width > maxDim || height > maxDim) {
