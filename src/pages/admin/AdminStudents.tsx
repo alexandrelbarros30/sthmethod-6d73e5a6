@@ -505,6 +505,7 @@ const AdminStudents = () => {
     setOrphanLoading(false);
   };
 
+  const subMutation = useMutation({
     mutationFn: async () => {
       if (selected?.subscription) {
         await supabase.from("subscriptions").update({
