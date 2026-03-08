@@ -456,7 +456,55 @@ const AdminStudents = () => {
     onError: (e: any) => toast.error(e.message || "Erro ao alterar senha"),
   });
 
-  const subMutation = useMutation({
+  const checkOrphan = async (email: string) => {
+    setOrphanLoading(true);
+    try {
+      const { data } = await supabase.functions.invoke("admin-manage-students", {
+        body: { action: "check_orphan", email },
+      });
+      if (data?.orphan) {
+        setOrphanData(data);
+      }
+    } catch {
+      // ignore
+    }
+    setOrphanLoading(false);
+  };
+
+  const handleOrphanDelete = async () => {
+    if (!orphanData?.user_id) return;
+    setOrphanLoading(true);
+    try {
+      const { data } = await supabase.functions.invoke("admin-manage-students", {
+        body: { action: "delete", user_id: orphanData.user_id },
+      });
+      if (data?.error) throw new Error(data.error);
+      toast.success("Cadastro órfão removido! Agora você pode cadastrar novamente.");
+      setOrphanData(null);
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao excluir");
+    }
+    setOrphanLoading(false);
+  };
+
+  const handleOrphanRepair = async () => {
+    if (!orphanData?.user_id) return;
+    setOrphanLoading(true);
+    try {
+      const { data } = await supabase.functions.invoke("admin-manage-students", {
+        body: { action: "repair_orphan", user_id: orphanData.user_id, full_name: form.full_name, email: orphanData.email },
+      });
+      if (data?.error) throw new Error(data.error);
+      toast.success("Cadastro reparado com sucesso! O aluno agora aparecerá na lista.");
+      setOrphanData(null);
+      setCreateOpen(false);
+      qc.invalidateQueries({ queryKey: ["admin-students-list"] });
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao reparar");
+    }
+    setOrphanLoading(false);
+  };
+
     mutationFn: async () => {
       if (selected?.subscription) {
         await supabase.from("subscriptions").update({
