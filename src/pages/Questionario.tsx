@@ -42,6 +42,7 @@ const emptyForm: QuizForm = {
 };
 
 export default function Questionario() {
+  const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<QuizForm>(emptyForm);
   const [result, setResult] = useState<MacroResult | null>(null);
