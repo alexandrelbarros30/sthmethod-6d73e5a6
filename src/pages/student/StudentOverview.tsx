@@ -96,6 +96,18 @@ const StudentOverview = () => {
     enabled: !!user?.id,
   });
 
+  const { data: weightChartData } = useQuery({
+    queryKey: ["weight-chart-overview", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("weight_logs").select("weight, logged_at").eq("user_id", user!.id).order("logged_at", { ascending: true }).limit(20);
+      return (data || []).map((d: any) => ({
+        date: new Date(d.logged_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+        peso: Number(d.weight),
+      }));
+    },
+    enabled: !!user?.id,
+  });
+
   // Fetch diet meals for nutritional summary
   const { data: dietMeals } = useQuery({
     queryKey: ["student-diet-meals", user?.id],
