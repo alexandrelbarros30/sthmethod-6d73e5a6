@@ -43,6 +43,8 @@ const steps = [
 
 const Cadastro = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const quizData = (location.state as any)?.quizData || null;
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
