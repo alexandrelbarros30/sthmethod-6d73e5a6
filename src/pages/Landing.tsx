@@ -197,8 +197,12 @@ const Landing = () => {
               <div className="px-4 py-4 flex flex-col gap-3 text-sm">
                 <a href="#como-funciona" onClick={() => setMobileMenuOpen(false)} className="py-2 text-muted-foreground hover:text-foreground transition-colors">Como Funciona</a>
                 <a href="#resultados" onClick={() => setMobileMenuOpen(false)} className="py-2 text-muted-foreground hover:text-foreground transition-colors">Resultados</a>
-                <a href="#depoimentos" onClick={() => setMobileMenuOpen(false)} className="py-2 text-muted-foreground hover:text-foreground transition-colors">Depoimentos</a>
                 <a href="#planos" onClick={() => setMobileMenuOpen(false)} className="py-2 text-muted-foreground hover:text-foreground transition-colors">Planos</a>
+                <a href="#imc" onClick={() => setMobileMenuOpen(false)} className="py-2 text-muted-foreground hover:text-foreground transition-colors">Calculadora IMC</a>
+                <a href="#guia-alimentar" onClick={() => setMobileMenuOpen(false)} className="py-2 text-muted-foreground hover:text-foreground transition-colors">Guia Alimentar</a>
+                <a href="#diagnostico" onClick={() => setMobileMenuOpen(false)} className="py-2 text-muted-foreground hover:text-foreground transition-colors">Diagnóstico</a>
+                <a href="#plano-alimentar" onClick={() => setMobileMenuOpen(false)} className="py-2 text-muted-foreground hover:text-foreground transition-colors">Plano Alimentar</a>
+                <a href="#simulador" onClick={() => setMobileMenuOpen(false)} className="py-2 text-muted-foreground hover:text-foreground transition-colors">Simulador</a>
                 <Link to="/questionario" onClick={() => setMobileMenuOpen(false)} className="py-2 font-medium gradient-text">Calcule seus Macros</Link>
                 <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="mt-1">
                   <Button size="sm" className="w-full gradient-bg text-primary-foreground hover:opacity-90">
