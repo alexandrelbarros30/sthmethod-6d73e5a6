@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import SubscriptionAlerts from "@/components/student/SubscriptionAlerts";
+import ChangePasswordDialog from "@/components/student/ChangePasswordDialog";
 import EvolutionWeightHistory from "@/components/student/EvolutionWeightHistory";
 import { calculateAge } from "@/lib/macro-calculator";
 import {
