@@ -9,83 +9,118 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Pencil, Upload, Trash2, FileText, Search } from "lucide-react";
+import { Pencil, Trash2, FileText, Search, Plus, Clock } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const AdminDiet = () => {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selected, setSelected] = useState<any>(null);
-  const [title, setTitle] = useState("Dieta");
-  const [content, setContent] = useState("");
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [existingPdf, setExistingPdf] = useState("");
-  const [dietId, setDietId] = useState<string | null>(null);
+
+  // New entry form
+  const [newTitle, setNewTitle] = useState("Dieta");
+  const [newContent, setNewContent] = useState("");
+  const [newPdfFile, setNewPdfFile] = useState<File | null>(null);
+  const [showNewForm, setShowNewForm] = useState(false);
+
+  // Delete
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { data: students } = useQuery({
     queryKey: ["admin-students-diets"],
     queryFn: async () => {
       const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, email");
-      const { data: diets } = await supabase.from("student_diets" as any).select("*");
+      const { data: diets } = await supabase.from("student_diets").select("*").order("created_at", { ascending: false });
       return (profiles || []).map((p: any) => {
-        const diet = (diets as any[])?.find((d: any) => d.user_id === p.user_id);
-        return { ...p, diet, initials: p.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "?" };
+        const studentDiets = (diets as any[])?.filter((d: any) => d.user_id === p.user_id) || [];
+        return {
+          ...p,
+          diets: studentDiets,
+          dietCount: studentDiets.length,
+          initials: p.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "?",
+        };
       });
     },
   });
 
+  const { data: studentDiets, refetch: refetchDiets } = useQuery({
+    queryKey: ["admin-student-diets-detail", selected?.user_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("student_diets")
+        .select("*")
+        .eq("user_id", selected!.user_id)
+        .order("created_at", { ascending: false });
+      return data || [];
+    },
+    enabled: !!selected?.user_id && dialogOpen,
+  });
+
   const openManage = (student: any) => {
     setSelected(student);
-    const diet = student.diet;
-    setDietId(diet?.id || null);
-    setTitle(diet?.title || "Dieta");
-    setContent(diet?.content || "");
-    setExistingPdf(diet?.pdf_url || "");
-    setPdfFile(null);
+    setShowNewForm(false);
+    resetNewForm();
     setDialogOpen(true);
+  };
+
+  const resetNewForm = () => {
+    setNewTitle("Dieta");
+    setNewContent("");
+    setNewPdfFile(null);
   };
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      let pdfUrl = existingPdf;
-      if (pdfFile) {
-        const path = `${selected.user_id}/diet/${pdfFile.name}`;
-        await supabase.storage.from("documents").upload(path, pdfFile, { upsert: true });
+      let pdfUrl = "";
+      if (newPdfFile) {
+        const path = `${selected.user_id}/diet/${Date.now()}_${newPdfFile.name}`;
+        await supabase.storage.from("documents").upload(path, newPdfFile, { upsert: true });
         const { data } = supabase.storage.from("documents").getPublicUrl(path);
         pdfUrl = data.publicUrl;
       }
-      const payload = { user_id: selected.user_id, title, content, pdf_url: pdfUrl };
-      if (dietId) {
-        await supabase.from("student_diets" as any).update(payload).eq("id", dietId);
-      } else {
-        await supabase.from("student_diets" as any).insert(payload);
-      }
+      const payload = {
+        user_id: selected.user_id,
+        title: newTitle,
+        content: newContent,
+        pdf_url: pdfUrl,
+      };
+      await supabase.from("student_diets").insert(payload);
     },
     onSuccess: () => {
-      toast.success("Dieta salva!");
+      toast.success("Dieta adicionada!");
       qc.invalidateQueries({ queryKey: ["admin-students-diets"] });
-      setDialogOpen(false);
+      refetchDiets();
+      setShowNewForm(false);
+      resetNewForm();
     },
     onError: () => toast.error("Erro ao salvar dieta"),
   });
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      if (dietId) await supabase.from("student_diets" as any).delete().eq("id", dietId);
+      if (deletingId) await supabase.from("student_diets").delete().eq("id", deletingId);
     },
     onSuccess: () => {
       toast.success("Dieta removida!");
       qc.invalidateQueries({ queryKey: ["admin-students-diets"] });
-      setDialogOpen(false);
+      refetchDiets();
+      setConfirmDeleteOpen(false);
+      setDeletingId(null);
     },
   });
 
+  const confirmDelete = (id: string) => {
+    setDeletingId(id);
+    setConfirmDeleteOpen(true);
+  };
+
   return (
-    <DashboardLayout role="admin" title="Gestão de Dietas" subtitle="Gerencie as dietas dos alunos com PDF e texto.">
+    <DashboardLayout role="admin" title="Gestão de Dietas" subtitle="Gerencie as dietas dos alunos com histórico completo.">
       <Card>
         <CardHeader>
           <CardTitle className="font-display">Alunos</CardTitle>
@@ -99,7 +134,7 @@ const AdminDiet = () => {
             <TableHeader>
               <TableRow>
                 <TableHead className="font-body">Aluno</TableHead>
-                <TableHead className="font-body">Status da Dieta</TableHead>
+                <TableHead className="font-body">Dietas</TableHead>
                 <TableHead className="font-body text-right">Ação</TableHead>
               </TableRow>
             </TableHeader>
@@ -109,7 +144,7 @@ const AdminDiet = () => {
                 const q = search.toLowerCase();
                 return s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q);
               }).map((s: any) => (
-                <TableRow key={s.id}>
+                <TableRow key={s.user_id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -119,8 +154,8 @@ const AdminDiet = () => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={s.diet ? "secondary" : "outline"} className="text-xs">
-                      {s.diet ? "Configurada" : "Pendente"}
+                    <Badge variant={s.dietCount > 0 ? "secondary" : "outline"} className="text-xs">
+                      {s.dietCount > 0 ? `${s.dietCount} registro(s)` : "Nenhuma"}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -135,44 +170,109 @@ const AdminDiet = () => {
         </CardContent>
       </Card>
 
+      {/* Diet Management Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle className="font-display">Dieta — {selected?.full_name}</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div><Label className="font-body">Título</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} /></div>
-            <div>
-              <Label className="font-body">Upload PDF</Label>
-              <Input type="file" accept=".pdf" onChange={(e) => setPdfFile(e.target.files?.[0] || null)} />
-              {existingPdf && (
-                <a href={existingPdf} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mt-1">
-                  <FileText className="w-3 h-3" /> Ver PDF atual
-                </a>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="font-display">Dietas — {selected?.full_name}</DialogTitle>
+          </DialogHeader>
+
+          <ScrollArea className="flex-1 pr-4">
+            <div className="space-y-4">
+              {/* Add new diet button */}
+              {!showNewForm && (
+                <Button onClick={() => setShowNewForm(true)} className="w-full" variant="outline">
+                  <Plus className="w-4 h-4 mr-2" /> Adicionar Nova Dieta
+                </Button>
+              )}
+
+              {/* New diet form */}
+              {showNewForm && (
+                <Card className="border-primary/30 bg-primary/5">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-display flex items-center gap-2">
+                      <Plus className="w-4 h-4" /> Nova Dieta
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <Label className="font-body">Título</Label>
+                      <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label className="font-body">Upload PDF</Label>
+                      <Input type="file" accept=".pdf" onChange={(e) => setNewPdfFile(e.target.files?.[0] || null)} />
+                    </div>
+                    <div>
+                      <Label className="font-body">Conteúdo (texto)</Label>
+                      <Textarea value={newContent} onChange={(e) => setNewContent(e.target.value)} rows={6} placeholder="Escreva o conteúdo da dieta aqui..." />
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <Button variant="ghost" size="sm" onClick={() => { setShowNewForm(false); resetNewForm(); }}>
+                        Cancelar
+                      </Button>
+                      <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+                        {saveMutation.isPending ? "Salvando..." : "Salvar"}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Diet History */}
+              {studentDiets && studentDiets.length > 0 ? (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-muted-foreground font-display flex items-center gap-2">
+                    <Clock className="w-4 h-4" /> Histórico de Dietas
+                  </h3>
+                  {studentDiets.map((diet: any) => (
+                    <Card key={diet.id} className="relative">
+                      <CardContent className="pt-4 pb-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="font-medium text-sm font-body">{diet.title}</p>
+                              <Badge variant="outline" className="text-[10px] shrink-0">
+                                {new Date(diet.created_at).toLocaleDateString("pt-BR")} às {new Date(diet.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                              </Badge>
+                            </div>
+                            {diet.pdf_url && (
+                              <a href={diet.pdf_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mb-1">
+                                <FileText className="w-3 h-3" /> Ver PDF
+                              </a>
+                            )}
+                            {diet.content && (
+                              <p className="text-xs text-muted-foreground line-clamp-3 whitespace-pre-wrap">{diet.content}</p>
+                            )}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => confirmDelete(diet.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-6">Nenhuma dieta cadastrada ainda.</p>
               )}
             </div>
-            <div>
-              <Label className="font-body">Conteúdo (texto)</Label>
-              <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={10} placeholder="Escreva o conteúdo da dieta aqui..." />
-            </div>
-          </div>
-          <DialogFooter className="flex gap-2">
-            {dietId && (
-              <Button variant="destructive" size="sm" onClick={() => setConfirmDeleteOpen(true)}>
-                <Trash2 className="w-3 h-3 mr-1" /> Excluir
-              </Button>
-            )}
-            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
-              {saveMutation.isPending ? "Salvando..." : "Salvar"}
-            </Button>
-          </DialogFooter>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
 
+      {/* Confirm Delete */}
       <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir a dieta de <strong>{selected?.full_name}</strong>? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir esta dieta? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
