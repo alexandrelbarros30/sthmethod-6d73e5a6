@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -44,6 +45,7 @@ const getEmbedUrl = (url: string) => {
 
 const AdminTraining = () => {
   const qc = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [manageOpen, setManageOpen] = useState(false);
@@ -99,6 +101,21 @@ const AdminTraining = () => {
     },
     enabled: !!weeks?.length,
   });
+
+  // Auto-select student from URL param
+  useEffect(() => {
+    const uid = searchParams.get("uid");
+    if (uid && students?.length && !selectedStudent) {
+      const found = students.find((s: any) => s.user_id === uid);
+      if (found) {
+        setSelectedStudent(found);
+        setManageOpen(true);
+        setExpandedWeeks(new Set());
+        searchParams.delete("uid");
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+  }, [students, searchParams]);
 
   const openManage = (student: any) => {
     setSelectedStudent(student);

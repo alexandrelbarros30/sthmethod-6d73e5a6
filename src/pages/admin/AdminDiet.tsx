@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -17,6 +18,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 const AdminDiet = () => {
   const qc = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selected, setSelected] = useState<any>(null);
@@ -70,6 +72,26 @@ const AdminDiet = () => {
     },
     enabled: !!selected?.user_id && dialogOpen,
   });
+
+  // Auto-select student from URL param
+  useEffect(() => {
+    const uid = searchParams.get("uid");
+    if (uid && students?.length && !selected) {
+      const found = students.find((s: any) => s.user_id === uid);
+      if (found) {
+        setSelected(found);
+        setShowNewForm(false);
+        setEditingId(null);
+        setPreviewDiet(null);
+        setNewTitle("Dieta");
+        setNewContent("");
+        setNewPdfFile(null);
+        setDialogOpen(true);
+        searchParams.delete("uid");
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+  }, [students, searchParams]);
 
   const openManage = (student: any) => {
     setSelected(student);
