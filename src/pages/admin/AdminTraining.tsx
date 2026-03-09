@@ -274,6 +274,55 @@ const AdminTraining = () => {
     setExerciseDialogOpen(true);
   };
 
+  const openTextEditor = (weekId: string) => {
+    const weekExercises = (exercises || []).filter((e: any) => e.week_id === weekId).sort((a: any, b: any) => a.sort_order - b.sort_order);
+    const text = weekExercises.map((ex: any) => {
+      const parts = [ex.name];
+      if (ex.reps) parts.push(ex.reps);
+      if (ex.rest_interval) parts.push(`Int: ${ex.rest_interval}`);
+      if (ex.load_suggestion) parts.push(`Carga: ${ex.load_suggestion}`);
+      if (ex.video_url) parts.push(`Video: ${ex.video_url}`);
+      if (ex.notes) parts.push(`Obs: ${ex.notes}`);
+      return parts.join(" | ");
+    }).join("\n");
+    setTextEditorWeekId(weekId);
+    setTextEditorContent(text);
+    setTextEditorOpen(true);
+  };
+
+  const saveTextExercisesMutation = useMutation({
+    mutationFn: async () => {
+      if (!textEditorWeekId) return;
+      const lines = textEditorContent.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+      const parsed = lines.map((line, i) => {
+        const parts = line.split("|").map(p => p.trim());
+        const name = parts[0] || "Exercício";
+        let reps = "", rest_interval = "", load_suggestion = "", video_url = "", notes = "";
+        for (let j = 1; j < parts.length; j++) {
+          const p = parts[j];
+          if (p.toLowerCase().startsWith("int:")) rest_interval = p.slice(4).trim();
+          else if (p.toLowerCase().startsWith("carga:")) load_suggestion = p.slice(6).trim();
+          else if (p.toLowerCase().startsWith("video:")) video_url = p.slice(6).trim();
+          else if (p.toLowerCase().startsWith("obs:")) notes = p.slice(4).trim();
+          else if (!reps) reps = p;
+          else notes = notes ? `${notes}; ${p}` : p;
+        }
+        return { week_id: textEditorWeekId!, name, reps, rest_interval, load_suggestion, video_url, notes, sets: "", description: "", sort_order: i };
+      });
+      await supabase.from("training_exercises").delete().eq("week_id", textEditorWeekId);
+      if (parsed.length > 0) {
+        const { error } = await supabase.from("training_exercises").insert(parsed);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Exercícios atualizados por texto!");
+      qc.invalidateQueries({ queryKey: ["admin-training-exercises"] });
+      setTextEditorOpen(false);
+    },
+    onError: () => toast.error("Erro ao salvar exercícios"),
+  });
+
   const embedUrl = editingExercise?.video_url ? getEmbedUrl(editingExercise.video_url) : null;
 
   return (
