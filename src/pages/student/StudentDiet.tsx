@@ -6,8 +6,11 @@ import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, Clock } from "lucide-react";
+import { FileText, Clock, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { generateStudentPDF, canDownloadPDF } from "@/lib/pdfGenerator";
+import { toast } from "sonner";
 
 const useContentProtection = () => {
   useEffect(() => {
@@ -46,7 +49,7 @@ const useContentProtection = () => {
 const StudentDiet = () => {
   useContentProtection();
   const { user } = useAuth();
-  const { isActive, isLoading: subLoading } = useSubscriptionGuard();
+  const { isActive, isLoading: subLoading, subscription } = useSubscriptionGuard();
 
   const { data: diets, isLoading } = useQuery({
     queryKey: ["student-diets", user?.id],
@@ -60,6 +63,53 @@ const StudentDiet = () => {
     },
     enabled: !!user?.id && isActive,
   });
+
+  const { data: profile } = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user!.id)
+        .single();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const handleDownloadPDF = async (diet: any) => {
+    try {
+      const blob = await generateStudentPDF({
+        type: 'diet',
+        title: diet.title,
+        content: diet.content || 'Conteúdo não disponível',
+        studentInfo: {
+          name: profile?.full_name || 'Aluno',
+          age: profile?.birth_date ? Math.floor((Date.now() - new Date(profile.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : undefined,
+          weight: profile?.weight || undefined,
+          height: profile?.height ? (profile.height / 100) : undefined,
+          goal: profile?.objective || undefined,
+        },
+        createdAt: diet.created_at,
+      });
+      
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${diet.title.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date(diet.created_at).toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast.success('PDF baixado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast.error('Erro ao gerar PDF. Tente novamente.');
+    }
+  };
+
+  const canDownload = canDownloadPDF(subscription?.plans?.name);
 
   if (subLoading || isLoading) {
     return (
@@ -101,12 +151,25 @@ const StudentDiet = () => {
         {diets.map((diet: any) => (
           <Card key={diet.id}>
             <CardHeader className="pb-2">
-              <div className="flex items-center gap-2 flex-wrap">
-                <CardTitle className="text-base font-display">{diet.title}</CardTitle>
-                <Badge variant="outline" className="text-[10px]">
-                  {new Date(diet.created_at).toLocaleDateString("pt-BR")} às{" "}
-                  {new Date(diet.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                </Badge>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <CardTitle className="text-base font-display">{diet.title}</CardTitle>
+                  <Badge variant="outline" className="text-[10px]">
+                    {new Date(diet.created_at).toLocaleDateString("pt-BR")} às{" "}
+                    {new Date(diet.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                  </Badge>
+                </div>
+                {canDownload && diet.content && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDownloadPDF(diet)}
+                    className="h-7 text-xs"
+                  >
+                    <Download className="w-3 h-3 mr-1" />
+                    PDF
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
