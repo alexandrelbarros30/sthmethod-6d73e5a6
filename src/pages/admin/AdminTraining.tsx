@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -45,7 +45,9 @@ const getEmbedUrl = (url: string) => {
 
 const AdminTraining = () => {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [returnToEdit, setReturnToEdit] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [manageOpen, setManageOpen] = useState(false);
@@ -108,10 +110,13 @@ const AdminTraining = () => {
     if (uid && students?.length && !selectedStudent) {
       const found = students.find((s: any) => s.user_id === uid);
       if (found) {
+        const shouldReturn = searchParams.get("return") === "edit";
+        if (shouldReturn) setReturnToEdit(uid);
         setSelectedStudent(found);
         setManageOpen(true);
         setExpandedWeeks(new Set());
         searchParams.delete("uid");
+        searchParams.delete("return");
         setSearchParams(searchParams, { replace: true });
       }
     }
@@ -326,8 +331,16 @@ const AdminTraining = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <Button variant="ghost" size="sm" onClick={() => { setManageOpen(false); setSelectedStudent(null); }}>
-                ← Voltar
+              <Button variant="ghost" size="sm" onClick={() => {
+                if (returnToEdit && selectedStudent) {
+                  navigate(`/admin/students?edit=${selectedStudent.user_id}`);
+                  setReturnToEdit(null);
+                } else {
+                  setManageOpen(false);
+                  setSelectedStudent(null);
+                }
+              }}>
+                ← {returnToEdit ? "Voltar ao Aluno" : "Voltar"}
               </Button>
               <h2 className="font-display text-lg font-semibold mt-1">{selectedStudent?.full_name}</h2>
             </div>

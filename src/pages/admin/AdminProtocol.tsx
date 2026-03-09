@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -18,7 +18,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 const AdminProtocol = () => {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [returnToEdit, setReturnToEdit] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selected, setSelected] = useState<any>(null);
@@ -79,6 +81,8 @@ const AdminProtocol = () => {
     if (uid && students?.length && !selected) {
       const found = students.find((s: any) => s.user_id === uid);
       if (found) {
+        const shouldReturn = searchParams.get("return") === "edit";
+        if (shouldReturn) setReturnToEdit(uid);
         setSelected(found);
         setShowNewForm(false);
         setEditingId(null);
@@ -88,6 +92,7 @@ const AdminProtocol = () => {
         setNewPdfFile(null);
         setDialogOpen(true);
         searchParams.delete("uid");
+        searchParams.delete("return");
         setSearchParams(searchParams, { replace: true });
       }
     }
@@ -244,7 +249,13 @@ const AdminProtocol = () => {
       </Card>
 
       {/* Protocol Management Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={(o) => {
+        setDialogOpen(o);
+        if (!o && returnToEdit) {
+          navigate(`/admin/students?edit=${returnToEdit}`);
+          setReturnToEdit(null);
+        }
+      }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="font-display">Protocolos — {selected?.full_name}</DialogTitle>
