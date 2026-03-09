@@ -110,10 +110,13 @@ const AdminTraining = () => {
     if (uid && students?.length && !selectedStudent) {
       const found = students.find((s: any) => s.user_id === uid);
       if (found) {
+        const shouldReturn = searchParams.get("return") === "edit";
+        if (shouldReturn) setReturnToEdit(uid);
         setSelectedStudent(found);
         setManageOpen(true);
         setExpandedWeeks(new Set());
         searchParams.delete("uid");
+        searchParams.delete("return");
         setSearchParams(searchParams, { replace: true });
       }
     }
