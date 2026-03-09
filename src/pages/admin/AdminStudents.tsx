@@ -943,9 +943,9 @@ const AdminStudents = () => {
         </TabsContent>
 
         <TabsContent value="docs" className="space-y-4">
-          {form.user_id && (
+          {selected?.user_id && (
             <DocumentUpload
-              userId={form.user_id}
+              userId={selected.user_id}
               onUploaded={() => qc.invalidateQueries({ queryKey: ["admin-students-list"] })}
             />
           )}
