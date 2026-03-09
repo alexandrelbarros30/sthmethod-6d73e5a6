@@ -38,6 +38,15 @@ const Landing = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupDismissed, setPopupDismissed] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  // Track scroll for navbar background
+  useEffect(() => {
+    const handleNavScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleNavScroll, { passive: true });
+    handleNavScroll();
+    return () => window.removeEventListener("scroll", handleNavScroll);
+  }, []);
 
   const showPopup = useCallback(() => {
     if (!popupDismissed) setPopupOpen(true);
@@ -150,34 +159,38 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-background overflow-hidden">
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 glass">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-background/90 backdrop-blur-xl shadow-lg border-b border-border/50' : 'bg-transparent backdrop-blur-sm'}`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 shrink-0">
             {logoUrl ? (
               <img src={logoUrl} alt="Logo" style={{ height: `${logoSize}px` }} className="object-contain" />
             ) : (
               <span className="font-display text-xl font-bold gradient-text">ST&H</span>
             )}
           </Link>
-          <div className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
-            <a href="#como-funciona" className="hover:text-foreground transition-colors">Como Funciona</a>
-            <a href="#resultados" className="hover:text-foreground transition-colors">Resultados</a>
-            <a href="#planos" className="hover:text-foreground transition-colors">Planos</a>
-            <a href="#imc" className="hover:text-foreground transition-colors">IMC</a>
-            <a href="#guia-alimentar" className="hover:text-foreground transition-colors">Guia</a>
-            <a href="#diagnostico" className="hover:text-foreground transition-colors">Diagnóstico</a>
-            <a href="#simulador" className="hover:text-foreground transition-colors">Simulador</a>
-            <Link to="/questionario" className="hover:text-foreground transition-colors font-medium gradient-text">Macros</Link>
+
+          {/* Desktop links */}
+          <div className="hidden lg:flex items-center gap-5 text-sm text-muted-foreground">
+            <a href="#como-funciona" className="hover:text-foreground transition-colors py-1">Como Funciona</a>
+            <a href="#resultados" className="hover:text-foreground transition-colors py-1">Resultados</a>
+            <a href="#planos" className="hover:text-foreground transition-colors py-1">Planos</a>
+            <a href="#imc" className="hover:text-foreground transition-colors py-1">IMC</a>
+            <a href="#guia-alimentar" className="hover:text-foreground transition-colors py-1">Guia</a>
+            <a href="#diagnostico" className="hover:text-foreground transition-colors py-1">Diagnóstico</a>
+            <a href="#simulador" className="hover:text-foreground transition-colors py-1">Simulador</a>
+            <Link to="/questionario" className="hover:text-foreground transition-colors font-medium gradient-text py-1">Macros</Link>
           </div>
-          <div className="flex items-center gap-2">
-            <Link to="/login" className="hidden sm:block">
-              <Button size="sm" className="gradient-bg text-primary-foreground hover:opacity-90">
-                Acessar Plataforma
+
+          {/* Right side: CTA + hamburger */}
+          <div className="flex items-center gap-2 shrink-0">
+            <Link to="/login">
+              <Button size="sm" className="gradient-bg text-primary-foreground hover:opacity-90 text-xs sm:text-sm px-3 sm:px-4">
+                Acessar
               </Button>
             </Link>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors text-foreground"
+              className="lg:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors text-foreground"
               aria-label="Menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -192,22 +205,35 @@ const Landing = () => {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="md:hidden border-t border-border overflow-hidden"
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="lg:hidden border-t border-border/50 overflow-hidden bg-background/95 backdrop-blur-xl"
             >
-              <div className="px-4 py-4 flex flex-col gap-3 text-sm">
-                <a href="#como-funciona" onClick={() => setMobileMenuOpen(false)} className="py-2 text-muted-foreground hover:text-foreground transition-colors">Como Funciona</a>
-                <a href="#resultados" onClick={() => setMobileMenuOpen(false)} className="py-2 text-muted-foreground hover:text-foreground transition-colors">Resultados</a>
-                <a href="#planos" onClick={() => setMobileMenuOpen(false)} className="py-2 text-muted-foreground hover:text-foreground transition-colors">Planos</a>
-                <a href="#imc" onClick={() => setMobileMenuOpen(false)} className="py-2 text-muted-foreground hover:text-foreground transition-colors">Calculadora IMC</a>
-                <a href="#guia-alimentar" onClick={() => setMobileMenuOpen(false)} className="py-2 text-muted-foreground hover:text-foreground transition-colors">Guia Alimentar</a>
-                <a href="#diagnostico" onClick={() => setMobileMenuOpen(false)} className="py-2 text-muted-foreground hover:text-foreground transition-colors">Diagnóstico</a>
-                <a href="#plano-alimentar" onClick={() => setMobileMenuOpen(false)} className="py-2 text-muted-foreground hover:text-foreground transition-colors">Plano Alimentar</a>
-                <a href="#simulador" onClick={() => setMobileMenuOpen(false)} className="py-2 text-muted-foreground hover:text-foreground transition-colors">Simulador</a>
-                <Link to="/questionario" onClick={() => setMobileMenuOpen(false)} className="py-2 font-medium gradient-text">Calcule seus Macros</Link>
-                <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="mt-1">
-                  <Button size="sm" className="w-full gradient-bg text-primary-foreground hover:opacity-90">
-                    Acessar Plataforma
-                  </Button>
+              <div className="px-5 py-4 flex flex-col gap-1 text-sm max-h-[70vh] overflow-y-auto">
+                {[
+                  { href: "#como-funciona", label: "Como Funciona" },
+                  { href: "#resultados", label: "Resultados" },
+                  { href: "#planos", label: "Planos" },
+                  { href: "#imc", label: "Calculadora IMC" },
+                  { href: "#guia-alimentar", label: "Guia Alimentar" },
+                  { href: "#diagnostico", label: "Diagnóstico" },
+                  { href: "#plano-alimentar", label: "Plano Alimentar" },
+                  { href: "#simulador", label: "Simulador Corporal" },
+                ].map((item) => (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="py-2.5 px-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors active:bg-muted"
+                  >
+                    {item.label}
+                  </a>
+                ))}
+                <Link
+                  to="/questionario"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="py-2.5 px-3 rounded-lg font-medium gradient-text hover:bg-muted/50 transition-colors"
+                >
+                  Calcule seus Macros
                 </Link>
               </div>
             </motion.div>
