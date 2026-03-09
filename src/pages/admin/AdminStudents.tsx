@@ -56,6 +56,7 @@ const emptyForm = {
 };
 
 const AdminStudents = () => {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const qc = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
