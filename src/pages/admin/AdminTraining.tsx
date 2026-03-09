@@ -585,6 +585,34 @@ const AdminTraining = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Text editor dialog */}
+      <Dialog open={textEditorOpen} onOpenChange={setTextEditorOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle className="font-display">Editar Exercícios por Texto</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="p-3 rounded-lg bg-muted/50 border border-border text-xs text-muted-foreground space-y-1">
+              <p className="font-semibold text-foreground">Formato: um exercício por linha</p>
+              <p>Nome | Séries/Reps | Int: intervalo | Carga: sugestão | Video: url | Obs: notas</p>
+              <p className="italic">Exemplo: Supino Reto | 4x12 | Int: 60s | Carga: 40kg</p>
+              <p className="text-destructive">⚠ Ao salvar, os exercícios existentes serão substituídos.</p>
+            </div>
+            <Textarea
+              value={textEditorContent}
+              onChange={(e) => setTextEditorContent(e.target.value)}
+              rows={12}
+              placeholder={"Supino Reto | 4x12 | Int: 60s\nPuxada Frontal | 3x15 | Int: 45s\nAgachamento | 4x10 | Int: 90s | Carga: 60kg"}
+              className="font-mono text-sm"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTextEditorOpen(false)}>Cancelar</Button>
+            <Button onClick={() => saveTextExercisesMutation.mutate()} disabled={saveTextExercisesMutation.isPending}>
+              {saveTextExercisesMutation.isPending ? "Salvando..." : "Salvar Exercícios"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
