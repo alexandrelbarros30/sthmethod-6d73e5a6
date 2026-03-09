@@ -45,6 +45,7 @@ const getEmbedUrl = (url: string) => {
 
 const AdminTraining = () => {
   const qc = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [manageOpen, setManageOpen] = useState(false);
