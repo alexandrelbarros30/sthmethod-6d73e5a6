@@ -469,9 +469,14 @@ const AdminTraining = () => {
                         </div>
                       </div>
                     ))}
-                    <Button variant="outline" size="sm" className="w-full" onClick={() => openNewExercise(week.id)}>
-                      <Plus className="w-4 h-4 mr-1" /> Adicionar Exercício
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="flex-1" onClick={() => openNewExercise(week.id)}>
+                        <Plus className="w-4 h-4 mr-1" /> Adicionar Exercício
+                      </Button>
+                      <Button variant="outline" size="sm" className="flex-1" onClick={() => openTextEditor(week.id)}>
+                        <FileText className="w-4 h-4 mr-1" /> Editar por Texto
+                      </Button>
+                    </div>
                   </CardContent>
                 )}
               </Card>
