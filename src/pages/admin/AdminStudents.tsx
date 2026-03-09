@@ -1430,6 +1430,7 @@ const AdminStudents = () => {
               )}
             </div>
           </DialogHeader>
+          {renderStudentFormFields(false)}
         </DialogContent>
       </Dialog>
 
