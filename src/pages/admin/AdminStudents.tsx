@@ -1341,18 +1341,10 @@ const AdminStudents = () => {
                 )}
                 <section>
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Documentos</h3>
-                  <div className="flex flex-col gap-2">
-                    {selected.lab_exam_url ? (
-                      <a href={selected.lab_exam_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline flex items-center gap-1">
-                        <FileText className="w-4 h-4" /> Exames Laboratoriais
-                      </a>
-                    ) : <p className="text-sm text-muted-foreground">Exames: não enviado</p>}
-                    {selected.medical_prescription_url ? (
-                      <a href={selected.medical_prescription_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline flex items-center gap-1">
-                        <FileText className="w-4 h-4" /> Receita Médica
-                      </a>
-                    ) : <p className="text-sm text-muted-foreground">Receita: não enviada</p>}
-                  </div>
+                  <DocumentUpload
+                    userId={selected.user_id}
+                    onUploaded={() => qc.invalidateQueries({ queryKey: ["admin-students-list"] })}
+                  />
                 </section>
                 {/* Body Images in View */}
                 <section>

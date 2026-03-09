@@ -553,12 +553,9 @@ const StudentOverview = () => {
               {p.comorbidities && <div><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Comorbidades</p><p className="text-sm whitespace-pre-wrap">{p.comorbidities}</p></div>}
             </div>
 
-            {(p.lab_exam_url || p.medical_prescription_url) && (
-              <div className="mt-4 border-t pt-4 flex gap-4">
-                {p.lab_exam_url && <a href={p.lab_exam_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline flex items-center gap-1"><FileText className="w-4 h-4" /> Exames</a>}
-                {p.medical_prescription_url && <a href={p.medical_prescription_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline flex items-center gap-1"><FileText className="w-4 h-4" /> Receita</a>}
-              </div>
-            )}
+            <div className="mt-4 border-t pt-4">
+              <DocumentUpload userId={p.user_id} />
+            </div>
           </CardContent>
         </Card>
       )}
