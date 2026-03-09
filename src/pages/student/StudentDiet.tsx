@@ -6,8 +6,11 @@ import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, Clock } from "lucide-react";
+import { FileText, Clock, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { generateStudentPDF, canDownloadPDF } from "@/lib/pdfGenerator";
+import { toast } from "sonner";
 
 const useContentProtection = () => {
   useEffect(() => {
