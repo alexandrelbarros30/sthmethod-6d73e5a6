@@ -439,8 +439,6 @@ export default function StudentProfileForm({ form, onChange, userId, isOnboarded
         {/* Document uploads */}
         <DocumentUpload
           userId={userId}
-          labExamUrl={labExamUrl}
-          prescriptionUrl={prescriptionUrl}
           onUploaded={onDocumentUploaded || (() => {})}
         />
 
