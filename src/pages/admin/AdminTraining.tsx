@@ -60,6 +60,9 @@ const AdminTraining = () => {
   const [activeWeekId, setActiveWeekId] = useState<string | null>(null);
   const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
   const [duplicateTargetId, setDuplicateTargetId] = useState<string | null>(null);
+  const [textEditorOpen, setTextEditorOpen] = useState(false);
+  const [textEditorWeekId, setTextEditorWeekId] = useState<string | null>(null);
+  const [textEditorContent, setTextEditorContent] = useState("");
 
   const { data: students } = useQuery({
     queryKey: ["admin-students-training-list"],
