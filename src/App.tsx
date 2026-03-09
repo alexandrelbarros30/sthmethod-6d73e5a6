@@ -9,6 +9,7 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
 import Questionario from "./pages/Questionario";
+import Install from "./pages/Install";
 import StudentOverview from "./pages/student/StudentOverview";
 import StudentDiet from "./pages/student/StudentDiet";
 import StudentTraining from "./pages/student/StudentTraining";
