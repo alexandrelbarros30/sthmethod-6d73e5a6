@@ -942,36 +942,12 @@ const AdminStudents = () => {
         </TabsContent>
 
         <TabsContent value="docs" className="space-y-4">
-          <div>
-            <Label className="font-body">Exames Laboratoriais (PDF, opcional)</Label>
-            <div className="flex items-center gap-2 mt-1">
-              <label className="flex items-center gap-2 px-3 py-2 border border-input rounded-md cursor-pointer hover:bg-accent text-sm">
-                <Upload className="w-4 h-4" />
-                {uploading === "lab_exam_url" ? "Enviando..." : "Selecionar PDF"}
-                <input type="file" accept=".pdf" className="hidden" onChange={(e) => handleFileUpload(e, "lab_exam_url")} />
-              </label>
-              {form.lab_exam_url && (
-                <a href={form.lab_exam_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline flex items-center gap-1">
-                  <FileText className="w-3 h-3" /> Ver arquivo
-                </a>
-              )}
-            </div>
-          </div>
-          <div>
-            <Label className="font-body">Receita Médica (PDF, opcional)</Label>
-            <div className="flex items-center gap-2 mt-1">
-              <label className="flex items-center gap-2 px-3 py-2 border border-input rounded-md cursor-pointer hover:bg-accent text-sm">
-                <Upload className="w-4 h-4" />
-                {uploading === "medical_prescription_url" ? "Enviando..." : "Selecionar PDF"}
-                <input type="file" accept=".pdf" className="hidden" onChange={(e) => handleFileUpload(e, "medical_prescription_url")} />
-              </label>
-              {form.medical_prescription_url && (
-                <a href={form.medical_prescription_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline flex items-center gap-1">
-                  <FileText className="w-3 h-3" /> Ver arquivo
-                </a>
-              )}
-            </div>
-          </div>
+          {form.user_id && (
+            <DocumentUpload
+              userId={form.user_id}
+              onUploaded={() => qc.invalidateQueries({ queryKey: ["admin-students-list"] })}
+            />
+          )}
           {renderSaveTabButton("docs", isCreate)}
         </TabsContent>
       </Tabs>
