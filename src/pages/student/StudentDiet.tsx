@@ -49,7 +49,7 @@ const useContentProtection = () => {
 const StudentDiet = () => {
   useContentProtection();
   const { user } = useAuth();
-  const { isActive, isLoading: subLoading } = useSubscriptionGuard();
+  const { isActive, isLoading: subLoading, subscription } = useSubscriptionGuard();
 
   const { data: diets, isLoading } = useQuery({
     queryKey: ["student-diets", user?.id],
@@ -63,6 +63,53 @@ const StudentDiet = () => {
     },
     enabled: !!user?.id && isActive,
   });
+
+  const { data: profile } = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user!.id)
+        .single();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const handleDownloadPDF = async (diet: any) => {
+    try {
+      const blob = await generateStudentPDF({
+        type: 'diet',
+        title: diet.title,
+        content: diet.content || 'Conteúdo não disponível',
+        studentInfo: {
+          name: profile?.full_name || 'Aluno',
+          age: profile?.birth_date ? Math.floor((Date.now() - new Date(profile.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : undefined,
+          weight: profile?.weight || undefined,
+          height: profile?.height ? (profile.height / 100) : undefined,
+          goal: profile?.objective || undefined,
+        },
+        createdAt: diet.created_at,
+      });
+      
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${diet.title.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date(diet.created_at).toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast.success('PDF baixado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast.error('Erro ao gerar PDF. Tente novamente.');
+    }
+  };
+
+  const canDownload = canDownloadPDF(subscription?.plans?.name);
 
   if (subLoading || isLoading) {
     return (
