@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,7 +14,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2, RotateCcw, AlertTriangle, UserX, UserCheck } from "lucide-react";
+import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2, RotateCcw, AlertTriangle, UserX, UserCheck, Dumbbell, Pill, UtensilsCrossed } from "lucide-react";
+
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,6 +56,7 @@ const emptyForm = {
 };
 
 const AdminStudents = () => {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const qc = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
@@ -1410,7 +1412,24 @@ const AdminStudents = () => {
       {/* Edit Dialog */}
       <Dialog open={editOpen} onOpenChange={(o) => { setEditOpen(o); if (!o) { setActiveTab("dados"); setSavedTabs(new Set()); } }}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle className="font-display">Editar Aluno</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <div className="flex items-center justify-between gap-2">
+              <DialogTitle className="font-display">Editar Aluno</DialogTitle>
+              {selected && (
+                <div className="flex items-center gap-1.5">
+                  <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditOpen(false); navigate(`/admin/training?uid=${selected.user_id}`); }}>
+                    <Dumbbell className="w-3.5 h-3.5" /> Treino
+                  </Button>
+                  <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditOpen(false); navigate(`/admin/diet?uid=${selected.user_id}`); }}>
+                    <UtensilsCrossed className="w-3.5 h-3.5" /> Dieta
+                  </Button>
+                  <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditOpen(false); navigate(`/admin/protocol?uid=${selected.user_id}`); }}>
+                    <Pill className="w-3.5 h-3.5" /> Protocolo
+                  </Button>
+                </div>
+              )}
+            </div>
+          </DialogHeader>
           {renderStudentFormFields(false)}
         </DialogContent>
       </Dialog>
