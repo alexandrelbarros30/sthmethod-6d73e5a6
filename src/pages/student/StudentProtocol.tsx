@@ -157,12 +157,25 @@ const StudentProtocol = () => {
             {protocols.map((protocol: any) => (
               <Card key={protocol.id}>
                 <CardHeader className="pb-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <CardTitle className="text-base font-display">{protocol.title}</CardTitle>
-                    <Badge variant="outline" className="text-[10px]">
-                      {new Date(protocol.created_at).toLocaleDateString("pt-BR")} às{" "}
-                      {new Date(protocol.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                    </Badge>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <CardTitle className="text-base font-display">{protocol.title}</CardTitle>
+                      <Badge variant="outline" className="text-[10px]">
+                        {new Date(protocol.created_at).toLocaleDateString("pt-BR")} às{" "}
+                        {new Date(protocol.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                      </Badge>
+                    </div>
+                    {canDownload && protocol.content && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownloadPDF(protocol)}
+                        className="h-7 text-xs"
+                      >
+                        <Download className="w-3 h-3 mr-1" />
+                        PDF
+                      </Button>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
