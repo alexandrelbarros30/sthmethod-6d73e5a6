@@ -102,6 +102,21 @@ const AdminTraining = () => {
     enabled: !!weeks?.length,
   });
 
+  // Auto-select student from URL param
+  useEffect(() => {
+    const uid = searchParams.get("uid");
+    if (uid && students?.length && !selectedStudent) {
+      const found = students.find((s: any) => s.user_id === uid);
+      if (found) {
+        setSelectedStudent(found);
+        setManageOpen(true);
+        setExpandedWeeks(new Set());
+        searchParams.delete("uid");
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+  }, [students, searchParams]);
+
   const openManage = (student: any) => {
     setSelectedStudent(student);
     setManageOpen(true);

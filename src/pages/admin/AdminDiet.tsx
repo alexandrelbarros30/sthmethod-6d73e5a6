@@ -73,6 +73,19 @@ const AdminDiet = () => {
     enabled: !!selected?.user_id && dialogOpen,
   });
 
+  // Auto-select student from URL param
+  useEffect(() => {
+    const uid = searchParams.get("uid");
+    if (uid && students?.length && !selected) {
+      const found = students.find((s: any) => s.user_id === uid);
+      if (found) {
+        openManage(found);
+        searchParams.delete("uid");
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+  }, [students, searchParams]);
+
   const openManage = (student: any) => {
     setSelected(student);
     setShowNewForm(false);
