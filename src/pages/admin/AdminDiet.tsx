@@ -81,6 +81,8 @@ const AdminDiet = () => {
     if (uid && students?.length && !selected) {
       const found = students.find((s: any) => s.user_id === uid);
       if (found) {
+        const shouldReturn = searchParams.get("return") === "edit";
+        if (shouldReturn) setReturnToEdit(uid);
         setSelected(found);
         setShowNewForm(false);
         setEditingId(null);
@@ -90,6 +92,7 @@ const AdminDiet = () => {
         setNewPdfFile(null);
         setDialogOpen(true);
         searchParams.delete("uid");
+        searchParams.delete("return");
         setSearchParams(searchParams, { replace: true });
       }
     }
