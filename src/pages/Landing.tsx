@@ -38,6 +38,15 @@ const Landing = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupDismissed, setPopupDismissed] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  // Track scroll for navbar background
+  useEffect(() => {
+    const handleNavScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleNavScroll, { passive: true });
+    handleNavScroll();
+    return () => window.removeEventListener("scroll", handleNavScroll);
+  }, []);
 
   const showPopup = useCallback(() => {
     if (!popupDismissed) setPopupOpen(true);
