@@ -9,6 +9,7 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
 import Questionario from "./pages/Questionario";
+import Install from "./pages/Install";
 import StudentOverview from "./pages/student/StudentOverview";
 import StudentDiet from "./pages/student/StudentDiet";
 import StudentTraining from "./pages/student/StudentTraining";
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/cadastro" element={<Cadastro />} />
             <Route path="/questionario" element={<Questionario />} />
+            <Route path="/install" element={<Install />} />
             {/* Student routes */}
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["student"]}><StudentOverview /></ProtectedRoute>} />
             <Route path="/dashboard/diet" element={<ProtectedRoute allowedRoles={["student"]}><StudentDiet /></ProtectedRoute>} />
