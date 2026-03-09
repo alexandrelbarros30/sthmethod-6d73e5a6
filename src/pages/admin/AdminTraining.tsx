@@ -331,8 +331,16 @@ const AdminTraining = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <Button variant="ghost" size="sm" onClick={() => { setManageOpen(false); setSelectedStudent(null); }}>
-                ← Voltar
+              <Button variant="ghost" size="sm" onClick={() => {
+                if (returnToEdit && selectedStudent) {
+                  navigate(`/admin/students?edit=${selectedStudent.user_id}`);
+                  setReturnToEdit(null);
+                } else {
+                  setManageOpen(false);
+                  setSelectedStudent(null);
+                }
+              }}>
+                ← {returnToEdit ? "Voltar ao Aluno" : "Voltar"}
               </Button>
               <h2 className="font-display text-lg font-semibold mt-1">{selectedStudent?.full_name}</h2>
             </div>
