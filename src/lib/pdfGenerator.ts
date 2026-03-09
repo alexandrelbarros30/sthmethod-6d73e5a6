@@ -174,11 +174,7 @@ export const generateStudentPDF = async (options: PDFContentOptions): Promise<Bl
   return pdf.output('blob');
 };
 
-// Helper to check if student has premium plan (6M only)
+// Helper to check if student has premium plan (currently disabled for all plans)
 export const canDownloadPDF = (planName?: string): boolean => {
-  if (!planName) return false;
-  const premiumPlans = ['6M', '6 Meses'];
-  return premiumPlans.some(plan => 
-    planName.toLowerCase().includes(plan.toLowerCase())
-  );
+  return false;
 };
