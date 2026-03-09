@@ -249,7 +249,13 @@ const AdminDiet = () => {
       </Card>
 
       {/* Diet Management Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={(o) => {
+        setDialogOpen(o);
+        if (!o && returnToEdit) {
+          navigate(`/admin/students?edit=${returnToEdit}`);
+          setReturnToEdit(null);
+        }
+      }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="font-display">Dietas — {selected?.full_name}</DialogTitle>
