@@ -959,9 +959,9 @@ const AdminStudents = () => {
     <DashboardLayout role="admin" title="Gestão de Alunos" subtitle="Crie, edite e gerencie todos os alunos.">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <CardTitle className="font-display">Alunos cadastrados</CardTitle>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <input
                 type="file"
                 ref={fileInputRef}
@@ -1145,96 +1145,144 @@ const AdminStudents = () => {
             />
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0 sm:px-6">
           {isLoading ? (
-            <p className="text-sm text-muted-foreground font-body">Carregando...</p>
+            <p className="text-sm text-muted-foreground font-body px-4">Carregando...</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="font-body">Aluno</TableHead>
-                  <TableHead className="font-body">Telefone</TableHead>
-                  <TableHead className="font-body">Cadastro</TableHead>
-                  <TableHead className="font-body">Plano</TableHead>
-                  <TableHead className="font-body">Início</TableHead>
-                  <TableHead className="font-body">Vencimento</TableHead>
-                  <TableHead className="font-body">Status</TableHead>
-                  <TableHead className="font-body text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* Mobile card list */}
+              <div className="sm:hidden space-y-2 px-4">
                 {filteredStudents?.map((s: any) => (
-                  <TableRow key={s.user_id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <div key={s.user_id} className="border border-border rounded-lg p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                           <span className="text-xs font-bold text-primary">{s.initials}</span>
                         </div>
-                        <div>
-                          <p className="font-medium text-sm font-body">{s.full_name || "Sem nome"}</p>
-                          <p className="text-xs text-muted-foreground font-body">{s.email}</p>
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm truncate">{s.full_name || "Sem nome"}</p>
+                          <p className="text-xs text-muted-foreground truncate">{s.email}</p>
                         </div>
                       </div>
-                    </TableCell>
-                    <TableCell className="font-body text-sm">{s.phone || "—"}</TableCell>
-                    <TableCell className="font-body text-xs text-muted-foreground">
-                      {s.created_at ? (
-                        <>
-                          {new Date(s.created_at).toLocaleDateString("pt-BR")}
-                          <br />
-                          <span className="text-[10px]">{new Date(s.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
-                        </>
-                      ) : "—"}
-                    </TableCell>
-                    <TableCell className="font-body text-sm">
-                      {s.plan !== "—" ? (
-                        <Badge variant="outline" className={`text-xs font-medium ${getPlanTierClasses(getPlanTier(s.planDurationDays)).badge}`}>
-                          {s.plan}
-                        </Badge>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-body text-sm">{s.startDate ? new Date(s.startDate).toLocaleDateString("pt-BR") : "—"}</TableCell>
-                    <TableCell className="font-body text-sm">{s.endDate ? new Date(s.endDate).toLocaleDateString("pt-BR") : "—"}</TableCell>
-                    <TableCell>
-                      <Badge variant={s.status === "active" ? "secondary" : s.status === "suspended" ? "outline" : "destructive"} className="text-xs">
+                      <Badge variant={s.status === "active" ? "secondary" : s.status === "suspended" ? "outline" : "destructive"} className="text-[10px] shrink-0">
                         {s.status === "active" ? "Ativo" : s.status === "suspended" ? "Suspenso" : s.status === "expired" ? "Vencido" : "Sem plano"}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => openView(s)} title="Visualizar"><Eye className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => { setSelected(s); setAnamneseOpen(true); }} title="Anamnese"><ClipboardList className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => { setSelected(s); setImagesOpen(true); }} title="Fotos corporais"><Image className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => openSub(s)} title="Assinatura"><CreditCard className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(s)} title="Editar"><Pencil className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="icon" title="Alterar senha" onClick={() => { setPasswordReset({ userId: s.user_id, name: s.full_name || s.email }); setNewPassword(""); }}><Lock className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="icon" title="Copiar link de renovação" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/dashboard/renew?uid=${s.user_id}`); toast.success("Link de renovação copiado!"); }}><Link2 className="w-4 h-4" /></Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild><Button variant="ghost" size="icon" title="Excluir"><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Excluir aluno?</AlertDialogTitle>
-                              <AlertDialogDescription>Esta ação é irreversível. Todos os dados de {s.full_name || "este aluno"} serão removidos.</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => deleteMutation.mutate(s.user_id)}>Excluir</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                      {s.plan !== "—" && (
+                        <Badge variant="outline" className={`text-[10px] ${getPlanTierClasses(getPlanTier(s.planDurationDays)).badge}`}>
+                          {s.plan}
+                        </Badge>
+                      )}
+                      {s.endDate && <span>Venc: {new Date(s.endDate).toLocaleDateString("pt-BR")}</span>}
+                    </div>
+                    <div className="flex items-center gap-1 flex-wrap pt-1 border-t border-border/50">
+                      <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 px-2" onClick={() => openView(s)}><Eye className="w-3.5 h-3.5" />Ver</Button>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 px-2" onClick={() => openEdit(s)}><Pencil className="w-3.5 h-3.5" />Editar</Button>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 px-2" onClick={() => openSub(s)}><CreditCard className="w-3.5 h-3.5" />Plano</Button>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 px-2" onClick={() => { setSelected(s); setAnamneseOpen(true); }}><ClipboardList className="w-3.5 h-3.5" /></Button>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 px-2" onClick={() => { setSelected(s); setImagesOpen(true); }}><Image className="w-3.5 h-3.5" /></Button>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 px-2" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/dashboard/renew?uid=${s.user_id}`); toast.success("Link copiado!"); }}><Link2 className="w-3.5 h-3.5" /></Button>
+                    </div>
+                  </div>
                 ))}
                 {(!filteredStudents || filteredStudents.length === 0) && (
-                  <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground font-body">
+                  <p className="text-center text-muted-foreground font-body py-8">
                     {searchTerm ? "Nenhum aluno encontrado." : "Nenhum aluno cadastrado."}
-                  </TableCell></TableRow>
+                  </p>
                 )}
-              </TableBody>
-            </Table>
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden sm:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="font-body">Aluno</TableHead>
+                      <TableHead className="font-body hidden md:table-cell">Telefone</TableHead>
+                      <TableHead className="font-body hidden lg:table-cell">Cadastro</TableHead>
+                      <TableHead className="font-body">Plano</TableHead>
+                      <TableHead className="font-body hidden lg:table-cell">Início</TableHead>
+                      <TableHead className="font-body">Vencimento</TableHead>
+                      <TableHead className="font-body">Status</TableHead>
+                      <TableHead className="font-body text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredStudents?.map((s: any) => (
+                      <TableRow key={s.user_id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                              <span className="text-xs font-bold text-primary">{s.initials}</span>
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-medium text-sm font-body truncate">{s.full_name || "Sem nome"}</p>
+                              <p className="text-xs text-muted-foreground font-body truncate">{s.email}</p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-body text-sm hidden md:table-cell">{s.phone || "—"}</TableCell>
+                        <TableCell className="font-body text-xs text-muted-foreground hidden lg:table-cell">
+                          {s.created_at ? (
+                            <>
+                              {new Date(s.created_at).toLocaleDateString("pt-BR")}
+                              <br />
+                              <span className="text-[10px]">{new Date(s.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+                            </>
+                          ) : "—"}
+                        </TableCell>
+                        <TableCell className="font-body text-sm">
+                          {s.plan !== "—" ? (
+                            <Badge variant="outline" className={`text-xs font-medium ${getPlanTierClasses(getPlanTier(s.planDurationDays)).badge}`}>
+                              {s.plan}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-body text-sm hidden lg:table-cell">{s.startDate ? new Date(s.startDate).toLocaleDateString("pt-BR") : "—"}</TableCell>
+                        <TableCell className="font-body text-sm">{s.endDate ? new Date(s.endDate).toLocaleDateString("pt-BR") : "—"}</TableCell>
+                        <TableCell>
+                          <Badge variant={s.status === "active" ? "secondary" : s.status === "suspended" ? "outline" : "destructive"} className="text-xs">
+                            {s.status === "active" ? "Ativo" : s.status === "suspended" ? "Suspenso" : s.status === "expired" ? "Vencido" : "Sem plano"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button variant="ghost" size="icon" onClick={() => openView(s)} title="Visualizar"><Eye className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => { setSelected(s); setAnamneseOpen(true); }} title="Anamnese"><ClipboardList className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => { setSelected(s); setImagesOpen(true); }} title="Fotos corporais"><Image className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => openSub(s)} title="Assinatura"><CreditCard className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => openEdit(s)} title="Editar"><Pencil className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="icon" title="Alterar senha" onClick={() => { setPasswordReset({ userId: s.user_id, name: s.full_name || s.email }); setNewPassword(""); }}><Lock className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="icon" title="Copiar link de renovação" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/dashboard/renew?uid=${s.user_id}`); toast.success("Link de renovação copiado!"); }}><Link2 className="w-4 h-4" /></Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild><Button variant="ghost" size="icon" title="Excluir"><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Excluir aluno?</AlertDialogTitle>
+                                  <AlertDialogDescription>Esta ação é irreversível. Todos os dados de {s.full_name || "este aluno"} serão removidos.</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => deleteMutation.mutate(s.user_id)}>Excluir</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {(!filteredStudents || filteredStudents.length === 0) && (
+                      <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground font-body">
+                        {searchTerm ? "Nenhum aluno encontrado." : "Nenhum aluno cadastrado."}
+                      </TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

@@ -46,7 +46,7 @@ serve(async (req) => {
     // Fetch payment
     const { data: payment, error: payErr } = await supabase
       .from("payments")
-      .select("*, plans(name, price)")
+      .select("*, plans(name, price, duration_days)")
       .eq("id", payment_id)
       .single();
 
