@@ -79,7 +79,14 @@ const AdminProtocol = () => {
     if (uid && students?.length && !selected) {
       const found = students.find((s: any) => s.user_id === uid);
       if (found) {
-        openManage(found);
+        setSelected(found);
+        setShowNewForm(false);
+        setEditingId(null);
+        setPreviewProtocol(null);
+        setNewTitle("Protocolo");
+        setNewContent("");
+        setNewPdfFile(null);
+        setDialogOpen(true);
         searchParams.delete("uid");
         setSearchParams(searchParams, { replace: true });
       }
