@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Plus, Search, GripVertical, Video, ChevronDown, ChevronUp, Copy } from "lucide-react";
+import { Pencil, Trash2, Plus, Search, GripVertical, Video, ChevronDown, ChevronUp, Copy, FileText } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,6 +60,9 @@ const AdminTraining = () => {
   const [activeWeekId, setActiveWeekId] = useState<string | null>(null);
   const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
   const [duplicateTargetId, setDuplicateTargetId] = useState<string | null>(null);
+  const [textEditorOpen, setTextEditorOpen] = useState(false);
+  const [textEditorWeekId, setTextEditorWeekId] = useState<string | null>(null);
+  const [textEditorContent, setTextEditorContent] = useState("");
 
   const { data: students } = useQuery({
     queryKey: ["admin-students-training-list"],
@@ -271,6 +274,55 @@ const AdminTraining = () => {
     setExerciseDialogOpen(true);
   };
 
+  const openTextEditor = (weekId: string) => {
+    const weekExercises = (exercises || []).filter((e: any) => e.week_id === weekId).sort((a: any, b: any) => a.sort_order - b.sort_order);
+    const text = weekExercises.map((ex: any) => {
+      const parts = [ex.name];
+      if (ex.reps) parts.push(ex.reps);
+      if (ex.rest_interval) parts.push(`Int: ${ex.rest_interval}`);
+      if (ex.load_suggestion) parts.push(`Carga: ${ex.load_suggestion}`);
+      if (ex.video_url) parts.push(`Video: ${ex.video_url}`);
+      if (ex.notes) parts.push(`Obs: ${ex.notes}`);
+      return parts.join(" | ");
+    }).join("\n");
+    setTextEditorWeekId(weekId);
+    setTextEditorContent(text);
+    setTextEditorOpen(true);
+  };
+
+  const saveTextExercisesMutation = useMutation({
+    mutationFn: async () => {
+      if (!textEditorWeekId) return;
+      const lines = textEditorContent.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+      const parsed = lines.map((line, i) => {
+        const parts = line.split("|").map(p => p.trim());
+        const name = parts[0] || "Exercício";
+        let reps = "", rest_interval = "", load_suggestion = "", video_url = "", notes = "";
+        for (let j = 1; j < parts.length; j++) {
+          const p = parts[j];
+          if (p.toLowerCase().startsWith("int:")) rest_interval = p.slice(4).trim();
+          else if (p.toLowerCase().startsWith("carga:")) load_suggestion = p.slice(6).trim();
+          else if (p.toLowerCase().startsWith("video:")) video_url = p.slice(6).trim();
+          else if (p.toLowerCase().startsWith("obs:")) notes = p.slice(4).trim();
+          else if (!reps) reps = p;
+          else notes = notes ? `${notes}; ${p}` : p;
+        }
+        return { week_id: textEditorWeekId!, name, reps, rest_interval, load_suggestion, video_url, notes, sets: "", description: "", sort_order: i };
+      });
+      await supabase.from("training_exercises").delete().eq("week_id", textEditorWeekId);
+      if (parsed.length > 0) {
+        const { error } = await supabase.from("training_exercises").insert(parsed);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Exercícios atualizados por texto!");
+      qc.invalidateQueries({ queryKey: ["admin-training-exercises"] });
+      setTextEditorOpen(false);
+    },
+    onError: () => toast.error("Erro ao salvar exercícios"),
+  });
+
   const embedUrl = editingExercise?.video_url ? getEmbedUrl(editingExercise.video_url) : null;
 
   return (
@@ -417,9 +469,14 @@ const AdminTraining = () => {
                         </div>
                       </div>
                     ))}
-                    <Button variant="outline" size="sm" className="w-full" onClick={() => openNewExercise(week.id)}>
-                      <Plus className="w-4 h-4 mr-1" /> Adicionar Exercício
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="flex-1" onClick={() => openNewExercise(week.id)}>
+                        <Plus className="w-4 h-4 mr-1" /> Adicionar Exercício
+                      </Button>
+                      <Button variant="outline" size="sm" className="flex-1" onClick={() => openTextEditor(week.id)}>
+                        <FileText className="w-4 h-4 mr-1" /> Editar por Texto
+                      </Button>
+                    </div>
                   </CardContent>
                 )}
               </Card>
@@ -524,6 +581,34 @@ const AdminTraining = () => {
             <Button variant="outline" onClick={() => setDuplicateDialogOpen(false)}>Cancelar</Button>
             <Button onClick={() => duplicateTrainingMutation.mutate()} disabled={!duplicateTargetId || duplicateTrainingMutation.isPending}>
               {duplicateTrainingMutation.isPending ? "Duplicando..." : "Duplicar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Text editor dialog */}
+      <Dialog open={textEditorOpen} onOpenChange={setTextEditorOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle className="font-display">Editar Exercícios por Texto</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="p-3 rounded-lg bg-muted/50 border border-border text-xs text-muted-foreground space-y-1">
+              <p className="font-semibold text-foreground">Formato: um exercício por linha</p>
+              <p>Nome | Séries/Reps | Int: intervalo | Carga: sugestão | Video: url | Obs: notas</p>
+              <p className="italic">Exemplo: Supino Reto | 4x12 | Int: 60s | Carga: 40kg</p>
+              <p className="text-destructive">⚠ Ao salvar, os exercícios existentes serão substituídos.</p>
+            </div>
+            <Textarea
+              value={textEditorContent}
+              onChange={(e) => setTextEditorContent(e.target.value)}
+              rows={12}
+              placeholder={"Supino Reto | 4x12 | Int: 60s\nPuxada Frontal | 3x15 | Int: 45s\nAgachamento | 4x10 | Int: 90s | Carga: 60kg"}
+              className="font-mono text-sm"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTextEditorOpen(false)}>Cancelar</Button>
+            <Button onClick={() => saveTextExercisesMutation.mutate()} disabled={saveTextExercisesMutation.isPending}>
+              {saveTextExercisesMutation.isPending ? "Salvando..." : "Salvar Exercícios"}
             </Button>
           </DialogFooter>
         </DialogContent>
