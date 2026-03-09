@@ -21,6 +21,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
+import DocumentUpload from "@/components/shared/DocumentUpload";
 import AdminBodyImageUpload from "@/components/admin/AdminBodyImageUpload";
 import AdminImageHistory from "@/components/admin/AdminImageHistory";
 import EvolutionGenerator from "@/components/admin/EvolutionGenerator";
@@ -942,36 +943,12 @@ const AdminStudents = () => {
         </TabsContent>
 
         <TabsContent value="docs" className="space-y-4">
-          <div>
-            <Label className="font-body">Exames Laboratoriais (PDF, opcional)</Label>
-            <div className="flex items-center gap-2 mt-1">
-              <label className="flex items-center gap-2 px-3 py-2 border border-input rounded-md cursor-pointer hover:bg-accent text-sm">
-                <Upload className="w-4 h-4" />
-                {uploading === "lab_exam_url" ? "Enviando..." : "Selecionar PDF"}
-                <input type="file" accept=".pdf" className="hidden" onChange={(e) => handleFileUpload(e, "lab_exam_url")} />
-              </label>
-              {form.lab_exam_url && (
-                <a href={form.lab_exam_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline flex items-center gap-1">
-                  <FileText className="w-3 h-3" /> Ver arquivo
-                </a>
-              )}
-            </div>
-          </div>
-          <div>
-            <Label className="font-body">Receita Médica (PDF, opcional)</Label>
-            <div className="flex items-center gap-2 mt-1">
-              <label className="flex items-center gap-2 px-3 py-2 border border-input rounded-md cursor-pointer hover:bg-accent text-sm">
-                <Upload className="w-4 h-4" />
-                {uploading === "medical_prescription_url" ? "Enviando..." : "Selecionar PDF"}
-                <input type="file" accept=".pdf" className="hidden" onChange={(e) => handleFileUpload(e, "medical_prescription_url")} />
-              </label>
-              {form.medical_prescription_url && (
-                <a href={form.medical_prescription_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline flex items-center gap-1">
-                  <FileText className="w-3 h-3" /> Ver arquivo
-                </a>
-              )}
-            </div>
-          </div>
+          {selected?.user_id && (
+            <DocumentUpload
+              userId={selected.user_id}
+              onUploaded={() => qc.invalidateQueries({ queryKey: ["admin-students-list"] })}
+            />
+          )}
           {renderSaveTabButton("docs", isCreate)}
         </TabsContent>
       </Tabs>
@@ -1365,18 +1342,10 @@ const AdminStudents = () => {
                 )}
                 <section>
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Documentos</h3>
-                  <div className="flex flex-col gap-2">
-                    {selected.lab_exam_url ? (
-                      <a href={selected.lab_exam_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline flex items-center gap-1">
-                        <FileText className="w-4 h-4" /> Exames Laboratoriais
-                      </a>
-                    ) : <p className="text-sm text-muted-foreground">Exames: não enviado</p>}
-                    {selected.medical_prescription_url ? (
-                      <a href={selected.medical_prescription_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline flex items-center gap-1">
-                        <FileText className="w-4 h-4" /> Receita Médica
-                      </a>
-                    ) : <p className="text-sm text-muted-foreground">Receita: não enviada</p>}
-                  </div>
+                  <DocumentUpload
+                    userId={selected.user_id}
+                    onUploaded={() => qc.invalidateQueries({ queryKey: ["admin-students-list"] })}
+                  />
                 </section>
                 {/* Body Images in View */}
                 <section>
