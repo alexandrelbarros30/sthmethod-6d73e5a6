@@ -174,10 +174,10 @@ export const generateStudentPDF = async (options: PDFContentOptions): Promise<Bl
   return pdf.output('blob');
 };
 
-// Helper to check if student has premium plan (6M or Impulso 90D)
+// Helper to check if student has premium plan (6M only)
 export const canDownloadPDF = (planName?: string): boolean => {
   if (!planName) return false;
-  const premiumPlans = ['6M', 'Impulso 90D', '6 Meses', 'Impulso'];
+  const premiumPlans = ['6M', '6 Meses'];
   return premiumPlans.some(plan => 
     planName.toLowerCase().includes(plan.toLowerCase())
   );
