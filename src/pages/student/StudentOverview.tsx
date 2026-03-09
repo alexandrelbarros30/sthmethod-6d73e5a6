@@ -18,6 +18,7 @@ import SubscriptionAlerts from "@/components/student/SubscriptionAlerts";
 import ChangePasswordDialog from "@/components/student/ChangePasswordDialog";
 import EvolutionWeightHistory from "@/components/student/EvolutionWeightHistory";
 import { calculateAge } from "@/lib/macro-calculator";
+import DocumentUpload from "@/components/shared/DocumentUpload";
 import {
   objectiveLabels, activityLabels,
   trainingIntensityOptions, cardioIntensityOptions,
