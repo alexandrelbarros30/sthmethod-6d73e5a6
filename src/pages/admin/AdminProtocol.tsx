@@ -18,7 +18,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 const AdminProtocol = () => {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [returnToEdit, setReturnToEdit] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selected, setSelected] = useState<any>(null);
