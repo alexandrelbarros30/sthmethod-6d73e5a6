@@ -118,7 +118,10 @@ const StudentRenew = () => {
     <DashboardLayout role="student" title="Renovação de Plano" subtitle={`Olá, ${profile?.full_name || ""}! Escolha seu plano para renovar.`}>
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
         {plans?.map((plan: any) => {
-          const finalPrice = calculateFinalPrice(plan);
+          const basePrice = calculateFinalPrice(plan);
+          const coupon = couponsByPlan[plan.id];
+          const couponDiscount = coupon?.discountAmount || 0;
+          const finalPrice = Math.max(0, Math.round((basePrice - couponDiscount) * 100) / 100);
           const link = getPlanLink(plan.id);
           const hasPix = link?.pix_enabled && link?.pix_code;
           const hasCard = link?.card_enabled && link?.card_link;
@@ -130,16 +133,24 @@ const StudentRenew = () => {
               <CardHeader className="text-center pb-2 pt-6">
                 <CardTitle className="text-lg font-display">{plan.name}</CardTitle>
                 {plan.subtitle && <p className="text-xs text-muted-foreground">{plan.subtitle}</p>}
-                {hasDiscount && <p className="text-sm line-through text-muted-foreground/60">R$ {originalPrice.toFixed(2)}</p>}
+                {(hasDiscount || couponDiscount > 0) && <p className="text-sm line-through text-muted-foreground/60">R$ {originalPrice.toFixed(2)}</p>}
                 <p className="text-2xl font-bold text-foreground mt-1">R$ {finalPrice.toFixed(2)}</p>
                 {hasDiscount && (
                   <Badge variant="outline" className="text-xs text-primary border-primary/30">
                     {plan.discount_type === "percentage" ? `${plan.discount_value}% OFF` : `R$ ${plan.discount_value} OFF`}
                   </Badge>
                 )}
+                {couponDiscount > 0 && (
+                  <Badge variant="outline" className="text-xs text-primary border-primary/30">Cupom: -R$ {couponDiscount.toFixed(2)}</Badge>
+                )}
                 <p className="text-xs text-muted-foreground">{plan.duration}</p>
               </CardHeader>
               <CardContent className="space-y-3">
+                <CouponInput
+                  planId={plan.id}
+                  originalPrice={basePrice}
+                  onCouponApplied={(c) => setCouponsByPlan(prev => ({ ...prev, [plan.id]: c }))}
+                />
                 {hasPix && (
                   <div className="space-y-2 p-3 rounded-lg border border-border">
                     <div className="flex items-center gap-2">
