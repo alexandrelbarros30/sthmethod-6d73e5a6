@@ -185,6 +185,56 @@ export type Database = {
         }
         Relationships: []
       }
+      coupons: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          current_uses: number
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          id: string
+          max_uses: number
+          plan_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          current_uses?: number
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          max_uses?: number
+          plan_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          current_uses?: number
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          max_uses?: number
+          plan_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupons_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       diet_foods: {
         Row: {
           carbs_g: number
@@ -661,6 +711,8 @@ export type Database = {
           ai_verification_notes: string | null
           ai_verification_status: string | null
           amount: number
+          coupon_discount: number | null
+          coupon_id: string | null
           created_at: string
           id: string
           installments: number
@@ -679,6 +731,8 @@ export type Database = {
           ai_verification_notes?: string | null
           ai_verification_status?: string | null
           amount: number
+          coupon_discount?: number | null
+          coupon_id?: string | null
           created_at?: string
           id?: string
           installments?: number
@@ -697,6 +751,8 @@ export type Database = {
           ai_verification_notes?: string | null
           ai_verification_status?: string | null
           amount?: number
+          coupon_discount?: number | null
+          coupon_id?: string | null
           created_at?: string
           id?: string
           installments?: number
@@ -711,6 +767,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "payments_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payments_plan_id_fkey"
             columns: ["plan_id"]

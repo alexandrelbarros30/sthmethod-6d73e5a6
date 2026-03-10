@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Check, CreditCard, QrCode, ExternalLink, Copy, CheckCircle2, ArrowRight, ArrowLeft, Loader2, Upload, ImageIcon, ShieldCheck, AlertTriangle } from "lucide-react";
+import CouponInput from "@/components/CouponInput";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +33,7 @@ const StudentSubscription = () => {
   const [renewalStep, setRenewalStep] = useState(1); // 1=update body, 2=payment
   const [renewalOpen, setRenewalOpen] = useState(false);
   const [renewalForm, setRenewalForm] = useState({ weight: "", height: "" });
+  const [renewalCoupon, setRenewalCoupon] = useState<any>(null);
 
   const { data: profile, refetch: refetchProfile } = useQuery({
     queryKey: ["student-profile-onboard", user?.id],
@@ -312,13 +314,22 @@ const StudentSubscription = () => {
             const hasPix = link?.pix_enabled && link?.pix_code;
             const hasCard = link?.card_enabled && link?.card_link;
             const hasAny = hasPix || hasCard;
+            const renewBase = calculateFinalPrice(selectedPlan);
+            const renewCouponDiscount = renewalCoupon?.discountAmount || 0;
+            const renewFinal = Math.max(0, Math.round((renewBase - renewCouponDiscount) * 100) / 100);
             return (
               <div className="space-y-4">
                 <div className="text-center p-4 rounded-lg bg-muted/50">
                   <p className="text-sm text-muted-foreground">Renovar plano</p>
                   <p className="text-lg font-bold text-foreground">{selectedPlan.name}</p>
-                  <p className="text-2xl font-bold text-primary mt-1">R$ {calculateFinalPrice(selectedPlan).toFixed(2)}</p>
+                  {renewCouponDiscount > 0 && <p className="text-sm line-through text-muted-foreground/60">R$ {renewBase.toFixed(2)}</p>}
+                  <p className="text-2xl font-bold text-primary mt-1">R$ {renewFinal.toFixed(2)}</p>
                 </div>
+                <CouponInput
+                  planId={selectedPlan.id}
+                  originalPrice={renewBase}
+                  onCouponApplied={setRenewalCoupon}
+                />
                 {!hasAny && <p className="text-sm text-muted-foreground text-center py-4">Nenhum método disponível. Entre em contato com o suporte.</p>}
                 {hasPix && (
                   <div className="space-y-2 p-3 rounded-lg border border-border">
@@ -400,37 +411,52 @@ const CheckoutDialog = ({ open, onOpenChange, selectedPlan, getPlanLink, calcula
   const [uploading, setUploading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [verificationResult, setVerificationResult] = useState<{ status: string; notes: string } | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const couponDiscount = appliedCoupon?.discountAmount || 0;
+  const baseFinalPrice = selectedPlan ? calculateFinalPrice(selectedPlan) : 0;
+  const priceAfterCoupon = Math.max(0, Math.round((baseFinalPrice - couponDiscount) * 100) / 100);
 
   const handleClose = (val: boolean) => {
     if (!val) {
       setReceiptStep("payment");
       setVerificationResult(null);
+      setAppliedCoupon(null);
     }
     onOpenChange(val);
   };
 
   const createPendingPayment = async () => {
     if (!user || !selectedPlan) return null;
+    const amount = priceAfterCoupon;
     const priceStr = selectedPlan.price.replace(/[^\d,\.]/g, "").replace(",", ".");
-    let amount = parseFloat(priceStr) || 0;
-    if (selectedPlan.discount_type === "percentage" && selectedPlan.discount_value > 0) {
-      amount = amount * (1 - selectedPlan.discount_value / 100);
-    } else if (selectedPlan.discount_type === "fixed" && selectedPlan.discount_value > 0) {
-      amount = Math.max(0, amount - selectedPlan.discount_value);
-    }
-    amount = Math.round(amount * 100) / 100;
+    const origAmount = parseFloat(priceStr) || 0;
 
-    const { data, error } = await supabase.from("payments").insert({
+    const insertPayload: any = {
       user_id: user.id,
       plan_id: selectedPlan.id,
       amount,
-      original_amount: parseFloat(priceStr) || 0,
+      original_amount: origAmount,
       method: "pix",
       action_type: "new",
       status: "pending",
-    }).select().single();
+    };
+    if (appliedCoupon?.id) {
+      insertPayload.coupon_id = appliedCoupon.id;
+      insertPayload.coupon_discount = couponDiscount;
+    }
+
+    const { data, error } = await supabase.from("payments").insert(insertPayload).select().single();
     if (error) throw error;
+
+    // Increment coupon usage via edge function
+    if (appliedCoupon?.id) {
+      await supabase.functions.invoke("validate-coupon", {
+        body: { coupon_id: appliedCoupon.id, plan_id: selectedPlan.id },
+      });
+    }
+
     return data;
   };
 
@@ -502,8 +528,14 @@ const CheckoutDialog = ({ open, onOpenChange, selectedPlan, getPlanLink, calcula
               <div className="text-center p-4 rounded-lg bg-muted/50">
                 <p className="text-sm text-muted-foreground">Plano selecionado</p>
                 <p className="text-lg font-bold text-foreground">{selectedPlan.name}</p>
-                <p className="text-2xl font-bold text-primary mt-1">R$ {calculateFinalPrice(selectedPlan).toFixed(2)}</p>
+                {couponDiscount > 0 && <p className="text-sm line-through text-muted-foreground/60">R$ {baseFinalPrice.toFixed(2)}</p>}
+                <p className="text-2xl font-bold text-primary mt-1">R$ {priceAfterCoupon.toFixed(2)}</p>
               </div>
+              <CouponInput
+                planId={selectedPlan.id}
+                originalPrice={baseFinalPrice}
+                onCouponApplied={setAppliedCoupon}
+              />
               {!hasAny && <p className="text-sm text-muted-foreground text-center py-4">Nenhum método disponível. Entre em contato com o suporte.</p>}
               {hasPix && (
                 <div className="space-y-2 p-3 rounded-lg border border-border">
