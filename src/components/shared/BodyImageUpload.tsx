@@ -130,6 +130,8 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
 
   const handleFileSelect = (type: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    // Reset input so the same file can be re-selected
+    e.target.value = "";
     if (!file) return;
     
     // On many mobile browsers file.type can be empty or unexpected — accept liberally
