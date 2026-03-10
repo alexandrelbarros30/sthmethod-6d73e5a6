@@ -16,6 +16,7 @@ const StudentRenew = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [pixCopied, setPixCopied] = useState(false);
+  const [couponsByPlan, setCouponsByPlan] = useState<Record<string, any>>({});
   const targetUserId = searchParams.get("uid");
 
   // Verify user matches the link target
