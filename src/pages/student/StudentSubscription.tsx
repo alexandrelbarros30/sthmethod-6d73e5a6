@@ -33,6 +33,7 @@ const StudentSubscription = () => {
   const [renewalStep, setRenewalStep] = useState(1); // 1=update body, 2=payment
   const [renewalOpen, setRenewalOpen] = useState(false);
   const [renewalForm, setRenewalForm] = useState({ weight: "", height: "" });
+  const [renewalCoupon, setRenewalCoupon] = useState<any>(null);
 
   const { data: profile, refetch: refetchProfile } = useQuery({
     queryKey: ["student-profile-onboard", user?.id],
