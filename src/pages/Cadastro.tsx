@@ -429,6 +429,13 @@ const Cadastro = () => {
     setStep(4);
   };
 
+  // Skip images and go directly to plans
+  const handleSkipImages = () => {
+    supabase.from("profiles").update({ onboarding_complete: true }).eq("user_id", userId!);
+    toast.info("Você pode enviar as fotos depois. Escolha seu plano!");
+    setStep(4);
+  };
+
   const handlePaymentNotified = async () => {
     setCheckoutOpen(false);
     // Save a pending payment record so admin can see which plan was chosen
