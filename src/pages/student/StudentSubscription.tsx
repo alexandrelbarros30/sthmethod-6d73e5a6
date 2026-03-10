@@ -419,25 +419,34 @@ const CheckoutDialog = ({ open, onOpenChange, selectedPlan, getPlanLink, calcula
 
   const createPendingPayment = async () => {
     if (!user || !selectedPlan) return null;
+    const amount = priceAfterCoupon;
     const priceStr = selectedPlan.price.replace(/[^\d,\.]/g, "").replace(",", ".");
-    let amount = parseFloat(priceStr) || 0;
-    if (selectedPlan.discount_type === "percentage" && selectedPlan.discount_value > 0) {
-      amount = amount * (1 - selectedPlan.discount_value / 100);
-    } else if (selectedPlan.discount_type === "fixed" && selectedPlan.discount_value > 0) {
-      amount = Math.max(0, amount - selectedPlan.discount_value);
-    }
-    amount = Math.round(amount * 100) / 100;
+    const origAmount = parseFloat(priceStr) || 0;
 
-    const { data, error } = await supabase.from("payments").insert({
+    const insertPayload: any = {
       user_id: user.id,
       plan_id: selectedPlan.id,
       amount,
-      original_amount: parseFloat(priceStr) || 0,
+      original_amount: origAmount,
       method: "pix",
       action_type: "new",
       status: "pending",
-    }).select().single();
+    };
+    if (appliedCoupon?.id) {
+      insertPayload.coupon_id = appliedCoupon.id;
+      insertPayload.coupon_discount = couponDiscount;
+    }
+
+    const { data, error } = await supabase.from("payments").insert(insertPayload).select().single();
     if (error) throw error;
+
+    // Increment coupon usage via edge function
+    if (appliedCoupon?.id) {
+      await supabase.functions.invoke("validate-coupon", {
+        body: { coupon_id: appliedCoupon.id, plan_id: selectedPlan.id },
+      });
+    }
+
     return data;
   };
 
