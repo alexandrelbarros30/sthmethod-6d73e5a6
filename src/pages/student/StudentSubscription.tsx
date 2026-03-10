@@ -88,7 +88,7 @@ const StudentSubscription = () => {
   // For new students: determine which step to show
   const needsOnboarding = !isOnboarded && !isActive;
   const effectiveOnboardingStep = needsOnboarding
-    ? (!profileComplete ? 1 : !hasImages ? 2 : 3)
+    ? (!profileComplete ? 1 : 3)
     : onboardingStep;
 
   const calculateFinalPrice = (plan: any) => {

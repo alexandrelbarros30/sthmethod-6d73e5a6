@@ -809,7 +809,10 @@ const Cadastro = () => {
                 />
               </CardContent>
             </Card>
-            <Button variant="outline" onClick={() => setStep(2)} className="w-full"><ArrowLeft className="w-4 h-4 mr-2" /> Voltar ao perfil</Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setStep(2)} className="flex-1"><ArrowLeft className="w-4 h-4 mr-2" /> Voltar</Button>
+              <Button variant="secondary" onClick={handleSkipImages} className="flex-1">Pular por agora <ArrowRight className="w-4 h-4 ml-2" /></Button>
+            </div>
           </div>
         )}
 
