@@ -108,6 +108,8 @@ const AdminBodyImageUpload = ({ userId, onComplete }: AdminBodyImageUploadProps)
 
   const handleFileSelect = (type: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    // Reset input so the same file can be re-selected
+    e.target.value = "";
     if (!file) return;
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "image/jpg", ""];
     const allowedExt = /\.(jpg|jpeg|png|webp|heic|heif)$/i;
