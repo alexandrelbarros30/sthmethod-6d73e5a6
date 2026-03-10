@@ -151,7 +151,7 @@ const StudentSubscription = () => {
                 {effectiveOnboardingStep > n ? <Check className="w-4 h-4" /> : n}
               </div>
               <span className={`text-sm font-body ${effectiveOnboardingStep >= n ? "text-foreground" : "text-muted-foreground"}`}>{label}</span>
-              {n < 3 && <ArrowRight className="w-4 h-4 text-muted-foreground" />}
+              {idx < arr.length - 1 && <ArrowRight className="w-4 h-4 text-muted-foreground" />}
             </div>
           ))}
         </div>

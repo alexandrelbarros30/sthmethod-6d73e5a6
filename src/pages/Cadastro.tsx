@@ -795,9 +795,9 @@ const Cadastro = () => {
           <div className="animate-fade-in space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="font-display text-xl">Fotos corporais</CardTitle>
+                <CardTitle className="font-display text-xl">Fotos corporais (opcional)</CardTitle>
                 <p className="text-sm text-muted-foreground font-body">
-                  Envie 3 fotos obrigatórias: frente, costas e perfil. Aceitos: .jpg e .png
+                  Envie 3 fotos: frente, costas e perfil. Você pode pular e enviar depois com seu consultor.
                 </p>
               </CardHeader>
               <CardContent>
