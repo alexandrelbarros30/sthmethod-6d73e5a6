@@ -142,9 +142,8 @@ const StudentSubscription = () => {
         <div className="flex items-center justify-center gap-2 mb-8">
           {[
             { n: 1, label: "Cadastro" },
-            { n: 2, label: "Fotos" },
             { n: 3, label: "Pagamento" },
-          ].map(({ n, label }) => (
+          ].map(({ n, label }, idx, arr) => (
             <div key={n} className="flex items-center gap-2">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                 effectiveOnboardingStep >= n ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
