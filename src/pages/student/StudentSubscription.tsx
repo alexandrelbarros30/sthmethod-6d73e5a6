@@ -314,13 +314,22 @@ const StudentSubscription = () => {
             const hasPix = link?.pix_enabled && link?.pix_code;
             const hasCard = link?.card_enabled && link?.card_link;
             const hasAny = hasPix || hasCard;
+            const renewBase = calculateFinalPrice(selectedPlan);
+            const renewCouponDiscount = renewalCoupon?.discountAmount || 0;
+            const renewFinal = Math.max(0, Math.round((renewBase - renewCouponDiscount) * 100) / 100);
             return (
               <div className="space-y-4">
                 <div className="text-center p-4 rounded-lg bg-muted/50">
                   <p className="text-sm text-muted-foreground">Renovar plano</p>
                   <p className="text-lg font-bold text-foreground">{selectedPlan.name}</p>
-                  <p className="text-2xl font-bold text-primary mt-1">R$ {calculateFinalPrice(selectedPlan).toFixed(2)}</p>
+                  {renewCouponDiscount > 0 && <p className="text-sm line-through text-muted-foreground/60">R$ {renewBase.toFixed(2)}</p>}
+                  <p className="text-2xl font-bold text-primary mt-1">R$ {renewFinal.toFixed(2)}</p>
                 </div>
+                <CouponInput
+                  planId={selectedPlan.id}
+                  originalPrice={renewBase}
+                  onCouponApplied={setRenewalCoupon}
+                />
                 {!hasAny && <p className="text-sm text-muted-foreground text-center py-4">Nenhum método disponível. Entre em contato com o suporte.</p>}
                 {hasPix && (
                   <div className="space-y-2 p-3 rounded-lg border border-border">
