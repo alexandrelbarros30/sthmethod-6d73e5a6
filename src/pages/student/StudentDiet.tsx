@@ -186,9 +186,7 @@ const StudentDiet = () => {
                 </div>
               )}
               {diet.content && (
-                <div className="whitespace-pre-wrap text-sm text-foreground font-body leading-relaxed">
-                  {diet.content}
-                </div>
+                <DietContentRenderer content={diet.content} />
               )}
             </CardContent>
           </Card>
