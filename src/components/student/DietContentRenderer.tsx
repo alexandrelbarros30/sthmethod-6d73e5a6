@@ -8,14 +8,18 @@ import React from "react";
  */
 
 const MEAL_HEADING_RE = /^(REFEIC[ÃA]O\s*\d+|REFEI[CÇ][ÃA]O\s*\d+|PRE[- ]?TREINO|P[OÓ]S[- ]?TREINO|CEIA|LANCHE\s*\d*|CAFÉ\s*DA\s*MANH[ÃA]|ALMO[CÇ]O|JANTAR)/i;
-const QTY_UNIT_RE = /(\d+[.,]?\d*)\s*(g|kg|mg|ml|l|litro|litros|un|unidade|unidades|colher|colheres|xícara|xícaras|fatia|fatias|cápsula|cápsulas|cap|caps|saches?|sachês?|porç[ãa]o|porções|scoop|scoops)\b/gi;
+const QTY_UNIT_RE = /(\d+[.,\/]?\d*)\s*(g|gr|grama|gramas|kg|mg|mcg|ml|l|litro|litros|un|und|unidade|unidades|colher|colheres|c\.?s\.?|c\.?ch\.?|xícara|xícaras|xic|fatia|fatias|cápsula|cápsulas|cap|caps|saches?|sachês?|sachê|porç[ãa]o|porções|porcao|scoop|scoops|dose|doses|gota|gotas|pedaço|pedaços|pote|potes|copo|copos|punhado|punhados|pitada|pitadas|lata|latas|tablete|tabletes|barra|barras|ovo|ovos|clara|claras|pç|pçs|tb|tbs|ud)\b/gi;
+// Also match standalone numbers at start of line (e.g. "2 ovos", "1 banana")
+const STANDALONE_NUM_RE = /^(\d+[.,\/]?\d*)\s+/i;
 
 function highlightUnits(text: string): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
-  const regex = new RegExp(QTY_UNIT_RE.source, "gi");
+  // Combined regex: qty+unit OR standalone number at word boundary followed by space
+  const combinedSource = `(\\d+[.,\\/]?\\d*)\\s*(g|gr|grama|gramas|kg|mg|mcg|ml|l|litro|litros|un|und|unidade|unidades|colher|colheres|c\\.?s\\.?|c\\.?ch\\.?|xícara|xícaras|xic|fatia|fatias|cápsula|cápsulas|cap|caps|saches?|sachês?|sachê|porç[ãa]o|porções|porcao|scoop|scoops|dose|doses|gota|gotas|pedaço|pedaços|pote|potes|copo|copos|punhado|punhados|pitada|pitadas|lata|latas|tablete|tabletes|barra|barras|ovo|ovos|clara|claras|pç|pçs|tb|tbs|ud)\\b`;
+  const regex = new RegExp(combinedSource, "gi");
 
   while ((match = regex.exec(text)) !== null) {
     if (match.index > lastIndex) {
@@ -31,6 +35,19 @@ function highlightUnits(text: string): React.ReactNode[] {
 
   if (lastIndex < text.length) {
     parts.push(text.slice(lastIndex));
+  }
+
+  // If no unit matches found, try to highlight leading standalone numbers
+  if (parts.length <= 1) {
+    const standaloneMatch = STANDALONE_NUM_RE.exec(text);
+    if (standaloneMatch) {
+      return [
+        <span key="num" className="text-primary font-semibold">
+          {standaloneMatch[1]}
+        </span>,
+        text.slice(standaloneMatch[1].length),
+      ];
+    }
   }
 
   return parts;
