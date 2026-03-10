@@ -412,6 +412,7 @@ const CheckoutDialog = ({ open, onOpenChange, selectedPlan, getPlanLink, calcula
     if (!val) {
       setReceiptStep("payment");
       setVerificationResult(null);
+      setAppliedCoupon(null);
     }
     onOpenChange(val);
   };
