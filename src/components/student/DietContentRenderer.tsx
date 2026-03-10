@@ -8,7 +8,9 @@ import React from "react";
  */
 
 const MEAL_HEADING_RE = /^(REFEIC[ÃA]O\s*\d+|REFEI[CÇ][ÃA]O\s*\d+|PRE[- ]?TREINO|P[OÓ]S[- ]?TREINO|CEIA|LANCHE\s*\d*|CAFÉ\s*DA\s*MANH[ÃA]|ALMO[CÇ]O|JANTAR)/i;
-const QTY_UNIT_RE = /(\d+[.,]?\d*)\s*(g|kg|mg|ml|l|litro|litros|un|unidade|unidades|colher|colheres|xícara|xícaras|fatia|fatias|cápsula|cápsulas|cap|caps|saches?|sachês?|porç[ãa]o|porções|scoop|scoops)\b/gi;
+const QTY_UNIT_RE = /(\d+[.,\/]?\d*)\s*(g|gr|grama|gramas|kg|mg|mcg|ml|l|litro|litros|un|und|unidade|unidades|colher|colheres|c\.?s\.?|c\.?ch\.?|xícara|xícaras|xic|fatia|fatias|cápsula|cápsulas|cap|caps|saches?|sachês?|sachê|porç[ãa]o|porções|porcao|scoop|scoops|dose|doses|gota|gotas|pedaço|pedaços|pote|potes|copo|copos|punhado|punhados|pitada|pitadas|lata|latas|tablete|tabletes|barra|barras|ovo|ovos|clara|claras|pç|pçs|tb|tbs|ud)\b/gi;
+// Also match standalone numbers at start of line (e.g. "2 ovos", "1 banana")
+const STANDALONE_NUM_RE = /^(\d+[.,\/]?\d*)\s+/i;
 
 function highlightUnits(text: string): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
