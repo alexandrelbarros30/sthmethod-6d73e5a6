@@ -401,7 +401,12 @@ const CheckoutDialog = ({ open, onOpenChange, selectedPlan, getPlanLink, calcula
   const [uploading, setUploading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [verificationResult, setVerificationResult] = useState<{ status: string; notes: string } | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const couponDiscount = appliedCoupon?.discountAmount || 0;
+  const baseFinalPrice = selectedPlan ? calculateFinalPrice(selectedPlan) : 0;
+  const priceAfterCoupon = Math.max(0, Math.round((baseFinalPrice - couponDiscount) * 100) / 100);
 
   const handleClose = (val: boolean) => {
     if (!val) {
