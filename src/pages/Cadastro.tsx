@@ -429,6 +429,13 @@ const Cadastro = () => {
     setStep(4);
   };
 
+  // Skip images and go directly to plans
+  const handleSkipImages = () => {
+    supabase.from("profiles").update({ onboarding_complete: true }).eq("user_id", userId!);
+    toast.info("Você pode enviar as fotos depois. Escolha seu plano!");
+    setStep(4);
+  };
+
   const handlePaymentNotified = async () => {
     setCheckoutOpen(false);
     // Save a pending payment record so admin can see which plan was chosen
@@ -788,9 +795,9 @@ const Cadastro = () => {
           <div className="animate-fade-in space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="font-display text-xl">Fotos corporais</CardTitle>
+                <CardTitle className="font-display text-xl">Fotos corporais (opcional)</CardTitle>
                 <p className="text-sm text-muted-foreground font-body">
-                  Envie 3 fotos obrigatórias: frente, costas e perfil. Aceitos: .jpg e .png
+                  Envie 3 fotos: frente, costas e perfil. Você pode pular e enviar depois com seu consultor.
                 </p>
               </CardHeader>
               <CardContent>
@@ -802,7 +809,10 @@ const Cadastro = () => {
                 />
               </CardContent>
             </Card>
-            <Button variant="outline" onClick={() => setStep(2)} className="w-full"><ArrowLeft className="w-4 h-4 mr-2" /> Voltar ao perfil</Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setStep(2)} className="flex-1"><ArrowLeft className="w-4 h-4 mr-2" /> Voltar</Button>
+              <Button variant="secondary" onClick={handleSkipImages} className="flex-1">Pular por agora <ArrowRight className="w-4 h-4 ml-2" /></Button>
+            </div>
           </div>
         )}
 

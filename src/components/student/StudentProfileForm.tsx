@@ -103,7 +103,6 @@ export function getPendingFields(form: ProfileFormData, hasImages: boolean): str
   if (!form.objective) pending.push("Objetivo");
   if (!form.current_protocol) pending.push("Protocolo atual");
   if (!form.comorbidities) pending.push("Comorbidades");
-  if (!hasImages) pending.push("Imagens corporais (3 fotos)");
   return pending;
 }
 

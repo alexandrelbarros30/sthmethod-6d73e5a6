@@ -88,7 +88,7 @@ const StudentSubscription = () => {
   // For new students: determine which step to show
   const needsOnboarding = !isOnboarded && !isActive;
   const effectiveOnboardingStep = needsOnboarding
-    ? (!profileComplete ? 1 : !hasImages ? 2 : 3)
+    ? (!profileComplete ? 1 : 3)
     : onboardingStep;
 
   const calculateFinalPrice = (plan: any) => {
@@ -142,9 +142,8 @@ const StudentSubscription = () => {
         <div className="flex items-center justify-center gap-2 mb-8">
           {[
             { n: 1, label: "Cadastro" },
-            { n: 2, label: "Fotos" },
             { n: 3, label: "Pagamento" },
-          ].map(({ n, label }) => (
+          ].map(({ n, label }, idx, arr) => (
             <div key={n} className="flex items-center gap-2">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                 effectiveOnboardingStep >= n ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
@@ -152,7 +151,7 @@ const StudentSubscription = () => {
                 {effectiveOnboardingStep > n ? <Check className="w-4 h-4" /> : n}
               </div>
               <span className={`text-sm font-body ${effectiveOnboardingStep >= n ? "text-foreground" : "text-muted-foreground"}`}>{label}</span>
-              {n < 3 && <ArrowRight className="w-4 h-4 text-muted-foreground" />}
+              {idx < arr.length - 1 && <ArrowRight className="w-4 h-4 text-muted-foreground" />}
             </div>
           ))}
         </div>
