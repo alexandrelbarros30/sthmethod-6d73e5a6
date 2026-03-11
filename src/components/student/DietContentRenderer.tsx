@@ -77,7 +77,7 @@ const DietContentRenderer: React.FC<DietContentRendererProps> = ({ content }) =>
       // Solid line before meal headings (except the very first element)
       if (elements.length > 0) {
         elements.push(
-          <div key={`solid-${i}`} className="border-t border-foreground/30 mt-7 mb-5" />
+          <div key={`solid-${i}`} className="border-t border-foreground/30 mt-7 mb-8" />
         );
       }
       elements.push(
