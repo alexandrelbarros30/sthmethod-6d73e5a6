@@ -82,6 +82,7 @@ export const emptyProfileForm: ProfileFormData = {
 export function profileFromDb(p: any): ProfileFormData {
   return {
     full_name: p.full_name || "",
+    cpf: p.cpf || "",
     phone: p.phone || "",
     birth_date: p.birth_date || "",
     height: p.height?.toString() || "",
