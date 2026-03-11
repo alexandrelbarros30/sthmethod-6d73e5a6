@@ -552,7 +552,7 @@ const AdminStudents = () => {
     supabase.from("profiles").select("*").eq("user_id", s.user_id).single().then(({ data: p }) => {
       if (p) {
         setForm({
-          full_name: p.full_name || "", email: p.email || "", password: "", phone: p.phone || "",
+          full_name: p.full_name || "", email: p.email || "", password: "", phone: p.phone || "", cpf: p.cpf ? cpfMask(p.cpf) : "",
           birth_date: p.birth_date || "", height: p.height?.toString() || "", weight: p.weight?.toString() || "",
           gender: (p as any).gender || "",
           activity_type: (p as any).activity_type || "",
