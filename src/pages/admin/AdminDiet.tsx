@@ -198,6 +198,17 @@ const AdminDiet = () => {
     setConfirmDeleteOpen(true);
   };
 
+  const toggleVisibility = useMutation({
+    mutationFn: async ({ id, visible }: { id: string; visible: boolean }) => {
+      await supabase.from("student_diets").update({ visible }).eq("id", id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-students-diets"] });
+      refetchDiets();
+    },
+    onError: () => toast.error("Erro ao alterar visibilidade"),
+  });
+
   return (
     <DashboardLayout role="admin" title="Gestão de Dietas" subtitle="Gerencie as dietas dos alunos com histórico completo.">
       <Card>
