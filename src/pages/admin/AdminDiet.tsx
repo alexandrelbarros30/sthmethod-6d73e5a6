@@ -391,7 +391,14 @@ const AdminDiet = () => {
                                 </div>
                               )}
                             </div>
-                            <div className="flex flex-col gap-1 shrink-0">
+                            <div className="flex flex-col gap-1 shrink-0 items-center">
+                              <div className="flex items-center gap-1" title={diet.visible ? "Visível para o aluno" : "Oculta para o aluno"}>
+                                <Switch
+                                  checked={diet.visible !== false}
+                                  onCheckedChange={(checked) => toggleVisibility.mutate({ id: diet.id, visible: checked })}
+                                  className="scale-75"
+                                />
+                              </div>
                               <Button
                                 variant="ghost"
                                 size="icon"

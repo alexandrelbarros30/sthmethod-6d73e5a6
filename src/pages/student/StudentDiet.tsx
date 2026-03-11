@@ -59,6 +59,7 @@ const StudentDiet = () => {
         .from("student_diets")
         .select("*")
         .eq("user_id", user!.id)
+        .eq("visible", true)
         .order("created_at", { ascending: false });
       return data || [];
     },
