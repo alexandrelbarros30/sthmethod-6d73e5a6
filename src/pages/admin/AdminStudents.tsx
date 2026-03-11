@@ -682,6 +682,7 @@ const AdminStudents = () => {
               </div>
             </div>
           )}
+          <div><Label className="font-body">CPF</Label><Input value={form.cpf} onChange={(e) => setForm({ ...form, cpf: cpfMask(e.target.value) })} placeholder="000.000.000-00" /></div>
           <div><Label className="font-body">Telefone *</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: phoneMask(e.target.value) })} placeholder="(xx) xxxxx-xxxx" /></div>
           
           <div>
