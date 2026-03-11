@@ -72,7 +72,7 @@ export interface ProfileFormData {
 }
 
 export const emptyProfileForm: ProfileFormData = {
-  full_name: "", phone: "", birth_date: "", height: "", weight: "",
+  full_name: "", cpf: "", phone: "", birth_date: "", height: "", weight: "",
   gender: "", physical_activity_level: "", activity_type: "", does_cardio: "",
   training_days_per_week: "", training_duration_minutes: "", training_intensity: "",
   cardio_days_per_week: "", cardio_duration_minutes: "", cardio_intensity: "",
