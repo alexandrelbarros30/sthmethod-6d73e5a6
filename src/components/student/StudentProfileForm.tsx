@@ -50,6 +50,7 @@ const isValidCpf = (cpf: string): boolean => {
 
 export interface ProfileFormData {
   full_name: string;
+  cpf: string;
   phone: string;
   birth_date: string;
   height: string;
