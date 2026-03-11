@@ -172,6 +172,7 @@ export default function StudentProfileForm({ form, onChange, userId, isOnboarded
 
   const handleSave = async () => {
     if (!form.full_name) { toast.error("Nome completo é obrigatório"); return; }
+    if (!form.cpf || !isValidCpf(form.cpf)) { toast.error("CPF inválido"); return; }
     const phoneClean = form.phone.replace(/\D/g, "");
     if (phoneClean.length < 10) { toast.error("Telefone inválido"); return; }
     if (!form.gender) { toast.error("Selecione o gênero"); return; }
