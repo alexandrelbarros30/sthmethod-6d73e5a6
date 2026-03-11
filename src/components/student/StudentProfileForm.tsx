@@ -107,6 +107,7 @@ export function profileFromDb(p: any): ProfileFormData {
 export function getPendingFields(form: ProfileFormData, hasImages: boolean): string[] {
   const pending: string[] = [];
   if (!form.full_name) pending.push("Nome completo");
+  if (!form.cpf || !isValidCpf(form.cpf)) pending.push("CPF");
   if (!form.phone) pending.push("Telefone");
   if (!form.gender) pending.push("Gênero");
   if (!form.birth_date) pending.push("Data de nascimento");
