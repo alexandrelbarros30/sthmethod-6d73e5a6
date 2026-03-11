@@ -361,6 +361,11 @@ const AdminDiet = () => {
                                 <Badge variant="outline" className="text-[10px] shrink-0">
                                   {new Date(diet.created_at).toLocaleDateString("pt-BR")} às {new Date(diet.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                                 </Badge>
+                                {!diet.visible && (
+                                  <Badge variant="secondary" className="text-[10px] bg-destructive/10 text-destructive">
+                                    Oculta
+                                  </Badge>
+                                )}
                               </div>
                               {diet.pdf_url && (
                                 <a href={diet.pdf_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mb-1">
