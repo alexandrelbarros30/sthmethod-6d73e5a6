@@ -277,6 +277,10 @@ export default function StudentProfileForm({ form, onChange, userId, isOnboarded
             <Label className="font-body">Nome completo *</Label>
             <Input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} />
           </div>
+          <div>
+            <Label className="font-body">CPF *</Label>
+            <Input value={form.cpf} onChange={(e) => set("cpf", cpfMask(e.target.value))} placeholder="000.000.000-00" />
+          </div>
           {email && (
             <div>
               <Label className="font-body">Email</Label>
