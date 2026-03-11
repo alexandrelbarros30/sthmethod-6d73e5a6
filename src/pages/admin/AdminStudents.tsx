@@ -371,6 +371,7 @@ const AdminStudents = () => {
   const profilePayload = () => ({
     full_name: form.full_name,
     email: form.email,
+    cpf: form.cpf.replace(/\D/g, ""),
     phone: form.phone,
     birth_date: form.birth_date || null,
     height: form.height ? Number(form.height) : null,
