@@ -1064,6 +1064,7 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          visible: boolean
         }
         Insert: {
           content?: string | null
@@ -1073,6 +1074,7 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id: string
+          visible?: boolean
         }
         Update: {
           content?: string | null
@@ -1082,6 +1084,7 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          visible?: boolean
         }
         Relationships: []
       }

@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff } from "lucide-react";
+import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff, ToggleLeft, ToggleRight } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -197,6 +198,17 @@ const AdminDiet = () => {
     setConfirmDeleteOpen(true);
   };
 
+  const toggleVisibility = useMutation({
+    mutationFn: async ({ id, visible }: { id: string; visible: boolean }) => {
+      await supabase.from("student_diets").update({ visible }).eq("id", id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-students-diets"] });
+      refetchDiets();
+    },
+    onError: () => toast.error("Erro ao alterar visibilidade"),
+  });
+
   return (
     <DashboardLayout role="admin" title="Gestão de Dietas" subtitle="Gerencie as dietas dos alunos com histórico completo.">
       <Card>
@@ -349,6 +361,11 @@ const AdminDiet = () => {
                                 <Badge variant="outline" className="text-[10px] shrink-0">
                                   {new Date(diet.created_at).toLocaleDateString("pt-BR")} às {new Date(diet.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                                 </Badge>
+                                {!diet.visible && (
+                                  <Badge variant="secondary" className="text-[10px] bg-destructive/10 text-destructive">
+                                    Oculta
+                                  </Badge>
+                                )}
                               </div>
                               {diet.pdf_url && (
                                 <a href={diet.pdf_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mb-1">
@@ -374,7 +391,14 @@ const AdminDiet = () => {
                                 </div>
                               )}
                             </div>
-                            <div className="flex flex-col gap-1 shrink-0">
+                            <div className="flex flex-col gap-1 shrink-0 items-center">
+                              <div className="flex items-center gap-1" title={diet.visible ? "Visível para o aluno" : "Oculta para o aluno"}>
+                                <Switch
+                                  checked={diet.visible !== false}
+                                  onCheckedChange={(checked) => toggleVisibility.mutate({ id: diet.id, visible: checked })}
+                                  className="scale-75"
+                                />
+                              </div>
                               <Button
                                 variant="ghost"
                                 size="icon"

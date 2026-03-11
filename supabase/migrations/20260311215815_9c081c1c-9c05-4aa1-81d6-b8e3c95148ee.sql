@@ -1,0 +1,1 @@
+ALTER TABLE public.student_diets ADD COLUMN visible boolean NOT NULL DEFAULT true;
