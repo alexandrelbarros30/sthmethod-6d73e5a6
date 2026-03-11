@@ -200,6 +200,7 @@ export default function StudentProfileForm({ form, onChange, userId, isOnboarded
     try {
       const updateData: any = {
         full_name: form.full_name,
+        cpf: form.cpf.replace(/\D/g, ""),
         phone: form.phone,
         birth_date: form.birth_date || null,
         height: Number(form.height),
