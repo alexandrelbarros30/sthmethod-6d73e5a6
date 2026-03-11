@@ -41,8 +41,16 @@ const phoneMask = (v: string) => {
   return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
 };
 
+const cpfMask = (v: string) => {
+  const d = v.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`;
+  if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+};
+
 const emptyForm = {
-  full_name: "", email: "", password: "", phone: "",
+  full_name: "", email: "", password: "", phone: "", cpf: "",
   birth_date: "", height: "", weight: "",
   gender: "", activity_type: "", does_cardio: "",
   physical_activity_level: "",
@@ -363,6 +371,7 @@ const AdminStudents = () => {
   const profilePayload = () => ({
     full_name: form.full_name,
     email: form.email,
+    cpf: form.cpf.replace(/\D/g, ""),
     phone: form.phone,
     birth_date: form.birth_date || null,
     height: form.height ? Number(form.height) : null,
@@ -543,7 +552,7 @@ const AdminStudents = () => {
     supabase.from("profiles").select("*").eq("user_id", s.user_id).single().then(({ data: p }) => {
       if (p) {
         setForm({
-          full_name: p.full_name || "", email: p.email || "", password: "", phone: p.phone || "",
+          full_name: p.full_name || "", email: p.email || "", password: "", phone: p.phone || "", cpf: p.cpf ? cpfMask(p.cpf) : "",
           birth_date: p.birth_date || "", height: p.height?.toString() || "", weight: p.weight?.toString() || "",
           gender: (p as any).gender || "",
           activity_type: (p as any).activity_type || "",
@@ -673,6 +682,7 @@ const AdminStudents = () => {
               </div>
             </div>
           )}
+          <div><Label className="font-body">CPF</Label><Input value={form.cpf} onChange={(e) => setForm({ ...form, cpf: cpfMask(e.target.value) })} placeholder="000.000.000-00" /></div>
           <div><Label className="font-body">Telefone *</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: phoneMask(e.target.value) })} placeholder="(xx) xxxxx-xxxx" /></div>
           
           <div>

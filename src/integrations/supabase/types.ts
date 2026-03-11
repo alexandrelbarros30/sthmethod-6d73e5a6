@@ -882,6 +882,7 @@ export type Database = {
           cardio_duration_minutes: number | null
           cardio_intensity: string | null
           comorbidities: string | null
+          cpf: string | null
           created_at: string
           current_protocol: string | null
           daily_calories: number | null
@@ -920,6 +921,7 @@ export type Database = {
           cardio_duration_minutes?: number | null
           cardio_intensity?: string | null
           comorbidities?: string | null
+          cpf?: string | null
           created_at?: string
           current_protocol?: string | null
           daily_calories?: number | null
@@ -958,6 +960,7 @@ export type Database = {
           cardio_duration_minutes?: number | null
           cardio_intensity?: string | null
           comorbidities?: string | null
+          cpf?: string | null
           created_at?: string
           current_protocol?: string | null
           daily_calories?: number | null

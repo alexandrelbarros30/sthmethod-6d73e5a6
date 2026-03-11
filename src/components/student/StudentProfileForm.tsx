@@ -25,8 +25,32 @@ const phoneMask = (v: string) => {
   return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
 };
 
+const cpfMask = (v: string) => {
+  const d = v.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`;
+  if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+};
+
+const isValidCpf = (cpf: string): boolean => {
+  const d = cpf.replace(/\D/g, "");
+  if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += parseInt(d[i]) * (10 - i);
+  let rem = (sum * 10) % 11;
+  if (rem === 10) rem = 0;
+  if (rem !== parseInt(d[9])) return false;
+  sum = 0;
+  for (let i = 0; i < 10; i++) sum += parseInt(d[i]) * (11 - i);
+  rem = (sum * 10) % 11;
+  if (rem === 10) rem = 0;
+  return rem === parseInt(d[10]);
+};
+
 export interface ProfileFormData {
   full_name: string;
+  cpf: string;
   phone: string;
   birth_date: string;
   height: string;
@@ -48,7 +72,7 @@ export interface ProfileFormData {
 }
 
 export const emptyProfileForm: ProfileFormData = {
-  full_name: "", phone: "", birth_date: "", height: "", weight: "",
+  full_name: "", cpf: "", phone: "", birth_date: "", height: "", weight: "",
   gender: "", physical_activity_level: "", activity_type: "", does_cardio: "",
   training_days_per_week: "", training_duration_minutes: "", training_intensity: "",
   cardio_days_per_week: "", cardio_duration_minutes: "", cardio_intensity: "",
@@ -58,6 +82,7 @@ export const emptyProfileForm: ProfileFormData = {
 export function profileFromDb(p: any): ProfileFormData {
   return {
     full_name: p.full_name || "",
+    cpf: p.cpf || "",
     phone: p.phone || "",
     birth_date: p.birth_date || "",
     height: p.height?.toString() || "",
@@ -82,6 +107,7 @@ export function profileFromDb(p: any): ProfileFormData {
 export function getPendingFields(form: ProfileFormData, hasImages: boolean): string[] {
   const pending: string[] = [];
   if (!form.full_name) pending.push("Nome completo");
+  if (!form.cpf || !isValidCpf(form.cpf)) pending.push("CPF");
   if (!form.phone) pending.push("Telefone");
   if (!form.gender) pending.push("Gênero");
   if (!form.birth_date) pending.push("Data de nascimento");
@@ -146,6 +172,7 @@ export default function StudentProfileForm({ form, onChange, userId, isOnboarded
 
   const handleSave = async () => {
     if (!form.full_name) { toast.error("Nome completo é obrigatório"); return; }
+    if (!form.cpf || !isValidCpf(form.cpf)) { toast.error("CPF inválido"); return; }
     const phoneClean = form.phone.replace(/\D/g, "");
     if (phoneClean.length < 10) { toast.error("Telefone inválido"); return; }
     if (!form.gender) { toast.error("Selecione o gênero"); return; }
@@ -173,6 +200,7 @@ export default function StudentProfileForm({ form, onChange, userId, isOnboarded
     try {
       const updateData: any = {
         full_name: form.full_name,
+        cpf: form.cpf.replace(/\D/g, ""),
         phone: form.phone,
         birth_date: form.birth_date || null,
         height: Number(form.height),
@@ -248,6 +276,10 @@ export default function StudentProfileForm({ form, onChange, userId, isOnboarded
           <div>
             <Label className="font-body">Nome completo *</Label>
             <Input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} />
+          </div>
+          <div>
+            <Label className="font-body">CPF *</Label>
+            <Input value={form.cpf} onChange={(e) => set("cpf", cpfMask(e.target.value))} placeholder="000.000.000-00" />
           </div>
           {email && (
             <div>
