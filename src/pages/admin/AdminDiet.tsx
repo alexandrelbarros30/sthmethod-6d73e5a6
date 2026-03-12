@@ -84,6 +84,7 @@ const AdminDiet = () => {
     }
   };
 
+  const { data: students } = useQuery({
     queryKey: ["admin-students-diets"],
     queryFn: async () => {
       const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, email");
