@@ -688,22 +688,7 @@ const AdminStudents = () => {
             <div className="flex gap-1.5">
               <Input className="flex-1" value={form.phone} onChange={(e) => setForm({ ...form, phone: phoneMask(e.target.value) })} placeholder="(xx) xxxxx-xxxx" />
               {form.phone && form.phone.replace(/\D/g, "").length >= 10 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="shrink-0 h-10 w-10 border-[#25D366]/30 text-[#25D366] hover:bg-[#25D366]/10"
-                  title="Enviar WhatsApp"
-                  asChild
-                >
-                  <a
-                    href={`https://wa.me/55${form.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá ${form.full_name || ""}! Tudo bem?`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                  </a>
-                </Button>
+                <WhatsAppPopoverButton phone={form.phone} name={form.full_name} />
               )}
             </div>
           </div>
