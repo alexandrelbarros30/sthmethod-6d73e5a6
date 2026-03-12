@@ -1322,17 +1322,31 @@ const AdminStudents = () => {
 
       {/* View Dialog */}
       <Dialog open={viewOpen} onOpenChange={setViewOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden">
           <DialogHeader><DialogTitle className="font-display">Ficha do Aluno</DialogTitle></DialogHeader>
           {selected && (
-            <ScrollArea className="max-h-[70vh] pr-4">
+            <ScrollArea className="max-h-[75vh] pr-2 sm:pr-4">
               <div className="space-y-6">
                 <section>
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Dados Pessoais</h3>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div><span className="text-muted-foreground">Nome:</span> <span className="font-medium">{selected.full_name}</span></div>
-                    <div><span className="text-muted-foreground">Email:</span> <span className="font-medium">{selected.email}</span></div>
-                    <div><span className="text-muted-foreground">Telefone:</span> <span className="font-medium">{selected.phone || "—"}</span></div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div className="sm:col-span-2"><span className="text-muted-foreground">Nome:</span> <span className="font-medium">{selected.full_name}</span></div>
+                    <div className="break-all"><span className="text-muted-foreground">Email:</span> <span className="font-medium">{selected.email}</span></div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">Telefone:</span>
+                      <span className="font-medium">{selected.phone || "—"}</span>
+                      {selected.phone && selected.phone.replace(/\D/g, "").length >= 10 && (
+                        <a
+                          href={`https://wa.me/55${selected.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá ${selected.full_name || ""}! Tudo bem?`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center w-7 h-7 rounded-md border border-[#25D366]/30 text-[#25D366] hover:bg-[#25D366]/10 transition-colors"
+                          title="Enviar WhatsApp"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                    </div>
                     <div><span className="text-muted-foreground">Gênero:</span> <span className="font-medium capitalize">{(selectedFullProfile as any)?.gender || "—"}</span></div>
                     <div><span className="text-muted-foreground">Nascimento:</span> <span className="font-medium">{selected.birth_date ? new Date(selected.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</span></div>
                     <div><span className="text-muted-foreground">Idade:</span> <span className="font-medium">{selected.birth_date ? `${calculateAge(selected.birth_date)} anos` : "—"}</span></div>
