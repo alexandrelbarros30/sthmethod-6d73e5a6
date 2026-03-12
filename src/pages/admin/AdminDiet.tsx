@@ -51,7 +51,39 @@ const AdminDiet = () => {
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const { data: students } = useQuery({
+  // Library
+  const { data: libraryItems } = useQuery({
+    queryKey: ["diet-library"],
+    queryFn: async () => {
+      const { data } = await supabase.from("diet_library" as any).select("*").order("title");
+      return (data || []) as any[];
+    },
+  });
+
+  const saveToLibraryMutation = useMutation({
+    mutationFn: async (diet: any) => {
+      await (supabase.from("diet_library" as any) as any).insert({
+        title: diet.title,
+        content: diet.content || "",
+        created_by: user!.id,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Dieta salva na biblioteca!");
+      qc.invalidateQueries({ queryKey: ["diet-library"] });
+    },
+    onError: () => toast.error("Erro ao salvar na biblioteca"),
+  });
+
+  const applyFromLibrary = (libId: string) => {
+    const item = libraryItems?.find((l: any) => l.id === libId);
+    if (item) {
+      setNewTitle(item.title);
+      setNewContent(item.content || "");
+      toast.success("Dieta carregada da biblioteca!");
+    }
+  };
+
     queryKey: ["admin-students-diets"],
     queryFn: async () => {
       const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, email");
