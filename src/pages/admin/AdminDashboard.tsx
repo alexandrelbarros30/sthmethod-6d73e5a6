@@ -244,8 +244,8 @@ const AdminDashboard = () => {
 };
 
 const RecentStudents = ({ profiles, subscriptions, navigate, queryClient }: { profiles: any[] | undefined; subscriptions: any[] | undefined; navigate: any; queryClient: any }) => {
+  const [open, setOpen] = useState(false);
   const now = Date.now();
-  const recentProfiles = profiles?.filter((p) => {
     const days = Math.floor((now - new Date(p.created_at).getTime()) / 86400000);
     return days <= 3 && !p.admin_confirmed;
   }) || [];
