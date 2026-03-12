@@ -191,24 +191,13 @@ const AdminDashboard = () => {
         )}
 
         {/* 2. Lembretes Inteligentes */}
-        <Collapsible defaultOpen={false}>
-          <Card>
-            <CollapsibleTrigger asChild>
-              <CardHeader className="pb-2 cursor-pointer hover:bg-muted/30 transition-colors rounded-t-lg">
-                <CardTitle className="text-base font-display flex items-center gap-2">
-                  <Bell className="w-4 h-4 text-primary" />
-                  Lembretes Inteligentes
-                  <ChevronDown className="w-4 h-4 ml-auto transition-transform data-[state=open]:rotate-180" />
-                </CardTitle>
-              </CardHeader>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <CardContent className="pt-0">
-                <AdminReminders />
-              </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
+        <CollapsiblePanel
+          title="Lembretes Inteligentes"
+          icon={<Bell className="w-4 h-4 text-primary" />}
+          defaultOpen={false}
+        >
+          <AdminReminders />
+        </CollapsiblePanel>
 
         {/* 3. Pagamentos Pendentes */}
         <PendingPayments />
