@@ -333,6 +333,22 @@ const AdminDiet = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
+                    {/* Use from library */}
+                    {libraryItems && libraryItems.length > 0 && (
+                      <div>
+                        <Label className="font-body flex items-center gap-1"><BookOpen className="w-3.5 h-3.5" /> Usar da Biblioteca</Label>
+                        <Select onValueChange={applyFromLibrary}>
+                          <SelectTrigger><SelectValue placeholder="Selecionar modelo..." /></SelectTrigger>
+                          <SelectContent>
+                            {libraryItems.map((lib: any) => (
+                              <SelectItem key={lib.id} value={lib.id}>
+                                {lib.title} {lib.energy_kcal ? `(${lib.energy_kcal} kcal)` : ""}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                     <div>
                       <Label className="font-body">Título</Label>
                       <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
