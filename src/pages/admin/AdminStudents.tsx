@@ -26,6 +26,7 @@ import AdminBodyImageUpload from "@/components/admin/AdminBodyImageUpload";
 import AdminImageHistory from "@/components/admin/AdminImageHistory";
 import EvolutionGenerator from "@/components/admin/EvolutionGenerator";
 import ExcelJS from "exceljs";
+import WhatsAppPopoverButton from "@/components/shared/WhatsAppPopoverButton";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
 import {
   objectiveLabels, activityLabels,
