@@ -291,14 +291,14 @@ const RecentStudents = ({ profiles, subscriptions, navigate, queryClient }: { pr
   if (recentProfiles.length === 0) return null;
 
   return (
-    <Collapsible defaultOpen={false}>
+    <Collapsible open={open} onOpenChange={setOpen}>
       <Card>
         <CollapsibleTrigger asChild>
           <CardHeader className="cursor-pointer hover:bg-muted/30 transition-colors rounded-t-lg">
             <CardTitle className="font-display flex items-center gap-2">
               Alunos Recentes
               <Badge variant="default" className="ml-2">{recentProfiles.length}</Badge>
-              <ChevronDown className="w-4 h-4 ml-auto transition-transform data-[state=open]:rotate-180" />
+              <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${open ? "rotate-180" : ""}`} />
             </CardTitle>
           </CardHeader>
         </CollapsibleTrigger>
