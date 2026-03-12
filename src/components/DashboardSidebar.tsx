@@ -30,6 +30,7 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/admin/plans", icon: CreditCard, label: "Planos" },
     { to: "/admin/payments", icon: Wallet, label: "Pagamentos" },
     { to: "/admin/diet", icon: Salad, label: "Dietas" },
+    { to: "/admin/diet-library", icon: BookOpen, label: "Bib. Dietas" },
     { to: "/admin/nutrition", icon: Apple, label: "Cardápio" },
     { to: "/admin/training", icon: Dumbbell, label: "Treinos" },
     { to: "/admin/exercise-library", icon: BookOpen, label: "Biblioteca" },
