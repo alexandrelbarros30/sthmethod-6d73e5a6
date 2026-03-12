@@ -39,6 +39,7 @@ const AdminDiet = () => {
   const [editContent, setEditContent] = useState("");
   const [editDate, setEditDate] = useState("");
   const [editTime, setEditTime] = useState("");
+  const [editReleaseDate, setEditReleaseDate] = useState("");
 
   // Preview
   const [previewDiet, setPreviewDiet] = useState<any>(null);
