@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff, ToggleLeft, ToggleRight } from "lucide-react";
+import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff, ToggleLeft, ToggleRight, CalendarClock } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +30,7 @@ const AdminDiet = () => {
   const [newTitle, setNewTitle] = useState("Dieta");
   const [newContent, setNewContent] = useState("");
   const [newPdfFile, setNewPdfFile] = useState<File | null>(null);
+  const [newReleaseDate, setNewReleaseDate] = useState("");
   const [showNewForm, setShowNewForm] = useState(false);
 
   // Edit state
@@ -38,6 +39,7 @@ const AdminDiet = () => {
   const [editContent, setEditContent] = useState("");
   const [editDate, setEditDate] = useState("");
   const [editTime, setEditTime] = useState("");
+  const [editReleaseDate, setEditReleaseDate] = useState("");
 
   // Preview
   const [previewDiet, setPreviewDiet] = useState<any>(null);
@@ -112,6 +114,7 @@ const AdminDiet = () => {
     setNewTitle("Dieta");
     setNewContent("");
     setNewPdfFile(null);
+    setNewReleaseDate("");
   };
 
   const startEdit = (diet: any) => {
@@ -121,6 +124,7 @@ const AdminDiet = () => {
     setEditContent(diet.content || "");
     setEditDate(d.toISOString().slice(0, 10));
     setEditTime(d.toTimeString().slice(0, 5));
+    setEditReleaseDate(diet.release_date ? new Date(diet.release_date).toISOString().slice(0, 10) : "");
     setPreviewDiet(null);
   };
 
@@ -141,11 +145,12 @@ const AdminDiet = () => {
         const { data } = supabase.storage.from("documents").getPublicUrl(path);
         pdfUrl = data.publicUrl;
       }
-      const payload = {
+      const payload: any = {
         user_id: selected.user_id,
         title: newTitle,
         content: newContent,
         pdf_url: pdfUrl,
+        release_date: newReleaseDate ? new Date(newReleaseDate + "T00:00:00").toISOString() : null,
       };
       await supabase.from("student_diets").insert(payload);
     },
@@ -168,7 +173,8 @@ const AdminDiet = () => {
           title: editTitle,
           content: editContent,
           created_at: newCreatedAt,
-        })
+          release_date: editReleaseDate ? new Date(editReleaseDate + "T00:00:00").toISOString() : null,
+        } as any)
         .eq("id", editingId!);
     },
     onSuccess: () => {
@@ -300,6 +306,11 @@ const AdminDiet = () => {
                       <Input type="file" accept=".pdf" onChange={(e) => setNewPdfFile(e.target.files?.[0] || null)} />
                     </div>
                     <div>
+                      <Label className="font-body flex items-center gap-1"><CalendarClock className="w-3.5 h-3.5" /> Data de liberação (opcional)</Label>
+                      <Input type="date" value={newReleaseDate} onChange={(e) => setNewReleaseDate(e.target.value)} />
+                      <p className="text-[10px] text-muted-foreground mt-1">Se preenchida, o aluno só verá a dieta a partir desta data.</p>
+                    </div>
+                    <div>
                       <Label className="font-body">Conteúdo (texto)</Label>
                       <Textarea value={newContent} onChange={(e) => setNewContent(e.target.value)} rows={6} placeholder="Escreva o conteúdo da dieta aqui..." />
                     </div>
@@ -335,7 +346,12 @@ const AdminDiet = () => {
                               <div>
                                 <Label className="font-body text-xs">Data</Label>
                                 <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />
-                              </div>
+                            </div>
+                            <div>
+                              <Label className="font-body text-xs flex items-center gap-1"><CalendarClock className="w-3 h-3" /> Data de liberação</Label>
+                              <Input type="date" value={editReleaseDate} onChange={(e) => setEditReleaseDate(e.target.value)} />
+                              <p className="text-[10px] text-muted-foreground mt-1">Deixe vazio para liberar imediatamente.</p>
+                            </div>
                               <div>
                                 <Label className="font-body text-xs">Horário</Label>
                                 <Input type="time" value={editTime} onChange={(e) => setEditTime(e.target.value)} />
@@ -364,6 +380,17 @@ const AdminDiet = () => {
                                 {!diet.visible && (
                                   <Badge variant="secondary" className="text-[10px] bg-destructive/10 text-destructive">
                                     Oculta
+                                  </Badge>
+                                )}
+                                {diet.release_date && new Date(diet.release_date) > new Date() && (
+                                  <Badge variant="secondary" className="text-[10px] bg-amber-500/10 text-amber-600">
+                                    <CalendarClock className="w-2.5 h-2.5 mr-0.5" />
+                                    Libera em {new Date(diet.release_date).toLocaleDateString("pt-BR")}
+                                  </Badge>
+                                )}
+                                {diet.release_date && new Date(diet.release_date) <= new Date() && (
+                                  <Badge variant="secondary" className="text-[10px] bg-green-500/10 text-green-600">
+                                    Liberada
                                   </Badge>
                                 )}
                               </div>

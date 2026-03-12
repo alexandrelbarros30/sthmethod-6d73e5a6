@@ -1,0 +1,1 @@
+ALTER TABLE public.student_diets ADD COLUMN release_date timestamptz DEFAULT NULL;

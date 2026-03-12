@@ -60,6 +60,7 @@ const StudentDiet = () => {
         .select("*")
         .eq("user_id", user!.id)
         .eq("visible", true)
+        .or(`release_date.is.null,release_date.lte.${new Date().toISOString()}`)
         .order("created_at", { ascending: false });
       return data || [];
     },
