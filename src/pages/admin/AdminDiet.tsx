@@ -499,6 +499,15 @@ const AdminDiet = () => {
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                className="text-muted-foreground hover:text-primary"
+                                onClick={() => saveToLibraryMutation.mutate(diet)}
+                                title="Salvar na Biblioteca"
+                              >
+                                <Save className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
                                 onClick={() => confirmDelete(diet.id)}
                                 title="Excluir"
