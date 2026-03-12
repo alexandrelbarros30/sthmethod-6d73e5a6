@@ -124,6 +124,7 @@ const AdminDiet = () => {
     setEditContent(diet.content || "");
     setEditDate(d.toISOString().slice(0, 10));
     setEditTime(d.toTimeString().slice(0, 5));
+    setEditReleaseDate(diet.release_date ? new Date(diet.release_date).toISOString().slice(0, 10) : "");
     setPreviewDiet(null);
   };
 
