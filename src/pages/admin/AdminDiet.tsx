@@ -114,6 +114,7 @@ const AdminDiet = () => {
     setNewTitle("Dieta");
     setNewContent("");
     setNewPdfFile(null);
+    setNewReleaseDate("");
   };
 
   const startEdit = (diet: any) => {
