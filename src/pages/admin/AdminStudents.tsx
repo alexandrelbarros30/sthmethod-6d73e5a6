@@ -1463,22 +1463,20 @@ const AdminStudents = () => {
       <Dialog open={editOpen} onOpenChange={(o) => { setEditOpen(o); if (!o) { setActiveTab("dados"); setSavedTabs(new Set()); } }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <div className="flex items-center justify-between gap-2">
-              <DialogTitle className="font-display">Editar Aluno</DialogTitle>
-              {selected && (
-                <div className="flex items-center gap-1.5">
-                  <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditOpen(false); navigate(`/admin/training?uid=${selected.user_id}&return=edit`); }}>
-                    <Dumbbell className="w-3.5 h-3.5" /> Treino
-                  </Button>
-                  <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditOpen(false); navigate(`/admin/diet?uid=${selected.user_id}&return=edit`); }}>
-                    <UtensilsCrossed className="w-3.5 h-3.5" /> Dieta
-                  </Button>
-                  <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditOpen(false); navigate(`/admin/protocol?uid=${selected.user_id}&return=edit`); }}>
-                    <Pill className="w-3.5 h-3.5" /> Protocolo
-                  </Button>
-                </div>
-              )}
-            </div>
+            <DialogTitle className="font-display">Editar Aluno</DialogTitle>
+            {selected && (
+              <div className="flex items-center gap-1.5 flex-wrap pt-2">
+                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditOpen(false); navigate(`/admin/training?uid=${selected.user_id}&return=edit`); }}>
+                  <Dumbbell className="w-3.5 h-3.5" /> Treino
+                </Button>
+                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditOpen(false); navigate(`/admin/diet?uid=${selected.user_id}&return=edit`); }}>
+                  <UtensilsCrossed className="w-3.5 h-3.5" /> Dieta
+                </Button>
+                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditOpen(false); navigate(`/admin/protocol?uid=${selected.user_id}&return=edit`); }}>
+                  <Pill className="w-3.5 h-3.5" /> Protocolo
+                </Button>
+              </div>
+            )}
           </DialogHeader>
           {renderStudentFormFields(false)}
         </DialogContent>
