@@ -30,6 +30,7 @@ const AdminDiet = () => {
   const [newTitle, setNewTitle] = useState("Dieta");
   const [newContent, setNewContent] = useState("");
   const [newPdfFile, setNewPdfFile] = useState<File | null>(null);
+  const [newReleaseDate, setNewReleaseDate] = useState("");
   const [showNewForm, setShowNewForm] = useState(false);
 
   // Edit state
