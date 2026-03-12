@@ -382,6 +382,17 @@ const AdminDiet = () => {
                                     Oculta
                                   </Badge>
                                 )}
+                                {diet.release_date && new Date(diet.release_date) > new Date() && (
+                                  <Badge variant="secondary" className="text-[10px] bg-amber-500/10 text-amber-600">
+                                    <CalendarClock className="w-2.5 h-2.5 mr-0.5" />
+                                    Libera em {new Date(diet.release_date).toLocaleDateString("pt-BR")}
+                                  </Badge>
+                                )}
+                                {diet.release_date && new Date(diet.release_date) <= new Date() && (
+                                  <Badge variant="secondary" className="text-[10px] bg-green-500/10 text-green-600">
+                                    Liberada
+                                  </Badge>
+                                )}
                               </div>
                               {diet.pdf_url && (
                                 <a href={diet.pdf_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mb-1">
