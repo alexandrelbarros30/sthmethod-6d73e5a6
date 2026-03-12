@@ -10,14 +10,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff, ToggleLeft, ToggleRight, CalendarClock } from "lucide-react";
+import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff, ToggleLeft, ToggleRight, CalendarClock, BookOpen, Save } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/contexts/AuthContext";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const AdminDiet = () => {
+  const { user } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -47,6 +50,39 @@ const AdminDiet = () => {
   // Delete
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Library
+  const { data: libraryItems } = useQuery({
+    queryKey: ["diet-library"],
+    queryFn: async () => {
+      const { data } = await supabase.from("diet_library" as any).select("*").order("title");
+      return (data || []) as any[];
+    },
+  });
+
+  const saveToLibraryMutation = useMutation({
+    mutationFn: async (diet: any) => {
+      await (supabase.from("diet_library" as any) as any).insert({
+        title: diet.title,
+        content: diet.content || "",
+        created_by: user!.id,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Dieta salva na biblioteca!");
+      qc.invalidateQueries({ queryKey: ["diet-library"] });
+    },
+    onError: () => toast.error("Erro ao salvar na biblioteca"),
+  });
+
+  const applyFromLibrary = (libId: string) => {
+    const item = libraryItems?.find((l: any) => l.id === libId);
+    if (item) {
+      setNewTitle(item.title);
+      setNewContent(item.content || "");
+      toast.success("Dieta carregada da biblioteca!");
+    }
+  };
 
   const { data: students } = useQuery({
     queryKey: ["admin-students-diets"],
@@ -297,6 +333,22 @@ const AdminDiet = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
+                    {/* Use from library */}
+                    {libraryItems && libraryItems.length > 0 && (
+                      <div>
+                        <Label className="font-body flex items-center gap-1"><BookOpen className="w-3.5 h-3.5" /> Usar da Biblioteca</Label>
+                        <Select onValueChange={applyFromLibrary}>
+                          <SelectTrigger><SelectValue placeholder="Selecionar modelo..." /></SelectTrigger>
+                          <SelectContent>
+                            {libraryItems.map((lib: any) => (
+                              <SelectItem key={lib.id} value={lib.id}>
+                                {lib.title} {lib.energy_kcal ? `(${lib.energy_kcal} kcal)` : ""}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                     <div>
                       <Label className="font-body">Título</Label>
                       <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
@@ -443,6 +495,15 @@ const AdminDiet = () => {
                                 title="Editar"
                               >
                                 <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-muted-foreground hover:text-primary"
+                                onClick={() => saveToLibraryMutation.mutate(diet)}
+                                title="Salvar na Biblioteca"
+                              >
+                                <Save className="w-4 h-4" />
                               </Button>
                               <Button
                                 variant="ghost"

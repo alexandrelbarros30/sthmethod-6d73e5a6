@@ -307,6 +307,45 @@ export type Database = {
           },
         ]
       }
+      diet_library: {
+        Row: {
+          carbs_g: number
+          content: string
+          created_at: string
+          created_by: string
+          energy_kcal: number
+          fat_g: number
+          id: string
+          protein_g: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          carbs_g?: number
+          content?: string
+          created_at?: string
+          created_by: string
+          energy_kcal?: number
+          fat_g?: number
+          id?: string
+          protein_g?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          carbs_g?: number
+          content?: string
+          created_at?: string
+          created_by?: string
+          energy_kcal?: number
+          fat_g?: number
+          id?: string
+          protein_g?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       diet_meals: {
         Row: {
           created_at: string
