@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff, ToggleLeft, ToggleRight, CalendarClock } from "lucide-react";
+import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff, ToggleLeft, ToggleRight, CalendarClock, BookOpen, Save } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
