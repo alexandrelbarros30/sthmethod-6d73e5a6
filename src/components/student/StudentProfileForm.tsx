@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
-import { Loader2, Save, User, Mail, MessageCircle } from "lucide-react";
+import { Loader2, Save, User, Mail } from "lucide-react";
+import WhatsAppPopoverButton from "@/components/shared/WhatsAppPopoverButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -295,22 +296,7 @@ export default function StudentProfileForm({ form, onChange, userId, isOnboarded
             <div className="flex gap-1.5">
               <Input className="flex-1" value={form.phone} onChange={(e) => set("phone", phoneMask(e.target.value))} placeholder="(00) 00000-0000" />
               {form.phone && form.phone.replace(/\D/g, "").length >= 10 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="shrink-0 h-10 w-10 border-[#25D366]/30 text-[#25D366] hover:bg-[#25D366]/10"
-                  title="Enviar WhatsApp"
-                  asChild
-                >
-                  <a
-                    href={`https://wa.me/55${form.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá ${form.full_name || ""}! Tudo bem?`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                  </a>
-                </Button>
+                <WhatsAppPopoverButton phone={form.phone} name={form.full_name} />
               )}
             </div>
           </div>

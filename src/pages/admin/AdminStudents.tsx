@@ -26,6 +26,7 @@ import AdminBodyImageUpload from "@/components/admin/AdminBodyImageUpload";
 import AdminImageHistory from "@/components/admin/AdminImageHistory";
 import EvolutionGenerator from "@/components/admin/EvolutionGenerator";
 import ExcelJS from "exceljs";
+import WhatsAppPopoverButton from "@/components/shared/WhatsAppPopoverButton";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
 import {
   objectiveLabels, activityLabels,
@@ -688,22 +689,7 @@ const AdminStudents = () => {
             <div className="flex gap-1.5">
               <Input className="flex-1" value={form.phone} onChange={(e) => setForm({ ...form, phone: phoneMask(e.target.value) })} placeholder="(xx) xxxxx-xxxx" />
               {form.phone && form.phone.replace(/\D/g, "").length >= 10 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="shrink-0 h-10 w-10 border-[#25D366]/30 text-[#25D366] hover:bg-[#25D366]/10"
-                  title="Enviar WhatsApp"
-                  asChild
-                >
-                  <a
-                    href={`https://wa.me/55${form.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá ${form.full_name || ""}! Tudo bem?`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                  </a>
-                </Button>
+                <WhatsAppPopoverButton phone={form.phone} name={form.full_name} />
               )}
             </div>
           </div>
@@ -1336,15 +1322,7 @@ const AdminStudents = () => {
                       <span className="text-muted-foreground">Telefone:</span>
                       <span className="font-medium">{selected.phone || "—"}</span>
                       {selected.phone && selected.phone.replace(/\D/g, "").length >= 10 && (
-                        <a
-                          href={`https://wa.me/55${selected.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá ${selected.full_name || ""}! Tudo bem?`)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center w-7 h-7 rounded-md border border-[#25D366]/30 text-[#25D366] hover:bg-[#25D366]/10 transition-colors"
-                          title="Enviar WhatsApp"
-                        >
-                          <MessageCircle className="w-3.5 h-3.5" />
-                        </a>
+                        <WhatsAppPopoverButton phone={selected.phone} name={selected.full_name} size="sm" />
                       )}
                     </div>
                     <div><span className="text-muted-foreground">Gênero:</span> <span className="font-medium capitalize">{(selectedFullProfile as any)?.gender || "—"}</span></div>
