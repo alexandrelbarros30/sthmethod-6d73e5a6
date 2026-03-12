@@ -173,7 +173,8 @@ const AdminDiet = () => {
           title: editTitle,
           content: editContent,
           created_at: newCreatedAt,
-        })
+          release_date: editReleaseDate ? new Date(editReleaseDate + "T00:00:00").toISOString() : null,
+        } as any)
         .eq("id", editingId!);
     },
     onSuccess: () => {
