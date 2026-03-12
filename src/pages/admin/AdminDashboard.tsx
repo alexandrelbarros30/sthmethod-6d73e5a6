@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, AlertCircle, Clock, Bell, CheckCircle, ExternalLink, Check, CreditCard, DollarSign, Link2 } from "lucide-react";
+import { Users, UserCheck, AlertCircle, Clock, Bell, CheckCircle, ExternalLink, Check, CreditCard, DollarSign, Link2, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminReminders from "@/components/admin/AdminReminders";
@@ -16,6 +18,43 @@ const copyRenewLink = (userId: string) => {
   const url = `${window.location.origin}/dashboard/renew?uid=${userId}`;
   navigator.clipboard.writeText(url);
   toast.success("Link de renovação copiado!");
+};
+
+interface CollapsiblePanelProps {
+  title: string;
+  icon: React.ReactNode;
+  badge?: number;
+  badgeClassName?: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+  cardClassName?: string;
+}
+
+const CollapsiblePanel = ({ title, icon, badge, badgeClassName, defaultOpen = false, children, cardClassName }: CollapsiblePanelProps) => {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <Card className={cardClassName}>
+        <CollapsibleTrigger asChild>
+          <CardHeader className="pb-2 cursor-pointer hover:bg-muted/30 transition-colors rounded-t-lg">
+            <CardTitle className="text-base font-display flex items-center gap-2">
+              {icon}
+              {title}
+              {badge !== undefined && badge > 0 && (
+                <Badge variant="default" className={`ml-2 ${badgeClassName || ""}`}>{badge}</Badge>
+              )}
+              <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${open ? "rotate-180" : ""}`} />
+            </CardTitle>
+          </CardHeader>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent className="space-y-2 pt-0">
+            {children}
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
+  );
 };
 
 const AdminDashboard = () => {
@@ -38,7 +77,6 @@ const AdminDashboard = () => {
     },
   });
 
-  // Recent completed onboardings (last 7 days)
   const { data: recentOnboardings } = useQuery({
     queryKey: ["admin-recent-onboardings"],
     queryFn: async () => {
@@ -49,15 +87,12 @@ const AdminDashboard = () => {
         .gte("created_at", sevenDaysAgo)
         .eq("status", "active")
         .order("created_at", { ascending: false });
-      
       if (!subs || subs.length === 0) return [];
-      
       const userIds = subs.map((s: any) => s.user_id);
       const { data: profilesData } = await supabase
         .from("profiles")
         .select("user_id, full_name, email, onboarding_complete")
         .in("user_id", userIds);
-      
       const profileMap = new Map((profilesData || []).map((p: any) => [p.user_id, p]));
       return subs
         .map((s: any) => ({ ...s, profiles: profileMap.get(s.user_id) }))
@@ -65,7 +100,6 @@ const AdminDashboard = () => {
     },
   });
 
-  // Recent INCOMPLETE onboardings (last 14 days, onboarding_complete = false)
   const { data: incompleteOnboardings } = useQuery({
     queryKey: ["admin-incomplete-onboardings"],
     queryFn: async () => {
@@ -99,9 +133,13 @@ const AdminDashboard = () => {
     { label: "Vencendo em 7 dias", value: expiringCount, icon: Clock, color: "text-warning" },
   ];
 
+  const incompleteCount = incompleteOnboardings?.length || 0;
+  const completedCount = recentOnboardings?.length || 0;
+
   return (
     <DashboardLayout role="admin" title="Dashboard" subtitle="Visão geral da consultoria.">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
+      {/* Metrics */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
         {metrics.map((m, i) => (
           <Card key={i} className="animate-fade-in" style={{ animationDelay: `${i * 80}ms` }}>
             <CardContent className="flex items-center gap-3 py-4 md:py-5">
@@ -117,50 +155,18 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      {/* Completed Onboardings */}
-      {recentOnboardings && recentOnboardings.length > 0 && (
-        <Card className="mb-6 border-primary/20 bg-primary/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-display flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-primary" /> Cadastros Completos
-              <Badge variant="default" className="ml-2">{recentOnboardings.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {recentOnboardings.map((s: any) => (
-              <div key={s.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <CheckCircle className="w-4 h-4 text-primary shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{(s as any).profiles?.full_name || "Aluno"}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {(s as any).plans?.name} • {new Date(s.created_at).toLocaleDateString("pt-BR")}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <Badge variant="outline" className="text-xs text-primary border-primary/30">Completo</Badge>
-                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => navigate(`/admin/students?edit=${s.user_id}`)}>
-                    <ExternalLink className="w-3.5 h-3.5" /> Ficha
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Incomplete Onboardings */}
-      {incompleteOnboardings && incompleteOnboardings.length > 0 && (
-        <Card className="mb-6 border-warning/20 bg-warning/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-display flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-warning" /> Cadastros Incompletos
-              <Badge variant="default" className="ml-2 bg-warning text-warning-foreground">{incompleteOnboardings.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {incompleteOnboardings.map((p: any) => {
+      <div className="space-y-4">
+        {/* 1. Cadastros Incompletos */}
+        {incompleteCount > 0 && (
+          <CollapsiblePanel
+            title="Cadastros Incompletos"
+            icon={<AlertCircle className="w-4 h-4 text-warning" />}
+            badge={incompleteCount}
+            badgeClassName="bg-warning text-warning-foreground"
+            defaultOpen={true}
+            cardClassName="border-warning/20 bg-warning/5"
+          >
+            {incompleteOnboardings!.map((p: any) => {
               const days = Math.floor((Date.now() - new Date(p.created_at).getTime()) / 86400000);
               const dayLabel = days === 0 ? "Hoje" : `${days}d atrás`;
               return (
@@ -181,36 +187,72 @@ const AdminDashboard = () => {
                 </div>
               );
             })}
-          </CardContent>
-        </Card>
-      )}
+          </CollapsiblePanel>
+        )}
 
-      <AdminReminders />
+        {/* 2. Lembretes Inteligentes */}
+        <CollapsiblePanel
+          title="Lembretes Inteligentes"
+          icon={<Bell className="w-4 h-4 text-primary" />}
+          defaultOpen={false}
+        >
+          <AdminReminders />
+        </CollapsiblePanel>
 
-      <div className="mt-6">
+        {/* 3. Pagamentos Pendentes */}
+        <PendingPayments />
+
+        {/* 4. Cadastros Completos (Alunos) */}
+        {completedCount > 0 && (
+          <CollapsiblePanel
+            title="Cadastros Completos"
+            icon={<CheckCircle className="w-4 h-4 text-primary" />}
+            badge={completedCount}
+            defaultOpen={false}
+            cardClassName="border-primary/20 bg-primary/5"
+          >
+            {recentOnboardings!.map((s: any) => (
+              <div key={s.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{(s as any).profiles?.full_name || "Aluno"}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {(s as any).plans?.name} • {new Date(s.created_at).toLocaleDateString("pt-BR")}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Badge variant="outline" className="text-xs text-primary border-primary/30">Completo</Badge>
+                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => navigate(`/admin/students?edit=${s.user_id}`)}>
+                    <ExternalLink className="w-3.5 h-3.5" /> Ficha
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CollapsiblePanel>
+        )}
+
+        {/* 5. Alunos Recentes */}
+        <RecentStudents profiles={profiles} subscriptions={subscriptions} navigate={navigate} queryClient={queryClient} />
+
+        {/* WhatsApp Quick Link */}
         <WhatsAppQuickLink />
       </div>
-
-      <RecentStudents profiles={profiles} subscriptions={subscriptions} navigate={navigate} queryClient={queryClient} />
-
-      <PendingPayments />
     </DashboardLayout>
   );
 };
 
 const RecentStudents = ({ profiles, subscriptions, navigate, queryClient }: { profiles: any[] | undefined; subscriptions: any[] | undefined; navigate: any; queryClient: any }) => {
+  const [open, setOpen] = useState(false);
   const now = Date.now();
   const recentProfiles = profiles?.filter((p) => {
     const days = Math.floor((now - new Date(p.created_at).getTime()) / 86400000);
     return days <= 3 && !p.admin_confirmed;
   }) || [];
 
-  // Map user_id -> subscription with plan info
-  const subMap = new Map(
-    (subscriptions || []).map((s: any) => [s.user_id, s])
-  );
+  const subMap = new Map((subscriptions || []).map((s: any) => [s.user_id, s]));
 
-  // Also fetch recent payments to show chosen plan even before subscription is created
   const { data: recentPayments } = useQuery({
     queryKey: ["admin-recent-payments-for-students"],
     queryFn: async () => {
@@ -222,7 +264,6 @@ const RecentStudents = ({ profiles, subscriptions, navigate, queryClient }: { pr
     },
   });
 
-  // Map user_id -> most recent payment with plan
   const paymentMap = new Map<string, any>();
   (recentPayments || []).forEach((p: any) => {
     if (!paymentMap.has(p.user_id)) paymentMap.set(p.user_id, p);
@@ -250,80 +291,86 @@ const RecentStudents = ({ profiles, subscriptions, navigate, queryClient }: { pr
   if (recentProfiles.length === 0) return null;
 
   return (
-    <Card className="mt-6">
-      <CardHeader>
-        <CardTitle className="font-display flex items-center gap-2">
-          Alunos recentes
-          <Badge variant="default" className="ml-2">{recentProfiles.length}</Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ScrollArea className="max-h-[520px]">
-        <div className="space-y-3">
-          {recentProfiles.slice(0, 10).map((p) => {
-            const color = getDayColor(p.created_at);
-            const sub = subMap.get(p.user_id);
-            const payment = paymentMap.get(p.user_id);
-            const planName = sub?.plans?.name || payment?.plans?.name || null;
-            const durationDays = sub?.plans?.duration_days || payment?.plans?.duration_days || null;
-            const tierClasses = getPlanTierClasses(getPlanTier(durationDays));
-            const paymentStatus = !sub && payment ? payment.status : null;
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <Card>
+        <CollapsibleTrigger asChild>
+          <CardHeader className="cursor-pointer hover:bg-muted/30 transition-colors rounded-t-lg">
+            <CardTitle className="font-display flex items-center gap-2">
+              Alunos Recentes
+              <Badge variant="default" className="ml-2">{recentProfiles.length}</Badge>
+              <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${open ? "rotate-180" : ""}`} />
+            </CardTitle>
+          </CardHeader>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent>
+            <ScrollArea className="max-h-[520px]">
+              <div className="space-y-3">
+                {recentProfiles.slice(0, 10).map((p) => {
+                  const color = getDayColor(p.created_at);
+                  const sub = subMap.get(p.user_id);
+                  const payment = paymentMap.get(p.user_id);
+                  const planName = sub?.plans?.name || payment?.plans?.name || null;
+                  const durationDays = sub?.plans?.duration_days || payment?.plans?.duration_days || null;
+                  const tierClasses = getPlanTierClasses(getPlanTier(durationDays));
+                  const paymentStatus = !sub && payment ? payment.status : null;
 
-            return (
-              <div key={p.id} className="py-3 border-b border-border/50 last:border-0">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${color.bg}`}>
-                      <span className={`text-xs font-bold ${color.text}`}>
-                        {p.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "?"}
-                      </span>
+                  return (
+                    <div key={p.id} className="py-3 border-b border-border/50 last:border-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${color.bg}`}>
+                            <span className={`text-xs font-bold ${color.text}`}>
+                              {p.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "?"}
+                            </span>
+                          </div>
+                          <div className="min-w-0">
+                            <p className={`text-sm font-medium font-body ${color.text} truncate`}>{p.full_name || "Sem nome"}</p>
+                            <p className="text-xs text-muted-foreground font-body truncate">{p.email}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Badge variant="outline" className={`text-[10px] ${color.border} ${color.text}`}>{color.label}</Badge>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => navigate(`/admin/students?edit=${p.user_id}`)}>
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="Copiar link de renovação" onClick={() => copyRenewLink(p.user_id)}>
+                            <Link2 className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button variant="outline" size="sm" className="h-7 w-7 p-0 text-green-600 border-green-300 hover:bg-green-50" onClick={() => confirmMutation.mutate(p.id)} disabled={confirmMutation.isPending} title="Confirmar registro">
+                            <Check className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                      {(planName || paymentStatus === "pending") && (
+                        <div className="flex items-center gap-2 mt-2 ml-12">
+                          {planName && (
+                            <Badge variant="outline" className={`text-[10px] font-medium ${tierClasses.badge}`}>
+                              {planName}
+                            </Badge>
+                          )}
+                          {paymentStatus === "pending" && (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] border-warning/30 text-warning cursor-pointer hover:bg-warning/10 transition-colors"
+                              onClick={() => navigate(`/admin/students?sub=${p.user_id}`)}
+                            >
+                              Pgto pendente →
+                            </Badge>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <div className="min-w-0">
-                      <p className={`text-sm font-medium font-body ${color.text} truncate`}>{p.full_name || "Sem nome"}</p>
-                      <p className="text-xs text-muted-foreground font-body truncate">{p.email}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Badge variant="outline" className={`text-[10px] ${color.border} ${color.text}`}>{color.label}</Badge>
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => navigate(`/admin/students?edit=${p.user_id}`)}>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="Copiar link de renovação" onClick={() => copyRenewLink(p.user_id)}>
-                      <Link2 className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button variant="outline" size="sm" className="h-7 w-7 p-0 text-green-600 border-green-300 hover:bg-green-50" onClick={() => confirmMutation.mutate(p.id)} disabled={confirmMutation.isPending} title="Confirmar registro">
-                      <Check className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                </div>
-                {(planName || paymentStatus === "pending") && (
-                  <div className="flex items-center gap-2 mt-2 ml-12">
-                    {planName && (
-                      <Badge variant="outline" className={`text-[10px] font-medium ${tierClasses.badge}`}>
-                        {planName}
-                      </Badge>
-                    )}
-                    {paymentStatus === "pending" && (
-                      <Badge
-                        variant="outline"
-                        className="text-[10px] border-warning/30 text-warning cursor-pointer hover:bg-warning/10 transition-colors"
-                        onClick={() => navigate(`/admin/students?sub=${p.user_id}`)}
-                      >
-                        Pgto pendente →
-                      </Badge>
-                    )}
-                  </div>
-                )}
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
-        </ScrollArea>
-      </CardContent>
-    </Card>
+            </ScrollArea>
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 };
-
 
 const PendingPayments = () => {
   const navigate = useNavigate();
@@ -339,8 +386,6 @@ const PendingPayments = () => {
         .order("created_at", { ascending: false });
       if (!data || data.length === 0) return [];
       const userIds = data.map((p: any) => p.user_id);
-      
-      // Filter out users who already have active subscriptions
       const { data: activeSubs } = await supabase
         .from("subscriptions")
         .select("user_id, status, end_date")
@@ -351,10 +396,8 @@ const PendingPayments = () => {
           .filter((s: any) => new Date(s.end_date) > new Date())
           .map((s: any) => s.user_id)
       );
-      
       const filteredData = data.filter((p: any) => !activeUserIds.has(p.user_id));
       if (filteredData.length === 0) return [];
-      
       const filteredUserIds = filteredData.map((p: any) => p.user_id);
       const { data: profilesData } = await supabase
         .from("profiles")
@@ -368,48 +411,47 @@ const PendingPayments = () => {
   if (!pendingPayments || pendingPayments.length === 0) return null;
 
   return (
-    <Card className="mt-6 border-warning/20 bg-warning/5">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base font-display flex items-center gap-2">
-          <DollarSign className="w-4 h-4 text-warning" /> Pagamentos Pendentes
-          <Badge variant="default" className="ml-2 bg-warning text-warning-foreground">{pendingPayments.length}</Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {pendingPayments.map((p: any) => {
-          const tierClasses = getPlanTierClasses(getPlanTier(p.plans?.duration_days));
-          return (
-            <div key={p.id} className="py-3 border-b border-border/50 last:border-0">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <CreditCard className="w-4 h-4 text-warning shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{p.profile?.full_name || "Aluno"}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      R$ {Number(p.amount).toFixed(2)} • {p.method === "manual" ? "Manual" : p.method}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  {p.plans?.name && (
-                    <Badge variant="outline" className={`text-[10px] font-medium ${tierClasses.badge}`}>
-                      {p.plans.name}
-                    </Badge>
-                  )}
-                  <Badge
-                    variant="outline"
-                    className="text-[10px] border-warning/30 text-warning cursor-pointer hover:bg-warning/10 transition-colors"
-                    onClick={() => navigate(`/admin/students?sub=${p.user_id}`)}
-                  >
-                    Pendente →
-                  </Badge>
+    <CollapsiblePanel
+      title="Pagamentos Pendentes"
+      icon={<DollarSign className="w-4 h-4 text-warning" />}
+      badge={pendingPayments.length}
+      badgeClassName="bg-warning text-warning-foreground"
+      defaultOpen={true}
+      cardClassName="border-warning/20 bg-warning/5"
+    >
+      {pendingPayments.map((p: any) => {
+        const tierClasses = getPlanTierClasses(getPlanTier(p.plans?.duration_days));
+        return (
+          <div key={p.id} className="py-3 border-b border-border/50 last:border-0">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <CreditCard className="w-4 h-4 text-warning shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{p.profile?.full_name || "Aluno"}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    R$ {Number(p.amount).toFixed(2)} • {p.method === "manual" ? "Manual" : p.method}
+                  </p>
                 </div>
               </div>
+              <div className="flex items-center gap-1 shrink-0">
+                {p.plans?.name && (
+                  <Badge variant="outline" className={`text-[10px] font-medium ${tierClasses.badge}`}>
+                    {p.plans.name}
+                  </Badge>
+                )}
+                <Badge
+                  variant="outline"
+                  className="text-[10px] border-warning/30 text-warning cursor-pointer hover:bg-warning/10 transition-colors"
+                  onClick={() => navigate(`/admin/students?sub=${p.user_id}`)}
+                >
+                  Pendente →
+                </Badge>
+              </div>
             </div>
-          );
-        })}
-      </CardContent>
-    </Card>
+          </div>
+        );
+      })}
+    </CollapsiblePanel>
   );
 };
 
