@@ -145,11 +145,12 @@ const AdminDiet = () => {
         const { data } = supabase.storage.from("documents").getPublicUrl(path);
         pdfUrl = data.publicUrl;
       }
-      const payload = {
+      const payload: any = {
         user_id: selected.user_id,
         title: newTitle,
         content: newContent,
         pdf_url: pdfUrl,
+        release_date: newReleaseDate ? new Date(newReleaseDate + "T00:00:00").toISOString() : null,
       };
       await supabase.from("student_diets").insert(payload);
     },
