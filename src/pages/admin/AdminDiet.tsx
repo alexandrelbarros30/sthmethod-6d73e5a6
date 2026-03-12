@@ -306,6 +306,11 @@ const AdminDiet = () => {
                       <Input type="file" accept=".pdf" onChange={(e) => setNewPdfFile(e.target.files?.[0] || null)} />
                     </div>
                     <div>
+                      <Label className="font-body flex items-center gap-1"><CalendarClock className="w-3.5 h-3.5" /> Data de liberação (opcional)</Label>
+                      <Input type="date" value={newReleaseDate} onChange={(e) => setNewReleaseDate(e.target.value)} />
+                      <p className="text-[10px] text-muted-foreground mt-1">Se preenchida, o aluno só verá a dieta a partir desta data.</p>
+                    </div>
+                    <div>
                       <Label className="font-body">Conteúdo (texto)</Label>
                       <Textarea value={newContent} onChange={(e) => setNewContent(e.target.value)} rows={6} placeholder="Escreva o conteúdo da dieta aqui..." />
                     </div>
