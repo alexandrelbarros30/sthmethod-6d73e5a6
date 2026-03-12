@@ -187,6 +187,10 @@ const AdminDashboard = () => {
 
       <AdminReminders />
 
+      <div className="mt-6">
+        <WhatsAppQuickLink />
+      </div>
+
       <RecentStudents profiles={profiles} subscriptions={subscriptions} navigate={navigate} queryClient={queryClient} />
 
       <PendingPayments />
