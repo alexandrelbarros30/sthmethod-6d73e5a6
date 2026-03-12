@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2, RotateCcw, AlertTriangle, UserX, UserCheck, Dumbbell, Pill, UtensilsCrossed } from "lucide-react";
+import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2, RotateCcw, AlertTriangle, UserX, UserCheck, Dumbbell, Pill, UtensilsCrossed, MessageCircle } from "lucide-react";
 
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -683,7 +683,30 @@ const AdminStudents = () => {
             </div>
           )}
           <div><Label className="font-body">CPF</Label><Input value={form.cpf} onChange={(e) => setForm({ ...form, cpf: cpfMask(e.target.value) })} placeholder="000.000.000-00" /></div>
-          <div><Label className="font-body">Telefone *</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: phoneMask(e.target.value) })} placeholder="(xx) xxxxx-xxxx" /></div>
+          <div>
+            <Label className="font-body">Telefone *</Label>
+            <div className="flex gap-1.5">
+              <Input className="flex-1" value={form.phone} onChange={(e) => setForm({ ...form, phone: phoneMask(e.target.value) })} placeholder="(xx) xxxxx-xxxx" />
+              {form.phone && form.phone.replace(/\D/g, "").length >= 10 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0 h-10 w-10 border-[#25D366]/30 text-[#25D366] hover:bg-[#25D366]/10"
+                  title="Enviar WhatsApp"
+                  asChild
+                >
+                  <a
+                    href={`https://wa.me/55${form.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá ${form.full_name || ""}! Tudo bem?`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                  </a>
+                </Button>
+              )}
+            </div>
+          </div>
           
           <div>
             <Label className="font-body">Gênero *</Label>
@@ -1299,17 +1322,31 @@ const AdminStudents = () => {
 
       {/* View Dialog */}
       <Dialog open={viewOpen} onOpenChange={setViewOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden">
           <DialogHeader><DialogTitle className="font-display">Ficha do Aluno</DialogTitle></DialogHeader>
           {selected && (
-            <ScrollArea className="max-h-[70vh] pr-4">
+            <ScrollArea className="max-h-[75vh] pr-2 sm:pr-4">
               <div className="space-y-6">
                 <section>
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Dados Pessoais</h3>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div><span className="text-muted-foreground">Nome:</span> <span className="font-medium">{selected.full_name}</span></div>
-                    <div><span className="text-muted-foreground">Email:</span> <span className="font-medium">{selected.email}</span></div>
-                    <div><span className="text-muted-foreground">Telefone:</span> <span className="font-medium">{selected.phone || "—"}</span></div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div className="sm:col-span-2"><span className="text-muted-foreground">Nome:</span> <span className="font-medium">{selected.full_name}</span></div>
+                    <div className="break-all"><span className="text-muted-foreground">Email:</span> <span className="font-medium">{selected.email}</span></div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">Telefone:</span>
+                      <span className="font-medium">{selected.phone || "—"}</span>
+                      {selected.phone && selected.phone.replace(/\D/g, "").length >= 10 && (
+                        <a
+                          href={`https://wa.me/55${selected.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá ${selected.full_name || ""}! Tudo bem?`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center w-7 h-7 rounded-md border border-[#25D366]/30 text-[#25D366] hover:bg-[#25D366]/10 transition-colors"
+                          title="Enviar WhatsApp"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                    </div>
                     <div><span className="text-muted-foreground">Gênero:</span> <span className="font-medium capitalize">{(selectedFullProfile as any)?.gender || "—"}</span></div>
                     <div><span className="text-muted-foreground">Nascimento:</span> <span className="font-medium">{selected.birth_date ? new Date(selected.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</span></div>
                     <div><span className="text-muted-foreground">Idade:</span> <span className="font-medium">{selected.birth_date ? `${calculateAge(selected.birth_date)} anos` : "—"}</span></div>
@@ -1440,22 +1477,20 @@ const AdminStudents = () => {
       <Dialog open={editOpen} onOpenChange={(o) => { setEditOpen(o); if (!o) { setActiveTab("dados"); setSavedTabs(new Set()); } }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <div className="flex items-center justify-between gap-2">
-              <DialogTitle className="font-display">Editar Aluno</DialogTitle>
-              {selected && (
-                <div className="flex items-center gap-1.5">
-                  <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditOpen(false); navigate(`/admin/training?uid=${selected.user_id}&return=edit`); }}>
-                    <Dumbbell className="w-3.5 h-3.5" /> Treino
-                  </Button>
-                  <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditOpen(false); navigate(`/admin/diet?uid=${selected.user_id}&return=edit`); }}>
-                    <UtensilsCrossed className="w-3.5 h-3.5" /> Dieta
-                  </Button>
-                  <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditOpen(false); navigate(`/admin/protocol?uid=${selected.user_id}&return=edit`); }}>
-                    <Pill className="w-3.5 h-3.5" /> Protocolo
-                  </Button>
-                </div>
-              )}
-            </div>
+            <DialogTitle className="font-display">Editar Aluno</DialogTitle>
+            {selected && (
+              <div className="flex items-center gap-1.5 flex-wrap pt-2">
+                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditOpen(false); navigate(`/admin/training?uid=${selected.user_id}&return=edit`); }}>
+                  <Dumbbell className="w-3.5 h-3.5" /> Treino
+                </Button>
+                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditOpen(false); navigate(`/admin/diet?uid=${selected.user_id}&return=edit`); }}>
+                  <UtensilsCrossed className="w-3.5 h-3.5" /> Dieta
+                </Button>
+                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditOpen(false); navigate(`/admin/protocol?uid=${selected.user_id}&return=edit`); }}>
+                  <Pill className="w-3.5 h-3.5" /> Protocolo
+                </Button>
+              </div>
+            )}
           </DialogHeader>
           {renderStudentFormFields(false)}
         </DialogContent>
