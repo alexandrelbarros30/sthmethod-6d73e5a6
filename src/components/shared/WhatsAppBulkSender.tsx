@@ -400,6 +400,33 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
               </TabsContent>
             </Tabs>
 
+            {/* Selected students summary */}
+            {selected.size > 0 && (
+              <div className="rounded-md border border-border/50 bg-muted/30 p-2 space-y-1">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Selecionados ({selected.size})</p>
+                <div className="flex flex-wrap gap-1">
+                  {(() => {
+                    const allEntries = [...expiringStudents, ...allStudents];
+                    const entryMap = new Map(allEntries.map((s) => [s.user_id, s]));
+                    return Array.from(selected).map((id) => {
+                      const s = entryMap.get(id);
+                      return (
+                        <Badge
+                          key={id}
+                          variant="secondary"
+                          className="text-[10px] gap-1 cursor-pointer hover:bg-destructive/20 transition-colors"
+                          onClick={() => toggleStudent(id)}
+                        >
+                          {s?.full_name || "Aluno"}
+                          <span className="text-muted-foreground">✕</span>
+                        </Badge>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+            )}
+
             {/* Send button */}
             <Button
               size="sm"
