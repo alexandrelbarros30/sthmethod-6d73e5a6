@@ -262,7 +262,7 @@ const AdminProtocol = () => {
             <DialogTitle className="font-display">Protocolos — {selected?.full_name}</DialogTitle>
           </DialogHeader>
 
-          <ScrollArea className="flex-1 pr-4">
+          <ScrollArea className="flex-1 pr-2 sm:pr-4">
             <div className="space-y-4">
               {/* Add new protocol button */}
               {!showNewForm && !editingId && (
