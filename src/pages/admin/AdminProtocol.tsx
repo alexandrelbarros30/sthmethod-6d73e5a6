@@ -288,9 +288,9 @@ const AdminProtocol = () => {
                       <Label className="font-body">Upload PDF</Label>
                       <Input type="file" accept=".pdf" onChange={(e) => setNewPdfFile(e.target.files?.[0] || null)} />
                     </div>
-                    <div>
-                      <Label className="font-body">Conteúdo (texto)</Label>
-                      <Textarea value={newContent} onChange={(e) => setNewContent(e.target.value)} rows={6} placeholder="Escreva o conteúdo do protocolo aqui..." />
+                     <div>
+                      <Label className="font-body">Conteúdo</Label>
+                      <RichTextEditor value={newContent} onChange={setNewContent} placeholder="Escreva o conteúdo do protocolo aqui..." />
                     </div>
                     <div className="flex gap-2 justify-end">
                       <Button variant="ghost" size="sm" onClick={() => { setShowNewForm(false); resetNewForm(); }}>
