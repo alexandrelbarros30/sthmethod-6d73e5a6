@@ -30,7 +30,7 @@ export default function WhatsAppPopoverButton({ phone, name, size = "default", u
   const handleOpen = (isOpen: boolean) => {
     if (isOpen) {
       setWaPhone(`55${rawPhone}`);
-      setWaMessage(`Olá ${name || ""}! Tudo bem?`);
+      setWaMessage(buildDefaultMessage());
     }
     setOpen(isOpen);
   };
