@@ -357,7 +357,10 @@ const AdminProtocol = () => {
                                 </a>
                               )}
                               {protocol.content && (
-                                <p className="text-xs text-muted-foreground line-clamp-3 whitespace-pre-wrap">{protocol.content}</p>
+                                <div className="text-xs text-muted-foreground line-clamp-3">
+                                  <RichContentRenderer content={protocol.content} />
+                                </div>
+                              )}
                               )}
 
                               {/* Preview toggle */}
