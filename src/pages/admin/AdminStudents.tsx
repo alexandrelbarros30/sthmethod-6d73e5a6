@@ -1322,7 +1322,7 @@ const AdminStudents = () => {
                       <span className="text-muted-foreground">Telefone:</span>
                       <span className="font-medium">{selected.phone || "—"}</span>
                       {selected.phone && selected.phone.replace(/\D/g, "").length >= 10 && (
-                        <WhatsAppPopoverButton phone={selected.phone} name={selected.full_name} size="sm" />
+                        <WhatsAppPopoverButton phone={selected.phone} name={selected.full_name} size="sm" userId={selected.user_id} />
                       )}
                     </div>
                     <div><span className="text-muted-foreground">Gênero:</span> <span className="font-medium capitalize">{(selectedFullProfile as any)?.gender || "—"}</span></div>
