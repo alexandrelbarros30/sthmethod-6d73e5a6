@@ -13,6 +13,7 @@ import { Users, Salad, Dumbbell, FlaskConical, ClipboardList, Scale } from "luci
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
+import WhatsAppBulkSender from "@/components/shared/WhatsAppBulkSender";
 
 const ConsultorDashboard = () => {
   const { user } = useAuth();
