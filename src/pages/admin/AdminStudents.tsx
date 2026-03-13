@@ -1639,6 +1639,19 @@ const AdminStudents = () => {
                   </CardContent>
                 </Card>
 
+                {/* Evolution Update */}
+                <AdminEvolutionUpdate
+                  userId={selected.user_id}
+                  studentName={selected.full_name}
+                  currentWeight={selected.weight}
+                  profile={selectedFullProfile}
+                  onComplete={() => {
+                    refetchAnamnese();
+                    qc.invalidateQueries({ queryKey: ["admin-weight-logs", selected.user_id] });
+                    qc.invalidateQueries({ queryKey: ["admin-students"] });
+                  }}
+                />
+
                 {/* Body Images Upload (admin append mode) */}
                 <AdminBodyImageUpload
                   userId={selected.user_id}

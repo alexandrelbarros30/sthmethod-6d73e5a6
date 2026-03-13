@@ -186,6 +186,18 @@ const ConsultorDashboard = () => {
                   </CardContent>
                 </Card>
 
+                {/* Evolution Update */}
+                <AdminEvolutionUpdate
+                  userId={selected.user_id}
+                  studentName={selected.full_name}
+                  currentWeight={selected.weight}
+                  onComplete={() => {
+                    refetchAnamnese();
+                    qc.invalidateQueries({ queryKey: ["consultor-weight-logs", selected.user_id] });
+                    qc.invalidateQueries({ queryKey: ["consultor-students"] });
+                  }}
+                />
+
                 {/* Current Images */}
                 <BodyImageUpload
                   userId={selected.user_id}
