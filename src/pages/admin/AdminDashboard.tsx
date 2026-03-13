@@ -13,6 +13,7 @@ import AdminReminders from "@/components/admin/AdminReminders";
 import { toast } from "sonner";
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
 import WhatsAppQuickLink from "@/components/admin/WhatsAppQuickLink";
+import WhatsAppBulkSender from "@/components/shared/WhatsAppBulkSender";
 
 const copyRenewLink = (userId: string) => {
   const url = `${window.location.origin}/dashboard/renew?uid=${userId}`;
@@ -235,6 +236,9 @@ const AdminDashboard = () => {
 
         {/* 5. Alunos Recentes */}
         <RecentStudents profiles={profiles} subscriptions={subscriptions} navigate={navigate} queryClient={queryClient} />
+
+        {/* WhatsApp em Massa */}
+        <WhatsAppBulkSender />
 
         {/* WhatsApp Quick Link */}
         <WhatsAppQuickLink />
