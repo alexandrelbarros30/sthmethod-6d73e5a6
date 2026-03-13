@@ -25,6 +25,7 @@ import DocumentUpload from "@/components/shared/DocumentUpload";
 import AdminBodyImageUpload from "@/components/admin/AdminBodyImageUpload";
 import AdminImageHistory from "@/components/admin/AdminImageHistory";
 import EvolutionGenerator from "@/components/admin/EvolutionGenerator";
+import AdminEvolutionUpdate from "@/components/admin/AdminEvolutionUpdate";
 import ExcelJS from "exceljs";
 import WhatsAppPopoverButton from "@/components/shared/WhatsAppPopoverButton";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
@@ -1637,6 +1638,19 @@ const AdminStudents = () => {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Evolution Update */}
+                <AdminEvolutionUpdate
+                  userId={selected.user_id}
+                  studentName={selected.full_name}
+                  currentWeight={selected.weight}
+                  profile={selectedFullProfile}
+                  onComplete={() => {
+                    refetchAnamnese();
+                    qc.invalidateQueries({ queryKey: ["admin-weight-logs", selected.user_id] });
+                    qc.invalidateQueries({ queryKey: ["admin-students"] });
+                  }}
+                />
 
                 {/* Body Images Upload (admin append mode) */}
                 <AdminBodyImageUpload

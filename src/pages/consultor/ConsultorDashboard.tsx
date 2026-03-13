@@ -14,6 +14,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
 import WhatsAppBulkSender from "@/components/shared/WhatsAppBulkSender";
+import AdminEvolutionUpdate from "@/components/admin/AdminEvolutionUpdate";
 
 const ConsultorDashboard = () => {
   const { user } = useAuth();
@@ -184,6 +185,18 @@ const ConsultorDashboard = () => {
                     </Button>
                   </CardContent>
                 </Card>
+
+                {/* Evolution Update */}
+                <AdminEvolutionUpdate
+                  userId={selected.user_id}
+                  studentName={selected.full_name}
+                  currentWeight={selected.weight}
+                  onComplete={() => {
+                    refetchAnamnese();
+                    qc.invalidateQueries({ queryKey: ["consultor-weight-logs", selected.user_id] });
+                    qc.invalidateQueries({ queryKey: ["consultor-students"] });
+                  }}
+                />
 
                 {/* Current Images */}
                 <BodyImageUpload
