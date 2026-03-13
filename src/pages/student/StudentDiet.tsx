@@ -190,7 +190,9 @@ const StudentDiet = () => {
                 </div>
               )}
               {diet.content && (
-                <DietContentRenderer content={diet.content} />
+                /<[a-z][\s\S]*>/i.test(diet.content)
+                  ? <RichContentRenderer content={diet.content} />
+                  : <DietContentRenderer content={diet.content} />
               )}
             </CardContent>
           </Card>

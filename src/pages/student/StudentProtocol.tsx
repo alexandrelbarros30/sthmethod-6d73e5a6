@@ -193,9 +193,7 @@ const StudentProtocol = () => {
                     </div>
                   )}
                   {protocol.content && (
-                    <div className="whitespace-pre-wrap text-sm text-foreground font-body leading-relaxed">
-                      {protocol.content}
-                    </div>
+                    <RichContentRenderer content={protocol.content} />
                   )}
                 </CardContent>
               </Card>
