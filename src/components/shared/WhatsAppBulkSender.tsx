@@ -308,11 +308,15 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
                             <div
                               key={student.user_id}
                               className="flex items-center gap-3 py-2 px-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors"
-                              onClick={() => toggleStudent(student.user_id)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                toggleStudent(student.user_id);
+                              }}
                             >
                               <Checkbox
                                 checked={selected.has(student.user_id)}
                                 onCheckedChange={() => toggleStudent(student.user_id)}
+                                onClick={(e) => e.stopPropagation()}
                                 className="shrink-0"
                               />
                               <div className="min-w-0 flex-1">
@@ -365,11 +369,17 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
                         <div
                           key={student.user_id}
                           className={`flex items-center gap-3 py-2 px-2 rounded-md transition-colors ${hasPhone ? "hover:bg-muted/50 cursor-pointer" : "opacity-50 cursor-not-allowed"}`}
-                          onClick={() => hasPhone && toggleStudent(student.user_id)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (hasPhone) toggleStudent(student.user_id);
+                          }}
                         >
                           <Checkbox
                             checked={selected.has(student.user_id)}
-                            onCheckedChange={() => hasPhone && toggleStudent(student.user_id)}
+                            onCheckedChange={(e) => {
+                              if (typeof e === "boolean" && hasPhone) toggleStudent(student.user_id);
+                            }}
+                            onClick={(e) => e.stopPropagation()}
                             disabled={!hasPhone}
                             className="shrink-0"
                           />
