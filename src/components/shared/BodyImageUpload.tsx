@@ -28,8 +28,34 @@ const MAX_DIMENSION = 1200;
  * Compress an image file using canvas.
  * Returns a Blob (JPEG) that is <= maxSizeMB.
  */
+async function loadImage(file: File): Promise<HTMLImageElement> {
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error("objectUrl failed"));
+      i.src = objectUrl;
+    });
+    return img;
+  } catch {
+    URL.revokeObjectURL(objectUrl);
+  }
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error("FileReader failed"));
+    reader.readAsDataURL(file);
+  });
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const i = new Image();
+    i.onload = () => resolve(i);
+    i.onerror = () => reject(new Error("dataUrl failed"));
+    i.src = dataUrl;
+  });
+}
+
 async function compressImage(file: File, maxSizeMB = MAX_SIZE_MB, maxDim = MAX_DIMENSION): Promise<Blob> {
-  // Try createImageBitmap first (faster, better mobile support), fallback to FileReader+Image
   let width: number, height: number;
   let drawSource: ImageBitmap | HTMLImageElement;
 
@@ -39,23 +65,15 @@ async function compressImage(file: File, maxSizeMB = MAX_SIZE_MB, maxDim = MAX_D
     height = bitmap.height;
     drawSource = bitmap;
   } catch {
-    // Fallback: use object URL (more reliable on mobile than FileReader)
-    const objectUrl = URL.createObjectURL(file);
     try {
-      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const i = new Image();
-        i.onload = () => resolve(i);
-        i.onerror = () => reject(new Error("Formato de imagem não suportado. Use JPG ou PNG."));
-        i.src = objectUrl;
-      });
+      const img = await loadImage(file);
       width = img.width;
       height = img.height;
       drawSource = img;
-    } catch (e) {
-      URL.revokeObjectURL(objectUrl);
-      throw e;
+    } catch {
+      console.warn("Could not decode image for compression, uploading original file");
+      return file;
     }
-    URL.revokeObjectURL(objectUrl);
   }
 
   if (width > maxDim || height > maxDim) {
@@ -69,16 +87,14 @@ async function compressImage(file: File, maxSizeMB = MAX_SIZE_MB, maxDim = MAX_D
   canvas.height = height;
   const ctx = canvas.getContext("2d")!;
   ctx.drawImage(drawSource, 0, 0, width, height);
-
-  // Close bitmap to free memory
   if ("close" in drawSource) (drawSource as ImageBitmap).close();
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     let quality = 0.85;
     const tryCompress = () => {
       canvas.toBlob(
         (blob) => {
-          if (!blob) return reject(new Error("Falha ao comprimir imagem"));
+          if (!blob) { resolve(file); return; }
           if (blob.size > maxSizeMB * 1024 * 1024 && quality > 0.3) {
             quality -= 0.15;
             tryCompress();
