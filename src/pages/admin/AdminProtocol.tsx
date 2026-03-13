@@ -321,7 +321,7 @@ const AdminProtocol = () => {
                               <Label className="font-body text-xs">Título</Label>
                               <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               <div>
                                 <Label className="font-body text-xs">Data</Label>
                                 <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />

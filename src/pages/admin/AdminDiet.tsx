@@ -396,19 +396,19 @@ const AdminDiet = () => {
                               <Label className="font-body text-xs">Título</Label>
                               <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               <div>
                                 <Label className="font-body text-xs">Data</Label>
                                 <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />
-                            </div>
-                            <div>
-                              <Label className="font-body text-xs flex items-center gap-1"><CalendarClock className="w-3 h-3" /> Data de liberação</Label>
-                              <Input type="date" value={editReleaseDate} onChange={(e) => setEditReleaseDate(e.target.value)} />
-                              <p className="text-[10px] text-muted-foreground mt-1">Deixe vazio para liberar imediatamente.</p>
-                            </div>
+                              </div>
                               <div>
                                 <Label className="font-body text-xs">Horário</Label>
                                 <Input type="time" value={editTime} onChange={(e) => setEditTime(e.target.value)} />
+                              </div>
+                              <div className="sm:col-span-2">
+                                <Label className="font-body text-xs flex items-center gap-1"><CalendarClock className="w-3 h-3" /> Data de liberação</Label>
+                                <Input type="date" value={editReleaseDate} onChange={(e) => setEditReleaseDate(e.target.value)} />
+                                <p className="text-[10px] text-muted-foreground mt-1">Deixe vazio para liberar imediatamente.</p>
                               </div>
                             </div>
                             <div>
