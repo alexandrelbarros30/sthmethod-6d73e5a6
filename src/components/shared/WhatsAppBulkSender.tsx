@@ -130,7 +130,6 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
       let query = supabase
         .from("profiles")
         .select("user_id, full_name, phone, email")
-        .neq("phone", "")
         .order("full_name", { ascending: true });
 
       if (linkedStudentIds?.length) {
@@ -138,23 +137,22 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
       }
 
       const { data } = await query;
-      return (data || [])
-        .filter((p: any) => p.phone && p.phone.trim() !== "")
-        .map((p: any) => ({
-          user_id: p.user_id,
-          full_name: p.full_name || "Aluno",
-          phone: p.phone,
-        })) as StudentEntry[];
+      return (data || []).map((p: any) => ({
+        user_id: p.user_id,
+        full_name: p.full_name || "Aluno",
+        phone: p.phone || "",
+        email: p.email || "",
+      })) as (StudentEntry & { email?: string })[];
     },
     enabled: open,
   });
 
   const filteredAllStudents = useMemo(() => {
-    if (!search.trim()) return allStudents.slice(0, 50);
+    if (!search.trim()) return allStudents;
     const q = search.toLowerCase();
     return allStudents.filter(
-      (s) => s.full_name.toLowerCase().includes(q) || s.phone.includes(q)
-    ).slice(0, 50);
+      (s) => s.full_name.toLowerCase().includes(q) || s.phone.includes(q) || ((s as any).email || "").toLowerCase().includes(q)
+    );
   }, [allStudents, search]);
 
   const currentList = tab === "expiring" ? expiringStudents : filteredAllStudents;
@@ -342,7 +340,7 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
                   <Input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Buscar por nome ou telefone..."
+                    placeholder="Buscar por nome, e-mail ou telefone..."
                     className="h-8 text-xs pl-8"
                   />
                 </div>
@@ -361,23 +359,29 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
                 </div>
                 <ScrollArea className="max-h-[250px]">
                   <div className="space-y-1">
-                    {filteredAllStudents.map((student) => (
-                      <div
-                        key={student.user_id}
-                        className="flex items-center gap-3 py-2 px-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors"
-                        onClick={() => toggleStudent(student.user_id)}
-                      >
-                        <Checkbox
-                          checked={selected.has(student.user_id)}
-                          onCheckedChange={() => toggleStudent(student.user_id)}
-                          className="shrink-0"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium truncate">{student.full_name}</p>
-                          <p className="text-[10px] text-muted-foreground truncate">{student.phone}</p>
+                    {filteredAllStudents.map((student) => {
+                      const hasPhone = student.phone && student.phone.trim() !== "";
+                      return (
+                        <div
+                          key={student.user_id}
+                          className={`flex items-center gap-3 py-2 px-2 rounded-md transition-colors ${hasPhone ? "hover:bg-muted/50 cursor-pointer" : "opacity-50 cursor-not-allowed"}`}
+                          onClick={() => hasPhone && toggleStudent(student.user_id)}
+                        >
+                          <Checkbox
+                            checked={selected.has(student.user_id)}
+                            onCheckedChange={() => hasPhone && toggleStudent(student.user_id)}
+                            disabled={!hasPhone}
+                            className="shrink-0"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate">{student.full_name}</p>
+                            <p className="text-[10px] text-muted-foreground truncate">
+                              {hasPhone ? student.phone : "Sem telefone cadastrado"}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     {filteredAllStudents.length === 0 && (
                       <p className="text-xs text-muted-foreground text-center py-3">Nenhum aluno encontrado.</p>
                     )}
