@@ -7,6 +7,7 @@ import SubscriptionBlock from "@/components/SubscriptionBlock";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, FileText, Clock, Download } from "lucide-react";
+import RichContentRenderer from "@/components/shared/RichContentRenderer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { generateStudentPDF, canDownloadPDF } from "@/lib/pdfGenerator";
@@ -192,9 +193,7 @@ const StudentProtocol = () => {
                     </div>
                   )}
                   {protocol.content && (
-                    <div className="whitespace-pre-wrap text-sm text-foreground font-body leading-relaxed">
-                      {protocol.content}
-                    </div>
+                    <RichContentRenderer content={protocol.content} />
                   )}
                 </CardContent>
               </Card>

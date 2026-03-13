@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import RichTextEditor from "@/components/shared/RichTextEditor";
+import RichContentRenderer from "@/components/shared/RichContentRenderer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -362,9 +363,9 @@ const AdminDiet = () => {
                       <Input type="date" value={newReleaseDate} onChange={(e) => setNewReleaseDate(e.target.value)} />
                       <p className="text-[10px] text-muted-foreground mt-1">Se preenchida, o aluno só verá a dieta a partir desta data.</p>
                     </div>
-                    <div>
-                      <Label className="font-body">Conteúdo (texto)</Label>
-                      <Textarea value={newContent} onChange={(e) => setNewContent(e.target.value)} rows={6} placeholder="Escreva o conteúdo da dieta aqui..." />
+                     <div>
+                      <Label className="font-body">Conteúdo</Label>
+                      <RichTextEditor value={newContent} onChange={setNewContent} placeholder="Escreva o conteúdo da dieta aqui..." />
                     </div>
                     <div className="flex gap-2 justify-end">
                       <Button variant="ghost" size="sm" onClick={() => { setShowNewForm(false); resetNewForm(); }}>
@@ -411,7 +412,7 @@ const AdminDiet = () => {
                             </div>
                             <div>
                               <Label className="font-body text-xs">Conteúdo</Label>
-                              <Textarea value={editContent} onChange={(e) => setEditContent(e.target.value)} rows={6} />
+                              <RichTextEditor value={editContent} onChange={setEditContent} />
                             </div>
                             <div className="flex gap-2 justify-end">
                               <Button variant="ghost" size="sm" onClick={cancelEdit}>Cancelar</Button>
@@ -452,16 +453,16 @@ const AdminDiet = () => {
                                 </a>
                               )}
                               {diet.content && (
-                                <p className="text-xs text-muted-foreground line-clamp-3 whitespace-pre-wrap">{diet.content}</p>
+                                <div className="text-xs text-muted-foreground line-clamp-3">
+                                  <RichContentRenderer content={diet.content} />
+                                </div>
                               )}
 
                               {/* Preview toggle */}
                               {previewDiet === diet.id && diet.content && (
                                 <div className="mt-3 p-3 rounded-md bg-muted/50 border border-border">
                                   <p className="text-xs font-semibold text-foreground mb-1">Visualização completa:</p>
-                                  <div className="whitespace-pre-wrap text-sm text-foreground font-body leading-relaxed">
-                                    {diet.content}
-                                  </div>
+                                  <RichContentRenderer content={diet.content} />
                                 </div>
                               )}
                               {previewDiet === diet.id && diet.pdf_url && (

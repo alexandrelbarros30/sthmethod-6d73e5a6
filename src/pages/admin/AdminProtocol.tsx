@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import RichTextEditor from "@/components/shared/RichTextEditor";
+import RichContentRenderer from "@/components/shared/RichContentRenderer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -287,9 +288,9 @@ const AdminProtocol = () => {
                       <Label className="font-body">Upload PDF</Label>
                       <Input type="file" accept=".pdf" onChange={(e) => setNewPdfFile(e.target.files?.[0] || null)} />
                     </div>
-                    <div>
-                      <Label className="font-body">Conteúdo (texto)</Label>
-                      <Textarea value={newContent} onChange={(e) => setNewContent(e.target.value)} rows={6} placeholder="Escreva o conteúdo do protocolo aqui..." />
+                     <div>
+                      <Label className="font-body">Conteúdo</Label>
+                      <RichTextEditor value={newContent} onChange={setNewContent} placeholder="Escreva o conteúdo do protocolo aqui..." />
                     </div>
                     <div className="flex gap-2 justify-end">
                       <Button variant="ghost" size="sm" onClick={() => { setShowNewForm(false); resetNewForm(); }}>
@@ -331,7 +332,7 @@ const AdminProtocol = () => {
                             </div>
                             <div>
                               <Label className="font-body text-xs">Conteúdo</Label>
-                              <Textarea value={editContent} onChange={(e) => setEditContent(e.target.value)} rows={6} />
+                              <RichTextEditor value={editContent} onChange={setEditContent} />
                             </div>
                             <div className="flex gap-2 justify-end">
                               <Button variant="ghost" size="sm" onClick={cancelEdit}>Cancelar</Button>
@@ -356,16 +357,16 @@ const AdminProtocol = () => {
                                 </a>
                               )}
                               {protocol.content && (
-                                <p className="text-xs text-muted-foreground line-clamp-3 whitespace-pre-wrap">{protocol.content}</p>
+                                <div className="text-xs text-muted-foreground line-clamp-3">
+                                  <RichContentRenderer content={protocol.content} />
+                                </div>
                               )}
 
                               {/* Preview toggle */}
                               {previewProtocol === protocol.id && protocol.content && (
                                 <div className="mt-3 p-3 rounded-md bg-muted/50 border border-border">
                                   <p className="text-xs font-semibold text-foreground mb-1">Visualização completa:</p>
-                                  <div className="whitespace-pre-wrap text-sm text-foreground font-body leading-relaxed">
-                                    {protocol.content}
-                                  </div>
+                                  <RichContentRenderer content={protocol.content} />
                                 </div>
                               )}
                               {previewProtocol === protocol.id && protocol.pdf_url && (
