@@ -88,7 +88,7 @@ const RichTextEditor = ({ value, onChange, placeholder, className }: RichTextEdi
     if (!editor) return;
     const currentHtml = editor.getHTML();
     if (value !== currentHtml && !editor.isFocused) {
-      editor.commands.setContent(value || "", false);
+      editor.commands.setContent(value || "");
     }
   }, [editor, value]);
 
