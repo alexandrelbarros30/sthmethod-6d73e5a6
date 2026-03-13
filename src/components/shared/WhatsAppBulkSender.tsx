@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageCircle, Send, ChevronDown, AlertCircle, Search, Users } from "lucide-react";
 import { toast } from "sonner";
 
-const MESSAGE_TEMPLATES = [
+const BUILTIN_TEMPLATES = [
   {
     id: "custom",
     label: "✏️ Personalizada",
@@ -73,6 +73,36 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
   const [customMessage, setCustomMessage] = useState("");
   const [tab, setTab] = useState("expiring");
   const [search, setSearch] = useState("");
+
+  // DB templates query
+  const { data: dbTemplates = [] } = useQuery({
+    queryKey: ["wa-db-templates"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("message_templates")
+        .select("id, title, content, message_categories(name)")
+        .order("created_at", { ascending: false });
+      return data || [];
+    },
+    enabled: open,
+  });
+
+  // Merge builtin + DB templates
+  const allTemplateOptions = useMemo(() => {
+    const builtinOptions = BUILTIN_TEMPLATES.map((t) => ({
+      id: t.id,
+      label: t.label,
+      type: "builtin" as const,
+    }));
+    const dbOptions = dbTemplates.map((t: any) => ({
+      id: `db_${t.id}`,
+      label: `📝 ${t.title}`,
+      type: "db" as const,
+      content: t.content,
+      dbId: t.id,
+    }));
+    return [...builtinOptions, ...dbOptions];
+  }, [dbTemplates]);
 
   // Expiring students query
   const { data: expiringStudents = [] } = useQuery({
@@ -178,8 +208,13 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
 
   const buildMessage = (student: StudentEntry) => {
     const renewLink = `${window.location.origin}/dashboard/renew?uid=${student.user_id}`;
-    const tpl = MESSAGE_TEMPLATES.find((t) => t.id === templateId);
     if (templateId === "custom") return customMessage.replace("{nome}", student.full_name).replace("{link}", renewLink);
+    if (templateId.startsWith("db_")) {
+      const opt = allTemplateOptions.find((t) => t.id === templateId);
+      const content = (opt as any)?.content || "";
+      return content.replace(/\{nome\}/gi, student.full_name).replace(/\{link\}/gi, renewLink);
+    }
+    const tpl = BUILTIN_TEMPLATES.find((t) => t.id === templateId);
     return tpl?.build(student.full_name, renewLink) || "";
   };
 
@@ -243,7 +278,7 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {MESSAGE_TEMPLATES.map((t) => (
+                  {allTemplateOptions.map((t) => (
                     <SelectItem key={t.id} value={t.id} className="text-xs">
                       {t.label}
                     </SelectItem>
@@ -266,7 +301,19 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
               </div>
             )}
 
-            {/* Tabs: Expiring vs All */}
+            {templateId.startsWith("db_") && (
+              <div className="rounded-md border border-border/50 bg-muted/30 p-2">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Pré-visualização</p>
+                <p className="text-xs whitespace-pre-wrap text-foreground/80">
+                  {(() => {
+                    const opt = allTemplateOptions.find((t) => t.id === templateId);
+                    return ((opt as any)?.content || "").replace(/\{nome\}/gi, "Nome do Aluno").replace(/\{link\}/gi, "https://...");
+                  })()}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-1">Variáveis suportadas: {"{nome}"}, {"{link}"}</p>
+              </div>
+            )}
+
             <Tabs value={tab} onValueChange={setTab} className="w-full">
               <TabsList className="w-full h-8">
                 <TabsTrigger value="expiring" className="flex-1 text-xs gap-1">
