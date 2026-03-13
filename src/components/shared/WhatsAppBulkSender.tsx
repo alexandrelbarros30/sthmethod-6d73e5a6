@@ -308,11 +308,15 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
                             <div
                               key={student.user_id}
                               className="flex items-center gap-3 py-2 px-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors"
-                              onClick={() => toggleStudent(student.user_id)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                toggleStudent(student.user_id);
+                              }}
                             >
                               <Checkbox
                                 checked={selected.has(student.user_id)}
                                 onCheckedChange={() => toggleStudent(student.user_id)}
+                                onClick={(e) => e.stopPropagation()}
                                 className="shrink-0"
                               />
                               <div className="min-w-0 flex-1">
