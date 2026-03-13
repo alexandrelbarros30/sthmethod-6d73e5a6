@@ -257,7 +257,7 @@ const AdminProtocol = () => {
           setReturnToEdit(null);
         }
       }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="font-display">Protocolos — {selected?.full_name}</DialogTitle>
           </DialogHeader>
