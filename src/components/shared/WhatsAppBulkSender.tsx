@@ -340,7 +340,7 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
                   <Input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Buscar por nome ou telefone..."
+                    placeholder="Buscar por nome, e-mail ou telefone..."
                     className="h-8 text-xs pl-8"
                   />
                 </div>
