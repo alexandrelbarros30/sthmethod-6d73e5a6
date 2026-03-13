@@ -359,23 +359,29 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
                 </div>
                 <ScrollArea className="max-h-[250px]">
                   <div className="space-y-1">
-                    {filteredAllStudents.map((student) => (
-                      <div
-                        key={student.user_id}
-                        className="flex items-center gap-3 py-2 px-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors"
-                        onClick={() => toggleStudent(student.user_id)}
-                      >
-                        <Checkbox
-                          checked={selected.has(student.user_id)}
-                          onCheckedChange={() => toggleStudent(student.user_id)}
-                          className="shrink-0"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium truncate">{student.full_name}</p>
-                          <p className="text-[10px] text-muted-foreground truncate">{student.phone}</p>
+                    {filteredAllStudents.map((student) => {
+                      const hasPhone = student.phone && student.phone.trim() !== "";
+                      return (
+                        <div
+                          key={student.user_id}
+                          className={`flex items-center gap-3 py-2 px-2 rounded-md transition-colors ${hasPhone ? "hover:bg-muted/50 cursor-pointer" : "opacity-50 cursor-not-allowed"}`}
+                          onClick={() => hasPhone && toggleStudent(student.user_id)}
+                        >
+                          <Checkbox
+                            checked={selected.has(student.user_id)}
+                            onCheckedChange={() => hasPhone && toggleStudent(student.user_id)}
+                            disabled={!hasPhone}
+                            className="shrink-0"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate">{student.full_name}</p>
+                            <p className="text-[10px] text-muted-foreground truncate">
+                              {hasPhone ? student.phone : "Sem telefone cadastrado"}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     {filteredAllStudents.length === 0 && (
                       <p className="text-xs text-muted-foreground text-center py-3">Nenhum aluno encontrado.</p>
                     )}
