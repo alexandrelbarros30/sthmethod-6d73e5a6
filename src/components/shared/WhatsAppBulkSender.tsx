@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageCircle, Send, ChevronDown, AlertCircle, Search, Users } from "lucide-react";
 import { toast } from "sonner";
 
-const MESSAGE_TEMPLATES = [
+const BUILTIN_TEMPLATES = [
   {
     id: "custom",
     label: "✏️ Personalizada",
