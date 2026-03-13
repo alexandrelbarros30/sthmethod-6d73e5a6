@@ -130,7 +130,6 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
       let query = supabase
         .from("profiles")
         .select("user_id, full_name, phone, email")
-        .neq("phone", "")
         .order("full_name", { ascending: true });
 
       if (linkedStudentIds?.length) {
@@ -138,13 +137,12 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
       }
 
       const { data } = await query;
-      return (data || [])
-        .filter((p: any) => p.phone && p.phone.trim() !== "")
-        .map((p: any) => ({
-          user_id: p.user_id,
-          full_name: p.full_name || "Aluno",
-          phone: p.phone,
-        })) as StudentEntry[];
+      return (data || []).map((p: any) => ({
+        user_id: p.user_id,
+        full_name: p.full_name || "Aluno",
+        phone: p.phone || "",
+        email: p.email || "",
+      })) as (StudentEntry & { email?: string })[];
     },
     enabled: open,
   });
