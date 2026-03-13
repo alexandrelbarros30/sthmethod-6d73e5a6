@@ -148,11 +148,11 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
   });
 
   const filteredAllStudents = useMemo(() => {
-    if (!search.trim()) return allStudents.slice(0, 50);
+    if (!search.trim()) return allStudents;
     const q = search.toLowerCase();
     return allStudents.filter(
-      (s) => s.full_name.toLowerCase().includes(q) || s.phone.includes(q)
-    ).slice(0, 50);
+      (s) => s.full_name.toLowerCase().includes(q) || s.phone.includes(q) || ((s as any).email || "").toLowerCase().includes(q)
+    );
   }, [allStudents, search]);
 
   const currentList = tab === "expiring" ? expiringStudents : filteredAllStudents;
