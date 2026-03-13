@@ -81,39 +81,39 @@ export function calculateMacros(input: MacroInput): MacroResult {
     bmr = 10 * input.weight + 6.25 * input.height - 5 * input.age - 161;
   }
 
-  // Calculate TDEE using activity-based EAT (Exercise Activity Thermogenesis)
-  // NEAT multiplier based on physical activity level (non-exercise)
+  // Calculate TDEE using NEAT + EAT (Exercise Activity Thermogenesis)
+  // NEAT multiplier covers non-exercise daily activity
   const neatMultiplier = getNeatMultiplier(input.physicalActivityLevel);
   let dailyTDEE = bmr * neatMultiplier;
 
-  // Add training calories if applicable
+  // Add NET training calories (MET - 1 to avoid double-counting BMR already in TDEE)
   if (input.activityType !== "nenhuma" && input.trainingDaysPerWeek && input.trainingDurationMinutes) {
     const met = getTrainingMET(input.trainingIntensity);
-    // Calories per session = MET * weight * hours
     const hoursPerSession = input.trainingDurationMinutes / 60;
-    const calPerSession = met * input.weight * hoursPerSession;
-    // Spread weekly training calories across 7 days
-    const dailyTrainingCal = (calPerSession * input.trainingDaysPerWeek) / 7;
+    const netCalPerSession = (met - 1) * input.weight * hoursPerSession;
+    const dailyTrainingCal = (netCalPerSession * input.trainingDaysPerWeek) / 7;
     dailyTDEE += dailyTrainingCal;
   } else if (input.activityType !== "nenhuma") {
-    // Fallback: use simple multiplier if no detailed data
-    if (input.activityType === "musculacao") {
-      dailyTDEE = bmr * 1.55;
-    } else if (input.activityType === "crossfit") {
-      dailyTDEE = bmr * 1.725;
-    }
+    // Fallback: add estimated EAT on top of NEAT (not replace)
+    const fallbackMET = input.activityType === "crossfit" ? 6.0 : 5.0;
+    const fallbackHours = 1; // assume 1h session
+    const fallbackDays = 4;  // assume 4x/week
+    const netCal = (fallbackMET - 1) * input.weight * fallbackHours;
+    dailyTDEE += (netCal * fallbackDays) / 7;
   }
 
-  // Add cardio calories if applicable
+  // Add NET cardio calories (MET - 1)
   if (input.doesCardio && input.cardioDaysPerWeek && input.cardioDurationMinutes) {
     const met = getCardioMET(input.cardioIntensity);
     const hoursPerSession = input.cardioDurationMinutes / 60;
-    const calPerSession = met * input.weight * hoursPerSession;
-    const dailyCardioCal = (calPerSession * input.cardioDaysPerWeek) / 7;
+    const netCalPerSession = (met - 1) * input.weight * hoursPerSession;
+    const dailyCardioCal = (netCalPerSession * input.cardioDaysPerWeek) / 7;
     dailyTDEE += dailyCardioCal;
   } else if (input.doesCardio) {
-    // Fallback: add a small bonus
-    dailyTDEE += bmr * 0.1;
+    // Fallback: assume 30min moderate cardio 3x/week
+    const fallbackMET = 5.0;
+    const netCal = (fallbackMET - 1) * input.weight * 0.5;
+    dailyTDEE += (netCal * 3) / 7;
   }
 
   const tdee = Math.round(dailyTDEE);
