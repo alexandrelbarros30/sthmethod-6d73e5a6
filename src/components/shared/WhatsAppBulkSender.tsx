@@ -208,8 +208,13 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
 
   const buildMessage = (student: StudentEntry) => {
     const renewLink = `${window.location.origin}/dashboard/renew?uid=${student.user_id}`;
-    const tpl = MESSAGE_TEMPLATES.find((t) => t.id === templateId);
     if (templateId === "custom") return customMessage.replace("{nome}", student.full_name).replace("{link}", renewLink);
+    if (templateId.startsWith("db_")) {
+      const opt = allTemplateOptions.find((t) => t.id === templateId);
+      const content = (opt as any)?.content || "";
+      return content.replace(/\{nome\}/gi, student.full_name).replace(/\{link\}/gi, renewLink);
+    }
+    const tpl = BUILTIN_TEMPLATES.find((t) => t.id === templateId);
     return tpl?.build(student.full_name, renewLink) || "";
   };
 
