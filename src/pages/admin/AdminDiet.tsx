@@ -412,7 +412,7 @@ const AdminDiet = () => {
                             </div>
                             <div>
                               <Label className="font-body text-xs">Conteúdo</Label>
-                              <Textarea value={editContent} onChange={(e) => setEditContent(e.target.value)} rows={6} />
+                              <RichTextEditor value={editContent} onChange={setEditContent} />
                             </div>
                             <div className="flex gap-2 justify-end">
                               <Button variant="ghost" size="sm" onClick={cancelEdit}>Cancelar</Button>
