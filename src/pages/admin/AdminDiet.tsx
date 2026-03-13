@@ -453,7 +453,10 @@ const AdminDiet = () => {
                                 </a>
                               )}
                               {diet.content && (
-                                <p className="text-xs text-muted-foreground line-clamp-3 whitespace-pre-wrap">{diet.content}</p>
+                                <div className="text-xs text-muted-foreground line-clamp-3">
+                                  <RichContentRenderer content={diet.content} />
+                                </div>
+                              )}
                               )}
 
                               {/* Preview toggle */}
