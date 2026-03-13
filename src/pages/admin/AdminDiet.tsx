@@ -311,12 +311,13 @@ const AdminDiet = () => {
           setReturnToEdit(null);
         }
       }}>
-        <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-3 sm:p-6">
-          <DialogHeader>
-            <DialogTitle className="font-display">Dietas — {selected?.full_name}</DialogTitle>
+        <DialogContent className="w-[calc(100vw-0.75rem)] max-w-2xl max-h-[94dvh] overflow-hidden flex flex-col p-2 sm:p-6">
+          <DialogHeader className="pr-8">
+            <DialogTitle className="font-display text-base sm:text-lg">Dietas — {selected?.full_name}</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">Edite com clareza no mobile e desktop.</DialogDescription>
           </DialogHeader>
 
-          <ScrollArea className="flex-1 pr-2 sm:pr-4">
+          <ScrollArea className="flex-1 pr-1 sm:pr-4">
             <div className="space-y-4">
               {/* Add new diet button */}
               {!showNewForm && !editingId && (
