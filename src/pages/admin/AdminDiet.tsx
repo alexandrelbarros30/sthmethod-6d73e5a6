@@ -457,7 +457,6 @@ const AdminDiet = () => {
                                   <RichContentRenderer content={diet.content} />
                                 </div>
                               )}
-                              )}
 
                               {/* Preview toggle */}
                               {previewDiet === diet.id && diet.content && (

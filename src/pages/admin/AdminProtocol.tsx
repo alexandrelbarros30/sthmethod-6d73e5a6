@@ -361,7 +361,6 @@ const AdminProtocol = () => {
                                   <RichContentRenderer content={protocol.content} />
                                 </div>
                               )}
-                              )}
 
                               {/* Preview toggle */}
                               {previewProtocol === protocol.id && protocol.content && (
