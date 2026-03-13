@@ -74,6 +74,36 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
   const [tab, setTab] = useState("expiring");
   const [search, setSearch] = useState("");
 
+  // DB templates query
+  const { data: dbTemplates = [] } = useQuery({
+    queryKey: ["wa-db-templates"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("message_templates")
+        .select("id, title, content, message_categories(name)")
+        .order("created_at", { ascending: false });
+      return data || [];
+    },
+    enabled: open,
+  });
+
+  // Merge builtin + DB templates
+  const allTemplateOptions = useMemo(() => {
+    const builtinOptions = BUILTIN_TEMPLATES.map((t) => ({
+      id: t.id,
+      label: t.label,
+      type: "builtin" as const,
+    }));
+    const dbOptions = dbTemplates.map((t: any) => ({
+      id: `db_${t.id}`,
+      label: `📝 ${t.title}`,
+      type: "db" as const,
+      content: t.content,
+      dbId: t.id,
+    }));
+    return [...builtinOptions, ...dbOptions];
+  }, [dbTemplates]);
+
   // Expiring students query
   const { data: expiringStudents = [] } = useQuery({
     queryKey: ["expiring-students-wa", linkedStudentIds],
