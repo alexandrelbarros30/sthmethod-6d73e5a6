@@ -367,9 +367,7 @@ const AdminProtocol = () => {
                               {previewProtocol === protocol.id && protocol.content && (
                                 <div className="mt-3 p-3 rounded-md bg-muted/50 border border-border">
                                   <p className="text-xs font-semibold text-foreground mb-1">Visualização completa:</p>
-                                  <div className="whitespace-pre-wrap text-sm text-foreground font-body leading-relaxed">
-                                    {protocol.content}
-                                  </div>
+                                  <RichContentRenderer content={protocol.content} />
                                 </div>
                               )}
                               {previewProtocol === protocol.id && protocol.pdf_url && (
