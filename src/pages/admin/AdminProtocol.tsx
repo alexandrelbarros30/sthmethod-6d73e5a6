@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import RichTextEditor from "@/components/shared/RichTextEditor";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff } from "lucide-react";
@@ -257,12 +257,13 @@ const AdminProtocol = () => {
           setReturnToEdit(null);
         }
       }}>
-        <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-3 sm:p-6">
-          <DialogHeader>
-            <DialogTitle className="font-display">Protocolos — {selected?.full_name}</DialogTitle>
+        <DialogContent className="w-[calc(100vw-0.75rem)] max-w-2xl max-h-[94dvh] overflow-hidden flex flex-col p-2 sm:p-6">
+          <DialogHeader className="pr-8">
+            <DialogTitle className="font-display text-base sm:text-lg">Protocolos — {selected?.full_name}</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">Edite com clareza no mobile e desktop.</DialogDescription>
           </DialogHeader>
 
-          <ScrollArea className="flex-1 pr-2 sm:pr-4">
+          <ScrollArea className="flex-1 pr-1 sm:pr-4">
             <div className="space-y-4">
               {/* Add new protocol button */}
               {!showNewForm && !editingId && (
@@ -320,7 +321,7 @@ const AdminProtocol = () => {
                               <Label className="font-body text-xs">Título</Label>
                               <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               <div>
                                 <Label className="font-body text-xs">Data</Label>
                                 <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />
@@ -334,9 +335,9 @@ const AdminProtocol = () => {
                               <Label className="font-body text-xs">Conteúdo</Label>
                               <RichTextEditor value={editContent} onChange={setEditContent} />
                             </div>
-                            <div className="flex gap-2 justify-end">
-                              <Button variant="ghost" size="sm" onClick={cancelEdit}>Cancelar</Button>
-                              <Button size="sm" onClick={() => editMutation.mutate()} disabled={editMutation.isPending}>
+                            <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
+                              <Button variant="ghost" size="sm" onClick={cancelEdit} className="w-full sm:w-auto">Cancelar</Button>
+                              <Button size="sm" onClick={() => editMutation.mutate()} disabled={editMutation.isPending} className="w-full sm:w-auto">
                                 {editMutation.isPending ? "Salvando..." : "Salvar Alterações"}
                               </Button>
                             </div>
