@@ -5,13 +5,13 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Camera, Upload, X, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { processAndUpload, validateImageFile } from "@/lib/image-upload";
 
 interface BodyImageUploadProps {
   userId: string;
   existingImages?: { type: string; image_url: string; id: string }[];
   onComplete: () => void;
   required?: boolean;
-  /** When true, existing (already saved) images cannot be removed — only new uploads allowed */
   canDeleteExisting?: boolean;
 }
 
@@ -20,117 +20,6 @@ const IMAGE_TYPES = [
   { key: "back", label: "Costas", icon: "🔙" },
   { key: "profile", label: "Perfil", icon: "👤" },
 ] as const;
-
-const MAX_SIZE_MB = 2; // Compress to max 2MB for reliable mobile uploads
-const MAX_DIMENSION = 1200;
-
-/**
- * Compress an image file using canvas.
- * Returns a Blob (JPEG) that is <= maxSizeMB.
- */
-async function loadImage(file: File): Promise<HTMLImageElement> {
-  const objectUrl = URL.createObjectURL(file);
-  try {
-    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const i = new Image();
-      i.onload = () => resolve(i);
-      i.onerror = () => reject(new Error("objectUrl failed"));
-      i.src = objectUrl;
-    });
-    return img;
-  } catch {
-    URL.revokeObjectURL(objectUrl);
-  }
-  const dataUrl = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error("FileReader failed"));
-    reader.readAsDataURL(file);
-  });
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const i = new Image();
-    i.onload = () => resolve(i);
-    i.onerror = () => reject(new Error("dataUrl failed"));
-    i.src = dataUrl;
-  });
-}
-
-async function compressImage(file: File, maxSizeMB = MAX_SIZE_MB, maxDim = MAX_DIMENSION): Promise<Blob> {
-  let width: number, height: number;
-  let drawSource: ImageBitmap | HTMLImageElement;
-
-  try {
-    const bitmap = await createImageBitmap(file);
-    width = bitmap.width;
-    height = bitmap.height;
-    drawSource = bitmap;
-  } catch {
-    try {
-      const img = await loadImage(file);
-      width = img.width;
-      height = img.height;
-      drawSource = img;
-    } catch {
-      console.warn("Could not decode image for compression, uploading original file");
-      return file;
-    }
-  }
-
-  if (width > maxDim || height > maxDim) {
-    const ratio = Math.min(maxDim / width, maxDim / height);
-    width = Math.round(width * ratio);
-    height = Math.round(height * ratio);
-  }
-
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(drawSource, 0, 0, width, height);
-  if ("close" in drawSource) (drawSource as ImageBitmap).close();
-
-  return new Promise((resolve) => {
-    let quality = 0.85;
-    const tryCompress = () => {
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) { resolve(file); return; }
-          if (blob.size > maxSizeMB * 1024 * 1024 && quality > 0.3) {
-            quality -= 0.15;
-            tryCompress();
-          } else {
-            resolve(blob);
-          }
-        },
-        "image/jpeg",
-        quality,
-      );
-    };
-    tryCompress();
-  });
-}
-
-/**
- * Upload with retry logic for flaky mobile connections.
- */
-async function uploadWithRetry(
-  bucket: string,
-  path: string,
-  blob: Blob,
-  retries = 3,
-): Promise<void> {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    const { error } = await supabase.storage.from(bucket).upload(path, blob, {
-      contentType: "image/jpeg",
-      upsert: true,
-    });
-    if (!error) return;
-    console.warn(`Upload attempt ${attempt} failed:`, error.message);
-    if (attempt === retries) throw error;
-    // Wait before retry (exponential backoff)
-    await new Promise((r) => setTimeout(r, 1000 * attempt));
-  }
-}
 
 const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = false, canDeleteExisting = true }: BodyImageUploadProps) => {
   const [images, setImages] = useState<Record<string, { file?: File; preview?: string; url?: string }>>(() => {
@@ -146,22 +35,11 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
 
   const handleFileSelect = (type: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    // Reset input so the same file can be re-selected
     e.target.value = "";
     if (!file) return;
-    
-    // On many mobile browsers file.type can be empty or unexpected — accept liberally
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "image/jpg", ""];
-    const allowedExt = /\.(jpg|jpeg|png|webp|heic|heif)$/i;
-    
-    if (!allowedTypes.includes(file.type) && !allowedExt.test(file.name)) {
-      toast.error("Apenas arquivos de imagem são aceitos (JPG, PNG).");
-      return;
-    }
-    if (file.size > 15 * 1024 * 1024) {
-      toast.error("Arquivo muito grande. Máximo 15MB.");
-      return;
-    }
+
+    const error = validateImageFile(file);
+    if (error) { toast.error(error); return; }
 
     const preview = URL.createObjectURL(file);
     setImages((prev) => ({ ...prev, [type]: { file, preview } }));
@@ -179,7 +57,6 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
   const allUploaded = IMAGE_TYPES.every(({ key }) => images[key]?.file || images[key]?.url);
 
   const handleUpload = async () => {
-    // Verify authentication before upload
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
       toast.error("Sessão expirada. Faça login novamente.");
@@ -193,29 +70,23 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
 
     setUploading(true);
     try {
-      // Mark old images as not current
       await supabase.from("body_images").update({ is_current: false }).eq("user_id", userId).eq("is_current", true);
 
       for (const { key } of IMAGE_TYPES) {
         const img = images[key];
         if (img?.file) {
-          toast.info(`Comprimindo imagem: ${key}...`);
-          const compressed = await compressImage(img.file);
-          const path = `${userId}/${key}_${Date.now()}.jpg`;
-          
           toast.info(`Enviando imagem: ${key}...`);
-          await uploadWithRetry("body-images", path, compressed);
-          
-          const { data: urlData } = supabase.storage.from("body-images").getPublicUrl(path);
+          const path = `${userId}/${key}_${Date.now()}.jpg`;
+          const publicUrl = await processAndUpload(img.file, "body-images", path);
 
-          await supabase.from("body_images").insert({
+          const { error } = await supabase.from("body_images").insert({
             user_id: userId,
             type: key,
-            image_url: urlData.publicUrl,
+            image_url: publicUrl,
             is_current: true,
           });
+          if (error) throw error;
         } else if (img?.url) {
-          // Re-mark existing as current
           const existing = existingImages.find((i) => i.type === key);
           if (existing) {
             await supabase.from("body_images").update({ is_current: true }).eq("id", existing.id);
@@ -226,7 +97,7 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
       toast.success("Imagens salvas com sucesso!");
       onComplete();
     } catch (err: any) {
-      console.error("Upload error:", err);
+      console.error("[body-upload] Error:", err);
       toast.error("Erro ao enviar imagens: " + (err.message || "Verifique sua conexão e tente novamente."));
     }
     setUploading(false);
@@ -260,7 +131,6 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
                   {src ? (
                     <>
                       <img src={src} alt={label} className="w-full h-full object-cover" />
-                      {/* Show remove button only for new files, or if canDeleteExisting is true */}
                       {(img?.file || canDeleteExisting) && (
                         <button
                           className="absolute top-1 right-1 p-1 bg-destructive/80 rounded-full text-white hover:bg-destructive"
@@ -283,7 +153,6 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
                     ref={(el) => { fileRefs.current[key] = el; }}
                     type="file"
                     accept="image/*"
-                    
                     className="hidden"
                     onChange={(e) => handleFileSelect(key, e)}
                   />

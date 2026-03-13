@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Camera, Upload, X, CheckCircle2, CalendarClock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { processAndUpload, validateImageFile } from "@/lib/image-upload";
 
 interface AdminBodyImageUploadProps {
   userId: string;
@@ -18,113 +19,11 @@ const IMAGE_TYPES = [
   { key: "profile", label: "Perfil", icon: "👤" },
 ] as const;
 
-const MAX_SIZE_MB = 2;
-const MAX_DIMENSION = 1200;
-
-async function loadImage(file: File): Promise<HTMLImageElement> {
-  // Try object URL first
-  const objectUrl = URL.createObjectURL(file);
-  try {
-    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const i = new Image();
-      i.onload = () => resolve(i);
-      i.onerror = () => reject(new Error("objectUrl failed"));
-      i.src = objectUrl;
-    });
-    return img;
-  } catch {
-    URL.revokeObjectURL(objectUrl);
-  }
-
-  // Fallback: FileReader as data URL
-  const dataUrl = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error("FileReader failed"));
-    reader.readAsDataURL(file);
-  });
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const i = new Image();
-    i.onload = () => resolve(i);
-    i.onerror = () => reject(new Error("dataUrl failed"));
-    i.src = dataUrl;
-  });
-}
-
-async function compressImage(file: File, maxSizeMB = MAX_SIZE_MB, maxDim = MAX_DIMENSION): Promise<Blob> {
-  let width: number, height: number;
-  let drawSource: ImageBitmap | HTMLImageElement;
-
-  try {
-    const bitmap = await createImageBitmap(file);
-    width = bitmap.width;
-    height = bitmap.height;
-    drawSource = bitmap;
-  } catch {
-    try {
-      const img = await loadImage(file);
-      width = img.width;
-      height = img.height;
-      drawSource = img;
-    } catch {
-      // Last resort: return original file as blob
-      console.warn("Could not decode image for compression, uploading original file");
-      return file;
-    }
-  }
-
-  if (width > maxDim || height > maxDim) {
-    const ratio = Math.min(maxDim / width, maxDim / height);
-    width = Math.round(width * ratio);
-    height = Math.round(height * ratio);
-  }
-
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(drawSource, 0, 0, width, height);
-  if ("close" in drawSource) (drawSource as ImageBitmap).close();
-
-  return new Promise((resolve) => {
-    let quality = 0.85;
-    const tryCompress = () => {
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) { resolve(file); return; }
-          if (blob.size > maxSizeMB * 1024 * 1024 && quality > 0.3) {
-            quality -= 0.15;
-            tryCompress();
-          } else {
-            resolve(blob);
-          }
-        },
-        "image/jpeg",
-        quality,
-      );
-    };
-    tryCompress();
-  });
-}
-
-async function uploadWithRetry(bucket: string, path: string, blob: Blob, retries = 3): Promise<void> {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    const { error } = await supabase.storage.from(bucket).upload(path, blob, {
-      contentType: "image/jpeg",
-      upsert: true,
-    });
-    if (!error) return;
-    if (attempt === retries) throw error;
-    await new Promise((r) => setTimeout(r, 1000 * attempt));
-  }
-}
-
 const AdminBodyImageUpload = ({ userId, onComplete }: AdminBodyImageUploadProps) => {
   const [images, setImages] = useState<Record<string, { file: File; preview: string }>>({});
   const [uploading, setUploading] = useState(false);
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  // Default to current date/time in local timezone
   const now = new Date();
   const pad = (n: number) => n.toString().padStart(2, "0");
   const defaultDateTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
@@ -132,19 +31,12 @@ const AdminBodyImageUpload = ({ userId, onComplete }: AdminBodyImageUploadProps)
 
   const handleFileSelect = (type: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    // Reset input so the same file can be re-selected
     e.target.value = "";
     if (!file) return;
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "image/jpg", ""];
-    const allowedExt = /\.(jpg|jpeg|png|webp|heic|heif)$/i;
-    if (!allowedTypes.includes(file.type) && !allowedExt.test(file.name)) {
-      toast.error("Apenas arquivos de imagem são aceitos (JPG, PNG).");
-      return;
-    }
-    if (file.size > 15 * 1024 * 1024) {
-      toast.error("Arquivo muito grande. Máximo 15MB.");
-      return;
-    }
+
+    const error = validateImageFile(file);
+    if (error) { toast.error(error); return; }
+
     const preview = URL.createObjectURL(file);
     setImages((prev) => ({ ...prev, [type]: { file, preview } }));
   };
@@ -174,25 +66,24 @@ const AdminBodyImageUpload = ({ userId, onComplete }: AdminBodyImageUploadProps)
         const img = images[key];
         if (!img?.file) continue;
 
-        const compressed = await compressImage(img.file);
         const path = `${userId}/${key}_${Date.now()}.jpg`;
-        await uploadWithRetry("body-images", path, compressed);
-        const { data: urlData } = supabase.storage.from("body-images").getPublicUrl(path);
+        const publicUrl = await processAndUpload(img.file, "body-images", path);
 
-        await supabase.from("body_images").insert({
+        const { error } = await supabase.from("body_images").insert({
           user_id: userId,
           type: key,
-          image_url: urlData.publicUrl,
+          image_url: publicUrl,
           is_current: false,
           uploaded_at: uploadedAt,
         });
+        if (error) throw error;
       }
 
       toast.success("Imagens adicionadas à galeria!");
       setImages({});
       onComplete();
     } catch (err: any) {
-      console.error("Upload error:", err);
+      console.error("[admin-body-upload] Error:", err);
       toast.error("Erro ao enviar imagens: " + (err.message || "Tente novamente."));
     }
     setUploading(false);
@@ -207,7 +98,6 @@ const AdminBodyImageUpload = ({ userId, onComplete }: AdminBodyImageUploadProps)
         <p className="text-xs text-muted-foreground">As imagens serão adicionadas sem substituir as existentes.</p>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* Editable date/time */}
         <div className="flex items-center gap-2">
           <CalendarClock className="w-4 h-4 text-muted-foreground shrink-0" />
           <Label className="text-xs whitespace-nowrap">Data/Hora:</Label>

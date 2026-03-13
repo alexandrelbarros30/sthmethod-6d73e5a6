@@ -236,9 +236,16 @@ export const useUpdateLandingSection = () => {
 
 // ─── File upload helper ───
 export const uploadLandingAsset = async (file: File, path: string) => {
+  // For images, compress before uploading to handle large mobile photos
+  let uploadBlob: Blob = file;
+  if (file.type.startsWith("image/") || /\.(jpg|jpeg|png|webp|heic|heif)$/i.test(file.name)) {
+    const { compressImage } = await import("@/lib/image-upload");
+    uploadBlob = await compressImage(file, 3, 1920);
+  }
+  const contentType = uploadBlob.type || file.type || "image/jpeg";
   const { data, error } = await supabase.storage
     .from("landing-assets")
-    .upload(path, file, { upsert: true });
+    .upload(path, uploadBlob, { upsert: true, contentType });
   if (error) throw error;
   const { data: urlData } = supabase.storage.from("landing-assets").getPublicUrl(data.path);
   return urlData.publicUrl;
