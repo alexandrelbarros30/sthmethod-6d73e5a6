@@ -149,6 +149,9 @@ const ConsultorDashboard = () => {
         </CardContent>
       </Card>
 
+      {/* WhatsApp em Massa */}
+      <WhatsAppBulkSender linkedStudentIds={linkedStudents.map((s: any) => s.user_id)} />
+
       {/* Anamnese Dialog */}
       <Dialog open={anamneseOpen} onOpenChange={setAnamneseOpen}>
         <DialogContent className="max-w-3xl">

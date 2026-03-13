@@ -237,6 +237,9 @@ const AdminDashboard = () => {
         {/* 5. Alunos Recentes */}
         <RecentStudents profiles={profiles} subscriptions={subscriptions} navigate={navigate} queryClient={queryClient} />
 
+        {/* WhatsApp em Massa */}
+        <WhatsAppBulkSender />
+
         {/* WhatsApp Quick Link */}
         <WhatsAppQuickLink />
       </div>
