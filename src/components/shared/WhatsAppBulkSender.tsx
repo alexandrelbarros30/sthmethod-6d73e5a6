@@ -278,7 +278,7 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {MESSAGE_TEMPLATES.map((t) => (
+                  {allTemplateOptions.map((t) => (
                     <SelectItem key={t.id} value={t.id} className="text-xs">
                       {t.label}
                     </SelectItem>
