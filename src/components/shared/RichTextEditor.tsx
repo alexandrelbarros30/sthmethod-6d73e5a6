@@ -95,10 +95,9 @@ const RichTextEditor = ({ value, onChange, placeholder, className }: RichTextEdi
   if (!editor) return null;
 
   return (
-    <div className={cn("rounded-md border border-input bg-background overflow-hidden", className)}>
+    <div className={cn("w-full min-w-0 rounded-md border border-input bg-background overflow-hidden", className)}>
       {/* Toolbar - scrollable on mobile */}
-      <div className="flex items-center gap-px overflow-x-auto scrollbar-none border-b border-input px-1 py-0.5">
-        <MenuButton
+      <div className="flex items-center gap-px overflow-x-auto scrollbar-none border-b border-input px-1 py-0.5 sticky top-0 bg-background z-10">
           active={editor.isActive("heading", { level: 2 })}
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
           title="Título"
