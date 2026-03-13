@@ -21,6 +21,36 @@ const IMAGE_TYPES = [
 const MAX_SIZE_MB = 2;
 const MAX_DIMENSION = 1200;
 
+async function loadImage(file: File): Promise<HTMLImageElement> {
+  // Try object URL first
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error("objectUrl failed"));
+      i.src = objectUrl;
+    });
+    return img;
+  } catch {
+    URL.revokeObjectURL(objectUrl);
+  }
+
+  // Fallback: FileReader as data URL
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error("FileReader failed"));
+    reader.readAsDataURL(file);
+  });
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const i = new Image();
+    i.onload = () => resolve(i);
+    i.onerror = () => reject(new Error("dataUrl failed"));
+    i.src = dataUrl;
+  });
+}
+
 async function compressImage(file: File, maxSizeMB = MAX_SIZE_MB, maxDim = MAX_DIMENSION): Promise<Blob> {
   let width: number, height: number;
   let drawSource: ImageBitmap | HTMLImageElement;
@@ -31,22 +61,16 @@ async function compressImage(file: File, maxSizeMB = MAX_SIZE_MB, maxDim = MAX_D
     height = bitmap.height;
     drawSource = bitmap;
   } catch {
-    const objectUrl = URL.createObjectURL(file);
     try {
-      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const i = new Image();
-        i.onload = () => resolve(i);
-        i.onerror = () => reject(new Error("Formato de imagem não suportado."));
-        i.src = objectUrl;
-      });
+      const img = await loadImage(file);
       width = img.width;
       height = img.height;
       drawSource = img;
-    } catch (e) {
-      URL.revokeObjectURL(objectUrl);
-      throw e;
+    } catch {
+      // Last resort: return original file as blob
+      console.warn("Could not decode image for compression, uploading original file");
+      return file;
     }
-    URL.revokeObjectURL(objectUrl);
   }
 
   if (width > maxDim || height > maxDim) {
@@ -62,12 +86,12 @@ async function compressImage(file: File, maxSizeMB = MAX_SIZE_MB, maxDim = MAX_D
   ctx.drawImage(drawSource, 0, 0, width, height);
   if ("close" in drawSource) (drawSource as ImageBitmap).close();
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     let quality = 0.85;
     const tryCompress = () => {
       canvas.toBlob(
         (blob) => {
-          if (!blob) return reject(new Error("Falha ao comprimir imagem"));
+          if (!blob) { resolve(file); return; }
           if (blob.size > maxSizeMB * 1024 * 1024 && quality > 0.3) {
             quality -= 0.15;
             tryCompress();
