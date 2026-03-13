@@ -301,7 +301,19 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
               </div>
             )}
 
-            {/* Tabs: Expiring vs All */}
+            {templateId.startsWith("db_") && (
+              <div className="rounded-md border border-border/50 bg-muted/30 p-2">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Pré-visualização</p>
+                <p className="text-xs whitespace-pre-wrap text-foreground/80">
+                  {(() => {
+                    const opt = allTemplateOptions.find((t) => t.id === templateId);
+                    return ((opt as any)?.content || "").replace(/\{nome\}/gi, "Nome do Aluno").replace(/\{link\}/gi, "https://...");
+                  })()}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-1">Variáveis suportadas: {"{nome}"}, {"{link}"}</p>
+              </div>
+            )}
+
             <Tabs value={tab} onValueChange={setTab} className="w-full">
               <TabsList className="w-full h-8">
                 <TabsTrigger value="expiring" className="flex-1 text-xs gap-1">
