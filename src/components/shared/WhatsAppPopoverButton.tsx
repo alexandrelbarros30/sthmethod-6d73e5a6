@@ -11,18 +11,26 @@ interface Props {
   name?: string;
   /** Size variant */
   size?: "sm" | "default";
+  /** If provided, appends the renewal payment link to the default message */
+  userId?: string;
 }
 
-export default function WhatsAppPopoverButton({ phone, name, size = "default" }: Props) {
+export default function WhatsAppPopoverButton({ phone, name, size = "default", userId }: Props) {
   const rawPhone = phone.replace(/\D/g, "");
+  const renewLink = userId ? `${window.location.origin}/dashboard/renew?uid=${userId}` : "";
+  const buildDefaultMessage = () => {
+    let msg = `Olá ${name || ""}! Tudo bem?`;
+    if (renewLink) msg += `\n\nSegue seu link de pagamento:\n${renewLink}`;
+    return msg;
+  };
   const [waPhone, setWaPhone] = useState(`55${rawPhone}`);
-  const [waMessage, setWaMessage] = useState(`Olá ${name || ""}! Tudo bem?`);
+  const [waMessage, setWaMessage] = useState(buildDefaultMessage());
   const [open, setOpen] = useState(false);
 
   const handleOpen = (isOpen: boolean) => {
     if (isOpen) {
       setWaPhone(`55${rawPhone}`);
-      setWaMessage(`Olá ${name || ""}! Tudo bem?`);
+      setWaMessage(buildDefaultMessage());
     }
     setOpen(isOpen);
   };

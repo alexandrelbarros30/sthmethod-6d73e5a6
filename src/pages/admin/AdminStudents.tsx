@@ -689,7 +689,7 @@ const AdminStudents = () => {
             <div className="flex gap-1.5">
               <Input className="flex-1" value={form.phone} onChange={(e) => setForm({ ...form, phone: phoneMask(e.target.value) })} placeholder="(xx) xxxxx-xxxx" />
               {form.phone && form.phone.replace(/\D/g, "").length >= 10 && (
-                <WhatsAppPopoverButton phone={form.phone} name={form.full_name} />
+                <WhatsAppPopoverButton phone={form.phone} name={form.full_name} userId={selected?.user_id} />
               )}
             </div>
           </div>
@@ -1322,7 +1322,7 @@ const AdminStudents = () => {
                       <span className="text-muted-foreground">Telefone:</span>
                       <span className="font-medium">{selected.phone || "—"}</span>
                       {selected.phone && selected.phone.replace(/\D/g, "").length >= 10 && (
-                        <WhatsAppPopoverButton phone={selected.phone} name={selected.full_name} size="sm" />
+                        <WhatsAppPopoverButton phone={selected.phone} name={selected.full_name} size="sm" userId={selected.user_id} />
                       )}
                     </div>
                     <div><span className="text-muted-foreground">Gênero:</span> <span className="font-medium capitalize">{(selectedFullProfile as any)?.gender || "—"}</span></div>
