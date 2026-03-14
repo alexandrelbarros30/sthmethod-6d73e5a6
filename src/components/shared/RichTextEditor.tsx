@@ -215,7 +215,9 @@ const RichTextEditor = ({ value, onChange, placeholder, className }: RichTextEdi
       </div>
 
       {/* Editor content */}
-      <EditorContent editor={editor} />
+      <div className="max-h-[38dvh] overflow-y-auto sm:max-h-none">
+        <EditorContent editor={editor} />
+      </div>
     </div>
   );
 };
