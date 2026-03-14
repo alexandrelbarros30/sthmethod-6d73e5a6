@@ -254,6 +254,12 @@ const AdminDiet = () => {
     onError: () => toast.error("Erro ao alterar visibilidade"),
   });
 
+  const filteredStudents = (students || []).filter((s: any) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q);
+  });
+
   return (
     <DashboardLayout role="admin" title="Gestão de Dietas" subtitle="Gerencie as dietas dos alunos com histórico completo.">
       <Card>
@@ -264,44 +270,68 @@ const AdminDiet = () => {
             <Input placeholder="Buscar por nome ou e-mail..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
           </div>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="font-body">Aluno</TableHead>
-                <TableHead className="font-body">Dietas</TableHead>
-                <TableHead className="font-body text-right">Ação</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {students?.filter((s: any) => {
-                if (!search.trim()) return true;
-                const q = search.toLowerCase();
-                return s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q);
-              }).map((s: any) => (
-                <TableRow key={s.user_id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+        <CardContent className="space-y-2">
+          {isMobile ? (
+            filteredStudents.length > 0 ? (
+              filteredStudents.map((s: any) => (
+                <div key={s.user_id} className="rounded-lg border border-border bg-card p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                         <span className="text-xs font-bold text-primary">{s.initials}</span>
                       </div>
-                      <p className="font-medium text-sm font-body">{s.full_name || "Sem nome"}</p>
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm font-body truncate">{s.full_name || "Sem nome"}</p>
+                        <p className="text-xs text-muted-foreground truncate">{s.email || "Sem e-mail"}</p>
+                      </div>
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={s.dietCount > 0 ? "secondary" : "outline"} className="text-xs">
+                    <Badge variant={s.dietCount > 0 ? "secondary" : "outline"} className="text-[10px] shrink-0">
                       {s.dietCount > 0 ? `${s.dietCount} registro(s)` : "Nenhuma"}
                     </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" onClick={() => openManage(s)}>
-                      <Pencil className="w-3 h-3 mr-1" /> Gerenciar
-                    </Button>
-                  </TableCell>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => openManage(s)} className="w-full mt-3">
+                    <Pencil className="w-3 h-3 mr-1" /> Gerenciar
+                  </Button>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-6">Nenhum aluno encontrado.</p>
+            )
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="font-body">Aluno</TableHead>
+                  <TableHead className="font-body">Dietas</TableHead>
+                  <TableHead className="font-body text-right">Ação</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredStudents.map((s: any) => (
+                  <TableRow key={s.user_id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="text-xs font-bold text-primary">{s.initials}</span>
+                        </div>
+                        <p className="font-medium text-sm font-body">{s.full_name || "Sem nome"}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={s.dietCount > 0 ? "secondary" : "outline"} className="text-xs">
+                        {s.dietCount > 0 ? `${s.dietCount} registro(s)` : "Nenhuma"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm" onClick={() => openManage(s)}>
+                        <Pencil className="w-3 h-3 mr-1" /> Gerenciar
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
@@ -315,8 +345,8 @@ const AdminDiet = () => {
       }}>
         <DialogContent
           className={isMobile
-            ? "!left-1 !right-1 !top-1 !bottom-1 !translate-x-0 !translate-y-0 !w-auto !max-w-none !max-h-none min-h-0 overflow-hidden !flex !flex-col p-3"
-            : "w-[calc(100vw-0.75rem)] max-w-2xl max-h-[94dvh] min-h-0 overflow-hidden !flex !flex-col p-2 sm:p-6"
+            ? "!inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 !w-screen !max-w-none !h-[100dvh] !max-h-none rounded-none border-0 p-2"
+            : "w-[calc(100vw-0.75rem)] max-w-2xl max-h-[94dvh] min-h-0 overflow-hidden !flex !flex-col p-3 sm:p-6"
           }
         >
           <DialogHeader className="pr-8">

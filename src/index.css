@@ -139,8 +139,16 @@
     @apply border-border;
   }
 
+  html, body, #root {
+    @apply w-full max-w-full overflow-x-hidden;
+  }
+
   body {
     @apply bg-background text-foreground font-body antialiased;
+  }
+
+  img, video, iframe {
+    @apply max-w-full;
   }
 
   h1, h2, h3, h4, h5, h6 {
