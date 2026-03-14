@@ -375,11 +375,11 @@ const AdminDiet = () => {
                       <Label className="font-body">Conteúdo</Label>
                       <RichTextEditor value={newContent} onChange={setNewContent} placeholder="Escreva o conteúdo da dieta aqui..." />
                     </div>
-                    <div className="flex gap-2 justify-end">
-                      <Button variant="ghost" size="sm" onClick={() => { setShowNewForm(false); resetNewForm(); }}>
+                    <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
+                      <Button variant="ghost" size="sm" onClick={() => { setShowNewForm(false); resetNewForm(); }} className="w-full sm:w-auto">
                         Cancelar
                       </Button>
-                      <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+                      <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full sm:w-auto">
                         {saveMutation.isPending ? "Salvando..." : "Salvar"}
                       </Button>
                     </div>
