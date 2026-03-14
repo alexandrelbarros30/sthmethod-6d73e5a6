@@ -78,7 +78,7 @@ const RichTextEditor = ({ value, onChange, placeholder, className }: RichTextEdi
     editorProps: {
       attributes: {
         class:
-          "min-h-[180px] sm:min-h-[220px] px-2 sm:px-3 py-2 focus:outline-none text-foreground text-sm leading-relaxed [&_h2]:text-base [&_h2]:font-bold [&_h2]:mb-2 [&_h3]:text-sm [&_h3]:font-bold [&_h3]:mb-1 [&_p]:mb-1 [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_mark]:bg-primary/20 [&_mark]:text-foreground",
+          "min-h-[180px] sm:min-h-[220px] px-2 sm:px-3 py-2 focus:outline-none text-foreground text-sm leading-relaxed break-words whitespace-pre-wrap [&_h2]:text-base [&_h2]:font-bold [&_h2]:mb-2 [&_h3]:text-sm [&_h3]:font-bold [&_h3]:mb-1 [&_p]:mb-1 [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_mark]:bg-primary/20 [&_mark]:text-foreground",
         ...(placeholder ? { "data-placeholder": placeholder } : {}),
       },
     },
@@ -97,7 +97,7 @@ const RichTextEditor = ({ value, onChange, placeholder, className }: RichTextEdi
   return (
     <div className={cn("w-full min-w-0 rounded-md border border-input bg-background overflow-hidden", className)}>
       {/* Toolbar - scrollable on mobile */}
-      <div className="flex items-center gap-px overflow-x-auto scrollbar-none border-b border-input px-1 py-0.5 sticky top-0 bg-background z-10">
+      <div className="flex items-center gap-px overflow-x-auto scrollbar-none border-b border-input px-1 py-0.5">
         <MenuButton
           active={editor.isActive("heading", { level: 2 })}
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
@@ -215,7 +215,9 @@ const RichTextEditor = ({ value, onChange, placeholder, className }: RichTextEdi
       </div>
 
       {/* Editor content */}
-      <EditorContent editor={editor} />
+      <div className="max-h-[38dvh] overflow-y-auto sm:max-h-none">
+        <EditorContent editor={editor} />
+      </div>
     </div>
   );
 };

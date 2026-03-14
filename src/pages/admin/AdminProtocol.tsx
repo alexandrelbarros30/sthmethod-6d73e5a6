@@ -16,10 +16,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const AdminProtocol = () => {
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [searchParams, setSearchParams] = useSearchParams();
   const [returnToEdit, setReturnToEdit] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -257,13 +259,18 @@ const AdminProtocol = () => {
           setReturnToEdit(null);
         }
       }}>
-        <DialogContent className="w-[calc(100vw-0.75rem)] max-w-2xl max-h-[94dvh] overflow-hidden flex flex-col p-2 sm:p-6">
+        <DialogContent
+          className={isMobile
+            ? "!left-1 !right-1 !top-1 !bottom-1 !translate-x-0 !translate-y-0 !w-auto !max-w-none !max-h-none min-h-0 overflow-hidden !flex !flex-col p-3"
+            : "w-[calc(100vw-0.75rem)] max-w-2xl max-h-[94dvh] min-h-0 overflow-hidden !flex !flex-col p-2 sm:p-6"
+          }
+        >
           <DialogHeader className="pr-8">
             <DialogTitle className="font-display text-base sm:text-lg">Protocolos — {selected?.full_name}</DialogTitle>
             <DialogDescription className="text-xs sm:text-sm">Edite com clareza no mobile e desktop.</DialogDescription>
           </DialogHeader>
 
-          <ScrollArea className="flex-1 pr-1 sm:pr-4">
+          <ScrollArea className="flex-1 min-h-0 pr-0 sm:pr-4">
             <div className="space-y-4">
               {/* Add new protocol button */}
               {!showNewForm && !editingId && (
@@ -293,11 +300,11 @@ const AdminProtocol = () => {
                       <Label className="font-body">Conteúdo</Label>
                       <RichTextEditor value={newContent} onChange={setNewContent} placeholder="Escreva o conteúdo do protocolo aqui..." />
                     </div>
-                    <div className="flex gap-2 justify-end">
-                      <Button variant="ghost" size="sm" onClick={() => { setShowNewForm(false); resetNewForm(); }}>
+                    <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
+                      <Button variant="ghost" size="sm" onClick={() => { setShowNewForm(false); resetNewForm(); }} className="w-full sm:w-auto">
                         Cancelar
                       </Button>
-                      <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+                      <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full sm:w-auto">
                         {saveMutation.isPending ? "Salvando..." : "Salvar"}
                       </Button>
                     </div>
