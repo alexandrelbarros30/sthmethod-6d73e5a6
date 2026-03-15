@@ -26,29 +26,35 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
 
-    const supabase = createClient(
+    const supabaseAuth = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(authHeader.replace("Bearer ", ""));
-    if (claimsError || !claimsData?.claims) {
+    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser();
+    if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
     }
-    const userId = claimsData.claims.sub;
+    const userId = user.id;
 
-    const { plan_id, method, action_type } = await req.json();
+    // Service role client for coupon operations
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    const { plan_id, method, action_type, coupon_id } = await req.json();
     if (!plan_id || !method) throw new Error("Missing plan_id or method");
 
     // Fetch plan
-    const { data: plan, error: planError } = await supabase.from("plans").select("*").eq("id", plan_id).single();
+    const { data: plan, error: planError } = await supabaseAuth.from("plans").select("*").eq("id", plan_id).single();
     if (planError || !plan) throw new Error("Plan not found");
 
     // Fetch user profile
-    const { data: profile } = await supabase.from("profiles").select("full_name, email, phone").eq("user_id", userId).single();
+    const { data: profile } = await supabaseAuth.from("profiles").select("full_name, email, phone").eq("user_id", userId).single();
 
-    // Calculate price
+    // Calculate base price (with plan discount)
     const priceStr = plan.price.replace(/[^\d,\.]/g, "").replace(",", ".");
     let originalAmount = parseFloat(priceStr) || 0;
     let finalAmount = originalAmount;
@@ -58,10 +64,47 @@ serve(async (req) => {
     } else if ((plan as any).discount_type === "fixed" && (plan as any).discount_value > 0) {
       finalAmount = Math.max(0, originalAmount - (plan as any).discount_value);
     }
+
+    // Apply coupon discount
+    let couponDiscount = 0;
+    let validCouponId: string | null = null;
+
+    if (coupon_id) {
+      const { data: coupon } = await supabaseAdmin
+        .from("coupons")
+        .select("*")
+        .eq("id", coupon_id)
+        .eq("active", true)
+        .single();
+
+      if (coupon) {
+        const isExpired = coupon.expires_at && new Date(coupon.expires_at) < new Date();
+        const isMaxed = coupon.current_uses >= coupon.max_uses;
+        const wrongPlan = coupon.plan_id && coupon.plan_id !== plan_id;
+
+        if (!isExpired && !isMaxed && !wrongPlan) {
+          if (coupon.discount_type === "percentage") {
+            couponDiscount = finalAmount * (Number(coupon.discount_value) / 100);
+          } else {
+            couponDiscount = Math.min(Number(coupon.discount_value), finalAmount);
+          }
+          couponDiscount = Math.round(couponDiscount * 100) / 100;
+          finalAmount = Math.max(0, finalAmount - couponDiscount);
+          validCouponId = coupon.id;
+
+          // Increment coupon usage
+          await supabaseAdmin
+            .from("coupons")
+            .update({ current_uses: coupon.current_uses + 1 })
+            .eq("id", coupon.id);
+        }
+      }
+    }
+
     finalAmount = Math.round(finalAmount * 100) / 100;
 
     // Create payment record
-    const { data: payment, error: paymentError } = await supabase.from("payments").insert({
+    const paymentInsert: any = {
       user_id: userId,
       plan_id,
       amount: finalAmount,
@@ -69,10 +112,16 @@ serve(async (req) => {
       method,
       action_type: action_type || "new",
       status: "pending",
-    }).select().single();
+    };
+    if (validCouponId) {
+      paymentInsert.coupon_id = validCouponId;
+      paymentInsert.coupon_discount = couponDiscount;
+    }
+
+    const { data: payment, error: paymentError } = await supabaseAdmin.from("payments").insert(paymentInsert).select().single();
     if (paymentError) throw paymentError;
 
-    // Map payment method
+    // Map payment method to excluded types
     const excludedMethods: Record<string, string[]> = {
       pix: ["credit_card", "debit_card", "ticket", "bolbradesco"],
       credit: ["pix", "debit_card", "ticket", "bolbradesco"],
@@ -117,7 +166,7 @@ serve(async (req) => {
     if (!mpRes.ok) throw new Error(`MP error [${mpRes.status}]: ${JSON.stringify(mpData)}`);
 
     // Update payment with MP preference ID
-    await supabase.from("payments").update({ mp_preference_id: mpData.id }).eq("id", payment.id);
+    await supabaseAdmin.from("payments").update({ mp_preference_id: mpData.id }).eq("id", payment.id);
 
     return new Response(JSON.stringify({
       init_point: mpData.init_point,
