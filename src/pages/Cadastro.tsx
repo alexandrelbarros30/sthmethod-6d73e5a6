@@ -12,13 +12,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import {
   ArrowLeft, ArrowRight, Check, Mail, Lock, User, Phone, Loader2,
-  QrCode, CreditCard, ExternalLink, Copy, CheckCircle2, CheckCircle, Calculator,
+  CheckCircle, Calculator,
   Eye, EyeOff,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import CouponInput from "@/components/CouponInput";
+import DynamicCheckoutDialog from "@/components/DynamicCheckoutDialog";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
 import DocumentUpload from "@/components/shared/DocumentUpload";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
