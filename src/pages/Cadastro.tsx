@@ -18,6 +18,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import CouponInput from "@/components/CouponInput";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
 import DocumentUpload from "@/components/shared/DocumentUpload";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
@@ -52,6 +53,7 @@ const Cadastro = () => {
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [pixCopied, setPixCopied] = useState(false);
   const [macroResult, setMacroResult] = useState<MacroResult | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
 
   // Step 1 - Account
   const [email, setEmail] = useState("");
@@ -451,7 +453,13 @@ const Cadastro = () => {
         }
         finalAmount = Math.round(finalAmount * 100) / 100;
 
-        await supabase.from("payments").insert({
+        // Apply coupon discount
+        const couponDiscount = appliedCoupon?.discountAmount || 0;
+        if (couponDiscount > 0) {
+          finalAmount = Math.max(0, Math.round((finalAmount - couponDiscount) * 100) / 100);
+        }
+
+        const insertPayload: any = {
           user_id: userId,
           plan_id: selectedPlan.id,
           amount: finalAmount,
@@ -459,7 +467,13 @@ const Cadastro = () => {
           method: "manual",
           action_type: "new",
           status: "pending",
-        });
+        };
+        if (appliedCoupon?.id) {
+          insertPayload.coupon_id = appliedCoupon.id;
+          insertPayload.coupon_discount = couponDiscount;
+        }
+
+        await supabase.from("payments").insert(insertPayload);
       } catch (err) {
         console.error("Error saving payment record:", err);
       }
@@ -872,13 +886,22 @@ const Cadastro = () => {
             const hasPix = link?.pix_enabled && link?.pix_code;
             const hasCard = link?.card_enabled && link?.card_link;
             const hasAny = hasPix || hasCard;
+            const basePrice = calculateFinalPrice(selectedPlan);
+            const couponDiscount = appliedCoupon?.discountAmount || 0;
+            const finalPrice = Math.max(0, Math.round((basePrice - couponDiscount) * 100) / 100);
             return (
               <div className="space-y-4">
                 <div className="text-center p-4 rounded-lg bg-muted/50">
                   <p className="text-sm text-muted-foreground">Plano selecionado</p>
                   <p className="text-lg font-bold text-foreground">{selectedPlan.name}</p>
-                  <p className="text-2xl font-bold text-primary mt-1">R$ {calculateFinalPrice(selectedPlan).toFixed(2)}</p>
+                  {couponDiscount > 0 && <p className="text-sm line-through text-muted-foreground/60">R$ {basePrice.toFixed(2)}</p>}
+                  <p className="text-2xl font-bold text-primary mt-1">R$ {finalPrice.toFixed(2)}</p>
                 </div>
+                <CouponInput
+                  planId={selectedPlan.id}
+                  originalPrice={basePrice}
+                  onCouponApplied={setAppliedCoupon}
+                />
                 {!hasAny && <p className="text-sm text-muted-foreground text-center py-4">Nenhum método de pagamento disponível. Entre em contato com o suporte.</p>}
                 {hasPix && (
                   <div className="space-y-2 p-3 rounded-lg border border-border">
