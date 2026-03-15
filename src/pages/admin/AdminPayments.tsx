@@ -189,8 +189,33 @@ const AdminPayments = () => {
 
         {/* ─── CONFIGURAÇÕES ─── */}
         <TabsContent value="settings" className="space-y-4 mt-4">
+          {/* Dynamic vs Manual toggle */}
           <Card className="bg-card border-border">
-            <CardHeader><CardTitle className="text-sm">Métodos de Pagamento</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">Modo de Pagamento</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-3 rounded-lg border border-primary/30 bg-primary/5">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="w-5 h-5 text-primary" />
+                    <span className="text-sm font-medium text-foreground">Pagamento Dinâmico via API</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Cria pagamentos automaticamente pelo Mercado Pago. Quando desativado, utiliza os Links de Pagamento manuais.
+                  </p>
+                </div>
+                <Switch
+                  checked={getSetting("use_dynamic_payments", "false") === "true"}
+                  onCheckedChange={(checked) => {
+                    updateSetting.mutate({ key: "use_dynamic_payments", value: checked ? "true" : "false" });
+                    toast.success(checked ? "Pagamento dinâmico ativado!" : "Pagamento dinâmico desativado. Usando links manuais.");
+                  }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card border-border">
+            <CardHeader><CardTitle className="text-sm">Métodos de Pagamento (API Dinâmica)</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               {[
                 { key: "pix_enabled", label: "PIX", icon: QrCode },

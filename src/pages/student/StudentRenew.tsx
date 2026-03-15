@@ -4,37 +4,26 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { QrCode, CreditCard, ExternalLink, Copy, CheckCircle2, Loader2 } from "lucide-react";
-import CouponInput from "@/components/CouponInput";
+import { Check } from "lucide-react";
+import DynamicCheckoutDialog from "@/components/DynamicCheckoutDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 const StudentRenew = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [pixCopied, setPixCopied] = useState(false);
-  const [couponsByPlan, setCouponsByPlan] = useState<Record<string, any>>({});
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const targetUserId = searchParams.get("uid");
 
-  // Verify user matches the link target
   const isAuthorized = user?.id === targetUserId;
 
   const { data: plans } = useQuery({
     queryKey: ["renew-plans"],
     queryFn: async () => {
       const { data } = await supabase.from("plans").select("*").eq("active", true).eq("visibility", "public").order("duration_days");
-      return data || [];
-    },
-    enabled: isAuthorized,
-  });
-
-  const { data: paymentLinks } = useQuery({
-    queryKey: ["renew-payment-links"],
-    queryFn: async () => {
-      const { data } = await supabase.from("plan_payment_links").select("*");
       return data || [];
     },
     enabled: isAuthorized,
@@ -49,8 +38,6 @@ const StudentRenew = () => {
     enabled: !!user?.id && isAuthorized,
   });
 
-  const getPlanLink = (planId: string) => paymentLinks?.find((l: any) => l.plan_id === planId);
-
   const calculateFinalPrice = (plan: any) => {
     const priceStr = plan.price.replace(/[^\d,\.]/g, "").replace(",", ".");
     let amount = parseFloat(priceStr) || 0;
@@ -60,30 +47,6 @@ const StudentRenew = () => {
       amount = Math.max(0, amount - plan.discount_value);
     }
     return Math.round(amount * 100) / 100;
-  };
-
-  const copyPixCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    setPixCopied(true);
-    toast.success("Código PIX copiado!");
-    setTimeout(() => setPixCopied(false), 3000);
-  };
-
-  const notifyPayment = async (planId: string, method: string, amount: number) => {
-    try {
-      await supabase.from("payments").insert({
-        user_id: user!.id,
-        plan_id: planId,
-        amount,
-        original_amount: amount,
-        method,
-        action_type: "unlock",
-        status: "pending",
-      });
-      toast.success("Pagamento notificado! Aguarde a confirmação do administrador.");
-    } catch {
-      toast.error("Erro ao notificar pagamento.");
-    }
   };
 
   if (!targetUserId) {
@@ -117,78 +80,56 @@ const StudentRenew = () => {
   return (
     <DashboardLayout role="student" title="Renovação de Plano" subtitle={`Olá, ${profile?.full_name || ""}! Escolha seu plano para renovar.`}>
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
-        {plans?.map((plan: any) => {
-          const basePrice = calculateFinalPrice(plan);
-          const coupon = couponsByPlan[plan.id];
-          const couponDiscount = coupon?.discountAmount || 0;
-          const finalPrice = Math.max(0, Math.round((basePrice - couponDiscount) * 100) / 100);
-          const link = getPlanLink(plan.id);
-          const hasPix = link?.pix_enabled && link?.pix_code;
-          const hasCard = link?.card_enabled && link?.card_link;
-          const hasDiscount = plan.discount_type !== "none" && plan.discount_value > 0;
+        {plans?.map((plan: any, i: number) => {
+          const finalPrice = calculateFinalPrice(plan);
           const originalPrice = parseFloat(plan.price.replace(/[^\d,\.]/g, "").replace(",", ".")) || 0;
+          const hasDiscount = plan.discount_type !== "none" && plan.discount_value > 0;
 
           return (
-            <Card key={plan.id} className="animate-fade-in">
+            <Card key={plan.id} className="animate-fade-in" style={{ animationDelay: `${i * 100}ms` }}>
               <CardHeader className="text-center pb-2 pt-6">
                 <CardTitle className="text-lg font-display">{plan.name}</CardTitle>
                 {plan.subtitle && <p className="text-xs text-muted-foreground">{plan.subtitle}</p>}
-                {(hasDiscount || couponDiscount > 0) && <p className="text-sm line-through text-muted-foreground/60">R$ {originalPrice.toFixed(2)}</p>}
+                {hasDiscount && <p className="text-sm line-through text-muted-foreground/60">R$ {originalPrice.toFixed(2)}</p>}
                 <p className="text-2xl font-bold text-foreground mt-1">R$ {finalPrice.toFixed(2)}</p>
                 {hasDiscount && (
                   <Badge variant="outline" className="text-xs text-primary border-primary/30">
                     {plan.discount_type === "percentage" ? `${plan.discount_value}% OFF` : `R$ ${plan.discount_value} OFF`}
                   </Badge>
                 )}
-                {couponDiscount > 0 && (
-                  <Badge variant="outline" className="text-xs text-primary border-primary/30">Cupom: -R$ {couponDiscount.toFixed(2)}</Badge>
-                )}
                 <p className="text-xs text-muted-foreground">{plan.duration}</p>
               </CardHeader>
               <CardContent className="space-y-3">
-                <CouponInput
-                  planId={plan.id}
-                  originalPrice={basePrice}
-                  onCouponApplied={(c) => setCouponsByPlan(prev => ({ ...prev, [plan.id]: c }))}
-                />
-                {hasPix && (
-                  <div className="space-y-2 p-3 rounded-lg border border-border">
-                    <div className="flex items-center gap-2">
-                      <QrCode className="w-4 h-4 text-primary" />
-                      <span className="text-sm font-medium">PIX</span>
-                    </div>
-                    <Button variant="outline" size="sm" className="w-full" onClick={() => copyPixCode(link!.pix_code!)}>
-                      {pixCopied ? <><CheckCircle2 className="w-4 h-4 mr-1 text-primary" />Copiado!</> : <><Copy className="w-4 h-4 mr-1" />Copiar PIX</>}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full text-xs text-muted-foreground"
-                      onClick={() => notifyPayment(plan.id, "pix", finalPrice)}
-                    >
-                      Já realizei o pagamento
-                    </Button>
-                  </div>
-                )}
-                {hasCard && (
-                  <div className="space-y-2 p-3 rounded-lg border border-border">
-                    <div className="flex items-center gap-2">
-                      <CreditCard className="w-4 h-4 text-primary" />
-                      <span className="text-sm font-medium">Cartão</span>
-                    </div>
-                    <a href={link!.card_link!} target="_blank" rel="noopener noreferrer">
-                      <Button size="sm" className="w-full"><ExternalLink className="w-4 h-4 mr-1" />Pagar com Cartão</Button>
-                    </a>
-                  </div>
-                )}
-                {!hasPix && !hasCard && (
-                  <p className="text-xs text-muted-foreground text-center py-2">Método de pagamento indisponível.</p>
-                )}
+                <ul className="space-y-2">
+                  {plan.benefits?.map((b: string, j: number) => (
+                    <li key={j} className="flex items-start gap-2 text-sm font-body">
+                      <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                      <span className="text-muted-foreground">{b}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  className="w-full"
+                  onClick={() => {
+                    setSelectedPlan(plan);
+                    setCheckoutOpen(true);
+                  }}
+                >
+                  Renovar
+                </Button>
               </CardContent>
             </Card>
           );
         })}
       </div>
+
+      <DynamicCheckoutDialog
+        open={checkoutOpen}
+        onOpenChange={setCheckoutOpen}
+        selectedPlan={selectedPlan}
+        calculateFinalPrice={calculateFinalPrice}
+        actionType="unlock"
+      />
     </DashboardLayout>
   );
 };

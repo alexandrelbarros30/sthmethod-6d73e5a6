@@ -6,19 +6,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import {
   ArrowLeft, ArrowRight, Check, Mail, Lock, User, Phone, Loader2,
-  QrCode, CreditCard, ExternalLink, Copy, CheckCircle2, CheckCircle, Calculator,
+  CheckCircle, Calculator,
   Eye, EyeOff,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import CouponInput from "@/components/CouponInput";
+
+import DynamicCheckoutDialog from "@/components/DynamicCheckoutDialog";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
 import DocumentUpload from "@/components/shared/DocumentUpload";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
@@ -51,9 +52,7 @@ const Cadastro = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
-  const [pixCopied, setPixCopied] = useState(false);
   const [macroResult, setMacroResult] = useState<MacroResult | null>(null);
-  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
 
   // Step 1 - Account
   const [email, setEmail] = useState("");
@@ -206,14 +205,6 @@ const Cadastro = () => {
     },
   });
 
-  const { data: paymentLinks } = useQuery({
-    queryKey: ["public-payment-links"],
-    queryFn: async () => {
-      const { data } = await supabase.from("plan_payment_links").select("*");
-      return data || [];
-    },
-  });
-
   const { data: bodyImages, refetch: refetchImages } = useQuery({
     queryKey: ["cadastro-body-images", userId],
     queryFn: async () => {
@@ -232,15 +223,6 @@ const Cadastro = () => {
       amount = Math.max(0, amount - plan.discount_value);
     }
     return Math.round(amount * 100) / 100;
-  };
-
-  const getPlanLink = (planId: string) => paymentLinks?.find((l: any) => l.plan_id === planId);
-
-  const copyPixCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    setPixCopied(true);
-    toast.success("Código PIX copiado!");
-    setTimeout(() => setPixCopied(false), 3000);
   };
 
   // Step 1: Create account
@@ -436,50 +418,6 @@ const Cadastro = () => {
     supabase.from("profiles").update({ onboarding_complete: true }).eq("user_id", userId!);
     toast.info("Você pode enviar as fotos depois. Escolha seu plano!");
     setStep(4);
-  };
-
-  const handlePaymentNotified = async () => {
-    setCheckoutOpen(false);
-    // Save a pending payment record so admin can see which plan was chosen
-    if (selectedPlan && userId) {
-      try {
-        const priceStr = selectedPlan.price.replace(/[^\d,\.]/g, "").replace(",", ".");
-        let originalAmount = parseFloat(priceStr) || 0;
-        let finalAmount = originalAmount;
-        if (selectedPlan.discount_type === "percentage" && selectedPlan.discount_value > 0) {
-          finalAmount = originalAmount * (1 - selectedPlan.discount_value / 100);
-        } else if (selectedPlan.discount_type === "fixed" && selectedPlan.discount_value > 0) {
-          finalAmount = Math.max(0, originalAmount - selectedPlan.discount_value);
-        }
-        finalAmount = Math.round(finalAmount * 100) / 100;
-
-        // Apply coupon discount
-        const couponDiscount = appliedCoupon?.discountAmount || 0;
-        if (couponDiscount > 0) {
-          finalAmount = Math.max(0, Math.round((finalAmount - couponDiscount) * 100) / 100);
-        }
-
-        const insertPayload: any = {
-          user_id: userId,
-          plan_id: selectedPlan.id,
-          amount: finalAmount,
-          original_amount: originalAmount,
-          method: "manual",
-          action_type: "new",
-          status: "pending",
-        };
-        if (appliedCoupon?.id) {
-          insertPayload.coupon_id = appliedCoupon.id;
-          insertPayload.coupon_discount = couponDiscount;
-        }
-
-        await supabase.from("payments").insert(insertPayload);
-      } catch (err) {
-        console.error("Error saving payment record:", err);
-      }
-    }
-    toast.success("Pagamento registrado! Seu acesso será liberado após confirmação.");
-    setTimeout(() => navigate("/login"), 2000);
   };
 
   const showTrainingDetails = profileForm.activity_type === "musculacao" || profileForm.activity_type === "crossfit";
@@ -863,7 +801,7 @@ const Cadastro = () => {
                           <li key={j} className="flex items-start gap-2 text-sm font-body"><Check className="w-4 h-4 text-primary shrink-0 mt-0.5" /><span className="text-muted-foreground">{b}</span></li>
                         ))}
                       </ul>
-                      <Button className="w-full" onClick={() => { setSelectedPlan(plan); setPixCopied(false); setCheckoutOpen(true); }}>
+                      <Button className="w-full" onClick={() => { setSelectedPlan(plan); setCheckoutOpen(true); }}>
                         Assinar agora
                       </Button>
                     </CardContent>
@@ -876,58 +814,18 @@ const Cadastro = () => {
       </div>
 
       {/* Checkout Dialog */}
-      <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="font-display">Realizar Pagamento</DialogTitle>
-          </DialogHeader>
-          {selectedPlan && (() => {
-            const link = getPlanLink(selectedPlan.id);
-            const hasPix = link?.pix_enabled && link?.pix_code;
-            const hasCard = link?.card_enabled && link?.card_link;
-            const hasAny = hasPix || hasCard;
-            const basePrice = calculateFinalPrice(selectedPlan);
-            const couponDiscount = appliedCoupon?.discountAmount || 0;
-            const finalPrice = Math.max(0, Math.round((basePrice - couponDiscount) * 100) / 100);
-            return (
-              <div className="space-y-4">
-                <div className="text-center p-4 rounded-lg bg-muted/50">
-                  <p className="text-sm text-muted-foreground">Plano selecionado</p>
-                  <p className="text-lg font-bold text-foreground">{selectedPlan.name}</p>
-                  {couponDiscount > 0 && <p className="text-sm line-through text-muted-foreground/60">R$ {basePrice.toFixed(2)}</p>}
-                  <p className="text-2xl font-bold text-primary mt-1">R$ {finalPrice.toFixed(2)}</p>
-                </div>
-                <CouponInput
-                  planId={selectedPlan.id}
-                  originalPrice={basePrice}
-                  onCouponApplied={setAppliedCoupon}
-                />
-                {!hasAny && <p className="text-sm text-muted-foreground text-center py-4">Nenhum método de pagamento disponível. Entre em contato com o suporte.</p>}
-                {hasPix && (
-                  <div className="space-y-2 p-3 rounded-lg border border-border">
-                    <div className="flex items-center gap-2 mb-2"><QrCode className="w-5 h-5 text-primary" /><span className="text-sm font-medium text-foreground">PIX</span></div>
-                    <Button variant="outline" className="w-full" onClick={() => copyPixCode(link!.pix_code!)}>
-                      {pixCopied ? <><CheckCircle2 className="w-4 h-4 mr-2 text-primary" />Código Copiado!</> : <><Copy className="w-4 h-4 mr-2" />Copiar código PIX</>}
-                    </Button>
-                    <p className="text-xs text-muted-foreground text-center">Após o pagamento, seu plano será ativado automaticamente.</p>
-                  </div>
-                )}
-                {hasCard && (
-                  <div className="space-y-2 p-3 rounded-lg border border-border">
-                    <div className="flex items-center gap-2 mb-2"><CreditCard className="w-5 h-5 text-primary" /><span className="text-sm font-medium text-foreground">Cartão</span></div>
-                    <a href={link!.card_link!} target="_blank" rel="noopener noreferrer">
-                      <Button className="w-full"><ExternalLink className="w-4 h-4 mr-2" />Pagar com Cartão</Button>
-                    </a>
-                  </div>
-                )}
-                <Button variant="outline" className="w-full mt-2" onClick={handlePaymentNotified}>
-                  ✅ Já realizei o pagamento
-                </Button>
-              </div>
-            );
-          })()}
-        </DialogContent>
-      </Dialog>
+      <DynamicCheckoutDialog
+        open={checkoutOpen}
+        onOpenChange={setCheckoutOpen}
+        selectedPlan={selectedPlan}
+        calculateFinalPrice={calculateFinalPrice}
+        actionType="new"
+        overrideUserId={userId || undefined}
+        onPaymentSuccess={() => {
+          toast.success("Pagamento registrado! Seu acesso será liberado após confirmação.");
+          setTimeout(() => navigate("/login"), 2000);
+        }}
+      />
     </div>
   );
 };
