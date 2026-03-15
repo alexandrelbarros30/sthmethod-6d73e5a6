@@ -1,15 +1,15 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Check, CreditCard, QrCode, ExternalLink, Copy, CheckCircle2, ArrowRight, ArrowLeft, Loader2, Upload, ImageIcon, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Check, ArrowRight, ArrowLeft } from "lucide-react";
 import CouponInput from "@/components/CouponInput";
+import DynamicCheckoutDialog from "@/components/DynamicCheckoutDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
