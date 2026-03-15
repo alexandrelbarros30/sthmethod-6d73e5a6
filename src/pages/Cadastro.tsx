@@ -876,58 +876,18 @@ const Cadastro = () => {
       </div>
 
       {/* Checkout Dialog */}
-      <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="font-display">Realizar Pagamento</DialogTitle>
-          </DialogHeader>
-          {selectedPlan && (() => {
-            const link = getPlanLink(selectedPlan.id);
-            const hasPix = link?.pix_enabled && link?.pix_code;
-            const hasCard = link?.card_enabled && link?.card_link;
-            const hasAny = hasPix || hasCard;
-            const basePrice = calculateFinalPrice(selectedPlan);
-            const couponDiscount = appliedCoupon?.discountAmount || 0;
-            const finalPrice = Math.max(0, Math.round((basePrice - couponDiscount) * 100) / 100);
-            return (
-              <div className="space-y-4">
-                <div className="text-center p-4 rounded-lg bg-muted/50">
-                  <p className="text-sm text-muted-foreground">Plano selecionado</p>
-                  <p className="text-lg font-bold text-foreground">{selectedPlan.name}</p>
-                  {couponDiscount > 0 && <p className="text-sm line-through text-muted-foreground/60">R$ {basePrice.toFixed(2)}</p>}
-                  <p className="text-2xl font-bold text-primary mt-1">R$ {finalPrice.toFixed(2)}</p>
-                </div>
-                <CouponInput
-                  planId={selectedPlan.id}
-                  originalPrice={basePrice}
-                  onCouponApplied={setAppliedCoupon}
-                />
-                {!hasAny && <p className="text-sm text-muted-foreground text-center py-4">Nenhum método de pagamento disponível. Entre em contato com o suporte.</p>}
-                {hasPix && (
-                  <div className="space-y-2 p-3 rounded-lg border border-border">
-                    <div className="flex items-center gap-2 mb-2"><QrCode className="w-5 h-5 text-primary" /><span className="text-sm font-medium text-foreground">PIX</span></div>
-                    <Button variant="outline" className="w-full" onClick={() => copyPixCode(link!.pix_code!)}>
-                      {pixCopied ? <><CheckCircle2 className="w-4 h-4 mr-2 text-primary" />Código Copiado!</> : <><Copy className="w-4 h-4 mr-2" />Copiar código PIX</>}
-                    </Button>
-                    <p className="text-xs text-muted-foreground text-center">Após o pagamento, seu plano será ativado automaticamente.</p>
-                  </div>
-                )}
-                {hasCard && (
-                  <div className="space-y-2 p-3 rounded-lg border border-border">
-                    <div className="flex items-center gap-2 mb-2"><CreditCard className="w-5 h-5 text-primary" /><span className="text-sm font-medium text-foreground">Cartão</span></div>
-                    <a href={link!.card_link!} target="_blank" rel="noopener noreferrer">
-                      <Button className="w-full"><ExternalLink className="w-4 h-4 mr-2" />Pagar com Cartão</Button>
-                    </a>
-                  </div>
-                )}
-                <Button variant="outline" className="w-full mt-2" onClick={handlePaymentNotified}>
-                  ✅ Já realizei o pagamento
-                </Button>
-              </div>
-            );
-          })()}
-        </DialogContent>
-      </Dialog>
+      <DynamicCheckoutDialog
+        open={checkoutOpen}
+        onOpenChange={setCheckoutOpen}
+        selectedPlan={selectedPlan}
+        calculateFinalPrice={calculateFinalPrice}
+        actionType="new"
+        overrideUserId={userId || undefined}
+        onPaymentSuccess={() => {
+          toast.success("Pagamento registrado! Seu acesso será liberado após confirmação.");
+          setTimeout(() => navigate("/login"), 2000);
+        }}
+      />
     </div>
   );
 };
