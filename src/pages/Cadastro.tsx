@@ -205,14 +205,6 @@ const Cadastro = () => {
     },
   });
 
-  const { data: paymentLinks } = useQuery({
-    queryKey: ["public-payment-links"],
-    queryFn: async () => {
-      const { data } = await supabase.from("plan_payment_links").select("*");
-      return data || [];
-    },
-  });
-
   const { data: bodyImages, refetch: refetchImages } = useQuery({
     queryKey: ["cadastro-body-images", userId],
     queryFn: async () => {
@@ -231,15 +223,6 @@ const Cadastro = () => {
       amount = Math.max(0, amount - plan.discount_value);
     }
     return Math.round(amount * 100) / 100;
-  };
-
-  const getPlanLink = (planId: string) => paymentLinks?.find((l: any) => l.plan_id === planId);
-
-  const copyPixCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    setPixCopied(true);
-    toast.success("Código PIX copiado!");
-    setTimeout(() => setPixCopied(false), 3000);
   };
 
   // Step 1: Create account
