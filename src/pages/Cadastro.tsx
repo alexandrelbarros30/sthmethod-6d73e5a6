@@ -453,7 +453,13 @@ const Cadastro = () => {
         }
         finalAmount = Math.round(finalAmount * 100) / 100;
 
-        await supabase.from("payments").insert({
+        // Apply coupon discount
+        const couponDiscount = appliedCoupon?.discountAmount || 0;
+        if (couponDiscount > 0) {
+          finalAmount = Math.max(0, Math.round((finalAmount - couponDiscount) * 100) / 100);
+        }
+
+        const insertPayload: any = {
           user_id: userId,
           plan_id: selectedPlan.id,
           amount: finalAmount,
@@ -461,7 +467,13 @@ const Cadastro = () => {
           method: "manual",
           action_type: "new",
           status: "pending",
-        });
+        };
+        if (appliedCoupon?.id) {
+          insertPayload.coupon_id = appliedCoupon.id;
+          insertPayload.coupon_discount = couponDiscount;
+        }
+
+        await supabase.from("payments").insert(insertPayload);
       } catch (err) {
         console.error("Error saving payment record:", err);
       }
