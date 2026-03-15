@@ -52,9 +52,7 @@ const Cadastro = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
-  const [pixCopied, setPixCopied] = useState(false);
   const [macroResult, setMacroResult] = useState<MacroResult | null>(null);
-  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
 
   // Step 1 - Account
   const [email, setEmail] = useState("");
