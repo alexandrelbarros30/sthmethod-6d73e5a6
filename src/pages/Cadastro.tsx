@@ -801,7 +801,7 @@ const Cadastro = () => {
                           <li key={j} className="flex items-start gap-2 text-sm font-body"><Check className="w-4 h-4 text-primary shrink-0 mt-0.5" /><span className="text-muted-foreground">{b}</span></li>
                         ))}
                       </ul>
-                      <Button className="w-full" onClick={() => { setSelectedPlan(plan); setPixCopied(false); setCheckoutOpen(true); }}>
+                      <Button className="w-full" onClick={() => { setSelectedPlan(plan); setCheckoutOpen(true); }}>
                         Assinar agora
                       </Button>
                     </CardContent>
