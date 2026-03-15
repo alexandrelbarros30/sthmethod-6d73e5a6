@@ -420,50 +420,6 @@ const Cadastro = () => {
     setStep(4);
   };
 
-  const handlePaymentNotified = async () => {
-    setCheckoutOpen(false);
-    // Save a pending payment record so admin can see which plan was chosen
-    if (selectedPlan && userId) {
-      try {
-        const priceStr = selectedPlan.price.replace(/[^\d,\.]/g, "").replace(",", ".");
-        let originalAmount = parseFloat(priceStr) || 0;
-        let finalAmount = originalAmount;
-        if (selectedPlan.discount_type === "percentage" && selectedPlan.discount_value > 0) {
-          finalAmount = originalAmount * (1 - selectedPlan.discount_value / 100);
-        } else if (selectedPlan.discount_type === "fixed" && selectedPlan.discount_value > 0) {
-          finalAmount = Math.max(0, originalAmount - selectedPlan.discount_value);
-        }
-        finalAmount = Math.round(finalAmount * 100) / 100;
-
-        // Apply coupon discount
-        const couponDiscount = appliedCoupon?.discountAmount || 0;
-        if (couponDiscount > 0) {
-          finalAmount = Math.max(0, Math.round((finalAmount - couponDiscount) * 100) / 100);
-        }
-
-        const insertPayload: any = {
-          user_id: userId,
-          plan_id: selectedPlan.id,
-          amount: finalAmount,
-          original_amount: originalAmount,
-          method: "manual",
-          action_type: "new",
-          status: "pending",
-        };
-        if (appliedCoupon?.id) {
-          insertPayload.coupon_id = appliedCoupon.id;
-          insertPayload.coupon_discount = couponDiscount;
-        }
-
-        await supabase.from("payments").insert(insertPayload);
-      } catch (err) {
-        console.error("Error saving payment record:", err);
-      }
-    }
-    toast.success("Pagamento registrado! Seu acesso será liberado após confirmação.");
-    setTimeout(() => navigate("/login"), 2000);
-  };
-
   const showTrainingDetails = profileForm.activity_type === "musculacao" || profileForm.activity_type === "crossfit";
   const showCardioDetails = profileForm.does_cardio === "sim";
 
