@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, FileText, Clock, Download } from "lucide-react";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
+import ProtocolInfoPanel from "@/components/student/ProtocolInfoPanel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { generateStudentPDF, canDownloadPDF } from "@/lib/pdfGenerator";
