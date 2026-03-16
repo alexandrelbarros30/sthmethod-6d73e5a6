@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
-const MAX_SIZE_MB = 2;
-const MAX_DIMENSION = 1200;
+const MAX_SIZE_MB = 1;
+const MAX_DIMENSION = 1000;
 
 /**
  * Detect content type from blob/file
