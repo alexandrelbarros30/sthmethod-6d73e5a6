@@ -93,7 +93,7 @@ export async function compressImage(
   if ("close" in drawSource) (drawSource as ImageBitmap).close();
 
   return new Promise((resolve) => {
-    let quality = 0.85;
+    let quality = 0.75;
     const tryCompress = () => {
       canvas.toBlob(
         (blob) => {
@@ -102,7 +102,8 @@ export async function compressImage(
             resolve(file);
             return;
           }
-          if (blob.size > maxSizeMB * 1024 * 1024 && quality > 0.3) {
+          console.log(`[image-upload] Compressed at quality ${quality.toFixed(2)}: ${(blob.size / 1024).toFixed(0)}KB`);
+          if (blob.size > maxSizeMB * 1024 * 1024 && quality > 0.2) {
             quality -= 0.15;
             tryCompress();
           } else {
