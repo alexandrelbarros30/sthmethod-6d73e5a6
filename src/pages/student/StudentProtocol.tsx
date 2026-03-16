@@ -146,6 +146,9 @@ const StudentProtocol = () => {
           </CardContent>
         </Card>
 
+        {/* Protocol Info Panel */}
+        <ProtocolInfoPanel />
+
         {!protocols || protocols.length === 0 ? (
           <Card><CardContent className="py-8 text-center">
             <p className="text-muted-foreground font-body">Nenhum protocolo configurado ainda. Aguarde seu consultor.</p>
