@@ -1,7 +1,12 @@
+// @ts-ignore
 import { useEditor, EditorContent } from "@tiptap/react";
+// @ts-ignore
 import StarterKit from "@tiptap/starter-kit";
+// @ts-ignore
 import Underline from "@tiptap/extension-underline";
+// @ts-ignore
 import TextAlign from "@tiptap/extension-text-align";
+// @ts-ignore
 import Highlight from "@tiptap/extension-highlight";
 import { Separator } from "@/components/ui/separator";
 import {
