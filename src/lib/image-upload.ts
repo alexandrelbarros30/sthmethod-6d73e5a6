@@ -131,20 +131,30 @@ export async function uploadWithRetry(
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
+      console.log(`[image-upload] Upload attempt ${attempt}/${retries}, size: ${(blob.size / 1024).toFixed(0)}KB`);
+      
+      // Use AbortController for timeout on mobile
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000 * attempt);
+      
       const { error } = await supabase.storage.from(bucket).upload(path, blob, {
         contentType,
         upsert: true,
       });
+      
+      clearTimeout(timeoutId);
+      
       if (!error) {
         const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
         return urlData.publicUrl;
       }
       console.warn(`[image-upload] Attempt ${attempt} failed:`, error.message);
       if (attempt === retries) throw error;
-    } catch (err) {
+    } catch (err: any) {
+      console.warn(`[image-upload] Attempt ${attempt} exception:`, err?.message || err);
       if (attempt === retries) throw err;
     }
-    await new Promise((r) => setTimeout(r, 1000 * attempt));
+    await new Promise((r) => setTimeout(r, 2000 * attempt));
   }
   throw new Error("Upload failed after retries");
 }
