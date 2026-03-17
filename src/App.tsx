@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,9 +24,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminStudents from "./pages/admin/AdminStudents";
 import AdminPlans from "./pages/admin/AdminPlans";
 import AdminPayments from "./pages/admin/AdminPayments";
-import AdminDiet from "./pages/admin/AdminDiet";
 import AdminNutrition from "./pages/admin/AdminNutrition";
-import AdminProtocol from "./pages/admin/AdminProtocol";
 import AdminTraining from "./pages/admin/AdminTraining";
 import AdminExerciseLibrary from "./pages/admin/AdminExerciseLibrary";
 import AdminTrainingPrograms from "./pages/admin/AdminTrainingPrograms";
@@ -41,6 +40,12 @@ import AssistenteDashboard from "./pages/assistente/AssistenteDashboard";
 import FinanceiroDashboard from "./pages/financeiro/FinanceiroDashboard";
 import NotFound from "./pages/NotFound";
 import { useDynamicFavicon } from "@/hooks/useDynamicFavicon";
+
+// Lazy load pages that use Tiptap editor to avoid blocking the app
+const AdminDiet = lazy(() => import("./pages/admin/AdminDiet"));
+const AdminProtocol = lazy(() => import("./pages/admin/AdminProtocol"));
+
+const LazyFallback = () => <div className="flex items-center justify-center min-h-screen"><p className="text-muted-foreground text-sm">Carregando...</p></div>;
 
 const queryClient = new QueryClient();
 
@@ -75,10 +80,10 @@ const App = () => (
             <Route path="/admin/students" element={<ProtectedRoute allowedRoles={["admin"]}><AdminStudents /></ProtectedRoute>} />
             <Route path="/admin/plans" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPlans /></ProtectedRoute>} />
             <Route path="/admin/payments" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPayments /></ProtectedRoute>} />
-            <Route path="/admin/diet" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDiet /></ProtectedRoute>} />
+            <Route path="/admin/diet" element={<ProtectedRoute allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><AdminDiet /></Suspense></ProtectedRoute>} />
             <Route path="/admin/nutrition" element={<ProtectedRoute allowedRoles={["admin"]}><AdminNutrition /></ProtectedRoute>} />
             <Route path="/admin/diet-library" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDietLibrary /></ProtectedRoute>} />
-            <Route path="/admin/protocol" element={<ProtectedRoute allowedRoles={["admin"]}><AdminProtocol /></ProtectedRoute>} />
+            <Route path="/admin/protocol" element={<ProtectedRoute allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><AdminProtocol /></Suspense></ProtectedRoute>} />
             <Route path="/admin/training" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTraining /></ProtectedRoute>} />
             <Route path="/admin/exercise-library" element={<ProtectedRoute allowedRoles={["admin"]}><AdminExerciseLibrary /></ProtectedRoute>} />
             <Route path="/admin/workout-templates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTrainingPrograms /></ProtectedRoute>} />
@@ -91,11 +96,11 @@ const App = () => (
             {/* Consultor routes */}
             <Route path="/consultor" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
             <Route path="/consultor/students" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
-            <Route path="/consultor/diet" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminDiet /></ProtectedRoute>} />
+            <Route path="/consultor/diet" element={<ProtectedRoute allowedRoles={["consultor"]}><Suspense fallback={<LazyFallback />}><AdminDiet /></Suspense></ProtectedRoute>} />
             <Route path="/consultor/nutrition" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminNutrition /></ProtectedRoute>} />
             <Route path="/consultor/diet-library" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminDietLibrary /></ProtectedRoute>} />
             <Route path="/consultor/training" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminTraining /></ProtectedRoute>} />
-            <Route path="/consultor/protocol" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminProtocol /></ProtectedRoute>} />
+            <Route path="/consultor/protocol" element={<ProtectedRoute allowedRoles={["consultor"]}><Suspense fallback={<LazyFallback />}><AdminProtocol /></Suspense></ProtectedRoute>} />
             <Route path="/consultor/exercise-library" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminExerciseLibrary /></ProtectedRoute>} />
             <Route path="/consultor/workout-templates" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminTrainingPrograms /></ProtectedRoute>} />
             {/* Assistente routes */}
