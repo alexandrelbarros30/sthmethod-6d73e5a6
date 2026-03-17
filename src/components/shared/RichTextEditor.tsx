@@ -1,20 +1,14 @@
 // @ts-nocheck
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import Underline from "@tiptap/extension-underline";
-import TextAlign from "@tiptap/extension-text-align";
 import Highlight from "@tiptap/extension-highlight";
 import { Separator } from "@/components/ui/separator";
 import {
   Bold,
   Italic,
-  Underline as UnderlineIcon,
   Strikethrough,
   List,
   ListOrdered,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
   Heading2,
   Heading3,
   Highlighter,
@@ -68,8 +62,6 @@ const RichTextEditor = ({ value, onChange, placeholder, className }: RichTextEdi
       StarterKit.configure({
         heading: { levels: [2, 3] },
       }),
-      Underline,
-      TextAlign.configure({ types: ["heading", "paragraph"] }),
       Highlight,
     ],
     content: value || "",
@@ -97,7 +89,7 @@ const RichTextEditor = ({ value, onChange, placeholder, className }: RichTextEdi
 
   return (
     <div className={cn("w-full min-w-0 rounded-md border border-input bg-background overflow-hidden", className)}>
-      {/* Toolbar - scrollable on mobile */}
+      {/* Toolbar */}
       <div className="flex items-center gap-px overflow-x-auto scrollbar-none border-b border-input px-1 py-0.5">
         <MenuButton
           active={editor.isActive("heading", { level: 2 })}
@@ -131,13 +123,6 @@ const RichTextEditor = ({ value, onChange, placeholder, className }: RichTextEdi
           <Italic className="h-3.5 w-3.5" />
         </MenuButton>
         <MenuButton
-          active={editor.isActive("underline")}
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
-          title="Sublinhado"
-        >
-          <UnderlineIcon className="h-3.5 w-3.5" />
-        </MenuButton>
-        <MenuButton
           active={editor.isActive("strike")}
           onClick={() => editor.chain().focus().toggleStrike().run()}
           title="Tachado"
@@ -167,30 +152,6 @@ const RichTextEditor = ({ value, onChange, placeholder, className }: RichTextEdi
           title="Numerada"
         >
           <ListOrdered className="h-3.5 w-3.5" />
-        </MenuButton>
-
-        <ToolbarSep />
-
-        <MenuButton
-          active={editor.isActive({ textAlign: "left" })}
-          onClick={() => editor.chain().focus().setTextAlign("left").run()}
-          title="Esquerda"
-        >
-          <AlignLeft className="h-3.5 w-3.5" />
-        </MenuButton>
-        <MenuButton
-          active={editor.isActive({ textAlign: "center" })}
-          onClick={() => editor.chain().focus().setTextAlign("center").run()}
-          title="Centro"
-        >
-          <AlignCenter className="h-3.5 w-3.5" />
-        </MenuButton>
-        <MenuButton
-          active={editor.isActive({ textAlign: "right" })}
-          onClick={() => editor.chain().focus().setTextAlign("right").run()}
-          title="Direita"
-        >
-          <AlignRight className="h-3.5 w-3.5" />
         </MenuButton>
 
         <ToolbarSep />
