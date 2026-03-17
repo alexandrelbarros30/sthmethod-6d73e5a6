@@ -302,11 +302,18 @@ const AdminProtocol = () => {
           </DialogHeader>
 
           <ScrollArea className="flex-1 min-h-0 pr-0 sm:pr-4">
-            <div className="space-y-4">
+            <div className="space-y-6">
+              {/* Protocol Items Manager (medications/supplements) */}
+              {selected?.user_id && (
+                <ProtocolItemsManager userId={selected.user_id} studentName={selected.full_name} />
+              )}
+
+              <hr className="border-border" />
+
               {/* Add new protocol button */}
               {!showNewForm && !editingId && (
                 <Button onClick={() => setShowNewForm(true)} className="w-full" variant="outline">
-                  <Plus className="w-4 h-4 mr-2" /> Adicionar Novo Protocolo
+                  <Plus className="w-4 h-4 mr-2" /> Adicionar Novo Protocolo (Texto/PDF)
                 </Button>
               )}
 
