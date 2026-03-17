@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { generateStudentPDF, canDownloadPDF } from "@/lib/pdfGenerator";
 import { toast } from "sonner";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const useContentProtection = () => {
   useEffect(() => {
@@ -173,49 +174,51 @@ const StudentProtocol = () => {
               <Clock className="w-4 h-4" /> Histórico de Protocolos ({protocols.length})
             </h3>
 
-            {protocols.map((protocol: any) => (
-              <Card key={protocol.id}>
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <CardTitle className="text-base font-display">{protocol.title}</CardTitle>
+            <Accordion type="single" collapsible className="space-y-2">
+              {protocols.map((protocol: any) => (
+                <AccordionItem key={protocol.id} value={protocol.id} className="border rounded-xl overflow-hidden bg-card">
+                  <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                    <div className="flex items-center gap-2 flex-wrap text-left">
+                      <span className="text-base font-display font-semibold">{protocol.title}</span>
                       <Badge variant="outline" className="text-[10px]">
                         {new Date(protocol.created_at).toLocaleDateString("pt-BR")} às{" "}
                         {new Date(protocol.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                       </Badge>
                     </div>
-                    {canDownload && protocol.content && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownloadPDF(protocol)}
-                        className="h-7 text-xs"
-                      >
-                        <Download className="w-3 h-3 mr-1" />
-                        PDF
-                      </Button>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {protocol.pdf_url && (
-                    <div>
-                      <p className="text-xs text-primary flex items-center gap-1 mb-2">
-                        <FileText className="w-3 h-3" /> Documento PDF
-                      </p>
-                      <iframe
-                        src={protocol.pdf_url}
-                        className="w-full h-[500px] rounded-lg border border-border"
-                        title="Protocolo PDF"
-                      />
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    <div className="space-y-3">
+                      {canDownload && protocol.content && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDownloadPDF(protocol)}
+                          className="h-7 text-xs"
+                        >
+                          <Download className="w-3 h-3 mr-1" />
+                          PDF
+                        </Button>
+                      )}
+                      {protocol.pdf_url && (
+                        <div>
+                          <p className="text-xs text-primary flex items-center gap-1 mb-2">
+                            <FileText className="w-3 h-3" /> Documento PDF
+                          </p>
+                          <iframe
+                            src={protocol.pdf_url}
+                            className="w-full h-[500px] rounded-lg border border-border"
+                            title="Protocolo PDF"
+                          />
+                        </div>
+                      )}
+                      {protocol.content && (
+                        <RichContentRenderer content={protocol.content} />
+                      )}
                     </div>
-                  )}
-                  {protocol.content && (
-                    <RichContentRenderer content={protocol.content} />
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </>
         )}
       </div>
