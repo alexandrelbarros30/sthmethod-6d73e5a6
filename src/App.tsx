@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,9 +24,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminStudents from "./pages/admin/AdminStudents";
 import AdminPlans from "./pages/admin/AdminPlans";
 import AdminPayments from "./pages/admin/AdminPayments";
-import AdminDiet from "./pages/admin/AdminDiet";
 import AdminNutrition from "./pages/admin/AdminNutrition";
-import AdminProtocol from "./pages/admin/AdminProtocol";
 import AdminTraining from "./pages/admin/AdminTraining";
 import AdminExerciseLibrary from "./pages/admin/AdminExerciseLibrary";
 import AdminTrainingPrograms from "./pages/admin/AdminTrainingPrograms";
@@ -41,6 +40,12 @@ import AssistenteDashboard from "./pages/assistente/AssistenteDashboard";
 import FinanceiroDashboard from "./pages/financeiro/FinanceiroDashboard";
 import NotFound from "./pages/NotFound";
 import { useDynamicFavicon } from "@/hooks/useDynamicFavicon";
+
+// Lazy load pages that use Tiptap editor to avoid blocking the app
+const AdminDiet = lazy(() => import("./pages/admin/AdminDiet"));
+const AdminProtocol = lazy(() => import("./pages/admin/AdminProtocol"));
+
+const LazyFallback = () => <div className="flex items-center justify-center min-h-screen"><p className="text-muted-foreground text-sm">Carregando...</p></div>;
 
 const queryClient = new QueryClient();
 
