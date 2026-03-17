@@ -66,6 +66,20 @@ const StudentProtocol = () => {
     enabled: !!user?.id && isActive,
   });
 
+  const { data: protocolItems = [] } = useQuery({
+    queryKey: ["student-protocol-items", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("protocols")
+        .select("*")
+        .eq("user_id", user!.id)
+        .order("category")
+        .order("sort_order");
+      return data || [];
+    },
+    enabled: !!user?.id && isActive,
+  });
+
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
     queryFn: async () => {

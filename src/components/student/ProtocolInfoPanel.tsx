@@ -1,55 +1,81 @@
 import { motion } from "framer-motion";
-import { Heart, Activity, Zap, Shield, FlaskConical, Brain } from "lucide-react";
+import { Heart, Activity, Zap, Shield, FlaskConical, Brain, Pill } from "lucide-react";
 
-const categories = [
+interface ProtocolItem {
+  id: string;
+  name: string;
+  category: string;
+  dosage: string;
+  frequency: string;
+  notes: string | null;
+  sort_order: number;
+}
+
+interface ProtocolInfoPanelProps {
+  protocols?: ProtocolItem[];
+}
+
+const categoryConfig = [
   {
+    key: "endocrino",
     title: "Suporte Endócrino Hormonal",
     icon: FlaskConical,
     color: "from-violet-500 to-fuchsia-500",
     glowColor: "shadow-violet-500/20",
     bgAccent: "bg-violet-500/10",
     borderAccent: "border-violet-500/20",
-    items: [
+    iconSecondary: Brain,
+    defaultItems: [
       "Otimização dos eixos hormonais",
       "Suporte à tireoide e metabolismo basal",
       "Regulação do cortisol e estresse",
       "Equilíbrio de hormônios anabólicos",
     ],
-    iconSecondary: Brain,
   },
   {
+    key: "cardiovascular",
     title: "Suporte Cardiovascular, Hepático e Renal",
     icon: Heart,
     color: "from-rose-500 to-orange-500",
     glowColor: "shadow-rose-500/20",
     bgAccent: "bg-rose-500/10",
     borderAccent: "border-rose-500/20",
-    items: [
+    iconSecondary: Shield,
+    defaultItems: [
       "Proteção cardiovascular avançada",
       "Suporte à função hepática e detox",
       "Manutenção da saúde renal",
       "Controle lipídico e pressórico",
     ],
-    iconSecondary: Shield,
   },
   {
+    key: "metabolico",
     title: "Suporte Metabólico e Performance",
     icon: Zap,
     color: "from-emerald-500 to-cyan-500",
     glowColor: "shadow-emerald-500/20",
     bgAccent: "bg-emerald-500/10",
     borderAccent: "border-emerald-500/20",
-    items: [
+    iconSecondary: Activity,
+    defaultItems: [
       "Maximização da performance esportiva",
       "Otimização da composição corporal",
       "Suporte energético e recuperação",
       "Nutrição celular e micronutrientes",
     ],
-    iconSecondary: Activity,
   },
 ];
 
-const ProtocolInfoPanel = () => {
+const ProtocolInfoPanel = ({ protocols = [] }: ProtocolInfoPanelProps) => {
+  const groupedProtocols = categoryConfig.reduce((acc, cat) => {
+    acc[cat.key] = protocols
+      .filter((p) => p.category === cat.key)
+      .sort((a, b) => a.sort_order - b.sort_order);
+    return acc;
+  }, {} as Record<string, ProtocolItem[]>);
+
+  const hasAnyProtocols = protocols.length > 0;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -67,18 +93,23 @@ const ProtocolInfoPanel = () => {
           Pilares do Protocolo
         </h2>
         <p className="text-sm text-muted-foreground max-w-md mx-auto font-body">
-          Seu protocolo é construído sobre três pilares científicos para otimização completa da saúde e performance.
+          {hasAnyProtocols
+            ? "Seus medicamentos e suplementos organizados por pilar de suporte."
+            : "Seu protocolo é construído sobre três pilares científicos para otimização completa da saúde e performance."}
         </p>
       </motion.div>
 
       {/* Cards */}
       <div className="grid gap-4">
-        {categories.map((cat, i) => {
+        {categoryConfig.map((cat, i) => {
           const Icon = cat.icon;
           const IconSec = cat.iconSecondary;
+          const items = groupedProtocols[cat.key] || [];
+          const showDefault = items.length === 0;
+
           return (
             <motion.div
-              key={cat.title}
+              key={cat.key}
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 + i * 0.15, duration: 0.5 }}
@@ -98,26 +129,65 @@ const ProtocolInfoPanel = () => {
                     <h3 className="font-display font-semibold text-sm sm:text-base text-foreground leading-tight">
                       {cat.title}
                     </h3>
+                    {!showDefault && (
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {items.length} item(ns) prescrito(s)
+                      </p>
+                    )}
                   </div>
-                  <IconSec className={`w-5 h-5 text-muted-foreground/30 shrink-0`} />
+                  <IconSec className="w-5 h-5 text-muted-foreground/30 shrink-0" />
                 </div>
 
-                {/* Items */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 ml-[52px]">
-                  {cat.items.map((item, j) => (
-                    <motion.div
-                      key={j}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.4 + i * 0.15 + j * 0.08 }}
-                      className="flex items-start gap-2"
-                    >
-                      <div className={`w-1.5 h-1.5 rounded-full bg-gradient-to-br ${cat.color} mt-1.5 shrink-0`} />
-                      <span className="text-xs sm:text-sm text-muted-foreground font-body leading-snug">
-                        {item}
-                      </span>
-                    </motion.div>
-                  ))}
+                {/* Items - dynamic or default */}
+                <div className="space-y-2 ml-[52px]">
+                  {showDefault ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                      {cat.defaultItems.map((item, j) => (
+                        <motion.div
+                          key={j}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.4 + i * 0.15 + j * 0.08 }}
+                          className="flex items-start gap-2"
+                        >
+                          <div className={`w-1.5 h-1.5 rounded-full bg-gradient-to-br ${cat.color} mt-1.5 shrink-0`} />
+                          <span className="text-xs sm:text-sm text-muted-foreground font-body leading-snug">
+                            {item}
+                          </span>
+                        </motion.div>
+                      ))}
+                    </div>
+                  ) : (
+                    items.map((item, j) => (
+                      <motion.div
+                        key={item.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 + i * 0.1 + j * 0.06 }}
+                        className={`rounded-lg border ${cat.borderAccent} ${cat.bgAccent} p-2.5 sm:p-3`}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <Pill className="w-3.5 h-3.5 text-foreground/70 shrink-0" />
+                          <span className="font-display font-semibold text-xs sm:text-sm text-foreground">
+                            {item.name}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px] sm:text-xs text-muted-foreground font-body pl-5.5">
+                          {item.dosage && (
+                            <span><strong className="text-foreground/80">Dose:</strong> {item.dosage}</span>
+                          )}
+                          {item.frequency && (
+                            <span><strong className="text-foreground/80">Freq:</strong> {item.frequency}</span>
+                          )}
+                        </div>
+                        {item.notes && (
+                          <p className="text-[10px] sm:text-[11px] text-muted-foreground/80 mt-1 pl-5.5 italic font-body">
+                            {item.notes}
+                          </p>
+                        )}
+                      </motion.div>
+                    ))
+                  )}
                 </div>
               </div>
             </motion.div>
