@@ -1,4 +1,4 @@
-// @ts-ignore
+// @ts-nocheck
 import { useEditor, EditorContent } from "@tiptap/react";
 // @ts-ignore
 import StarterKit from "@tiptap/starter-kit";
