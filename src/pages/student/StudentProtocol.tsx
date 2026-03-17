@@ -161,7 +161,7 @@ const StudentProtocol = () => {
         </Card>
 
         {/* Protocol Info Panel */}
-        <ProtocolInfoPanel />
+        <ProtocolInfoPanel protocols={protocolItems} />
 
         {!protocols || protocols.length === 0 ? (
           <Card><CardContent className="py-8 text-center">
