@@ -96,7 +96,7 @@ const App = () => (
             {/* Consultor routes */}
             <Route path="/consultor" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
             <Route path="/consultor/students" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
-            <Route path="/consultor/diet" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminDiet /></ProtectedRoute>} />
+            <Route path="/consultor/diet" element={<ProtectedRoute allowedRoles={["consultor"]}><Suspense fallback={<LazyFallback />}><AdminDiet /></Suspense></ProtectedRoute>} />
             <Route path="/consultor/nutrition" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminNutrition /></ProtectedRoute>} />
             <Route path="/consultor/diet-library" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminDietLibrary /></ProtectedRoute>} />
             <Route path="/consultor/training" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminTraining /></ProtectedRoute>} />
