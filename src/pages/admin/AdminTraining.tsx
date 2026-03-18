@@ -505,6 +505,19 @@ const AdminTraining = () => {
           <DialogHeader><DialogTitle className="font-display">{editingExercise?.id ? "Editar Exercício" : "Novo Exercício"}</DialogTitle></DialogHeader>
           {editingExercise && (
             <div className="space-y-4">
+              {/* Exercise Library Picker */}
+              {!editingExercise.id && (
+                <ExerciseLibraryPicker
+                  onSelect={(ex) => {
+                    setEditingExercise({
+                      ...editingExercise,
+                      name: ex.name,
+                      description: ex.description,
+                      video_url: ex.video_url,
+                    });
+                  }}
+                />
+              )}
               <div>
                 <Label className="font-body">Nome do exercício *</Label>
                 <Input value={editingExercise.name} onChange={(e) => setEditingExercise({ ...editingExercise, name: e.target.value })} placeholder="Ex: Supino Barra Reta" maxLength={40} />
