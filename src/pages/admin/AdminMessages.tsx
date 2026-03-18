@@ -184,13 +184,15 @@ const AdminMessages = () => {
 
       // Generate WhatsApp links for immediate sends
       if (sendSchedule === "now") {
-        targets.forEach(s => {
+        for (const s of targets) {
           if (s.phone) {
             const phone = s.phone.replace(/\D/g, "");
-            const text = encodeURIComponent(sendingTemplate.content);
+            const sub = subscriptions?.find(sub => sub.user_id === s.user_id);
+            const plan = sub ? (sub as any).plans : null;
+            const text = encodeURIComponent(replaceVariables(sendingTemplate.content, s, sub, plan));
             window.open(`https://wa.me/55${phone}?text=${text}`, "_blank");
           }
-        });
+        }
       }
     },
     onSuccess: () => {
