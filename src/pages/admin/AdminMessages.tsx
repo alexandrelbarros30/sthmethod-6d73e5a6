@@ -16,18 +16,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, Copy, Eye, Send, Clock, Search, MessageSquare, Image, Phone, Calendar, Users, Filter, Variable, Save, X } from "lucide-react";
 
-const SYSTEM_VARIABLE_KEYS = ["{nome}", "{plano}", "{vencimento}", "{link}", "{dias_restantes}", "{valor}"];
+const SYSTEM_VARIABLE_KEYS = ["{nome}", "{nome_completo}", "{email}", "{telefone}", "{plano}", "{vencimento}", "{link}", "{dias_restantes}", "{valor}"];
 
 const replaceVariables = (
   content: string,
-  student?: { full_name?: string; user_id?: string; phone?: string },
+  student?: { full_name?: string; user_id?: string; phone?: string; email?: string; birth_date?: string; height?: number; weight?: number; objective?: string },
   subscription?: any,
   plan?: any,
 ) => {
   let msg = content;
-  const name = student?.full_name?.split(" ")[0] || "Aluno";
-  msg = msg.replace(/\{nome\}/g, name);
+  const firstName = student?.full_name?.split(" ")[0] || "Aluno";
+  const fullName = student?.full_name || "Aluno";
+  msg = msg.replace(/\{nome\}/g, firstName);
+  msg = msg.replace(/\{nome_completo\}/g, fullName);
+  msg = msg.replace(/\{email\}/g, student?.email || "—");
+  msg = msg.replace(/\{telefone\}/g, student?.phone || "—");
   msg = msg.replace(/\{plano\}/g, plan?.name || "—");
+  msg = msg.replace(/\{objetivo\}/g, student?.objective || "—");
+  msg = msg.replace(/\{peso\}/g, student?.weight ? `${student.weight}kg` : "—");
+  msg = msg.replace(/\{altura\}/g, student?.height ? `${student.height}cm` : "—");
   if (subscription?.end_date) {
     const d = new Date(subscription.end_date);
     msg = msg.replace(/\{vencimento\}/g, d.toLocaleDateString("pt-BR"));
