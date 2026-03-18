@@ -28,12 +28,32 @@ const AdminPayments = () => {
   const { data: payments } = useQuery({
     queryKey: ["admin-payments-history"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data: paymentsData } = await supabase
         .from("payments")
         .select("*, plans(name, duration_days)")
         .order("created_at", { ascending: false })
         .limit(100);
-      return data || [];
+      
+      if (!paymentsData || paymentsData.length === 0) return [];
+
+      // Fetch gateway details for these payments
+      const paymentIds = paymentsData.map(p => p.id);
+      const { data: gatewayData } = await supabase
+        .from("payment_gateway_details")
+        .select("*")
+        .in("payment_id", paymentIds);
+
+      // Merge gateway details into payments
+      return paymentsData.map(p => {
+        const gw = gatewayData?.find(g => g.payment_id === p.id);
+        return {
+          ...p,
+          receipt_url: gw?.receipt_url || null,
+          ai_verification_status: gw?.ai_verification_status || null,
+          ai_verification_notes: gw?.ai_verification_notes || null,
+          mp_payment_id: gw?.mp_payment_id || null,
+        };
+      });
     },
   });
 
@@ -61,9 +81,14 @@ const AdminPayments = () => {
       // Update payment status
       const { error: payErr } = await supabase
         .from("payments")
-        .update({ status: "approved", ai_verification_status: "approved" })
+        .update({ status: "approved" })
         .eq("id", payment.id);
       if (payErr) throw payErr;
+
+      // Update gateway details
+      await supabase
+        .from("payment_gateway_details")
+        .upsert({ payment_id: payment.id, ai_verification_status: "approved" }, { onConflict: "payment_id" });
 
       // Activate subscription
       const startDate = new Date();
@@ -108,9 +133,14 @@ const AdminPayments = () => {
     mutationFn: async (paymentId: string) => {
       const { error } = await supabase
         .from("payments")
-        .update({ status: "rejected", ai_verification_status: "rejected" })
+        .update({ status: "rejected" })
         .eq("id", paymentId);
       if (error) throw error;
+
+      // Update gateway details
+      await supabase
+        .from("payment_gateway_details")
+        .upsert({ payment_id: paymentId, ai_verification_status: "rejected" }, { onConflict: "payment_id" });
     },
     onSuccess: () => {
       toast.success("Pagamento rejeitado.");

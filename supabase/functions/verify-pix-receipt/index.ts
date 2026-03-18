@@ -57,14 +57,19 @@ serve(async (req) => {
         headers: corsHeaders,
       });
 
-    // Update receipt URL immediately
-    await supabase
-      .from("payments")
-      .update({
+    // Store receipt and verification status in gateway details table
+    const serviceSupabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    await serviceSupabase
+      .from("payment_gateway_details")
+      .upsert({
+        payment_id,
         receipt_url,
         ai_verification_status: "analyzing",
-      })
-      .eq("id", payment_id);
+      }, { onConflict: "payment_id" });
 
     // Use Lovable AI to analyze the receipt image
     const expectedAmount = Number(payment.amount).toFixed(2);
@@ -173,14 +178,14 @@ REGRAS DE VERIFICAÇÃO:
       console.error("AI gateway error:", aiResponse.status, errText);
 
       // Fallback: mark as review
-      await supabase
-        .from("payments")
-        .update({
+      await serviceSupabase
+        .from("payment_gateway_details")
+        .upsert({
+          payment_id,
           ai_verification_status: "review",
           ai_verification_notes:
             "Análise automática indisponível. Revisão manual necessária.",
-        })
-        .eq("id", payment_id);
+        }, { onConflict: "payment_id" });
 
       return new Response(
         JSON.stringify({
@@ -209,13 +214,8 @@ REGRAS DE VERIFICAÇÃO:
           verificationStatus === "approved" &&
           result.confidence === "high"
         ) {
-          const adminSupabase = createClient(
-            Deno.env.get("SUPABASE_URL")!,
-            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-          );
-
           // Update payment status
-          await adminSupabase
+          await serviceSupabase
             .from("payments")
             .update({ status: "approved" })
             .eq("id", payment_id);
@@ -226,7 +226,7 @@ REGRAS DE VERIFICAÇÃO:
           const durationDays = (payment as any).plans?.duration_days || 30;
           endDate.setDate(endDate.getDate() + durationDays);
 
-          const { data: existingSub } = await adminSupabase
+          const { data: existingSub } = await serviceSupabase
             .from("subscriptions")
             .select("id")
             .eq("user_id", userId)
@@ -235,7 +235,7 @@ REGRAS DE VERIFICAÇÃO:
             .maybeSingle();
 
           if (existingSub) {
-            await adminSupabase
+            await serviceSupabase
               .from("subscriptions")
               .update({
                 plan_id: payment.plan_id,
@@ -245,7 +245,7 @@ REGRAS DE VERIFICAÇÃO:
               })
               .eq("id", existingSub.id);
           } else {
-            await adminSupabase.from("subscriptions").insert({
+            await serviceSupabase.from("subscriptions").insert({
               user_id: userId,
               plan_id: payment.plan_id,
               status: "active",
@@ -261,18 +261,15 @@ REGRAS DE VERIFICAÇÃO:
       }
     }
 
-    // Update payment with verification results
-    const serviceSupabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    // Update gateway details with verification results
     await serviceSupabase
-      .from("payments")
-      .update({
+      .from("payment_gateway_details")
+      .upsert({
+        payment_id,
         ai_verification_status: verificationStatus,
         ai_verification_notes: verificationNotes,
-      })
-      .eq("id", payment_id);
+        receipt_url,
+      }, { onConflict: "payment_id" });
 
     return new Response(
       JSON.stringify({ status: verificationStatus, notes: verificationNotes }),
