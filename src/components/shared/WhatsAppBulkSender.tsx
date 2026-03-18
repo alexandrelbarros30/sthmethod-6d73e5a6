@@ -436,14 +436,28 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
               </TabsContent>
 
               <TabsContent value="all" className="mt-3 space-y-3">
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                  <Input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Buscar por nome, e-mail ou telefone..."
-                    className="h-8 text-xs pl-8"
-                  />
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                    <Input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Buscar nome, e-mail ou telefone..."
+                      className="h-8 text-xs pl-8"
+                    />
+                  </div>
+                  <Select value={planFilter} onValueChange={setPlanFilter}>
+                    <SelectTrigger className="h-8 text-xs w-[140px] shrink-0">
+                      <Filter className="w-3 h-3 mr-1" />
+                      <SelectValue placeholder="Plano" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all" className="text-xs">Todos os planos</SelectItem>
+                      {plans.map((p: any) => (
+                        <SelectItem key={p.id} value={p.id} className="text-xs">{p.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-muted-foreground">
