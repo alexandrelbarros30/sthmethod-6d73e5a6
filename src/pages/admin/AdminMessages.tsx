@@ -450,10 +450,18 @@ const AdminMessages = () => {
           <div className="bg-[#e5ddd5] rounded-lg p-4 min-h-[200px]">
             <div className="bg-[#dcf8c6] rounded-lg p-3 shadow-sm max-w-[85%] ml-auto">
               {previewTemplate?.image_url && <img src={previewTemplate.image_url} alt="" className="w-full rounded mb-2" />}
-              <p className="text-sm text-[#303030] whitespace-pre-wrap">{previewTemplate?.content}</p>
+              <p className="text-sm text-[#303030] whitespace-pre-wrap">
+                {replaceVariables(
+                  previewTemplate?.content || "",
+                  { full_name: "Maria Silva", user_id: "demo" },
+                  { end_date: new Date(Date.now() + 7 * 86400000).toISOString() },
+                  { name: "Plano Premium 90 dias", price: "297,00" },
+                )}
+              </p>
               <p className="text-[10px] text-[#667781] text-right mt-1">{new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
             </div>
           </div>
+          <p className="text-[10px] text-muted-foreground text-center">⬆ Pré-visualização com dados de exemplo</p>
         </DialogContent>
       </Dialog>
 
