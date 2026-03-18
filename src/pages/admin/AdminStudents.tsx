@@ -690,7 +690,7 @@ const AdminStudents = () => {
             <div className="flex gap-1.5">
               <Input className="flex-1" value={form.phone} onChange={(e) => setForm({ ...form, phone: phoneMask(e.target.value) })} placeholder="(xx) xxxxx-xxxx" />
               {form.phone && form.phone.replace(/\D/g, "").length >= 10 && (
-                <WhatsAppPopoverButton phone={form.phone} name={form.full_name} userId={selected?.user_id} />
+                <WhatsAppPopoverButton phone={form.phone} name={form.full_name} userId={selected?.user_id} studentProfile={{ full_name: form.full_name, email: form.email, phone: form.phone, weight: form.weight ? Number(form.weight) : null, height: form.height ? Number(form.height) : null, objective: form.objective || null, birth_date: (selected as any)?.birth_date || null }} />
               )}
             </div>
           </div>
@@ -1323,7 +1323,7 @@ const AdminStudents = () => {
                       <span className="text-muted-foreground">Telefone:</span>
                       <span className="font-medium">{selected.phone || "—"}</span>
                       {selected.phone && selected.phone.replace(/\D/g, "").length >= 10 && (
-                        <WhatsAppPopoverButton phone={selected.phone} name={selected.full_name} size="sm" userId={selected.user_id} />
+                        <WhatsAppPopoverButton phone={selected.phone} name={selected.full_name} size="sm" userId={selected.user_id} studentProfile={{ full_name: selected.full_name, email: selected.email, phone: selected.phone, weight: selected.weight, height: selected.height, objective: selected.objective, birth_date: selected.birth_date }} />
                       )}
                     </div>
                     <div><span className="text-muted-foreground">Gênero:</span> <span className="font-medium capitalize">{(selectedFullProfile as any)?.gender || "—"}</span></div>
