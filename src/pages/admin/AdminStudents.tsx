@@ -67,47 +67,7 @@ const emptyForm = {
   bmr: "", tdee: "", daily_calories: "", protein_g: "", carbs_g: "", fat_g: "",
 };
 
-const DeleteStudentDialog = ({ studentName, onConfirm }: { studentName: string; onConfirm: () => void }) => {
-  const [confirmText, setConfirmText] = useState("");
-  const [open, setOpen] = useState(false);
-  const canDelete = confirmText === "DELETAR";
 
-  return (
-    <AlertDialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setConfirmText(""); }}>
-      <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="icon" title="Excluir"><Trash2 className="w-4 h-4 text-destructive" /></Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Excluir aluno?</AlertDialogTitle>
-          <AlertDialogDescription asChild>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>Esta ação é irreversível. Todos os dados de <strong>{studentName}</strong> serão removidos permanentemente (dietas, treinos, protocolos, imagens, pagamentos e assinatura).</p>
-              <p>Digite <strong className="text-destructive">DELETAR</strong> para confirmar:</p>
-            </div>
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <Input
-          value={confirmText}
-          onChange={(e) => setConfirmText(e.target.value)}
-          placeholder="Digite DELETAR"
-          className="font-mono tracking-widest"
-          autoComplete="off"
-        />
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
-            disabled={!canDelete}
-            onClick={() => { onConfirm(); setOpen(false); }}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
-          >
-            Excluir permanentemente
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-};
 
 const AdminStudents = () => {
   const navigate = useNavigate();
