@@ -212,12 +212,28 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
   });
 
   const filteredAllStudents = useMemo(() => {
-    if (!search.trim()) return allStudents;
-    const q = search.toLowerCase();
-    return allStudents.filter(
-      (s) => s.full_name.toLowerCase().includes(q) || s.phone.includes(q) || ((s as any).email || "").toLowerCase().includes(q)
-    );
-  }, [allStudents, search]);
+    let list = allStudents;
+
+    // Filter by plan
+    if (planFilter !== "all") {
+      const userIdsInPlan = new Set(
+        activeSubscriptions
+          .filter((s: any) => s.plan_id === planFilter)
+          .map((s: any) => s.user_id)
+      );
+      list = list.filter((s) => userIdsInPlan.has(s.user_id));
+    }
+
+    // Filter by search
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        (s) => s.full_name.toLowerCase().includes(q) || s.phone.includes(q) || ((s as any).email || "").toLowerCase().includes(q)
+      );
+    }
+
+    return list;
+  }, [allStudents, search, planFilter, activeSubscriptions]);
 
   const currentList = tab === "expiring" ? expiringStudents : filteredAllStudents;
 
