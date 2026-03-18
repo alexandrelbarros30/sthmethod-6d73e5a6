@@ -81,9 +81,14 @@ const AdminPayments = () => {
       // Update payment status
       const { error: payErr } = await supabase
         .from("payments")
-        .update({ status: "approved", ai_verification_status: "approved" })
+        .update({ status: "approved" })
         .eq("id", payment.id);
       if (payErr) throw payErr;
+
+      // Update gateway details
+      await supabase
+        .from("payment_gateway_details")
+        .upsert({ payment_id: payment.id, ai_verification_status: "approved" }, { onConflict: "payment_id" });
 
       // Activate subscription
       const startDate = new Date();
