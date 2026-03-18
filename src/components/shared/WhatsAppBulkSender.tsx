@@ -446,7 +446,21 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
                       className="h-8 text-xs pl-8"
                     />
                   </div>
-                  <Select value={planFilter} onValueChange={setPlanFilter}>
+                  <Select value={planFilter} onValueChange={(val) => {
+                    setPlanFilter(val);
+                    if (val !== "all") {
+                      const idsInPlan = allStudents
+                        .filter((s) => {
+                          const sub = activeSubscriptions.find((sub: any) => sub.user_id === s.user_id && sub.plan_id === val);
+                          return !!sub && s.phone && s.phone.trim() !== "";
+                        })
+                        .slice(0, 10)
+                        .map((s) => s.user_id);
+                      setSelected(new Set(idsInPlan));
+                    } else {
+                      setSelected(new Set());
+                    }
+                  }}>
                     <SelectTrigger className="h-8 text-xs w-[140px] shrink-0">
                       <Filter className="w-3 h-3 mr-1" />
                       <SelectValue placeholder="Plano" />
