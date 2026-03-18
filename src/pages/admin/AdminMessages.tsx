@@ -116,6 +116,50 @@ const AdminMessages = () => {
     },
   });
 
+  const { data: dbVariables } = useQuery({
+    queryKey: ["message-variables"],
+    queryFn: async () => {
+      const { data } = await supabase.from("message_variables").select("*").order("sort_order");
+      return data || [];
+    },
+  });
+
+  const AVAILABLE_VARIABLES = (dbVariables || []).map((v: any) => ({ key: v.key, label: v.label, example: v.example, id: v.id }));
+
+  // Variable mutations
+  const saveVarMutation = useMutation({
+    mutationFn: async ({ id, key, label, example }: { id?: string; key: string; label: string; example: string }) => {
+      const formattedKey = key.startsWith("{") ? key : `{${key}}`;
+      if (id) {
+        const { error } = await supabase.from("message_variables").update({ key: formattedKey, label, example }).eq("id", id);
+        if (error) throw error;
+      } else {
+        const maxOrder = dbVariables?.length ? Math.max(...dbVariables.map((v: any) => v.sort_order)) + 1 : 0;
+        const { error } = await supabase.from("message_variables").insert({ key: formattedKey, label, example, sort_order: maxOrder });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["message-variables"] });
+      setVarEditing(null);
+      setVarNewOpen(false);
+      setVarFormKey(""); setVarFormLabel(""); setVarFormExample("");
+      toast({ title: "Variável salva!" });
+    },
+    onError: () => toast({ title: "Erro ao salvar variável", variant: "destructive" }),
+  });
+
+  const deleteVarMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("message_variables").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["message-variables"] });
+      toast({ title: "Variável excluída!" });
+    },
+  });
+
   // Mutations
   const saveMutation = useMutation({
     mutationFn: async () => {
