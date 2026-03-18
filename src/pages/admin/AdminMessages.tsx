@@ -341,6 +341,7 @@ const AdminMessages = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4">
           <TabsTrigger value="templates"><MessageSquare className="w-4 h-4 mr-1" />Templates</TabsTrigger>
+          <TabsTrigger value="variables"><Variable className="w-4 h-4 mr-1" />Variáveis</TabsTrigger>
           <TabsTrigger value="history"><Clock className="w-4 h-4 mr-1" />Histórico</TabsTrigger>
         </TabsList>
 
