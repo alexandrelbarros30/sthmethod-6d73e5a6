@@ -1,0 +1,1 @@
+ALTER TABLE public.plans ADD COLUMN card_price text NOT NULL DEFAULT '';

@@ -44,8 +44,10 @@ serve(async (req) => {
     // Fetch user profile
     const { data: profile } = await supabaseAuth.from("profiles").select("full_name, email, phone").eq("user_id", userId).single();
 
-    // Calculate base price (with plan discount)
-    const priceStr = plan.price.replace(/[^\d,\.]/g, "").replace(",", ".");
+    // Calculate base price — use card_price for credit/debit, price for pix
+    const isCard = method === "credit" || method === "debit";
+    const rawPrice = isCard && plan.card_price ? plan.card_price : plan.price;
+    const priceStr = rawPrice.replace(/[^\d,\.]/g, "").replace(",", ".");
     let originalAmount = parseFloat(priceStr) || 0;
     let finalAmount = originalAmount;
 
