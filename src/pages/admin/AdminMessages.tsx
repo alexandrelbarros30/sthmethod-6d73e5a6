@@ -14,7 +14,41 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, Copy, Eye, Send, Clock, Search, MessageSquare, Image, Phone, Calendar, Users, Filter } from "lucide-react";
+import { Plus, Edit, Trash2, Copy, Eye, Send, Clock, Search, MessageSquare, Image, Phone, Calendar, Users, Filter, Variable } from "lucide-react";
+
+const AVAILABLE_VARIABLES = [
+  { key: "{nome}", label: "Nome do aluno", example: "Maria Silva" },
+  { key: "{plano}", label: "Nome do plano", example: "Plano Premium 90 dias" },
+  { key: "{vencimento}", label: "Data de vencimento", example: "25/03/2026" },
+  { key: "{link}", label: "Link de renovação", example: "https://..." },
+  { key: "{dias_restantes}", label: "Dias restantes", example: "7" },
+  { key: "{valor}", label: "Valor do plano", example: "R$ 297,00" },
+];
+
+const replaceVariables = (
+  content: string,
+  student?: { full_name?: string; user_id?: string; phone?: string },
+  subscription?: any,
+  plan?: any,
+) => {
+  let msg = content;
+  const name = student?.full_name?.split(" ")[0] || "Aluno";
+  msg = msg.replace(/\{nome\}/g, name);
+  msg = msg.replace(/\{plano\}/g, plan?.name || "—");
+  if (subscription?.end_date) {
+    const d = new Date(subscription.end_date);
+    msg = msg.replace(/\{vencimento\}/g, d.toLocaleDateString("pt-BR"));
+    const diff = Math.max(0, Math.ceil((d.getTime() - Date.now()) / 86400000));
+    msg = msg.replace(/\{dias_restantes\}/g, String(diff));
+  } else {
+    msg = msg.replace(/\{vencimento\}/g, "—");
+    msg = msg.replace(/\{dias_restantes\}/g, "—");
+  }
+  const link = student?.user_id ? `${window.location.origin}/dashboard/renew?uid=${student.user_id}` : "";
+  msg = msg.replace(/\{link\}/g, link);
+  msg = msg.replace(/\{valor\}/g, plan?.price ? `R$ ${plan.price}` : "—");
+  return msg;
+};
 
 const AdminMessages = () => {
   const queryClient = useQueryClient();
@@ -128,30 +162,37 @@ const AdminMessages = () => {
         ? students.filter(s => selectedStudents.includes(s.user_id))
         : students;
 
-      const records = targets.map(s => ({
-        template_id: sendingTemplate.id,
-        category_id: sendingTemplate.category_id,
-        user_id: s.user_id,
-        recipient_phone: s.phone || "",
-        recipient_name: s.full_name || "",
-        content: sendingTemplate.content,
-        image_url: sendingTemplate.image_url,
-        status: sendSchedule === "now" ? "pending" : "scheduled",
-        scheduled_at: sendSchedule === "schedule" && sendScheduleDate ? new Date(sendScheduleDate).toISOString() : null,
-      }));
+      const records = targets.map(s => {
+        const sub = subscriptions?.find(sub => sub.user_id === s.user_id);
+        const plan = sub ? (sub as any).plans : null;
+        const personalizedContent = replaceVariables(sendingTemplate.content, s, sub, plan);
+        return {
+          template_id: sendingTemplate.id,
+          category_id: sendingTemplate.category_id,
+          user_id: s.user_id,
+          recipient_phone: s.phone || "",
+          recipient_name: s.full_name || "",
+          content: personalizedContent,
+          image_url: sendingTemplate.image_url,
+          status: sendSchedule === "now" ? "pending" : "scheduled",
+          scheduled_at: sendSchedule === "schedule" && sendScheduleDate ? new Date(sendScheduleDate).toISOString() : null,
+        };
+      });
 
       const { error } = await supabase.from("message_history").insert(records);
       if (error) throw error;
 
       // Generate WhatsApp links for immediate sends
       if (sendSchedule === "now") {
-        targets.forEach(s => {
+        for (const s of targets) {
           if (s.phone) {
             const phone = s.phone.replace(/\D/g, "");
-            const text = encodeURIComponent(sendingTemplate.content);
+            const sub = subscriptions?.find(sub => sub.user_id === s.user_id);
+            const plan = sub ? (sub as any).plans : null;
+            const text = encodeURIComponent(replaceVariables(sendingTemplate.content, s, sub, plan));
             window.open(`https://wa.me/55${phone}?text=${text}`, "_blank");
           }
-        });
+        }
       }
     },
     onSuccess: () => {
@@ -384,6 +425,20 @@ const AdminMessages = () => {
               <Checkbox checked={formReusable} onCheckedChange={(v) => setFormReusable(!!v)} id="reusable" />
               <Label htmlFor="reusable">Reutilizável para outros alunos</Label>
             </div>
+            <div>
+              <Label className="text-xs text-muted-foreground flex items-center gap-1 mb-1"><Variable className="w-3 h-3" /> Variáveis disponíveis</Label>
+              <div className="flex flex-wrap gap-1">
+                {AVAILABLE_VARIABLES.map(v => (
+                  <Button key={v.key} type="button" variant="outline" size="sm" className="h-6 text-[10px] px-2 font-mono"
+                    onClick={() => setFormContent(prev => prev + v.key)}
+                    title={`${v.label} — ex: ${v.example}`}
+                  >
+                    {v.key}
+                  </Button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">Clique para inserir no final da mensagem. Ex: "Olá {"{nome}"}, seu plano vence em {"{vencimento}"}."</p>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditorOpen(false)}>Cancelar</Button>
@@ -402,10 +457,18 @@ const AdminMessages = () => {
           <div className="bg-[#e5ddd5] rounded-lg p-4 min-h-[200px]">
             <div className="bg-[#dcf8c6] rounded-lg p-3 shadow-sm max-w-[85%] ml-auto">
               {previewTemplate?.image_url && <img src={previewTemplate.image_url} alt="" className="w-full rounded mb-2" />}
-              <p className="text-sm text-[#303030] whitespace-pre-wrap">{previewTemplate?.content}</p>
+              <p className="text-sm text-[#303030] whitespace-pre-wrap">
+                {replaceVariables(
+                  previewTemplate?.content || "",
+                  { full_name: "Maria Silva", user_id: "demo" },
+                  { end_date: new Date(Date.now() + 7 * 86400000).toISOString() },
+                  { name: "Plano Premium 90 dias", price: "297,00" },
+                )}
+              </p>
               <p className="text-[10px] text-[#667781] text-right mt-1">{new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
             </div>
           </div>
+          <p className="text-[10px] text-muted-foreground text-center">⬆ Pré-visualização com dados de exemplo</p>
         </DialogContent>
       </Dialog>
 
