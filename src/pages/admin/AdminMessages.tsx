@@ -162,17 +162,22 @@ const AdminMessages = () => {
         ? students.filter(s => selectedStudents.includes(s.user_id))
         : students;
 
-      const records = targets.map(s => ({
-        template_id: sendingTemplate.id,
-        category_id: sendingTemplate.category_id,
-        user_id: s.user_id,
-        recipient_phone: s.phone || "",
-        recipient_name: s.full_name || "",
-        content: sendingTemplate.content,
-        image_url: sendingTemplate.image_url,
-        status: sendSchedule === "now" ? "pending" : "scheduled",
-        scheduled_at: sendSchedule === "schedule" && sendScheduleDate ? new Date(sendScheduleDate).toISOString() : null,
-      }));
+      const records = targets.map(s => {
+        const sub = subscriptions?.find(sub => sub.user_id === s.user_id);
+        const plan = sub ? (sub as any).plans : null;
+        const personalizedContent = replaceVariables(sendingTemplate.content, s, sub, plan);
+        return {
+          template_id: sendingTemplate.id,
+          category_id: sendingTemplate.category_id,
+          user_id: s.user_id,
+          recipient_phone: s.phone || "",
+          recipient_name: s.full_name || "",
+          content: personalizedContent,
+          image_url: sendingTemplate.image_url,
+          status: sendSchedule === "now" ? "pending" : "scheduled",
+          scheduled_at: sendSchedule === "schedule" && sendScheduleDate ? new Date(sendScheduleDate).toISOString() : null,
+        };
+      });
 
       const { error } = await supabase.from("message_history").insert(records);
       if (error) throw error;
