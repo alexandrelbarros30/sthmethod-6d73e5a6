@@ -690,7 +690,7 @@ const AdminStudents = () => {
             <div className="flex gap-1.5">
               <Input className="flex-1" value={form.phone} onChange={(e) => setForm({ ...form, phone: phoneMask(e.target.value) })} placeholder="(xx) xxxxx-xxxx" />
               {form.phone && form.phone.replace(/\D/g, "").length >= 10 && (
-                <WhatsAppPopoverButton phone={form.phone} name={form.full_name} userId={selected?.user_id} />
+                <WhatsAppPopoverButton phone={form.phone} name={form.full_name} userId={selected?.user_id} studentProfile={{ full_name: form.full_name, email: form.email, phone: form.phone, weight: form.weight ? Number(form.weight) : null, height: form.height ? Number(form.height) : null, objective: form.objective || null, birth_date: (selected as any)?.birth_date || null }} />
               )}
             </div>
           </div>
