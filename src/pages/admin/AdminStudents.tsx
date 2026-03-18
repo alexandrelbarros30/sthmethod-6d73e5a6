@@ -14,7 +14,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2, RotateCcw, AlertTriangle, UserX, UserCheck, Dumbbell, Pill, UtensilsCrossed, MessageCircle } from "lucide-react";
+import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2, RotateCcw, AlertTriangle, UserX, UserCheck, Dumbbell, Pill, UtensilsCrossed, MessageCircle, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -66,47 +67,7 @@ const emptyForm = {
   bmr: "", tdee: "", daily_calories: "", protein_g: "", carbs_g: "", fat_g: "",
 };
 
-const DeleteStudentDialog = ({ studentName, onConfirm }: { studentName: string; onConfirm: () => void }) => {
-  const [confirmText, setConfirmText] = useState("");
-  const [open, setOpen] = useState(false);
-  const canDelete = confirmText === "DELETAR";
 
-  return (
-    <AlertDialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setConfirmText(""); }}>
-      <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="icon" title="Excluir"><Trash2 className="w-4 h-4 text-destructive" /></Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Excluir aluno?</AlertDialogTitle>
-          <AlertDialogDescription asChild>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>Esta ação é irreversível. Todos os dados de <strong>{studentName}</strong> serão removidos permanentemente (dietas, treinos, protocolos, imagens, pagamentos e assinatura).</p>
-              <p>Digite <strong className="text-destructive">DELETAR</strong> para confirmar:</p>
-            </div>
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <Input
-          value={confirmText}
-          onChange={(e) => setConfirmText(e.target.value)}
-          placeholder="Digite DELETAR"
-          className="font-mono tracking-widest"
-          autoComplete="off"
-        />
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
-            disabled={!canDelete}
-            onClick={() => { onConfirm(); setOpen(false); }}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
-          >
-            Excluir permanentemente
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-};
 
 const AdminStudents = () => {
   const navigate = useNavigate();
@@ -137,6 +98,8 @@ const AdminStudents = () => {
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [orphanData, setOrphanData] = useState<any>(null);
   const [orphanLoading, setOrphanLoading] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ userId: string; name: string } | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   const { data: students, isLoading } = useQuery({
     queryKey: ["admin-students-list"],
@@ -1313,13 +1276,33 @@ const AdminStudents = () => {
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
                             <Button variant="ghost" size="icon" onClick={() => openView(s)} title="Visualizar"><Eye className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="icon" onClick={() => { setSelected(s); setAnamneseOpen(true); }} title="Anamnese"><ClipboardList className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="icon" onClick={() => { setSelected(s); setImagesOpen(true); }} title="Fotos corporais"><Image className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="icon" onClick={() => openSub(s)} title="Assinatura"><CreditCard className="w-4 h-4" /></Button>
                             <Button variant="ghost" size="icon" onClick={() => openEdit(s)} title="Editar"><Pencil className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="icon" title="Alterar senha" onClick={() => { setPasswordReset({ userId: s.user_id, name: s.full_name || s.email }); setNewPassword(""); }}><Lock className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="icon" title="Copiar link de renovação" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/dashboard/renew?uid=${s.user_id}`); toast.success("Link de renovação copiado!"); }}><Link2 className="w-4 h-4" /></Button>
-                            <DeleteStudentDialog studentName={s.full_name || s.email} onConfirm={() => deleteMutation.mutate(s.user_id)} />
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" title="Mais ações"><MoreVertical className="w-4 h-4" /></Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => { setSelected(s); setAnamneseOpen(true); }}>
+                                  <ClipboardList className="w-4 h-4 mr-2" /> Anamnese
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => { setSelected(s); setImagesOpen(true); }}>
+                                  <Image className="w-4 h-4 mr-2" /> Fotos corporais
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => openSub(s)}>
+                                  <CreditCard className="w-4 h-4 mr-2" /> Assinatura
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => { setPasswordReset({ userId: s.user_id, name: s.full_name || s.email }); setNewPassword(""); }}>
+                                  <Lock className="w-4 h-4 mr-2" /> Alterar senha
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/dashboard/renew?uid=${s.user_id}`); toast.success("Link de renovação copiado!"); }}>
+                                  <Link2 className="w-4 h-4 mr-2" /> Copiar link renovação
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeleteTarget({ userId: s.user_id, name: s.full_name || s.email })}>
+                                  <Trash2 className="w-4 h-4 mr-2" /> Excluir aluno
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -1868,6 +1851,37 @@ const AdminStudents = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(v) => { if (!v) { setDeleteTarget(null); setDeleteConfirmText(""); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir aluno?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>Esta ação é irreversível. Todos os dados de <strong>{deleteTarget?.name}</strong> serão removidos permanentemente (dietas, treinos, protocolos, imagens, pagamentos e assinatura).</p>
+                <p>Digite <strong className="text-destructive">DELETAR</strong> para confirmar:</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Input
+            value={deleteConfirmText}
+            onChange={(e) => setDeleteConfirmText(e.target.value)}
+            placeholder="Digite DELETAR"
+            className="font-mono tracking-widest"
+            autoComplete="off"
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteConfirmText !== "DELETAR"}
+              onClick={() => { if (deleteTarget) { deleteMutation.mutate(deleteTarget.userId); setDeleteTarget(null); setDeleteConfirmText(""); } }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+            >
+              Excluir permanentemente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
