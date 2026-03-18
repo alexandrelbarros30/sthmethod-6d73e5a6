@@ -418,6 +418,20 @@ const AdminMessages = () => {
               <Checkbox checked={formReusable} onCheckedChange={(v) => setFormReusable(!!v)} id="reusable" />
               <Label htmlFor="reusable">Reutilizável para outros alunos</Label>
             </div>
+            <div>
+              <Label className="text-xs text-muted-foreground flex items-center gap-1 mb-1"><Variable className="w-3 h-3" /> Variáveis disponíveis</Label>
+              <div className="flex flex-wrap gap-1">
+                {AVAILABLE_VARIABLES.map(v => (
+                  <Button key={v.key} type="button" variant="outline" size="sm" className="h-6 text-[10px] px-2 font-mono"
+                    onClick={() => setFormContent(prev => prev + v.key)}
+                    title={`${v.label} — ex: ${v.example}`}
+                  >
+                    {v.key}
+                  </Button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">Clique para inserir no final da mensagem. Ex: "Olá {"{nome}"}, seu plano vence em {"{vencimento}"}."</p>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditorOpen(false)}>Cancelar</Button>
