@@ -359,6 +359,7 @@ const Cadastro = () => {
   // Step 2: Save profile
   const handleSaveProfile = async () => {
     const { height, weight, gender, activity_type, does_cardio, objective, current_protocol, comorbidities, birth_date } = profileForm;
+    if (!profileForm.cpf || !isValidCpf(profileForm.cpf)) { toast.error("CPF inválido"); return; }
     if (!gender) { toast.error("Selecione o gênero"); return; }
     if (!birth_date) { toast.error("Data de nascimento é obrigatória"); return; }
     if (!height || Number(height) <= 0) { toast.error("Altura é obrigatória"); return; }
