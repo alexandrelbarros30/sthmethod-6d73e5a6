@@ -14,7 +14,41 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, Copy, Eye, Send, Clock, Search, MessageSquare, Image, Phone, Calendar, Users, Filter } from "lucide-react";
+import { Plus, Edit, Trash2, Copy, Eye, Send, Clock, Search, MessageSquare, Image, Phone, Calendar, Users, Filter, Variable } from "lucide-react";
+
+const AVAILABLE_VARIABLES = [
+  { key: "{nome}", label: "Nome do aluno", example: "Maria Silva" },
+  { key: "{plano}", label: "Nome do plano", example: "Plano Premium 90 dias" },
+  { key: "{vencimento}", label: "Data de vencimento", example: "25/03/2026" },
+  { key: "{link}", label: "Link de renovação", example: "https://..." },
+  { key: "{dias_restantes}", label: "Dias restantes", example: "7" },
+  { key: "{valor}", label: "Valor do plano", example: "R$ 297,00" },
+];
+
+const replaceVariables = (
+  content: string,
+  student?: { full_name?: string; user_id?: string; phone?: string },
+  subscription?: any,
+  plan?: any,
+) => {
+  let msg = content;
+  const name = student?.full_name?.split(" ")[0] || "Aluno";
+  msg = msg.replace(/\{nome\}/g, name);
+  msg = msg.replace(/\{plano\}/g, plan?.name || "—");
+  if (subscription?.end_date) {
+    const d = new Date(subscription.end_date);
+    msg = msg.replace(/\{vencimento\}/g, d.toLocaleDateString("pt-BR"));
+    const diff = Math.max(0, Math.ceil((d.getTime() - Date.now()) / 86400000));
+    msg = msg.replace(/\{dias_restantes\}/g, String(diff));
+  } else {
+    msg = msg.replace(/\{vencimento\}/g, "—");
+    msg = msg.replace(/\{dias_restantes\}/g, "—");
+  }
+  const link = student?.user_id ? `${window.location.origin}/dashboard/renew?uid=${student.user_id}` : "";
+  msg = msg.replace(/\{link\}/g, link);
+  msg = msg.replace(/\{valor\}/g, plan?.price ? `R$ ${plan.price}` : "—");
+  return msg;
+};
 
 const AdminMessages = () => {
   const queryClient = useQueryClient();
