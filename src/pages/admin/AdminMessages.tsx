@@ -68,6 +68,13 @@ const AdminMessages = () => {
   const [sendScheduleDate, setSendScheduleDate] = useState("");
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
 
+  // Variable editor state
+  const [varEditing, setVarEditing] = useState<string | null>(null);
+  const [varNewOpen, setVarNewOpen] = useState(false);
+  const [varFormKey, setVarFormKey] = useState("");
+  const [varFormLabel, setVarFormLabel] = useState("");
+  const [varFormExample, setVarFormExample] = useState("");
+
   // Queries
   const { data: categories } = useQuery({
     queryKey: ["message-categories"],
