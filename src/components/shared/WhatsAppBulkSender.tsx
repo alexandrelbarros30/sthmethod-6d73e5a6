@@ -498,6 +498,11 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
                             <p className="text-sm font-medium truncate">{student.full_name}</p>
                             <p className="text-[10px] text-muted-foreground truncate">
                               {hasPhone ? student.phone : "Sem telefone cadastrado"}
+                              {(() => {
+                                const sub = activeSubscriptions.find((s: any) => s.user_id === student.user_id);
+                                const planName = (sub as any)?.plans?.name;
+                                return planName ? ` • ${planName}` : "";
+                              })()}
                             </p>
                           </div>
                         </div>
