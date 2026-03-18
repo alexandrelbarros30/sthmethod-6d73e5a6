@@ -386,6 +386,7 @@ const Cadastro = () => {
     setLoading(true);
     try {
       const updateData: any = {
+        cpf: profileForm.cpf.replace(/\D/g, ""),
         phone: phoneVal || undefined,
         birth_date: birth_date || null,
         height: Number(height),
