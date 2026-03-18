@@ -503,7 +503,7 @@ const AdminMessages = () => {
             </CardContent>
           </Card>
           <p className="text-[10px] text-muted-foreground mt-3">
-            💡 As variáveis do sistema ({"{nome}"}, {"{plano}"}, {"{vencimento}"}, {"{link}"}, {"{dias_restantes}"}, {"{valor}"}) são substituídas automaticamente pelos dados do aluno. Variáveis personalizadas serão mantidas como texto no envio.
+            💡 As variáveis do sistema ({"{nome}"}, {"{nome_completo}"}, {"{email}"}, {"{telefone}"}, {"{plano}"}, {"{vencimento}"}, {"{link}"}, {"{dias_restantes}"}, {"{valor}"}, {"{objetivo}"}, {"{peso}"}, {"{altura}"}) são substituídas automaticamente pelos dados do cadastro do aluno. Variáveis personalizadas serão mantidas como texto no envio.
           </p>
         </TabsContent>
 
