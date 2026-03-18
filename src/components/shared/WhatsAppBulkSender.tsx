@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Send, ChevronDown, AlertCircle, Search, Users } from "lucide-react";
+import { MessageCircle, Send, ChevronDown, AlertCircle, Search, Users, Filter } from "lucide-react";
 import { toast } from "sonner";
 
 const BUILTIN_TEMPLATES = [
@@ -73,6 +73,40 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
   const [customMessage, setCustomMessage] = useState("");
   const [tab, setTab] = useState("expiring");
   const [search, setSearch] = useState("");
+  const [planFilter, setPlanFilter] = useState("all");
+
+  // Plans query
+  const { data: plans = [] } = useQuery({
+    queryKey: ["wa-plans"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("plans")
+        .select("id, name")
+        .eq("active", true)
+        .order("name");
+      return data || [];
+    },
+    enabled: open,
+  });
+
+  // Active subscriptions for plan filtering
+  const { data: activeSubscriptions = [] } = useQuery({
+    queryKey: ["wa-active-subs", linkedStudentIds],
+    queryFn: async () => {
+      let query = supabase
+        .from("subscriptions")
+        .select("user_id, plan_id, plans(name)")
+        .eq("status", "active");
+
+      if (linkedStudentIds?.length) {
+        query = query.in("user_id", linkedStudentIds);
+      }
+
+      const { data } = await query;
+      return data || [];
+    },
+    enabled: open,
+  });
 
   // DB templates query
   const { data: dbTemplates = [] } = useQuery({
@@ -178,12 +212,28 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
   });
 
   const filteredAllStudents = useMemo(() => {
-    if (!search.trim()) return allStudents;
-    const q = search.toLowerCase();
-    return allStudents.filter(
-      (s) => s.full_name.toLowerCase().includes(q) || s.phone.includes(q) || ((s as any).email || "").toLowerCase().includes(q)
-    );
-  }, [allStudents, search]);
+    let list = allStudents;
+
+    // Filter by plan
+    if (planFilter !== "all") {
+      const userIdsInPlan = new Set(
+        activeSubscriptions
+          .filter((s: any) => s.plan_id === planFilter)
+          .map((s: any) => s.user_id)
+      );
+      list = list.filter((s) => userIdsInPlan.has(s.user_id));
+    }
+
+    // Filter by search
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        (s) => s.full_name.toLowerCase().includes(q) || s.phone.includes(q) || ((s as any).email || "").toLowerCase().includes(q)
+      );
+    }
+
+    return list;
+  }, [allStudents, search, planFilter, activeSubscriptions]);
 
   const currentList = tab === "expiring" ? expiringStudents : filteredAllStudents;
 
@@ -386,14 +436,28 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
               </TabsContent>
 
               <TabsContent value="all" className="mt-3 space-y-3">
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                  <Input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Buscar por nome, e-mail ou telefone..."
-                    className="h-8 text-xs pl-8"
-                  />
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                    <Input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Buscar nome, e-mail ou telefone..."
+                      className="h-8 text-xs pl-8"
+                    />
+                  </div>
+                  <Select value={planFilter} onValueChange={setPlanFilter}>
+                    <SelectTrigger className="h-8 text-xs w-[140px] shrink-0">
+                      <Filter className="w-3 h-3 mr-1" />
+                      <SelectValue placeholder="Plano" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all" className="text-xs">Todos os planos</SelectItem>
+                      {plans.map((p: any) => (
+                        <SelectItem key={p.id} value={p.id} className="text-xs">{p.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-muted-foreground">
@@ -434,6 +498,11 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
                             <p className="text-sm font-medium truncate">{student.full_name}</p>
                             <p className="text-[10px] text-muted-foreground truncate">
                               {hasPhone ? student.phone : "Sem telefone cadastrado"}
+                              {(() => {
+                                const sub = activeSubscriptions.find((s: any) => s.user_id === student.user_id);
+                                const planName = (sub as any)?.plans?.name;
+                                return planName ? ` • ${planName}` : "";
+                              })()}
                             </p>
                           </div>
                         </div>
