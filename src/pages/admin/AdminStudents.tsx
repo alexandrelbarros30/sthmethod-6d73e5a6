@@ -1277,19 +1277,7 @@ const AdminStudents = () => {
                             <Button variant="ghost" size="icon" onClick={() => openEdit(s)} title="Editar"><Pencil className="w-4 h-4" /></Button>
                             <Button variant="ghost" size="icon" title="Alterar senha" onClick={() => { setPasswordReset({ userId: s.user_id, name: s.full_name || s.email }); setNewPassword(""); }}><Lock className="w-4 h-4" /></Button>
                             <Button variant="ghost" size="icon" title="Copiar link de renovação" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/dashboard/renew?uid=${s.user_id}`); toast.success("Link de renovação copiado!"); }}><Link2 className="w-4 h-4" /></Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild><Button variant="ghost" size="icon" title="Excluir"><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Excluir aluno?</AlertDialogTitle>
-                                  <AlertDialogDescription>Esta ação é irreversível. Todos os dados de {s.full_name || "este aluno"} serão removidos.</AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => deleteMutation.mutate(s.user_id)}>Excluir</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                            <DeleteStudentDialog studentName={s.full_name || s.email} onConfirm={() => deleteMutation.mutate(s.user_id)} />
                           </div>
                         </TableCell>
                       </TableRow>
