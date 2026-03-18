@@ -920,6 +920,7 @@ export type Database = {
         Row: {
           active: boolean
           benefits: string[]
+          card_price: string
           created_at: string
           discount_type: string
           discount_value: number
@@ -934,6 +935,7 @@ export type Database = {
         Insert: {
           active?: boolean
           benefits?: string[]
+          card_price?: string
           created_at?: string
           discount_type?: string
           discount_value?: number
@@ -948,6 +950,7 @@ export type Database = {
         Update: {
           active?: boolean
           benefits?: string[]
+          card_price?: string
           created_at?: string
           discount_type?: string
           discount_value?: number
