@@ -622,7 +622,7 @@ const AdminMessages = () => {
               <p className="text-sm text-[#303030] whitespace-pre-wrap">
                 {replaceVariables(
                   previewTemplate?.content || "",
-                  { full_name: "Maria Silva", user_id: "demo" },
+                  { full_name: "Maria Silva", user_id: "demo", email: "maria@email.com", phone: "(21) 99999-0000", weight: 65, height: 165, objective: "Emagrecimento" },
                   { end_date: new Date(Date.now() + 7 * 86400000).toISOString() },
                   { name: "Plano Premium 90 dias", price: "297,00" },
                 )}
