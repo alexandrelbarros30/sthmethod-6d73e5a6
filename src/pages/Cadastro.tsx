@@ -552,6 +552,16 @@ const Cadastro = () => {
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* CPF */}
+              <div>
+                <Label className="font-body">CPF *</Label>
+                <Input
+                  value={profileForm.cpf}
+                  onChange={(e) => setProfileForm({ ...profileForm, cpf: cpfMask(e.target.value) })}
+                  placeholder="000.000.000-00"
+                />
+              </div>
+
               {/* Gender */}
               <div>
                 <Label className="font-body">Gênero *</Label>
