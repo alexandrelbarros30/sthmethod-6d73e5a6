@@ -14,16 +14,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, Copy, Eye, Send, Clock, Search, MessageSquare, Image, Phone, Calendar, Users, Filter, Variable } from "lucide-react";
+import { Plus, Edit, Trash2, Copy, Eye, Send, Clock, Search, MessageSquare, Image, Phone, Calendar, Users, Filter, Variable, Save, X } from "lucide-react";
 
-const AVAILABLE_VARIABLES = [
-  { key: "{nome}", label: "Nome do aluno", example: "Maria Silva" },
-  { key: "{plano}", label: "Nome do plano", example: "Plano Premium 90 dias" },
-  { key: "{vencimento}", label: "Data de vencimento", example: "25/03/2026" },
-  { key: "{link}", label: "Link de renovação", example: "https://..." },
-  { key: "{dias_restantes}", label: "Dias restantes", example: "7" },
-  { key: "{valor}", label: "Valor do plano", example: "R$ 297,00" },
-];
+const SYSTEM_VARIABLE_KEYS = ["{nome}", "{plano}", "{vencimento}", "{link}", "{dias_restantes}", "{valor}"];
 
 const replaceVariables = (
   content: string,
@@ -75,6 +68,13 @@ const AdminMessages = () => {
   const [sendScheduleDate, setSendScheduleDate] = useState("");
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
 
+  // Variable editor state
+  const [varEditing, setVarEditing] = useState<string | null>(null);
+  const [varNewOpen, setVarNewOpen] = useState(false);
+  const [varFormKey, setVarFormKey] = useState("");
+  const [varFormLabel, setVarFormLabel] = useState("");
+  const [varFormExample, setVarFormExample] = useState("");
+
   // Queries
   const { data: categories } = useQuery({
     queryKey: ["message-categories"],
@@ -113,6 +113,50 @@ const AdminMessages = () => {
     queryFn: async () => {
       const { data } = await supabase.from("subscriptions").select("*, plans(name, duration_days)");
       return data || [];
+    },
+  });
+
+  const { data: dbVariables } = useQuery({
+    queryKey: ["message-variables"],
+    queryFn: async () => {
+      const { data } = await supabase.from("message_variables").select("*").order("sort_order");
+      return data || [];
+    },
+  });
+
+  const AVAILABLE_VARIABLES = (dbVariables || []).map((v: any) => ({ key: v.key, label: v.label, example: v.example, id: v.id }));
+
+  // Variable mutations
+  const saveVarMutation = useMutation({
+    mutationFn: async ({ id, key, label, example }: { id?: string; key: string; label: string; example: string }) => {
+      const formattedKey = key.startsWith("{") ? key : `{${key}}`;
+      if (id) {
+        const { error } = await supabase.from("message_variables").update({ key: formattedKey, label, example }).eq("id", id);
+        if (error) throw error;
+      } else {
+        const maxOrder = dbVariables?.length ? Math.max(...dbVariables.map((v: any) => v.sort_order)) + 1 : 0;
+        const { error } = await supabase.from("message_variables").insert({ key: formattedKey, label, example, sort_order: maxOrder });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["message-variables"] });
+      setVarEditing(null);
+      setVarNewOpen(false);
+      setVarFormKey(""); setVarFormLabel(""); setVarFormExample("");
+      toast({ title: "Variável salva!" });
+    },
+    onError: () => toast({ title: "Erro ao salvar variável", variant: "destructive" }),
+  });
+
+  const deleteVarMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("message_variables").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["message-variables"] });
+      toast({ title: "Variável excluída!" });
     },
   });
 
@@ -297,6 +341,7 @@ const AdminMessages = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4">
           <TabsTrigger value="templates"><MessageSquare className="w-4 h-4 mr-1" />Templates</TabsTrigger>
+          <TabsTrigger value="variables"><Variable className="w-4 h-4 mr-1" />Variáveis</TabsTrigger>
           <TabsTrigger value="history"><Clock className="w-4 h-4 mr-1" />Histórico</TabsTrigger>
         </TabsList>
 
@@ -343,6 +388,116 @@ const AdminMessages = () => {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        {/* VARIABLES TAB */}
+        <TabsContent value="variables">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-muted-foreground">Gerencie as variáveis disponíveis para usar nos templates de mensagem.</p>
+            <Button size="sm" onClick={() => { setVarNewOpen(true); setVarFormKey(""); setVarFormLabel(""); setVarFormExample(""); }}>
+              <Plus className="w-4 h-4 mr-1" />Nova Variável
+            </Button>
+          </div>
+
+          {/* New variable inline form */}
+          {varNewOpen && (
+            <Card className="mb-4">
+              <CardContent className="pt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+                  <div>
+                    <Label className="text-xs">Chave (ex: email)</Label>
+                    <Input value={varFormKey} onChange={e => setVarFormKey(e.target.value)} placeholder="email" className="font-mono text-sm" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Nome da variável</Label>
+                    <Input value={varFormLabel} onChange={e => setVarFormLabel(e.target.value)} placeholder="E-mail do aluno" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Exemplo</Label>
+                    <Input value={varFormExample} onChange={e => setVarFormExample(e.target.value)} placeholder="aluno@email.com" />
+                  </div>
+                  <div className="flex gap-1">
+                    <Button size="sm" onClick={() => saveVarMutation.mutate({ key: varFormKey, label: varFormLabel, example: varFormExample })} disabled={!varFormKey || !varFormLabel}>
+                      <Save className="w-3 h-3 mr-1" />Salvar
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setVarNewOpen(false)}>
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Chave</TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Exemplo</TableHead>
+                    <TableHead className="w-[100px]">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {AVAILABLE_VARIABLES.length === 0 ? (
+                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Nenhuma variável cadastrada.</TableCell></TableRow>
+                  ) : AVAILABLE_VARIABLES.map((v: any) => (
+                    <TableRow key={v.id}>
+                      {varEditing === v.id ? (
+                        <>
+                          <TableCell>
+                            <Input value={varFormKey} onChange={e => setVarFormKey(e.target.value)} className="font-mono text-xs h-8" />
+                          </TableCell>
+                          <TableCell>
+                            <Input value={varFormLabel} onChange={e => setVarFormLabel(e.target.value)} className="text-xs h-8" />
+                          </TableCell>
+                          <TableCell>
+                            <Input value={varFormExample} onChange={e => setVarFormExample(e.target.value)} className="text-xs h-8" />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button size="sm" variant="ghost" onClick={() => saveVarMutation.mutate({ id: v.id, key: varFormKey, label: varFormLabel, example: varFormExample })}>
+                                <Save className="w-3 h-3" />
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={() => setVarEditing(null)}>
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </>
+                      ) : (
+                        <>
+                          <TableCell><Badge variant="outline" className="font-mono text-xs">{v.key}</Badge></TableCell>
+                          <TableCell className="text-sm">{v.label}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{v.example}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button size="sm" variant="ghost" onClick={() => {
+                                setVarEditing(v.id);
+                                setVarFormKey(v.key);
+                                setVarFormLabel(v.label);
+                                setVarFormExample(v.example);
+                              }}>
+                                <Edit className="w-3 h-3" />
+                              </Button>
+                              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteVarMutation.mutate(v.id)}>
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+          <p className="text-[10px] text-muted-foreground mt-3">
+            💡 As variáveis do sistema ({"{nome}"}, {"{plano}"}, {"{vencimento}"}, {"{link}"}, {"{dias_restantes}"}, {"{valor}"}) são substituídas automaticamente pelos dados do aluno. Variáveis personalizadas serão mantidas como texto no envio.
+          </p>
         </TabsContent>
 
         {/* HISTORY TAB */}
