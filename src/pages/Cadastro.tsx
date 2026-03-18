@@ -181,6 +181,7 @@ const Cadastro = () => {
             setFullName(p.full_name || "");
             setPhoneVal(p.phone || "");
             setProfileForm({
+              cpf: p.cpf ? cpfMask(p.cpf) : "",
               birth_date: p.birth_date || "",
               height: p.height?.toString() || "",
               weight: p.weight?.toString() || "",
