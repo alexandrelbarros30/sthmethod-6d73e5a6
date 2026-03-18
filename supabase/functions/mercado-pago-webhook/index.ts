@@ -64,12 +64,22 @@ serve(async (req) => {
       .from("payments")
       .update({
         status: newStatus,
-        mp_payment_id: String(paymentId),
         installments: mpPayment.installments || 1,
       })
       .eq("id", internalPaymentId)
       .select("*, plans(*)")
       .single();
+
+    if (updateError) {
+      console.error("Error updating payment:", updateError);
+      throw updateError;
+    }
+
+    // Store gateway details in separate restricted table
+    await supabase.from("payment_gateway_details").upsert({
+      payment_id: internalPaymentId,
+      mp_payment_id: String(paymentId),
+    }, { onConflict: "payment_id" });
 
     if (updateError) {
       console.error("Error updating payment:", updateError);

@@ -155,8 +155,11 @@ serve(async (req) => {
     const mpData = await mpRes.json();
     if (!mpRes.ok) throw new Error(`MP error [${mpRes.status}]: ${JSON.stringify(mpData)}`);
 
-    // Update payment with MP preference ID
-    await supabaseAdmin.from("payments").update({ mp_preference_id: mpData.id }).eq("id", payment.id);
+    // Store MP preference ID in gateway details table
+    await supabaseAdmin.from("payment_gateway_details").upsert({
+      payment_id: payment.id,
+      mp_preference_id: mpData.id,
+    }, { onConflict: "payment_id" });
 
     return new Response(JSON.stringify({
       init_point: mpData.init_point,
