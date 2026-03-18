@@ -16,18 +16,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, Copy, Eye, Send, Clock, Search, MessageSquare, Image, Phone, Calendar, Users, Filter, Variable, Save, X } from "lucide-react";
 
-const SYSTEM_VARIABLE_KEYS = ["{nome}", "{plano}", "{vencimento}", "{link}", "{dias_restantes}", "{valor}"];
+const SYSTEM_VARIABLE_KEYS = ["{nome}", "{nome_completo}", "{email}", "{telefone}", "{plano}", "{vencimento}", "{link}", "{dias_restantes}", "{valor}"];
 
 const replaceVariables = (
   content: string,
-  student?: { full_name?: string; user_id?: string; phone?: string },
+  student?: { full_name?: string; user_id?: string; phone?: string; email?: string; birth_date?: string; height?: number; weight?: number; objective?: string },
   subscription?: any,
   plan?: any,
 ) => {
   let msg = content;
-  const name = student?.full_name?.split(" ")[0] || "Aluno";
-  msg = msg.replace(/\{nome\}/g, name);
+  const firstName = student?.full_name?.split(" ")[0] || "Aluno";
+  const fullName = student?.full_name || "Aluno";
+  msg = msg.replace(/\{nome\}/g, firstName);
+  msg = msg.replace(/\{nome_completo\}/g, fullName);
+  msg = msg.replace(/\{email\}/g, student?.email || "—");
+  msg = msg.replace(/\{telefone\}/g, student?.phone || "—");
   msg = msg.replace(/\{plano\}/g, plan?.name || "—");
+  msg = msg.replace(/\{objetivo\}/g, student?.objective || "—");
+  msg = msg.replace(/\{peso\}/g, student?.weight ? `${student.weight}kg` : "—");
+  msg = msg.replace(/\{altura\}/g, student?.height ? `${student.height}cm` : "—");
   if (subscription?.end_date) {
     const d = new Date(subscription.end_date);
     msg = msg.replace(/\{vencimento\}/g, d.toLocaleDateString("pt-BR"));
@@ -103,7 +110,7 @@ const AdminMessages = () => {
   const { data: profiles } = useQuery({
     queryKey: ["msg-profiles"],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("user_id, full_name, email, phone, birth_date, created_at");
+      const { data } = await supabase.from("profiles").select("user_id, full_name, email, phone, birth_date, created_at, weight, height, objective");
       return data || [];
     },
   });
@@ -496,7 +503,7 @@ const AdminMessages = () => {
             </CardContent>
           </Card>
           <p className="text-[10px] text-muted-foreground mt-3">
-            💡 As variáveis do sistema ({"{nome}"}, {"{plano}"}, {"{vencimento}"}, {"{link}"}, {"{dias_restantes}"}, {"{valor}"}) são substituídas automaticamente pelos dados do aluno. Variáveis personalizadas serão mantidas como texto no envio.
+            💡 As variáveis do sistema ({"{nome}"}, {"{nome_completo}"}, {"{email}"}, {"{telefone}"}, {"{plano}"}, {"{vencimento}"}, {"{link}"}, {"{dias_restantes}"}, {"{valor}"}, {"{objetivo}"}, {"{peso}"}, {"{altura}"}) são substituídas automaticamente pelos dados do cadastro do aluno. Variáveis personalizadas serão mantidas como texto no envio.
           </p>
         </TabsContent>
 
@@ -615,7 +622,7 @@ const AdminMessages = () => {
               <p className="text-sm text-[#303030] whitespace-pre-wrap">
                 {replaceVariables(
                   previewTemplate?.content || "",
-                  { full_name: "Maria Silva", user_id: "demo" },
+                  { full_name: "Maria Silva", user_id: "demo", email: "maria@email.com", phone: "(21) 99999-0000", weight: 65, height: 165, objective: "Emagrecimento" },
                   { end_date: new Date(Date.now() + 7 * 86400000).toISOString() },
                   { name: "Plano Premium 90 dias", price: "297,00" },
                 )}
