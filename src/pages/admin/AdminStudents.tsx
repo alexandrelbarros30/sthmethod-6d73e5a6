@@ -1891,6 +1891,37 @@ const AdminStudents = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(v) => { if (!v) { setDeleteTarget(null); setDeleteConfirmText(""); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir aluno?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>Esta ação é irreversível. Todos os dados de <strong>{deleteTarget?.name}</strong> serão removidos permanentemente (dietas, treinos, protocolos, imagens, pagamentos e assinatura).</p>
+                <p>Digite <strong className="text-destructive">DELETAR</strong> para confirmar:</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Input
+            value={deleteConfirmText}
+            onChange={(e) => setDeleteConfirmText(e.target.value)}
+            placeholder="Digite DELETAR"
+            className="font-mono tracking-widest"
+            autoComplete="off"
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteConfirmText !== "DELETAR"}
+              onClick={() => { if (deleteTarget) { deleteMutation.mutate(deleteTarget.userId); setDeleteTarget(null); setDeleteConfirmText(""); } }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+            >
+              Excluir permanentemente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
