@@ -110,7 +110,7 @@ const AdminMessages = () => {
   const { data: profiles } = useQuery({
     queryKey: ["msg-profiles"],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("user_id, full_name, email, phone, birth_date, created_at");
+      const { data } = await supabase.from("profiles").select("user_id, full_name, email, phone, birth_date, created_at, weight, height, objective");
       return data || [];
     },
   });
