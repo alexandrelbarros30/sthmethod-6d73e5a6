@@ -66,6 +66,48 @@ const emptyForm = {
   bmr: "", tdee: "", daily_calories: "", protein_g: "", carbs_g: "", fat_g: "",
 };
 
+const DeleteStudentDialog = ({ studentName, onConfirm }: { studentName: string; onConfirm: () => void }) => {
+  const [confirmText, setConfirmText] = useState("");
+  const [open, setOpen] = useState(false);
+  const canDelete = confirmText === "DELETAR";
+
+  return (
+    <AlertDialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setConfirmText(""); }}>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" size="icon" title="Excluir"><Trash2 className="w-4 h-4 text-destructive" /></Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir aluno?</AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>Esta ação é irreversível. Todos os dados de <strong>{studentName}</strong> serão removidos permanentemente (dietas, treinos, protocolos, imagens, pagamentos e assinatura).</p>
+              <p>Digite <strong className="text-destructive">DELETAR</strong> para confirmar:</p>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <Input
+          value={confirmText}
+          onChange={(e) => setConfirmText(e.target.value)}
+          placeholder="Digite DELETAR"
+          className="font-mono tracking-widest"
+          autoComplete="off"
+        />
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={!canDelete}
+            onClick={() => { onConfirm(); setOpen(false); }}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+          >
+            Excluir permanentemente
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+};
+
 const AdminStudents = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -1277,19 +1319,7 @@ const AdminStudents = () => {
                             <Button variant="ghost" size="icon" onClick={() => openEdit(s)} title="Editar"><Pencil className="w-4 h-4" /></Button>
                             <Button variant="ghost" size="icon" title="Alterar senha" onClick={() => { setPasswordReset({ userId: s.user_id, name: s.full_name || s.email }); setNewPassword(""); }}><Lock className="w-4 h-4" /></Button>
                             <Button variant="ghost" size="icon" title="Copiar link de renovação" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/dashboard/renew?uid=${s.user_id}`); toast.success("Link de renovação copiado!"); }}><Link2 className="w-4 h-4" /></Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild><Button variant="ghost" size="icon" title="Excluir"><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Excluir aluno?</AlertDialogTitle>
-                                  <AlertDialogDescription>Esta ação é irreversível. Todos os dados de {s.full_name || "este aluno"} serão removidos.</AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => deleteMutation.mutate(s.user_id)}>Excluir</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                            <DeleteStudentDialog studentName={s.full_name || s.email} onConfirm={() => deleteMutation.mutate(s.user_id)} />
                           </div>
                         </TableCell>
                       </TableRow>
