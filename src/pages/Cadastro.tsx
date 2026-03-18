@@ -107,6 +107,7 @@ const Cadastro = () => {
       };
     }
     return {
+      cpf: "",
       birth_date: "", height: "", weight: "",
       gender: "", activity_type: "", does_cardio: "",
       physical_activity_level: "",
