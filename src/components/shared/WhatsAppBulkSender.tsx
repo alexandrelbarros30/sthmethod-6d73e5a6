@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Send, ChevronDown, AlertCircle, Search, Users } from "lucide-react";
+import { MessageCircle, Send, ChevronDown, AlertCircle, Search, Users, Filter } from "lucide-react";
 import { toast } from "sonner";
 
 const BUILTIN_TEMPLATES = [
