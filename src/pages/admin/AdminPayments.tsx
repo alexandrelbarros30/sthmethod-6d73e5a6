@@ -133,9 +133,14 @@ const AdminPayments = () => {
     mutationFn: async (paymentId: string) => {
       const { error } = await supabase
         .from("payments")
-        .update({ status: "rejected", ai_verification_status: "rejected" })
+        .update({ status: "rejected" })
         .eq("id", paymentId);
       if (error) throw error;
+
+      // Update gateway details
+      await supabase
+        .from("payment_gateway_details")
+        .upsert({ payment_id: paymentId, ai_verification_status: "rejected" }, { onConflict: "payment_id" });
     },
     onSuccess: () => {
       toast.success("Pagamento rejeitado.");
