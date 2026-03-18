@@ -36,6 +36,29 @@ const phoneMask = (v: string) => {
   return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
 };
 
+const cpfMask = (v: string) => {
+  const d = v.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`;
+  if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+};
+
+const isValidCpf = (cpf: string): boolean => {
+  const d = cpf.replace(/\D/g, "");
+  if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += parseInt(d[i]) * (10 - i);
+  let rem = (sum * 10) % 11;
+  if (rem === 10) rem = 0;
+  if (rem !== parseInt(d[9])) return false;
+  sum = 0;
+  for (let i = 0; i < 10; i++) sum += parseInt(d[i]) * (11 - i);
+  rem = (sum * 10) % 11;
+  if (rem === 10) rem = 0;
+  return rem === parseInt(d[10]);
+};
+
 const steps = [
   { n: 1, label: "Conta" },
   { n: 2, label: "Perfil" },
@@ -65,6 +88,7 @@ const Cadastro = () => {
   const [profileForm, setProfileForm] = useState(() => {
     if (quizData) {
       return {
+        cpf: "",
         birth_date: quizData.birth_date || "",
         height: quizData.height || "",
         weight: quizData.weight || "",
@@ -83,6 +107,7 @@ const Cadastro = () => {
       };
     }
     return {
+      cpf: "",
       birth_date: "", height: "", weight: "",
       gender: "", activity_type: "", does_cardio: "",
       physical_activity_level: "",
@@ -156,6 +181,7 @@ const Cadastro = () => {
             setFullName(p.full_name || "");
             setPhoneVal(p.phone || "");
             setProfileForm({
+              cpf: p.cpf ? cpfMask(p.cpf) : "",
               birth_date: p.birth_date || "",
               height: p.height?.toString() || "",
               weight: p.weight?.toString() || "",
@@ -336,6 +362,7 @@ const Cadastro = () => {
   // Step 2: Save profile
   const handleSaveProfile = async () => {
     const { height, weight, gender, activity_type, does_cardio, objective, current_protocol, comorbidities, birth_date } = profileForm;
+    if (!profileForm.cpf || !isValidCpf(profileForm.cpf)) { toast.error("CPF inválido"); return; }
     if (!gender) { toast.error("Selecione o gênero"); return; }
     if (!birth_date) { toast.error("Data de nascimento é obrigatória"); return; }
     if (!height || Number(height) <= 0) { toast.error("Altura é obrigatória"); return; }
@@ -362,6 +389,7 @@ const Cadastro = () => {
     setLoading(true);
     try {
       const updateData: any = {
+        cpf: profileForm.cpf.replace(/\D/g, ""),
         phone: phoneVal || undefined,
         birth_date: birth_date || null,
         height: Number(height),
@@ -524,6 +552,16 @@ const Cadastro = () => {
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* CPF */}
+              <div>
+                <Label className="font-body">CPF *</Label>
+                <Input
+                  value={profileForm.cpf}
+                  onChange={(e) => setProfileForm({ ...profileForm, cpf: cpfMask(e.target.value) })}
+                  placeholder="000.000.000-00"
+                />
+              </div>
+
               {/* Gender */}
               <div>
                 <Label className="font-body">Gênero *</Label>
