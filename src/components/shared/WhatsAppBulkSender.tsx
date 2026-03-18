@@ -73,6 +73,40 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
   const [customMessage, setCustomMessage] = useState("");
   const [tab, setTab] = useState("expiring");
   const [search, setSearch] = useState("");
+  const [planFilter, setPlanFilter] = useState("all");
+
+  // Plans query
+  const { data: plans = [] } = useQuery({
+    queryKey: ["wa-plans"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("plans")
+        .select("id, name")
+        .eq("active", true)
+        .order("name");
+      return data || [];
+    },
+    enabled: open,
+  });
+
+  // Active subscriptions for plan filtering
+  const { data: activeSubscriptions = [] } = useQuery({
+    queryKey: ["wa-active-subs", linkedStudentIds],
+    queryFn: async () => {
+      let query = supabase
+        .from("subscriptions")
+        .select("user_id, plan_id, plans(name)")
+        .eq("status", "active");
+
+      if (linkedStudentIds?.length) {
+        query = query.in("user_id", linkedStudentIds);
+      }
+
+      const { data } = await query;
+      return data || [];
+    },
+    enabled: open,
+  });
 
   // DB templates query
   const { data: dbTemplates = [] } = useQuery({
