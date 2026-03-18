@@ -14,16 +14,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, Copy, Eye, Send, Clock, Search, MessageSquare, Image, Phone, Calendar, Users, Filter, Variable } from "lucide-react";
+import { Plus, Edit, Trash2, Copy, Eye, Send, Clock, Search, MessageSquare, Image, Phone, Calendar, Users, Filter, Variable, Save, X } from "lucide-react";
 
-const AVAILABLE_VARIABLES = [
-  { key: "{nome}", label: "Nome do aluno", example: "Maria Silva" },
-  { key: "{plano}", label: "Nome do plano", example: "Plano Premium 90 dias" },
-  { key: "{vencimento}", label: "Data de vencimento", example: "25/03/2026" },
-  { key: "{link}", label: "Link de renovação", example: "https://..." },
-  { key: "{dias_restantes}", label: "Dias restantes", example: "7" },
-  { key: "{valor}", label: "Valor do plano", example: "R$ 297,00" },
-];
+const SYSTEM_VARIABLE_KEYS = ["{nome}", "{plano}", "{vencimento}", "{link}", "{dias_restantes}", "{valor}"];
 
 const replaceVariables = (
   content: string,
