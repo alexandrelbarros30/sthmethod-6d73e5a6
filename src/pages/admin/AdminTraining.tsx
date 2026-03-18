@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash2, Plus, Search, GripVertical, Video, ChevronDown, ChevronUp, Copy, FileText } from "lucide-react";
+import ExerciseLibraryPicker from "@/components/admin/ExerciseLibraryPicker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -504,6 +505,19 @@ const AdminTraining = () => {
           <DialogHeader><DialogTitle className="font-display">{editingExercise?.id ? "Editar Exercício" : "Novo Exercício"}</DialogTitle></DialogHeader>
           {editingExercise && (
             <div className="space-y-4">
+              {/* Exercise Library Picker */}
+              {!editingExercise.id && (
+                <ExerciseLibraryPicker
+                  onSelect={(ex) => {
+                    setEditingExercise({
+                      ...editingExercise,
+                      name: ex.name,
+                      description: ex.description,
+                      video_url: ex.video_url,
+                    });
+                  }}
+                />
+              )}
               <div>
                 <Label className="font-body">Nome do exercício *</Label>
                 <Input value={editingExercise.name} onChange={(e) => setEditingExercise({ ...editingExercise, name: e.target.value })} placeholder="Ex: Supino Barra Reta" maxLength={40} />
