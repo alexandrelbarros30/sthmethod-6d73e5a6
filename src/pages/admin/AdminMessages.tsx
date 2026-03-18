@@ -390,6 +390,116 @@ const AdminMessages = () => {
           )}
         </TabsContent>
 
+        {/* VARIABLES TAB */}
+        <TabsContent value="variables">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-muted-foreground">Gerencie as variáveis disponíveis para usar nos templates de mensagem.</p>
+            <Button size="sm" onClick={() => { setVarNewOpen(true); setVarFormKey(""); setVarFormLabel(""); setVarFormExample(""); }}>
+              <Plus className="w-4 h-4 mr-1" />Nova Variável
+            </Button>
+          </div>
+
+          {/* New variable inline form */}
+          {varNewOpen && (
+            <Card className="mb-4">
+              <CardContent className="pt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+                  <div>
+                    <Label className="text-xs">Chave (ex: email)</Label>
+                    <Input value={varFormKey} onChange={e => setVarFormKey(e.target.value)} placeholder="email" className="font-mono text-sm" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Nome da variável</Label>
+                    <Input value={varFormLabel} onChange={e => setVarFormLabel(e.target.value)} placeholder="E-mail do aluno" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Exemplo</Label>
+                    <Input value={varFormExample} onChange={e => setVarFormExample(e.target.value)} placeholder="aluno@email.com" />
+                  </div>
+                  <div className="flex gap-1">
+                    <Button size="sm" onClick={() => saveVarMutation.mutate({ key: varFormKey, label: varFormLabel, example: varFormExample })} disabled={!varFormKey || !varFormLabel}>
+                      <Save className="w-3 h-3 mr-1" />Salvar
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setVarNewOpen(false)}>
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Chave</TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Exemplo</TableHead>
+                    <TableHead className="w-[100px]">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {AVAILABLE_VARIABLES.length === 0 ? (
+                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Nenhuma variável cadastrada.</TableCell></TableRow>
+                  ) : AVAILABLE_VARIABLES.map((v: any) => (
+                    <TableRow key={v.id}>
+                      {varEditing === v.id ? (
+                        <>
+                          <TableCell>
+                            <Input value={varFormKey} onChange={e => setVarFormKey(e.target.value)} className="font-mono text-xs h-8" />
+                          </TableCell>
+                          <TableCell>
+                            <Input value={varFormLabel} onChange={e => setVarFormLabel(e.target.value)} className="text-xs h-8" />
+                          </TableCell>
+                          <TableCell>
+                            <Input value={varFormExample} onChange={e => setVarFormExample(e.target.value)} className="text-xs h-8" />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button size="sm" variant="ghost" onClick={() => saveVarMutation.mutate({ id: v.id, key: varFormKey, label: varFormLabel, example: varFormExample })}>
+                                <Save className="w-3 h-3" />
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={() => setVarEditing(null)}>
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </>
+                      ) : (
+                        <>
+                          <TableCell><Badge variant="outline" className="font-mono text-xs">{v.key}</Badge></TableCell>
+                          <TableCell className="text-sm">{v.label}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{v.example}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button size="sm" variant="ghost" onClick={() => {
+                                setVarEditing(v.id);
+                                setVarFormKey(v.key);
+                                setVarFormLabel(v.label);
+                                setVarFormExample(v.example);
+                              }}>
+                                <Edit className="w-3 h-3" />
+                              </Button>
+                              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteVarMutation.mutate(v.id)}>
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+          <p className="text-[10px] text-muted-foreground mt-3">
+            💡 As variáveis do sistema ({"{nome}"}, {"{plano}"}, {"{vencimento}"}, {"{link}"}, {"{dias_restantes}"}, {"{valor}"}) são substituídas automaticamente pelos dados do aluno. Variáveis personalizadas serão mantidas como texto no envio.
+          </p>
+        </TabsContent>
+
         {/* HISTORY TAB */}
         <TabsContent value="history">
           <div className="flex items-center gap-3 mb-4">
