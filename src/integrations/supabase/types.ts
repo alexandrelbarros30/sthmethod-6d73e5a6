@@ -750,6 +750,47 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_gateway_details: {
+        Row: {
+          ai_verification_notes: string | null
+          ai_verification_status: string | null
+          created_at: string
+          id: string
+          mp_payment_id: string | null
+          mp_preference_id: string | null
+          payment_id: string
+          receipt_url: string | null
+        }
+        Insert: {
+          ai_verification_notes?: string | null
+          ai_verification_status?: string | null
+          created_at?: string
+          id?: string
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
+          payment_id: string
+          receipt_url?: string | null
+        }
+        Update: {
+          ai_verification_notes?: string | null
+          ai_verification_status?: string | null
+          created_at?: string
+          id?: string
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
+          payment_id?: string
+          receipt_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_gateway_details_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: true
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_settings: {
         Row: {
           id: string
@@ -774,8 +815,6 @@ export type Database = {
       payments: {
         Row: {
           action_type: string
-          ai_verification_notes: string | null
-          ai_verification_status: string | null
           amount: number
           coupon_discount: number | null
           coupon_id: string | null
@@ -783,19 +822,14 @@ export type Database = {
           id: string
           installments: number
           method: string
-          mp_payment_id: string | null
-          mp_preference_id: string | null
           original_amount: number
           plan_id: string
-          receipt_url: string | null
           status: string
           updated_at: string
           user_id: string
         }
         Insert: {
           action_type?: string
-          ai_verification_notes?: string | null
-          ai_verification_status?: string | null
           amount: number
           coupon_discount?: number | null
           coupon_id?: string | null
@@ -803,19 +837,14 @@ export type Database = {
           id?: string
           installments?: number
           method?: string
-          mp_payment_id?: string | null
-          mp_preference_id?: string | null
           original_amount: number
           plan_id: string
-          receipt_url?: string | null
           status?: string
           updated_at?: string
           user_id: string
         }
         Update: {
           action_type?: string
-          ai_verification_notes?: string | null
-          ai_verification_status?: string | null
           amount?: number
           coupon_discount?: number | null
           coupon_id?: string | null
@@ -823,11 +852,8 @@ export type Database = {
           id?: string
           installments?: number
           method?: string
-          mp_payment_id?: string | null
-          mp_preference_id?: string | null
           original_amount?: number
           plan_id?: string
-          receipt_url?: string | null
           status?: string
           updated_at?: string
           user_id?: string
