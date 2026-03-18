@@ -88,6 +88,7 @@ const Cadastro = () => {
   const [profileForm, setProfileForm] = useState(() => {
     if (quizData) {
       return {
+        cpf: "",
         birth_date: quizData.birth_date || "",
         height: quizData.height || "",
         weight: quizData.weight || "",
