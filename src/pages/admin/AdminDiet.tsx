@@ -163,6 +163,10 @@ const AdminDiet = () => {
     setNewContent("");
     setNewPdfFile(null);
     setNewReleaseDate("");
+    setNewEnergyKcal("");
+    setNewProteinG("");
+    setNewCarbsG("");
+    setNewFatG("");
   };
 
   const startEdit = (diet: any) => {
