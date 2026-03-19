@@ -238,6 +238,10 @@ const AdminDiet = () => {
           content: editContent,
           created_at: newCreatedAt,
           release_date: editReleaseDate ? new Date(editReleaseDate + "T00:00:00").toISOString() : null,
+          energy_kcal: editEnergyKcal ? parseFloat(editEnergyKcal) : null,
+          protein_g: editProteinG ? parseFloat(editProteinG) : null,
+          carbs_g: editCarbsG ? parseFloat(editCarbsG) : null,
+          fat_g: editFatG ? parseFloat(editFatG) : null,
         } as any)
         .eq("id", editingId!);
     },
