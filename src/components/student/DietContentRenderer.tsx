@@ -159,14 +159,14 @@ const DietContentRenderer: React.FC<DietContentRendererProps> = ({
             {studentInfo.name && (
               <InfoRow label="Nome" value={studentInfo.name} />
             )}
-            {studentInfo.age && (
+             {studentInfo.age && (
               <InfoRow label="Idade" value={`${studentInfo.age} anos`} />
             )}
-            {studentInfo.weight && studentInfo.height && (
-              <InfoRow
-                label="Peso / Altura"
-                value={`${studentInfo.weight} kg / ${studentInfo.height.toFixed(2).replace(".", ",")} m`}
-              />
+            {studentInfo.weight && (
+              <InfoRow label="Peso" value={`${studentInfo.weight} kg`} />
+            )}
+            {studentInfo.height && (
+              <InfoRow label="Altura" value={`${studentInfo.height} cm`} />
             )}
             {studentInfo.objective && (
               <InfoRow label="Objetivo" value={studentInfo.objective} />

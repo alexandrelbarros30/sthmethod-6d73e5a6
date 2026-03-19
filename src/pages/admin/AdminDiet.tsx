@@ -589,20 +589,31 @@ const AdminDiet = () => {
                                 <div className="mt-3 p-3 rounded-md bg-muted/50 border border-border">
                                   <p className="text-xs font-semibold text-foreground mb-2">Visualização completa:</p>
                                   {/* Macros from diet */}
-                                  {(diet.energy_kcal || diet.protein_g || diet.carbs_g || diet.fat_g || diet.hydration_l) && (
-                                    <DietContentRenderer
-                                      content=""
-                                      studentInfo={{
-                                        name: selected?.full_name,
-                                        hydration: diet.hydration_l ? `${diet.hydration_l} litros` : undefined,
-                                        totalEnergy: diet.energy_kcal || undefined,
-                                        protein: diet.protein_g || undefined,
-                                        carbs: diet.carbs_g || undefined,
-                                        fat: diet.fat_g || undefined,
-                                      }}
-                                      showHeader={true}
-                                    />
-                                  )}
+                                  {(() => {
+                                    const age = selected?.birth_date
+                                      ? Math.floor((Date.now() - new Date(selected.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+                                      : undefined;
+                                    const studentInfo: any = {
+                                      name: selected?.full_name,
+                                      age,
+                                      weight: selected?.weight || undefined,
+                                      height: selected?.height || undefined,
+                                      objective: selected?.objective || undefined,
+                                      startDate: new Date(diet.created_at).toLocaleDateString("pt-BR"),
+                                      hydration: diet.hydration_l ? `${diet.hydration_l} litros` : undefined,
+                                      totalEnergy: diet.energy_kcal || undefined,
+                                      protein: diet.protein_g || undefined,
+                                      carbs: diet.carbs_g || undefined,
+                                      fat: diet.fat_g || undefined,
+                                    };
+                                    return (
+                                      <DietContentRenderer
+                                        content=""
+                                        studentInfo={studentInfo}
+                                        showHeader={true}
+                                      />
+                                    );
+                                  })()}
                                   {diet.content && (
                                     /<[a-z][\s\S]*>/i.test(diet.content)
                                       ? <RichContentRenderer content={diet.content} />
