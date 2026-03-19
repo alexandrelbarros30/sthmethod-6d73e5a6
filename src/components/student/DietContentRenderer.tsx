@@ -148,6 +148,13 @@ const DietContentRenderer: React.FC<DietContentRendererProps> = ({
       {/* Student info header */}
       {showHeader && studentInfo && (
         <div className="mb-6 pb-4 border-b border-border">
+          {/* Title */}
+          <div className="text-center mb-4">
+            <h2 className="text-base font-bold tracking-[0.2em] uppercase text-foreground font-display">
+              STH METHOD
+            </h2>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm font-body">
             {studentInfo.name && (
               <InfoRow label="Nome" value={studentInfo.name} />
@@ -166,6 +173,9 @@ const DietContentRenderer: React.FC<DietContentRendererProps> = ({
             )}
             {studentInfo.startDate && (
               <InfoRow label="Data de Início" value={studentInfo.startDate} />
+            )}
+            {studentInfo.hydration && (
+              <InfoRow label="Hidratação" value={studentInfo.hydration} />
             )}
           </div>
 
@@ -190,7 +200,7 @@ const DietContentRenderer: React.FC<DietContentRendererProps> = ({
       )}
 
       {/* Diet content */}
-      <div>{elements}</div>
+      {elements.length > 0 && <div>{elements}</div>}
     </div>
   );
 };
