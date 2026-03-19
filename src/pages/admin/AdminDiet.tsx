@@ -190,6 +190,10 @@ const AdminDiet = () => {
     setEditContent("");
     setEditDate("");
     setEditTime("");
+    setEditEnergyKcal("");
+    setEditProteinG("");
+    setEditCarbsG("");
+    setEditFatG("");
   };
 
   const saveMutation = useMutation({
