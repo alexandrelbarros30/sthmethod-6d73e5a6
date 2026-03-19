@@ -194,6 +194,15 @@ const StudentDiet = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
+              {/* Student info header + macros — always shown */}
+              {profile && (
+                <DietContentRenderer
+                  content=""
+                  studentInfo={buildStudentInfo(diet)}
+                  showHeader={true}
+                />
+              )}
+
               {diet.pdf_url && (
                 <div>
                   <p className="text-xs text-primary flex items-center gap-1 mb-2">
@@ -211,7 +220,7 @@ const StudentDiet = () => {
                   ? <RichContentRenderer content={diet.content} />
                   : <DietContentRenderer
                       content={diet.content}
-                      studentInfo={buildStudentInfo(diet)}
+                      showHeader={false}
                     />
               )}
             </CardContent>
