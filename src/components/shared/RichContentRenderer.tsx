@@ -5,14 +5,24 @@ interface RichContentRendererProps {
   className?: string;
 }
 
-/**
- * Detects if content is HTML (from rich text editor) or plain text,
- * and renders accordingly.
- */
+const MEAL_HEADING_RE = /^(REFEIC[ÃA]O\s*\d+|REFEI[CÇ][ÃA]O\s*\d+|PRE[- ]?TREINO|P[OÓ]S[- ]?TREINO|CEIA|LANCHE\s*\d*|CAFÉ\s*DA\s*MANH[ÃA]|ALMO[CÇ]O|JANTAR)/i;
+const SECTION_TITLE_RE = /^(ROTINA\s*ALIMENTAR|PLANO\s*ALIMENTAR|DIETA)/i;
+
+function addBulletsToHTML(html: string): string {
+  return html.replace(/<p([^>]*)>([\s\S]*?)<\/p>/gi, (match, attrs, inner) => {
+    const text = inner.replace(/<[^>]*>/g, '').trim();
+    if (!text) return match;
+    if (SECTION_TITLE_RE.test(text) || MEAL_HEADING_RE.test(text)) return match;
+    if (text.startsWith("(") && text.endsWith(")")) return match;
+    return `<p${attrs}><span style="color:hsl(var(--primary));font-weight:700;margin-right:0.375rem;">•</span>${inner}</p>`;
+  });
+}
+
 const RichContentRenderer = ({ content, className }: RichContentRendererProps) => {
   const isHTML = /<[a-z][\s\S]*>/i.test(content);
 
   if (isHTML) {
+    const processedContent = addBulletsToHTML(content);
     return (
       <div
         className={cn(
@@ -30,12 +40,11 @@ const RichContentRenderer = ({ content, className }: RichContentRendererProps) =
           "[&_s]:line-through",
           className
         )}
-        dangerouslySetInnerHTML={{ __html: content }}
+        dangerouslySetInnerHTML={{ __html: processedContent }}
       />
     );
   }
 
-  // Fallback: plain text (legacy content)
   return (
     <div className={cn("whitespace-pre-wrap text-sm text-foreground font-body leading-relaxed", className)}>
       {content}
