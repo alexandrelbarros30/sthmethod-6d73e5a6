@@ -39,6 +39,10 @@ const AdminDiet = () => {
   const [newPdfFile, setNewPdfFile] = useState<File | null>(null);
   const [newReleaseDate, setNewReleaseDate] = useState("");
   const [showNewForm, setShowNewForm] = useState(false);
+  const [newEnergyKcal, setNewEnergyKcal] = useState("");
+  const [newProteinG, setNewProteinG] = useState("");
+  const [newCarbsG, setNewCarbsG] = useState("");
+  const [newFatG, setNewFatG] = useState("");
 
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -47,6 +51,10 @@ const AdminDiet = () => {
   const [editDate, setEditDate] = useState("");
   const [editTime, setEditTime] = useState("");
   const [editReleaseDate, setEditReleaseDate] = useState("");
+  const [editEnergyKcal, setEditEnergyKcal] = useState("");
+  const [editProteinG, setEditProteinG] = useState("");
+  const [editCarbsG, setEditCarbsG] = useState("");
+  const [editFatG, setEditFatG] = useState("");
 
   // Preview
   const [previewDiet, setPreviewDiet] = useState<any>(null);
