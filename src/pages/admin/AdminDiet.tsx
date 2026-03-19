@@ -430,6 +430,28 @@ const AdminDiet = () => {
                       <Input type="date" value={newReleaseDate} onChange={(e) => setNewReleaseDate(e.target.value)} />
                       <p className="text-[10px] text-muted-foreground mt-1">Se preenchida, o aluno só verá a dieta a partir desta data.</p>
                     </div>
+                    {/* Macronutrientes */}
+                    <div>
+                      <Label className="font-body text-xs font-semibold">Macronutrientes (opcional)</Label>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1">
+                        <div>
+                          <Label className="font-body text-[10px] text-muted-foreground">Energia (kcal)</Label>
+                          <Input type="number" placeholder="0" value={newEnergyKcal} onChange={(e) => setNewEnergyKcal(e.target.value)} />
+                        </div>
+                        <div>
+                          <Label className="font-body text-[10px] text-muted-foreground">Proteínas (g)</Label>
+                          <Input type="number" placeholder="0" value={newProteinG} onChange={(e) => setNewProteinG(e.target.value)} />
+                        </div>
+                        <div>
+                          <Label className="font-body text-[10px] text-muted-foreground">Carboidratos (g)</Label>
+                          <Input type="number" placeholder="0" value={newCarbsG} onChange={(e) => setNewCarbsG(e.target.value)} />
+                        </div>
+                        <div>
+                          <Label className="font-body text-[10px] text-muted-foreground">Lipídios (g)</Label>
+                          <Input type="number" placeholder="0" value={newFatG} onChange={(e) => setNewFatG(e.target.value)} />
+                        </div>
+                      </div>
+                    </div>
                      <div>
                       <Label className="font-body">Conteúdo</Label>
                       <RichTextEditor value={newContent} onChange={setNewContent} placeholder="Escreva o conteúdo da dieta aqui..." />
