@@ -220,6 +220,7 @@ const AdminDiet = () => {
         protein_g: newProteinG ? parseFloat(newProteinG) : null,
         carbs_g: newCarbsG ? parseFloat(newCarbsG) : null,
         fat_g: newFatG ? parseFloat(newFatG) : null,
+        hydration_l: newHydrationL ? parseFloat(newHydrationL) : null,
       };
       await supabase.from("student_diets").insert(payload);
     },
