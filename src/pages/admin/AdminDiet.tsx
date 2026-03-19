@@ -589,11 +589,12 @@ const AdminDiet = () => {
                                 <div className="mt-3 p-3 rounded-md bg-muted/50 border border-border">
                                   <p className="text-xs font-semibold text-foreground mb-2">Visualização completa:</p>
                                   {/* Macros from diet */}
-                                  {(diet.energy_kcal || diet.protein_g || diet.carbs_g || diet.fat_g) && (
+                                  {(diet.energy_kcal || diet.protein_g || diet.carbs_g || diet.fat_g || diet.hydration_l) && (
                                     <DietContentRenderer
                                       content=""
                                       studentInfo={{
                                         name: selected?.full_name,
+                                        hydration: diet.hydration_l ? `${diet.hydration_l} litros` : undefined,
                                         totalEnergy: diet.energy_kcal || undefined,
                                         protein: diet.protein_g || undefined,
                                         carbs: diet.carbs_g || undefined,
