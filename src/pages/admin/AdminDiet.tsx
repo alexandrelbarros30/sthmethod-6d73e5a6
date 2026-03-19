@@ -211,6 +211,10 @@ const AdminDiet = () => {
         content: newContent,
         pdf_url: pdfUrl,
         release_date: newReleaseDate ? new Date(newReleaseDate + "T00:00:00").toISOString() : null,
+        energy_kcal: newEnergyKcal ? parseFloat(newEnergyKcal) : null,
+        protein_g: newProteinG ? parseFloat(newProteinG) : null,
+        carbs_g: newCarbsG ? parseFloat(newCarbsG) : null,
+        fat_g: newFatG ? parseFloat(newFatG) : null,
       };
       await supabase.from("student_diets").insert(payload);
     },
