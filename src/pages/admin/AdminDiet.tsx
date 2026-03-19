@@ -499,6 +499,28 @@ const AdminDiet = () => {
                                 <p className="text-[10px] text-muted-foreground mt-1">Deixe vazio para liberar imediatamente.</p>
                               </div>
                             </div>
+                            {/* Macronutrientes */}
+                            <div>
+                              <Label className="font-body text-xs font-semibold">Macronutrientes</Label>
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1">
+                                <div>
+                                  <Label className="font-body text-[10px] text-muted-foreground">Energia (kcal)</Label>
+                                  <Input type="number" placeholder="0" value={editEnergyKcal} onChange={(e) => setEditEnergyKcal(e.target.value)} />
+                                </div>
+                                <div>
+                                  <Label className="font-body text-[10px] text-muted-foreground">Proteínas (g)</Label>
+                                  <Input type="number" placeholder="0" value={editProteinG} onChange={(e) => setEditProteinG(e.target.value)} />
+                                </div>
+                                <div>
+                                  <Label className="font-body text-[10px] text-muted-foreground">Carboidratos (g)</Label>
+                                  <Input type="number" placeholder="0" value={editCarbsG} onChange={(e) => setEditCarbsG(e.target.value)} />
+                                </div>
+                                <div>
+                                  <Label className="font-body text-[10px] text-muted-foreground">Lipídios (g)</Label>
+                                  <Input type="number" placeholder="0" value={editFatG} onChange={(e) => setEditFatG(e.target.value)} />
+                                </div>
+                              </div>
+                            </div>
                             <div>
                               <Label className="font-body text-xs">Conteúdo</Label>
                               <RichTextEditor value={editContent} onChange={setEditContent} />
