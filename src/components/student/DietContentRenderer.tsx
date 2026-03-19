@@ -116,6 +116,7 @@ const DietContentRenderer: React.FC<DietContentRendererProps> = ({
         </div>
       );
     } else if (isMealHeading) {
+      foodItemIndex = 0;
       elements.push(
         <div key={`meal-${i}`} className="mt-8 mb-4 first:mt-2">
           <h3 className="text-sm font-bold uppercase tracking-wider text-foreground font-display underline underline-offset-4 decoration-primary/60 decoration-2">

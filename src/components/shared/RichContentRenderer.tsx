@@ -28,7 +28,7 @@ const RichContentRenderer = ({ content, className }: RichContentRendererProps) =
   const isHTML = /<[a-z][\s\S]*>/i.test(content);
 
   if (isHTML) {
-    const processedContent = addBulletsToHTML(content);
+    const processedContent = addBulletsAndZebraToHTML(content);
     return (
       <div
         className={cn(
