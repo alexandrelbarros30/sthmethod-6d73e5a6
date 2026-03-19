@@ -586,7 +586,7 @@ const AdminDiet = () => {
 
                               {/* Preview toggle */}
                               {previewDiet === diet.id && (
-                                <div className="mt-3 p-3 rounded-md bg-muted/50 border border-border">
+                                <div className="mt-3 p-3 rounded-md bg-muted/50 border border-border space-y-2">
                                   <p className="text-xs font-semibold text-foreground mb-2">Visualização completa:</p>
                                   {/* Macros from diet */}
                                   {(() => {
