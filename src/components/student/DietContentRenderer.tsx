@@ -126,9 +126,10 @@ const DietContentRenderer: React.FC<DietContentRendererProps> = ({
     } else {
       // Check if it's a parenthetical note
       const isNote = line.startsWith("(") && line.endsWith(")");
+      foodItemIndex++;
 
       elements.push(
-        <div key={`food-${i}`} className="py-1.5 flex items-start gap-2">
+        <div key={`food-${i}`} className={`py-1.5 px-2 flex items-start gap-2 rounded ${foodItemIndex % 2 === 0 ? 'bg-muted/50' : ''}`}>
           {!isNote && (
             <span className="text-primary font-bold text-sm leading-relaxed select-none mt-px">•</span>
           )}
