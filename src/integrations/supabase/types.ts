@@ -1157,6 +1157,7 @@ export type Database = {
           created_at: string
           energy_kcal: number | null
           fat_g: number | null
+          hydration_l: number | null
           id: string
           pdf_url: string | null
           protein_g: number | null
@@ -1172,6 +1173,7 @@ export type Database = {
           created_at?: string
           energy_kcal?: number | null
           fat_g?: number | null
+          hydration_l?: number | null
           id?: string
           pdf_url?: string | null
           protein_g?: number | null
@@ -1187,6 +1189,7 @@ export type Database = {
           created_at?: string
           energy_kcal?: number | null
           fat_g?: number | null
+          hydration_l?: number | null
           id?: string
           pdf_url?: string | null
           protein_g?: number | null

@@ -43,6 +43,7 @@ const AdminDiet = () => {
   const [newProteinG, setNewProteinG] = useState("");
   const [newCarbsG, setNewCarbsG] = useState("");
   const [newFatG, setNewFatG] = useState("");
+  const [newHydrationL, setNewHydrationL] = useState("");
 
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -55,6 +56,7 @@ const AdminDiet = () => {
   const [editProteinG, setEditProteinG] = useState("");
   const [editCarbsG, setEditCarbsG] = useState("");
   const [editFatG, setEditFatG] = useState("");
+  const [editHydrationL, setEditHydrationL] = useState("");
 
   // Preview
   const [previewDiet, setPreviewDiet] = useState<any>(null);
@@ -167,6 +169,7 @@ const AdminDiet = () => {
     setNewProteinG("");
     setNewCarbsG("");
     setNewFatG("");
+    setNewHydrationL("");
   };
 
   const startEdit = (diet: any) => {
@@ -181,6 +184,7 @@ const AdminDiet = () => {
     setEditProteinG(diet.protein_g != null ? String(diet.protein_g) : "");
     setEditCarbsG(diet.carbs_g != null ? String(diet.carbs_g) : "");
     setEditFatG(diet.fat_g != null ? String(diet.fat_g) : "");
+    setEditHydrationL(diet.hydration_l != null ? String(diet.hydration_l) : "");
     setPreviewDiet(null);
   };
 
@@ -194,6 +198,7 @@ const AdminDiet = () => {
     setEditProteinG("");
     setEditCarbsG("");
     setEditFatG("");
+    setEditHydrationL("");
   };
 
   const saveMutation = useMutation({
@@ -215,6 +220,7 @@ const AdminDiet = () => {
         protein_g: newProteinG ? parseFloat(newProteinG) : null,
         carbs_g: newCarbsG ? parseFloat(newCarbsG) : null,
         fat_g: newFatG ? parseFloat(newFatG) : null,
+        hydration_l: newHydrationL ? parseFloat(newHydrationL) : null,
       };
       await supabase.from("student_diets").insert(payload);
     },
@@ -242,6 +248,7 @@ const AdminDiet = () => {
           protein_g: editProteinG ? parseFloat(editProteinG) : null,
           carbs_g: editCarbsG ? parseFloat(editCarbsG) : null,
           fat_g: editFatG ? parseFloat(editFatG) : null,
+          hydration_l: editHydrationL ? parseFloat(editHydrationL) : null,
         } as any)
         .eq("id", editingId!);
     },
@@ -433,7 +440,7 @@ const AdminDiet = () => {
                     {/* Macronutrientes */}
                     <div>
                       <Label className="font-body text-xs font-semibold">Macronutrientes (opcional)</Label>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1">
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-1">
                         <div>
                           <Label className="font-body text-[10px] text-muted-foreground">Energia (kcal)</Label>
                           <Input type="number" placeholder="0" value={newEnergyKcal} onChange={(e) => setNewEnergyKcal(e.target.value)} />
@@ -449,6 +456,10 @@ const AdminDiet = () => {
                         <div>
                           <Label className="font-body text-[10px] text-muted-foreground">Lipídios (g)</Label>
                           <Input type="number" placeholder="0" value={newFatG} onChange={(e) => setNewFatG(e.target.value)} />
+                        </div>
+                        <div>
+                          <Label className="font-body text-[10px] text-muted-foreground">Hidratação (l)</Label>
+                          <Input type="number" step="0.1" placeholder="0" value={newHydrationL} onChange={(e) => setNewHydrationL(e.target.value)} />
                         </div>
                       </div>
                     </div>
@@ -502,7 +513,7 @@ const AdminDiet = () => {
                             {/* Macronutrientes */}
                             <div>
                               <Label className="font-body text-xs font-semibold">Macronutrientes</Label>
-                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1">
+                              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-1">
                                 <div>
                                   <Label className="font-body text-[10px] text-muted-foreground">Energia (kcal)</Label>
                                   <Input type="number" placeholder="0" value={editEnergyKcal} onChange={(e) => setEditEnergyKcal(e.target.value)} />
@@ -518,6 +529,10 @@ const AdminDiet = () => {
                                 <div>
                                   <Label className="font-body text-[10px] text-muted-foreground">Lipídios (g)</Label>
                                   <Input type="number" placeholder="0" value={editFatG} onChange={(e) => setEditFatG(e.target.value)} />
+                                </div>
+                                <div>
+                                  <Label className="font-body text-[10px] text-muted-foreground">Hidratação (l)</Label>
+                                  <Input type="number" step="0.1" placeholder="0" value={editHydrationL} onChange={(e) => setEditHydrationL(e.target.value)} />
                                 </div>
                               </div>
                             </div>
