@@ -43,6 +43,7 @@ const AdminDiet = () => {
   const [newProteinG, setNewProteinG] = useState("");
   const [newCarbsG, setNewCarbsG] = useState("");
   const [newFatG, setNewFatG] = useState("");
+  const [newHydrationL, setNewHydrationL] = useState("");
 
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
