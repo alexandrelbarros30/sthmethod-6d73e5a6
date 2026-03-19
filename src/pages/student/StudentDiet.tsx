@@ -97,7 +97,7 @@ const StudentDiet = () => {
       name: profile.full_name || undefined,
       age,
       weight: profile.weight || undefined,
-      height: profile.height ? profile.height / 100 : undefined,
+      height: profile.height || undefined,
       objective: profile.objective || undefined,
       startDate: new Date(diet.created_at).toLocaleDateString("pt-BR"),
       hydration: diet.hydration_l ? `${diet.hydration_l} litros` : undefined,
