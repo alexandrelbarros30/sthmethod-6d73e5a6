@@ -570,10 +570,28 @@ const AdminDiet = () => {
                               )}
 
                               {/* Preview toggle */}
-                              {previewDiet === diet.id && diet.content && (
+                              {previewDiet === diet.id && (
                                 <div className="mt-3 p-3 rounded-md bg-muted/50 border border-border">
-                                  <p className="text-xs font-semibold text-foreground mb-1">Visualização completa:</p>
-                                  <RichContentRenderer content={diet.content} />
+                                  <p className="text-xs font-semibold text-foreground mb-2">Visualização completa:</p>
+                                  {/* Macros from diet */}
+                                  {(diet.energy_kcal || diet.protein_g || diet.carbs_g || diet.fat_g) && (
+                                    <DietContentRenderer
+                                      content=""
+                                      studentInfo={{
+                                        name: selected?.full_name,
+                                        totalEnergy: diet.energy_kcal || undefined,
+                                        protein: diet.protein_g || undefined,
+                                        carbs: diet.carbs_g || undefined,
+                                        fat: diet.fat_g || undefined,
+                                      }}
+                                      showHeader={true}
+                                    />
+                                  )}
+                                  {diet.content && (
+                                    /<[a-z][\s\S]*>/i.test(diet.content)
+                                      ? <RichContentRenderer content={diet.content} />
+                                      : <DietContentRenderer content={diet.content} showHeader={false} />
+                                  )}
                                 </div>
                               )}
                               {previewDiet === diet.id && diet.pdf_url && (
