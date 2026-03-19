@@ -100,6 +100,7 @@ const StudentDiet = () => {
       height: profile.height ? profile.height / 100 : undefined,
       objective: profile.objective || undefined,
       startDate: new Date(diet.created_at).toLocaleDateString("pt-BR"),
+      hydration: diet.hydration_l ? `${diet.hydration_l} litros` : undefined,
       totalEnergy: hasMacros ? energy : undefined,
       protein: hasMacros ? protein : undefined,
       carbs: hasMacros ? carbs : undefined,
