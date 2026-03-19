@@ -7,7 +7,7 @@ import SubscriptionBlock from "@/components/SubscriptionBlock";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { FileText, Clock, Download } from "lucide-react";
-import DietContentRenderer from "@/components/student/DietContentRenderer";
+import DietContentRenderer, { type DietStudentInfo } from "@/components/student/DietContentRenderer";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -81,6 +81,25 @@ const StudentDiet = () => {
     enabled: !!user?.id,
   });
 
+  const buildStudentInfo = (diet: any): DietStudentInfo | undefined => {
+    if (!profile) return undefined;
+    const age = profile.birth_date
+      ? Math.floor((Date.now() - new Date(profile.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+      : undefined;
+    return {
+      name: profile.full_name || undefined,
+      age,
+      weight: profile.weight || undefined,
+      height: profile.height ? profile.height / 100 : undefined,
+      objective: profile.objective || undefined,
+      startDate: new Date(diet.created_at).toLocaleDateString("pt-BR"),
+      totalEnergy: profile.daily_calories || undefined,
+      protein: profile.protein_g || undefined,
+      carbs: profile.carbs_g || undefined,
+      fat: profile.fat_g || undefined,
+    };
+  };
+
   const handleDownloadPDF = async (diet: any) => {
     try {
       const blob = await generateStudentPDF({
@@ -96,7 +115,6 @@ const StudentDiet = () => {
         },
         createdAt: diet.created_at,
       });
-      
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -105,7 +123,6 @@ const StudentDiet = () => {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      
       toast.success('PDF baixado com sucesso!');
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
@@ -192,7 +209,10 @@ const StudentDiet = () => {
               {diet.content && (
                 /<[a-z][\s\S]*>/i.test(diet.content)
                   ? <RichContentRenderer content={diet.content} />
-                  : <DietContentRenderer content={diet.content} />
+                  : <DietContentRenderer
+                      content={diet.content}
+                      studentInfo={buildStudentInfo(diet)}
+                    />
               )}
             </CardContent>
           </Card>
