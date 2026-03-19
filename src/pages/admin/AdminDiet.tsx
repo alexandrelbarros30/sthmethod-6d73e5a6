@@ -184,6 +184,7 @@ const AdminDiet = () => {
     setEditProteinG(diet.protein_g != null ? String(diet.protein_g) : "");
     setEditCarbsG(diet.carbs_g != null ? String(diet.carbs_g) : "");
     setEditFatG(diet.fat_g != null ? String(diet.fat_g) : "");
+    setEditHydrationL(diet.hydration_l != null ? String(diet.hydration_l) : "");
     setPreviewDiet(null);
   };
 
