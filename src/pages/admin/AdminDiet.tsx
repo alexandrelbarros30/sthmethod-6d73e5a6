@@ -56,6 +56,7 @@ const AdminDiet = () => {
   const [editProteinG, setEditProteinG] = useState("");
   const [editCarbsG, setEditCarbsG] = useState("");
   const [editFatG, setEditFatG] = useState("");
+  const [editHydrationL, setEditHydrationL] = useState("");
 
   // Preview
   const [previewDiet, setPreviewDiet] = useState<any>(null);
