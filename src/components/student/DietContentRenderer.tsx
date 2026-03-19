@@ -128,7 +128,10 @@ const DietContentRenderer: React.FC<DietContentRendererProps> = ({
       const isNote = line.startsWith("(") && line.endsWith(")");
 
       elements.push(
-        <div key={`food-${i}`} className="py-1.5">
+        <div key={`food-${i}`} className="py-1.5 flex items-start gap-2">
+          {!isNote && (
+            <span className="text-primary font-bold text-sm leading-relaxed select-none mt-px">•</span>
+          )}
           <p
             className={`text-sm leading-relaxed font-body ${
               isNote
