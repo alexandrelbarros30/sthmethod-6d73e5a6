@@ -177,6 +177,10 @@ const AdminDiet = () => {
     setEditDate(d.toISOString().slice(0, 10));
     setEditTime(d.toTimeString().slice(0, 5));
     setEditReleaseDate(diet.release_date ? new Date(diet.release_date).toISOString().slice(0, 10) : "");
+    setEditEnergyKcal(diet.energy_kcal != null ? String(diet.energy_kcal) : "");
+    setEditProteinG(diet.protein_g != null ? String(diet.protein_g) : "");
+    setEditCarbsG(diet.carbs_g != null ? String(diet.carbs_g) : "");
+    setEditFatG(diet.fat_g != null ? String(diet.fat_g) : "");
     setPreviewDiet(null);
   };
 
