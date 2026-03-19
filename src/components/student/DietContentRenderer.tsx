@@ -76,7 +76,7 @@ export interface DietStudentInfo {
   name?: string;
   age?: number;
   weight?: number;
-  height?: number; // in meters
+  height?: number; // in cm
   objective?: string;
   startDate?: string;
   hydration?: string;
