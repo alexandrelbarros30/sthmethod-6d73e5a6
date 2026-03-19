@@ -440,7 +440,7 @@ const AdminDiet = () => {
                     {/* Macronutrientes */}
                     <div>
                       <Label className="font-body text-xs font-semibold">Macronutrientes (opcional)</Label>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1">
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-1">
                         <div>
                           <Label className="font-body text-[10px] text-muted-foreground">Energia (kcal)</Label>
                           <Input type="number" placeholder="0" value={newEnergyKcal} onChange={(e) => setNewEnergyKcal(e.target.value)} />
@@ -456,6 +456,10 @@ const AdminDiet = () => {
                         <div>
                           <Label className="font-body text-[10px] text-muted-foreground">Lipídios (g)</Label>
                           <Input type="number" placeholder="0" value={newFatG} onChange={(e) => setNewFatG(e.target.value)} />
+                        </div>
+                        <div>
+                          <Label className="font-body text-[10px] text-muted-foreground">Hidratação (l)</Label>
+                          <Input type="number" step="0.1" placeholder="0" value={newHydrationL} onChange={(e) => setNewHydrationL(e.target.value)} />
                         </div>
                       </div>
                     </div>
