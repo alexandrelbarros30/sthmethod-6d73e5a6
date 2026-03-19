@@ -101,7 +101,7 @@ const AdminDiet = () => {
   const { data: students } = useQuery({
     queryKey: ["admin-students-diets"],
     queryFn: async () => {
-      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, email");
+      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, email, birth_date, weight, height, objective");
       const { data: diets } = await supabase.from("student_diets").select("*").order("created_at", { ascending: false });
       return (profiles || []).map((p: any) => {
         const studentDiets = (diets as any[])?.filter((d: any) => d.user_id === p.user_id) || [];
