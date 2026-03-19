@@ -99,6 +99,7 @@ const DietContentRenderer: React.FC<DietContentRendererProps> = ({
 }) => {
   const lines = content.split("\n");
   const elements: React.ReactNode[] = [];
+  let foodItemIndex = 0;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
