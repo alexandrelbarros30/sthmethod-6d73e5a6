@@ -99,6 +99,7 @@ const DietContentRenderer: React.FC<DietContentRendererProps> = ({
 }) => {
   const lines = content.split("\n");
   const elements: React.ReactNode[] = [];
+  let foodItemIndex = 0;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -116,6 +117,7 @@ const DietContentRenderer: React.FC<DietContentRendererProps> = ({
         </div>
       );
     } else if (isMealHeading) {
+      foodItemIndex = 0;
       elements.push(
         <div key={`meal-${i}`} className="mt-8 mb-4 first:mt-2">
           <h3 className="text-sm font-bold uppercase tracking-wider text-foreground font-display underline underline-offset-4 decoration-primary/60 decoration-2">
@@ -126,9 +128,10 @@ const DietContentRenderer: React.FC<DietContentRendererProps> = ({
     } else {
       // Check if it's a parenthetical note
       const isNote = line.startsWith("(") && line.endsWith(")");
+      foodItemIndex++;
 
       elements.push(
-        <div key={`food-${i}`} className="py-1.5 flex items-start gap-2">
+        <div key={`food-${i}`} className={`py-1.5 px-2 flex items-start gap-2 rounded ${foodItemIndex % 2 === 0 ? 'bg-muted/50' : ''}`}>
           {!isNote && (
             <span className="text-primary font-bold text-sm leading-relaxed select-none mt-px">•</span>
           )}

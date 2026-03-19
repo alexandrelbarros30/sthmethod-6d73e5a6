@@ -8,13 +8,19 @@ interface RichContentRendererProps {
 const MEAL_HEADING_RE = /^(REFEIC[ÃA]O\s*\d+|REFEI[CÇ][ÃA]O\s*\d+|PRE[- ]?TREINO|P[OÓ]S[- ]?TREINO|CEIA|LANCHE\s*\d*|CAFÉ\s*DA\s*MANH[ÃA]|ALMO[CÇ]O|JANTAR)/i;
 const SECTION_TITLE_RE = /^(ROTINA\s*ALIMENTAR|PLANO\s*ALIMENTAR|DIETA)/i;
 
-function addBulletsToHTML(html: string): string {
+function addBulletsAndZebraToHTML(html: string): string {
+  let itemIndex = 0;
   return html.replace(/<p([^>]*)>([\s\S]*?)<\/p>/gi, (match, attrs, inner) => {
     const text = inner.replace(/<[^>]*>/g, '').trim();
     if (!text) return match;
-    if (SECTION_TITLE_RE.test(text) || MEAL_HEADING_RE.test(text)) return match;
+    if (SECTION_TITLE_RE.test(text) || MEAL_HEADING_RE.test(text)) {
+      itemIndex = 0;
+      return match;
+    }
     if (text.startsWith("(") && text.endsWith(")")) return match;
-    return `<p${attrs}><span style="color:hsl(var(--primary));font-weight:700;margin-right:0.375rem;">•</span>${inner}</p>`;
+    itemIndex++;
+    const bg = itemIndex % 2 === 0 ? 'background:hsl(var(--muted)/0.5);border-radius:0.25rem;' : '';
+    return `<p${attrs} style="padding:0.375rem 0.5rem;${bg}"><span style="color:hsl(var(--primary));font-weight:700;margin-right:0.375rem;">•</span>${inner}</p>`;
   });
 }
 
@@ -22,7 +28,7 @@ const RichContentRenderer = ({ content, className }: RichContentRendererProps) =
   const isHTML = /<[a-z][\s\S]*>/i.test(content);
 
   if (isHTML) {
-    const processedContent = addBulletsToHTML(content);
+    const processedContent = addBulletsAndZebraToHTML(content);
     return (
       <div
         className={cn(
