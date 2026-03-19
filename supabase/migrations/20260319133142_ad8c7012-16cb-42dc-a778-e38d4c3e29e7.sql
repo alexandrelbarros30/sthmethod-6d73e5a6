@@ -1,0 +1,5 @@
+ALTER TABLE public.student_diets 
+  ADD COLUMN IF NOT EXISTS energy_kcal numeric DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS protein_g numeric DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS carbs_g numeric DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS fat_g numeric DEFAULT NULL;

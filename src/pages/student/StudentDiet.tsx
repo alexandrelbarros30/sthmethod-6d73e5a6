@@ -86,6 +86,13 @@ const StudentDiet = () => {
     const age = profile.birth_date
       ? Math.floor((Date.now() - new Date(profile.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
       : undefined;
+    // Use diet-level macros if available, otherwise fall back to profile
+    const energy = diet.energy_kcal ?? profile.daily_calories ?? undefined;
+    const protein = diet.protein_g ?? profile.protein_g ?? undefined;
+    const carbs = diet.carbs_g ?? profile.carbs_g ?? undefined;
+    const fat = diet.fat_g ?? profile.fat_g ?? undefined;
+    // Only include macros if at least one value exists
+    const hasMacros = energy || protein || carbs || fat;
     return {
       name: profile.full_name || undefined,
       age,
@@ -93,10 +100,10 @@ const StudentDiet = () => {
       height: profile.height ? profile.height / 100 : undefined,
       objective: profile.objective || undefined,
       startDate: new Date(diet.created_at).toLocaleDateString("pt-BR"),
-      totalEnergy: profile.daily_calories || undefined,
-      protein: profile.protein_g || undefined,
-      carbs: profile.carbs_g || undefined,
-      fat: profile.fat_g || undefined,
+      totalEnergy: hasMacros ? energy : undefined,
+      protein: hasMacros ? protein : undefined,
+      carbs: hasMacros ? carbs : undefined,
+      fat: hasMacros ? fat : undefined,
     };
   };
 

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import RichTextEditor from "@/components/shared/RichTextEditor";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
+import DietContentRenderer from "@/components/student/DietContentRenderer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -38,6 +39,10 @@ const AdminDiet = () => {
   const [newPdfFile, setNewPdfFile] = useState<File | null>(null);
   const [newReleaseDate, setNewReleaseDate] = useState("");
   const [showNewForm, setShowNewForm] = useState(false);
+  const [newEnergyKcal, setNewEnergyKcal] = useState("");
+  const [newProteinG, setNewProteinG] = useState("");
+  const [newCarbsG, setNewCarbsG] = useState("");
+  const [newFatG, setNewFatG] = useState("");
 
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -46,6 +51,10 @@ const AdminDiet = () => {
   const [editDate, setEditDate] = useState("");
   const [editTime, setEditTime] = useState("");
   const [editReleaseDate, setEditReleaseDate] = useState("");
+  const [editEnergyKcal, setEditEnergyKcal] = useState("");
+  const [editProteinG, setEditProteinG] = useState("");
+  const [editCarbsG, setEditCarbsG] = useState("");
+  const [editFatG, setEditFatG] = useState("");
 
   // Preview
   const [previewDiet, setPreviewDiet] = useState<any>(null);
@@ -154,6 +163,10 @@ const AdminDiet = () => {
     setNewContent("");
     setNewPdfFile(null);
     setNewReleaseDate("");
+    setNewEnergyKcal("");
+    setNewProteinG("");
+    setNewCarbsG("");
+    setNewFatG("");
   };
 
   const startEdit = (diet: any) => {
@@ -164,6 +177,10 @@ const AdminDiet = () => {
     setEditDate(d.toISOString().slice(0, 10));
     setEditTime(d.toTimeString().slice(0, 5));
     setEditReleaseDate(diet.release_date ? new Date(diet.release_date).toISOString().slice(0, 10) : "");
+    setEditEnergyKcal(diet.energy_kcal != null ? String(diet.energy_kcal) : "");
+    setEditProteinG(diet.protein_g != null ? String(diet.protein_g) : "");
+    setEditCarbsG(diet.carbs_g != null ? String(diet.carbs_g) : "");
+    setEditFatG(diet.fat_g != null ? String(diet.fat_g) : "");
     setPreviewDiet(null);
   };
 
@@ -173,6 +190,10 @@ const AdminDiet = () => {
     setEditContent("");
     setEditDate("");
     setEditTime("");
+    setEditEnergyKcal("");
+    setEditProteinG("");
+    setEditCarbsG("");
+    setEditFatG("");
   };
 
   const saveMutation = useMutation({
@@ -190,6 +211,10 @@ const AdminDiet = () => {
         content: newContent,
         pdf_url: pdfUrl,
         release_date: newReleaseDate ? new Date(newReleaseDate + "T00:00:00").toISOString() : null,
+        energy_kcal: newEnergyKcal ? parseFloat(newEnergyKcal) : null,
+        protein_g: newProteinG ? parseFloat(newProteinG) : null,
+        carbs_g: newCarbsG ? parseFloat(newCarbsG) : null,
+        fat_g: newFatG ? parseFloat(newFatG) : null,
       };
       await supabase.from("student_diets").insert(payload);
     },
@@ -213,6 +238,10 @@ const AdminDiet = () => {
           content: editContent,
           created_at: newCreatedAt,
           release_date: editReleaseDate ? new Date(editReleaseDate + "T00:00:00").toISOString() : null,
+          energy_kcal: editEnergyKcal ? parseFloat(editEnergyKcal) : null,
+          protein_g: editProteinG ? parseFloat(editProteinG) : null,
+          carbs_g: editCarbsG ? parseFloat(editCarbsG) : null,
+          fat_g: editFatG ? parseFloat(editFatG) : null,
         } as any)
         .eq("id", editingId!);
     },
@@ -401,6 +430,28 @@ const AdminDiet = () => {
                       <Input type="date" value={newReleaseDate} onChange={(e) => setNewReleaseDate(e.target.value)} />
                       <p className="text-[10px] text-muted-foreground mt-1">Se preenchida, o aluno só verá a dieta a partir desta data.</p>
                     </div>
+                    {/* Macronutrientes */}
+                    <div>
+                      <Label className="font-body text-xs font-semibold">Macronutrientes (opcional)</Label>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1">
+                        <div>
+                          <Label className="font-body text-[10px] text-muted-foreground">Energia (kcal)</Label>
+                          <Input type="number" placeholder="0" value={newEnergyKcal} onChange={(e) => setNewEnergyKcal(e.target.value)} />
+                        </div>
+                        <div>
+                          <Label className="font-body text-[10px] text-muted-foreground">Proteínas (g)</Label>
+                          <Input type="number" placeholder="0" value={newProteinG} onChange={(e) => setNewProteinG(e.target.value)} />
+                        </div>
+                        <div>
+                          <Label className="font-body text-[10px] text-muted-foreground">Carboidratos (g)</Label>
+                          <Input type="number" placeholder="0" value={newCarbsG} onChange={(e) => setNewCarbsG(e.target.value)} />
+                        </div>
+                        <div>
+                          <Label className="font-body text-[10px] text-muted-foreground">Lipídios (g)</Label>
+                          <Input type="number" placeholder="0" value={newFatG} onChange={(e) => setNewFatG(e.target.value)} />
+                        </div>
+                      </div>
+                    </div>
                      <div>
                       <Label className="font-body">Conteúdo</Label>
                       <RichTextEditor value={newContent} onChange={setNewContent} placeholder="Escreva o conteúdo da dieta aqui..." />
@@ -446,6 +497,28 @@ const AdminDiet = () => {
                                 <Label className="font-body text-xs flex items-center gap-1"><CalendarClock className="w-3 h-3" /> Data de liberação</Label>
                                 <Input type="date" value={editReleaseDate} onChange={(e) => setEditReleaseDate(e.target.value)} />
                                 <p className="text-[10px] text-muted-foreground mt-1">Deixe vazio para liberar imediatamente.</p>
+                              </div>
+                            </div>
+                            {/* Macronutrientes */}
+                            <div>
+                              <Label className="font-body text-xs font-semibold">Macronutrientes</Label>
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1">
+                                <div>
+                                  <Label className="font-body text-[10px] text-muted-foreground">Energia (kcal)</Label>
+                                  <Input type="number" placeholder="0" value={editEnergyKcal} onChange={(e) => setEditEnergyKcal(e.target.value)} />
+                                </div>
+                                <div>
+                                  <Label className="font-body text-[10px] text-muted-foreground">Proteínas (g)</Label>
+                                  <Input type="number" placeholder="0" value={editProteinG} onChange={(e) => setEditProteinG(e.target.value)} />
+                                </div>
+                                <div>
+                                  <Label className="font-body text-[10px] text-muted-foreground">Carboidratos (g)</Label>
+                                  <Input type="number" placeholder="0" value={editCarbsG} onChange={(e) => setEditCarbsG(e.target.value)} />
+                                </div>
+                                <div>
+                                  <Label className="font-body text-[10px] text-muted-foreground">Lipídios (g)</Label>
+                                  <Input type="number" placeholder="0" value={editFatG} onChange={(e) => setEditFatG(e.target.value)} />
+                                </div>
                               </div>
                             </div>
                             <div>
@@ -497,10 +570,28 @@ const AdminDiet = () => {
                               )}
 
                               {/* Preview toggle */}
-                              {previewDiet === diet.id && diet.content && (
+                              {previewDiet === diet.id && (
                                 <div className="mt-3 p-3 rounded-md bg-muted/50 border border-border">
-                                  <p className="text-xs font-semibold text-foreground mb-1">Visualização completa:</p>
-                                  <RichContentRenderer content={diet.content} />
+                                  <p className="text-xs font-semibold text-foreground mb-2">Visualização completa:</p>
+                                  {/* Macros from diet */}
+                                  {(diet.energy_kcal || diet.protein_g || diet.carbs_g || diet.fat_g) && (
+                                    <DietContentRenderer
+                                      content=""
+                                      studentInfo={{
+                                        name: selected?.full_name,
+                                        totalEnergy: diet.energy_kcal || undefined,
+                                        protein: diet.protein_g || undefined,
+                                        carbs: diet.carbs_g || undefined,
+                                        fat: diet.fat_g || undefined,
+                                      }}
+                                      showHeader={true}
+                                    />
+                                  )}
+                                  {diet.content && (
+                                    /<[a-z][\s\S]*>/i.test(diet.content)
+                                      ? <RichContentRenderer content={diet.content} />
+                                      : <DietContentRenderer content={diet.content} showHeader={false} />
+                                  )}
                                 </div>
                               )}
                               {previewDiet === diet.id && diet.pdf_url && (

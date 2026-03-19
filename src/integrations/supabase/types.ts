@@ -1152,10 +1152,14 @@ export type Database = {
       }
       student_diets: {
         Row: {
+          carbs_g: number | null
           content: string | null
           created_at: string
+          energy_kcal: number | null
+          fat_g: number | null
           id: string
           pdf_url: string | null
+          protein_g: number | null
           release_date: string | null
           title: string
           updated_at: string
@@ -1163,10 +1167,14 @@ export type Database = {
           visible: boolean
         }
         Insert: {
+          carbs_g?: number | null
           content?: string | null
           created_at?: string
+          energy_kcal?: number | null
+          fat_g?: number | null
           id?: string
           pdf_url?: string | null
+          protein_g?: number | null
           release_date?: string | null
           title?: string
           updated_at?: string
@@ -1174,10 +1182,14 @@ export type Database = {
           visible?: boolean
         }
         Update: {
+          carbs_g?: number | null
           content?: string | null
           created_at?: string
+          energy_kcal?: number | null
+          fat_g?: number | null
           id?: string
           pdf_url?: string | null
+          protein_g?: number | null
           release_date?: string | null
           title?: string
           updated_at?: string
