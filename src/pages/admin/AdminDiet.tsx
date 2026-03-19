@@ -381,7 +381,7 @@ const AdminDiet = () => {
       }}>
         <DialogContent
           className={isMobile
-            ? "!inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 !w-screen !max-w-none !h-[100dvh] !max-h-none rounded-none border-0 p-2"
+            ? "!inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 !w-screen !max-w-none !h-[100dvh] !max-h-none rounded-none border-0 p-2 !flex !flex-col"
             : "w-[calc(100vw-0.75rem)] max-w-2xl max-h-[94dvh] min-h-0 overflow-hidden !flex !flex-col p-3 sm:p-6"
           }
         >
