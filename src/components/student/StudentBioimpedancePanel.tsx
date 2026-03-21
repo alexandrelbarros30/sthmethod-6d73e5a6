@@ -182,7 +182,7 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
       </div>
 
       {/* Second row metrics */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-4">
         <MetricCard
           icon={<Activity className="w-4 h-4" />}
           label="Musc. Esquelética"
