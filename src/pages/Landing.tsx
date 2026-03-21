@@ -326,7 +326,7 @@ const Landing = () => {
           viewport={{ once: true }}
           className="max-w-4xl mx-auto text-center glass rounded-2xl sm:rounded-3xl p-6 sm:p-12 md:p-16 glow-border"
         >
-          <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
             {ctaFinalTitle}
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto mb-8 text-lg">
