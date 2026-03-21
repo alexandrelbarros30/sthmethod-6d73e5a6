@@ -612,10 +612,10 @@ const AdminDiet = () => {
                                   <FileText className="w-3 h-3" /> Ver PDF
                                 </a>
                               )}
-                              {diet.content && (
-                                <div className="text-sm text-muted-foreground line-clamp-4 leading-relaxed">
-                                  <RichContentRenderer content={diet.content} />
-                                </div>
+                              {diet.content && !previewDiet && (
+                                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mt-1">
+                                  {diet.content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, 120)}…
+                                </p>
                               )}
 
                               {/* Preview toggle - identical to student view */}
