@@ -200,15 +200,16 @@ const AdminStudents = () => {
     enabled: !!selected?.user_id,
   });
 
-  const filteredStudents = students?.filter((s: any) => {
-    if (!searchTerm.trim()) return true;
-    const term = searchTerm.toLowerCase();
-    return (
-      s.full_name?.toLowerCase().includes(term) ||
-      s.email?.toLowerCase().includes(term) ||
-      s.phone?.toLowerCase().includes(term)
-    );
-  });
+  const filteredStudents = searchTerm.trim().length < 2
+    ? []
+    : students?.filter((s: any) => {
+        const term = searchTerm.toLowerCase();
+        return (
+          s.full_name?.toLowerCase().includes(term) ||
+          s.email?.toLowerCase().includes(term) ||
+          s.phone?.toLowerCase().includes(term)
+        );
+      });
 
   const saveAnamneseMutation = useMutation({
     mutationFn: async () => {
