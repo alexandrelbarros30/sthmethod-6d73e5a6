@@ -271,7 +271,7 @@ const Landing = () => {
             Consultoria Online em Performance &amp; Saúde
           </motion.div>
 
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-display font-bold text-foreground leading-tight mb-6">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-display font-bold text-foreground leading-tight mb-6">
             {heroTitle}
           </h1>
 
