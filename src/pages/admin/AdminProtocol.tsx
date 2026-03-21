@@ -460,7 +460,7 @@ const AdminProtocol = () => {
                 <p className="text-sm text-muted-foreground text-center py-6">Nenhum protocolo cadastrado ainda.</p>
               )}
             </div>
-          </ScrollArea>
+          </div>
         </DialogContent>
       </Dialog>
 
