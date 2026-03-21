@@ -458,8 +458,8 @@ const StudentOverview = () => {
           )}
           {strategy && (
             <Card className="border-gold/20 bg-gold/[0.03] shadow-[0_0_16px_-6px_hsl(var(--gold)/0.15)]">
-              <CardContent className="py-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center shrink-0 ring-1 ring-gold/20">
+              <CardContent className="py-3 sm:py-4 flex items-center gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gold/10 flex items-center justify-center shrink-0 ring-1 ring-gold/20">
                   <Target className="w-5 h-5 text-gold" />
                 </div>
                 <div>
