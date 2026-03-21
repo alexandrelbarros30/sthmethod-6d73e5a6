@@ -291,11 +291,12 @@ const AdminDiet = () => {
     onError: () => toast.error("Erro ao alterar visibilidade"),
   });
 
-  const filteredStudents = (students || []).filter((s: any) => {
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
-    return s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q);
-  });
+  const filteredStudents = search.trim().length < 2
+    ? []
+    : (students || []).filter((s: any) => {
+        const q = search.toLowerCase();
+        return s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q);
+      });
 
   return (
     <DashboardLayout role="admin" title="Gestão de Dietas" subtitle="Gerencie as dietas dos alunos com histórico completo.">
