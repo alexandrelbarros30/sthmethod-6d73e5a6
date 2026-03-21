@@ -218,6 +218,9 @@ const AdminProtocol = () => {
           </div>
         </CardHeader>
         <CardContent className="space-y-2">
+          {search.trim().length < 2 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">Digite pelo menos 2 caracteres para buscar alunos.</p>
+          ) :
           {isMobile ? (
             filteredStudents.length > 0 ? (
               filteredStudents.map((s: any) => (
