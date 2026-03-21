@@ -388,7 +388,7 @@ const MetricCard = ({
   delta?: React.ReactNode;
   color: string;
 }) => (
-  <div className="bg-muted/50 rounded-xl p-3 text-center border border-border/30">
+  <div className="bg-muted/50 rounded-xl p-2 sm:p-3 text-center border border-border/30">
     <div className={`flex items-center justify-center gap-1 mb-1 ${color}`}>
       {icon}
       <span className="text-[10px] font-medium uppercase tracking-wide">{label}</span>
