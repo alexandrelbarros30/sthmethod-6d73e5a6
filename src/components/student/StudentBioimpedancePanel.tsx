@@ -296,28 +296,55 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
         </Card>
       )}
 
-      {/* Segmental Bar Chart */}
-      {segmentalData.length > 0 && (
+      {/* Body Silhouette + or Segmental Bar Chart */}
+      {(seg mentalData.length > 0 || latest) && (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-display flex items-center gap-2">
               <Activity className="w-4 h-4 text-primary" />
-              Distribuição Segmentar
+              Mapa Corporal & Distribuição Segmentar
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer
-              config={{ segmento: { label: "Valor", color: "hsl(var(--primary))" } }}
-              className="h-[200px] w-full"
-            >
-              <BarChart data={segmentalData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" />
-                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ChartContainer>
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              {/* Body silhouette */}
+              <BodySilhouette
+                segments={{
+                  leftArm: latest?.seg_left_arm ? Number(latest.seg_left_arm) : null,
+                  rightArm: latest?.seg_right_arm ? Number(latest.seg_right_arm) : null,
+                  leftLeg: latest?.seg_left_leg ? Number(latest.seg_left_leg) : null,
+                  rightLeg: latest?.seg_right_leg ? Number(latest.seg_right_leg) : null,
+                  trunk: latest?.seg_trunk ? Number(latest.seg_trunk) : null,
+                }}
+                metrics={{
+                  bodyFatPct: latest?.body_fat_pct ? Number(latest.body_fat_pct) : null,
+                  leanMassKg: latest?.lean_mass_kg ? Number(latest.lean_mass_kg) : null,
+                  fatMassKg: latest?.fat_mass_kg ? Number(latest.fat_mass_kg) : null,
+                  skeletalMuscleKg: latest?.skeletal_muscle_kg ? Number(latest.skeletal_muscle_kg) : null,
+                  totalWeight: latest?.total_weight ? Number(latest.total_weight) : null,
+                  visceralFat: latest?.visceral_fat ? Number(latest.visceral_fat) : null,
+                  totalWaterPct: latest?.total_water_pct ? Number(latest.total_water_pct) : null,
+                }}
+                gender={profile?.gender}
+              />
+              {/* Segmental bar chart */}
+              {segmentalData.length > 0 && (
+                <div className="flex-1 w-full min-w-0">
+                  <ChartContainer
+                    config={{ segmento: { label: "Valor", color: "hsl(var(--primary))" } }}
+                    className="h-[200px] w-full"
+                  >
+                    <BarChart data={segmentalData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" />
+                      <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                      <YAxis tick={{ fontSize: 10 }} />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ChartContainer>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
