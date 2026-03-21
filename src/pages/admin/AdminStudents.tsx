@@ -1406,7 +1406,7 @@ const AdminStudents = () => {
                   {(selectedFullProfile as any)?.does_cardio === true && (
                     <div className="mt-3 p-3 rounded-lg bg-muted/30 border border-border/50">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Detalhes do cardio</p>
-                      <div className="grid grid-cols-3 gap-2 text-sm">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
                         <div><span className="text-muted-foreground text-xs">Dias/sem:</span> <span className="font-medium">{(selectedFullProfile as any)?.cardio_days_per_week || "—"}</span></div>
                         <div><span className="text-muted-foreground text-xs">Duração:</span> <span className="font-medium">{(selectedFullProfile as any)?.cardio_duration_minutes ? `${(selectedFullProfile as any).cardio_duration_minutes} min` : "—"}</span></div>
                         <div><span className="text-muted-foreground text-xs">Intensidade:</span> <span className="font-medium">{cardioIntensityOptions.find(o => o.value === (selectedFullProfile as any)?.cardio_intensity)?.label || "—"}</span></div>
