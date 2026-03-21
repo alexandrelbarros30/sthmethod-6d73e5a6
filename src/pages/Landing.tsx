@@ -242,7 +242,7 @@ const Landing = () => {
       </nav>
 
       {/* Hero */}
-      <section className="relative min-h-screen flex items-center justify-center px-6 pt-20">
+      <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 pt-20">
         <div className="absolute inset-0 grid-pattern opacity-20" />
         {bgEnabled && (
           <img
