@@ -213,7 +213,7 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
 
       {/* Phase angle & water detail */}
       {(latest.phase_angle || latest.intracellular_water_l || latest.extracellular_water_l) && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
           {latest.phase_angle && (
             <MetricCard icon={<Activity className="w-4 h-4" />} label="Ângulo de Fase" value={`${Number(latest.phase_angle).toFixed(2)}°`} color="text-emerald-500" />
           )}
