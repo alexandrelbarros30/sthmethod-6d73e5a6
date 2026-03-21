@@ -6,10 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Activity, Trash2, Edit2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Activity, Trash2, Edit2, BarChart3 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import StudentBioimpedancePanel from "@/components/student/StudentBioimpedancePanel";
 
 interface Props {
   userId: string;
@@ -199,137 +201,158 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[70vh] pr-4">
-          <div className="space-y-4">
-            {/* Date */}
-            <div>
-              <Label className="font-body text-sm">Data da Avaliação</Label>
-              <Input
-                type="date"
-                value={form.logged_at}
-                onChange={(e) => setField("logged_at", e.target.value)}
-              />
-            </div>
+        <Tabs defaultValue="visualizar" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="visualizar" className="flex items-center gap-1.5">
+              <BarChart3 className="w-3.5 h-3.5" />
+              Visualizar
+            </TabsTrigger>
+            <TabsTrigger value="editar" className="flex items-center gap-1.5">
+              <Edit2 className="w-3.5 h-3.5" />
+              Editar
+            </TabsTrigger>
+          </TabsList>
 
-            {/* Field groups */}
-            {fieldGroups.map((group) => (
-              <Card key={group.title} className="border-border/50">
-                <CardHeader className="pb-2 pt-3 px-4">
-                  <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    {group.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="px-4 pb-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    {group.fields.map((field) => (
-                      <div key={field.key}>
-                        <Label className="text-xs font-body">{field.label}</Label>
-                        <Input
-                          type="number"
-                          step={field.step}
-                          value={form[field.key as keyof FormData]}
-                          onChange={(e) => setField(field.key, e.target.value)}
-                          placeholder="—"
-                          className="h-8 text-sm"
-                        />
+          <TabsContent value="visualizar">
+            <ScrollArea className="max-h-[65vh] pr-4">
+              <StudentBioimpedancePanel userId={userId} />
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="editar">
+            <ScrollArea className="max-h-[65vh] pr-4">
+              <div className="space-y-4">
+                {/* Date */}
+                <div>
+                  <Label className="font-body text-sm">Data da Avaliação</Label>
+                  <Input
+                    type="date"
+                    value={form.logged_at}
+                    onChange={(e) => setField("logged_at", e.target.value)}
+                  />
+                </div>
+
+                {/* Field groups */}
+                {fieldGroups.map((group) => (
+                  <Card key={group.title} className="border-border/50">
+                    <CardHeader className="pb-2 pt-3 px-4">
+                      <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        {group.title}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="px-4 pb-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        {group.fields.map((field) => (
+                          <div key={field.key}>
+                            <Label className="text-xs font-body">{field.label}</Label>
+                            <Input
+                              type="number"
+                              step={field.step}
+                              value={form[field.key as keyof FormData]}
+                              onChange={(e) => setField(field.key, e.target.value)}
+                              placeholder="—"
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    </CardContent>
+                  </Card>
+                ))}
 
-            {/* Notes */}
-            <div>
-              <Label className="text-xs font-body">Observações</Label>
-              <Textarea
-                value={form.notes}
-                onChange={(e) => setField("notes", e.target.value)}
-                rows={2}
-                placeholder="Observações sobre a avaliação..."
-              />
-            </div>
+                {/* Notes */}
+                <div>
+                  <Label className="text-xs font-body">Observações</Label>
+                  <Textarea
+                    value={form.notes}
+                    onChange={(e) => setField("notes", e.target.value)}
+                    rows={2}
+                    placeholder="Observações sobre a avaliação..."
+                  />
+                </div>
 
-            <div className="flex gap-2">
-              <Button onClick={handleSave} disabled={saving} className="flex-1">
-                {saving ? "Salvando..." : editingId ? "Atualizar Registro" : "Salvar Registro"}
-              </Button>
-              {editingId && (
-                <Button variant="outline" onClick={resetForm}>Cancelar edição</Button>
-              )}
-            </div>
+                <div className="flex gap-2">
+                  <Button onClick={handleSave} disabled={saving} className="flex-1">
+                    {saving ? "Salvando..." : editingId ? "Atualizar Registro" : "Salvar Registro"}
+                  </Button>
+                  {editingId && (
+                    <Button variant="outline" onClick={resetForm}>Cancelar edição</Button>
+                  )}
+                </div>
 
-            {/* History */}
-            {logs && logs.length > 0 && (
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-display">Histórico de Avaliações</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {logs.map((log: any) => (
-                    <div
-                      key={log.id}
-                      className={`flex items-start justify-between border rounded-lg p-3 text-sm transition-colors ${
-                        editingId === log.id ? "border-primary bg-primary/5" : "border-border/50"
-                      }`}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-foreground">
-                          {new Date(log.logged_at).toLocaleDateString("pt-BR")}
-                        </p>
-                        <div className="flex flex-wrap gap-2 mt-1">
-                          {log.total_weight && (
-                            <span className="text-xs bg-muted px-1.5 py-0.5 rounded">
-                              ⚖️ {Number(log.total_weight).toFixed(1)} kg
-                            </span>
-                          )}
-                          {log.body_fat_pct && (
-                            <span className="text-xs bg-orange-500/10 text-orange-600 px-1.5 py-0.5 rounded">
-                              🔥 {Number(log.body_fat_pct).toFixed(1)}% gordura
-                            </span>
-                          )}
-                          {log.lean_mass_kg && (
-                            <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
-                              💪 {Number(log.lean_mass_kg).toFixed(1)} kg magra
-                            </span>
-                          )}
-                          {log.skeletal_muscle_kg && (
-                            <span className="text-xs bg-blue-500/10 text-blue-600 px-1.5 py-0.5 rounded">
-                              🏋️ {Number(log.skeletal_muscle_kg).toFixed(1)} kg muscular
-                            </span>
-                          )}
-                          {log.visceral_fat != null && (
-                            <span className="text-xs bg-red-500/10 text-red-600 px-1.5 py-0.5 rounded">
-                              🫀 Visceral: {log.visceral_fat}
-                            </span>
-                          )}
+                {/* History */}
+                {logs && logs.length > 0 && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-display">Histórico de Avaliações</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      {logs.map((log: any) => (
+                        <div
+                          key={log.id}
+                          className={`flex items-start justify-between border rounded-lg p-3 text-sm transition-colors ${
+                            editingId === log.id ? "border-primary bg-primary/5" : "border-border/50"
+                          }`}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-foreground">
+                              {new Date(log.logged_at).toLocaleDateString("pt-BR")}
+                            </p>
+                            <div className="flex flex-wrap gap-2 mt-1">
+                              {log.total_weight && (
+                                <span className="text-xs bg-muted px-1.5 py-0.5 rounded">
+                                  ⚖️ {Number(log.total_weight).toFixed(1)} kg
+                                </span>
+                              )}
+                              {log.body_fat_pct && (
+                                <span className="text-xs bg-destructive/10 text-destructive px-1.5 py-0.5 rounded">
+                                  🔥 {Number(log.body_fat_pct).toFixed(1)}% gordura
+                                </span>
+                              )}
+                              {log.lean_mass_kg && (
+                                <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                                  💪 {Number(log.lean_mass_kg).toFixed(1)} kg magra
+                                </span>
+                              )}
+                              {log.skeletal_muscle_kg && (
+                                <span className="text-xs bg-info/10 text-info px-1.5 py-0.5 rounded">
+                                  🏋️ {Number(log.skeletal_muscle_kg).toFixed(1)} kg muscular
+                                </span>
+                              )}
+                              {log.visceral_fat != null && (
+                                <span className="text-xs bg-destructive/10 text-destructive px-1.5 py-0.5 rounded">
+                                  🫀 Visceral: {log.visceral_fat}
+                                </span>
+                              )}
+                            </div>
+                            {log.notes && (
+                              <p className="text-xs text-muted-foreground mt-1">{log.notes}</p>
+                            )}
+                          </div>
+                          <div className="flex gap-1 ml-2 shrink-0">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => loadForEdit(log)}>
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(log.id)}>
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
                         </div>
-                        {log.notes && (
-                          <p className="text-xs text-muted-foreground mt-1">{log.notes}</p>
-                        )}
-                      </div>
-                      <div className="flex gap-1 ml-2 shrink-0">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => loadForEdit(log)}>
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(log.id)}>
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
 
-            {isLoading && <p className="text-sm text-muted-foreground text-center py-4">Carregando...</p>}
-            {!isLoading && (!logs || logs.length === 0) && (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                Nenhuma avaliação de bioimpedância registrada.
-              </p>
-            )}
-          </div>
-        </ScrollArea>
+                {isLoading && <p className="text-sm text-muted-foreground text-center py-4">Carregando...</p>}
+                {!isLoading && (!logs || logs.length === 0) && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Nenhuma avaliação de bioimpedância registrada.
+                  </p>
+                )}
+              </div>
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
