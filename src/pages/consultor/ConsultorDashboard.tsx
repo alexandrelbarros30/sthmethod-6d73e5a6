@@ -308,6 +308,15 @@ const ConsultorDashboard = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {selected && (
+        <AdminBioimpedance
+          userId={selected.user_id}
+          studentName={selected.full_name || selected.email}
+          open={bioOpen}
+          onOpenChange={setBioOpen}
+        />
+      )}
     </DashboardLayout>
   );
 };
