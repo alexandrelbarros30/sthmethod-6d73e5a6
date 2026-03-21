@@ -987,8 +987,8 @@ const AdminStudents = () => {
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <CardTitle className="font-display">Alunos cadastrados</CardTitle>
-            <div className="flex gap-2 flex-wrap">
+            <CardTitle className="font-display text-base sm:text-lg">Alunos cadastrados</CardTitle>
+            <div className="flex gap-2 flex-wrap items-center">
               <input
                 type="file"
                 ref={fileInputRef}
