@@ -23,6 +23,7 @@ const ConsultorDashboard = () => {
   const [anamneseOpen, setAnamneseOpen] = useState(false);
   const [selected, setSelected] = useState<any>(null);
   const [anamneseText, setAnamneseText] = useState("");
+  const [bioOpen, setBioOpen] = useState(false);
 
   const { data: linkedStudents = [] } = useQuery({
     queryKey: ["consultor-students", user?.id],
