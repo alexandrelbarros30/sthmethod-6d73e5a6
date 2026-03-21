@@ -63,10 +63,10 @@ const StudentInfoHeader: React.FC<{ info: StudentInfoHeaderProps }> = ({ info })
 };
 
 const InfoRow = ({ label, value }: { label: string; value: string }) => (
-  <p className="text-foreground">
+  <span className="text-foreground whitespace-nowrap">
     <span className="font-semibold">{label}:</span>{" "}
     <span className="text-muted-foreground">{value}</span>
-  </p>
+  </span>
 );
 
 const MacroBadge = ({
