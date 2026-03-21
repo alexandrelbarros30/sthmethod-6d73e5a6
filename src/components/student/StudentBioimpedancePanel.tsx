@@ -391,7 +391,7 @@ const MetricCard = ({
   <div className="bg-muted/50 rounded-xl p-2 sm:p-3 text-center border border-border/30">
     <div className={`flex items-center justify-center gap-1 mb-1 ${color}`}>
       {icon}
-      <span className="text-[10px] font-medium uppercase tracking-wide">{label}</span>
+      <span className="text-[9px] sm:text-[10px] font-medium uppercase tracking-wide">{label}</span>
     </div>
     <p className="text-sm font-bold text-foreground">{value}</p>
     {delta && <div className="mt-0.5">{delta}</div>}
