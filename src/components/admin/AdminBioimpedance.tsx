@@ -350,7 +350,7 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
                   </p>
                 )}
               </div>
-            </ScrollArea>
+            </div>
           </TabsContent>
         </Tabs>
       </DialogContent>
