@@ -613,7 +613,7 @@ const AdminDiet = () => {
                                 </a>
                               )}
                               {diet.content && (
-                                <div className="text-xs text-muted-foreground line-clamp-3">
+                                <div className="text-sm text-muted-foreground line-clamp-4 leading-relaxed">
                                   <RichContentRenderer content={diet.content} />
                                 </div>
                               )}
