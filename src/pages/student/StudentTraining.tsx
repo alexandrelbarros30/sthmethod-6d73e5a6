@@ -76,6 +76,19 @@ const StudentTraining = () => {
     enabled: !!weeks?.length,
   });
 
+  const { data: profile } = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user!.id)
+        .single();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
   const isLoading = subLoading || weeksLoading || exLoading;
 
   const toggleExercise = (id: string) => {
@@ -121,9 +134,34 @@ const StudentTraining = () => {
         @media print { .training-protected { display: none !important; } body::after { content: "Impressão não permitida"; display: flex; align-items: center; justify-content: center; font-size: 2rem; height: 100vh; } }
         .training-protected { user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; -webkit-touch-callout: none; }
       `}</style>
-      <div className="max-w-4xl training-protected">
+      <div className="max-w-4xl training-protected space-y-4">
+        {/* Student info */}
+        {profile && (
+          <Card className="border-border bg-muted/50">
+            <CardContent className="py-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm font-body">
+                {profile.full_name && (
+                  <p className="text-foreground"><span className="font-semibold">Nome:</span> <span className="text-muted-foreground">{profile.full_name}</span></p>
+                )}
+                {profile.birth_date && (
+                  <p className="text-foreground"><span className="font-semibold">Idade:</span> <span className="text-muted-foreground">{Math.floor((Date.now() - new Date(profile.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000))} anos</span></p>
+                )}
+                {profile.weight && (
+                  <p className="text-foreground"><span className="font-semibold">Peso:</span> <span className="text-muted-foreground">{profile.weight} kg</span></p>
+                )}
+                {profile.height && (
+                  <p className="text-foreground"><span className="font-semibold">Altura:</span> <span className="text-muted-foreground">{profile.height} cm</span></p>
+                )}
+                {profile.objective && (
+                  <p className="text-foreground"><span className="font-semibold">Objetivo:</span> <span className="text-muted-foreground">{profile.objective}</span></p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Program header card */}
-        <Card className="mb-6 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
           <CardContent className="py-5">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">

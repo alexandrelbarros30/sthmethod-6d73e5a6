@@ -94,6 +94,34 @@ const StudentProtocol = () => {
     enabled: !!user?.id,
   });
 
+  const buildStudentInfoBlock = () => {
+    if (!profile) return null;
+    const age = profile.birth_date
+      ? Math.floor((Date.now() - new Date(profile.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+      : undefined;
+    const rows: { label: string; value: string }[] = [];
+    if (profile.full_name) rows.push({ label: "Nome", value: profile.full_name });
+    if (age) rows.push({ label: "Idade", value: `${age} anos` });
+    if (profile.weight) rows.push({ label: "Peso", value: `${profile.weight} kg` });
+    if (profile.height) rows.push({ label: "Altura", value: `${profile.height} cm` });
+    if (profile.objective) rows.push({ label: "Objetivo", value: profile.objective });
+    if (rows.length === 0) return null;
+    return (
+      <Card className="border-border bg-muted/50">
+        <CardContent className="py-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm font-body">
+            {rows.map((r) => (
+              <p key={r.label} className="text-foreground">
+                <span className="font-semibold">{r.label}:</span>{" "}
+                <span className="text-muted-foreground">{r.value}</span>
+              </p>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   const handleDownloadPDF = async (protocol: any) => {
     try {
       const blob = await generateStudentPDF({
@@ -160,6 +188,9 @@ const StudentProtocol = () => {
             </p>
           </CardContent>
         </Card>
+
+        {/* Student info */}
+        {buildStudentInfoBlock()}
 
         {/* Protocol Info Panel */}
         <ProtocolInfoPanel protocols={protocolItems} />

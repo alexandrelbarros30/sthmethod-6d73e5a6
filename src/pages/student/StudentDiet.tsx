@@ -201,36 +201,38 @@ const StudentDiet = () => {
                 )}
               </div>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {/* Student info header + macros — always shown */}
-              {profile && (
-                <DietContentRenderer
-                  content=""
-                  studentInfo={buildStudentInfo(diet)}
-                  showHeader={true}
-                />
-              )}
-
-              {diet.pdf_url && (
-                <div>
-                  <p className="text-xs text-primary flex items-center gap-1 mb-2">
-                    <FileText className="w-3 h-3" /> Documento PDF
-                  </p>
-                  <iframe
-                    src={diet.pdf_url}
-                    className="w-full h-[500px] rounded-lg border border-border"
-                    title="Dieta PDF"
+            <CardContent>
+              <div className="p-3 rounded-lg bg-muted/50 border border-border space-y-3">
+                {/* Student info header + macros */}
+                {profile && (
+                  <DietContentRenderer
+                    content=""
+                    studentInfo={buildStudentInfo(diet)}
+                    showHeader={true}
                   />
-                </div>
-              )}
-              {diet.content && (
-                /<[a-z][\s\S]*>/i.test(diet.content)
-                  ? <RichContentRenderer content={diet.content} />
-                  : <DietContentRenderer
-                      content={diet.content}
-                      showHeader={false}
+                )}
+
+                {diet.pdf_url && (
+                  <div>
+                    <p className="text-xs text-primary flex items-center gap-1 mb-2">
+                      <FileText className="w-3 h-3" /> Documento PDF
+                    </p>
+                    <iframe
+                      src={diet.pdf_url}
+                      className="w-full h-[500px] rounded-lg border border-border"
+                      title="Dieta PDF"
                     />
-              )}
+                  </div>
+                )}
+                {diet.content && (
+                  /<[a-z][\s\S]*>/i.test(diet.content)
+                    ? <RichContentRenderer content={diet.content} />
+                    : <DietContentRenderer
+                        content={diet.content}
+                        showHeader={false}
+                      />
+                )}
+              </div>
             </CardContent>
           </Card>
         ))}
