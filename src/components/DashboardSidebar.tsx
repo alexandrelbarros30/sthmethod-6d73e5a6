@@ -17,6 +17,7 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
   student: [
     { to: "/dashboard", icon: LayoutDashboard, label: "Visão Geral" },
     { to: "/dashboard/evolution", icon: TrendingUp, label: "Atualização" },
+    { to: "/dashboard/bioimpedance", icon: Activity, label: "Bioimpedância" },
     { to: "/dashboard/diet", icon: Salad, label: "Dieta" },
     { to: "/dashboard/training", icon: Dumbbell, label: "Treino" },
     { to: "/dashboard/guided-workout", icon: ListChecks, label: "Treino Guiado" },

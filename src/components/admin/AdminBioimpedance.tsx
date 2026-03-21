@@ -221,7 +221,7 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
   const setField = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }));
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); onOpenChange(v); }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) { resetForm(); setProfileLoaded(false); } onOpenChange(v); }}>
       <DialogContent className="max-w-2xl max-h-[85dvh] w-[calc(100vw-1rem)] flex flex-col overflow-hidden p-3 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
