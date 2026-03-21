@@ -619,30 +619,24 @@ const AdminDiet = () => {
                               {previewDiet === diet.id && (
                                 <div className="mt-3 p-3 rounded-md bg-muted/50 border border-border space-y-2">
                                   <p className="text-xs font-semibold text-foreground mb-2">Visualização completa:</p>
-                                  {/* Macros from diet */}
                                   {(() => {
                                     const age = selected?.birth_date
                                       ? Math.floor((Date.now() - new Date(selected.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
                                       : undefined;
-                                    const studentInfo: any = {
-                                      name: selected?.full_name,
-                                      age,
-                                      weight: selected?.weight || undefined,
-                                      height: selected?.height || undefined,
-                                      objective: selected?.objective || undefined,
-                                      startDate: new Date(diet.created_at).toLocaleDateString("pt-BR"),
-                                      hydration: diet.hydration_l ? `${diet.hydration_l} litros` : undefined,
-                                      totalEnergy: diet.energy_kcal || undefined,
-                                      protein: diet.protein_g || undefined,
-                                      carbs: diet.carbs_g || undefined,
-                                      fat: diet.fat_g || undefined,
-                                    };
                                     return (
-                                      <DietContentRenderer
-                                        content=""
-                                        studentInfo={studentInfo}
-                                        showHeader={true}
-                                      />
+                                      <StudentInfoHeader info={{
+                                        name: selected?.full_name,
+                                        age,
+                                        weight: selected?.weight || undefined,
+                                        height: selected?.height || undefined,
+                                        objective: selected?.objective || undefined,
+                                        startDate: new Date(diet.created_at).toLocaleDateString("pt-BR"),
+                                        hydration: diet.hydration_l ? `${diet.hydration_l} litros` : undefined,
+                                        totalEnergy: diet.energy_kcal || undefined,
+                                        protein: diet.protein_g || undefined,
+                                        carbs: diet.carbs_g || undefined,
+                                        fat: diet.fat_g || undefined,
+                                      }} />
                                     );
                                   })()}
                                   {diet.content && (
