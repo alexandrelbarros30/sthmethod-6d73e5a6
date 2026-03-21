@@ -319,12 +319,12 @@ const Landing = () => {
       <BodySimulatorSection />
 
       {/* Final CTA */}
-      <section className="py-24 px-6">
+      <section className="py-16 sm:py-24 px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="max-w-4xl mx-auto text-center glass rounded-3xl p-12 md:p-16 glow-border"
+          className="max-w-4xl mx-auto text-center glass rounded-2xl sm:rounded-3xl p-6 sm:p-12 md:p-16 glow-border"
         >
           <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
             {ctaFinalTitle}
