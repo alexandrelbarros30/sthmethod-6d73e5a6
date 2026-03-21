@@ -296,7 +296,7 @@ const Landing = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="flex items-center justify-center gap-8 md:gap-16 mt-16"
+            className="flex items-center justify-center gap-6 sm:gap-8 md:gap-16 mt-12 sm:mt-16"
           >
             {stats.map((stat) => (
               <div key={stat.label} className="text-center">
