@@ -707,7 +707,7 @@ const AdminDiet = () => {
                 <p className="text-sm text-muted-foreground text-center py-6">Nenhuma dieta cadastrada ainda.</p>
               )}
             </div>
-          </ScrollArea>
+          </div>
         </DialogContent>
       </Dialog>
 
