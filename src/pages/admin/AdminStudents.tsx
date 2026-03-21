@@ -1421,7 +1421,7 @@ const AdminStudents = () => {
                     <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
                       <Calculator className="w-4 h-4" /> Macronutrientes
                     </h3>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       <div className="bg-muted/50 rounded-lg p-3 text-center">
                         <p className="text-xs text-muted-foreground">TMB</p>
                         <p className="font-bold text-sm">{(selectedFullProfile as any)?.bmr || "—"} kcal</p>
