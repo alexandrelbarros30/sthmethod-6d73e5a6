@@ -38,11 +38,12 @@ const AdminNutrition = () => {
     },
   });
 
-  const filtered = students.filter((s: any) => {
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
-    return s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q);
-  });
+  const filtered = search.trim().length < 2
+    ? []
+    : students.filter((s: any) => {
+        const q = search.toLowerCase();
+        return s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q);
+      });
 
   if (selectedStudent) {
     return (
