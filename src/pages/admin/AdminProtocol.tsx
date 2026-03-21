@@ -335,9 +335,31 @@ const AdminProtocol = () => {
 
           <div className="flex-1 min-h-0 overflow-y-auto pr-1 sm:pr-4">
             <div className="space-y-6">
+              {/* Student Info Header - like student view */}
+              {selectedProfile && (
+                <Card className="border-border bg-muted/50">
+                  <CardContent className="py-4">
+                    <StudentInfoHeader info={{
+                      name: selectedProfile.full_name || undefined,
+                      age: selectedProfile.birth_date
+                        ? Math.floor((Date.now() - new Date(selectedProfile.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+                        : undefined,
+                      weight: selectedProfile.weight || undefined,
+                      height: selectedProfile.height || undefined,
+                      objective: selectedProfile.objective || undefined,
+                    }} />
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Protocol Items Manager (medications/supplements) */}
               {selected?.user_id && (
                 <ProtocolItemsManager userId={selected.user_id} studentName={selected.full_name} />
+              )}
+
+              {/* Protocol Info Panel - identical to student view */}
+              {protocolItems.length > 0 && (
+                <ProtocolInfoPanel protocols={protocolItems} />
               )}
 
               <hr className="border-border" />
@@ -382,111 +404,94 @@ const AdminProtocol = () => {
                 </Card>
               )}
 
-              {/* Protocol History */}
+              {/* Protocol History - Accordion style like student view */}
               {studentProtocols && studentProtocols.length > 0 ? (
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-muted-foreground font-display flex items-center gap-2">
-                    <Clock className="w-4 h-4" /> Histórico de Protocolos
+                    <Clock className="w-4 h-4" /> Histórico de Protocolos ({studentProtocols.length})
                   </h3>
-                  {studentProtocols.map((protocol: any) => (
-                    <Card key={protocol.id} className="relative">
-                      <CardContent className="pt-4 pb-3">
-                        {editingId === protocol.id ? (
-                          /* Edit mode */
-                          <div className="space-y-3">
-                            <div>
-                              <Label className="font-body text-xs">Título</Label>
-                              <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              <div>
-                                <Label className="font-body text-xs">Data</Label>
-                                <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />
-                              </div>
-                              <div>
-                                <Label className="font-body text-xs">Horário</Label>
-                                <Input type="time" value={editTime} onChange={(e) => setEditTime(e.target.value)} />
-                              </div>
-                            </div>
-                            <div>
-                              <Label className="font-body text-xs">Conteúdo</Label>
-                              <RichTextEditor value={editContent} onChange={setEditContent} />
-                            </div>
-                            <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
-                              <Button variant="ghost" size="sm" onClick={cancelEdit} className="w-full sm:w-auto">Cancelar</Button>
-                              <Button size="sm" onClick={() => editMutation.mutate()} disabled={editMutation.isPending} className="w-full sm:w-auto">
-                                {editMutation.isPending ? "Salvando..." : "Salvar Alterações"}
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          /* View mode */
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                <p className="font-medium text-sm font-body">{protocol.title}</p>
-                                <Badge variant="outline" className="text-[10px] shrink-0">
-                                  {new Date(protocol.created_at).toLocaleDateString("pt-BR")} às {new Date(protocol.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                                </Badge>
-                              </div>
-                              {protocol.pdf_url && (
-                                <a href={protocol.pdf_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mb-1">
-                                  <FileText className="w-3 h-3" /> Ver PDF
-                                </a>
-                              )}
-                              {protocol.content && (
-                                <div className="text-xs text-muted-foreground line-clamp-3">
-                                  <RichContentRenderer content={protocol.content} />
-                                </div>
-                              )}
 
-                              {/* Preview toggle */}
-                              {previewProtocol === protocol.id && protocol.content && (
-                                <div className="mt-3 p-3 rounded-md bg-muted/50 border border-border">
-                                  <p className="text-xs font-semibold text-foreground mb-1">Visualização completa:</p>
-                                  <RichContentRenderer content={protocol.content} />
-                                </div>
-                              )}
-                              {previewProtocol === protocol.id && protocol.pdf_url && (
-                                <div className="mt-3">
-                                  <iframe src={protocol.pdf_url} className="w-full h-[400px] rounded-lg border border-border" title="Protocolo PDF" />
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex flex-row sm:flex-col gap-1 shrink-0 flex-wrap justify-end">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-muted-foreground hover:text-primary"
-                                onClick={() => setPreviewProtocol(previewProtocol === protocol.id ? null : protocol.id)}
-                                title="Visualizar"
-                              >
-                                {previewProtocol === protocol.id ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-muted-foreground hover:text-primary"
-                                onClick={() => startEdit(protocol)}
-                                title="Editar"
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                onClick={() => confirmDelete(protocol.id)}
-                                title="Excluir"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
+                  {/* Edit form - shown above accordion when editing */}
+                  {editingId && (
+                    <Card className="border-primary/30 bg-primary/5">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-display flex items-center gap-2">
+                          <Pencil className="w-4 h-4" /> Editando Protocolo
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div>
+                          <Label className="font-body text-xs">Título</Label>
+                          <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <Label className="font-body text-xs">Data</Label>
+                            <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />
                           </div>
-                        )}
+                          <div>
+                            <Label className="font-body text-xs">Horário</Label>
+                            <Input type="time" value={editTime} onChange={(e) => setEditTime(e.target.value)} />
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="font-body text-xs">Conteúdo</Label>
+                          <RichTextEditor value={editContent} onChange={setEditContent} />
+                        </div>
+                        <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
+                          <Button variant="ghost" size="sm" onClick={cancelEdit} className="w-full sm:w-auto">Cancelar</Button>
+                          <Button size="sm" onClick={() => editMutation.mutate()} disabled={editMutation.isPending} className="w-full sm:w-auto">
+                            {editMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                          </Button>
+                        </div>
                       </CardContent>
                     </Card>
-                  ))}
+                  )}
+
+                  <Accordion type="single" collapsible className="space-y-2">
+                    {studentProtocols.map((protocol: any) => (
+                      <AccordionItem key={protocol.id} value={protocol.id} className="border rounded-xl overflow-hidden bg-card">
+                        <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                          <div className="flex items-center gap-2 flex-wrap text-left">
+                            <span className="text-base font-display font-semibold">{protocol.title}</span>
+                            <Badge variant="outline" className="text-[10px]">
+                              {new Date(protocol.created_at).toLocaleDateString("pt-BR")} às{" "}
+                              {new Date(protocol.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                            </Badge>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="px-4 pb-4">
+                          <div className="space-y-3">
+                            {/* Admin action buttons */}
+                            <div className="flex gap-2">
+                              <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => startEdit(protocol)}>
+                                <Pencil className="w-3 h-3 mr-1" /> Editar
+                              </Button>
+                              <Button variant="outline" size="sm" className="h-7 text-xs text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => confirmDelete(protocol.id)}>
+                                <Trash2 className="w-3 h-3 mr-1" /> Excluir
+                              </Button>
+                            </div>
+
+                            {protocol.pdf_url && (
+                              <div>
+                                <p className="text-xs text-primary flex items-center gap-1 mb-2">
+                                  <FileText className="w-3 h-3" /> Documento PDF
+                                </p>
+                                <iframe
+                                  src={protocol.pdf_url}
+                                  className="w-full h-[500px] rounded-lg border border-border"
+                                  title="Protocolo PDF"
+                                />
+                              </div>
+                            )}
+                            {protocol.content && (
+                              <RichContentRenderer content={protocol.content} />
+                            )}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-6">Nenhum protocolo cadastrado ainda.</p>
