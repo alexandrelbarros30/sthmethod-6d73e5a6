@@ -481,18 +481,18 @@ const StudentOverview = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-3 rounded-xl bg-gold/[0.06] border border-gold/15">
-                <p className="text-2xl font-bold text-gold font-display">{proteinPerKg}</p>
-                <p className="text-xs text-muted-foreground mt-1">Proteína (g/kg)</p>
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+              <div className="text-center p-2 sm:p-3 rounded-xl bg-gold/[0.06] border border-gold/15">
+                <p className="text-lg sm:text-2xl font-bold text-gold font-display">{proteinPerKg}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Proteína (g/kg)</p>
               </div>
-              <div className="text-center p-3 rounded-xl bg-gold/[0.06] border border-gold/15">
-                <p className="text-2xl font-bold text-gold font-display">{carbsPerKg}</p>
-                <p className="text-xs text-muted-foreground mt-1">Carboidrato (g/kg)</p>
+              <div className="text-center p-2 sm:p-3 rounded-xl bg-gold/[0.06] border border-gold/15">
+                <p className="text-lg sm:text-2xl font-bold text-gold font-display">{carbsPerKg}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Carboidrato (g/kg)</p>
               </div>
-              <div className="text-center p-3 rounded-xl bg-gold/[0.06] border border-gold/15">
-                <p className="text-2xl font-bold text-gold font-display">{fatPerKg}</p>
-                <p className="text-xs text-muted-foreground mt-1">Gordura (g/kg)</p>
+              <div className="text-center p-2 sm:p-3 rounded-xl bg-gold/[0.06] border border-gold/15">
+                <p className="text-lg sm:text-2xl font-bold text-gold font-display">{fatPerKg}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Gordura (g/kg)</p>
               </div>
             </div>
             {calorieDiff !== null && (
