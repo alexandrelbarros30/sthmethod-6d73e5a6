@@ -1189,11 +1189,50 @@ const AdminStudents = () => {
                         <div className="min-w-0">
                           <p className="font-medium text-sm truncate">{s.full_name || "Sem nome"}</p>
                           <p className="text-xs text-muted-foreground truncate">{s.email}</p>
+                          {s.phone && <p className="text-[10px] text-muted-foreground">{s.phone}</p>}
                         </div>
                       </div>
-                      <Badge variant={s.status === "active" ? "secondary" : s.status === "suspended" ? "outline" : "destructive"} className="text-[10px] shrink-0">
-                        {s.status === "active" ? "Ativo" : s.status === "suspended" ? "Suspenso" : s.status === "expired" ? "Vencido" : "Sem plano"}
-                      </Badge>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Badge variant={s.status === "active" ? "secondary" : s.status === "suspended" ? "outline" : "destructive"} className="text-[10px]">
+                          {s.status === "active" ? "Ativo" : s.status === "suspended" ? "Suspenso" : s.status === "expired" ? "Vencido" : "Sem plano"}
+                        </Badge>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7"><MoreVertical className="w-4 h-4" /></Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openView(s)}>
+                              <Eye className="w-4 h-4 mr-2" /> Visualizar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openEdit(s)}>
+                              <Pencil className="w-4 h-4 mr-2" /> Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => { setSelected(s); setAnamneseOpen(true); }}>
+                              <ClipboardList className="w-4 h-4 mr-2" /> Anamnese
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setSelected(s); setImagesOpen(true); }}>
+                              <Image className="w-4 h-4 mr-2" /> Fotos corporais
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setSelected(s); setBioOpen(true); }}>
+                              <Activity className="w-4 h-4 mr-2" /> Bioimpedância
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openSub(s)}>
+                              <CreditCard className="w-4 h-4 mr-2" /> Assinatura
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setPasswordReset({ userId: s.user_id, name: s.full_name || s.email }); setNewPassword(""); }}>
+                              <Lock className="w-4 h-4 mr-2" /> Alterar senha
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/dashboard/renew?uid=${s.user_id}`); toast.success("Link copiado!"); }}>
+                              <Link2 className="w-4 h-4 mr-2" /> Copiar link renovação
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeleteTarget({ userId: s.user_id, name: s.full_name || s.email })}>
+                              <Trash2 className="w-4 h-4 mr-2" /> Excluir aluno
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                       {s.plan !== "—" && (
@@ -1202,14 +1241,6 @@ const AdminStudents = () => {
                         </Badge>
                       )}
                       {s.endDate && <span>Venc: {new Date(s.endDate).toLocaleDateString("pt-BR")}</span>}
-                    </div>
-                    <div className="flex items-center gap-1 flex-wrap pt-1 border-t border-border/50">
-                      <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 px-2" onClick={() => openView(s)}><Eye className="w-3.5 h-3.5" />Ver</Button>
-                      <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 px-2" onClick={() => openEdit(s)}><Pencil className="w-3.5 h-3.5" />Editar</Button>
-                      <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 px-2" onClick={() => openSub(s)}><CreditCard className="w-3.5 h-3.5" />Plano</Button>
-                      <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 px-2" onClick={() => { setSelected(s); setAnamneseOpen(true); }}><ClipboardList className="w-3.5 h-3.5" /></Button>
-                      <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 px-2" onClick={() => { setSelected(s); setImagesOpen(true); }}><Image className="w-3.5 h-3.5" /></Button>
-                      <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 px-2" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/dashboard/renew?uid=${s.user_id}`); toast.success("Link copiado!"); }}><Link2 className="w-3.5 h-3.5" /></Button>
                     </div>
                   </div>
                 ))}
