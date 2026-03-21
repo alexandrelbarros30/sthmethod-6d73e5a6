@@ -52,12 +52,12 @@ const EvolutionMacroDisplay = ({ profile }: Props) => {
 };
 
 const MacroCard = ({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) => (
-  <div className="bg-muted/50 rounded-lg p-3 text-center">
+  <div className="bg-muted/50 rounded-lg p-2 sm:p-3 text-center">
     <div className={`flex items-center justify-center gap-1 mb-1 ${color}`}>
       {icon}
-      <span className="text-[10px] font-medium uppercase tracking-wide">{label}</span>
+      <span className="text-[9px] sm:text-[10px] font-medium uppercase tracking-wide">{label}</span>
     </div>
-    <p className="text-sm font-bold text-foreground">{value}</p>
+    <p className="text-xs sm:text-sm font-bold text-foreground">{value}</p>
   </div>
 );
 
