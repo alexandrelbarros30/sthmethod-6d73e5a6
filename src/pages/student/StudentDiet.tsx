@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { FileText, Clock, Download } from "lucide-react";
 import DietContentRenderer, { type DietStudentInfo } from "@/components/student/DietContentRenderer";
+import StudentInfoHeader from "@/components/student/StudentInfoHeader";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
