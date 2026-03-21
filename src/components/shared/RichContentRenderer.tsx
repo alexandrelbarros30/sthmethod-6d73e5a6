@@ -8,11 +8,17 @@ interface RichContentRendererProps {
 const MEAL_HEADING_RE = /^(REFEIC[ÃA]O\s*\d+|REFEI[CÇ][ÃA]O\s*\d+|PRE[- ]?TREINO|P[OÓ]S[- ]?TREINO|CEIA|LANCHE\s*\d*|CAFÉ\s*DA\s*MANH[ÃA]|ALMO[CÇ]O|JANTAR)/i;
 const SECTION_TITLE_RE = /^(ROTINA\s*ALIMENTAR|PLANO\s*ALIMENTAR|DIETA)/i;
 
+function cleanEmptyParagraphs(html: string): string {
+  // Remove empty <p> tags (with optional <br>, &nbsp;, whitespace)
+  return html.replace(/<p[^>]*>\s*(<br\s*\/?>|\s|&nbsp;)*\s*<\/p>/gi, '');
+}
+
 function addBulletsAndZebraToHTML(html: string): string {
+  const cleaned = cleanEmptyParagraphs(html);
   let itemIndex = 0;
-  return html.replace(/<p([^>]*)>([\s\S]*?)<\/p>/gi, (match, attrs, inner) => {
+  return cleaned.replace(/<p([^>]*)>([\s\S]*?)<\/p>/gi, (match, attrs, inner) => {
     const text = inner.replace(/<[^>]*>/g, '').trim();
-    if (!text) return match;
+    if (!text) return '';
     if (SECTION_TITLE_RE.test(text) || MEAL_HEADING_RE.test(text)) {
       itemIndex = 0;
       return match;
