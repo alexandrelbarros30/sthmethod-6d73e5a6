@@ -153,7 +153,7 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
       payload.metabolic_age = form.metabolic_age ? parseInt(form.metabolic_age) : null;
 
       if (editingId) {
-        const { error } = await (supabase.from("bioimpedance_logs" as any) as any)
+        const { error } = await supabase.from("bioimpedance_logs")
           .update(payload)
           .eq("id", editingId);
         if (error) throw error;
