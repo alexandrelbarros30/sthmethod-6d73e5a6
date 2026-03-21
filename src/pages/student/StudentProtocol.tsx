@@ -183,7 +183,7 @@ const StudentProtocol = () => {
         </Card>
 
         {/* Student info */}
-        {buildStudentInfoBlock()}
+        {buildStudentInfo()}
 
         {/* Protocol Info Panel */}
         <ProtocolInfoPanel protocols={protocolItems} />
