@@ -464,7 +464,7 @@ const StudentOverview = () => {
                 </div>
                 <div>
                   <p className="text-xs text-gold-dark dark:text-gold-light/70">Estratégia</p>
-                  <p className={`text-base font-bold font-display ${strategyColor}`}>{strategy}</p>
+                  <p className={`text-sm sm:text-base font-bold font-display ${strategyColor}`}>{strategy}</p>
                 </div>
               </CardContent>
             </Card>
