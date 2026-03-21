@@ -553,150 +553,154 @@ const AdminDiet = () => {
                           </div>
                         ) : (
                           /* View mode */
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                <p className="font-medium text-sm font-body">{diet.title}</p>
-                                <Badge variant="outline" className="text-[10px] shrink-0">
-                                  {new Date(diet.created_at).toLocaleDateString("pt-BR")} às {new Date(diet.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                                </Badge>
-                                {!diet.visible && (
-                                  <Badge variant="secondary" className="text-[10px] bg-destructive/10 text-destructive">
-                                    Oculta
+                          <div className="space-y-3">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                  <p className="font-medium text-sm font-body">{diet.title}</p>
+                                  <Badge variant="outline" className="text-[10px] shrink-0">
+                                    {new Date(diet.created_at).toLocaleDateString("pt-BR")} às {new Date(diet.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                                   </Badge>
-                                )}
-                                {diet.release_date && new Date(diet.release_date) > new Date() && (
-                                  <Badge variant="secondary" className="text-[10px] bg-amber-500/10 text-amber-600">
-                                    <CalendarClock className="w-2.5 h-2.5 mr-0.5" />
-                                    Libera em {new Date(diet.release_date).toLocaleDateString("pt-BR")}
-                                  </Badge>
-                                )}
-                                {diet.release_date && new Date(diet.release_date) <= new Date() && (
-                                  <Badge variant="secondary" className="text-[10px] bg-green-500/10 text-green-600">
-                                    Liberada
-                                  </Badge>
-                                )}
-                              </div>
-                              {/* Inline macro badges */}
-                              {(diet.energy_kcal || diet.protein_g || diet.carbs_g || diet.fat_g || diet.hydration_l) && (
-                                <div className="flex flex-wrap gap-1.5 mb-1">
-                                  {diet.energy_kcal && (
-                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-500/10 text-orange-600 border border-orange-500/20">
-                                      🔥 {diet.energy_kcal} kcal
-                                    </span>
+                                  {!diet.visible && (
+                                    <Badge variant="secondary" className="text-[10px] bg-destructive/10 text-destructive">
+                                      Oculta
+                                    </Badge>
                                   )}
-                                  {diet.protein_g && (
-                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
-                                      💪 {diet.protein_g}g P
-                                    </span>
+                                  {diet.release_date && new Date(diet.release_date) > new Date() && (
+                                    <Badge variant="secondary" className="text-[10px] bg-amber-500/10 text-amber-600">
+                                      <CalendarClock className="w-2.5 h-2.5 mr-0.5" />
+                                      Libera em {new Date(diet.release_date).toLocaleDateString("pt-BR")}
+                                    </Badge>
                                   )}
-                                  {diet.carbs_g && (
-                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-500/10 text-blue-600 border border-blue-500/20">
-                                      🍞 {diet.carbs_g}g C
-                                    </span>
-                                  )}
-                                  {diet.fat_g && (
-                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-yellow-500/10 text-yellow-700 border border-yellow-500/20">
-                                      🥑 {diet.fat_g}g G
-                                    </span>
-                                  )}
-                                  {diet.hydration_l && (
-                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-500/10 text-cyan-600 border border-cyan-500/20">
-                                      💧 {diet.hydration_l}L
-                                    </span>
+                                  {diet.release_date && new Date(diet.release_date) <= new Date() && (
+                                    <Badge variant="secondary" className="text-[10px] bg-green-500/10 text-green-600">
+                                      Liberada
+                                    </Badge>
                                   )}
                                 </div>
-                              )}
-                              {diet.pdf_url && (
-                                <a href={diet.pdf_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mb-1">
-                                  <FileText className="w-3 h-3" /> Ver PDF
-                                </a>
-                              )}
-                              {diet.content && !previewDiet && (
-                                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mt-1">
-                                  {diet.content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, 120)}…
-                                </p>
-                              )}
 
-                              {/* Preview toggle - identical to student view */}
-                              {previewDiet === diet.id && (
-                                <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border">
-                                  {(() => {
-                                    const age = selected?.birth_date
-                                      ? Math.floor((Date.now() - new Date(selected.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-                                      : undefined;
-                                    return (
-                                      <StudentInfoHeader info={{
-                                        name: selected?.full_name,
-                                        age,
-                                        weight: selected?.weight || undefined,
-                                        height: selected?.height || undefined,
-                                        objective: selected?.objective || undefined,
-                                        startDate: new Date(diet.created_at).toLocaleDateString("pt-BR"),
-                                        hydration: diet.hydration_l ? `${diet.hydration_l} litros` : undefined,
-                                        totalEnergy: diet.energy_kcal || undefined,
-                                        protein: diet.protein_g || undefined,
-                                        carbs: diet.carbs_g || undefined,
-                                        fat: diet.fat_g || undefined,
-                                      }} />
-                                    );
-                                  })()}
-                                  {diet.pdf_url && (
-                                    <iframe src={diet.pdf_url} className="w-full h-[400px] rounded-lg border border-border mb-3" title="Dieta PDF" />
-                                  )}
-                                  {diet.content && (
-                                    /<[a-z][\s\S]*>/i.test(diet.content)
-                                      ? <RichContentRenderer content={diet.content} />
-                                      : <DietContentRenderer content={diet.content} showHeader={false} />
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex flex-row sm:flex-col gap-1 shrink-0 items-center flex-wrap justify-end">
-                              <div className="flex items-center gap-1" title={diet.visible ? "Visível para o aluno" : "Oculta para o aluno"}>
-                                <Switch
-                                  checked={diet.visible !== false}
-                                  onCheckedChange={(checked) => toggleVisibility.mutate({ id: diet.id, visible: checked })}
-                                  className="scale-75"
-                                />
+                                {(diet.energy_kcal || diet.protein_g || diet.carbs_g || diet.fat_g || diet.hydration_l) && (
+                                  <div className="flex flex-wrap gap-1.5 mb-1">
+                                    {diet.energy_kcal && (
+                                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-500/10 text-orange-600 border border-orange-500/20">
+                                        🔥 {diet.energy_kcal} kcal
+                                      </span>
+                                    )}
+                                    {diet.protein_g && (
+                                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
+                                        💪 {diet.protein_g}g P
+                                      </span>
+                                    )}
+                                    {diet.carbs_g && (
+                                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                                        🍞 {diet.carbs_g}g C
+                                      </span>
+                                    )}
+                                    {diet.fat_g && (
+                                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-yellow-500/10 text-yellow-700 border border-yellow-500/20">
+                                        🥑 {diet.fat_g}g G
+                                      </span>
+                                    )}
+                                    {diet.hydration_l && (
+                                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-500/10 text-cyan-600 border border-cyan-500/20">
+                                        💧 {diet.hydration_l}L
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+
+                                {diet.pdf_url && (
+                                  <a href={diet.pdf_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mb-1">
+                                    <FileText className="w-3 h-3" /> Ver PDF
+                                  </a>
+                                )}
+
+                                {diet.content && !previewDiet && (
+                                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mt-1">
+                                    {diet.content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, 120)}…
+                                  </p>
+                                )}
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-muted-foreground hover:text-primary"
-                                onClick={() => setPreviewDiet(previewDiet === diet.id ? null : diet.id)}
-                                title="Visualizar"
-                              >
-                                {previewDiet === diet.id ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-muted-foreground hover:text-primary"
-                                onClick={() => startEdit(diet)}
-                                title="Editar"
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-muted-foreground hover:text-primary"
-                                onClick={() => saveToLibraryMutation.mutate(diet)}
-                                title="Salvar na Biblioteca"
-                              >
-                                <Save className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                onClick={() => confirmDelete(diet.id)}
-                                title="Excluir"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+
+                              <div className="flex items-center gap-1 sm:flex-col sm:items-center shrink-0 self-end sm:self-auto">
+                                <div className="flex items-center gap-1" title={diet.visible ? "Visível para o aluno" : "Oculta para o aluno"}>
+                                  <Switch
+                                    checked={diet.visible !== false}
+                                    onCheckedChange={(checked) => toggleVisibility.mutate({ id: diet.id, visible: checked })}
+                                    className="scale-75"
+                                  />
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-muted-foreground hover:text-primary"
+                                  onClick={() => setPreviewDiet(previewDiet === diet.id ? null : diet.id)}
+                                  title="Visualizar"
+                                >
+                                  {previewDiet === diet.id ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-muted-foreground hover:text-primary"
+                                  onClick={() => startEdit(diet)}
+                                  title="Editar"
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-muted-foreground hover:text-primary"
+                                  onClick={() => saveToLibraryMutation.mutate(diet)}
+                                  title="Salvar na Biblioteca"
+                                >
+                                  <Save className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  onClick={() => confirmDelete(diet.id)}
+                                  title="Excluir"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
                             </div>
+
+                            {previewDiet === diet.id && (
+                              <div className="p-3 rounded-lg bg-muted/50 border border-border w-full overflow-x-hidden">
+                                {(() => {
+                                  const age = selected?.birth_date
+                                    ? Math.floor((Date.now() - new Date(selected.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+                                    : undefined;
+                                  return (
+                                    <StudentInfoHeader info={{
+                                      name: selected?.full_name,
+                                      age,
+                                      weight: selected?.weight || undefined,
+                                      height: selected?.height || undefined,
+                                      objective: selected?.objective || undefined,
+                                      startDate: new Date(diet.created_at).toLocaleDateString("pt-BR"),
+                                      hydration: diet.hydration_l ? `${diet.hydration_l} litros` : undefined,
+                                      totalEnergy: diet.energy_kcal || undefined,
+                                      protein: diet.protein_g || undefined,
+                                      carbs: diet.carbs_g || undefined,
+                                      fat: diet.fat_g || undefined,
+                                    }} />
+                                  );
+                                })()}
+                                {diet.pdf_url && (
+                                  <iframe src={diet.pdf_url} className="w-full h-[400px] rounded-lg border border-border mb-3" title="Dieta PDF" />
+                                )}
+                                {diet.content && (
+                                  /<[a-z][\s\S]*>/i.test(diet.content)
+                                    ? <RichContentRenderer content={diet.content} />
+                                    : <DietContentRenderer content={diet.content} showHeader={false} />
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </CardContent>
