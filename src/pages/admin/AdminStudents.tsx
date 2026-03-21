@@ -200,15 +200,16 @@ const AdminStudents = () => {
     enabled: !!selected?.user_id,
   });
 
-  const filteredStudents = students?.filter((s: any) => {
-    if (!searchTerm.trim()) return true;
-    const term = searchTerm.toLowerCase();
-    return (
-      s.full_name?.toLowerCase().includes(term) ||
-      s.email?.toLowerCase().includes(term) ||
-      s.phone?.toLowerCase().includes(term)
-    );
-  });
+  const filteredStudents = searchTerm.trim().length < 2
+    ? []
+    : students?.filter((s: any) => {
+        const term = searchTerm.toLowerCase();
+        return (
+          s.full_name?.toLowerCase().includes(term) ||
+          s.email?.toLowerCase().includes(term) ||
+          s.phone?.toLowerCase().includes(term)
+        );
+      });
 
   const saveAnamneseMutation = useMutation({
     mutationFn: async () => {
@@ -1176,6 +1177,8 @@ const AdminStudents = () => {
         <CardContent className="px-0 sm:px-6">
           {isLoading ? (
             <p className="text-sm text-muted-foreground font-body px-4">Carregando...</p>
+          ) : searchTerm.trim().length < 2 ? (
+            <p className="text-sm text-muted-foreground text-center py-8 px-4">Digite pelo menos 2 caracteres para buscar alunos.</p>
           ) : (
             <>
               {/* Mobile card list */}

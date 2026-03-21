@@ -38,11 +38,12 @@ const AdminNutrition = () => {
     },
   });
 
-  const filtered = students.filter((s: any) => {
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
-    return s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q);
-  });
+  const filtered = search.trim().length < 2
+    ? []
+    : students.filter((s: any) => {
+        const q = search.toLowerCase();
+        return s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q);
+      });
 
   if (selectedStudent) {
     return (
@@ -99,24 +100,28 @@ const AdminNutrition = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((s: any) => (
-              <button key={s.user_id} onClick={() => setSelectedStudent(s)}
-                className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors text-left">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <span className="text-sm font-bold text-primary">{s.initials}</span>
-                </div>
-                <div className="min-w-0">
-                  <p className="font-medium text-sm font-body truncate">{s.full_name || "Sem nome"}</p>
-                  <p className="text-xs text-muted-foreground font-body truncate">{s.email}</p>
-                  {s.weight && <p className="text-xs text-muted-foreground mt-0.5">{s.weight}kg</p>}
-                </div>
-              </button>
-            ))}
-            {filtered.length === 0 && (
-              <p className="text-muted-foreground text-sm col-span-full text-center py-8">Nenhum aluno encontrado.</p>
-            )}
-          </div>
+          {search.trim().length < 2 ? (
+            <p className="text-muted-foreground text-sm text-center py-8">Digite pelo menos 2 caracteres para buscar alunos.</p>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {filtered.map((s: any) => (
+                <button key={s.user_id} onClick={() => setSelectedStudent(s)}
+                  className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors text-left">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <span className="text-sm font-bold text-primary">{s.initials}</span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm font-body truncate">{s.full_name || "Sem nome"}</p>
+                    <p className="text-xs text-muted-foreground font-body truncate">{s.email}</p>
+                    {s.weight && <p className="text-xs text-muted-foreground mt-0.5">{s.weight}kg</p>}
+                  </div>
+                </button>
+              ))}
+              {filtered.length === 0 && (
+                <p className="text-muted-foreground text-sm col-span-full text-center py-8">Nenhum aluno encontrado.</p>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </DashboardLayout>

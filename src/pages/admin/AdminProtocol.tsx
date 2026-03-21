@@ -200,11 +200,12 @@ const AdminProtocol = () => {
     setConfirmDeleteOpen(true);
   };
 
-  const filteredStudents = (students || []).filter((s: any) => {
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
-    return s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q);
-  });
+  const filteredStudents = search.trim().length < 2
+    ? []
+    : (students || []).filter((s: any) => {
+        const q = search.toLowerCase();
+        return s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q);
+      });
 
   return (
     <DashboardLayout role="admin" title="Gestão de Protocolos" subtitle="Gerencie os protocolos dos alunos com histórico completo.">
@@ -217,7 +218,9 @@ const AdminProtocol = () => {
           </div>
         </CardHeader>
         <CardContent className="space-y-2">
-          {isMobile ? (
+          {search.trim().length < 2 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">Digite pelo menos 2 caracteres para buscar alunos.</p>
+          ) : isMobile ? (
             filteredStudents.length > 0 ? (
               filteredStudents.map((s: any) => (
                 <div key={s.user_id} className="rounded-lg border border-border bg-card p-3">

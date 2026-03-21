@@ -338,46 +338,49 @@ const AdminTraining = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="font-body">Aluno</TableHead>
-                  <TableHead className="font-body">Treinos</TableHead>
-                  <TableHead className="font-body text-right">Ação</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {students?.filter((s: any) => {
-                  if (!search.trim()) return true;
-                  const q = search.toLowerCase();
-                  return s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q);
-                }).map((s: any) => (
-                  <TableRow key={s.user_id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="text-xs font-bold text-primary">{s.initials}</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm font-body">{s.full_name || "Sem nome"}</p>
-                          <p className="text-xs text-muted-foreground">{s.email}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={s.weekCount > 0 ? "secondary" : "outline"} className="text-xs">
-                        {s.weekCount > 0 ? `${s.weekCount} treino(s)` : "Pendente"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" onClick={() => openManage(s)}>
-                        <Pencil className="w-3 h-3 mr-1" /> Gerenciar
-                      </Button>
-                    </TableCell>
+            {search.trim().length < 2 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">Digite pelo menos 2 caracteres para buscar alunos.</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="font-body">Aluno</TableHead>
+                    <TableHead className="font-body">Treinos</TableHead>
+                    <TableHead className="font-body text-right">Ação</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {students?.filter((s: any) => {
+                    const q = search.toLowerCase();
+                    return s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q);
+                  }).map((s: any) => (
+                    <TableRow key={s.user_id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span className="text-xs font-bold text-primary">{s.initials}</span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm font-body">{s.full_name || "Sem nome"}</p>
+                            <p className="text-xs text-muted-foreground">{s.email}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={s.weekCount > 0 ? "secondary" : "outline"} className="text-xs">
+                          {s.weekCount > 0 ? `${s.weekCount} treino(s)` : "Pendente"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm" onClick={() => openManage(s)}>
+                          <Pencil className="w-3 h-3 mr-1" /> Gerenciar
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       ) : (
