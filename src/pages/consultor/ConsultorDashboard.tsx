@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
 import WhatsAppBulkSender from "@/components/shared/WhatsAppBulkSender";
 import AdminEvolutionUpdate from "@/components/admin/AdminEvolutionUpdate";
+import AdminBioimpedance from "@/components/admin/AdminBioimpedance";
 
 const ConsultorDashboard = () => {
   const { user } = useAuth();
