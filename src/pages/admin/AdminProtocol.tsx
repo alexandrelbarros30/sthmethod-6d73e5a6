@@ -81,6 +81,33 @@ const AdminProtocol = () => {
     enabled: !!selected?.user_id && dialogOpen,
   });
 
+  const { data: selectedProfile } = useQuery({
+    queryKey: ["admin-student-profile-protocol", selected?.user_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", selected!.user_id)
+        .single();
+      return data;
+    },
+    enabled: !!selected?.user_id && dialogOpen,
+  });
+
+  const { data: protocolItems = [] } = useQuery({
+    queryKey: ["admin-protocol-items", selected?.user_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("protocols")
+        .select("*")
+        .eq("user_id", selected!.user_id)
+        .order("category")
+        .order("sort_order");
+      return data || [];
+    },
+    enabled: !!selected?.user_id && dialogOpen,
+  });
+
   // Auto-select student from URL param
   useEffect(() => {
     const uid = searchParams.get("uid");
