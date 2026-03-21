@@ -391,7 +391,7 @@ const AdminDiet = () => {
             <DialogDescription className="text-xs sm:text-sm">Edite com clareza no mobile e desktop.</DialogDescription>
           </DialogHeader>
 
-          <ScrollArea className="flex-1 min-h-0 pr-0 sm:pr-4">
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1 sm:pr-4">
             <div className="space-y-4">
               {/* Add new diet button */}
               {!showNewForm && !editingId && (
