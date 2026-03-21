@@ -281,7 +281,8 @@ const AdminProtocol = () => {
                 ))}
               </TableBody>
             </Table>
-          )}
+          )
+          }
         </CardContent>
       </Card>
 

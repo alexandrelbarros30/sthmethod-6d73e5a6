@@ -1177,6 +1177,8 @@ const AdminStudents = () => {
         <CardContent className="px-0 sm:px-6">
           {isLoading ? (
             <p className="text-sm text-muted-foreground font-body px-4">Carregando...</p>
+          ) : searchTerm.trim().length < 2 ? (
+            <p className="text-sm text-muted-foreground text-center py-8 px-4">Digite pelo menos 2 caracteres para buscar alunos.</p>
           ) : (
             <>
               {/* Mobile card list */}

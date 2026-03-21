@@ -372,7 +372,8 @@ const AdminDiet = () => {
                 ))}
               </TableBody>
             </Table>
-          )}
+          )
+          }
         </CardContent>
       </Card>
 
