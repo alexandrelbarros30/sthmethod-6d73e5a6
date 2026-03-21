@@ -42,16 +42,19 @@ const StudentInfoHeader: React.FC<{ info: StudentInfoHeaderProps }> = ({ info })
       {hasMacros && (
         <div className="mt-4 flex flex-wrap gap-3">
           {info.totalEnergy && (
-            <MacroBadge label="Energia" value={`${info.totalEnergy} kcal`} />
+            <MacroBadge label="Energia" value={`${info.totalEnergy} kcal`} colorClass="bg-orange-500/15 text-orange-600 border-orange-500/20" />
           )}
           {info.protein && (
             <MacroBadge label="Proteína" value={`~${info.protein}g`} accent />
           )}
           {info.carbs && (
-            <MacroBadge label="Carboidratos" value={`~${info.carbs}g`} />
+            <MacroBadge label="Carboidratos" value={`~${info.carbs}g`} colorClass="bg-blue-500/15 text-blue-600 border-blue-500/20" />
           )}
           {info.fat && (
-            <MacroBadge label="Lipídios" value={`~${info.fat}g`} />
+            <MacroBadge label="Lipídios" value={`~${info.fat}g`} colorClass="bg-yellow-500/15 text-yellow-700 border-yellow-500/20" />
+          )}
+          {info.hydration && (
+            <MacroBadge label="Hidratação" value={info.hydration} colorClass="bg-cyan-500/15 text-cyan-600 border-cyan-500/20" />
           )}
         </div>
       )}
