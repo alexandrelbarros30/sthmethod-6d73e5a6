@@ -242,7 +242,7 @@ const Landing = () => {
       </nav>
 
       {/* Hero */}
-      <section className="relative min-h-screen flex items-center justify-center px-6 pt-20">
+      <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 pt-20">
         <div className="absolute inset-0 grid-pattern opacity-20" />
         {bgEnabled && (
           <img
@@ -271,11 +271,11 @@ const Landing = () => {
             Consultoria Online em Performance &amp; Saúde
           </motion.div>
 
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-display font-bold text-foreground leading-tight mb-6">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-display font-bold text-foreground leading-tight mb-6">
             {heroTitle}
           </h1>
 
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed">
             {heroSubtitle}
           </p>
 
@@ -296,11 +296,11 @@ const Landing = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="flex items-center justify-center gap-8 md:gap-16 mt-16"
+            className="flex items-center justify-center gap-6 sm:gap-8 md:gap-16 mt-12 sm:mt-16"
           >
             {stats.map((stat) => (
               <div key={stat.label} className="text-center">
-                <div className="text-2xl md:text-3xl font-display font-bold gradient-text">{stat.value}</div>
+                <div className="text-xl sm:text-2xl md:text-3xl font-display font-bold gradient-text">{stat.value}</div>
                 <div className="text-xs text-muted-foreground mt-1">{stat.label}</div>
               </div>
             ))}
@@ -319,14 +319,14 @@ const Landing = () => {
       <BodySimulatorSection />
 
       {/* Final CTA */}
-      <section className="py-24 px-6">
+      <section className="py-16 sm:py-24 px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="max-w-4xl mx-auto text-center glass rounded-3xl p-12 md:p-16 glow-border"
+          className="max-w-4xl mx-auto text-center glass rounded-2xl sm:rounded-3xl p-6 sm:p-12 md:p-16 glow-border"
         >
-          <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
             {ctaFinalTitle}
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto mb-8 text-lg">
@@ -348,8 +348,8 @@ const Landing = () => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-8 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+      <footer className="border-t border-border py-6 sm:py-8 px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 text-xs sm:text-sm text-muted-foreground text-center">
           {logoUrl ? (
             <img src={logoUrl} alt="Logo" className="h-6 object-contain" />
           ) : (

@@ -987,8 +987,8 @@ const AdminStudents = () => {
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <CardTitle className="font-display">Alunos cadastrados</CardTitle>
-            <div className="flex gap-2 flex-wrap">
+            <CardTitle className="font-display text-base sm:text-lg">Alunos cadastrados</CardTitle>
+            <div className="flex gap-2 flex-wrap items-center">
               <input
                 type="file"
                 ref={fileInputRef}
@@ -1085,8 +1085,9 @@ const AdminStudents = () => {
                 variant="outline"
                 disabled={importingStudents}
                 onClick={() => fileInputRef.current?.click()}
+                className="text-xs"
               >
-                <Upload className="w-4 h-4 mr-1" /> {importingStudents ? "Importando..." : "Importar Planilha"}
+                <Upload className="w-4 h-4 sm:mr-1" /> <span className="hidden sm:inline">{importingStudents ? "Importando..." : "Importar Planilha"}</span><span className="sm:hidden">{importingStudents ? "..." : "Importar"}</span>
               </Button>
               <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
                 <DialogContent className="max-w-lg">
@@ -1152,9 +1153,9 @@ const AdminStudents = () => {
               </Dialog>
             <Dialog open={createOpen} onOpenChange={(o) => { setCreateOpen(o); if (!o) { setForm({ ...emptyForm }); setActiveTab("dados"); setSavedTabs(new Set()); setSelected(null); } }}>
               <DialogTrigger asChild>
-                <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Criar Aluno</Button>
+                <Button size="sm" className="text-xs"><Plus className="w-4 h-4 sm:mr-1" /> <span className="hidden sm:inline">Criar Aluno</span><span className="sm:hidden">Criar</span></Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader><DialogTitle className="font-display">Novo Aluno</DialogTitle></DialogHeader>
                 {renderStudentFormFields(true)}
               </DialogContent>
@@ -1384,17 +1385,17 @@ const AdminStudents = () => {
                 </section>
                 <section>
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Atividade & Objetivo</h3>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="col-span-2"><span className="text-muted-foreground">Nível atividade (NEAT):</span> <span className="font-medium">{physicalActivityLevelOptions.find(o => o.value === (selectedFullProfile as any)?.physical_activity_level)?.label || "—"}</span></div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div className="col-span-1 sm:col-span-2"><span className="text-muted-foreground">Nível atividade (NEAT):</span> <span className="font-medium">{physicalActivityLevelOptions.find(o => o.value === (selectedFullProfile as any)?.physical_activity_level)?.label || "—"}</span></div>
                     <div><span className="text-muted-foreground">Atividade:</span> <span className="font-medium">{activityLabels[(selectedFullProfile as any)?.activity_type] || selected.physical_activity || "—"}</span></div>
                     <div><span className="text-muted-foreground">Cardio:</span> <span className="font-medium">{(selectedFullProfile as any)?.does_cardio === true ? "Sim" : (selectedFullProfile as any)?.does_cardio === false ? "Não" : "—"}</span></div>
-                    <div className="col-span-2"><span className="text-muted-foreground">Objetivo:</span> <span className="font-medium">{objectiveLabels[selected.objective] || selected.objective || "—"}</span></div>
+                    <div className="col-span-1 sm:col-span-2"><span className="text-muted-foreground">Objetivo:</span> <span className="font-medium">{objectiveLabels[selected.objective] || selected.objective || "—"}</span></div>
                   </div>
                   {/* Training details */}
                   {((selectedFullProfile as any)?.activity_type === "musculacao" || (selectedFullProfile as any)?.activity_type === "crossfit") && (
                     <div className="mt-3 p-3 rounded-lg bg-muted/30 border border-border/50">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Detalhes do treino</p>
-                      <div className="grid grid-cols-3 gap-2 text-sm">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
                         <div><span className="text-muted-foreground text-xs">Dias/sem:</span> <span className="font-medium">{(selectedFullProfile as any)?.training_days_per_week || "—"}</span></div>
                         <div><span className="text-muted-foreground text-xs">Duração:</span> <span className="font-medium">{(selectedFullProfile as any)?.training_duration_minutes ? `${(selectedFullProfile as any).training_duration_minutes} min` : "—"}</span></div>
                         <div><span className="text-muted-foreground text-xs">Intensidade:</span> <span className="font-medium">{trainingIntensityOptions.find(o => o.value === (selectedFullProfile as any)?.training_intensity)?.label || "—"}</span></div>
@@ -1405,7 +1406,7 @@ const AdminStudents = () => {
                   {(selectedFullProfile as any)?.does_cardio === true && (
                     <div className="mt-3 p-3 rounded-lg bg-muted/30 border border-border/50">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Detalhes do cardio</p>
-                      <div className="grid grid-cols-3 gap-2 text-sm">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
                         <div><span className="text-muted-foreground text-xs">Dias/sem:</span> <span className="font-medium">{(selectedFullProfile as any)?.cardio_days_per_week || "—"}</span></div>
                         <div><span className="text-muted-foreground text-xs">Duração:</span> <span className="font-medium">{(selectedFullProfile as any)?.cardio_duration_minutes ? `${(selectedFullProfile as any).cardio_duration_minutes} min` : "—"}</span></div>
                         <div><span className="text-muted-foreground text-xs">Intensidade:</span> <span className="font-medium">{cardioIntensityOptions.find(o => o.value === (selectedFullProfile as any)?.cardio_intensity)?.label || "—"}</span></div>
@@ -1420,7 +1421,7 @@ const AdminStudents = () => {
                     <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
                       <Calculator className="w-4 h-4" /> Macronutrientes
                     </h3>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       <div className="bg-muted/50 rounded-lg p-3 text-center">
                         <p className="text-xs text-muted-foreground">TMB</p>
                         <p className="font-bold text-sm">{(selectedFullProfile as any)?.bmr || "—"} kcal</p>
@@ -1503,19 +1504,19 @@ const AdminStudents = () => {
 
       {/* Edit Dialog */}
       <Dialog open={editOpen} onOpenChange={(o) => { setEditOpen(o); if (!o) { setActiveTab("dados"); setSavedTabs(new Set()); } }}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="font-display">Editar Aluno</DialogTitle>
+            <DialogTitle className="font-display text-base sm:text-lg">Editar Aluno</DialogTitle>
             {selected && (
               <div className="flex items-center gap-1.5 flex-wrap pt-2">
-                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditOpen(false); navigate(`/admin/training?uid=${selected.user_id}&return=edit`); }}>
-                  <Dumbbell className="w-3.5 h-3.5" /> Treino
+                <Button variant="outline" size="sm" className="h-7 sm:h-8 gap-1 sm:gap-1.5 text-[10px] sm:text-xs px-2 sm:px-3" onClick={() => { setEditOpen(false); navigate(`/admin/training?uid=${selected.user_id}&return=edit`); }}>
+                  <Dumbbell className="w-3 sm:w-3.5 h-3 sm:h-3.5" /> Treino
                 </Button>
-                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditOpen(false); navigate(`/admin/diet?uid=${selected.user_id}&return=edit`); }}>
-                  <UtensilsCrossed className="w-3.5 h-3.5" /> Dieta
+                <Button variant="outline" size="sm" className="h-7 sm:h-8 gap-1 sm:gap-1.5 text-[10px] sm:text-xs px-2 sm:px-3" onClick={() => { setEditOpen(false); navigate(`/admin/diet?uid=${selected.user_id}&return=edit`); }}>
+                  <UtensilsCrossed className="w-3 sm:w-3.5 h-3 sm:h-3.5" /> Dieta
                 </Button>
-                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditOpen(false); navigate(`/admin/protocol?uid=${selected.user_id}&return=edit`); }}>
-                  <Pill className="w-3.5 h-3.5" /> Protocolo
+                <Button variant="outline" size="sm" className="h-7 sm:h-8 gap-1 sm:gap-1.5 text-[10px] sm:text-xs px-2 sm:px-3" onClick={() => { setEditOpen(false); navigate(`/admin/protocol?uid=${selected.user_id}&return=edit`); }}>
+                  <Pill className="w-3 sm:w-3.5 h-3 sm:h-3.5" /> Protocolo
                 </Button>
               </div>
             )}

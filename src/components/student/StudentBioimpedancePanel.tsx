@@ -150,7 +150,7 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
       </div>
 
       {/* Key Metrics Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-4">
         <MetricCard
           icon={<Scale className="w-4 h-4" />}
           label="Peso"
@@ -182,7 +182,7 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
       </div>
 
       {/* Second row metrics */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-4">
         <MetricCard
           icon={<Activity className="w-4 h-4" />}
           label="Musc. Esquelética"
@@ -213,7 +213,7 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
 
       {/* Phase angle & water detail */}
       {(latest.phase_angle || latest.intracellular_water_l || latest.extracellular_water_l) && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
           {latest.phase_angle && (
             <MetricCard icon={<Activity className="w-4 h-4" />} label="Ângulo de Fase" value={`${Number(latest.phase_angle).toFixed(2)}°`} color="text-emerald-500" />
           )}
@@ -236,8 +236,8 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              <div className="w-48 h-48">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-40 h-40 sm:w-48 sm:h-48">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -331,7 +331,7 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
               {profile.bmr && (
                 <MiniStat label="TMB (Perfil)" value={`${profile.bmr} kcal`} />
               )}
@@ -388,10 +388,10 @@ const MetricCard = ({
   delta?: React.ReactNode;
   color: string;
 }) => (
-  <div className="bg-muted/50 rounded-xl p-3 text-center border border-border/30">
+  <div className="bg-muted/50 rounded-xl p-2 sm:p-3 text-center border border-border/30">
     <div className={`flex items-center justify-center gap-1 mb-1 ${color}`}>
       {icon}
-      <span className="text-[10px] font-medium uppercase tracking-wide">{label}</span>
+      <span className="text-[9px] sm:text-[10px] font-medium uppercase tracking-wide">{label}</span>
     </div>
     <p className="text-sm font-bold text-foreground">{value}</p>
     {delta && <div className="mt-0.5">{delta}</div>}

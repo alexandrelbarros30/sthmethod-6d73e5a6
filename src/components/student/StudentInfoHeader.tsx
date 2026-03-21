@@ -40,7 +40,7 @@ const StudentInfoHeader: React.FC<{ info: StudentInfoHeaderProps }> = ({ info })
 
       {/* Macros summary */}
       {hasMacros && (
-        <div className="mt-4 flex flex-wrap gap-3">
+        <div className="mt-4 flex flex-wrap gap-2 sm:gap-3">
           {info.totalEnergy && (
             <MacroBadge label="Energia" value={`${info.totalEnergy} kcal`} colorClass="bg-orange-500/15 text-orange-600 border-orange-500/20" />
           )}
@@ -81,7 +81,7 @@ const MacroBadge = ({
   colorClass?: string;
 }) => (
   <div
-    className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${
+    className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-medium border ${
       colorClass
         ? colorClass
         : accent
@@ -89,8 +89,8 @@ const MacroBadge = ({
         : "bg-muted text-muted-foreground border-border"
     }`}
   >
-    <span className="block text-[10px] uppercase tracking-wider opacity-70">{label}</span>
-    <span className="font-bold text-sm">{value}</span>
+    <span className="block text-[9px] sm:text-[10px] uppercase tracking-wider opacity-70">{label}</span>
+    <span className="font-bold text-xs sm:text-sm">{value}</span>
   </div>
 );
 

@@ -419,52 +419,52 @@ const StudentOverview = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           {weight && (
             <Card className="border-gold/20 bg-gold/[0.03] shadow-[0_0_16px_-6px_hsl(var(--gold)/0.15)]">
-              <CardContent className="py-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center shrink-0 ring-1 ring-gold/20">
+              <CardContent className="py-3 sm:py-4 flex items-center gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gold/10 flex items-center justify-center shrink-0 ring-1 ring-gold/20">
                   <Scale className="w-5 h-5 text-gold" />
                 </div>
                 <div>
                   <p className="text-xs text-gold-dark dark:text-gold-light/70">Peso</p>
-                  <p className="text-lg font-bold text-foreground font-display">{weight} <span className="text-xs font-normal text-muted-foreground">kg</span></p>
+                  <p className="text-sm sm:text-lg font-bold text-foreground font-display">{weight} <span className="text-xs font-normal text-muted-foreground">kg</span></p>
                 </div>
               </CardContent>
             </Card>
           )}
           {tdee && (
             <Card className="border-gold/20 bg-gold/[0.03] shadow-[0_0_16px_-6px_hsl(var(--gold)/0.15)]">
-              <CardContent className="py-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center shrink-0 ring-1 ring-gold/20">
+              <CardContent className="py-3 sm:py-4 flex items-center gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gold/10 flex items-center justify-center shrink-0 ring-1 ring-gold/20">
                   <Flame className="w-5 h-5 text-gold" />
                 </div>
                 <div>
                   <p className="text-xs text-gold-dark dark:text-gold-light/70">Gasto (TDEE)</p>
-                  <p className="text-lg font-bold text-foreground font-display">{Math.round(tdee)} <span className="text-xs font-normal text-muted-foreground">kcal</span></p>
+                  <p className="text-sm sm:text-lg font-bold text-foreground font-display">{Math.round(tdee)} <span className="text-xs font-normal text-muted-foreground">kcal</span></p>
                 </div>
               </CardContent>
             </Card>
           )}
           {nutritionTotals.kcal > 0 && (
             <Card className="border-gold/20 bg-gold/[0.03] shadow-[0_0_16px_-6px_hsl(var(--gold)/0.15)]">
-              <CardContent className="py-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center shrink-0 ring-1 ring-gold/20">
+              <CardContent className="py-3 sm:py-4 flex items-center gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gold/10 flex items-center justify-center shrink-0 ring-1 ring-gold/20">
                   <Zap className="w-5 h-5 text-gold" />
                 </div>
                 <div>
                   <p className="text-xs text-gold-dark dark:text-gold-light/70">Consumo</p>
-                  <p className="text-lg font-bold text-foreground font-display">{Math.round(nutritionTotals.kcal)} <span className="text-xs font-normal text-muted-foreground">kcal</span></p>
+                  <p className="text-sm sm:text-lg font-bold text-foreground font-display">{Math.round(nutritionTotals.kcal)} <span className="text-xs font-normal text-muted-foreground">kcal</span></p>
                 </div>
               </CardContent>
             </Card>
           )}
           {strategy && (
             <Card className="border-gold/20 bg-gold/[0.03] shadow-[0_0_16px_-6px_hsl(var(--gold)/0.15)]">
-              <CardContent className="py-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center shrink-0 ring-1 ring-gold/20">
+              <CardContent className="py-3 sm:py-4 flex items-center gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gold/10 flex items-center justify-center shrink-0 ring-1 ring-gold/20">
                   <Target className="w-5 h-5 text-gold" />
                 </div>
                 <div>
                   <p className="text-xs text-gold-dark dark:text-gold-light/70">Estratégia</p>
-                  <p className={`text-base font-bold font-display ${strategyColor}`}>{strategy}</p>
+                  <p className={`text-sm sm:text-base font-bold font-display ${strategyColor}`}>{strategy}</p>
                 </div>
               </CardContent>
             </Card>
@@ -481,18 +481,18 @@ const StudentOverview = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-3 rounded-xl bg-gold/[0.06] border border-gold/15">
-                <p className="text-2xl font-bold text-gold font-display">{proteinPerKg}</p>
-                <p className="text-xs text-muted-foreground mt-1">Proteína (g/kg)</p>
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+              <div className="text-center p-2 sm:p-3 rounded-xl bg-gold/[0.06] border border-gold/15">
+                <p className="text-lg sm:text-2xl font-bold text-gold font-display">{proteinPerKg}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Proteína (g/kg)</p>
               </div>
-              <div className="text-center p-3 rounded-xl bg-gold/[0.06] border border-gold/15">
-                <p className="text-2xl font-bold text-gold font-display">{carbsPerKg}</p>
-                <p className="text-xs text-muted-foreground mt-1">Carboidrato (g/kg)</p>
+              <div className="text-center p-2 sm:p-3 rounded-xl bg-gold/[0.06] border border-gold/15">
+                <p className="text-lg sm:text-2xl font-bold text-gold font-display">{carbsPerKg}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Carboidrato (g/kg)</p>
               </div>
-              <div className="text-center p-3 rounded-xl bg-gold/[0.06] border border-gold/15">
-                <p className="text-2xl font-bold text-gold font-display">{fatPerKg}</p>
-                <p className="text-xs text-muted-foreground mt-1">Gordura (g/kg)</p>
+              <div className="text-center p-2 sm:p-3 rounded-xl bg-gold/[0.06] border border-gold/15">
+                <p className="text-lg sm:text-2xl font-bold text-gold font-display">{fatPerKg}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Gordura (g/kg)</p>
               </div>
             </div>
             {calorieDiff !== null && (

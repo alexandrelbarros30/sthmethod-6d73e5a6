@@ -35,13 +35,13 @@ const EvolutionMacroDisplay = ({ profile }: Props) => {
         </p>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-          <MacroCard icon={<Scale className="w-4 h-4" />} label="Peso" value={`${Number(profile.weight).toFixed(1)} kg`} color="text-foreground" />
-          <MacroCard icon={<Flame className="w-4 h-4" />} label="TMB" value={`${profile.bmr} kcal`} color="text-destructive" />
-          <MacroCard icon={<Zap className="w-4 h-4" />} label="TDEE" value={`${profile.tdee} kcal`} color="text-warning" />
-          <MacroCard icon={<Activity className="w-4 h-4" />} label="Meta Calórica" value={`${profile.daily_calories} kcal`} color="text-primary" />
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-4 mb-3">
+          <MacroCard icon={<Scale className="w-3.5 sm:w-4 h-3.5 sm:h-4" />} label="Peso" value={`${Number(profile.weight).toFixed(1)} kg`} color="text-foreground" />
+          <MacroCard icon={<Flame className="w-3.5 sm:w-4 h-3.5 sm:h-4" />} label="TMB" value={`${profile.bmr} kcal`} color="text-destructive" />
+          <MacroCard icon={<Zap className="w-3.5 sm:w-4 h-3.5 sm:h-4" />} label="TDEE" value={`${profile.tdee} kcal`} color="text-warning" />
+          <MacroCard icon={<Activity className="w-3.5 sm:w-4 h-3.5 sm:h-4" />} label="Meta Calórica" value={`${profile.daily_calories} kcal`} color="text-primary" />
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
           <MacroCard icon={<Droplets className="w-4 h-4" />} label="Proteína" value={`${profile.protein_g}g`} color="text-info" />
           <MacroCard icon={<Zap className="w-4 h-4" />} label="Carboidratos" value={`${profile.carbs_g}g`} color="text-success" />
           <MacroCard icon={<Flame className="w-4 h-4" />} label="Gordura" value={`${profile.fat_g}g`} color="text-warning" />
@@ -52,12 +52,12 @@ const EvolutionMacroDisplay = ({ profile }: Props) => {
 };
 
 const MacroCard = ({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) => (
-  <div className="bg-muted/50 rounded-lg p-3 text-center">
+  <div className="bg-muted/50 rounded-lg p-2 sm:p-3 text-center">
     <div className={`flex items-center justify-center gap-1 mb-1 ${color}`}>
       {icon}
-      <span className="text-[10px] font-medium uppercase tracking-wide">{label}</span>
+      <span className="text-[9px] sm:text-[10px] font-medium uppercase tracking-wide">{label}</span>
     </div>
-    <p className="text-sm font-bold text-foreground">{value}</p>
+    <p className="text-xs sm:text-sm font-bold text-foreground">{value}</p>
   </div>
 );
 
