@@ -1153,9 +1153,9 @@ const AdminStudents = () => {
               </Dialog>
             <Dialog open={createOpen} onOpenChange={(o) => { setCreateOpen(o); if (!o) { setForm({ ...emptyForm }); setActiveTab("dados"); setSavedTabs(new Set()); setSelected(null); } }}>
               <DialogTrigger asChild>
-                <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Criar Aluno</Button>
+                <Button size="sm" className="text-xs"><Plus className="w-4 h-4 sm:mr-1" /> <span className="hidden sm:inline">Criar Aluno</span><span className="sm:hidden">Criar</span></Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader><DialogTitle className="font-display">Novo Aluno</DialogTitle></DialogHeader>
                 {renderStudentFormFields(true)}
               </DialogContent>
