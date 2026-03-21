@@ -236,8 +236,8 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              <div className="w-48 h-48">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-40 h-40 sm:w-48 sm:h-48">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
