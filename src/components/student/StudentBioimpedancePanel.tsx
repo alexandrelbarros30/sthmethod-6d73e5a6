@@ -36,7 +36,7 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
     queryKey: ["bioimpedance-logs", userId],
     queryFn: async () => {
       const { data } = await supabase
-        .from("bioimpedance_logs" as any)
+        .from("bioimpedance_logs")
         .select("*")
         .eq("user_id", userId!)
         .order("logged_at", { ascending: true })

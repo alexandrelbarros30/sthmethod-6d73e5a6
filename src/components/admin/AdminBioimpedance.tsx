@@ -175,7 +175,7 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
 
   const handleDelete = async (id: string) => {
     try {
-      const { error } = await (supabase.from("bioimpedance_logs" as any) as any)
+      const { error } = await supabase.from("bioimpedance_logs")
         .delete()
         .eq("id", id);
       if (error) throw error;
