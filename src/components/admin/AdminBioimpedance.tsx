@@ -201,7 +201,7 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="visualizar" className="w-full">
+        <Tabs defaultValue="visualizar" className="w-full flex-1 flex flex-col min-h-0 overflow-hidden">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="visualizar" className="flex items-center gap-1.5">
               <BarChart3 className="w-3.5 h-3.5" />
