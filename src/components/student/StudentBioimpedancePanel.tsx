@@ -297,7 +297,7 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
       )}
 
       {/* Body Silhouette + or Segmental Bar Chart */}
-      {(seg mentalData.length > 0 || latest) && (
+      {(segmentalData.length > 0 || latest) && (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-display flex items-center gap-2">
