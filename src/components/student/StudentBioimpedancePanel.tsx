@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import BodySilhouette from "@/components/shared/BodySilhouette";
 import { Badge } from "@/components/ui/badge";
 import {
   Activity, Droplets, Flame, Scale, Heart, Brain, TrendingUp, TrendingDown, Minus,
