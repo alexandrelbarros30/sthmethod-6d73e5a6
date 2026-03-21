@@ -618,10 +618,9 @@ const AdminDiet = () => {
                                 </div>
                               )}
 
-                              {/* Preview toggle */}
+                              {/* Preview toggle - identical to student view */}
                               {previewDiet === diet.id && (
-                                <div className="mt-3 p-4 rounded-lg bg-muted/50 border border-border space-y-3">
-                                  <p className="text-sm font-semibold text-foreground mb-2">Visualização completa:</p>
+                                <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border">
                                   {(() => {
                                     const age = selected?.birth_date
                                       ? Math.floor((Date.now() - new Date(selected.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
@@ -642,16 +641,14 @@ const AdminDiet = () => {
                                       }} />
                                     );
                                   })()}
+                                  {diet.pdf_url && (
+                                    <iframe src={diet.pdf_url} className="w-full h-[400px] rounded-lg border border-border mb-3" title="Dieta PDF" />
+                                  )}
                                   {diet.content && (
                                     /<[a-z][\s\S]*>/i.test(diet.content)
                                       ? <RichContentRenderer content={diet.content} />
                                       : <DietContentRenderer content={diet.content} showHeader={false} />
                                   )}
-                                </div>
-                              )}
-                              {previewDiet === diet.id && diet.pdf_url && (
-                                <div className="mt-3">
-                                  <iframe src={diet.pdf_url} className="w-full h-[400px] rounded-lg border border-border" title="Dieta PDF" />
                                 </div>
                               )}
                             </div>
