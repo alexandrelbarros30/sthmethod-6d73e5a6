@@ -425,7 +425,7 @@ const StudentOverview = () => {
                 </div>
                 <div>
                   <p className="text-xs text-gold-dark dark:text-gold-light/70">Peso</p>
-                  <p className="text-lg font-bold text-foreground font-display">{weight} <span className="text-xs font-normal text-muted-foreground">kg</span></p>
+                  <p className="text-sm sm:text-lg font-bold text-foreground font-display">{weight} <span className="text-xs font-normal text-muted-foreground">kg</span></p>
                 </div>
               </CardContent>
             </Card>
