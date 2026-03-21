@@ -144,6 +144,9 @@ const ConsultorDashboard = () => {
                     <Link to={`/consultor/diet?student=${s.user_id}`} className="p-2 rounded hover:bg-accent"><Salad className="w-4 h-4" /></Link>
                     <Link to={`/consultor/training?student=${s.user_id}`} className="p-2 rounded hover:bg-accent"><Dumbbell className="w-4 h-4" /></Link>
                     <Link to={`/consultor/protocol?student=${s.user_id}`} className="p-2 rounded hover:bg-accent"><FlaskConical className="w-4 h-4" /></Link>
+                    <Button variant="ghost" size="icon" onClick={() => { setSelected(s); setBioOpen(true); }} title="Bioimpedância">
+                      <Activity className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
               ))}
