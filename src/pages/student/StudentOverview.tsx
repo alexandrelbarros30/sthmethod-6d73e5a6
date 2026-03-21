@@ -438,7 +438,7 @@ const StudentOverview = () => {
                 </div>
                 <div>
                   <p className="text-xs text-gold-dark dark:text-gold-light/70">Gasto (TDEE)</p>
-                  <p className="text-lg font-bold text-foreground font-display">{Math.round(tdee)} <span className="text-xs font-normal text-muted-foreground">kcal</span></p>
+                  <p className="text-sm sm:text-lg font-bold text-foreground font-display">{Math.round(tdee)} <span className="text-xs font-normal text-muted-foreground">kcal</span></p>
                 </div>
               </CardContent>
             </Card>
