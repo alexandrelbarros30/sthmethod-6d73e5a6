@@ -16,7 +16,6 @@ import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff } from "luci
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const AdminProtocol = () => {
@@ -292,7 +291,7 @@ const AdminProtocol = () => {
       }}>
         <DialogContent
           className={isMobile
-            ? "!inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 !w-screen !max-w-none !h-[100dvh] !max-h-none rounded-none border-0 p-2"
+            ? "!inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 !w-screen !max-w-none !h-[100dvh] !max-h-none rounded-none border-0 p-2 !flex !flex-col overflow-hidden"
             : "w-[calc(100vw-0.75rem)] max-w-2xl max-h-[94dvh] min-h-0 overflow-hidden !flex !flex-col p-3 sm:p-6"
           }
         >
@@ -301,7 +300,7 @@ const AdminProtocol = () => {
             <DialogDescription className="text-xs sm:text-sm">Edite com clareza no mobile e desktop.</DialogDescription>
           </DialogHeader>
 
-          <ScrollArea className="flex-1 min-h-0 pr-0 sm:pr-4">
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1 sm:pr-4">
             <div className="space-y-6">
               {/* Protocol Items Manager (medications/supplements) */}
               {selected?.user_id && (
@@ -421,7 +420,7 @@ const AdminProtocol = () => {
                                 </div>
                               )}
                             </div>
-                            <div className="flex flex-col gap-1 shrink-0">
+                            <div className="flex flex-row sm:flex-col gap-1 shrink-0 flex-wrap justify-end">
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -460,7 +459,7 @@ const AdminProtocol = () => {
                 <p className="text-sm text-muted-foreground text-center py-6">Nenhum protocolo cadastrado ainda.</p>
               )}
             </div>
-          </ScrollArea>
+          </div>
         </DialogContent>
       </Dialog>
 

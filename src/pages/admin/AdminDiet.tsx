@@ -18,7 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -382,7 +382,7 @@ const AdminDiet = () => {
       }}>
         <DialogContent
           className={isMobile
-            ? "!inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 !w-screen !max-w-none !h-[100dvh] !max-h-none rounded-none border-0 p-2 !flex !flex-col"
+            ? "!inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 !w-screen !max-w-none !h-[100dvh] !max-h-none rounded-none border-0 p-2 !flex !flex-col overflow-hidden"
             : "w-[calc(100vw-0.75rem)] max-w-2xl max-h-[94dvh] min-h-0 overflow-hidden !flex !flex-col p-3 sm:p-6"
           }
         >
@@ -391,7 +391,7 @@ const AdminDiet = () => {
             <DialogDescription className="text-xs sm:text-sm">Edite com clareza no mobile e desktop.</DialogDescription>
           </DialogHeader>
 
-          <ScrollArea className="flex-1 min-h-0 pr-0 sm:pr-4">
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1 sm:pr-4">
             <div className="space-y-4">
               {/* Add new diet button */}
               {!showNewForm && !editingId && (
@@ -441,7 +441,7 @@ const AdminDiet = () => {
                     {/* Macronutrientes */}
                     <div>
                       <Label className="font-body text-xs font-semibold">Macronutrientes (opcional)</Label>
-                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-1">
+                      <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 mt-1">
                         <div>
                           <Label className="font-body text-[10px] text-muted-foreground">Energia (kcal)</Label>
                           <Input type="number" placeholder="0" value={newEnergyKcal} onChange={(e) => setNewEnergyKcal(e.target.value)} />
@@ -514,7 +514,7 @@ const AdminDiet = () => {
                             {/* Macronutrientes */}
                             <div>
                               <Label className="font-body text-xs font-semibold">Macronutrientes</Label>
-                              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-1">
+                              <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 mt-1">
                                 <div>
                                   <Label className="font-body text-[10px] text-muted-foreground">Energia (kcal)</Label>
                                   <Input type="number" placeholder="0" value={editEnergyKcal} onChange={(e) => setEditEnergyKcal(e.target.value)} />
@@ -652,7 +652,7 @@ const AdminDiet = () => {
                                 </div>
                               )}
                             </div>
-                            <div className="flex flex-col gap-1 shrink-0 items-center">
+                            <div className="flex flex-row sm:flex-col gap-1 shrink-0 items-center flex-wrap justify-end">
                               <div className="flex items-center gap-1" title={diet.visible ? "Visível para o aluno" : "Oculta para o aluno"}>
                                 <Switch
                                   checked={diet.visible !== false}
@@ -707,7 +707,7 @@ const AdminDiet = () => {
                 <p className="text-sm text-muted-foreground text-center py-6">Nenhuma dieta cadastrada ainda.</p>
               )}
             </div>
-          </ScrollArea>
+          </div>
         </DialogContent>
       </Dialog>
 
