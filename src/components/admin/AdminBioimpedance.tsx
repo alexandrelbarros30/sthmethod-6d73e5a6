@@ -193,7 +193,7 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); onOpenChange(v); }}>
-      <DialogContent className="max-w-2xl max-h-[90vh]">
+      <DialogContent className="max-w-2xl max-h-[85dvh] w-[calc(100vw-1rem)] flex flex-col overflow-hidden p-3 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Activity className="w-5 h-5 text-primary" />
@@ -201,7 +201,7 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="visualizar" className="w-full">
+        <Tabs defaultValue="visualizar" className="w-full flex-1 flex flex-col min-h-0 overflow-hidden">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="visualizar" className="flex items-center gap-1.5">
               <BarChart3 className="w-3.5 h-3.5" />
@@ -213,14 +213,14 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="visualizar">
-            <ScrollArea className="max-h-[65vh] pr-4">
+          <TabsContent value="visualizar" className="flex-1 min-h-0 overflow-hidden mt-2">
+            <div className="h-full overflow-y-auto pr-1 max-h-[calc(85dvh-8rem)]">
               <StudentBioimpedancePanel userId={userId} />
-            </ScrollArea>
+            </div>
           </TabsContent>
 
-          <TabsContent value="editar">
-            <ScrollArea className="max-h-[65vh] pr-4">
+          <TabsContent value="editar" className="flex-1 min-h-0 overflow-hidden mt-2">
+            <div className="h-full overflow-y-auto pr-1 max-h-[calc(85dvh-8rem)]">
               <div className="space-y-4">
                 {/* Date */}
                 <div>
@@ -350,7 +350,7 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
                   </p>
                 )}
               </div>
-            </ScrollArea>
+            </div>
           </TabsContent>
         </Tabs>
       </DialogContent>
