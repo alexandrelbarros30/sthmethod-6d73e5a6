@@ -305,7 +305,7 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
                     {saving ? "Salvando..." : editingId ? "Atualizar Registro" : "Salvar Registro"}
                   </Button>
                   {editingId && (
-                    <Button variant="outline" onClick={resetForm}>Cancelar edição</Button>
+                    <Button variant="outline" onClick={() => resetForm()}>Cancelar edição</Button>
                   )}
                 </div>
 
