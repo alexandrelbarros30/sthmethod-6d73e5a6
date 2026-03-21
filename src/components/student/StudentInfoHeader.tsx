@@ -40,7 +40,7 @@ const StudentInfoHeader: React.FC<{ info: StudentInfoHeaderProps }> = ({ info })
 
       {/* Macros summary */}
       {hasMacros && (
-        <div className="mt-4 flex flex-wrap gap-3">
+        <div className="mt-4 flex flex-wrap gap-2 sm:gap-3">
           {info.totalEnergy && (
             <MacroBadge label="Energia" value={`${info.totalEnergy} kcal`} colorClass="bg-orange-500/15 text-orange-600 border-orange-500/20" />
           )}
