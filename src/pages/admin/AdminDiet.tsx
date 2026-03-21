@@ -573,6 +573,36 @@ const AdminDiet = () => {
                                   </Badge>
                                 )}
                               </div>
+                              {/* Inline macro badges */}
+                              {(diet.energy_kcal || diet.protein_g || diet.carbs_g || diet.fat_g || diet.hydration_l) && (
+                                <div className="flex flex-wrap gap-1.5 mb-1">
+                                  {diet.energy_kcal && (
+                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-500/10 text-orange-600 border border-orange-500/20">
+                                      🔥 {diet.energy_kcal} kcal
+                                    </span>
+                                  )}
+                                  {diet.protein_g && (
+                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
+                                      💪 {diet.protein_g}g P
+                                    </span>
+                                  )}
+                                  {diet.carbs_g && (
+                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                                      🍞 {diet.carbs_g}g C
+                                    </span>
+                                  )}
+                                  {diet.fat_g && (
+                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-yellow-500/10 text-yellow-700 border border-yellow-500/20">
+                                      🥑 {diet.fat_g}g G
+                                    </span>
+                                  )}
+                                  {diet.hydration_l && (
+                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-500/10 text-cyan-600 border border-cyan-500/20">
+                                      💧 {diet.hydration_l}L
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                               {diet.pdf_url && (
                                 <a href={diet.pdf_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mb-1">
                                   <FileText className="w-3 h-3" /> Ver PDF
