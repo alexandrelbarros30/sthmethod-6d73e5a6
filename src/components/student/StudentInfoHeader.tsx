@@ -16,7 +16,7 @@ export interface StudentInfoHeaderProps {
 
 const StudentInfoHeader: React.FC<{ info: StudentInfoHeaderProps }> = ({ info }) => {
   const hasInfo = info.name || info.age || info.weight || info.height || info.objective;
-  const hasMacros = info.totalEnergy || info.protein || info.carbs || info.fat;
+  const hasMacros = info.totalEnergy || info.protein || info.carbs || info.fat || info.hydration;
   if (!hasInfo && !hasMacros) return null;
 
   return (
