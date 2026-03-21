@@ -86,7 +86,7 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
     queryKey: ["bioimpedance-logs", userId],
     queryFn: async () => {
       const { data } = await supabase
-        .from("bioimpedance_logs" as any)
+        .from("bioimpedance_logs")
         .select("*")
         .eq("user_id", userId)
         .order("logged_at", { ascending: false })
@@ -153,14 +153,14 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
       payload.metabolic_age = form.metabolic_age ? parseInt(form.metabolic_age) : null;
 
       if (editingId) {
-        const { error } = await (supabase.from("bioimpedance_logs" as any) as any)
-          .update(payload)
+        const { error } = await supabase.from("bioimpedance_logs")
+          .update(payload as any)
           .eq("id", editingId);
         if (error) throw error;
         toast.success("Registro atualizado!");
       } else {
-        const { error } = await (supabase.from("bioimpedance_logs" as any) as any)
-          .insert(payload);
+        const { error } = await supabase.from("bioimpedance_logs")
+          .insert(payload as any);
         if (error) throw error;
         toast.success("Bioimpedância registrada!");
       }
@@ -175,7 +175,7 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
 
   const handleDelete = async (id: string) => {
     try {
-      const { error } = await (supabase.from("bioimpedance_logs" as any) as any)
+      const { error } = await supabase.from("bioimpedance_logs")
         .delete()
         .eq("id", id);
       if (error) throw error;
