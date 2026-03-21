@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Video, Dumbbell, Timer, ChevronDown, ChevronUp, Play, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import StudentInfoHeader from "@/components/student/StudentInfoHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const getEmbedUrl = (url: string) => {
