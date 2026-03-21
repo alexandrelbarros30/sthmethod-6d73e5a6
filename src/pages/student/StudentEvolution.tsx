@@ -299,6 +299,12 @@ const StudentEvolution = () => {
       </Card>
 
       <EvolutionWeightHistory weightLogs={weightLogs || []} />
+
+      {/* Bioimpedance Panel */}
+      <div className="mb-6">
+        <StudentBioimpedancePanel />
+      </div>
+
       <EvolutionImageHistory allImages={allImages || []} />
     </DashboardLayout>
   );
