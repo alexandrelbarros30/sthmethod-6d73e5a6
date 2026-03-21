@@ -1289,6 +1289,9 @@ const AdminStudents = () => {
                                 <DropdownMenuItem onClick={() => { setSelected(s); setImagesOpen(true); }}>
                                   <Image className="w-4 h-4 mr-2" /> Fotos corporais
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => { setSelected(s); setBioOpen(true); }}>
+                                  <Activity className="w-4 h-4 mr-2" /> Bioimpedância
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => openSub(s)}>
                                   <CreditCard className="w-4 h-4 mr-2" /> Assinatura
                                 </DropdownMenuItem>
