@@ -220,8 +220,7 @@ const AdminProtocol = () => {
         <CardContent className="space-y-2">
           {search.trim().length < 2 ? (
             <p className="text-sm text-muted-foreground text-center py-8">Digite pelo menos 2 caracteres para buscar alunos.</p>
-          ) :
-          {isMobile ? (
+          ) : isMobile ? (
             filteredStudents.length > 0 ? (
               filteredStudents.map((s: any) => (
                 <div key={s.user_id} className="rounded-lg border border-border bg-card p-3">
@@ -281,8 +280,7 @@ const AdminProtocol = () => {
                 ))}
               </TableBody>
             </Table>
-          )
-          }
+          )}
         </CardContent>
       </Card>
 
