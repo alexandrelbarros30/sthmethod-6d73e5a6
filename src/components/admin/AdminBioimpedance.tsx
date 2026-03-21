@@ -219,8 +219,8 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
             </div>
           </TabsContent>
 
-          <TabsContent value="editar">
-            <ScrollArea className="max-h-[65vh] pr-4">
+          <TabsContent value="editar" className="flex-1 min-h-0 overflow-hidden mt-2">
+            <div className="h-full overflow-y-auto pr-1 max-h-[calc(85dvh-8rem)]">
               <div className="space-y-4">
                 {/* Date */}
                 <div>
