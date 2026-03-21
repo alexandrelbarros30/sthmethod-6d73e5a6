@@ -331,7 +331,7 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
               {profile.bmr && (
                 <MiniStat label="TMB (Perfil)" value={`${profile.bmr} kcal`} />
               )}
