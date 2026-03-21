@@ -83,6 +83,7 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
   const [form, setForm] = useState<FormData>({ ...emptyForm });
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
   const { data: logs, isLoading } = useQuery({
     queryKey: ["bioimpedance-logs", userId],
@@ -98,10 +99,38 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
     enabled: open && !!userId,
   });
 
-  const resetForm = () => {
-    setForm({ ...emptyForm, logged_at: new Date().toISOString().split("T")[0] });
+  // Fetch profile to auto-fill weight and BMR
+  const { data: studentProfile } = useQuery({
+    queryKey: ["bio-profile-autofill", userId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("weight, bmr")
+        .eq("user_id", userId)
+        .single();
+      return data;
+    },
+    enabled: open && !!userId,
+  });
+
+  const resetForm = (applyProfile = true) => {
+    const base = { ...emptyForm, logged_at: new Date().toISOString().split("T")[0] };
+    if (applyProfile && studentProfile) {
+      if (studentProfile.weight) base.total_weight = String(studentProfile.weight);
+      if (studentProfile.bmr) base.bmr_kcal = String(studentProfile.bmr);
+    }
+    setForm(base);
     setEditingId(null);
   };
+
+  // Auto-fill on first open when profile loads
+  if (studentProfile && !profileLoaded && !editingId && !form.total_weight) {
+    setProfileLoaded(true);
+    const updated = { ...form };
+    if (studentProfile.weight) updated.total_weight = String(studentProfile.weight);
+    if (studentProfile.bmr) updated.bmr_kcal = String(studentProfile.bmr);
+    setForm(updated);
+  }
 
   const loadForEdit = (log: any) => {
     setEditingId(log.id);
@@ -192,7 +221,7 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
   const setField = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }));
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); onOpenChange(v); }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) { resetForm(); setProfileLoaded(false); } onOpenChange(v); }}>
       <DialogContent className="max-w-2xl max-h-[85dvh] w-[calc(100vw-1rem)] flex flex-col overflow-hidden p-3 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -276,7 +305,7 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
                     {saving ? "Salvando..." : editingId ? "Atualizar Registro" : "Salvar Registro"}
                   </Button>
                   {editingId && (
-                    <Button variant="outline" onClick={resetForm}>Cancelar edição</Button>
+                    <Button variant="outline" onClick={() => resetForm()}>Cancelar edição</Button>
                   )}
                 </div>
 

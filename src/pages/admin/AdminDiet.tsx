@@ -613,15 +613,15 @@ const AdminDiet = () => {
                                 </a>
                               )}
                               {diet.content && (
-                                <div className="text-xs text-muted-foreground line-clamp-3">
+                                <div className="text-sm text-muted-foreground line-clamp-4 leading-relaxed">
                                   <RichContentRenderer content={diet.content} />
                                 </div>
                               )}
 
                               {/* Preview toggle */}
                               {previewDiet === diet.id && (
-                                <div className="mt-3 p-3 rounded-md bg-muted/50 border border-border space-y-2">
-                                  <p className="text-xs font-semibold text-foreground mb-2">Visualização completa:</p>
+                                <div className="mt-3 p-4 rounded-lg bg-muted/50 border border-border space-y-3">
+                                  <p className="text-sm font-semibold text-foreground mb-2">Visualização completa:</p>
                                   {(() => {
                                     const age = selected?.birth_date
                                       ? Math.floor((Date.now() - new Date(selected.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
