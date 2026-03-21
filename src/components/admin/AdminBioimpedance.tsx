@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Activity, Trash2, Edit2, BarChart3 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -84,6 +83,7 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [activeTab, setActiveTab] = useState("visualizar");
 
   const { data: logs, isLoading } = useQuery({
     queryKey: ["bioimpedance-logs", userId],
@@ -99,7 +99,6 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
     enabled: open && !!userId,
   });
 
-  // Fetch profile to auto-fill weight and BMR
   const { data: studentProfile } = useQuery({
     queryKey: ["bio-profile-autofill", userId],
     queryFn: async () => {
@@ -123,7 +122,6 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
     setEditingId(null);
   };
 
-  // Auto-fill on first open when profile loads
   if (studentProfile && !profileLoaded && !editingId && !form.total_weight) {
     setProfileLoaded(true);
     const updated = { ...form };
@@ -156,6 +154,8 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
       notes: log.notes || "",
       logged_at: log.logged_at ? new Date(log.logged_at).toISOString().split("T")[0] : "",
     });
+    // Switch to edit tab automatically
+    setActiveTab("editar");
   };
 
   const handleSave = async () => {
@@ -198,6 +198,8 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
 
       qc.invalidateQueries({ queryKey: ["bioimpedance-logs", userId] });
       resetForm();
+      // Switch to view tab after saving
+      setActiveTab("visualizar");
     } catch (err: any) {
       toast.error("Erro: " + (err.message || "Tente novamente"));
     }
@@ -221,7 +223,7 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
   const setField = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }));
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) { resetForm(); setProfileLoaded(false); } onOpenChange(v); }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) { resetForm(); setProfileLoaded(false); setActiveTab("visualizar"); } onOpenChange(v); }}>
       <DialogContent className="max-w-2xl max-h-[85dvh] w-[calc(100vw-1rem)] flex flex-col overflow-hidden p-3 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -230,7 +232,7 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="visualizar" className="w-full flex-1 flex flex-col min-h-0 overflow-hidden">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1 flex flex-col min-h-0 overflow-hidden">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="visualizar" className="flex items-center gap-1.5">
               <BarChart3 className="w-3.5 h-3.5" />
@@ -238,7 +240,7 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
             </TabsTrigger>
             <TabsTrigger value="editar" className="flex items-center gap-1.5">
               <Edit2 className="w-3.5 h-3.5" />
-              Editar
+              {editingId ? "Editando" : "Novo"}
             </TabsTrigger>
           </TabsList>
 
@@ -251,6 +253,16 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
           <TabsContent value="editar" className="flex-1 min-h-0 overflow-hidden mt-2">
             <div className="h-full overflow-y-auto pr-1 max-h-[calc(85dvh-8rem)]">
               <div className="space-y-4">
+                {/* Editing indicator */}
+                {editingId && (
+                  <div className="bg-primary/10 border border-primary/30 rounded-lg p-2 text-xs text-primary font-medium flex items-center justify-between">
+                    <span>✏️ Editando registro existente</span>
+                    <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => resetForm()}>
+                      Cancelar
+                    </Button>
+                  </div>
+                )}
+
                 {/* Date */}
                 <div>
                   <Label className="font-body text-sm">Data da Avaliação</Label>
@@ -305,7 +317,7 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
                     {saving ? "Salvando..." : editingId ? "Atualizar Registro" : "Salvar Registro"}
                   </Button>
                   {editingId && (
-                    <Button variant="outline" onClick={() => resetForm()}>Cancelar edição</Button>
+                    <Button variant="outline" onClick={() => resetForm()}>Cancelar</Button>
                   )}
                 </div>
 
@@ -343,19 +355,9 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
                                   💪 {Number(log.lean_mass_kg).toFixed(1)} kg magra
                                 </span>
                               )}
-                              {log.skeletal_muscle_kg && (
-                                <span className="text-xs bg-info/10 text-info px-1.5 py-0.5 rounded">
-                                  🏋️ {Number(log.skeletal_muscle_kg).toFixed(1)} kg muscular
-                                </span>
-                              )}
-                              {log.visceral_fat != null && (
-                                <span className="text-xs bg-destructive/10 text-destructive px-1.5 py-0.5 rounded">
-                                  🫀 Visceral: {log.visceral_fat}
-                                </span>
-                              )}
                             </div>
                             {log.notes && (
-                              <p className="text-xs text-muted-foreground mt-1">{log.notes}</p>
+                              <p className="text-xs text-muted-foreground mt-1 truncate">{log.notes}</p>
                             )}
                           </div>
                           <div className="flex gap-1 ml-2 shrink-0">
