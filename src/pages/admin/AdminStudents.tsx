@@ -1085,8 +1085,9 @@ const AdminStudents = () => {
                 variant="outline"
                 disabled={importingStudents}
                 onClick={() => fileInputRef.current?.click()}
+                className="text-xs"
               >
-                <Upload className="w-4 h-4 mr-1" /> {importingStudents ? "Importando..." : "Importar Planilha"}
+                <Upload className="w-4 h-4 sm:mr-1" /> <span className="hidden sm:inline">{importingStudents ? "Importando..." : "Importar Planilha"}</span><span className="sm:hidden">{importingStudents ? "..." : "Importar"}</span>
               </Button>
               <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
                 <DialogContent className="max-w-lg">
