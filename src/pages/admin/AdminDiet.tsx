@@ -514,7 +514,7 @@ const AdminDiet = () => {
                             {/* Macronutrientes */}
                             <div>
                               <Label className="font-body text-xs font-semibold">Macronutrientes</Label>
-                              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-1">
+                              <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 mt-1">
                                 <div>
                                   <Label className="font-body text-[10px] text-muted-foreground">Energia (kcal)</Label>
                                   <Input type="number" placeholder="0" value={editEnergyKcal} onChange={(e) => setEditEnergyKcal(e.target.value)} />
