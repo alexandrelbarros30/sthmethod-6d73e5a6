@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Users, Salad, Dumbbell, FlaskConical, ClipboardList, Scale } from "lucide-react";
+import { Users, Salad, Dumbbell, FlaskConical, ClipboardList, Scale, Activity } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
