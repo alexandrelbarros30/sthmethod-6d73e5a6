@@ -421,7 +421,7 @@ const AdminProtocol = () => {
                                 </div>
                               )}
                             </div>
-                            <div className="flex flex-col gap-1 shrink-0">
+                            <div className="flex flex-row sm:flex-col gap-1 shrink-0 flex-wrap justify-end">
                               <Button
                                 variant="ghost"
                                 size="icon"

@@ -652,7 +652,7 @@ const AdminDiet = () => {
                                 </div>
                               )}
                             </div>
-                            <div className="flex flex-col gap-1 shrink-0 items-center">
+                            <div className="flex flex-row sm:flex-col gap-1 shrink-0 items-center flex-wrap justify-end">
                               <div className="flex items-center gap-1" title={diet.visible ? "Visível para o aluno" : "Oculta para o aluno"}>
                                 <Switch
                                   checked={diet.visible !== false}
