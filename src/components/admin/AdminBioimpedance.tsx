@@ -159,7 +159,7 @@ const AdminBioimpedance = ({ userId, studentName, open, onOpenChange }: Props) =
         if (error) throw error;
         toast.success("Registro atualizado!");
       } else {
-        const { error } = await (supabase.from("bioimpedance_logs" as any) as any)
+        const { error } = await supabase.from("bioimpedance_logs")
           .insert(payload);
         if (error) throw error;
         toast.success("Bioimpedância registrada!");
