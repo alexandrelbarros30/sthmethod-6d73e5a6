@@ -20,41 +20,41 @@ const StudentInfoHeader: React.FC<{ info: StudentInfoHeaderProps }> = ({ info })
   if (!hasInfo && !hasMacros) return null;
 
   return (
-    <div className="mb-6 pb-4 border-b border-border">
+    <div className="mb-4 pb-3 border-b border-border">
       {/* Title */}
-      <div className="text-center mb-4">
-        <h2 className="text-base font-bold tracking-[0.2em] uppercase text-foreground font-display">
+      <div className="text-center mb-3">
+        <h2 className="text-sm font-bold tracking-[0.15em] uppercase text-foreground font-display">
           STH METHOD
         </h2>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm font-body">
+      <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs font-body justify-center sm:justify-start">
         {info.name && <InfoRow label="Nome" value={info.name} />}
-        {info.age && <InfoRow label="Idade" value={`${info.age} anos`} />}
+        {info.age != null && <InfoRow label="Idade" value={`${info.age} anos`} />}
         {info.weight && <InfoRow label="Peso" value={`${info.weight} kg`} />}
         {info.height && <InfoRow label="Altura" value={`${info.height} cm`} />}
         {info.objective && <InfoRow label="Objetivo" value={info.objective} />}
-        {info.startDate && <InfoRow label="Data de Início" value={info.startDate} />}
+        {info.startDate && <InfoRow label="Início" value={info.startDate} />}
         {info.hydration && <InfoRow label="Hidratação" value={info.hydration} />}
       </div>
 
       {/* Macros summary */}
       {hasMacros && (
-        <div className="mt-4 flex flex-wrap gap-2 sm:gap-3">
-          {info.totalEnergy && (
+        <div className="mt-3 grid grid-cols-3 sm:grid-cols-5 gap-1.5">
+          {info.totalEnergy != null && (
             <MacroBadge label="Energia" value={`${info.totalEnergy} kcal`} colorClass="bg-orange-500/15 text-orange-600 border-orange-500/20" />
           )}
-          {info.protein && (
+          {info.protein != null && (
             <MacroBadge label="Proteína" value={`~${info.protein}g`} accent />
           )}
-          {info.carbs && (
-            <MacroBadge label="Carboidratos" value={`~${info.carbs}g`} colorClass="bg-blue-500/15 text-blue-600 border-blue-500/20" />
+          {info.carbs != null && (
+            <MacroBadge label="Carbos" value={`~${info.carbs}g`} colorClass="bg-blue-500/15 text-blue-600 border-blue-500/20" />
           )}
-          {info.fat && (
+          {info.fat != null && (
             <MacroBadge label="Lipídios" value={`~${info.fat}g`} colorClass="bg-yellow-500/15 text-yellow-700 border-yellow-500/20" />
           )}
           {info.hydration && (
-            <MacroBadge label="Hidratação" value={info.hydration} colorClass="bg-cyan-500/15 text-cyan-600 border-cyan-500/20" />
+            <MacroBadge label="Água" value={info.hydration} colorClass="bg-cyan-500/15 text-cyan-600 border-cyan-500/20" />
           )}
         </div>
       )}
