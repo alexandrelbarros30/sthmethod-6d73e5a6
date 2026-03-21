@@ -73,16 +73,20 @@ const MacroBadge = ({
   label,
   value,
   accent,
+  colorClass,
 }: {
   label: string;
   value: string;
   accent?: boolean;
+  colorClass?: string;
 }) => (
   <div
-    className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
-      accent
-        ? "bg-primary/15 text-primary border border-primary/20"
-        : "bg-muted text-muted-foreground border border-border"
+    className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${
+      colorClass
+        ? colorClass
+        : accent
+        ? "bg-primary/15 text-primary border-primary/20"
+        : "bg-muted text-muted-foreground border-border"
     }`}
   >
     <span className="block text-[10px] uppercase tracking-wider opacity-70">{label}</span>
