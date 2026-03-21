@@ -200,11 +200,12 @@ const AdminProtocol = () => {
     setConfirmDeleteOpen(true);
   };
 
-  const filteredStudents = (students || []).filter((s: any) => {
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
-    return s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q);
-  });
+  const filteredStudents = search.trim().length < 2
+    ? []
+    : (students || []).filter((s: any) => {
+        const q = search.toLowerCase();
+        return s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q);
+      });
 
   return (
     <DashboardLayout role="admin" title="Gestão de Protocolos" subtitle="Gerencie os protocolos dos alunos com histórico completo.">
