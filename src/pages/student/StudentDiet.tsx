@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { FileText, Clock, Download } from "lucide-react";
 import DietContentRenderer, { type DietStudentInfo } from "@/components/student/DietContentRenderer";
+import StudentInfoHeader from "@/components/student/StudentInfoHeader";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -205,11 +206,19 @@ const StudentDiet = () => {
               <div className="p-3 rounded-lg bg-muted/50 border border-border space-y-3">
                 {/* Student info header + macros */}
                 {profile && (
-                  <DietContentRenderer
-                    content=""
-                    studentInfo={buildStudentInfo(diet)}
-                    showHeader={true}
-                  />
+                  <StudentInfoHeader info={{
+                    name: profile.full_name || undefined,
+                    age: profile.birth_date ? Math.floor((Date.now() - new Date(profile.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : undefined,
+                    weight: profile.weight || undefined,
+                    height: profile.height || undefined,
+                    objective: profile.objective || undefined,
+                    startDate: new Date(diet.created_at).toLocaleDateString("pt-BR"),
+                    hydration: diet.hydration_l ? `${diet.hydration_l} litros` : undefined,
+                    totalEnergy: diet.energy_kcal ?? profile.daily_calories ?? undefined,
+                    protein: diet.protein_g ?? profile.protein_g ?? undefined,
+                    carbs: diet.carbs_g ?? profile.carbs_g ?? undefined,
+                    fat: diet.fat_g ?? profile.fat_g ?? undefined,
+                  }} />
                 )}
 
                 {diet.pdf_url && (

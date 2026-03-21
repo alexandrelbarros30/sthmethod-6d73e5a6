@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Video, Dumbbell, Timer, ChevronDown, ChevronUp, Play, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import StudentInfoHeader from "@/components/student/StudentInfoHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const getEmbedUrl = (url: string) => {
@@ -138,24 +139,14 @@ const StudentTraining = () => {
         {/* Student info */}
         {profile && (
           <Card className="border-border bg-muted/50">
-            <CardContent className="py-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm font-body">
-                {profile.full_name && (
-                  <p className="text-foreground"><span className="font-semibold">Nome:</span> <span className="text-muted-foreground">{profile.full_name}</span></p>
-                )}
-                {profile.birth_date && (
-                  <p className="text-foreground"><span className="font-semibold">Idade:</span> <span className="text-muted-foreground">{Math.floor((Date.now() - new Date(profile.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000))} anos</span></p>
-                )}
-                {profile.weight && (
-                  <p className="text-foreground"><span className="font-semibold">Peso:</span> <span className="text-muted-foreground">{profile.weight} kg</span></p>
-                )}
-                {profile.height && (
-                  <p className="text-foreground"><span className="font-semibold">Altura:</span> <span className="text-muted-foreground">{profile.height} cm</span></p>
-                )}
-                {profile.objective && (
-                  <p className="text-foreground"><span className="font-semibold">Objetivo:</span> <span className="text-muted-foreground">{profile.objective}</span></p>
-                )}
-              </div>
+            <CardContent className="py-4">
+              <StudentInfoHeader info={{
+                name: profile.full_name || undefined,
+                age: profile.birth_date ? Math.floor((Date.now() - new Date(profile.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : undefined,
+                weight: profile.weight || undefined,
+                height: profile.height || undefined,
+                objective: profile.objective || undefined,
+              }} />
             </CardContent>
           </Card>
         )}
