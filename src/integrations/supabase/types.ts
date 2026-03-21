@@ -71,6 +71,84 @@ export type Database = {
         }
         Relationships: []
       }
+      bioimpedance_logs: {
+        Row: {
+          bmr_kcal: number | null
+          body_fat_pct: number | null
+          created_at: string
+          extracellular_water_l: number | null
+          fat_mass_kg: number | null
+          id: string
+          intracellular_water_l: number | null
+          lean_mass_kg: number | null
+          logged_at: string
+          metabolic_age: number | null
+          notes: string | null
+          phase_angle: number | null
+          seg_left_arm: number | null
+          seg_left_leg: number | null
+          seg_right_arm: number | null
+          seg_right_leg: number | null
+          seg_trunk: number | null
+          skeletal_muscle_kg: number | null
+          total_water_l: number | null
+          total_water_pct: number | null
+          total_weight: number | null
+          user_id: string
+          visceral_fat: number | null
+        }
+        Insert: {
+          bmr_kcal?: number | null
+          body_fat_pct?: number | null
+          created_at?: string
+          extracellular_water_l?: number | null
+          fat_mass_kg?: number | null
+          id?: string
+          intracellular_water_l?: number | null
+          lean_mass_kg?: number | null
+          logged_at?: string
+          metabolic_age?: number | null
+          notes?: string | null
+          phase_angle?: number | null
+          seg_left_arm?: number | null
+          seg_left_leg?: number | null
+          seg_right_arm?: number | null
+          seg_right_leg?: number | null
+          seg_trunk?: number | null
+          skeletal_muscle_kg?: number | null
+          total_water_l?: number | null
+          total_water_pct?: number | null
+          total_weight?: number | null
+          user_id: string
+          visceral_fat?: number | null
+        }
+        Update: {
+          bmr_kcal?: number | null
+          body_fat_pct?: number | null
+          created_at?: string
+          extracellular_water_l?: number | null
+          fat_mass_kg?: number | null
+          id?: string
+          intracellular_water_l?: number | null
+          lean_mass_kg?: number | null
+          logged_at?: string
+          metabolic_age?: number | null
+          notes?: string | null
+          phase_angle?: number | null
+          seg_left_arm?: number | null
+          seg_left_leg?: number | null
+          seg_right_arm?: number | null
+          seg_right_leg?: number | null
+          seg_trunk?: number | null
+          skeletal_muscle_kg?: number | null
+          total_water_l?: number | null
+          total_water_pct?: number | null
+          total_weight?: number | null
+          user_id?: string
+          visceral_fat?: number | null
+        }
+        Relationships: []
+      }
       body_images: {
         Row: {
           created_at: string

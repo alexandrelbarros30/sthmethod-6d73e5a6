@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2, RotateCcw, AlertTriangle, UserX, UserCheck, Dumbbell, Pill, UtensilsCrossed, MessageCircle, MoreVertical } from "lucide-react";
+import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2, RotateCcw, AlertTriangle, UserX, UserCheck, Dumbbell, Pill, UtensilsCrossed, MessageCircle, MoreVertical, Activity } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
@@ -28,6 +28,7 @@ import AdminImageHistory from "@/components/admin/AdminImageHistory";
 import EvolutionGenerator from "@/components/admin/EvolutionGenerator";
 import AdminEvolutionUpdate from "@/components/admin/AdminEvolutionUpdate";
 import ExcelJS from "exceljs";
+import AdminBioimpedance from "@/components/admin/AdminBioimpedance";
 import WhatsAppPopoverButton from "@/components/shared/WhatsAppPopoverButton";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
 import {
@@ -100,6 +101,7 @@ const AdminStudents = () => {
   const [orphanLoading, setOrphanLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ userId: string; name: string } | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [bioOpen, setBioOpen] = useState(false);
 
   const { data: students, isLoading } = useQuery({
     queryKey: ["admin-students-list"],
@@ -1288,6 +1290,9 @@ const AdminStudents = () => {
                                 <DropdownMenuItem onClick={() => { setSelected(s); setImagesOpen(true); }}>
                                   <Image className="w-4 h-4 mr-2" /> Fotos corporais
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => { setSelected(s); setBioOpen(true); }}>
+                                  <Activity className="w-4 h-4 mr-2" /> Bioimpedância
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => openSub(s)}>
                                   <CreditCard className="w-4 h-4 mr-2" /> Assinatura
                                 </DropdownMenuItem>
@@ -1882,6 +1887,15 @@ const AdminStudents = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {selected && (
+        <AdminBioimpedance
+          userId={selected.user_id}
+          studentName={selected.full_name || selected.email}
+          open={bioOpen}
+          onOpenChange={setBioOpen}
+        />
+      )}
     </DashboardLayout>
   );
 };

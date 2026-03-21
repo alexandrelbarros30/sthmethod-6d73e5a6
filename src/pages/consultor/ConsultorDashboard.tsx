@@ -9,12 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Users, Salad, Dumbbell, FlaskConical, ClipboardList, Scale } from "lucide-react";
+import { Users, Salad, Dumbbell, FlaskConical, ClipboardList, Scale, Activity } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
 import WhatsAppBulkSender from "@/components/shared/WhatsAppBulkSender";
 import AdminEvolutionUpdate from "@/components/admin/AdminEvolutionUpdate";
+import AdminBioimpedance from "@/components/admin/AdminBioimpedance";
 
 const ConsultorDashboard = () => {
   const { user } = useAuth();
@@ -22,6 +23,7 @@ const ConsultorDashboard = () => {
   const [anamneseOpen, setAnamneseOpen] = useState(false);
   const [selected, setSelected] = useState<any>(null);
   const [anamneseText, setAnamneseText] = useState("");
+  const [bioOpen, setBioOpen] = useState(false);
 
   const { data: linkedStudents = [] } = useQuery({
     queryKey: ["consultor-students", user?.id],
@@ -142,6 +144,9 @@ const ConsultorDashboard = () => {
                     <Link to={`/consultor/diet?student=${s.user_id}`} className="p-2 rounded hover:bg-accent"><Salad className="w-4 h-4" /></Link>
                     <Link to={`/consultor/training?student=${s.user_id}`} className="p-2 rounded hover:bg-accent"><Dumbbell className="w-4 h-4" /></Link>
                     <Link to={`/consultor/protocol?student=${s.user_id}`} className="p-2 rounded hover:bg-accent"><FlaskConical className="w-4 h-4" /></Link>
+                    <Button variant="ghost" size="icon" onClick={() => { setSelected(s); setBioOpen(true); }} title="Bioimpedância">
+                      <Activity className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -303,6 +308,15 @@ const ConsultorDashboard = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {selected && (
+        <AdminBioimpedance
+          userId={selected.user_id}
+          studentName={selected.full_name || selected.email}
+          open={bioOpen}
+          onOpenChange={setBioOpen}
+        />
+      )}
     </DashboardLayout>
   );
 };

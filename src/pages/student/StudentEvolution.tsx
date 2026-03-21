@@ -16,6 +16,7 @@ import EvolutionMacroDisplay from "@/components/student/EvolutionMacroDisplay";
 import EvolutionWeightHistory from "@/components/student/EvolutionWeightHistory";
 import EvolutionImageHistory from "@/components/student/EvolutionImageHistory";
 import EvolutionActivityChange, { type ActivityData } from "@/components/student/EvolutionActivityChange";
+import StudentBioimpedancePanel from "@/components/student/StudentBioimpedancePanel";
 
 const StudentEvolution = () => {
   const { user } = useAuth();
@@ -298,6 +299,12 @@ const StudentEvolution = () => {
       </Card>
 
       <EvolutionWeightHistory weightLogs={weightLogs || []} />
+
+      {/* Bioimpedance Panel */}
+      <div className="mb-6">
+        <StudentBioimpedancePanel />
+      </div>
+
       <EvolutionImageHistory allImages={allImages || []} />
     </DashboardLayout>
   );
