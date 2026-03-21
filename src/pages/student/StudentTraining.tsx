@@ -76,6 +76,19 @@ const StudentTraining = () => {
     enabled: !!weeks?.length,
   });
 
+  const { data: profile } = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user!.id)
+        .single();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
   const isLoading = subLoading || weeksLoading || exLoading;
 
   const toggleExercise = (id: string) => {
