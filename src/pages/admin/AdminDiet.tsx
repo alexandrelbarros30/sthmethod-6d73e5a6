@@ -22,9 +22,11 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { syncStudentDietMeals } from "@/lib/diet-meal-sync";
 
 const AdminDiet = () => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const displayRole = role === "consultor" ? "consultor" : "admin";
   const isMobile = useIsMobile();
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -100,10 +102,47 @@ const AdminDiet = () => {
   };
 
   const { data: students } = useQuery({
-    queryKey: ["admin-students-diets"],
+    queryKey: ["admin-students-diets", displayRole, user?.id],
     queryFn: async () => {
-      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, email, birth_date, weight, height, objective");
-      const { data: diets } = await supabase.from("student_diets").select("*").order("created_at", { ascending: false });
+      if (!user?.id) return [];
+
+      let allowedStudentIds: string[] | null = null;
+
+      if (displayRole === "consultor") {
+        const { data: links, error: linksError } = await supabase
+          .from("consultant_students")
+          .select("student_id")
+          .eq("consultant_id", user.id);
+
+        if (linksError) throw linksError;
+
+        allowedStudentIds = (links || []).map((l: any) => l.student_id);
+        if (allowedStudentIds.length === 0) return [];
+      }
+
+      let profilesQuery = supabase
+        .from("profiles")
+        .select("user_id, full_name, email, birth_date, weight, height, objective");
+
+      if (allowedStudentIds) {
+        profilesQuery = profilesQuery.in("user_id", allowedStudentIds);
+      }
+
+      const { data: profiles, error: profilesError } = await profilesQuery;
+      if (profilesError) throw profilesError;
+
+      let dietsQuery = supabase
+        .from("student_diets")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (allowedStudentIds) {
+        dietsQuery = dietsQuery.in("user_id", allowedStudentIds);
+      }
+
+      const { data: diets, error: dietsError } = await dietsQuery;
+      if (dietsError) throw dietsError;
+
       return (profiles || []).map((p: any) => {
         const studentDiets = (diets as any[])?.filter((d: any) => d.user_id === p.user_id) || [];
         return {
@@ -114,16 +153,18 @@ const AdminDiet = () => {
         };
       });
     },
+    enabled: !!user?.id,
   });
 
   const { data: studentDiets, refetch: refetchDiets } = useQuery({
     queryKey: ["admin-student-diets-detail", selected?.user_id],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("student_diets")
         .select("*")
         .eq("user_id", selected!.user_id)
         .order("created_at", { ascending: false });
+      if (error) throw error;
       return data || [];
     },
     enabled: !!selected?.user_id && dialogOpen,
@@ -207,7 +248,8 @@ const AdminDiet = () => {
       let pdfUrl = "";
       if (newPdfFile) {
         const path = `${selected.user_id}/diet/${Date.now()}_${newPdfFile.name}`;
-        await supabase.storage.from("documents").upload(path, newPdfFile, { upsert: true });
+        const { error: uploadError } = await supabase.storage.from("documents").upload(path, newPdfFile, { upsert: true });
+        if (uploadError) throw uploadError;
         const { data } = supabase.storage.from("documents").getPublicUrl(path);
         pdfUrl = data.publicUrl;
       }
@@ -223,22 +265,26 @@ const AdminDiet = () => {
         fat_g: newFatG ? parseFloat(newFatG) : null,
         hydration_l: newHydrationL ? parseFloat(newHydrationL) : null,
       };
-      await supabase.from("student_diets").insert(payload);
+
+      const { error: insertError } = await supabase.from("student_diets").insert(payload);
+      if (insertError) throw insertError;
+
+      await syncStudentDietMeals(selected.user_id, newContent);
     },
     onSuccess: () => {
-      toast.success("Dieta adicionada!");
+      toast.success("Dieta adicionada e vinculada ao aluno!");
       qc.invalidateQueries({ queryKey: ["admin-students-diets"] });
       refetchDiets();
       setShowNewForm(false);
       resetNewForm();
     },
-    onError: () => toast.error("Erro ao salvar dieta"),
+    onError: (error: any) => toast.error(error?.message || "Erro ao salvar dieta"),
   });
 
   const editMutation = useMutation({
     mutationFn: async () => {
       const newCreatedAt = new Date(`${editDate}T${editTime}:00`).toISOString();
-      await supabase
+      const { error: updateError } = await supabase
         .from("student_diets")
         .update({
           title: editTitle,
@@ -252,27 +298,47 @@ const AdminDiet = () => {
           hydration_l: editHydrationL ? parseFloat(editHydrationL) : null,
         } as any)
         .eq("id", editingId!);
+
+      if (updateError) throw updateError;
+
+      await syncStudentDietMeals(selected.user_id, editContent);
     },
     onSuccess: () => {
-      toast.success("Dieta atualizada!");
+      toast.success("Dieta atualizada e sincronizada com o aluno!");
       qc.invalidateQueries({ queryKey: ["admin-students-diets"] });
       refetchDiets();
       cancelEdit();
     },
-    onError: () => toast.error("Erro ao atualizar dieta"),
+    onError: (error: any) => toast.error(error?.message || "Erro ao atualizar dieta"),
   });
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      if (deletingId) await supabase.from("student_diets").delete().eq("id", deletingId);
+      if (!deletingId) return;
+
+      const { error: deleteError } = await supabase.from("student_diets").delete().eq("id", deletingId);
+      if (deleteError) throw deleteError;
+
+      const { data: latestDiet, error: latestDietError } = await supabase
+        .from("student_diets")
+        .select("content")
+        .eq("user_id", selected.user_id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (latestDietError) throw latestDietError;
+
+      await syncStudentDietMeals(selected.user_id, latestDiet?.content || "");
     },
     onSuccess: () => {
-      toast.success("Dieta removida!");
+      toast.success("Dieta removida e visão do aluno atualizada!");
       qc.invalidateQueries({ queryKey: ["admin-students-diets"] });
       refetchDiets();
       setConfirmDeleteOpen(false);
       setDeletingId(null);
     },
+    onError: (error: any) => toast.error(error?.message || "Erro ao remover dieta"),
   });
 
   const confirmDelete = (id: string) => {
@@ -282,7 +348,8 @@ const AdminDiet = () => {
 
   const toggleVisibility = useMutation({
     mutationFn: async ({ id, visible }: { id: string; visible: boolean }) => {
-      await supabase.from("student_diets").update({ visible }).eq("id", id);
+      const { error } = await supabase.from("student_diets").update({ visible }).eq("id", id);
+      if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-students-diets"] });
@@ -299,7 +366,7 @@ const AdminDiet = () => {
       });
 
   return (
-    <DashboardLayout role="admin" title="Gestão de Dietas" subtitle="Gerencie as dietas dos alunos com histórico completo.">
+    <DashboardLayout role={displayRole} title="Gestão de Dietas" subtitle="Gerencie as dietas dos alunos com histórico completo.">
       <Card>
         <CardHeader>
           <CardTitle className="font-display">Alunos</CardTitle>
