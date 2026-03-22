@@ -1,0 +1,1 @@
+ALTER TABLE public.diet_meals ADD COLUMN IF NOT EXISTS image_url text DEFAULT '';
