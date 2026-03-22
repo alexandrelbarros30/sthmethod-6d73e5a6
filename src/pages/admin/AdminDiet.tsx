@@ -243,6 +243,7 @@ const AdminDiet = () => {
     setEditCarbsG("");
     setEditFatG("");
     setEditHydrationL("");
+    setEditMealMacros(null);
   };
 
   const saveMutation = useMutation({
