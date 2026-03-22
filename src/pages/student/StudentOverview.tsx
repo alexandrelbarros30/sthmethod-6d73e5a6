@@ -62,13 +62,14 @@ const DailyMealWidget = () => {
   if (isLoading || meals.length === 0) return null;
 
   return (
-    <Card className="mb-6 border-primary/10">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-display flex items-center gap-2">
+    <Card className="mb-6 premium-card border-primary/10 overflow-hidden animate-fade-in">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
+      <CardHeader className="pb-2 relative">
+        <CardTitle className="text-sm font-bold flex items-center gap-2 tracking-tight">
           <Utensils className="w-4 h-4 text-primary" /> Progresso do Dia
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="relative">
         <div className="flex items-center gap-4">
           <DailyProgressRing
             percent={progressPercent}
@@ -77,13 +78,14 @@ const DailyMealWidget = () => {
             sublabel={nextMeal?.name}
           />
           <div className="flex-1 space-y-2">
-            <p className="text-sm font-medium text-foreground">
-              {completedCount}/{totalMeals} refeições
+            <p className="text-lg font-bold text-foreground tabular-nums">
+              {completedCount}<span className="text-muted-foreground font-normal text-sm">/{totalMeals}</span>
+              <span className="text-xs text-muted-foreground font-normal ml-1">refeições</span>
             </p>
             {nextMeal && !isMealCompleted(nextMeal.id) && (
-              <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
-                <p className="text-[10px] text-primary font-medium uppercase">Próxima</p>
-                <p className="text-xs font-semibold text-foreground flex items-center gap-1">
+              <div className="p-2.5 rounded-xl bg-primary/8 border border-primary/15">
+                <p className="text-[9px] text-primary font-bold uppercase tracking-wider">Próxima</p>
+                <p className="text-xs font-semibold text-foreground flex items-center gap-1 mt-0.5">
                   <Clock className="w-3 h-3 text-muted-foreground" />
                   {nextMeal.name} — {nextMeal.time}
                 </p>
@@ -92,10 +94,10 @@ const DailyMealWidget = () => {
             <MacroProgressBar label="Calorias" consumed={consumedMacros.kcal} total={totalMacros.kcal} unit="kcal" color="bg-primary" />
           </div>
         </div>
-        <div className="mt-3 text-center">
+        <div className="mt-4 text-center">
           <Link to="/dashboard/diet">
-            <Button variant="outline" size="sm" className="text-xs gap-1">
-              <Salad className="w-3 h-3" /> Ver refeições <ChevronRight className="w-3 h-3" />
+            <Button size="sm" className="text-xs gap-1.5 premium-btn bg-primary text-primary-foreground hover:bg-primary/90 px-5">
+              <Salad className="w-3.5 h-3.5" /> Ver refeições <ChevronRight className="w-3.5 h-3.5" />
             </Button>
           </Link>
         </div>
