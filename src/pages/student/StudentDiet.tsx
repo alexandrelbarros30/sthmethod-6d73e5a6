@@ -29,6 +29,7 @@ const StudentDiet = () => {
     activeMeal,
     toggleMeal,
     isLoading,
+    error,
     isMealCompleted,
     isMealSkipped,
   } = useMealTracking();
@@ -47,6 +48,19 @@ const StudentDiet = () => {
     return (
       <DashboardLayout role="student" title="Dieta" subtitle="Seu plano alimentar personalizado.">
         <SubscriptionBlock />
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout role="student" title="Dieta" subtitle="Seu plano alimentar personalizado.">
+        <Card className="premium-card">
+          <CardContent className="py-8 text-center">
+            <p className="text-sm font-semibold text-foreground">Não foi possível carregar sua dieta.</p>
+            <p className="text-xs text-muted-foreground mt-1">Tente atualizar a página; se persistir, avise seu consultor.</p>
+          </CardContent>
+        </Card>
       </DashboardLayout>
     );
   }
