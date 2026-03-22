@@ -48,11 +48,25 @@ export interface FoodItem {
   sort_order: number;
 }
 
+export const MEAL_LABELS: Record<number, string> = {
+  1: "Café da Manhã",
+  2: "Lanche da Manhã",
+  3: "Almoço",
+  4: "Lanche da Tarde",
+  5: "Jantar",
+  6: "Ceia",
+};
+
+export const getMealLabel = (sortOrder: number): string => {
+  const num = sortOrder + 1;
+  return MEAL_LABELS[num] || "Refeição Extra";
+};
+
 const DEFAULT_MEALS: Omit<MealData, "foods">[] = [
-  { name: "Café da manhã", time: "07:00", sort_order: 0 },
-  { name: "Colação", time: "10:00", sort_order: 1 },
+  { name: "Café da Manhã", time: "07:00", sort_order: 0 },
+  { name: "Lanche da Manhã", time: "10:00", sort_order: 1 },
   { name: "Almoço", time: "12:00", sort_order: 2 },
-  { name: "Lanche", time: "15:00", sort_order: 3 },
+  { name: "Lanche da Tarde", time: "15:00", sort_order: 3 },
   { name: "Jantar", time: "19:00", sort_order: 4 },
   { name: "Ceia", time: "21:00", sort_order: 5 },
 ];
@@ -265,6 +279,9 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
         await supabase.from("diet_foods").delete().in("meal_id", mealIds);
         await supabase.from("diet_meals").delete().eq("user_id", studentId);
       }
+
+      const savedMealIds: { id: string; foods: FoodItem[] }[] = [];
+
       for (let i = 0; i < meals.length; i++) {
         const meal = meals[i];
         const { data: insertedMeal } = await supabase
@@ -277,10 +294,31 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
             sodium_mg: f.sodium_mg, cholesterol_mg: f.cholesterol_mg, sort_order: fi,
           }));
           await supabase.from("diet_foods").insert(foodInserts);
+          savedMealIds.push({ id: insertedMeal.id, foods: meal.foods });
         }
       }
+
       toast.success("Cardápio salvo com sucesso!");
       qc.invalidateQueries({ queryKey: ["nutrition-meals", studentId] });
+
+      // Auto-generate plate images in background
+      if (savedMealIds.length > 0) {
+        toast.info("Gerando imagens dos pratos automaticamente...");
+        for (const saved of savedMealIds) {
+          try {
+            await supabase.functions.invoke("generate-meal-image", {
+              body: {
+                mealId: saved.id,
+                foods: saved.foods.map((f) => ({ item: f.item, quantity: f.quantity })),
+              },
+            });
+          } catch (imgErr) {
+            console.warn("Auto image gen failed for meal:", saved.id, imgErr);
+          }
+        }
+        toast.success("Imagens dos pratos geradas!");
+        qc.invalidateQueries({ queryKey: ["nutrition-meals", studentId] });
+      }
     } catch (err) {
       toast.error("Erro ao salvar cardápio");
     }
