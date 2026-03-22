@@ -48,7 +48,7 @@ const AdminDiet = () => {
   const [newCarbsG, setNewCarbsG] = useState("");
   const [newFatG, setNewFatG] = useState("");
   const [newHydrationL, setNewHydrationL] = useState("");
-
+  const [newMealMacros, setNewMealMacros] = useState<MealMacros[] | null>(null);
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
