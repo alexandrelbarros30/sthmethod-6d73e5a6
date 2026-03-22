@@ -40,7 +40,7 @@ export function useMealTracking() {
     queryFn: async () => {
       const { data } = await supabase
         .from("diet_meals")
-        .select("id, name, time, sort_order, diet_foods(id, item, quantity, energy_kcal, protein_g, carbs_g, fat_g, fiber_g, notes)")
+        .select("id, name, time, sort_order, image_url, diet_foods(id, item, quantity, energy_kcal, protein_g, carbs_g, fat_g, fiber_g, notes)")
         .eq("user_id", user!.id)
         .order("sort_order", { ascending: true });
       return (data || []) as MealWithFoods[];
