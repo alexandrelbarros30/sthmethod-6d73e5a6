@@ -7,8 +7,11 @@ import { Progress } from "@/components/ui/progress";
 import {
   Salad, Dumbbell, FlaskConical, BookOpen, CalendarDays, CheckCircle,
   AlertCircle, User, FileText, TrendingUp, Activity, Flame, Scale,
-  Target, ChevronRight, Zap, Droplets, ListChecks
+  Target, ChevronRight, Zap, Droplets, ListChecks, Clock, Utensils
 } from "lucide-react";
+import { useMealTracking } from "@/hooks/useMealTracking";
+import DailyProgressRing from "@/components/student/DailyProgressRing";
+import MacroProgressBar from "@/components/student/MacroProgressBar";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,6 +43,66 @@ const premiumModules = [
   { to: "/dashboard/protocol", icon: FlaskConical, title: "Protocolo", desc: "Suplementação e prescrições", color: "text-warning", bgColor: "bg-warning/10" },
   { to: "/dashboard/content", icon: BookOpen, title: "Conteúdos", desc: "Materiais educativos exclusivos", color: "text-accent-foreground", bgColor: "bg-accent/50" },
 ];
+
+// Daily meal widget sub-component
+const DailyMealWidget = () => {
+  const { user } = useAuth();
+  const {
+    meals,
+    totalMacros,
+    consumedMacros,
+    completedCount,
+    totalMeals,
+    progressPercent,
+    nextMeal,
+    isLoading,
+    isMealCompleted,
+  } = useMealTracking();
+
+  if (isLoading || meals.length === 0) return null;
+
+  return (
+    <Card className="mb-6 border-primary/10">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-display flex items-center gap-2">
+          <Utensils className="w-4 h-4 text-primary" /> Progresso do Dia
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center gap-4">
+          <DailyProgressRing
+            percent={progressPercent}
+            size={90}
+            strokeWidth={7}
+            sublabel={nextMeal?.name}
+          />
+          <div className="flex-1 space-y-2">
+            <p className="text-sm font-medium text-foreground">
+              {completedCount}/{totalMeals} refeições
+            </p>
+            {nextMeal && !isMealCompleted(nextMeal.id) && (
+              <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
+                <p className="text-[10px] text-primary font-medium uppercase">Próxima</p>
+                <p className="text-xs font-semibold text-foreground flex items-center gap-1">
+                  <Clock className="w-3 h-3 text-muted-foreground" />
+                  {nextMeal.name} — {nextMeal.time}
+                </p>
+              </div>
+            )}
+            <MacroProgressBar label="Calorias" consumed={consumedMacros.kcal} total={totalMacros.kcal} unit="kcal" color="bg-primary" />
+          </div>
+        </div>
+        <div className="mt-3 text-center">
+          <Link to="/dashboard/diet">
+            <Button variant="outline" size="sm" className="text-xs gap-1">
+              <Salad className="w-3 h-3" /> Ver refeições <ChevronRight className="w-3 h-3" />
+            </Button>
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 const StudentOverview = () => {
   const { profile, user } = useAuth();
@@ -413,6 +476,9 @@ const StudentOverview = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* ===== PROGRESSO DIÁRIO DE REFEIÇÕES ===== */}
+      <DailyMealWidget />
 
       {/* ===== INDICADORES METABÓLICOS (Premium Gold) ===== */}
       {isPremium && p && isOnboarded && (weight || tdee || nutritionTotals.kcal > 0) && (

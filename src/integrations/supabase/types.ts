@@ -673,6 +673,44 @@ export type Database = {
         }
         Relationships: []
       }
+      meal_completions: {
+        Row: {
+          completed_at: string
+          completed_date: string
+          id: string
+          meal_id: string
+          notes: string | null
+          skipped: boolean
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          completed_date?: string
+          id?: string
+          meal_id: string
+          notes?: string | null
+          skipped?: boolean
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          completed_date?: string
+          id?: string
+          meal_id?: string
+          notes?: string | null
+          skipped?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_completions_meal_id_fkey"
+            columns: ["meal_id"]
+            isOneToOne: false
+            referencedRelation: "diet_meals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_categories: {
         Row: {
           created_at: string
