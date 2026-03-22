@@ -71,7 +71,7 @@ const MealCard = ({ meal, mealLabel, isCompleted, isSkipped, isActive, isNext, i
               "font-semibold text-sm tracking-tight",
               isCompleted ? "text-primary line-through decoration-primary/40" : "text-foreground"
             )}>
-              {meal.name}
+              {mealLabel || meal.name}
             </span>
             {isActive && !isCompleted && !isSkipped && (
               <span className="text-[9px] text-primary font-bold flex items-center gap-1 bg-primary/10 px-1.5 py-0.5 rounded-full border border-primary/20">
@@ -85,7 +85,7 @@ const MealCard = ({ meal, mealLabel, isCompleted, isSkipped, isActive, isNext, i
           <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
             <Clock className="w-3 h-3" />
             <span>{meal.time}</span>
-            {mealLabel && <span className="text-[10px] text-muted-foreground/60">• {mealLabel}</span>}
+            <span className="text-[10px] text-muted-foreground/60">• {meal.name}</span>
             <span className="text-foreground font-bold tabular-nums">{Math.round(mealMacros.kcal)}</span>
             <span className="text-muted-foreground text-[10px]">kcal</span>
           </div>
