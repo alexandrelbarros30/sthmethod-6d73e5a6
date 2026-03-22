@@ -303,7 +303,7 @@ const AdminDiet = () => {
 
       if (updateError) throw updateError;
 
-      await syncStudentDietMeals(selected.user_id, editContent);
+      await syncStudentDietMeals(selected.user_id, editContent, editMealMacros || undefined);
     },
     onSuccess: () => {
       toast.success("Dieta atualizada e sincronizada com o aluno!");
