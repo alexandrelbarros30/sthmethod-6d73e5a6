@@ -128,8 +128,10 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
   const { isLoading } = useQuery({
     queryKey: ["nutrition-meals", studentId],
     queryFn: async () => {
-      const { data: mealsData } = await supabase
+      const { data: mealsData, error: mealsError } = await supabase
         .from("diet_meals").select("*").eq("user_id", studentId).order("sort_order");
+
+      if (mealsError) throw mealsError;
 
       if (!mealsData?.length) {
         setMeals(DEFAULT_MEALS.map((m) => ({ ...m, foods: [] })));
@@ -138,8 +140,10 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
       }
 
       const mealIds = mealsData.map((m) => m.id);
-      const { data: foodsData } = await supabase
+      const { data: foodsData, error: foodsError } = await supabase
         .from("diet_foods").select("*").in("meal_id", mealIds).order("sort_order");
+
+      if (foodsError) throw foodsError;
 
       const mealsWithFoods: MealData[] = mealsData.map((m) => ({
         id: m.id, name: m.name, time: m.time, sort_order: m.sort_order,
@@ -273,19 +277,30 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { data: existingMeals } = await supabase.from("diet_meals").select("id").eq("user_id", studentId);
+      const { data: existingMeals, error: existingMealsError } = await supabase
+        .from("diet_meals")
+        .select("id")
+        .eq("user_id", studentId);
+
+      if (existingMealsError) throw existingMealsError;
+
       if (existingMeals?.length) {
         const mealIds = existingMeals.map((m) => m.id);
-        await supabase.from("diet_foods").delete().in("meal_id", mealIds);
-        await supabase.from("diet_meals").delete().eq("user_id", studentId);
+        const { error: deleteFoodsError } = await supabase.from("diet_foods").delete().in("meal_id", mealIds);
+        if (deleteFoodsError) throw deleteFoodsError;
+
+        const { error: deleteMealsError } = await supabase.from("diet_meals").delete().eq("user_id", studentId);
+        if (deleteMealsError) throw deleteMealsError;
       }
 
       const savedMealIds: { id: string; foods: FoodItem[] }[] = [];
 
       for (let i = 0; i < meals.length; i++) {
         const meal = meals[i];
-        const { data: insertedMeal } = await supabase
+        const { data: insertedMeal, error: insertMealError } = await supabase
           .from("diet_meals").insert({ user_id: studentId, name: meal.name, time: meal.time, sort_order: i }).select("id").single();
+        if (insertMealError) throw insertMealError;
+
         if (insertedMeal && meal.foods.length > 0) {
           const foodInserts = meal.foods.map((f, fi) => ({
             meal_id: insertedMeal.id, food_id: f.food_id || undefined, item: f.item, quantity: f.quantity,
@@ -293,7 +308,10 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
             carbs_g: f.carbs_g, fat_g: f.fat_g, fiber_g: f.fiber_g, sugar_g: f.sugar_g,
             sodium_mg: f.sodium_mg, cholesterol_mg: f.cholesterol_mg, sort_order: fi,
           }));
-          await supabase.from("diet_foods").insert(foodInserts);
+
+          const { error: insertFoodsError } = await supabase.from("diet_foods").insert(foodInserts);
+          if (insertFoodsError) throw insertFoodsError;
+
           savedMealIds.push({ id: insertedMeal.id, foods: meal.foods });
         }
       }
@@ -304,6 +322,7 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
       // Auto-generate plate images in background
       if (savedMealIds.length > 0) {
         toast.info("Gerando imagens dos pratos automaticamente...");
+        let generatedImages = 0;
         for (const saved of savedMealIds) {
           try {
             await supabase.functions.invoke("generate-meal-image", {
@@ -312,15 +331,18 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
                 foods: saved.foods.map((f) => ({ item: f.item, quantity: f.quantity })),
               },
             });
+            generatedImages += 1;
           } catch (imgErr) {
             console.warn("Auto image gen failed for meal:", saved.id, imgErr);
           }
         }
-        toast.success("Imagens dos pratos geradas!");
+        if (generatedImages > 0) {
+          toast.success("Imagens dos pratos geradas!");
+        }
         qc.invalidateQueries({ queryKey: ["nutrition-meals", studentId] });
       }
-    } catch (err) {
-      toast.error("Erro ao salvar cardápio");
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao salvar cardápio");
     }
     setSaving(false);
   };

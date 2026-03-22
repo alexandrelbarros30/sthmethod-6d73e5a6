@@ -35,27 +35,29 @@ export function useMealTracking() {
   const { user } = useAuth();
   const qc = useQueryClient();
 
-  const { data: meals = [], isLoading: mealsLoading } = useQuery({
+  const { data: meals = [], isLoading: mealsLoading, error: mealsError } = useQuery({
     queryKey: ["diet-meals-tracking", user?.id],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("diet_meals")
         .select("id, name, time, sort_order, image_url, diet_foods(id, item, quantity, energy_kcal, protein_g, carbs_g, fat_g, fiber_g, notes)")
         .eq("user_id", user!.id)
         .order("sort_order", { ascending: true });
+      if (error) throw error;
       return (data || []) as MealWithFoods[];
     },
     enabled: !!user?.id,
   });
 
-  const { data: completions = [], isLoading: completionsLoading } = useQuery({
+  const { data: completions = [], isLoading: completionsLoading, error: completionsError } = useQuery({
     queryKey: ["meal-completions", user?.id, todayStr()],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("meal_completions")
         .select("*")
         .eq("user_id", user!.id)
         .eq("completed_date", todayStr());
+      if (error) throw error;
       return (data || []) as MealCompletion[];
     },
     enabled: !!user?.id,
@@ -65,14 +67,16 @@ export function useMealTracking() {
     mutationFn: async ({ mealId, skipped = false }: { mealId: string; skipped?: boolean }) => {
       const existing = completions.find((c) => c.meal_id === mealId);
       if (existing) {
-        await supabase.from("meal_completions").delete().eq("id", existing.id);
+        const { error } = await supabase.from("meal_completions").delete().eq("id", existing.id);
+        if (error) throw error;
       } else {
-        await supabase.from("meal_completions").insert({
+        const { error } = await supabase.from("meal_completions").insert({
           user_id: user!.id,
           meal_id: mealId,
           completed_date: todayStr(),
           skipped,
         });
+        if (error) throw error;
       }
     },
     onSuccess: () => {
@@ -148,6 +152,7 @@ export function useMealTracking() {
     activeMeal,
     toggleMeal,
     isLoading: mealsLoading || completionsLoading,
+    error: mealsError || completionsError,
     isMealCompleted: (mealId: string) => completions.some((c) => c.meal_id === mealId && !c.skipped),
     isMealSkipped: (mealId: string) => completions.some((c) => c.meal_id === mealId && c.skipped),
   };
