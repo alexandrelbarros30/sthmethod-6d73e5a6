@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff, ToggleLeft, ToggleRight, CalendarClock, BookOpen, Save } from "lucide-react";
+import DietAIAnalysis from "@/components/admin/DietAIAnalysis";
 import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -538,6 +539,17 @@ const AdminDiet = () => {
                       <Label className="font-body">Conteúdo</Label>
                       <RichTextEditor value={newContent} onChange={setNewContent} placeholder="Escreva o conteúdo da dieta aqui..." />
                     </div>
+                    {/* AI Analysis */}
+                    <DietAIAnalysis
+                      dietContent={newContent}
+                      onConfirm={(result) => {
+                        setNewEnergyKcal(String(Math.round(result.total.energy_kcal)));
+                        setNewProteinG(String(Math.round(result.total.protein_g)));
+                        setNewCarbsG(String(Math.round(result.total.carbs_g)));
+                        setNewFatG(String(Math.round(result.total.fat_g)));
+                        toast.success("Valores da IA aplicados nos macronutrientes!");
+                      }}
+                    />
                     <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
                       <Button variant="ghost" size="sm" onClick={() => { setShowNewForm(false); resetNewForm(); }} className="w-full sm:w-auto">
                         Cancelar
@@ -611,6 +623,17 @@ const AdminDiet = () => {
                               <Label className="font-body text-xs">Conteúdo</Label>
                               <RichTextEditor value={editContent} onChange={setEditContent} />
                             </div>
+                            {/* AI Analysis in edit mode */}
+                            <DietAIAnalysis
+                              dietContent={editContent}
+                              onConfirm={(result) => {
+                                setEditEnergyKcal(String(Math.round(result.total.energy_kcal)));
+                                setEditProteinG(String(Math.round(result.total.protein_g)));
+                                setEditCarbsG(String(Math.round(result.total.carbs_g)));
+                                setEditFatG(String(Math.round(result.total.fat_g)));
+                                toast.success("Valores da IA aplicados nos macronutrientes!");
+                              }}
+                            />
                             <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
                               <Button variant="ghost" size="sm" onClick={cancelEdit} className="w-full sm:w-auto">Cancelar</Button>
                               <Button size="sm" onClick={() => editMutation.mutate()} disabled={editMutation.isPending} className="w-full sm:w-auto">

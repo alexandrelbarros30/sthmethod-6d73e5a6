@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.import-students]
 verify_jwt = false
+
+[functions.analyze-diet]
+verify_jwt = false
