@@ -110,10 +110,16 @@ const StudentDiet = () => {
 
   const expandedMeal = expandedMealId ? meals.find((m) => m.id === expandedMealId) : null;
 
-  // Meal label mapping
   const getMealLabel = (index: number) => {
-    const labels = ["Refeição 1", "Refeição 2", "Refeição 3", "Refeição 4", "Refeição 5", "Refeição 6"];
-    return index < 6 ? labels[index] : "Extra";
+    const labels: Record<number, string> = {
+      0: "Café da Manhã",
+      1: "Lanche da Manhã",
+      2: "Almoço",
+      3: "Lanche da Tarde",
+      4: "Jantar",
+      5: "Ceia",
+    };
+    return labels[index] || "Refeição Extra";
   };
 
   return (
