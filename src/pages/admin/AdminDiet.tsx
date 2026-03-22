@@ -61,7 +61,7 @@ const AdminDiet = () => {
   const [editCarbsG, setEditCarbsG] = useState("");
   const [editFatG, setEditFatG] = useState("");
   const [editHydrationL, setEditHydrationL] = useState("");
-
+  const [editMealMacros, setEditMealMacros] = useState<MealMacros[] | null>(null);
   // Preview
   const [previewDiet, setPreviewDiet] = useState<any>(null);
 
