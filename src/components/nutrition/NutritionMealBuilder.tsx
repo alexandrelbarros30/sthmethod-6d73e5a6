@@ -48,11 +48,25 @@ export interface FoodItem {
   sort_order: number;
 }
 
+export const MEAL_LABELS: Record<number, string> = {
+  1: "Café da Manhã",
+  2: "Lanche da Manhã",
+  3: "Almoço",
+  4: "Lanche da Tarde",
+  5: "Jantar",
+  6: "Ceia",
+};
+
+export const getMealLabel = (sortOrder: number): string => {
+  const num = sortOrder + 1;
+  return MEAL_LABELS[num] || "Refeição Extra";
+};
+
 const DEFAULT_MEALS: Omit<MealData, "foods">[] = [
-  { name: "Café da manhã", time: "07:00", sort_order: 0 },
-  { name: "Colação", time: "10:00", sort_order: 1 },
+  { name: "Café da Manhã", time: "07:00", sort_order: 0 },
+  { name: "Lanche da Manhã", time: "10:00", sort_order: 1 },
   { name: "Almoço", time: "12:00", sort_order: 2 },
-  { name: "Lanche", time: "15:00", sort_order: 3 },
+  { name: "Lanche da Tarde", time: "15:00", sort_order: 3 },
   { name: "Jantar", time: "19:00", sort_order: 4 },
   { name: "Ceia", time: "21:00", sort_order: 5 },
 ];
