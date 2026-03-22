@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { syncStudentDietMeals } from "@/lib/diet-meal-sync";
+import { syncStudentDietMeals, MealMacros } from "@/lib/diet-meal-sync";
 
 const AdminDiet = () => {
   const { user, role } = useAuth();
@@ -48,7 +48,7 @@ const AdminDiet = () => {
   const [newCarbsG, setNewCarbsG] = useState("");
   const [newFatG, setNewFatG] = useState("");
   const [newHydrationL, setNewHydrationL] = useState("");
-
+  const [newMealMacros, setNewMealMacros] = useState<MealMacros[] | null>(null);
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
@@ -61,7 +61,7 @@ const AdminDiet = () => {
   const [editCarbsG, setEditCarbsG] = useState("");
   const [editFatG, setEditFatG] = useState("");
   const [editHydrationL, setEditHydrationL] = useState("");
-
+  const [editMealMacros, setEditMealMacros] = useState<MealMacros[] | null>(null);
   // Preview
   const [previewDiet, setPreviewDiet] = useState<any>(null);
 
@@ -213,6 +213,7 @@ const AdminDiet = () => {
     setNewCarbsG("");
     setNewFatG("");
     setNewHydrationL("");
+    setNewMealMacros(null);
   };
 
   const startEdit = (diet: any) => {
@@ -242,6 +243,7 @@ const AdminDiet = () => {
     setEditCarbsG("");
     setEditFatG("");
     setEditHydrationL("");
+    setEditMealMacros(null);
   };
 
   const saveMutation = useMutation({
@@ -270,7 +272,7 @@ const AdminDiet = () => {
       const { error: insertError } = await supabase.from("student_diets").insert(payload);
       if (insertError) throw insertError;
 
-      await syncStudentDietMeals(selected.user_id, newContent);
+      await syncStudentDietMeals(selected.user_id, newContent, newMealMacros || undefined);
     },
     onSuccess: () => {
       toast.success("Dieta adicionada e vinculada ao aluno!");
@@ -302,7 +304,7 @@ const AdminDiet = () => {
 
       if (updateError) throw updateError;
 
-      await syncStudentDietMeals(selected.user_id, editContent);
+      await syncStudentDietMeals(selected.user_id, editContent, editMealMacros || undefined);
     },
     onSuccess: () => {
       toast.success("Dieta atualizada e sincronizada com o aluno!");
@@ -547,6 +549,13 @@ const AdminDiet = () => {
                         setNewProteinG(String(Math.round(result.total.protein_g)));
                         setNewCarbsG(String(Math.round(result.total.carbs_g)));
                         setNewFatG(String(Math.round(result.total.fat_g)));
+                        setNewMealMacros(result.meals.map((m) => ({
+                          meal_number: m.meal_number,
+                          energy_kcal: m.energy_kcal,
+                          protein_g: m.protein_g,
+                          carbs_g: m.carbs_g,
+                          fat_g: m.fat_g,
+                        })));
                         toast.success("Valores da IA aplicados nos macronutrientes!");
                       }}
                     />
@@ -631,6 +640,13 @@ const AdminDiet = () => {
                                 setEditProteinG(String(Math.round(result.total.protein_g)));
                                 setEditCarbsG(String(Math.round(result.total.carbs_g)));
                                 setEditFatG(String(Math.round(result.total.fat_g)));
+                                setEditMealMacros(result.meals.map((m) => ({
+                                  meal_number: m.meal_number,
+                                  energy_kcal: m.energy_kcal,
+                                  protein_g: m.protein_g,
+                                  carbs_g: m.carbs_g,
+                                  fat_g: m.fat_g,
+                                })));
                                 toast.success("Valores da IA aplicados nos macronutrientes!");
                               }}
                             />
