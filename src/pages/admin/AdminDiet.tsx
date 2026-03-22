@@ -539,6 +539,17 @@ const AdminDiet = () => {
                       <Label className="font-body">Conteúdo</Label>
                       <RichTextEditor value={newContent} onChange={setNewContent} placeholder="Escreva o conteúdo da dieta aqui..." />
                     </div>
+                    {/* AI Analysis */}
+                    <DietAIAnalysis
+                      dietContent={newContent}
+                      onConfirm={(result) => {
+                        setNewEnergyKcal(String(Math.round(result.total.energy_kcal)));
+                        setNewProteinG(String(Math.round(result.total.protein_g)));
+                        setNewCarbsG(String(Math.round(result.total.carbs_g)));
+                        setNewFatG(String(Math.round(result.total.fat_g)));
+                        toast.success("Valores da IA aplicados nos macronutrientes!");
+                      }}
+                    />
                     <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
                       <Button variant="ghost" size="sm" onClick={() => { setShowNewForm(false); resetNewForm(); }} className="w-full sm:w-auto">
                         Cancelar
