@@ -260,7 +260,11 @@ const StudentDiet = () => {
                 isExpanded={expandedMealId === meal.id}
               />
               {expandedMealId === meal.id && expandedMeal && (
-                <MealDetailPanel meal={expandedMeal} onClose={() => setExpandedMealId(null)} />
+                <MealDetailPanel
+                  meal={expandedMeal}
+                  mealLabel={expandedMeal.sort_order <= 5 ? `Refeição ${expandedMeal.sort_order + 1}` : "Refeição Extra"}
+                  onClose={() => setExpandedMealId(null)}
+                />
               )}
             </div>
           ))}

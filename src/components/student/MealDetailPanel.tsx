@@ -11,13 +11,17 @@ import { toast } from "sonner";
 
 interface MealDetailPanelProps {
   meal: MealWithFoods;
+  mealLabel?: string;
   onClose: () => void;
 }
 
-const MealDetailPanel = ({ meal, onClose }: MealDetailPanelProps) => {
+const MealDetailPanel = ({ meal, mealLabel, onClose }: MealDetailPanelProps) => {
   const [generatingImage, setGeneratingImage] = useState(false);
   const [imageUrl, setImageUrl] = useState((meal as any).image_url || "");
   const qc = useQueryClient();
+
+  const displayTitle = mealLabel || (meal.sort_order <= 5 ? `Refeição ${meal.sort_order + 1}` : "Refeição Extra");
+  const displaySubtitle = meal.name;
 
   const mealMacros = meal.diet_foods.reduce(
     (acc, f) => ({
@@ -75,9 +79,11 @@ const MealDetailPanel = ({ meal, onClose }: MealDetailPanelProps) => {
             <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
             <div className="absolute bottom-3 left-4 right-4">
               <h3 className="text-lg font-bold text-white drop-shadow-lg tracking-tight">
-                {meal.name}
+                {displayTitle}
               </h3>
-              <div className="flex items-center gap-2 text-xs text-white/80 mt-1">
+              <div className="flex items-center gap-2 text-xs text-white/80 mt-0.5">
+                <span>{displaySubtitle}</span>
+                <span>•</span>
                 <Clock className="w-3 h-3" />
                 <span>{meal.time}</span>
                 <Badge className="bg-primary/80 text-primary-foreground text-[10px] border-0">
@@ -92,7 +98,8 @@ const MealDetailPanel = ({ meal, onClose }: MealDetailPanelProps) => {
               <ImageIcon className="w-8 h-8 text-primary/50" />
             </div>
             <div className="text-center">
-              <h3 className="text-base font-bold text-foreground tracking-tight">{meal.name}</h3>
+              <h3 className="text-base font-bold text-foreground tracking-tight">{displayTitle}</h3>
+              <p className="text-xs text-muted-foreground">{displaySubtitle}</p>
               <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1 justify-center">
                 <Clock className="w-3 h-3" />
                 <span>{meal.time}</span>
