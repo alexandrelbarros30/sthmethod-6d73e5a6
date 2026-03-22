@@ -1,19 +1,21 @@
 import { cn } from "@/lib/utils";
-import { Check, Clock, SkipForward, Utensils, ChevronRight } from "lucide-react";
+import { Check, Clock, SkipForward, Utensils, ChevronDown, ChevronRight } from "lucide-react";
 import type { MealWithFoods } from "@/hooks/useMealTracking";
 
 interface MealCardProps {
   meal: MealWithFoods;
+  mealLabel?: string;
   isCompleted: boolean;
   isSkipped: boolean;
   isActive: boolean;
   isNext: boolean;
+  isExpanded?: boolean;
   onToggle: () => void;
   onSkip: () => void;
   onExpand: () => void;
 }
 
-const MealCard = ({ meal, isCompleted, isSkipped, isActive, isNext, onToggle, onSkip, onExpand }: MealCardProps) => {
+const MealCard = ({ meal, mealLabel, isCompleted, isSkipped, isActive, isNext, isExpanded, onToggle, onSkip, onExpand }: MealCardProps) => {
   const mealMacros = meal.diet_foods.reduce(
     (acc, f) => ({
       kcal: acc.kcal + (f.energy_kcal || 0),
@@ -28,6 +30,8 @@ const MealCard = ({ meal, isCompleted, isSkipped, isActive, isNext, onToggle, on
   const proteinPct = totalMacroG > 0 ? (mealMacros.protein / totalMacroG) * 100 : 33;
   const carbsPct = totalMacroG > 0 ? (mealMacros.carbs / totalMacroG) * 100 : 33;
   const fatPct = totalMacroG > 0 ? (mealMacros.fat / totalMacroG) * 100 : 33;
+
+  const ChevronIcon = isExpanded ? ChevronDown : ChevronRight;
 
   return (
     <div
@@ -76,6 +80,7 @@ const MealCard = ({ meal, isCompleted, isSkipped, isActive, isNext, onToggle, on
           <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
             <Clock className="w-3 h-3" />
             <span>{meal.time}</span>
+            {mealLabel && <span className="text-[10px] text-muted-foreground/60">• {mealLabel}</span>}
             <span className="text-foreground font-bold tabular-nums">{Math.round(mealMacros.kcal)}</span>
             <span className="text-muted-foreground text-[10px]">kcal</span>
           </div>
@@ -110,7 +115,7 @@ const MealCard = ({ meal, isCompleted, isSkipped, isActive, isNext, onToggle, on
               <SkipForward className="w-3.5 h-3.5" />
             </button>
           )}
-          <ChevronRight className="w-4 h-4 text-muted-foreground/40 ml-0.5" />
+          <ChevronIcon className="w-4 h-4 text-muted-foreground/40 ml-0.5 transition-transform duration-200" />
         </div>
       </div>
 

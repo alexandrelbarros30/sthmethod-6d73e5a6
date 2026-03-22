@@ -428,6 +428,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          image_url: string | null
           name: string
           sort_order: number
           time: string
@@ -436,6 +437,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          image_url?: string | null
           name: string
           sort_order?: number
           time: string
@@ -444,6 +446,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          image_url?: string | null
           name?: string
           sort_order?: number
           time?: string

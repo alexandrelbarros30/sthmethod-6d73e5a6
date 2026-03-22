@@ -8,74 +8,10 @@ import { useMealTracking } from "@/hooks/useMealTracking";
 import DailyProgressRing from "@/components/student/DailyProgressRing";
 import MacroProgressBar from "@/components/student/MacroProgressBar";
 import MealCard from "@/components/student/MealCard";
+import MealDetailPanel from "@/components/student/MealDetailPanel";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Utensils, Flame, Zap } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-
-// Expanded meal detail view
-const MealDetail = ({ meal, onClose }: { meal: any; onClose: () => void }) => {
-  const mealMacros = meal.diet_foods.reduce(
-    (acc: any, f: any) => ({
-      kcal: acc.kcal + (f.energy_kcal || 0),
-      protein: acc.protein + (f.protein_g || 0),
-      carbs: acc.carbs + (f.carbs_g || 0),
-      fat: acc.fat + (f.fat_g || 0),
-    }),
-    { kcal: 0, protein: 0, carbs: 0, fat: 0 }
-  );
-
-  return (
-    <Card className="premium-card border-primary/15 animate-scale-in">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-bold tracking-tight">{meal.name}</CardTitle>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg bg-muted/60 hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors text-xs">✕</button>
-        </div>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{meal.time}</span>
-          <Badge variant="outline" className="text-[10px] border-primary/20 text-primary">{Math.round(mealMacros.kcal)} kcal</Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {/* Macro summary */}
-        <div className="grid grid-cols-3 gap-2 text-center text-xs p-3 rounded-xl bg-muted/30 border border-border/30">
-          <div>
-            <span className="block font-bold text-info text-base tabular-nums">{Math.round(mealMacros.protein)}g</span>
-            <span className="text-muted-foreground text-[10px]">Proteína</span>
-          </div>
-          <div>
-            <span className="block font-bold text-warning text-base tabular-nums">{Math.round(mealMacros.carbs)}g</span>
-            <span className="text-muted-foreground text-[10px]">Carbo</span>
-          </div>
-          <div>
-            <span className="block font-bold text-base tabular-nums" style={{ color: "hsl(25, 85%, 55%)" }}>{Math.round(mealMacros.fat)}g</span>
-            <span className="text-muted-foreground text-[10px]">Gordura</span>
-          </div>
-        </div>
-
-        {/* Food items */}
-        <div className="space-y-1">
-          {meal.diet_foods.map((food: any, i: number) => (
-            <div
-              key={food.id}
-              className={cn(
-                "flex items-center justify-between py-2 px-3 rounded-xl text-sm transition-colors",
-                i % 2 === 0 ? "bg-muted/20" : ""
-              )}
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                <span className="truncate text-foreground font-medium">{food.item}</span>
-              </div>
-              <span className="text-xs text-muted-foreground shrink-0 ml-2 tabular-nums">{food.quantity}</span>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
 
 const StudentDiet = () => {
   const { user } = useAuth();
@@ -174,13 +110,18 @@ const StudentDiet = () => {
 
   const expandedMeal = expandedMealId ? meals.find((m) => m.id === expandedMealId) : null;
 
+  // Meal label mapping
+  const getMealLabel = (index: number) => {
+    const labels = ["Refeição 1", "Refeição 2", "Refeição 3", "Refeição 4", "Refeição 5", "Refeição 6"];
+    return index < 6 ? labels[index] : "Extra";
+  };
+
   return (
     <DashboardLayout role="student" title="Dieta" subtitle="Acompanhe suas refeições do dia.">
       <div className="space-y-5 max-w-lg mx-auto">
         {/* Daily Progress Header */}
         <Card className="premium-card border-primary/10 animate-fade-in overflow-hidden">
           <CardContent className="py-6 relative">
-            {/* Subtle gradient bg */}
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
             <div className="relative flex items-center gap-5">
               <DailyProgressRing
@@ -222,31 +163,10 @@ const StudentDiet = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <MacroProgressBar
-              label="Calorias"
-              consumed={consumedMacros.kcal}
-              total={totalMacros.kcal}
-              unit="kcal"
-              color="bg-primary"
-            />
-            <MacroProgressBar
-              label="Proteína"
-              consumed={consumedMacros.protein}
-              total={totalMacros.protein}
-              color="bg-info"
-            />
-            <MacroProgressBar
-              label="Carboidrato"
-              consumed={consumedMacros.carbs}
-              total={totalMacros.carbs}
-              color="bg-warning"
-            />
-            <MacroProgressBar
-              label="Gordura"
-              consumed={consumedMacros.fat}
-              total={totalMacros.fat}
-              color="bg-[hsl(25,85%,55%)]"
-            />
+            <MacroProgressBar label="Calorias" consumed={consumedMacros.kcal} total={totalMacros.kcal} unit="kcal" color="bg-primary" />
+            <MacroProgressBar label="Proteína" consumed={consumedMacros.protein} total={totalMacros.protein} color="bg-info" />
+            <MacroProgressBar label="Carboidrato" consumed={consumedMacros.carbs} total={totalMacros.carbs} color="bg-warning" />
+            <MacroProgressBar label="Gordura" consumed={consumedMacros.fat} total={totalMacros.fat} color="bg-[hsl(25,85%,55%)]" />
 
             {skippedMacros.kcal > 0 && remainingMeals > 0 && (
               <p className="text-[10px] text-warning mt-1 flex items-center gap-1">
@@ -267,6 +187,7 @@ const StudentDiet = () => {
             <div key={meal.id} className="animate-slide-up" style={{ animationDelay: `${0.05 * idx}s` }}>
               <MealCard
                 meal={meal}
+                mealLabel={getMealLabel(idx)}
                 isCompleted={isMealCompleted(meal.id)}
                 isSkipped={isMealSkipped(meal.id)}
                 isActive={activeMeal?.id === meal.id}
@@ -274,11 +195,10 @@ const StudentDiet = () => {
                 onToggle={() => handleToggle(meal.id)}
                 onSkip={() => handleSkip(meal.id)}
                 onExpand={() => setExpandedMealId(expandedMealId === meal.id ? null : meal.id)}
+                isExpanded={expandedMealId === meal.id}
               />
               {expandedMealId === meal.id && expandedMeal && (
-                <div className="mt-2 ml-3">
-                  <MealDetail meal={expandedMeal} onClose={() => setExpandedMealId(null)} />
-                </div>
+                <MealDetailPanel meal={expandedMeal} onClose={() => setExpandedMealId(null)} />
               )}
             </div>
           ))}
