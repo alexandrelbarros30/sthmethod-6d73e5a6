@@ -10,6 +10,7 @@ interface MealCardProps {
   isActive: boolean;
   isNext: boolean;
   isExpanded?: boolean;
+  distributedMacros?: { kcal: number; protein: number; carbs: number; fat: number } | null;
   onToggle: () => void;
   onSkip: () => void;
   onExpand: () => void;
