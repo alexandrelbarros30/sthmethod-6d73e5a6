@@ -71,6 +71,35 @@ const extractQuantity = (line: string) => {
   return match?.[1]?.trim() || "porção";
 };
 
+const inferMealNameFromHeadingRemainder = (value: string): string | null => {
+  const n = normalize(value.replace(/[()]/g, " "));
+  if (!n) return null;
+  if (n.includes("cafe da manha")) return "Café da Manhã";
+  if (n.includes("lanche da manha")) return "Lanche da Manhã";
+  if (n.includes("almoco")) return "Almoço";
+  if (n.includes("lanche da tarde")) return "Lanche da Tarde";
+  if (n.includes("jantar")) return "Jantar";
+  if (n.includes("ceia") || n.includes("pos treino") || n.includes("pós treino")) return "Ceia";
+  if (n.includes("extra")) return "Refeição Extra";
+  return null;
+};
+
+const isHeadingMetadataOnly = (value: string) => {
+  const n = normalize(value.replace(/[()]/g, " "));
+  if (!n) return true;
+  return (
+    n.includes("cafe da manha") ||
+    n.includes("lanche da manha") ||
+    n.includes("almoco") ||
+    n.includes("lanche da tarde") ||
+    n.includes("jantar") ||
+    n.includes("ceia") ||
+    n.includes("pos treino") ||
+    n.includes("pós treino") ||
+    n === "extra"
+  );
+};
+
 const parseHeading = (
   line: string,
   nextExtraOrder: () => number
@@ -79,17 +108,25 @@ const parseHeading = (
   if (refeicao) {
     const raw = refeicao[1]?.toLowerCase();
     const remainder = (refeicao[2] || "").trim();
+    const inferredName = inferMealNameFromHeadingRemainder(remainder);
+    const remainderShouldBecomeFood = remainder && !inferredName && !isHeadingMetadataOnly(remainder);
+
     if (raw === "extra") {
       const sortOrder = nextExtraOrder();
-      return { sortOrder, name: "Refeição Extra", remainder };
+      return {
+        sortOrder,
+        name: inferredName || "Refeição Extra",
+        remainder: remainderShouldBecomeFood ? remainder : "",
+      };
     }
+
     const parsed = Number(raw);
     if (!Number.isNaN(parsed)) {
       const sortOrder = parsed > 6 ? nextExtraOrder() : Math.max(0, parsed - 1);
       return {
         sortOrder,
-        name: DEFAULT_MEAL_NAMES[sortOrder] || `Refeição ${parsed}`,
-        remainder,
+        name: inferredName || DEFAULT_MEAL_NAMES[sortOrder] || `Refeição ${parsed}`,
+        remainder: remainderShouldBecomeFood ? remainder : "",
       };
     }
   }
