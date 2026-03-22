@@ -7,6 +7,7 @@ export interface MealWithFoods {
   name: string;
   time: string;
   sort_order: number;
+  image_url?: string;
   diet_foods: {
     id: string;
     item: string;
