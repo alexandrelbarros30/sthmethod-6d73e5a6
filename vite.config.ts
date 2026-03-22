@@ -16,44 +16,48 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === "development" && componentTagger(),
-    VitePWA({
-      registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "pwa-icon-192.png", "pwa-icon-512.png"],
-      workbox: {
-        navigateFallbackDenylist: [/^\/~oauth/],
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,woff2}"],
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-      },
-      manifest: {
-        name: "STH Consultoria",
-        short_name: "STH",
-        description: "Consultoria online personalizada para quem busca emagrecimento, definição, saúde hormonal e evolução no shape.",
-        theme_color: "#0a1214",
-        background_color: "#0a1214",
-        display: "fullscreen",
-        orientation: "portrait",
-        scope: "/",
-        start_url: "/",
-        icons: [
-          {
-            src: "/pwa-icon-192.png",
-            sizes: "192x192",
-            type: "image/png",
-          },
-          {
-            src: "/pwa-icon-512.png",
-            sizes: "512x512",
-            type: "image/png",
-          },
-          {
-            src: "/pwa-icon-512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "maskable",
-          },
-        ],
-      },
-    }),
+    mode === "production" &&
+      VitePWA({
+        registerType: "autoUpdate",
+        includeAssets: ["favicon.ico", "pwa-icon-192.png", "pwa-icon-512.png"],
+        workbox: {
+          navigateFallbackDenylist: [/^\/~oauth/],
+          globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,woff2}"],
+          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+          cleanupOutdatedCaches: true,
+          skipWaiting: true,
+          clientsClaim: true,
+        },
+        manifest: {
+          name: "STH Consultoria",
+          short_name: "STH",
+          description: "Consultoria online personalizada para quem busca emagrecimento, definição, saúde hormonal e evolução no shape.",
+          theme_color: "#0a1214",
+          background_color: "#0a1214",
+          display: "fullscreen",
+          orientation: "portrait",
+          scope: "/",
+          start_url: "/",
+          icons: [
+            {
+              src: "/pwa-icon-192.png",
+              sizes: "192x192",
+              type: "image/png",
+            },
+            {
+              src: "/pwa-icon-512.png",
+              sizes: "512x512",
+              type: "image/png",
+            },
+            {
+              src: "/pwa-icon-512.png",
+              sizes: "512x512",
+              type: "image/png",
+              purpose: "maskable",
+            },
+          ],
+        },
+      }),
   ].filter(Boolean),
   resolve: {
     alias: {
