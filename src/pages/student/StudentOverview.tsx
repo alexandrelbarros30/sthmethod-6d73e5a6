@@ -417,6 +417,9 @@ const StudentOverview = () => {
         </Card>
       )}
 
+      {/* ===== PROGRESSO DIÁRIO DE REFEIÇÕES ===== */}
+      <DailyMealWidget />
+
       {/* ===== INDICADORES METABÓLICOS (Premium Gold) ===== */}
       {isPremium && p && isOnboarded && (weight || tdee || nutritionTotals.kcal > 0) && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
