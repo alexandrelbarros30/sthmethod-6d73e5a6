@@ -639,6 +639,13 @@ const AdminDiet = () => {
                                 setEditProteinG(String(Math.round(result.total.protein_g)));
                                 setEditCarbsG(String(Math.round(result.total.carbs_g)));
                                 setEditFatG(String(Math.round(result.total.fat_g)));
+                                setEditMealMacros(result.meals.map((m) => ({
+                                  meal_number: m.meal_number,
+                                  energy_kcal: m.energy_kcal,
+                                  protein_g: m.protein_g,
+                                  carbs_g: m.carbs_g,
+                                  fat_g: m.fat_g,
+                                })));
                                 toast.success("Valores da IA aplicados nos macronutrientes!");
                               }}
                             />
