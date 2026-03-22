@@ -116,6 +116,9 @@ const App = () => (
             <Route path="/financeiro/revenue" element={<ProtectedRoute allowedRoles={["financeiro"]}><FinanceiroDashboard /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <div className="fixed bottom-1 right-1 text-[9px] text-muted-foreground/40 pointer-events-none z-50 font-mono">
+            v2026.03.22.1
+          </div>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
