@@ -1,6 +1,7 @@
 import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
@@ -9,14 +10,15 @@ import DailyProgressRing from "@/components/student/DailyProgressRing";
 import MacroProgressBar from "@/components/student/MacroProgressBar";
 import MealCard from "@/components/student/MealCard";
 import MealDetailPanel from "@/components/student/MealDetailPanel";
-import { Badge } from "@/components/ui/badge";
-import { Clock, Utensils, Flame, Zap } from "lucide-react";
+import { Utensils, Flame, Zap, FileDown } from "lucide-react";
 import { toast } from "sonner";
+import { generateStudentPDF } from "@/lib/pdfGenerator";
 
 const StudentDiet = () => {
   const { user } = useAuth();
   const { isActive, isLoading: subLoading } = useSubscriptionGuard();
   const [expandedMealId, setExpandedMealId] = useState<string | null>(null);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const {
     meals,
     completions,
@@ -124,21 +126,59 @@ const StudentDiet = () => {
 
   const expandedMeal = expandedMealId ? meals.find((m) => m.id === expandedMealId) : null;
 
-  const getMealLabel = (index: number) => {
-    const labels: Record<number, string> = {
-      0: "Café da Manhã",
-      1: "Lanche da Manhã",
-      2: "Almoço",
-      3: "Lanche da Tarde",
-      4: "Jantar",
-      5: "Ceia",
-    };
-    return labels[index] || "Refeição Extra";
+  const handleDownloadPdf = async () => {
+    if (meals.length === 0) {
+      toast.error("Nenhuma refeição disponível para gerar o PDF.");
+      return;
+    }
+
+    setIsDownloadingPdf(true);
+    try {
+      const content = meals
+        .map((meal) => {
+          const heading = meal.sort_order <= 5 ? `REFEIÇÃO ${meal.sort_order + 1} - ${meal.name}` : meal.name;
+          const foods = meal.diet_foods.map((food) => `${food.quantity} - ${food.item}`).join("\n");
+          return `${heading}\n${foods}`;
+        })
+        .join("\n\n");
+
+      const blob = await generateStudentPDF({
+        type: "diet",
+        title: "Rotina Alimentar",
+        content,
+        studentInfo: {
+          name: (user?.user_metadata?.full_name as string) || user?.email || "Aluno",
+        },
+        createdAt: new Date().toISOString(),
+      });
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `dieta-${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success("PDF da dieta baixado com sucesso.");
+    } catch (error) {
+      console.error("Erro ao gerar PDF da dieta:", error);
+      toast.error("Não foi possível gerar o PDF agora.");
+    } finally {
+      setIsDownloadingPdf(false);
+    }
   };
 
   return (
     <DashboardLayout role="student" title="Dieta" subtitle="Acompanhe suas refeições do dia.">
       <div className="space-y-5 max-w-lg mx-auto">
+        <div className="flex justify-end">
+          <Button variant="outline" size="sm" onClick={handleDownloadPdf} disabled={isDownloadingPdf}>
+            <FileDown className="w-4 h-4 mr-1" />
+            {isDownloadingPdf ? "Gerando PDF..." : "Baixar PDF"}
+          </Button>
+        </div>
+
         {/* Daily Progress Header */}
         <Card className="premium-card border-primary/10 animate-fade-in overflow-hidden">
           <CardContent className="py-6 relative">
@@ -207,7 +247,7 @@ const StudentDiet = () => {
             <div key={meal.id} className="animate-slide-up" style={{ animationDelay: `${0.05 * idx}s` }}>
               <MealCard
                 meal={meal}
-                mealLabel={getMealLabel(idx)}
+                mealLabel={meal.sort_order > 5 ? "Refeição Extra" : `Refeição ${meal.sort_order + 1}`}
                 isCompleted={isMealCompleted(meal.id)}
                 isSkipped={isMealSkipped(meal.id)}
                 isActive={activeMeal?.id === meal.id}
