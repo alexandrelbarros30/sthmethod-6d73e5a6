@@ -181,12 +181,6 @@ const MealDetailPanel = ({ meal, mealLabel, onClose }: MealDetailPanelProps) => 
                     )}
                   </div>
                 </div>
-                <div className="text-right shrink-0 ml-3">
-                  <span className="text-xs font-bold text-primary tabular-nums">{food.quantity}</span>
-                  <span className="block text-[9px] text-muted-foreground tabular-nums">
-                    {Math.round(food.energy_kcal)} kcal
-                  </span>
-                </div>
               </div>
             ))}
           </div>
