@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { syncStudentDietMeals } from "@/lib/diet-meal-sync";
+import { syncStudentDietMeals, MealMacros } from "@/lib/diet-meal-sync";
 
 const AdminDiet = () => {
   const { user, role } = useAuth();
