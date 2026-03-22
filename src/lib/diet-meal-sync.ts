@@ -194,7 +194,8 @@ export const parseDietContentToMeals = (content: string): ParsedDietMeal[] => {
 
     if (currentOrder === null) continue;
 
-    const cleaned = raw.replace(/^[•\-*\d.)\s]+/, "").trim();
+    // Only strip bullet markers (•, -, *) but preserve leading numbers that are food quantities
+    const cleaned = raw.replace(/^[•\-*]\s*/, "").trim();
     if (!cleaned) continue;
 
     const meal = ensureMeal(currentOrder);

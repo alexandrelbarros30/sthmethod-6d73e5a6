@@ -10,13 +10,14 @@ interface MealCardProps {
   isActive: boolean;
   isNext: boolean;
   isExpanded?: boolean;
+  distributedMacros?: { kcal: number; protein: number; carbs: number; fat: number } | null;
   onToggle: () => void;
   onSkip: () => void;
   onExpand: () => void;
 }
 
-const MealCard = ({ meal, mealLabel, isCompleted, isSkipped, isActive, isNext, isExpanded, onToggle, onSkip, onExpand }: MealCardProps) => {
-  const mealMacros = meal.diet_foods.reduce(
+const MealCard = ({ meal, mealLabel, isCompleted, isSkipped, isActive, isNext, isExpanded, distributedMacros, onToggle, onSkip, onExpand }: MealCardProps) => {
+  const foodMacros = meal.diet_foods.reduce(
     (acc, f) => ({
       kcal: acc.kcal + (f.energy_kcal || 0),
       protein: acc.protein + (f.protein_g || 0),
@@ -25,6 +26,10 @@ const MealCard = ({ meal, mealLabel, isCompleted, isSkipped, isActive, isNext, i
     }),
     { kcal: 0, protein: 0, carbs: 0, fat: 0 }
   );
+
+  // Use distributed admin macros if available, otherwise use food-level macros
+  const mealMacros = distributedMacros && (distributedMacros.kcal > 0 || distributedMacros.protein > 0)
+    ? distributedMacros : foodMacros;
 
   const totalMacroG = mealMacros.protein + mealMacros.carbs + mealMacros.fat;
   const proteinPct = totalMacroG > 0 ? (mealMacros.protein / totalMacroG) * 100 : 33;

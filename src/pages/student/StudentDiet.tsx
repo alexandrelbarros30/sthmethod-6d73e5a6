@@ -24,6 +24,7 @@ const StudentDiet = () => {
     completions,
     totalMacros,
     consumedMacros,
+    perMealMacros,
     completedCount,
     totalMeals,
     progressPercent,
@@ -252,6 +253,7 @@ const StudentDiet = () => {
                 isSkipped={isMealSkipped(meal.id)}
                 isActive={activeMeal?.id === meal.id}
                 isNext={nextMeal?.id === meal.id && activeMeal?.id !== meal.id}
+                distributedMacros={perMealMacros}
                 onToggle={() => handleToggle(meal.id)}
                 onSkip={() => handleSkip(meal.id)}
                 onExpand={() => setExpandedMealId(expandedMealId === meal.id ? null : meal.id)}
