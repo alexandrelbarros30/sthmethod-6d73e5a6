@@ -7,8 +7,11 @@ import { Progress } from "@/components/ui/progress";
 import {
   Salad, Dumbbell, FlaskConical, BookOpen, CalendarDays, CheckCircle,
   AlertCircle, User, FileText, TrendingUp, Activity, Flame, Scale,
-  Target, ChevronRight, Zap, Droplets, ListChecks
+  Target, ChevronRight, Zap, Droplets, ListChecks, Clock, Utensils
 } from "lucide-react";
+import { useMealTracking } from "@/hooks/useMealTracking";
+import DailyProgressRing from "@/components/student/DailyProgressRing";
+import MacroProgressBar from "@/components/student/MacroProgressBar";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
