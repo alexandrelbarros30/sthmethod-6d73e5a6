@@ -1,145 +1,101 @@
-import { useEffect } from "react";
+import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { FileText, Clock, Download } from "lucide-react";
-import DietContentRenderer, { type DietStudentInfo } from "@/components/student/DietContentRenderer";
-import StudentInfoHeader from "@/components/student/StudentInfoHeader";
-import RichContentRenderer from "@/components/shared/RichContentRenderer";
+import { useMealTracking } from "@/hooks/useMealTracking";
+import DailyProgressRing from "@/components/student/DailyProgressRing";
+import MacroProgressBar from "@/components/student/MacroProgressBar";
+import MealCard from "@/components/student/MealCard";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { generateStudentPDF, canDownloadPDF } from "@/lib/pdfGenerator";
+import { Clock, Utensils, ChevronRight, Flame } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-const useContentProtection = () => {
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "PrintScreen" || (e.ctrlKey && e.key === "p") || (e.metaKey && e.key === "p") || (e.ctrlKey && e.key === "c") || (e.metaKey && e.key === "c")) {
-        e.preventDefault();
-        document.body.style.filter = "blur(20px)";
-        setTimeout(() => { document.body.style.filter = "none"; }, 1500);
-      }
-    };
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === "PrintScreen") {
-        document.body.style.filter = "blur(20px)";
-        navigator.clipboard.writeText("").catch(() => {});
-        setTimeout(() => { document.body.style.filter = "none"; }, 1500);
-      }
-    };
-    const handleContextMenu = (e: MouseEvent) => e.preventDefault();
-    const handleVisibilityChange = () => {
-      document.body.style.filter = document.visibilityState === "hidden" ? "blur(20px)" : "none";
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("keyup", handleKeyUp);
-    document.addEventListener("contextmenu", handleContextMenu);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("keyup", handleKeyUp);
-      document.removeEventListener("contextmenu", handleContextMenu);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      document.body.style.filter = "none";
-    };
-  }, []);
+// Expanded meal detail view
+const MealDetail = ({ meal, onClose }: { meal: any; onClose: () => void }) => {
+  const mealMacros = meal.diet_foods.reduce(
+    (acc: any, f: any) => ({
+      kcal: acc.kcal + (f.energy_kcal || 0),
+      protein: acc.protein + (f.protein_g || 0),
+      carbs: acc.carbs + (f.carbs_g || 0),
+      fat: acc.fat + (f.fat_g || 0),
+    }),
+    { kcal: 0, protein: 0, carbs: 0, fat: 0 }
+  );
+
+  return (
+    <Card className="border-primary/20">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base font-display uppercase">{meal.name}</CardTitle>
+          <button onClick={onClose} className="text-xs text-muted-foreground hover:text-foreground">✕</button>
+        </div>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{meal.time}</span>
+          <Badge variant="outline" className="text-[10px]">{Math.round(mealMacros.kcal)} kcal</Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {/* Macro summary */}
+        <div className="grid grid-cols-3 gap-2 text-center text-xs p-2 rounded-lg bg-muted/50">
+          <div>
+            <span className="block font-bold text-blue-400 text-sm">{Math.round(mealMacros.protein)}g</span>
+            <span className="text-muted-foreground">Proteína</span>
+          </div>
+          <div>
+            <span className="block font-bold text-amber-400 text-sm">{Math.round(mealMacros.carbs)}g</span>
+            <span className="text-muted-foreground">Carbo</span>
+          </div>
+          <div>
+            <span className="block font-bold text-orange-400 text-sm">{Math.round(mealMacros.fat)}g</span>
+            <span className="text-muted-foreground">Gordura</span>
+          </div>
+        </div>
+
+        {/* Food items */}
+        <div className="space-y-1.5">
+          {meal.diet_foods.map((food: any, i: number) => (
+            <div
+              key={food.id}
+              className={cn(
+                "flex items-center justify-between py-1.5 px-2 rounded text-sm",
+                i % 2 === 0 ? "bg-muted/30" : ""
+              )}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-primary text-xs">•</span>
+                <span className="truncate text-foreground">{food.item}</span>
+              </div>
+              <span className="text-xs text-muted-foreground shrink-0 ml-2">{food.quantity}</span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
 };
 
 const StudentDiet = () => {
-  useContentProtection();
   const { user } = useAuth();
-  const { isActive, isLoading: subLoading, subscription } = useSubscriptionGuard();
-
-  const { data: diets, isLoading } = useQuery({
-    queryKey: ["student-diets", user?.id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("student_diets")
-        .select("*")
-        .eq("user_id", user!.id)
-        .eq("visible", true)
-        .or(`release_date.is.null,release_date.lte.${new Date().toISOString()}`)
-        .order("created_at", { ascending: false });
-      return data || [];
-    },
-    enabled: !!user?.id && isActive,
-  });
-
-  const { data: profile } = useQuery({
-    queryKey: ["profile", user?.id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", user!.id)
-        .single();
-      return data;
-    },
-    enabled: !!user?.id,
-  });
-
-  const buildStudentInfo = (diet: any): DietStudentInfo | undefined => {
-    if (!profile) return undefined;
-    const age = profile.birth_date
-      ? Math.floor((Date.now() - new Date(profile.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-      : undefined;
-    // Use diet-level macros if available, otherwise fall back to profile
-    const energy = diet.energy_kcal ?? profile.daily_calories ?? undefined;
-    const protein = diet.protein_g ?? profile.protein_g ?? undefined;
-    const carbs = diet.carbs_g ?? profile.carbs_g ?? undefined;
-    const fat = diet.fat_g ?? profile.fat_g ?? undefined;
-    // Only include macros if at least one value exists
-    const hasMacros = energy || protein || carbs || fat;
-    return {
-      name: profile.full_name || undefined,
-      age,
-      weight: profile.weight || undefined,
-      height: profile.height || undefined,
-      objective: profile.objective || undefined,
-      startDate: new Date(diet.created_at).toLocaleDateString("pt-BR"),
-      hydration: diet.hydration_l ? `${diet.hydration_l} litros` : undefined,
-      totalEnergy: hasMacros ? energy : undefined,
-      protein: hasMacros ? protein : undefined,
-      carbs: hasMacros ? carbs : undefined,
-      fat: hasMacros ? fat : undefined,
-    };
-  };
-
-  const handleDownloadPDF = async (diet: any) => {
-    try {
-      const blob = await generateStudentPDF({
-        type: 'diet',
-        title: diet.title,
-        content: diet.content || 'Conteúdo não disponível',
-        studentInfo: {
-          name: profile?.full_name || 'Aluno',
-          age: profile?.birth_date ? Math.floor((Date.now() - new Date(profile.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : undefined,
-          weight: profile?.weight || undefined,
-          height: profile?.height ? (profile.height / 100) : undefined,
-          goal: profile?.objective || undefined,
-        },
-        createdAt: diet.created_at,
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${diet.title.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date(diet.created_at).toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      toast.success('PDF baixado com sucesso!');
-    } catch (error) {
-      console.error('Erro ao gerar PDF:', error);
-      toast.error('Erro ao gerar PDF. Tente novamente.');
-    }
-  };
-
-  const canDownload = canDownloadPDF(subscription?.plans?.name);
+  const { isActive, isLoading: subLoading } = useSubscriptionGuard();
+  const [expandedMealId, setExpandedMealId] = useState<string | null>(null);
+  const {
+    meals,
+    completions,
+    totalMacros,
+    consumedMacros,
+    completedCount,
+    totalMeals,
+    progressPercent,
+    nextMeal,
+    activeMeal,
+    toggleMeal,
+    isLoading,
+    isMealCompleted,
+    isMealSkipped,
+  } = useMealTracking();
 
   if (subLoading || isLoading) {
     return (
@@ -157,94 +113,169 @@ const StudentDiet = () => {
     );
   }
 
-  if (!diets || diets.length === 0) {
+  if (meals.length === 0) {
     return (
       <DashboardLayout role="student" title="Dieta" subtitle="Seu plano alimentar personalizado.">
-        <Card><CardContent className="py-8 text-center">
-          <p className="text-muted-foreground font-body">Nenhuma dieta configurada ainda. Aguarde seu consultor.</p>
-        </CardContent></Card>
+        <Card>
+          <CardContent className="py-8 text-center">
+            <Utensils className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground font-body">Nenhuma refeição configurada ainda. Aguarde seu consultor.</p>
+          </CardContent>
+        </Card>
       </DashboardLayout>
     );
   }
 
+  const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "Aluno";
+
+  const handleToggle = (mealId: string) => {
+    const wasCompleted = isMealCompleted(mealId);
+    toggleMeal.mutate({ mealId, skipped: false });
+    if (!wasCompleted) {
+      toast.success("Refeição concluída! ✅");
+    }
+  };
+
+  const handleSkip = (mealId: string) => {
+    const wasSkipped = isMealSkipped(mealId);
+    toggleMeal.mutate({ mealId, skipped: true });
+    if (!wasSkipped) {
+      toast("Refeição pulada", { description: "Os macros serão redistribuídos" });
+    }
+  };
+
+  // Remaining macros (considering skipped meals redistribute)
+  const skippedMacros = meals.reduce(
+    (acc, meal) => {
+      if (isMealSkipped(meal.id)) {
+        meal.diet_foods.forEach((f) => {
+          acc.kcal += f.energy_kcal || 0;
+          acc.protein += f.protein_g || 0;
+          acc.carbs += f.carbs_g || 0;
+          acc.fat += f.fat_g || 0;
+        });
+      }
+      return acc;
+    },
+    { kcal: 0, protein: 0, carbs: 0, fat: 0 }
+  );
+
+  const remainingMeals = meals.filter((m) => !isMealCompleted(m.id) && !isMealSkipped(m.id)).length;
+  const redistributedPerMeal = remainingMeals > 0
+    ? {
+        kcal: skippedMacros.kcal / remainingMeals,
+        protein: skippedMacros.protein / remainingMeals,
+        carbs: skippedMacros.carbs / remainingMeals,
+        fat: skippedMacros.fat / remainingMeals,
+      }
+    : { kcal: 0, protein: 0, carbs: 0, fat: 0 };
+
+  const expandedMeal = expandedMealId ? meals.find((m) => m.id === expandedMealId) : null;
+
   return (
-    <DashboardLayout role="student" title="Dieta" subtitle="Seu plano alimentar personalizado.">
-      <style>{`
-        @media print { .content-protected { display: none !important; } body::after { content: "Impressão não permitida"; display: flex; align-items: center; justify-content: center; font-size: 2rem; height: 100vh; } }
-        .content-protected { user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; -webkit-touch-callout: none; }
-      `}</style>
-      <div className="space-y-4 max-w-4xl content-protected">
-        <h3 className="text-sm font-semibold text-muted-foreground font-display flex items-center gap-2">
-          <Clock className="w-4 h-4" /> Histórico de Dietas ({diets.length})
-        </h3>
-
-        {diets.map((diet: any) => (
-          <Card key={diet.id}>
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <CardTitle className="text-base font-display">{diet.title}</CardTitle>
-                  <Badge variant="outline" className="text-[10px]">
-                    {new Date(diet.created_at).toLocaleDateString("pt-BR")} às{" "}
-                    {new Date(diet.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                  </Badge>
+    <DashboardLayout role="student" title="Dieta" subtitle="Acompanhe suas refeições do dia.">
+      <div className="space-y-4 max-w-lg mx-auto">
+        {/* Daily Progress Header */}
+        <Card className="border-primary/10">
+          <CardContent className="py-5">
+            <div className="flex items-center gap-4">
+              <DailyProgressRing
+                percent={progressPercent}
+                size={110}
+                strokeWidth={8}
+                sublabel={nextMeal?.name || "Concluído"}
+              />
+              <div className="flex-1 space-y-3">
+                <div>
+                  <p className="text-sm font-medium text-foreground font-display">
+                    {completedCount}/{totalMeals} refeições
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {progressPercent === 100 ? "Dia completo! 🎉" : `${totalMeals - completedCount} restantes`}
+                  </p>
                 </div>
-                {canDownload && diet.content && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDownloadPDF(diet)}
-                    className="h-7 text-xs"
-                  >
-                    <Download className="w-3 h-3 mr-1" />
-                    PDF
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="p-3 rounded-lg bg-muted/50 border border-border space-y-3">
-                {/* Student info header + macros */}
-                {profile && (
-                  <StudentInfoHeader info={{
-                    name: profile.full_name || undefined,
-                    age: profile.birth_date ? Math.floor((Date.now() - new Date(profile.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : undefined,
-                    weight: profile.weight || undefined,
-                    height: profile.height || undefined,
-                    objective: profile.objective || undefined,
-                    startDate: new Date(diet.created_at).toLocaleDateString("pt-BR"),
-                    hydration: diet.hydration_l ? `${diet.hydration_l} litros` : undefined,
-                    totalEnergy: diet.energy_kcal ?? profile.daily_calories ?? undefined,
-                    protein: diet.protein_g ?? profile.protein_g ?? undefined,
-                    carbs: diet.carbs_g ?? profile.carbs_g ?? undefined,
-                    fat: diet.fat_g ?? profile.fat_g ?? undefined,
-                  }} />
-                )}
 
-                {diet.pdf_url && (
-                  <div>
-                    <p className="text-xs text-primary flex items-center gap-1 mb-2">
-                      <FileText className="w-3 h-3" /> Documento PDF
+                {nextMeal && !isMealCompleted(nextMeal.id) && (
+                  <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
+                    <p className="text-[10px] text-primary font-medium uppercase">Próxima Refeição</p>
+                    <p className="text-sm font-semibold text-foreground flex items-center gap-1">
+                      {nextMeal.name} <span className="text-muted-foreground text-xs">{nextMeal.time}</span>
                     </p>
-                    <iframe
-                      src={diet.pdf_url}
-                      className="w-full h-[500px] rounded-lg border border-border"
-                      title="Dieta PDF"
-                    />
                   </div>
                 )}
-                {diet.content && (
-                  /<[a-z][\s\S]*>/i.test(diet.content)
-                    ? <RichContentRenderer content={diet.content} />
-                    : <DietContentRenderer
-                        content={diet.content}
-                        showHeader={false}
-                      />
-                )}
               </div>
-            </CardContent>
-          </Card>
-        ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Macro Progress */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-display flex items-center gap-2">
+              <Flame className="w-4 h-4 text-primary" /> Macros do Dia
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2.5">
+            <MacroProgressBar
+              label="Calorias"
+              consumed={consumedMacros.kcal}
+              total={totalMacros.kcal}
+              unit="kcal"
+              color="bg-primary"
+            />
+            <MacroProgressBar
+              label="Proteína"
+              consumed={consumedMacros.protein}
+              total={totalMacros.protein}
+              color="bg-blue-500"
+            />
+            <MacroProgressBar
+              label="Carboidrato"
+              consumed={consumedMacros.carbs}
+              total={totalMacros.carbs}
+              color="bg-amber-500"
+            />
+            <MacroProgressBar
+              label="Gordura"
+              consumed={consumedMacros.fat}
+              total={totalMacros.fat}
+              color="bg-orange-500"
+            />
+
+            {skippedMacros.kcal > 0 && remainingMeals > 0 && (
+              <p className="text-[10px] text-warning mt-1">
+                ⚠️ +{Math.round(redistributedPerMeal.kcal)} kcal redistribuídos por refeição restante
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Meal List */}
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold text-muted-foreground font-display flex items-center gap-2">
+            <Utensils className="w-4 h-4" /> Refeições ({completedCount}/{totalMeals})
+          </h3>
+
+          {meals.map((meal) => (
+            <div key={meal.id}>
+              <MealCard
+                meal={meal}
+                isCompleted={isMealCompleted(meal.id)}
+                isSkipped={isMealSkipped(meal.id)}
+                isActive={activeMeal?.id === meal.id}
+                isNext={nextMeal?.id === meal.id && activeMeal?.id !== meal.id}
+                onToggle={() => handleToggle(meal.id)}
+                onSkip={() => handleSkip(meal.id)}
+                onExpand={() => setExpandedMealId(expandedMealId === meal.id ? null : meal.id)}
+              />
+              {expandedMealId === meal.id && expandedMeal && (
+                <div className="mt-2 ml-4">
+                  <MealDetail meal={expandedMeal} onClose={() => setExpandedMealId(null)} />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     </DashboardLayout>
   );
