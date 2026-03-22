@@ -211,7 +211,19 @@ export const parseDietContentToMeals = (content: string): ParsedDietMeal[] => {
     .filter((meal) => meal.foods.length > 0);
 };
 
-export const syncStudentDietMeals = async (studentId: string, content: string) => {
+export interface MealMacros {
+  meal_number: number;
+  energy_kcal: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+}
+
+export const syncStudentDietMeals = async (
+  studentId: string,
+  content: string,
+  perMealMacros?: MealMacros[]
+) => {
   const meals = parseDietContentToMeals(content);
 
   const { data: existingMeals, error: existingMealsError } = await supabase
@@ -248,12 +260,23 @@ export const syncStudentDietMeals = async (studentId: string, content: string) =
     if (insertMealError) throw insertMealError;
 
     if (meal.foods.length > 0) {
-      const rows = meal.foods.map((food, index) => ({
-        meal_id: insertedMeal.id,
-        item: food.item,
-        quantity: food.quantity,
-        sort_order: index,
-      }));
+      // Find matching per-meal macros from AI analysis (meal_number is 1-based, sort_order is 0-based)
+      const mealMacro = perMealMacros?.find((m) => m.meal_number === meal.sort_order + 1);
+
+      const rows = meal.foods.map((food, index) => {
+        const foodCount = meal.foods.length;
+        return {
+          meal_id: insertedMeal.id,
+          item: food.item,
+          quantity: food.quantity,
+          sort_order: index,
+          // Distribute meal macros equally across foods
+          energy_kcal: mealMacro ? Math.round((mealMacro.energy_kcal / foodCount) * 10) / 10 : 0,
+          protein_g: mealMacro ? Math.round((mealMacro.protein_g / foodCount) * 10) / 10 : 0,
+          carbs_g: mealMacro ? Math.round((mealMacro.carbs_g / foodCount) * 10) / 10 : 0,
+          fat_g: mealMacro ? Math.round((mealMacro.fat_g / foodCount) * 10) / 10 : 0,
+        };
+      });
 
       const { error: insertFoodsError } = await supabase.from("diet_foods").insert(rows);
       if (insertFoodsError) throw insertFoodsError;
