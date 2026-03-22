@@ -1,16 +1,19 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { registerSW } from "virtual:pwa-register";
 
 const PREVIEW_SW_RESET_KEY = "sth-preview-sw-reset-v1";
 const PREVIEW_REFRESH_PARAM = "__preview_refresh";
 const PREVIEW_BUNDLE_MARKER = import.meta.env.PROD ? new URL(import.meta.url).pathname : "dev";
 
+const isPreviewHost = () =>
+  typeof window !== "undefined" && window.location.hostname.includes("preview--");
+
 const clearPreviewCaches = async (): Promise<boolean> => {
   if (typeof window === "undefined") return true;
 
-  const isPreviewHost = window.location.hostname.includes("preview--");
-  if (!isPreviewHost) return true;
+  if (!isPreviewHost()) return true;
 
   const currentUrl = new URL(window.location.href);
   const alreadyRefreshed = currentUrl.searchParams.has(PREVIEW_REFRESH_PARAM);
@@ -49,6 +52,10 @@ const clearPreviewCaches = async (): Promise<boolean> => {
 const bootstrap = async () => {
   const canRender = await clearPreviewCaches();
   if (!canRender) return;
+
+  if (import.meta.env.PROD && !isPreviewHost()) {
+    registerSW({ immediate: true });
+  }
 
   createRoot(document.getElementById("root")!).render(<App />);
 };
