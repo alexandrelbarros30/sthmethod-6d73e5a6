@@ -104,7 +104,7 @@ const parseHeading = (
   line: string,
   nextExtraOrder: () => number
 ): { sortOrder: number; name: string; remainder: string } | null => {
-  const refeicao = line.match(/^refei[cç]a?o\s*(extra|\d+)\b[:\-\s]*(.*)$/i);
+  const refeicao = line.match(/^refei[cç][aã]?o\s*(extra|\d+)\b[:\-\s]*(.*)$/i);
   if (refeicao) {
     const raw = refeicao[1]?.toLowerCase();
     const remainder = (refeicao[2] || "").trim();
