@@ -623,6 +623,17 @@ const AdminDiet = () => {
                               <Label className="font-body text-xs">Conteúdo</Label>
                               <RichTextEditor value={editContent} onChange={setEditContent} />
                             </div>
+                            {/* AI Analysis in edit mode */}
+                            <DietAIAnalysis
+                              dietContent={editContent}
+                              onConfirm={(result) => {
+                                setEditEnergyKcal(String(Math.round(result.total.energy_kcal)));
+                                setEditProteinG(String(Math.round(result.total.protein_g)));
+                                setEditCarbsG(String(Math.round(result.total.carbs_g)));
+                                setEditFatG(String(Math.round(result.total.fat_g)));
+                                toast.success("Valores da IA aplicados nos macronutrientes!");
+                              }}
+                            />
                             <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
                               <Button variant="ghost" size="sm" onClick={cancelEdit} className="w-full sm:w-auto">Cancelar</Button>
                               <Button size="sm" onClick={() => editMutation.mutate()} disabled={editMutation.isPending} className="w-full sm:w-auto">
