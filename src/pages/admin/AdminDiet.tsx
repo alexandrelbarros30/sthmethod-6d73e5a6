@@ -213,6 +213,7 @@ const AdminDiet = () => {
     setNewCarbsG("");
     setNewFatG("");
     setNewHydrationL("");
+    setNewMealMacros(null);
   };
 
   const startEdit = (diet: any) => {
