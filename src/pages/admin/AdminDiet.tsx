@@ -271,7 +271,7 @@ const AdminDiet = () => {
       const { error: insertError } = await supabase.from("student_diets").insert(payload);
       if (insertError) throw insertError;
 
-      await syncStudentDietMeals(selected.user_id, newContent);
+      await syncStudentDietMeals(selected.user_id, newContent, newMealMacros || undefined);
     },
     onSuccess: () => {
       toast.success("Dieta adicionada e vinculada ao aluno!");
