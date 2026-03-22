@@ -12,7 +12,7 @@ import NutritionSummaryPanel, { type NutritionTotals } from "@/components/nutrit
 import NutritionPdfPreview from "@/components/nutrition/NutritionPdfPreview";
 
 const AdminNutrition = () => {
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const displayRole = role === "consultor" ? "consultor" : "admin";
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [search, setSearch] = useState("");
@@ -26,16 +26,36 @@ const AdminNutrition = () => {
   }, []);
 
   const { data: students = [] } = useQuery({
-    queryKey: ["nutrition-students", displayRole],
+    queryKey: ["nutrition-students", displayRole, user?.id],
     queryFn: async () => {
-      const { data: profiles } = await supabase
+      if (!user?.id) return [];
+
+      let profilesQuery = supabase
         .from("profiles")
         .select("user_id, full_name, email, weight, tdee, daily_calories, objective, protein_g, carbs_g, fat_g");
+
+      if (displayRole === "consultor") {
+        const { data: links, error: linksError } = await supabase
+          .from("consultant_students")
+          .select("student_id")
+          .eq("consultant_id", user.id);
+
+        if (linksError) throw linksError;
+
+        const studentIds = (links || []).map((link: any) => link.student_id);
+        if (studentIds.length === 0) return [];
+        profilesQuery = profilesQuery.in("user_id", studentIds);
+      }
+
+      const { data: profiles, error: profilesError } = await profilesQuery;
+      if (profilesError) throw profilesError;
+
       return (profiles || []).map((p: any) => ({
         ...p,
         initials: p.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "?",
       }));
     },
+    enabled: !!user?.id,
   });
 
   const filtered = search.trim().length < 2
