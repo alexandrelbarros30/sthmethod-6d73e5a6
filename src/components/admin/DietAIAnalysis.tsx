@@ -30,6 +30,7 @@ interface DietAnalysisResult {
 interface Props {
   dietContent: string;
   onConfirm: (result: DietAnalysisResult) => void;
+  onSaveToLibrary?: (result: DietAnalysisResult, dietContent: string) => void;
 }
 
 const MEAL_LABELS: Record<number, string> = {
