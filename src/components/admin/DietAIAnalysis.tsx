@@ -260,10 +260,21 @@ const DietAIAnalysis = ({ dietContent, onConfirm, onSaveToLibrary }: Props) => {
           </div>
         </div>
 
-        <div className="flex gap-2 justify-end">
+        <div className="flex gap-2 justify-end flex-wrap">
           <Button variant="ghost" size="sm" onClick={() => setResult(null)} className="text-xs">
             Descartar
           </Button>
+          {onSaveToLibrary && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onSaveToLibrary(result, dietContent)}
+              className="gap-1 text-xs border-primary/30 text-primary hover:bg-primary/10"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              Salvar na Biblioteca
+            </Button>
+          )}
           <Button size="sm" onClick={() => onConfirm(result)} className="gap-1 text-xs">
             <Check className="w-3.5 h-3.5" />
             Confirmar Valores

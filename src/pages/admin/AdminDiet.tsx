@@ -83,11 +83,15 @@ const AdminDiet = () => {
       await (supabase.from("diet_library" as any) as any).insert({
         title: diet.title,
         content: diet.content || "",
+        energy_kcal: diet.energy_kcal || 0,
+        protein_g: diet.protein_g || 0,
+        carbs_g: diet.carbs_g || 0,
+        fat_g: diet.fat_g || 0,
         created_by: user!.id,
       });
     },
     onSuccess: () => {
-      toast.success("Dieta salva na biblioteca!");
+      toast.success("Dieta salva na biblioteca com macros!");
       qc.invalidateQueries({ queryKey: ["diet-library"] });
     },
     onError: () => toast.error("Erro ao salvar na biblioteca"),
