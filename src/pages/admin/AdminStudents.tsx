@@ -1425,7 +1425,32 @@ const AdminStudents = () => {
                           <div key={type} className="text-center">
                             <p className="text-xs text-muted-foreground mb-1">{labels[type]}</p>
                             {img ? (
-                              <img src={img.image_url} alt={labels[type]} className="w-full aspect-[3/4] object-cover rounded-lg border" />
+                              <div className="relative group">
+                                <img src={img.image_url} alt={labels[type]} className="w-full aspect-[3/4] object-cover rounded-lg border" />
+                                <a
+                                  href={img.image_url}
+                                  download={`${selected.full_name || "aluno"}_${type}.jpg`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="absolute bottom-1 right-1 p-1.5 bg-background/80 backdrop-blur-sm rounded-full border border-border/50 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
+                                  title="Baixar imagem"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    fetch(img.image_url).then(r => r.blob()).then(blob => {
+                                      const url = URL.createObjectURL(blob);
+                                      const a = document.createElement("a");
+                                      a.href = url;
+                                      a.download = `${selected.full_name || "aluno"}_${type}.jpg`;
+                                      document.body.appendChild(a);
+                                      a.click();
+                                      document.body.removeChild(a);
+                                      URL.revokeObjectURL(url);
+                                    });
+                                  }}
+                                >
+                                  <Download className="w-3 h-3" />
+                                </a>
+                              </div>
                             ) : (
                               <div className="w-full aspect-[3/4] bg-muted rounded-lg flex items-center justify-center text-muted-foreground text-xs">Não enviada</div>
                             )}
