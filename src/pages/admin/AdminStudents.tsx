@@ -1348,6 +1348,16 @@ const AdminStudents = () => {
                                   <Link2 className="w-4 h-4 mr-2" /> Copiar link renovação
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => navigate(`/admin/diet?student=${s.user_id}`)}>
+                                  <UtensilsCrossed className="w-4 h-4 mr-2" /> Dieta
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => navigate(`/admin/training?student=${s.user_id}`)}>
+                                  <Dumbbell className="w-4 h-4 mr-2" /> Treino
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => navigate(`/admin/protocol?student=${s.user_id}`)}>
+                                  <Pill className="w-4 h-4 mr-2" /> Protocolo
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeleteTarget({ userId: s.user_id, name: s.full_name || s.email })}>
                                   <Trash2 className="w-4 h-4 mr-2" /> Excluir aluno
                                 </DropdownMenuItem>
