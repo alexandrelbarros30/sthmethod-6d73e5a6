@@ -42,7 +42,7 @@ const MEAL_LABELS: Record<number, string> = {
   6: "Ceia",
 };
 
-const DietAIAnalysis = ({ dietContent, onConfirm }: Props) => {
+const DietAIAnalysis = ({ dietContent, onConfirm, onSaveToLibrary }: Props) => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DietAnalysisResult | null>(null);
   const [editingMeal, setEditingMeal] = useState<number | null>(null);
