@@ -197,32 +197,25 @@ export function useMealTracking() {
       }
     : foodSumMacros;
 
-  const mealCount = meals.length;
-  const perMealMacros = mealCount > 0 && adminMacros && (adminMacros.energy_kcal > 0 || adminMacros.protein_g > 0)
-    ? {
-        kcal: adminMacros.energy_kcal / mealCount,
-        protein: adminMacros.protein_g / mealCount,
-        carbs: adminMacros.carbs_g / mealCount,
-        fat: adminMacros.fat_g / mealCount,
-      }
-    : null;
+  // Per-meal macros: always use food-level sums (accurate from AI analysis)
+  const perMealFoodMacros = meals.map((meal) => ({
+    mealId: meal.id,
+    kcal: meal.diet_foods.reduce((s, f) => s + (f.energy_kcal || 0), 0),
+    protein: meal.diet_foods.reduce((s, f) => s + (f.protein_g || 0), 0),
+    carbs: meal.diet_foods.reduce((s, f) => s + (f.carbs_g || 0), 0),
+    fat: meal.diet_foods.reduce((s, f) => s + (f.fat_g || 0), 0),
+  }));
 
   const consumedMacros = meals.reduce(
     (acc, meal) => {
       const isCompleted = completions.some((c) => c.meal_id === meal.id && !c.skipped);
       if (isCompleted) {
-        if (perMealMacros) {
-          acc.kcal += perMealMacros.kcal;
-          acc.protein += perMealMacros.protein;
-          acc.carbs += perMealMacros.carbs;
-          acc.fat += perMealMacros.fat;
-        } else {
-          meal.diet_foods.forEach((f) => {
-            acc.kcal += f.energy_kcal || 0;
-            acc.protein += f.protein_g || 0;
-            acc.carbs += f.carbs_g || 0;
-            acc.fat += f.fat_g || 0;
-          });
+        const mealFoodMacros = perMealFoodMacros.find((m) => m.mealId === meal.id);
+        if (mealFoodMacros) {
+          acc.kcal += mealFoodMacros.kcal;
+          acc.protein += mealFoodMacros.protein;
+          acc.carbs += mealFoodMacros.carbs;
+          acc.fat += mealFoodMacros.fat;
         }
       }
       return acc;
@@ -263,7 +256,7 @@ export function useMealTracking() {
     completions,
     totalMacros,
     consumedMacros,
-    perMealMacros,
+    perMealFoodMacros,
     completedCount,
     skippedCount,
     totalMeals,
