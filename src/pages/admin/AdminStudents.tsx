@@ -1196,13 +1196,13 @@ const AdminStudents = () => {
                           {s.phone && <p className="text-[10px] text-muted-foreground">{s.phone}</p>}
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <Badge variant={s.status === "active" ? "secondary" : s.status === "suspended" ? "outline" : "destructive"} className="text-[10px]">
+                      <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                        <Badge variant={s.status === "active" ? "secondary" : s.status === "suspended" ? "outline" : "destructive"} className="text-[10px] whitespace-nowrap">
                           {s.status === "active" ? "Ativo" : s.status === "suspended" ? "Suspenso" : s.status === "expired" ? "Vencido" : "Sem plano"}
                         </Badge>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7"><MoreVertical className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0"><MoreVertical className="w-4 h-4" /></Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => openView(s)}>
