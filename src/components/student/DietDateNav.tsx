@@ -21,20 +21,21 @@ const DietDateNav = ({ selectedDate, onDateChange }: DietDateNavProps) => {
     ? "Hoje"
     : format(date, "EEEE", { locale: ptBR }).replace(/^\w/, (c) => c.toUpperCase());
 
-  const dateStr = format(date, "dd 'de' MMM", { locale: ptBR });
+  const dateStr = format(date, "dd 'de' MMMM", { locale: ptBR });
 
   return (
-    <div className="flex items-center justify-between">
-      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goPrev}>
+    <div className="flex items-center justify-between rounded-2xl border bg-card/80 backdrop-blur-sm px-2 py-2">
+      <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl" onClick={goPrev}>
         <ChevronLeft className="w-4 h-4" />
       </Button>
 
       <button
         onClick={!today ? goToday : undefined}
         className={cn(
-          "flex flex-col items-center gap-0.5 px-4 py-1 rounded-xl transition-colors",
-          !today && "hover:bg-muted/50 cursor-pointer",
-          today && "cursor-default"
+          "flex flex-col items-center gap-0.5 px-5 py-1.5 rounded-xl transition-all duration-300",
+          today
+            ? "bg-primary/10 border border-primary/20 shadow-sm"
+            : "hover:bg-muted/50 cursor-pointer border border-transparent"
         )}
       >
         <span className={cn(
@@ -44,10 +45,18 @@ const DietDateNav = ({ selectedDate, onDateChange }: DietDateNavProps) => {
           <CalendarDays className="w-3.5 h-3.5" />
           {label}
         </span>
-        <span className="text-[10px] text-muted-foreground tabular-nums">{dateStr}</span>
+        <span className={cn(
+          "text-[11px] tabular-nums",
+          today ? "text-primary/70 font-medium" : "text-muted-foreground"
+        )}>
+          {dateStr}
+        </span>
+        {!today && (
+          <span className="text-[9px] text-primary font-semibold mt-0.5">Toque para voltar a hoje</span>
+        )}
       </button>
 
-      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goNext} disabled={today}>
+      <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl" onClick={goNext} disabled={today}>
         <ChevronRight className="w-4 h-4" />
       </Button>
     </div>
