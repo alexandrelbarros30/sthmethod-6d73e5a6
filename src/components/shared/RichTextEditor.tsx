@@ -82,8 +82,8 @@ const RichTextEditor = ({ value, onChange, placeholder, className }: RichTextEdi
         heading: { levels: [2, 3] },
       }),
       Highlight,
-      TextStyle,
-      Color,
+      TextStyle.configure({}),
+      Color.configure({ types: ['textStyle'] }),
     ],
     content: value || "",
     onUpdate: ({ editor }) => {
