@@ -1328,7 +1328,7 @@ const AdminStudents = () => {
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon" title="Mais ações"><MoreVertical className="w-4 h-4" /></Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
+                              <DropdownMenuContent align="end" side="bottom" className="max-h-[60vh] overflow-y-auto z-50">
                                 <DropdownMenuItem onClick={() => { setSelected(s); setAnamneseOpen(true); }}>
                                   <ClipboardList className="w-4 h-4 mr-2" /> Anamnese
                                 </DropdownMenuItem>
