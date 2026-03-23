@@ -2,6 +2,8 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Highlight from "@tiptap/extension-highlight";
+import Color from "@tiptap/extension-color";
+import TextStyle from "@tiptap/extension-text-style";
 import { Separator } from "@/components/ui/separator";
 import {
   Bold,
@@ -15,8 +17,9 @@ import {
   Undo,
   Redo,
   Minus,
+  Palette,
 } from "lucide-react";
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 interface RichTextEditorProps {
@@ -56,13 +59,31 @@ const ToolbarSep = () => (
   <Separator orientation="vertical" className="h-4 sm:h-5 mx-0.5 shrink-0" />
 );
 
+const TEXT_COLORS = [
+  { label: "Padrão", value: "" },
+  { label: "Vermelho", value: "#ef4444" },
+  { label: "Laranja", value: "#f97316" },
+  { label: "Amarelo", value: "#eab308" },
+  { label: "Verde", value: "#22c55e" },
+  { label: "Azul", value: "#3b82f6" },
+  { label: "Roxo", value: "#a855f7" },
+  { label: "Rosa", value: "#ec4899" },
+  { label: "Ciano", value: "#06b6d4" },
+  { label: "Branco", value: "#ffffff" },
+];
+
 const RichTextEditor = ({ value, onChange, placeholder, className }: RichTextEditorProps) => {
+  const [showColors, setShowColors] = useState(false);
+  const colorRef = useRef<HTMLDivElement>(null);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         heading: { levels: [2, 3] },
       }),
       Highlight,
+      TextStyle,
+      Color,
     ],
     content: value || "",
     onUpdate: ({ editor }) => {
@@ -84,6 +105,18 @@ const RichTextEditor = ({ value, onChange, placeholder, className }: RichTextEdi
       editor.commands.setContent(value || "");
     }
   }, [editor, value]);
+
+  // Close color picker on outside click
+  useEffect(() => {
+    if (!showColors) return;
+    const handler = (e: MouseEvent) => {
+      if (colorRef.current && !colorRef.current.contains(e.target as Node)) {
+        setShowColors(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showColors]);
 
   if (!editor) return null;
 
@@ -136,6 +169,41 @@ const RichTextEditor = ({ value, onChange, placeholder, className }: RichTextEdi
         >
           <Highlighter className="h-3.5 w-3.5" />
         </MenuButton>
+
+        {/* Color picker */}
+        <div className="relative" ref={colorRef}>
+          <MenuButton
+            active={showColors}
+            onClick={() => setShowColors(!showColors)}
+            title="Cor do texto"
+          >
+            <Palette className="h-3.5 w-3.5" />
+          </MenuButton>
+          {showColors && (
+            <div className="absolute top-full left-0 z-50 mt-1 p-2 rounded-lg border border-border bg-popover shadow-lg grid grid-cols-5 gap-1.5 min-w-[140px]">
+              {TEXT_COLORS.map((c) => (
+                <button
+                  key={c.value || "default"}
+                  type="button"
+                  title={c.label}
+                  className={cn(
+                    "w-6 h-6 rounded-full border border-border hover:scale-110 transition-transform",
+                    !c.value && "bg-foreground"
+                  )}
+                  style={c.value ? { backgroundColor: c.value } : undefined}
+                  onClick={() => {
+                    if (c.value) {
+                      editor.chain().focus().setColor(c.value).run();
+                    } else {
+                      editor.chain().focus().unsetColor().run();
+                    }
+                    setShowColors(false);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
 
         <ToolbarSep />
 
