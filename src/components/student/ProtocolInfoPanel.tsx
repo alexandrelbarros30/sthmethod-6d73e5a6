@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Activity, Zap, Shield, FlaskConical, Brain, Pill, Eye, EyeOff } from "lucide-react";
+import { motion } from "framer-motion";
+import { Heart, Activity, Zap, Shield, FlaskConical, Brain, Pill, Eye, Sparkles } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -77,6 +77,7 @@ const ProtocolInfoPanel = ({ protocols = [], userId }: ProtocolInfoPanelProps) =
   const { user } = useAuth();
   const effectiveUserId = userId || user?.id;
   const [viewingCategory, setViewingCategory] = useState<string | null>(null);
+  const [viewingExtra, setViewingExtra] = useState<any>(null);
 
   const { data: categoryContents = [] } = useQuery({
     queryKey: ["protocol-category-content", effectiveUserId],
@@ -86,6 +87,19 @@ const ProtocolInfoPanel = ({ protocols = [], userId }: ProtocolInfoPanelProps) =
         .select("*")
         .eq("user_id", effectiveUserId!);
       return data || [];
+    },
+    enabled: !!effectiveUserId,
+  });
+
+  const { data: extraCategories = [] } = useQuery({
+    queryKey: ["protocol-extra-categories", effectiveUserId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("protocol_extra_categories" as any)
+        .select("*")
+        .eq("user_id", effectiveUserId!)
+        .order("sort_order");
+      return (data || []) as any[];
     },
     enabled: !!effectiveUserId,
   });
@@ -105,6 +119,7 @@ const ProtocolInfoPanel = ({ protocols = [], userId }: ProtocolInfoPanelProps) =
   };
 
   const viewingCatConfig = viewingCategory ? categoryConfig.find((c) => c.key === viewingCategory) : null;
+  const visibleExtras = extraCategories.filter((e: any) => e.content?.replace(/<[^>]*>/g, "").trim().length > 0);
 
   return (
     <div className="space-y-6">
@@ -148,12 +163,10 @@ const ProtocolInfoPanel = ({ protocols = [], userId }: ProtocolInfoPanelProps) =
               transition={{ delay: 0.2 + i * 0.15, duration: 0.5 }}
               className={`relative overflow-hidden rounded-xl border ${cat.borderAccent} bg-card/80 backdrop-blur-sm p-4 sm:p-5 group hover:shadow-lg ${cat.glowColor} transition-all duration-500`}
             >
-              {/* Glow background effect */}
               <div className={`absolute -top-12 -right-12 w-32 h-32 bg-gradient-to-br ${cat.color} opacity-[0.07] rounded-full blur-2xl group-hover:opacity-[0.12] transition-opacity duration-500`} />
               <div className={`absolute -bottom-8 -left-8 w-24 h-24 bg-gradient-to-br ${cat.color} opacity-[0.04] rounded-full blur-xl`} />
 
               <div className="relative z-10">
-                {/* Title row */}
                 <div className="flex items-center gap-3 mb-3">
                   <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${cat.color} flex items-center justify-center shadow-lg ${cat.glowColor}`}>
                     <Icon className="w-5 h-5 text-white" />
@@ -183,7 +196,6 @@ const ProtocolInfoPanel = ({ protocols = [], userId }: ProtocolInfoPanelProps) =
                   </div>
                 </div>
 
-                {/* Items - dynamic or default */}
                 <div className="space-y-2 ml-[52px]">
                   {showDefault ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
@@ -247,6 +259,41 @@ const ProtocolInfoPanel = ({ protocols = [], userId }: ProtocolInfoPanelProps) =
             </motion.div>
           );
         })}
+
+        {/* Extra Categories */}
+        {visibleExtras.map((extra: any, i: number) => (
+          <motion.div
+            key={extra.id}
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 + (categoryConfig.length + i) * 0.15, duration: 0.5 }}
+            className="relative overflow-hidden rounded-xl border border-amber-500/20 bg-card/80 backdrop-blur-sm p-4 sm:p-5 group hover:shadow-lg shadow-amber-500/20 transition-all duration-500"
+          >
+            <div className="absolute -top-12 -right-12 w-32 h-32 bg-gradient-to-br from-amber-500 to-orange-500 opacity-[0.07] rounded-full blur-2xl group-hover:opacity-[0.12] transition-opacity duration-500" />
+            <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-gradient-to-br from-amber-500 to-orange-500 opacity-[0.04] rounded-full blur-xl" />
+
+            <div className="relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-display font-semibold text-sm sm:text-base text-foreground leading-tight">
+                    {extra.name}
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setViewingExtra(extra)}
+                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300"
+                  title={`Ver ${extra.name}`}
+                >
+                  <Eye className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        ))}
       </div>
 
       {/* Category Detail Dialog */}
@@ -263,7 +310,6 @@ const ProtocolInfoPanel = ({ protocols = [], userId }: ProtocolInfoPanelProps) =
                 </DialogTitle>
               </DialogHeader>
               <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1">
-                {/* Category text content */}
                 {(() => {
                   const content = getCategoryContent(viewingCatConfig.key);
                   const hasText = content.replace(/<[^>]*>/g, "").trim().length > 0;
@@ -275,7 +321,6 @@ const ProtocolInfoPanel = ({ protocols = [], userId }: ProtocolInfoPanelProps) =
                   );
                 })()}
 
-                {/* Items */}
                 {(groupedProtocols[viewingCatConfig.key] || []).map((item, j) => (
                   <motion.div
                     key={item.id}
@@ -311,6 +356,29 @@ const ProtocolInfoPanel = ({ protocols = [], userId }: ProtocolInfoPanelProps) =
                     Nenhum item prescrito nesta categoria.
                   </p>
                 )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Extra Category Detail Dialog */}
+      <Dialog open={!!viewingExtra} onOpenChange={(o) => !o && setViewingExtra(null)}>
+        <DialogContent className="max-w-lg max-h-[85dvh] overflow-hidden !flex !flex-col">
+          {viewingExtra && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-3 font-display">
+                  <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg">
+                    <Sparkles className="w-4.5 h-4.5 text-white" />
+                  </div>
+                  {viewingExtra.name}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+                <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+                  <RichContentRenderer content={viewingExtra.content} />
+                </div>
               </div>
             </>
           )}
