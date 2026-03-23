@@ -114,8 +114,8 @@ const AdminTraining = () => {
     if (uid && students?.length && !selectedStudent) {
       const found = students.find((s: any) => s.user_id === uid);
       if (found) {
-        const shouldReturn = searchParams.get("return") === "edit";
-        if (shouldReturn) setReturnToEdit(uid);
+        const returnParam = searchParams.get("return");
+        if (returnParam === "edit" || returnParam === "manage") setReturnToEdit(returnParam === "manage" ? `manage:${uid}` : uid);
         setSelectedStudent(found);
         setManageOpen(true);
         setExpandedWeeks(new Set());
