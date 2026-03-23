@@ -388,8 +388,12 @@ const AdminTraining = () => {
           <div className="flex items-center justify-between">
             <div>
               <Button variant="ghost" size="sm" onClick={() => {
-                if (returnToEdit && selectedStudent) {
-                  navigate(`/admin/students?edit=${selectedStudent.user_id}`);
+              if (returnToEdit && selectedStudent) {
+                  if (returnToEdit.startsWith("manage:")) {
+                    navigate(`/admin/students?manage=${selectedStudent.user_id}`);
+                  } else {
+                    navigate(`/admin/students?edit=${selectedStudent.user_id}`);
+                  }
                   setReturnToEdit(null);
                 } else {
                   setManageOpen(false);

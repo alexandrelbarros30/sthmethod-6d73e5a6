@@ -319,7 +319,11 @@ const AdminProtocol = () => {
       <Dialog open={dialogOpen} onOpenChange={(o) => {
         setDialogOpen(o);
         if (!o && returnToEdit) {
-          navigate(`/admin/students?edit=${returnToEdit}`);
+          if (returnToEdit.startsWith("manage:")) {
+            navigate(`/admin/students?manage=${returnToEdit.replace("manage:", "")}`);
+          } else {
+            navigate(`/admin/students?edit=${returnToEdit}`);
+          }
           setReturnToEdit(null);
         }
       }}>
