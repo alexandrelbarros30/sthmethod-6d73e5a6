@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useState, useMemo } from "react";
 
 export interface MealWithFoods {
   id: string;
@@ -36,19 +37,23 @@ export interface AdminMacros {
   fat_g: number;
 }
 
-const todayStr = () => new Date().toISOString().split("T")[0];
+const formatDate = (d: Date) => d.toISOString().split("T")[0];
+const todayStr = () => formatDate(new Date());
 
 export function useMealTracking() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const [selectedDate, setSelectedDate] = useState<string>(todayStr());
 
-  // Fetch admin-defined macros from student_diets
-  const { data: adminMacros } = useQuery({
+  const isToday = selectedDate === todayStr();
+
+  // Fetch admin-defined macros + hydration from student_diets
+  const { data: dietMeta } = useQuery({
     queryKey: ["student-diet-macros", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("student_diets")
-        .select("energy_kcal, protein_g, carbs_g, fat_g")
+        .select("energy_kcal, protein_g, carbs_g, fat_g, hydration_l")
         .eq("user_id", user!.id)
         .eq("visible", true)
         .order("created_at", { ascending: false })
@@ -61,10 +66,20 @@ export function useMealTracking() {
         protein_g: data.protein_g || 0,
         carbs_g: data.carbs_g || 0,
         fat_g: data.fat_g || 0,
-      } as AdminMacros;
+        hydration_l: data.hydration_l || 0,
+      };
     },
     enabled: !!user?.id,
   });
+
+  const adminMacros = dietMeta ? {
+    energy_kcal: dietMeta.energy_kcal,
+    protein_g: dietMeta.protein_g,
+    carbs_g: dietMeta.carbs_g,
+    fat_g: dietMeta.fat_g,
+  } as AdminMacros : null;
+
+  const hydrationGoalL = dietMeta?.hydration_l || 0;
 
   const { data: meals = [], isLoading: mealsLoading, error: mealsError } = useQuery({
     queryKey: ["diet-meals-tracking", user?.id],
@@ -81,17 +96,61 @@ export function useMealTracking() {
   });
 
   const { data: completions = [], isLoading: completionsLoading, error: completionsError } = useQuery({
-    queryKey: ["meal-completions", user?.id, todayStr()],
+    queryKey: ["meal-completions", user?.id, selectedDate],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("meal_completions")
         .select("*")
         .eq("user_id", user!.id)
-        .eq("completed_date", todayStr());
+        .eq("completed_date", selectedDate);
       if (error) throw error;
       return (data || []) as MealCompletion[];
     },
     enabled: !!user?.id,
+  });
+
+  // Water logs
+  const { data: waterLogs = [] } = useQuery({
+    queryKey: ["water-logs", user?.id, selectedDate],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("water_logs")
+        .select("*")
+        .eq("user_id", user!.id)
+        .eq("log_date", selectedDate)
+        .order("logged_at", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user?.id,
+  });
+
+  const waterConsumedMl = useMemo(() => waterLogs.reduce((s, l: any) => s + (l.amount_ml || 0), 0), [waterLogs]);
+
+  const addWater = useMutation({
+    mutationFn: async (amountMl: number) => {
+      const { error } = await supabase.from("water_logs").insert({
+        user_id: user!.id,
+        log_date: selectedDate,
+        amount_ml: amountMl,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["water-logs", user?.id, selectedDate] });
+    },
+  });
+
+  const removeLastWater = useMutation({
+    mutationFn: async () => {
+      if (waterLogs.length === 0) return;
+      const last = waterLogs[waterLogs.length - 1] as any;
+      const { error } = await supabase.from("water_logs").delete().eq("id", last.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["water-logs", user?.id, selectedDate] });
+    },
   });
 
   const toggleMeal = useMutation({
@@ -104,14 +163,14 @@ export function useMealTracking() {
         const { error } = await supabase.from("meal_completions").insert({
           user_id: user!.id,
           meal_id: mealId,
-          completed_date: todayStr(),
+          completed_date: selectedDate,
           skipped,
         });
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["meal-completions", user?.id, todayStr()] });
+      qc.invalidateQueries({ queryKey: ["meal-completions", user?.id, selectedDate] });
     },
   });
 
@@ -138,7 +197,6 @@ export function useMealTracking() {
       }
     : foodSumMacros;
 
-  // Distribute admin macros evenly across meals for per-meal display
   const mealCount = meals.length;
   const perMealMacros = mealCount > 0 && adminMacros && (adminMacros.energy_kcal > 0 || adminMacros.protein_g > 0)
     ? {
@@ -150,7 +208,7 @@ export function useMealTracking() {
     : null;
 
   const consumedMacros = meals.reduce(
-    (acc, meal, idx) => {
+    (acc, meal) => {
       const isCompleted = completions.some((c) => c.meal_id === meal.id && !c.skipped);
       if (isCompleted) {
         if (perMealMacros) {
@@ -177,25 +235,28 @@ export function useMealTracking() {
   const totalMeals = meals.length;
   const progressPercent = totalMeals > 0 ? Math.round((completedCount / totalMeals) * 100) : 0;
 
-  // Find next meal based on current time
+  // Find next meal based on current time (only for today)
   const now = new Date();
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
   const completedMealIds = new Set(completions.map((c) => c.meal_id));
 
-  const nextMeal = meals.find((meal) => {
-    if (completedMealIds.has(meal.id)) return false;
-    const [h, m] = meal.time.split(":").map(Number);
-    const mealMinutes = (h || 0) * 60 + (m || 0);
-    return mealMinutes >= currentMinutes - 30;
-  }) || meals.find((meal) => !completedMealIds.has(meal.id));
+  const nextMeal = isToday
+    ? (meals.find((meal) => {
+        if (completedMealIds.has(meal.id)) return false;
+        const [h, m] = meal.time.split(":").map(Number);
+        const mealMinutes = (h || 0) * 60 + (m || 0);
+        return mealMinutes >= currentMinutes - 30;
+      }) || meals.find((meal) => !completedMealIds.has(meal.id)))
+    : null;
 
-  // Active meal (current time window)
-  const activeMeal = meals.find((meal) => {
-    if (completedMealIds.has(meal.id)) return false;
-    const [h, m] = meal.time.split(":").map(Number);
-    const mealMinutes = (h || 0) * 60 + (m || 0);
-    return Math.abs(mealMinutes - currentMinutes) <= 30;
-  });
+  const activeMeal = isToday
+    ? meals.find((meal) => {
+        if (completedMealIds.has(meal.id)) return false;
+        const [h, m] = meal.time.split(":").map(Number);
+        const mealMinutes = (h || 0) * 60 + (m || 0);
+        return Math.abs(mealMinutes - currentMinutes) <= 30;
+      })
+    : null;
 
   return {
     meals,
@@ -214,5 +275,14 @@ export function useMealTracking() {
     error: mealsError || completionsError,
     isMealCompleted: (mealId: string) => completions.some((c) => c.meal_id === mealId && !c.skipped),
     isMealSkipped: (mealId: string) => completions.some((c) => c.meal_id === mealId && c.skipped),
+    // Date navigation
+    selectedDate,
+    setSelectedDate,
+    isToday,
+    // Hydration
+    hydrationGoalL,
+    waterConsumedMl,
+    addWater,
+    removeLastWater,
   };
 }

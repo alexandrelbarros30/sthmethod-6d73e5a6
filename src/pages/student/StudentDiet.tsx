@@ -10,6 +10,8 @@ import DailyProgressRing from "@/components/student/DailyProgressRing";
 import MacroProgressBar from "@/components/student/MacroProgressBar";
 import MealCard from "@/components/student/MealCard";
 import MealDetailPanel from "@/components/student/MealDetailPanel";
+import DietDateNav from "@/components/student/DietDateNav";
+import HydrationTracker from "@/components/student/HydrationTracker";
 import { Utensils, Flame, Zap, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { generateStudentPDF } from "@/lib/pdfGenerator";
@@ -35,6 +37,13 @@ const StudentDiet = () => {
     error,
     isMealCompleted,
     isMealSkipped,
+    selectedDate,
+    setSelectedDate,
+    isToday,
+    hydrationGoalL,
+    waterConsumedMl,
+    addWater,
+    removeLastWater,
   } = useMealTracking();
 
   if (subLoading || isLoading) {
@@ -173,6 +182,9 @@ const StudentDiet = () => {
   return (
     <DashboardLayout role="student" title="Dieta" subtitle="Acompanhe suas refeições do dia.">
       <div className="space-y-5 max-w-lg mx-auto">
+        {/* Date navigation */}
+        <DietDateNav selectedDate={selectedDate} onDateChange={setSelectedDate} />
+
         <div className="flex justify-end">
           <Button variant="outline" size="sm" onClick={handleDownloadPdf} disabled={isDownloadingPdf}>
             <FileDown className="w-4 h-4 mr-1" />
@@ -189,7 +201,7 @@ const StudentDiet = () => {
                 percent={progressPercent}
                 size={120}
                 strokeWidth={8}
-                sublabel={nextMeal?.name || "Concluído"}
+                sublabel={isToday ? (nextMeal?.name || "Concluído") : undefined}
               />
               <div className="flex-1 space-y-3">
                 <div>
@@ -201,13 +213,21 @@ const StudentDiet = () => {
                   </p>
                 </div>
 
-                {nextMeal && !isMealCompleted(nextMeal.id) && (
+                {isToday && nextMeal && !isMealCompleted(nextMeal.id) && (
                   <div className="p-2.5 rounded-xl bg-primary/8 border border-primary/15">
                     <p className="text-[9px] text-primary font-bold uppercase tracking-wider flex items-center gap-1">
                       <Zap className="w-3 h-3" /> Próxima Refeição
                     </p>
                     <p className="text-sm font-semibold text-foreground mt-0.5">
                       {nextMeal.name} <span className="text-muted-foreground text-xs font-normal">{nextMeal.time}</span>
+                    </p>
+                  </div>
+                )}
+
+                {!isToday && (
+                  <div className="p-2 rounded-xl bg-muted/30 border border-border/30">
+                    <p className="text-[10px] text-muted-foreground font-medium">
+                      Visualizando histórico
                     </p>
                   </div>
                 )}
@@ -236,6 +256,18 @@ const StudentDiet = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Hydration Tracker */}
+        {hydrationGoalL > 0 && (
+          <HydrationTracker
+            goalL={hydrationGoalL}
+            consumedMl={waterConsumedMl}
+            onAdd={(ml) => addWater.mutate(ml)}
+            onRemove={() => removeLastWater.mutate()}
+            isAdding={addWater.isPending}
+            disabled={!isToday}
+          />
+        )}
 
         {/* Meal List */}
         <div className="space-y-3" style={{ animationDelay: "0.2s" }}>
