@@ -607,6 +607,20 @@ const AdminStudents = () => {
     }
   }, [students, searchParams]);
 
+  // Auto-open manage dialog when ?manage=USER_ID is present
+  useEffect(() => {
+    const manageUserId = searchParams.get("manage");
+    if (manageUserId && students && students.length > 0) {
+      const student = students.find((s: any) => s.user_id === manageUserId);
+      if (student) {
+        setSelected(student);
+        setManageOpen(true);
+        searchParams.delete("manage");
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+  }, [students, searchParams]);
+
   // Auto-open subscription dialog when ?sub=USER_ID is present
   useEffect(() => {
     const subUserId = searchParams.get("sub");
