@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Brain, Check, Loader2, Pencil, RotateCcw } from "lucide-react";
+import { Brain, BookOpen, Check, Loader2, Pencil, RotateCcw } from "lucide-react";
 
 interface MealAnalysis {
   meal_number: number;
