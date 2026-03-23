@@ -102,6 +102,7 @@ const AdminStudents = () => {
   const [deleteTarget, setDeleteTarget] = useState<{ userId: string; name: string } | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [bioOpen, setBioOpen] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
 
   const { data: students, isLoading } = useQuery({
     queryKey: ["admin-students-list"],
