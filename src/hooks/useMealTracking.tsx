@@ -206,16 +206,28 @@ export function useMealTracking() {
     fat: meal.diet_foods.reduce((s, f) => s + (f.fat_g || 0), 0),
   }));
 
+  // Check if food-level macros have actual values
+  const hasFoodLevelMacros = foodSumMacros.kcal > 0 || foodSumMacros.protein > 0;
+  const useAdminProportional = !hasFoodLevelMacros && adminMacros && (adminMacros.energy_kcal > 0 || adminMacros.protein_g > 0);
+
   const consumedMacros = meals.reduce(
     (acc, meal) => {
       const isCompleted = completions.some((c) => c.meal_id === meal.id && !c.skipped);
       if (isCompleted) {
-        const mealFoodMacros = perMealFoodMacros.find((m) => m.mealId === meal.id);
-        if (mealFoodMacros) {
-          acc.kcal += mealFoodMacros.kcal;
-          acc.protein += mealFoodMacros.protein;
-          acc.carbs += mealFoodMacros.carbs;
-          acc.fat += mealFoodMacros.fat;
+        if (useAdminProportional && totalMeals > 0) {
+          // Distribute admin totals equally across meals
+          acc.kcal += totalMacros.kcal / totalMeals;
+          acc.protein += totalMacros.protein / totalMeals;
+          acc.carbs += totalMacros.carbs / totalMeals;
+          acc.fat += totalMacros.fat / totalMeals;
+        } else {
+          const mealFoodMacros = perMealFoodMacros.find((m) => m.mealId === meal.id);
+          if (mealFoodMacros) {
+            acc.kcal += mealFoodMacros.kcal;
+            acc.protein += mealFoodMacros.protein;
+            acc.carbs += mealFoodMacros.carbs;
+            acc.fat += mealFoodMacros.fat;
+          }
         }
       }
       return acc;
