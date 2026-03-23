@@ -256,7 +256,7 @@ export function useMealTracking() {
     completions,
     totalMacros,
     consumedMacros,
-    perMealMacros,
+    perMealFoodMacros,
     completedCount,
     skippedCount,
     totalMeals,

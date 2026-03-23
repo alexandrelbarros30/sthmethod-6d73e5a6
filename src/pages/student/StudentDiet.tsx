@@ -285,7 +285,7 @@ const StudentDiet = () => {
                 isSkipped={isMealSkipped(meal.id)}
                 isActive={activeMeal?.id === meal.id}
                 isNext={nextMeal?.id === meal.id && activeMeal?.id !== meal.id}
-                distributedMacros={perMealMacros ? { kcal: perMealMacros.kcal, protein: perMealMacros.protein, carbs: perMealMacros.carbs, fat: perMealMacros.fat } : null}
+                distributedMacros={(() => { const m = perMealFoodMacros.find(pm => pm.mealId === meal.id); return m ? { kcal: m.kcal, protein: m.protein, carbs: m.carbs, fat: m.fat } : null; })()}
                 onToggle={() => handleToggle(meal.id)}
                 onSkip={() => handleSkip(meal.id)}
                 onExpand={() => setExpandedMealId(expandedMealId === meal.id ? null : meal.id)}
