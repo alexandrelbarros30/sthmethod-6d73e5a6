@@ -177,8 +177,8 @@ const AdminDiet = () => {
     if (uid && students?.length && !selected) {
       const found = students.find((s: any) => s.user_id === uid);
       if (found) {
-        const shouldReturn = searchParams.get("return") === "edit";
-        if (shouldReturn) setReturnToEdit(uid);
+        const returnParam = searchParams.get("return");
+        if (returnParam === "edit" || returnParam === "manage") setReturnToEdit(returnParam === "manage" ? `manage:${uid}` : uid);
         setSelected(found);
         setShowNewForm(false);
         setEditingId(null);
@@ -449,7 +449,11 @@ const AdminDiet = () => {
       <Dialog open={dialogOpen} onOpenChange={(o) => {
         setDialogOpen(o);
         if (!o && returnToEdit) {
-          navigate(`/admin/students?edit=${returnToEdit}`);
+          if (returnToEdit.startsWith("manage:")) {
+            navigate(`/admin/students?manage=${returnToEdit.replace("manage:", "")}`);
+          } else {
+            navigate(`/admin/students?edit=${returnToEdit}`);
+          }
           setReturnToEdit(null);
         }
       }}>

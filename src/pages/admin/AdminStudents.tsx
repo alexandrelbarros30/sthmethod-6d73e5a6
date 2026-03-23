@@ -607,6 +607,20 @@ const AdminStudents = () => {
     }
   }, [students, searchParams]);
 
+  // Auto-open manage dialog when ?manage=USER_ID is present
+  useEffect(() => {
+    const manageUserId = searchParams.get("manage");
+    if (manageUserId && students && students.length > 0) {
+      const student = students.find((s: any) => s.user_id === manageUserId);
+      if (student) {
+        setSelected(student);
+        setManageOpen(true);
+        searchParams.delete("manage");
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+  }, [students, searchParams]);
+
   // Auto-open subscription dialog when ?sub=USER_ID is present
   useEffect(() => {
     const subUserId = searchParams.get("sub");
@@ -1914,9 +1928,9 @@ const AdminStudents = () => {
             {[
               { icon: Eye, label: "Visão Geral", action: () => { setManageOpen(false); openView(selected); } },
               { icon: Pencil, label: "Editar", action: () => { setManageOpen(false); openEdit(selected); } },
-              { icon: UtensilsCrossed, label: "Dieta", action: () => { setManageOpen(false); navigate(`/admin/diet?uid=${selected?.user_id}`); } },
-              { icon: Pill, label: "Protocolo", action: () => { setManageOpen(false); navigate(`/admin/protocol?uid=${selected?.user_id}`); } },
-              { icon: Dumbbell, label: "Treino", action: () => { setManageOpen(false); navigate(`/admin/training?uid=${selected?.user_id}`); } },
+              { icon: UtensilsCrossed, label: "Dieta", action: () => { setManageOpen(false); navigate(`/admin/diet?uid=${selected?.user_id}&return=manage`); } },
+              { icon: Pill, label: "Protocolo", action: () => { setManageOpen(false); navigate(`/admin/protocol?uid=${selected?.user_id}&return=manage`); } },
+              { icon: Dumbbell, label: "Treino", action: () => { setManageOpen(false); navigate(`/admin/training?uid=${selected?.user_id}&return=manage`); } },
               { icon: Camera, label: "Fotos", action: () => { setManageOpen(false); setImagesOpen(true); } },
               { icon: Activity, label: "Bioimpedância", action: () => { setManageOpen(false); setBioOpen(true); } },
               { icon: ClipboardList, label: "Anamnese", action: () => { setManageOpen(false); setAnamneseOpen(true); } },
