@@ -1,5 +1,11 @@
-import { motion } from "framer-motion";
-import { Heart, Activity, Zap, Shield, FlaskConical, Brain, Pill } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Heart, Activity, Zap, Shield, FlaskConical, Brain, Pill, Eye, EyeOff } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import RichContentRenderer from "@/components/shared/RichContentRenderer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface ProtocolItem {
   id: string;
@@ -13,6 +19,7 @@ interface ProtocolItem {
 
 interface ProtocolInfoPanelProps {
   protocols?: ProtocolItem[];
+  userId?: string;
 }
 
 const categoryConfig = [
@@ -66,7 +73,23 @@ const categoryConfig = [
   },
 ];
 
-const ProtocolInfoPanel = ({ protocols = [] }: ProtocolInfoPanelProps) => {
+const ProtocolInfoPanel = ({ protocols = [], userId }: ProtocolInfoPanelProps) => {
+  const { user } = useAuth();
+  const effectiveUserId = userId || user?.id;
+  const [viewingCategory, setViewingCategory] = useState<string | null>(null);
+
+  const { data: categoryContents = [] } = useQuery({
+    queryKey: ["protocol-category-content", effectiveUserId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("protocol_category_content")
+        .select("*")
+        .eq("user_id", effectiveUserId!);
+      return data || [];
+    },
+    enabled: !!effectiveUserId,
+  });
+
   const groupedProtocols = categoryConfig.reduce((acc, cat) => {
     acc[cat.key] = protocols
       .filter((p) => p.category === cat.key)
@@ -75,6 +98,13 @@ const ProtocolInfoPanel = ({ protocols = [] }: ProtocolInfoPanelProps) => {
   }, {} as Record<string, ProtocolItem[]>);
 
   const hasAnyProtocols = protocols.length > 0;
+
+  const getCategoryContent = (catKey: string) => {
+    const found = categoryContents.find((c: any) => c.category === catKey);
+    return found?.content || "";
+  };
+
+  const viewingCatConfig = viewingCategory ? categoryConfig.find((c) => c.key === viewingCategory) : null;
 
   return (
     <div className="space-y-6">
@@ -106,6 +136,9 @@ const ProtocolInfoPanel = ({ protocols = [] }: ProtocolInfoPanelProps) => {
           const IconSec = cat.iconSecondary;
           const items = groupedProtocols[cat.key] || [];
           const showDefault = items.length === 0;
+          const catContent = getCategoryContent(cat.key);
+          const hasContent = catContent.replace(/<[^>]*>/g, "").trim().length > 0;
+          const hasViewable = items.length > 0 || hasContent;
 
           return (
             <motion.div
@@ -135,7 +168,19 @@ const ProtocolInfoPanel = ({ protocols = [] }: ProtocolInfoPanelProps) => {
                       </p>
                     )}
                   </div>
-                  <IconSec className="w-5 h-5 text-muted-foreground/30 shrink-0" />
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {hasViewable && (
+                      <button
+                        type="button"
+                        onClick={() => setViewingCategory(cat.key)}
+                        className={`inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br ${cat.color} text-white shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300`}
+                        title={`Ver protocolo ${cat.title}`}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                    )}
+                    <IconSec className="w-5 h-5 text-muted-foreground/30" />
+                  </div>
                 </div>
 
                 {/* Items - dynamic or default */}
@@ -158,7 +203,7 @@ const ProtocolInfoPanel = ({ protocols = [] }: ProtocolInfoPanelProps) => {
                       ))}
                     </div>
                   ) : (
-                    items.map((item, j) => (
+                    items.slice(0, 3).map((item, j) => (
                       <motion.div
                         key={item.id}
                         initial={{ opacity: 0, y: 8 }}
@@ -188,12 +233,89 @@ const ProtocolInfoPanel = ({ protocols = [] }: ProtocolInfoPanelProps) => {
                       </motion.div>
                     ))
                   )}
+                  {items.length > 3 && (
+                    <button
+                      type="button"
+                      onClick={() => setViewingCategory(cat.key)}
+                      className="text-xs text-primary hover:underline font-body"
+                    >
+                      +{items.length - 3} itens... ver todos
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.div>
           );
         })}
       </div>
+
+      {/* Category Detail Dialog */}
+      <Dialog open={!!viewingCategory} onOpenChange={(o) => !o && setViewingCategory(null)}>
+        <DialogContent className="max-w-lg max-h-[85dvh] overflow-hidden !flex !flex-col">
+          {viewingCatConfig && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-3 font-display">
+                  <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${viewingCatConfig.color} flex items-center justify-center shadow-lg`}>
+                    <viewingCatConfig.icon className="w-4.5 h-4.5 text-white" />
+                  </div>
+                  {viewingCatConfig.title}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1">
+                {/* Category text content */}
+                {(() => {
+                  const content = getCategoryContent(viewingCatConfig.key);
+                  const hasText = content.replace(/<[^>]*>/g, "").trim().length > 0;
+                  if (!hasText) return null;
+                  return (
+                    <div className={`rounded-xl border ${viewingCatConfig.borderAccent} ${viewingCatConfig.bgAccent} p-4`}>
+                      <RichContentRenderer content={content} />
+                    </div>
+                  );
+                })()}
+
+                {/* Items */}
+                {(groupedProtocols[viewingCatConfig.key] || []).map((item, j) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: j * 0.05 }}
+                    className={`rounded-xl border ${viewingCatConfig.borderAccent} ${viewingCatConfig.bgAccent} p-4`}
+                  >
+                    <div className="flex items-center gap-2.5 mb-2">
+                      <Pill className="w-4 h-4 text-foreground/70 shrink-0" />
+                      <span className="font-display font-bold text-sm text-foreground">
+                        {item.name}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground font-body pl-6">
+                      {item.dosage && (
+                        <span><strong className="text-foreground/80">Dosagem:</strong> {item.dosage}</span>
+                      )}
+                      {item.frequency && (
+                        <span><strong className="text-foreground/80">Frequência:</strong> {item.frequency}</span>
+                      )}
+                    </div>
+                    {item.notes && (
+                      <p className="text-[11px] text-muted-foreground/80 mt-2 pl-6 italic font-body leading-relaxed">
+                        {item.notes}
+                      </p>
+                    )}
+                  </motion.div>
+                ))}
+
+                {(groupedProtocols[viewingCatConfig.key] || []).length === 0 && !getCategoryContent(viewingCatConfig.key).replace(/<[^>]*>/g, "").trim() && (
+                  <p className="text-sm text-muted-foreground text-center py-6 font-body">
+                    Nenhum item prescrito nesta categoria.
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Bottom note */}
       <motion.p
