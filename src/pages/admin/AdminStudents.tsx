@@ -18,6 +18,7 @@ import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
+import { cn } from "@/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -102,6 +103,7 @@ const AdminStudents = () => {
   const [deleteTarget, setDeleteTarget] = useState<{ userId: string; name: string } | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [bioOpen, setBioOpen] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
 
   const { data: students, isLoading } = useQuery({
     queryKey: ["admin-students-list"],
@@ -1200,52 +1202,9 @@ const AdminStudents = () => {
                         <Badge variant={s.status === "active" ? "secondary" : s.status === "suspended" ? "outline" : "destructive"} className="text-[10px] whitespace-nowrap">
                           {s.status === "active" ? "Ativo" : s.status === "suspended" ? "Suspenso" : s.status === "expired" ? "Vencido" : "Sem plano"}
                         </Badge>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0"><MoreVertical className="w-4 h-4" /></Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" side="bottom" className="max-h-[60vh] overflow-y-auto z-50">
-                            <DropdownMenuItem onClick={() => openView(s)}>
-                              <Eye className="w-4 h-4 mr-2" /> Visualizar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openEdit(s)}>
-                              <Pencil className="w-4 h-4 mr-2" /> Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => navigate(`/admin/diet?student=${s.user_id}`)}>
-                              <UtensilsCrossed className="w-4 h-4 mr-2" /> Dieta
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => navigate(`/admin/training?student=${s.user_id}`)}>
-                              <Dumbbell className="w-4 h-4 mr-2" /> Treino
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => navigate(`/admin/protocol?student=${s.user_id}`)}>
-                              <Pill className="w-4 h-4 mr-2" /> Protocolo
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => { setSelected(s); setAnamneseOpen(true); }}>
-                              <ClipboardList className="w-4 h-4 mr-2" /> Anamnese
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => { setSelected(s); setImagesOpen(true); }}>
-                              <Image className="w-4 h-4 mr-2" /> Fotos corporais
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => { setSelected(s); setBioOpen(true); }}>
-                              <Activity className="w-4 h-4 mr-2" /> Bioimpedância
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openSub(s)}>
-                              <CreditCard className="w-4 h-4 mr-2" /> Assinatura
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => { setPasswordReset({ userId: s.user_id, name: s.full_name || s.email }); setNewPassword(""); }}>
-                              <Lock className="w-4 h-4 mr-2" /> Alterar senha
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/dashboard/renew?uid=${s.user_id}`); toast.success("Link copiado!"); }}>
-                              <Link2 className="w-4 h-4 mr-2" /> Copiar link renovação
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeleteTarget({ userId: s.user_id, name: s.full_name || s.email })}>
-                              <Trash2 className="w-4 h-4 mr-2" /> Excluir aluno
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <Button variant="outline" size="sm" className="text-xs h-7 px-2" onClick={() => { setSelected(s); setManageOpen(true); }}>
+                          Gerenciar
+                        </Button>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
@@ -1321,49 +1280,9 @@ const AdminStudents = () => {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => openView(s)} title="Visualizar"><Eye className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="icon" onClick={() => openEdit(s)} title="Editar"><Pencil className="w-4 h-4" /></Button>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" title="Mais ações"><MoreVertical className="w-4 h-4" /></Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" side="bottom" className="max-h-[60vh] overflow-y-auto z-50">
-                                <DropdownMenuItem onClick={() => { setSelected(s); setAnamneseOpen(true); }}>
-                                  <ClipboardList className="w-4 h-4 mr-2" /> Anamnese
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => { setSelected(s); setImagesOpen(true); }}>
-                                  <Image className="w-4 h-4 mr-2" /> Fotos corporais
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => { setSelected(s); setBioOpen(true); }}>
-                                  <Activity className="w-4 h-4 mr-2" /> Bioimpedância
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => openSub(s)}>
-                                  <CreditCard className="w-4 h-4 mr-2" /> Assinatura
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => { setPasswordReset({ userId: s.user_id, name: s.full_name || s.email }); setNewPassword(""); }}>
-                                  <Lock className="w-4 h-4 mr-2" /> Alterar senha
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/dashboard/renew?uid=${s.user_id}`); toast.success("Link de renovação copiado!"); }}>
-                                  <Link2 className="w-4 h-4 mr-2" /> Copiar link renovação
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => navigate(`/admin/diet?student=${s.user_id}`)}>
-                                  <UtensilsCrossed className="w-4 h-4 mr-2" /> Dieta
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => navigate(`/admin/training?student=${s.user_id}`)}>
-                                  <Dumbbell className="w-4 h-4 mr-2" /> Treino
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => navigate(`/admin/protocol?student=${s.user_id}`)}>
-                                  <Pill className="w-4 h-4 mr-2" /> Protocolo
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeleteTarget({ userId: s.user_id, name: s.full_name || s.email })}>
-                                  <Trash2 className="w-4 h-4 mr-2" /> Excluir aluno
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
+                          <Button variant="outline" size="sm" className="text-xs" onClick={() => { setSelected(s); setManageOpen(true); }}>
+                            Gerenciar
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -1951,6 +1870,54 @@ const AdminStudents = () => {
           onOpenChange={setBioOpen}
         />
       )}
+
+      {/* Manage Panel Dialog */}
+      <Dialog open={manageOpen} onOpenChange={setManageOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <span className="text-sm font-bold text-primary">{selected?.initials}</span>
+              </div>
+              <div className="min-w-0">
+                <p className="truncate">{selected?.full_name || "Aluno"}</p>
+                <p className="text-xs text-muted-foreground font-normal truncate">{selected?.email}</p>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-3 gap-2 pt-2">
+            {[
+              { icon: Eye, label: "Visão Geral", action: () => { setManageOpen(false); openView(selected); } },
+              { icon: Pencil, label: "Editar", action: () => { setManageOpen(false); openEdit(selected); } },
+              { icon: UtensilsCrossed, label: "Dieta", action: () => { setManageOpen(false); navigate(`/admin/diet?student=${selected?.user_id}`); } },
+              { icon: Pill, label: "Protocolo", action: () => { setManageOpen(false); navigate(`/admin/protocol?student=${selected?.user_id}`); } },
+              { icon: Dumbbell, label: "Treino", action: () => { setManageOpen(false); navigate(`/admin/training?student=${selected?.user_id}`); } },
+              { icon: Camera, label: "Fotos", action: () => { setManageOpen(false); setImagesOpen(true); } },
+              { icon: Activity, label: "Bioimpedância", action: () => { setManageOpen(false); setBioOpen(true); } },
+              { icon: ClipboardList, label: "Anamnese", action: () => { setManageOpen(false); setAnamneseOpen(true); } },
+              { icon: CreditCard, label: "Assinatura", action: () => { setManageOpen(false); openSub(selected); } },
+              { icon: Lock, label: "Alterar Senha", action: () => { setManageOpen(false); setPasswordReset({ userId: selected?.user_id, name: selected?.full_name || selected?.email }); setNewPassword(""); } },
+              { icon: Link2, label: "Link Renovação", action: () => { navigator.clipboard.writeText(`${window.location.origin}/dashboard/renew?uid=${selected?.user_id}`); toast.success("Link copiado!"); setManageOpen(false); } },
+              { icon: Trash2, label: "Excluir", action: () => { setManageOpen(false); setDeleteTarget({ userId: selected?.user_id, name: selected?.full_name || selected?.email }); }, destructive: true },
+            ].map(({ icon: Icon, label, action, destructive }) => (
+              <button
+                key={label}
+                onClick={action}
+                className={cn(
+                  "flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border/50 transition-all duration-200 hover:scale-[1.03] hover:shadow-sm",
+                  destructive
+                    ? "hover:bg-destructive/10 hover:border-destructive/30 text-destructive"
+                    : "hover:bg-primary/5 hover:border-primary/20"
+                )}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-[10px] font-medium leading-tight text-center">{label}</span>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </DashboardLayout>
   );
 };
