@@ -1204,7 +1204,7 @@ const AdminStudents = () => {
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0"><MoreVertical className="w-4 h-4" /></Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent align="end" side="bottom" className="max-h-[60vh] overflow-y-auto z-50">
                             <DropdownMenuItem onClick={() => openView(s)}>
                               <Eye className="w-4 h-4 mr-2" /> Visualizar
                             </DropdownMenuItem>
@@ -1328,7 +1328,7 @@ const AdminStudents = () => {
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon" title="Mais ações"><MoreVertical className="w-4 h-4" /></Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
+                              <DropdownMenuContent align="end" side="bottom" className="max-h-[60vh] overflow-y-auto z-50">
                                 <DropdownMenuItem onClick={() => { setSelected(s); setAnamneseOpen(true); }}>
                                   <ClipboardList className="w-4 h-4 mr-2" /> Anamnese
                                 </DropdownMenuItem>
