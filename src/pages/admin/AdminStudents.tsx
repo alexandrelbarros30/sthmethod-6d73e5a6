@@ -1889,9 +1889,9 @@ const AdminStudents = () => {
             {[
               { icon: Eye, label: "Visão Geral", action: () => { setManageOpen(false); openView(selected); } },
               { icon: Pencil, label: "Editar", action: () => { setManageOpen(false); openEdit(selected); } },
-              { icon: UtensilsCrossed, label: "Dieta", action: () => { setManageOpen(false); navigate(`/admin/diet?student=${selected?.user_id}`); } },
-              { icon: Pill, label: "Protocolo", action: () => { setManageOpen(false); navigate(`/admin/protocol?student=${selected?.user_id}`); } },
-              { icon: Dumbbell, label: "Treino", action: () => { setManageOpen(false); navigate(`/admin/training?student=${selected?.user_id}`); } },
+              { icon: UtensilsCrossed, label: "Dieta", action: () => { setManageOpen(false); navigate(`/admin/diet?uid=${selected?.user_id}`); } },
+              { icon: Pill, label: "Protocolo", action: () => { setManageOpen(false); navigate(`/admin/protocol?uid=${selected?.user_id}`); } },
+              { icon: Dumbbell, label: "Treino", action: () => { setManageOpen(false); navigate(`/admin/training?uid=${selected?.user_id}`); } },
               { icon: Camera, label: "Fotos", action: () => { setManageOpen(false); setImagesOpen(true); } },
               { icon: Activity, label: "Bioimpedância", action: () => { setManageOpen(false); setBioOpen(true); } },
               { icon: ClipboardList, label: "Anamnese", action: () => { setManageOpen(false); setAnamneseOpen(true); } },
