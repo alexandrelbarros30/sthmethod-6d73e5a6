@@ -566,6 +566,16 @@ const AdminDiet = () => {
                         })));
                         toast.success("Valores da IA aplicados nos macronutrientes!");
                       }}
+                      onSaveToLibrary={(result, content) => {
+                        saveToLibraryMutation.mutate({
+                          title: newTitle || "Dieta da Biblioteca",
+                          content,
+                          energy_kcal: Math.round(result.total.energy_kcal),
+                          protein_g: Math.round(result.total.protein_g),
+                          carbs_g: Math.round(result.total.carbs_g),
+                          fat_g: Math.round(result.total.fat_g),
+                        });
+                      }}
                     />
                     <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
                       <Button variant="ghost" size="sm" onClick={() => { setShowNewForm(false); resetNewForm(); }} className="w-full sm:w-auto">
