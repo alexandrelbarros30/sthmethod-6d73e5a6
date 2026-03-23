@@ -355,7 +355,10 @@ const AdminProtocol = () => {
 
               {/* Protocol Items Manager (medications/supplements) */}
               {selected?.user_id && (
-                <ProtocolItemsManager userId={selected.user_id} studentName={selected.full_name} />
+                <>
+                  <ProtocolItemsManager userId={selected.user_id} studentName={selected.full_name} />
+                  <ProtocolExtraCategoriesManager userId={selected.user_id} />
+                </>
               )}
 
               {/* Protocol Info Panel - identical to student view */}
