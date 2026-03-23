@@ -186,7 +186,7 @@ const StudentProtocol = () => {
         {buildStudentInfo()}
 
         {/* Protocol Info Panel */}
-        <ProtocolInfoPanel protocols={protocolItems} />
+        <ProtocolInfoPanel protocols={protocolItems} userId={user?.id} />
 
         {!protocols || protocols.length === 0 ? (
           <Card><CardContent className="py-8 text-center">
