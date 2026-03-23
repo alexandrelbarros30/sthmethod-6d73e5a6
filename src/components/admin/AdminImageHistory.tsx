@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { History, Pencil, Check, X, Trash2 } from "lucide-react";
+import { History, Pencil, Check, X, Trash2, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -170,13 +170,33 @@ const AdminImageHistory = ({ allImages, onUpdate }: Props) => {
                         {img ? (
                           <div className="relative">
                             <img src={img.image_url} alt={labels[type]} className="w-full aspect-[3/4] object-cover rounded border" />
-                            <button
-                              className="absolute top-1 right-1 p-1 bg-destructive/80 rounded-full text-white hover:bg-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => setDeleteTarget({ type: "single", img })}
-                              title="Excluir esta imagem"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
+                            <div className="absolute top-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                className="p-1 bg-background/80 backdrop-blur-sm rounded-full border border-border/50 hover:bg-background"
+                                onClick={() => {
+                                  fetch(img.image_url).then(r => r.blob()).then(blob => {
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement("a");
+                                    a.href = url;
+                                    a.download = `${type}_${groupKey}.jpg`;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                    URL.revokeObjectURL(url);
+                                  });
+                                }}
+                                title="Baixar imagem"
+                              >
+                                <Download className="w-3 h-3" />
+                              </button>
+                              <button
+                                className="p-1 bg-destructive/80 rounded-full text-white hover:bg-destructive"
+                                onClick={() => setDeleteTarget({ type: "single", img })}
+                                title="Excluir esta imagem"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
                           </div>
                         ) : (
                           <div className="w-full aspect-[3/4] bg-muted rounded flex items-center justify-center text-muted-foreground text-[10px]">—</div>
