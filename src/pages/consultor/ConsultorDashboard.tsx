@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Users, Salad, Dumbbell, FlaskConical, ClipboardList, Scale, Activity } from "lucide-react";
+import { Users, Salad, Dumbbell, FlaskConical, ClipboardList, Scale, Activity, MoreVertical } from "lucide-react";
 import { Link } from "react-router-dom";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
 import WhatsAppBulkSender from "@/components/shared/WhatsAppBulkSender";
@@ -132,7 +133,7 @@ const ConsultorDashboard = () => {
                     <p className="font-medium font-body">{s.full_name}</p>
                     <p className="text-sm text-muted-foreground font-body">{s.email}</p>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 items-center">
                     <Button
                       variant="ghost"
                       size="icon"
@@ -141,12 +142,33 @@ const ConsultorDashboard = () => {
                     >
                       <ClipboardList className="w-4 h-4" />
                     </Button>
-                    <Link to={`/consultor/diet?student=${s.user_id}`} className="p-2 rounded hover:bg-accent"><Salad className="w-4 h-4" /></Link>
-                    <Link to={`/consultor/training?student=${s.user_id}`} className="p-2 rounded hover:bg-accent"><Dumbbell className="w-4 h-4" /></Link>
-                    <Link to={`/consultor/protocol?student=${s.user_id}`} className="p-2 rounded hover:bg-accent"><FlaskConical className="w-4 h-4" /></Link>
                     <Button variant="ghost" size="icon" onClick={() => { setSelected(s); setBioOpen(true); }} title="Bioimpedância">
                       <Activity className="w-4 h-4" />
                     </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link to={`/consultor/diet?student=${s.user_id}`} className="flex items-center gap-2">
+                            <Salad className="w-4 h-4" /> Dieta
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to={`/consultor/training?student=${s.user_id}`} className="flex items-center gap-2">
+                            <Dumbbell className="w-4 h-4" /> Treino
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to={`/consultor/protocol?student=${s.user_id}`} className="flex items-center gap-2">
+                            <FlaskConical className="w-4 h-4" /> Protocolo
+                          </Link>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               ))}
