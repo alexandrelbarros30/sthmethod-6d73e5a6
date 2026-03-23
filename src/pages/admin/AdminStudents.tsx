@@ -1201,52 +1201,9 @@ const AdminStudents = () => {
                         <Badge variant={s.status === "active" ? "secondary" : s.status === "suspended" ? "outline" : "destructive"} className="text-[10px] whitespace-nowrap">
                           {s.status === "active" ? "Ativo" : s.status === "suspended" ? "Suspenso" : s.status === "expired" ? "Vencido" : "Sem plano"}
                         </Badge>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0"><MoreVertical className="w-4 h-4" /></Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" side="bottom" className="max-h-[60vh] overflow-y-auto z-50">
-                            <DropdownMenuItem onClick={() => openView(s)}>
-                              <Eye className="w-4 h-4 mr-2" /> Visualizar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openEdit(s)}>
-                              <Pencil className="w-4 h-4 mr-2" /> Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => navigate(`/admin/diet?student=${s.user_id}`)}>
-                              <UtensilsCrossed className="w-4 h-4 mr-2" /> Dieta
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => navigate(`/admin/training?student=${s.user_id}`)}>
-                              <Dumbbell className="w-4 h-4 mr-2" /> Treino
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => navigate(`/admin/protocol?student=${s.user_id}`)}>
-                              <Pill className="w-4 h-4 mr-2" /> Protocolo
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => { setSelected(s); setAnamneseOpen(true); }}>
-                              <ClipboardList className="w-4 h-4 mr-2" /> Anamnese
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => { setSelected(s); setImagesOpen(true); }}>
-                              <Image className="w-4 h-4 mr-2" /> Fotos corporais
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => { setSelected(s); setBioOpen(true); }}>
-                              <Activity className="w-4 h-4 mr-2" /> Bioimpedância
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openSub(s)}>
-                              <CreditCard className="w-4 h-4 mr-2" /> Assinatura
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => { setPasswordReset({ userId: s.user_id, name: s.full_name || s.email }); setNewPassword(""); }}>
-                              <Lock className="w-4 h-4 mr-2" /> Alterar senha
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/dashboard/renew?uid=${s.user_id}`); toast.success("Link copiado!"); }}>
-                              <Link2 className="w-4 h-4 mr-2" /> Copiar link renovação
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeleteTarget({ userId: s.user_id, name: s.full_name || s.email })}>
-                              <Trash2 className="w-4 h-4 mr-2" /> Excluir aluno
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <Button variant="outline" size="sm" className="text-xs h-7 px-2" onClick={() => { setSelected(s); setManageOpen(true); }}>
+                          Gerenciar
+                        </Button>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
