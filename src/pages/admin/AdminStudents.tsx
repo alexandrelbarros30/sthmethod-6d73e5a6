@@ -1869,6 +1869,54 @@ const AdminStudents = () => {
           onOpenChange={setBioOpen}
         />
       )}
+
+      {/* Manage Panel Dialog */}
+      <Dialog open={manageOpen} onOpenChange={setManageOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <span className="text-sm font-bold text-primary">{selected?.initials}</span>
+              </div>
+              <div className="min-w-0">
+                <p className="truncate">{selected?.full_name || "Aluno"}</p>
+                <p className="text-xs text-muted-foreground font-normal truncate">{selected?.email}</p>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-3 gap-2 pt-2">
+            {[
+              { icon: Eye, label: "Visão Geral", action: () => { setManageOpen(false); openView(selected); } },
+              { icon: Pencil, label: "Editar", action: () => { setManageOpen(false); openEdit(selected); } },
+              { icon: UtensilsCrossed, label: "Dieta", action: () => { setManageOpen(false); navigate(`/admin/diet?student=${selected?.user_id}`); } },
+              { icon: Pill, label: "Protocolo", action: () => { setManageOpen(false); navigate(`/admin/protocol?student=${selected?.user_id}`); } },
+              { icon: Dumbbell, label: "Treino", action: () => { setManageOpen(false); navigate(`/admin/training?student=${selected?.user_id}`); } },
+              { icon: Camera, label: "Fotos", action: () => { setManageOpen(false); setImagesOpen(true); } },
+              { icon: Activity, label: "Bioimpedância", action: () => { setManageOpen(false); setBioOpen(true); } },
+              { icon: ClipboardList, label: "Anamnese", action: () => { setManageOpen(false); setAnamneseOpen(true); } },
+              { icon: CreditCard, label: "Assinatura", action: () => { setManageOpen(false); openSub(selected); } },
+              { icon: Lock, label: "Alterar Senha", action: () => { setManageOpen(false); setPasswordReset({ userId: selected?.user_id, name: selected?.full_name || selected?.email }); setNewPassword(""); } },
+              { icon: Link2, label: "Link Renovação", action: () => { navigator.clipboard.writeText(`${window.location.origin}/dashboard/renew?uid=${selected?.user_id}`); toast.success("Link copiado!"); setManageOpen(false); } },
+              { icon: Trash2, label: "Excluir", action: () => { setManageOpen(false); setDeleteTarget({ userId: selected?.user_id, name: selected?.full_name || selected?.email }); }, destructive: true },
+            ].map(({ icon: Icon, label, action, destructive }) => (
+              <button
+                key={label}
+                onClick={action}
+                className={cn(
+                  "flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border/50 transition-all duration-200 hover:scale-[1.03] hover:shadow-sm",
+                  destructive
+                    ? "hover:bg-destructive/10 hover:border-destructive/30 text-destructive"
+                    : "hover:bg-primary/5 hover:border-primary/20"
+                )}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-[10px] font-medium leading-tight text-center">{label}</span>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </DashboardLayout>
   );
 };
