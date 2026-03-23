@@ -226,6 +226,36 @@ export const syncStudentDietMeals = async (
 ) => {
   const meals = parseDietContentToMeals(content);
 
+  // If no per-meal macros from AI, try to fetch totals from student_diets and distribute equally
+  let fallbackPerMealMacros: MealMacros[] | undefined;
+  if (!perMealMacros?.length && meals.length > 0) {
+    const { data: dietRecord } = await supabase
+      .from("student_diets")
+      .select("energy_kcal, protein_g, carbs_g, fat_g")
+      .eq("user_id", studentId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (dietRecord && (dietRecord.energy_kcal || dietRecord.protein_g)) {
+      const totalKcal = dietRecord.energy_kcal || 0;
+      const totalProtein = dietRecord.protein_g || 0;
+      const totalCarbs = dietRecord.carbs_g || 0;
+      const totalFat = dietRecord.fat_g || 0;
+      const mealCount = meals.length;
+
+      fallbackPerMealMacros = meals.map((m, idx) => ({
+        meal_number: m.sort_order + 1,
+        energy_kcal: Math.round((totalKcal / mealCount) * 10) / 10,
+        protein_g: Math.round((totalProtein / mealCount) * 10) / 10,
+        carbs_g: Math.round((totalCarbs / mealCount) * 10) / 10,
+        fat_g: Math.round((totalFat / mealCount) * 10) / 10,
+      }));
+    }
+  }
+
+  const effectiveMacros = perMealMacros?.length ? perMealMacros : fallbackPerMealMacros;
+
   const { data: existingMeals, error: existingMealsError } = await supabase
     .from("diet_meals")
     .select("id")
@@ -261,7 +291,7 @@ export const syncStudentDietMeals = async (
 
     if (meal.foods.length > 0) {
       // Find matching per-meal macros from AI analysis (meal_number is 1-based, sort_order is 0-based)
-      const mealMacro = perMealMacros?.find((m) => m.meal_number === meal.sort_order + 1);
+      const mealMacro = effectiveMacros?.find((m) => m.meal_number === meal.sort_order + 1);
 
       const rows = meal.foods.map((food, index) => {
         const foodCount = meal.foods.length;
