@@ -1653,6 +1653,30 @@ export type Database = {
         }
         Relationships: []
       }
+      water_logs: {
+        Row: {
+          amount_ml: number
+          id: string
+          log_date: string
+          logged_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_ml?: number
+          id?: string
+          log_date?: string
+          logged_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_ml?: number
+          id?: string
+          log_date?: string
+          logged_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       weight_logs: {
         Row: {
           created_at: string
