@@ -26,7 +26,7 @@ const StudentDiet = () => {
     completions,
     totalMacros,
     consumedMacros,
-    perMealMacros,
+    perMealFoodMacros,
     completedCount,
     totalMeals,
     progressPercent,
