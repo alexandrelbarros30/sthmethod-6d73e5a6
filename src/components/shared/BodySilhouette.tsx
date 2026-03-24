@@ -25,23 +25,32 @@ interface BodySilhouetteProps {
   className?: string;
 }
 
-function segmentColor(value: number | null | undefined, fallback = "hsl(var(--muted))"): string {
-  if (value == null) return fallback;
+function segmentNeonColor(value: number | null | undefined): string {
+  if (value == null) return "rgba(100,100,120,0.3)";
   const clamped = Math.max(0, Math.min(200, value));
-  if (clamped < 80) return "hsl(0, 65%, 55%)";
-  if (clamped < 95) return "hsl(25, 80%, 55%)";
-  if (clamped < 105) return "hsl(45, 85%, 50%)";
-  if (clamped < 120) return "hsl(120, 55%, 45%)";
-  return "hsl(160, 65%, 40%)";
+  if (clamped < 80) return "#ff3355";
+  if (clamped < 95) return "#ff8833";
+  if (clamped < 105) return "#ffdd33";
+  if (clamped < 120) return "#33ff88";
+  return "#00ffcc";
 }
 
-function trunkColorFromFat(bodyFatPct: number | null | undefined): string {
-  if (bodyFatPct == null) return "hsl(var(--muted))";
-  if (bodyFatPct < 10) return "hsl(160, 65%, 40%)";
-  if (bodyFatPct < 15) return "hsl(120, 55%, 45%)";
-  if (bodyFatPct < 22) return "hsl(45, 85%, 50%)";
-  if (bodyFatPct < 30) return "hsl(25, 80%, 55%)";
-  return "hsl(0, 65%, 55%)";
+function trunkNeonFromFat(bodyFatPct: number | null | undefined): string {
+  if (bodyFatPct == null) return "rgba(100,100,120,0.3)";
+  if (bodyFatPct < 10) return "#00ffcc";
+  if (bodyFatPct < 15) return "#33ff88";
+  if (bodyFatPct < 22) return "#ffdd33";
+  if (bodyFatPct < 30) return "#ff8833";
+  return "#ff3355";
+}
+
+function glowFilter(color: string, id: string) {
+  return (
+    <filter id={id} x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor={color} floodOpacity="0.7" />
+      <feDropShadow dx="0" dy="0" stdDeviation="8" floodColor={color} floodOpacity="0.3" />
+    </filter>
+  );
 }
 
 const BodySilhouette: React.FC<BodySilhouetteProps> = ({
@@ -49,13 +58,13 @@ const BodySilhouette: React.FC<BodySilhouetteProps> = ({
   metrics,
   className = "",
 }) => {
-  const leftArmColor = segmentColor(segments?.leftArm);
-  const rightArmColor = segmentColor(segments?.rightArm);
-  const leftLegColor = segmentColor(segments?.leftLeg);
-  const rightLegColor = segmentColor(segments?.rightLeg);
-  const trunkColor = segments?.trunk != null
-    ? segmentColor(segments.trunk)
-    : trunkColorFromFat(metrics?.bodyFatPct);
+  const rightArmC = segmentNeonColor(segments?.rightArm);
+  const leftArmC = segmentNeonColor(segments?.leftArm);
+  const rightLegC = segmentNeonColor(segments?.rightLeg);
+  const leftLegC = segmentNeonColor(segments?.leftLeg);
+  const trunkC = segments?.trunk != null
+    ? segmentNeonColor(segments.trunk)
+    : trunkNeonFromFat(metrics?.bodyFatPct);
 
   const hasSegments = segments && (
     segments.leftArm != null || segments.rightArm != null ||
@@ -77,161 +86,287 @@ const BodySilhouette: React.FC<BodySilhouetteProps> = ({
     );
   }
 
+  // DNA helix points generator
+  const dnaHelixPath = (yStart: number, yEnd: number, xCenter: number, amplitude: number, phase: number) => {
+    const points = [];
+    const steps = 20;
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const y = yStart + (yEnd - yStart) * t;
+      const x = xCenter + Math.sin(t * Math.PI * 4 + phase) * amplitude;
+      points.push(`${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`);
+    }
+    return points.join(' ');
+  };
+
   return (
     <div className={`flex flex-col items-center gap-3 ${className}`}>
-      <div className="relative w-[160px] h-[300px]">
+      <div className="relative w-[180px] h-[320px]">
         <svg
-          viewBox="0 0 200 380"
+          viewBox="0 0 220 400"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className="w-full h-full"
-          style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.15))" }}
         >
           <defs>
-            <linearGradient id="headGrad" x1="100" y1="0" x2="100" y2="50" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="hsl(var(--foreground))" stopOpacity="0.18" />
-              <stop offset="100%" stopColor="hsl(var(--foreground))" stopOpacity="0.12" />
+            {/* Neon glow filters for each segment */}
+            {glowFilter(rightArmC, "glowRA")}
+            {glowFilter(leftArmC, "glowLA")}
+            {glowFilter(rightLegC, "glowRL")}
+            {glowFilter(leftLegC, "glowLL")}
+            {glowFilter(trunkC, "glowTrunk")}
+            {glowFilter("#00ddff", "glowHead")}
+            {glowFilter("#00ddff", "glowDna")}
+
+            {/* Subtle grid pattern */}
+            <pattern id="gridPattern" width="10" height="10" patternUnits="userSpaceOnUse">
+              <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(0,220,255,0.04)" strokeWidth="0.3" />
+            </pattern>
+
+            {/* Scan line animation */}
+            <linearGradient id="scanGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="transparent" />
+              <stop offset="45%" stopColor="rgba(0,255,200,0.08)" />
+              <stop offset="50%" stopColor="rgba(0,255,200,0.25)" />
+              <stop offset="55%" stopColor="rgba(0,255,200,0.08)" />
+              <stop offset="100%" stopColor="transparent" />
             </linearGradient>
-            <linearGradient id="neckGrad" x1="100" y1="42" x2="100" y2="58" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="hsl(var(--foreground))" stopOpacity="0.12" />
-              <stop offset="100%" stopColor="hsl(var(--foreground))" stopOpacity="0.08" />
+
+            <linearGradient id="bodyFill" x1="110" y1="0" x2="110" y2="400" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="rgba(0,220,255,0.05)" />
+              <stop offset="50%" stopColor="rgba(0,220,255,0.02)" />
+              <stop offset="100%" stopColor="rgba(0,220,255,0.05)" />
             </linearGradient>
-            {/* Muscle definition overlay */}
-            <filter id="muscleGlow">
-              <feGaussianBlur stdDeviation="1.5" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
           </defs>
 
-          {/* Head - athletic proportioned */}
-          <ellipse cx="100" cy="22" rx="18" ry="20" fill="url(#headGrad)" />
-          {/* Jaw line */}
-          <path d="M 82 26 Q 84 40, 100 44 Q 116 40, 118 26" fill="url(#headGrad)" />
+          {/* Background grid */}
+          <rect width="220" height="400" fill="url(#gridPattern)" />
 
-          {/* Neck - muscular */}
-          <path d="M 88 42 L 86 56 Q 87 60, 100 60 Q 113 60, 114 56 L 112 42" fill="url(#neckGrad)" />
-          {/* Trapezius */}
-          <path d="M 86 56 Q 70 58, 52 68 L 56 64 Q 72 56, 86 54" fill="hsl(var(--foreground))" opacity="0.06" />
-          <path d="M 114 56 Q 130 58, 148 68 L 144 64 Q 128 56, 114 54" fill="hsl(var(--foreground))" opacity="0.06" />
-
-          {/* Right Arm (viewer's left) - athletic with deltoid, bicep, forearm */}
+          {/* === DNA HELIX STRANDS running through the body === */}
           <path
-            d="M 50 68 Q 38 66, 28 74 Q 20 82, 18 98 Q 16 112, 18 128 Q 19 138, 22 148 Q 24 156, 28 162 Q 30 166, 34 166 Q 38 166, 40 160 Q 44 148, 46 136 Q 48 124, 50 112 Q 52 98, 54 86 Q 55 76, 52 70 Z"
-            fill={rightArmColor}
-            opacity="0.85"
-            className="transition-colors duration-700"
-            filter="url(#muscleGlow)"
+            d={dnaHelixPath(15, 385, 110, 18, 0)}
+            stroke="#00ddff"
+            strokeWidth="1.2"
+            opacity="0.35"
+            fill="none"
+            filter="url(#glowDna)"
           />
-          {/* Right arm muscle line */}
-          <path d="M 36 90 Q 34 105, 36 120" stroke="hsl(var(--background))" strokeWidth="0.6" opacity="0.25" fill="none" />
-
-          {/* Left Arm (viewer's right) */}
           <path
-            d="M 150 68 Q 162 66, 172 74 Q 180 82, 182 98 Q 184 112, 182 128 Q 181 138, 178 148 Q 176 156, 172 162 Q 170 166, 166 166 Q 162 166, 160 160 Q 156 148, 154 136 Q 152 124, 150 112 Q 148 98, 146 86 Q 145 76, 148 70 Z"
-            fill={leftArmColor}
-            opacity="0.85"
-            className="transition-colors duration-700"
-            filter="url(#muscleGlow)"
+            d={dnaHelixPath(15, 385, 110, 18, Math.PI)}
+            stroke="#00ffcc"
+            strokeWidth="1.2"
+            opacity="0.35"
+            fill="none"
+            filter="url(#glowDna)"
           />
-          {/* Left arm muscle line */}
-          <path d="M 164 90 Q 166 105, 164 120" stroke="hsl(var(--background))" strokeWidth="0.6" opacity="0.25" fill="none" />
+          {/* DNA rungs */}
+          {Array.from({ length: 16 }, (_, i) => {
+            const t = (i + 0.5) / 16;
+            const y = 15 + (385 - 15) * t;
+            const x1 = 110 + Math.sin(t * Math.PI * 4) * 18;
+            const x2 = 110 + Math.sin(t * Math.PI * 4 + Math.PI) * 18;
+            return (
+              <line key={i} x1={x1} y1={y} x2={x2} y2={y}
+                stroke="#00ddff" strokeWidth="0.5" opacity="0.15" />
+            );
+          })}
 
-          {/* Trunk - V-taper athletic torso */}
-          <path
-            d="M 52 68 Q 54 62, 76 60 Q 100 58, 124 60 Q 146 62, 148 68 
-               L 150 80 Q 152 100, 148 120 Q 146 135, 140 148 
-               Q 136 156, 130 162 Q 120 168, 100 170 
-               Q 80 168, 70 162 Q 64 156, 60 148 
-               Q 54 135, 52 120 Q 48 100, 50 80 Z"
-            fill={trunkColor}
-            opacity="0.8"
-            className="transition-colors duration-700"
-            filter="url(#muscleGlow)"
+          {/* === HEAD — circuit/tech pattern === */}
+          <ellipse cx="110" cy="28" rx="19" ry="21"
+            fill="rgba(0,200,255,0.06)" stroke="#00ddff" strokeWidth="0.8" opacity="0.6"
+            filter="url(#glowHead)"
           />
-          {/* Abs definition lines */}
-          <line x1="100" y1="68" x2="100" y2="158" stroke="hsl(var(--background))" strokeWidth="0.5" opacity="0.2" />
-          <path d="M 85 88 Q 100 90, 115 88" stroke="hsl(var(--background))" strokeWidth="0.4" opacity="0.15" fill="none" />
-          <path d="M 84 105 Q 100 107, 116 105" stroke="hsl(var(--background))" strokeWidth="0.4" opacity="0.15" fill="none" />
-          <path d="M 83 122 Q 100 124, 117 122" stroke="hsl(var(--background))" strokeWidth="0.4" opacity="0.15" fill="none" />
-          <path d="M 84 138 Q 100 140, 116 138" stroke="hsl(var(--background))" strokeWidth="0.4" opacity="0.15" fill="none" />
-          {/* Pec line */}
-          <path d="M 58 76 Q 75 84, 100 86 Q 125 84, 142 76" stroke="hsl(var(--background))" strokeWidth="0.5" opacity="0.15" fill="none" />
+          {/* Circuit lines on head */}
+          <circle cx="110" cy="28" r="10" fill="none" stroke="#00ddff" strokeWidth="0.3" opacity="0.3" strokeDasharray="2 3" />
+          <line x1="110" y1="12" x2="110" y2="20" stroke="#00ddff" strokeWidth="0.4" opacity="0.4" />
 
-          {/* Right Leg (viewer's left) - athletic quads/calves */}
-          <path
-            d="M 68 166 Q 60 170, 54 185 Q 48 205, 46 228 
-               Q 44 248, 44 268 Q 44 288, 46 305 
-               Q 47 318, 50 330 Q 52 342, 54 350 
-               Q 56 360, 60 364 Q 64 368, 68 366 
-               Q 72 364, 74 356 Q 76 342, 78 328 
-               Q 80 310, 82 290 Q 84 268, 86 248 
-               Q 88 228, 90 208 Q 92 190, 94 178 
-               Q 95 172, 94 168 Z"
-            fill={rightLegColor}
-            opacity="0.85"
-            className="transition-colors duration-700"
-            filter="url(#muscleGlow)"
-          />
-          {/* Right leg muscle line */}
-          <path d="M 70 200 Q 66 230, 66 260" stroke="hsl(var(--background))" strokeWidth="0.5" opacity="0.2" fill="none" />
-          {/* Right calf definition */}
-          <path d="M 56 290 Q 54 305, 56 318" stroke="hsl(var(--background))" strokeWidth="0.4" opacity="0.15" fill="none" />
+          {/* Jaw */}
+          <path d="M 91 32 Q 94 46, 110 50 Q 126 46, 129 32"
+            fill="rgba(0,200,255,0.04)" stroke="#00ddff" strokeWidth="0.5" opacity="0.4" />
 
-          {/* Left Leg (viewer's right) */}
-          <path
-            d="M 132 166 Q 140 170, 146 185 Q 152 205, 154 228 
-               Q 156 248, 156 268 Q 156 288, 154 305 
-               Q 153 318, 150 330 Q 148 342, 146 350 
-               Q 144 360, 140 364 Q 136 368, 132 366 
-               Q 128 364, 126 356 Q 124 342, 122 328 
-               Q 120 310, 118 290 Q 116 268, 114 248 
-               Q 112 228, 110 208 Q 108 190, 106 178 
-               Q 105 172, 106 168 Z"
-            fill={leftLegColor}
-            opacity="0.85"
-            className="transition-colors duration-700"
-            filter="url(#muscleGlow)"
-          />
-          {/* Left leg muscle line */}
-          <path d="M 130 200 Q 134 230, 134 260" stroke="hsl(var(--background))" strokeWidth="0.5" opacity="0.2" fill="none" />
-          {/* Left calf definition */}
-          <path d="M 144 290 Q 146 305, 144 318" stroke="hsl(var(--background))" strokeWidth="0.4" opacity="0.15" fill="none" />
+          {/* === NECK === */}
+          <path d="M 98 48 L 96 60 Q 98 64, 110 64 Q 122 64, 124 60 L 122 48"
+            fill="rgba(0,200,255,0.03)" stroke="#00ddff" strokeWidth="0.4" opacity="0.3" />
 
-          {/* Subtle body outline glow */}
+          {/* === TRUNK — V-taper athletic === */}
           <path
-            d="M 100 44 Q 86 42, 82 26"
-            stroke="hsl(var(--foreground))" strokeWidth="0.3" opacity="0.08" fill="none"
+            d="M 62 72 Q 64 66, 86 64 Q 110 62, 134 64 Q 156 66, 158 72 
+               L 160 84 Q 162 104, 158 124 Q 156 139, 150 152 
+               Q 146 160, 140 166 Q 130 172, 110 174 
+               Q 90 172, 80 166 Q 74 160, 70 152 
+               Q 64 139, 62 124 Q 58 104, 60 84 Z"
+            fill="rgba(0,0,0,0.3)"
+            stroke={trunkC}
+            strokeWidth="1.5"
+            opacity="0.9"
+            filter="url(#glowTrunk)"
+            className="transition-all duration-700"
           />
+          {/* Abs circuit lines */}
+          <line x1="110" y1="72" x2="110" y2="162" stroke={trunkC} strokeWidth="0.4" opacity="0.3" />
+          <path d="M 95 92 Q 110 94, 125 92" stroke={trunkC} strokeWidth="0.3" opacity="0.25" fill="none" />
+          <path d="M 94 109 Q 110 111, 126 109" stroke={trunkC} strokeWidth="0.3" opacity="0.25" fill="none" />
+          <path d="M 93 126 Q 110 128, 127 126" stroke={trunkC} strokeWidth="0.3" opacity="0.25" fill="none" />
+          <path d="M 94 142 Q 110 144, 126 142" stroke={trunkC} strokeWidth="0.3" opacity="0.25" fill="none" />
+          {/* Pec arc */}
+          <path d="M 68 80 Q 85 88, 110 90 Q 135 88, 152 80" stroke={trunkC} strokeWidth="0.4" opacity="0.2" fill="none" />
+          {/* Inner glow fill */}
+          <path
+            d="M 62 72 Q 64 66, 86 64 Q 110 62, 134 64 Q 156 66, 158 72 
+               L 160 84 Q 162 104, 158 124 Q 156 139, 150 152 
+               Q 146 160, 140 166 Q 130 172, 110 174 
+               Q 90 172, 80 166 Q 74 160, 70 152 
+               Q 64 139, 62 124 Q 58 104, 60 84 Z"
+            fill={trunkC}
+            opacity="0.08"
+          />
+
+          {/* === RIGHT ARM (viewer's left) === */}
+          <path
+            d="M 60 72 Q 48 70, 38 78 Q 30 86, 28 102 Q 26 116, 28 132 Q 29 142, 32 152 Q 34 160, 38 166 Q 40 170, 44 170 Q 48 170, 50 164 Q 54 152, 56 140 Q 58 128, 60 116 Q 62 102, 64 90 Q 65 80, 62 74 Z"
+            fill="rgba(0,0,0,0.3)"
+            stroke={rightArmC}
+            strokeWidth="1.5"
+            opacity="0.9"
+            filter="url(#glowRA)"
+            className="transition-all duration-700"
+          />
+          <path
+            d="M 60 72 Q 48 70, 38 78 Q 30 86, 28 102 Q 26 116, 28 132 Q 29 142, 32 152 Q 34 160, 38 166 Q 40 170, 44 170 Q 48 170, 50 164 Q 54 152, 56 140 Q 58 128, 60 116 Q 62 102, 64 90 Q 65 80, 62 74 Z"
+            fill={rightArmC} opacity="0.08"
+          />
+          {/* Muscle circuit line */}
+          <path d="M 44 94 Q 42 110, 44 126" stroke={rightArmC} strokeWidth="0.4" opacity="0.3" fill="none" />
+
+          {/* === LEFT ARM (viewer's right) === */}
+          <path
+            d="M 160 72 Q 172 70, 182 78 Q 190 86, 192 102 Q 194 116, 192 132 Q 191 142, 188 152 Q 186 160, 182 166 Q 180 170, 176 170 Q 172 170, 170 164 Q 166 152, 164 140 Q 162 128, 160 116 Q 158 102, 156 90 Q 155 80, 158 74 Z"
+            fill="rgba(0,0,0,0.3)"
+            stroke={leftArmC}
+            strokeWidth="1.5"
+            opacity="0.9"
+            filter="url(#glowLA)"
+            className="transition-all duration-700"
+          />
+          <path
+            d="M 160 72 Q 172 70, 182 78 Q 190 86, 192 102 Q 194 116, 192 132 Q 191 142, 188 152 Q 186 160, 182 166 Q 180 170, 176 170 Q 172 170, 170 164 Q 166 152, 164 140 Q 162 128, 160 116 Q 158 102, 156 90 Q 155 80, 158 74 Z"
+            fill={leftArmC} opacity="0.08"
+          />
+          <path d="M 176 94 Q 178 110, 176 126" stroke={leftArmC} strokeWidth="0.4" opacity="0.3" fill="none" />
+
+          {/* === RIGHT LEG (viewer's left) === */}
+          <path
+            d="M 78 170 Q 70 174, 64 189 Q 58 209, 56 232 
+               Q 54 252, 54 272 Q 54 292, 56 309 
+               Q 57 322, 60 334 Q 62 346, 64 354 
+               Q 66 364, 70 368 Q 74 372, 78 370 
+               Q 82 368, 84 360 Q 86 346, 88 332 
+               Q 90 314, 92 294 Q 94 272, 96 252 
+               Q 98 232, 100 212 Q 102 194, 104 182 
+               Q 105 176, 104 172 Z"
+            fill="rgba(0,0,0,0.3)"
+            stroke={rightLegC}
+            strokeWidth="1.5"
+            opacity="0.9"
+            filter="url(#glowRL)"
+            className="transition-all duration-700"
+          />
+          <path
+            d="M 78 170 Q 70 174, 64 189 Q 58 209, 56 232 
+               Q 54 252, 54 272 Q 54 292, 56 309 
+               Q 57 322, 60 334 Q 62 346, 64 354 
+               Q 66 364, 70 368 Q 74 372, 78 370 
+               Q 82 368, 84 360 Q 86 346, 88 332 
+               Q 90 314, 92 294 Q 94 272, 96 252 
+               Q 98 232, 100 212 Q 102 194, 104 182 
+               Q 105 176, 104 172 Z"
+            fill={rightLegC} opacity="0.08"
+          />
+          <path d="M 80 204 Q 76 234, 76 264" stroke={rightLegC} strokeWidth="0.4" opacity="0.3" fill="none" />
+          <path d="M 66 294 Q 64 309, 66 322" stroke={rightLegC} strokeWidth="0.3" opacity="0.2" fill="none" />
+
+          {/* === LEFT LEG (viewer's right) === */}
+          <path
+            d="M 142 170 Q 150 174, 156 189 Q 162 209, 164 232 
+               Q 166 252, 166 272 Q 166 292, 164 309 
+               Q 163 322, 160 334 Q 158 346, 156 354 
+               Q 154 364, 150 368 Q 146 372, 142 370 
+               Q 138 368, 136 360 Q 134 346, 132 332 
+               Q 130 314, 128 294 Q 126 272, 124 252 
+               Q 122 232, 120 212 Q 118 194, 116 182 
+               Q 115 176, 116 172 Z"
+            fill="rgba(0,0,0,0.3)"
+            stroke={leftLegC}
+            strokeWidth="1.5"
+            opacity="0.9"
+            filter="url(#glowLL)"
+            className="transition-all duration-700"
+          />
+          <path
+            d="M 142 170 Q 150 174, 156 189 Q 162 209, 164 232 
+               Q 166 252, 166 272 Q 166 292, 164 309 
+               Q 163 322, 160 334 Q 158 346, 156 354 
+               Q 154 364, 150 368 Q 146 372, 142 370 
+               Q 138 368, 136 360 Q 134 346, 132 332 
+               Q 130 314, 128 294 Q 126 272, 124 252 
+               Q 122 232, 120 212 Q 118 194, 116 182 
+               Q 115 176, 116 172 Z"
+            fill={leftLegC} opacity="0.08"
+          />
+          <path d="M 140 204 Q 144 234, 144 264" stroke={leftLegC} strokeWidth="0.4" opacity="0.3" fill="none" />
+          <path d="M 154 294 Q 156 309, 154 322" stroke={leftLegC} strokeWidth="0.3" opacity="0.2" fill="none" />
+
+          {/* Scan line animation overlay */}
+          <rect x="0" y="0" width="220" height="400" fill="url(#scanGrad)" opacity="0.5">
+            <animateTransform attributeName="transform" type="translate" from="0 -400" to="0 400" dur="4s" repeatCount="indefinite" />
+          </rect>
+
+          {/* Corner tech markers */}
+          <path d="M 5 5 L 5 20" stroke="#00ddff" strokeWidth="0.5" opacity="0.3" />
+          <path d="M 5 5 L 20 5" stroke="#00ddff" strokeWidth="0.5" opacity="0.3" />
+          <path d="M 215 5 L 215 20" stroke="#00ddff" strokeWidth="0.5" opacity="0.3" />
+          <path d="M 215 5 L 200 5" stroke="#00ddff" strokeWidth="0.5" opacity="0.3" />
+          <path d="M 5 395 L 5 380" stroke="#00ddff" strokeWidth="0.5" opacity="0.3" />
+          <path d="M 5 395 L 20 395" stroke="#00ddff" strokeWidth="0.5" opacity="0.3" />
+          <path d="M 215 395 L 215 380" stroke="#00ddff" strokeWidth="0.5" opacity="0.3" />
+          <path d="M 215 395 L 200 395" stroke="#00ddff" strokeWidth="0.5" opacity="0.3" />
+
+          {/* Tech label */}
+          <text x="110" y="396" textAnchor="middle" fill="#00ddff" fontSize="5" opacity="0.4" fontFamily="monospace">
+            DNA • BIOANALYSIS
+          </text>
         </svg>
 
-        {/* Segmental value labels */}
+        {/* Segmental value labels with neon style */}
         {hasSegments && (
           <>
             {segments?.rightArm != null && (
-              <div className="absolute top-[28%] left-[-6px] text-[9px] font-bold text-foreground bg-background/90 backdrop-blur-sm px-1.5 py-0.5 rounded-full shadow-sm border border-border/30">
+              <div className="absolute top-[26%] left-[-4px] text-[9px] font-bold px-1.5 py-0.5 rounded-full border"
+                style={{ color: rightArmC, borderColor: rightArmC, backgroundColor: 'rgba(0,0,0,0.7)', boxShadow: `0 0 8px ${rightArmC}40` }}>
                 {segments.rightArm}
               </div>
             )}
             {segments?.leftArm != null && (
-              <div className="absolute top-[28%] right-[-6px] text-[9px] font-bold text-foreground bg-background/90 backdrop-blur-sm px-1.5 py-0.5 rounded-full shadow-sm border border-border/30">
+              <div className="absolute top-[26%] right-[-4px] text-[9px] font-bold px-1.5 py-0.5 rounded-full border"
+                style={{ color: leftArmC, borderColor: leftArmC, backgroundColor: 'rgba(0,0,0,0.7)', boxShadow: `0 0 8px ${leftArmC}40` }}>
                 {segments.leftArm}
               </div>
             )}
             {segments?.trunk != null && (
-              <div className="absolute top-[32%] left-1/2 -translate-x-1/2 text-[9px] font-bold text-foreground bg-background/90 backdrop-blur-sm px-1.5 py-0.5 rounded-full shadow-sm border border-border/30">
+              <div className="absolute top-[30%] left-1/2 -translate-x-1/2 text-[9px] font-bold px-1.5 py-0.5 rounded-full border"
+                style={{ color: trunkC, borderColor: trunkC, backgroundColor: 'rgba(0,0,0,0.7)', boxShadow: `0 0 8px ${trunkC}40` }}>
                 {segments.trunk}
               </div>
             )}
             {segments?.rightLeg != null && (
-              <div className="absolute bottom-[12%] left-[10px] text-[9px] font-bold text-foreground bg-background/90 backdrop-blur-sm px-1.5 py-0.5 rounded-full shadow-sm border border-border/30">
+              <div className="absolute bottom-[10%] left-[8px] text-[9px] font-bold px-1.5 py-0.5 rounded-full border"
+                style={{ color: rightLegC, borderColor: rightLegC, backgroundColor: 'rgba(0,0,0,0.7)', boxShadow: `0 0 8px ${rightLegC}40` }}>
                 {segments.rightLeg}
               </div>
             )}
             {segments?.leftLeg != null && (
-              <div className="absolute bottom-[12%] right-[10px] text-[9px] font-bold text-foreground bg-background/90 backdrop-blur-sm px-1.5 py-0.5 rounded-full shadow-sm border border-border/30">
+              <div className="absolute bottom-[10%] right-[8px] text-[9px] font-bold px-1.5 py-0.5 rounded-full border"
+                style={{ color: leftLegC, borderColor: leftLegC, backgroundColor: 'rgba(0,0,0,0.7)', boxShadow: `0 0 8px ${leftLegC}40` }}>
                 {segments.leftLeg}
               </div>
             )}
@@ -239,13 +374,13 @@ const BodySilhouette: React.FC<BodySilhouetteProps> = ({
         )}
       </div>
 
-      {/* Color legend */}
+      {/* Neon color legend */}
       <div className="flex items-center gap-2 flex-wrap justify-center">
-        <LegendDot color="hsl(0, 65%, 55%)" label="Baixo" />
-        <LegendDot color="hsl(25, 80%, 55%)" label="Abaixo" />
-        <LegendDot color="hsl(45, 85%, 50%)" label="Normal" />
-        <LegendDot color="hsl(120, 55%, 45%)" label="Bom" />
-        <LegendDot color="hsl(160, 65%, 40%)" label="Excelente" />
+        <LegendDot color="#ff3355" label="Baixo" />
+        <LegendDot color="#ff8833" label="Abaixo" />
+        <LegendDot color="#ffdd33" label="Normal" />
+        <LegendDot color="#33ff88" label="Bom" />
+        <LegendDot color="#00ffcc" label="Excelente" />
       </div>
 
       {/* Key metrics */}
@@ -271,14 +406,14 @@ const BodySilhouette: React.FC<BodySilhouetteProps> = ({
 
 const LegendDot = ({ color, label }: { color: string; label: string }) => (
   <div className="flex items-center gap-1">
-    <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: color }} />
+    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color, boxShadow: `0 0 6px ${color}60` }} />
     <span className="text-[9px] text-muted-foreground font-medium">{label}</span>
   </div>
 );
 
 const MetricLabel = ({ label, value }: { label: string; value: string }) => (
   <div className="text-muted-foreground">
-    <span className="font-semibold text-foreground">{value}</span>{" "}
+    <span className="font-semibold" style={{ color: '#00ffcc' }}>{value}</span>{" "}
     <span>{label}</span>
   </div>
 );
