@@ -225,12 +225,13 @@ export function useMealTracking() {
   const hasFoodLevelMacros = foodSumMacros.kcal > 0 || foodSumMacros.protein > 0;
   const useAdminProportional = !hasFoodLevelMacros && adminMacros && (adminMacros.energy_kcal > 0 || adminMacros.protein_g > 0);
 
+  const totalMeals = meals.length;
+
   const consumedMacros = meals.reduce(
     (acc, meal) => {
       const isCompleted = completions.some((c) => c.meal_id === meal.id && !c.skipped);
       if (isCompleted) {
         if (useAdminProportional && totalMeals > 0) {
-          // Distribute admin totals equally across meals
           acc.kcal += totalMacros.kcal / totalMeals;
           acc.protein += totalMacros.protein / totalMeals;
           acc.carbs += totalMacros.carbs / totalMeals;
@@ -252,7 +253,6 @@ export function useMealTracking() {
 
   const completedCount = completions.filter((c) => !c.skipped).length;
   const skippedCount = completions.filter((c) => c.skipped).length;
-  const totalMeals = meals.length;
   const progressPercent = totalMeals > 0 ? Math.round((completedCount / totalMeals) * 100) : 0;
 
   // Find next meal based on current time (only for today)
