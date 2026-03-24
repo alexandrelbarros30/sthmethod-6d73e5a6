@@ -240,7 +240,7 @@ const StudentDiet = () => {
         <Card className="premium-card animate-fade-in" style={{ animationDelay: "0.1s" }}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-bold flex items-center gap-2 tracking-tight">
-              <Flame className="w-4 h-4 text-primary" /> Macros do Dia
+              <Flame className="w-4 h-4 text-primary" /> Seu dia até agora
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
