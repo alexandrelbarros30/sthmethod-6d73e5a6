@@ -48,7 +48,7 @@ const StudentDiet = () => {
 
   if (subLoading || isLoading) {
     return (
-      <DashboardLayout role="student" title="Dieta" subtitle="Seu plano alimentar personalizado.">
+        <DashboardLayout role="student" title="Seu plano hoje" subtitle="Seu plano alimentar personalizado.">
         <div className="flex items-center justify-center py-20">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
