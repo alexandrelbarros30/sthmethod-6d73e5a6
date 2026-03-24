@@ -53,18 +53,20 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
-function drawImageCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number) {
+function drawImageContain(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number) {
   const imgRatio = img.width / img.height;
   const boxRatio = w / h;
-  let sx = 0, sy = 0, sw = img.width, sh = img.height;
+  let dw: number, dh: number;
   if (imgRatio > boxRatio) {
-    sw = img.height * boxRatio;
-    sx = (img.width - sw) / 2;
+    dw = w;
+    dh = w / imgRatio;
   } else {
-    sh = img.width / boxRatio;
-    sy = (img.height - sh) / 2;
+    dh = h;
+    dw = h * imgRatio;
   }
-  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+  const dx = x + (w - dw) / 2;
+  const dy = y + (h - dh) / 2;
+  ctx.drawImage(img, dx, dy, dw, dh);
 }
 
 const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps) => {
@@ -126,71 +128,57 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
         canvas.height = CANVAS_HEIGHT;
         const ctx = canvas.getContext("2d")!;
 
-        // Draw the frame first (it becomes the background)
-        // Scale frame to fill canvas
-        const frameRatio = frameImg.width / frameImg.height;
-        const canvasRatio = CANVAS_WIDTH / CANVAS_HEIGHT;
-        let fw = CANVAS_WIDTH, fh = CANVAS_HEIGHT;
-        if (frameRatio > canvasRatio) {
-          fh = CANVAS_HEIGHT;
-          fw = fh * frameRatio;
-        } else {
-          fw = CANVAS_WIDTH;
-          fh = fw / frameRatio;
-        }
-        ctx.drawImage(frameImg, (CANVAS_WIDTH - fw) / 2, (CANVAS_HEIGHT - fh) / 2, fw, fh);
+        // Draw the frame as background, scaled to fill canvas
+        ctx.drawImage(frameImg, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-        // Calculate photo areas - the black area in the frame
-        // Frame has header (~8%) and footer (~10%), photos fill the middle black area
-        const headerHeight = Math.round(CANVAS_HEIGHT * 0.075);
-        const footerHeight = Math.round(CANVAS_HEIGHT * 0.085);
+        // Photo areas match the gray lines in the template
+        // Header with logo: ~19% from top
+        // Footer with "antes/depois": ~5% from bottom
+        const headerHeight = Math.round(CANVAS_HEIGHT * 0.19);
+        const footerHeight = Math.round(CANVAS_HEIGHT * 0.05);
         const photoAreaY = headerHeight;
         const photoAreaH = CANVAS_HEIGHT - headerHeight - footerHeight;
         const halfWidth = CANVAS_WIDTH / 2;
-        const gap = 3; // small gap at center divider
+        const gap = 2; // thin center divider
 
-        // Draw old image on left half
-        drawImageCover(ctx, oldEl, 0, photoAreaY, halfWidth - gap, photoAreaH);
+        // Draw photos using "contain" approach to keep body proportional
+        // This ensures the full body is visible and proportional on both sides
+        drawImageContain(ctx, oldEl, 0, photoAreaY, halfWidth - gap, photoAreaH);
+        drawImageContain(ctx, newEl, halfWidth + gap, photoAreaY, halfWidth - gap, photoAreaH);
 
-        // Draw new image on right half
-        drawImageCover(ctx, newEl, halfWidth + gap, photoAreaY, halfWidth - gap, photoAreaH);
-
-        // Re-draw header and footer over the photos to keep frame intact
-        // Header
-        ctx.drawImage(
-          frameImg,
-          0, 0, frameImg.width, Math.round(frameImg.height * 0.075),
-          0, 0, CANVAS_WIDTH, headerHeight
-        );
-        // Footer
-        const footerSrcY = Math.round(frameImg.height * 0.915);
+        // Re-draw header and footer over photos to preserve frame elements
+        // Header (logo area)
+        const headerSrcH = Math.round(frameImg.height * 0.19);
+        ctx.drawImage(frameImg, 0, 0, frameImg.width, headerSrcH, 0, 0, CANVAS_WIDTH, headerHeight);
+        // Footer ("antes" / "depois" labels)
+        const footerSrcY = Math.round(frameImg.height * 0.95);
         ctx.drawImage(
           frameImg,
           0, footerSrcY, frameImg.width, frameImg.height - footerSrcY,
           0, CANVAS_HEIGHT - footerHeight, CANVAS_WIDTH, footerHeight
         );
 
-        // Thin divider line at center
-        ctx.strokeStyle = "rgba(255,255,255,0.3)";
-        ctx.lineWidth = 2;
+        // Center divider line matching frame style
+        ctx.strokeStyle = "rgba(180,180,180,0.5)";
+        ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(halfWidth, photoAreaY);
-        ctx.lineTo(halfWidth, photoAreaY + photoAreaH);
+        ctx.lineTo(halfWidth, CANVAS_HEIGHT - footerHeight);
         ctx.stroke();
 
-        // Type label badge at bottom of photo area
-        const badgeW = 160;
-        const badgeH = 36;
+        // Type label badge
+        const badgeW = 140;
+        const badgeH = 32;
         const badgeX = halfWidth - badgeW / 2;
-        const badgeY = photoAreaY + photoAreaH - badgeH - 12;
-        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        const badgeY = photoAreaY + photoAreaH - badgeH - 10;
+        ctx.fillStyle = "rgba(0,0,0,0.6)";
         ctx.beginPath();
-        ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 6);
+        ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 4);
         ctx.fill();
         ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 18px Arial, sans-serif";
+        ctx.font = "bold 16px Arial, sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText(TYPE_LABELS[type].toUpperCase(), halfWidth, badgeY + badgeH / 2 + 6);
+        ctx.fillText(TYPE_LABELS[type].toUpperCase(), halfWidth, badgeY + badgeH / 2 + 5);
 
         results.push(canvas.toDataURL("image/jpeg", 0.92));
       }
