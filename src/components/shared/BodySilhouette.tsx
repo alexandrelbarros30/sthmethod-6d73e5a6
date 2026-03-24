@@ -25,348 +25,295 @@ interface BodySilhouetteProps {
   className?: string;
 }
 
-function segmentNeonColor(value: number | null | undefined): string {
-  if (value == null) return "rgba(100,100,120,0.3)";
-  const clamped = Math.max(0, Math.min(200, value));
-  if (clamped < 80) return "#ff3355";
-  if (clamped < 95) return "#ff8833";
-  if (clamped < 105) return "#ffdd33";
-  if (clamped < 120) return "#33ff88";
+function segmentColor(value: number | null | undefined): string {
+  if (value == null) return "rgba(0,200,255,0.3)";
+  const c = Math.max(0, Math.min(200, value));
+  if (c < 80) return "#ff3355";
+  if (c < 95) return "#ff8833";
+  if (c < 105) return "#00ddff";
+  if (c < 120) return "#33ff88";
   return "#00ffcc";
 }
 
-function trunkNeonFromFat(bodyFatPct: number | null | undefined): string {
-  if (bodyFatPct == null) return "rgba(100,100,120,0.3)";
+function trunkColor(bodyFatPct: number | null | undefined): string {
+  if (bodyFatPct == null) return "rgba(0,200,255,0.3)";
   if (bodyFatPct < 10) return "#00ffcc";
   if (bodyFatPct < 15) return "#33ff88";
-  if (bodyFatPct < 22) return "#ffdd33";
+  if (bodyFatPct < 22) return "#00ddff";
   if (bodyFatPct < 30) return "#ff8833";
   return "#ff3355";
 }
 
-function glowFilter(color: string, id: string) {
-  return (
-    <filter id={id} x="-50%" y="-50%" width="200%" height="200%">
-      <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor={color} floodOpacity="0.7" />
-      <feDropShadow dx="0" dy="0" stdDeviation="8" floodColor={color} floodOpacity="0.3" />
-    </filter>
-  );
-}
+const BodySilhouette: React.FC<BodySilhouetteProps> = ({ segments, metrics, className = "" }) => {
+  const rA = segmentColor(segments?.rightArm);
+  const lA = segmentColor(segments?.leftArm);
+  const rL = segmentColor(segments?.rightLeg);
+  const lL = segmentColor(segments?.leftLeg);
+  const tC = segments?.trunk != null ? segmentColor(segments.trunk) : trunkColor(metrics?.bodyFatPct);
 
-const BodySilhouette: React.FC<BodySilhouetteProps> = ({
-  segments,
-  metrics,
-  className = "",
-}) => {
-  const rightArmC = segmentNeonColor(segments?.rightArm);
-  const leftArmC = segmentNeonColor(segments?.leftArm);
-  const rightLegC = segmentNeonColor(segments?.rightLeg);
-  const leftLegC = segmentNeonColor(segments?.leftLeg);
-  const trunkC = segments?.trunk != null
-    ? segmentNeonColor(segments.trunk)
-    : trunkNeonFromFat(metrics?.bodyFatPct);
-
-  const hasSegments = segments && (
-    segments.leftArm != null || segments.rightArm != null ||
-    segments.leftLeg != null || segments.rightLeg != null ||
-    segments.trunk != null
-  );
-
-  const hasMetrics = metrics && (
-    metrics.bodyFatPct != null || metrics.totalWeight != null
-  );
+  const hasSegments = segments && (segments.leftArm != null || segments.rightArm != null || segments.leftLeg != null || segments.rightLeg != null || segments.trunk != null);
+  const hasMetrics = metrics && (metrics.bodyFatPct != null || metrics.totalWeight != null);
 
   if (!hasSegments && !hasMetrics) {
     return (
       <div className={`flex flex-col items-center gap-2 py-4 ${className}`}>
-        <div className="text-muted-foreground text-xs text-center">
-          Dados segmentares não disponíveis
-        </div>
+        <div className="text-muted-foreground text-xs text-center">Dados segmentares não disponíveis</div>
       </div>
     );
   }
 
-  // DNA helix points generator
-  const dnaHelixPath = (yStart: number, yEnd: number, xCenter: number, amplitude: number, phase: number) => {
-    const points = [];
-    const steps = 20;
-    for (let i = 0; i <= steps; i++) {
-      const t = i / steps;
-      const y = yStart + (yEnd - yStart) * t;
-      const x = xCenter + Math.sin(t * Math.PI * 4 + phase) * amplitude;
-      points.push(`${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`);
-    }
-    return points.join(' ');
-  };
-
   return (
     <div className={`flex flex-col items-center gap-3 ${className}`}>
-      <div className="relative w-[180px] h-[320px]">
-        <svg
-          viewBox="0 0 220 400"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-full h-full"
-        >
+      <div className="relative w-[220px] h-[380px]">
+        <svg viewBox="0 0 300 500" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
           <defs>
-            {/* Neon glow filters for each segment */}
-            {glowFilter(rightArmC, "glowRA")}
-            {glowFilter(leftArmC, "glowLA")}
-            {glowFilter(rightLegC, "glowRL")}
-            {glowFilter(leftLegC, "glowLL")}
-            {glowFilter(trunkC, "glowTrunk")}
-            {glowFilter("#00ddff", "glowHead")}
-            {glowFilter("#00ddff", "glowDna")}
+            {/* Main holographic glow */}
+            <filter id="holoGlow" x="-80%" y="-80%" width="260%" height="260%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
+              <feFlood floodColor="#00ddff" floodOpacity="0.6" result="color" />
+              <feComposite in="color" in2="blur" operator="in" result="shadow" />
+              <feMerge>
+                <feMergeNode in="shadow" />
+                <feMergeNode in="shadow" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            <filter id="segGlow" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="b" />
+              <feFlood floodColor="#00ffcc" floodOpacity="0.4" result="c" />
+              <feComposite in="c" in2="b" operator="in" result="s" />
+              <feMerge><feMergeNode in="s" /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
+            <filter id="baseGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="6" />
+            </filter>
+            <filter id="labelGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#00ddff" floodOpacity="0.8" />
+            </filter>
 
-            {/* Subtle grid pattern */}
-            <pattern id="gridPattern" width="10" height="10" patternUnits="userSpaceOnUse">
-              <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(0,220,255,0.04)" strokeWidth="0.3" />
-            </pattern>
-
-            {/* Scan line animation */}
-            <linearGradient id="scanGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="transparent" />
-              <stop offset="45%" stopColor="rgba(0,255,200,0.08)" />
-              <stop offset="50%" stopColor="rgba(0,255,200,0.25)" />
-              <stop offset="55%" stopColor="rgba(0,255,200,0.08)" />
+            {/* Radial gradient for holographic base */}
+            <radialGradient id="basePlatform" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#00ffcc" stopOpacity="0.3" />
+              <stop offset="40%" stopColor="#00ddff" stopOpacity="0.15" />
+              <stop offset="80%" stopColor="#00aaff" stopOpacity="0.05" />
               <stop offset="100%" stopColor="transparent" />
+            </radialGradient>
+
+            {/* Body wireframe gradient */}
+            <linearGradient id="bodyGrad" x1="150" y1="20" x2="150" y2="380" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#00ffcc" stopOpacity="0.9" />
+              <stop offset="30%" stopColor="#00ddff" stopOpacity="0.7" />
+              <stop offset="60%" stopColor="#00aaff" stopOpacity="0.5" />
+              <stop offset="100%" stopColor="#0088cc" stopOpacity="0.3" />
             </linearGradient>
 
-            <linearGradient id="bodyFill" x1="110" y1="0" x2="110" y2="400" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="rgba(0,220,255,0.05)" />
-              <stop offset="50%" stopColor="rgba(0,220,255,0.02)" />
-              <stop offset="100%" stopColor="rgba(0,220,255,0.05)" />
+            {/* Scan line */}
+            <linearGradient id="scanLine" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="transparent" />
+              <stop offset="40%" stopColor="rgba(0,255,200,0.05)" />
+              <stop offset="50%" stopColor="rgba(0,255,200,0.3)" />
+              <stop offset="60%" stopColor="rgba(0,255,200,0.05)" />
+              <stop offset="100%" stopColor="transparent" />
             </linearGradient>
           </defs>
 
-          {/* Background grid */}
-          <rect width="220" height="400" fill="url(#gridPattern)" />
+          {/* === HOLOGRAPHIC BASE PLATFORM === */}
+          {/* Concentric rings */}
+          {[90, 70, 50, 35].map((rx, i) => (
+            <ellipse key={i} cx="150" cy="420" rx={rx} ry={rx * 0.28}
+              fill="none" stroke="#00ffcc" strokeWidth={i === 0 ? 1.5 : 0.8}
+              opacity={0.2 + i * 0.1}
+              filter="url(#baseGlow)"
+            >
+              <animate attributeName="opacity" values={`${0.15 + i * 0.05};${0.3 + i * 0.1};${0.15 + i * 0.05}`} dur={`${3 + i}s`} repeatCount="indefinite" />
+            </ellipse>
+          ))}
+          {/* Base glow */}
+          <ellipse cx="150" cy="420" rx="100" ry="30" fill="url(#basePlatform)" opacity="0.6" />
+          {/* Radial lines on base */}
+          {Array.from({ length: 8 }, (_, i) => {
+            const angle = (i / 8) * Math.PI * 2;
+            const x1 = 150 + Math.cos(angle) * 25;
+            const y1 = 420 + Math.sin(angle) * 7;
+            const x2 = 150 + Math.cos(angle) * 95;
+            const y2 = 420 + Math.sin(angle) * 28;
+            return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#00ffcc" strokeWidth="0.4" opacity="0.15" />;
+          })}
 
-          {/* === DNA HELIX STRANDS running through the body === */}
-          <path
-            d={dnaHelixPath(15, 385, 110, 18, 0)}
-            stroke="#00ddff"
-            strokeWidth="1.2"
-            opacity="0.35"
-            fill="none"
-            filter="url(#glowDna)"
-          />
-          <path
-            d={dnaHelixPath(15, 385, 110, 18, Math.PI)}
-            stroke="#00ffcc"
-            strokeWidth="1.2"
-            opacity="0.35"
-            fill="none"
-            filter="url(#glowDna)"
-          />
-          {/* DNA rungs */}
-          {Array.from({ length: 16 }, (_, i) => {
-            const t = (i + 0.5) / 16;
-            const y = 15 + (385 - 15) * t;
-            const x1 = 110 + Math.sin(t * Math.PI * 4) * 18;
-            const x2 = 110 + Math.sin(t * Math.PI * 4 + Math.PI) * 18;
+          {/* === VERTICAL BEAM from base === */}
+          <line x1="150" y1="395" x2="150" y2="420" stroke="#00ddff" strokeWidth="0.5" opacity="0.2" />
+
+          {/* === HOLOGRAPHIC BODY — Wireframe Athletic Figure === */}
+          <g filter="url(#holoGlow)">
+            {/* HEAD */}
+            <ellipse cx="150" cy="48" rx="16" ry="19" fill="rgba(0,200,255,0.06)" stroke="url(#bodyGrad)" strokeWidth="1.2" />
+            {/* Wireframe face lines */}
+            <path d="M 142 42 Q 150 38, 158 42" fill="none" stroke="#00ddff" strokeWidth="0.4" opacity="0.4" />
+            <path d="M 140 52 Q 150 56, 160 52" fill="none" stroke="#00ddff" strokeWidth="0.3" opacity="0.3" />
+            <ellipse cx="150" cy="48" rx="8" ry="10" fill="none" stroke="#00ddff" strokeWidth="0.3" opacity="0.2" strokeDasharray="2 2" />
+
+            {/* NECK */}
+            <path d="M 143 66 L 141 76 Q 146 78, 150 78 Q 154 78, 159 76 L 157 66" fill="rgba(0,200,255,0.03)" stroke="url(#bodyGrad)" strokeWidth="0.6" />
+
+            {/* TRUNK */}
+            <path
+              d="M 108 86 Q 112 78, 130 76 Q 150 74, 170 76 Q 188 78, 192 86
+                 L 194 100 Q 196 118, 192 138 Q 190 152, 184 164
+                 Q 180 172, 174 178 Q 164 184, 150 186
+                 Q 136 184, 126 178 Q 120 172, 116 164
+                 Q 110 152, 108 138 Q 104 118, 106 100 Z"
+              fill="rgba(0,0,0,0.15)"
+              stroke={tC}
+              strokeWidth="1.4"
+              opacity="0.85"
+              className="transition-all duration-700"
+            />
+            {/* Trunk inner wireframe */}
+            <path d="M 108 86 Q 112 78, 130 76 Q 150 74, 170 76 Q 188 78, 192 86 L 194 100 Q 196 118, 192 138 Q 190 152, 184 164 Q 180 172, 174 178 Q 164 184, 150 186 Q 136 184, 126 178 Q 120 172, 116 164 Q 110 152, 108 138 Q 104 118, 106 100 Z"
+              fill={tC} opacity="0.06" />
+            {/* Abs wireframe */}
+            <line x1="150" y1="86" x2="150" y2="178" stroke={tC} strokeWidth="0.5" opacity="0.25" />
+            <path d="M 128 104 Q 150 106, 172 104" stroke={tC} strokeWidth="0.35" opacity="0.2" fill="none" />
+            <path d="M 127 120 Q 150 122, 173 120" stroke={tC} strokeWidth="0.35" opacity="0.2" fill="none" />
+            <path d="M 126 136 Q 150 138, 174 136" stroke={tC} strokeWidth="0.35" opacity="0.2" fill="none" />
+            <path d="M 128 152 Q 150 154, 172 152" stroke={tC} strokeWidth="0.35" opacity="0.2" fill="none" />
+            {/* Pec arc */}
+            <path d="M 112 92 Q 130 100, 150 102 Q 170 100, 188 92" stroke={tC} strokeWidth="0.4" opacity="0.18" fill="none" />
+
+            {/* RIGHT ARM */}
+            <path
+              d="M 106 86 Q 94 84, 84 92 Q 76 100, 74 116 Q 72 130, 74 146 Q 75 156, 78 166 Q 80 174, 84 180 Q 86 184, 90 184 Q 94 184, 96 178 Q 100 166, 102 154 Q 104 142, 106 130 Q 108 116, 110 104 Q 111 94, 108 88 Z"
+              fill="rgba(0,0,0,0.15)" stroke={rA} strokeWidth="1.4" opacity="0.85"
+              className="transition-all duration-700"
+            />
+            <path d="M 106 86 Q 94 84, 84 92 Q 76 100, 74 116 Q 72 130, 74 146 Q 75 156, 78 166 Q 80 174, 84 180 Q 86 184, 90 184 Q 94 184, 96 178 Q 100 166, 102 154 Q 104 142, 106 130 Q 108 116, 110 104 Q 111 94, 108 88 Z"
+              fill={rA} opacity="0.05" />
+            {/* Wireframe muscle */}
+            <path d="M 90 108 Q 88 124, 90 140" stroke={rA} strokeWidth="0.4" opacity="0.25" fill="none" />
+            <path d="M 82 100 Q 80 120, 82 140" stroke={rA} strokeWidth="0.3" opacity="0.15" fill="none" strokeDasharray="3 3" />
+
+            {/* LEFT ARM */}
+            <path
+              d="M 194 86 Q 206 84, 216 92 Q 224 100, 226 116 Q 228 130, 226 146 Q 225 156, 222 166 Q 220 174, 216 180 Q 214 184, 210 184 Q 206 184, 204 178 Q 200 166, 198 154 Q 196 142, 194 130 Q 192 116, 190 104 Q 189 94, 192 88 Z"
+              fill="rgba(0,0,0,0.15)" stroke={lA} strokeWidth="1.4" opacity="0.85"
+              className="transition-all duration-700"
+            />
+            <path d="M 194 86 Q 206 84, 216 92 Q 224 100, 226 116 Q 228 130, 226 146 Q 225 156, 222 166 Q 220 174, 216 180 Q 214 184, 210 184 Q 206 184, 204 178 Q 200 166, 198 154 Q 196 142, 194 130 Q 192 116, 190 104 Q 189 94, 192 88 Z"
+              fill={lA} opacity="0.05" />
+            <path d="M 210 108 Q 212 124, 210 140" stroke={lA} strokeWidth="0.4" opacity="0.25" fill="none" />
+            <path d="M 218 100 Q 220 120, 218 140" stroke={lA} strokeWidth="0.3" opacity="0.15" fill="none" strokeDasharray="3 3" />
+
+            {/* RIGHT LEG */}
+            <path
+              d="M 124 182 Q 116 186, 110 202 Q 104 222, 102 244
+                 Q 100 264, 100 284 Q 100 304, 102 322
+                 Q 103 336, 106 348 Q 108 358, 110 366
+                 Q 112 376, 116 380 Q 120 384, 124 382
+                 Q 128 380, 130 372 Q 132 358, 134 344
+                 Q 136 326, 138 306 Q 140 284, 142 264
+                 Q 144 244, 146 224 Q 148 206, 150 194
+                 Q 151 188, 150 184 Z"
+              fill="rgba(0,0,0,0.15)" stroke={rL} strokeWidth="1.4" opacity="0.85"
+              className="transition-all duration-700"
+            />
+            <path d="M 124 182 Q 116 186, 110 202 Q 104 222, 102 244 Q 100 264, 100 284 Q 100 304, 102 322 Q 103 336, 106 348 Q 108 358, 110 366 Q 112 376, 116 380 Q 120 384, 124 382 Q 128 380, 130 372 Q 132 358, 134 344 Q 136 326, 138 306 Q 140 284, 142 264 Q 144 244, 146 224 Q 148 206, 150 194 Q 151 188, 150 184 Z"
+              fill={rL} opacity="0.05" />
+            <path d="M 122 216 Q 118 246, 118 276" stroke={rL} strokeWidth="0.4" opacity="0.25" fill="none" />
+            <path d="M 110 308 Q 108 322, 110 336" stroke={rL} strokeWidth="0.3" opacity="0.18" fill="none" />
+
+            {/* LEFT LEG */}
+            <path
+              d="M 176 182 Q 184 186, 190 202 Q 196 222, 198 244
+                 Q 200 264, 200 284 Q 200 304, 198 322
+                 Q 197 336, 194 348 Q 192 358, 190 366
+                 Q 188 376, 184 380 Q 180 384, 176 382
+                 Q 172 380, 170 372 Q 168 358, 166 344
+                 Q 164 326, 162 306 Q 160 284, 158 264
+                 Q 156 244, 154 224 Q 152 206, 150 194
+                 Q 149 188, 150 184 Z"
+              fill="rgba(0,0,0,0.15)" stroke={lL} strokeWidth="1.4" opacity="0.85"
+              className="transition-all duration-700"
+            />
+            <path d="M 176 182 Q 184 186, 190 202 Q 196 222, 198 244 Q 200 264, 200 284 Q 200 304, 198 322 Q 197 336, 194 348 Q 192 358, 190 366 Q 188 376, 184 380 Q 180 384, 176 382 Q 172 380, 170 372 Q 168 358, 166 344 Q 164 326, 162 306 Q 160 284, 158 264 Q 156 244, 154 224 Q 152 206, 150 194 Q 149 188, 150 184 Z"
+              fill={lL} opacity="0.05" />
+            <path d="M 178 216 Q 182 246, 182 276" stroke={lL} strokeWidth="0.4" opacity="0.25" fill="none" />
+            <path d="M 190 308 Q 192 322, 190 336" stroke={lL} strokeWidth="0.3" opacity="0.18" fill="none" />
+
+            {/* Horizontal wireframe rings on body */}
+            {[90, 110, 130, 150, 170, 200, 240, 280, 320, 360].map((y, i) => {
+              const bodyWidth = y < 86 ? 12 : y < 186 ? 44 - Math.abs(y - 130) * 0.15 : y < 400 ? 28 - Math.abs(y - 280) * 0.04 : 10;
+              return (
+                <ellipse key={i} cx="150" cy={y} rx={Math.max(8, bodyWidth)} ry={2}
+                  fill="none" stroke="#00ddff" strokeWidth="0.3" opacity={0.08 + (i % 2) * 0.04}
+                  strokeDasharray="4 4" />
+              );
+            })}
+          </g>
+
+          {/* Particle dots floating around the body */}
+          {Array.from({ length: 12 }, (_, i) => {
+            const angle = (i / 12) * Math.PI * 2;
+            const radius = 60 + (i % 3) * 20;
+            const cx = 150 + Math.cos(angle) * radius;
+            const cy = 180 + Math.sin(angle) * radius * 1.5;
             return (
-              <line key={i} x1={x1} y1={y} x2={x2} y2={y}
-                stroke="#00ddff" strokeWidth="0.5" opacity="0.15" />
+              <circle key={i} cx={cx} cy={cy} r="1" fill="#00ffcc" opacity="0.3">
+                <animate attributeName="opacity" values="0.1;0.5;0.1" dur={`${2 + i * 0.3}s`} repeatCount="indefinite" />
+              </circle>
             );
           })}
 
-          {/* === HEAD — circuit/tech pattern === */}
-          <ellipse cx="110" cy="28" rx="19" ry="21"
-            fill="rgba(0,200,255,0.06)" stroke="#00ddff" strokeWidth="0.8" opacity="0.6"
-            filter="url(#glowHead)"
-          />
-          {/* Circuit lines on head */}
-          <circle cx="110" cy="28" r="10" fill="none" stroke="#00ddff" strokeWidth="0.3" opacity="0.3" strokeDasharray="2 3" />
-          <line x1="110" y1="12" x2="110" y2="20" stroke="#00ddff" strokeWidth="0.4" opacity="0.4" />
-
-          {/* Jaw */}
-          <path d="M 91 32 Q 94 46, 110 50 Q 126 46, 129 32"
-            fill="rgba(0,200,255,0.04)" stroke="#00ddff" strokeWidth="0.5" opacity="0.4" />
-
-          {/* === NECK === */}
-          <path d="M 98 48 L 96 60 Q 98 64, 110 64 Q 122 64, 124 60 L 122 48"
-            fill="rgba(0,200,255,0.03)" stroke="#00ddff" strokeWidth="0.4" opacity="0.3" />
-
-          {/* === TRUNK — V-taper athletic === */}
-          <path
-            d="M 62 72 Q 64 66, 86 64 Q 110 62, 134 64 Q 156 66, 158 72 
-               L 160 84 Q 162 104, 158 124 Q 156 139, 150 152 
-               Q 146 160, 140 166 Q 130 172, 110 174 
-               Q 90 172, 80 166 Q 74 160, 70 152 
-               Q 64 139, 62 124 Q 58 104, 60 84 Z"
-            fill="rgba(0,0,0,0.3)"
-            stroke={trunkC}
-            strokeWidth="1.5"
-            opacity="0.9"
-            filter="url(#glowTrunk)"
-            className="transition-all duration-700"
-          />
-          {/* Abs circuit lines */}
-          <line x1="110" y1="72" x2="110" y2="162" stroke={trunkC} strokeWidth="0.4" opacity="0.3" />
-          <path d="M 95 92 Q 110 94, 125 92" stroke={trunkC} strokeWidth="0.3" opacity="0.25" fill="none" />
-          <path d="M 94 109 Q 110 111, 126 109" stroke={trunkC} strokeWidth="0.3" opacity="0.25" fill="none" />
-          <path d="M 93 126 Q 110 128, 127 126" stroke={trunkC} strokeWidth="0.3" opacity="0.25" fill="none" />
-          <path d="M 94 142 Q 110 144, 126 142" stroke={trunkC} strokeWidth="0.3" opacity="0.25" fill="none" />
-          {/* Pec arc */}
-          <path d="M 68 80 Q 85 88, 110 90 Q 135 88, 152 80" stroke={trunkC} strokeWidth="0.4" opacity="0.2" fill="none" />
-          {/* Inner glow fill */}
-          <path
-            d="M 62 72 Q 64 66, 86 64 Q 110 62, 134 64 Q 156 66, 158 72 
-               L 160 84 Q 162 104, 158 124 Q 156 139, 150 152 
-               Q 146 160, 140 166 Q 130 172, 110 174 
-               Q 90 172, 80 166 Q 74 160, 70 152 
-               Q 64 139, 62 124 Q 58 104, 60 84 Z"
-            fill={trunkC}
-            opacity="0.08"
-          />
-
-          {/* === RIGHT ARM (viewer's left) === */}
-          <path
-            d="M 60 72 Q 48 70, 38 78 Q 30 86, 28 102 Q 26 116, 28 132 Q 29 142, 32 152 Q 34 160, 38 166 Q 40 170, 44 170 Q 48 170, 50 164 Q 54 152, 56 140 Q 58 128, 60 116 Q 62 102, 64 90 Q 65 80, 62 74 Z"
-            fill="rgba(0,0,0,0.3)"
-            stroke={rightArmC}
-            strokeWidth="1.5"
-            opacity="0.9"
-            filter="url(#glowRA)"
-            className="transition-all duration-700"
-          />
-          <path
-            d="M 60 72 Q 48 70, 38 78 Q 30 86, 28 102 Q 26 116, 28 132 Q 29 142, 32 152 Q 34 160, 38 166 Q 40 170, 44 170 Q 48 170, 50 164 Q 54 152, 56 140 Q 58 128, 60 116 Q 62 102, 64 90 Q 65 80, 62 74 Z"
-            fill={rightArmC} opacity="0.08"
-          />
-          {/* Muscle circuit line */}
-          <path d="M 44 94 Q 42 110, 44 126" stroke={rightArmC} strokeWidth="0.4" opacity="0.3" fill="none" />
-
-          {/* === LEFT ARM (viewer's right) === */}
-          <path
-            d="M 160 72 Q 172 70, 182 78 Q 190 86, 192 102 Q 194 116, 192 132 Q 191 142, 188 152 Q 186 160, 182 166 Q 180 170, 176 170 Q 172 170, 170 164 Q 166 152, 164 140 Q 162 128, 160 116 Q 158 102, 156 90 Q 155 80, 158 74 Z"
-            fill="rgba(0,0,0,0.3)"
-            stroke={leftArmC}
-            strokeWidth="1.5"
-            opacity="0.9"
-            filter="url(#glowLA)"
-            className="transition-all duration-700"
-          />
-          <path
-            d="M 160 72 Q 172 70, 182 78 Q 190 86, 192 102 Q 194 116, 192 132 Q 191 142, 188 152 Q 186 160, 182 166 Q 180 170, 176 170 Q 172 170, 170 164 Q 166 152, 164 140 Q 162 128, 160 116 Q 158 102, 156 90 Q 155 80, 158 74 Z"
-            fill={leftArmC} opacity="0.08"
-          />
-          <path d="M 176 94 Q 178 110, 176 126" stroke={leftArmC} strokeWidth="0.4" opacity="0.3" fill="none" />
-
-          {/* === RIGHT LEG (viewer's left) === */}
-          <path
-            d="M 78 170 Q 70 174, 64 189 Q 58 209, 56 232 
-               Q 54 252, 54 272 Q 54 292, 56 309 
-               Q 57 322, 60 334 Q 62 346, 64 354 
-               Q 66 364, 70 368 Q 74 372, 78 370 
-               Q 82 368, 84 360 Q 86 346, 88 332 
-               Q 90 314, 92 294 Q 94 272, 96 252 
-               Q 98 232, 100 212 Q 102 194, 104 182 
-               Q 105 176, 104 172 Z"
-            fill="rgba(0,0,0,0.3)"
-            stroke={rightLegC}
-            strokeWidth="1.5"
-            opacity="0.9"
-            filter="url(#glowRL)"
-            className="transition-all duration-700"
-          />
-          <path
-            d="M 78 170 Q 70 174, 64 189 Q 58 209, 56 232 
-               Q 54 252, 54 272 Q 54 292, 56 309 
-               Q 57 322, 60 334 Q 62 346, 64 354 
-               Q 66 364, 70 368 Q 74 372, 78 370 
-               Q 82 368, 84 360 Q 86 346, 88 332 
-               Q 90 314, 92 294 Q 94 272, 96 252 
-               Q 98 232, 100 212 Q 102 194, 104 182 
-               Q 105 176, 104 172 Z"
-            fill={rightLegC} opacity="0.08"
-          />
-          <path d="M 80 204 Q 76 234, 76 264" stroke={rightLegC} strokeWidth="0.4" opacity="0.3" fill="none" />
-          <path d="M 66 294 Q 64 309, 66 322" stroke={rightLegC} strokeWidth="0.3" opacity="0.2" fill="none" />
-
-          {/* === LEFT LEG (viewer's right) === */}
-          <path
-            d="M 142 170 Q 150 174, 156 189 Q 162 209, 164 232 
-               Q 166 252, 166 272 Q 166 292, 164 309 
-               Q 163 322, 160 334 Q 158 346, 156 354 
-               Q 154 364, 150 368 Q 146 372, 142 370 
-               Q 138 368, 136 360 Q 134 346, 132 332 
-               Q 130 314, 128 294 Q 126 272, 124 252 
-               Q 122 232, 120 212 Q 118 194, 116 182 
-               Q 115 176, 116 172 Z"
-            fill="rgba(0,0,0,0.3)"
-            stroke={leftLegC}
-            strokeWidth="1.5"
-            opacity="0.9"
-            filter="url(#glowLL)"
-            className="transition-all duration-700"
-          />
-          <path
-            d="M 142 170 Q 150 174, 156 189 Q 162 209, 164 232 
-               Q 166 252, 166 272 Q 166 292, 164 309 
-               Q 163 322, 160 334 Q 158 346, 156 354 
-               Q 154 364, 150 368 Q 146 372, 142 370 
-               Q 138 368, 136 360 Q 134 346, 132 332 
-               Q 130 314, 128 294 Q 126 272, 124 252 
-               Q 122 232, 120 212 Q 118 194, 116 182 
-               Q 115 176, 116 172 Z"
-            fill={leftLegC} opacity="0.08"
-          />
-          <path d="M 140 204 Q 144 234, 144 264" stroke={leftLegC} strokeWidth="0.4" opacity="0.3" fill="none" />
-          <path d="M 154 294 Q 156 309, 154 322" stroke={leftLegC} strokeWidth="0.3" opacity="0.2" fill="none" />
-
-          {/* Scan line animation overlay */}
-          <rect x="0" y="0" width="220" height="400" fill="url(#scanGrad)" opacity="0.5">
-            <animateTransform attributeName="transform" type="translate" from="0 -400" to="0 400" dur="4s" repeatCount="indefinite" />
+          {/* Scan line animation */}
+          <rect x="60" y="0" width="180" height="500" fill="url(#scanLine)" opacity="0.4">
+            <animateTransform attributeName="transform" type="translate" from="0 -500" to="0 500" dur="4s" repeatCount="indefinite" />
           </rect>
 
-          {/* Corner tech markers */}
-          <path d="M 5 5 L 5 20" stroke="#00ddff" strokeWidth="0.5" opacity="0.3" />
-          <path d="M 5 5 L 20 5" stroke="#00ddff" strokeWidth="0.5" opacity="0.3" />
-          <path d="M 215 5 L 215 20" stroke="#00ddff" strokeWidth="0.5" opacity="0.3" />
-          <path d="M 215 5 L 200 5" stroke="#00ddff" strokeWidth="0.5" opacity="0.3" />
-          <path d="M 5 395 L 5 380" stroke="#00ddff" strokeWidth="0.5" opacity="0.3" />
-          <path d="M 5 395 L 20 395" stroke="#00ddff" strokeWidth="0.5" opacity="0.3" />
-          <path d="M 215 395 L 215 380" stroke="#00ddff" strokeWidth="0.5" opacity="0.3" />
-          <path d="M 215 395 L 200 395" stroke="#00ddff" strokeWidth="0.5" opacity="0.3" />
-
-          {/* Tech label */}
-          <text x="110" y="396" textAnchor="middle" fill="#00ddff" fontSize="5" opacity="0.4" fontFamily="monospace">
-            DNA • BIOANALYSIS
+          {/* HOLOGRAM label */}
+          <text x="150" y="458" textAnchor="middle" fill="#00ddff" fontSize="7" opacity="0.5" fontFamily="monospace" letterSpacing="3" filter="url(#labelGlow)">
+            BODY HOLOGRAM
           </text>
+
+          {/* Corner brackets */}
+          <path d="M 55 20 L 55 35" stroke="#00ddff" strokeWidth="0.5" opacity="0.25" />
+          <path d="M 55 20 L 70 20" stroke="#00ddff" strokeWidth="0.5" opacity="0.25" />
+          <path d="M 245 20 L 245 35" stroke="#00ddff" strokeWidth="0.5" opacity="0.25" />
+          <path d="M 245 20 L 230 20" stroke="#00ddff" strokeWidth="0.5" opacity="0.25" />
+          <path d="M 55 470 L 55 455" stroke="#00ddff" strokeWidth="0.5" opacity="0.25" />
+          <path d="M 55 470 L 70 470" stroke="#00ddff" strokeWidth="0.5" opacity="0.25" />
+          <path d="M 245 470 L 245 455" stroke="#00ddff" strokeWidth="0.5" opacity="0.25" />
+          <path d="M 245 470 L 230 470" stroke="#00ddff" strokeWidth="0.5" opacity="0.25" />
         </svg>
 
-        {/* Segmental value labels with neon style */}
+        {/* Segment value labels */}
         {hasSegments && (
           <>
             {segments?.rightArm != null && (
-              <div className="absolute top-[26%] left-[-4px] text-[9px] font-bold px-1.5 py-0.5 rounded-full border"
-                style={{ color: rightArmC, borderColor: rightArmC, backgroundColor: 'rgba(0,0,0,0.7)', boxShadow: `0 0 8px ${rightArmC}40` }}>
+              <div className="absolute top-[24%] left-[-2px] text-[9px] font-bold px-1.5 py-0.5 rounded-full border"
+                style={{ color: rA, borderColor: rA, backgroundColor: 'rgba(0,0,0,0.8)', boxShadow: `0 0 10px ${rA}50` }}>
                 {segments.rightArm}
               </div>
             )}
             {segments?.leftArm != null && (
-              <div className="absolute top-[26%] right-[-4px] text-[9px] font-bold px-1.5 py-0.5 rounded-full border"
-                style={{ color: leftArmC, borderColor: leftArmC, backgroundColor: 'rgba(0,0,0,0.7)', boxShadow: `0 0 8px ${leftArmC}40` }}>
+              <div className="absolute top-[24%] right-[-2px] text-[9px] font-bold px-1.5 py-0.5 rounded-full border"
+                style={{ color: lA, borderColor: lA, backgroundColor: 'rgba(0,0,0,0.8)', boxShadow: `0 0 10px ${lA}50` }}>
                 {segments.leftArm}
               </div>
             )}
             {segments?.trunk != null && (
-              <div className="absolute top-[30%] left-1/2 -translate-x-1/2 text-[9px] font-bold px-1.5 py-0.5 rounded-full border"
-                style={{ color: trunkC, borderColor: trunkC, backgroundColor: 'rgba(0,0,0,0.7)', boxShadow: `0 0 8px ${trunkC}40` }}>
+              <div className="absolute top-[28%] left-1/2 -translate-x-1/2 text-[9px] font-bold px-1.5 py-0.5 rounded-full border"
+                style={{ color: tC, borderColor: tC, backgroundColor: 'rgba(0,0,0,0.8)', boxShadow: `0 0 10px ${tC}50` }}>
                 {segments.trunk}
               </div>
             )}
             {segments?.rightLeg != null && (
-              <div className="absolute bottom-[10%] left-[8px] text-[9px] font-bold px-1.5 py-0.5 rounded-full border"
-                style={{ color: rightLegC, borderColor: rightLegC, backgroundColor: 'rgba(0,0,0,0.7)', boxShadow: `0 0 8px ${rightLegC}40` }}>
+              <div className="absolute bottom-[16%] left-[10px] text-[9px] font-bold px-1.5 py-0.5 rounded-full border"
+                style={{ color: rL, borderColor: rL, backgroundColor: 'rgba(0,0,0,0.8)', boxShadow: `0 0 10px ${rL}50` }}>
                 {segments.rightLeg}
               </div>
             )}
             {segments?.leftLeg != null && (
-              <div className="absolute bottom-[10%] right-[8px] text-[9px] font-bold px-1.5 py-0.5 rounded-full border"
-                style={{ color: leftLegC, borderColor: leftLegC, backgroundColor: 'rgba(0,0,0,0.7)', boxShadow: `0 0 8px ${leftLegC}40` }}>
+              <div className="absolute bottom-[16%] right-[10px] text-[9px] font-bold px-1.5 py-0.5 rounded-full border"
+                style={{ color: lL, borderColor: lL, backgroundColor: 'rgba(0,0,0,0.8)', boxShadow: `0 0 10px ${lL}50` }}>
                 {segments.leftLeg}
               </div>
             )}
@@ -374,11 +321,11 @@ const BodySilhouette: React.FC<BodySilhouetteProps> = ({
         )}
       </div>
 
-      {/* Neon color legend */}
+      {/* Legend */}
       <div className="flex items-center gap-2 flex-wrap justify-center">
         <LegendDot color="#ff3355" label="Baixo" />
         <LegendDot color="#ff8833" label="Abaixo" />
-        <LegendDot color="#ffdd33" label="Normal" />
+        <LegendDot color="#00ddff" label="Normal" />
         <LegendDot color="#33ff88" label="Bom" />
         <LegendDot color="#00ffcc" label="Excelente" />
       </div>
@@ -386,18 +333,10 @@ const BodySilhouette: React.FC<BodySilhouetteProps> = ({
       {/* Key metrics */}
       {hasMetrics && (
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px] text-center">
-          {metrics?.totalWeight != null && (
-            <MetricLabel label="Peso" value={`${metrics.totalWeight} kg`} />
-          )}
-          {metrics?.bodyFatPct != null && (
-            <MetricLabel label="Gordura" value={`${metrics.bodyFatPct}%`} />
-          )}
-          {metrics?.skeletalMuscleKg != null && (
-            <MetricLabel label="M. Esquelética" value={`${metrics.skeletalMuscleKg} kg`} />
-          )}
-          {metrics?.totalWaterPct != null && (
-            <MetricLabel label="Água" value={`${metrics.totalWaterPct}%`} />
-          )}
+          {metrics?.totalWeight != null && <MetricLabel label="Peso" value={`${metrics.totalWeight} kg`} />}
+          {metrics?.bodyFatPct != null && <MetricLabel label="Gordura" value={`${metrics.bodyFatPct}%`} />}
+          {metrics?.skeletalMuscleKg != null && <MetricLabel label="M. Esquelética" value={`${metrics.skeletalMuscleKg} kg`} />}
+          {metrics?.totalWaterPct != null && <MetricLabel label="Água" value={`${metrics.totalWaterPct}%`} />}
         </div>
       )}
     </div>
