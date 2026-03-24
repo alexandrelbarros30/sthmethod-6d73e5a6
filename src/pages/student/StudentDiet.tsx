@@ -66,7 +66,7 @@ const StudentDiet = () => {
 
   if (error) {
     return (
-      <DashboardLayout role="student" title="Dieta" subtitle="Seu plano alimentar personalizado.">
+        <DashboardLayout role="student" title="Seu plano hoje" subtitle="Seu plano alimentar personalizado.">
         <Card className="premium-card">
           <CardContent className="py-8 text-center">
             <p className="text-sm font-semibold text-foreground">Não foi possível carregar sua dieta.</p>
