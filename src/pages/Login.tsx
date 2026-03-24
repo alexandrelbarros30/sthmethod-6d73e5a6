@@ -86,7 +86,7 @@ const Login = () => {
             consultor: "/consultor",
             assistente: "/assistente",
             financeiro: "/financeiro",
-            student: "/dashboard/hub",
+            student: "/dashboard",
           };
           const role = roleData?.role || "student";
           navigate(redirectTo || roleHomeMap[role] || "/dashboard");
