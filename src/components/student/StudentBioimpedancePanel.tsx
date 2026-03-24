@@ -131,7 +131,7 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
   };
 
   const chartConfig = {
-    peso: { label: "Peso (kg)", color: "hsl(var(--foreground))" },
+    peso: { label: "Peso (kg)", color: "#00ffcc" },
     gordura: { label: "Gordura (%)", color: COLORS.fat },
     musculo: { label: "Músculo (kg)", color: COLORS.muscle },
     agua: { label: "Água (%)", color: COLORS.water },
