@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Brain, BookOpen, Check, Loader2, Pencil, RotateCcw } from "lucide-react";
+import { Brain, Check, Loader2, Pencil, RotateCcw } from "lucide-react";
 
 interface MealAnalysis {
   meal_number: number;
@@ -30,7 +30,6 @@ interface DietAnalysisResult {
 interface Props {
   dietContent: string;
   onConfirm: (result: DietAnalysisResult) => void;
-  onSaveToLibrary?: (result: DietAnalysisResult, dietContent: string) => void;
 }
 
 const MEAL_LABELS: Record<number, string> = {
@@ -42,7 +41,7 @@ const MEAL_LABELS: Record<number, string> = {
   6: "Ceia",
 };
 
-const DietAIAnalysis = ({ dietContent, onConfirm, onSaveToLibrary }: Props) => {
+const DietAIAnalysis = ({ dietContent, onConfirm }: Props) => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DietAnalysisResult | null>(null);
   const [editingMeal, setEditingMeal] = useState<number | null>(null);
@@ -260,21 +259,10 @@ const DietAIAnalysis = ({ dietContent, onConfirm, onSaveToLibrary }: Props) => {
           </div>
         </div>
 
-        <div className="flex gap-2 justify-end flex-wrap">
+        <div className="flex gap-2 justify-end">
           <Button variant="ghost" size="sm" onClick={() => setResult(null)} className="text-xs">
             Descartar
           </Button>
-          {onSaveToLibrary && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onSaveToLibrary(result, dietContent)}
-              className="gap-1 text-xs border-primary/30 text-primary hover:bg-primary/10"
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              Salvar na Biblioteca
-            </Button>
-          )}
           <Button size="sm" onClick={() => onConfirm(result)} className="gap-1 text-xs">
             <Check className="w-3.5 h-3.5" />
             Confirmar Valores

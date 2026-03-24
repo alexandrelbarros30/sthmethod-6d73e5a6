@@ -83,15 +83,11 @@ const AdminDiet = () => {
       await (supabase.from("diet_library" as any) as any).insert({
         title: diet.title,
         content: diet.content || "",
-        energy_kcal: diet.energy_kcal || 0,
-        protein_g: diet.protein_g || 0,
-        carbs_g: diet.carbs_g || 0,
-        fat_g: diet.fat_g || 0,
         created_by: user!.id,
       });
     },
     onSuccess: () => {
-      toast.success("Dieta salva na biblioteca com macros!");
+      toast.success("Dieta salva na biblioteca!");
       qc.invalidateQueries({ queryKey: ["diet-library"] });
     },
     onError: () => toast.error("Erro ao salvar na biblioteca"),
@@ -102,11 +98,7 @@ const AdminDiet = () => {
     if (item) {
       setNewTitle(item.title);
       setNewContent(item.content || "");
-      setNewEnergyKcal(item.energy_kcal ? String(item.energy_kcal) : "");
-      setNewProteinG(item.protein_g ? String(item.protein_g) : "");
-      setNewCarbsG(item.carbs_g ? String(item.carbs_g) : "");
-      setNewFatG(item.fat_g ? String(item.fat_g) : "");
-      toast.success("Dieta e macros carregados da biblioteca!");
+      toast.success("Dieta carregada da biblioteca!");
     }
   };
 
@@ -570,16 +562,6 @@ const AdminDiet = () => {
                         })));
                         toast.success("Valores da IA aplicados nos macronutrientes!");
                       }}
-                      onSaveToLibrary={(result, content) => {
-                        saveToLibraryMutation.mutate({
-                          title: newTitle || "Dieta da Biblioteca",
-                          content,
-                          energy_kcal: Math.round(result.total.energy_kcal),
-                          protein_g: Math.round(result.total.protein_g),
-                          carbs_g: Math.round(result.total.carbs_g),
-                          fat_g: Math.round(result.total.fat_g),
-                        });
-                      }}
                     />
                     <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
                       <Button variant="ghost" size="sm" onClick={() => { setShowNewForm(false); resetNewForm(); }} className="w-full sm:w-auto">
@@ -670,16 +652,6 @@ const AdminDiet = () => {
                                   fat_g: m.fat_g,
                                 })));
                                 toast.success("Valores da IA aplicados nos macronutrientes!");
-                              }}
-                              onSaveToLibrary={(result, content) => {
-                                saveToLibraryMutation.mutate({
-                                  title: editTitle || "Dieta da Biblioteca",
-                                  content,
-                                  energy_kcal: Math.round(result.total.energy_kcal),
-                                  protein_g: Math.round(result.total.protein_g),
-                                  carbs_g: Math.round(result.total.carbs_g),
-                                  fat_g: Math.round(result.total.fat_g),
-                                });
                               }}
                             />
                             <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
