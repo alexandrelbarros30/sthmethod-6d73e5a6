@@ -21,12 +21,12 @@ interface Props {
 }
 
 const COLORS = {
-  fat: "hsl(var(--destructive))",
-  lean: "hsl(var(--primary))",
-  muscle: "hsl(210, 80%, 55%)",
-  water: "hsl(190, 80%, 50%)",
-  visceral: "hsl(0, 70%, 55%)",
-  bmr: "hsl(35, 90%, 55%)",
+  fat: "#ff3355",
+  lean: "#00ffcc",
+  muscle: "#00aaff",
+  water: "#00ddff",
+  visceral: "#ff5566",
+  bmr: "#ffaa33",
 };
 
 const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
