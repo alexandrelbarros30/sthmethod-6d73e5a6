@@ -79,7 +79,7 @@ const StudentDiet = () => {
 
   if (meals.length === 0) {
     return (
-      <DashboardLayout role="student" title="Dieta" subtitle="Seu plano alimentar personalizado.">
+      <DashboardLayout role="student" title="Seu plano hoje" subtitle="Seu plano alimentar personalizado.">
         <Card className="premium-card">
           <CardContent className="py-12 text-center">
             <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-4">
