@@ -8,8 +8,8 @@ import { useAuth } from "@/contexts/AuthContext";
 const mainItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Início" },
   { to: "/dashboard/bioimpedance", icon: Activity, label: "Bio" },
-  { to: "/dashboard/evolution", icon: TrendingUp, label: "Evolução", center: true },
-  { to: "/dashboard/diet", icon: Salad, label: "Dieta" },
+  { to: "/dashboard/diet", icon: Salad, label: "Dieta", center: true },
+  { to: "/dashboard/evolution", icon: TrendingUp, label: "Evolução" },
   { to: "/dashboard/protocol", icon: FlaskConical, label: "Protocolo" },
 ];
 
