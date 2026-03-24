@@ -238,6 +238,7 @@ const StudentDiet = () => {
                 )}
               </div>
             </div>
+            </div>
           </CardContent>
         </Card>
 
