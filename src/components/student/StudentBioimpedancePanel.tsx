@@ -283,13 +283,13 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[250px] w-full">
               <LineChart data={evolutionData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" />
-                <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,220,255,0.08)" />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} stroke="rgba(0,220,255,0.15)" />
+                <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} stroke="rgba(0,220,255,0.15)" />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Line type="monotone" dataKey="peso" stroke="hsl(var(--foreground))" strokeWidth={2} dot={{ r: 3 }} connectNulls />
-                <Line type="monotone" dataKey="gordura" stroke={COLORS.fat} strokeWidth={2} dot={{ r: 3 }} connectNulls />
-                <Line type="monotone" dataKey="musculo" stroke={COLORS.muscle} strokeWidth={2} dot={{ r: 3 }} connectNulls />
+                <Line type="monotone" dataKey="peso" stroke="#00ffcc" strokeWidth={2} dot={{ r: 3, fill: '#00ffcc', stroke: '#00ffcc' }} connectNulls style={{ filter: 'drop-shadow(0 0 4px #00ffcc80)' }} />
+                <Line type="monotone" dataKey="gordura" stroke={COLORS.fat} strokeWidth={2} dot={{ r: 3, fill: COLORS.fat, stroke: COLORS.fat }} connectNulls style={{ filter: `drop-shadow(0 0 4px ${COLORS.fat}80)` }} />
+                <Line type="monotone" dataKey="musculo" stroke={COLORS.muscle} strokeWidth={2} dot={{ r: 3, fill: COLORS.muscle, stroke: COLORS.muscle }} connectNulls style={{ filter: `drop-shadow(0 0 4px ${COLORS.muscle}80)` }} />
               </LineChart>
             </ChartContainer>
           </CardContent>
