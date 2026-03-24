@@ -53,18 +53,20 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
-function drawImageCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number) {
+function drawImageContain(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number) {
   const imgRatio = img.width / img.height;
   const boxRatio = w / h;
-  let sx = 0, sy = 0, sw = img.width, sh = img.height;
+  let dw: number, dh: number;
   if (imgRatio > boxRatio) {
-    sw = img.height * boxRatio;
-    sx = (img.width - sw) / 2;
+    dw = w;
+    dh = w / imgRatio;
   } else {
-    sh = img.width / boxRatio;
-    sy = (img.height - sh) / 2;
+    dh = h;
+    dw = h * imgRatio;
   }
-  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+  const dx = x + (w - dw) / 2;
+  const dy = y + (h - dh) / 2;
+  ctx.drawImage(img, dx, dy, dw, dh);
 }
 
 const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps) => {
