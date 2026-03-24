@@ -33,196 +33,248 @@ const loadImage = (url: string): Promise<HTMLImageElement> => {
   });
 };
 
+// Strip "Refeição N" prefix, keep only descriptive name
+const cleanMealName = (line: string): string => {
+  // Remove "REFEIÇÃO 1 -", "REFEIÇÃO 2:", "Refeição Extra" etc
+  let cleaned = line.replace(/^#+\s*/, '').trim();
+  // Match "REFEIÇÃO N" or "REFEICAO N" followed by optional separator and descriptive name
+  const refeicaoMatch = cleaned.match(/^refei[cç][ãa]o\s*(\d+|extra)\s*[-–:]\s*(.+)$/i);
+  if (refeicaoMatch && refeicaoMatch[2]) {
+    return refeicaoMatch[2].trim().toUpperCase();
+  }
+  // If it's just "REFEIÇÃO N" without descriptive name, map to default
+  const justNumber = cleaned.match(/^refei[cç][ãa]o\s*(\d+|extra)\s*$/i);
+  if (justNumber) {
+    const num = justNumber[1].toLowerCase();
+    if (num === 'extra') return 'REFEIÇÃO EXTRA';
+    const defaults: Record<string, string> = {
+      '1': 'CAFÉ DA MANHÃ', '2': 'LANCHE DA MANHÃ', '3': 'ALMOÇO',
+      '4': 'LANCHE DA TARDE', '5': 'JANTAR', '6': 'CEIA',
+    };
+    return defaults[num] || `REFEIÇÃO ${num}`;
+  }
+  return cleaned;
+};
+
+// Meal header colors (muted, elegant tones)
+const MEAL_COLORS: string[] = [
+  '#16a34a', // green
+  '#0d9488', // teal
+  '#2563eb', // blue
+  '#7c3aed', // violet
+  '#db2777', // pink
+  '#ea580c', // orange
+  '#64748b', // slate
+];
+
 export const generateStudentPDF = async (options: PDFContentOptions): Promise<Blob> => {
   const { type, title, content, studentInfo, createdAt } = options;
 
-  const pdf = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4'
-  });
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-  // Colors matching template
-  const primaryColor = '#16a34a';
-  const darkText = '#1f2937';
-  const lightText = '#6b7280';
-  const headerBg = '#f0fdf4';
+  const primary = '#16a34a';
+  const dark = '#1f2937';
+  const muted = '#6b7280';
+  const ml = 18; // margin left
+  const mr = 18;
+  const pw = 210;
+  const cw = pw - ml - mr;
+  const lh = 4.8; // line height for size 11
+  const bottomLimit = 276;
 
-  const marginLeft = 15;
-  const marginTop = 15;
-  const pageWidth = 210;
-  const contentWidth = pageWidth - (marginLeft * 2);
+  let y = 16;
+  let mealIndex = 0;
 
-  let currentY = marginTop;
+  const ensurePage = (need: number = lh) => {
+    if (y + need > bottomLimit) { pdf.addPage(); y = 16; }
+  };
+
+  const hexToRgb = (hex: string) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return { r, g, b };
+  };
 
   // --- Logo ---
   try {
     const logoImg = await loadImage('/sth-logo.jpeg');
-    const logoH = 28;
+    const logoH = 24;
     const logoW = (logoImg.width / logoImg.height) * logoH;
-    const logoX = (pageWidth - logoW) / 2;
-    pdf.addImage(logoImg, 'JPEG', logoX, currentY, logoW, logoH);
-    currentY += logoH + 8;
+    const logoX = (pw - logoW) / 2;
+    pdf.addImage(logoImg, 'JPEG', logoX, y, logoW, logoH);
+    y += logoH + 4;
   } catch {
-    // fallback text header
-    pdf.setFontSize(22);
-    pdf.setTextColor(primaryColor);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('STH', marginLeft, currentY + 8);
-    pdf.setFontSize(10);
-    pdf.text('performance | saúde | consultoria', marginLeft + 25, currentY + 8);
-    currentY += 20;
+    pdf.setFont('times', 'bold');
+    pdf.setFontSize(18);
+    pdf.setTextColor(primary);
+    pdf.text('STH', ml, y + 6);
+    pdf.setFontSize(9);
+    pdf.setFont('times', 'normal');
+    pdf.text('performance | saúde | consultoria', ml + 18, y + 6);
+    y += 14;
   }
 
-  // --- Separator line ---
-  pdf.setDrawColor(primaryColor);
-  pdf.setLineWidth(0.5);
-  pdf.line(marginLeft, currentY, pageWidth - marginLeft, currentY);
-  currentY += 8;
+  // --- Thin separator ---
+  pdf.setDrawColor(primary);
+  pdf.setLineWidth(0.4);
+  pdf.line(ml, y, pw - mr, y);
+  y += 6;
 
-  // --- Student info block with background ---
-  const infoStartY = currentY;
-  const infoLines: { label: string; value: string }[] = [
+  // --- Student info block ---
+  const infoItems: { label: string; value: string }[] = [
     { label: 'Nome', value: studentInfo.name },
   ];
-  if (studentInfo.age) infoLines.push({ label: 'Idade', value: `${studentInfo.age} anos` });
+  if (studentInfo.age) infoItems.push({ label: 'Idade', value: `${studentInfo.age} anos` });
   if (studentInfo.weight && studentInfo.height)
-    infoLines.push({ label: 'Peso / Altura', value: `${studentInfo.weight} kg / ${studentInfo.height} m` });
-  if (studentInfo.goal) infoLines.push({ label: 'Objetivo', value: studentInfo.goal });
-  infoLines.push({ label: 'Data de Início', value: studentInfo.startDate || new Date(createdAt).toLocaleDateString('pt-BR') });
-  if (studentInfo.hydration) infoLines.push({ label: 'Hidratação', value: studentInfo.hydration });
+    infoItems.push({ label: 'Peso / Altura', value: `${studentInfo.weight} kg / ${studentInfo.height} m` });
+  if (studentInfo.goal) infoItems.push({ label: 'Objetivo', value: studentInfo.goal });
+  infoItems.push({ label: 'Data de Início', value: studentInfo.startDate || new Date(createdAt).toLocaleDateString('pt-BR') });
+  if (studentInfo.hydration) infoItems.push({ label: 'Hidratação', value: studentInfo.hydration });
 
-  // Macro row
-  const macroValues: string[] = [];
-  if (studentInfo.energyTotal) macroValues.push(`Energia total: ${studentInfo.energyTotal}`);
-  if (studentInfo.carbsTotal) macroValues.push(`Carboidratos: ${studentInfo.carbsTotal}`);
-  if (studentInfo.proteinTotal) macroValues.push(`Proteína: ${studentInfo.proteinTotal}`);
-  if (studentInfo.fatTotal) macroValues.push(`Lipídios: ${studentInfo.fatTotal}`);
+  const macros: string[] = [];
+  if (studentInfo.energyTotal) macros.push(`Energia: ${studentInfo.energyTotal}`);
+  if (studentInfo.carbsTotal) macros.push(`Carb: ${studentInfo.carbsTotal}`);
+  if (studentInfo.proteinTotal) macros.push(`Prot: ${studentInfo.proteinTotal}`);
+  if (studentInfo.fatTotal) macros.push(`Lip: ${studentInfo.fatTotal}`);
 
-  const totalInfoLines = infoLines.length + (macroValues.length > 0 ? 1 : 0);
-  const infoBlockHeight = totalInfoLines * 6 + 8;
-
-  // Light green background
+  const infoBlockH = infoItems.length * 5 + (macros.length ? 7 : 0) + 6;
   pdf.setFillColor(240, 253, 244);
-  pdf.roundedRect(marginLeft, infoStartY - 2, contentWidth, infoBlockHeight, 2, 2, 'F');
+  pdf.roundedRect(ml, y - 2, cw, infoBlockH, 2, 2, 'F');
 
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
+  pdf.setFont('times', 'normal');
+  pdf.setFontSize(11);
 
-  infoLines.forEach(({ label, value }) => {
-    pdf.setTextColor(lightText);
-    pdf.text(`${label}:`, marginLeft + 4, currentY);
-    pdf.setTextColor(darkText);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text(value, marginLeft + 4 + pdf.getTextWidth(`${label}: `), currentY);
-    pdf.setFont('helvetica', 'normal');
-    currentY += 6;
+  infoItems.forEach(({ label, value }) => {
+    pdf.setTextColor(muted);
+    pdf.text(`${label}:`, ml + 4, y + 2);
+    pdf.setTextColor(dark);
+    pdf.setFont('times', 'bold');
+    const labelW = pdf.getTextWidth(`${label}: `);
+    pdf.text(value, ml + 4 + labelW, y + 2);
+    pdf.setFont('times', 'normal');
+    y += 5;
   });
 
-  // Macros in a single row
-  if (macroValues.length > 0) {
-    currentY += 2;
+  if (macros.length) {
+    y += 2;
     pdf.setFontSize(9);
-    pdf.setTextColor(primaryColor);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text(macroValues.join('   |   '), marginLeft + 4, currentY);
-    pdf.setFont('helvetica', 'normal');
-    currentY += 6;
+    pdf.setTextColor(primary);
+    pdf.setFont('times', 'bold');
+    pdf.text(macros.join('   |   '), ml + 4, y + 2);
+    pdf.setFont('times', 'normal');
+    y += 5;
   }
 
-  currentY += 10;
+  y += 8;
 
   // --- Document title ---
-  pdf.setFontSize(16);
-  pdf.setTextColor(primaryColor);
-  pdf.setFont('helvetica', 'bold');
+  pdf.setFont('times', 'bold');
+  pdf.setFontSize(14);
+  pdf.setTextColor(primary);
+  const docTitle = type === 'diet' ? 'ROTINA ALIMENTAR' : title.toUpperCase();
+  pdf.text(docTitle, pw / 2, y, { align: 'center' });
+  y += 8;
 
-  const documentTitle = type === 'diet' ? 'ROTINA ALIMENTAR' : title.toUpperCase();
-  pdf.text(documentTitle, marginLeft, currentY);
-  currentY += 12;
-
-  // --- Separator ---
-  pdf.setDrawColor(primaryColor);
+  pdf.setDrawColor(primary);
   pdf.setLineWidth(0.3);
-  pdf.line(marginLeft, currentY, pageWidth - marginLeft, currentY);
-  currentY += 8;
+  pdf.line(ml, y, pw - mr, y);
+  y += 6;
 
-  // --- Content processing ---
-  pdf.setFontSize(10);
-  pdf.setTextColor(darkText);
-  pdf.setFont('helvetica', 'normal');
+  // --- Content ---
+  pdf.setFont('times', 'normal');
+  pdf.setFontSize(11);
+  pdf.setTextColor(dark);
 
   const lines = content.split('\n');
-  const lineHeight = 5;
-  const maxWidth = contentWidth;
+  let itemInMeal = 0;
 
-  for (const line of lines) {
-    if (currentY > 278) {
-      pdf.addPage();
-      currentY = marginTop;
-    }
+  const isMealHeading = (line: string) => {
+    return /^(#+\s*)?(refei[cç][ãa]o\s*(\d+|extra)|caf[eé]\s*da\s*manh[ãa]|lanche|almo[cç]o|jantar|ceia|pr[eé][- ]?treino|p[oó]s[- ]?treino)/i.test(line.trim());
+  };
 
-    const trimmedLine = line.trim();
+  const isSectionTitle = (line: string) => {
+    return /^(ROTINA\s*ALIMENTAR|PLANO\s*ALIMENTAR|DIETA)\b/i.test(line.trim());
+  };
 
-    if (!trimmedLine) {
-      currentY += lineHeight / 2;
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (!trimmed) {
+      y += lh * 0.4;
       continue;
     }
 
-    const isHeader = trimmedLine.startsWith('#') ||
-      (trimmedLine === trimmedLine.toUpperCase() && trimmedLine.length > 3 && !trimmedLine.includes(':'));
+    if (isSectionTitle(trimmed)) continue; // skip, we already have the title
 
-    if (isHeader) {
-      currentY += 5;
-      pdf.setFont('helvetica', 'bold');
+    if (isMealHeading(trimmed)) {
+      // Double space before meal (except first)
+      if (mealIndex > 0) {
+        // Zebra separator line
+        ensurePage(lh * 3);
+        y += lh;
+        pdf.setDrawColor(220, 220, 220);
+        pdf.setLineWidth(0.15);
+        pdf.line(ml, y, pw - mr, y);
+        y += lh;
+      }
+
+      ensurePage(lh * 2);
+      const mealName = cleanMealName(trimmed);
+      const color = hexToRgb(MEAL_COLORS[mealIndex % MEAL_COLORS.length]);
+
+      // Colored left accent bar + meal name
+      pdf.setFillColor(color.r, color.g, color.b);
+      pdf.rect(ml, y - 3, 1.5, 5, 'F');
+
+      pdf.setFont('times', 'bold');
       pdf.setFontSize(11);
-      pdf.setTextColor(primaryColor);
+      pdf.setTextColor(color.r, color.g, color.b);
+      pdf.text(mealName, ml + 5, y);
 
-      const headerText = trimmedLine.replace(/^#+\s*/, '');
-
-      // Green underline accent for meal headers
-      const headerLines = pdf.splitTextToSize(headerText, maxWidth);
-      headerLines.forEach((headerLine: string) => {
-        if (currentY > 278) { pdf.addPage(); currentY = marginTop; }
-        pdf.text(headerLine, marginLeft, currentY);
-        currentY += lineHeight + 2;
-      });
-
-      // Subtle line under header
-      pdf.setDrawColor(200, 230, 200);
-      pdf.setLineWidth(0.2);
-      pdf.line(marginLeft, currentY - 1, marginLeft + pdf.getTextWidth(headerLines[0] || ''), currentY - 1);
-      currentY += 3;
-    } else {
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(10);
-      pdf.setTextColor(darkText);
-
-      const textLines = pdf.splitTextToSize(trimmedLine, maxWidth);
-      textLines.forEach((textLine: string) => {
-        if (currentY > 278) { pdf.addPage(); currentY = marginTop; }
-        pdf.text(textLine, marginLeft, currentY);
-        currentY += lineHeight;
-      });
+      y += lh + 2;
+      itemInMeal = 0;
+      mealIndex++;
+      continue;
     }
+
+    // Regular food line
+    ensurePage();
+    const cleanLine = trimmed.replace(/^[•\-*]\s*/, '');
+    const isNote = cleanLine.startsWith('(') && cleanLine.endsWith(')');
+
+    // Subtle zebra row background for alternating items
+    if (!isNote && itemInMeal % 2 === 1) {
+      pdf.setFillColor(248, 250, 252);
+      pdf.rect(ml, y - 3.2, cw, lh + 0.4, 'F');
+    }
+
+    pdf.setFont('times', isNote ? 'italic' : 'normal');
+    pdf.setFontSize(11);
+    pdf.setTextColor(isNote ? muted : dark);
+
+    const prefix = isNote ? '' : '  · ';
+    const textLines = pdf.splitTextToSize(prefix + cleanLine, cw - 4);
+    textLines.forEach((tl: string) => {
+      ensurePage();
+      pdf.text(tl, ml + 2, y);
+      y += lh;
+    });
+
+    if (!isNote) itemInMeal++;
   }
 
-  // --- Footer ---
-  const pageCount = pdf.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    pdf.setPage(i);
+  // --- Footer on all pages ---
+  const totalPages = pdf.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p++) {
+    pdf.setPage(p);
+    pdf.setFont('times', 'normal');
     pdf.setFontSize(8);
-    pdf.setTextColor(lightText);
-    pdf.setFont('helvetica', 'normal');
-
-    const footerText = `Gerado em ${new Date().toLocaleDateString('pt-BR')} - Página ${i} de ${pageCount}`;
-    const textWidth = pdf.getTextWidth(footerText);
-    pdf.text(footerText, pageWidth - textWidth - marginLeft, 287);
-
-    // Footer green line
-    pdf.setDrawColor(primaryColor);
-    pdf.setLineWidth(0.3);
-    pdf.line(marginLeft, 284, pageWidth - marginLeft, 284);
+    pdf.setTextColor(muted);
+    const footer = `Gerado em ${new Date().toLocaleDateString('pt-BR')} — Página ${p} de ${totalPages}`;
+    pdf.text(footer, pw - mr, 287, { align: 'right' });
+    pdf.setDrawColor(primary);
+    pdf.setLineWidth(0.2);
+    pdf.line(ml, 284, pw - mr, 284);
   }
 
   return pdf.output('blob');
