@@ -247,7 +247,9 @@ export const generateStudentPDF = async (options: PDFContentOptions): Promise<Bl
 
     // Regular food line
     ensurePage();
-    const cleanLine = trimmed.replace(/^[•\-*]\s*/, '');
+    let cleanLine = trimmed.replace(/^[•\-*]\s*/, '');
+    // Remove duplicate leading quantity (e.g. "200g 200g arroz" → "200g arroz")
+    cleanLine = cleanLine.replace(/^([\d.,\/]+\s*(?:g|gr|kg|mg|ml|l|un|und|colher|colheres|xícara|xícaras|fatia|fatias|cápsula|cápsulas|cap|caps|scoop|scoops|dose|doses|gota|gotas|pedaço|pedaços|pote|potes|copo|copos|ovo|ovos|clara|claras|barra|barras|tablete|tabletes|lata|latas|sachê|saches|porção|porções|unidade|unidades)\b)\s+\1/i, '$1');
     const isNote = cleanLine.startsWith('(') && cleanLine.endsWith(')');
 
     // Subtle zebra row background for alternating items
