@@ -196,7 +196,12 @@ const StudentDiet = () => {
         <Card className="premium-card border-primary/10 animate-fade-in overflow-hidden">
           <CardContent className="py-6 relative">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
-            <div className="relative flex items-center gap-5">
+            <div className="relative">
+              <div className="mb-3">
+                <h3 className="text-sm font-bold text-foreground tracking-tight">Consistência de Hoje</h3>
+                <p className="text-[10px] text-muted-foreground">Continue assim para manter sua evolução.</p>
+              </div>
+              <div className="flex items-center gap-5">
               <DailyProgressRing
                 percent={progressPercent}
                 size={120}
