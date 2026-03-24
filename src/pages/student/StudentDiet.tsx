@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -144,6 +145,28 @@ const StudentDiet = () => {
 
     setIsDownloadingPdf(true);
     try {
+      // Fetch profile data for PDF header
+      let profileData: { full_name?: string; weight?: number; height?: number; objective?: string; birth_date?: string } | null = null;
+      if (user?.id) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("full_name, weight, height, objective, birth_date")
+          .eq("user_id", user.id)
+          .single();
+        profileData = data;
+      }
+
+      // Calculate age from birth_date
+      let age: number | undefined;
+      if (profileData?.birth_date) {
+        const birth = new Date(profileData.birth_date);
+        const today = new Date();
+        age = today.getFullYear() - birth.getFullYear();
+        if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) {
+          age--;
+        }
+      }
+
       const content = meals
         .map((meal) => {
           const heading = meal.sort_order <= 5 ? `REFEIÇÃO ${meal.sort_order + 1} - ${meal.name}` : meal.name;
@@ -157,7 +180,16 @@ const StudentDiet = () => {
         title: "Rotina Alimentar",
         content,
         studentInfo: {
-          name: (user?.user_metadata?.full_name as string) || user?.email || "Aluno",
+          name: profileData?.full_name || (user?.user_metadata?.full_name as string) || user?.email || "Aluno",
+          age,
+          weight: profileData?.weight ?? undefined,
+          height: profileData?.height ?? undefined,
+          goal: profileData?.objective ?? undefined,
+          hydration: hydrationGoalL > 0 ? `${hydrationGoalL} L` : undefined,
+          energyTotal: totalMacros.kcal > 0 ? `${Math.round(totalMacros.kcal)} kcal` : undefined,
+          carbsTotal: totalMacros.carbs > 0 ? `${Math.round(totalMacros.carbs)} g` : undefined,
+          proteinTotal: totalMacros.protein > 0 ? `${Math.round(totalMacros.protein)} g` : undefined,
+          fatTotal: totalMacros.fat > 0 ? `${Math.round(totalMacros.fat)} g` : undefined,
         },
         createdAt: new Date().toISOString(),
       });
