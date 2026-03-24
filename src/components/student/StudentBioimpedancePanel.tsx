@@ -66,12 +66,12 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
   const compositionData = useMemo(() => {
     if (!latest) return [];
     const items = [];
-    if (latest.fat_mass_kg) items.push({ name: "Gordura", value: Number(latest.fat_mass_kg), color: COLORS.fat });
-    if (latest.skeletal_muscle_kg) items.push({ name: "Músculo Esquelético", value: Number(latest.skeletal_muscle_kg), color: COLORS.muscle });
+    if (latest.fat_mass_kg) items.push({ name: "Gordura", value: Number(latest.fat_mass_kg), color: "#ff3355" });
+    if (latest.skeletal_muscle_kg) items.push({ name: "Músculo Esquelético", value: Number(latest.skeletal_muscle_kg), color: "#00aaff" });
     const otherLean = latest.lean_mass_kg && latest.skeletal_muscle_kg
       ? Number(latest.lean_mass_kg) - Number(latest.skeletal_muscle_kg)
       : latest.lean_mass_kg ? Number(latest.lean_mass_kg) : 0;
-    if (otherLean > 0) items.push({ name: "Outros (ossos, órgãos)", value: otherLean, color: "hsl(var(--muted-foreground))" });
+    if (otherLean > 0) items.push({ name: "Outros (ossos, órgãos)", value: otherLean, color: "rgba(100,120,140,0.6)" });
     return items;
   }, [latest]);
 
