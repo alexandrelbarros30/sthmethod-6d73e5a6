@@ -331,15 +331,15 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
               {segmentalData.length > 0 && (
                 <div className="flex-1 w-full min-w-0">
                   <ChartContainer
-                    config={{ segmento: { label: "Valor", color: "hsl(var(--primary))" } }}
+                    config={{ segmento: { label: "Valor", color: "#00ffcc" } }}
                     className="h-[200px] w-full"
                   >
                     <BarChart data={segmentalData}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" />
-                      <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                      <YAxis tick={{ fontSize: 10 }} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,220,255,0.08)" />
+                      <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} stroke="rgba(0,220,255,0.15)" />
+                      <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} stroke="rgba(0,220,255,0.15)" />
                       <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="value" fill="#00ffcc" radius={[4, 4, 0, 0]} style={{ filter: 'drop-shadow(0 0 6px #00ffcc60)' }} />
                     </BarChart>
                   </ChartContainer>
                 </div>
