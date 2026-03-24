@@ -180,7 +180,7 @@ const StudentDiet = () => {
   };
 
   return (
-    <DashboardLayout role="student" title="Dieta" subtitle="Acompanhe suas refeições do dia.">
+    <DashboardLayout role="student" title="Seu plano hoje" subtitle="Acompanhe suas refeições do dia.">
       <div className="space-y-5 max-w-lg mx-auto">
         {/* Date navigation */}
         <DietDateNav selectedDate={selectedDate} onDateChange={setSelectedDate} />
