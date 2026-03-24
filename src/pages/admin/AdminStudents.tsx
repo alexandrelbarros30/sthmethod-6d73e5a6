@@ -607,6 +607,17 @@ const AdminStudents = () => {
     }
   }, [students, searchParams]);
 
+  // Auto-open create dialog when ?create=true is present
+  useEffect(() => {
+    const shouldCreate = searchParams.get("create");
+    if (shouldCreate === "true") {
+      setForm({ ...emptyForm });
+      setCreateOpen(true);
+      searchParams.delete("create");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams]);
+
   // Auto-open manage dialog when ?manage=USER_ID is present
   useEffect(() => {
     const manageUserId = searchParams.get("manage");
