@@ -197,14 +197,29 @@ export function useMealTracking() {
       }
     : foodSumMacros;
 
-  // Per-meal macros: always use food-level sums (accurate from AI analysis)
-  const perMealFoodMacros = meals.map((meal) => ({
+  // Per-meal macros: use food-level sums when available, otherwise distribute admin totals
+  const rawPerMealFoodMacros = meals.map((meal) => ({
     mealId: meal.id,
     kcal: meal.diet_foods.reduce((s, f) => s + (f.energy_kcal || 0), 0),
     protein: meal.diet_foods.reduce((s, f) => s + (f.protein_g || 0), 0),
     carbs: meal.diet_foods.reduce((s, f) => s + (f.carbs_g || 0), 0),
     fat: meal.diet_foods.reduce((s, f) => s + (f.fat_g || 0), 0),
   }));
+
+  // If food-level macros are all zero but admin totals exist, distribute equally
+  const perMealFoodMacros = useMemo(() => {
+    const hasAnyFoodMacros = rawPerMealFoodMacros.some((m) => m.kcal > 0 || m.protein > 0);
+    if (!hasAnyFoodMacros && adminMacros && (adminMacros.energy_kcal > 0 || adminMacros.protein_g > 0) && meals.length > 0) {
+      return rawPerMealFoodMacros.map((m) => ({
+        ...m,
+        kcal: adminMacros.energy_kcal / meals.length,
+        protein: adminMacros.protein_g / meals.length,
+        carbs: adminMacros.carbs_g / meals.length,
+        fat: adminMacros.fat_g / meals.length,
+      }));
+    }
+    return rawPerMealFoodMacros;
+  }, [rawPerMealFoodMacros, adminMacros, meals.length]);
 
   // Check if food-level macros have actual values
   const hasFoodLevelMacros = foodSumMacros.kcal > 0 || foodSumMacros.protein > 0;
