@@ -106,6 +106,15 @@ const ConsultorDashboard = () => {
 
   return (
     <DashboardLayout role="consultor" title="Painel do Consultor" subtitle="Gerencie seus alunos vinculados">
+      {/* Quick action */}
+      <div className="flex justify-end mb-4">
+        <Button asChild className="gap-2">
+          <Link to="/admin/students?create=true">
+            <Users className="w-4 h-4" /> Criar Aluno
+          </Link>
+        </Button>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

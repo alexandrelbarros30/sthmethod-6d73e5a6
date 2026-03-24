@@ -135,6 +135,13 @@ const AdminDashboard = () => {
 
   return (
     <DashboardLayout role="admin" title="Dashboard" subtitle="Visão geral da consultoria.">
+      {/* Quick action */}
+      <div className="flex justify-end mb-4">
+        <Button onClick={() => navigate("/admin/students?create=true")} className="gap-2">
+          <Users className="w-4 h-4" /> Criar Aluno
+        </Button>
+      </div>
+
       {/* Metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
         {metrics.map((m, i) => (
