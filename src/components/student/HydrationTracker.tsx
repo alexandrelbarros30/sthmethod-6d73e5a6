@@ -89,6 +89,28 @@ const HydrationTracker = ({ goalL, consumedMl, onAdd, onRemove, isAdding, disabl
           </div>
         )}
 
+        {/* Motivational feedback */}
+        {consumedMl > 0 && (
+          <div className={cn(
+            "p-2.5 rounded-lg text-[11px] font-medium leading-snug border",
+            pct >= 100
+              ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+              : pct >= 75
+              ? "bg-green-500/10 text-green-600 border-green-500/20"
+              : pct >= 50
+              ? "bg-yellow-500/10 text-yellow-700 border-yellow-500/20"
+              : "bg-orange-500/10 text-orange-600 border-orange-500/20"
+          )}>
+            {pct >= 100
+              ? "🏆 Excelente! Isso aqui muda treino, digestão, pele, recuperação e até controle de apetite."
+              : pct >= 75
+              ? "💪 Ótimo caminho. Nesse ponto seu corpo já sente melhora de energia, digestão e treino."
+              : pct >= 50
+              ? "⚡ Metade concluída. Já é um bom sinal, mas ainda não entrega o efeito metabólico que queremos."
+              : "💧 Você começou, mas ainda está bem abaixo do ideal. Bora ajustar?"}
+          </div>
+        )}
+
         {/* Action buttons */}
         <div className="flex items-center gap-2">
           <Button

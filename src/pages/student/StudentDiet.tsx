@@ -48,7 +48,7 @@ const StudentDiet = () => {
 
   if (subLoading || isLoading) {
     return (
-      <DashboardLayout role="student" title="Dieta" subtitle="Seu plano alimentar personalizado.">
+        <DashboardLayout role="student" title="Seu plano hoje" subtitle="Seu plano alimentar personalizado.">
         <div className="flex items-center justify-center py-20">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
@@ -58,7 +58,7 @@ const StudentDiet = () => {
 
   if (!isActive) {
     return (
-      <DashboardLayout role="student" title="Dieta" subtitle="Seu plano alimentar personalizado.">
+        <DashboardLayout role="student" title="Seu plano hoje" subtitle="Seu plano alimentar personalizado.">
         <SubscriptionBlock />
       </DashboardLayout>
     );
@@ -66,7 +66,7 @@ const StudentDiet = () => {
 
   if (error) {
     return (
-      <DashboardLayout role="student" title="Dieta" subtitle="Seu plano alimentar personalizado.">
+        <DashboardLayout role="student" title="Seu plano hoje" subtitle="Seu plano alimentar personalizado.">
         <Card className="premium-card">
           <CardContent className="py-8 text-center">
             <p className="text-sm font-semibold text-foreground">Não foi possível carregar sua dieta.</p>
@@ -79,7 +79,7 @@ const StudentDiet = () => {
 
   if (meals.length === 0) {
     return (
-      <DashboardLayout role="student" title="Dieta" subtitle="Seu plano alimentar personalizado.">
+      <DashboardLayout role="student" title="Seu plano hoje" subtitle="Seu plano alimentar personalizado.">
         <Card className="premium-card">
           <CardContent className="py-12 text-center">
             <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-4">
@@ -180,7 +180,7 @@ const StudentDiet = () => {
   };
 
   return (
-    <DashboardLayout role="student" title="Dieta" subtitle="Acompanhe suas refeições do dia.">
+    <DashboardLayout role="student" title="Seu plano hoje" subtitle="Acompanhe suas refeições do dia.">
       <div className="space-y-5 max-w-lg mx-auto">
         {/* Date navigation */}
         <DietDateNav selectedDate={selectedDate} onDateChange={setSelectedDate} />
@@ -196,7 +196,12 @@ const StudentDiet = () => {
         <Card className="premium-card border-primary/10 animate-fade-in overflow-hidden">
           <CardContent className="py-6 relative">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
-            <div className="relative flex items-center gap-5">
+            <div className="relative">
+              <div className="mb-3">
+                <h3 className="text-sm font-bold text-foreground tracking-tight">Consistência de Hoje</h3>
+                <p className="text-[10px] text-muted-foreground">Continue assim para manter sua evolução.</p>
+              </div>
+              <div className="flex items-center gap-5">
               <DailyProgressRing
                 percent={progressPercent}
                 size={120}
@@ -233,6 +238,7 @@ const StudentDiet = () => {
                 )}
               </div>
             </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -240,7 +246,7 @@ const StudentDiet = () => {
         <Card className="premium-card animate-fade-in" style={{ animationDelay: "0.1s" }}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-bold flex items-center gap-2 tracking-tight">
-              <Flame className="w-4 h-4 text-primary" /> Macros do Dia
+              <Flame className="w-4 h-4 text-primary" /> Seu dia até agora
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
