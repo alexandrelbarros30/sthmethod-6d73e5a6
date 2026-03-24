@@ -58,7 +58,7 @@ const StudentDiet = () => {
 
   if (!isActive) {
     return (
-      <DashboardLayout role="student" title="Dieta" subtitle="Seu plano alimentar personalizado.">
+        <DashboardLayout role="student" title="Seu plano hoje" subtitle="Seu plano alimentar personalizado.">
         <SubscriptionBlock />
       </DashboardLayout>
     );
