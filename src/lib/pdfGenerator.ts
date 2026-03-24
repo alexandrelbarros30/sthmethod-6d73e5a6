@@ -33,27 +33,35 @@ const loadImage = (url: string): Promise<HTMLImageElement> => {
   });
 };
 
-// Strip "Refeição N" prefix, keep only descriptive name
+// Keep meal label as "REFEIÇÃO N" or "REFEIÇÃO EXTRA"
 const cleanMealName = (line: string): string => {
-  // Remove "REFEIÇÃO 1 -", "REFEIÇÃO 2:", "Refeição Extra" etc
   let cleaned = line.replace(/^#+\s*/, '').trim();
-  // Match "REFEIÇÃO N" or "REFEICAO N" followed by optional separator and descriptive name
-  const refeicaoMatch = cleaned.match(/^refei[cç][ãa]o\s*(\d+|extra)\s*[-–:]\s*(.+)$/i);
-  if (refeicaoMatch && refeicaoMatch[2]) {
-    return refeicaoMatch[2].trim().toUpperCase();
+  // Match "REFEIÇÃO N - descriptive name" → keep only "REFEIÇÃO N"
+  const refeicaoMatch = cleaned.match(/^(refei[cç][ãa]o\s*(?:\d+|extra))\s*[-–:].*/i);
+  if (refeicaoMatch) {
+    return refeicaoMatch[1].trim().toUpperCase();
   }
-  // If it's just "REFEIÇÃO N" without descriptive name, map to default
+  // Match standalone "REFEIÇÃO N"
   const justNumber = cleaned.match(/^refei[cç][ãa]o\s*(\d+|extra)\s*$/i);
   if (justNumber) {
-    const num = justNumber[1].toLowerCase();
-    if (num === 'extra') return 'REFEIÇÃO EXTRA';
-    const defaults: Record<string, string> = {
-      '1': 'CAFÉ DA MANHÃ', '2': 'LANCHE DA MANHÃ', '3': 'ALMOÇO',
-      '4': 'LANCHE DA TARDE', '5': 'JANTAR', '6': 'CEIA',
-    };
-    return defaults[num] || `REFEIÇÃO ${num}`;
+    return `REFEIÇÃO ${justNumber[1].toUpperCase()}`;
   }
-  return cleaned;
+  // Map descriptive names back to numbered
+  const descMap: [RegExp, string][] = [
+    [/^caf[eé]\s*da\s*manh[ãa]/i, 'REFEIÇÃO 1'],
+    [/^lanche\s*da\s*manh[ãa]/i, 'REFEIÇÃO 2'],
+    [/^almo[cç]o/i, 'REFEIÇÃO 3'],
+    [/^lanche\s*da\s*tarde/i, 'REFEIÇÃO 4'],
+    [/^lanche/i, 'REFEIÇÃO 2'],
+    [/^jantar/i, 'REFEIÇÃO 5'],
+    [/^ceia/i, 'REFEIÇÃO 6'],
+    [/^pr[eé][- ]?treino/i, 'PRÉ-TREINO'],
+    [/^p[oó]s[- ]?treino/i, 'PÓS-TREINO'],
+  ];
+  for (const [re, label] of descMap) {
+    if (re.test(cleaned)) return label;
+  }
+  return cleaned.toUpperCase();
 };
 
 // Meal header colors (muted, elegant tones)
