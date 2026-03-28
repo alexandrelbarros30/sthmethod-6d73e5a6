@@ -33,7 +33,7 @@ const clearPreviewCaches = async (): Promise<boolean> => {
       const cacheKeys = await caches.keys();
       await Promise.allSettled(cacheKeys.map((key) => caches.delete(key)));
     }
-  } catch {
+  } catch (_e) {
     // Ignore cache cleanup failures to avoid blocking preview render
   }
 
