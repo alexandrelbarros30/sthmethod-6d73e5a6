@@ -98,10 +98,10 @@ const AdminDiet = () => {
     if (item) {
       setNewTitle(item.title);
       setNewContent(item.content || "");
-      setNewEnergyKcal(item.energy_kcal ? String(item.energy_kcal) : "");
-      setNewProteinG(item.protein_g ? String(item.protein_g) : "");
-      setNewCarbsG(item.carbs_g ? String(item.carbs_g) : "");
-      setNewFatG(item.fat_g ? String(item.fat_g) : "");
+      setNewEnergyKcal(item.energy_kcal != null ? String(item.energy_kcal) : "");
+      setNewProteinG(item.protein_g != null ? String(item.protein_g) : "");
+      setNewCarbsG(item.carbs_g != null ? String(item.carbs_g) : "");
+      setNewFatG(item.fat_g != null ? String(item.fat_g) : "");
       toast.success("Dieta carregada da biblioteca com macros!");
     }
   };
