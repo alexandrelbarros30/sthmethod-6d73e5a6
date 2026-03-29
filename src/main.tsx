@@ -53,10 +53,8 @@ const bootstrap = async () => {
   const canRender = await clearPreviewCaches();
   if (!canRender) return;
 
-  // Force light theme on startup
-  // Always force light mode
-  localStorage.setItem("app-theme", "light");
-  const theme = "light";
+  // Apply stored theme (admin-controlled via DB)
+  const theme = localStorage.getItem("app-theme") || "light";
   document.documentElement.classList.remove("dark", "light");
   document.documentElement.classList.add(theme);
 
