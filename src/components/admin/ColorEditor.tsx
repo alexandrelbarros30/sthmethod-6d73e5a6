@@ -117,8 +117,51 @@ const ColorEditor = () => {
     }
   };
 
+  const siteTheme = val("site_theme", "light");
+
+  const saveTheme = async (value: string) => {
+    setVal("site_theme", value);
+    try {
+      await updateSetting.mutateAsync({ key: "site_theme", value });
+      toast({ title: "Tema salvo!" });
+    } catch {
+      toast({ title: "Erro ao salvar tema", variant: "destructive" });
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Theme Selector */}
+      <Card className="bg-card border-border">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Palette className="w-4 h-4" />
+            Tema do Site
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Escolha entre layout claro ou escuro para todo o site (externo e interno)
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-3">
+            <Button
+              variant={siteTheme === "light" ? "default" : "outline"}
+              className={siteTheme === "light" ? "gradient-bg text-white" : ""}
+              onClick={() => saveTheme("light")}
+            >
+              ☀️ Claro
+            </Button>
+            <Button
+              variant={siteTheme === "dark" ? "default" : "outline"}
+              className={siteTheme === "dark" ? "bg-zinc-900 text-white hover:bg-zinc-800" : ""}
+              onClick={() => saveTheme("dark")}
+            >
+              🌙 Escuro
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       <p className="text-sm text-muted-foreground">
         Personalize as cores do site público. As alterações são aplicadas em tempo real após salvar.
       </p>
