@@ -76,7 +76,7 @@ const roleLabelMap: Record<AppRole, string> = {
   student: "Área do Aluno",
 };
 
-const SidebarContent = ({ role, links, onNavClick }: { role: string; links: { to: string; icon: any; label: string }[]; onNavClick?: () => void }) => {
+const SidebarNav = ({ role, links, onNavClick }: { role: string; links: { to: string; icon: any; label: string }[]; onNavClick?: () => void }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile } = useAuth();
@@ -88,24 +88,26 @@ const SidebarContent = ({ role, links, onNavClick }: { role: string; links: { to
 
   return (
     <>
-      <div className="p-6 border-b border-sidebar-border">
-        <Link to="/" className="flex items-center gap-2" onClick={onNavClick}>
-          <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
-            <span className="text-sidebar-primary-foreground font-bold text-sm">ST</span>
+      {/* Header */}
+      <div className="px-5 py-5 border-b border-sidebar-border/60">
+        <Link to="/" className="flex items-center gap-2.5" onClick={onNavClick}>
+          <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center">
+            <span className="text-primary-foreground font-bold text-xs tracking-tight">ST</span>
           </div>
-          <span className="font-display text-xl font-bold text-sidebar-foreground">ST&H</span>
+          <span className="font-display text-lg font-semibold text-sidebar-foreground tracking-tight">ST&H</span>
         </Link>
-        <p className="text-xs text-sidebar-foreground/50 mt-1 font-body">
+        <p className="text-[11px] text-muted-foreground mt-1.5 font-body tracking-wide uppercase">
           {roleLabelMap[role as AppRole] || "Painel"}
         </p>
         {profile?.full_name && (
-          <p className="text-xs text-sidebar-foreground/70 mt-1 font-body truncate">
+          <p className="text-xs text-sidebar-foreground/70 mt-0.5 font-body truncate">
             {profile.full_name}
           </p>
         )}
       </div>
 
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+      {/* Nav links */}
+      <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
         {links.map((link) => {
           const isActive = location.pathname === link.to;
           return (
@@ -114,23 +116,24 @@ const SidebarContent = ({ role, links, onNavClick }: { role: string; links: { to
               to={link.to}
               onClick={onNavClick}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 font-body",
+                "flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-200 font-body",
                 isActive
-                  ? "bg-sidebar-accent text-sidebar-primary"
-                  : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                  ? "bg-primary/10 text-primary"
+                  : "text-sidebar-foreground/65 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
               )}
             >
-              <link.icon className="w-4 h-4" />
+              <link.icon className="w-[18px] h-[18px] shrink-0" />
               {link.label}
             </Link>
           );
         })}
       </nav>
 
-      <div className="p-4 border-t border-sidebar-border flex items-center justify-between">
+      {/* Footer */}
+      <div className="px-3 py-3 border-t border-sidebar-border/60 flex items-center justify-between">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors font-body"
+          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/60 transition-colors font-body"
         >
           <LogOut className="w-4 h-4" />
           Sair
@@ -149,24 +152,24 @@ const DashboardSidebar = ({ role }: SidebarProps) => {
   if (isMobile) {
     return (
       <>
-        <div className="fixed top-0 left-0 right-0 h-14 bg-sidebar border-b border-sidebar-border z-50 flex items-center px-4 gap-3">
+        <div className="fixed top-0 left-0 right-0 h-12 bg-background/80 backdrop-blur-2xl border-b border-border/50 z-50 flex items-center px-4 gap-3">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <button className="p-2 rounded-lg hover:bg-sidebar-accent/50 text-sidebar-foreground transition-colors">
+              <button className="p-1.5 rounded-lg hover:bg-accent text-foreground/70 transition-colors">
                 <Menu className="w-5 h-5" />
               </button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0 bg-sidebar border-sidebar-border">
+            <SheetContent side="left" className="w-72 p-0 bg-background border-border/50">
               <div className="flex flex-col h-full">
-                <SidebarContent role={role} links={links} onNavClick={() => setOpen(false)} />
+                <SidebarNav role={role} links={links} onNavClick={() => setOpen(false)} />
               </div>
             </SheetContent>
           </Sheet>
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-sidebar-primary flex items-center justify-center">
-              <span className="text-sidebar-primary-foreground font-bold text-xs">ST</span>
+            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-[10px]">ST</span>
             </div>
-            <span className="font-display text-lg font-bold text-sidebar-foreground">ST&H</span>
+            <span className="font-display text-base font-semibold text-foreground tracking-tight">ST&H</span>
           </Link>
         </div>
       </>
@@ -174,8 +177,8 @@ const DashboardSidebar = ({ role }: SidebarProps) => {
   }
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-64 bg-sidebar flex flex-col border-r border-sidebar-border z-40">
-      <SidebarContent role={role} links={links} />
+    <aside className="fixed left-0 top-0 bottom-0 w-60 bg-background/60 backdrop-blur-2xl flex flex-col border-r border-border/50 z-40">
+      <SidebarNav role={role} links={links} />
     </aside>
   );
 };
