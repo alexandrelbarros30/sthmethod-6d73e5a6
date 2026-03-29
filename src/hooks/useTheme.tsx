@@ -3,9 +3,9 @@ import { useState, useEffect, useCallback } from "react";
 type Theme = "dark" | "light";
 
 function getInitialTheme(): Theme {
+  // Always force light — dark mode is disabled
   if (typeof window !== "undefined") {
-    const stored = localStorage.getItem("app-theme") as Theme | null;
-    if (stored === "light" || stored === "dark") return stored;
+    localStorage.setItem("app-theme", "light");
   }
   return "light";
 }
