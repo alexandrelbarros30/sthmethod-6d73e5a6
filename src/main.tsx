@@ -53,6 +53,15 @@ const bootstrap = async () => {
   const canRender = await clearPreviewCaches();
   if (!canRender) return;
 
+  // Force light theme on startup
+  const storedTheme = localStorage.getItem("app-theme");
+  if (storedTheme !== "light" && storedTheme !== "dark") {
+    localStorage.setItem("app-theme", "light");
+  }
+  const theme = localStorage.getItem("app-theme") || "light";
+  document.documentElement.classList.remove("dark", "light");
+  document.documentElement.classList.add(theme);
+
   if (import.meta.env.PROD && !isPreviewHost()) {
     registerSW({ immediate: true });
   }
