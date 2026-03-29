@@ -7,7 +7,7 @@ function getInitialTheme(): Theme {
     const stored = localStorage.getItem("app-theme") as Theme | null;
     if (stored === "light" || stored === "dark") return stored;
   }
-  return "dark";
+  return "light";
 }
 
 export function useTheme() {

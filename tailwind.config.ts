@@ -14,8 +14,14 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Inter", "sans-serif"],
-        body: ["Inter", "sans-serif"],
+        display: [
+          "-apple-system", "BlinkMacSystemFont", "Inter",
+          "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "sans-serif",
+        ],
+        body: [
+          "-apple-system", "BlinkMacSystemFont", "Inter",
+          "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "sans-serif",
+        ],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -91,6 +97,15 @@ export default {
         "2xl": "1.25rem",
         "3xl": "1.5rem",
       },
+      boxShadow: {
+        "apple-sm": "0 1px 2px hsl(0 0% 0% / 0.04), 0 1px 4px hsl(0 0% 0% / 0.03)",
+        "apple": "0 2px 8px hsl(0 0% 0% / 0.06), 0 8px 24px hsl(0 0% 0% / 0.04)",
+        "apple-lg": "0 4px 12px hsl(0 0% 0% / 0.06), 0 16px 48px hsl(0 0% 0% / 0.06)",
+        "apple-xl": "0 8px 24px hsl(0 0% 0% / 0.08), 0 24px 64px hsl(0 0% 0% / 0.06)",
+      },
+      backdropBlur: {
+        "3xl": "64px",
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
@@ -106,18 +121,18 @@ export default {
         },
         float: {
           "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-10px)" },
+          "50%": { transform: "translateY(-8px)" },
         },
         "fade-in": {
-          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "0%": { opacity: "0", transform: "translateY(6px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
         "scale-in": {
-          "0%": { opacity: "0", transform: "scale(0.96)" },
+          "0%": { opacity: "0", transform: "scale(0.97)" },
           "100%": { opacity: "1", transform: "scale(1)" },
         },
         "slide-up": {
-          "0%": { opacity: "0", transform: "translateY(16px)" },
+          "0%": { opacity: "0", transform: "translateY(12px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
       },
@@ -126,9 +141,9 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         "pulse-glow": "pulse-glow 3s ease-in-out infinite",
         float: "float 6s ease-in-out infinite",
-        "fade-in": "fade-in 0.4s ease-out both",
-        "scale-in": "scale-in 0.3s ease-out both",
-        "slide-up": "slide-up 0.5s ease-out both",
+        "fade-in": "fade-in 0.35s ease-out both",
+        "scale-in": "scale-in 0.25s ease-out both",
+        "slide-up": "slide-up 0.4s ease-out both",
       },
     },
   },

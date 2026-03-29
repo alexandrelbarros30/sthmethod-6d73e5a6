@@ -18,20 +18,19 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
 
   return (
     <div className="min-h-screen w-full max-w-full bg-background overflow-x-hidden">
-      {/* Hide sidebar on mobile for students — they use the floating dock */}
       {!(isStudent && isMobile) && <DashboardSidebar role={role} />}
       <main className={cn(
         "min-w-0 overflow-x-hidden",
         isStudent && isMobile
-          ? "w-full px-3 pt-4 pb-4"
+          ? "w-full px-4 pt-4 pb-4"
           : isMobile
-            ? "w-full pt-14 px-3 pb-4"
-            : "ml-64 w-[calc(100%-16rem)] px-4 py-5 lg:px-6 lg:py-6 xl:px-8"
+            ? "w-full pt-14 px-4 pb-4"
+            : "ml-60 w-[calc(100%-15rem)] px-6 py-6 lg:px-8 lg:py-8"
       )}>
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <div className="mb-6 md:mb-8">
-            <h1 className="text-xl md:text-2xl font-bold text-foreground font-display">{title}</h1>
-            {subtitle && <p className="text-sm md:text-base text-muted-foreground mt-1 font-body">{subtitle}</p>}
+            <h1 className="text-xl md:text-2xl font-semibold text-foreground font-display tracking-tight">{title}</h1>
+            {subtitle && <p className="text-sm text-muted-foreground mt-1 font-body">{subtitle}</p>}
           </div>
           <div className="w-full min-w-0">{children}</div>
         </div>
