@@ -42,6 +42,7 @@ import AssistenteDashboard from "./pages/assistente/AssistenteDashboard";
 import FinanceiroDashboard from "./pages/financeiro/FinanceiroDashboard";
 import NotFound from "./pages/NotFound";
 import { useDynamicFavicon } from "@/hooks/useDynamicFavicon";
+import { useAdminTheme } from "@/hooks/useAdminTheme";
 
 // Lazy load pages that use Tiptap editor to avoid blocking the app
 const AdminDiet = lazy(() => import("./pages/admin/AdminDiet"));
@@ -51,7 +52,7 @@ const LazyFallback = () => <div className="flex items-center justify-center min-
 
 const queryClient = new QueryClient();
 
-const DynamicHead = () => { useDynamicFavicon(); return null; };
+const DynamicHead = () => { useDynamicFavicon(); useAdminTheme(); return null; };
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
