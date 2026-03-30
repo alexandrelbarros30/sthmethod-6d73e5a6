@@ -159,7 +159,7 @@ const ConsultorDashboard = () => {
             </p>
           ) : (
             <div className="space-y-3">
-              {linkedStudents.map((s: any) => (
+              {filteredStudents.map((s: any) => (
                 <div key={s.user_id} className="flex items-center justify-between p-3 rounded-lg border">
                   <div>
                     <p className="font-medium font-body">{s.full_name}</p>
