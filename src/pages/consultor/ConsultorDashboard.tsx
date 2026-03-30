@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Users, Salad, Dumbbell, FlaskConical, ClipboardList, Scale, Activity, MoreVertical, Search, Settings } from "lucide-react";
+import { Users, Salad, Dumbbell, FlaskConical, ClipboardList, Scale, Activity, MoreVertical, Search, Settings, Camera } from "lucide-react";
 import { Link } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
