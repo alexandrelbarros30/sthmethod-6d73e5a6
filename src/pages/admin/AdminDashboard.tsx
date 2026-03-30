@@ -243,7 +243,7 @@ const AdminDashboard = () => {
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <Clock className="w-4 h-4 text-warning shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{p.full_name || "Sem nome"}</p>
+                      <p className="text-sm font-medium truncate">{p.full_name?.trim() || p.email || "Sem nome"}</p>
                       <p className="text-xs text-muted-foreground truncate">{p.email} • {dayLabel}</p>
                     </div>
                   </div>
