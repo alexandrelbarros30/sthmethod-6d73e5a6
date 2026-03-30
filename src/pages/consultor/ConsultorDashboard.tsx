@@ -162,7 +162,7 @@ const ConsultorDashboard = () => {
               {filteredStudents.map((s: any) => (
                 <div key={s.user_id} className="flex items-center justify-between p-3 rounded-lg border">
                   <div>
-                    <p className="font-medium font-body">{s.full_name}</p>
+                    <p className="font-medium font-body">{s.full_name?.trim() || s.email}</p>
                     <p className="text-sm text-muted-foreground font-body">{s.email}</p>
                   </div>
                   <div className="flex gap-1 items-center">
