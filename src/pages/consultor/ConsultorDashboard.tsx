@@ -377,6 +377,44 @@ const ConsultorDashboard = () => {
           onOpenChange={setBioOpen}
         />
       )}
+
+      {/* Manage Panel Dialog */}
+      <Dialog open={manageOpen} onOpenChange={setManageOpen}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <span className="text-sm font-bold text-primary">
+                  {(selected?.full_name || "?").slice(0, 2).toUpperCase()}
+                </span>
+              </div>
+              <div className="min-w-0">
+                <p className="truncate">{selected?.full_name?.trim() || "Aluno"}</p>
+                <p className="text-xs text-muted-foreground font-normal truncate">{selected?.email}</p>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-3 gap-2 pt-2">
+            {[
+              { icon: Salad, label: "Dieta", action: () => { setManageOpen(false); navigate(`/consultor/diet?student=${selected?.user_id}&return=manage`); } },
+              { icon: FlaskConical, label: "Protocolo", action: () => { setManageOpen(false); navigate(`/consultor/protocol?student=${selected?.user_id}&return=manage`); } },
+              { icon: Dumbbell, label: "Treino", action: () => { setManageOpen(false); navigate(`/consultor/training?student=${selected?.user_id}&return=manage`); } },
+              { icon: Camera, label: "Fotos", action: () => { setManageOpen(false); setAnamneseOpen(true); } },
+              { icon: Activity, label: "Bioimpedância", action: () => { setManageOpen(false); setBioOpen(true); } },
+              { icon: ClipboardList, label: "Anamnese", action: () => { setManageOpen(false); setAnamneseOpen(true); } },
+            ].map(({ icon: Icon, label, action }) => (
+              <button
+                key={label}
+                onClick={action}
+                className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border/50 transition-all duration-200 hover:scale-[1.03] hover:shadow-sm hover:bg-primary/5 hover:border-primary/20"
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-[10px] font-medium leading-tight text-center">{label}</span>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
