@@ -153,8 +153,10 @@ const ConsultorDashboard = () => {
           <CardTitle className="font-display">Meus Alunos</CardTitle>
         </CardHeader>
         <CardContent>
-          {linkedStudents.length === 0 ? (
-            <p className="text-muted-foreground text-sm font-body">Nenhum aluno vinculado ainda.</p>
+          {filteredStudents.length === 0 ? (
+            <p className="text-muted-foreground text-sm font-body">
+              {searchTerm ? `Nenhum aluno encontrado para "${searchTerm}"` : "Nenhum aluno vinculado ainda."}
+            </p>
           ) : (
             <div className="space-y-3">
               {linkedStudents.map((s: any) => (
