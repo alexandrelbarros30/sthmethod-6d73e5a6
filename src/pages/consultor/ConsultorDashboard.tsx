@@ -28,14 +28,6 @@ const ConsultorDashboard = () => {
   const [bioOpen, setBioOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredStudents = useMemo(() => {
-    if (!searchTerm.trim()) return linkedStudents;
-    const term = searchTerm.toLowerCase();
-    return linkedStudents.filter((s: any) =>
-      s.full_name?.toLowerCase().includes(term) || s.email?.toLowerCase().includes(term)
-    );
-  }, [searchTerm, linkedStudents]);
-
   const { data: linkedStudents = [] } = useQuery({
     queryKey: ["consultor-students", user?.id],
     queryFn: async () => {
