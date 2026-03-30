@@ -54,7 +54,7 @@ const ConsultorDashboard = () => {
     );
   }, [searchTerm, linkedStudents]);
 
-
+  const { data: anamneseEntries, refetch: refetchAnamnese } = useQuery({
     queryKey: ["consultor-anamnese", selected?.user_id],
     queryFn: async () => {
       const { data } = await supabase
