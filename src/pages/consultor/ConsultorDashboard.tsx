@@ -28,6 +28,8 @@ const ConsultorDashboard = () => {
   const [anamneseText, setAnamneseText] = useState("");
   const [bioOpen, setBioOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [manageOpen, setManageOpen] = useState(false);
+  const navigate = useNavigate();
 
   const { data: linkedStudents = [] } = useQuery({
     queryKey: ["consultor-students", user?.id],
