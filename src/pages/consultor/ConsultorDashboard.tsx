@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -9,11 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Users, Salad, Dumbbell, FlaskConical, ClipboardList, Scale, Activity, MoreVertical } from "lucide-react";
+import { Users, Salad, Dumbbell, FlaskConical, ClipboardList, Scale, Activity, MoreVertical, Search, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
+import { Input } from "@/components/ui/input";
 import WhatsAppBulkSender from "@/components/shared/WhatsAppBulkSender";
 import AdminEvolutionUpdate from "@/components/admin/AdminEvolutionUpdate";
 import AdminBioimpedance from "@/components/admin/AdminBioimpedance";
@@ -25,6 +26,7 @@ const ConsultorDashboard = () => {
   const [selected, setSelected] = useState<any>(null);
   const [anamneseText, setAnamneseText] = useState("");
   const [bioOpen, setBioOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { data: linkedStudents = [] } = useQuery({
     queryKey: ["consultor-students", user?.id],
@@ -43,6 +45,14 @@ const ConsultorDashboard = () => {
     },
     enabled: !!user?.id,
   });
+
+  const filteredStudents = useMemo(() => {
+    if (!searchTerm.trim()) return linkedStudents;
+    const term = searchTerm.toLowerCase();
+    return linkedStudents.filter((s: any) =>
+      s.full_name?.toLowerCase().includes(term) || s.email?.toLowerCase().includes(term)
+    );
+  }, [searchTerm, linkedStudents]);
 
   const { data: anamneseEntries, refetch: refetchAnamnese } = useQuery({
     queryKey: ["consultor-anamnese", selected?.user_id],
@@ -115,6 +125,17 @@ const ConsultorDashboard = () => {
         </Button>
       </div>
 
+      {/* Search */}
+      <div className="relative mb-6">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          placeholder="Pesquisar aluno por nome ou email..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -132,11 +153,13 @@ const ConsultorDashboard = () => {
           <CardTitle className="font-display">Meus Alunos</CardTitle>
         </CardHeader>
         <CardContent>
-          {linkedStudents.length === 0 ? (
-            <p className="text-muted-foreground text-sm font-body">Nenhum aluno vinculado ainda.</p>
+          {filteredStudents.length === 0 ? (
+            <p className="text-muted-foreground text-sm font-body">
+              {searchTerm ? `Nenhum aluno encontrado para "${searchTerm}"` : "Nenhum aluno vinculado ainda."}
+            </p>
           ) : (
             <div className="space-y-3">
-              {linkedStudents.map((s: any) => (
+              {filteredStudents.map((s: any) => (
                 <div key={s.user_id} className="flex items-center justify-between p-3 rounded-lg border">
                   <div>
                     <p className="font-medium font-body">{s.full_name}</p>

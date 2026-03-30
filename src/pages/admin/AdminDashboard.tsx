@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, AlertCircle, Clock, Bell, CheckCircle, ExternalLink, Check, CreditCard, DollarSign, Link2, ChevronDown } from "lucide-react";
+import { Users, UserCheck, AlertCircle, Clock, Bell, CheckCircle, ExternalLink, Check, CreditCard, DollarSign, Link2, ChevronDown, Search, Settings } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -133,6 +134,16 @@ const AdminDashboard = () => {
   const incompleteCount = incompleteOnboardings?.length || 0;
   const completedCount = recentOnboardings?.length || 0;
 
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredProfiles = useMemo(() => {
+    if (!searchTerm.trim() || !profiles) return null;
+    const term = searchTerm.toLowerCase();
+    return profiles.filter((p: any) =>
+      p.full_name?.toLowerCase().includes(term) || p.email?.toLowerCase().includes(term)
+    );
+  }, [searchTerm, profiles]);
+
   return (
     <DashboardLayout role="admin" title="Dashboard" subtitle="Visão geral da consultoria.">
       {/* Quick action */}
@@ -141,6 +152,57 @@ const AdminDashboard = () => {
           <Users className="w-4 h-4" /> Criar Aluno
         </Button>
       </div>
+
+      {/* Search */}
+      <div className="relative mb-6">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          placeholder="Pesquisar aluno por nome ou email..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
+      {/* Search Results */}
+      {filteredProfiles && filteredProfiles.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-display flex items-center gap-2">
+              <Search className="w-4 h-4" /> Resultados ({filteredProfiles.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="max-h-[300px]">
+              <div className="space-y-2">
+                {filteredProfiles.map((p: any) => (
+                  <div key={p.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{p.full_name || "Sem nome"}</p>
+                      <p className="text-xs text-muted-foreground truncate">{p.email}</p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => navigate(`/admin/students?manage=${p.user_id}`)}>
+                        <Settings className="w-3.5 h-3.5" /> Gerenciar
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => navigate(`/admin/students?edit=${p.user_id}`)}>
+                        <ExternalLink className="w-3.5 h-3.5" /> Ficha
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      )}
+      {filteredProfiles && filteredProfiles.length === 0 && (
+        <Card className="mb-6">
+          <CardContent className="py-6 text-center text-sm text-muted-foreground">
+            Nenhum aluno encontrado para "{searchTerm}"
+          </CardContent>
+        </Card>
+      )}
 
       {/* Metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
@@ -160,7 +222,10 @@ const AdminDashboard = () => {
       </div>
 
       <div className="space-y-4">
-        {/* 1. Cadastros Incompletos */}
+        {/* 1. Alunos Recentes (moved up) */}
+        <RecentStudents profiles={profiles} subscriptions={subscriptions} navigate={navigate} queryClient={queryClient} />
+
+        {/* 2. Cadastros Incompletos */}
         {incompleteCount > 0 && (
           <CollapsiblePanel
             title="Cadastros Incompletos"
@@ -184,6 +249,9 @@ const AdminDashboard = () => {
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <Badge variant="outline" className="text-xs text-warning border-warning/30">Incompleto</Badge>
+                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => navigate(`/admin/students?manage=${p.user_id}`)}>
+                      <Settings className="w-3.5 h-3.5" /> Gerenciar
+                    </Button>
                     <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => navigate(`/admin/students?edit=${p.user_id}`)}>
                       <ExternalLink className="w-3.5 h-3.5" /> Ficha
                     </Button>
@@ -194,7 +262,7 @@ const AdminDashboard = () => {
           </CollapsiblePanel>
         )}
 
-        {/* 2. Lembretes Inteligentes */}
+        {/* 3. Lembretes Inteligentes */}
         <CollapsiblePanel
           title="Lembretes Inteligentes"
           icon={<Bell className="w-4 h-4 text-primary" />}
@@ -203,10 +271,10 @@ const AdminDashboard = () => {
           <AdminReminders />
         </CollapsiblePanel>
 
-        {/* 3. Pagamentos Pendentes */}
+        {/* 4. Pagamentos Pendentes */}
         <PendingPayments />
 
-        {/* 4. Cadastros Completos (Alunos) */}
+        {/* 5. Cadastros Completos (Alunos) */}
         {completedCount > 0 && (
           <CollapsiblePanel
             title="Cadastros Completos"
@@ -236,9 +304,6 @@ const AdminDashboard = () => {
             ))}
           </CollapsiblePanel>
         )}
-
-        {/* 5. Alunos Recentes */}
-        <RecentStudents profiles={profiles} subscriptions={subscriptions} navigate={navigate} queryClient={queryClient} />
 
         {/* WhatsApp em Massa */}
         <WhatsAppBulkSender />
