@@ -3,6 +3,7 @@ import DashboardSidebar from "./DashboardSidebar";
 import FloatingDock from "./student/FloatingDock";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { usePaymentNotifications } from "@/hooks/usePaymentNotifications";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -15,6 +16,7 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
   const isMobile = useIsMobile();
   const isStudent = role === "student";
   const showDock = isStudent && isMobile;
+  usePaymentNotifications();
 
   return (
     <div className="min-h-screen w-full max-w-full bg-background overflow-x-hidden">
