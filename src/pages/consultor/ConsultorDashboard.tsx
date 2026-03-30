@@ -169,6 +169,9 @@ const ConsultorDashboard = () => {
                     <p className="text-sm text-muted-foreground font-body">{s.email}</p>
                   </div>
                   <div className="flex gap-1 items-center">
+                    <Button variant="outline" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => { setSelected(s); setManageOpen(true); }}>
+                      <Settings className="w-3.5 h-3.5" /> Gerenciar
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
