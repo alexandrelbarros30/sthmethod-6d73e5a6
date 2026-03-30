@@ -3,6 +3,7 @@ import DashboardSidebar from "./DashboardSidebar";
 import FloatingDock from "./student/FloatingDock";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { usePaymentNotifications } from "@/hooks/usePaymentNotifications";
 
 interface DashboardLayoutProps {
   children: ReactNode;
