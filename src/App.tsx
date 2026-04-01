@@ -13,6 +13,7 @@ import Questionario from "./pages/Questionario";
 import Install from "./pages/Install";
 import StudentOverview from "./pages/student/StudentOverview";
 import StudentHub from "./pages/student/StudentHub";
+import StudentRecipes from "./pages/student/StudentRecipes";
 import StudentDiet from "./pages/student/StudentDiet";
 import StudentTraining from "./pages/student/StudentTraining";
 import StudentGuidedWorkout from "./pages/student/StudentGuidedWorkout";
@@ -78,6 +79,7 @@ const App = () => (
             <Route path="/dashboard/content" element={<ProtectedRoute allowedRoles={["student"]}><StudentContent /></ProtectedRoute>} />
             <Route path="/dashboard/subscription" element={<ProtectedRoute allowedRoles={["student"]}><StudentSubscription /></ProtectedRoute>} />
             <Route path="/dashboard/renew" element={<ProtectedRoute allowedRoles={["student"]}><StudentRenew /></ProtectedRoute>} />
+            <Route path="/dashboard/recipes" element={<ProtectedRoute allowedRoles={["student"]}><StudentRecipes /></ProtectedRoute>} />
             <Route path="/dashboard/evolution" element={<ProtectedRoute allowedRoles={["student"]}><StudentEvolution /></ProtectedRoute>} />
             <Route path="/dashboard/bioimpedance" element={<ProtectedRoute allowedRoles={["student"]}><StudentBioimpedance /></ProtectedRoute>} />
             {/* Admin routes */}

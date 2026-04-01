@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,13 +7,14 @@ import { Progress } from "@/components/ui/progress";
 import {
   Salad, Dumbbell, FlaskConical, BookOpen, CalendarDays, CheckCircle,
   AlertCircle, User, FileText, TrendingUp, Activity, Flame, Scale,
-  Target, ChevronRight, Zap, Droplets, ListChecks, Clock, Utensils
+  Target, ChevronRight, Zap, Droplets, ListChecks, Clock, Utensils,
+  Play, UtensilsCrossed
 } from "lucide-react";
 import { useMealTracking } from "@/hooks/useMealTracking";
 import DailyProgressRing from "@/components/student/DailyProgressRing";
 import MacroProgressBar from "@/components/student/MacroProgressBar";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +30,35 @@ import {
 } from "@/lib/form-constants";
 import StudentProfileForm, { profileFromDb, getPendingFields, type ProfileFormData } from "@/components/student/StudentProfileForm";
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
+
+import recipePoke from "@/assets/recipe-poke.jpg";
+import recipeFrango from "@/assets/recipe-frango.jpg";
+import recipeAcai from "@/assets/recipe-acai.jpg";
+import recipeSmoothie from "@/assets/recipe-smoothie.jpg";
+import recipePanqueca from "@/assets/recipe-panqueca.jpg";
+import recipeSalada from "@/assets/recipe-salada.jpg";
+
+const greetings = [
+  "Olá", "Oi", "Seja bem-vindo", "E aí", "Fala", "Bom te ver",
+  "Bem-vindo de volta", "Hey"
+];
+
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  const base = greetings[Math.floor(Math.random() * greetings.length)];
+  if (hour < 12) return `${base}`;
+  if (hour < 18) return `${base}`;
+  return `${base}`;
+};
+
+const recipeHighlights = [
+  { id: "1", title: "Poke Bowl", image: recipePoke, kcal: 420 },
+  { id: "2", title: "Frango Fit", image: recipeFrango, kcal: 380 },
+  { id: "3", title: "Açaí Proteico", image: recipeAcai, kcal: 350 },
+  { id: "4", title: "Smoothie Detox", image: recipeSmoothie, kcal: 180 },
+  { id: "5", title: "Panqueca Fit", image: recipePanqueca, kcal: 290 },
+  { id: "6", title: "Salada Power", image: recipeSalada, kcal: 400 },
+];
 
 const basicModules = [
   { to: "/dashboard/diet", icon: Salad, title: "Dieta", desc: "Plano alimentar", color: "text-success", bgColor: "bg-success/10" },
@@ -109,8 +139,11 @@ const DailyMealWidget = () => {
 const StudentOverview = () => {
   const { profile, user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const statusRef = useRef<HTMLDivElement>(null);
+
+  const [greeting] = useState(getGreeting);
 
   const { data: fullProfile, refetch: refetchProfile } = useQuery({
     queryKey: ["student-full-profile", user?.id],
@@ -172,6 +205,22 @@ const StudentOverview = () => {
         date: new Date(d.logged_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
         peso: Number(d.weight),
       }));
+    },
+    enabled: !!user?.id,
+  });
+
+  // Fetch featured workout
+  const { data: featuredWorkout } = useQuery({
+    queryKey: ["featured-workout", user?.id],
+    queryFn: async () => {
+      const { data: assignments } = await supabase
+        .from("student_workout_assignments")
+        .select("*, workout_templates(id, title, subtitle, description, days_per_week, minutes_per_day)")
+        .eq("user_id", user!.id)
+        .eq("active", true)
+        .limit(1)
+        .maybeSingle();
+      return assignments?.workout_templates || null;
     },
     enabled: !!user?.id,
   });
@@ -255,7 +304,14 @@ const StudentOverview = () => {
   const showEditableForm = !isOnboarded || editing;
 
   return (
-    <DashboardLayout role="student" title={`Olá, ${firstName} 👋`} subtitle="Acompanhe seu progresso e acesse seus módulos.">
+    <DashboardLayout role="student" title="" subtitle="">
+      {/* ===== GREETING ===== */}
+      <div className="mb-5">
+        <h1 className="text-xl font-bold text-foreground font-display">
+          {greeting}, {firstName}! 👋
+        </h1>
+        <p className="text-sm text-muted-foreground mt-0.5">Acompanhe seu progresso e conquiste seus objetivos.</p>
+      </div>
       <SubscriptionAlerts subscription={subscription ? { ...subscription, plans: (subscription as any)?.plans } : null} />
 
       {/* ===== STATUS DO CADASTRO ===== */}
@@ -479,6 +535,55 @@ const StudentOverview = () => {
         </Card>
       )}
 
+      {/* ===== FEATURED WORKOUT ===== */}
+      {featuredWorkout && (
+        <Card
+          className="mb-6 overflow-hidden cursor-pointer group border-border/50"
+          onClick={() => navigate("/dashboard/training")}
+        >
+          <div className="relative h-44 bg-gradient-to-br from-muted via-muted/80 to-muted/60 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10" />
+            <div className="absolute inset-0 flex items-center justify-center z-0">
+              <Dumbbell className="w-20 h-20 text-muted-foreground/20" />
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
+              <p className="text-[10px] text-primary font-bold uppercase tracking-widest mb-1">Destaque</p>
+              <h3 className="text-lg font-bold text-white font-display leading-tight">{featuredWorkout.title}</h3>
+              {featuredWorkout.subtitle && (
+                <p className="text-xs text-white/70 mt-0.5">{featuredWorkout.subtitle}</p>
+              )}
+              <div className="flex items-center gap-3 mt-2">
+                {featuredWorkout.days_per_week && (
+                  <span className="text-[10px] text-white/60">{featuredWorkout.days_per_week}x/sem</span>
+                )}
+                {featuredWorkout.minutes_per_day && (
+                  <span className="text-[10px] text-white/60">{featuredWorkout.minutes_per_day} min</span>
+                )}
+              </div>
+            </div>
+            <div className="absolute top-3 right-3 z-20 w-10 h-10 rounded-full bg-primary/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+              <Play className="w-5 h-5 text-primary-foreground ml-0.5" />
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* ===== ROTINA ALIMENTAR ===== */}
+      <Link to="/dashboard/diet" className="block mb-6">
+        <Card className="border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent hover:shadow-lg transition-all group cursor-pointer">
+          <CardContent className="py-4 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <UtensilsCrossed className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-foreground font-display text-sm">Sua Rotina Alimentar de Hoje</p>
+              <p className="text-xs text-muted-foreground">Confira suas refeições e acompanhe seus macros</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-primary shrink-0 group-hover:translate-x-1 transition-transform" />
+          </CardContent>
+        </Card>
+      </Link>
+
       {/* ===== PROGRESSO DIÁRIO DE REFEIÇÕES ===== */}
       <DailyMealWidget />
 
@@ -642,6 +747,43 @@ const StudentOverview = () => {
           <ChangePasswordDialog />
         </CardContent>
       </Card>
+
+      {/* ===== RECEITAS SAUDÁVEIS ===== */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-bold text-foreground font-display">Receitas Saudáveis</h2>
+          <Link to="/dashboard/recipes">
+            <Button variant="ghost" size="sm" className="text-xs text-primary gap-1">
+              Ver todas <ChevronRight className="w-3 h-3" />
+            </Button>
+          </Link>
+        </div>
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
+          {recipeHighlights.map((recipe) => (
+            <div
+              key={recipe.id}
+              className="shrink-0 w-28 cursor-pointer group"
+              onClick={() => navigate("/dashboard/recipes")}
+            >
+              <div className="relative aspect-square rounded-xl overflow-hidden mb-1.5 shadow-md">
+                <img
+                  src={recipe.image}
+                  alt={recipe.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  loading="lazy"
+                  width={112}
+                  height={112}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                <span className="absolute bottom-1.5 left-1.5 text-[9px] text-white/80 flex items-center gap-0.5">
+                  <Flame className="w-2.5 h-2.5" /> {recipe.kcal}
+                </span>
+              </div>
+              <p className="text-[11px] font-medium text-foreground text-center leading-tight truncate">{recipe.title}</p>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* ===== MÓDULOS ===== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
