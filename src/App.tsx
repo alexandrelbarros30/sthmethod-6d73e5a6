@@ -13,6 +13,7 @@ import Questionario from "./pages/Questionario";
 import Install from "./pages/Install";
 import StudentOverview from "./pages/student/StudentOverview";
 import StudentHub from "./pages/student/StudentHub";
+import StudentRecipes from "./pages/student/StudentRecipes";
 import StudentDiet from "./pages/student/StudentDiet";
 import StudentTraining from "./pages/student/StudentTraining";
 import StudentGuidedWorkout from "./pages/student/StudentGuidedWorkout";
