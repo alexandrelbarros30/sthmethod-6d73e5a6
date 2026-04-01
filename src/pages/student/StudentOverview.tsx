@@ -748,6 +748,43 @@ const StudentOverview = () => {
         </CardContent>
       </Card>
 
+      {/* ===== RECEITAS SAUDÁVEIS ===== */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-bold text-foreground font-display">Receitas Saudáveis</h2>
+          <Link to="/dashboard/recipes">
+            <Button variant="ghost" size="sm" className="text-xs text-primary gap-1">
+              Ver todas <ChevronRight className="w-3 h-3" />
+            </Button>
+          </Link>
+        </div>
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
+          {recipeHighlights.map((recipe) => (
+            <div
+              key={recipe.id}
+              className="shrink-0 w-28 cursor-pointer group"
+              onClick={() => navigate("/dashboard/recipes")}
+            >
+              <div className="relative aspect-square rounded-xl overflow-hidden mb-1.5 shadow-md">
+                <img
+                  src={recipe.image}
+                  alt={recipe.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  loading="lazy"
+                  width={112}
+                  height={112}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                <span className="absolute bottom-1.5 left-1.5 text-[9px] text-white/80 flex items-center gap-0.5">
+                  <Flame className="w-2.5 h-2.5" /> {recipe.kcal}
+                </span>
+              </div>
+              <p className="text-[11px] font-medium text-foreground text-center leading-tight truncate">{recipe.title}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* ===== MÓDULOS ===== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
         {(isPremium ? premiumModules : basicModules).map((mod) => (
