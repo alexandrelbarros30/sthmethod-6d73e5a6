@@ -227,15 +227,7 @@ const StudentSubscription = () => {
         calculateFinalPrice={calculateFinalPrice}
         onSelect={(plan: any) => {
           setSelectedPlan(plan);
-          if (isExpired || !isActive) {
-            // Renewal flow - update body data first
-            setRenewalForm({ weight: profile?.weight?.toString() || "", height: profile?.height?.toString() || "" });
-            setRenewalStep(1);
-            setRenewalOpen(true);
-          } else {
-            // Upgrade — direct to payment
-            setCheckoutOpen(true);
-          }
+          setCheckoutOpen(true);
         }}
       />
 
