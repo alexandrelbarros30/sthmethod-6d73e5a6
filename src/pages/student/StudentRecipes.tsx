@@ -13,6 +13,12 @@ import recipeAcai from "@/assets/recipe-acai.jpg";
 import recipeSmoothie from "@/assets/recipe-smoothie.jpg";
 import recipePanqueca from "@/assets/recipe-panqueca.jpg";
 import recipeSalada from "@/assets/recipe-salada.jpg";
+import recipeMoqueca from "@/assets/recipe-moqueca.jpg";
+import recipeTapioca from "@/assets/recipe-tapioca.jpg";
+import recipeCuscuz from "@/assets/recipe-cuscuz.jpg";
+import recipePureBatata from "@/assets/recipe-pure-batata.jpg";
+import recipeOmelete from "@/assets/recipe-omelete.jpg";
+import recipeEscondidinho from "@/assets/recipe-escondidinho.jpg";
 
 const recipes = [
   {
@@ -51,6 +57,42 @@ const recipes = [
     ingredients: ["150g salmão grelhado", "80g quinoa cozida", "Mix de folhas verdes", "Tomate cereja", "½ abacate", "Azeite e limão"],
     instructions: "1. Grelhe o salmão temperado com sal e limão.\n2. Cozinhe a quinoa conforme instruções.\n3. Monte a salada com folhas, tomate e abacate.\n4. Coloque o salmão e a quinoa por cima.\n5. Regue com azeite e limão.",
   },
+  {
+    id: "7", title: "Moqueca de Peixe Fit", image: recipeMoqueca, time: "35 min", kcal: 360, category: "Almoço",
+    tags: ["Rico em Ômega-3", "Brasileiro"],
+    ingredients: ["200g filé de peixe branco", "100ml leite de coco light", "1 tomate", "½ pimentão", "½ cebola", "Coentro fresco", "Azeite de dendê (1 colher)"],
+    instructions: "1. Tempere o peixe com limão, sal e pimenta.\n2. Refogue cebola, pimentão e tomate no azeite.\n3. Adicione o peixe e o leite de coco.\n4. Cozinhe em fogo baixo por 15 min.\n5. Finalize com azeite de dendê e coentro.",
+  },
+  {
+    id: "8", title: "Tapioca de Frango", image: recipeTapioca, time: "15 min", kcal: 280, category: "Lanche",
+    tags: ["Sem Glúten", "Brasileiro"],
+    ingredients: ["3 colheres de goma de tapioca", "100g frango desfiado", "Tomate e alface", "Requeijão light"],
+    instructions: "1. Espalhe a goma na frigideira antiaderente.\n2. Quando firmar, vire e recheie com frango, requeijão, tomate e alface.\n3. Dobre e sirva.",
+  },
+  {
+    id: "9", title: "Cuscuz com Ovos e Legumes", image: recipeCuscuz, time: "20 min", kcal: 320, category: "Café da manhã",
+    tags: ["Rico em Fibras", "Brasileiro"],
+    ingredients: ["100g flocos de milho", "2 ovos cozidos", "Tomate, cebola e pimentão picados", "Azeite e sal"],
+    instructions: "1. Hidrate os flocos de milho com água e sal.\n2. Coloque na cuscuzeira e cozinhe por 5 min.\n3. Cozinhe os ovos.\n4. Sirva o cuscuz com ovos fatiados e legumes picados.",
+  },
+  {
+    id: "10", title: "Purê de Batata Doce com Frango", image: recipePureBatata, time: "30 min", kcal: 410, category: "Jantar",
+    tags: ["Alto em Proteína", "Brasileiro"],
+    ingredients: ["200g batata doce", "180g peito de frango grelhado", "Vagem e cenoura no vapor", "Azeite, sal e ervas"],
+    instructions: "1. Cozinhe a batata doce e amasse com um fio de azeite.\n2. Grelhe o frango temperado.\n3. Cozinhe os legumes no vapor.\n4. Monte o prato com o purê, frango fatiado e legumes.",
+  },
+  {
+    id: "11", title: "Omelete de Claras com Espinafre", image: recipeOmelete, time: "10 min", kcal: 200, category: "Café da manhã",
+    tags: ["Alto em Proteína", "Low Carb"],
+    ingredients: ["4 claras de ovo", "1 ovo inteiro", "1 xícara de espinafre", "Tomate cereja", "Sal e pimenta"],
+    instructions: "1. Bata as claras e o ovo inteiro.\n2. Despeje na frigideira antiaderente.\n3. Adicione espinafre e tomate.\n4. Dobre ao meio quando firmar.\n5. Sirva com salada verde.",
+  },
+  {
+    id: "12", title: "Escondidinho Fit de Frango", image: recipeEscondidinho, time: "40 min", kcal: 370, category: "Jantar",
+    tags: ["Comfort Food", "Brasileiro"],
+    ingredients: ["200g batata doce cozida", "150g frango desfiado", "Requeijão light", "Queijo minas ralado", "Temperos a gosto"],
+    instructions: "1. Amasse a batata doce com requeijão light.\n2. Refogue o frango desfiado com temperos.\n3. Em um refratário, faça camadas: purê, frango, purê.\n4. Cubra com queijo minas ralado.\n5. Leve ao forno por 15 min até gratinar.",
+  },
 ];
 
 const categories = ["Todos", "Café da manhã", "Almoço", "Lanche", "Jantar"];
@@ -68,7 +110,6 @@ const StudentRecipes = () => {
         <ChevronLeft className="w-4 h-4" /> Voltar
       </Button>
 
-      {/* Category filters */}
       <div className="flex gap-2 overflow-x-auto pb-3 mb-4 scrollbar-hide">
         {categories.map((cat) => (
           <button
@@ -85,7 +126,6 @@ const StudentRecipes = () => {
         ))}
       </div>
 
-      {/* Recipe grid */}
       <div className="grid grid-cols-2 gap-3">
         {filtered.map((recipe) => (
           <Card
@@ -118,7 +158,6 @@ const StudentRecipes = () => {
         ))}
       </div>
 
-      {/* Recipe detail modal */}
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
         <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto p-0">
           {selected && (
