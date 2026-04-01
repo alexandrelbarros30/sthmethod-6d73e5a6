@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,13 +7,14 @@ import { Progress } from "@/components/ui/progress";
 import {
   Salad, Dumbbell, FlaskConical, BookOpen, CalendarDays, CheckCircle,
   AlertCircle, User, FileText, TrendingUp, Activity, Flame, Scale,
-  Target, ChevronRight, Zap, Droplets, ListChecks, Clock, Utensils
+  Target, ChevronRight, Zap, Droplets, ListChecks, Clock, Utensils,
+  Play, UtensilsCrossed
 } from "lucide-react";
 import { useMealTracking } from "@/hooks/useMealTracking";
 import DailyProgressRing from "@/components/student/DailyProgressRing";
 import MacroProgressBar from "@/components/student/MacroProgressBar";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +30,35 @@ import {
 } from "@/lib/form-constants";
 import StudentProfileForm, { profileFromDb, getPendingFields, type ProfileFormData } from "@/components/student/StudentProfileForm";
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
+
+import recipePoke from "@/assets/recipe-poke.jpg";
+import recipeFrango from "@/assets/recipe-frango.jpg";
+import recipeAcai from "@/assets/recipe-acai.jpg";
+import recipeSmoothie from "@/assets/recipe-smoothie.jpg";
+import recipePanqueca from "@/assets/recipe-panqueca.jpg";
+import recipeSalada from "@/assets/recipe-salada.jpg";
+
+const greetings = [
+  "Olá", "Oi", "Seja bem-vindo", "E aí", "Fala", "Bom te ver",
+  "Bem-vindo de volta", "Hey"
+];
+
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  const base = greetings[Math.floor(Math.random() * greetings.length)];
+  if (hour < 12) return `${base}`;
+  if (hour < 18) return `${base}`;
+  return `${base}`;
+};
+
+const recipeHighlights = [
+  { id: "1", title: "Poke Bowl", image: recipePoke, kcal: 420 },
+  { id: "2", title: "Frango Fit", image: recipeFrango, kcal: 380 },
+  { id: "3", title: "Açaí Proteico", image: recipeAcai, kcal: 350 },
+  { id: "4", title: "Smoothie Detox", image: recipeSmoothie, kcal: 180 },
+  { id: "5", title: "Panqueca Fit", image: recipePanqueca, kcal: 290 },
+  { id: "6", title: "Salada Power", image: recipeSalada, kcal: 400 },
+];
 
 const basicModules = [
   { to: "/dashboard/diet", icon: Salad, title: "Dieta", desc: "Plano alimentar", color: "text-success", bgColor: "bg-success/10" },
@@ -109,8 +139,11 @@ const DailyMealWidget = () => {
 const StudentOverview = () => {
   const { profile, user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const statusRef = useRef<HTMLDivElement>(null);
+
+  const [greeting] = useState(getGreeting);
 
   const { data: fullProfile, refetch: refetchProfile } = useQuery({
     queryKey: ["student-full-profile", user?.id],
@@ -172,6 +205,22 @@ const StudentOverview = () => {
         date: new Date(d.logged_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
         peso: Number(d.weight),
       }));
+    },
+    enabled: !!user?.id,
+  });
+
+  // Fetch featured workout
+  const { data: featuredWorkout } = useQuery({
+    queryKey: ["featured-workout", user?.id],
+    queryFn: async () => {
+      const { data: assignments } = await supabase
+        .from("student_workout_assignments")
+        .select("*, workout_templates(id, title, subtitle, description, days_per_week, minutes_per_day)")
+        .eq("user_id", user!.id)
+        .eq("active", true)
+        .limit(1)
+        .maybeSingle();
+      return assignments?.workout_templates || null;
     },
     enabled: !!user?.id,
   });
@@ -255,7 +304,14 @@ const StudentOverview = () => {
   const showEditableForm = !isOnboarded || editing;
 
   return (
-    <DashboardLayout role="student" title={`Olá, ${firstName} 👋`} subtitle="Acompanhe seu progresso e acesse seus módulos.">
+    <DashboardLayout role="student" title="" subtitle="">
+      {/* ===== GREETING ===== */}
+      <div className="mb-5">
+        <h1 className="text-xl font-bold text-foreground font-display">
+          {greeting}, {firstName}! 👋
+        </h1>
+        <p className="text-sm text-muted-foreground mt-0.5">Acompanhe seu progresso e conquiste seus objetivos.</p>
+      </div>
       <SubscriptionAlerts subscription={subscription ? { ...subscription, plans: (subscription as any)?.plans } : null} />
 
       {/* ===== STATUS DO CADASTRO ===== */}
