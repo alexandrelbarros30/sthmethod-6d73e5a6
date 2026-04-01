@@ -38,6 +38,22 @@ import recipeSmoothie from "@/assets/recipe-smoothie.jpg";
 import recipePanqueca from "@/assets/recipe-panqueca.jpg";
 import recipeSalada from "@/assets/recipe-salada.jpg";
 
+import workoutMale1 from "@/assets/workout-male-1.jpg";
+import workoutMale2 from "@/assets/workout-male-2.jpg";
+import workoutMale3 from "@/assets/workout-male-3.jpg";
+import workoutFemale1 from "@/assets/workout-female-1.jpg";
+import workoutFemale2 from "@/assets/workout-female-2.jpg";
+import workoutFemale3 from "@/assets/workout-female-3.jpg";
+
+const maleWorkoutImages = [workoutMale1, workoutMale2, workoutMale3];
+const femaleWorkoutImages = [workoutFemale1, workoutFemale2, workoutFemale3];
+
+const getDailyWorkoutImage = (gender: string | null | undefined) => {
+  const images = gender === "feminino" ? femaleWorkoutImages : maleWorkoutImages;
+  const dayIndex = Math.floor(Date.now() / 86400000) % images.length;
+  return images[dayIndex];
+};
+
 const greetings = [
   "Olá", "Oi", "Seja bem-vindo", "E aí", "Fala", "Bom te ver",
   "Bem-vindo de volta", "Hey"
