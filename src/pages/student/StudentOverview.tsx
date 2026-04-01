@@ -77,12 +77,14 @@ const getGreeting = () => {
 };
 
 const recipeHighlights = [
+  { id: "7", title: "Moqueca Fit", image: recipeMoqueca, kcal: 360 },
   { id: "1", title: "Poke Bowl", image: recipePoke, kcal: 420 },
-  { id: "2", title: "Frango Fit", image: recipeFrango, kcal: 380 },
+  { id: "8", title: "Tapioca", image: recipeTapioca, kcal: 280 },
   { id: "3", title: "Açaí Proteico", image: recipeAcai, kcal: 350 },
-  { id: "4", title: "Smoothie Detox", image: recipeSmoothie, kcal: 180 },
+  { id: "9", title: "Cuscuz Fit", image: recipeCuscuz, kcal: 320 },
+  { id: "12", title: "Escondidinho", image: recipeEscondidinho, kcal: 370 },
+  { id: "2", title: "Frango Fit", image: recipeFrango, kcal: 380 },
   { id: "5", title: "Panqueca Fit", image: recipePanqueca, kcal: 290 },
-  { id: "6", title: "Salada Power", image: recipeSalada, kcal: 400 },
 ];
 
 const basicModules = [
