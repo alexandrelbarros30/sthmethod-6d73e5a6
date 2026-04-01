@@ -535,6 +535,55 @@ const StudentOverview = () => {
         </Card>
       )}
 
+      {/* ===== FEATURED WORKOUT ===== */}
+      {featuredWorkout && (
+        <Card
+          className="mb-6 overflow-hidden cursor-pointer group border-border/50"
+          onClick={() => navigate("/dashboard/training")}
+        >
+          <div className="relative h-44 bg-gradient-to-br from-muted via-muted/80 to-muted/60 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10" />
+            <div className="absolute inset-0 flex items-center justify-center z-0">
+              <Dumbbell className="w-20 h-20 text-muted-foreground/20" />
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
+              <p className="text-[10px] text-primary font-bold uppercase tracking-widest mb-1">Destaque</p>
+              <h3 className="text-lg font-bold text-white font-display leading-tight">{featuredWorkout.title}</h3>
+              {featuredWorkout.subtitle && (
+                <p className="text-xs text-white/70 mt-0.5">{featuredWorkout.subtitle}</p>
+              )}
+              <div className="flex items-center gap-3 mt-2">
+                {featuredWorkout.days_per_week && (
+                  <span className="text-[10px] text-white/60">{featuredWorkout.days_per_week}x/sem</span>
+                )}
+                {featuredWorkout.minutes_per_day && (
+                  <span className="text-[10px] text-white/60">{featuredWorkout.minutes_per_day} min</span>
+                )}
+              </div>
+            </div>
+            <div className="absolute top-3 right-3 z-20 w-10 h-10 rounded-full bg-primary/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+              <Play className="w-5 h-5 text-primary-foreground ml-0.5" />
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* ===== ROTINA ALIMENTAR ===== */}
+      <Link to="/dashboard/diet" className="block mb-6">
+        <Card className="border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent hover:shadow-lg transition-all group cursor-pointer">
+          <CardContent className="py-4 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <UtensilsCrossed className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-foreground font-display text-sm">Sua Rotina Alimentar de Hoje</p>
+              <p className="text-xs text-muted-foreground">Confira suas refeições e acompanhe seus macros</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-primary shrink-0 group-hover:translate-x-1 transition-transform" />
+          </CardContent>
+        </Card>
+      </Link>
+
       {/* ===== PROGRESSO DIÁRIO DE REFEIÇÕES ===== */}
       <DailyMealWidget />
 
