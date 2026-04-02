@@ -157,7 +157,7 @@ const DietContentRenderer: React.FC<DietContentRendererProps> = ({
           {/* Title */}
           <div className="text-center mb-4">
             <h2 className="text-base font-bold tracking-[0.2em] uppercase text-foreground font-display">
-              STH METHOD
+              STM METHOD
             </h2>
           </div>
 

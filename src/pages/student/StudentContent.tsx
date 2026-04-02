@@ -1,8 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { motion } from "framer-motion";
 import { ArrowLeft, Brain, Shield, Zap, Lock, Unlock, Award, MessageCircle, ChevronRight } from "lucide-react";
 import { families, TOTAL_COMPOUNDS, type Family } from "@/components/student/content/compoundData";
+import { supabase } from "@/integrations/supabase/client";
 import FamilyCard from "@/components/student/content/FamilyCard";
 import CompoundDetail from "@/components/student/content/CompoundDetail";
 import heroImg from "@/assets/content-hero.jpg";
