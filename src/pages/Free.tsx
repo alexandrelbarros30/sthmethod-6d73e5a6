@@ -1080,6 +1080,7 @@ const TabConteudo = () => {
   }
 
   return null;
+};
 
 /* ──── Tab: Perfil (with logout) ──── */
 const TabPerfil = ({ profile, macroResult, onConvert, onLogout }: { profile: ProfileData; macroResult: MacroResult | null; onConvert: () => void; onLogout: () => void }) => {
