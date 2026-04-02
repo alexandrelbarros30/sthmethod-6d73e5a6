@@ -242,7 +242,7 @@ const StudentContent = () => {
             ) : (
               <Lock className="w-4 h-4" style={{ color: G.t30 }} />
             )}
-            <h3 className="text-base font-semibold" style={{ color: G.t92 }}>Nível Avançado STM</h3>
+            <h3 className="text-base font-semibold" style={{ color: G.t92 }}>Nível Avançado STH</h3>
           </div>
           <p className="text-sm leading-relaxed" style={{ color: G.t55 }}>
             Combinação de compostos, ajuste fino e controle real de resultado.
