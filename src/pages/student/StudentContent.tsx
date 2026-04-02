@@ -92,7 +92,8 @@ const StudentContent = () => {
 
   // ── Section titles
   const sectionTitle = section === "hormonios" ? "Hormônios e Compostos"
-    : section === "dicas" ? "Dicas Estratégicas" : "";
+    : section === "dicas" ? "Dicas Estratégicas"
+    : section === "combinacoes" ? "Combinações Estratégicas" : "";
 
   return (
     <DashboardLayout role="student" title="" subtitle="">
