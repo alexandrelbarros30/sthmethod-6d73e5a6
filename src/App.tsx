@@ -75,6 +75,7 @@ const App = () => (
             <Route path="/questionario" element={<Questionario />} />
             <Route path="/install" element={<Install />} />
             <Route path="/free" element={<Free />} />
+            <Route path="/performeth" element={<PerformethCatalog />} />
             {/* Student routes */}
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["student"]}><StudentOverview /></ProtectedRoute>} />
             <Route path="/dashboard/hub" element={<ProtectedRoute allowedRoles={["student"]}><StudentHub /></ProtectedRoute>} />
