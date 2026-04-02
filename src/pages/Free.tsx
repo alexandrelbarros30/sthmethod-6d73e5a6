@@ -9,12 +9,7 @@ import {
 import { calculateMacros, type MacroInput, type MacroResult } from "@/lib/macro-calculator";
 import { recipes as richRecipes, recipeCategories, type Recipe as RichRecipe } from "@/data/recipes";
 import { families, type Family } from "@/components/student/content/compoundData";
-import FamilyCard from "@/components/student/content/FamilyCard";
 import CompoundDetail from "@/components/student/content/CompoundDetail";
-import InsightCarousel from "@/components/student/content/InsightCarousel";
-import heroImg from "@/assets/content-hero.jpg";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 /* ───────── types ───────── */
 type Screen = "login" | "hero" | "diagnostic" | "result" | "progress" | "lock" | "dashboard";
