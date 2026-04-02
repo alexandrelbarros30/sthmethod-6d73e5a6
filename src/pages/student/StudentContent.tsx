@@ -6,6 +6,7 @@ import { families, TOTAL_COMPOUNDS, type Family } from "@/components/student/con
 import { supabase } from "@/integrations/supabase/client";
 import FamilyCard from "@/components/student/content/FamilyCard";
 import CompoundDetail from "@/components/student/content/CompoundDetail";
+import InsightCarousel from "@/components/student/content/InsightCarousel";
 import heroImg from "@/assets/content-hero.jpg";
 
 const G = {
