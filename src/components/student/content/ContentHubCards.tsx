@@ -1,10 +1,11 @@
 import { motion } from "framer-motion";
-import { ChevronRight, Beaker, Brain, UtensilsCrossed, Flame, Clock } from "lucide-react";
+import { ChevronRight, Beaker, Brain, UtensilsCrossed, Flame, Clock, Layers } from "lucide-react";
 import cardHormoniosImg from "@/assets/card-hormonios.jpg";
 import cardDicasImg from "@/assets/card-dicas.jpg";
 import cardReceitasImg from "@/assets/card-receitas.jpg";
+import cardCombinacoesImg from "@/assets/card-combinacoes.jpg";
 
-export type ContentSection = "hormonios" | "dicas" | "receitas";
+export type ContentSection = "hormonios" | "dicas" | "receitas" | "combinacoes";
 
 const G = {
   accent: "hsl(145 60% 42%)",
@@ -65,6 +66,20 @@ const sections = [
         { name: "Panqueca Proteica", kcal: 290, time: "15 min" },
       ],
       meta: "12 receitas • Macros detalhados",
+    },
+  },
+  {
+    id: "combinacoes" as ContentSection,
+    tag: "Estratégia",
+    title: "Combinações Estratégicas",
+    subtitle: "Não é sobre o composto isolado. É sobre como eles se comportam juntos.",
+    img: cardCombinacoesImg,
+    icon: Layers,
+    accentHue: "270",
+    preview: {
+      type: "pills" as const,
+      items: ["Definição", "Hipertrofia", "3 níveis"],
+      meta: "6 combinações • Visão estratégica",
     },
   },
 ];
