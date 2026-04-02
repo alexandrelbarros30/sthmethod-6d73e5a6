@@ -6,9 +6,10 @@ import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Video, Dumbbell, Timer, ChevronDown, ChevronUp, Play, Info, Smartphone } from "lucide-react";
+import { Video, Dumbbell, Timer, ChevronDown, ChevronUp, Play, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import StCoachButton from "@/components/student/StCoachButton";
 import StudentInfoHeader from "@/components/student/StudentInfoHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
