@@ -538,6 +538,51 @@ export type Database = {
         }
         Relationships: []
       }
+      free_leads: {
+        Row: {
+          age: number | null
+          converted: boolean
+          created_at: string
+          email: string
+          frequency: number | null
+          full_name: string | null
+          gender: string | null
+          height: number | null
+          id: string
+          objective: string | null
+          phone: string
+          weight: number | null
+        }
+        Insert: {
+          age?: number | null
+          converted?: boolean
+          created_at?: string
+          email: string
+          frequency?: number | null
+          full_name?: string | null
+          gender?: string | null
+          height?: number | null
+          id?: string
+          objective?: string | null
+          phone: string
+          weight?: number | null
+        }
+        Update: {
+          age?: number | null
+          converted?: boolean
+          created_at?: string
+          email?: string
+          frequency?: number | null
+          full_name?: string | null
+          gender?: string | null
+          height?: number | null
+          id?: string
+          objective?: string | null
+          phone?: string
+          weight?: number | null
+        }
+        Relationships: []
+      }
       landing_evolutions: {
         Row: {
           active: boolean
