@@ -135,6 +135,38 @@ const StudentGuidedWorkout = () => {
   return (
     <DashboardLayout role="student" title="Treino Guiado" subtitle="Seus treinos atribuídos.">
       <div className="space-y-6 max-w-4xl">
+        {/* ST Coach App Button */}
+        <Card className="border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
+          <CardContent className="py-4 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+              <Smartphone className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-foreground font-display text-sm">Abrir no ST Coach</p>
+              <p className="text-xs text-muted-foreground">Execute seu treino pelo app com cronômetro e guia</p>
+            </div>
+            <Button
+              size="sm"
+              className="shrink-0 gap-1.5"
+              onClick={() => {
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                const storeUrl = isIOS
+                  ? "https://apps.apple.com/us/app/st-coach/id1537125272"
+                  : "https://play.google.com/store/apps/details?id=com.appsupercoach.app";
+                if (isIOS) {
+                  window.location.href = "stcoach://";
+                  setTimeout(() => { window.open(storeUrl, "_blank"); }, 1500);
+                } else {
+                  window.location.href =
+                    "intent://#Intent;package=com.appsupercoach.app;scheme=stcoach;S.browser_fallback_url=" +
+                    encodeURIComponent(storeUrl) + ";end";
+                }
+              }}
+            >
+              <Play className="w-3.5 h-3.5" /> Abrir App
+            </Button>
+          </CardContent>
+        </Card>
         {assignments.map((assignment: any) => {
           const template = assignment.workout_templates;
           if (!template) return null;
