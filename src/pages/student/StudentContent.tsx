@@ -174,6 +174,8 @@ const StudentContent = () => {
                 />
               ))}
             </div>
+            {/* Insight tips */}
+            <InsightCarousel />
           </>
         )}
 
