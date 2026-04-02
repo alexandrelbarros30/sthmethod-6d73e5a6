@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import FamilyCard from "@/components/student/content/FamilyCard";
 import CompoundDetail from "@/components/student/content/CompoundDetail";
 import InsightCarousel from "@/components/student/content/InsightCarousel";
+import CombinationsSection from "@/components/student/content/CombinationsSection";
 import ContentHubCards, { type ContentSection } from "@/components/student/content/ContentHubCards";
 import { useNavigate } from "react-router-dom";
 
