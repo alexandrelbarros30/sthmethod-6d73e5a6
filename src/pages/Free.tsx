@@ -193,7 +193,7 @@ const FreePage = () => {
         {/* ──── 1. HERO ──── */}
         {screen === "hero" && (
           <motion.div key="hero" {...fade} className="flex flex-col items-center justify-center min-h-screen px-6 text-center">
-            <p className="text-[10px] uppercase tracking-[.35em] text-emerald-400/70 mb-8">STM Method</p>
+            <p className="text-[10px] uppercase tracking-[.35em] text-emerald-400/70 mb-8">STH Method</p>
             <h1 className="text-3xl sm:text-5xl font-semibold leading-tight tracking-tight max-w-lg">
               Controle seu corpo.<br />Com método.
             </h1>
@@ -409,7 +409,7 @@ const FreePage = () => {
         {screen === "dashboard" && (
           <motion.div key="dash" {...fade} className="flex flex-col min-h-screen pb-20">
             <div className="px-6 pt-12 pb-4">
-              <p className="text-[10px] uppercase tracking-[.3em] text-emerald-400/60">STM Method Free</p>
+              <p className="text-[10px] uppercase tracking-[.3em] text-emerald-400/60">STH Method Free</p>
               <h2 className="text-lg font-semibold tracking-tight mt-1">
                 {tab === "receitas" && "Receitas"}
                 {tab === "macros" && "Calculadora de Macros"}
@@ -706,7 +706,7 @@ const TabConteudo = () => {
     <motion.div {...fade} className="space-y-6 pb-6">
       {/* Hero */}
       <div className="rounded-2xl overflow-hidden relative" style={{ border: `0.5px solid ${G.border}` }}>
-        <img src={heroImg} alt="STM Method" className="w-full h-44 object-cover" />
+        <img src={heroImg} alt="STH Method" className="w-full h-44 object-cover" />
         <div className="absolute inset-0 flex flex-col justify-end p-4" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.92), rgba(0,0,0,0.2))" }}>
           <h3 className="text-base font-semibold text-white">Entenda com clareza</h3>
           <p className="text-[11px] text-white/40 mt-1">Leitura rápida. Interpretação estratégica.</p>
