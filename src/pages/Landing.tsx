@@ -183,6 +183,11 @@ const Landing = () => {
 
           {/* Right side: CTA + hamburger */}
           <div className="flex items-center gap-2 shrink-0">
+            <Link to="/free">
+              <Button size="sm" variant="outline" className="text-xs sm:text-sm px-3 sm:px-4 border-primary/30 hover:bg-primary/10">
+                Free
+              </Button>
+            </Link>
             <Link to="/login">
               <Button size="sm" className="gradient-bg text-primary-foreground hover:opacity-90 text-xs sm:text-sm px-3 sm:px-4">
                 Acessar
@@ -234,6 +239,14 @@ const Landing = () => {
                   className="py-2.5 px-3 rounded-lg font-medium gradient-text hover:bg-muted/50 transition-colors"
                 >
                   Calcule seus Macros
+                </Link>
+                <Link
+                  to="/free"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="py-2.5 px-3 rounded-lg font-medium text-primary hover:bg-muted/50 transition-colors flex items-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Versão Gratuita
                 </Link>
               </div>
             </motion.div>
@@ -291,6 +304,20 @@ const Landing = () => {
               </Button>
             </LinkOrA>
           </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="mt-6"
+          >
+            <Link to="/free">
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground gap-2 text-sm">
+                <Sparkles className="w-4 h-4" />
+                Experimentar versão gratuita
+              </Button>
+            </Link>
+          </motion.div>
 
           <motion.div
             initial={{ opacity: 0 }}
