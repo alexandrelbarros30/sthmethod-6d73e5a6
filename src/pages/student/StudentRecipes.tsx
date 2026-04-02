@@ -129,8 +129,8 @@ const StudentRecipes = () => {
 
   return (
     <DashboardLayout role="student" title="Receitas Saudáveis" subtitle="Decisões alimentares guiadas">
-      <Button variant="ghost" size="sm" className="mb-4 gap-1 text-muted-foreground" onClick={() => navigate("/dashboard")}>
-        <ChevronLeft className="w-4 h-4" /> Voltar
+      <Button variant="ghost" size="sm" className="mb-4 gap-1 text-muted-foreground" onClick={() => navigate("/dashboard/content")}>
+        <ChevronLeft className="w-4 h-4" /> Voltar ao conteúdo
       </Button>
 
       <div className="flex gap-2 overflow-x-auto pb-3 mb-4 scrollbar-hide">
