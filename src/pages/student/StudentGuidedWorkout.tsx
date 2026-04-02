@@ -9,7 +9,7 @@ import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Dumbbell, Video, ChevronDown, ChevronUp, Save, Clock, Repeat, Weight } from "lucide-react";
+import { Dumbbell, Video, ChevronDown, ChevronUp, Save, Clock, Repeat, Weight, Smartphone, Play } from "lucide-react";
 import { toast } from "sonner";
 
 const getEmbedUrl = (url: string) => {
