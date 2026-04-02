@@ -240,6 +240,14 @@ const Landing = () => {
                 >
                   Calcule seus Macros
                 </Link>
+                <Link
+                  to="/free"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="py-2.5 px-3 rounded-lg font-medium text-primary hover:bg-muted/50 transition-colors flex items-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Versão Gratuita
+                </Link>
               </div>
             </motion.div>
           )}
