@@ -811,50 +811,13 @@ const TabConteudo = () => {
     setVisited(prev => new Set(prev).add(id));
   }, []);
 
-  const selectedCompound = allCompounds.find(c => c.id === selectedCompoundId);
-
-  if (selectedCompound) {
-    return (
-      <motion.div {...fade} className="pb-6">
-        <button onClick={() => setSelectedCompoundId(null)} className="flex items-center gap-1 text-xs text-white/40 mb-4">
-          <ArrowLeft className="w-3.5 h-3.5" /> Voltar
-        </button>
-        <CompoundDetail compound={selectedCompound} onBack={() => setSelectedCompoundId(null)} />
-      </motion.div>
-    );
-  }
-
   if (selectedFamily) {
     return (
       <motion.div {...fade} className="space-y-4 pb-6">
-        <button onClick={() => setSelectedFamily(null)} className="flex items-center gap-1 text-xs text-white/40 mb-2">
+        <button onClick={() => { setSelectedFamily(null); setSelectedCompoundId(null); }} className="flex items-center gap-1 text-xs text-white/40 mb-2">
           <ArrowLeft className="w-3.5 h-3.5" /> Voltar
         </button>
-        <div className="rounded-2xl overflow-hidden relative" style={{ border: `0.5px solid ${G.border}` }}>
-          <img src={selectedFamily.image} alt={selectedFamily.name} className="w-full h-36 object-cover" />
-          <div className="absolute inset-0 flex flex-col justify-end p-4" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9), transparent 60%)" }}>
-            <h3 className="text-base font-bold text-white">{selectedFamily.name}</h3>
-            <p className="text-[11px] text-white/50 mt-0.5">{selectedFamily.compounds.length} compostos</p>
-          </div>
-        </div>
-        <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-hide -mx-6 px-6 snap-x">
-          {selectedFamily.compounds.map((c, i) => {
-            const isSelected = selectedCompoundId === c.id;
-            const isVisited = visited.has(c.id);
-            return (
-              <motion.button key={c.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.05 + i * 0.03 }}
-                whileTap={{ scale: 0.95 }} onClick={() => handleSelectCompound(c.id)}
-                className="snap-center flex-shrink-0 rounded-xl overflow-hidden min-w-[110px] transition-all relative"
-                style={{ border: isSelected ? `1px solid ${G.accentBorder}` : `0.5px solid ${G.border}` }}>
-                <img src={c.image} alt={c.name} className="w-full h-20 object-cover" />
-                <div className="absolute inset-0 flex flex-col items-center justify-end pb-2" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85), transparent 50%)" }}>
-                  <span className="text-[11px] font-medium text-white">{c.name}</span>
-                  {isVisited && <Check className="w-3 h-3 text-emerald-400 absolute top-1.5 right-1.5" />}
-                </div>
-              </motion.button>
-            );
-          })}
-        </div>
+        <CompoundDetail family={selectedFamily} selected={selectedCompoundId} visited={visited} onSelect={handleSelectCompound} />
       </motion.div>
     );
   }
