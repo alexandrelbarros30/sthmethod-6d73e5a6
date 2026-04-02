@@ -4,22 +4,11 @@ import { Smartphone, Play } from "lucide-react";
 
 const openStCoach = () => {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const deepLink = isIOS
+    ? "stcoach://"
+    : "intent://#Intent;scheme=stcoach;package=com.appsupercoach.app;end";
 
-  // Always try to open the app directly first via custom URI scheme
-  window.location.href = "stcoach://";
-
-  // Only fall back to store if the app didn't open (longer delay = more time for app to launch)
-  const storeUrl = isIOS
-    ? "https://apps.apple.com/us/app/st-coach/id1537125272"
-    : "https://play.google.com/store/apps/details?id=com.appsupercoach.app";
-
-  const start = Date.now();
-  setTimeout(() => {
-    // If less than 2s passed and page is still visible, the app likely didn't open
-    if (document.visibilityState === "visible" && Date.now() - start < 3000) {
-      window.open(storeUrl, "_blank");
-    }
-  }, 2500);
+  window.location.href = deepLink;
 };
 
 const StCoachButton = () => (
