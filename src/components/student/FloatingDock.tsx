@@ -172,7 +172,7 @@ const FloatingDock = () => {
                 })}
                 <div className="h-px bg-border/40 my-1" />
                 <button
-                  onClick={() => { signOut(); setMenuOpen(false); }}
+                  onClick={() => { signOut(); navigate("/"); setMenuOpen(false); }}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-destructive hover:bg-destructive/8 transition-colors"
                 >
                   <LogOut className="w-4 h-4" />
