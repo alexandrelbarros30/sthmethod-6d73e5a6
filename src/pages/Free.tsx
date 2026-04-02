@@ -1,42 +1,19 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Check, Lock, ChevronRight, MessageCircle, ArrowLeft, Flame, Target, Activity,
   Utensils, BarChart3, Brain, User, X, Clock, Zap, Shield, Award, Unlock,
-  Mail, Phone, ChevronDown,
+  Mail, Phone, LogOut,
 } from "lucide-react";
 import { calculateMacros, type MacroInput, type MacroResult } from "@/lib/macro-calculator";
-
-/* ── Recipe images ── */
-import recipePoke from "@/assets/recipe-poke.jpg";
-import recipeFrango from "@/assets/recipe-frango.jpg";
-import recipeAcai from "@/assets/recipe-acai.jpg";
-import recipeSmoothie from "@/assets/recipe-smoothie.jpg";
-import recipePanqueca from "@/assets/recipe-panqueca.jpg";
-import recipeSalada from "@/assets/recipe-salada.jpg";
-import recipeMoqueca from "@/assets/recipe-moqueca.jpg";
-import recipeTapioca from "@/assets/recipe-tapioca.jpg";
-import recipeCuscuz from "@/assets/recipe-cuscuz.jpg";
-import recipePureBatata from "@/assets/recipe-pure-batata.jpg";
-import recipeOmelete from "@/assets/recipe-omelete.jpg";
-import recipeEscondidinho from "@/assets/recipe-escondidinho.jpg";
-
-/* ── Compound images ── */
-import imgEnantato from "@/assets/compound-enantato.jpg";
-import imgCipionato from "@/assets/compound-cipionato.jpg";
-import imgPropionato from "@/assets/compound-propionato.jpg";
-import imgDurateston from "@/assets/compound-durateston.jpg";
-import imgGel from "@/assets/compound-gel.jpg";
-import imgMasteronProp from "@/assets/compound-masteron-prop.jpg";
-import imgMasteronEnan from "@/assets/compound-masteron-enan.jpg";
-import imgNandrolona from "@/assets/compound-nandrolona.jpg";
-import imgGestrinona from "@/assets/compound-gestrinona.jpg";
-import imgOxandrolona from "@/assets/compound-oxandrolona.jpg";
+import { recipes as richRecipes, recipeCategories, type Recipe as RichRecipe } from "@/data/recipes";
+import { families, type Family } from "@/components/student/content/compoundData";
+import CompoundDetail from "@/components/student/content/CompoundDetail";
 import heroImg from "@/assets/content-hero.jpg";
 
 /* ───────── types ───────── */
-type Screen = "hero" | "diagnostic" | "result" | "progress" | "lock" | "dashboard";
+type Screen = "login" | "hero" | "diagnostic" | "result" | "progress" | "lock" | "dashboard";
 type Tab = "receitas" | "macros" | "conteudo" | "perfil";
 type Objective = "emagrecimento" | "hipertrofia" | "saude" | "";
 
@@ -50,6 +27,8 @@ interface ProfileData {
   phone: string;
   email: string;
 }
+
+const FREE_SESSION_KEY = "sth_free_session";
 
 /* ───────── constants ───────── */
 const WHATSAPP_URL = "https://wa.me/5521998496289?text=Vi%20meu%20perfil%20no%20app%20e%20quero%20ativar%20meu%20plano%20completo.";
@@ -82,47 +61,6 @@ const G = {
   t10: "hsl(0 0% 10%)",
 };
 
-/* ── Recipes data ── */
-const RECIPES = [
-  { id: "1", title: "Poke Bowl de Salmão", image: recipePoke, time: "20 min", kcal: 420, category: "Almoço", tags: ["Alto em Proteína", "Low Carb"], ingredients: ["150g salmão fresco em cubos", "100g arroz japonês cozido", "½ abacate fatiado", "50g edamame", "Gergelim e molho shoyu light"], instructions: "1. Cozinhe o arroz e reserve.\n2. Corte o salmão em cubos.\n3. Monte o bowl e finalize com gergelim." },
-  { id: "2", title: "Frango Grelhado com Batata Doce", image: recipeFrango, time: "30 min", kcal: 380, category: "Almoço", tags: ["Alto em Proteína", "Pré-treino"], ingredients: ["200g peito de frango", "150g batata doce", "100g brócolis", "Azeite, sal e pimenta"], instructions: "1. Tempere e grelhe o frango.\n2. Cozinhe a batata doce no vapor.\n3. Refogue o brócolis com azeite." },
-  { id: "3", title: "Açaí Bowl Proteico", image: recipeAcai, time: "10 min", kcal: 350, category: "Lanche", tags: ["Pós-treino", "Rico em Fibras"], ingredients: ["200g polpa de açaí sem açúcar", "1 banana", "30g granola", "Morangos e mirtilos"], instructions: "1. Bata o açaí com a banana.\n2. Decore com granola e frutas." },
-  { id: "4", title: "Smoothie Verde Detox", image: recipeSmoothie, time: "5 min", kcal: 180, category: "Café da manhã", tags: ["Detox", "Rico em Vitaminas"], ingredients: ["1 xícara de espinafre", "1 banana", "1 kiwi", "200ml água de coco"], instructions: "1. Bata tudo no liquidificador.\n2. Sirva gelado." },
-  { id: "5", title: "Panqueca Proteica", image: recipePanqueca, time: "15 min", kcal: 290, category: "Café da manhã", tags: ["Alto em Proteína"], ingredients: ["2 ovos", "1 banana madura", "30g aveia", "1 scoop whey"], instructions: "1. Bata tudo no liquidificador.\n2. Doure dos dois lados na frigideira." },
-  { id: "6", title: "Salada de Salmão e Quinoa", image: recipeSalada, time: "25 min", kcal: 400, category: "Jantar", tags: ["Rico em Ômega-3", "Low Carb"], ingredients: ["150g salmão grelhado", "80g quinoa cozida", "Mix de folhas verdes", "Azeite e limão"], instructions: "1. Grelhe o salmão.\n2. Monte a salada e regue com azeite." },
-  { id: "7", title: "Moqueca de Peixe Fit", image: recipeMoqueca, time: "35 min", kcal: 360, category: "Almoço", tags: ["Rico em Ômega-3", "Brasileiro"], ingredients: ["200g filé de peixe branco", "100ml leite de coco light", "Tomate, pimentão, coentro"], instructions: "1. Refogue os vegetais.\n2. Adicione o peixe e leite de coco.\n3. Cozinhe em fogo baixo." },
-  { id: "8", title: "Tapioca de Frango", image: recipeTapioca, time: "15 min", kcal: 280, category: "Lanche", tags: ["Sem Glúten", "Brasileiro"], ingredients: ["3 colheres de goma de tapioca", "100g frango desfiado", "Requeijão light"], instructions: "1. Espalhe a goma na frigideira.\n2. Recheie e dobre." },
-  { id: "9", title: "Cuscuz com Ovos", image: recipeCuscuz, time: "20 min", kcal: 320, category: "Café da manhã", tags: ["Rico em Fibras", "Brasileiro"], ingredients: ["100g flocos de milho", "2 ovos cozidos", "Tomate e cebola"], instructions: "1. Hidrate e cozinhe o cuscuz.\n2. Sirva com ovos e legumes." },
-  { id: "10", title: "Purê de Batata Doce com Frango", image: recipePureBatata, time: "30 min", kcal: 410, category: "Jantar", tags: ["Alto em Proteína", "Brasileiro"], ingredients: ["200g batata doce", "180g peito de frango", "Vagem e cenoura no vapor"], instructions: "1. Cozinhe e amasse a batata doce.\n2. Grelhe o frango.\n3. Monte o prato." },
-  { id: "11", title: "Omelete de Claras", image: recipeOmelete, time: "10 min", kcal: 200, category: "Café da manhã", tags: ["Alto em Proteína", "Low Carb"], ingredients: ["4 claras de ovo", "1 ovo inteiro", "Espinafre", "Tomate cereja"], instructions: "1. Bata os ovos.\n2. Adicione espinafre e tomate.\n3. Dobre ao meio." },
-  { id: "12", title: "Escondidinho Fit", image: recipeEscondidinho, time: "40 min", kcal: 370, category: "Jantar", tags: ["Comfort Food", "Brasileiro"], ingredients: ["200g batata doce", "150g frango desfiado", "Requeijão light", "Queijo minas"], instructions: "1. Monte camadas: purê, frango, purê.\n2. Cubra com queijo.\n3. Gratine por 15 min." },
-];
-
-const RECIPE_CATEGORIES = ["Todos", "Café da manhã", "Almoço", "Lanche", "Jantar"];
-
-/* ── Compounds data ── */
-const compounds = [
-  { id: "enantato", name: "Enantato", tag: "Estável", image: imgEnantato, essencia: "Éster de liberação gradual e perfil estável.", oQueFaz: "Favorece manutenção hormonal, recuperação e suporte à massa muscular.", comoEntra: "Aplicação intramuscular com liberação lenta.", comoSeComporta: "Resposta previsível ao longo dos dias.", atencao: "Pode causar retenção, acne e aromatização.", resumo: "Estabilidade e leitura mais limpa do protocolo." },
-  { id: "cipionato", name: "Cipionato", tag: "Consistente", image: imgCipionato, essencia: "Forma de ação prolongada e comportamento consistente.", oQueFaz: "Atua na força, recuperação e síntese proteica.", comoEntra: "Aplicação intramuscular lenta.", comoSeComporta: "Mantém níveis relativamente estáveis.", atencao: "Pode gerar retenção e elevação estrogênica.", resumo: "Consistência é o principal valor." },
-  { id: "propionato", name: "Propionato", tag: "Rápido", image: imgPropionato, essencia: "Éster de ação curta e resposta rápida.", oQueFaz: "Favorece ação mais ágil no organismo.", comoEntra: "Absorção intramuscular rápida.", comoSeComporta: "Exige aplicações mais frequentes.", atencao: "Pode causar irritação local e mais variação hormonal.", resumo: "Rápido, porém menos estável." },
-  { id: "durateston", name: "Durateston", tag: "Misto", image: imgDurateston, essencia: "Blend de testosteronas com tempos diferentes de liberação.", oQueFaz: "Combina início mais rápido com sustentação posterior.", comoEntra: "Aplicação intramuscular com liberação em fases.", comoSeComporta: "Pico inicial seguido de manutenção prolongada.", atencao: "Pode oscilar mais e exigir maior controle.", resumo: "Entrega velocidade, mas cobra precisão." },
-  { id: "gel", name: "Gel", tag: "Diário", image: imgGel, essencia: "Aplicação transdérmica diária.", oQueFaz: "Promove aumento gradual dos níveis hormonais.", comoEntra: "Absorção pela pele.", comoSeComporta: "Níveis mais lineares dependendo da absorção.", atencao: "Absorção variável e risco de transferência por contato.", resumo: "Praticidade com dependência da absorção individual." },
-  { id: "masteron-prop", name: "Masteron P.", tag: "Seco", image: imgMasteronProp, essencia: "Derivado com ação mais rápida e perfil seco.", oQueFaz: "Atua na densidade muscular e estética.", comoEntra: "Aplicação intramuscular rápida.", comoSeComporta: "Resposta ágil com necessidade de maior frequência.", atencao: "Exige controle e acompanhamento.", resumo: "Rápido e sensível a ajustes." },
-  { id: "masteron-enan", name: "Masteron E.", tag: "Estável", image: imgMasteronEnan, essencia: "Versão mais estável da drostanolona.", oQueFaz: "Contribui para densidade e estética com estabilidade.", comoEntra: "Aplicação intramuscular prolongada.", comoSeComporta: "Resposta mais linear.", atencao: "Exige estratégia.", resumo: "Estabilidade com controle." },
-  { id: "nandrolona", name: "Nandrolona", tag: "Estrutura", image: imgNandrolona, essencia: "Forte ação anabólica e suporte estrutural.", oQueFaz: "Auxilia recuperação e articulações.", comoEntra: "Aplicação intramuscular prolongada.", comoSeComporta: "Ação duradoura e acumulativa.", atencao: "Impacto hormonal relevante.", resumo: "Eficiência com necessidade de precisão." },
-  { id: "gestrinona", name: "Gestrinona", tag: "Controle", image: imgGestrinona, essencia: "Atua no controle do ambiente hormonal.", oQueFaz: "Modulação hormonal e composição corporal.", comoEntra: "Oral ou transdérmico.", comoSeComporta: "Resposta dependente do contexto individual.", atencao: "Necessita acompanhamento profissional.", resumo: "Controle exige estratégia." },
-  { id: "oxandrolona", name: "Oxandrolona", tag: "Definição", image: imgOxandrolona, essencia: "Perfil controlado com foco em definição.", oQueFaz: "Auxilia definição e manutenção muscular.", comoEntra: "Administração oral.", comoSeComporta: "Resposta progressiva.", atencao: "Controle hepático necessário.", resumo: "Previsível, mas exige cuidado." },
-];
-
-const compoundFields = [
-  { key: "essencia", label: "Essência" },
-  { key: "oQueFaz", label: "O que faz" },
-  { key: "comoEntra", label: "Como entra no corpo" },
-  { key: "comoSeComporta", label: "Como se comporta" },
-  { key: "atencao", label: "Pontos de atenção" },
-  { key: "resumo", label: "Resumo STH" },
-] as const;
-
 const gamificationMessages = [
   { min: 3, icon: Brain, text: "Você já está à frente da maioria." },
   { min: 5, icon: Shield, text: "Agora começa o nível estratégico." },
@@ -136,6 +74,22 @@ function potentialText(obj: Objective) {
   return "Melhora metabólica significativa em 30 dias";
 }
 
+function saveSession(profile: ProfileData) {
+  localStorage.setItem(FREE_SESSION_KEY, JSON.stringify(profile));
+}
+
+function loadSession(): ProfileData | null {
+  try {
+    const raw = localStorage.getItem(FREE_SESSION_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+
+function clearSession() {
+  localStorage.removeItem(FREE_SESSION_KEY);
+}
+
 /* ───────── component ───────── */
 const FreePage = () => {
   const [screen, setScreen] = useState<Screen>("hero");
@@ -147,6 +101,19 @@ const FreePage = () => {
   const [progressPct, setProgressPct] = useState(0);
   const [showConversion, setShowConversion] = useState(false);
   const [macroResult, setMacroResult] = useState<MacroResult | null>(null);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPhone, setLoginPhone] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+
+  /* Check for existing session on mount */
+  useEffect(() => {
+    const saved = loadSession();
+    if (saved && saved.email && saved.phone) {
+      setProfile(saved);
+      setScreen("dashboard");
+    }
+  }, []);
 
   /* progress animation */
   useEffect(() => {
@@ -184,6 +151,62 @@ const FreePage = () => {
     setScreen("result");
   }, [profile]);
 
+  const handleSignupAndNext = useCallback(() => {
+    // Save lead to database
+    supabase.from("free_leads").insert({
+      email: profile.email,
+      phone: profile.phone,
+      gender: profile.gender,
+      age: Number(profile.age) || null,
+      weight: Number(profile.peso) || null,
+      height: Number(profile.altura) || null,
+      objective: profile.objetivo,
+      frequency: Number(profile.frequencia) || null,
+    }).then(() => {});
+    // Save session locally
+    saveSession(profile);
+    setStep(5);
+  }, [profile]);
+
+  const handleLogin = useCallback(async () => {
+    setLoginError("");
+    setLoginLoading(true);
+    const { data, error } = await supabase
+      .from("free_leads")
+      .select("email, phone, gender, age, weight, height, objective, frequency")
+      .eq("email", loginEmail.trim().toLowerCase())
+      .eq("phone", loginPhone.trim())
+      .limit(1)
+      .maybeSingle();
+
+    if (error || !data) {
+      setLoginError("E-mail ou telefone não encontrado. Faça seu cadastro primeiro.");
+      setLoginLoading(false);
+      return;
+    }
+    const restored: ProfileData = {
+      email: data.email,
+      phone: data.phone,
+      gender: (data.gender as "masculino" | "feminino") || "masculino",
+      age: String(data.age || 28),
+      peso: String(data.weight || ""),
+      altura: String(data.height || ""),
+      objetivo: (data.objective as Objective) || "",
+      frequencia: String(data.frequency || ""),
+    };
+    setProfile(restored);
+    saveSession(restored);
+    setScreen("dashboard");
+    setLoginLoading(false);
+  }, [loginEmail, loginPhone]);
+
+  const handleLogout = useCallback(() => {
+    clearSession();
+    setProfile({ peso: "", altura: "", objetivo: "", frequencia: "", gender: "masculino", age: "28", phone: "", email: "" });
+    setScreen("hero");
+    setTab("receitas");
+  }, []);
+
   const objLabel = (o: Objective) => o === "emagrecimento" ? "Emagrecimento" : o === "hipertrofia" ? "Hipertrofia" : o === "saude" ? "Saúde" : "";
 
   const inputClass = "w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 text-sm outline-none focus:border-emerald-500/50 transition-colors placeholder:text-white/20";
@@ -191,6 +214,36 @@ const FreePage = () => {
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-emerald-500/30 overflow-x-hidden">
       <AnimatePresence mode="wait">
+        {/* ──── LOGIN ──── */}
+        {screen === "login" && (
+          <motion.div key="login" {...fade} className="flex flex-col items-center justify-center min-h-screen px-6">
+            <p className="text-[10px] uppercase tracking-[.35em] text-emerald-400/70 mb-6">STH Method Free</p>
+            <h2 className="text-2xl font-semibold tracking-tight mb-2">Entrar na plataforma</h2>
+            <p className="text-sm text-white/40 mb-8 text-center max-w-xs">Use o e-mail e telefone que você cadastrou.</p>
+
+            <div className="w-full max-w-xs space-y-4">
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                <input type="email" inputMode="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)}
+                  className={`${inputClass} pl-10`} placeholder="seu@email.com" />
+              </div>
+              <div className="relative">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                <input type="tel" inputMode="tel" value={loginPhone} onChange={e => setLoginPhone(e.target.value)}
+                  className={`${inputClass} pl-10`} placeholder="(11) 99999-9999" />
+              </div>
+              {loginError && <p className="text-xs text-red-400 text-center">{loginError}</p>}
+              <button disabled={!loginEmail || !loginPhone || loginLoading} onClick={handleLogin}
+                className="w-full py-3.5 rounded-full bg-emerald-500 text-black text-sm font-semibold disabled:opacity-30 active:scale-95 transition">
+                {loginLoading ? "Verificando..." : "Entrar"}
+              </button>
+              <button onClick={() => setScreen("hero")} className="w-full text-sm text-white/30 hover:text-white/50 transition">
+                Ainda não tenho conta
+              </button>
+            </div>
+          </motion.div>
+        )}
+
         {/* ──── 1. HERO ──── */}
         {screen === "hero" && (
           <motion.div key="hero" {...fade} className="flex flex-col items-center justify-center min-h-screen px-6 text-center">
@@ -203,6 +256,9 @@ const FreePage = () => {
             </p>
             <button onClick={() => setScreen("diagnostic")} className="mt-10 px-8 py-3.5 rounded-full bg-emerald-500 text-black text-sm font-semibold hover:bg-emerald-400 transition-colors active:scale-95">
               Começar análise
+            </button>
+            <button onClick={() => setScreen("login")} className="mt-4 text-sm text-white/40 hover:text-white/60 transition">
+              Já tenho conta — Entrar
             </button>
           </motion.div>
         )}
@@ -303,20 +359,8 @@ const FreePage = () => {
                   <p className="text-[10px] text-white/25 leading-relaxed">
                     Seus dados são usados apenas para personalizar sua experiência e enviar seu resultado.
                   </p>
-                  <button disabled={!profile.phone || !profile.email} onClick={() => {
-                    // Save lead to database
-                    supabase.from("free_leads").insert({
-                      email: profile.email,
-                      phone: profile.phone,
-                      gender: profile.gender,
-                      age: Number(profile.age) || null,
-                      weight: Number(profile.peso) || null,
-                      height: Number(profile.altura) || null,
-                      objective: profile.objetivo,
-                      frequency: Number(profile.frequencia) || null,
-                    }).then(() => {});
-                    setStep(5);
-                  }} className="mt-auto px-8 py-3.5 rounded-full bg-emerald-500 text-black text-sm font-semibold disabled:opacity-30 active:scale-95">
+                  <button disabled={!profile.phone || !profile.email} onClick={handleSignupAndNext}
+                    className="mt-auto px-8 py-3.5 rounded-full bg-emerald-500 text-black text-sm font-semibold disabled:opacity-30 active:scale-95">
                     Próximo
                   </button>
                 </motion.div>
@@ -355,7 +399,6 @@ const FreePage = () => {
               <ResultCard icon={<Target className="w-5 h-5 text-emerald-400" />} label="Meta Calórica Diária" value={`${macroResult.dailyCalories} kcal`}
                 sub={profile.objetivo === "emagrecimento" ? "Déficit de 500 kcal aplicado" : profile.objetivo === "hipertrofia" ? "Superávit de 350 kcal aplicado" : "Manutenção"} />
 
-              {/* Macro bars */}
               <div className="bg-white/[.03] border border-white/[.06] rounded-2xl p-5 space-y-4">
                 <p className="text-xs text-white/40">Distribuição de Macronutrientes</p>
                 <MacroBar label="Proteína" value={macroResult.proteinG} unit="g" color="bg-emerald-500" detail="2g/kg" />
@@ -425,7 +468,7 @@ const FreePage = () => {
             <div className="px-6 pt-12 pb-4">
               <p className="text-[10px] uppercase tracking-[.3em] text-emerald-400/60">STH Method Free</p>
               <h2 className="text-lg font-semibold tracking-tight mt-1">
-                {tab === "receitas" && "Receitas"}
+                {tab === "receitas" && "Receitas Saudáveis"}
                 {tab === "macros" && "Calculadora de Macros"}
                 {tab === "conteudo" && "Hormônios e Compostos"}
                 {tab === "perfil" && "Meu Perfil"}
@@ -437,7 +480,7 @@ const FreePage = () => {
                 {tab === "receitas" && <TabReceitas key="rec" />}
                 {tab === "macros" && <TabMacros key="mac" profile={profile} />}
                 {tab === "conteudo" && <TabConteudo key="cont" />}
-                {tab === "perfil" && <TabPerfil key="perf" profile={profile} macroResult={macroResult} onConvert={() => setShowConversion(true)} />}
+                {tab === "perfil" && <TabPerfil key="perf" profile={profile} macroResult={macroResult} onConvert={() => setShowConversion(true)} onLogout={handleLogout} />}
               </AnimatePresence>
             </div>
 
@@ -504,16 +547,23 @@ const SummaryRow = ({ label, value }: { label: string; value: string }) => (
   </div>
 );
 
-/* ──── Tab: Receitas (with real images) ──── */
+/* ──── Tab: Receitas (using rich recipe data) ──── */
+const objectiveColor: Record<string, string> = {
+  Emagrecimento: "text-green-400",
+  Hipertrofia: "text-blue-400",
+  Manutenção: "text-amber-400",
+  Definição: "text-purple-400",
+};
+
 const TabReceitas = () => {
   const [filter, setFilter] = useState("Todos");
-  const [selected, setSelected] = useState<typeof RECIPES[0] | null>(null);
-  const filtered = filter === "Todos" ? RECIPES : RECIPES.filter(r => r.category === filter);
+  const [selected, setSelected] = useState<RichRecipe | null>(null);
+  const filtered = filter === "Todos" ? richRecipes : richRecipes.filter(r => r.category === filter);
 
   return (
     <motion.div {...fade} className="space-y-4 pb-6">
       <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
-        {RECIPE_CATEGORIES.map(cat => (
+        {recipeCategories.map(cat => (
           <button key={cat} onClick={() => setFilter(cat)}
             className={`px-3 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap transition-colors ${filter === cat ? "bg-emerald-500 text-black" : "bg-white/5 border border-white/10 text-white/50"}`}>
             {cat}
@@ -542,7 +592,7 @@ const TabReceitas = () => {
         ))}
       </div>
 
-      {/* Recipe detail modal */}
+      {/* Rich Recipe detail modal */}
       <AnimatePresence>
         {selected && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -566,8 +616,20 @@ const TabReceitas = () => {
                     <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">{tag}</span>
                   ))}
                 </div>
-                <div>
-                  <h4 className="text-sm font-bold mb-2">Ingredientes</h4>
+
+                {/* Objetivo */}
+                <div className="space-y-1">
+                  <p className="text-[11px] uppercase tracking-widest font-medium" style={{ color: G.accent }}>📌 Objetivo</p>
+                  <div className="flex gap-2">
+                    {selected.objetivo.split("/").map(obj => (
+                      <span key={obj.trim()} className={`text-sm font-bold ${objectiveColor[obj.trim()] || "text-emerald-400"}`}>{obj.trim()}</span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Ingredientes */}
+                <div className="space-y-2">
+                  <p className="text-[11px] uppercase tracking-widest font-medium" style={{ color: G.accent }}>🍽️ Composição Base</p>
                   <ul className="space-y-1.5">
                     {selected.ingredients.map((ing, i) => (
                       <li key={i} className="text-xs text-white/60 flex items-start gap-2">
@@ -576,9 +638,35 @@ const TabReceitas = () => {
                     ))}
                   </ul>
                 </div>
-                <div>
-                  <h4 className="text-sm font-bold mb-2">Modo de Preparo</h4>
+
+                {/* Preparo */}
+                <div className="space-y-2">
+                  <p className="text-[11px] uppercase tracking-widest font-medium" style={{ color: G.accent }}>⚙️ Preparo</p>
                   <p className="text-xs text-white/60 whitespace-pre-line leading-relaxed">{selected.instructions}</p>
+                </div>
+
+                {/* Substituições */}
+                <div className="space-y-2">
+                  <p className="text-[11px] uppercase tracking-widest font-medium" style={{ color: G.accent }}>🔄 Substituições Inteligentes</p>
+                  <ul className="space-y-1.5">
+                    {selected.substituicoes.map((sub, i) => (
+                      <li key={i} className="text-xs text-white/60 flex items-start gap-2">
+                        <span className="text-emerald-400">→</span>{sub}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Ajuste Estratégico */}
+                <div className="rounded-xl p-4 space-y-1.5" style={{ background: G.accentText06, border: `0.5px solid ${G.accentBorderSoft}` }}>
+                  <p className="text-[11px] uppercase tracking-widest font-medium" style={{ color: G.accent }}>💡 Ajuste Estratégico</p>
+                  <p className="text-xs leading-relaxed" style={{ color: G.t80 }}>{selected.ajusteEstrategico}</p>
+                </div>
+
+                {/* Dica Prática */}
+                <div className="rounded-xl p-4 space-y-1.5" style={{ background: G.card, border: `0.5px solid ${G.border}` }}>
+                  <p className="text-[11px] uppercase tracking-widest font-medium" style={{ color: G.accent }}>🚀 Dica Prática</p>
+                  <p className="text-xs leading-relaxed" style={{ color: G.t80 }}>{selected.dicaPratica}</p>
                 </div>
               </div>
             </div>
@@ -704,17 +792,31 @@ const TabMacros = ({ profile }: { profile: ProfileData }) => {
   );
 };
 
-/* ──── Tab: Conteúdo (real compounds) ──── */
+/* ──── Tab: Conteúdo (full compound families from student) ──── */
 const TabConteudo = () => {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedFamily, setSelectedFamily] = useState<Family | null>(null);
+  const [selectedCompoundId, setSelectedCompoundId] = useState<string | null>(null);
   const [visited, setVisited] = useState<Set<string>>(new Set());
-  const progress = visited.size;
-  const compound = compounds.find(c => c.id === selectedId);
 
-  const handleSelect = useCallback((id: string) => {
-    setSelectedId(id);
+  const allCompounds = families.flatMap(f => f.compounds);
+  const totalCompounds = allCompounds.length;
+  const progress = visited.size;
+
+  const handleSelectCompound = useCallback((id: string) => {
+    setSelectedCompoundId(id);
     setVisited(prev => new Set(prev).add(id));
   }, []);
+
+  if (selectedFamily) {
+    return (
+      <motion.div {...fade} className="space-y-4 pb-6">
+        <button onClick={() => { setSelectedFamily(null); setSelectedCompoundId(null); }} className="flex items-center gap-1 text-xs text-white/40 mb-2">
+          <ArrowLeft className="w-3.5 h-3.5" /> Voltar
+        </button>
+        <CompoundDetail family={selectedFamily} selected={selectedCompoundId} visited={visited} onSelect={handleSelectCompound} />
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div {...fade} className="space-y-6 pb-6">
@@ -730,58 +832,33 @@ const TabConteudo = () => {
       {/* Progress */}
       <div className="space-y-2">
         <div className="flex justify-between text-xs">
-          <span className="text-white/40">{progress}/{compounds.length} compostos</span>
-          {progress === compounds.length && <span className="text-emerald-400 font-semibold">✓ Completo</span>}
+          <span className="text-white/40">{progress}/{totalCompounds} compostos</span>
+          {progress === totalCompounds && <span className="text-emerald-400 font-semibold">✓ Completo</span>}
         </div>
         <div className="h-1 rounded-full bg-white/10 overflow-hidden">
-          <motion.div className="h-full bg-emerald-500 rounded-full" animate={{ width: `${(progress / compounds.length) * 100}%` }} transition={{ duration: 0.6 }} />
+          <motion.div className="h-full bg-emerald-500 rounded-full" animate={{ width: `${(progress / totalCompounds) * 100}%` }} transition={{ duration: 0.6 }} />
         </div>
       </div>
 
-      {/* Selector */}
-      <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-hide -mx-6 px-6 snap-x">
-        {compounds.map((c, i) => {
-          const isSelected = selectedId === c.id;
-          const isVisited = visited.has(c.id);
-          return (
-            <motion.button key={c.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 + i * 0.03 }}
-              whileTap={{ scale: 0.95 }} onClick={() => handleSelect(c.id)}
-              className="snap-center flex-shrink-0 rounded-xl px-3.5 py-2.5 flex flex-col items-center gap-1 min-w-[84px] transition-all"
-              style={{ background: isSelected ? G.accentBg : G.card, border: isSelected ? `1px solid ${G.accentBorder}` : `0.5px solid ${G.border}` }}>
-              <div className="flex items-center gap-1">
-                <span className="text-[12px] font-medium whitespace-nowrap" style={{ color: isSelected ? G.accent : G.t80 }}>{c.name}</span>
-                {isVisited && !isSelected && <Check className="w-3 h-3" style={{ color: "hsl(142 60% 40%)" }} />}
+      {/* Family cards */}
+      <div className="space-y-3">
+        <p className="text-xs text-white/40 uppercase tracking-widest">Famílias Hormonais</p>
+        {families.map((family, i) => (
+          <motion.div key={family.title} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
+            onClick={() => setSelectedFamily(family)}
+            className="rounded-2xl overflow-hidden relative cursor-pointer active:scale-[.98] transition-transform"
+            style={{ border: `0.5px solid ${G.border}` }}>
+            <img src={family.image} alt={family.title} className="w-full h-28 object-cover" />
+            <div className="absolute inset-0 flex items-end p-4" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9), transparent 60%)" }}>
+              <div className="flex-1">
+                <h4 className="text-sm font-bold text-white">{family.title}</h4>
+                <p className="text-[10px] text-white/40 mt-0.5">{family.compounds.length} compostos</p>
               </div>
-              <span className="text-[9px] whitespace-nowrap" style={{ color: G.t45 }}>{c.tag}</span>
-            </motion.button>
-          );
-        })}
-      </div>
-
-      {/* Content */}
-      <AnimatePresence mode="wait">
-        {compound && (
-          <motion.div key={compound.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3">
-            <div className="rounded-xl overflow-hidden relative" style={{ border: `0.5px solid ${G.border}` }}>
-              <img src={compound.image} alt={compound.name} className="w-full h-40 object-cover" loading="lazy" />
-              <div className="absolute inset-0 flex items-end p-4" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85), transparent 60%)" }}>
-                <div className="flex items-center gap-2">
-                  <span className="text-base font-bold text-white">{compound.name}</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: G.accentBg, color: G.accent, border: `0.5px solid ${G.accentBorderSoft}` }}>{compound.tag}</span>
-                </div>
-              </div>
+              <ChevronRight className="w-4 h-4 text-white/30" />
             </div>
-            {compoundFields.map((field, i) => (
-              <motion.div key={field.key} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                className="rounded-xl p-4 space-y-1.5"
-                style={{ background: field.key === "resumo" ? G.accentText06 : G.card, border: field.key === "resumo" ? `0.5px solid ${G.accentBorderSoft}` : `0.5px solid ${G.borderSoft}` }}>
-                <p className="text-[11px] uppercase tracking-widest font-medium" style={{ color: field.key === "resumo" ? G.accent : G.t40 }}>{field.label}</p>
-                <p className="text-sm leading-relaxed" style={{ color: G.t80 }}>{compound[field.key]}</p>
-              </motion.div>
-            ))}
           </motion.div>
-        )}
-      </AnimatePresence>
+        ))}
+      </div>
 
       {/* Gamification */}
       {gamificationMessages.map(gm => progress >= gm.min && (
@@ -791,38 +868,12 @@ const TabConteudo = () => {
           <p className="text-sm font-medium" style={{ color: G.accentSoft }}>{gm.text}</p>
         </motion.div>
       ))}
-
-      {/* Locked section */}
-      <div className="relative rounded-2xl p-5 space-y-3 overflow-hidden" style={{ background: G.card, border: `0.5px solid ${G.border}` }}>
-        {progress < compounds.length && (
-          <div className="absolute inset-0 z-10 backdrop-blur-md flex flex-col items-center justify-center gap-3" style={{ background: "rgba(0,0,0,0.7)" }}>
-            <Lock className="w-6 h-6" style={{ color: G.t30 }} />
-            <p className="text-xs font-medium text-center" style={{ color: G.t40 }}>Explore todos os {compounds.length} compostos para desbloquear</p>
-          </div>
-        )}
-        <div className="flex items-center gap-2">
-          {progress === compounds.length ? <Unlock className="w-4 h-4" style={{ color: G.accent }} /> : <Lock className="w-4 h-4" style={{ color: G.t30 }} />}
-          <h3 className="text-base font-semibold" style={{ color: G.t92 }}>Nível Avançado STH</h3>
-        </div>
-        <p className="text-sm leading-relaxed" style={{ color: G.t55 }}>Combinação de compostos, ajuste fino e controle real de resultado.</p>
-        {progress === compounds.length && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-2 space-y-3">
-            <div className="flex items-center gap-2">
-              <Award className="w-4 h-4" style={{ color: G.accent }} />
-              <p className="text-xs font-semibold" style={{ color: G.accent }}>Conteúdo desbloqueado!</p>
-            </div>
-            <p className="text-sm leading-relaxed" style={{ color: G.t65 }}>
-              A combinação de compostos exige leitura de meia-vida, janela de aplicação e controle de aromatização.
-            </p>
-          </motion.div>
-        )}
-      </div>
     </motion.div>
   );
 };
 
-/* ──── Tab: Perfil ──── */
-const TabPerfil = ({ profile, macroResult, onConvert }: { profile: ProfileData; macroResult: MacroResult | null; onConvert: () => void }) => {
+/* ──── Tab: Perfil (with logout) ──── */
+const TabPerfil = ({ profile, macroResult, onConvert, onLogout }: { profile: ProfileData; macroResult: MacroResult | null; onConvert: () => void; onLogout: () => void }) => {
   const objLabel = profile.objetivo === "emagrecimento" ? "Emagrecimento" : profile.objetivo === "hipertrofia" ? "Hipertrofia" : "Saúde";
   const locked = ["Plano alimentar personalizado", "Treino completo", "Protocolo estratégico"];
 
@@ -860,6 +911,13 @@ const TabPerfil = ({ profile, macroResult, onConvert }: { profile: ProfileData; 
           </button>
         ))}
       </div>
+
+      {/* Logout button */}
+      <button onClick={onLogout}
+        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-red-500/20 bg-red-500/5 text-red-400 text-sm font-medium mt-4 active:scale-[.98] transition-transform">
+        <LogOut className="w-4 h-4" />
+        Sair da plataforma
+      </button>
     </motion.div>
   );
 };
