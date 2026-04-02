@@ -46,6 +46,7 @@ import FinanceiroDashboard from "./pages/financeiro/FinanceiroDashboard";
 import NotFound from "./pages/NotFound";
 import { useDynamicFavicon } from "@/hooks/useDynamicFavicon";
 import { useAdminTheme } from "@/hooks/useAdminTheme";
+import UpdateBanner from "@/components/shared/UpdateBanner";
 
 // Lazy load pages that use Tiptap editor to avoid blocking the app
 const AdminDiet = lazy(() => import("./pages/admin/AdminDiet"));
@@ -65,6 +66,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <DynamicHead />
+          <UpdateBanner />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
