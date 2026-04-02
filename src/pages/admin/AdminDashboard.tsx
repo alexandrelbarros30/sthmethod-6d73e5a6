@@ -114,6 +114,19 @@ const AdminDashboard = () => {
     },
   });
 
+  const { data: freeLeads } = useQuery({
+    queryKey: ["admin-free-leads"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("free_leads")
+        .select("*")
+        .eq("converted", false)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      return data || [];
+    },
+  });
+
   const totalStudents = profiles?.length || 0;
   const now = new Date();
   const activeCount = subscriptions?.filter((s) => s.status === "active" && new Date(s.end_date) > now).length || 0;
