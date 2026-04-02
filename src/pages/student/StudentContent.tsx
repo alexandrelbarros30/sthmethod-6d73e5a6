@@ -80,7 +80,7 @@ const StudentContent = () => {
 
   const handleNavigate = (s: ContentSection) => {
     if (s === "receitas") {
-      navigate("/student/recipes");
+      navigate("/dashboard/recipes");
       return;
     }
     setSection(s);
