@@ -476,7 +476,7 @@ const FreePage = () => {
               <h2 className="text-lg font-semibold tracking-tight mt-1">
                 {tab === "receitas" && "Receitas Saudáveis"}
                 {tab === "macros" && "Calculadora de Macros"}
-                {tab === "conteudo" && "Hormônios e Compostos"}
+                {tab === "conteudo" && "Conteúdo"}
                 {tab === "perfil" && "Meu Perfil"}
               </h2>
             </div>
