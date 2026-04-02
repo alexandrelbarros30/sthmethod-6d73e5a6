@@ -1,9 +1,10 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Salad, FlaskConical, Activity, User, Dumbbell, TrendingUp, BookOpen, CreditCard, ListChecks, LogOut } from "lucide-react";
+import { LayoutDashboard, Salad, FlaskConical, Activity, User, Dumbbell, TrendingUp, BookOpen, CreditCard, ListChecks, LogOut, FileText, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const mainItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Início" },
@@ -14,6 +15,7 @@ const mainItems = [
 ];
 
 const menuItems = [
+  { to: "/dashboard/profile", icon: FileText, label: "Minha Ficha" },
   { to: "/dashboard/training", icon: Dumbbell, label: "Treino" },
   { to: "/dashboard/guided-workout", icon: ListChecks, label: "Treino Guiado" },
   { to: "/dashboard/content", icon: BookOpen, label: "Conteúdo" },
@@ -23,7 +25,7 @@ const menuItems = [
 const FloatingDock = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, profile } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -42,6 +44,7 @@ const FloatingDock = () => {
   }, [menuOpen]);
 
   const isActive = (path: string) => location.pathname === path;
+  const firstName = profile?.full_name?.split(" ")[0] || "";
 
   return (
     <>
@@ -52,7 +55,7 @@ const FloatingDock = () => {
           initial={{ y: 60, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: "spring", stiffness: 380, damping: 28, delay: 0.1 }}
-          className="relative flex items-center justify-around rounded-[22px] bg-card/75 backdrop-blur-3xl border border-border/40 shadow-apple-lg px-2 py-2.5"
+          className="relative flex items-center justify-around rounded-[22px] bg-card border border-border shadow-apple-lg px-2 py-2.5"
         >
           {mainItems.map((item) => {
             const Icon = item.icon;
@@ -113,7 +116,7 @@ const FloatingDock = () => {
             );
           })}
 
-          {/* Account menu trigger */}
+          {/* Profile menu trigger */}
           <div ref={menuRef} className="relative flex flex-col items-center gap-0.5 py-1 px-1 min-w-[3rem]">
             <motion.button
               whileTap={{ scale: 0.88 }}
@@ -125,13 +128,18 @@ const FloatingDock = () => {
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <User className="w-[18px] h-[18px]" />
+              <Avatar className="w-7 h-7">
+                <AvatarImage src={profile?.avatar_url || ""} alt={firstName} />
+                <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">
+                  {firstName.charAt(0).toUpperCase() || <User className="w-3.5 h-3.5" />}
+                </AvatarFallback>
+              </Avatar>
             </motion.button>
             <span className={cn(
               "text-[10px] font-medium transition-colors",
               menuOpen ? "text-primary" : "text-muted-foreground"
             )}>
-              Conta
+              Perfil
             </span>
 
             {menuOpen && (
