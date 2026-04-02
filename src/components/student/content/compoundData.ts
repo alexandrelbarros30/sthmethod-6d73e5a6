@@ -202,6 +202,7 @@ export const families: Family[] = [
     description: "Alteração no carbono 19. Compostos altamente anabólicos com maior complexidade de manejo hormonal.",
     profile: "Alta capacidade de transformação corporal, com necessidade de acompanhamento mais estratégico.",
     accentHue: "30",
+    image: imgFamily19nor,
     compounds: [
       {
         id: "nandrolona",
