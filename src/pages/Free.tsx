@@ -10,6 +10,7 @@ import { calculateMacros, type MacroInput, type MacroResult } from "@/lib/macro-
 import { recipes as richRecipes, recipeCategories, type Recipe as RichRecipe } from "@/data/recipes";
 import { families, type Family } from "@/components/student/content/compoundData";
 import CompoundDetail from "@/components/student/content/CompoundDetail";
+import heroImg from "@/assets/content-hero.jpg";
 
 /* ───────── types ───────── */
 type Screen = "login" | "hero" | "diagnostic" | "result" | "progress" | "lock" | "dashboard";
