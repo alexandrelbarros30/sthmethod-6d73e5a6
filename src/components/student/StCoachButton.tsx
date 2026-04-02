@@ -3,12 +3,26 @@ import { Button } from "@/components/ui/button";
 import { Smartphone, Play } from "lucide-react";
 
 const openStCoach = () => {
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  const deepLink = isIOS
-    ? "stcoach://"
-    : "intent://#Intent;scheme=stcoach;package=com.appsupercoach.app;end";
+  const userAgent = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(userAgent);
+  const isAndroid = /Android/i.test(userAgent);
+  const appStoreUrl = "https://apps.apple.com/us/app/st-coach/id1537125272";
+  const playStoreUrl = "https://play.google.com/store/apps/details?id=com.appsupercoach.app";
 
-  window.location.href = deepLink;
+  if (isAndroid) {
+    const fallbackUrl = encodeURIComponent(playStoreUrl);
+    window.location.href = `intent://#Intent;scheme=stcoach;package=com.appsupercoach.app;S.browser_fallback_url=${fallbackUrl};end`;
+    return;
+  }
+
+  const start = Date.now();
+  window.location.href = "stcoach://";
+
+  setTimeout(() => {
+    if (document.visibilityState === "visible" && Date.now() - start < 2500) {
+      window.location.href = isIOS ? appStoreUrl : playStoreUrl;
+    }
+  }, 1800);
 };
 
 const StCoachButton = () => (
