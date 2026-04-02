@@ -6,9 +6,10 @@ import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Video, Dumbbell, Timer, ChevronDown, ChevronUp, Play, Info, Smartphone } from "lucide-react";
+import { Video, Dumbbell, Timer, ChevronDown, ChevronUp, Play, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import StCoachButton from "@/components/student/StCoachButton";
 import StudentInfoHeader from "@/components/student/StudentInfoHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
@@ -121,38 +122,7 @@ const StudentTraining = () => {
     return (
       <DashboardLayout role="student" title="Treino" subtitle="Seu plano de treino personalizado.">
         <div className="max-w-4xl training-protected space-y-4">
-          <Card className="border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
-            <CardContent className="py-4 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
-                <Smartphone className="w-6 h-6 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-foreground font-display text-sm">Abrir no ST Coach</p>
-                <p className="text-xs text-muted-foreground">Execute seu treino pelo app com cronômetro e guia</p>
-              </div>
-              <Button
-                size="sm"
-                className="shrink-0 gap-1.5"
-                onClick={() => {
-                  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-                  const storeUrl = isIOS
-                    ? "https://apps.apple.com/us/app/st-coach/id1537125272"
-                    : "https://play.google.com/store/apps/details?id=com.appsupercoach.app";
-
-                  if (isIOS) {
-                    window.location.href = "stcoach://";
-                    setTimeout(() => { window.open(storeUrl, "_blank"); }, 1500);
-                  } else {
-                    window.location.href =
-                      "intent://#Intent;package=com.appsupercoach.app;scheme=stcoach;S.browser_fallback_url=" +
-                      encodeURIComponent(storeUrl) + ";end";
-                  }
-                }}
-              >
-                <Play className="w-3.5 h-3.5" /> Abrir App
-              </Button>
-            </CardContent>
-          </Card>
+          <StCoachButton />
 
           <Card><CardContent className="py-8 text-center">
             <Dumbbell className="w-10 h-10 mx-auto text-muted-foreground/40 mb-3" />
@@ -203,40 +173,7 @@ const StudentTraining = () => {
         </Card>
 
         {/* ST Coach App Button */}
-        <Card className="border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
-          <CardContent className="py-4 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
-              <Smartphone className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-foreground font-display text-sm">Abrir no ST Coach</p>
-              <p className="text-xs text-muted-foreground">Execute seu treino pelo app com cronômetro e guia</p>
-            </div>
-            <Button
-              size="sm"
-              className="shrink-0 gap-1.5"
-              onClick={() => {
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-                const storeUrl = isIOS
-                  ? "https://apps.apple.com/us/app/st-coach/id1537125272"
-                  : "https://play.google.com/store/apps/details?id=com.appsupercoach.app";
-
-                if (isIOS) {
-                  // iOS universal link — tries to open app, falls back to App Store
-                  window.location.href = "stcoach://";
-                  setTimeout(() => { window.open(storeUrl, "_blank"); }, 1500);
-                } else {
-                  // Android intent — opens app if installed, falls back to Play Store
-                  window.location.href =
-                    "intent://#Intent;package=com.appsupercoach.app;scheme=stcoach;S.browser_fallback_url=" +
-                    encodeURIComponent(storeUrl) + ";end";
-                }
-              }}
-            >
-              <Play className="w-3.5 h-3.5" /> Abrir App
-            </Button>
-          </CardContent>
-        </Card>
+        <StCoachButton />
 
         {/* Tabs for each workout */}
         <Tabs defaultValue={defaultTab} className="w-full">
