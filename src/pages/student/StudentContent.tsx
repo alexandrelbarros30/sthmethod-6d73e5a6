@@ -78,6 +78,13 @@ const StudentContent = () => {
       <div className="min-h-screen -m-4 sm:-m-6 px-4 sm:px-6 py-6 space-y-6 max-w-lg mx-auto" style={{ background: G.bg }}>
         {/* ── HEADER ── */}
         <motion.header initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-3 pt-2">
+          {/* Logo */}
+          {logoUrl && !activeFamily && (
+            <div className="flex justify-center pb-1">
+              <img src={logoUrl} alt="Logo" className="h-10 object-contain" />
+            </div>
+          )}
+
           {activeFamily ? (
             <button onClick={handleBack} className="flex items-center gap-2 text-sm font-medium" style={{ color: G.t60 }}>
               <ArrowLeft className="w-4 h-4" /> Famílias
