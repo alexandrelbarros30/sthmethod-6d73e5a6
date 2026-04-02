@@ -11,7 +11,7 @@ const mainItems = [
   { to: "/dashboard/bioimpedance", icon: Activity, label: "Bio" },
   { to: "/dashboard/diet", icon: Salad, label: "Dieta", center: true },
   { to: "/dashboard/evolution", icon: TrendingUp, label: "Evolução" },
-  { to: "/dashboard/protocol", icon: FlaskConical, label: "Protocolo" },
+  { to: "/dashboard/content", icon: BookOpen, label: "Conteúdo" },
 ];
 
 const menuItems = [
