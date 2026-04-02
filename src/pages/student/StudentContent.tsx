@@ -220,6 +220,13 @@ const StudentContent = () => {
           </motion.div>
         )}
 
+        {/* ═══ COMBINAÇÕES SECTION ═══ */}
+        {section === "combinacoes" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <CombinationsSection />
+          </motion.div>
+        )}
+
         {/* ── GAMIFICATION (hormônios) ── */}
         {section === "hormonios" && (
           <div className="space-y-3">
