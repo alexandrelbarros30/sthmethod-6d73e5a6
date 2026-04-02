@@ -1,8 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { motion } from "framer-motion";
 import { ArrowLeft, Brain, Shield, Zap, Lock, Unlock, Award, MessageCircle, ChevronRight } from "lucide-react";
 import { families, TOTAL_COMPOUNDS, type Family } from "@/components/student/content/compoundData";
+import { supabase } from "@/integrations/supabase/client";
 import FamilyCard from "@/components/student/content/FamilyCard";
 import CompoundDetail from "@/components/student/content/CompoundDetail";
 import heroImg from "@/assets/content-hero.jpg";
@@ -45,8 +46,14 @@ const StudentContent = () => {
   const [activeFamily, setActiveFamily] = useState<Family | null>(null);
   const [selectedCompound, setSelectedCompound] = useState<string | null>(null);
   const [visited, setVisited] = useState<Set<string>>(new Set());
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   const progress = visited.size;
+
+  useEffect(() => {
+    supabase.from("landing_settings").select("value").eq("key", "logo_url").maybeSingle()
+      .then(({ data }) => { if (data?.value) setLogoUrl(data.value); });
+  }, []);
 
   const handleSelect = useCallback((id: string) => {
     setSelectedCompound(id);
@@ -71,6 +78,13 @@ const StudentContent = () => {
       <div className="min-h-screen -m-4 sm:-m-6 px-4 sm:px-6 py-6 space-y-6 max-w-lg mx-auto" style={{ background: G.bg }}>
         {/* ── HEADER ── */}
         <motion.header initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-3 pt-2">
+          {/* Logo */}
+          {logoUrl && !activeFamily && (
+            <div className="flex justify-center pb-1">
+              <img src={logoUrl} alt="Logo" className="h-10 object-contain" />
+            </div>
+          )}
+
           {activeFamily ? (
             <button onClick={handleBack} className="flex items-center gap-2 text-sm font-medium" style={{ color: G.t60 }}>
               <ArrowLeft className="w-4 h-4" /> Famílias
