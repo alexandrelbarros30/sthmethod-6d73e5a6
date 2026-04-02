@@ -66,6 +66,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <DynamicHead />
+          <UpdateBanner />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
