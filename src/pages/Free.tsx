@@ -799,13 +799,24 @@ const TabMacros = ({ profile }: { profile: ProfileData }) => {
 };
 
 /* ──── Tab: Conteúdo (full compound families from student) ──── */
+type ContentView = "hub" | "hormonios" | "dicas" | "receitas_section" | "combinacoes";
+
+const contentSections = [
+  { id: "hormonios" as ContentView, tag: "Compostos", title: "Hormônios e Compostos", subtitle: "3 famílias · 15 compostos", img: cardHormoniosImg, icon: Beaker, accentHue: "145" },
+  { id: "dicas" as ContentView, tag: "Estratégia", title: "Dicas Estratégicas", subtitle: "8 temas fundamentais", img: cardDicasImg, icon: Brain, accentHue: "210" },
+  { id: "receitas_section" as ContentView, tag: "Nutrição", title: "Receitas Saudáveis", subtitle: "Pratos inteligentes", img: cardReceitasImg, icon: UtensilsCrossed, accentHue: "30" },
+  { id: "combinacoes" as ContentView, tag: "Estratégia", title: "Combinações Estratégicas", subtitle: "Definição · Hipertrofia", img: cardCombinacoesImg, icon: Layers, accentHue: "270" },
+];
+
 const TabConteudo = () => {
+  const [view, setView] = useState<ContentView>("hub");
   const [selectedFamily, setSelectedFamily] = useState<Family | null>(null);
   const [selectedCompoundId, setSelectedCompoundId] = useState<string | null>(null);
   const [visited, setVisited] = useState<Set<string>>(new Set());
+  const [recipeFilter, setRecipeFilter] = useState("Todos");
+  const [selectedRecipe, setSelectedRecipe] = useState<RichRecipe | null>(null);
 
-  const allCompounds = families.flatMap(f => f.compounds);
-  const totalCompounds = allCompounds.length;
+  const totalCompounds = families.flatMap(f => f.compounds).length;
   const progress = visited.size;
 
   const handleSelectCompound = useCallback((id: string) => {
@@ -813,70 +824,262 @@ const TabConteudo = () => {
     setVisited(prev => new Set(prev).add(id));
   }, []);
 
-  if (selectedFamily) {
+  const handleBack = () => {
+    if (selectedFamily) {
+      setSelectedFamily(null);
+      setSelectedCompoundId(null);
+    } else {
+      setView("hub");
+    }
+  };
+
+  const filteredRecipes = recipeFilter === "Todos" ? richRecipes : richRecipes.filter(r => r.category === recipeFilter);
+
+  // ── Hub view
+  if (view === "hub") {
     return (
       <motion.div {...fade} className="space-y-4 pb-6">
-        <button onClick={() => { setSelectedFamily(null); setSelectedCompoundId(null); }} className="flex items-center gap-1 text-xs text-white/40 mb-2">
-          <ArrowLeft className="w-3.5 h-3.5" /> Voltar
-        </button>
-        <CompoundDetail family={selectedFamily} selected={selectedCompoundId} visited={visited} onSelect={handleSelectCompound} />
+        <p className="text-sm leading-relaxed" style={{ color: G.t50 }}>
+          Escolha uma trilha. Cada módulo entrega clareza e resultado.
+        </p>
+        <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-none -mx-1 px-1 pb-2">
+          {contentSections.map((s, i) => {
+            const accent = `hsl(${s.accentHue} 60% 42%)`;
+            const accentBg = `hsl(${s.accentHue} 60% 42% / 0.12)`;
+            const accentBorder = `hsl(${s.accentHue} 60% 42% / 0.3)`;
+            return (
+              <motion.button key={s.id} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.08 * i }}
+                whileTap={{ scale: 0.96 }} onClick={() => setView(s.id)}
+                className="snap-center flex-shrink-0 w-[72vw] max-w-[280px] text-left rounded-2xl overflow-hidden relative group"
+                style={{ border: `0.5px solid ${G.border}` }}>
+                <div className="relative h-36 overflow-hidden">
+                  <img src={s.img} alt={s.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading={i === 0 ? undefined : "lazy"} />
+                  <div className="absolute inset-0" style={{ background: "linear-gradient(to top, hsl(0 0% 4% / 1) 0%, hsl(0 0% 4% / 0.4) 55%, transparent 100%)" }} />
+                  <div className="absolute top-2.5 left-2.5">
+                    <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.18em] font-bold px-2 py-1 rounded-full backdrop-blur-md"
+                      style={{ background: accentBg, color: accent, border: `0.5px solid ${accentBorder}` }}>
+                      <s.icon className="w-2.5 h-2.5" />{s.tag}
+                    </span>
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 p-3.5 space-y-0.5">
+                    <h3 className="text-[15px] font-bold tracking-tight leading-tight" style={{ color: G.t96 }}>{s.title}</h3>
+                    <p className="text-[11px]" style={{ color: G.t50 }}>{s.subtitle}</p>
+                  </div>
+                </div>
+                <div className="px-3.5 py-2.5 flex items-center justify-between" style={{ background: G.card }}>
+                  <span className="text-[10px] font-medium" style={{ color: G.t40 }}>Explorar</span>
+                  <ChevronRight className="w-3 h-3" style={{ color: accent }} />
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
       </motion.div>
     );
   }
 
-  return (
-    <motion.div {...fade} className="space-y-6 pb-6">
-      {/* Hero */}
-      <div className="rounded-2xl overflow-hidden relative" style={{ border: `0.5px solid ${G.border}` }}>
-        <img src={heroImg} alt="STH Method" className="w-full h-44 object-cover" />
-        <div className="absolute inset-0 flex flex-col justify-end p-4" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.92), rgba(0,0,0,0.2))" }}>
-          <h3 className="text-base font-semibold text-white">Entenda com clareza</h3>
-          <p className="text-[11px] text-white/40 mt-1">Leitura rápida. Interpretação estratégica.</p>
-        </div>
-      </div>
+  // ── Back button (always visible inside any section)
+  const BackButton = () => (
+    <button onClick={handleBack} className="flex items-center gap-1.5 text-xs font-medium mb-3" style={{ color: G.t60 }}>
+      <ArrowLeft className="w-3.5 h-3.5" />
+      {selectedFamily ? "Famílias" : "Conteúdo"}
+    </button>
+  );
 
-      {/* Progress */}
-      <div className="space-y-2">
-        <div className="flex justify-between text-xs">
-          <span className="text-white/40">{progress}/{totalCompounds} compostos</span>
-          {progress === totalCompounds && <span className="text-emerald-400 font-semibold">✓ Completo</span>}
-        </div>
-        <div className="h-1 rounded-full bg-white/10 overflow-hidden">
-          <motion.div className="h-full bg-emerald-500 rounded-full" animate={{ width: `${(progress / totalCompounds) * 100}%` }} transition={{ duration: 0.6 }} />
-        </div>
-      </div>
+  // ── Hormônios
+  if (view === "hormonios") {
+    if (selectedFamily) {
+      return (
+        <motion.div {...fade} className="space-y-4 pb-6">
+          <BackButton />
+          <h3 className="text-base font-bold" style={{ color: G.t96 }}>{selectedFamily.title}</h3>
+          <p className="text-xs" style={{ color: `hsl(${selectedFamily.accentHue} 50% 55%)` }}>{selectedFamily.subheadline}</p>
+          <CompoundDetail family={selectedFamily} selected={selectedCompoundId} visited={visited} onSelect={handleSelectCompound} />
+        </motion.div>
+      );
+    }
 
-      {/* Family cards */}
-      <div className="space-y-3">
-        <p className="text-xs text-white/40 uppercase tracking-widest">Famílias Hormonais</p>
-        {families.map((family, i) => (
-          <motion.div key={family.title} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
-            onClick={() => setSelectedFamily(family)}
-            className="rounded-2xl overflow-hidden relative cursor-pointer active:scale-[.98] transition-transform"
-            style={{ border: `0.5px solid ${G.border}` }}>
-            <img src={family.image} alt={family.title} className="w-full h-28 object-cover" />
-            <div className="absolute inset-0 flex items-end p-4" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9), transparent 60%)" }}>
-              <div className="flex-1">
-                <h4 className="text-sm font-bold text-white">{family.title}</h4>
-                <p className="text-[10px] text-white/40 mt-0.5">{family.compounds.length} compostos</p>
+    return (
+      <motion.div {...fade} className="space-y-4 pb-6">
+        <BackButton />
+        <h3 className="text-base font-bold" style={{ color: G.t96 }}>Hormônios e Compostos</h3>
+
+        {/* Progress */}
+        <div className="space-y-2">
+          <div className="flex justify-between text-xs">
+            <span style={{ color: G.t40 }}>{progress}/{totalCompounds} compostos</span>
+            {progress === totalCompounds && <span className="font-semibold" style={{ color: G.accent }}>✓ Completo</span>}
+          </div>
+          <div className="h-1 rounded-full overflow-hidden" style={{ background: G.t10 }}>
+            <motion.div className="h-full rounded-full" style={{ background: G.accent }} animate={{ width: `${(progress / totalCompounds) * 100}%` }} transition={{ duration: 0.6 }} />
+          </div>
+        </div>
+
+        {/* Family cards */}
+        <div className="space-y-3">
+          {families.map((family, i) => (
+            <motion.div key={family.title} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
+              onClick={() => setSelectedFamily(family)}
+              className="rounded-2xl overflow-hidden relative cursor-pointer active:scale-[.98] transition-transform"
+              style={{ border: `0.5px solid ${G.border}` }}>
+              <img src={family.image} alt={family.title} className="w-full h-28 object-cover" />
+              <div className="absolute inset-0 flex items-end p-4" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9), transparent 60%)" }}>
+                <div className="flex-1">
+                  <h4 className="text-sm font-bold text-white">{family.title}</h4>
+                  <p className="text-[10px] text-white/40 mt-0.5">{family.compounds.length} compostos</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-white/30" />
               </div>
-              <ChevronRight className="w-4 h-4 text-white/30" />
-            </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Gamification */}
+        {gamificationMessages.map(gm => progress >= gm.min && (
+          <motion.div key={gm.min} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+            className="rounded-xl p-4 flex items-center gap-3" style={{ background: G.accentText06, border: `0.5px solid ${G.accentText15}` }}>
+            <gm.icon className="w-5 h-5 flex-shrink-0" style={{ color: G.accent }} />
+            <p className="text-sm font-medium" style={{ color: G.accentSoft }}>{gm.text}</p>
           </motion.div>
         ))}
-      </div>
+      </motion.div>
+    );
+  }
 
-      {/* Gamification */}
-      {gamificationMessages.map(gm => progress >= gm.min && (
-        <motion.div key={gm.min} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-          className="rounded-xl p-4 flex items-center gap-3" style={{ background: G.accentText06, border: `0.5px solid ${G.accentText15}` }}>
-          <gm.icon className="w-5 h-5 flex-shrink-0" style={{ color: G.accent }} />
-          <p className="text-sm font-medium" style={{ color: G.accentSoft }}>{gm.text}</p>
-        </motion.div>
-      ))}
-    </motion.div>
-  );
-};
+  // ── Dicas
+  if (view === "dicas") {
+    return (
+      <motion.div {...fade} className="space-y-4 pb-6">
+        <BackButton />
+        <h3 className="text-base font-bold" style={{ color: G.t96 }}>Dicas Estratégicas</h3>
+        <InsightCarousel />
+      </motion.div>
+    );
+  }
+
+  // ── Receitas (inside content hub)
+  if (view === "receitas_section") {
+    return (
+      <motion.div {...fade} className="space-y-4 pb-6">
+        <BackButton />
+        <h3 className="text-base font-bold" style={{ color: G.t96 }}>Receitas Saudáveis</h3>
+
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
+          {recipeCategories.map(cat => (
+            <button key={cat} onClick={() => setRecipeFilter(cat)}
+              className={`px-3 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap transition-colors ${recipeFilter === cat ? "bg-emerald-500 text-black" : "bg-white/5 border border-white/10 text-white/50"}`}>
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          {filteredRecipes.map((r, i) => (
+            <motion.div key={r.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+              onClick={() => setSelectedRecipe(r)}
+              className="bg-white/[.03] border border-white/[.06] rounded-2xl overflow-hidden cursor-pointer active:scale-[.97] transition-transform">
+              <div className="relative aspect-square overflow-hidden">
+                <img src={r.image} alt={r.title} className="w-full h-full object-cover" loading="lazy" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                <div className="absolute bottom-2 left-2 right-2">
+                  <p className="text-white text-xs font-bold leading-tight">{r.title}</p>
+                </div>
+              </div>
+              <div className="px-2.5 py-2 flex items-center justify-between text-[10px] text-white/40">
+                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {r.time}</span>
+                <span className="flex items-center gap-1"><Flame className="w-3 h-3" /> {r.kcal} kcal</span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Recipe detail modal */}
+        <AnimatePresence>
+          {selectedRecipe && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100] bg-black/95 overflow-y-auto" onClick={() => setSelectedRecipe(null)}>
+              <div className="max-w-md mx-auto" onClick={e => e.stopPropagation()}>
+                <div className="relative">
+                  <img src={selectedRecipe.image} alt={selectedRecipe.title} className="w-full aspect-video object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent" />
+                  <button onClick={() => setSelectedRecipe(null)} className="absolute top-4 left-4 text-white/50 hover:text-white flex items-center gap-1 text-xs">
+                    <ArrowLeft className="w-4 h-4" /> Voltar
+                  </button>
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <h3 className="text-lg font-bold">{selectedRecipe.title}</h3>
+                    <div className="flex gap-3 mt-1 text-xs text-white/60">
+                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {selectedRecipe.time}</span>
+                      <span className="flex items-center gap-1"><Flame className="w-3 h-3" /> {selectedRecipe.kcal} kcal</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-5 space-y-5">
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedRecipe.tags.map(tag => (
+                      <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">{tag}</span>
+                    ))}
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[11px] uppercase tracking-widest font-medium" style={{ color: G.accent }}>📌 Objetivo</p>
+                    <div className="flex gap-2">
+                      {selectedRecipe.objetivo.split("/").map(obj => (
+                        <span key={obj.trim()} className={`text-sm font-bold ${objectiveColor[obj.trim()] || "text-emerald-400"}`}>{obj.trim()}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-[11px] uppercase tracking-widest font-medium" style={{ color: G.accent }}>🍽️ Composição Base</p>
+                    <ul className="space-y-1.5">
+                      {selectedRecipe.ingredients.map((ing, i) => (
+                        <li key={i} className="text-xs text-white/60 flex items-start gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />{ing}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-[11px] uppercase tracking-widest font-medium" style={{ color: G.accent }}>⚙️ Preparo</p>
+                    <p className="text-xs text-white/60 whitespace-pre-line leading-relaxed">{selectedRecipe.instructions}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-[11px] uppercase tracking-widest font-medium" style={{ color: G.accent }}>🔄 Substituições</p>
+                    <ul className="space-y-1.5">
+                      {selectedRecipe.substituicoes.map((sub, i) => (
+                        <li key={i} className="text-xs text-white/60 flex items-start gap-2">
+                          <span className="text-emerald-400">→</span>{sub}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="rounded-xl p-4 space-y-1.5" style={{ background: G.accentText06, border: `0.5px solid ${G.accentBorderSoft}` }}>
+                    <p className="text-[11px] uppercase tracking-widest font-medium" style={{ color: G.accent }}>💡 Ajuste Estratégico</p>
+                    <p className="text-xs leading-relaxed" style={{ color: G.t80 }}>{selectedRecipe.ajusteEstrategico}</p>
+                  </div>
+                  <div className="rounded-xl p-4 space-y-1.5" style={{ background: G.card, border: `0.5px solid ${G.border}` }}>
+                    <p className="text-[11px] uppercase tracking-widest font-medium" style={{ color: G.accent }}>🚀 Dica Prática</p>
+                    <p className="text-xs leading-relaxed" style={{ color: G.t80 }}>{selectedRecipe.dicaPratica}</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    );
+  }
+
+  // ── Combinações
+  if (view === "combinacoes") {
+    return (
+      <motion.div {...fade} className="space-y-4 pb-6">
+        <BackButton />
+        <h3 className="text-base font-bold" style={{ color: G.t96 }}>Combinações Estratégicas</h3>
+        <CombinationsSection />
+      </motion.div>
+    );
+  }
+
+  return null;
 
 /* ──── Tab: Perfil (with logout) ──── */
 const TabPerfil = ({ profile, macroResult, onConvert, onLogout }: { profile: ProfileData; macroResult: MacroResult | null; onConvert: () => void; onLogout: () => void }) => {
