@@ -48,6 +48,7 @@ export const families: Family[] = [
     description: "Moléculas versáteis que podem se converter em estrogênio e DHT. São a base estrutural da maioria dos protocolos.",
     profile: "Equilíbrio entre ganho de massa e força, com maior tendência à retenção hídrica.",
     accentHue: "145",
+    image: imgFamilyTestosterona,
     compounds: [
       {
         id: "enantato",
