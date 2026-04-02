@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
-import { ChevronRight, Beaker, Brain, UtensilsCrossed, Flame, Clock } from "lucide-react";
+import { ChevronRight, Beaker, Brain, UtensilsCrossed, Flame, Clock, Layers } from "lucide-react";
 import cardHormoniosImg from "@/assets/card-hormonios.jpg";
 import cardDicasImg from "@/assets/card-dicas.jpg";
 import cardReceitasImg from "@/assets/card-receitas.jpg";
+import cardCombinacoesImg from "@/assets/card-combinacoes.jpg";
 
 export type ContentSection = "hormonios" | "dicas" | "receitas" | "combinacoes";
 
