@@ -183,6 +183,11 @@ const Landing = () => {
 
           {/* Right side: CTA + hamburger */}
           <div className="flex items-center gap-2 shrink-0">
+            <Link to="/free">
+              <Button size="sm" variant="outline" className="text-xs sm:text-sm px-3 sm:px-4 border-primary/30 hover:bg-primary/10">
+                Free
+              </Button>
+            </Link>
             <Link to="/login">
               <Button size="sm" className="gradient-bg text-primary-foreground hover:opacity-90 text-xs sm:text-sm px-3 sm:px-4">
                 Acessar
