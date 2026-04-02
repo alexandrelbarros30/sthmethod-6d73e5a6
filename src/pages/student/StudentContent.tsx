@@ -91,7 +91,7 @@ const StudentContent = () => {
             </button>
           ) : (
             <p className="text-[11px] uppercase tracking-[0.25em] font-medium" style={{ color: G.accent }}>
-              STM Method
+              STH Method
             </p>
           )}
 
@@ -144,7 +144,7 @@ const StudentContent = () => {
               className="rounded-2xl overflow-hidden relative"
               style={{ border: `0.5px solid ${G.border}` }}
             >
-              <img src={heroImg} alt="STM Method" className="w-full h-48 object-cover" width={800} height={512} />
+              <img src={heroImg} alt="STH Method" className="w-full h-48 object-cover" width={800} height={512} />
               <div
                 className="absolute inset-0 flex flex-col justify-end p-5 space-y-2"
                 style={{ background: "linear-gradient(to top, hsl(0 0% 3% / 0.92), hsl(0 0% 3% / 0.3))" }}
@@ -242,7 +242,7 @@ const StudentContent = () => {
             ) : (
               <Lock className="w-4 h-4" style={{ color: G.t30 }} />
             )}
-            <h3 className="text-base font-semibold" style={{ color: G.t92 }}>Nível Avançado STM</h3>
+            <h3 className="text-base font-semibold" style={{ color: G.t92 }}>Nível Avançado STH</h3>
           </div>
           <p className="text-sm leading-relaxed" style={{ color: G.t55 }}>
             Combinação de compostos, ajuste fino e controle real de resultado.

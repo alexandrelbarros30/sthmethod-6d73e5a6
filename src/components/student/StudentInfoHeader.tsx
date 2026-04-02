@@ -24,7 +24,7 @@ const StudentInfoHeader: React.FC<{ info: StudentInfoHeaderProps }> = ({ info })
       {/* Title */}
       <div className="text-center mb-3">
         <h2 className="text-sm font-bold tracking-[0.15em] uppercase text-foreground font-display">
-          STM METHOD
+          STH METHOD
         </h2>
       </div>
 
