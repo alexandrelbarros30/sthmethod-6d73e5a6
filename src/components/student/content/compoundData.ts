@@ -13,6 +13,9 @@ import imgHemogenin from "@/assets/compound-hemogenin.jpg";
 import imgNandrolona from "@/assets/compound-nandrolona.jpg";
 import imgNpp from "@/assets/compound-npp.jpg";
 import imgTrembolona from "@/assets/compound-trembolona.jpg";
+import imgFamilyTestosterona from "@/assets/family-testosterona.jpg";
+import imgFamilyDht from "@/assets/family-dht.jpg";
+import imgFamily19nor from "@/assets/family-19nor.jpg";
 
 export interface Compound {
   id: string;
@@ -33,6 +36,7 @@ export interface Family {
   description: string;
   profile: string;
   accentHue: string;
+  image: string;
   compounds: Compound[];
 }
 
@@ -44,6 +48,7 @@ export const families: Family[] = [
     description: "Moléculas versáteis que podem se converter em estrogênio e DHT. São a base estrutural da maioria dos protocolos.",
     profile: "Equilíbrio entre ganho de massa e força, com maior tendência à retenção hídrica.",
     accentHue: "145",
+    image: imgFamilyTestosterona,
     compounds: [
       {
         id: "enantato",
@@ -131,6 +136,7 @@ export const families: Family[] = [
     description: "Derivados que não aromatizam. Muito utilizados para melhorar densidade muscular e aparência.",
     profile: "Ganhos mais secos, melhora da definição e menor retenção hídrica.",
     accentHue: "200",
+    image: imgFamilyDht,
     compounds: [
       {
         id: "oxandrolona",
@@ -196,6 +202,7 @@ export const families: Family[] = [
     description: "Alteração no carbono 19. Compostos altamente anabólicos com maior complexidade de manejo hormonal.",
     profile: "Alta capacidade de transformação corporal, com necessidade de acompanhamento mais estratégico.",
     accentHue: "30",
+    image: imgFamily19nor,
     compounds: [
       {
         id: "nandrolona",
