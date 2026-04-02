@@ -83,7 +83,7 @@ const SidebarNav = ({ role, links, onNavClick }: { role: string; links: { to: st
 
   const handleLogout = async () => {
     await signOut();
-    navigate("/login");
+    navigate("/");
   };
 
   return (
