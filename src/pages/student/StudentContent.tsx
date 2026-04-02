@@ -46,8 +46,14 @@ const StudentContent = () => {
   const [activeFamily, setActiveFamily] = useState<Family | null>(null);
   const [selectedCompound, setSelectedCompound] = useState<string | null>(null);
   const [visited, setVisited] = useState<Set<string>>(new Set());
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   const progress = visited.size;
+
+  useEffect(() => {
+    supabase.from("landing_settings").select("value").eq("key", "logo_url").maybeSingle()
+      .then(({ data }) => { if (data?.value) setLogoUrl(data.value); });
+  }, []);
 
   const handleSelect = useCallback((id: string) => {
     setSelectedCompound(id);
