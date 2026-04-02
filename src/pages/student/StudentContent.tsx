@@ -9,6 +9,11 @@ import imgMasteronEnan from "@/assets/compound-masteron-enan.jpg";
 import imgNandrolona from "@/assets/compound-nandrolona.jpg";
 import imgGestrinona from "@/assets/compound-gestrinona.jpg";
 import imgOxandrolona from "@/assets/compound-oxandrolona.jpg";
+import imgEnantato from "@/assets/compound-enantato.jpg";
+import imgCipionato from "@/assets/compound-cipionato.jpg";
+import imgPropionato from "@/assets/compound-propionato.jpg";
+import imgDurateston from "@/assets/compound-durateston.jpg";
+import imgGel from "@/assets/compound-gel.jpg";
 
 /* ── Colors ── */
 const G = {
@@ -40,6 +45,68 @@ const G = {
 
 /* ── Compound Data ── */
 const compounds = [
+  // Testosteronas
+  {
+    id: "enantato",
+    name: "Enantato",
+    tag: "Estável",
+    image: imgEnantato,
+    essencia: "Éster de liberação gradual e perfil estável.",
+    oQueFaz: "Favorece manutenção hormonal, recuperação e suporte à massa muscular.",
+    comoEntra: "Aplicação intramuscular com liberação lenta.",
+    comoSeComporta: "Resposta previsível ao longo dos dias.",
+    atencao: "Pode causar retenção, acne e aromatização.",
+    resumo: "Estabilidade e leitura mais limpa do protocolo.",
+  },
+  {
+    id: "cipionato",
+    name: "Cipionato",
+    tag: "Consistente",
+    image: imgCipionato,
+    essencia: "Forma de ação prolongada e comportamento consistente.",
+    oQueFaz: "Atua na força, recuperação e síntese proteica.",
+    comoEntra: "Aplicação intramuscular lenta.",
+    comoSeComporta: "Mantém níveis relativamente estáveis.",
+    atencao: "Pode gerar retenção e elevação estrogênica.",
+    resumo: "Consistência é o principal valor.",
+  },
+  {
+    id: "propionato",
+    name: "Propionato",
+    tag: "Rápido",
+    image: imgPropionato,
+    essencia: "Éster de ação curta e resposta rápida.",
+    oQueFaz: "Favorece ação mais ágil no organismo.",
+    comoEntra: "Absorção intramuscular rápida.",
+    comoSeComporta: "Exige aplicações mais frequentes.",
+    atencao: "Pode causar irritação local e mais variação hormonal.",
+    resumo: "Rápido, porém menos estável.",
+  },
+  {
+    id: "durateston",
+    name: "Durateston",
+    tag: "Misto",
+    image: imgDurateston,
+    essencia: "Blend de testosteronas com tempos diferentes de liberação.",
+    oQueFaz: "Combina início mais rápido com sustentação posterior.",
+    comoEntra: "Aplicação intramuscular com liberação em fases.",
+    comoSeComporta: "Pico inicial seguido de manutenção prolongada.",
+    atencao: "Pode oscilar mais e exigir maior controle.",
+    resumo: "Entrega velocidade, mas cobra precisão.",
+  },
+  {
+    id: "gel",
+    name: "Gel",
+    tag: "Diário",
+    image: imgGel,
+    essencia: "Aplicação transdérmica diária.",
+    oQueFaz: "Promove aumento gradual dos níveis hormonais.",
+    comoEntra: "Absorção pela pele.",
+    comoSeComporta: "Níveis mais lineares dependendo da absorção.",
+    atencao: "Absorção variável e risco de transferência por contato.",
+    resumo: "Praticidade com dependência da absorção individual.",
+  },
+  // Compostos avançados
   {
     id: "masteron-prop",
     name: "Masteron P.",
@@ -102,10 +169,12 @@ const compounds = [
   },
 ];
 
+const TOTAL = compounds.length;
+
 const gamificationMessages = [
-  { min: 2, icon: Brain, text: "Você já está à frente da maioria." },
-  { min: 3, icon: Shield, text: "Agora começa o nível estratégico." },
-  { min: 4, icon: Zap, text: "A maioria erra na condução aqui." },
+  { min: 3, icon: Brain, text: "Você já está à frente da maioria." },
+  { min: 5, icon: Shield, text: "Agora começa o nível estratégico." },
+  { min: 8, icon: Zap, text: "A maioria erra na condução aqui." },
 ];
 
 const cardFields = [
@@ -135,10 +204,7 @@ const StudentContent = () => {
 
   return (
     <DashboardLayout role="student" title="" subtitle="">
-      <div
-        className="min-h-screen -m-4 sm:-m-6 px-4 sm:px-6 py-6 space-y-8 max-w-lg mx-auto"
-        style={{ background: G.bg }}
-      >
+      <div className="min-h-screen -m-4 sm:-m-6 px-4 sm:px-6 py-6 space-y-8 max-w-lg mx-auto" style={{ background: G.bg }}>
         {/* ── HEADER ── */}
         <motion.header initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-3 pt-2">
           <p className="text-[11px] uppercase tracking-[0.25em] font-medium" style={{ color: G.accent }}>
@@ -151,13 +217,12 @@ const StudentContent = () => {
             Cada composto tem um comportamento. O resultado depende de como ele é conduzido.
           </p>
 
-          {/* Progress */}
           <div className="space-y-2 pt-1">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium" style={{ color: G.t45 }}>
-                Progresso: {progress}/5 compostos
+                Progresso: {progress}/{TOTAL} compostos
               </span>
-              {progress === 5 && (
+              {progress === TOTAL && (
                 <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-xs font-semibold" style={{ color: G.accent }}>
                   ✓ Completo
                 </motion.span>
@@ -168,7 +233,7 @@ const StudentContent = () => {
                 className="h-full rounded-full"
                 style={{ background: `linear-gradient(90deg, ${G.accent}, ${G.accentSoft})` }}
                 initial={{ width: 0 }}
-                animate={{ width: `${(progress / 5) * 100}%` }}
+                animate={{ width: `${(progress / TOTAL) * 100}%` }}
                 transition={{ duration: 0.6, ease: "easeOut" }}
               />
             </div>
@@ -188,9 +253,7 @@ const StudentContent = () => {
             className="absolute inset-0 flex flex-col justify-end p-5 space-y-2"
             style={{ background: "linear-gradient(to top, hsl(0 0% 3% / 0.92), hsl(0 0% 3% / 0.3))" }}
           >
-            <h2 className="text-lg font-semibold" style={{ color: G.t92 }}>
-              Entenda com clareza
-            </h2>
+            <h2 className="text-lg font-semibold" style={{ color: G.t92 }}>Entenda com clareza</h2>
             <ul className="space-y-1.5">
               {["o que faz no corpo", "como se comporta", "onde exige atenção", "impacto no resultado"].map((item) => (
                 <li key={item} className="flex items-center gap-2 text-sm" style={{ color: G.t60 }}>
@@ -199,9 +262,7 @@ const StudentContent = () => {
                 </li>
               ))}
             </ul>
-            <p className="text-[11px] pt-1" style={{ color: G.t35 }}>
-              Leitura rápida. Interpretação estratégica.
-            </p>
+            <p className="text-[11px] pt-1" style={{ color: G.t35 }}>Leitura rápida. Interpretação estratégica.</p>
           </div>
         </motion.div>
 
@@ -215,24 +276,22 @@ const StudentContent = () => {
                 key={c.id}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.15 + i * 0.05 }}
+                transition={{ delay: 0.15 + i * 0.04 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => handleSelect(c.id)}
-                className="snap-center flex-shrink-0 rounded-xl px-4 py-3 flex flex-col items-center gap-1 min-w-[100px] transition-all duration-200"
+                className="snap-center flex-shrink-0 rounded-xl px-3.5 py-2.5 flex flex-col items-center gap-1 min-w-[88px] transition-all duration-200"
                 style={{
                   background: isSelected ? G.accentBg : G.card,
                   border: isSelected ? `1px solid ${G.accentBorder}` : `0.5px solid ${G.border}`,
                 }}
               >
-                <div className="flex items-center gap-1.5">
-                  <span className="text-sm font-medium whitespace-nowrap" style={{ color: isSelected ? G.accent : G.t80 }}>
+                <div className="flex items-center gap-1">
+                  <span className="text-[13px] font-medium whitespace-nowrap" style={{ color: isSelected ? G.accent : G.t80 }}>
                     {c.name}
                   </span>
                   {isVisited && !isSelected && <Check className="w-3 h-3" style={{ color: "hsl(142 60% 40%)" }} />}
                 </div>
-                <span className="text-[10px] whitespace-nowrap" style={{ color: G.t45 }}>
-                  {c.tag}
-                </span>
+                <span className="text-[10px] whitespace-nowrap" style={{ color: G.t45 }}>{c.tag}</span>
               </motion.button>
             );
           })}
@@ -251,22 +310,13 @@ const StudentContent = () => {
             >
               {/* Compound Image */}
               <div className="rounded-xl overflow-hidden relative" style={{ border: `0.5px solid ${G.border}` }}>
-                <img
-                  src={compound.image}
-                  alt={compound.name}
-                  className="w-full h-44 object-cover"
-                  loading="lazy"
-                  width={800}
-                  height={512}
-                />
+                <img src={compound.image} alt={compound.name} className="w-full h-44 object-cover" loading="lazy" width={800} height={512} />
                 <div
                   className="absolute inset-0 flex items-end p-4"
                   style={{ background: "linear-gradient(to top, hsl(0 0% 3% / 0.85), transparent 60%)" }}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-base font-bold" style={{ color: G.t96 }}>
-                      {compound.name}
-                    </span>
+                    <span className="text-base font-bold" style={{ color: G.t96 }}>{compound.name}</span>
                     <span
                       className="text-[10px] px-2 py-0.5 rounded-full font-medium"
                       style={{ background: G.accentBg, color: G.accent, border: `0.5px solid ${G.accentBorderSoft}` }}
@@ -289,15 +339,10 @@ const StudentContent = () => {
                     border: field.key === "resumo" ? `0.5px solid ${G.accentBorderSoft}` : `0.5px solid ${G.borderSoft}`,
                   }}
                 >
-                  <p
-                    className="text-[11px] uppercase tracking-widest font-medium"
-                    style={{ color: field.key === "resumo" ? G.accent : G.t40 }}
-                  >
+                  <p className="text-[11px] uppercase tracking-widest font-medium" style={{ color: field.key === "resumo" ? G.accent : G.t40 }}>
                     {field.label}
                   </p>
-                  <p className="text-sm leading-relaxed" style={{ color: G.t80 }}>
-                    {compound[field.key]}
-                  </p>
+                  <p className="text-sm leading-relaxed" style={{ color: G.t80 }}>{compound[field.key]}</p>
                 </motion.div>
               ))}
             </motion.div>
@@ -317,9 +362,7 @@ const StudentContent = () => {
                   style={{ background: G.accentText06, border: `0.5px solid ${G.accentText15}` }}
                 >
                   <gm.icon className="w-5 h-5 flex-shrink-0" style={{ color: G.accent }} />
-                  <p className="text-sm font-medium" style={{ color: G.accentSoft }}>
-                    {gm.text}
-                  </p>
+                  <p className="text-sm font-medium" style={{ color: G.accentSoft }}>{gm.text}</p>
                 </motion.div>
               )
           )}
@@ -333,37 +376,33 @@ const StudentContent = () => {
           className="relative rounded-2xl p-5 space-y-3 overflow-hidden"
           style={{ background: G.card, border: `0.5px solid ${G.border}` }}
         >
-          {progress < 5 && (
+          {progress < TOTAL && (
             <div
               className="absolute inset-0 z-10 backdrop-blur-md flex flex-col items-center justify-center gap-3"
               style={{ background: "hsl(0 0% 3% / 0.7)" }}
             >
               <Lock className="w-6 h-6" style={{ color: G.t30 }} />
-              <p className="text-xs font-medium" style={{ color: G.t40 }}>
-                Explore todos os 5 compostos para desbloquear
+              <p className="text-xs font-medium text-center" style={{ color: G.t40 }}>
+                Explore todos os {TOTAL} compostos para desbloquear
               </p>
             </div>
           )}
           <div className="flex items-center gap-2">
-            {progress === 5 ? (
+            {progress === TOTAL ? (
               <Unlock className="w-4 h-4" style={{ color: G.accent }} />
             ) : (
               <Lock className="w-4 h-4" style={{ color: G.t30 }} />
             )}
-            <h3 className="text-base font-semibold" style={{ color: G.t92 }}>
-              Nível Avançado STM
-            </h3>
+            <h3 className="text-base font-semibold" style={{ color: G.t92 }}>Nível Avançado STM</h3>
           </div>
           <p className="text-sm leading-relaxed" style={{ color: G.t55 }}>
             Combinação de compostos, ajuste fino e controle real de resultado.
           </p>
-          {progress === 5 && (
+          {progress === TOTAL && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pt-2 space-y-3">
               <div className="flex items-center gap-2">
                 <Award className="w-4 h-4" style={{ color: G.accent }} />
-                <p className="text-xs font-semibold" style={{ color: G.accent }}>
-                  Conteúdo desbloqueado!
-                </p>
+                <p className="text-xs font-semibold" style={{ color: G.accent }}>Conteúdo desbloqueado!</p>
               </div>
               <p className="text-sm leading-relaxed" style={{ color: G.t65 }}>
                 A combinação de compostos exige leitura de meia-vida, janela de aplicação e controle de aromatização. O protocolo inteligente considera não apenas o composto, mas o contexto metabólico individual — sensibilidade estrogênica, perfil lipídico e resposta hepática. É aqui que o ajuste fino separa resultados medianos de resultados de elite.
@@ -383,12 +422,8 @@ const StudentContent = () => {
             border: `0.5px solid ${G.accentBorderSoft}`,
           }}
         >
-          <h3 className="text-lg font-bold" style={{ color: G.t96 }}>
-            Não é o composto isolado que define o resultado.
-          </h3>
-          <p className="text-sm" style={{ color: G.t50 }}>
-            É a estratégia, o contexto e o acompanhamento.
-          </p>
+          <h3 className="text-lg font-bold" style={{ color: G.t96 }}>Não é o composto isolado que define o resultado.</h3>
+          <p className="text-sm" style={{ color: G.t50 }}>É a estratégia, o contexto e o acompanhamento.</p>
           <motion.a
             href={whatsappUrl}
             target="_blank"
