@@ -16,6 +16,7 @@ const mainItems = [
 
 const menuItems = [
   { to: "/dashboard/profile", icon: FileText, label: "Minha Ficha" },
+  { to: "/dashboard/protocol", icon: FlaskConical, label: "Protocolo" },
   { to: "/dashboard/training", icon: Dumbbell, label: "Treino" },
   { to: "/dashboard/guided-workout", icon: ListChecks, label: "Treino Guiado" },
   { to: "/dashboard/content", icon: BookOpen, label: "Conteúdo" },
