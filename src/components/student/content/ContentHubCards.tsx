@@ -68,6 +68,20 @@ const sections = [
       meta: "12 receitas • Macros detalhados",
     },
   },
+  {
+    id: "combinacoes" as ContentSection,
+    tag: "Estratégia",
+    title: "Combinações Estratégicas",
+    subtitle: "Não é sobre o composto isolado. É sobre como eles se comportam juntos.",
+    img: cardCombinacoesImg,
+    icon: Layers,
+    accentHue: "270",
+    preview: {
+      type: "pills" as const,
+      items: ["Definição", "Hipertrofia", "3 níveis"],
+      meta: "6 combinações • Visão estratégica",
+    },
+  },
 ];
 
 interface Props {
