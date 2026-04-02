@@ -23,6 +23,7 @@ import StudentSubscription from "./pages/student/StudentSubscription";
 import StudentRenew from "./pages/student/StudentRenew";
 import StudentEvolution from "./pages/student/StudentEvolution";
 import StudentBioimpedance from "./pages/student/StudentBioimpedance";
+import StudentProfile from "./pages/student/StudentProfile";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminStudents from "./pages/admin/AdminStudents";
 import AdminPlans from "./pages/admin/AdminPlans";
