@@ -2,71 +2,70 @@ import { useState, useRef, useCallback } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Lock, Unlock, MessageCircle, Zap, Brain, Shield, Award, ChevronRight } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 
 /* ── Compound Data ── */
 const compounds = [
   {
-    id: "enantato",
-    name: "Enantato",
-    tag: "Estável",
-    essencia: "Éster de liberação gradual e perfil estável.",
-    oQueFaz: "Favorece manutenção hormonal, recuperação e suporte à massa muscular.",
-    comoEntra: "Aplicação intramuscular com liberação lenta.",
-    comoSeComporta: "Resposta previsível ao longo dos dias.",
-    atencao: "Pode causar retenção, acne e aromatização.",
-    resumo: "Estabilidade e leitura mais limpa do protocolo.",
+    id: "masteron-prop",
+    name: "Masteron P.",
+    tag: "Seco / Rápido",
+    essencia: "Derivado da drostanolona com ação mais rápida e perfil mais seco.",
+    oQueFaz: "Atua na densidade muscular, melhora estética e auxilia no controle de retenção.",
+    comoEntra: "Aplicação intramuscular com absorção mais rápida.",
+    comoSeComporta: "Resposta mais ágil, porém com necessidade de maior frequência de aplicação.",
+    atencao: "Pode impactar perfil lipídico e exige acompanhamento adequado.",
+    resumo: "Mais rápido, mais sensível a ajustes.",
   },
   {
-    id: "cipionato",
-    name: "Cipionato",
-    tag: "Consistente",
-    essencia: "Forma de ação prolongada e comportamento consistente.",
-    oQueFaz: "Atua na força, recuperação e síntese proteica.",
-    comoEntra: "Aplicação intramuscular lenta.",
-    comoSeComporta: "Mantém níveis relativamente estáveis.",
-    atencao: "Pode gerar retenção e elevação estrogênica.",
-    resumo: "Consistência é o principal valor.",
+    id: "masteron-enan",
+    name: "Masteron E.",
+    tag: "Seco / Estável",
+    essencia: "Versão de liberação mais lenta da drostanolona.",
+    oQueFaz: "Contribui para densidade muscular e estética com maior estabilidade.",
+    comoEntra: "Aplicação intramuscular com liberação prolongada.",
+    comoSeComporta: "Resposta mais estável ao longo do tempo.",
+    atencao: "Menor frequência de aplicação, mas ainda exige controle estratégico.",
+    resumo: "Mais estável, porém menos imediato.",
   },
   {
-    id: "propionato",
-    name: "Propionato",
-    tag: "Rápido",
-    essencia: "Éster de ação curta e resposta rápida.",
-    oQueFaz: "Favorece ação mais ágil no organismo.",
-    comoEntra: "Absorção intramuscular rápida.",
-    comoSeComporta: "Exige aplicações mais frequentes.",
-    atencao: "Pode causar irritação local e mais variação hormonal.",
-    resumo: "Rápido, porém menos estável.",
+    id: "nandrolona",
+    name: "Nandrolona",
+    tag: "Recuperação",
+    essencia: "Composto com forte ação anabólica e suporte estrutural.",
+    oQueFaz: "Auxilia recuperação, articulações e manutenção de massa muscular.",
+    comoEntra: "Aplicação intramuscular com liberação prolongada.",
+    comoSeComporta: "Ação mais duradoura e acumulativa.",
+    atencao: "Pode impactar eixo hormonal e retenção hídrica.",
+    resumo: "Muito eficaz, mas exige condução precisa.",
   },
   {
-    id: "durateston",
-    name: "Durateston",
-    tag: "Misto",
-    essencia: "Blend de testosteronas com tempos diferentes de liberação.",
-    oQueFaz: "Combina início mais rápido com sustentação posterior.",
-    comoEntra: "Aplicação intramuscular com liberação em fases.",
-    comoSeComporta: "Pico inicial seguido de manutenção prolongada.",
-    atencao: "Pode oscilar mais e exigir maior controle.",
-    resumo: "Entrega velocidade, mas cobra precisão.",
+    id: "gestrinona",
+    name: "Gestrinona",
+    tag: "Controle",
+    essencia: "Composto com ação sobre o ambiente hormonal, especialmente em controle estrogênico.",
+    oQueFaz: "Atua na modulação hormonal e pode influenciar composição corporal.",
+    comoEntra: "Dependendo da forma, pode ser oral ou transdérmica.",
+    comoSeComporta: "Resposta dependente do contexto hormonal individual.",
+    atencao: "Alta necessidade de acompanhamento profissional.",
+    resumo: "Controle hormonal exige estratégia.",
   },
   {
-    id: "gel",
-    name: "Gel",
-    tag: "Diário",
-    essencia: "Aplicação transdérmica diária.",
-    oQueFaz: "Promove aumento gradual dos níveis hormonais.",
-    comoEntra: "Absorção pela pele.",
-    comoSeComporta: "Níveis mais lineares dependendo da absorção.",
-    atencao: "Absorção variável e risco de transferência por contato.",
-    resumo: "Praticidade com dependência da absorção individual.",
+    id: "oxandrolona",
+    name: "Oxandrolona",
+    tag: "Definição",
+    essencia: "Derivado com perfil mais controlado e foco em qualidade muscular.",
+    oQueFaz: "Auxilia na definição, manutenção de massa e desempenho.",
+    comoEntra: "Administração oral.",
+    comoSeComporta: "Resposta progressiva com menor retenção hídrica.",
+    atencao: "Impacto hepático e necessidade de controle de dose.",
+    resumo: "Mais previsível, mas não isenta de cuidado.",
   },
 ];
 
 const gamificationMessages = [
-  { min: 2, icon: Brain, text: "Você já entende mais que a maioria." },
+  { min: 2, icon: Brain, text: "Você já está à frente da maioria." },
   { min: 3, icon: Shield, text: "Agora começa o nível estratégico." },
-  { min: 4, icon: Zap, text: "A maioria erra aqui." },
+  { min: 4, icon: Zap, text: "A maioria erra na condução aqui." },
 ];
 
 const cardFields = [
@@ -92,7 +91,7 @@ const StudentContent = () => {
   }, []);
 
   const whatsappUrl =
-    "https://wa.me/5521998496289?text=Fala,%20vi%20o%20conteudo%20sobre%20testosteronas%20e%20quero%20ajustar%20meu%20protocolo";
+    "https://wa.me/5521998496289?text=Fala,%20vi%20o%20conteudo%20sobre%20hormonios%20e%20quero%20ajustar%20meu%20protocolo";
 
   return (
     <DashboardLayout role="student" title="" subtitle="">
@@ -107,13 +106,13 @@ const StudentContent = () => {
         >
           <p className="text-[11px] uppercase tracking-[0.25em] font-medium"
             style={{ color: "hsl(42 70% 50%)" }}>
-            ST&H Education
+            STH Method
           </p>
           <h1 className="text-3xl font-bold tracking-tight" style={{ color: "hsl(0 0% 96%)" }}>
-            Testosteronas
+            Hormônios e Compostos
           </h1>
           <p className="text-sm leading-relaxed" style={{ color: "hsl(0 0% 50%)" }}>
-            Cada versão tem um ritmo. O resultado depende de saber ler esse ritmo.
+            Cada composto tem um comportamento. O resultado depende de como ele é conduzido.
           </p>
 
           {/* Progress */}
@@ -157,10 +156,10 @@ const StudentContent = () => {
           }}
         >
           <h2 className="text-base font-semibold" style={{ color: "hsl(0 0% 92%)" }}>
-            Entenda em segundos
+            Entenda com clareza
           </h2>
           <ul className="space-y-2">
-            {["o que faz", "como entra no corpo", "como se comporta", "o que exige de atenção"].map((item) => (
+            {["o que faz no corpo", "como se comporta", "onde exige mais atenção", "impacto no resultado"].map((item) => (
               <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: "hsl(0 0% 60%)" }}>
                 <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "hsl(42 70% 50%)" }} />
                 {item}
@@ -168,7 +167,7 @@ const StudentContent = () => {
             ))}
           </ul>
           <p className="text-[11px] pt-1" style={{ color: "hsl(0 0% 35%)" }}>
-            Leitura rápida. Clareza real.
+            Leitura rápida. Interpretação estratégica.
           </p>
         </motion.div>
 
@@ -198,7 +197,7 @@ const StudentContent = () => {
               >
                 <div className="flex items-center gap-1.5">
                   <span
-                    className="text-sm font-medium"
+                    className="text-sm font-medium whitespace-nowrap"
                     style={{ color: isSelected ? "hsl(42 70% 50%)" : "hsl(0 0% 80%)" }}
                   >
                     {c.name}
@@ -207,7 +206,7 @@ const StudentContent = () => {
                     <Check className="w-3 h-3" style={{ color: "hsl(142 60% 40%)" }} />
                   )}
                 </div>
-                <span className="text-[10px]" style={{ color: "hsl(0 0% 45%)" }}>
+                <span className="text-[10px] whitespace-nowrap" style={{ color: "hsl(0 0% 45%)" }}>
                   {c.tag}
                 </span>
               </motion.button>
@@ -310,7 +309,7 @@ const StudentContent = () => {
             </h3>
           </div>
           <p className="text-sm leading-relaxed" style={{ color: "hsl(0 0% 55%)" }}>
-            Ajuste fino de protocolo, combinação de compostos e controle de colaterais.
+            Combinação de compostos, ajuste fino e controle real de resultado.
           </p>
           {progress === 5 && (
             <motion.div
@@ -325,7 +324,7 @@ const StudentContent = () => {
                 </p>
               </div>
               <p className="text-sm leading-relaxed" style={{ color: "hsl(0 0% 65%)" }}>
-                A combinação de ésteres exige leitura de meia-vida, janela de aplicação e controle de aromatização. O protocolo inteligente considera não apenas o composto, mas o contexto metabólico individual — sensibilidade estrogênica, perfil lipídico e resposta hepática. É aqui que o ajuste fino separa resultados medianos de resultados de elite.
+                A combinação de compostos exige leitura de meia-vida, janela de aplicação e controle de aromatização. O protocolo inteligente considera não apenas o composto, mas o contexto metabólico individual — sensibilidade estrogênica, perfil lipídico e resposta hepática. É aqui que o ajuste fino separa resultados medianos de resultados de elite.
               </p>
             </motion.div>
           )}
@@ -343,10 +342,10 @@ const StudentContent = () => {
           }}
         >
           <h3 className="text-lg font-bold" style={{ color: "hsl(0 0% 96%)" }}>
-            Nome forte não substitui protocolo forte.
+            Não é o composto isolado que define o resultado.
           </h3>
           <p className="text-sm" style={{ color: "hsl(0 0% 50%)" }}>
-            A substância influencia. A estratégia decide.
+            É a estratégia, o contexto e o acompanhamento.
           </p>
           <motion.a
             href={whatsappUrl}
@@ -361,7 +360,7 @@ const StudentContent = () => {
             }}
           >
             <MessageCircle className="w-4 h-4" />
-            Solicitar ajuste
+            Solicitar ajuste de protocolo
           </motion.a>
         </motion.div>
 
