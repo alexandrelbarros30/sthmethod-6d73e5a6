@@ -4,7 +4,7 @@ import cardHormoniosImg from "@/assets/card-hormonios.jpg";
 import cardDicasImg from "@/assets/card-dicas.jpg";
 import cardReceitasImg from "@/assets/card-receitas.jpg";
 
-export type ContentSection = "hormonios" | "dicas" | "receitas";
+export type ContentSection = "hormonios" | "dicas" | "receitas" | "combinacoes";
 
 const G = {
   accent: "hsl(145 60% 42%)",
