@@ -848,14 +848,14 @@ const TabConteudo = () => {
       <div className="space-y-3">
         <p className="text-xs text-white/40 uppercase tracking-widest">Famílias Hormonais</p>
         {families.map((family, i) => (
-          <motion.div key={family.name} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
+          <motion.div key={family.title} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
             onClick={() => setSelectedFamily(family)}
             className="rounded-2xl overflow-hidden relative cursor-pointer active:scale-[.98] transition-transform"
             style={{ border: `0.5px solid ${G.border}` }}>
-            <img src={family.image} alt={family.name} className="w-full h-28 object-cover" />
+            <img src={family.image} alt={family.title} className="w-full h-28 object-cover" />
             <div className="absolute inset-0 flex items-end p-4" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9), transparent 60%)" }}>
               <div className="flex-1">
-                <h4 className="text-sm font-bold text-white">{family.name}</h4>
+                <h4 className="text-sm font-bold text-white">{family.title}</h4>
                 <p className="text-[10px] text-white/40 mt-0.5">{family.compounds.length} compostos</p>
               </div>
               <ChevronRight className="w-4 h-4 text-white/30" />
