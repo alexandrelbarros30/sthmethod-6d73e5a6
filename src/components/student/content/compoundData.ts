@@ -136,6 +136,7 @@ export const families: Family[] = [
     description: "Derivados que não aromatizam. Muito utilizados para melhorar densidade muscular e aparência.",
     profile: "Ganhos mais secos, melhora da definição e menor retenção hídrica.",
     accentHue: "200",
+    image: imgFamilyDht,
     compounds: [
       {
         id: "oxandrolona",
