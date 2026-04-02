@@ -13,6 +13,9 @@ import imgHemogenin from "@/assets/compound-hemogenin.jpg";
 import imgNandrolona from "@/assets/compound-nandrolona.jpg";
 import imgNpp from "@/assets/compound-npp.jpg";
 import imgTrembolona from "@/assets/compound-trembolona.jpg";
+import imgFamilyTestosterona from "@/assets/family-testosterona.jpg";
+import imgFamilyDht from "@/assets/family-dht.jpg";
+import imgFamily19nor from "@/assets/family-19nor.jpg";
 
 export interface Compound {
   id: string;
@@ -33,6 +36,7 @@ export interface Family {
   description: string;
   profile: string;
   accentHue: string;
+  image: string;
   compounds: Compound[];
 }
 
