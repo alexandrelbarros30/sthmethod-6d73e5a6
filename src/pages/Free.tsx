@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Check, Lock, ChevronRight, MessageCircle, ArrowLeft, Flame, Target, Activity,
@@ -302,7 +303,20 @@ const FreePage = () => {
                   <p className="text-[10px] text-white/25 leading-relaxed">
                     Seus dados são usados apenas para personalizar sua experiência e enviar seu resultado.
                   </p>
-                  <button disabled={!profile.phone || !profile.email} onClick={() => setStep(5)} className="mt-auto px-8 py-3.5 rounded-full bg-emerald-500 text-black text-sm font-semibold disabled:opacity-30 active:scale-95">
+                  <button disabled={!profile.phone || !profile.email} onClick={() => {
+                    // Save lead to database
+                    supabase.from("free_leads").insert({
+                      email: profile.email,
+                      phone: profile.phone,
+                      gender: profile.gender,
+                      age: Number(profile.age) || null,
+                      weight: Number(profile.peso) || null,
+                      height: Number(profile.altura) || null,
+                      objective: profile.objetivo,
+                      frequency: Number(profile.frequencia) || null,
+                    }).then(() => {});
+                    setStep(5);
+                  }} className="mt-auto px-8 py-3.5 rounded-full bg-emerald-500 text-black text-sm font-semibold disabled:opacity-30 active:scale-95">
                     Próximo
                   </button>
                 </motion.div>
