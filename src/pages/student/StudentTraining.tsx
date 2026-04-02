@@ -182,10 +182,20 @@ const StudentTraining = () => {
               className="shrink-0 gap-1.5"
               onClick={() => {
                 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-                const url = isIOS
+                const storeUrl = isIOS
                   ? "https://apps.apple.com/us/app/st-coach/id1537125272"
                   : "https://play.google.com/store/apps/details?id=com.appsupercoach.app";
-                window.open(url, "_blank");
+
+                if (isIOS) {
+                  // iOS universal link — tries to open app, falls back to App Store
+                  window.location.href = "stcoach://";
+                  setTimeout(() => { window.open(storeUrl, "_blank"); }, 1500);
+                } else {
+                  // Android intent — opens app if installed, falls back to Play Store
+                  window.location.href =
+                    "intent://#Intent;package=com.appsupercoach.app;scheme=stcoach;S.browser_fallback_url=" +
+                    encodeURIComponent(storeUrl) + ";end";
+                }
               }}
             >
               <Play className="w-3.5 h-3.5" /> Abrir App
