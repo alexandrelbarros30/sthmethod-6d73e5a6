@@ -323,6 +323,52 @@ const AdminDashboard = () => {
 
         {/* WhatsApp Quick Link */}
         <WhatsAppQuickLink />
+
+        {/* Leads Free para Conversão */}
+        {(freeLeads?.length || 0) > 0 && (
+          <CollapsiblePanel
+            title="Leads Free"
+            icon={<Sparkles className="w-4 h-4 text-emerald-500" />}
+            badge={freeLeads?.length}
+            badgeClassName="bg-emerald-500 text-white"
+            defaultOpen={true}
+            cardClassName="border-emerald-500/20 bg-emerald-500/5"
+          >
+            {freeLeads!.map((lead: any) => {
+              const days = Math.floor((Date.now() - new Date(lead.created_at).getTime()) / 86400000);
+              const dayLabel = days === 0 ? "Hoje" : `${days}d atrás`;
+              const objLabel = lead.objective === "emagrecimento" ? "Emagrecer" : lead.objective === "hipertrofia" ? "Hipertrofia" : lead.objective === "saude" ? "Saúde" : "";
+              return (
+                <div key={lead.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <Sparkles className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{lead.email}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {lead.phone} • {objLabel} • {lead.weight}kg • {dayLabel}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/30">Free</Badge>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2 text-xs gap-1 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10"
+                      onClick={() => {
+                        const phone = lead.phone.replace(/\D/g, "");
+                        const msg = encodeURIComponent(`Olá! Vi que você fez a análise gratuita no STH Method. Posso te ajudar a desbloquear seu plano completo?`);
+                        window.open(`https://wa.me/55${phone}?text=${msg}`, "_blank");
+                      }}
+                    >
+                      <ExternalLink className="w-3 h-3" /> WhatsApp
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </CollapsiblePanel>
+        )}
       </div>
     </DashboardLayout>
   );
