@@ -293,6 +293,20 @@ const Landing = () => {
           </div>
 
           <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="mt-6"
+          >
+            <Link to="/free">
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground gap-2 text-sm">
+                <Sparkles className="w-4 h-4" />
+                Experimentar versão gratuita
+              </Button>
+            </Link>
+          </motion.div>
+
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
