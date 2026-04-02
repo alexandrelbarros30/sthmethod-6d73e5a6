@@ -1,117 +1,140 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Flame, ChevronLeft } from "lucide-react";
+import { Clock, Flame, ChevronLeft, Target, Utensils, ArrowRightLeft, Lightbulb, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { recipes, recipeCategories, type Recipe } from "@/data/recipes";
 
-import recipePoke from "@/assets/recipe-poke.jpg";
-import recipeFrango from "@/assets/recipe-frango.jpg";
-import recipeAcai from "@/assets/recipe-acai.jpg";
-import recipeSmoothie from "@/assets/recipe-smoothie.jpg";
-import recipePanqueca from "@/assets/recipe-panqueca.jpg";
-import recipeSalada from "@/assets/recipe-salada.jpg";
-import recipeMoqueca from "@/assets/recipe-moqueca.jpg";
-import recipeTapioca from "@/assets/recipe-tapioca.jpg";
-import recipeCuscuz from "@/assets/recipe-cuscuz.jpg";
-import recipePureBatata from "@/assets/recipe-pure-batata.jpg";
-import recipeOmelete from "@/assets/recipe-omelete.jpg";
-import recipeEscondidinho from "@/assets/recipe-escondidinho.jpg";
+const objectiveColor: Record<string, string> = {
+  Emagrecimento: "text-green-400",
+  Hipertrofia: "text-blue-400",
+  Manutenção: "text-amber-400",
+  Definição: "text-purple-400",
+};
 
-const recipes = [
-  {
-    id: "1", title: "Poke Bowl de Salmão", image: recipePoke, time: "20 min", kcal: 420, category: "Almoço",
-    tags: ["Alto em Proteína", "Low Carb"],
-    ingredients: ["150g salmão fresco em cubos", "100g arroz japonês cozido", "½ abacate fatiado", "50g edamame", "50g repolho roxo", "Gergelim e molho shoyu light"],
-    instructions: "1. Cozinhe o arroz e reserve.\n2. Corte o salmão em cubos.\n3. Monte o bowl: arroz na base, salmão, abacate, edamame e repolho.\n4. Finalize com gergelim e molho shoyu light.",
-  },
-  {
-    id: "2", title: "Frango Grelhado com Batata Doce", image: recipeFrango, time: "30 min", kcal: 380, category: "Almoço",
-    tags: ["Alto em Proteína", "Pré-treino"],
-    ingredients: ["200g peito de frango", "150g batata doce", "100g brócolis", "Azeite, sal e pimenta"],
-    instructions: "1. Tempere o frango com sal, pimenta e azeite.\n2. Grelhe em fogo médio-alto por 6 min de cada lado.\n3. Cozinhe a batata doce no vapor por 15 min.\n4. Refogue o brócolis com um fio de azeite.",
-  },
-  {
-    id: "3", title: "Açaí Bowl Proteico", image: recipeAcai, time: "10 min", kcal: 350, category: "Lanche",
-    tags: ["Pós-treino", "Rico em Fibras"],
-    ingredients: ["200g polpa de açaí sem açúcar", "1 banana", "30g granola", "Morangos e mirtilos", "1 scoop whey protein (opcional)"],
-    instructions: "1. Bata o açaí com a banana e whey no liquidificador.\n2. Coloque na tigela.\n3. Decore com granola, morangos e mirtilos.",
-  },
-  {
-    id: "4", title: "Smoothie Verde Detox", image: recipeSmoothie, time: "5 min", kcal: 180, category: "Café da manhã",
-    tags: ["Detox", "Rico em Vitaminas"],
-    ingredients: ["1 xícara de espinafre", "1 banana", "1 kiwi", "1 colher de chia", "200ml água de coco"],
-    instructions: "1. Coloque todos os ingredientes no liquidificador.\n2. Bata até ficar homogêneo.\n3. Sirva gelado.",
-  },
-  {
-    id: "5", title: "Panqueca Proteica", image: recipePanqueca, time: "15 min", kcal: 290, category: "Café da manhã",
-    tags: ["Alto em Proteína", "Pré-treino"],
-    ingredients: ["2 ovos", "1 banana madura", "30g aveia", "1 scoop whey", "Frutas vermelhas para decorar"],
-    instructions: "1. Bata os ovos, banana, aveia e whey no liquidificador.\n2. Despeje em frigideira antiaderente.\n3. Doure dos dois lados.\n4. Decore com frutas vermelhas e mel.",
-  },
-  {
-    id: "6", title: "Salada de Salmão e Quinoa", image: recipeSalada, time: "25 min", kcal: 400, category: "Jantar",
-    tags: ["Rico em Ômega-3", "Low Carb"],
-    ingredients: ["150g salmão grelhado", "80g quinoa cozida", "Mix de folhas verdes", "Tomate cereja", "½ abacate", "Azeite e limão"],
-    instructions: "1. Grelhe o salmão temperado com sal e limão.\n2. Cozinhe a quinoa conforme instruções.\n3. Monte a salada com folhas, tomate e abacate.\n4. Coloque o salmão e a quinoa por cima.\n5. Regue com azeite e limão.",
-  },
-  {
-    id: "7", title: "Moqueca de Peixe Fit", image: recipeMoqueca, time: "35 min", kcal: 360, category: "Almoço",
-    tags: ["Rico em Ômega-3", "Brasileiro"],
-    ingredients: ["200g filé de peixe branco", "100ml leite de coco light", "1 tomate", "½ pimentão", "½ cebola", "Coentro fresco", "Azeite de dendê (1 colher)"],
-    instructions: "1. Tempere o peixe com limão, sal e pimenta.\n2. Refogue cebola, pimentão e tomate no azeite.\n3. Adicione o peixe e o leite de coco.\n4. Cozinhe em fogo baixo por 15 min.\n5. Finalize com azeite de dendê e coentro.",
-  },
-  {
-    id: "8", title: "Tapioca de Frango", image: recipeTapioca, time: "15 min", kcal: 280, category: "Lanche",
-    tags: ["Sem Glúten", "Brasileiro"],
-    ingredients: ["3 colheres de goma de tapioca", "100g frango desfiado", "Tomate e alface", "Requeijão light"],
-    instructions: "1. Espalhe a goma na frigideira antiaderente.\n2. Quando firmar, vire e recheie com frango, requeijão, tomate e alface.\n3. Dobre e sirva.",
-  },
-  {
-    id: "9", title: "Cuscuz com Ovos e Legumes", image: recipeCuscuz, time: "20 min", kcal: 320, category: "Café da manhã",
-    tags: ["Rico em Fibras", "Brasileiro"],
-    ingredients: ["100g flocos de milho", "2 ovos cozidos", "Tomate, cebola e pimentão picados", "Azeite e sal"],
-    instructions: "1. Hidrate os flocos de milho com água e sal.\n2. Coloque na cuscuzeira e cozinhe por 5 min.\n3. Cozinhe os ovos.\n4. Sirva o cuscuz com ovos fatiados e legumes picados.",
-  },
-  {
-    id: "10", title: "Purê de Batata Doce com Frango", image: recipePureBatata, time: "30 min", kcal: 410, category: "Jantar",
-    tags: ["Alto em Proteína", "Brasileiro"],
-    ingredients: ["200g batata doce", "180g peito de frango grelhado", "Vagem e cenoura no vapor", "Azeite, sal e ervas"],
-    instructions: "1. Cozinhe a batata doce e amasse com um fio de azeite.\n2. Grelhe o frango temperado.\n3. Cozinhe os legumes no vapor.\n4. Monte o prato com o purê, frango fatiado e legumes.",
-  },
-  {
-    id: "11", title: "Omelete de Claras com Espinafre", image: recipeOmelete, time: "10 min", kcal: 200, category: "Café da manhã",
-    tags: ["Alto em Proteína", "Low Carb"],
-    ingredients: ["4 claras de ovo", "1 ovo inteiro", "1 xícara de espinafre", "Tomate cereja", "Sal e pimenta"],
-    instructions: "1. Bata as claras e o ovo inteiro.\n2. Despeje na frigideira antiaderente.\n3. Adicione espinafre e tomate.\n4. Dobre ao meio quando firmar.\n5. Sirva com salada verde.",
-  },
-  {
-    id: "12", title: "Escondidinho Fit de Frango", image: recipeEscondidinho, time: "40 min", kcal: 370, category: "Jantar",
-    tags: ["Comfort Food", "Brasileiro"],
-    ingredients: ["200g batata doce cozida", "150g frango desfiado", "Requeijão light", "Queijo minas ralado", "Temperos a gosto"],
-    instructions: "1. Amasse a batata doce com requeijão light.\n2. Refogue o frango desfiado com temperos.\n3. Em um refratário, faça camadas: purê, frango, purê.\n4. Cubra com queijo minas ralado.\n5. Leve ao forno por 15 min até gratinar.",
-  },
-];
+const RecipeDetailModal = ({ recipe, onClose }: { recipe: Recipe; onClose: () => void }) => {
+  const objectives = recipe.objetivo.split("/").map((o) => o.trim());
 
-const categories = ["Todos", "Café da manhã", "Almoço", "Lanche", "Jantar"];
+  return (
+    <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0 gap-0">
+      {/* Hero image */}
+      <div className="relative aspect-[16/10]">
+        <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+        <div className="absolute bottom-4 left-4 right-4">
+          <DialogHeader>
+            <DialogTitle className="text-white text-lg font-bold tracking-tight">{recipe.title}</DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center gap-3 mt-1.5 text-white/70 text-xs">
+            <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {recipe.time}</span>
+            <span className="flex items-center gap-1"><Flame className="w-3 h-3" /> {recipe.kcal} kcal</span>
+          </div>
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {recipe.tags.map((tag) => (
+              <Badge key={tag} className="text-[9px] bg-white/10 backdrop-blur-sm text-white border-white/20">{tag}</Badge>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="p-4 space-y-5">
+        {/* Objetivo */}
+        <SectionBlock icon={<Target className="w-4 h-4 text-primary" />} title="Objetivo">
+          <div className="flex gap-2">
+            {objectives.map((obj) => (
+              <span key={obj} className={`text-sm font-bold ${objectiveColor[obj] || "text-primary"}`}>
+                {obj}
+              </span>
+            ))}
+          </div>
+        </SectionBlock>
+
+        {/* Composição Base */}
+        <SectionBlock icon={<Utensils className="w-4 h-4 text-primary" />} title="Composição Base">
+          <ul className="space-y-1.5">
+            {recipe.ingredients.map((ing, i) => (
+              <li key={i} className="text-xs text-muted-foreground flex items-start gap-2 leading-relaxed">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                {ing}
+              </li>
+            ))}
+          </ul>
+        </SectionBlock>
+
+        {/* Preparo */}
+        <SectionBlock icon={<Flame className="w-4 h-4 text-orange-400" />} title="Preparo Simples">
+          <div className="space-y-2">
+            {recipe.instructions.split("\n").map((step, i) => (
+              <p key={i} className="text-xs text-muted-foreground leading-relaxed">{step}</p>
+            ))}
+          </div>
+        </SectionBlock>
+
+        {/* Substituições */}
+        <SectionBlock icon={<ArrowRightLeft className="w-4 h-4 text-blue-400" />} title="Substituições Inteligentes">
+          <ul className="space-y-1.5">
+            {recipe.substituicoes.map((sub, i) => (
+              <li key={i} className="text-xs text-muted-foreground flex items-start gap-2 leading-relaxed">
+                <span className="text-blue-400 font-bold shrink-0">↔</span>
+                {sub}
+              </li>
+            ))}
+          </ul>
+        </SectionBlock>
+
+        {/* Ajuste Estratégico */}
+        <SectionBlock icon={<Lightbulb className="w-4 h-4 text-amber-400" />} title="Ajuste Estratégico">
+          <p className="text-xs text-muted-foreground leading-relaxed">{recipe.ajusteEstrategico}</p>
+        </SectionBlock>
+
+        {/* Dica Prática */}
+        <div className="rounded-xl bg-primary/8 border border-primary/15 p-3">
+          <div className="flex items-center gap-2 mb-1.5">
+            <Rocket className="w-4 h-4 text-primary" />
+            <span className="text-xs font-bold text-primary uppercase tracking-wider">Dica Prática</span>
+          </div>
+          <p className="text-xs text-foreground leading-relaxed">{recipe.dicaPratica}</p>
+        </div>
+
+        <button
+          onClick={onClose}
+          className="w-full py-2.5 rounded-xl bg-muted/30 hover:bg-muted/50 text-muted-foreground hover:text-foreground text-xs font-medium transition-all"
+        >
+          Fechar receita
+        </button>
+      </div>
+    </DialogContent>
+  );
+};
+
+const SectionBlock = ({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) => (
+  <div>
+    <div className="flex items-center gap-2 mb-2">
+      {icon}
+      <span className="text-[10px] font-bold text-foreground uppercase tracking-wider">{title}</span>
+    </div>
+    {children}
+  </div>
+);
 
 const StudentRecipes = () => {
   const navigate = useNavigate();
   const [filter, setFilter] = useState("Todos");
-  const [selected, setSelected] = useState<typeof recipes[0] | null>(null);
+  const [selected, setSelected] = useState<Recipe | null>(null);
 
   const filtered = filter === "Todos" ? recipes : recipes.filter((r) => r.category === filter);
 
   return (
-    <DashboardLayout role="student" title="Receitas Saudáveis" subtitle="Inspire-se para suas refeições">
+    <DashboardLayout role="student" title="Receitas Saudáveis" subtitle="Decisões alimentares guiadas">
       <Button variant="ghost" size="sm" className="mb-4 gap-1 text-muted-foreground" onClick={() => navigate("/dashboard")}>
         <ChevronLeft className="w-4 h-4" /> Voltar
       </Button>
 
       <div className="flex gap-2 overflow-x-auto pb-3 mb-4 scrollbar-hide">
-        {categories.map((cat) => (
+        {recipeCategories.map((cat) => (
           <button
             key={cat}
             onClick={() => setFilter(cat)}
@@ -159,47 +182,7 @@ const StudentRecipes = () => {
       </div>
 
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
-        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto p-0">
-          {selected && (
-            <>
-              <div className="relative aspect-video">
-                <img src={selected.image} alt={selected.title} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4">
-                  <DialogHeader>
-                    <DialogTitle className="text-white text-lg">{selected.title}</DialogTitle>
-                  </DialogHeader>
-                  <div className="flex items-center gap-3 mt-2 text-white/80 text-xs">
-                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {selected.time}</span>
-                    <span className="flex items-center gap-1"><Flame className="w-3 h-3" /> {selected.kcal} kcal</span>
-                  </div>
-                </div>
-              </div>
-              <div className="p-4 space-y-4">
-                <div className="flex flex-wrap gap-1.5">
-                  {selected.tags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-[10px]">{tag}</Badge>
-                  ))}
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-foreground mb-2">Ingredientes</h3>
-                  <ul className="space-y-1">
-                    {selected.ingredients.map((ing, i) => (
-                      <li key={i} className="text-xs text-muted-foreground flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                        {ing}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-foreground mb-2">Modo de Preparo</h3>
-                  <p className="text-xs text-muted-foreground whitespace-pre-line leading-relaxed">{selected.instructions}</p>
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
+        {selected && <RecipeDetailModal recipe={selected} onClose={() => setSelected(null)} />}
       </Dialog>
     </DashboardLayout>
   );
