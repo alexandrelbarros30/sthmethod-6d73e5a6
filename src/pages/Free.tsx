@@ -488,6 +488,7 @@ const FreePage = () => {
                 {tab === "receitas" && <TabReceitas key="rec" />}
                 {tab === "macros" && <TabMacros key="mac" profile={profile} />}
                 {tab === "conteudo" && <TabConteudo key="cont" />}
+                {tab === "resultados" && <TabResultados key="res" />}
                 {tab === "perfil" && <TabPerfil key="perf" profile={profile} macroResult={macroResult} onConvert={() => setShowConversion(true)} onLogout={handleLogout} />}
               </AnimatePresence>
             </div>
