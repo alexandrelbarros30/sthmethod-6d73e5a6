@@ -197,12 +197,32 @@ const AdminProtocol = () => {
           });
         }
       }
+
+      // Insert protocol content (rich text) as a new student_protocols entry
+      const libContent = libItem.content || "";
+      if (libContent.replace(/<[^>]*>/g, "").trim().length > 0) {
+        await supabase.from("student_protocols").insert({
+          user_id: uid,
+          title: libItem.title || "Protocolo",
+          content: libContent,
+        });
+      }
+
+      return libItem;
     },
-    onSuccess: () => {
+    onSuccess: (libItem) => {
       toast.success("Protocolo carregado da biblioteca!");
       qc.invalidateQueries({ queryKey: ["admin-protocol-items", selected?.user_id] });
       qc.invalidateQueries({ queryKey: ["protocol-extra-categories", selected?.user_id] });
       qc.invalidateQueries({ queryKey: ["protocol-category-content", selected?.user_id] });
+      qc.invalidateQueries({ queryKey: ["admin-student-protocols-detail", selected?.user_id] });
+      qc.invalidateQueries({ queryKey: ["admin-students-protocols"] });
+      // Pre-fill the editor with the library content
+      const libContent = libItem?.content || "";
+      if (libContent.replace(/<[^>]*>/g, "").trim().length > 0) {
+        setNewContent(libContent);
+        setNewTitle(libItem?.title || "Protocolo");
+      }
       setLibraryDialogOpen(false);
     },
     onError: () => toast.error("Erro ao carregar da biblioteca"),
