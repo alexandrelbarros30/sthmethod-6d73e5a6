@@ -51,7 +51,7 @@ const FloatingDock = () => {
     <>
       <div className="h-24" />
 
-      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md">
+      <div className="fixed left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md" style={{ bottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))' }}>
         <motion.div
           initial={{ y: 60, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
