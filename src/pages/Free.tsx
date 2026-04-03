@@ -478,6 +478,7 @@ const FreePage = () => {
                 {tab === "receitas" && "Receitas Saudáveis"}
                 {tab === "macros" && "Calculadora de Macros"}
                 {tab === "conteudo" && "Conteúdo"}
+                {tab === "resultados" && "Resultados"}
                 {tab === "perfil" && "Meu Perfil"}
               </h2>
             </div>
