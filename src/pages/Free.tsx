@@ -4,11 +4,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Check, Lock, ChevronRight, MessageCircle, ArrowLeft, Flame, Target, Activity,
   Utensils, BarChart3, Brain, User, X, Clock, Zap, Shield, Award, Unlock,
-  Mail, Phone, LogOut, Beaker, UtensilsCrossed, Layers,
+  Mail, Phone, LogOut, Beaker, UtensilsCrossed, Layers, TrendingUp, ShieldCheck, Trophy,
 } from "lucide-react";
 import { calculateMacros, type MacroInput, type MacroResult } from "@/lib/macro-calculator";
 import { recipes as richRecipes, recipeCategories, type Recipe as RichRecipe } from "@/data/recipes";
 import { families, type Family } from "@/components/student/content/compoundData";
+import { useLandingEvolutions, useLandingTestimonials } from "@/hooks/useLandingData";
 import CompoundDetail from "@/components/student/content/CompoundDetail";
 import InsightCarousel from "@/components/student/content/InsightCarousel";
 import CombinationsSection from "@/components/student/content/CombinationsSection";
@@ -20,7 +21,7 @@ import cardCombinacoesImg from "@/assets/card-combinacoes.jpg";
 
 /* ───────── types ───────── */
 type Screen = "login" | "hero" | "diagnostic" | "result" | "progress" | "lock" | "dashboard";
-type Tab = "receitas" | "macros" | "conteudo" | "perfil";
+type Tab = "receitas" | "macros" | "conteudo" | "resultados" | "perfil";
 type Objective = "emagrecimento" | "hipertrofia" | "saude" | "";
 
 interface ProfileData {
@@ -477,6 +478,7 @@ const FreePage = () => {
                 {tab === "receitas" && "Receitas Saudáveis"}
                 {tab === "macros" && "Calculadora de Macros"}
                 {tab === "conteudo" && "Conteúdo"}
+                {tab === "resultados" && "Resultados"}
                 {tab === "perfil" && "Meu Perfil"}
               </h2>
             </div>
@@ -486,6 +488,7 @@ const FreePage = () => {
                 {tab === "receitas" && <TabReceitas key="rec" />}
                 {tab === "macros" && <TabMacros key="mac" profile={profile} />}
                 {tab === "conteudo" && <TabConteudo key="cont" />}
+                {tab === "resultados" && <TabResultados key="res" />}
                 {tab === "perfil" && <TabPerfil key="perf" profile={profile} macroResult={macroResult} onConvert={() => setShowConversion(true)} onLogout={handleLogout} />}
               </AnimatePresence>
             </div>
@@ -495,6 +498,7 @@ const FreePage = () => {
                 { id: "receitas" as Tab, icon: Utensils, label: "Receitas" },
                 { id: "macros" as Tab, icon: BarChart3, label: "Macros" },
                 { id: "conteudo" as Tab, icon: Brain, label: "Conteúdo" },
+                { id: "resultados" as Tab, icon: Trophy, label: "Resultados" },
                 { id: "perfil" as Tab, icon: User, label: "Perfil" },
               ]).map(t => (
                 <button key={t.id} onClick={() => setTab(t.id)}
@@ -1080,6 +1084,99 @@ const TabConteudo = () => {
   }
 
   return null;
+};
+
+/* ──── Tab: Resultados (evolutions + pillars from landing) ──── */
+const TabResultados = () => {
+  const { data: evolutions } = useLandingEvolutions();
+  const { data: testimonials } = useLandingTestimonials();
+  const active = evolutions?.filter((e) => e.active) ?? [];
+  const activeTestimonials = testimonials?.filter((t) => t.active) ?? [];
+
+  const pillars = [
+    { icon: <Target className="w-5 h-5" />, title: "Método", desc: "Protocolo individualizado, nada genérico." },
+    { icon: <TrendingUp className="w-5 h-5" />, title: "Constância", desc: "Acompanhamento contínuo que gera disciplina." },
+    { icon: <ShieldCheck className="w-5 h-5" />, title: "Segurança", desc: "Saúde em primeiro lugar, sempre." },
+  ];
+
+  const timeline = [
+    { month: "Mês 1", label: "Organização & Ritmo", emoji: "🔄" },
+    { month: "Mês 3", label: "Evolução Consistente", emoji: "📈" },
+    { month: "Mês 6", label: "Transformação Real", emoji: "🏆" },
+  ];
+
+  return (
+    <motion.div {...fade} className="space-y-6 pb-6">
+      {/* Timeline */}
+      <div className="bg-white/[.03] border border-white/[.06] rounded-2xl p-5">
+        <p className="text-[11px] uppercase tracking-widest font-medium mb-4" style={{ color: G.accent }}>Linha do Tempo</p>
+        <div className="flex justify-between gap-2">
+          {timeline.map((s, i) => (
+            <div key={i} className="flex-1 text-center">
+              <div className="text-2xl mb-1">{s.emoji}</div>
+              <p className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">{s.month}</p>
+              <p className="text-xs text-white/70 mt-0.5">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Pillars */}
+      <div className="grid grid-cols-3 gap-3">
+        {pillars.map((p, i) => (
+          <div key={i} className="bg-white/[.03] border border-white/[.06] rounded-2xl p-3 text-center">
+            <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-2 text-emerald-400">
+              {p.icon}
+            </div>
+            <p className="text-xs font-semibold text-white/90">{p.title}</p>
+            <p className="text-[10px] text-white/40 mt-0.5 leading-tight">{p.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Evolutions carousel */}
+      {active.length > 0 && (
+        <div>
+          <p className="text-[11px] uppercase tracking-widest font-medium mb-3" style={{ color: G.accent }}>Evoluções Reais</p>
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: "none" }}>
+            {active.map((ev) => (
+              <div key={ev.id} className="shrink-0 w-60 rounded-2xl overflow-hidden border border-white/[.06]">
+                <img src={ev.image_url} alt={ev.caption || "Evolução"} className="w-full h-64 object-cover" loading="lazy" />
+                {ev.caption && (
+                  <div className="p-2.5 bg-white/[.02]">
+                    <p className="text-[11px] text-white/50">{ev.caption}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Testimonials */}
+      {activeTestimonials.length > 0 && (
+        <div>
+          <p className="text-[11px] uppercase tracking-widest font-medium mb-3" style={{ color: G.accent }}>Depoimentos</p>
+          <div className="space-y-3">
+            {activeTestimonials.map((t) => (
+              <div key={t.id} className="bg-white/[.03] border border-white/[.06] rounded-2xl p-4 relative">
+                {t.tag && (
+                  <span className="absolute -top-2 right-3 bg-emerald-500 text-black text-[9px] font-semibold px-2 py-0.5 rounded-full">{t.tag}</span>
+                )}
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-full bg-emerald-500/15 flex items-center justify-center text-emerald-400">
+                    <MessageCircle className="w-3.5 h-3.5" />
+                  </div>
+                  <p className="text-xs font-semibold text-white/80">{t.name}</p>
+                </div>
+                <p className="text-xs text-white/50 italic leading-relaxed">"{t.text}"</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </motion.div>
+  );
 };
 
 /* ──── Tab: Perfil (with logout) ──── */
