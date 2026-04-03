@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => ({
         description: "Consultoria online personalizada para quem busca emagrecimento, definição, saúde hormonal e evolução no shape.",
         theme_color: "#0a1214",
         background_color: "#0a1214",
-        display: "fullscreen",
+        display: "standalone",
         orientation: "portrait",
         scope: "/",
         start_url: "/",
