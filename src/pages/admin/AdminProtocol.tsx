@@ -16,16 +16,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff } from "lucide-react";
+import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff, BookOpen, Save, Download } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AdminProtocol = () => {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [returnToEdit, setReturnToEdit] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -51,6 +53,10 @@ const AdminProtocol = () => {
   // Delete
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Library
+  const [libraryDialogOpen, setLibraryDialogOpen] = useState(false);
+  const [librarySearch, setLibrarySearch] = useState("");
 
   const { data: students } = useQuery({
     queryKey: ["admin-students-protocols"],
@@ -109,7 +115,100 @@ const AdminProtocol = () => {
     enabled: !!selected?.user_id && dialogOpen,
   });
 
-  // Auto-select student from URL param
+  // Protocol Library
+  const { data: libraryItems = [] } = useQuery({
+    queryKey: ["protocol-library"],
+    queryFn: async () => {
+      const { data } = await supabase.from("protocol_library" as any).select("*").order("created_at", { ascending: false });
+      return (data || []) as any[];
+    },
+  });
+
+  const saveToLibraryMutation = useMutation({
+    mutationFn: async () => {
+      if (!selected?.user_id) return;
+      // Gather current protocol items
+      const { data: items } = await supabase.from("protocols").select("*").eq("user_id", selected.user_id);
+      const { data: extraCats } = await supabase.from("protocol_extra_categories" as any).select("*").eq("user_id", selected.user_id);
+      const { data: catContents } = await supabase.from("protocol_category_content").select("*").eq("user_id", selected.user_id);
+
+      const itemsArr = (items || []).map((i: any) => ({
+        name: i.name, dosage: i.dosage, frequency: i.frequency, category: i.category, notes: i.notes,
+      }));
+      const extraArr = (extraCats || []).map((c: any) => ({
+        name: c.name, content: c.content,
+      }));
+      const catObj: Record<string, string> = {};
+      (catContents || []).forEach((c: any) => { catObj[c.category] = c.content; });
+
+      await supabase.from("protocol_library" as any).insert({
+        title: `Protocolo de ${selected.full_name || "Aluno"}`,
+        content: "",
+        items_json: itemsArr,
+        extra_categories_json: extraArr,
+        category_contents_json: catObj,
+        created_by: user!.id,
+      } as any);
+    },
+    onSuccess: () => {
+      toast.success("Protocolo salvo na biblioteca!");
+      qc.invalidateQueries({ queryKey: ["protocol-library"] });
+    },
+    onError: () => toast.error("Erro ao salvar na biblioteca"),
+  });
+
+  const loadFromLibraryMutation = useMutation({
+    mutationFn: async (libItem: any) => {
+      if (!selected?.user_id) return;
+      const uid = selected.user_id;
+
+      // Clear existing items
+      await supabase.from("protocols").delete().eq("user_id", uid);
+      await supabase.from("protocol_extra_categories" as any).delete().eq("user_id", uid);
+      await supabase.from("protocol_category_content").delete().eq("user_id", uid);
+
+      // Insert items from library
+      const items = (libItem.items_json || []) as any[];
+      if (items.length > 0) {
+        await supabase.from("protocols").insert(
+          items.map((item: any, idx: number) => ({
+            user_id: uid, name: item.name, dosage: item.dosage || "", frequency: item.frequency || "",
+            category: item.category, notes: item.notes || "", sort_order: idx,
+          }))
+        );
+      }
+
+      // Insert extra categories
+      const extras = (libItem.extra_categories_json || []) as any[];
+      if (extras.length > 0) {
+        for (let i = 0; i < extras.length; i++) {
+          await supabase.from("protocol_extra_categories" as any).insert({
+            user_id: uid, name: extras[i].name, content: extras[i].content || "", sort_order: i,
+          } as any);
+        }
+      }
+
+      // Insert category contents
+      const catContents = (libItem.category_contents_json || {}) as Record<string, string>;
+      for (const [cat, content] of Object.entries(catContents)) {
+        if (content) {
+          await supabase.from("protocol_category_content").insert({
+            user_id: uid, category: cat, content,
+          });
+        }
+      }
+    },
+    onSuccess: () => {
+      toast.success("Protocolo carregado da biblioteca!");
+      qc.invalidateQueries({ queryKey: ["admin-protocol-items", selected?.user_id] });
+      qc.invalidateQueries({ queryKey: ["protocol-extra-categories", selected?.user_id] });
+      qc.invalidateQueries({ queryKey: ["protocol-category-content", selected?.user_id] });
+      setLibraryDialogOpen(false);
+    },
+    onError: () => toast.error("Erro ao carregar da biblioteca"),
+  });
+
+
   useEffect(() => {
     const uid = searchParams.get("uid");
     if (uid && students?.length && !selected) {
@@ -357,6 +456,18 @@ const AdminProtocol = () => {
                 </Card>
               )}
 
+              {/* Library Buttons */}
+              {selected?.user_id && (
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" className="text-xs" onClick={() => setLibraryDialogOpen(true)}>
+                    <Download className="w-3.5 h-3.5 mr-1" /> Carregar da Biblioteca
+                  </Button>
+                  <Button variant="outline" size="sm" className="text-xs" onClick={() => saveToLibraryMutation.mutate()} disabled={saveToLibraryMutation.isPending}>
+                    <Save className="w-3.5 h-3.5 mr-1" /> {saveToLibraryMutation.isPending ? "Salvando..." : "Salvar na Biblioteca"}
+                  </Button>
+                </div>
+              )}
+
               {/* Protocol Items Manager (medications/supplements) */}
               {selected?.user_id && (
                 <>
@@ -526,6 +637,39 @@ const AdminProtocol = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Library Selection Dialog */}
+      <Dialog open={libraryDialogOpen} onOpenChange={setLibraryDialogOpen}>
+        <DialogContent className="max-w-md max-h-[80dvh] overflow-hidden !flex !flex-col">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <BookOpen className="w-5 h-5" /> Biblioteca de Protocolos
+            </DialogTitle>
+            <DialogDescription>Selecione um modelo para aplicar neste aluno. Os dados atuais serão substituídos.</DialogDescription>
+          </DialogHeader>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input placeholder="Buscar modelo..." value={librarySearch} onChange={(e) => setLibrarySearch(e.target.value)} className="pl-9" />
+          </div>
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-2">
+            {libraryItems
+              .filter((i: any) => !librarySearch.trim() || i.title?.toLowerCase().includes(librarySearch.toLowerCase()))
+              .map((item: any) => (
+                <div key={item.id} className="rounded-lg border border-border p-3 hover:bg-muted/50 cursor-pointer transition-colors"
+                  onClick={() => loadFromLibraryMutation.mutate(item)}
+                >
+                  <p className="font-medium text-sm font-display">{item.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {(item.items_json || []).length} itens • {new Date(item.created_at).toLocaleDateString("pt-BR")}
+                  </p>
+                </div>
+              ))}
+            {libraryItems.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-6">Nenhum modelo na biblioteca. Salve um protocolo primeiro.</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };

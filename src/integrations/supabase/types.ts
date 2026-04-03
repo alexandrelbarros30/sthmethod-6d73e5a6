@@ -1305,6 +1305,42 @@ export type Database = {
         }
         Relationships: []
       }
+      protocol_library: {
+        Row: {
+          category_contents_json: Json
+          content: string
+          created_at: string
+          created_by: string
+          extra_categories_json: Json
+          id: string
+          items_json: Json
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category_contents_json?: Json
+          content?: string
+          created_at?: string
+          created_by: string
+          extra_categories_json?: Json
+          id?: string
+          items_json?: Json
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category_contents_json?: Json
+          content?: string
+          created_at?: string
+          created_by?: string
+          extra_categories_json?: Json
+          id?: string
+          items_json?: Json
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       protocols: {
         Row: {
           category: string
