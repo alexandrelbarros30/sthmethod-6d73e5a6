@@ -158,18 +158,40 @@ const FreePage = () => {
     setScreen("result");
   }, [profile]);
 
-  const handleSignupAndNext = useCallback(() => {
+  const handleSignupAndNext = useCallback(async () => {
+    const cleanPhone = profile.phone.replace(/\D/g, "");
+    const cleanEmail = profile.email.trim().toLowerCase();
+
+    // Check for existing lead by email or phone
+    const { data: existing } = await supabase
+      .from("free_leads")
+      .select("email, phone")
+      .or(`email.eq.${cleanEmail},phone.eq.${cleanPhone}`)
+      .limit(1)
+      .maybeSingle();
+
+    if (existing) {
+      const msg = existing.email === cleanEmail
+        ? "Este e-mail já está cadastrado. Use o login para acessar."
+        : "Este telefone já está cadastrado. Use o login para acessar.";
+      alert(msg);
+      setScreen("login");
+      setLoginEmail(cleanEmail);
+      setLoginPhone(profile.phone);
+      return;
+    }
+
     // Save lead to database
-    supabase.from("free_leads").insert({
-      email: profile.email,
-      phone: profile.phone,
+    await supabase.from("free_leads").insert({
+      email: cleanEmail,
+      phone: cleanPhone,
       gender: profile.gender,
       age: Number(profile.age) || null,
       weight: Number(profile.peso) || null,
       height: Number(profile.altura) || null,
       objective: profile.objetivo,
       frequency: Number(profile.frequencia) || null,
-    }).then(() => {});
+    });
     // Save session locally
     saveSession(profile);
     setStep(5);
