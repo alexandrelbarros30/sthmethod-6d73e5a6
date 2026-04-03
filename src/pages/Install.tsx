@@ -48,7 +48,7 @@ const Install = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       {/* Header */}
       <div className="gradient-bg py-8 px-6">
         <div className="max-w-lg mx-auto">
