@@ -131,6 +131,14 @@ const AdminProtocol = () => {
       const { data: items } = await supabase.from("protocols").select("*").eq("user_id", selected.user_id);
       const { data: extraCats } = await supabase.from("protocol_extra_categories" as any).select("*").eq("user_id", selected.user_id);
       const { data: catContents } = await supabase.from("protocol_category_content").select("*").eq("user_id", selected.user_id);
+      // Get the latest student_protocols content
+      const { data: latestProtocol } = await supabase
+        .from("student_protocols")
+        .select("content")
+        .eq("user_id", selected.user_id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       const itemsArr = (items || []).map((i: any) => ({
         name: i.name, dosage: i.dosage, frequency: i.frequency, category: i.category, notes: i.notes,
@@ -143,7 +151,7 @@ const AdminProtocol = () => {
 
       await supabase.from("protocol_library" as any).insert({
         title: `Protocolo de ${selected.full_name || "Aluno"}`,
-        content: "",
+        content: latestProtocol?.content || "",
         items_json: itemsArr,
         extra_categories_json: extraArr,
         category_contents_json: catObj,
