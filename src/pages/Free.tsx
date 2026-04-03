@@ -9,6 +9,7 @@ import {
 import { calculateMacros, type MacroInput, type MacroResult } from "@/lib/macro-calculator";
 import { recipes as richRecipes, recipeCategories, type Recipe as RichRecipe } from "@/data/recipes";
 import { families, type Family } from "@/components/student/content/compoundData";
+import { useLandingEvolutions, useLandingTestimonials } from "@/hooks/useLandingData";
 import CompoundDetail from "@/components/student/content/CompoundDetail";
 import InsightCarousel from "@/components/student/content/InsightCarousel";
 import CombinationsSection from "@/components/student/content/CombinationsSection";
