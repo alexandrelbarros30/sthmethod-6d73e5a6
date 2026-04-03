@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_logs: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          is_free: boolean
+          logged_in_at: string
+          logged_out_at: string | null
+          page_path: string | null
+          session_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          is_free?: boolean
+          logged_in_at?: string
+          logged_out_at?: string | null
+          page_path?: string | null
+          session_id?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          is_free?: boolean
+          logged_in_at?: string
+          logged_out_at?: string | null
+          page_path?: string | null
+          session_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       admin_reminders: {
         Row: {
           created_at: string

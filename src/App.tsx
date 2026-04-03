@@ -47,6 +47,7 @@ import FinanceiroDashboard from "./pages/financeiro/FinanceiroDashboard";
 import NotFound from "./pages/NotFound";
 import { useDynamicFavicon } from "@/hooks/useDynamicFavicon";
 import { useAdminTheme } from "@/hooks/useAdminTheme";
+import { useAccessLog } from "@/hooks/useAccessLog";
 import UpdateBanner from "@/components/shared/UpdateBanner";
 
 // Lazy load pages that use Tiptap editor to avoid blocking the app
@@ -57,7 +58,7 @@ const LazyFallback = () => <div className="flex items-center justify-center min-
 
 const queryClient = new QueryClient();
 
-const DynamicHead = () => { useDynamicFavicon(); useAdminTheme(); return null; };
+const DynamicHead = () => { useDynamicFavicon(); useAdminTheme(); useAccessLog(); return null; };
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -131,7 +132,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           <div className="fixed bottom-1 right-1 text-[9px] text-muted-foreground/40 pointer-events-none z-50 font-mono">
-            Versão 1.2.5 – Safe Area Mobile
+            Versão 1.2.6 – Access Tracking
           </div>
         </AuthProvider>
       </BrowserRouter>
