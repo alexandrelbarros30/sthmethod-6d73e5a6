@@ -27,6 +27,7 @@ const AdminProtocol = () => {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [returnToEdit, setReturnToEdit] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -52,6 +53,10 @@ const AdminProtocol = () => {
   // Delete
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Library
+  const [libraryDialogOpen, setLibraryDialogOpen] = useState(false);
+  const [librarySearch, setLibrarySearch] = useState("");
 
   const { data: students } = useQuery({
     queryKey: ["admin-students-protocols"],
