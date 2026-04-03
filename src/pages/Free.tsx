@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Check, Lock, ChevronRight, MessageCircle, ArrowLeft, Flame, Target, Activity,
   Utensils, BarChart3, Brain, User, X, Clock, Zap, Shield, Award, Unlock,
-  Mail, Phone, LogOut, Beaker, UtensilsCrossed, Layers,
+  Mail, Phone, LogOut, Beaker, UtensilsCrossed, Layers, TrendingUp, ShieldCheck, Trophy,
 } from "lucide-react";
 import { calculateMacros, type MacroInput, type MacroResult } from "@/lib/macro-calculator";
 import { recipes as richRecipes, recipeCategories, type Recipe as RichRecipe } from "@/data/recipes";
