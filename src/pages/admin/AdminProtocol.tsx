@@ -637,6 +637,39 @@ const AdminProtocol = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Library Selection Dialog */}
+      <Dialog open={libraryDialogOpen} onOpenChange={setLibraryDialogOpen}>
+        <DialogContent className="max-w-md max-h-[80dvh] overflow-hidden !flex !flex-col">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <BookOpen className="w-5 h-5" /> Biblioteca de Protocolos
+            </DialogTitle>
+            <DialogDescription>Selecione um modelo para aplicar neste aluno. Os dados atuais serão substituídos.</DialogDescription>
+          </DialogHeader>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input placeholder="Buscar modelo..." value={librarySearch} onChange={(e) => setLibrarySearch(e.target.value)} className="pl-9" />
+          </div>
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-2">
+            {libraryItems
+              .filter((i: any) => !librarySearch.trim() || i.title?.toLowerCase().includes(librarySearch.toLowerCase()))
+              .map((item: any) => (
+                <div key={item.id} className="rounded-lg border border-border p-3 hover:bg-muted/50 cursor-pointer transition-colors"
+                  onClick={() => loadFromLibraryMutation.mutate(item)}
+                >
+                  <p className="font-medium text-sm font-display">{item.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {(item.items_json || []).length} itens • {new Date(item.created_at).toLocaleDateString("pt-BR")}
+                  </p>
+                </div>
+              ))}
+            {libraryItems.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-6">Nenhum modelo na biblioteca. Salve um protocolo primeiro.</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
