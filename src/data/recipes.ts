@@ -17,7 +17,7 @@ export interface Recipe {
   image: string;
   time: string;
   kcal: number;
-  category: "Café da manhã" | "Almoço" | "Lanche" | "Jantar";
+  category: "Café da manhã" | "Almoço" | "Lanche" | "Lanche da Tarde" | "Jantar" | "Ceia";
   tags: string[];
   objetivo: string;
   ingredients: string[];
