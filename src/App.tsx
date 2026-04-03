@@ -47,6 +47,7 @@ import FinanceiroDashboard from "./pages/financeiro/FinanceiroDashboard";
 import NotFound from "./pages/NotFound";
 import { useDynamicFavicon } from "@/hooks/useDynamicFavicon";
 import { useAdminTheme } from "@/hooks/useAdminTheme";
+import { useAccessLog } from "@/hooks/useAccessLog";
 import UpdateBanner from "@/components/shared/UpdateBanner";
 
 // Lazy load pages that use Tiptap editor to avoid blocking the app
