@@ -178,28 +178,43 @@ const FreePage = () => {
   const handleLogin = useCallback(async () => {
     setLoginError("");
     setLoginLoading(true);
+    const cleanPhone = loginPhone.replace(/\D/g, "").trim();
+    const cleanEmail = loginEmail.trim().toLowerCase();
+
+    // Try exact phone match first, then also try without leading country code
     const { data, error } = await supabase
       .from("free_leads")
       .select("email, phone, gender, age, weight, height, objective, frequency")
-      .eq("email", loginEmail.trim().toLowerCase())
-      .eq("phone", loginPhone.trim())
-      .limit(1)
-      .maybeSingle();
+      .eq("email", cleanEmail)
+      .limit(10);
 
-    if (error || !data) {
-      setLoginError("E-mail ou telefone não encontrado. Faça seu cadastro primeiro.");
+    if (error || !data || data.length === 0) {
+      setLoginError("E-mail não encontrado. Faça seu cadastro primeiro.");
       setLoginLoading(false);
       return;
     }
+
+    // Match phone flexibly (strip non-digits from both sides)
+    const match = data.find(d => {
+      const dbPhone = (d.phone || "").replace(/\D/g, "");
+      return dbPhone === cleanPhone || dbPhone.endsWith(cleanPhone) || cleanPhone.endsWith(dbPhone);
+    });
+
+    if (!match) {
+      setLoginError("Telefone não corresponde ao cadastro deste e-mail.");
+      setLoginLoading(false);
+      return;
+    }
+
     const restored: ProfileData = {
-      email: data.email,
-      phone: data.phone,
-      gender: (data.gender as "masculino" | "feminino") || "masculino",
-      age: String(data.age || 28),
-      peso: String(data.weight || ""),
-      altura: String(data.height || ""),
-      objetivo: (data.objective as Objective) || "",
-      frequencia: String(data.frequency || ""),
+      email: match.email,
+      phone: match.phone,
+      gender: (match.gender as "masculino" | "feminino") || "masculino",
+      age: String(match.age || 28),
+      peso: String(match.weight || ""),
+      altura: String(match.height || ""),
+      objetivo: (match.objective as Objective) || "",
+      frequencia: String(match.frequency || ""),
     };
     setProfile(restored);
     saveSession(restored);
