@@ -120,8 +120,20 @@ serve(async (req) => {
       debit: ["pix", "credit_card", "ticket", "bolbradesco"],
     };
 
+    // Calculate max installments based on plan duration
+    let maxInstallments = 1;
+    if (plan.duration_days >= 180) {
+      maxInstallments = 6;
+    } else if (plan.duration_days >= 90) {
+      maxInstallments = 3;
+    }
+    // For debit, always 1 installment
+    if (method === "debit") {
+      maxInstallments = 1;
+    }
+
     // Create MP preference
-    const preference = {
+    const preference: any = {
       items: [{
         title: `${plan.name} - ST&H Consultoria`,
         description: plan.subtitle || plan.duration,
@@ -144,6 +156,17 @@ serve(async (req) => {
       excluded_payment_methods: [],
       excluded_payment_types: (excludedMethods[method] || []).map((id: string) => ({ id })),
     };
+
+    // Set installment limits for credit card
+    if (method === "credit" && maxInstallments > 1) {
+      preference.payment_methods = {
+        installments: maxInstallments,
+      };
+    } else if (method === "credit") {
+      preference.payment_methods = {
+        installments: 1,
+      };
+    }
 
     const mpRes = await fetch("https://api.mercadopago.com/checkout/preferences", {
       method: "POST",
