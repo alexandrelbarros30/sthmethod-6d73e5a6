@@ -498,6 +498,7 @@ const FreePage = () => {
                 { id: "receitas" as Tab, icon: Utensils, label: "Receitas" },
                 { id: "macros" as Tab, icon: BarChart3, label: "Macros" },
                 { id: "conteudo" as Tab, icon: Brain, label: "Conteúdo" },
+                { id: "resultados" as Tab, icon: Trophy, label: "Resultados" },
                 { id: "perfil" as Tab, icon: User, label: "Perfil" },
               ]).map(t => (
                 <button key={t.id} onClick={() => setTab(t.id)}
