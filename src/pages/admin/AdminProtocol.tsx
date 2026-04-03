@@ -456,6 +456,18 @@ const AdminProtocol = () => {
                 </Card>
               )}
 
+              {/* Library Buttons */}
+              {selected?.user_id && (
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" className="text-xs" onClick={() => setLibraryDialogOpen(true)}>
+                    <Download className="w-3.5 h-3.5 mr-1" /> Carregar da Biblioteca
+                  </Button>
+                  <Button variant="outline" size="sm" className="text-xs" onClick={() => saveToLibraryMutation.mutate()} disabled={saveToLibraryMutation.isPending}>
+                    <Save className="w-3.5 h-3.5 mr-1" /> {saveToLibraryMutation.isPending ? "Salvando..." : "Salvar na Biblioteca"}
+                  </Button>
+                </div>
+              )}
+
               {/* Protocol Items Manager (medications/supplements) */}
               {selected?.user_id && (
                 <>
