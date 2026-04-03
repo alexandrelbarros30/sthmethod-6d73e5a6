@@ -21,7 +21,7 @@ import cardCombinacoesImg from "@/assets/card-combinacoes.jpg";
 
 /* ───────── types ───────── */
 type Screen = "login" | "hero" | "diagnostic" | "result" | "progress" | "lock" | "dashboard";
-type Tab = "receitas" | "macros" | "conteudo" | "perfil";
+type Tab = "receitas" | "macros" | "conteudo" | "resultados" | "perfil";
 type Objective = "emagrecimento" | "hipertrofia" | "saude" | "";
 
 interface ProfileData {
