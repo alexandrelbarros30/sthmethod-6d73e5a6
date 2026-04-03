@@ -238,93 +238,7 @@ const AdminDashboard = () => {
         {/* 1. Alunos Recentes (moved up) */}
         <RecentStudents profiles={profiles} subscriptions={subscriptions} navigate={navigate} queryClient={queryClient} />
 
-        {/* 2. Cadastros Incompletos */}
-        {incompleteCount > 0 && (
-          <CollapsiblePanel
-            title="Cadastros Incompletos"
-            icon={<AlertCircle className="w-4 h-4 text-warning" />}
-            badge={incompleteCount}
-            badgeClassName="bg-warning text-warning-foreground"
-            defaultOpen={true}
-            cardClassName="border-warning/20 bg-warning/5"
-          >
-            {incompleteOnboardings!.map((p: any) => {
-              const days = Math.floor((Date.now() - new Date(p.created_at).getTime()) / 86400000);
-              const dayLabel = days === 0 ? "Hoje" : `${days}d atrás`;
-              return (
-                <div key={p.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <Clock className="w-4 h-4 text-warning shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{p.full_name?.trim() || p.email || "Sem nome"}</p>
-                      <p className="text-xs text-muted-foreground truncate">{p.email} • {dayLabel}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Badge variant="outline" className="text-xs text-warning border-warning/30">Incompleto</Badge>
-                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => navigate(`/admin/students?manage=${p.user_id}`)}>
-                      <Settings className="w-3.5 h-3.5" /> Gerenciar
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => navigate(`/admin/students?edit=${p.user_id}`)}>
-                      <ExternalLink className="w-3.5 h-3.5" /> Ficha
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </CollapsiblePanel>
-        )}
-
-        {/* 3. Lembretes Inteligentes */}
-        <CollapsiblePanel
-          title="Lembretes Inteligentes"
-          icon={<Bell className="w-4 h-4 text-primary" />}
-          defaultOpen={false}
-        >
-          <AdminReminders />
-        </CollapsiblePanel>
-
-        {/* 4. Pagamentos Pendentes */}
-        <PendingPayments />
-
-        {/* 5. Cadastros Completos (Alunos) */}
-        {completedCount > 0 && (
-          <CollapsiblePanel
-            title="Cadastros Completos"
-            icon={<CheckCircle className="w-4 h-4 text-primary" />}
-            badge={completedCount}
-            defaultOpen={false}
-            cardClassName="border-primary/20 bg-primary/5"
-          >
-            {recentOnboardings!.map((s: any) => (
-              <div key={s.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <CheckCircle className="w-4 h-4 text-primary shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{(s as any).profiles?.full_name || "Aluno"}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {(s as any).plans?.name} • {new Date(s.created_at).toLocaleDateString("pt-BR")}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <Badge variant="outline" className="text-xs text-primary border-primary/30">Completo</Badge>
-                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => navigate(`/admin/students?edit=${s.user_id}`)}>
-                    <ExternalLink className="w-3.5 h-3.5" /> Ficha
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </CollapsiblePanel>
-        )}
-
-        {/* WhatsApp em Massa */}
-        <WhatsAppBulkSender />
-
-        {/* WhatsApp Quick Link */}
-        <WhatsAppQuickLink />
-
-        {/* Leads Free para Conversão */}
+        {/* 2. Leads Free */}
         {(freeLeads?.length || 0) > 0 && (
           <CollapsiblePanel
             title="Leads Free"
@@ -339,22 +253,20 @@ const AdminDashboard = () => {
               const dayLabel = days === 0 ? "Hoje" : `${days}d atrás`;
               const objLabel = lead.objective === "emagrecimento" ? "Emagrecer" : lead.objective === "hipertrofia" ? "Hipertrofia" : lead.objective === "saude" ? "Saúde" : "";
               return (
-                <div key={lead.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div key={lead.id} className="flex flex-col gap-1 py-2 border-b border-border/50 last:border-0">
+                  <div className="flex items-center gap-2 min-w-0">
                     <Sparkles className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{lead.email}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {lead.phone} • {objLabel} • {lead.weight}kg • {dayLabel}
-                      </p>
-                    </div>
+                    <p className="text-sm font-medium truncate flex-1">{lead.full_name || lead.email}</p>
+                    <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/30 shrink-0">Free</Badge>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/30">Free</Badge>
+                  <div className="flex items-center justify-between pl-6">
+                    <p className="text-xs text-muted-foreground truncate">
+                      {lead.phone} • {objLabel} • {lead.weight}kg • {dayLabel}
+                    </p>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-7 px-2 text-xs gap-1 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10"
+                      className="h-7 px-2 text-xs gap-1 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10 shrink-0"
                       onClick={() => {
                         const phone = lead.phone.replace(/\D/g, "");
                         const msg = encodeURIComponent(`Olá! Vi que você fez a análise gratuita no STH Method. Posso te ajudar a desbloquear seu plano completo?`);
@@ -369,6 +281,87 @@ const AdminDashboard = () => {
             })}
           </CollapsiblePanel>
         )}
+
+        {/* 3. Cadastros Completos */}
+        {completedCount > 0 && (
+          <CollapsiblePanel
+            title="Cadastros Completos"
+            icon={<CheckCircle className="w-4 h-4 text-primary" />}
+            badge={completedCount}
+            defaultOpen={false}
+            cardClassName="border-primary/20 bg-primary/5"
+          >
+            {recentOnboardings!.map((s: any) => (
+              <div key={s.id} className="flex flex-col gap-1 py-2 border-b border-border/50 last:border-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                  <p className="text-sm font-medium truncate flex-1">{(s as any).profiles?.full_name || "Aluno"}</p>
+                  <Badge variant="outline" className="text-xs text-primary border-primary/30 shrink-0">Completo</Badge>
+                </div>
+                <div className="flex items-center justify-between pl-6">
+                  <p className="text-xs text-muted-foreground truncate">
+                    {(s as any).plans?.name} • {new Date(s.created_at).toLocaleDateString("pt-BR")}
+                  </p>
+                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1 shrink-0" onClick={() => navigate(`/admin/students?edit=${s.user_id}`)}>
+                    <ExternalLink className="w-3.5 h-3.5" /> Ficha
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CollapsiblePanel>
+        )}
+
+        {/* 4. Cadastros Incompletos */}
+        {incompleteCount > 0 && (
+          <CollapsiblePanel
+            title="Cadastros Incompletos"
+            icon={<AlertCircle className="w-4 h-4 text-warning" />}
+            badge={incompleteCount}
+            badgeClassName="bg-warning text-warning-foreground"
+            defaultOpen={false}
+            cardClassName="border-warning/20 bg-warning/5"
+          >
+            {incompleteOnboardings!.map((p: any) => {
+              const days = Math.floor((Date.now() - new Date(p.created_at).getTime()) / 86400000);
+              const dayLabel = days === 0 ? "Hoje" : `${days}d atrás`;
+              return (
+                <div key={p.id} className="flex flex-col gap-1 py-2 border-b border-border/50 last:border-0">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Clock className="w-4 h-4 text-warning shrink-0" />
+                    <p className="text-sm font-medium truncate flex-1">{p.full_name?.trim() || p.email || "Sem nome"}</p>
+                    <Badge variant="outline" className="text-xs text-warning border-warning/30 shrink-0">Incompleto</Badge>
+                  </div>
+                  <div className="flex items-center justify-between pl-6">
+                    <p className="text-xs text-muted-foreground truncate">{p.email} • {dayLabel}</p>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => navigate(`/admin/students?manage=${p.user_id}`)}>
+                        <Settings className="w-3.5 h-3.5" /> Gerenciar
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </CollapsiblePanel>
+        )}
+
+        {/* 5. Lembretes Inteligentes */}
+        <CollapsiblePanel
+          title="Lembretes Inteligentes"
+          icon={<Bell className="w-4 h-4 text-primary" />}
+          defaultOpen={false}
+        >
+          <AdminReminders />
+        </CollapsiblePanel>
+
+        {/* 6. Pagamentos Pendentes */}
+        <PendingPayments />
+
+        {/* WhatsApp em Massa */}
+        <WhatsAppBulkSender />
+
+        {/* WhatsApp Quick Link */}
+        <WhatsAppQuickLink />
       </div>
     </DashboardLayout>
   );
