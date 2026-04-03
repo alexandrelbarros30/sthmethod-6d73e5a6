@@ -112,6 +112,7 @@ const FreePage = () => {
   const [loginPhone, setLoginPhone] = useState("");
   const [loginError, setLoginError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
+  const [whatsappTriggered, setWhatsappTriggered] = useState(false);
 
   /* Check for existing session on mount */
   useEffect(() => {
@@ -121,6 +122,57 @@ const FreePage = () => {
       setScreen("dashboard");
     }
   }, []);
+
+  /* Auto-trigger WhatsApp message when entering free dashboard */
+  useEffect(() => {
+    if (screen === "dashboard" && !whatsappTriggered) {
+      setWhatsappTriggered(true);
+      const msg = `👀 *Vi que você entrou na plataforma gratuita…*
+
+Mas deixa eu ser direto contigo:
+
+Se *só conteúdo resolvesse*,
+você já teria o corpo que quer há muito tempo.
+
+❌ O que trava não é saber.
+⚠️ É não ter *estratégia aplicada na sua rotina.*
+
+E é exatamente isso que a *consultoria resolve.*
+
+---
+
+📊 *A gente pega o seu cenário real*
+e transforma em *execução:*
+
+✔️ *Dieta possível de seguir* (sem loucura)
+✔️ *Treino com progressão de verdade*
+✔️ *Ajustes estratégicos no metabolismo*
+✔️ *Acompanhamento constante* pra não sair do caminho
+
+---
+
+🚫 *Sem achismo*
+🚫 *Sem tentativa e erro*
+🎯 *Com método*
+
+---
+
+Agora a decisão é simples:
+
+👉 *Continuar testando sozinho*
+ou
+🔥 *Entrar em um método que já sabe o caminho*
+
+---
+
+📲 *Se fizer sentido pra você,*
+me chama aqui que eu te coloco pra dentro *ainda hoje.*`;
+      const encoded = encodeURIComponent(msg);
+      setTimeout(() => {
+        window.open(`https://wa.me/5521998496289?text=${encoded}`, "_blank");
+      }, 1500);
+    }
+  }, [screen, whatsappTriggered]);
 
   /* progress animation */
   useEffect(() => {
