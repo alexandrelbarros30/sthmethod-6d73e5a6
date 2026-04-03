@@ -57,7 +57,7 @@ const LazyFallback = () => <div className="flex items-center justify-center min-
 
 const queryClient = new QueryClient();
 
-const DynamicHead = () => { useDynamicFavicon(); useAdminTheme(); return null; };
+const DynamicHead = () => { useDynamicFavicon(); useAdminTheme(); useAccessLog(); return null; };
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
