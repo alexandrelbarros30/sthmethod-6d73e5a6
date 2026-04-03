@@ -115,7 +115,100 @@ const AdminProtocol = () => {
     enabled: !!selected?.user_id && dialogOpen,
   });
 
-  // Auto-select student from URL param
+  // Protocol Library
+  const { data: libraryItems = [] } = useQuery({
+    queryKey: ["protocol-library"],
+    queryFn: async () => {
+      const { data } = await supabase.from("protocol_library" as any).select("*").order("created_at", { ascending: false });
+      return (data || []) as any[];
+    },
+  });
+
+  const saveToLibraryMutation = useMutation({
+    mutationFn: async () => {
+      if (!selected?.user_id) return;
+      // Gather current protocol items
+      const { data: items } = await supabase.from("protocols").select("*").eq("user_id", selected.user_id);
+      const { data: extraCats } = await supabase.from("protocol_extra_categories" as any).select("*").eq("user_id", selected.user_id);
+      const { data: catContents } = await supabase.from("protocol_category_content").select("*").eq("user_id", selected.user_id);
+
+      const itemsArr = (items || []).map((i: any) => ({
+        name: i.name, dosage: i.dosage, frequency: i.frequency, category: i.category, notes: i.notes,
+      }));
+      const extraArr = (extraCats || []).map((c: any) => ({
+        name: c.name, content: c.content,
+      }));
+      const catObj: Record<string, string> = {};
+      (catContents || []).forEach((c: any) => { catObj[c.category] = c.content; });
+
+      await supabase.from("protocol_library" as any).insert({
+        title: `Protocolo de ${selected.full_name || "Aluno"}`,
+        content: "",
+        items_json: itemsArr,
+        extra_categories_json: extraArr,
+        category_contents_json: catObj,
+        created_by: user!.id,
+      } as any);
+    },
+    onSuccess: () => {
+      toast.success("Protocolo salvo na biblioteca!");
+      qc.invalidateQueries({ queryKey: ["protocol-library"] });
+    },
+    onError: () => toast.error("Erro ao salvar na biblioteca"),
+  });
+
+  const loadFromLibraryMutation = useMutation({
+    mutationFn: async (libItem: any) => {
+      if (!selected?.user_id) return;
+      const uid = selected.user_id;
+
+      // Clear existing items
+      await supabase.from("protocols").delete().eq("user_id", uid);
+      await supabase.from("protocol_extra_categories" as any).delete().eq("user_id", uid);
+      await supabase.from("protocol_category_content").delete().eq("user_id", uid);
+
+      // Insert items from library
+      const items = (libItem.items_json || []) as any[];
+      if (items.length > 0) {
+        await supabase.from("protocols").insert(
+          items.map((item: any, idx: number) => ({
+            user_id: uid, name: item.name, dosage: item.dosage || "", frequency: item.frequency || "",
+            category: item.category, notes: item.notes || "", sort_order: idx,
+          }))
+        );
+      }
+
+      // Insert extra categories
+      const extras = (libItem.extra_categories_json || []) as any[];
+      if (extras.length > 0) {
+        for (let i = 0; i < extras.length; i++) {
+          await supabase.from("protocol_extra_categories" as any).insert({
+            user_id: uid, name: extras[i].name, content: extras[i].content || "", sort_order: i,
+          } as any);
+        }
+      }
+
+      // Insert category contents
+      const catContents = (libItem.category_contents_json || {}) as Record<string, string>;
+      for (const [cat, content] of Object.entries(catContents)) {
+        if (content) {
+          await supabase.from("protocol_category_content").insert({
+            user_id: uid, category: cat, content,
+          });
+        }
+      }
+    },
+    onSuccess: () => {
+      toast.success("Protocolo carregado da biblioteca!");
+      qc.invalidateQueries({ queryKey: ["admin-protocol-items", selected?.user_id] });
+      qc.invalidateQueries({ queryKey: ["protocol-extra-categories", selected?.user_id] });
+      qc.invalidateQueries({ queryKey: ["protocol-category-content", selected?.user_id] });
+      setLibraryDialogOpen(false);
+    },
+    onError: () => toast.error("Erro ao carregar da biblioteca"),
+  });
+
+
   useEffect(() => {
     const uid = searchParams.get("uid");
     if (uid && students?.length && !selected) {
