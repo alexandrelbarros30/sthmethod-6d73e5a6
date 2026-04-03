@@ -40,6 +40,7 @@ import AdminRoles from "./pages/admin/AdminRoles";
 import AdminStaff from "./pages/admin/AdminStaff";
 import AdminCoupons from "./pages/admin/AdminCoupons";
 import AdminDietLibrary from "./pages/admin/AdminDietLibrary";
+import AdminProtocolLibrary from "./pages/admin/AdminProtocolLibrary";
 import ConsultorDashboard from "./pages/consultor/ConsultorDashboard";
 import AssistenteDashboard from "./pages/assistente/AssistenteDashboard";
 import FinanceiroDashboard from "./pages/financeiro/FinanceiroDashboard";
