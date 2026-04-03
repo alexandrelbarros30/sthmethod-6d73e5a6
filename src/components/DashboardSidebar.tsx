@@ -37,6 +37,7 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/admin/exercise-library", icon: BookOpen, label: "Biblioteca" },
     { to: "/admin/workout-templates", icon: Layers, label: "ProgramaTreino" },
     { to: "/admin/protocol", icon: FlaskConical, label: "Protocolos" },
+    { to: "/admin/protocol-library", icon: BookOpen, label: "Bib. Protocolos" },
     { to: "/admin/messages", icon: MessageSquare, label: "Mensagens" },
     { to: "/admin/content", icon: Palette, label: "Personalização" },
     { to: "/admin/layout", icon: PanelTop, label: "Layout Externo" },
