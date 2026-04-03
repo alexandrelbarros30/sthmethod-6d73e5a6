@@ -131,7 +131,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           <div className="fixed bottom-1 right-1 text-[9px] text-muted-foreground/40 pointer-events-none z-50 font-mono">
-            Versão 1.2.4 – Novas Receitas Fit Brasileiras
+            Versão 1.2.5 – Safe Area Mobile
           </div>
         </AuthProvider>
       </BrowserRouter>
