@@ -127,6 +127,13 @@ const AdminDashboard = () => {
     },
   });
 
+  // Users who completed onboarding but have no subscription yet
+  const pendingPaymentProfiles = useMemo(() => {
+    if (!profiles || !subscriptions) return [];
+    const subUserIds = new Set((subscriptions || []).map((s: any) => s.user_id));
+    return profiles.filter((p: any) => p.onboarding_complete && !subUserIds.has(p.user_id));
+  }, [profiles, subscriptions]);
+
   const totalStudents = profiles?.length || 0;
   const now = new Date();
   const activeCount = subscriptions?.filter((s) => s.status === "active" && new Date(s.end_date) > now).length || 0;
