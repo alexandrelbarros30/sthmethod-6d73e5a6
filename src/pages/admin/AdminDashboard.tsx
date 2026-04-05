@@ -289,7 +289,42 @@ const AdminDashboard = () => {
           </CollapsiblePanel>
         )}
 
-        {/* 3. Cadastros Completos */}
+        {/* 2.5 Aguardando Pagamento */}
+        {pendingPaymentProfiles.length > 0 && (
+          <CollapsiblePanel
+            title="Aguardando Pagamento"
+            icon={<CreditCard className="w-4 h-4 text-amber-500" />}
+            badge={pendingPaymentProfiles.length}
+            badgeClassName="bg-amber-500 text-white"
+            defaultOpen={true}
+            cardClassName="border-amber-500/20 bg-amber-500/5"
+          >
+            {pendingPaymentProfiles.map((p: any) => {
+              const days = Math.floor((Date.now() - new Date(p.created_at).getTime()) / 86400000);
+              const dayLabel = days === 0 ? "Hoje" : `${days}d atrás`;
+              return (
+                <div key={p.id} className="flex flex-col gap-1 py-2 border-b border-border/50 last:border-0">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <UserPlus className="w-4 h-4 text-amber-500 shrink-0" />
+                    <p className="text-sm font-medium truncate flex-1">{p.full_name?.trim() || p.email || "Sem nome"}</p>
+                    <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/30 shrink-0">Sem plano</Badge>
+                  </div>
+                  <div className="flex items-center justify-between pl-6">
+                    <p className="text-xs text-muted-foreground truncate">{p.email} • {dayLabel}</p>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <WhatsAppQuickLink phone={p.phone || ""} name={p.full_name || ""} />
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => navigate(`/admin/students?manage=${p.user_id}`)}>
+                        <Settings className="w-3.5 h-3.5" /> Gerenciar
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </CollapsiblePanel>
+        )}
+
+
         {completedCount > 0 && (
           <CollapsiblePanel
             title="Cadastros Completos"
