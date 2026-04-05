@@ -312,9 +312,19 @@ const AdminDashboard = () => {
                   <div className="flex items-center justify-between pl-6">
                     <p className="text-xs text-muted-foreground truncate">{p.email} • {dayLabel}</p>
                     <div className="flex items-center gap-1 shrink-0">
-                      <WhatsAppQuickLink phone={p.phone || ""} name={p.full_name || ""} />
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => navigate(`/admin/students?manage=${p.user_id}`)}>
-                        <Settings className="w-3.5 h-3.5" /> Gerenciar
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs gap-1 shrink-0"
+                        onClick={() => {
+                          const ph = (p.phone || "").replace(/\D/g, "");
+                          if (!ph) { toast.error("Sem telefone cadastrado"); return; }
+                          const msg = encodeURIComponent(`Olá ${p.full_name || ""}! Vi que você se cadastrou no STH Method. Posso te ajudar a ativar seu plano?`);
+                          window.open(`https://wa.me/55${ph}?text=${msg}`, "_blank");
+                        }}
+                      >
+                        <ExternalLink className="w-3 h-3" /> WhatsApp
+                      </Button>
                       </Button>
                     </div>
                   </div>
