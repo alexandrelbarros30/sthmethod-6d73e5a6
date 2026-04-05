@@ -325,6 +325,8 @@ const AdminDashboard = () => {
                       >
                         <ExternalLink className="w-3 h-3" /> WhatsApp
                       </Button>
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => navigate(`/admin/students?manage=${p.user_id}`)}>
+                        <Settings className="w-3.5 h-3.5" /> Gerenciar
                       </Button>
                     </div>
                   </div>
