@@ -127,12 +127,22 @@ const AdminDashboard = () => {
     },
   });
 
-  // Users who completed onboarding but have no subscription yet
+  // Set of user_ids with active subscriptions (status active + end_date in future)
+  const activeSubUserIds = useMemo(() => {
+    if (!subscriptions) return new Set<string>();
+    const now = new Date();
+    return new Set(
+      subscriptions
+        .filter((s: any) => s.status === "active" && new Date(s.end_date) > now)
+        .map((s: any) => s.user_id)
+    );
+  }, [subscriptions]);
+
+  // Users who completed onboarding but have no active subscription
   const pendingPaymentProfiles = useMemo(() => {
     if (!profiles || !subscriptions) return [];
-    const subUserIds = new Set((subscriptions || []).map((s: any) => s.user_id));
-    return profiles.filter((p: any) => p.onboarding_complete && !subUserIds.has(p.user_id));
-  }, [profiles, subscriptions]);
+    return profiles.filter((p: any) => p.onboarding_complete && !activeSubUserIds.has(p.user_id));
+  }, [profiles, subscriptions, activeSubUserIds]);
 
   const totalStudents = profiles?.length || 0;
   const now = new Date();
@@ -151,7 +161,13 @@ const AdminDashboard = () => {
     { label: "Vencendo em 7 dias", value: expiringCount, icon: Clock, color: "text-warning" },
   ];
 
-  const incompleteCount = incompleteOnboardings?.length || 0;
+  // Filter incomplete onboardings to exclude users with active subscriptions
+  const filteredIncompleteOnboardings = useMemo(() => {
+    if (!incompleteOnboardings) return [];
+    return incompleteOnboardings.filter((p: any) => !activeSubUserIds.has(p.user_id));
+  }, [incompleteOnboardings, activeSubUserIds]);
+
+  const incompleteCount = filteredIncompleteOnboardings.length;
   const completedCount = recentOnboardings?.length || 0;
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -243,7 +259,7 @@ const AdminDashboard = () => {
 
       <div className="space-y-4">
         {/* 1. Alunos Recentes (moved up) */}
-        <RecentStudents profiles={profiles} subscriptions={subscriptions} navigate={navigate} queryClient={queryClient} />
+        <RecentStudents profiles={profiles} subscriptions={subscriptions} navigate={navigate} queryClient={queryClient} activeSubUserIds={activeSubUserIds} />
 
         {/* 2. Leads Free */}
         {(freeLeads?.length || 0) > 0 && (
@@ -375,7 +391,7 @@ const AdminDashboard = () => {
             defaultOpen={false}
             cardClassName="border-warning/20 bg-warning/5"
           >
-            {incompleteOnboardings!.map((p: any) => {
+            {filteredIncompleteOnboardings.map((p: any) => {
               const days = Math.floor((Date.now() - new Date(p.created_at).getTime()) / 86400000);
               const dayLabel = days === 0 ? "Hoje" : `${days}d atrás`;
               return (
@@ -421,12 +437,12 @@ const AdminDashboard = () => {
   );
 };
 
-const RecentStudents = ({ profiles, subscriptions, navigate, queryClient }: { profiles: any[] | undefined; subscriptions: any[] | undefined; navigate: any; queryClient: any }) => {
+const RecentStudents = ({ profiles, subscriptions, navigate, queryClient, activeSubUserIds }: { profiles: any[] | undefined; subscriptions: any[] | undefined; navigate: any; queryClient: any; activeSubUserIds: Set<string> }) => {
   const [open, setOpen] = useState(false);
   const now = Date.now();
   const recentProfiles = profiles?.filter((p) => {
     const days = Math.floor((now - new Date(p.created_at).getTime()) / 86400000);
-    return days <= 3 && !p.admin_confirmed;
+    return days <= 3 && !p.admin_confirmed && !activeSubUserIds.has(p.user_id);
   }) || [];
 
   const subMap = new Map((subscriptions || []).map((s: any) => [s.user_id, s]));
