@@ -298,11 +298,9 @@ const PlanCards = ({ plans, currentPlanId, isActive, isExpired, subscription, ca
                 <li key={j} className="flex items-start gap-2 text-sm font-body"><Check className="w-4 h-4 text-primary shrink-0 mt-0.5" /><span className="text-muted-foreground">{b}</span></li>
               ))}
             </ul>
-            {!isCurrent && (
-              <Button className="w-full" onClick={() => onSelect(plan)}>
-                {!subscription ? "Assinar" : isExpired ? "🔓 Renovar" : "🔄 Atualizar"}
-              </Button>
-            )}
+            <Button className="w-full" onClick={() => onSelect(plan)}>
+              {!subscription ? "Assinar" : isCurrent ? "🔄 Renovar" : isExpired ? "🔓 Renovar" : "🔄 Atualizar"}
+            </Button>
           </CardContent>
         </Card>
       );
