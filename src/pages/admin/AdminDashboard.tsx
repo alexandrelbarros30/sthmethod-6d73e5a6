@@ -161,8 +161,13 @@ const AdminDashboard = () => {
     { label: "Vencendo em 7 dias", value: expiringCount, icon: Clock, color: "text-warning" },
   ];
 
-  const incompleteCount = incompleteOnboardings?.length || 0;
-  const completedCount = recentOnboardings?.length || 0;
+  // Filter incomplete onboardings to exclude users with active subscriptions
+  const filteredIncompleteOnboardings = useMemo(() => {
+    if (!incompleteOnboardings) return [];
+    return incompleteOnboardings.filter((p: any) => !activeSubUserIds.has(p.user_id));
+  }, [incompleteOnboardings, activeSubUserIds]);
+
+  const incompleteCount = filteredIncompleteOnboardings.length;
 
   const [searchTerm, setSearchTerm] = useState("");
 
