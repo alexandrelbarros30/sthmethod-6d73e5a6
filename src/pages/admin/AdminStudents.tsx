@@ -1327,7 +1327,7 @@ const AdminStudents = () => {
       </Card>
 
       {/* View Dialog */}
-      <Dialog open={viewOpen} onOpenChange={setViewOpen}>
+      <Dialog open={viewOpen} onOpenChange={(o) => { setViewOpen(o); if (!o) setManageOpen(true); }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden">
           <DialogHeader><DialogTitle className="font-display">Ficha do Aluno</DialogTitle></DialogHeader>
           {selected && (
@@ -1497,7 +1497,7 @@ const AdminStudents = () => {
       </Dialog>
 
       {/* Edit Dialog */}
-      <Dialog open={editOpen} onOpenChange={(o) => { setEditOpen(o); if (!o) { setActiveTab("dados"); setSavedTabs(new Set()); } }}>
+      <Dialog open={editOpen} onOpenChange={(o) => { setEditOpen(o); if (!o) { setActiveTab("dados"); setSavedTabs(new Set()); setManageOpen(true); } }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display text-base sm:text-lg">Editar Aluno</DialogTitle>
@@ -1520,7 +1520,7 @@ const AdminStudents = () => {
       </Dialog>
 
       {/* Subscription Dialog */}
-      <Dialog open={subOpen} onOpenChange={setSubOpen}>
+      <Dialog open={subOpen} onOpenChange={(o) => { setSubOpen(o); if (!o) setManageOpen(true); }}>
         <DialogContent>
           <DialogHeader><DialogTitle className="font-display">Gerenciar Assinatura</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground font-body">{selected?.full_name}</p>
@@ -1555,7 +1555,7 @@ const AdminStudents = () => {
       </Dialog>
 
       {/* Body Images Management Dialog */}
-      <Dialog open={imagesOpen} onOpenChange={setImagesOpen}>
+      <Dialog open={imagesOpen} onOpenChange={(o) => { setImagesOpen(o); if (!o) setManageOpen(true); }}>
         <DialogContent className="max-w-2xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle className="font-display flex items-center gap-2">
@@ -1649,7 +1649,7 @@ const AdminStudents = () => {
       </Dialog>
 
       {/* Anamnese Dialog */}
-      <Dialog open={anamneseOpen} onOpenChange={setAnamneseOpen}>
+      <Dialog open={anamneseOpen} onOpenChange={(o) => { setAnamneseOpen(o); if (!o) setManageOpen(true); }}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle className="font-display flex items-center gap-2">
@@ -1818,7 +1818,7 @@ const AdminStudents = () => {
       </Dialog>
 
       {/* Password reset dialog */}
-      <Dialog open={!!passwordReset} onOpenChange={(open) => { if (!open) { setPasswordReset(null); setNewPassword(""); } }}>
+      <Dialog open={!!passwordReset} onOpenChange={(open) => { if (!open) { setPasswordReset(null); setNewPassword(""); setManageOpen(true); } }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Alterar senha</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">Definir nova senha para <strong>{passwordReset?.name}</strong></p>
@@ -1919,7 +1919,7 @@ const AdminStudents = () => {
           userId={selected.user_id}
           studentName={selected.full_name || selected.email}
           open={bioOpen}
-          onOpenChange={setBioOpen}
+          onOpenChange={(o) => { setBioOpen(o); if (!o) setManageOpen(true); }}
         />
       )}
 
@@ -1974,7 +1974,7 @@ const AdminStudents = () => {
       {selected && (
         <AdminMetabolicPanel
           open={metabolicOpen}
-          onOpenChange={setMetabolicOpen}
+          onOpenChange={(o) => { setMetabolicOpen(o); if (!o) setManageOpen(true); }}
           userId={selected.user_id}
           userName={selected.full_name || selected.email}
         />
