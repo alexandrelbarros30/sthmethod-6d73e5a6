@@ -31,6 +31,7 @@ import AdminEvolutionUpdate from "@/components/admin/AdminEvolutionUpdate";
 import ExcelJS from "exceljs";
 import AdminBioimpedance from "@/components/admin/AdminBioimpedance";
 import WhatsAppPopoverButton from "@/components/shared/WhatsAppPopoverButton";
+import AdminMetabolicPanel from "@/components/admin/AdminMetabolicPanel";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
 import {
   objectiveLabels, activityLabels,
@@ -1969,6 +1970,15 @@ const AdminStudents = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {selected && (
+        <AdminMetabolicPanel
+          open={metabolicOpen}
+          onOpenChange={setMetabolicOpen}
+          userId={selected.user_id}
+          userName={selected.full_name || selected.email}
+        />
+      )}
 
     </DashboardLayout>
   );
