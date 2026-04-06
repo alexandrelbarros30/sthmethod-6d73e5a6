@@ -48,8 +48,7 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
     checkMetabolic();
   }, [isStudent, user?.id]);
 
-  const handleClosePopup = async () => {
-    setMetabolicPopup(false);
+  const markAsSeen = async () => {
     if (pendingPanelId) {
       await supabase
         .from("metabolic_panels")
@@ -57,6 +56,17 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
         .eq("id", pendingPanelId);
       setPendingPanelId(null);
     }
+  };
+
+  const handleClosePopup = async () => {
+    setMetabolicPopup(false);
+    await markAsSeen();
+  };
+
+  const handleGoToPanel = async () => {
+    setMetabolicPopup(false);
+    await markAsSeen();
+    navigate("/dashboard/metabolic");
   };
 
   return (
