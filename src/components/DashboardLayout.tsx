@@ -19,6 +19,7 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutProps) => {
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const isStudent = role === "student";
   const showDock = isStudent && isMobile;
