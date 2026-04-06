@@ -25,6 +25,7 @@ import StudentRenew from "./pages/student/StudentRenew";
 import StudentEvolution from "./pages/student/StudentEvolution";
 import StudentBioimpedance from "./pages/student/StudentBioimpedance";
 import StudentProfile from "./pages/student/StudentProfile";
+import StudentMetabolic from "./pages/student/StudentMetabolic";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminStudents from "./pages/admin/AdminStudents";
 import AdminPlans from "./pages/admin/AdminPlans";
@@ -90,6 +91,7 @@ const App = () => (
             <Route path="/dashboard/evolution" element={<ProtectedRoute allowedRoles={["student"]}><StudentEvolution /></ProtectedRoute>} />
             <Route path="/dashboard/bioimpedance" element={<ProtectedRoute allowedRoles={["student"]}><StudentBioimpedance /></ProtectedRoute>} />
             <Route path="/dashboard/profile" element={<ProtectedRoute allowedRoles={["student"]}><StudentProfile /></ProtectedRoute>} />
+            <Route path="/dashboard/metabolic" element={<ProtectedRoute allowedRoles={["student"]}><StudentMetabolic /></ProtectedRoute>} />
             {/* Admin routes */}
             <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/students" element={<ProtectedRoute allowedRoles={["admin"]}><AdminStudents /></ProtectedRoute>} />
@@ -132,7 +134,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           <div className="fixed bottom-1 right-1 text-[9px] text-muted-foreground/40 pointer-events-none z-50 font-mono">
-            Versão 1.2.8.3
+            Versão 1.2.8.4
           </div>
         </AuthProvider>
       </BrowserRouter>

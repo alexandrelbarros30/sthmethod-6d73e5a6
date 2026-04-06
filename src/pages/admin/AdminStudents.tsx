@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2, RotateCcw, AlertTriangle, UserX, UserCheck, Dumbbell, Pill, UtensilsCrossed, MessageCircle, MoreVertical, Activity } from "lucide-react";
+import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2, RotateCcw, AlertTriangle, UserX, UserCheck, Dumbbell, Pill, UtensilsCrossed, MessageCircle, MoreVertical, Activity, Microscope } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
@@ -31,6 +31,7 @@ import AdminEvolutionUpdate from "@/components/admin/AdminEvolutionUpdate";
 import ExcelJS from "exceljs";
 import AdminBioimpedance from "@/components/admin/AdminBioimpedance";
 import WhatsAppPopoverButton from "@/components/shared/WhatsAppPopoverButton";
+import AdminMetabolicPanel from "@/components/admin/AdminMetabolicPanel";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
 import {
   objectiveLabels, activityLabels,
@@ -104,6 +105,7 @@ const AdminStudents = () => {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [bioOpen, setBioOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
+  const [metabolicOpen, setMetabolicOpen] = useState(false);
 
   const { data: students, isLoading } = useQuery({
     queryKey: ["admin-students-list"],
@@ -1945,6 +1947,7 @@ const AdminStudents = () => {
               { icon: Camera, label: "Fotos", action: () => { setManageOpen(false); setImagesOpen(true); } },
               { icon: Activity, label: "Bioimpedância", action: () => { setManageOpen(false); setBioOpen(true); } },
               { icon: ClipboardList, label: "Anamnese", action: () => { setManageOpen(false); setAnamneseOpen(true); } },
+              { icon: Microscope, label: "Painel Metabólico", action: () => { setManageOpen(false); setMetabolicOpen(true); } },
               { icon: CreditCard, label: "Assinatura", action: () => { setManageOpen(false); openSub(selected); } },
               { icon: Lock, label: "Alterar Senha", action: () => { setManageOpen(false); setPasswordReset({ userId: selected?.user_id, name: selected?.full_name || selected?.email }); setNewPassword(""); } },
               { icon: Link2, label: "Link Renovação", action: () => { navigator.clipboard.writeText(`${window.location.origin}/dashboard/renew?uid=${selected?.user_id}`); toast.success("Link copiado!"); setManageOpen(false); } },
@@ -1967,6 +1970,15 @@ const AdminStudents = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {selected && (
+        <AdminMetabolicPanel
+          open={metabolicOpen}
+          onOpenChange={setMetabolicOpen}
+          userId={selected.user_id}
+          userName={selected.full_name || selected.email}
+        />
+      )}
 
     </DashboardLayout>
   );
