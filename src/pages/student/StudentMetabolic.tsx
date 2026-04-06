@@ -82,22 +82,6 @@ const StudentMetabolic = () => {
         )}
       </div>
 
-      <Dialog open={popupOpen} onOpenChange={(open) => { if (!open) handleClosePopup(); }}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-primary">
-              <Microscope className="w-5 h-5" />
-              Nova Análise Metabólica
-            </DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Seu painel metabólico foi atualizado com novas informações. Confira agora!
-          </p>
-          <Button onClick={handleClosePopup} className="w-full mt-2">
-            Fechar
-          </Button>
-        </DialogContent>
-      </Dialog>
     </DashboardLayout>
   );
 };
