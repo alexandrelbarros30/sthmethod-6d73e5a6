@@ -391,7 +391,7 @@ const AdminDashboard = () => {
             defaultOpen={false}
             cardClassName="border-warning/20 bg-warning/5"
           >
-            {incompleteOnboardings!.map((p: any) => {
+            {filteredIncompleteOnboardings.map((p: any) => {
               const days = Math.floor((Date.now() - new Date(p.created_at).getTime()) / 86400000);
               const dayLabel = days === 0 ? "Hoje" : `${days}d atrás`;
               return (
