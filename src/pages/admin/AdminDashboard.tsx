@@ -431,7 +431,7 @@ const AdminDashboard = () => {
   );
 };
 
-const RecentStudents = ({ profiles, subscriptions, navigate, queryClient }: { profiles: any[] | undefined; subscriptions: any[] | undefined; navigate: any; queryClient: any }) => {
+const RecentStudents = ({ profiles, subscriptions, navigate, queryClient, activeSubUserIds }: { profiles: any[] | undefined; subscriptions: any[] | undefined; navigate: any; queryClient: any; activeSubUserIds: Set<string> }) => {
   const [open, setOpen] = useState(false);
   const now = Date.now();
   const recentProfiles = profiles?.filter((p) => {
