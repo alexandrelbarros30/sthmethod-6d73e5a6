@@ -8,13 +8,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Microscope, AlertCircle } from "lucide-react";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
-import StudentInfoHeader from "@/components/student/StudentInfoHeader";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 const StudentMetabolic = () => {
   const { user } = useAuth();
-  const { blocked } = useSubscriptionGuard();
+  const { isActive, isLoading: guardLoading } = useSubscriptionGuard();
   const qc = useQueryClient();
   const [popupOpen, setPopupOpen] = useState(false);
 
@@ -44,7 +43,6 @@ const StudentMetabolic = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["metabolic-panel-student"] }),
   });
 
-  // Show popup if there's unseen content
   useEffect(() => {
     if (panel && !panel.seen_by_student && panel.visible) {
       setPopupOpen(true);
@@ -56,13 +54,13 @@ const StudentMetabolic = () => {
     if (panel) markSeen.mutate(panel.id);
   };
 
-  if (blocked) return <DashboardLayout role="student"><SubscriptionBlock /></DashboardLayout>;
+  if (!guardLoading && !isActive) {
+    return <DashboardLayout role="student" title="Painel Metabólico"><SubscriptionBlock /></DashboardLayout>;
+  }
 
   return (
-    <DashboardLayout role="student">
+    <DashboardLayout role="student" title="Painel Metabólico">
       <div className="space-y-4 sm:space-y-6 animate-fade-in">
-        <StudentInfoHeader />
-
         <Card className="border-border/50 bg-card/80 backdrop-blur">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base font-semibold">
@@ -88,7 +86,6 @@ const StudentMetabolic = () => {
         </Card>
       </div>
 
-      {/* Popup de atualização */}
       <Dialog open={popupOpen} onOpenChange={(open) => { if (!open) handleClosePopup(); }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
