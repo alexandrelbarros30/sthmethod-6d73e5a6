@@ -101,9 +101,14 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
           <p className="text-sm text-muted-foreground">
             Seu painel metabólico foi atualizado com novas informações. Confira agora!
           </p>
-          <Button onClick={handleClosePopup} className="w-full mt-2">
-            Fechar
-          </Button>
+          <div className="flex gap-2 mt-2">
+            <Button onClick={handleGoToPanel} className="flex-1">
+              Ver Painel
+            </Button>
+            <Button variant="outline" onClick={handleClosePopup} className="flex-1">
+              Fechar
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
