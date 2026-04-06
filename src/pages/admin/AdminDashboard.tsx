@@ -436,7 +436,7 @@ const RecentStudents = ({ profiles, subscriptions, navigate, queryClient, active
   const now = Date.now();
   const recentProfiles = profiles?.filter((p) => {
     const days = Math.floor((now - new Date(p.created_at).getTime()) / 86400000);
-    return days <= 3 && !p.admin_confirmed;
+    return days <= 3 && !p.admin_confirmed && !activeSubUserIds.has(p.user_id);
   }) || [];
 
   const subMap = new Map((subscriptions || []).map((s: any) => [s.user_id, s]));
