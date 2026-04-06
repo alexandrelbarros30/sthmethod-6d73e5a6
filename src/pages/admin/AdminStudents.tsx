@@ -104,6 +104,7 @@ const AdminStudents = () => {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [bioOpen, setBioOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
+  const [metabolicOpen, setMetabolicOpen] = useState(false);
 
   const { data: students, isLoading } = useQuery({
     queryKey: ["admin-students-list"],
@@ -1945,6 +1946,7 @@ const AdminStudents = () => {
               { icon: Camera, label: "Fotos", action: () => { setManageOpen(false); setImagesOpen(true); } },
               { icon: Activity, label: "Bioimpedância", action: () => { setManageOpen(false); setBioOpen(true); } },
               { icon: ClipboardList, label: "Anamnese", action: () => { setManageOpen(false); setAnamneseOpen(true); } },
+              { icon: Microscope, label: "Painel Metabólico", action: () => { setManageOpen(false); setMetabolicOpen(true); } },
               { icon: CreditCard, label: "Assinatura", action: () => { setManageOpen(false); openSub(selected); } },
               { icon: Lock, label: "Alterar Senha", action: () => { setManageOpen(false); setPasswordReset({ userId: selected?.user_id, name: selected?.full_name || selected?.email }); setNewPassword(""); } },
               { icon: Link2, label: "Link Renovação", action: () => { navigator.clipboard.writeText(`${window.location.origin}/dashboard/renew?uid=${selected?.user_id}`); toast.success("Link copiado!"); setManageOpen(false); } },
