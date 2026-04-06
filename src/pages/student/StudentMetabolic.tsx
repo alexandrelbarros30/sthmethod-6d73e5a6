@@ -17,21 +17,21 @@ const StudentMetabolic = () => {
   const qc = useQueryClient();
   const [popupOpen, setPopupOpen] = useState(false);
 
-  const { data: panel, isLoading } = useQuery({
+  const { data: panels = [], isLoading } = useQuery({
     queryKey: ["metabolic-panel-student", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("metabolic_panels")
         .select("*")
         .eq("user_id", user!.id)
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data || [];
     },
     enabled: !!user?.id,
   });
+
+  const latestPanel = panels[0] || null;
 
   const markSeen = useMutation({
     mutationFn: async (id: string) => {
@@ -44,14 +44,14 @@ const StudentMetabolic = () => {
   });
 
   useEffect(() => {
-    if (panel && !panel.seen_by_student && panel.visible) {
+    if (latestPanel && !latestPanel.seen_by_student && latestPanel.visible) {
       setPopupOpen(true);
     }
-  }, [panel]);
+  }, [latestPanel]);
 
   const handleClosePopup = () => {
     setPopupOpen(false);
-    if (panel) markSeen.mutate(panel.id);
+    if (latestPanel) markSeen.mutate(latestPanel.id);
   };
 
   if (!guardLoading && !isActive) {
@@ -61,29 +61,38 @@ const StudentMetabolic = () => {
   return (
     <DashboardLayout role="student" title="Painel Metabólico">
       <div className="space-y-4 sm:space-y-6 animate-fade-in">
-        <Card className="border-border/50 bg-card/80 backdrop-blur">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <Microscope className="w-5 h-5 text-primary" />
-              Painel Metabólico
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <p className="text-sm text-muted-foreground">Carregando...</p>
-            ) : panel && panel.content ? (
-              <div className="prose prose-sm dark:prose-invert max-w-none">
-                <RichContentRenderer content={panel.content} />
-              </div>
-            ) : (
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        ) : panels.length > 0 ? (
+          panels.map((p: any) => (
+            <Card key={p.id} className="border-border/50 bg-card/80 backdrop-blur">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <Microscope className="w-5 h-5 text-primary" />
+                  Painel Metabólico
+                  <span className="text-xs font-normal text-muted-foreground ml-auto">
+                    {new Date(p.created_at).toLocaleDateString("pt-BR")}
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <RichContentRenderer content={p.content} />
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <Card className="border-border/50 bg-card/80 backdrop-blur">
+            <CardContent className="pt-6">
               <div className="flex flex-col items-center gap-3 py-10 text-muted-foreground">
                 <AlertCircle className="w-10 h-10 opacity-40" />
                 <p className="text-sm">Nenhuma análise metabólica disponível no momento.</p>
                 <p className="text-xs opacity-60">Seu consultor publicará aqui os resultados assim que estiverem prontos.</p>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <Dialog open={popupOpen} onOpenChange={(open) => { if (!open) handleClosePopup(); }}>
