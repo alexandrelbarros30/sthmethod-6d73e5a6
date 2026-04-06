@@ -1,9 +1,14 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import DashboardSidebar from "./DashboardSidebar";
 import FloatingDock from "./student/FloatingDock";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { usePaymentNotifications } from "@/hooks/usePaymentNotifications";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Microscope } from "lucide-react";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -17,6 +22,40 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
   const isStudent = role === "student";
   const showDock = isStudent && isMobile;
   usePaymentNotifications();
+
+  const { user } = useAuth();
+  const [metabolicPopup, setMetabolicPopup] = useState(false);
+  const [pendingPanelId, setPendingPanelId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isStudent || !user?.id) return;
+    const checkMetabolic = async () => {
+      const { data } = await supabase
+        .from("metabolic_panels")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("visible", true)
+        .eq("seen_by_student", false)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (data && data.length > 0) {
+        setPendingPanelId(data[0].id);
+        setMetabolicPopup(true);
+      }
+    };
+    checkMetabolic();
+  }, [isStudent, user?.id]);
+
+  const handleClosePopup = async () => {
+    setMetabolicPopup(false);
+    if (pendingPanelId) {
+      await supabase
+        .from("metabolic_panels")
+        .update({ seen_by_student: true })
+        .eq("id", pendingPanelId);
+      setPendingPanelId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen w-full max-w-full bg-background overflow-x-hidden">
@@ -38,6 +77,23 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
         </div>
       </main>
       {showDock && <FloatingDock />}
+
+      <Dialog open={metabolicPopup} onOpenChange={(open) => { if (!open) handleClosePopup(); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-primary">
+              <Microscope className="w-5 h-5" />
+              Nova Análise Metabólica
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Seu painel metabólico foi atualizado com novas informações. Confira agora!
+          </p>
+          <Button onClick={handleClosePopup} className="w-full mt-2">
+            Fechar
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
