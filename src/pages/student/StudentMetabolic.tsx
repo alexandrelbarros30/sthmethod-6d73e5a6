@@ -17,21 +17,21 @@ const StudentMetabolic = () => {
   const qc = useQueryClient();
   const [popupOpen, setPopupOpen] = useState(false);
 
-  const { data: panel, isLoading } = useQuery({
+  const { data: panels = [], isLoading } = useQuery({
     queryKey: ["metabolic-panel-student", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("metabolic_panels")
         .select("*")
         .eq("user_id", user!.id)
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data || [];
     },
     enabled: !!user?.id,
   });
+
+  const latestPanel = panels[0] || null;
 
   const markSeen = useMutation({
     mutationFn: async (id: string) => {
