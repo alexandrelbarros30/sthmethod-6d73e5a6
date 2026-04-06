@@ -253,7 +253,7 @@ const AdminDashboard = () => {
 
       <div className="space-y-4">
         {/* 1. Alunos Recentes (moved up) */}
-        <RecentStudents profiles={profiles} subscriptions={subscriptions} navigate={navigate} queryClient={queryClient} />
+        <RecentStudents profiles={profiles} subscriptions={subscriptions} navigate={navigate} queryClient={queryClient} activeSubUserIds={activeSubUserIds} />
 
         {/* 2. Leads Free */}
         {(freeLeads?.length || 0) > 0 && (
