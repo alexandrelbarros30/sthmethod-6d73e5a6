@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,15 +7,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Microscope, AlertCircle } from "lucide-react";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 
 const StudentMetabolic = () => {
   const { user } = useAuth();
   const { isActive, isLoading: guardLoading } = useSubscriptionGuard();
   const qc = useQueryClient();
-  const [popupOpen, setPopupOpen] = useState(false);
-
   const { data: panels = [], isLoading } = useQuery({
     queryKey: ["metabolic-panel-student", user?.id],
     queryFn: async () => {
@@ -42,17 +37,6 @@ const StudentMetabolic = () => {
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["metabolic-panel-student"] }),
   });
-
-  useEffect(() => {
-    if (latestPanel && !latestPanel.seen_by_student && latestPanel.visible) {
-      setPopupOpen(true);
-    }
-  }, [latestPanel]);
-
-  const handleClosePopup = () => {
-    setPopupOpen(false);
-    if (latestPanel) markSeen.mutate(latestPanel.id);
-  };
 
   if (!guardLoading && !isActive) {
     return <DashboardLayout role="student" title="Painel Metabólico"><SubscriptionBlock /></DashboardLayout>;
@@ -95,22 +79,6 @@ const StudentMetabolic = () => {
         )}
       </div>
 
-      <Dialog open={popupOpen} onOpenChange={(open) => { if (!open) handleClosePopup(); }}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-primary">
-              <Microscope className="w-5 h-5" />
-              Nova Análise Metabólica
-            </DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Seu painel metabólico foi atualizado com novas informações. Confira agora!
-          </p>
-          <Button onClick={handleClosePopup} className="w-full mt-2">
-            Fechar
-          </Button>
-        </DialogContent>
-      </Dialog>
     </DashboardLayout>
   );
 };
