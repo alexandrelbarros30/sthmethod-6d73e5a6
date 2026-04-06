@@ -26,6 +26,7 @@ type ViewMode = "list" | "edit";
 const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName }: AdminMetabolicPanelProps) => {
   const qc = useQueryClient();
   const [content, setContent] = useState("");
+  const [title, setTitle] = useState("");
   const [visible, setVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
@@ -47,6 +48,7 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName }: AdminMeta
   const startNew = () => {
     setEditingId(null);
     setContent("");
+    setTitle("");
     setVisible(false);
     setViewMode("edit");
   };
@@ -54,6 +56,7 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName }: AdminMeta
   const startEdit = (panel: any) => {
     setEditingId(panel.id);
     setContent(panel.content || "");
+    setTitle(panel.title || "");
     setVisible(panel.visible || false);
     setViewMode("edit");
   };
@@ -63,13 +66,13 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName }: AdminMeta
       if (editingId) {
         const { error } = await supabase
           .from("metabolic_panels")
-          .update({ content, visible, seen_by_student: false })
+          .update({ content, title, visible, seen_by_student: false })
           .eq("id", editingId);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("metabolic_panels")
-          .insert({ user_id: userId, content, visible, seen_by_student: false });
+          .insert({ user_id: userId, content, title, visible, seen_by_student: false });
         if (error) throw error;
       }
 
@@ -87,6 +90,19 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName }: AdminMeta
       setViewMode("list");
     },
     onError: () => toast.error("Erro ao salvar painel metabólico"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("metabolic_panels").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Registro excluído!");
+      qc.invalidateQueries({ queryKey: ["metabolic-panels-admin", userId] });
+      qc.invalidateQueries({ queryKey: ["metabolic-panel-student", userId] });
+    },
+    onError: () => toast.error("Erro ao excluir"),
   });
 
   const handleClose = () => {
