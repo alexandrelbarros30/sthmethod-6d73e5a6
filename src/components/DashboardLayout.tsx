@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardSidebar from "./DashboardSidebar";
 import FloatingDock from "./student/FloatingDock";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -18,6 +19,7 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutProps) => {
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const isStudent = role === "student";
   const showDock = isStudent && isMobile;
@@ -46,8 +48,7 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
     checkMetabolic();
   }, [isStudent, user?.id]);
 
-  const handleClosePopup = async () => {
-    setMetabolicPopup(false);
+  const markAsSeen = async () => {
     if (pendingPanelId) {
       await supabase
         .from("metabolic_panels")
@@ -55,6 +56,17 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
         .eq("id", pendingPanelId);
       setPendingPanelId(null);
     }
+  };
+
+  const handleClosePopup = async () => {
+    setMetabolicPopup(false);
+    await markAsSeen();
+  };
+
+  const handleGoToPanel = async () => {
+    setMetabolicPopup(false);
+    await markAsSeen();
+    navigate("/dashboard/metabolic");
   };
 
   return (
@@ -89,9 +101,14 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
           <p className="text-sm text-muted-foreground">
             Seu painel metabólico foi atualizado com novas informações. Confira agora!
           </p>
-          <Button onClick={handleClosePopup} className="w-full mt-2">
-            Fechar
-          </Button>
+          <div className="flex gap-2 mt-2">
+            <Button onClick={handleGoToPanel} className="flex-1">
+              Ver Painel
+            </Button>
+            <Button variant="outline" onClick={handleClosePopup} className="flex-1">
+              Fechar
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
