@@ -168,6 +168,7 @@ const AdminDashboard = () => {
   }, [incompleteOnboardings, activeSubUserIds]);
 
   const incompleteCount = filteredIncompleteOnboardings.length;
+  const completedCount = recentOnboardings?.length || 0;
 
   const [searchTerm, setSearchTerm] = useState("");
 
