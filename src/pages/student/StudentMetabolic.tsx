@@ -15,8 +15,6 @@ const StudentMetabolic = () => {
   const { user } = useAuth();
   const { isActive, isLoading: guardLoading } = useSubscriptionGuard();
   const qc = useQueryClient();
-  const [popupOpen, setPopupOpen] = useState(false);
-
   const { data: panels = [], isLoading } = useQuery({
     queryKey: ["metabolic-panel-student", user?.id],
     queryFn: async () => {
