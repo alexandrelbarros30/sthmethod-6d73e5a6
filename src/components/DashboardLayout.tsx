@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardSidebar from "./DashboardSidebar";
 import FloatingDock from "./student/FloatingDock";
 import { useIsMobile } from "@/hooks/use-mobile";
