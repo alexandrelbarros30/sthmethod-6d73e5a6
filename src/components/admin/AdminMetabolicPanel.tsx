@@ -5,7 +5,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Microscope, Save, Plus, Pencil, History, ChevronLeft } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Microscope, Save, Plus, Pencil, History, ChevronLeft, Trash2, X } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent as AlertContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle as AlertTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -26,6 +28,7 @@ type ViewMode = "list" | "edit";
 const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName }: AdminMetabolicPanelProps) => {
   const qc = useQueryClient();
   const [content, setContent] = useState("");
+  const [title, setTitle] = useState("");
   const [visible, setVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
@@ -47,6 +50,7 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName }: AdminMeta
   const startNew = () => {
     setEditingId(null);
     setContent("");
+    setTitle("");
     setVisible(false);
     setViewMode("edit");
   };
@@ -54,6 +58,7 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName }: AdminMeta
   const startEdit = (panel: any) => {
     setEditingId(panel.id);
     setContent(panel.content || "");
+    setTitle(panel.title || "");
     setVisible(panel.visible || false);
     setViewMode("edit");
   };
@@ -63,13 +68,13 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName }: AdminMeta
       if (editingId) {
         const { error } = await supabase
           .from("metabolic_panels")
-          .update({ content, visible, seen_by_student: false })
+          .update({ content, title, visible, seen_by_student: false })
           .eq("id", editingId);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("metabolic_panels")
-          .insert({ user_id: userId, content, visible, seen_by_student: false });
+          .insert({ user_id: userId, content, title, visible, seen_by_student: false });
         if (error) throw error;
       }
 
@@ -87,6 +92,19 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName }: AdminMeta
       setViewMode("list");
     },
     onError: () => toast.error("Erro ao salvar painel metabólico"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("metabolic_panels").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Registro excluído!");
+      qc.invalidateQueries({ queryKey: ["metabolic-panels-admin", userId] });
+      qc.invalidateQueries({ queryKey: ["metabolic-panel-student", userId] });
+    },
+    onError: () => toast.error("Erro ao excluir"),
   });
 
   const handleClose = () => {
@@ -136,8 +154,26 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName }: AdminMeta
                           <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => startEdit(panel)}>
                             <Pencil className="w-3.5 h-3.5" />
                           </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive hover:text-destructive">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertContent>
+                              <AlertDialogHeader>
+                                <AlertTitle>Excluir registro?</AlertTitle>
+                                <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => deleteMutation.mutate(panel.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertContent>
+                          </AlertDialog>
                         </div>
                       </div>
+                      {panel.title && <p className="text-sm font-medium mb-1">{panel.title}</p>}
                       <div className="prose prose-sm dark:prose-invert max-w-none line-clamp-3 text-xs">
                         <RichContentRenderer content={panel.content || ""} />
                       </div>
@@ -149,10 +185,20 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName }: AdminMeta
           </div>
         ) : (
           <div className="space-y-4">
-            <Button variant="ghost" size="sm" onClick={() => setViewMode("list")} className="gap-1 -ml-2">
-              <ChevronLeft className="w-4 h-4" />
-              Voltar ao histórico
-            </Button>
+            <div className="flex items-center justify-between -ml-2">
+              <Button variant="ghost" size="sm" onClick={() => setViewMode("list")} className="gap-1">
+                <ChevronLeft className="w-4 h-4" />
+                Voltar ao histórico
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setViewMode("list")}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div>
+              <Label htmlFor="panel-title" className="text-sm mb-1.5 block">Título</Label>
+              <Input id="panel-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Análise laboratorial — Março 2026" />
+            </div>
 
             <Suspense fallback={<div className="h-[220px] rounded-md border border-input bg-background animate-pulse" />}>
               <RichTextEditor
