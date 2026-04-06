@@ -950,6 +950,36 @@ export type Database = {
         }
         Relationships: []
       }
+      metabolic_panels: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          seen_by_student: boolean
+          updated_at: string
+          user_id: string
+          visible: boolean
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          seen_by_student?: boolean
+          updated_at?: string
+          user_id: string
+          visible?: boolean
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          seen_by_student?: boolean
+          updated_at?: string
+          user_id?: string
+          visible?: boolean
+        }
+        Relationships: []
+      }
       payment_gateway_details: {
         Row: {
           ai_verification_notes: string | null
