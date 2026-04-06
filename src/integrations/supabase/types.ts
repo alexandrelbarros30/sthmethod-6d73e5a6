@@ -956,6 +956,7 @@ export type Database = {
           created_at: string
           id: string
           seen_by_student: boolean
+          title: string
           updated_at: string
           user_id: string
           visible: boolean
@@ -965,6 +966,7 @@ export type Database = {
           created_at?: string
           id?: string
           seen_by_student?: boolean
+          title?: string
           updated_at?: string
           user_id: string
           visible?: boolean
@@ -974,6 +976,7 @@ export type Database = {
           created_at?: string
           id?: string
           seen_by_student?: boolean
+          title?: string
           updated_at?: string
           user_id?: string
           visible?: boolean
