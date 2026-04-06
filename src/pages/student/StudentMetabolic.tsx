@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,17 +40,6 @@ const StudentMetabolic = () => {
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["metabolic-panel-student"] }),
   });
-
-  useEffect(() => {
-    if (latestPanel && !latestPanel.seen_by_student && latestPanel.visible) {
-      setPopupOpen(true);
-    }
-  }, [latestPanel]);
-
-  const handleClosePopup = () => {
-    setPopupOpen(false);
-    if (latestPanel) markSeen.mutate(latestPanel.id);
-  };
 
   if (!guardLoading && !isActive) {
     return <DashboardLayout role="student" title="Painel Metabólico"><SubscriptionBlock /></DashboardLayout>;
