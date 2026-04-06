@@ -1,0 +1,112 @@
+import { useEffect, useState } from "react";
+import DashboardLayout from "@/components/DashboardLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
+import SubscriptionBlock from "@/components/SubscriptionBlock";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Microscope, AlertCircle } from "lucide-react";
+import RichContentRenderer from "@/components/shared/RichContentRenderer";
+import StudentInfoHeader from "@/components/student/StudentInfoHeader";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+
+const StudentMetabolic = () => {
+  const { user } = useAuth();
+  const { blocked } = useSubscriptionGuard();
+  const qc = useQueryClient();
+  const [popupOpen, setPopupOpen] = useState(false);
+
+  const { data: panel, isLoading } = useQuery({
+    queryKey: ["metabolic-panel-student", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("metabolic_panels")
+        .select("*")
+        .eq("user_id", user!.id)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const markSeen = useMutation({
+    mutationFn: async (id: string) => {
+      await supabase
+        .from("metabolic_panels")
+        .update({ seen_by_student: true })
+        .eq("id", id);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["metabolic-panel-student"] }),
+  });
+
+  // Show popup if there's unseen content
+  useEffect(() => {
+    if (panel && !panel.seen_by_student && panel.visible) {
+      setPopupOpen(true);
+    }
+  }, [panel]);
+
+  const handleClosePopup = () => {
+    setPopupOpen(false);
+    if (panel) markSeen.mutate(panel.id);
+  };
+
+  if (blocked) return <DashboardLayout role="student"><SubscriptionBlock /></DashboardLayout>;
+
+  return (
+    <DashboardLayout role="student">
+      <div className="space-y-4 sm:space-y-6 animate-fade-in">
+        <StudentInfoHeader />
+
+        <Card className="border-border/50 bg-card/80 backdrop-blur">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+              <Microscope className="w-5 h-5 text-primary" />
+              Painel Metabólico
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <p className="text-sm text-muted-foreground">Carregando...</p>
+            ) : panel && panel.content ? (
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                <RichContentRenderer content={panel.content} />
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-3 py-10 text-muted-foreground">
+                <AlertCircle className="w-10 h-10 opacity-40" />
+                <p className="text-sm">Nenhuma análise metabólica disponível no momento.</p>
+                <p className="text-xs opacity-60">Seu consultor publicará aqui os resultados assim que estiverem prontos.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Popup de atualização */}
+      <Dialog open={popupOpen} onOpenChange={(open) => { if (!open) handleClosePopup(); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-primary">
+              <Microscope className="w-5 h-5" />
+              Nova Análise Metabólica
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Seu painel metabólico foi atualizado com novas informações. Confira agora!
+          </p>
+          <Button onClick={handleClosePopup} className="w-full mt-2">
+            Fechar
+          </Button>
+        </DialogContent>
+      </Dialog>
+    </DashboardLayout>
+  );
+};
+
+export default StudentMetabolic;

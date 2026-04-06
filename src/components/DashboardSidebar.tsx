@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Layers, Apple, Ticket, Activity } from "lucide-react";
+import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Layers, Apple, Ticket, Activity, Microscope } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,6 +22,7 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/dashboard/training", icon: Dumbbell, label: "Treino" },
     { to: "/dashboard/guided-workout", icon: ListChecks, label: "Treino Guiado" },
     { to: "/dashboard/protocol", icon: FlaskConical, label: "Protocolo" },
+    { to: "/dashboard/metabolic", icon: Microscope, label: "Painel Metabólico" },
     { to: "/dashboard/content", icon: BookOpen, label: "Conteúdo" },
     { to: "/dashboard/subscription", icon: CreditCard, label: "Assinatura" },
   ],
