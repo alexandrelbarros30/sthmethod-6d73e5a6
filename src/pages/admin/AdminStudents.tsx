@@ -1818,7 +1818,7 @@ const AdminStudents = () => {
       </Dialog>
 
       {/* Password reset dialog */}
-      <Dialog open={!!passwordReset} onOpenChange={(open) => { if (!open) { setPasswordReset(null); setNewPassword(""); } }}>
+      <Dialog open={!!passwordReset} onOpenChange={(open) => { if (!open) { setPasswordReset(null); setNewPassword(""); setManageOpen(true); } }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Alterar senha</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">Definir nova senha para <strong>{passwordReset?.name}</strong></p>
