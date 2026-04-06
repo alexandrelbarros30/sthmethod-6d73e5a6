@@ -127,12 +127,22 @@ const AdminDashboard = () => {
     },
   });
 
-  // Users who completed onboarding but have no subscription yet
+  // Set of user_ids with active subscriptions (status active + end_date in future)
+  const activeSubUserIds = useMemo(() => {
+    if (!subscriptions) return new Set<string>();
+    const now = new Date();
+    return new Set(
+      subscriptions
+        .filter((s: any) => s.status === "active" && new Date(s.end_date) > now)
+        .map((s: any) => s.user_id)
+    );
+  }, [subscriptions]);
+
+  // Users who completed onboarding but have no active subscription
   const pendingPaymentProfiles = useMemo(() => {
     if (!profiles || !subscriptions) return [];
-    const subUserIds = new Set((subscriptions || []).map((s: any) => s.user_id));
-    return profiles.filter((p: any) => p.onboarding_complete && !subUserIds.has(p.user_id));
-  }, [profiles, subscriptions]);
+    return profiles.filter((p: any) => p.onboarding_complete && !activeSubUserIds.has(p.user_id));
+  }, [profiles, subscriptions, activeSubUserIds]);
 
   const totalStudents = profiles?.length || 0;
   const now = new Date();
