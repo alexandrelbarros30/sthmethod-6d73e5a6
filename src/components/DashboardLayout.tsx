@@ -154,6 +154,14 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
           break; // show first matching
         }
       }
+      // 5) Performeth Labs promo — show once per session
+      const performethKey = `performeth_seen_${user.id}_session`;
+      if (!sessionStorage.getItem(performethKey)) {
+        setTimeout(() => {
+          setPerformethOpen(true);
+          sessionStorage.setItem(performethKey, "1");
+        }, 2000);
+      }
     };
 
     checkAll();
