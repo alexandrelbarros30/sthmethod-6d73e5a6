@@ -349,6 +349,51 @@ export type Database = {
           },
         ]
       }
+      custom_popups: {
+        Row: {
+          active: boolean
+          button_route: string | null
+          button_text: string | null
+          created_at: string
+          end_date: string | null
+          id: string
+          message: string
+          start_date: string
+          target_type: string
+          target_user_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          button_route?: string | null
+          button_text?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          message?: string
+          start_date?: string
+          target_type?: string
+          target_user_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          button_route?: string | null
+          button_text?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          message?: string
+          start_date?: string
+          target_type?: string
+          target_user_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       diet_foods: {
         Row: {
           carbs_g: number
@@ -1196,6 +1241,35 @@ export type Database = {
           visibility?: string
         }
         Relationships: []
+      }
+      popup_dismissals: {
+        Row: {
+          dismissed_at: string
+          id: string
+          popup_id: string
+          user_id: string
+        }
+        Insert: {
+          dismissed_at?: string
+          id?: string
+          popup_id: string
+          user_id: string
+        }
+        Update: {
+          dismissed_at?: string
+          id?: string
+          popup_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "popup_dismissals_popup_id_fkey"
+            columns: ["popup_id"]
+            isOneToOne: false
+            referencedRelation: "custom_popups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
