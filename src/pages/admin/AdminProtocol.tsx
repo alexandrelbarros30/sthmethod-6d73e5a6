@@ -547,6 +547,18 @@ const AdminProtocol = () => {
                       <Label className="font-body">Upload PDF</Label>
                       <Input type="file" accept=".pdf" onChange={(e) => setNewPdfFile(e.target.files?.[0] || null)} />
                     </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <Label className="font-body">Data de Liberação</Label>
+                        <Input type="date" value={newReleaseDate} onChange={(e) => setNewReleaseDate(e.target.value)} />
+                        <p className="text-[10px] text-muted-foreground mt-0.5">Deixe vazio para liberar imediatamente</p>
+                      </div>
+                      <div>
+                        <Label className="font-body">Data de Encerramento</Label>
+                        <Input type="date" value={newEndDate} onChange={(e) => setNewEndDate(e.target.value)} />
+                        <p className="text-[10px] text-muted-foreground mt-0.5">Deixe vazio para sem encerramento</p>
+                      </div>
+                    </div>
                      <div>
                       <Label className="font-body">Conteúdo</Label>
                       <RichTextEditor value={newContent} onChange={setNewContent} placeholder="Escreva o conteúdo do protocolo aqui..." />
