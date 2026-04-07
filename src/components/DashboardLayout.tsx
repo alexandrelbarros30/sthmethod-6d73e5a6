@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Microscope, UtensilsCrossed, PartyPopper, Megaphone } from "lucide-react";
+import PerformethLabsPopup from "./student/PerformethLabsPopup";
 
 const BIRTHDAY_MESSAGES = [
   "🎉 Feliz Aniversário! Que este novo ciclo traga muita saúde, energia e conquistas. Você merece!",
@@ -53,6 +54,9 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
   // Custom popup state
   const [customPopup, setCustomPopup] = useState<any>(null);
   const [customPopupOpen, setCustomPopupOpen] = useState(false);
+
+  // Performeth Labs popup state
+  const [performethOpen, setPerformethOpen] = useState(false);
 
   const birthdayMessage = useMemo(() => {
     const idx = Math.floor(Math.random() * BIRTHDAY_MESSAGES.length);
@@ -149,6 +153,14 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
           setCustomPopupOpen(true);
           break; // show first matching
         }
+      }
+      // 5) Performeth Labs promo — show once per session
+      const performethKey = `performeth_seen_${user.id}_session`;
+      if (!sessionStorage.getItem(performethKey)) {
+        setTimeout(() => {
+          setPerformethOpen(true);
+          sessionStorage.setItem(performethKey, "1");
+        }, 2000);
       }
     };
 
@@ -303,6 +315,9 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Performeth Labs Promo */}
+      <PerformethLabsPopup open={performethOpen} onClose={() => setPerformethOpen(false)} />
     </div>
   );
 };
