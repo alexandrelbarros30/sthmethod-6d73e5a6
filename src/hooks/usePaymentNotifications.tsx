@@ -94,12 +94,23 @@ export const usePaymentNotifications = () => {
           const amount = Number(payment.amount).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
           const statusLabel = payment.status === "approved" ? "✅ Aprovado" : "⏳ Pendente";
+          const actionLabel = payment.action_type === "new" ? "Novo plano" : payment.action_type === "upgrade" ? "Atualização" : "Renovação";
 
           toast({
             title: `${statusLabel} — ${studentName}`,
-            description: `${planName} • ${amount}`,
-            duration: 8000,
+            description: `${actionLabel} • ${planName} • ${amount}`,
+            duration: 12000,
           });
+
+          if (payment.status === "approved") {
+            setTimeout(() => {
+              toast({
+                title: `📋 Lembrete — Atualizar STCoach`,
+                description: `Atualize os dados de ${studentName} no STCoach (${actionLabel}).`,
+                duration: 15000,
+              });
+            }, 1500);
+          }
 
           // Auto-open WhatsApp welcome when payment transitions to approved
           if (payment.status === "approved" && prevPayment?.status !== "approved") {
