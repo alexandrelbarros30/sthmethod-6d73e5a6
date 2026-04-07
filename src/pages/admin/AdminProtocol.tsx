@@ -131,10 +131,10 @@ const AdminProtocol = () => {
       const { data: items } = await supabase.from("protocols").select("*").eq("user_id", selected.user_id);
       const { data: extraCats } = await supabase.from("protocol_extra_categories" as any).select("*").eq("user_id", selected.user_id);
       const { data: catContents } = await supabase.from("protocol_category_content").select("*").eq("user_id", selected.user_id);
-      // Get the latest student_protocols content
+      // Get the latest student_protocols content + pdf
       const { data: latestProtocol } = await supabase
         .from("student_protocols")
-        .select("content")
+        .select("content, pdf_url")
         .eq("user_id", selected.user_id)
         .order("created_at", { ascending: false })
         .limit(1)
