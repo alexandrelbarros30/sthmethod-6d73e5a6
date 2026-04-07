@@ -147,11 +147,21 @@ export const usePaymentNotifications = () => {
           const planName = planRes.data?.name || "Plano";
           const amount = Number(payment.amount).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+          const actionLabel = payment.action_type === "new" ? "Novo plano" : payment.action_type === "upgrade" ? "Atualização" : "Renovação";
+
           toast({
             title: `💰 Novo pagamento — ${studentName}`,
-            description: `${planName} • ${amount} • ${payment.method?.toUpperCase()}`,
-            duration: 8000,
+            description: `${actionLabel} • ${planName} • ${amount} • ${payment.method?.toUpperCase()}`,
+            duration: 12000,
           });
+
+          setTimeout(() => {
+            toast({
+              title: `📋 Lembrete — Atualizar STCoach`,
+              description: `Cadastre/atualize ${studentName} no STCoach (${actionLabel}).`,
+              duration: 15000,
+            });
+          }, 1500);
         }
       )
       .subscribe();
