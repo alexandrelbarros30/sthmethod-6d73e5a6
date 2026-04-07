@@ -231,9 +231,10 @@ const AdminProtocol = () => {
       qc.invalidateQueries({ queryKey: ["admin-students-protocols"] });
       // Pre-fill the editor with the library content
       const libContent = libItem?.content || "";
-      if (libContent.replace(/<[^>]*>/g, "").trim().length > 0) {
+      if (libContent.replace(/<[^>]*>/g, "").trim().length > 0 || libItem?.pdf_url) {
         setNewContent(libContent);
         setNewTitle(libItem?.title || "Protocolo");
+        setShowNewForm(false); // Entry already created, just show in history
       }
       setLibraryDialogOpen(false);
     },
