@@ -1,0 +1,1 @@
+ALTER TABLE public.protocol_library ADD COLUMN pdf_url text DEFAULT '';

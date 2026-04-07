@@ -131,10 +131,10 @@ const AdminProtocol = () => {
       const { data: items } = await supabase.from("protocols").select("*").eq("user_id", selected.user_id);
       const { data: extraCats } = await supabase.from("protocol_extra_categories" as any).select("*").eq("user_id", selected.user_id);
       const { data: catContents } = await supabase.from("protocol_category_content").select("*").eq("user_id", selected.user_id);
-      // Get the latest student_protocols content
+      // Get the latest student_protocols content + pdf
       const { data: latestProtocol } = await supabase
         .from("student_protocols")
-        .select("content")
+        .select("content, pdf_url")
         .eq("user_id", selected.user_id)
         .order("created_at", { ascending: false })
         .limit(1)
@@ -152,6 +152,7 @@ const AdminProtocol = () => {
       await supabase.from("protocol_library" as any).insert({
         title: `Protocolo de ${selected.full_name || "Aluno"}`,
         content: latestProtocol?.content || "",
+        pdf_url: latestProtocol?.pdf_url || "",
         items_json: itemsArr,
         extra_categories_json: extraArr,
         category_contents_json: catObj,
@@ -206,13 +207,16 @@ const AdminProtocol = () => {
         }
       }
 
-      // Insert protocol content (rich text) as a new student_protocols entry
+      // Insert protocol content (rich text + pdf) as a new student_protocols entry
       const libContent = libItem.content || "";
-      if (libContent.replace(/<[^>]*>/g, "").trim().length > 0) {
+      const libPdf = libItem.pdf_url || "";
+      const hasContent = libContent.replace(/<[^>]*>/g, "").trim().length > 0;
+      if (hasContent || libPdf) {
         await supabase.from("student_protocols").insert({
           user_id: uid,
           title: libItem.title || "Protocolo",
           content: libContent,
+          pdf_url: libPdf,
         });
       }
 
@@ -227,9 +231,10 @@ const AdminProtocol = () => {
       qc.invalidateQueries({ queryKey: ["admin-students-protocols"] });
       // Pre-fill the editor with the library content
       const libContent = libItem?.content || "";
-      if (libContent.replace(/<[^>]*>/g, "").trim().length > 0) {
+      if (libContent.replace(/<[^>]*>/g, "").trim().length > 0 || libItem?.pdf_url) {
         setNewContent(libContent);
         setNewTitle(libItem?.title || "Protocolo");
+        setShowNewForm(false); // Entry already created, just show in history
       }
       setLibraryDialogOpen(false);
     },

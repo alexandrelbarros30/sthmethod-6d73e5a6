@@ -1383,6 +1383,7 @@ export type Database = {
           extra_categories_json: Json
           id: string
           items_json: Json
+          pdf_url: string | null
           title: string
           updated_at: string
         }
@@ -1394,6 +1395,7 @@ export type Database = {
           extra_categories_json?: Json
           id?: string
           items_json?: Json
+          pdf_url?: string | null
           title: string
           updated_at?: string
         }
@@ -1405,6 +1407,7 @@ export type Database = {
           extra_categories_json?: Json
           id?: string
           items_json?: Json
+          pdf_url?: string | null
           title?: string
           updated_at?: string
         }
