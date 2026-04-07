@@ -152,6 +152,7 @@ const AdminProtocol = () => {
       await supabase.from("protocol_library" as any).insert({
         title: `Protocolo de ${selected.full_name || "Aluno"}`,
         content: latestProtocol?.content || "",
+        pdf_url: latestProtocol?.pdf_url || "",
         items_json: itemsArr,
         extra_categories_json: extraArr,
         category_contents_json: catObj,
