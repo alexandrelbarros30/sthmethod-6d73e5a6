@@ -55,6 +55,9 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
   const [customPopup, setCustomPopup] = useState<any>(null);
   const [customPopupOpen, setCustomPopupOpen] = useState(false);
 
+  // Performeth Labs popup state
+  const [performethOpen, setPerformethOpen] = useState(false);
+
   const birthdayMessage = useMemo(() => {
     const idx = Math.floor(Math.random() * BIRTHDAY_MESSAGES.length);
     return BIRTHDAY_MESSAGES[idx];
