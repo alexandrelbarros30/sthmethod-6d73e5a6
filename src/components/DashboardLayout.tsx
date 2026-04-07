@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Microscope, UtensilsCrossed, PartyPopper } from "lucide-react";
+import { Microscope, UtensilsCrossed, PartyPopper, Megaphone } from "lucide-react";
 
 const BIRTHDAY_MESSAGES = [
   "🎉 Feliz Aniversário! Que este novo ciclo traga muita saúde, energia e conquistas. Você merece!",
@@ -49,6 +49,10 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
 
   // Birthday popup state
   const [birthdayPopup, setBirthdayPopup] = useState(false);
+
+  // Custom popup state
+  const [customPopup, setCustomPopup] = useState<any>(null);
+  const [customPopupOpen, setCustomPopupOpen] = useState(false);
 
   const birthdayMessage = useMemo(() => {
     const idx = Math.floor(Math.random() * BIRTHDAY_MESSAGES.length);
@@ -106,6 +110,46 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
           }
         }
       }
+
+      // 4) Check custom popups
+      const { data: dismissed } = await supabase
+        .from("popup_dismissals")
+        .select("popup_id")
+        .eq("user_id", user.id);
+      const dismissedIds = new Set((dismissed || []).map((d: any) => d.popup_id));
+
+      const { data: allPopups } = await supabase
+        .from("custom_popups")
+        .select("*")
+        .eq("active", true)
+        .lte("start_date", today)
+        .order("created_at", { ascending: false });
+
+      if (allPopups) {
+        // Check subscription status for targeting
+        const { data: subs } = await supabase
+          .from("subscriptions")
+          .select("status, end_date")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1);
+        const hasActiveSub = subs && subs.length > 0 && subs[0].status === "active" && new Date(subs[0].end_date) > new Date();
+
+        for (const popup of allPopups) {
+          if (dismissedIds.has(popup.id)) continue;
+          if (popup.end_date && popup.end_date < today) continue;
+
+          const tt = popup.target_type;
+          if (tt === "specific" && popup.target_user_id !== user.id) continue;
+          if (tt === "all_active" && !hasActiveSub) continue;
+          if (tt === "all_inactive" && hasActiveSub) continue;
+          // "all" matches everyone
+
+          setCustomPopup(popup);
+          setCustomPopupOpen(true);
+          break; // show first matching
+        }
+      }
     };
 
     checkAll();
@@ -137,6 +181,20 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
       const seenKey = `birthday_seen_${user.id}_${new Date().getFullYear()}`;
       localStorage.setItem(seenKey, "1");
     }
+  };
+
+  // ---- Custom popup handlers ----
+  const handleDismissCustomPopup = async () => {
+    if (customPopup && user?.id) {
+      await supabase.from("popup_dismissals").insert({ popup_id: customPopup.id, user_id: user.id });
+    }
+    setCustomPopupOpen(false);
+    setCustomPopup(null);
+  };
+  const handleCustomPopupAction = async () => {
+    const route = customPopup?.button_route;
+    await handleDismissCustomPopup();
+    if (route && route !== "none") navigate(route);
   };
 
   return (
@@ -212,6 +270,37 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
           <Button onClick={handleCloseBirthday} className="w-full mt-2">
             Obrigado! 🥰
           </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Custom Popup */}
+      <Dialog open={customPopupOpen} onOpenChange={(open) => { if (!open) handleDismissCustomPopup(); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-primary">
+              <Megaphone className="w-5 h-5" />
+              {customPopup?.title || "Aviso"}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+            {customPopup?.message}
+          </p>
+          <div className="flex gap-2 mt-2">
+            {customPopup?.button_text && customPopup?.button_route && customPopup.button_route !== "none" ? (
+              <>
+                <Button onClick={handleCustomPopupAction} className="flex-1">
+                  {customPopup.button_text}
+                </Button>
+                <Button variant="outline" onClick={handleDismissCustomPopup} className="flex-1">
+                  Fechar
+                </Button>
+              </>
+            ) : (
+              <Button onClick={handleDismissCustomPopup} className="w-full">
+                Fechar
+              </Button>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
