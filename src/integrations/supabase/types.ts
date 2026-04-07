@@ -1488,6 +1488,7 @@ export type Database = {
           pdf_url: string | null
           protein_g: number | null
           release_date: string | null
+          seen_by_student: boolean
           title: string
           updated_at: string
           user_id: string
@@ -1504,6 +1505,7 @@ export type Database = {
           pdf_url?: string | null
           protein_g?: number | null
           release_date?: string | null
+          seen_by_student?: boolean
           title?: string
           updated_at?: string
           user_id: string
@@ -1520,6 +1522,7 @@ export type Database = {
           pdf_url?: string | null
           protein_g?: number | null
           release_date?: string | null
+          seen_by_student?: boolean
           title?: string
           updated_at?: string
           user_id?: string

@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardSidebar from "./DashboardSidebar";
 import FloatingDock from "./student/FloatingDock";
@@ -9,7 +9,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Microscope } from "lucide-react";
+import { Microscope, UtensilsCrossed, PartyPopper } from "lucide-react";
+
+const BIRTHDAY_MESSAGES = [
+  "🎉 Feliz Aniversário! Que este novo ciclo traga muita saúde, energia e conquistas. Você merece!",
+  "🎂 Parabéns pelo seu dia! Continue firme na sua jornada — cada passo conta. Feliz Aniversário!",
+  "🥳 Hoje é seu dia especial! Que a dedicação que você tem com sua saúde se reflita em um ano incrível!",
+  "🎈 Feliz Aniversário! Celebre com alegria e orgulho de todo o progresso que já alcançou!",
+  "🌟 Parabéns! Mais um ano de vida, mais um ano de evolução. Continue brilhando!",
+  "🎁 Feliz Aniversário! Que este novo ano seja repleto de resultados surpreendentes e muita motivação!",
+  "💪 Hoje é dia de comemorar! Feliz Aniversário — você é inspiração com sua disciplina e foco!",
+  "🎊 Parabéns pelo seu aniversário! Que cada treino e cada refeição te levem ainda mais longe este ano!",
+];
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -26,13 +37,30 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
   usePaymentNotifications();
 
   const { user } = useAuth();
+
+  // Metabolic popup state
   const [metabolicPopup, setMetabolicPopup] = useState(false);
   const [pendingPanelId, setPendingPanelId] = useState<string | null>(null);
 
+  // Diet popup state
+  const [dietPopup, setDietPopup] = useState(false);
+  const [pendingDietId, setPendingDietId] = useState<string | null>(null);
+  const [pendingDietTitle, setPendingDietTitle] = useState("");
+
+  // Birthday popup state
+  const [birthdayPopup, setBirthdayPopup] = useState(false);
+
+  const birthdayMessage = useMemo(() => {
+    const idx = Math.floor(Math.random() * BIRTHDAY_MESSAGES.length);
+    return BIRTHDAY_MESSAGES[idx];
+  }, []);
+
   useEffect(() => {
     if (!isStudent || !user?.id) return;
-    const checkMetabolic = async () => {
-      const { data } = await supabase
+
+    const checkAll = async () => {
+      // 1) Check metabolic panels
+      const { data: metaData } = await supabase
         .from("metabolic_panels")
         .select("id")
         .eq("user_id", user.id)
@@ -40,33 +68,75 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
         .eq("seen_by_student", false)
         .order("created_at", { ascending: false })
         .limit(1);
-      if (data && data.length > 0) {
-        setPendingPanelId(data[0].id);
+      if (metaData && metaData.length > 0) {
+        setPendingPanelId(metaData[0].id);
         setMetabolicPopup(true);
       }
+
+      // 2) Check new diets released
+      const today = new Date().toISOString().split("T")[0];
+      const { data: dietData } = await supabase
+        .from("student_diets")
+        .select("id, title, release_date")
+        .eq("user_id", user.id)
+        .eq("visible", true)
+        .eq("seen_by_student", false)
+        .lte("release_date", today)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (dietData && dietData.length > 0) {
+        setPendingDietId(dietData[0].id);
+        setPendingDietTitle(dietData[0].title || "Nova Dieta");
+        setDietPopup(true);
+      }
+
+      // 3) Check birthday
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("birth_date")
+        .eq("user_id", user.id)
+        .single();
+      if (profile?.birth_date) {
+        const bd = new Date(profile.birth_date + "T12:00:00");
+        const now = new Date();
+        if (bd.getMonth() === now.getMonth() && bd.getDate() === now.getDate()) {
+          const seenKey = `birthday_seen_${user.id}_${now.getFullYear()}`;
+          if (!localStorage.getItem(seenKey)) {
+            setBirthdayPopup(true);
+          }
+        }
+      }
     };
-    checkMetabolic();
+
+    checkAll();
   }, [isStudent, user?.id]);
 
-  const markAsSeen = async () => {
+  // ---- Metabolic handlers ----
+  const markMetabolicSeen = async () => {
     if (pendingPanelId) {
-      await supabase
-        .from("metabolic_panels")
-        .update({ seen_by_student: true })
-        .eq("id", pendingPanelId);
+      await supabase.from("metabolic_panels").update({ seen_by_student: true }).eq("id", pendingPanelId);
       setPendingPanelId(null);
     }
   };
+  const handleCloseMetabolic = async () => { setMetabolicPopup(false); await markMetabolicSeen(); };
+  const handleGoToMetabolic = async () => { setMetabolicPopup(false); await markMetabolicSeen(); navigate("/dashboard/metabolic"); };
 
-  const handleClosePopup = async () => {
-    setMetabolicPopup(false);
-    await markAsSeen();
+  // ---- Diet handlers ----
+  const markDietSeen = async () => {
+    if (pendingDietId) {
+      await supabase.from("student_diets").update({ seen_by_student: true } as any).eq("id", pendingDietId);
+      setPendingDietId(null);
+    }
   };
+  const handleGoToDiet = async () => { setDietPopup(false); await markDietSeen(); navigate("/dashboard/diet"); };
 
-  const handleGoToPanel = async () => {
-    setMetabolicPopup(false);
-    await markAsSeen();
-    navigate("/dashboard/metabolic");
+  // ---- Birthday handlers ----
+  const handleCloseBirthday = () => {
+    setBirthdayPopup(false);
+    if (user?.id) {
+      const seenKey = `birthday_seen_${user.id}_${new Date().getFullYear()}`;
+      localStorage.setItem(seenKey, "1");
+    }
   };
 
   return (
@@ -90,7 +160,8 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
       </main>
       {showDock && <FloatingDock />}
 
-      <Dialog open={metabolicPopup} onOpenChange={(open) => { if (!open) handleClosePopup(); }}>
+      {/* Metabolic Popup */}
+      <Dialog open={metabolicPopup} onOpenChange={(open) => { if (!open) handleCloseMetabolic(); }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-primary">
@@ -102,13 +173,45 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
             Seu painel metabólico foi atualizado com novas informações. Confira agora!
           </p>
           <div className="flex gap-2 mt-2">
-            <Button onClick={handleGoToPanel} className="flex-1">
-              Ver Painel
-            </Button>
-            <Button variant="outline" onClick={handleClosePopup} className="flex-1">
-              Fechar
-            </Button>
+            <Button onClick={handleGoToMetabolic} className="flex-1">Ver Painel</Button>
+            <Button variant="outline" onClick={handleCloseMetabolic} className="flex-1">Fechar</Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Diet Released Popup */}
+      <Dialog open={dietPopup} onOpenChange={() => {}}>
+        <DialogContent className="max-w-sm" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-primary">
+              <UtensilsCrossed className="w-5 h-5" />
+              Nova Dieta Liberada! 🎉
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Sua nova dieta <span className="font-semibold text-foreground">"{pendingDietTitle}"</span> foi liberada e está disponível para consulta. Confira agora seu novo plano alimentar!
+          </p>
+          <Button onClick={handleGoToDiet} className="w-full mt-2">
+            Ver Minha Dieta
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Birthday Popup */}
+      <Dialog open={birthdayPopup} onOpenChange={(open) => { if (!open) handleCloseBirthday(); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-primary">
+              <PartyPopper className="w-5 h-5" />
+              Feliz Aniversário! 🎂
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {birthdayMessage}
+          </p>
+          <Button onClick={handleCloseBirthday} className="w-full mt-2">
+            Obrigado! 🥰
+          </Button>
         </DialogContent>
       </Dialog>
     </div>
