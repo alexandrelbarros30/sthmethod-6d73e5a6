@@ -58,12 +58,19 @@ const StudentProtocol = () => {
   const { data: protocols, isLoading } = useQuery({
     queryKey: ["student-protocols", user?.id],
     queryFn: async () => {
+      const today = new Date().toISOString().slice(0, 10);
       const { data } = await supabase
         .from("student_protocols")
         .select("*")
         .eq("user_id", user!.id)
+        .eq("visible", true)
         .order("created_at", { ascending: false });
-      return data || [];
+      // Filter by release_date and end_date client-side
+      return (data || []).filter((p: any) => {
+        if (p.release_date && p.release_date > today) return false;
+        if (p.end_date && p.end_date < today) return false;
+        return true;
+      });
     },
     enabled: !!user?.id && isActive,
   });
