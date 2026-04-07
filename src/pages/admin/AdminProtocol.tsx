@@ -624,17 +624,46 @@ const AdminProtocol = () => {
                       <AccordionItem key={protocol.id} value={protocol.id} className="border rounded-xl overflow-hidden bg-card">
                         <AccordionTrigger className="px-4 py-3 hover:no-underline">
                           <div className="flex items-center gap-2 flex-wrap text-left">
+                            {protocol.visible ? (
+                              <Eye className="w-4 h-4 text-green-500 shrink-0" />
+                            ) : (
+                              <EyeOff className="w-4 h-4 text-muted-foreground shrink-0" />
+                            )}
                             <span className="text-base font-display font-semibold">{protocol.title}</span>
                             <Badge variant="outline" className="text-[10px]">
                               {new Date(protocol.created_at).toLocaleDateString("pt-BR")} às{" "}
                               {new Date(protocol.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                             </Badge>
+                            {protocol.release_date && (
+                              <Badge variant="secondary" className="text-[10px]">
+                                Liberação: {new Date(protocol.release_date + "T12:00:00").toLocaleDateString("pt-BR")}
+                              </Badge>
+                            )}
+                            {protocol.end_date && (
+                              <Badge variant="secondary" className="text-[10px]">
+                                Encerra: {new Date(protocol.end_date + "T12:00:00").toLocaleDateString("pt-BR")}
+                              </Badge>
+                            )}
                           </div>
                         </AccordionTrigger>
                         <AccordionContent className="px-4 pb-4">
                           <div className="space-y-3">
                             {/* Admin action buttons */}
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={async () => {
+                                  await supabase.from("student_protocols").update({ visible: !protocol.visible }).eq("id", protocol.id);
+                                  refetchProtocols();
+                                  qc.invalidateQueries({ queryKey: ["admin-students-protocols"] });
+                                  toast.success(protocol.visible ? "Protocolo ocultado" : "Protocolo visível");
+                                }}
+                              >
+                                {protocol.visible ? <EyeOff className="w-3 h-3 mr-1" /> : <Eye className="w-3 h-3 mr-1" />}
+                                {protocol.visible ? "Ocultar" : "Tornar Visível"}
+                              </Button>
                               <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => startEdit(protocol)}>
                                 <Pencil className="w-3 h-3 mr-1" /> Editar
                               </Button>
