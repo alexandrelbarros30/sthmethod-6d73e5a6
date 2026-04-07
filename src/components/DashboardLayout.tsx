@@ -315,6 +315,9 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Performeth Labs Promo */}
+      <PerformethLabsPopup open={performethOpen} onClose={() => setPerformethOpen(false)} />
     </div>
   );
 };
