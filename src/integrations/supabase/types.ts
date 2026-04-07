@@ -1656,29 +1656,38 @@ export type Database = {
         Row: {
           content: string | null
           created_at: string
+          end_date: string | null
           id: string
           pdf_url: string | null
+          release_date: string | null
           title: string
           updated_at: string
           user_id: string
+          visible: boolean
         }
         Insert: {
           content?: string | null
           created_at?: string
+          end_date?: string | null
           id?: string
           pdf_url?: string | null
+          release_date?: string | null
           title?: string
           updated_at?: string
           user_id: string
+          visible?: boolean
         }
         Update: {
           content?: string | null
           created_at?: string
+          end_date?: string | null
           id?: string
           pdf_url?: string | null
+          release_date?: string | null
           title?: string
           updated_at?: string
           user_id?: string
+          visible?: boolean
         }
         Relationships: []
       }
