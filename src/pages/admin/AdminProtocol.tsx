@@ -207,13 +207,16 @@ const AdminProtocol = () => {
         }
       }
 
-      // Insert protocol content (rich text) as a new student_protocols entry
+      // Insert protocol content (rich text + pdf) as a new student_protocols entry
       const libContent = libItem.content || "";
-      if (libContent.replace(/<[^>]*>/g, "").trim().length > 0) {
+      const libPdf = libItem.pdf_url || "";
+      const hasContent = libContent.replace(/<[^>]*>/g, "").trim().length > 0;
+      if (hasContent || libPdf) {
         await supabase.from("student_protocols").insert({
           user_id: uid,
           title: libItem.title || "Protocolo",
           content: libContent,
+          pdf_url: libPdf,
         });
       }
 
