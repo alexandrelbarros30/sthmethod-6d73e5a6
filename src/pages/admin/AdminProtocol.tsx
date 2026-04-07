@@ -39,6 +39,8 @@ const AdminProtocol = () => {
   const [newContent, setNewContent] = useState("");
   const [newPdfFile, setNewPdfFile] = useState<File | null>(null);
   const [showNewForm, setShowNewForm] = useState(false);
+  const [newReleaseDate, setNewReleaseDate] = useState("");
+  const [newEndDate, setNewEndDate] = useState("");
 
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -277,6 +279,8 @@ const AdminProtocol = () => {
     setNewTitle("Protocolo");
     setNewContent("");
     setNewPdfFile(null);
+    setNewReleaseDate("");
+    setNewEndDate("");
   };
 
   const startEdit = (protocol: any) => {
@@ -306,12 +310,15 @@ const AdminProtocol = () => {
         const { data } = supabase.storage.from("documents").getPublicUrl(path);
         pdfUrl = data.publicUrl;
       }
-      const payload = {
+      const payload: any = {
         user_id: selected.user_id,
         title: newTitle,
         content: newContent,
         pdf_url: pdfUrl,
+        visible: !newReleaseDate, // if has release_date, start hidden until that date
       };
+      if (newReleaseDate) payload.release_date = newReleaseDate;
+      if (newEndDate) payload.end_date = newEndDate;
       await supabase.from("student_protocols").insert(payload);
     },
     onSuccess: () => {
