@@ -12,6 +12,7 @@ import gestrinona from "@/assets/performeth/gestrinona.jpg";
 import testosteronaGel from "@/assets/performeth/testosterona-gel.jpg";
 import estradiolGel from "@/assets/performeth/estradiol-gel.png";
 import oxandrolona from "@/assets/performeth/oxandrolona.jpg";
+import tirzepatida from "@/assets/performeth/tirzepatida-tg.png";
 
 const PRODUCTS = [
   {
