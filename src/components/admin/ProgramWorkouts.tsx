@@ -7,13 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Dumbbell, Video, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Pencil, Trash2, Dumbbell, Video, ChevronDown, ChevronUp, Copy, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import SortableExerciseRow, { ExerciseRow } from "@/components/admin/SortableExerciseRow";
 
 interface Props {
@@ -33,6 +35,83 @@ interface WorkoutForm {
 const emptyWorkout: WorkoutForm = {
   title: "", subtitle: "", description: "", released: true,
   weeks: "", days_per_week: "", minutes_per_day: "",
+};
+
+/* ---------- sortable workout card ---------- */
+const SortableWorkoutCard = ({ w, wIdx, exs, isExpanded, onToggle, onEdit, onDelete, onDuplicate, onToggleReleased }: any) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: w.id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <Card className="hover:shadow-sm transition-shadow">
+        <CardContent className="py-4">
+          <div className="flex items-center gap-2">
+            <button type="button" className="cursor-grab touch-none text-muted-foreground hover:text-foreground shrink-0" {...attributes} {...listeners}>
+              <GripVertical className="w-4 h-4" />
+            </button>
+            <button className="flex-1 text-left" onClick={onToggle}>
+              <div className="flex items-center gap-2">
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary text-sm font-bold shrink-0">
+                  {wIdx + 1}
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-sm truncate">{w.title}</p>
+                    {!w.released && <Badge variant="secondary" className="text-[10px]">Bloqueado</Badge>}
+                  </div>
+                  {w.subtitle && <p className="text-xs text-muted-foreground truncate">{w.subtitle}</p>}
+                  <div className="flex gap-1.5 mt-0.5">
+                    <Badge variant="outline" className="text-[10px]">{exs.length} exercício(s)</Badge>
+                    {w.weeks && <Badge variant="outline" className="text-[10px]">{w.weeks}sem</Badge>}
+                  </div>
+                </div>
+              </div>
+            </button>
+            <div className="flex gap-1 items-center shrink-0">
+              <div className="flex items-center gap-1 mr-1">
+                <Switch
+                  checked={w.released ?? true}
+                  onCheckedChange={(checked) => onToggleReleased(checked)}
+                />
+              </div>
+              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={onDuplicate}><Copy className="w-3.5 h-3.5" /></Button>
+              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={onEdit}><Pencil className="w-3.5 h-3.5" /></Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="icon" variant="ghost" className="h-7 w-7"><Trash2 className="w-3.5 h-3.5 text-destructive" /></Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir treino?</AlertDialogTitle>
+                    <AlertDialogDescription>Isso removerá "{w.title}" e seus exercícios.</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={onDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+            </div>
+          </div>
+          {isExpanded && exs.length > 0 && (
+            <div className="mt-3 border-t pt-3 space-y-2">
+              {exs.map((ex: any, i: number) => (
+                <div key={ex.id} className="flex items-center gap-2 text-sm">
+                  <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold">{i + 1}</span>
+                  <span className="font-medium truncate">{ex.custom_name || "Sem nome"}</span>
+                  {ex.sets && ex.reps && <span className="text-muted-foreground shrink-0">{ex.sets}x{ex.reps}</span>}
+                  {ex.rest_interval && <span className="text-xs text-muted-foreground shrink-0">Int: {ex.rest_interval}</span>}
+                  {ex.video_url && <Video className="w-3.5 h-3.5 text-primary shrink-0" />}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
 };
 
 const ProgramWorkouts = ({ programId }: Props) => {
@@ -106,7 +185,6 @@ const ProgramWorkouts = ({ programId }: Props) => {
         templateId = data.id;
       }
 
-      // Save exercises
       if (templateId) {
         await supabase.from("workout_template_exercises").delete().eq("template_id", templateId);
         if (exerciseRows.length > 0) {
@@ -144,10 +222,52 @@ const ProgramWorkouts = ({ programId }: Props) => {
     },
   });
 
+  const duplicateWorkoutMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const original = (workouts || []).find((w: any) => w.id === id);
+      if (!original) throw new Error("Treino não encontrado");
+      const { data: newW, error } = await supabase.from("workout_templates").insert({
+        title: `${original.title} (Cópia)`, subtitle: original.subtitle, description: original.description,
+        weeks: original.weeks, days_per_week: original.days_per_week, minutes_per_day: original.minutes_per_day,
+        program_id: programId, created_by: user!.id, sort_order: (workouts || []).length, released: original.released,
+      }).select("id").single();
+      if (error) throw error;
+      const exs = templateExercisesMap?.[id] || [];
+      if (exs.length > 0) {
+        await supabase.from("workout_template_exercises").insert(
+          exs.map((e: any) => ({
+            template_id: newW.id, exercise_id: e.exercise_id,
+            custom_name: e.custom_name, custom_description: e.custom_description,
+            sets: e.sets, reps: e.reps, rest_interval: e.rest_interval,
+            load_suggestion: e.load_suggestion, video_url: e.video_url, sort_order: e.sort_order,
+          }))
+        );
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["program-workouts", programId] });
+      queryClient.invalidateQueries({ queryKey: ["template-exercises-program", programId] });
+      queryClient.invalidateQueries({ queryKey: ["program-workout-counts"] });
+      toast.success("Treino duplicado!");
+    },
+    onError: () => toast.error("Erro ao duplicar treino."),
+  });
+
   const toggleReleasedMutation = useMutation({
     mutationFn: async ({ id, released }: { id: string; released: boolean }) => {
       const { error } = await supabase.from("workout_templates").update({ released }).eq("id", id);
       if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["program-workouts", programId] });
+    },
+  });
+
+  const reorderMutation = useMutation({
+    mutationFn: async (ordered: { id: string; sort_order: number }[]) => {
+      for (const item of ordered) {
+        await supabase.from("workout_templates").update({ sort_order: item.sort_order }).eq("id", item.id);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["program-workouts", programId] });
@@ -188,7 +308,19 @@ const ProgramWorkouts = ({ programId }: Props) => {
 
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleWorkoutDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const items = workouts || [];
+    const oldIndex = items.findIndex((w: any) => w.id === active.id);
+    const newIndex = items.findIndex((w: any) => w.id === over.id);
+    const reordered = arrayMove(items, oldIndex, newIndex);
+    // Optimistic update via query cache
+    queryClient.setQueryData(["program-workouts", programId], reordered);
+    reorderMutation.mutate(reordered.map((w: any, i: number) => ({ id: w.id, sort_order: i })));
+  };
+
+  const handleExerciseDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     setExerciseRows(prev => {
@@ -228,62 +360,26 @@ const ProgramWorkouts = ({ programId }: Props) => {
           <p className="text-muted-foreground">Nenhum treino neste programa.</p>
         </CardContent></Card>
       ) : (
-        <div className="space-y-3">
-          {(workouts || []).map((w: any, wIdx: number) => {
-            const exs = templateExercisesMap?.[w.id] || [];
-            const isExpanded = expandedId === w.id;
-            return (
-              <Card key={w.id} className="hover:shadow-sm transition-shadow">
-                <CardContent className="py-4">
-                  <div className="flex items-center gap-3">
-                    <button className="flex-1 text-left" onClick={() => setExpandedId(isExpanded ? null : w.id)}>
-                      <div className="flex items-center gap-2">
-                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary text-sm font-bold shrink-0">
-                          {wIdx + 1}
-                        </span>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium text-sm">{w.title}</p>
-                            {!w.released && <Badge variant="secondary" className="text-xs">Bloqueado</Badge>}
-                          </div>
-                          {w.subtitle && <p className="text-xs text-muted-foreground">{w.subtitle}</p>}
-                          <div className="flex gap-2 mt-0.5 text-xs text-muted-foreground">
-                            <Badge variant="outline" className="text-xs">{exs.length} exercício(s)</Badge>
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                    <div className="flex gap-1 items-center shrink-0">
-                      <div className="flex items-center gap-1 mr-2">
-                        <Switch
-                          checked={w.released ?? true}
-                          onCheckedChange={(checked) => toggleReleasedMutation.mutate({ id: w.id, released: checked })}
-                        />
-                        <span className="text-xs text-muted-foreground">{w.released ? "Liberado" : "Bloqueado"}</span>
-                      </div>
-                      <Button size="icon" variant="ghost" onClick={() => openEditWorkout(w)}><Pencil className="w-4 h-4" /></Button>
-                      <Button size="icon" variant="ghost" onClick={() => deleteWorkoutMutation.mutate(w.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                      {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-                    </div>
-                  </div>
-                  {isExpanded && exs.length > 0 && (
-                    <div className="mt-3 border-t pt-3 space-y-2">
-                      {exs.map((ex: any, i: number) => (
-                        <div key={ex.id} className="flex items-center gap-2 text-sm">
-                          <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold">{i + 1}</span>
-                          <span className="font-medium">{ex.custom_name || "Sem nome"}</span>
-                          {ex.sets && ex.reps && <span className="text-muted-foreground">{ex.sets}x{ex.reps}</span>}
-                          {ex.rest_interval && <span className="text-xs text-muted-foreground">Int: {ex.rest_interval}</span>}
-                          {ex.video_url && <Video className="w-3.5 h-3.5 text-primary" />}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleWorkoutDragEnd}>
+          <SortableContext items={(workouts || []).map((w: any) => w.id)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-3">
+              {(workouts || []).map((w: any, wIdx: number) => (
+                <SortableWorkoutCard
+                  key={w.id}
+                  w={w}
+                  wIdx={wIdx}
+                  exs={templateExercisesMap?.[w.id] || []}
+                  isExpanded={expandedId === w.id}
+                  onToggle={() => setExpandedId(expandedId === w.id ? null : w.id)}
+                  onEdit={() => openEditWorkout(w)}
+                  onDelete={() => deleteWorkoutMutation.mutate(w.id)}
+                  onDuplicate={() => duplicateWorkoutMutation.mutate(w.id)}
+                  onToggleReleased={(checked: boolean) => toggleReleasedMutation.mutate({ id: w.id, released: checked })}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       {/* Workout Create/Edit Dialog */}
@@ -299,7 +395,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
             </div>
             <div>
               <Label>Título *</Label>
-              <Input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="Ex: Inferiores" />
+              <Input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="Ex: Treino A — Inferiores" />
             </div>
             <div>
               <Label>Subtítulo</Label>
@@ -312,22 +408,21 @@ const ProgramWorkouts = ({ programId }: Props) => {
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label>Semanas</Label>
-                <Input type="number" min={1} value={form.weeks} onChange={e => setForm(p => ({ ...p, weeks: e.target.value }))} placeholder="Ex: 4" />
+                <Input type="number" min={1} value={form.weeks} onChange={e => setForm(p => ({ ...p, weeks: e.target.value }))} placeholder="4" />
               </div>
               <div>
-                <Label>Dias/semana</Label>
-                <Input type="number" min={1} max={7} value={form.days_per_week} onChange={e => setForm(p => ({ ...p, days_per_week: e.target.value }))} placeholder="Ex: 3" />
+                <Label>Dias/sem</Label>
+                <Input type="number" min={1} max={7} value={form.days_per_week} onChange={e => setForm(p => ({ ...p, days_per_week: e.target.value }))} placeholder="3" />
               </div>
               <div>
                 <Label>Min/dia</Label>
-                <Input type="number" min={1} value={form.minutes_per_day} onChange={e => setForm(p => ({ ...p, minutes_per_day: e.target.value }))} placeholder="Ex: 60" />
+                <Input type="number" min={1} value={form.minutes_per_day} onChange={e => setForm(p => ({ ...p, minutes_per_day: e.target.value }))} placeholder="60" />
               </div>
             </div>
 
-            {/* Exercises */}
             <div className="border-t pt-4">
               <div className="flex justify-between items-center mb-3">
-                <Label className="text-base font-semibold">Exercícios</Label>
+                <Label className="text-base font-semibold">Exercícios ({exerciseRows.length})</Label>
                 <Button size="sm" variant="outline" onClick={addExerciseRow}>
                   <Plus className="w-3 h-3 mr-1" /> Adicionar
                 </Button>
@@ -335,7 +430,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
               {exerciseRows.length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-4">Nenhum exercício. Clique em "Adicionar".</p>
               )}
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleExerciseDragEnd}>
                 <SortableContext items={exerciseRows.map(r => r._uid)} strategy={verticalListSortingStrategy}>
                   <div className="space-y-4">
                     {exerciseRows.map((row, idx) => (
