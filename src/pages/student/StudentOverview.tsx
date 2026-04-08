@@ -1,5 +1,8 @@
 import { useState, useMemo } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
+import PerformethLabsPopup from "@/components/student/PerformethLabsPopup";
+import TirzepatidaPopup from "@/components/student/TirzepatidaPopup";
+import AdFloatingButton from "@/components/student/AdFloatingButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -127,6 +130,8 @@ const StudentOverview = () => {
   const { profile, user } = useAuth();
   const navigate = useNavigate();
   const [greeting] = useState(getGreeting);
+  const [adPopupOpen, setAdPopupOpen] = useState(false);
+  const [adTirzeOpen, setAdTirzeOpen] = useState(false);
 
   const { data: fullProfile } = useQuery({
     queryKey: ["student-full-profile", user?.id],
@@ -166,6 +171,7 @@ const StudentOverview = () => {
 
   return (
     <DashboardLayout role="student" title="" subtitle="">
+      <AdFloatingButton onOpen={() => setAdPopupOpen(true)} />
       {/* ===== SAUDAÇÃO ===== */}
       <div className="mb-5">
         <h1 className="text-xl font-bold text-foreground font-display">
@@ -271,6 +277,10 @@ const StudentOverview = () => {
 
       {/* ===== PROGRESSO DIÁRIO ===== */}
       <DailyMealWidget />
+
+      {/* Ad popups triggered from floating button */}
+      <PerformethLabsPopup open={adPopupOpen} onClose={() => { setAdPopupOpen(false); setAdTirzeOpen(true); }} />
+      <TirzepatidaPopup open={adTirzeOpen} onClose={() => setAdTirzeOpen(false)} />
     </DashboardLayout>
   );
 };
