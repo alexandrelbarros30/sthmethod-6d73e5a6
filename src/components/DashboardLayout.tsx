@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Microscope, UtensilsCrossed, PartyPopper, Megaphone } from "lucide-react";
 import PerformethLabsPopup from "./student/PerformethLabsPopup";
+import TirzepatidaPopup from "./student/TirzepatidaPopup";
 
 const BIRTHDAY_MESSAGES = [
   "🎉 Feliz Aniversário! Que este novo ciclo traga muita saúde, energia e conquistas. Você merece!",
@@ -57,6 +58,7 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
 
   // Performeth Labs popup state
   const [performethOpen, setPerformethOpen] = useState(false);
+  const [tirzepatidaOpen, setTirzepatidaOpen] = useState(false);
 
   const birthdayMessage = useMemo(() => {
     const idx = Math.floor(Math.random() * BIRTHDAY_MESSAGES.length);
@@ -154,13 +156,13 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
           break; // show first matching
         }
       }
-      // 5) Performeth Labs promo — show once per session
+      // 5) Performeth Labs promo — show once per session (sequential: Performeth → Tirzepatida)
       const performethKey = `performeth_seen_${user.id}_session`;
       if (!sessionStorage.getItem(performethKey)) {
         setTimeout(() => {
           setPerformethOpen(true);
           sessionStorage.setItem(performethKey, "1");
-        }, 2000);
+        }, 1500);
       }
     };
 
@@ -317,8 +319,9 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
         </DialogContent>
       </Dialog>
 
-      {/* Performeth Labs Promo */}
-      <PerformethLabsPopup open={performethOpen} onClose={() => setPerformethOpen(false)} />
+      {/* Performeth Labs Promo → sequential to Tirzepatida */}
+      <PerformethLabsPopup open={performethOpen} onClose={() => { setPerformethOpen(false); setTirzepatidaOpen(true); }} />
+      <TirzepatidaPopup open={tirzepatidaOpen} onClose={() => setTirzepatidaOpen(false)} />
     </div>
   );
 };
