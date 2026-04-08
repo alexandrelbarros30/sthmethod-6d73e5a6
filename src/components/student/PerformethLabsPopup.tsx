@@ -71,6 +71,13 @@ const PRODUCTS = [
     ingredients: "Oxandrolona 3,5mg",
     qty: "100 cápsulas",
   },
+  {
+    name: "Tirzepatida TG 60mg",
+    image: tirzepatida,
+    desc: "4 ampolas de 15mg — Controle glicêmico e redução de peso",
+    ingredients: "Tirzepatida 15mg/0,5mL • Via subcutânea • À vista R$ 1.520 no Pix • 6x de R$ 297,83",
+    qty: "4 frascos-ampola",
+  },
 ];
 
 const WHATSAPP = "5521972486650";
