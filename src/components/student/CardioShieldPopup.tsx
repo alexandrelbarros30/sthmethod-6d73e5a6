@@ -51,15 +51,15 @@ const CardioShieldPopup = ({ open, onClose }: Props) => {
         <div className="px-4 pb-1 space-y-1.5">
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
-            <p className="text-[11px] text-gray-300"><span className="text-red-400 font-semibold">Tadalafila 5mg</span> — 60 cáps • Circulação e vitalidade</p>
+            <p className="text-[11px] text-gray-300"><span className="text-red-400 font-semibold">Tadalafila 5mg</span> — Circulação e vitalidade</p>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-            <p className="text-[11px] text-gray-300"><span className="text-amber-400 font-semibold">Omega 3 1000mg</span> — 120 softgels • EPA e DHA Ultra Puro</p>
+            <p className="text-[11px] text-gray-300"><span className="text-amber-400 font-semibold">Omega 3 1000mg</span> — EPA e DHA Ultra Puro</p>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
-            <p className="text-[11px] text-gray-300"><span className="text-blue-400 font-semibold">N-Acetilcisteína 600mg</span> — 60 cáps • Proteção antioxidante</p>
+            <p className="text-[11px] text-gray-300"><span className="text-blue-400 font-semibold">N-Acetilcisteína 600mg</span> — Proteção antioxidante</p>
           </div>
         </div>
 
