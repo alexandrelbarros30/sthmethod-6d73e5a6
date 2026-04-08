@@ -251,8 +251,8 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
       </Dialog>
 
       {/* Diet Released Popup */}
-      <Dialog open={dietPopup} onOpenChange={() => {}}>
-        <DialogContent className="max-w-sm" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+      <Dialog open={dietPopup} onOpenChange={(open) => { if (!open) handleCloseDiet(); }}>
+        <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-primary">
               <UtensilsCrossed className="w-5 h-5" />
