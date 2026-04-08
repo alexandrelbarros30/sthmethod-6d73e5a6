@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Microscope, UtensilsCrossed, PartyPopper, Megaphone } from "lucide-react";
 import PerformethLabsPopup from "./student/PerformethLabsPopup";
 import TirzepatidaPopup from "./student/TirzepatidaPopup";
+import CardioShieldPopup from "./student/CardioShieldPopup";
 
 const BIRTHDAY_MESSAGES = [
   "🎉 Feliz Aniversário! Que este novo ciclo traga muita saúde, energia e conquistas. Você merece!",
@@ -59,6 +60,7 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
   // Performeth Labs popup state
   const [performethOpen, setPerformethOpen] = useState(false);
   const [tirzepatidaOpen, setTirzepatidaOpen] = useState(false);
+  const [cardioShieldOpen, setCardioShieldOpen] = useState(false);
 
   const birthdayMessage = useMemo(() => {
     const idx = Math.floor(Math.random() * BIRTHDAY_MESSAGES.length);
@@ -321,7 +323,8 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
 
       {/* Performeth Labs Promo → sequential to Tirzepatida */}
       <PerformethLabsPopup open={performethOpen} onClose={() => { setPerformethOpen(false); setTirzepatidaOpen(true); }} />
-      <TirzepatidaPopup open={tirzepatidaOpen} onClose={() => setTirzepatidaOpen(false)} />
+      <TirzepatidaPopup open={tirzepatidaOpen} onClose={() => { setTirzepatidaOpen(false); setCardioShieldOpen(true); }} />
+      <CardioShieldPopup open={cardioShieldOpen} onClose={() => setCardioShieldOpen(false)} />
     </div>
   );
 };
