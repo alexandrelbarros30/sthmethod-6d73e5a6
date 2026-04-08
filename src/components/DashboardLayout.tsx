@@ -184,6 +184,7 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
       setPendingDietId(null);
     }
   };
+  const handleCloseDiet = async () => { setDietPopup(false); await markDietSeen(); };
   const handleGoToDiet = async () => { setDietPopup(false); await markDietSeen(); navigate("/dashboard/diet"); };
 
   // ---- Birthday handlers ----
