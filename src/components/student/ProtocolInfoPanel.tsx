@@ -281,7 +281,7 @@ const ProtocolInfoPanel = ({ protocols = [], userId, editable = false }: Protoco
                       </Button>
                     </div>
                   </div>
-                ) : (
+                ) : editable ? (
                   <div className="space-y-2 ml-[52px]">
                     {hasContent ? (
                       <div className={`rounded-lg border ${cat.borderAccent} ${cat.bgAccent} p-2.5`}>
@@ -345,6 +345,12 @@ const ProtocolInfoPanel = ({ protocols = [], userId, editable = false }: Protoco
                       </button>
                     )}
                   </div>
+                ) : (
+                  hasViewable && (
+                    <p className="text-xs text-muted-foreground ml-[52px] mt-1 font-body">
+                      Toque no <Eye className="w-3 h-3 inline-block mx-0.5" /> para visualizar
+                    </p>
+                  )
                 )}
               </div>
             </motion.div>
