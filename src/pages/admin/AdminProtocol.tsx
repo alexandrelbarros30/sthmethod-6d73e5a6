@@ -424,10 +424,16 @@ const AdminProtocol = () => {
           created_at: newCreatedAt,
         })
         .eq("id", editingId!);
+
+      // Re-parse content into category cards on edit
+      if (editContent && selected?.user_id) {
+        await parseAndSaveCategoryContent(editContent, selected.user_id);
+      }
     },
     onSuccess: () => {
       toast.success("Protocolo atualizado!");
       qc.invalidateQueries({ queryKey: ["admin-students-protocols"] });
+      qc.invalidateQueries({ queryKey: ["protocol-category-content", selected?.user_id] });
       refetchProtocols();
       cancelEdit();
     },
