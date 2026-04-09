@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2, RotateCcw, AlertTriangle, UserX, UserCheck, Dumbbell, Pill, UtensilsCrossed, MessageCircle, MoreVertical, Activity, Microscope } from "lucide-react";
+import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2, RotateCcw, AlertTriangle, UserX, UserCheck, Dumbbell, Pill, UtensilsCrossed, MessageCircle, MoreVertical, Activity, Microscope, Copy } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
@@ -1335,6 +1335,30 @@ const AdminStudents = () => {
               <div className="space-y-6">
                 <section>
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Dados Pessoais</h3>
+                  {/* Quick copy buttons */}
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {[
+                      { label: "Nome", value: selected.full_name },
+                      { label: "Email", value: selected.email },
+                      { label: "Tel", value: selected.phone },
+                      { label: "Altura", value: selected.height ? `${selected.height} cm` : "" },
+                      { label: "Peso", value: selected.weight ? `${selected.weight} kg` : "" },
+                    ].filter(i => i.value).map(item => (
+                      <Button
+                        key={item.label}
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs gap-1 px-2"
+                        onClick={() => {
+                          navigator.clipboard.writeText(item.value!);
+                          toast.success(`${item.label} copiado!`);
+                        }}
+                      >
+                        <Copy className="w-3 h-3" />
+                        {item.label}
+                      </Button>
+                    ))}
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                     <div className="sm:col-span-2"><span className="text-muted-foreground">Nome:</span> <span className="font-medium">{selected.full_name}</span></div>
                     <div className="break-all"><span className="text-muted-foreground">Email:</span> <span className="font-medium">{selected.email}</span></div>
@@ -1350,6 +1374,14 @@ const AdminStudents = () => {
                     <div><span className="text-muted-foreground">Idade:</span> <span className="font-medium">{selected.birth_date ? `${calculateAge(selected.birth_date)} anos` : "—"}</span></div>
                     <div><span className="text-muted-foreground">Altura:</span> <span className="font-medium">{selected.height ? `${selected.height} cm` : "—"}</span></div>
                     <div><span className="text-muted-foreground">Peso:</span> <span className="font-medium">{selected.weight ? `${selected.weight} kg` : "—"}</span></div>
+                    {/* Plan expiry date */}
+                    <div><span className="text-muted-foreground">Plano:</span> <span className="font-medium">{selected.plan || "—"}</span></div>
+                    <div>
+                      <span className="text-muted-foreground">Vencimento:</span>{" "}
+                      <span className={cn("font-medium", selected.status === "expired" && "text-destructive", selected.status === "active" && "text-primary")}>
+                        {selected.endDate ? new Date(selected.endDate + "T12:00:00").toLocaleDateString("pt-BR") : "—"}
+                      </span>
+                    </div>
                   </div>
                 </section>
                 <section>
