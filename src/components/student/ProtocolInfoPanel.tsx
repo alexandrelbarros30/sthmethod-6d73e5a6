@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Heart, Activity, Zap, Shield, FlaskConical, Brain, Pill, Eye, Sparkles } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { Heart, Activity, Zap, Shield, FlaskConical, Brain, Pill, Eye, Sparkles, Pencil, Save, Check, X } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
+import RichTextEditor from "@/components/shared/RichTextEditor";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface ProtocolItem {
   id: string;
@@ -20,6 +23,7 @@ interface ProtocolItem {
 interface ProtocolInfoPanelProps {
   protocols?: ProtocolItem[];
   userId?: string;
+  editable?: boolean;
 }
 
 const categoryConfig = [
@@ -50,8 +54,8 @@ const categoryConfig = [
     iconSecondary: Shield,
     defaultItems: [
       "Proteção cardiovascular avançada",
-      "Suporte à função hepática e detox",
-      "Manutenção da saúde renal",
+      "Suporte hepático e detoxificação",
+      "Função renal e equilíbrio hídrico",
       "Controle lipídico e pressórico",
     ],
   },
@@ -59,16 +63,16 @@ const categoryConfig = [
     key: "metabolico",
     title: "Suporte Metabólico e Performance",
     icon: Zap,
-    color: "from-emerald-500 to-cyan-500",
+    color: "from-emerald-500 to-teal-500",
     glowColor: "shadow-emerald-500/20",
     bgAccent: "bg-emerald-500/10",
     borderAccent: "border-emerald-500/20",
     iconSecondary: Activity,
     defaultItems: [
-      "Maximização da performance esportiva",
-      "Otimização da composição corporal",
-      "Suporte energético e recuperação",
-      "Nutrição celular e micronutrientes",
+      "Otimização do metabolismo energético",
+      "Suplementação baseada em evidências",
+      "Micronutrientes essenciais",
+      "Performance e recuperação muscular",
     ],
   },
   {
@@ -89,11 +93,14 @@ const categoryConfig = [
   },
 ];
 
-const ProtocolInfoPanel = ({ protocols = [], userId }: ProtocolInfoPanelProps) => {
+const ProtocolInfoPanel = ({ protocols = [], userId, editable = false }: ProtocolInfoPanelProps) => {
   const { user } = useAuth();
+  const qc = useQueryClient();
   const effectiveUserId = userId || user?.id;
   const [viewingCategory, setViewingCategory] = useState<string | null>(null);
   const [viewingExtra, setViewingExtra] = useState<any>(null);
+  const [editingCategory, setEditingCategory] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState("");
 
   const { data: categoryContents = [] } = useQuery({
     queryKey: ["protocol-category-content", effectiveUserId],
@@ -120,6 +127,24 @@ const ProtocolInfoPanel = ({ protocols = [], userId }: ProtocolInfoPanelProps) =
     enabled: !!effectiveUserId,
   });
 
+  const saveCategoryMutation = useMutation({
+    mutationFn: async ({ category, content }: { category: string; content: string }) => {
+      const existing = categoryContents.find((c: any) => c.category === category);
+      if (existing) {
+        await supabase.from("protocol_category_content").update({ content, updated_at: new Date().toISOString() }).eq("id", existing.id);
+      } else {
+        await supabase.from("protocol_category_content").insert({ user_id: effectiveUserId!, category, content });
+      }
+    },
+    onSuccess: () => {
+      toast.success("Conteúdo da categoria salvo!");
+      qc.invalidateQueries({ queryKey: ["protocol-category-content", effectiveUserId] });
+      setEditingCategory(null);
+      setEditContent("");
+    },
+    onError: () => toast.error("Erro ao salvar conteúdo"),
+  });
+
   const groupedProtocols = categoryConfig.reduce((acc, cat) => {
     acc[cat.key] = protocols
       .filter((p) => p.category === cat.key)
@@ -132,6 +157,16 @@ const ProtocolInfoPanel = ({ protocols = [], userId }: ProtocolInfoPanelProps) =
   const getCategoryContent = (catKey: string) => {
     const found = categoryContents.find((c: any) => c.category === catKey);
     return found?.content || "";
+  };
+
+  const startEditing = (catKey: string) => {
+    setEditingCategory(catKey);
+    setEditContent(getCategoryContent(catKey));
+  };
+
+  const cancelEditing = () => {
+    setEditingCategory(null);
+    setEditContent("");
   };
 
   const viewingCatConfig = viewingCategory ? categoryConfig.find((c) => c.key === viewingCategory) : null;
@@ -156,7 +191,7 @@ const ProtocolInfoPanel = ({ protocols = [], userId }: ProtocolInfoPanelProps) =
         <p className="text-sm text-muted-foreground max-w-md mx-auto font-body">
           {hasAnyProtocols
             ? "Seus medicamentos e suplementos organizados por pilar de suporte."
-            : "Seu protocolo é construído sobre três pilares científicos para otimização completa da saúde e performance."}
+            : "Seu protocolo é construído sobre pilares científicos para otimização completa da saúde e performance."}
         </p>
       </motion.div>
 
@@ -170,6 +205,7 @@ const ProtocolInfoPanel = ({ protocols = [], userId }: ProtocolInfoPanelProps) =
           const catContent = getCategoryContent(cat.key);
           const hasContent = catContent.replace(/<[^>]*>/g, "").trim().length > 0;
           const hasViewable = items.length > 0 || hasContent;
+          const isEditing = editingCategory === cat.key;
 
           return (
             <motion.div
@@ -198,7 +234,17 @@ const ProtocolInfoPanel = ({ protocols = [], userId }: ProtocolInfoPanelProps) =
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    {hasViewable && (
+                    {editable && !isEditing && (
+                      <button
+                        type="button"
+                        onClick={() => startEditing(cat.key)}
+                        className={`inline-flex items-center justify-center w-8 h-8 rounded-lg border ${cat.borderAccent} ${cat.bgAccent} text-foreground/70 hover:text-foreground hover:scale-105 transition-all duration-300`}
+                        title={`Editar ${cat.title}`}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    )}
+                    {hasViewable && !isEditing && (
                       <button
                         type="button"
                         onClick={() => setViewingCategory(cat.key)}
@@ -208,69 +254,98 @@ const ProtocolInfoPanel = ({ protocols = [], userId }: ProtocolInfoPanelProps) =
                         <Eye className="w-4 h-4" />
                       </button>
                     )}
-                    <IconSec className="w-5 h-5 text-muted-foreground/30" />
+                    {!editable && <IconSec className="w-5 h-5 text-muted-foreground/30" />}
                   </div>
                 </div>
 
-                <div className="space-y-2 ml-[52px]">
-                  {showDefault ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                      {cat.defaultItems.map((item, j) => (
-                        <motion.div
-                          key={j}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.4 + i * 0.15 + j * 0.08 }}
-                          className="flex items-start gap-2"
-                        >
-                          <div className={`w-1.5 h-1.5 rounded-full bg-gradient-to-br ${cat.color} mt-1.5 shrink-0`} />
-                          <span className="text-xs sm:text-sm text-muted-foreground font-body leading-snug">
-                            {item}
-                          </span>
-                        </motion.div>
-                      ))}
-                    </div>
-                  ) : (
-                    items.slice(0, 3).map((item, j) => (
-                      <motion.div
-                        key={item.id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 + i * 0.1 + j * 0.06 }}
-                        className={`rounded-lg border ${cat.borderAccent} ${cat.bgAccent} p-2.5 sm:p-3`}
+                {/* Inline editor when editing */}
+                {isEditing ? (
+                  <div className="space-y-3 mt-2">
+                    <RichTextEditor
+                      value={editContent}
+                      onChange={setEditContent}
+                      placeholder={`Escreva orientações para ${cat.title}...`}
+                      className="min-h-0 [&_.ProseMirror]:!min-h-[120px]"
+                    />
+                    <div className="flex gap-2 justify-end">
+                      <Button variant="ghost" size="sm" onClick={cancelEditing} className="h-7 text-xs">
+                        <X className="w-3 h-3 mr-1" /> Cancelar
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="h-7 text-xs"
+                        onClick={() => saveCategoryMutation.mutate({ category: cat.key, content: editContent })}
+                        disabled={saveCategoryMutation.isPending}
                       >
-                        <div className="flex items-center gap-2 mb-1">
-                          <Pill className="w-3.5 h-3.5 text-foreground/70 shrink-0" />
-                          <span className="font-display font-semibold text-xs sm:text-sm text-foreground">
-                            {item.name}
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px] sm:text-xs text-muted-foreground font-body pl-5.5">
-                          {item.dosage && (
-                            <span><strong className="text-foreground/80">Dose:</strong> {item.dosage}</span>
+                        <Check className="w-3 h-3 mr-1" /> Salvar
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2 ml-[52px]">
+                    {hasContent ? (
+                      <div className={`rounded-lg border ${cat.borderAccent} ${cat.bgAccent} p-2.5`}>
+                        <RichContentRenderer content={catContent} />
+                      </div>
+                    ) : showDefault ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                        {cat.defaultItems.map((item, j) => (
+                          <motion.div
+                            key={j}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.4 + i * 0.15 + j * 0.08 }}
+                            className="flex items-start gap-2"
+                          >
+                            <div className={`w-1.5 h-1.5 rounded-full bg-gradient-to-br ${cat.color} mt-1.5 shrink-0`} />
+                            <span className="text-xs sm:text-sm text-muted-foreground font-body leading-snug">
+                              {item}
+                            </span>
+                          </motion.div>
+                        ))}
+                      </div>
+                    ) : (
+                      items.slice(0, 3).map((item, j) => (
+                        <motion.div
+                          key={item.id}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.3 + i * 0.1 + j * 0.06 }}
+                          className={`rounded-lg border ${cat.borderAccent} ${cat.bgAccent} p-2.5 sm:p-3`}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <Pill className="w-3.5 h-3.5 text-foreground/70 shrink-0" />
+                            <span className="font-display font-semibold text-xs sm:text-sm text-foreground">
+                              {item.name}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px] sm:text-xs text-muted-foreground font-body pl-5.5">
+                            {item.dosage && (
+                              <span><strong className="text-foreground/80">Dose:</strong> {item.dosage}</span>
+                            )}
+                            {item.frequency && (
+                              <span><strong className="text-foreground/80">Freq:</strong> {item.frequency}</span>
+                            )}
+                          </div>
+                          {item.notes && (
+                            <p className="text-[10px] sm:text-[11px] text-muted-foreground/80 mt-1 pl-5.5 italic font-body">
+                              {item.notes}
+                            </p>
                           )}
-                          {item.frequency && (
-                            <span><strong className="text-foreground/80">Freq:</strong> {item.frequency}</span>
-                          )}
-                        </div>
-                        {item.notes && (
-                          <p className="text-[10px] sm:text-[11px] text-muted-foreground/80 mt-1 pl-5.5 italic font-body">
-                            {item.notes}
-                          </p>
-                        )}
-                      </motion.div>
-                    ))
-                  )}
-                  {items.length > 3 && (
-                    <button
-                      type="button"
-                      onClick={() => setViewingCategory(cat.key)}
-                      className="text-xs text-primary hover:underline font-body"
-                    >
-                      +{items.length - 3} itens... ver todos
-                    </button>
-                  )}
-                </div>
+                        </motion.div>
+                      ))
+                    )}
+                    {items.length > 3 && (
+                      <button
+                        type="button"
+                        onClick={() => setViewingCategory(cat.key)}
+                        className="text-xs text-primary hover:underline font-body"
+                      >
+                        +{items.length - 3} itens... ver todos
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </motion.div>
           );

@@ -594,17 +594,12 @@ const AdminProtocol = () => {
                 </div>
               )}
 
-              {/* Protocol Items Manager (medications/supplements) */}
+              {/* Protocol Info Panel - editable cards */}
               {selected?.user_id && (
                 <>
-                  <ProtocolItemsManager userId={selected.user_id} studentName={selected.full_name} />
+                  <ProtocolInfoPanel protocols={protocolItems} userId={selected.user_id} editable />
                   <ProtocolExtraCategoriesManager userId={selected.user_id} />
                 </>
-              )}
-
-              {/* Protocol Info Panel - identical to student view */}
-              {selected?.user_id && (
-                <ProtocolInfoPanel protocols={protocolItems} userId={selected.user_id} />
               )}
 
               <hr className="border-border" />
