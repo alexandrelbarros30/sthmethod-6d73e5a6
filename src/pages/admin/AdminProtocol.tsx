@@ -303,27 +303,30 @@ const AdminProtocol = () => {
   };
 
   const parseAndSaveCategoryContent = async (htmlContent: string, userId: string) => {
-    const sectionMap: Record<string, string> = {
-      "suporte endócrino": "endocrino",
-      "endócrino": "endocrino",
-      "endocrino hormonal": "endocrino",
-      "suporte cardiovascular": "cardiovascular",
-      "cardiovascular": "cardiovascular",
-      "hepático": "cardiovascular",
-      "renal": "cardiovascular",
-      "suporte metabólico": "metabolico",
-      "metabólico": "metabolico",
-      "metabolico": "metabolico",
-      "performance": "metabolico",
-      "pré pós treino": "pre_pos_treino",
-      "pré/pós treino": "pre_pos_treino",
-      "pre pos treino": "pre_pos_treino",
-      "pré treino": "pre_pos_treino",
-      "pós treino": "pre_pos_treino",
-      "sistema pré": "pre_pos_treino",
+    // Keywords ordered by specificity (longer/more specific first)
+    const sectionKeywords: { keywords: string[]; catKey: string }[] = [
+      { keywords: ["suporte endocrino", "endocrino hormonal", "suporte endócrino", "endócrino hormonal"], catKey: "endocrino" },
+      { keywords: ["suporte cardiovascular", "cardiovascular", "hepatico", "hepático", "renal"], catKey: "cardiovascular" },
+      { keywords: ["suporte metabolico", "suporte metabólico", "metabolico e performance", "metabólico e performance"], catKey: "metabolico" },
+      { keywords: ["pre pos treino", "pré pós treino", "pré/pós treino", "pre treino", "pré treino", "pos treino", "pós treino", "sistema pre", "sistema pré"], catKey: "pre_pos_treino" },
+    ];
+
+    const normalize = (s: string) =>
+      s.toLowerCase().trim()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[-–—]+/g, " ").replace(/[\/\\]/g, " ").replace(/\s+/g, " ");
+
+    const matchCategory = (text: string): string | null => {
+      const norm = normalize(text);
+      for (const entry of sectionKeywords) {
+        for (const kw of entry.keywords) {
+          if (norm.includes(normalize(kw))) return entry.catKey;
+        }
+      }
+      return null;
     };
 
-    // Parse HTML to extract sections by headings
+    // Parse HTML to extract sections
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlContent, "text/html");
     const elements = Array.from(doc.body.children);
@@ -332,24 +335,19 @@ const AdminProtocol = () => {
     let currentKey: string | null = null;
 
     for (const el of elements) {
-      const tagName = el.tagName.toLowerCase();
-      const isHeading = ["h1", "h2", "h3", "h4", "strong"].includes(tagName) ||
-        (tagName === "p" && el.querySelector("strong"));
+      const text = (el.textContent || "").trim();
+      // Skip empty elements
+      if (!text) {
+        if (currentKey) sections[currentKey].push(el.outerHTML);
+        continue;
+      }
 
-      if (isHeading) {
-        const text = (el.textContent || "").toLowerCase().trim()
-          .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-        let matched: string | null = null;
-        for (const [keyword, catKey] of Object.entries(sectionMap)) {
-          const normalizedKeyword = keyword.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-          if (text.includes(normalizedKeyword)) {
-            matched = catKey;
-            break;
-          }
-        }
-
-        if (matched) {
+      // Check ALL elements for section markers (headings, strong, or plain text with keywords)
+      const matched = matchCategory(text);
+      if (matched) {
+        // Only treat as section header if text is short enough (likely a title, not content)
+        const cleanText = text.replace(/[-–—*•·.,:;]/g, "").trim();
+        if (cleanText.length < 80) {
           currentKey = matched;
           if (!sections[currentKey]) sections[currentKey] = [];
           continue;
