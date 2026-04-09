@@ -1072,6 +1072,48 @@ export type Database = {
           },
         ]
       }
+      payment_notifications: {
+        Row: {
+          action_type: string
+          amount: number
+          created_at: string
+          id: string
+          method: string
+          payment_id: string
+          payment_status: string
+          plan_name: string
+          seen: boolean
+          student_name: string
+          student_user_id: string
+        }
+        Insert: {
+          action_type?: string
+          amount?: number
+          created_at?: string
+          id?: string
+          method?: string
+          payment_id: string
+          payment_status?: string
+          plan_name?: string
+          seen?: boolean
+          student_name?: string
+          student_user_id: string
+        }
+        Update: {
+          action_type?: string
+          amount?: number
+          created_at?: string
+          id?: string
+          method?: string
+          payment_id?: string
+          payment_status?: string
+          plan_name?: string
+          seen?: boolean
+          student_name?: string
+          student_user_id?: string
+        }
+        Relationships: []
+      }
       payment_settings: {
         Row: {
           id: string
