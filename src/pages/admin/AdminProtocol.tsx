@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import ProtocolItemsManager from "@/components/admin/ProtocolItemsManager";
+// ProtocolItemsManager removed - editing is now inline in ProtocolInfoPanel
 import ProtocolExtraCategoriesManager from "@/components/admin/ProtocolExtraCategoriesManager";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
