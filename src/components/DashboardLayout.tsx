@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState, useMemo } from "react";
+import { ReactNode, useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardSidebar from "./DashboardSidebar";
 import FloatingDock from "./student/FloatingDock";
@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Microscope, UtensilsCrossed, PartyPopper, Megaphone } from "lucide-react";
+import { Microscope, UtensilsCrossed, PartyPopper, Megaphone, Dumbbell, FileText } from "lucide-react";
 import PerformethLabsPopup from "./student/PerformethLabsPopup";
 import TirzepatidaPopup from "./student/TirzepatidaPopup";
 import CardioShieldPopup from "./student/CardioShieldPopup";
@@ -50,6 +50,16 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
   const [pendingDietId, setPendingDietId] = useState<string | null>(null);
   const [pendingDietTitle, setPendingDietTitle] = useState("");
 
+  // Training popup state
+  const [trainingPopup, setTrainingPopup] = useState(false);
+  const [pendingTrainingId, setPendingTrainingId] = useState<string | null>(null);
+  const [pendingTrainingTitle, setPendingTrainingTitle] = useState("");
+
+  // Protocol popup state
+  const [protocolPopup, setProtocolPopup] = useState(false);
+  const [pendingProtocolId, setPendingProtocolId] = useState<string | null>(null);
+  const [pendingProtocolTitle, setPendingProtocolTitle] = useState("");
+
   // Birthday popup state
   const [birthdayPopup, setBirthdayPopup] = useState(false);
 
@@ -62,6 +72,9 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
   const [tirzepatidaOpen, setTirzepatidaOpen] = useState(false);
   const [cardioShieldOpen, setCardioShieldOpen] = useState(false);
 
+  // Track whether notification popups were shown — suppresses ads this session
+  const hadNotificationPopup = useRef(false);
+
   const birthdayMessage = useMemo(() => {
     const idx = Math.floor(Math.random() * BIRTHDAY_MESSAGES.length);
     return BIRTHDAY_MESSAGES[idx];
@@ -71,6 +84,9 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
     if (!isStudent || !user?.id) return;
 
     const checkAll = async () => {
+      const today = new Date().toISOString().split("T")[0];
+      let hasNotification = false;
+
       // 1) Check metabolic panels
       const { data: metaData } = await supabase
         .from("metabolic_panels")
@@ -83,10 +99,10 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
       if (metaData && metaData.length > 0) {
         setPendingPanelId(metaData[0].id);
         setMetabolicPopup(true);
+        hasNotification = true;
       }
 
       // 2) Check new diets released
-      const today = new Date().toISOString().split("T")[0];
       const { data: dietData } = await supabase
         .from("student_diets")
         .select("id, title, release_date")
@@ -100,9 +116,41 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
         setPendingDietId(dietData[0].id);
         setPendingDietTitle(dietData[0].title || "Nova Dieta");
         setDietPopup(true);
+        hasNotification = true;
       }
 
-      // 3) Check birthday
+      // 3) Check new training (workout assignments)
+      const { data: trainingData } = await supabase
+        .from("student_workout_assignments")
+        .select("id, workout_templates(title)")
+        .eq("user_id", user.id)
+        .eq("seen_by_student", false)
+        .order("assigned_at", { ascending: false })
+        .limit(1);
+      if (trainingData && trainingData.length > 0) {
+        setPendingTrainingId(trainingData[0].id);
+        setPendingTrainingTitle((trainingData[0] as any).workout_templates?.title || "Novo Treino");
+        setTrainingPopup(true);
+        hasNotification = true;
+      }
+
+      // 4) Check new protocols
+      const { data: protocolData } = await supabase
+        .from("student_protocols")
+        .select("id, title")
+        .eq("user_id", user.id)
+        .eq("visible", true)
+        .eq("seen_by_student", false)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (protocolData && protocolData.length > 0) {
+        setPendingProtocolId(protocolData[0].id);
+        setPendingProtocolTitle(protocolData[0].title || "Novo Protocolo");
+        setProtocolPopup(true);
+        hasNotification = true;
+      }
+
+      // 5) Check birthday
       const { data: profile } = await supabase
         .from("profiles")
         .select("birth_date")
@@ -119,7 +167,7 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
         }
       }
 
-      // 4) Check custom popups
+      // 6) Check custom popups
       const { data: dismissed } = await supabase
         .from("popup_dismissals")
         .select("popup_id")
@@ -134,7 +182,6 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
         .order("created_at", { ascending: false });
 
       if (allPopups) {
-        // Check subscription status for targeting
         const { data: subs } = await supabase
           .from("subscriptions")
           .select("status, end_date")
@@ -146,25 +193,27 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
         for (const popup of allPopups) {
           if (dismissedIds.has(popup.id)) continue;
           if (popup.end_date && popup.end_date < today) continue;
-
           const tt = popup.target_type;
           if (tt === "specific" && popup.target_user_id !== user.id) continue;
           if (tt === "all_active" && !hasActiveSub) continue;
           if (tt === "all_inactive" && hasActiveSub) continue;
-          // "all" matches everyone
-
           setCustomPopup(popup);
           setCustomPopupOpen(true);
-          break; // show first matching
+          break;
         }
       }
-      // 5) Performeth Labs promo — show once per session (sequential: Performeth → Tirzepatida)
-      const performethKey = `performeth_seen_${user.id}_session`;
-      if (!sessionStorage.getItem(performethKey)) {
-        setTimeout(() => {
-          setPerformethOpen(true);
-          sessionStorage.setItem(performethKey, "1");
-        }, 1500);
+
+      // 7) Performeth Labs promo — only if NO notification popups were shown
+      if (hasNotification) {
+        hadNotificationPopup.current = true;
+      } else {
+        const performethKey = `performeth_seen_${user.id}_session`;
+        if (!sessionStorage.getItem(performethKey)) {
+          setTimeout(() => {
+            setPerformethOpen(true);
+            sessionStorage.setItem(performethKey, "1");
+          }, 1500);
+        }
       }
     };
 
@@ -190,6 +239,26 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
   };
   const handleCloseDiet = async () => { setDietPopup(false); await markDietSeen(); };
   const handleGoToDiet = async () => { setDietPopup(false); await markDietSeen(); navigate("/dashboard/diet"); };
+
+  // ---- Training handlers ----
+  const markTrainingSeen = async () => {
+    if (pendingTrainingId) {
+      await supabase.from("student_workout_assignments").update({ seen_by_student: true } as any).eq("id", pendingTrainingId);
+      setPendingTrainingId(null);
+    }
+  };
+  const handleCloseTraining = async () => { setTrainingPopup(false); await markTrainingSeen(); };
+  const handleGoToTraining = async () => { setTrainingPopup(false); await markTrainingSeen(); navigate("/dashboard/training"); };
+
+  // ---- Protocol handlers ----
+  const markProtocolSeen = async () => {
+    if (pendingProtocolId) {
+      await supabase.from("student_protocols").update({ seen_by_student: true } as any).eq("id", pendingProtocolId);
+      setPendingProtocolId(null);
+    }
+  };
+  const handleCloseProtocol = async () => { setProtocolPopup(false); await markProtocolSeen(); };
+  const handleGoToProtocol = async () => { setProtocolPopup(false); await markProtocolSeen(); navigate("/dashboard/protocol"); };
 
   // ---- Birthday handlers ----
   const handleCloseBirthday = () => {
@@ -272,6 +341,42 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
         </DialogContent>
       </Dialog>
 
+      {/* Training Popup */}
+      <Dialog open={trainingPopup} onOpenChange={(open) => { if (!open) handleCloseTraining(); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-primary">
+              <Dumbbell className="w-5 h-5" />
+              Novo Treino Liberado! 💪
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Seu novo treino <span className="font-semibold text-foreground">"{pendingTrainingTitle}"</span> foi atribuído e está pronto para você começar. Bora treinar!
+          </p>
+          <Button onClick={handleGoToTraining} className="w-full mt-2">
+            Ver Meu Treino
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Protocol Popup */}
+      <Dialog open={protocolPopup} onOpenChange={(open) => { if (!open) handleCloseProtocol(); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-primary">
+              <FileText className="w-5 h-5" />
+              Novo Protocolo Liberado! 📋
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Seu novo protocolo <span className="font-semibold text-foreground">"{pendingProtocolTitle}"</span> foi liberado. Confira todas as orientações agora!
+          </p>
+          <Button onClick={handleGoToProtocol} className="w-full mt-2">
+            Ver Meu Protocolo
+          </Button>
+        </DialogContent>
+      </Dialog>
+
       {/* Birthday Popup */}
       <Dialog open={birthdayPopup} onOpenChange={(open) => { if (!open) handleCloseBirthday(); }}>
         <DialogContent className="max-w-sm">
@@ -321,7 +426,7 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
         </DialogContent>
       </Dialog>
 
-      {/* Performeth Labs Promo → sequential to Tirzepatida */}
+      {/* Performeth Labs Promo → sequential to Tirzepatida → CardioShield */}
       <PerformethLabsPopup open={performethOpen} onClose={() => { setPerformethOpen(false); setTirzepatidaOpen(true); }} />
       <TirzepatidaPopup open={tirzepatidaOpen} onClose={() => { setTirzepatidaOpen(false); setCardioShieldOpen(true); }} />
       <CardioShieldPopup open={cardioShieldOpen} onClose={() => setCardioShieldOpen(false)} />
