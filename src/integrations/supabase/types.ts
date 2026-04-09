@@ -1739,6 +1739,7 @@ export type Database = {
           assigned_at: string
           assigned_by: string
           id: string
+          seen_by_student: boolean
           template_id: string
           user_id: string
         }
@@ -1747,6 +1748,7 @@ export type Database = {
           assigned_at?: string
           assigned_by: string
           id?: string
+          seen_by_student?: boolean
           template_id: string
           user_id: string
         }
@@ -1755,6 +1757,7 @@ export type Database = {
           assigned_at?: string
           assigned_by?: string
           id?: string
+          seen_by_student?: boolean
           template_id?: string
           user_id?: string
         }
