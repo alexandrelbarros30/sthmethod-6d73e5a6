@@ -88,6 +88,7 @@ const AdminDiet = () => {
         protein_g: diet.protein_g || 0,
         carbs_g: diet.carbs_g || 0,
         fat_g: diet.fat_g || 0,
+        hydration_l: diet.hydration_l || 0,
       });
     },
     onSuccess: () => {
@@ -106,7 +107,8 @@ const AdminDiet = () => {
       setNewProteinG(item.protein_g != null ? String(item.protein_g) : "");
       setNewCarbsG(item.carbs_g != null ? String(item.carbs_g) : "");
       setNewFatG(item.fat_g != null ? String(item.fat_g) : "");
-      toast.success("Dieta carregada da biblioteca com macros!");
+      setNewHydrationL(item.hydration_l != null && item.hydration_l > 0 ? String(item.hydration_l) : "");
+      toast.success("Dieta carregada da biblioteca com macros e hidratação!");
     }
   };
 

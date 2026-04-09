@@ -42,6 +42,8 @@ const AdminDietLibrary = () => {
     },
   });
 
+  const [hydration, setHydration] = useState("");
+
   const resetForm = () => {
     setTitle("");
     setContent("");
@@ -49,6 +51,7 @@ const AdminDietLibrary = () => {
     setProtein("");
     setCarbs("");
     setFat("");
+    setHydration("");
     setEditingId(null);
   };
 
@@ -65,6 +68,7 @@ const AdminDietLibrary = () => {
     setProtein(String(item.protein_g || 0));
     setCarbs(String(item.carbs_g || 0));
     setFat(String(item.fat_g || 0));
+    setHydration(item.hydration_l ? String(item.hydration_l) : "");
     setFormOpen(true);
   };
 
@@ -77,6 +81,7 @@ const AdminDietLibrary = () => {
         protein_g: parseFloat(protein) || 0,
         carbs_g: parseFloat(carbs) || 0,
         fat_g: parseFloat(fat) || 0,
+        hydration_l: parseFloat(hydration) || 0,
         created_by: user!.id,
       };
       if (editingId) {
@@ -151,6 +156,11 @@ const AdminDietLibrary = () => {
                           <Badge variant="outline" className="text-[10px] gap-1">
                             <Droplets className="w-2.5 h-2.5" /> {item.fat_g}g G
                           </Badge>
+                          {item.hydration_l > 0 && (
+                            <Badge variant="outline" className="text-[10px] gap-1">
+                              💧 {item.hydration_l}L H₂O
+                            </Badge>
+                          )}
                         </div>
                         {previewId === item.id && item.content && (
                           <div className="mt-2 p-3 rounded-md bg-muted/50 border border-border whitespace-pre-wrap text-xs font-body leading-relaxed">
@@ -211,10 +221,14 @@ const AdminDietLibrary = () => {
                   <Input type="number" value={carbs} onChange={(e) => setCarbs(e.target.value)} placeholder="0" />
                 </div>
                 <div>
-                  <Label className="font-body text-xs flex items-center gap-1"><Droplets className="w-3 h-3" /> Gorduras (g)</Label>
-                  <Input type="number" value={fat} onChange={(e) => setFat(e.target.value)} placeholder="0" />
-                </div>
-              </div>
+                   <Label className="font-body text-xs flex items-center gap-1"><Droplets className="w-3 h-3" /> Gorduras (g)</Label>
+                   <Input type="number" value={fat} onChange={(e) => setFat(e.target.value)} placeholder="0" />
+                 </div>
+               </div>
+               <div>
+                 <Label className="font-body text-xs flex items-center gap-1"><Droplets className="w-3 h-3" /> Hidratação (L)</Label>
+                 <Input type="number" step="0.1" value={hydration} onChange={(e) => setHydration(e.target.value)} placeholder="0" />
+               </div>
               <div>
                 <Label className="font-body">Conteúdo da Dieta</Label>
                 <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={10} placeholder="Escreva o plano alimentar completo aqui..." />
