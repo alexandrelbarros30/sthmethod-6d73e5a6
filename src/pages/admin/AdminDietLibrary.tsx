@@ -156,6 +156,11 @@ const AdminDietLibrary = () => {
                           <Badge variant="outline" className="text-[10px] gap-1">
                             <Droplets className="w-2.5 h-2.5" /> {item.fat_g}g G
                           </Badge>
+                          {item.hydration_l > 0 && (
+                            <Badge variant="outline" className="text-[10px] gap-1">
+                              💧 {item.hydration_l}L H₂O
+                            </Badge>
+                          )}
                         </div>
                         {previewId === item.id && item.content && (
                           <div className="mt-2 p-3 rounded-md bg-muted/50 border border-border whitespace-pre-wrap text-xs font-body leading-relaxed">
