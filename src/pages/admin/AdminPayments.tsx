@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Input } from "@/components/ui/input";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -266,6 +267,32 @@ const AdminPayments = () => {
                   />
                 </div>
               ))}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card border-border">
+            <CardHeader><CardTitle className="text-sm">Notificações de Pagamento</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs text-muted-foreground">WhatsApp do Admin (para receber alertas de pagamento)</label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="5521999999999"
+                    defaultValue={getSetting("admin_notification_phone", "")}
+                    className="bg-background"
+                    onBlur={(e) => {
+                      const val = e.target.value.replace(/\D/g, "");
+                      if (val) {
+                        updateSetting.mutate({ key: "admin_notification_phone", value: val });
+                        toast.success("Número de notificação salvo!");
+                      }
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Ao aprovar um pagamento, o WhatsApp será aberto automaticamente com os detalhes para este número.
+                </p>
+              </div>
             </CardContent>
           </Card>
 

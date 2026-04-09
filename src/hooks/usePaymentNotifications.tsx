@@ -7,7 +7,6 @@ const WELCOME_TEMPLATE_ID = "c6aefbd6-049c-4d8e-aa55-ebece3b638ca";
 
 const openWhatsAppWelcome = async (userId: string) => {
   try {
-    // Fetch profile and template in parallel
     const [profileRes, templateRes] = await Promise.all([
       supabase.from("profiles").select("full_name, phone").eq("user_id", userId).single(),
       supabase.from("message_templates").select("content").eq("id", WELCOME_TEMPLATE_ID).single(),
@@ -17,7 +16,6 @@ const openWhatsAppWelcome = async (userId: string) => {
     const template = templateRes.data;
     if (!profile?.phone || !template?.content) return;
 
-    // Replace variables
     const firstName = profile.full_name?.split(" ")[0] || "Aluno";
     let message = template.content
       .replace(/\{nome\}/g, firstName)
@@ -25,7 +23,6 @@ const openWhatsAppWelcome = async (userId: string) => {
       .replace(/\{email\}/g, "")
       .replace(/\{telefone\}/g, profile.phone || "");
 
-    // Clean phone number
     const phone = profile.phone.replace(/\D/g, "");
     if (!phone) return;
 
@@ -34,7 +31,6 @@ const openWhatsAppWelcome = async (userId: string) => {
 
     window.open(waUrl, "_blank");
 
-    // Log in message_history
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       await supabase.from("message_history").insert({
@@ -49,6 +45,38 @@ const openWhatsAppWelcome = async (userId: string) => {
     }
   } catch (err) {
     console.error("Error opening WhatsApp welcome:", err);
+  }
+};
+
+const openWhatsAppAdminNotification = async (payment: any, studentName: string, planName: string) => {
+  try {
+    const { data: settings } = await supabase
+      .from("payment_settings")
+      .select("value")
+      .eq("key", "admin_notification_phone")
+      .single();
+
+    const adminPhone = settings?.value?.replace(/\D/g, "");
+    if (!adminPhone) return;
+
+    const fullPhone = adminPhone.startsWith("55") ? adminPhone : `55${adminPhone}`;
+    const amount = Number(payment.amount).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    const methodLabels: Record<string, string> = { pix: "PIX", credit: "Crédito", debit: "Débito" };
+    const actionLabels: Record<string, string> = { new: "Novo plano", upgrade: "Atualização", renewal: "Renovação" };
+
+    const message =
+      `✅ *Pagamento Aprovado - ST&H*\n\n` +
+      `👤 Aluno: ${studentName}\n` +
+      `📋 Ação: ${actionLabels[payment.action_type] || payment.action_type}\n` +
+      `📦 Plano: ${planName}\n` +
+      `💰 Valor: ${amount}\n` +
+      `💳 Método: ${methodLabels[payment.method] || payment.method}\n` +
+      `📅 Data: ${new Date().toLocaleDateString("pt-BR")}`;
+
+    const waUrl = `https://wa.me/${fullPhone}?text=${encodeURIComponent(message)}`;
+    window.open(waUrl, "_blank");
+  } catch (err) {
+    console.error("Error opening WhatsApp admin notification:", err);
   }
 };
 
@@ -72,7 +100,6 @@ export const usePaymentNotifications = () => {
           const prevPayment = payload.old as any;
           if (payment.status !== "approved" && payment.status !== "pending") return;
 
-          // For consultors, check if the student is linked
           if (role === "consultor") {
             const { data: link } = await supabase
               .from("consultant_students")
@@ -83,7 +110,6 @@ export const usePaymentNotifications = () => {
             if (!link) return;
           }
 
-          // Fetch student name and plan
           const [profileRes, planRes] = await Promise.all([
             supabase.from("profiles").select("full_name").eq("user_id", payment.user_id).single(),
             supabase.from("plans").select("name").eq("id", payment.plan_id).single(),
@@ -115,6 +141,8 @@ export const usePaymentNotifications = () => {
           // Auto-open WhatsApp welcome when payment transitions to approved
           if (payment.status === "approved" && prevPayment?.status !== "approved") {
             openWhatsAppWelcome(payment.user_id);
+            // Also notify admin via WhatsApp
+            openWhatsAppAdminNotification(payment, studentName, planName);
           }
         }
       )
