@@ -474,6 +474,7 @@ export type Database = {
           created_by: string
           energy_kcal: number
           fat_g: number
+          hydration_l: number
           id: string
           protein_g: number
           title: string
@@ -486,6 +487,7 @@ export type Database = {
           created_by: string
           energy_kcal?: number
           fat_g?: number
+          hydration_l?: number
           id?: string
           protein_g?: number
           title: string
@@ -498,6 +500,7 @@ export type Database = {
           created_by?: string
           energy_kcal?: number
           fat_g?: number
+          hydration_l?: number
           id?: string
           protein_g?: number
           title?: string

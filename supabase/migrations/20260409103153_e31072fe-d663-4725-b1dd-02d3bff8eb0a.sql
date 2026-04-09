@@ -1,0 +1,1 @@
+ALTER TABLE public.diet_library ADD COLUMN hydration_l numeric NOT NULL DEFAULT 0;
