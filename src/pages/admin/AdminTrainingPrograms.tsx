@@ -187,8 +187,8 @@ const AdminTrainingPrograms = () => {
       if (!templateIds.length) throw new Error("Programa sem treinos para atribuir");
       for (const templateId of templateIds) {
         const { error } = await supabase.from("student_workout_assignments").upsert({
-          user_id: userId, template_id: templateId, assigned_by: user!.id, active: true,
-        }, { onConflict: "user_id,template_id" });
+          user_id: userId, template_id: templateId, assigned_by: user!.id, active: true, seen_by_student: false,
+        } as any, { onConflict: "user_id,template_id" });
         if (error) throw error;
       }
     },

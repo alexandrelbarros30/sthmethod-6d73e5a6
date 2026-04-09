@@ -1663,6 +1663,7 @@ export type Database = {
           id: string
           pdf_url: string | null
           release_date: string | null
+          seen_by_student: boolean
           title: string
           updated_at: string
           user_id: string
@@ -1675,6 +1676,7 @@ export type Database = {
           id?: string
           pdf_url?: string | null
           release_date?: string | null
+          seen_by_student?: boolean
           title?: string
           updated_at?: string
           user_id: string
@@ -1687,6 +1689,7 @@ export type Database = {
           id?: string
           pdf_url?: string | null
           release_date?: string | null
+          seen_by_student?: boolean
           title?: string
           updated_at?: string
           user_id?: string
@@ -1700,6 +1703,7 @@ export type Database = {
           created_at: string
           id: string
           pdf_url: string | null
+          seen_by_student: boolean
           title: string
           updated_at: string
           user_id: string
@@ -1710,6 +1714,7 @@ export type Database = {
           created_at?: string
           id?: string
           pdf_url?: string | null
+          seen_by_student?: boolean
           title?: string
           updated_at?: string
           user_id: string
@@ -1720,6 +1725,7 @@ export type Database = {
           created_at?: string
           id?: string
           pdf_url?: string | null
+          seen_by_student?: boolean
           title?: string
           updated_at?: string
           user_id?: string
@@ -1733,6 +1739,7 @@ export type Database = {
           assigned_at: string
           assigned_by: string
           id: string
+          seen_by_student: boolean
           template_id: string
           user_id: string
         }
@@ -1741,6 +1748,7 @@ export type Database = {
           assigned_at?: string
           assigned_by: string
           id?: string
+          seen_by_student?: boolean
           template_id: string
           user_id: string
         }
@@ -1749,6 +1757,7 @@ export type Database = {
           assigned_at?: string
           assigned_by?: string
           id?: string
+          seen_by_student?: boolean
           template_id?: string
           user_id?: string
         }
