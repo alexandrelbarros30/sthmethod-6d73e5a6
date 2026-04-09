@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RefreshCw, X } from "lucide-react";
 
-const APP_VERSION = "1.2.0";
+const APP_VERSION = "1.3.0";
 const VERSION_KEY = "sth-app-version";
 
 const UpdateBanner = () => {
