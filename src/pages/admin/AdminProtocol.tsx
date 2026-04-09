@@ -219,7 +219,8 @@ const AdminProtocol = () => {
           title: libItem.title || "Protocolo",
           content: libContent,
           pdf_url: libPdf,
-        });
+          seen_by_student: false,
+        } as any);
       }
 
       return libItem;

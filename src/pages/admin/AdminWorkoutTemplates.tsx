@@ -143,8 +143,8 @@ const AdminWorkoutTemplates = () => {
   const assignMutation = useMutation({
     mutationFn: async ({ templateId, userId }: { templateId: string; userId: string }) => {
       const { error } = await supabase.from("student_workout_assignments").upsert({
-        user_id: userId, template_id: templateId, assigned_by: user!.id, active: true,
-      }, { onConflict: "user_id,template_id" });
+        user_id: userId, template_id: templateId, assigned_by: user!.id, active: true, seen_by_student: false,
+      } as any, { onConflict: "user_id,template_id" });
       if (error) throw error;
     },
     onSuccess: () => {
