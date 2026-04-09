@@ -5,6 +5,54 @@ import { toast } from "@/hooks/use-toast";
 
 const WELCOME_TEMPLATE_ID = "c6aefbd6-049c-4d8e-aa55-ebece3b638ca";
 
+const notifyAdminWhatsApp = async (
+  studentName: string,
+  planName: string,
+  amount: string,
+  actionLabel: string,
+  method: string
+) => {
+  try {
+    const { data: setting } = await supabase
+      .from("payment_settings")
+      .select("value")
+      .eq("key", "admin_whatsapp")
+      .single();
+
+    let adminPhone = setting?.value;
+
+    if (!adminPhone) {
+      const { data: adminRoles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "admin")
+        .limit(1);
+
+      if (adminRoles?.[0]) {
+        const { data: adminProfile } = await supabase
+          .from("profiles")
+          .select("phone")
+          .eq("user_id", adminRoles[0].user_id)
+          .single();
+        adminPhone = adminProfile?.phone;
+      }
+    }
+
+    if (!adminPhone) return;
+
+    const phone = adminPhone.replace(/\D/g, "");
+    if (!phone) return;
+    const fullPhone = phone.startsWith("55") ? phone : `55${phone}`;
+
+    const message = `💰 *Pagamento Aprovado!*\n\n👤 Aluno: ${studentName}\n📋 ${actionLabel}\n📦 Plano: ${planName}\n💵 Valor: ${amount}\n💳 Método: ${method?.toUpperCase() || "N/A"}\n⏰ ${new Date().toLocaleString("pt-BR")}`;
+
+    const waUrl = `https://wa.me/${fullPhone}?text=${encodeURIComponent(message)}`;
+    window.open(waUrl, "_blank");
+  } catch (err) {
+    console.error("Error notifying admin via WhatsApp:", err);
+  }
+};
+
 const openWhatsAppWelcome = async (userId: string) => {
   try {
     // Fetch profile and template in parallel
