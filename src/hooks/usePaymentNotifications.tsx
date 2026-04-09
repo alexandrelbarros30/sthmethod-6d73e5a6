@@ -115,6 +115,8 @@ export const usePaymentNotifications = () => {
           // Auto-open WhatsApp welcome when payment transitions to approved
           if (payment.status === "approved" && prevPayment?.status !== "approved") {
             openWhatsAppWelcome(payment.user_id);
+            // Notify admin via WhatsApp
+            notifyAdminWhatsApp(studentName, planName, amount, actionLabel, payment.method);
           }
         }
       )
