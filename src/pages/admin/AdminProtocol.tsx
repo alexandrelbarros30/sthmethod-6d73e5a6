@@ -605,8 +605,8 @@ const AdminProtocol = () => {
               )}
 
               {/* Protocol Info Panel - identical to student view */}
-              {protocolItems.length > 0 && (
-                <ProtocolInfoPanel protocols={protocolItems} userId={selected?.user_id} />
+              {selected?.user_id && (
+                <ProtocolInfoPanel protocols={protocolItems} userId={selected.user_id} />
               )}
 
               <hr className="border-border" />
