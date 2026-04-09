@@ -316,7 +316,8 @@ const AdminProtocol = () => {
         title: newTitle,
         content: newContent,
         pdf_url: pdfUrl,
-        visible: !newReleaseDate, // if has release_date, start hidden until that date
+        visible: !newReleaseDate,
+        seen_by_student: false,
       };
       if (newReleaseDate) payload.release_date = newReleaseDate;
       if (newEndDate) payload.end_date = newEndDate;
