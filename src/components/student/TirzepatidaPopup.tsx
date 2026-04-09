@@ -39,11 +39,11 @@ const TirzepatidaPopup = ({ open, onClose }: Props) => {
         </div>
 
         <div className="px-4">
-          <div className="relative aspect-[3/4] max-h-[260px] mx-auto flex items-center justify-center overflow-hidden rounded-lg">
+          <div className="mx-auto flex items-center justify-center overflow-hidden rounded-lg">
             <img
               src={tirzepatida}
               alt="Tirzepatida TG 60mg"
-              className="h-full w-full object-cover rounded-lg"
+              className="w-full h-auto object-contain rounded-lg"
             />
           </div>
         </div>

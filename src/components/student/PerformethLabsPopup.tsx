@@ -126,11 +126,11 @@ const PerformethLabsPopup = ({ open, onClose }: Props) => {
 
         {/* Product Image */}
         <div className="relative px-4">
-          <div className="relative aspect-[3/4] max-h-[280px] mx-auto flex items-center justify-center overflow-hidden rounded-lg">
+          <div className="mx-auto flex items-center justify-center overflow-hidden rounded-lg">
             <img
               src={product.image}
               alt={product.name}
-              className="h-full w-full object-cover rounded-lg transition-all duration-500"
+              className="w-full h-auto max-h-[300px] object-contain rounded-lg transition-all duration-500"
             />
           </div>
 
