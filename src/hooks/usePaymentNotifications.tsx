@@ -212,6 +212,11 @@ export const usePaymentNotifications = () => {
               duration: 15000,
             });
           }, 1500);
+
+          // Notify admin via WhatsApp for new payments
+          if (payment.status === "approved") {
+            notifyAdminWhatsApp(studentName, planName, amount, actionLabel, payment.method);
+          }
         }
       )
       .subscribe();
