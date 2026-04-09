@@ -71,6 +71,22 @@ const categoryConfig = [
       "Nutrição celular e micronutrientes",
     ],
   },
+  {
+    key: "pre_pos_treino",
+    title: "Pré / Pós Treino",
+    icon: Activity,
+    color: "from-sky-500 to-indigo-500",
+    glowColor: "shadow-sky-500/20",
+    bgAccent: "bg-sky-500/10",
+    borderAccent: "border-sky-500/20",
+    iconSecondary: Zap,
+    defaultItems: [
+      "Estratégia pré-treino personalizada",
+      "Nutrição intra-treino otimizada",
+      "Recuperação pós-treino acelerada",
+      "Suplementação periódica estratégica",
+    ],
+  },
 ];
 
 const ProtocolInfoPanel = ({ protocols = [], userId }: ProtocolInfoPanelProps) => {
