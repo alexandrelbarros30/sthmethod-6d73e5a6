@@ -302,6 +302,80 @@ const AdminProtocol = () => {
     setEditTime("");
   };
 
+  const parseAndSaveCategoryContent = async (htmlContent: string, userId: string) => {
+    const sectionMap: Record<string, string> = {
+      "suporte endócrino": "endocrino",
+      "endócrino": "endocrino",
+      "endocrino hormonal": "endocrino",
+      "suporte cardiovascular": "cardiovascular",
+      "cardiovascular": "cardiovascular",
+      "hepático": "cardiovascular",
+      "renal": "cardiovascular",
+      "suporte metabólico": "metabolico",
+      "metabólico": "metabolico",
+      "metabolico": "metabolico",
+      "performance": "metabolico",
+      "pré pós treino": "pre_pos_treino",
+      "pré/pós treino": "pre_pos_treino",
+      "pre pos treino": "pre_pos_treino",
+      "pré treino": "pre_pos_treino",
+      "pós treino": "pre_pos_treino",
+      "sistema pré": "pre_pos_treino",
+    };
+
+    // Parse HTML to extract sections by headings
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContent, "text/html");
+    const elements = Array.from(doc.body.children);
+
+    const sections: Record<string, string[]> = {};
+    let currentKey: string | null = null;
+
+    for (const el of elements) {
+      const tagName = el.tagName.toLowerCase();
+      const isHeading = ["h1", "h2", "h3", "h4", "strong"].includes(tagName) ||
+        (tagName === "p" && el.querySelector("strong"));
+
+      if (isHeading) {
+        const text = (el.textContent || "").toLowerCase().trim()
+          .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+        let matched: string | null = null;
+        for (const [keyword, catKey] of Object.entries(sectionMap)) {
+          const normalizedKeyword = keyword.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          if (text.includes(normalizedKeyword)) {
+            matched = catKey;
+            break;
+          }
+        }
+
+        if (matched) {
+          currentKey = matched;
+          if (!sections[currentKey]) sections[currentKey] = [];
+          continue;
+        }
+      }
+
+      if (currentKey) {
+        sections[currentKey].push(el.outerHTML);
+      }
+    }
+
+    // Save parsed sections to protocol_category_content
+    for (const [catKey, htmlParts] of Object.entries(sections)) {
+      const content = htmlParts.join("");
+      if (!content.replace(/<[^>]*>/g, "").trim()) continue;
+
+      // Upsert: delete existing then insert
+      await supabase.from("protocol_category_content").delete().eq("user_id", userId).eq("category", catKey);
+      await supabase.from("protocol_category_content").insert({
+        user_id: userId,
+        category: catKey,
+        content,
+      });
+    }
+  };
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       let pdfUrl = "";
@@ -322,10 +396,16 @@ const AdminProtocol = () => {
       if (newReleaseDate) payload.release_date = newReleaseDate;
       if (newEndDate) payload.end_date = newEndDate;
       await supabase.from("student_protocols").insert(payload);
+
+      // Auto-parse content into category cards
+      if (newContent) {
+        await parseAndSaveCategoryContent(newContent, selected.user_id);
+      }
     },
     onSuccess: () => {
       toast.success("Protocolo adicionado!");
       qc.invalidateQueries({ queryKey: ["admin-students-protocols"] });
+      qc.invalidateQueries({ queryKey: ["protocol-category-content", selected?.user_id] });
       refetchProtocols();
       setShowNewForm(false);
       resetNewForm();
