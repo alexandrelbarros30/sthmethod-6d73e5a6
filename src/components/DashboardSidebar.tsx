@@ -47,6 +47,7 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/admin/coupons", icon: Ticket, label: "Cupons" },
     { to: "/admin/popups", icon: Megaphone, label: "Popups" },
     { to: "/admin/notifications", icon: Bell, label: "Notificações" },
+    { to: "/admin/budgets", icon: Receipt, label: "Orçamentos" },
   ],
   consultor: [
     { to: "/consultor", icon: LayoutDashboard, label: "Dashboard" },
