@@ -45,6 +45,7 @@ import AdminDietLibrary from "./pages/admin/AdminDietLibrary";
 import AdminProtocolLibrary from "./pages/admin/AdminProtocolLibrary";
 import AdminPopups from "./pages/admin/AdminPopups";
 import AdminNotifications from "./pages/admin/AdminNotifications";
+import AdminBudgets from "./pages/admin/AdminBudgets";
 import ConsultorDashboard from "./pages/consultor/ConsultorDashboard";
 import AssistenteDashboard from "./pages/assistente/AssistenteDashboard";
 import FinanceiroDashboard from "./pages/financeiro/FinanceiroDashboard";
