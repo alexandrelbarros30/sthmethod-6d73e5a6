@@ -1854,6 +1854,42 @@ export type Database = {
           },
         ]
       }
+      supplement_budgets: {
+        Row: {
+          created_at: string
+          id: string
+          items: Json
+          notes: string | null
+          status: string
+          title: string
+          total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          items?: Json
+          notes?: string | null
+          status?: string
+          title?: string
+          total?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          items?: Json
+          notes?: string | null
+          status?: string
+          title?: string
+          total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       training_exercises: {
         Row: {
           description: string | null
