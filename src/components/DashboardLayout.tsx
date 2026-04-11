@@ -14,6 +14,8 @@ import PerformethLabsPopup from "./student/PerformethLabsPopup";
 import TirzepatidaPopup from "./student/TirzepatidaPopup";
 import CardioShieldPopup from "./student/CardioShieldPopup";
 import PaymentNotificationPopup from "./admin/PaymentNotificationPopup";
+import EvolutionReminderPopup from "./admin/EvolutionReminderPopup";
+import { useEvolutionReminders } from "@/hooks/useEvolutionReminders";
 
 const BIRTHDAY_MESSAGES = [
   "🎉 Feliz Aniversário! Que este novo ciclo traga muita saúde, energia e conquistas. Você merece!",
@@ -39,6 +41,7 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
   const isStudent = role === "student";
   const showDock = isStudent && isMobile;
   usePaymentNotifications();
+  useEvolutionReminders();
 
   const { user } = useAuth();
 
@@ -432,6 +435,7 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
       <TirzepatidaPopup open={tirzepatidaOpen} onClose={() => { setTirzepatidaOpen(false); setCardioShieldOpen(true); }} />
       <CardioShieldPopup open={cardioShieldOpen} onClose={() => setCardioShieldOpen(false)} />
       <PaymentNotificationPopup />
+      <EvolutionReminderPopup />
     </div>
   );
 };
