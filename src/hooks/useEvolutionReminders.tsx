@@ -17,17 +17,22 @@ export const useEvolutionReminders = () => {
     const generate = async () => {
       const today = new Date().toISOString().split("T")[0];
 
-      // Fetch all active subscriptions started from 2026-03-01
+      // Fetch active subscriptions with 90+ day plans
       const { data: subs } = await supabase
         .from("subscriptions")
         .select("id, user_id, start_date, plans(name, duration_days)")
         .eq("status", "active")
-        .gte("end_date", today)
-        .gte("start_date", "2026-03-01");
+        .gte("end_date", today);
 
       if (!subs || subs.length === 0) return;
 
-      const longSubs = subs;
+      // Filter only 90 and 180 day plans
+      const longSubs = subs.filter((s: any) => {
+        const days = s.plans?.duration_days;
+        return days === 90 || days === 180;
+      });
+
+      if (longSubs.length === 0) return;
 
       // Fetch existing reminders to avoid duplicates
       const subIds = longSubs.map((s: any) => s.id);
