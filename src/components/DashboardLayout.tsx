@@ -14,6 +14,8 @@ import PerformethLabsPopup from "./student/PerformethLabsPopup";
 import TirzepatidaPopup from "./student/TirzepatidaPopup";
 import CardioShieldPopup from "./student/CardioShieldPopup";
 import PaymentNotificationPopup from "./admin/PaymentNotificationPopup";
+import EvolutionReminderPopup from "./admin/EvolutionReminderPopup";
+import { useEvolutionReminders } from "@/hooks/useEvolutionReminders";
 
 const BIRTHDAY_MESSAGES = [
   "🎉 Feliz Aniversário! Que este novo ciclo traga muita saúde, energia e conquistas. Você merece!",
