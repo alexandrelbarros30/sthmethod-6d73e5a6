@@ -538,6 +538,39 @@ export type Database = {
         }
         Relationships: []
       }
+      evolution_reminders: {
+        Row: {
+          created_at: string
+          cycle_number: number
+          due_date: string
+          id: string
+          seen: boolean
+          student_name: string
+          student_user_id: string
+          subscription_id: string
+        }
+        Insert: {
+          created_at?: string
+          cycle_number?: number
+          due_date: string
+          id?: string
+          seen?: boolean
+          student_name?: string
+          student_user_id: string
+          subscription_id: string
+        }
+        Update: {
+          created_at?: string
+          cycle_number?: number
+          due_date?: string
+          id?: string
+          seen?: boolean
+          student_name?: string
+          student_user_id?: string
+          subscription_id?: string
+        }
+        Relationships: []
+      }
       exercise_library: {
         Row: {
           created_at: string
