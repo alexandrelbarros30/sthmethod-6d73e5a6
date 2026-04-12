@@ -28,7 +28,6 @@ serve(async (req) => {
     }
     const userId = user.id;
 
-    // Service role client for coupon operations
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -37,20 +36,25 @@ serve(async (req) => {
     const { plan_id, method, action_type, coupon_id } = await req.json();
     if (!plan_id || !method) throw new Error("Missing plan_id or method");
 
-    // Fetch plan
+    // Validate method
+    const validMethods = ["pix", "credit", "debit"];
+    if (!validMethods.includes(method)) throw new Error("Invalid payment method");
+
+    // Fetch plan from DB (server-side source of truth)
     const { data: plan, error: planError } = await supabaseAuth.from("plans").select("*").eq("id", plan_id).single();
     if (planError || !plan) throw new Error("Plan not found");
 
     // Fetch user profile
     const { data: profile } = await supabaseAuth.from("profiles").select("full_name, email, phone").eq("user_id", userId).single();
 
-    // Calculate base price — use card_price for credit/debit, price for pix
+    // SERVER-SIDE price calculation — client cannot influence this
     const isCard = method === "credit" || method === "debit";
-    const rawPrice = isCard && plan.card_price ? plan.card_price : plan.price;
-    const priceStr = rawPrice.replace(/[^\d,\.]/g, "").replace(",", ".");
+    const rawPriceStr = isCard && plan.card_price ? plan.card_price : plan.price;
+    const priceStr = rawPriceStr.replace(/[^\d,\.]/g, "").replace(",", ".");
     let originalAmount = parseFloat(priceStr) || 0;
     let finalAmount = originalAmount;
 
+    // Apply plan-level discount
     if ((plan as any).discount_type === "percentage" && (plan as any).discount_value > 0) {
       finalAmount = originalAmount * (1 - (plan as any).discount_value / 100);
     } else if ((plan as any).discount_type === "fixed" && (plan as any).discount_value > 0) {
@@ -84,7 +88,6 @@ serve(async (req) => {
           finalAmount = Math.max(0, finalAmount - couponDiscount);
           validCouponId = coupon.id;
 
-          // Increment coupon usage
           await supabaseAdmin
             .from("coupons")
             .update({ current_uses: coupon.current_uses + 1 })
@@ -95,6 +98,19 @@ serve(async (req) => {
 
     finalAmount = Math.round(finalAmount * 100) / 100;
 
+    // SERVER-SIDE installment calculation based on plan duration and method
+    let maxInstallments = 1;
+    if (method === "credit") {
+      if (plan.duration_days >= 180) {
+        maxInstallments = 6;
+      } else if (plan.duration_days >= 90) {
+        maxInstallments = 3;
+      } else {
+        maxInstallments = 1;
+      }
+    }
+    // PIX and debit: ALWAYS 1 installment, no exceptions
+
     // Create payment record
     const paymentInsert: any = {
       user_id: userId,
@@ -104,6 +120,7 @@ serve(async (req) => {
       method,
       action_type: action_type || "new",
       status: "pending",
+      installments: maxInstallments,
     };
     if (validCouponId) {
       paymentInsert.coupon_id = validCouponId;
@@ -113,26 +130,15 @@ serve(async (req) => {
     const { data: payment, error: paymentError } = await supabaseAdmin.from("payments").insert(paymentInsert).select().single();
     if (paymentError) throw paymentError;
 
-    // Map payment method to excluded types
-    const excludedMethods: Record<string, string[]> = {
-      pix: ["credit_card", "debit_card", "ticket", "bolbradesco"],
-      credit: ["pix", "debit_card", "ticket", "bolbradesco"],
-      debit: ["pix", "credit_card", "ticket", "bolbradesco"],
+    // Mercado Pago payment type exclusions (correct type IDs)
+    // These are PAYMENT TYPES, not payment method IDs
+    const excludedPaymentTypes: Record<string, string[]> = {
+      pix: ["credit_card", "debit_card", "ticket", "prepaid_card"],
+      credit: ["bank_transfer", "debit_card", "ticket", "prepaid_card"],
+      debit: ["bank_transfer", "credit_card", "ticket", "prepaid_card"],
     };
 
-    // Calculate max installments based on plan duration
-    let maxInstallments = 1;
-    if (plan.duration_days >= 180) {
-      maxInstallments = 6;
-    } else if (plan.duration_days >= 90) {
-      maxInstallments = 3;
-    }
-    // For debit, always 1 installment
-    if (method === "debit") {
-      maxInstallments = 1;
-    }
-
-    // Create MP preference
+    // Build MP preference
     const preference: any = {
       items: [{
         title: `${plan.name} - ST&H Consultoria`,
@@ -154,19 +160,14 @@ serve(async (req) => {
       auto_return: "approved",
       notification_url: `${Deno.env.get("SUPABASE_URL")}/functions/v1/mercado-pago-webhook`,
       excluded_payment_methods: [],
-      excluded_payment_types: (excludedMethods[method] || []).map((id: string) => ({ id })),
+      excluded_payment_types: (excludedPaymentTypes[method] || []).map((id: string) => ({ id })),
+      payment_methods: {
+        installments: maxInstallments,
+        default_installments: 1,
+      },
     };
 
-    // Set installment limits for credit card
-    if (method === "credit" && maxInstallments > 1) {
-      preference.payment_methods = {
-        installments: maxInstallments,
-      };
-    } else if (method === "credit") {
-      preference.payment_methods = {
-        installments: 1,
-      };
-    }
+    console.log(`Creating payment: method=${method}, plan=${plan.name}, amount=${finalAmount}, maxInstallments=${maxInstallments}`);
 
     const mpRes = await fetch("https://api.mercadopago.com/checkout/preferences", {
       method: "POST",
@@ -180,7 +181,6 @@ serve(async (req) => {
     const mpData = await mpRes.json();
     if (!mpRes.ok) throw new Error(`MP error [${mpRes.status}]: ${JSON.stringify(mpData)}`);
 
-    // Store MP preference ID in gateway details table
     await supabaseAdmin.from("payment_gateway_details").upsert({
       payment_id: payment.id,
       mp_preference_id: mpData.id,
