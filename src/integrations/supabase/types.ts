@@ -538,6 +538,42 @@ export type Database = {
         }
         Relationships: []
       }
+      evolution_notifications: {
+        Row: {
+          created_at: string
+          has_photos: boolean
+          id: string
+          new_weight: number | null
+          notes: string | null
+          previous_weight: number | null
+          seen: boolean
+          student_name: string
+          student_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          has_photos?: boolean
+          id?: string
+          new_weight?: number | null
+          notes?: string | null
+          previous_weight?: number | null
+          seen?: boolean
+          student_name?: string
+          student_user_id: string
+        }
+        Update: {
+          created_at?: string
+          has_photos?: boolean
+          id?: string
+          new_weight?: number | null
+          notes?: string | null
+          previous_weight?: number | null
+          seen?: boolean
+          student_name?: string
+          student_user_id?: string
+        }
+        Relationships: []
+      }
       evolution_reminders: {
         Row: {
           created_at: string
