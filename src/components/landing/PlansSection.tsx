@@ -76,18 +76,18 @@ const PlansSection = () => {
                 {plan.subtitle && (
                   <p className="text-muted-foreground text-sm mb-4">{plan.subtitle}</p>
                 )}
-                <div className="flex items-baseline gap-1 mb-2">
+                <div className="flex items-baseline gap-1 mb-1">
+                  <span className="text-sm text-muted-foreground">Pix</span>
                   <span className="text-4xl font-display font-bold gradient-text">{plan.price}</span>
                   <span className="text-muted-foreground text-sm">/ {plan.duration}</span>
                 </div>
-                {plan.duration_days >= 90 && (
+                {plan.card_price && (
                   <p className="text-xs text-muted-foreground mb-4">
-                    ou no cartão em até {plan.duration_days >= 180 ? "6x" : "3x"}
-                  </p>
-                )}
-                {plan.duration_days < 90 && (
-                  <p className="text-xs text-muted-foreground mb-4">
-                    ou no cartão à vista
+                    {plan.duration_days >= 180
+                      ? `ou 6x de R$ 88,15 no cartão`
+                      : plan.duration_days >= 90
+                        ? `ou 3x de R$ 92,15 no cartão`
+                        : `ou ${plan.card_price} à vista no cartão`}
                   </p>
                 )}
                 <ul className="space-y-3 mb-8">
