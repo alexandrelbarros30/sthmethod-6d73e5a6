@@ -196,6 +196,23 @@ const StudentEvolution = () => {
         notes: anamnesisNote,
       });
 
+      // Update the evolution notification with photos flag if applicable
+      if (imagesSaved) {
+        // Get the most recent notification for this user (just created by trigger)
+        const { data: recentNotif } = await supabase
+          .from("evolution_notifications")
+          .select("id")
+          .eq("student_user_id", user!.id)
+          .order("created_at", { ascending: false })
+          .limit(1);
+        if (recentNotif && recentNotif.length > 0) {
+          await supabase
+            .from("evolution_notifications")
+            .update({ has_photos: true })
+            .eq("id", recentNotif[0].id);
+        }
+      }
+
       toast.success("Evolução registrada com sucesso! Macros atualizados.");
       setWeight("");
       setNotes("");
