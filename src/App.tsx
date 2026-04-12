@@ -81,6 +81,7 @@ const App = () => (
             <Route path="/cadastro" element={<Cadastro />} />
             <Route path="/questionario" element={<Questionario />} />
             <Route path="/install" element={<Install />} />
+            <Route path="/como-funciona" element={<ComoFunciona />} />
             <Route path="/free" element={<Free />} />
             {/* Student routes */}
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["student"]}><StudentOverview /></ProtectedRoute>} />
