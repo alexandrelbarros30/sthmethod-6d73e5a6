@@ -144,7 +144,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           <div className="fixed bottom-1 right-1 text-[9px] text-muted-foreground/40 pointer-events-none z-50 font-mono">
-            Versão 1.4.4.0
+            Versão 1.4.5.0
           </div>
         </AuthProvider>
       </BrowserRouter>
