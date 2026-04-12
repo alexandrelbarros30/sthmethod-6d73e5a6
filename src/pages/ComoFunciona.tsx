@@ -254,7 +254,7 @@ const cards = [
             </Button>
           </Link>
           <a
-            href="https://wa.me/5500000000000"
+            href="https://wa.me/5521998496289?text=Ol%C3%A1!%20Gostaria%20de%20saber%20mais%20sobre%20a%20consultoria."
             target="_blank"
             rel="noopener noreferrer"
             className="w-full"
