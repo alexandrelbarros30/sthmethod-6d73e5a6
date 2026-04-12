@@ -437,6 +437,7 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
       <CardioShieldPopup open={cardioShieldOpen} onClose={() => setCardioShieldOpen(false)} />
       <PaymentNotificationPopup />
       <EvolutionReminderPopup />
+      <EvolutionUpdatePopup />
     </div>
   );
 };
