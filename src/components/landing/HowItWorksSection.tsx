@@ -25,7 +25,7 @@ const HowItWorksSection = () => {
       <div className="max-w-6xl mx-auto">
         <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
-            Como Funciona a <span className="gradient-text">Consultoria</span>
+            Como Funciona a <span className="gradient-text">STH METHOD</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Um método completo, do diagnóstico à transformação — cada etapa pensada para o seu resultado.
