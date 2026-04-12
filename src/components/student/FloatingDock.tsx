@@ -8,7 +8,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const mainItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Início" },
-  { to: "/dashboard/content", icon: BookOpen, label: "Conteúdo" },
+  { to: "/dashboard/evolution", icon: TrendingUp, label: "Atualização" },
   { to: "/dashboard/diet", icon: Salad, label: "Dieta", center: true },
   { to: "/dashboard/protocol", icon: FlaskConical, label: "Protocolo" },
   { to: "/dashboard/training", icon: Dumbbell, label: "Treino" },
@@ -17,7 +17,7 @@ const mainItems = [
 const menuItems = [
   { to: "/dashboard/profile", icon: FileText, label: "Minha Ficha" },
   { to: "/dashboard/bioimpedance", icon: Activity, label: "Bioimpedância" },
-  { to: "/dashboard/evolution", icon: TrendingUp, label: "Evolução" },
+  { to: "/dashboard/content", icon: BookOpen, label: "Conteúdo" },
   { to: "/dashboard/metabolic", icon: Microscope, label: "Painel Metabólico" },
   { to: "/dashboard/guided-workout", icon: ListChecks, label: "Treino Guiado" },
   { to: "/dashboard/ads", icon: Megaphone, label: "Propagandas" },
