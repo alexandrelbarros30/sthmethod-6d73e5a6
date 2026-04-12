@@ -159,9 +159,9 @@ serve(async (req) => {
       },
       auto_return: "approved",
       notification_url: `${Deno.env.get("SUPABASE_URL")}/functions/v1/mercado-pago-webhook`,
-      excluded_payment_methods: [],
-      excluded_payment_types: (excludedPaymentTypes[method] || []).map((id: string) => ({ id })),
       payment_methods: {
+        excluded_payment_methods: [],
+        excluded_payment_types: (excludedPaymentTypes[method] || []).map((id: string) => ({ id })),
         installments: maxInstallments,
         default_installments: 1,
       },
