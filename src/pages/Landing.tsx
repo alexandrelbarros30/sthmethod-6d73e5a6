@@ -180,26 +180,59 @@ const Landing = () => {
             <a href="#simulador" className="hover:text-foreground transition-colors py-1">Simulador</a>
             <Link to="/questionario" className="hover:text-foreground transition-colors font-medium gradient-text py-1">Macros</Link>
           </div>
-...
-                  {[
-                    { href: "/como-funciona", label: "Como Funciona" },
-                    { href: "#resultados", label: "Resultados" },
-                    { href: "#planos", label: "Planos" },
-                    { href: "#imc", label: "Calculadora IMC" },
-                    { href: "#guia-alimentar", label: "Guia Alimentar" },
-                    { href: "#diagnostico", label: "Diagnóstico" },
-                    { href: "#plano-alimentar", label: "Plano Alimentar" },
-                    { href: "#simulador", label: "Simulador Corporal" },
-                  ].map((item) => (
-                    <LinkOrA
-                      key={item.href}
-                      to={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="py-2.5 px-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors active:bg-muted"
-                    >
-                      {item.label}
-                    </LinkOrA>
-                  ))}
+
+          {/* Right side: CTA + hamburger */}
+          <div className="flex items-center gap-2 shrink-0">
+            <Link to="/free">
+              <Button size="sm" variant="outline" className="text-xs sm:text-sm px-3 sm:px-4 border-primary/30 hover:bg-primary/10">
+                Free
+              </Button>
+            </Link>
+            <Link to="/login">
+              <Button size="sm" className="gradient-bg text-primary-foreground hover:opacity-90 text-xs sm:text-sm px-3 sm:px-4">
+                Acessar
+              </Button>
+            </Link>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors text-foreground"
+              aria-label="Menu"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="lg:hidden border-t border-border/50 overflow-hidden bg-background/95 backdrop-blur-xl"
+            >
+              <div className="px-5 py-4 flex flex-col gap-1 text-sm max-h-[70vh] overflow-y-auto">
+                {[
+                  { href: "/como-funciona", label: "Como Funciona" },
+                  { href: "#resultados", label: "Resultados" },
+                  { href: "#planos", label: "Planos" },
+                  { href: "#imc", label: "Calculadora IMC" },
+                  { href: "#guia-alimentar", label: "Guia Alimentar" },
+                  { href: "#diagnostico", label: "Diagnóstico" },
+                  { href: "#plano-alimentar", label: "Plano Alimentar" },
+                  { href: "#simulador", label: "Simulador Corporal" },
+                ].map((item) => (
+                  <LinkOrA
+                    key={item.href}
+                    to={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="py-2.5 px-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors active:bg-muted"
+                  >
+                    {item.label}
+                  </LinkOrA>
+                ))}
                 <Link
                   to="/questionario"
                   onClick={() => setMobileMenuOpen(false)}
