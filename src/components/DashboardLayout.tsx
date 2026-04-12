@@ -15,6 +15,7 @@ import TirzepatidaPopup from "./student/TirzepatidaPopup";
 import CardioShieldPopup from "./student/CardioShieldPopup";
 import PaymentNotificationPopup from "./admin/PaymentNotificationPopup";
 import EvolutionReminderPopup from "./admin/EvolutionReminderPopup";
+import EvolutionUpdatePopup from "./admin/EvolutionUpdatePopup";
 import { useEvolutionReminders } from "@/hooks/useEvolutionReminders";
 
 const BIRTHDAY_MESSAGES = [
@@ -436,6 +437,7 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
       <CardioShieldPopup open={cardioShieldOpen} onClose={() => setCardioShieldOpen(false)} />
       <PaymentNotificationPopup />
       <EvolutionReminderPopup />
+      <EvolutionUpdatePopup />
     </div>
   );
 };

@@ -5,12 +5,32 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Camera, CheckCheck, Eye, Filter, MessageSquare } from "lucide-react";
+import { Bell, Camera, CheckCheck, Eye, Filter, MessageSquare, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+const EVOLUTION_TEMPLATE = `Olá, {nome}! 👋📸
+
+Chegou o momento de atualizarmos sua evolução — essa etapa é essencial para ajustar sua estratégia e manter o progresso acelerado 🚀
+
+Acesse a plataforma no menu ATUALIZAÇÃO e envie:
+
+📷 FOTO FRONTAL
+
+📷 FOTO LATERAL
+
+📷 FOTO COSTAS
+
+⚖️ PESO ATUAL
+
+👉 Essas informações permitem ajustes mais precisos na sua dieta, treino e protocolo.
+
+🔥 Resultado não é sorte. É acompanhamento + ajuste estratégico.
+
+Vamos juntos nessa! 💪🚀`;
 
 const AdminNotifications = () => {
   const queryClient = useQueryClient();
@@ -33,7 +53,7 @@ const AdminNotifications = () => {
     },
   });
 
-  // Evolution reminders
+  // Evolution reminders (29-day cycle)
   const { data: evolutionReminders = [], isLoading: loadingEvolution } = useQuery({
     queryKey: ["evolution-reminders", filter],
     queryFn: async () => {
@@ -41,6 +61,23 @@ const AdminNotifications = () => {
         .from("evolution_reminders")
         .select("*")
         .order("due_date", { ascending: false })
+        .limit(200);
+      if (filter === "unseen") query = query.eq("seen", false);
+      if (filter === "seen") query = query.eq("seen", true);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Evolution update notifications (student submitted)
+  const { data: evolutionUpdates = [], isLoading: loadingUpdates } = useQuery({
+    queryKey: ["evolution-notifications", filter],
+    queryFn: async () => {
+      let query = supabase
+        .from("evolution_notifications")
+        .select("*")
+        .order("created_at", { ascending: false })
         .limit(200);
       if (filter === "unseen") query = query.eq("seen", false);
       if (filter === "seen") query = query.eq("seen", true);
@@ -84,6 +121,23 @@ const AdminNotifications = () => {
     },
   });
 
+  const markUpdateSeen = useMutation({
+    mutationFn: async (id: string) => {
+      await supabase.from("evolution_notifications").update({ seen: true }).eq("id", id);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["evolution-notifications"] }),
+  });
+
+  const markAllUpdatesSeen = useMutation({
+    mutationFn: async () => {
+      await supabase.from("evolution_notifications").update({ seen: true }).eq("seen", false);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["evolution-notifications"] });
+      toast.success("Todas as atualizações marcadas como vistas");
+    },
+  });
+
   const handleSendEvolutionWhatsApp = async (reminder: any) => {
     const { data: profile } = await supabase
       .from("profiles")
@@ -97,7 +151,7 @@ const AdminNotifications = () => {
     }
 
     const firstName = profile.full_name?.split(" ")[0] || "Aluno";
-    const message = `Olá ${firstName}! 📸\n\nÉ hora de atualizar suas fotos e peso para acompanharmos sua evolução. Envie por aqui:\n\n✅ Foto frontal\n✅ Foto lateral\n✅ Foto costas\n✅ Peso atual\n\nVamos juntos! 💪`;
+    const message = EVOLUTION_TEMPLATE.replace(/\{nome\}/g, firstName);
 
     const phone = profile.phone.replace(/\D/g, "");
     const fullPhone = phone.startsWith("55") ? phone : `55${phone}`;
@@ -107,6 +161,7 @@ const AdminNotifications = () => {
 
   const unseenPayment = paymentNotifs.filter((n: any) => !n.seen).length;
   const unseenEvolution = evolutionReminders.filter((n: any) => !n.seen).length;
+  const unseenUpdates = evolutionUpdates.filter((n: any) => !n.seen).length;
 
   const actionLabel = (type: string) =>
     type === "new" ? "Novo plano" : type === "upgrade" ? "Atualização" : "Renovação";
@@ -133,14 +188,18 @@ const AdminNotifications = () => {
         </div>
 
         <Tabs defaultValue="payments" className="w-full">
-          <TabsList className="w-full grid grid-cols-2">
-            <TabsTrigger value="payments" className="text-xs gap-1.5">
+          <TabsList className="w-full grid grid-cols-3">
+            <TabsTrigger value="payments" className="text-xs gap-1">
               💰 Pagamentos
               {unseenPayment > 0 && <Badge variant="destructive" className="text-[10px] ml-1">{unseenPayment}</Badge>}
             </TabsTrigger>
-            <TabsTrigger value="evolution" className="text-xs gap-1.5">
-              📸 Evolução
+            <TabsTrigger value="evolution" className="text-xs gap-1">
+              📸 Lembretes
               {unseenEvolution > 0 && <Badge variant="destructive" className="text-[10px] ml-1">{unseenEvolution}</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="updates" className="text-xs gap-1">
+              📊 Atualizações
+              {unseenUpdates > 0 && <Badge variant="destructive" className="text-[10px] ml-1">{unseenUpdates}</Badge>}
             </TabsTrigger>
           </TabsList>
 
@@ -183,7 +242,7 @@ const AdminNotifications = () => {
             )}
           </TabsContent>
 
-          {/* Evolution Reminders Tab */}
+          {/* Evolution Reminders Tab (29-day cycle) */}
           <TabsContent value="evolution" className="space-y-2 mt-3">
             {unseenEvolution > 0 && (
               <div className="flex justify-end">
@@ -207,7 +266,7 @@ const AdminNotifications = () => {
                         {!r.seen && <Badge variant="destructive" className="text-[10px]">Nova</Badge>}
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        Atualização de fotos e peso • Vencimento: {format(new Date(r.due_date + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR })}
+                        Solicitar fotos e peso • Vencimento: {format(new Date(r.due_date + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR })}
                       </p>
                     </div>
                     <div className="flex gap-1 shrink-0">
@@ -223,6 +282,61 @@ const AdminNotifications = () => {
                   </CardContent>
                 </Card>
               ))
+            )}
+          </TabsContent>
+
+          {/* Evolution Updates Tab (student submitted) */}
+          <TabsContent value="updates" className="space-y-2 mt-3">
+            {unseenUpdates > 0 && (
+              <div className="flex justify-end">
+                <Button size="sm" variant="outline" onClick={() => markAllUpdatesSeen.mutate()} className="text-xs gap-1.5">
+                  <CheckCheck className="w-3.5 h-3.5" /> Marcar todas como vistas
+                </Button>
+              </div>
+            )}
+            {loadingUpdates ? (
+              <p className="text-sm text-muted-foreground">Carregando...</p>
+            ) : evolutionUpdates.length === 0 ? (
+              <Card><CardContent className="py-12 text-center text-muted-foreground text-sm">Nenhuma atualização de aluno encontrada.</CardContent></Card>
+            ) : (
+              evolutionUpdates.map((n: any) => {
+                const diff = n.previous_weight && n.new_weight
+                  ? (Number(n.new_weight) - Number(n.previous_weight)).toFixed(1)
+                  : null;
+                const diffLabel = diff ? (Number(diff) > 0 ? `+${diff}` : diff) : null;
+
+                return (
+                  <Card key={n.id} className={`transition-colors ${!n.seen ? "border-primary/40 bg-primary/5" : ""}`}>
+                    <CardContent className="py-3 px-4 flex items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium">📊 {n.student_name}</span>
+                          <Badge variant="secondary" className="text-[10px]">
+                            ⚖️ {Number(n.new_weight).toFixed(1)} kg
+                          </Badge>
+                          {diffLabel && (
+                            <Badge variant="outline" className="text-[10px]">
+                              {diffLabel} kg
+                            </Badge>
+                          )}
+                          {n.has_photos && (
+                            <Badge variant="outline" className="text-[10px]">📸 Fotos</Badge>
+                          )}
+                          {!n.seen && <Badge variant="destructive" className="text-[10px]">Nova</Badge>}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Atualização de evolução • {format(new Date(n.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                        </p>
+                      </div>
+                      {!n.seen && (
+                        <Button size="sm" variant="ghost" onClick={() => markUpdateSeen.mutate(n.id)} className="text-xs gap-1 shrink-0">
+                          <Eye className="w-3.5 h-3.5" /> Visto
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })
             )}
           </TabsContent>
         </Tabs>
