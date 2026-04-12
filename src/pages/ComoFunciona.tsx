@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import {
   Rocket, Utensils, Dumbbell, Settings, BarChart3, Calendar,
   TrendingUp, ArrowLeft, ChevronLeft, ChevronRight, Target,
-  Zap, DollarSign, Package, Eye, Ban, MessageCircle,
+  Zap, DollarSign, Package, Eye, Ban, MessageCircle, FlaskConical, FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
