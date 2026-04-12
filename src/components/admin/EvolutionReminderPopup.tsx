@@ -112,7 +112,7 @@ const EvolutionReminderPopup = () => {
 
     if (!message) {
       const firstName = profile.full_name?.split(" ")[0] || "Aluno";
-      message = `Olá ${firstName}! 📸\n\nÉ hora de atualizar suas fotos e peso para acompanharmos sua evolução. Envie por aqui:\n\n✅ Foto frontal\n✅ Foto lateral\n✅ Foto costas\n✅ Peso atual\n\nVamos juntos! 💪`;
+      message = `Olá, ${firstName}! 👋📸\n\nChegou o momento de atualizarmos sua evolução — essa etapa é essencial para ajustar sua estratégia e manter o progresso acelerado 🚀\n\nAcesse a plataforma no menu ATUALIZAÇÃO e envie:\n\n📷 FOTO FRONTAL\n\n📷 FOTO LATERAL\n\n📷 FOTO COSTAS\n\n⚖️ PESO ATUAL\n\n👉 Essas informações permitem ajustes mais precisos na sua dieta, treino e protocolo.\n\n🔥 Resultado não é sorte. É acompanhamento + ajuste estratégico.\n\nVamos juntos nessa! 💪🚀`;
     }
 
     const phone = profile.phone.replace(/\D/g, "");
