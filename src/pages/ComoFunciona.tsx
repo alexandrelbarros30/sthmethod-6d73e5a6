@@ -224,7 +224,7 @@ const cards = [
     ),
   },
   {
-    id: 6,
+    id: 7,
     tag: "Comece agora",
     title: "Fechamento",
     icon: Rocket,
