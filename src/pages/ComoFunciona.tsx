@@ -23,7 +23,7 @@ const cards = [
         </div>
         <h2 className="text-2xl md:text-4xl font-extrabold text-foreground leading-tight">
           COMO FUNCIONA A<br />
-          CONSULTORIA <span className="gradient-text">STH METHOD</span>
+          <span className="gradient-text">STH METHOD</span>
         </h2>
         <div className="space-y-3 max-w-sm">
           <p className="text-base text-muted-foreground leading-relaxed">
