@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import {
   Rocket, Utensils, Dumbbell, Settings, BarChart3, Calendar,
   TrendingUp, ArrowLeft, ChevronLeft, ChevronRight, Target,
-  Zap, DollarSign, Package, Eye, Ban, MessageCircle,
+  Zap, DollarSign, Package, Eye, Ban, MessageCircle, FlaskConical, FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -151,6 +151,48 @@ const cards = [
   },
   {
     id: 5,
+    tag: "Exames",
+    title: "Análise de Exames",
+    icon: FlaskConical,
+    accent: "from-cyan-500/20 to-teal-500/10",
+    content: (
+      <div className="space-y-5 w-full">
+        <h2 className="text-xl md:text-2xl font-extrabold text-foreground text-center mb-4">
+          Análise de <span className="gradient-text">Exames</span>
+        </h2>
+        <div className="p-5 rounded-2xl bg-muted/50 border border-border/50">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-background flex items-center justify-center shrink-0 shadow-sm">
+              <FlaskConical className="w-6 h-6 text-cyan-500" />
+            </div>
+            <div>
+              <span className="font-bold text-foreground text-sm">Análise e interpretação de exames</span>
+              <p className="text-xs text-muted-foreground mt-1">Avaliação detalhada dos seus resultados laboratoriais</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-5 rounded-2xl bg-muted/50 border border-border/50">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-background flex items-center justify-center shrink-0 shadow-sm">
+              <FileText className="w-6 h-6 text-teal-500" />
+            </div>
+            <div>
+              <span className="font-bold text-foreground text-sm">Requisição de exames</span>
+              <p className="text-xs text-muted-foreground mt-1">Solicitamos a requisição dos exames necessários</p>
+              <span className="inline-block mt-2 text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                Custo adicional
+              </span>
+            </div>
+          </div>
+        </div>
+        <p className="text-center text-sm font-semibold text-primary pt-2">
+          👉 Seus exames analisados com estratégia
+        </p>
+      </div>
+    ),
+  },
+  {
+    id: 6,
     tag: "Controle",
     title: "Organização e Controle",
     icon: Eye,
@@ -182,7 +224,7 @@ const cards = [
     ),
   },
   {
-    id: 6,
+    id: 7,
     tag: "Comece agora",
     title: "Fechamento",
     icon: Rocket,
