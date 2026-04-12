@@ -3,23 +3,23 @@ import App from "./App.tsx";
 import "./index.css";
 import { registerSW } from "virtual:pwa-register";
 
-const PREVIEW_SW_RESET_KEY = "sth-preview-sw-reset-v1";
-const PREVIEW_REFRESH_PARAM = "__preview_refresh";
-const PREVIEW_BUNDLE_MARKER = import.meta.env.PROD ? new URL(import.meta.url).pathname : "dev";
+const SW_RESET_KEY = "sth-sw-reset-v2";
+const SW_REFRESH_PARAM = "__sw_refresh";
+const CURRENT_BUNDLE_MARKER = import.meta.env.PROD ? new URL(import.meta.url).pathname : "dev";
 
 const isPreviewHost = () =>
   typeof window !== "undefined" && window.location.hostname.includes("preview--");
 
-const clearPreviewCaches = async (): Promise<boolean> => {
-  if (typeof window === "undefined") return true;
+const getResetStorage = () => (isPreviewHost() ? sessionStorage : localStorage);
 
-  if (!isPreviewHost()) return true;
+const clearStaleCaches = async (): Promise<boolean> => {
+  if (typeof window === "undefined" || !import.meta.env.PROD) return true;
 
   const currentUrl = new URL(window.location.href);
-  const alreadyRefreshed = currentUrl.searchParams.has(PREVIEW_REFRESH_PARAM);
-  const resetMarker = sessionStorage.getItem(PREVIEW_SW_RESET_KEY);
+  const alreadyRefreshed = currentUrl.searchParams.has(SW_REFRESH_PARAM);
+  const resetMarker = getResetStorage().getItem(SW_RESET_KEY);
 
-  if (!alreadyRefreshed && resetMarker === PREVIEW_BUNDLE_MARKER) {
+  if (!alreadyRefreshed && resetMarker === CURRENT_BUNDLE_MARKER) {
     return true;
   }
 
@@ -34,23 +34,23 @@ const clearPreviewCaches = async (): Promise<boolean> => {
       await Promise.allSettled(cacheKeys.map((key) => caches.delete(key)));
     }
   } catch (_e) {
-    // Ignore cache cleanup failures to avoid blocking preview render
+    // Ignore cache cleanup failures to avoid blocking app render
   }
 
   if (!alreadyRefreshed) {
-    currentUrl.searchParams.set(PREVIEW_REFRESH_PARAM, `${Date.now()}`);
+    currentUrl.searchParams.set(SW_REFRESH_PARAM, `${Date.now()}`);
     window.location.replace(currentUrl.toString());
     return false;
   }
 
-  currentUrl.searchParams.delete(PREVIEW_REFRESH_PARAM);
+  currentUrl.searchParams.delete(SW_REFRESH_PARAM);
   window.history.replaceState(window.history.state, "", currentUrl.toString());
-  sessionStorage.setItem(PREVIEW_SW_RESET_KEY, PREVIEW_BUNDLE_MARKER);
+  getResetStorage().setItem(SW_RESET_KEY, CURRENT_BUNDLE_MARKER);
   return true;
 };
 
 const bootstrap = async () => {
-  const canRender = await clearPreviewCaches();
+  const canRender = await clearStaleCaches();
   if (!canRender) return;
 
   // Apply stored theme (admin-controlled via DB)
