@@ -171,7 +171,7 @@ const Landing = () => {
 
           {/* Desktop links */}
           <div className="hidden lg:flex items-center gap-5 text-sm text-muted-foreground">
-            <a href="#como-funciona" className="hover:text-foreground transition-colors py-1">Como Funciona</a>
+            <Link to="/como-funciona" className="hover:text-foreground transition-colors py-1">Como Funciona</Link>
             <a href="#resultados" className="hover:text-foreground transition-colors py-1">Resultados</a>
             <a href="#planos" className="hover:text-foreground transition-colors py-1">Planos</a>
             <a href="#imc" className="hover:text-foreground transition-colors py-1">IMC</a>
@@ -215,7 +215,7 @@ const Landing = () => {
             >
               <div className="px-5 py-4 flex flex-col gap-1 text-sm max-h-[70vh] overflow-y-auto">
                 {[
-                  { href: "#como-funciona", label: "Como Funciona" },
+                  { href: "/como-funciona", label: "Como Funciona" },
                   { href: "#resultados", label: "Resultados" },
                   { href: "#planos", label: "Planos" },
                   { href: "#imc", label: "Calculadora IMC" },
@@ -224,14 +224,14 @@ const Landing = () => {
                   { href: "#plano-alimentar", label: "Plano Alimentar" },
                   { href: "#simulador", label: "Simulador Corporal" },
                 ].map((item) => (
-                  <a
+                  <LinkOrA
                     key={item.href}
-                    href={item.href}
+                    to={item.href}
                     onClick={() => setMobileMenuOpen(false)}
                     className="py-2.5 px-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors active:bg-muted"
                   >
                     {item.label}
-                  </a>
+                  </LinkOrA>
                 ))}
                 <Link
                   to="/questionario"
