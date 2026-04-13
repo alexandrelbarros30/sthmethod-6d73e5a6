@@ -46,6 +46,7 @@ import AdminCoupons from "./pages/admin/AdminCoupons";
 import AdminDietLibrary from "./pages/admin/AdminDietLibrary";
 import AdminProtocolLibrary from "./pages/admin/AdminProtocolLibrary";
 import AdminPopups from "./pages/admin/AdminPopups";
+import AdminAds from "./pages/admin/AdminAds";
 import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminBudgets from "./pages/admin/AdminBudgets";
 import ConsultorDashboard from "./pages/consultor/ConsultorDashboard";
@@ -123,6 +124,7 @@ const App = () => (
             <Route path="/admin/popups" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPopups /></ProtectedRoute>} />
             <Route path="/admin/notifications" element={<ProtectedRoute allowedRoles={["admin"]}><AdminNotifications /></ProtectedRoute>} />
             <Route path="/admin/budgets" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBudgets /></ProtectedRoute>} />
+            <Route path="/admin/ads" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAds /></ProtectedRoute>} />
             {/* Consultor routes */}
             <Route path="/consultor" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
             <Route path="/consultor/students" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
