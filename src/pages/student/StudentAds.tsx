@@ -6,10 +6,12 @@ import { MessageCircle, ExternalLink } from "lucide-react";
 import PerformethLabsPopup from "@/components/student/PerformethLabsPopup";
 import TirzepatidaPopup from "@/components/student/TirzepatidaPopup";
 import CardioShieldPopup from "@/components/student/CardioShieldPopup";
+import MareAltaPopup from "@/components/student/MareAltaPopup";
 
 import alphaBurn from "@/assets/performeth/alpha-burn.png";
 import tirzepatida from "@/assets/performeth/tirzepatida-tg.png";
 import cardioShield from "@/assets/performeth/cardio-shield.png";
+import mareAlta from "@/assets/performeth/mare-alta-peptideos.png";
 
 const WHATSAPP = "5521972486650";
 
@@ -17,17 +19,20 @@ const ads = [
   { id: "performeth", title: "Performeth Labs", desc: "Fórmulas exclusivas de alta performance", image: alphaBurn },
   { id: "tirzepatida", title: "Tirzepatida TG 60mg", desc: "Controle glicêmico e redução de peso", image: tirzepatida },
   { id: "cardioshield", title: "CardioShield", desc: "Blindagem Endotelial — Omega 3, NAC, Tadalafila", image: cardioShield },
+  { id: "marealta", title: "Maré Alta Importados", desc: "Peptídeos — Tirzepatida e Retratutida", image: mareAlta },
 ];
 
 const StudentAds = () => {
   const [performethOpen, setPerformethOpen] = useState(false);
   const [tirzepatidaOpen, setTirzepatidaOpen] = useState(false);
   const [cardioShieldOpen, setCardioShieldOpen] = useState(false);
+  const [mareAltaOpen, setMareAltaOpen] = useState(false);
 
   const openAd = (id: string) => {
     if (id === "performeth") setPerformethOpen(true);
     else if (id === "tirzepatida") setTirzepatidaOpen(true);
-    else setCardioShieldOpen(true);
+    else if (id === "cardioshield") setCardioShieldOpen(true);
+    else if (id === "marealta") setMareAltaOpen(true);
   };
 
   return (
@@ -63,6 +68,7 @@ const StudentAds = () => {
       <PerformethLabsPopup open={performethOpen} onClose={() => setPerformethOpen(false)} />
       <TirzepatidaPopup open={tirzepatidaOpen} onClose={() => setTirzepatidaOpen(false)} />
       <CardioShieldPopup open={cardioShieldOpen} onClose={() => setCardioShieldOpen(false)} />
+      <MareAltaPopup open={mareAltaOpen} onClose={() => setMareAltaOpen(false)} />
     </DashboardLayout>
   );
 };
