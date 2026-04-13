@@ -26,11 +26,13 @@ const StudentAds = () => {
   const [performethOpen, setPerformethOpen] = useState(false);
   const [tirzepatidaOpen, setTirzepatidaOpen] = useState(false);
   const [cardioShieldOpen, setCardioShieldOpen] = useState(false);
+  const [mareAltaOpen, setMareAltaOpen] = useState(false);
 
   const openAd = (id: string) => {
     if (id === "performeth") setPerformethOpen(true);
     else if (id === "tirzepatida") setTirzepatidaOpen(true);
-    else setCardioShieldOpen(true);
+    else if (id === "cardioshield") setCardioShieldOpen(true);
+    else if (id === "marealta") setMareAltaOpen(true);
   };
 
   return (
