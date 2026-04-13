@@ -18,6 +18,7 @@ const menuItems = [
   { to: "/dashboard/profile", icon: FileText, label: "Minha Ficha" },
   { to: "/dashboard/bioimpedance", icon: Activity, label: "Bioimpedância" },
   { to: "/dashboard/content", icon: BookOpen, label: "Conteúdo" },
+  { to: "/tendencias", icon: Newspaper, label: "STH News" },
   { to: "/dashboard/metabolic", icon: Microscope, label: "Painel Metabólico" },
   { to: "/dashboard/guided-workout", icon: ListChecks, label: "Treino Guiado" },
   { to: "/dashboard/ads", icon: Megaphone, label: "Propagandas" },
