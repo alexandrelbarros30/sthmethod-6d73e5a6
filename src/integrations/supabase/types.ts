@@ -83,6 +83,57 @@ export type Database = {
         }
         Relationships: []
       }
+      ads: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string
+          display_duration_seconds: number | null
+          end_date: string | null
+          external_link: string | null
+          id: string
+          image_url: string | null
+          popup_content: string | null
+          sort_order: number
+          start_date: string
+          title: string
+          updated_at: string
+          whatsapp_number: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description?: string
+          display_duration_seconds?: number | null
+          end_date?: string | null
+          external_link?: string | null
+          id?: string
+          image_url?: string | null
+          popup_content?: string | null
+          sort_order?: number
+          start_date?: string
+          title?: string
+          updated_at?: string
+          whatsapp_number?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string
+          display_duration_seconds?: number | null
+          end_date?: string | null
+          external_link?: string | null
+          id?: string
+          image_url?: string | null
+          popup_content?: string | null
+          sort_order?: number
+          start_date?: string
+          title?: string
+          updated_at?: string
+          whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
       anamnesis_entries: {
         Row: {
           created_at: string
