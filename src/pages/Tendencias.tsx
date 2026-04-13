@@ -196,9 +196,21 @@ const Tendencias = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="text-sm font-bold text-foreground leading-tight">{ref.name}</h3>
-                      <ExternalLink className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0 mt-0.5 group-hover:text-primary transition-colors" />
                     </div>
                     <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{ref.desc}</p>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {ref.links.map((link) => (
+                        <a
+                          key={link.url}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary hover:underline"
+                        >
+                          {link.label} <ExternalLink className="w-3 h-3" />
+                        </a>
+                      ))}
+                    </div>
                   </div>
                 </div>
                 {/* Bottom accent */}
