@@ -13,6 +13,7 @@ import Questionario from "./pages/Questionario";
 import Install from "./pages/Install";
 import Free from "./pages/Free";
 import ComoFunciona from "./pages/ComoFunciona";
+import Tendencias from "./pages/Tendencias";
 import StudentOverview from "./pages/student/StudentOverview";
 import StudentHub from "./pages/student/StudentHub";
 import StudentRecipes from "./pages/student/StudentRecipes";
@@ -83,6 +84,7 @@ const App = () => (
             <Route path="/install" element={<Install />} />
             <Route path="/como-funciona" element={<ComoFunciona />} />
             <Route path="/free" element={<Free />} />
+            <Route path="/tendencias" element={<Tendencias />} />
             {/* Student routes */}
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["student"]}><StudentOverview /></ProtectedRoute>} />
             <Route path="/dashboard/hub" element={<ProtectedRoute allowedRoles={["student"]}><StudentHub /></ProtectedRoute>} />
