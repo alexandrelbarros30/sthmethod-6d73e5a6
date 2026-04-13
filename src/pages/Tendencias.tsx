@@ -164,12 +164,12 @@ const Tendencias = () => {
             <div className="flex-1 h-px bg-border" />
           </motion.div>
 
-          <div className="space-y-3">
+          <motion.div className="space-y-3" initial="hidden" whileInView="visible" viewport={{ once: true }}>
             {references.map((ref, i) => (
               <motion.div
                 key={ref.tag}
                 variants={fadeUp}
-                custom={i + 1}
+                custom={i}
                 className="group relative rounded-2xl border border-border/60 bg-card overflow-hidden hover:border-primary/30 transition-colors"
               >
                 <div className="flex items-start gap-4 p-4">
