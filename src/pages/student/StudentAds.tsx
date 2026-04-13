@@ -68,6 +68,7 @@ const StudentAds = () => {
       <PerformethLabsPopup open={performethOpen} onClose={() => setPerformethOpen(false)} />
       <TirzepatidaPopup open={tirzepatidaOpen} onClose={() => setTirzepatidaOpen(false)} />
       <CardioShieldPopup open={cardioShieldOpen} onClose={() => setCardioShieldOpen(false)} />
+      <MareAltaPopup open={mareAltaOpen} onClose={() => setMareAltaOpen(false)} />
     </DashboardLayout>
   );
 };
