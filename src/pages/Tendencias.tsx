@@ -18,28 +18,43 @@ const fadeUp = {
 
 const references = [
   {
-    name: "American College of Sports Medicine",
+    name: "ACSM — Worldwide Fitness Trends",
     tag: "ACSM",
-    desc: "Worldwide Survey of Fitness Trends — referência global em diretrizes de exercício e saúde.",
+    desc: "Referência global em diretrizes de exercício e saúde.",
     color: "from-blue-600 to-blue-800",
+    links: [
+      { label: "Trending Topics", url: "https://acsm.org/education-resources/trending-topics-resources/acsm-fitness-trends/" },
+      { label: "Trends 2025", url: "https://acsm.org/top-fitness-trends-2025/" },
+      { label: "Trends 2026", url: "https://acsm.org/top-fitness-trends-2026/" },
+      { label: "Research Study", url: "https://www.researchgate.net/publication/385247109_2025_ACSM_Worldwide_Fitness_Trends_Future_Directions_of_the_Health_and_Fitness_Industry" },
+    ],
   },
   {
     name: "Harvard Medical School",
     tag: "HARVARD",
     desc: "Publicações sobre exercício, prevenção de doenças e longevidade baseada em evidência.",
     color: "from-red-700 to-red-900",
+    links: [
+      { label: "Health Publications", url: "https://www.health.harvard.edu/" },
+    ],
   },
   {
     name: "Cleveland Clinic",
     tag: "CLEVELAND",
     desc: "Abordagem baseada em biomarcadores e medicina preventiva de alto nível.",
     color: "from-emerald-600 to-emerald-800",
+    links: [
+      { label: "Health Essentials", url: "https://health.clevelandclinic.org/" },
+    ],
   },
   {
     name: "Mayo Clinic",
     tag: "MAYO",
     desc: "Diretrizes de saúde integrativa, performance e acompanhamento contínuo.",
     color: "from-sky-600 to-sky-800",
+    links: [
+      { label: "Healthy Lifestyle", url: "https://www.mayoclinic.org/healthy-lifestyle" },
+    ],
   },
 ];
 
@@ -181,9 +196,21 @@ const Tendencias = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="text-sm font-bold text-foreground leading-tight">{ref.name}</h3>
-                      <ExternalLink className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0 mt-0.5 group-hover:text-primary transition-colors" />
                     </div>
                     <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{ref.desc}</p>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {ref.links.map((link) => (
+                        <a
+                          key={link.url}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary hover:underline"
+                        >
+                          {link.label} <ExternalLink className="w-3 h-3" />
+                        </a>
+                      ))}
+                    </div>
                   </div>
                 </div>
                 {/* Bottom accent */}
