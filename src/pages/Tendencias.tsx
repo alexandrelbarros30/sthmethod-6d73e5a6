@@ -23,10 +23,7 @@ const references = [
     desc: "Referência global em diretrizes de exercício e saúde.",
     color: "from-blue-600 to-blue-800",
     links: [
-      { label: "Trending Topics", url: "https://acsm.org/education-resources/trending-topics-resources/acsm-fitness-trends/" },
-      { label: "Trends 2025", url: "https://acsm.org/top-fitness-trends-2025/" },
-      { label: "Trends 2026", url: "https://acsm.org/top-fitness-trends-2026/" },
-      { label: "Research Study", url: "https://www.researchgate.net/publication/385247109_2025_ACSM_Worldwide_Fitness_Trends_Future_Directions_of_the_Health_and_Fitness_Industry" },
+      { label: "Top Fitness Trends", url: "https://www.acsm.org/news-detail/2023/01/01/top-fitness-trends" },
     ],
   },
   {
@@ -35,7 +32,7 @@ const references = [
     desc: "Publicações sobre exercício, prevenção de doenças e longevidade baseada em evidência.",
     color: "from-red-700 to-red-900",
     links: [
-      { label: "Health Publications", url: "https://www.health.harvard.edu/" },
+      { label: "Exercise and Fitness", url: "https://www.health.harvard.edu/exercise-and-fitness" },
     ],
   },
   {
@@ -44,7 +41,7 @@ const references = [
     desc: "Abordagem baseada em biomarcadores e medicina preventiva de alto nível.",
     color: "from-emerald-600 to-emerald-800",
     links: [
-      { label: "Health Essentials", url: "https://health.clevelandclinic.org/" },
+      { label: "Health Essentials", url: "https://health.clevelandclinic.org" },
     ],
   },
   {
@@ -53,7 +50,7 @@ const references = [
     desc: "Diretrizes de saúde integrativa, performance e acompanhamento contínuo.",
     color: "from-sky-600 to-sky-800",
     links: [
-      { label: "Healthy Lifestyle", url: "https://www.mayoclinic.org/healthy-lifestyle" },
+      { label: "Fitness & Lifestyle", url: "https://www.mayoclinic.org/healthy-lifestyle/fitness" },
     ],
   },
 ];
