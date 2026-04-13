@@ -78,6 +78,7 @@ function replaceVariables(text: string, profile: StudentProfile, renewLink: stri
   msg = msg.replace(/{altura}/gi, profile.height ? `${profile.height}cm` : "—");
   msg = msg.replace(/{objetivo}/gi, profile.objective || "—");
   msg = msg.replace(/{link_renovacao}/gi, renewLink || "—");
+  msg = msg.replace(/{link}/gi, renewLink || "—");
 
   if (profile.birth_date) {
     try {
