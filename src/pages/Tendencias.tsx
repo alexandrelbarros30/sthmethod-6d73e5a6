@@ -18,28 +18,43 @@ const fadeUp = {
 
 const references = [
   {
-    name: "American College of Sports Medicine",
+    name: "ACSM — Worldwide Fitness Trends",
     tag: "ACSM",
-    desc: "Worldwide Survey of Fitness Trends — referência global em diretrizes de exercício e saúde.",
+    desc: "Referência global em diretrizes de exercício e saúde.",
     color: "from-blue-600 to-blue-800",
+    links: [
+      { label: "Trending Topics", url: "https://acsm.org/education-resources/trending-topics-resources/acsm-fitness-trends/" },
+      { label: "Trends 2025", url: "https://acsm.org/top-fitness-trends-2025/" },
+      { label: "Trends 2026", url: "https://acsm.org/top-fitness-trends-2026/" },
+      { label: "Research Study", url: "https://www.researchgate.net/publication/385247109_2025_ACSM_Worldwide_Fitness_Trends_Future_Directions_of_the_Health_and_Fitness_Industry" },
+    ],
   },
   {
     name: "Harvard Medical School",
     tag: "HARVARD",
     desc: "Publicações sobre exercício, prevenção de doenças e longevidade baseada em evidência.",
     color: "from-red-700 to-red-900",
+    links: [
+      { label: "Health Publications", url: "https://www.health.harvard.edu/" },
+    ],
   },
   {
     name: "Cleveland Clinic",
     tag: "CLEVELAND",
     desc: "Abordagem baseada em biomarcadores e medicina preventiva de alto nível.",
     color: "from-emerald-600 to-emerald-800",
+    links: [
+      { label: "Health Essentials", url: "https://health.clevelandclinic.org/" },
+    ],
   },
   {
     name: "Mayo Clinic",
     tag: "MAYO",
     desc: "Diretrizes de saúde integrativa, performance e acompanhamento contínuo.",
     color: "from-sky-600 to-sky-800",
+    links: [
+      { label: "Healthy Lifestyle", url: "https://www.mayoclinic.org/healthy-lifestyle" },
+    ],
   },
 ];
 
