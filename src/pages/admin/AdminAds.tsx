@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,11 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, Megaphone, Calendar, ArrowUp, ArrowDown, ImageIcon, MessageCircle, ExternalLink, Eye } from "lucide-react";
+import { Plus, Pencil, Trash2, Megaphone, Calendar, ArrowUp, ArrowDown, ImageIcon, MessageCircle, ExternalLink, Eye, EyeOff, Timer } from "lucide-react";
 import { format } from "date-fns";
 import { processAndUpload, validateImageFile } from "@/lib/image-upload";
 
@@ -43,12 +44,36 @@ const emptyForm: AdForm = {
   display_duration_seconds: 0,
 };
 
+/* ── Preview countdown hook ── */
+const usePreviewCountdown = (seconds: number, active: boolean) => {
+  const [remaining, setRemaining] = useState(seconds);
+  const [running, setRunning] = useState(false);
+
+  const start = useCallback(() => {
+    if (seconds <= 0) return;
+    setRemaining(seconds);
+    setRunning(true);
+  }, [seconds]);
+
+  useEffect(() => {
+    if (!running || !active) return;
+    if (remaining <= 0) { setRunning(false); return; }
+    const t = setTimeout(() => setRemaining((r) => r - 1), 1000);
+    return () => clearTimeout(t);
+  }, [running, remaining, active]);
+
+  return { remaining, running, start };
+};
+
 const AdminAds = () => {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<AdForm>(emptyForm);
   const [uploading, setUploading] = useState(false);
+  const [previewTab, setPreviewTab] = useState("edit");
+
+  const countdown = usePreviewCountdown(form.display_duration_seconds, previewTab === "preview");
 
   const { data: ads, isLoading } = useQuery({
     queryKey: ["admin-ads"],
@@ -107,6 +132,17 @@ const AdminAds = () => {
     },
   });
 
+  const toggleActiveMutation = useMutation({
+    mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
+      const { error } = await supabase.from("ads").update({ active }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-ads"] });
+      queryClient.invalidateQueries({ queryKey: ["student-ads"] });
+    },
+  });
+
   const reorderMutation = useMutation({
     mutationFn: async ({ id, newOrder }: { id: string; newOrder: number }) => {
       const { error } = await supabase.from("ads").update({ sort_order: newOrder }).eq("id", id);
@@ -148,6 +184,7 @@ const AdminAds = () => {
       end_date: ad.end_date || "",
       display_duration_seconds: ad.display_duration_seconds || 0,
     });
+    setPreviewTab("edit");
     setDialogOpen(true);
   };
 
@@ -155,6 +192,7 @@ const AdminAds = () => {
     setEditingId(null);
     const nextOrder = (ads?.length || 0);
     setForm({ ...emptyForm, sort_order: nextOrder });
+    setPreviewTab("edit");
     setDialogOpen(true);
   };
 
@@ -170,10 +208,15 @@ const AdminAds = () => {
 
   const statusBadge = (ad: any) => {
     const now = new Date().toISOString().split("T")[0];
-    if (!ad.active) return <Badge variant="secondary">Inativo</Badge>;
+    if (!ad.active) return <Badge variant="secondary" className="gap-1"><EyeOff className="w-3 h-3" /> Oculto</Badge>;
     if (ad.end_date && ad.end_date < now) return <Badge variant="outline" className="text-muted-foreground">Encerrado</Badge>;
     if (ad.start_date > now) return <Badge className="bg-amber-500 text-white">Agendado</Badge>;
     return <Badge className="bg-emerald-500 text-white">Ativo</Badge>;
+  };
+
+  const openWhatsApp = (number: string) => {
+    const clean = number.replace(/\D/g, "");
+    window.open(`https://wa.me/${clean}`, "_blank");
   };
 
   return (
@@ -199,7 +242,7 @@ const AdminAds = () => {
       ) : (
         <div className="space-y-3">
           {ads.map((ad: any, idx: number) => (
-            <Card key={ad.id}>
+            <Card key={ad.id} className={!ad.active ? "opacity-60" : ""}>
               <CardContent className="py-4">
                 <div className="flex items-start gap-3">
                   {ad.image_url && (
@@ -224,11 +267,16 @@ const AdminAds = () => {
                         </span>
                       )}
                       {ad.display_duration_seconds > 0 && (
-                        <Badge variant="outline" className="text-[10px]">{ad.display_duration_seconds}s</Badge>
+                        <Badge variant="outline" className="text-[10px] gap-1"><Timer className="w-3 h-3" />{ad.display_duration_seconds}s</Badge>
                       )}
                     </div>
                   </div>
-                  <div className="flex flex-col gap-1 shrink-0">
+                  <div className="flex flex-col gap-1.5 shrink-0 items-end">
+                    <Switch
+                      checked={ad.active}
+                      onCheckedChange={(checked) => toggleActiveMutation.mutate({ id: ad.id, active: checked })}
+                      className="data-[state=checked]:bg-emerald-500"
+                    />
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" className="h-7 w-7" disabled={idx === 0} onClick={() => moveAd(ad, "up")}>
                         <ArrowUp className="w-3.5 h-3.5" />
@@ -258,7 +306,7 @@ const AdminAds = () => {
           <DialogHeader>
             <DialogTitle>{editingId ? "Editar Propaganda" : "Nova Propaganda"}</DialogTitle>
           </DialogHeader>
-          <Tabs defaultValue="edit" className="w-full">
+          <Tabs value={previewTab} onValueChange={(v) => { setPreviewTab(v); if (v === "preview") countdown.start(); }} className="w-full">
             <TabsList className="w-full mb-3">
               <TabsTrigger value="edit" className="flex-1 gap-1.5"><Pencil className="w-3.5 h-3.5" /> Editar</TabsTrigger>
               <TabsTrigger value="preview" className="flex-1 gap-1.5"><Eye className="w-3.5 h-3.5" /> Visualizar</TabsTrigger>
@@ -329,9 +377,15 @@ const AdminAds = () => {
                       <Input type="number" value={form.display_duration_seconds} onChange={(e) => setForm({ ...form, display_duration_seconds: parseInt(e.target.value) || 0 })} placeholder="0 = sem timer" />
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} className="rounded border-input" />
-                    <label className="text-sm">Ativo</label>
+                  <div className="flex items-center justify-between rounded-lg border p-3">
+                    <div className="flex items-center gap-2">
+                      {form.active ? <Eye className="w-4 h-4 text-emerald-500" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
+                      <div>
+                        <p className="text-sm font-medium">{form.active ? "Visível para alunos" : "Oculta dos alunos"}</p>
+                        <p className="text-[10px] text-muted-foreground">{form.active ? "A propaganda será exibida aos alunos" : "A propaganda não será exibida"}</p>
+                      </div>
+                    </div>
+                    <Switch checked={form.active} onCheckedChange={(checked) => setForm({ ...form, active: checked })} className="data-[state=checked]:bg-emerald-500" />
                   </div>
                   <Button className="w-full" onClick={() => saveMutation.mutate()} disabled={!form.title || saveMutation.isPending}>
                     {saveMutation.isPending ? "Salvando..." : editingId ? "Atualizar" : "Criar Propaganda"}
@@ -343,6 +397,30 @@ const AdminAds = () => {
             <TabsContent value="preview">
               <ScrollArea className="max-h-[60vh]">
                 <div className="space-y-4 pr-2">
+                  {/* Countdown bar */}
+                  {form.display_duration_seconds > 0 && (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                        <span className="flex items-center gap-1 uppercase tracking-wider"><Timer className="w-3 h-3" /> Temporizador</span>
+                        <span className="font-mono font-bold text-sm text-foreground">{countdown.running ? countdown.remaining : form.display_duration_seconds}s</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-primary transition-all duration-1000 ease-linear"
+                          style={{ width: `${countdown.running ? (countdown.remaining / form.display_duration_seconds) * 100 : 100}%` }}
+                        />
+                      </div>
+                      {!countdown.running && (
+                        <Button variant="outline" size="sm" className="w-full text-xs gap-1.5" onClick={countdown.start}>
+                          <Timer className="w-3.5 h-3.5" /> Simular contagem
+                        </Button>
+                      )}
+                      {countdown.running && countdown.remaining <= 0 && (
+                        <p className="text-xs text-center text-amber-500 font-medium">⏱ Popup seria fechado automaticamente</p>
+                      )}
+                    </div>
+                  )}
+
                   <p className="text-[10px] text-muted-foreground text-center uppercase tracking-wider">Visão do aluno — Card</p>
                   <Card className="overflow-hidden border-border/50">
                     <CardContent className="p-0">
@@ -377,12 +455,12 @@ const AdminAds = () => {
                           )}
                           <div className="flex gap-2 pt-1">
                             {form.whatsapp_number && (
-                              <Button size="sm" className="flex-1 bg-green-600 text-white text-xs gap-1.5" disabled>
+                              <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs gap-1.5" onClick={() => openWhatsApp(form.whatsapp_number)}>
                                 <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
                               </Button>
                             )}
                             {form.external_link && (
-                              <Button size="sm" variant="outline" className="flex-1 text-xs gap-1.5" disabled>
+                              <Button size="sm" variant="outline" className="flex-1 text-xs gap-1.5" onClick={() => window.open(form.external_link, "_blank")}>
                                 <ExternalLink className="w-3.5 h-3.5" /> Site
                               </Button>
                             )}
@@ -392,8 +470,10 @@ const AdminAds = () => {
                     </>
                   )}
 
-                  {form.display_duration_seconds > 0 && (
-                    <p className="text-[10px] text-muted-foreground text-center">⏱ Popup fechará automaticamente após {form.display_duration_seconds}s</p>
+                  {!form.active && (
+                    <div className="flex items-center gap-2 justify-center text-amber-500 text-xs font-medium">
+                      <EyeOff className="w-4 h-4" /> Esta propaganda está oculta dos alunos
+                    </div>
                   )}
 
                   <Button className="w-full" onClick={() => saveMutation.mutate()} disabled={!form.title || saveMutation.isPending}>
