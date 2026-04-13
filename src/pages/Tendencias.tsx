@@ -190,7 +190,7 @@ const Tendencias = () => {
                 <div className={`h-0.5 bg-gradient-to-r ${ref.color} opacity-30 group-hover:opacity-70 transition-opacity`} />
               </motion.div>
             ))}
-          </div>
+          </motion.div>
 
           <motion.p variants={fadeUp} custom={5} className="text-center text-xs text-muted-foreground mt-5 font-medium">
             👉 Todos reforçando:{" "}
