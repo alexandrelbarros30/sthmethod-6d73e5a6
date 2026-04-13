@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Salad, FlaskConical, Activity, User, Dumbbell, TrendingUp, BookOpen, CreditCard, ListChecks, LogOut, FileText, Shield, Microscope, Megaphone } from "lucide-react";
+import { LayoutDashboard, Salad, FlaskConical, Activity, User, Dumbbell, TrendingUp, BookOpen, CreditCard, ListChecks, LogOut, FileText, Shield, Microscope, Megaphone, Newspaper } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,6 +18,7 @@ const menuItems = [
   { to: "/dashboard/profile", icon: FileText, label: "Minha Ficha" },
   { to: "/dashboard/bioimpedance", icon: Activity, label: "Bioimpedância" },
   { to: "/dashboard/content", icon: BookOpen, label: "Conteúdo" },
+  { to: "/tendencias", icon: Newspaper, label: "STH News" },
   { to: "/dashboard/metabolic", icon: Microscope, label: "Painel Metabólico" },
   { to: "/dashboard/guided-workout", icon: ListChecks, label: "Treino Guiado" },
   { to: "/dashboard/ads", icon: Megaphone, label: "Propagandas" },
