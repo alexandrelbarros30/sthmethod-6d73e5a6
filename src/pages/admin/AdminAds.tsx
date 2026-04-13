@@ -258,87 +258,151 @@ const AdminAds = () => {
           <DialogHeader>
             <DialogTitle>{editingId ? "Editar Propaganda" : "Nova Propaganda"}</DialogTitle>
           </DialogHeader>
-          <ScrollArea className="max-h-[70vh]">
-            <div className="space-y-4 pr-2">
-              <div>
-                <label className="text-xs font-medium mb-1 block">Título</label>
-                <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Nome da propaganda" />
-              </div>
+          <Tabs defaultValue="edit" className="w-full">
+            <TabsList className="w-full mb-3">
+              <TabsTrigger value="edit" className="flex-1 gap-1.5"><Pencil className="w-3.5 h-3.5" /> Editar</TabsTrigger>
+              <TabsTrigger value="preview" className="flex-1 gap-1.5"><Eye className="w-3.5 h-3.5" /> Visualizar</TabsTrigger>
+            </TabsList>
 
-              <div>
-                <label className="text-xs font-medium mb-1 block">Descrição</label>
-                <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Descrição curta" />
-              </div>
-
-              <div>
-                <label className="text-xs font-medium mb-1 block">Imagem</label>
-                <div className="flex items-center gap-3">
-                  {form.image_url ? (
-                    <img src={form.image_url} alt="" className="w-16 h-16 rounded-xl object-cover" />
-                  ) : (
-                    <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center">
-                      <ImageIcon className="w-6 h-6 text-muted-foreground/40" />
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <Input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} />
-                    {form.image_url && (
-                      <Button variant="link" size="sm" className="text-xs text-destructive p-0 h-auto mt-1" onClick={() => setForm({ ...form, image_url: "" })}>
-                        Remover imagem
-                      </Button>
-                    )}
+            <TabsContent value="edit">
+              <ScrollArea className="max-h-[60vh]">
+                <div className="space-y-4 pr-2">
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Título</label>
+                    <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Nome da propaganda" />
                   </div>
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Descrição</label>
+                    <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Descrição curta" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Imagem</label>
+                    <div className="flex items-center gap-3">
+                      {form.image_url ? (
+                        <img src={form.image_url} alt="" className="w-16 h-16 rounded-xl object-cover" />
+                      ) : (
+                        <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center">
+                          <ImageIcon className="w-6 h-6 text-muted-foreground/40" />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <Input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} />
+                        {form.image_url && (
+                          <Button variant="link" size="sm" className="text-xs text-destructive p-0 h-auto mt-1" onClick={() => setForm({ ...form, image_url: "" })}>
+                            Remover imagem
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Conteúdo do Popup</label>
+                    <Textarea value={form.popup_content} onChange={(e) => setForm({ ...form, popup_content: e.target.value })} rows={4} placeholder="Texto detalhado exibido ao abrir a propaganda..." />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">WhatsApp</label>
+                      <Input value={form.whatsapp_number} onChange={(e) => setForm({ ...form, whatsapp_number: e.target.value })} placeholder="5521999999999" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">Link Externo</label>
+                      <Input value={form.external_link} onChange={(e) => setForm({ ...form, external_link: e.target.value })} placeholder="https://..." />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">Data de Início</label>
+                      <Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">Data de Encerramento</label>
+                      <Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">Ordem</label>
+                      <Input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">Tempo exibição (seg)</label>
+                      <Input type="number" value={form.display_duration_seconds} onChange={(e) => setForm({ ...form, display_duration_seconds: parseInt(e.target.value) || 0 })} placeholder="0 = sem timer" />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} className="rounded border-input" />
+                    <label className="text-sm">Ativo</label>
+                  </div>
+                  <Button className="w-full" onClick={() => saveMutation.mutate()} disabled={!form.title || saveMutation.isPending}>
+                    {saveMutation.isPending ? "Salvando..." : editingId ? "Atualizar" : "Criar Propaganda"}
+                  </Button>
                 </div>
-              </div>
+              </ScrollArea>
+            </TabsContent>
 
-              <div>
-                <label className="text-xs font-medium mb-1 block">Conteúdo do Popup</label>
-                <Textarea value={form.popup_content} onChange={(e) => setForm({ ...form, popup_content: e.target.value })} rows={4} placeholder="Texto detalhado exibido ao abrir a propaganda..." />
-              </div>
+            <TabsContent value="preview">
+              <ScrollArea className="max-h-[60vh]">
+                <div className="space-y-4 pr-2">
+                  <p className="text-[10px] text-muted-foreground text-center uppercase tracking-wider">Visão do aluno — Card</p>
+                  <Card className="overflow-hidden border-border/50">
+                    <CardContent className="p-0">
+                      <div className="flex items-center gap-4 p-4">
+                        {form.image_url ? (
+                          <img src={form.image_url} alt={form.title} className="w-16 h-16 rounded-xl object-cover" />
+                        ) : (
+                          <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                            <ImageIcon className="w-6 h-6 text-muted-foreground/40" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-bold text-foreground">{form.title || "Sem título"}</h3>
+                          <p className="text-xs text-muted-foreground mt-0.5">{form.description || "Sem descrição"}</p>
+                        </div>
+                        <Button size="sm" variant="outline" className="text-xs shrink-0" disabled>Ver</Button>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-medium mb-1 block">WhatsApp</label>
-                  <Input value={form.whatsapp_number} onChange={(e) => setForm({ ...form, whatsapp_number: e.target.value })} placeholder="5521999999999" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block">Link Externo</label>
-                  <Input value={form.external_link} onChange={(e) => setForm({ ...form, external_link: e.target.value })} placeholder="https://..." />
-                </div>
-              </div>
+                  {(form.popup_content || form.image_url) && (
+                    <>
+                      <p className="text-[10px] text-muted-foreground text-center uppercase tracking-wider pt-2">Visão do aluno — Popup</p>
+                      <Card className="border-border/50">
+                        <CardContent className="p-4 space-y-3">
+                          <h3 className="text-base font-bold text-foreground">{form.title || "Sem título"}</h3>
+                          {form.image_url && (
+                            <img src={form.image_url} alt="" className="w-full rounded-xl object-cover max-h-48" />
+                          )}
+                          {form.popup_content && (
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{form.popup_content}</p>
+                          )}
+                          <div className="flex gap-2 pt-1">
+                            {form.whatsapp_number && (
+                              <Button size="sm" className="flex-1 bg-green-600 text-white text-xs gap-1.5" disabled>
+                                <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+                              </Button>
+                            )}
+                            {form.external_link && (
+                              <Button size="sm" variant="outline" className="flex-1 text-xs gap-1.5" disabled>
+                                <ExternalLink className="w-3.5 h-3.5" /> Site
+                              </Button>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </>
+                  )}
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-medium mb-1 block">Data de Início</label>
-                  <Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
-                </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block">Data de Encerramento</label>
-                  <Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
-                </div>
-              </div>
+                  {form.display_duration_seconds > 0 && (
+                    <p className="text-[10px] text-muted-foreground text-center">⏱ Popup fechará automaticamente após {form.display_duration_seconds}s</p>
+                  )}
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-medium mb-1 block">Ordem</label>
-                  <Input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })} />
+                  <Button className="w-full" onClick={() => saveMutation.mutate()} disabled={!form.title || saveMutation.isPending}>
+                    {saveMutation.isPending ? "Salvando..." : editingId ? "Atualizar" : "Criar Propaganda"}
+                  </Button>
                 </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block">Tempo exibição (seg)</label>
-                  <Input type="number" value={form.display_duration_seconds} onChange={(e) => setForm({ ...form, display_duration_seconds: parseInt(e.target.value) || 0 })} placeholder="0 = sem timer" />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} className="rounded border-input" />
-                <label className="text-sm">Ativo</label>
-              </div>
-
-              <Button className="w-full" onClick={() => saveMutation.mutate()} disabled={!form.title || saveMutation.isPending}>
-                {saveMutation.isPending ? "Salvando..." : editingId ? "Atualizar" : "Criar Propaganda"}
-              </Button>
-            </div>
-          </ScrollArea>
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </DashboardLayout>
