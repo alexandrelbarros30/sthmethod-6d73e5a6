@@ -106,6 +106,30 @@ const Tendencias = () => {
       </header>
 
       <main className="pt-24 pb-16 px-4 max-w-3xl mx-auto">
+        {/* Featured Article Link */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mb-6"
+        >
+          <Link
+            to="/tendencias/cenario-fitness-2026"
+            className="block rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-background to-primary/5 p-4 hover:border-primary/50 transition-colors group"
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[9px] font-black bg-primary text-primary-foreground px-2 py-0.5 rounded tracking-wider">NOVA MATÉRIA</span>
+              <span className="text-[10px] text-muted-foreground">Abril 2026</span>
+            </div>
+            <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors leading-tight">
+              O cenário atual do fitness global: IFBB, FIBO Europe e o fim do conteúdo genérico
+            </h3>
+            <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+              Ler matéria completa <ChevronRight className="w-3 h-3" />
+            </p>
+          </Link>
+        </motion.div>
+
         {/* HEADLINE — Breaking news style */}
         <motion.section
           initial="hidden"
