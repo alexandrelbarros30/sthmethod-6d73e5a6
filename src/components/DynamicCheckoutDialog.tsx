@@ -254,9 +254,15 @@ const DynamicCheckoutDialog = ({
               <p className="text-2xl font-bold text-primary mt-1">R$ {priceAfterCoupon.toFixed(2)}</p>
               <p className="text-xs text-muted-foreground mt-1">Preço no PIX</p>
               {selectedPlan.card_price && (
-                <p className="text-xs text-muted-foreground">
-                  Cartão: {selectedPlan.card_price}
-                </p>
+                <div className="text-xs text-muted-foreground space-y-0.5">
+                  <p>Cartão: {selectedPlan.card_price}
+                    {selectedPlan.duration_days >= 180
+                      ? " em até 6x de R$ 88,31"
+                      : selectedPlan.duration_days >= 90
+                        ? " em até 3x de R$ 96,63"
+                        : " à vista"}
+                  </p>
+                </div>
               )}
             </div>
 
