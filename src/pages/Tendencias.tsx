@@ -91,15 +91,25 @@ const Tendencias = () => {
           </div>
           {/* Ticker */}
           <div className="h-7 flex items-center gap-3 border-t border-border/50 overflow-hidden">
-            <span className="shrink-0 text-[9px] font-bold bg-primary text-primary-foreground px-2 py-0.5 rounded">AO VIVO</span>
-            <div className="flex items-center gap-4 animate-[marquee_30s_linear_infinite] whitespace-nowrap">
-              <span className="text-[10px] text-muted-foreground">🌍 ACSM publica novas diretrizes globais de fitness</span>
-              <span className="text-[10px] text-primary">•</span>
-              <span className="text-[10px] text-muted-foreground">🧬 Harvard reforça: dados + exercício = longevidade</span>
-              <span className="text-[10px] text-primary">•</span>
-              <span className="text-[10px] text-muted-foreground">📊 Cleveland Clinic aposta em biomarcadores preventivos</span>
-              <span className="text-[10px] text-primary">•</span>
-              <span className="text-[10px] text-muted-foreground">🏥 Mayo Clinic atualiza protocolo de saúde integrativa</span>
+            <span className="shrink-0 text-[9px] font-bold bg-primary text-primary-foreground px-2 py-0.5 rounded leading-none">AO VIVO</span>
+            <div className="relative flex-1 overflow-hidden h-full flex items-center">
+              <div className="flex items-center gap-6 animate-[marquee_30s_linear_infinite] whitespace-nowrap">
+                <span className="text-[10px] text-muted-foreground">🌍 ACSM publica novas diretrizes globais de fitness</span>
+                <span className="text-[10px] text-primary">•</span>
+                <span className="text-[10px] text-muted-foreground">🧬 Harvard reforça: dados + exercício = longevidade</span>
+                <span className="text-[10px] text-primary">•</span>
+                <span className="text-[10px] text-muted-foreground">📊 Cleveland Clinic aposta em biomarcadores preventivos</span>
+                <span className="text-[10px] text-primary">•</span>
+                <span className="text-[10px] text-muted-foreground">🏥 Mayo Clinic atualiza protocolo de saúde integrativa</span>
+                <span className="text-[10px] text-primary mx-4">•</span>
+                <span className="text-[10px] text-muted-foreground">🌍 ACSM publica novas diretrizes globais de fitness</span>
+                <span className="text-[10px] text-primary">•</span>
+                <span className="text-[10px] text-muted-foreground">🧬 Harvard reforça: dados + exercício = longevidade</span>
+                <span className="text-[10px] text-primary">•</span>
+                <span className="text-[10px] text-muted-foreground">📊 Cleveland Clinic aposta em biomarcadores preventivos</span>
+                <span className="text-[10px] text-primary">•</span>
+                <span className="text-[10px] text-muted-foreground">🏥 Mayo Clinic atualiza protocolo de saúde integrativa</span>
+              </div>
             </div>
           </div>
         </div>
