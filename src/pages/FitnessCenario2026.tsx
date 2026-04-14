@@ -47,15 +47,25 @@ const FitnessCenario2026 = () => {
           </div>
           {/* Ticker */}
           <div className="h-7 flex items-center gap-3 border-t border-border/50 overflow-hidden">
-            <span className="shrink-0 text-[9px] font-bold bg-primary text-primary-foreground px-2 py-0.5 rounded">EDIÇÃO ESPECIAL</span>
-            <div className="flex items-center gap-4 animate-[marquee_35s_linear_infinite] whitespace-nowrap">
-              <span className="text-[10px] text-muted-foreground">🏆 IFBB confirma European Championships e Mr. Universe 2026</span>
-              <span className="text-[10px] text-primary">•</span>
-              <span className="text-[10px] text-muted-foreground">🇩🇪 FIBO Europe bate recorde com foco em saúde integrada</span>
-              <span className="text-[10px] text-primary">•</span>
-              <span className="text-[10px] text-muted-foreground">💻 Bodybuilding.com reposiciona marca para dados e longevidade</span>
-              <span className="text-[10px] text-primary">•</span>
-              <span className="text-[10px] text-muted-foreground">📊 Fitness em 2026: de estética para sistema biológico</span>
+            <span className="shrink-0 text-[9px] font-bold bg-primary text-primary-foreground px-2 py-0.5 rounded leading-none">EDIÇÃO ESPECIAL</span>
+            <div className="relative flex-1 overflow-hidden h-full flex items-center">
+              <div className="flex items-center gap-6 animate-[marquee_35s_linear_infinite] whitespace-nowrap">
+                <span className="text-[10px] text-muted-foreground">🏆 IFBB confirma European Championships e Mr. Universe 2026</span>
+                <span className="text-[10px] text-primary">•</span>
+                <span className="text-[10px] text-muted-foreground">🇩🇪 FIBO Europe bate recorde com foco em saúde integrada</span>
+                <span className="text-[10px] text-primary">•</span>
+                <span className="text-[10px] text-muted-foreground">💻 Bodybuilding.com reposiciona marca para dados e longevidade</span>
+                <span className="text-[10px] text-primary">•</span>
+                <span className="text-[10px] text-muted-foreground">📊 Fitness em 2026: de estética para sistema biológico</span>
+                <span className="text-[10px] text-primary mx-4">•</span>
+                <span className="text-[10px] text-muted-foreground">🏆 IFBB confirma European Championships e Mr. Universe 2026</span>
+                <span className="text-[10px] text-primary">•</span>
+                <span className="text-[10px] text-muted-foreground">🇩🇪 FIBO Europe bate recorde com foco em saúde integrada</span>
+                <span className="text-[10px] text-primary">•</span>
+                <span className="text-[10px] text-muted-foreground">💻 Bodybuilding.com reposiciona marca para dados e longevidade</span>
+                <span className="text-[10px] text-primary">•</span>
+                <span className="text-[10px] text-muted-foreground">📊 Fitness em 2026: de estética para sistema biológico</span>
+              </div>
             </div>
           </div>
         </div>
