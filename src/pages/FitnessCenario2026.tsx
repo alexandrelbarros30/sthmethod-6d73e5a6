@@ -3,9 +3,12 @@ import { Link } from "react-router-dom";
 import {
   ArrowLeft, Newspaper, Globe, MessageCircle, Rocket,
   Trophy, Cpu, TrendingUp, Target, Layers, ChevronRight,
-  ExternalLink, Zap, Shield,
+  ExternalLink, Zap, Shield, Flame, Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import fiboImg from "@/assets/fibo-2026.jpg";
+import ifbbMemphisImg from "@/assets/ifbb-memphis-2026.jpg";
+import ifbbMercosurImg from "@/assets/ifbb-mercosur-2026.jpg";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -109,27 +112,55 @@ const FitnessCenario2026 = () => {
             <div className="flex-1 h-px bg-border" />
           </motion.div>
 
-          <motion.div variants={fadeUp} custom={1} className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5 space-y-3">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[9px] font-black bg-amber-500/20 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded tracking-wider">COMPETIÇÕES</span>
+          <motion.div variants={fadeUp} custom={1} className="rounded-2xl border border-amber-500/20 bg-amber-500/5 overflow-hidden">
+            {/* Image grid */}
+            <div className="grid grid-cols-2 gap-0">
+              <img src={ifbbMercosurImg} alt="Copa Mercosur IFBB Brasil 2026" className="w-full h-36 md:h-48 object-cover" />
+              <img src={ifbbMemphisImg} alt="IFBB Pro League Memphis Championship 2026" className="w-full h-36 md:h-48 object-cover" />
             </div>
-            <p className="text-sm text-foreground leading-relaxed">
-              A IFBB (International Federation of Bodybuilding & Fitness) segue como a <strong>maior organização 
-              competitiva do planeta</strong>. Em 2026, os eventos de destaque incluem o <strong>European Championships</strong> e o 
-              lendário <strong>Mr. Universe</strong> — ambos com protocolos de avaliação cada vez mais técnicos.
-            </p>
-            <p className="text-sm text-foreground leading-relaxed">
-              O que mudou: a elite física não é mais avaliada apenas pela simetria e volume muscular. 
-              Agora, a <strong>condição metabólica, a maturidade dos protocolos e a sustentabilidade 
-              do preparo</strong> são fatores decisivos. Atletas que chegam "secos" mas sem saúde são cada vez 
-              mais questionados — pelo público e pelos juízes.
-            </p>
-            <div className="flex items-start gap-2 p-3 rounded-xl bg-background/60 border border-border/40">
-              <Target className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
-              <p className="text-xs text-muted-foreground">
-                <strong className="text-foreground">Leitura STH:</strong> Performance de palco sem performance biológica é insustentável. 
-                Os atletas que dominam o circuito internacional hoje são os que tratam o corpo como um <em>sistema</em>, não como uma vitrine.
+            <div className="p-5 space-y-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[9px] font-black bg-amber-500/20 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded tracking-wider">COMPETIÇÕES</span>
+                <span className="text-[9px] text-muted-foreground flex items-center gap-1"><Calendar className="w-3 h-3" /> Mai–Jun 2026</span>
+              </div>
+              <p className="text-sm text-foreground leading-relaxed">
+                A IFBB (International Federation of Bodybuilding & Fitness) segue como a <strong>maior organização 
+                competitiva do planeta</strong>. Em 2026, os eventos de destaque incluem o <strong>European Championships</strong>, o 
+                lendário <strong>Mr. Universe</strong>, a <strong>Copa Mercosur IFBB no Brasil</strong> e o 
+                <strong> Memphis Bodybuilding Championship</strong> — todos com protocolos de avaliação cada vez mais técnicos.
               </p>
+              <p className="text-sm text-foreground leading-relaxed">
+                O que mudou: a elite física não é mais avaliada apenas pela simetria e volume muscular. 
+                Agora, a <strong>condição metabólica, a maturidade dos protocolos e a sustentabilidade 
+                do preparo</strong> são fatores decisivos. Atletas que chegam "secos" mas sem saúde são cada vez 
+                mais questionados — pelo público e pelos juízes.
+              </p>
+
+              {/* Mini news cards */}
+              <div className="grid grid-cols-1 gap-2 mt-2">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-background/60 border border-border/40">
+                  <Flame className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[10px] font-bold text-foreground">Copa Mercosur IFBB — Brasil 2026</p>
+                    <p className="text-[9px] text-muted-foreground">Atletas de 12 países do Mercosul competem em solo brasileiro. O evento reforça a expansão da IFBB na América Latina com foco em categorias clássicas e novas divisões.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-background/60 border border-border/40">
+                  <Flame className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[10px] font-bold text-foreground">Memphis IFBB Pro & NPC — Maio 2026</p>
+                    <p className="text-[9px] text-muted-foreground">Qualifier oficial para o Olympia. Men's Physique, Bikini Masters e divisões 35+ a 60+ mostram a longevidade competitiva como nova tendência.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2 p-3 rounded-xl bg-background/60 border border-border/40">
+                <Target className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                <p className="text-xs text-muted-foreground">
+                  <strong className="text-foreground">Leitura STH:</strong> Performance de palco sem performance biológica é insustentável. 
+                  Os atletas que dominam o circuito internacional hoje são os que tratam o corpo como um <em>sistema</em>, não como uma vitrine.
+                </p>
+              </div>
             </div>
           </motion.div>
         </motion.section>
@@ -142,38 +173,43 @@ const FitnessCenario2026 = () => {
             <div className="flex-1 h-px bg-border" />
           </motion.div>
 
-          <motion.div variants={fadeUp} custom={1} className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-5 space-y-3">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[9px] font-black bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 px-2 py-0.5 rounded tracking-wider">ALEMANHA 2026</span>
-            </div>
-            <p className="text-sm text-foreground leading-relaxed">
-              A <strong>FIBO</strong> (Fitness, Innovation, Body & Outdoor), realizada em Colônia, na Alemanha, é a <strong>maior feira 
-              de fitness do mundo</strong>. Em 2026, o evento consolidou uma tendência irreversível: a fusão entre 
-              <strong> fitness, tecnologia médica e lifestyle</strong>.
-            </p>
-            <p className="text-sm text-foreground leading-relaxed">
-              Os destaques não foram suplementos ou equipamentos. Foram <strong>plataformas de rastreamento biológico, 
-              dispositivos de bioimpedância em tempo real, integração com prontuários médicos</strong> e painéis 
-              inteiros dedicados à <strong>saúde mental como componente de performance</strong>.
-            </p>
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              <div className="p-3 rounded-xl bg-background/60 border border-border/40 text-center">
-                <Layers className="w-5 h-5 mx-auto mb-1.5 text-cyan-500" />
-                <p className="text-[10px] font-bold text-foreground">Saúde Integrada</p>
-                <p className="text-[9px] text-muted-foreground">Fitness + Medicina + Tech</p>
+          <motion.div variants={fadeUp} custom={1} className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 overflow-hidden">
+            {/* FIBO Hero image */}
+            <img src={fiboImg} alt="FIBO 2026 — Exhibition Centre Cologne, 16-19 April" className="w-full h-44 md:h-56 object-cover" />
+            <div className="p-5 space-y-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[9px] font-black bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 px-2 py-0.5 rounded tracking-wider">ALEMANHA 2026</span>
+                <span className="text-[9px] text-muted-foreground flex items-center gap-1"><Calendar className="w-3 h-3" /> 16–19 Abril</span>
               </div>
-              <div className="p-3 rounded-xl bg-background/60 border border-border/40 text-center">
-                <Shield className="w-5 h-5 mx-auto mb-1.5 text-cyan-500" />
-                <p className="text-[10px] font-bold text-foreground">Dados Biológicos</p>
-                <p className="text-[9px] text-muted-foreground">Wearables + Exames</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-2 p-3 rounded-xl bg-background/60 border border-border/40">
-              <Target className="w-4 h-4 text-cyan-500 mt-0.5 shrink-0" />
-              <p className="text-xs text-muted-foreground">
-                <strong className="text-foreground">Leitura STH:</strong> A Europa não vende mais fitness. 
-                Vende <em>gestão biológica</em>. E quem não acompanha, fica preso num modelo de década passada.
+              <p className="text-sm text-foreground leading-relaxed">
+                A <strong>FIBO</strong> (Fitness, Innovation, Body & Outdoor), realizada em Colônia, na Alemanha, é a <strong>maior feira 
+                de fitness do mundo</strong>. Em 2026, o evento consolidou uma tendência irreversível: a fusão entre 
+                <strong> fitness, tecnologia médica e lifestyle</strong>.
               </p>
+              <p className="text-sm text-foreground leading-relaxed">
+                Os destaques não foram suplementos ou equipamentos. Foram <strong>plataformas de rastreamento biológico, 
+                dispositivos de bioimpedância em tempo real, integração com prontuários médicos</strong> e painéis 
+                inteiros dedicados à <strong>saúde mental como componente de performance</strong>.
+              </p>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <div className="p-3 rounded-xl bg-background/60 border border-border/40 text-center">
+                  <Layers className="w-5 h-5 mx-auto mb-1.5 text-cyan-500" />
+                  <p className="text-[10px] font-bold text-foreground">Saúde Integrada</p>
+                  <p className="text-[9px] text-muted-foreground">Fitness + Medicina + Tech</p>
+                </div>
+                <div className="p-3 rounded-xl bg-background/60 border border-border/40 text-center">
+                  <Shield className="w-5 h-5 mx-auto mb-1.5 text-cyan-500" />
+                  <p className="text-[10px] font-bold text-foreground">Dados Biológicos</p>
+                  <p className="text-[9px] text-muted-foreground">Wearables + Exames</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2 p-3 rounded-xl bg-background/60 border border-border/40">
+                <Target className="w-4 h-4 text-cyan-500 mt-0.5 shrink-0" />
+                <p className="text-xs text-muted-foreground">
+                  <strong className="text-foreground">Leitura STH:</strong> A Europa não vende mais fitness. 
+                  Vende <em>gestão biológica</em>. E quem não acompanha, fica preso num modelo de década passada.
+                </p>
+              </div>
             </div>
           </motion.div>
         </motion.section>
