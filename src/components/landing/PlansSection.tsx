@@ -81,13 +81,13 @@ const PlansSection = () => {
                   <span className="text-4xl font-display font-bold gradient-text">{plan.price}</span>
                   <span className="text-muted-foreground text-sm">/ {plan.duration}</span>
                 </div>
-                {plan.card_price && (
+{plan.card_price && (
                   <p className="text-xs text-muted-foreground mb-4">
                     {plan.duration_days >= 180
                       ? `ou ${plan.card_price} no cartão em até 6x de R$ 88,31`
                       : plan.duration_days >= 90
                         ? `ou ${plan.card_price} no cartão em até 3x de R$ 96,63`
-                        : `ou ${plan.card_price} à vista no cartão`}
+                        : `ou ${plan.card_price} no cartão à vista`}
                   </p>
                 )}
                 <ul className="space-y-3 mb-8">
