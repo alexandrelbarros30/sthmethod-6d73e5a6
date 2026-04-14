@@ -84,9 +84,9 @@ const PlansSection = () => {
                 {plan.card_price && (
                   <p className="text-xs text-muted-foreground mb-4">
                     {plan.duration_days >= 180
-                      ? `ou 6x de R$ 88,15 no cartão`
+                      ? `ou ${plan.card_price} no cartão em até 6x de R$ 88,31`
                       : plan.duration_days >= 90
-                        ? `ou 3x de R$ 92,15 no cartão`
+                        ? `ou ${plan.card_price} no cartão em até 3x de R$ 96,63`
                         : `ou ${plan.card_price} à vista no cartão`}
                   </p>
                 )}
