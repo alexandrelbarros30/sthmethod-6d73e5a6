@@ -318,7 +318,7 @@ const StudentDiet = () => {
             <div key={meal.id} className="animate-slide-up" style={{ animationDelay: `${0.05 * idx}s` }}>
               <MealCard
                 meal={meal}
-                mealLabel={meal.sort_order > 5 ? "Refeição Extra" : `Refeição ${meal.sort_order + 1}`}
+                mealLabel={`Refeição ${meal.sort_order + 1}`}
                 isCompleted={isMealCompleted(meal.id)}
                 isSkipped={isMealSkipped(meal.id)}
                 isActive={activeMeal?.id === meal.id}
@@ -332,7 +332,7 @@ const StudentDiet = () => {
               {expandedMealId === meal.id && expandedMeal && (
                 <MealDetailPanel
                   meal={expandedMeal}
-                  mealLabel={expandedMeal.sort_order <= 5 ? `Refeição ${expandedMeal.sort_order + 1}` : "Refeição Extra"}
+                  mealLabel={`Refeição ${expandedMeal.sort_order + 1}`}
                   onClose={() => setExpandedMealId(null)}
                 />
               )}
