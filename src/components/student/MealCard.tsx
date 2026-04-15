@@ -85,7 +85,6 @@ const MealCard = ({ meal, mealLabel, isCompleted, isSkipped, isActive, isNext, i
           <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
             <Clock className="w-3 h-3" />
             <span>{meal.time}</span>
-            <span className="text-[10px] text-muted-foreground/60">• {meal.name}</span>
             <span className="text-foreground font-bold tabular-nums">{Math.round(mealMacros.kcal)}</span>
             <span className="text-muted-foreground text-[10px]">kcal</span>
           </div>
