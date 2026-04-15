@@ -137,7 +137,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
           </CardTitle>
           {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
         </div>
-        <p className="text-sm text-muted-foreground">Registre seu peso atual e envie novas fotos. Macros serão recalculados.</p>
+        <p className="text-sm text-muted-foreground">Registre seu peso e envie novas fotos. Dados anteriores são sempre preservados.</p>
       </CardHeader>
 
       {expanded && (

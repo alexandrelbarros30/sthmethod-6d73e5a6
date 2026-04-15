@@ -55,6 +55,7 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
   };
 
   const allUploaded = IMAGE_TYPES.every(({ key }) => images[key]?.file || images[key]?.url);
+  const hasAnyNew = IMAGE_TYPES.some(({ key }) => images[key]?.file);
 
   const handleUpload = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -63,18 +64,27 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
       return;
     }
 
-    if (!allUploaded) {
+    if (required && !allUploaded) {
       toast.error("Envie as 3 imagens obrigatórias.");
+      return;
+    }
+
+    if (!hasAnyNew) {
+      toast.info("Nenhuma imagem nova selecionada.");
       return;
     }
 
     setUploading(true);
     try {
-      await supabase.from("body_images").update({ is_current: false }).eq("user_id", userId).eq("is_current", true);
-
+      // Upload new images WITHOUT deleting previous ones
+      // Old images are sempre preservadas no histórico
       for (const { key } of IMAGE_TYPES) {
         const img = images[key];
         if (img?.file) {
+          // Mark only this type as not current before inserting new
+          await supabase.from("body_images").update({ is_current: false })
+            .eq("user_id", userId).eq("type", key).eq("is_current", true);
+
           toast.info(`Enviando imagem: ${key}...`);
           const path = `${userId}/${key}_${Date.now()}.jpg`;
           const publicUrl = await processAndUpload(img.file, "body-images", path);
@@ -86,15 +96,11 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
             is_current: true,
           });
           if (error) throw error;
-        } else if (img?.url) {
-          const existing = existingImages.find((i) => i.type === key);
-          if (existing) {
-            await supabase.from("body_images").update({ is_current: true }).eq("id", existing.id);
-          }
         }
+        // Existing images that weren't replaced keep their is_current status
       }
 
-      toast.success("Imagens salvas com sucesso!");
+      toast.success("Imagens salvas! As anteriores foram preservadas no histórico.");
       onComplete();
     } catch (err: any) {
       console.error("[body-upload] Error:", err);
@@ -162,7 +168,10 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
           })}
         </div>
 
-        <Button className="w-full mt-4" onClick={handleUpload} disabled={uploading || (required && !allUploaded)}>
+        <p className="text-xs text-muted-foreground mt-3 text-center">
+          📂 As imagens anteriores são sempre preservadas no histórico.
+        </p>
+        <Button className="w-full mt-2" onClick={handleUpload} disabled={uploading || (required && !allUploaded) || (!required && !hasAnyNew)}>
           {uploading ? "Enviando..." : "Salvar Imagens"}
         </Button>
       </CardContent>
