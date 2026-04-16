@@ -420,7 +420,8 @@ const AdminProtocol = () => {
           title: editTitle,
           content: editContent,
           created_at: newCreatedAt,
-        })
+          seen_by_student: false,
+        } as any)
         .eq("id", editingId!);
 
       // Re-parse content into category cards on edit

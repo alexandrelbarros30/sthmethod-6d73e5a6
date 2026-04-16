@@ -174,6 +174,11 @@ const ProgramWorkouts = ({ programId }: Props) => {
           updated_at: new Date().toISOString(),
         }).eq("id", editingWorkout);
         if (error) throw error;
+        // Notify all assigned students about the update
+        await supabase
+          .from("student_workout_assignments")
+          .update({ seen_by_student: false } as any)
+          .eq("template_id", editingWorkout);
       } else {
         const sortOrder = (workouts || []).length;
         const { data, error } = await supabase.from("workout_templates").insert({

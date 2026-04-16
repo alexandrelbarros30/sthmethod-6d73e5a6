@@ -309,6 +309,7 @@ const AdminDiet = () => {
           carbs_g: editCarbsG ? parseFloat(editCarbsG) : null,
           fat_g: editFatG ? parseFloat(editFatG) : null,
           hydration_l: editHydrationL ? parseFloat(editHydrationL) : null,
+          seen_by_student: false,
         } as any)
         .eq("id", editingId!);
 
