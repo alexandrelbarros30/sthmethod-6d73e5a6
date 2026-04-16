@@ -126,6 +126,10 @@ const htmlToTokens = (content: string): DietToken[] => {
     if (/^h[1-6]$/.test(tag)) {
       tokens.push({ type: "HEADING", text });
     } else if (tag === "li") {
+      // Skip wrapper <li> that contains nested <ol>/<ul> — children will be emitted separately
+      if (/<(ol|ul)\b/i.test(inner)) continue;
+      // Skip pure label content like "Substituições:" / "Alimentos:"
+      if (/^\s*(alimentos|substitui[cç][õo]es)\s*[:\-–]?\s*$/i.test(text)) continue;
       const sub = isInsideOl(m.index);
       tokens.push({ type: sub ? "SUB_ITEM" : "ITEM", text });
     } else {
