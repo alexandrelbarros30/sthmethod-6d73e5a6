@@ -49,25 +49,128 @@ const decodeHtml = (value: string) =>
     .replace(/&lt;/gi, "<")
     .replace(/&gt;/gi, ">");
 
-const htmlToLines = (content: string) => {
-  const plain = decodeHtml(
-    content
-      .replace(/<br\s*\/?>/gi, "\n")
-      .replace(/<\/p>/gi, "\n")
-      .replace(/<\/div>/gi, "\n")
-      .replace(/<\/li>/gi, "\n")
-      .replace(/<li[^>]*>/gi, "• ")
-      .replace(/<[^>]+>/g, " ")
-  );
+/**
+ * Token types emitted from the rich-text content.
+ * - HEADING: a meal heading (h1-h3) → starts a new meal
+ * - LABEL: an inline label like "Alimentos:" / "Substituições:" — attached as a note prefix
+ * - ITEM: a regular line (paragraph or top-level li)
+ * - SUB_ITEM: an ordered-list (<ol>) item — substitution alternative
+ */
+type DietToken =
+  | { type: "HEADING"; text: string }
+  | { type: "ITEM"; text: string }
+  | { type: "SUB_ITEM"; text: string };
 
-  return plain
-    .split("\n")
-    .map((line) => line.replace(/\s+/g, " ").trim())
+const stripTags = (html: string) =>
+  decodeHtml(html.replace(/<[^>]+>/g, " "))
+    .replace(/\s+/g, " ")
+    .trim();
+
+const splitFoodsByPlus = (text: string): string[] => {
+  // Split on "+" but keep numbers like "1/2" intact. Also split on " ou " to keep alternatives short.
+  return text
+    .split(/\s*\+\s*/)
+    .map((s) => s.trim())
     .filter(Boolean);
 };
 
+const stripLeadingLabel = (text: string): string => {
+  // Removes leading labels like "Alimentos:", "Substituições:", "Opção 1:" etc.
+  return text.replace(/^\s*(alimentos|substitui[cç][õo]es|op[cç][aã]o\s*\d*|sugest[ãa]o)\s*[:\-–]\s*/i, "").trim();
+};
+
+/**
+ * Tokenize the diet HTML preserving the semantic structure:
+ * - <h1>/<h2>/<h3> → HEADING
+ * - <ol><li> → SUB_ITEM (substitutions)
+ * - <ul><li>, <p>, <div>, plain text → ITEM
+ */
+const htmlToTokens = (content: string): DietToken[] => {
+  if (!content) return [];
+
+  // Normalize: ensure plain text without HTML still works
+  const hasHtml = /<[a-z!\/][^>]*>/i.test(content);
+  if (!hasHtml) {
+    return content
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((text) => {
+        if (/^(refei[cç][aã]o|caf[eé] da manh[ãa]|almo[cç]o|lanche|jantar|ceia|pr[eé][- ]?treino|p[oó]s[- ]?treino)/i.test(text)) {
+          return { type: "HEADING" as const, text };
+        }
+        return { type: "ITEM" as const, text };
+      });
+  }
+
+  // Pre-process: unwrap <li>…<ol/ul>…</ol/ul>…</li> so the inner list is not consumed by the lazy outer match.
+  // Replace the wrapper <li>...</li> with its inner content surrounded by paragraph boundaries.
+  let normalized = content;
+  // Repeat a few times in case of multiple wrapper levels
+  for (let i = 0; i < 3; i++) {
+    const before = normalized;
+    normalized = normalized.replace(
+      /<li\b[^>]*>([\s\S]*?<(?:ol|ul)\b[\s\S]*?<\/(?:ol|ul)>[\s\S]*?)<\/li>/gi,
+      "$1"
+    );
+    if (normalized === before) break;
+  }
+
+  const tokens: DietToken[] = [];
+  // Match heading, ol-li, ul-li, p, div in document order
+  const blockRe = /<(h[1-6]|li|p|div)\b([^>]*)>([\s\S]*?)<\/\1>/gi;
+  // Track whether the parent of the current <li> is an <ol>
+  const olRanges: Array<[number, number]> = [];
+  const olRe = /<ol\b[^>]*>[\s\S]*?<\/ol>/gi;
+  let olMatch: RegExpExecArray | null;
+  while ((olMatch = olRe.exec(normalized)) !== null) {
+    olRanges.push([olMatch.index, olMatch.index + olMatch[0].length]);
+  }
+  const isInsideOl = (pos: number) => olRanges.some(([s, e]) => pos >= s && pos < e);
+
+  let m: RegExpExecArray | null;
+  while ((m = blockRe.exec(normalized)) !== null) {
+    const tag = m[1].toLowerCase();
+    const inner = m[3];
+    const text = stripTags(inner);
+    if (!text) continue;
+
+    if (/^h[1-6]$/.test(tag)) {
+      tokens.push({ type: "HEADING", text });
+    } else if (tag === "li") {
+      // Skip wrapper <li> that contains nested <ol>/<ul> — children will be emitted separately
+      if (/<(ol|ul)\b/i.test(inner)) continue;
+      // Skip pure label content like "Substituições:" / "Alimentos:"
+      if (/^\s*(alimentos|substitui[cç][õo]es)\s*[:\-–]?\s*$/i.test(text)) continue;
+      const sub = isInsideOl(m.index);
+      tokens.push({ type: sub ? "SUB_ITEM" : "ITEM", text });
+    } else {
+      // p / div → split by <br> (already inside inner HTML)
+      const parts = inner
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<[^>]+>/g, " ");
+      decodeHtml(parts)
+        .split("\n")
+        .map((l) => l.replace(/\s+/g, " ").trim())
+        .filter(Boolean)
+        .forEach((line) => {
+          // Plain-text headings inside <p> (e.g. "REFEIÇÃO 2")
+          if (/^(refei[cç][aã]o\s*(extra|\d+)|caf[eé] da manh[ãa]|almo[cç]o|lanche\s+da\s+\w+|jantar|ceia|pr[eé][- ]?treino|p[oó]s[- ]?treino)\b/i.test(line)) {
+            tokens.push({ type: "HEADING", text: line });
+          } else {
+            tokens.push({ type: "ITEM", text: line });
+          }
+        });
+    }
+  }
+
+  return tokens;
+};
+
+const QUANTITY_RE = /^([\d.,\/]+\s?(?:g|gr|grama|gramas|kg|mg|ml|l|un|und|unidade|unidades|x[ií]cara|x[ií]caras|colher(?:es)?|fatia(?:s)?|kcal|copo|copos|pitada|porç[ãa]o|colheres?))\b/i;
+
 const extractQuantity = (line: string) => {
-  const match = line.match(/^([\d.,/]+\s?(?:g|gr|grama|gramas|kg|mg|ml|l|un|und|unidade|xicara|xícara|colher|fatia|fatia[s]?|kcal))\b/i);
+  const match = line.match(QUANTITY_RE);
   return match?.[1]?.trim() || "porção";
 };
 
@@ -152,10 +255,11 @@ const parseHeading = (
 };
 
 export const parseDietContentToMeals = (content: string): ParsedDietMeal[] => {
-  const lines = htmlToLines(content);
+  const tokens = htmlToTokens(content);
   const mealsMap = new Map<number, ParsedDietMeal>();
   let currentOrder: number | null = null;
   let extraOrder = 6;
+  let substitutionIndex = 0;
 
   const nextExtraOrder = () => {
     const value = extraOrder;
@@ -175,35 +279,52 @@ export const parseDietContentToMeals = (content: string): ParsedDietMeal[] => {
     return mealsMap.get(order)!;
   };
 
-  for (const raw of lines) {
-    if (!raw || SECTION_TITLE_RE.test(raw)) continue;
+  const addFoodsFromText = (meal: ParsedDietMeal, rawText: string, opts?: { isSubstitution?: boolean; subIndex?: number }) => {
+    const stripped = stripLeadingLabel(rawText);
+    if (!stripped) return;
+    if (/^(alimentos|substitui[cç][õo]es)\s*[:\-–]?\s*$/i.test(rawText.trim())) return;
 
-    const heading = parseHeading(raw, nextExtraOrder);
-    if (heading) {
-      currentOrder = heading.sortOrder;
-      const meal = ensureMeal(heading.sortOrder, heading.name);
-      if (heading.remainder && !SECTION_TITLE_RE.test(heading.remainder)) {
-        meal.foods.push({
-          item: heading.remainder,
-          quantity: extractQuantity(heading.remainder),
-          sort_order: meal.foods.length,
-        });
+    const parts = splitFoodsByPlus(stripped);
+    parts.forEach((part) => {
+      const cleaned = part.replace(/^[•\-*]\s*/, "").trim();
+      if (!cleaned) return;
+      const itemText = opts?.isSubstitution
+        ? `Opção ${opts.subIndex}: ${cleaned}`
+        : cleaned;
+      meal.foods.push({
+        item: itemText,
+        quantity: extractQuantity(cleaned),
+        sort_order: meal.foods.length,
+      });
+    });
+  };
+
+  for (const token of tokens) {
+    const text = token.text;
+    if (!text || SECTION_TITLE_RE.test(text)) continue;
+
+    if (token.type === "HEADING") {
+      const heading = parseHeading(text, nextExtraOrder);
+      if (heading) {
+        currentOrder = heading.sortOrder;
+        substitutionIndex = 0;
+        const meal = ensureMeal(heading.sortOrder, heading.name);
+        if (heading.remainder && !SECTION_TITLE_RE.test(heading.remainder)) {
+          addFoodsFromText(meal, heading.remainder);
+        }
       }
       continue;
     }
 
     if (currentOrder === null) continue;
-
-    // Only strip bullet markers (•, -, *) but preserve leading numbers that are food quantities
-    const cleaned = raw.replace(/^[•\-*]\s*/, "").trim();
-    if (!cleaned) continue;
-
     const meal = ensureMeal(currentOrder);
-    meal.foods.push({
-      item: cleaned,
-      quantity: extractQuantity(cleaned),
-      sort_order: meal.foods.length,
-    });
+
+    if (token.type === "SUB_ITEM") {
+      substitutionIndex += 1;
+      addFoodsFromText(meal, text, { isSubstitution: true, subIndex: substitutionIndex });
+    } else {
+      addFoodsFromText(meal, text);
+    }
   }
 
   return Array.from(mealsMap.values())
