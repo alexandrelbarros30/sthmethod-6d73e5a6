@@ -49,25 +49,112 @@ const decodeHtml = (value: string) =>
     .replace(/&lt;/gi, "<")
     .replace(/&gt;/gi, ">");
 
-const htmlToLines = (content: string) => {
-  const plain = decodeHtml(
-    content
-      .replace(/<br\s*\/?>/gi, "\n")
-      .replace(/<\/p>/gi, "\n")
-      .replace(/<\/div>/gi, "\n")
-      .replace(/<\/li>/gi, "\n")
-      .replace(/<li[^>]*>/gi, "• ")
-      .replace(/<[^>]+>/g, " ")
-  );
+/**
+ * Token types emitted from the rich-text content.
+ * - HEADING: a meal heading (h1-h3) → starts a new meal
+ * - LABEL: an inline label like "Alimentos:" / "Substituições:" — attached as a note prefix
+ * - ITEM: a regular line (paragraph or top-level li)
+ * - SUB_ITEM: an ordered-list (<ol>) item — substitution alternative
+ */
+type DietToken =
+  | { type: "HEADING"; text: string }
+  | { type: "ITEM"; text: string }
+  | { type: "SUB_ITEM"; text: string };
 
-  return plain
-    .split("\n")
-    .map((line) => line.replace(/\s+/g, " ").trim())
+const stripTags = (html: string) =>
+  decodeHtml(html.replace(/<[^>]+>/g, " "))
+    .replace(/\s+/g, " ")
+    .trim();
+
+const splitFoodsByPlus = (text: string): string[] => {
+  // Split on "+" but keep numbers like "1/2" intact. Also split on " ou " to keep alternatives short.
+  return text
+    .split(/\s*\+\s*/)
+    .map((s) => s.trim())
     .filter(Boolean);
 };
 
+const stripLeadingLabel = (text: string): string => {
+  // Removes leading labels like "Alimentos:", "Substituições:", "Opção 1:" etc.
+  return text.replace(/^\s*(alimentos|substitui[cç][õo]es|op[cç][aã]o\s*\d*|sugest[ãa]o)\s*[:\-–]\s*/i, "").trim();
+};
+
+/**
+ * Tokenize the diet HTML preserving the semantic structure:
+ * - <h1>/<h2>/<h3> → HEADING
+ * - <ol><li> → SUB_ITEM (substitutions)
+ * - <ul><li>, <p>, <div>, plain text → ITEM
+ */
+const htmlToTokens = (content: string): DietToken[] => {
+  if (!content) return [];
+
+  // Normalize: ensure plain text without HTML still works
+  const hasHtml = /<[a-z!\/][^>]*>/i.test(content);
+  if (!hasHtml) {
+    return content
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((text) => {
+        if (/^(refei[cç][aã]o|caf[eé] da manh[ãa]|almo[cç]o|lanche|jantar|ceia|pr[eé][- ]?treino|p[oó]s[- ]?treino)/i.test(text)) {
+          return { type: "HEADING" as const, text };
+        }
+        return { type: "ITEM" as const, text };
+      });
+  }
+
+  const tokens: DietToken[] = [];
+  // Match heading, ol-li, ul-li, p, div in document order
+  const blockRe = /<(h[1-6]|li|p|div)\b([^>]*)>([\s\S]*?)<\/\1>/gi;
+  // Track whether the parent of the current <li> is an <ol>
+  // Strategy: pre-scan for <ol>...</ol> ranges to flag SUB_ITEM lis.
+  const olRanges: Array<[number, number]> = [];
+  const olRe = /<ol\b[^>]*>[\s\S]*?<\/ol>/gi;
+  let olMatch: RegExpExecArray | null;
+  while ((olMatch = olRe.exec(content)) !== null) {
+    olRanges.push([olMatch.index, olMatch.index + olMatch[0].length]);
+  }
+  const isInsideOl = (pos: number) => olRanges.some(([s, e]) => pos >= s && pos < e);
+
+  let m: RegExpExecArray | null;
+  while ((m = blockRe.exec(content)) !== null) {
+    const tag = m[1].toLowerCase();
+    const inner = m[3];
+    const text = stripTags(inner);
+    if (!text) continue;
+
+    if (/^h[1-6]$/.test(tag)) {
+      tokens.push({ type: "HEADING", text });
+    } else if (tag === "li") {
+      const sub = isInsideOl(m.index);
+      tokens.push({ type: sub ? "SUB_ITEM" : "ITEM", text });
+    } else {
+      // p / div → split by <br> (already inside inner HTML)
+      const parts = inner
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<[^>]+>/g, " ");
+      decodeHtml(parts)
+        .split("\n")
+        .map((l) => l.replace(/\s+/g, " ").trim())
+        .filter(Boolean)
+        .forEach((line) => {
+          // Plain-text headings inside <p> (e.g. "REFEIÇÃO 2")
+          if (/^(refei[cç][aã]o\s*(extra|\d+)|caf[eé] da manh[ãa]|almo[cç]o|lanche\s+da\s+\w+|jantar|ceia|pr[eé][- ]?treino|p[oó]s[- ]?treino)\b/i.test(line)) {
+            tokens.push({ type: "HEADING", text: line });
+          } else {
+            tokens.push({ type: "ITEM", text: line });
+          }
+        });
+    }
+  }
+
+  return tokens;
+};
+
+const QUANTITY_RE = /^([\d.,\/]+\s?(?:g|gr|grama|gramas|kg|mg|ml|l|un|und|unidade|unidades|x[ií]cara|x[ií]caras|colher(?:es)?|fatia(?:s)?|kcal|copo|copos|pitada|porç[ãa]o|colheres?))\b/i;
+
 const extractQuantity = (line: string) => {
-  const match = line.match(/^([\d.,/]+\s?(?:g|gr|grama|gramas|kg|mg|ml|l|un|und|unidade|xicara|xícara|colher|fatia|fatia[s]?|kcal))\b/i);
+  const match = line.match(QUANTITY_RE);
   return match?.[1]?.trim() || "porção";
 };
 
