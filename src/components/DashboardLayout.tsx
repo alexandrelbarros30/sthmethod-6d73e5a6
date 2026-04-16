@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState, useMemo, useRef } from "react";
+import { ReactNode, useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardSidebar from "./DashboardSidebar";
 import FloatingDock from "./student/FloatingDock";
@@ -10,9 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Microscope, UtensilsCrossed, PartyPopper, Megaphone, Dumbbell, FileText } from "lucide-react";
-import PerformethLabsPopup from "./student/PerformethLabsPopup";
-import TirzepatidaPopup from "./student/TirzepatidaPopup";
-import CardioShieldPopup from "./student/CardioShieldPopup";
 import PaymentNotificationPopup from "./admin/PaymentNotificationPopup";
 import EvolutionReminderPopup from "./admin/EvolutionReminderPopup";
 import EvolutionUpdatePopup from "./admin/EvolutionUpdatePopup";
@@ -72,13 +69,7 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
   const [customPopup, setCustomPopup] = useState<any>(null);
   const [customPopupOpen, setCustomPopupOpen] = useState(false);
 
-  // Performeth Labs popup state
-  const [performethOpen, setPerformethOpen] = useState(false);
-  const [tirzepatidaOpen, setTirzepatidaOpen] = useState(false);
-  const [cardioShieldOpen, setCardioShieldOpen] = useState(false);
 
-  // Track whether notification popups were shown — suppresses ads this session
-  const hadNotificationPopup = useRef(false);
 
   const birthdayMessage = useMemo(() => {
     const idx = Math.floor(Math.random() * BIRTHDAY_MESSAGES.length);
@@ -205,19 +196,6 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
           setCustomPopup(popup);
           setCustomPopupOpen(true);
           break;
-        }
-      }
-
-      // 7) Performeth Labs promo — only if NO notification popups were shown
-      if (hasNotification) {
-        hadNotificationPopup.current = true;
-      } else {
-        const performethKey = `performeth_seen_${user.id}_session`;
-        if (!sessionStorage.getItem(performethKey)) {
-          setTimeout(() => {
-            setPerformethOpen(true);
-            sessionStorage.setItem(performethKey, "1");
-          }, 1500);
         }
       }
     };
@@ -431,10 +409,6 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
         </DialogContent>
       </Dialog>
 
-      {/* Performeth Labs Promo → sequential to Tirzepatida → CardioShield */}
-      <PerformethLabsPopup open={performethOpen} onClose={() => { setPerformethOpen(false); setTirzepatidaOpen(true); }} />
-      <TirzepatidaPopup open={tirzepatidaOpen} onClose={() => { setTirzepatidaOpen(false); setCardioShieldOpen(true); }} />
-      <CardioShieldPopup open={cardioShieldOpen} onClose={() => setCardioShieldOpen(false)} />
       <PaymentNotificationPopup />
       <EvolutionReminderPopup />
       <EvolutionUpdatePopup />
