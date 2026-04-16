@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState, useMemo, useRef } from "react";
+import { ReactNode, useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardSidebar from "./DashboardSidebar";
 import FloatingDock from "./student/FloatingDock";
