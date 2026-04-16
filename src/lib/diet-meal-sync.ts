@@ -129,7 +129,7 @@ const htmlToTokens = (content: string): DietToken[] => {
   const isInsideOl = (pos: number) => olRanges.some(([s, e]) => pos >= s && pos < e);
 
   let m: RegExpExecArray | null;
-  while ((m = blockRe.exec(content)) !== null) {
+  while ((m = blockRe.exec(normalized)) !== null) {
     const tag = m[1].toLowerCase();
     const inner = m[3];
     const text = stripTags(inner);
