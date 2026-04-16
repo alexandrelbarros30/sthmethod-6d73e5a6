@@ -305,6 +305,7 @@ const StudentOverview = () => {
             } else {
               setAdPopupOpen(false);
               setAdIndex(0);
+              sessionStorage.setItem("ads-auto-shown", "1");
             }
           }
         }}>
