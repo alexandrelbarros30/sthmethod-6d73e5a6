@@ -130,7 +130,10 @@ const StudentOverview = () => {
   const { profile, user } = useAuth();
   const navigate = useNavigate();
   const [greeting] = useState(getGreeting);
-  const [adPopupOpen, setAdPopupOpen] = useState(false);
+  const [adPopupOpen, setAdPopupOpen] = useState(() => {
+    const shown = sessionStorage.getItem("ads-auto-shown");
+    return !shown;
+  });
   const [adIndex, setAdIndex] = useState(0);
 
   const { data: dynamicAds } = useQuery({
