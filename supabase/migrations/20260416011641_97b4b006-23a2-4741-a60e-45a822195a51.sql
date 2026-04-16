@@ -1,0 +1,1 @@
+UPDATE public.ads SET image_url = 'https://tthahgwkkdyvxdbhsgyb.supabase.co/storage/v1/object/public/ads/mare-alta-peptideos.png', updated_at = now() WHERE title ILIKE '%Maré Alta%' AND active = true;
