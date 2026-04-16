@@ -239,10 +239,11 @@ const parseHeading = (
 };
 
 export const parseDietContentToMeals = (content: string): ParsedDietMeal[] => {
-  const lines = htmlToLines(content);
+  const tokens = htmlToTokens(content);
   const mealsMap = new Map<number, ParsedDietMeal>();
   let currentOrder: number | null = null;
   let extraOrder = 6;
+  let substitutionIndex = 0;
 
   const nextExtraOrder = () => {
     const value = extraOrder;
@@ -262,35 +263,52 @@ export const parseDietContentToMeals = (content: string): ParsedDietMeal[] => {
     return mealsMap.get(order)!;
   };
 
-  for (const raw of lines) {
-    if (!raw || SECTION_TITLE_RE.test(raw)) continue;
+  const addFoodsFromText = (meal: ParsedDietMeal, rawText: string, opts?: { isSubstitution?: boolean; subIndex?: number }) => {
+    const stripped = stripLeadingLabel(rawText);
+    if (!stripped) return;
+    if (/^(alimentos|substitui[cç][õo]es)\s*[:\-–]?\s*$/i.test(rawText.trim())) return;
 
-    const heading = parseHeading(raw, nextExtraOrder);
-    if (heading) {
-      currentOrder = heading.sortOrder;
-      const meal = ensureMeal(heading.sortOrder, heading.name);
-      if (heading.remainder && !SECTION_TITLE_RE.test(heading.remainder)) {
-        meal.foods.push({
-          item: heading.remainder,
-          quantity: extractQuantity(heading.remainder),
-          sort_order: meal.foods.length,
-        });
+    const parts = splitFoodsByPlus(stripped);
+    parts.forEach((part) => {
+      const cleaned = part.replace(/^[•\-*]\s*/, "").trim();
+      if (!cleaned) return;
+      const itemText = opts?.isSubstitution
+        ? `Opção ${opts.subIndex}: ${cleaned}`
+        : cleaned;
+      meal.foods.push({
+        item: itemText,
+        quantity: extractQuantity(cleaned),
+        sort_order: meal.foods.length,
+      });
+    });
+  };
+
+  for (const token of tokens) {
+    const text = token.text;
+    if (!text || SECTION_TITLE_RE.test(text)) continue;
+
+    if (token.type === "HEADING") {
+      const heading = parseHeading(text, nextExtraOrder);
+      if (heading) {
+        currentOrder = heading.sortOrder;
+        substitutionIndex = 0;
+        const meal = ensureMeal(heading.sortOrder, heading.name);
+        if (heading.remainder && !SECTION_TITLE_RE.test(heading.remainder)) {
+          addFoodsFromText(meal, heading.remainder);
+        }
       }
       continue;
     }
 
     if (currentOrder === null) continue;
-
-    // Only strip bullet markers (•, -, *) but preserve leading numbers that are food quantities
-    const cleaned = raw.replace(/^[•\-*]\s*/, "").trim();
-    if (!cleaned) continue;
-
     const meal = ensureMeal(currentOrder);
-    meal.foods.push({
-      item: cleaned,
-      quantity: extractQuantity(cleaned),
-      sort_order: meal.foods.length,
-    });
+
+    if (token.type === "SUB_ITEM") {
+      substitutionIndex += 1;
+      addFoodsFromText(meal, text, { isSubstitution: true, subIndex: substitutionIndex });
+    } else {
+      addFoodsFromText(meal, text);
+    }
   }
 
   return Array.from(mealsMap.values())
