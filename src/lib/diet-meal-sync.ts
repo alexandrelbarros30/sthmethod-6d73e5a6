@@ -103,15 +103,27 @@ const htmlToTokens = (content: string): DietToken[] => {
       });
   }
 
+  // Pre-process: unwrap <li>…<ol/ul>…</ol/ul>…</li> so the inner list is not consumed by the lazy outer match.
+  // Replace the wrapper <li>...</li> with its inner content surrounded by paragraph boundaries.
+  let normalized = content;
+  // Repeat a few times in case of multiple wrapper levels
+  for (let i = 0; i < 3; i++) {
+    const before = normalized;
+    normalized = normalized.replace(
+      /<li\b[^>]*>([\s\S]*?<(?:ol|ul)\b[\s\S]*?<\/(?:ol|ul)>[\s\S]*?)<\/li>/gi,
+      "$1"
+    );
+    if (normalized === before) break;
+  }
+
   const tokens: DietToken[] = [];
   // Match heading, ol-li, ul-li, p, div in document order
   const blockRe = /<(h[1-6]|li|p|div)\b([^>]*)>([\s\S]*?)<\/\1>/gi;
   // Track whether the parent of the current <li> is an <ol>
-  // Strategy: pre-scan for <ol>...</ol> ranges to flag SUB_ITEM lis.
   const olRanges: Array<[number, number]> = [];
   const olRe = /<ol\b[^>]*>[\s\S]*?<\/ol>/gi;
   let olMatch: RegExpExecArray | null;
-  while ((olMatch = olRe.exec(content)) !== null) {
+  while ((olMatch = olRe.exec(normalized)) !== null) {
     olRanges.push([olMatch.index, olMatch.index + olMatch[0].length]);
   }
   const isInsideOl = (pos: number) => olRanges.some(([s, e]) => pos >= s && pos < e);
