@@ -70,8 +70,6 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
   const [customPopupOpen, setCustomPopupOpen] = useState(false);
 
 
-  // Track whether notification popups were shown — suppresses ads this session
-  const hadNotificationPopup = useRef(false);
 
   const birthdayMessage = useMemo(() => {
     const idx = Math.floor(Math.random() * BIRTHDAY_MESSAGES.length);
@@ -199,10 +197,6 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
           setCustomPopupOpen(true);
           break;
         }
-      }
-
-      if (hasNotification) {
-        hadNotificationPopup.current = true;
       }
     };
 
