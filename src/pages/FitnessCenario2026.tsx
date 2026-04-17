@@ -3,9 +3,10 @@ import { Link } from "react-router-dom";
 import {
   ArrowLeft, Newspaper, Globe, MessageCircle, Rocket,
   Trophy, Cpu, TrendingUp, Target, Layers, ChevronRight,
-  ExternalLink, Zap, Shield, Flame, Calendar,
+  ExternalLink, Zap, Shield, Flame, Calendar, Home,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import fiboImg from "@/assets/fibo-2026.jpg";
 import ifbbMemphisImg from "@/assets/ifbb-memphis-2026.jpg";
 import ifbbMercosurImg from "@/assets/ifbb-mercosur-2026.jpg";
