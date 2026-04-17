@@ -160,30 +160,54 @@ const MealDetailPanel = ({ meal, mealLabel, onClose }: MealDetailPanelProps) => 
             </div>
           </div>
 
-          {/* Food Items - Premium Text List */}
-          <div className="space-y-1.5">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mb-2">Cardápio</p>
-            {meal.diet_foods.map((food, i) => (
-              <div
-                key={food.id}
-                className={cn(
-                  "flex items-start justify-between py-2.5 px-3 rounded-xl text-sm transition-all duration-200",
-                  i % 2 === 0 ? "bg-muted/15" : "bg-transparent",
-                  "hover:bg-primary/5"
-                )}
-              >
-                <div className="flex items-start gap-2.5 min-w-0 flex-1">
-                  <span className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0 glow-sm" />
-                  <div className="min-w-0">
-                    <span className="block text-foreground font-semibold leading-tight">{food.item}</span>
-                    {food.notes && (
-                      <span className="block text-[10px] text-muted-foreground mt-0.5 italic">{food.notes}</span>
-                    )}
+          {/* Food Items - prefer faithful HTML render when available */}
+          {(() => {
+            const firstNotes = meal.diet_foods[0]?.notes || "";
+            const rawHtmlMatch = firstNotes.startsWith("__RAW_HTML__")
+              ? firstNotes.slice("__RAW_HTML__".length)
+              : null;
+
+            if (rawHtmlMatch) {
+              const isHtml = /<[a-z!\/][^>]*>/i.test(rawHtmlMatch);
+              return (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mb-2">Cardápio</p>
+                  <div
+                    className="diet-rich-content text-sm leading-relaxed text-foreground space-y-2 [&_strong]:text-foreground [&_strong]:font-semibold [&_p]:my-1.5 [&_ul]:pl-5 [&_ul]:list-disc [&_ol]:pl-5 [&_ol]:list-decimal [&_li]:my-0.5 [&_h1]:text-base [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-bold [&_h3]:text-sm [&_h3]:font-bold [&_h3]:uppercase [&_h3]:tracking-wider [&_h3]:text-primary [&_h3]:mt-3"
+                    dangerouslySetInnerHTML={isHtml ? { __html: rawHtmlMatch } : undefined}
+                  >
+                    {!isHtml ? rawHtmlMatch : undefined}
                   </div>
                 </div>
+              );
+            }
+
+            return (
+              <div className="space-y-1.5">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mb-2">Cardápio</p>
+                {meal.diet_foods.map((food, i) => (
+                  <div
+                    key={food.id}
+                    className={cn(
+                      "flex items-start justify-between py-2.5 px-3 rounded-xl text-sm transition-all duration-200",
+                      i % 2 === 0 ? "bg-muted/15" : "bg-transparent",
+                      "hover:bg-primary/5"
+                    )}
+                  >
+                    <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                      <span className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0 glow-sm" />
+                      <div className="min-w-0">
+                        <span className="block text-foreground font-semibold leading-tight">{food.item}</span>
+                        {food.notes && !food.notes.startsWith("__RAW_HTML__") && (
+                          <span className="block text-[10px] text-muted-foreground mt-0.5 italic">{food.notes}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            );
+          })()}
 
           {/* Close button */}
           <button
