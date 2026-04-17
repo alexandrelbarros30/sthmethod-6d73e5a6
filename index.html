@@ -24,17 +24,24 @@
     <meta name="twitter:image" content="https://tthahgwkkdyvxdbhsgyb.supabase.co/storage/v1/object/public/landing-assets/og-image/1772802656246.png" />
 
     <script>
-      // Pre-boot version check: kills stale service worker / caches before React loads
+      // Pre-boot cache cleanup: runs in background, never blocks render
       (function () {
         try {
           var KEY = "sth-preboot-version";
+          var RELOAD_KEY = "sth-preboot-reloaded";
           var stored = localStorage.getItem(KEY);
+          // Skip entirely on preview/iframe to avoid breaking the editor
+          var host = window.location.hostname;
+          if (host.includes("lovableproject.com") || host.includes("preview--") || window.self !== window.top) return;
           fetch("/version.json?t=" + Date.now(), { cache: "no-store" })
             .then(function (r) { return r.json(); })
             .then(function (data) {
               var remote = data && data.version;
               if (!remote || stored === remote) return;
+              var alreadyReloaded = sessionStorage.getItem(RELOAD_KEY) === remote;
               localStorage.setItem(KEY, remote);
+              if (alreadyReloaded) return;
+              sessionStorage.setItem(RELOAD_KEY, remote);
               var jobs = [];
               if ("serviceWorker" in navigator) {
                 jobs.push(navigator.serviceWorker.getRegistrations().then(function (rs) {
@@ -47,11 +54,7 @@
                 }));
               }
               Promise.all(jobs).finally(function () {
-                if (stored && stored !== remote) {
-                  var u = new URL(window.location.href);
-                  u.searchParams.set("_v", remote);
-                  window.location.replace(u.toString());
-                }
+                window.location.reload();
               });
             })
             .catch(function () {});
