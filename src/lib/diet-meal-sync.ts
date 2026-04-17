@@ -106,13 +106,14 @@ const htmlToTokens = (content: string): DietToken[] => {
   }
 
   // Pre-process: unwrap <li>…<ol/ul>…</ol/ul>…</li> so the inner list is not consumed by the lazy outer match.
-  // Replace the wrapper <li>...</li> with its inner content surrounded by paragraph boundaries.
+  // CRITICAL: the captured prefix before <ol|ul> must NOT contain another <li> opener,
+  // otherwise sibling <li>s get merged and their content is lost.
+  // We also use a tempered pattern to avoid matching across sibling boundaries.
   let normalized = content;
-  // Repeat a few times in case of multiple wrapper levels
   for (let i = 0; i < 3; i++) {
     const before = normalized;
     normalized = normalized.replace(
-      /<li\b[^>]*>([\s\S]*?<(?:ol|ul)\b[\s\S]*?<\/(?:ol|ul)>[\s\S]*?)<\/li>/gi,
+      /<li\b[^>]*>((?:(?!<li\b|<\/li>)[\s\S])*?<(?:ol|ul)\b[\s\S]*?<\/(?:ol|ul)>(?:(?!<li\b|<\/li>)[\s\S])*?)<\/li>/gi,
       "$1"
     );
     if (normalized === before) break;
