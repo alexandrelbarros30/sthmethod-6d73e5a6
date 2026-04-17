@@ -125,7 +125,8 @@ const StudentRecipes = () => {
   const [filter, setFilter] = useState("Todos");
   const [selected, setSelected] = useState<Recipe | null>(null);
 
-  const filtered = filter === "Todos" ? recipes : recipes.filter((r) => r.category === filter);
+  const base = filter === "Todos" ? recipes : recipes.filter((r) => r.category === filter);
+  const filtered = [...base].sort((a, b) => Number(!!b.isNew) - Number(!!a.isNew));
 
   return (
     <DashboardLayout role="student" title="Receitas Saudáveis" subtitle="Decisões alimentares guiadas">
@@ -170,6 +171,11 @@ const StudentRecipes = () => {
               <Badge className="absolute top-2 right-2 text-[9px] bg-black/50 backdrop-blur-sm text-white border-0">
                 {recipe.category}
               </Badge>
+              {recipe.isNew && (
+                <Badge className="absolute top-2 left-2 text-[9px] bg-primary text-primary-foreground border-0 font-bold tracking-wider animate-pulse">
+                  NOVO
+                </Badge>
+              )}
             </div>
             <CardContent className="p-2.5">
               <div className="flex items-center justify-between text-[10px] text-muted-foreground">
