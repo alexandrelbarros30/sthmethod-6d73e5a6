@@ -4,8 +4,9 @@ import { RefreshCw, X } from "lucide-react";
 
 const APP_VERSION = "1.4.9";
 const VERSION_KEY = "sth-app-version";
+const AUTO_RELOAD_KEY = "sth-auto-reload-version";
 const VERSION_URL = "/version.json";
-const POLL_INTERVAL_MS = 30_000;
+const POLL_INTERVAL_MS = 15_000;
 
 const fetchRemoteVersion = async (): Promise<string | null> => {
   try {
