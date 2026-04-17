@@ -11,6 +11,8 @@ export interface ParsedDietMeal {
   time: string;
   sort_order: number;
   foods: ParsedDietFood[];
+  /** Raw HTML/text slice of this meal section (between this REFEIÇÃO heading and the next one). */
+  raw_html?: string;
 }
 
 const DEFAULT_MEAL_NAMES: Record<number, string> = {
@@ -254,12 +256,77 @@ const parseHeading = (
   return null;
 };
 
+/**
+ * Splits the raw HTML/text content into slices, one per meal heading.
+ * A heading is REFEIÇÃO N, CAFÉ DA MANHÃ, ALMOÇO, LANCHE…, JANTAR, CEIA, PRÉ/PÓS-TREINO.
+ * Each slice contains everything between this heading and the next one.
+ */
+const HEADING_KEYWORDS_RE = /^(refei[cç][aã]o\s*(?:extra|\d+)|caf[eé]\s+da\s+manh[ãa]|almo[cç]o|lanche\s+da\s+\w+|jantar|ceia|pr[eé][- ]?treino|p[oó]s[- ]?treino)\b/i;
+
+const sliceContentByMealHeading = (content: string): Array<{ headingText: string; htmlSlice: string }> => {
+  if (!content) return [];
+
+  const hasHtml = /<[a-z!\/][^>]*>/i.test(content);
+
+  if (!hasHtml) {
+    const lines = content.split(/\r?\n/);
+    const slices: Array<{ headingText: string; htmlSlice: string }> = [];
+    let currentHeading: string | null = null;
+    let buffer: string[] = [];
+    const flush = () => {
+      if (currentHeading !== null) {
+        slices.push({ headingText: currentHeading, htmlSlice: buffer.join("\n").trim() });
+      }
+      buffer = [];
+    };
+    for (const line of lines) {
+      const t = line.trim();
+      if (HEADING_KEYWORDS_RE.test(t)) {
+        flush();
+        currentHeading = t;
+      } else if (currentHeading !== null) {
+        buffer.push(line);
+      }
+    }
+    flush();
+    return slices;
+  }
+
+  type Marker = { start: number; end: number; headingText: string };
+  const markers: Marker[] = [];
+  const re = /<(h[1-6]|p|div)\b[^>]*>([\s\S]*?)<\/\1>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(content)) !== null) {
+    const innerText = stripTags(m[2]);
+    if (!innerText) continue;
+    const isHeadingTag = /^h[1-6]$/i.test(m[1]);
+    if (HEADING_KEYWORDS_RE.test(innerText) || (isHeadingTag && HEADING_KEYWORDS_RE.test(innerText))) {
+      markers.push({ start: m.index, end: m.index + m[0].length, headingText: innerText });
+    }
+  }
+
+  if (!markers.length) return [];
+
+  const slices: Array<{ headingText: string; htmlSlice: string }> = [];
+  for (let i = 0; i < markers.length; i++) {
+    const cur = markers[i];
+    const next = markers[i + 1];
+    slices.push({
+      headingText: cur.headingText,
+      htmlSlice: content.slice(cur.end, next ? next.start : content.length).trim(),
+    });
+  }
+  return slices;
+};
+
 export const parseDietContentToMeals = (content: string): ParsedDietMeal[] => {
   const tokens = htmlToTokens(content);
+  const slices = sliceContentByMealHeading(content);
   const mealsMap = new Map<number, ParsedDietMeal>();
   let currentOrder: number | null = null;
   let extraOrder = 6;
   let substitutionIndex = 0;
+  let headingIndex = -1;
 
   const nextExtraOrder = () => {
     const value = extraOrder;
@@ -267,14 +334,17 @@ export const parseDietContentToMeals = (content: string): ParsedDietMeal[] => {
     return value;
   };
 
-  const ensureMeal = (order: number, name?: string) => {
+  const ensureMeal = (order: number, name?: string, rawHtml?: string) => {
     if (!mealsMap.has(order)) {
       mealsMap.set(order, {
         sort_order: order,
         name: name || DEFAULT_MEAL_NAMES[order] || "Refeição Extra",
         time: DEFAULT_MEAL_TIMES[order] || "12:00",
         foods: [],
+        raw_html: rawHtml,
       });
+    } else if (rawHtml && !mealsMap.get(order)!.raw_html) {
+      mealsMap.get(order)!.raw_html = rawHtml;
     }
     return mealsMap.get(order)!;
   };
@@ -308,7 +378,9 @@ export const parseDietContentToMeals = (content: string): ParsedDietMeal[] => {
       if (heading) {
         currentOrder = heading.sortOrder;
         substitutionIndex = 0;
-        const meal = ensureMeal(heading.sortOrder, heading.name);
+        headingIndex += 1;
+        const rawHtml = slices[headingIndex]?.htmlSlice;
+        const meal = ensureMeal(heading.sortOrder, heading.name, rawHtml);
         if (heading.remainder && !SECTION_TITLE_RE.test(heading.remainder)) {
           addFoodsFromText(meal, heading.remainder);
         }
@@ -421,6 +493,9 @@ export const syncStudentDietMeals = async (
           item: food.item,
           quantity: food.quantity,
           sort_order: index,
+          // Persist the raw HTML/text of the entire meal section on the first food's `notes`,
+          // so the student detail panel can render it faithfully (with prefix marker).
+          notes: index === 0 && meal.raw_html ? `__RAW_HTML__${meal.raw_html}` : null,
           // Distribute meal macros equally across foods
           energy_kcal: mealMacro ? Math.round((mealMacro.energy_kcal / foodCount) * 10) / 10 : 0,
           protein_g: mealMacro ? Math.round((mealMacro.protein_g / foodCount) * 10) / 10 : 0,
