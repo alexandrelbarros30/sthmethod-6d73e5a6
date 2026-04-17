@@ -18,13 +18,13 @@ import SubscriptionAlerts from "@/components/student/SubscriptionAlerts";
 import recipePoke from "@/assets/recipe-poke.jpg";
 import recipeFrango from "@/assets/recipe-frango.jpg";
 import recipeAcai from "@/assets/recipe-acai.jpg";
-import recipeSmoothie from "@/assets/recipe-smoothie.jpg";
-import recipePanqueca from "@/assets/recipe-panqueca.jpg";
-import recipeSalada from "@/assets/recipe-salada.jpg";
 import recipeMoqueca from "@/assets/recipe-moqueca.jpg";
 import recipeTapioca from "@/assets/recipe-tapioca.jpg";
-import recipeCuscuz from "@/assets/recipe-cuscuz.jpg";
-import recipeEscondidinho from "@/assets/recipe-escondidinho.jpg";
+import recipeMousseWhey from "@/assets/recipe-mousse-whey.jpg";
+import recipePatinho from "@/assets/recipe-patinho-grelhado.jpg";
+import recipeMexidoOvos from "@/assets/recipe-mexido-ovos.jpg";
+import recipeGelatina from "@/assets/recipe-gelatina-proteica.jpg";
+import recipeAlmondega from "@/assets/recipe-almondega-fit.jpg";
 
 import workoutMale1 from "@/assets/workout-male-1.jpg";
 import workoutMale2 from "@/assets/workout-male-2.jpg";
