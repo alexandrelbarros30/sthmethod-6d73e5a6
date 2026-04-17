@@ -293,10 +293,14 @@ const sliceContentByMealHeading = (content: string): Array<{ headingText: string
     return slices;
   }
 
-  // A marker locates a heading. `headingEnd` is where the heading text ENDS (so the slice
-  // begins right after it — even if the heading shares a block with other content, we keep
-  // that remaining content in the slice).
-  type Marker = { blockStart: number; headingEnd: number; headingText: string };
+  // A marker locates a heading block. We capture both the heading text AND any
+  // "remainder" content that lives in the SAME block (e.g. text after a <br>).
+  type Marker = {
+    blockStart: number;
+    blockEnd: number;
+    headingText: string;
+    remainderHtml: string; // any extra content inside the same block, after the heading line
+  };
   const markers: Marker[] = [];
   const re = /<(h[1-6]|p|div|li)\b[^>]*>([\s\S]*?)<\/\1>/gi;
   let m: RegExpExecArray | null;
@@ -307,29 +311,31 @@ const sliceContentByMealHeading = (content: string): Array<{ headingText: string
     if (!innerText) continue;
     const isHeadingTag = /^h[1-6]$/i.test(tag);
 
-    // Headings inside <h*> always count. For <p>/<div>/<li>, only count when the FIRST
-    // non-empty line matches the heading keyword pattern — this avoids treating a
-    // paragraph that just MENTIONS "refeição" as a heading.
     let headingLine = "";
+    let remainderHtml = "";
+
     if (isHeadingTag) {
       headingLine = innerText;
     } else {
-      const firstLine = inner
-        .replace(/<br\s*\/?>(\s|&nbsp;)*/gi, "\n")
-        .split(/\n/)
-        .map((s) => stripTags(s))
-        .find((s) => s.length > 0) || "";
-      if (HEADING_KEYWORDS_RE.test(firstLine)) headingLine = firstLine;
+      // Split the block by <br> and look for a heading on the FIRST non-empty line.
+      const segments = inner.split(/<br\s*\/?\s*>/gi);
+      const firstSegText = stripTags(segments[0] || "");
+      if (HEADING_KEYWORDS_RE.test(firstSegText)) {
+        headingLine = firstSegText;
+        // Anything after the first <br> in the same block belongs to this meal.
+        if (segments.length > 1) {
+          remainderHtml = segments.slice(1).join("<br>").trim();
+        }
+      }
     }
-    if (!headingLine) continue;
-    if (!HEADING_KEYWORDS_RE.test(headingLine)) continue;
 
-    // Compute headingEnd: end of the entire block tag — slice from here keeps any
-    // sibling blocks (<ul>, <ol>, additional <p>) until the next heading marker.
+    if (!headingLine || !HEADING_KEYWORDS_RE.test(headingLine)) continue;
+
     markers.push({
       blockStart: m.index,
-      headingEnd: m.index + m[0].length,
+      blockEnd: m.index + m[0].length,
       headingText: headingLine,
+      remainderHtml,
     });
   }
 
@@ -339,12 +345,13 @@ const sliceContentByMealHeading = (content: string): Array<{ headingText: string
   for (let i = 0; i < markers.length; i++) {
     const cur = markers[i];
     const next = markers[i + 1];
-    // Slice = everything from end of heading block until start of next heading block.
-    // This guarantees: ALL content (paragraphs, lists, divs) between two headings
-    // is captured, with no interruption.
+    // Everything between the end of THIS heading block and the start of the NEXT
+    // heading block — guaranteed uninterrupted (lists, paragraphs, divs all included).
+    const between = content.slice(cur.blockEnd, next ? next.blockStart : content.length);
+    const htmlSlice = (cur.remainderHtml ? `<p>${cur.remainderHtml}</p>` : "") + between;
     slices.push({
       headingText: cur.headingText,
-      htmlSlice: content.slice(cur.headingEnd, next ? next.blockStart : content.length).trim(),
+      htmlSlice: htmlSlice.trim(),
     });
   }
   return slices;
