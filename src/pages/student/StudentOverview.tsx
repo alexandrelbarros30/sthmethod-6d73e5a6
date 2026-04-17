@@ -52,14 +52,16 @@ const getGreeting = () => {
 };
 
 const recipeHighlights = [
+  { id: "39", title: "Mousse de Whey", image: recipeMousseWhey, kcal: 180, isNew: true },
+  { id: "40", title: "Patinho Grelhado", image: recipePatinho, kcal: 410, isNew: true },
+  { id: "41", title: "Mexido de Ovos", image: recipeMexidoOvos, kcal: 320, isNew: true },
+  { id: "42", title: "Gelatina Proteica", image: recipeGelatina, kcal: 90, isNew: true },
+  { id: "43", title: "Almôndega Fit", image: recipeAlmondega, kcal: 380, isNew: true },
   { id: "7", title: "Moqueca Fit", image: recipeMoqueca, kcal: 360 },
   { id: "1", title: "Poke Bowl", image: recipePoke, kcal: 420 },
   { id: "8", title: "Tapioca", image: recipeTapioca, kcal: 280 },
   { id: "3", title: "Açaí Proteico", image: recipeAcai, kcal: 350 },
-  { id: "9", title: "Cuscuz Fit", image: recipeCuscuz, kcal: 320 },
-  { id: "12", title: "Escondidinho", image: recipeEscondidinho, kcal: 370 },
   { id: "2", title: "Frango Fit", image: recipeFrango, kcal: 380 },
-  { id: "5", title: "Panqueca Fit", image: recipePanqueca, kcal: 290 },
 ];
 
 // Daily meal widget sub-component
