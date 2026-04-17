@@ -493,6 +493,9 @@ export const syncStudentDietMeals = async (
           item: food.item,
           quantity: food.quantity,
           sort_order: index,
+          // Persist the raw HTML/text of the entire meal section on the first food's `notes`,
+          // so the student detail panel can render it faithfully (with prefix marker).
+          notes: index === 0 && meal.raw_html ? `__RAW_HTML__${meal.raw_html}` : null,
           // Distribute meal macros equally across foods
           energy_kcal: mealMacro ? Math.round((mealMacro.energy_kcal / foodCount) * 10) / 10 : 0,
           protein_g: mealMacro ? Math.round((mealMacro.protein_g / foodCount) * 10) / 10 : 0,
