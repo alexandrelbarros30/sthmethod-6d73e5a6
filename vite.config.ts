@@ -40,47 +40,14 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       injectRegister: false,
       registerType: "autoUpdate",
-      devOptions: {
-        enabled: false,
+      strategies: "injectManifest",
+      srcDir: "public",
+      filename: "sw-kill.js",
+      injectManifest: {
+        injectionPoint: undefined,
       },
-      includeAssets: ["favicon.ico", "pwa-icon-192.png", "pwa-icon-512.png"],
-      workbox: {
-        navigateFallbackDenylist: [/^\/~oauth/],
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,woff2}"],
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-        cleanupOutdatedCaches: true,
-        skipWaiting: true,
-        clientsClaim: true,
-      },
-      manifest: {
-        name: "STH Consultoria",
-        short_name: "STH",
-        description: "Consultoria online personalizada para quem busca emagrecimento, definição, saúde hormonal e evolução no shape.",
-        theme_color: "#0a1214",
-        background_color: "#0a1214",
-        display: "standalone",
-        orientation: "portrait",
-        scope: "/",
-        start_url: "/",
-        icons: [
-          {
-            src: "/pwa-icon-192.png",
-            sizes: "192x192",
-            type: "image/png",
-          },
-          {
-            src: "/pwa-icon-512.png",
-            sizes: "512x512",
-            type: "image/png",
-          },
-          {
-            src: "/pwa-icon-512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "maskable",
-          },
-        ],
-      },
+      devOptions: { enabled: false },
+      manifest: false,
     }),
   ].filter(Boolean),
   resolve: {
