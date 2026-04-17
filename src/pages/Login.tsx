@@ -69,28 +69,43 @@ const Login = () => {
           duration: 8000,
         });
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
 
-        // Check role to redirect
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: roleData } = await supabase
+        const userId = signInData.user?.id;
+        if (!userId) {
+          toast.error("Não foi possível autenticar. Tente novamente.");
+          setLoading(false);
+          return;
+        }
+
+        // Fetch role with maybeSingle (avoids hang/error when no row); guarded with timeout.
+        let role: string = "student";
+        try {
+          const rolePromise = supabase
             .from("user_roles")
             .select("role")
-            .eq("user_id", user.id)
-            .single();
-
-          const roleHomeMap: Record<string, string> = {
-            admin: "/admin",
-            consultor: "/consultor",
-            assistente: "/assistente",
-            financeiro: "/financeiro",
-            student: "/dashboard",
-          };
-          const role = roleData?.role || "student";
-          navigate(redirectTo || roleHomeMap[role] || "/dashboard");
+            .eq("user_id", userId)
+            .maybeSingle();
+          const timeout = new Promise<{ data: null }>((resolve) =>
+            setTimeout(() => resolve({ data: null }), 4000)
+          );
+          const result: any = await Promise.race([rolePromise, timeout]);
+          if (result?.data?.role) role = result.data.role;
+        } catch (e) {
+          console.warn("[Login] role fetch failed, defaulting to student:", e);
         }
+
+        const roleHomeMap: Record<string, string> = {
+          admin: "/admin",
+          consultor: "/consultor",
+          assistente: "/assistente",
+          financeiro: "/financeiro",
+          student: "/dashboard",
+        };
+        setLoading(false);
+        navigate(redirectTo || roleHomeMap[role] || "/dashboard", { replace: true });
+        return;
       }
     } catch (error: any) {
       toast.error(error.message || "Erro ao processar");
