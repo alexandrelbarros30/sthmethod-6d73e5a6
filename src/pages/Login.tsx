@@ -69,8 +69,40 @@ const Login = () => {
           duration: 8000,
         });
       } else {
-        const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        // Retry sign-in to mitigate transient "Failed to fetch" on mobile networks
+        let signInData: any = null;
+        let error: any = null;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          const res = await supabase.auth.signInWithPassword({ email, password });
+          signInData = res.data;
+          error = res.error;
+          if (!error) break;
+          const msg = (error.message || "").toLowerCase();
+          const isNetwork = msg.includes("failed to fetch") || msg.includes("network") || msg.includes("load failed");
+          if (!isNetwork) break;
+          await new Promise(r => setTimeout(r, 600 * (attempt + 1)));
+        }
+        if (error) {
+          const msg = (error.message || "").toLowerCase();
+          if (msg.includes("failed to fetch") || msg.includes("network") || msg.includes("load failed")) {
+            // Force-clear caches & SW so next attempt uses fresh network stack
+            try {
+              if ("caches" in window) {
+                const keys = await caches.keys();
+                await Promise.all(keys.map(k => caches.delete(k)));
+              }
+              if ("serviceWorker" in navigator) {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                await Promise.all(regs.map(r => r.unregister()));
+              }
+            } catch {}
+            toast.error("Falha de conexão. Recarregando...", { duration: 2000 });
+            setTimeout(() => window.location.reload(), 1500);
+            setLoading(false);
+            return;
+          }
+          throw error;
+        }
 
         const userId = signInData.user?.id;
         if (!userId) {
