@@ -148,16 +148,15 @@ serve(async (req) => {
         currency_id: "BRL",
       }],
       payer: {
-        name: profile?.full_name || "",
-        email: profile?.email || "",
+        name: profile?.full_name || "Aluno",
+        email: profile?.email || user.email || "aluno@sthmethod.com.br",
       },
       external_reference: payment.id,
       back_urls: {
-        success: `${req.headers.get("origin") || "https://sthconsultoria.lovable.app"}/dashboard/subscription?status=approved`,
-        failure: `${req.headers.get("origin") || "https://sthconsultoria.lovable.app"}/dashboard/subscription?status=failed`,
-        pending: `${req.headers.get("origin") || "https://sthconsultoria.lovable.app"}/dashboard/subscription?status=pending`,
+        success: `${req.headers.get("origin") || "https://sthmethod.com.br"}/dashboard/subscription?status=approved`,
+        failure: `${req.headers.get("origin") || "https://sthmethod.com.br"}/dashboard/subscription?status=failed`,
+        pending: `${req.headers.get("origin") || "https://sthmethod.com.br"}/dashboard/subscription?status=pending`,
       },
-      auto_return: "approved",
       notification_url: `${Deno.env.get("SUPABASE_URL")}/functions/v1/mercado-pago-webhook`,
       payment_methods: {
         excluded_payment_methods: [],
@@ -179,7 +178,11 @@ serve(async (req) => {
     });
 
     const mpData = await mpRes.json();
-    if (!mpRes.ok) throw new Error(`MP error [${mpRes.status}]: ${JSON.stringify(mpData)}`);
+    if (!mpRes.ok) {
+      console.error(`MP error [${mpRes.status}]:`, JSON.stringify(mpData));
+      console.error("Preference sent:", JSON.stringify(preference));
+      throw new Error(`MP error [${mpRes.status}]: ${mpData.message || JSON.stringify(mpData)}`);
+    }
 
     await supabaseAdmin.from("payment_gateway_details").upsert({
       payment_id: payment.id,
