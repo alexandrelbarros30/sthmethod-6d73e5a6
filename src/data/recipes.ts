@@ -34,6 +34,11 @@ import recipeMuffinBatata from "@/assets/recipe-muffin-batata.jpg";
 import recipeChaAmendoas from "@/assets/recipe-cha-amendoas.jpg";
 import recipeCottageNozes from "@/assets/recipe-cottage-nozes.jpg";
 import recipePudimCaseina from "@/assets/recipe-pudim-caseina.jpg";
+import recipeMousseWhey from "@/assets/recipe-mousse-whey.jpg";
+import recipePatinhoGrelhado from "@/assets/recipe-patinho-grelhado.jpg";
+import recipeMexidoOvos from "@/assets/recipe-mexido-ovos.jpg";
+import recipeGelatinaProteica from "@/assets/recipe-gelatina-proteica.jpg";
+import recipeAlmondegaFit from "@/assets/recipe-almondega-fit.jpg";
 
 export interface Recipe {
   id: string;
@@ -787,6 +792,137 @@ export const recipes: Recipe[] = [
     substituicoes: ["Cottage → iogurte grego", "Nozes → castanha-do-pará", "Granola → aveia crua"],
     ajusteEstrategico: "Cottage natural é 80% caseína. Com porção generosa + gordura das nozes + carboidrato da granola, cria um ambiente anticatabólico completo para a noite.",
     dicaPratica: "Versão turbinada da ceia de emagrecimento — mesma base, porção maior. Simples assim funciona a periodização nutricional.",
+  },
+  {
+    id: "39",
+    title: "Mousse de Whey com Cacau",
+    image: recipeMousseWhey,
+    time: "5 min",
+    kcal: 220,
+    category: "Lanche",
+    tags: ["Whey Protein", "Sobremesa Fit"],
+    objetivo: "Emagrecimento / Hipertrofia",
+    ingredients: [
+      "30g whey protein chocolate",
+      "150g iogurte grego natural",
+      "1 col. sopa cacau 100%",
+      "1 col. chá adoçante",
+      "Morangos para finalizar",
+    ],
+    instructions:
+      "1. Misture whey, iogurte, cacau e adoçante em um bowl.\n2. Bata com fouet até virar mousse cremoso.\n3. Leve à geladeira por 10 min.\n4. Finalize com morangos e cacau em pó.",
+    substituicoes: [
+      "Iogurte grego → cottage batido",
+      "Whey chocolate → whey baunilha + cacau extra",
+      "Morangos → frutas vermelhas congeladas",
+    ],
+    ajusteEstrategico: "Sobremesa proteica de baixa caloria que mata vontade de doce sem sair do plano. O cacau 100% acrescenta antioxidantes e dá cremosidade sem açúcar.",
+    dicaPratica: "Faça 3 porções no domingo e congele em potinhos. Lanche da tarde resolvido para a semana inteira em 5 minutos.",
+  },
+  {
+    id: "40",
+    title: "Patinho Grelhado com Batata-doce",
+    image: recipePatinhoGrelhado,
+    time: "20 min",
+    kcal: 410,
+    category: "Almoço",
+    tags: ["Carne Magra", "Alto em Proteína"],
+    objetivo: "Hipertrofia / Definição",
+    ingredients: [
+      "180g patinho em bifes",
+      "150g batata-doce em cubos",
+      "100g brócolis cozido no vapor",
+      "Alho, sal, pimenta-do-reino",
+      "1 col. chá azeite",
+    ],
+    instructions:
+      "1. Tempere o patinho com alho, sal e pimenta.\n2. Asse a batata-doce no forno por 15 min a 200°C.\n3. Grelhe o patinho 3 min de cada lado.\n4. Cozinhe o brócolis no vapor por 4 min.\n5. Monte o prato e finalize com fio de azeite.",
+    substituicoes: [
+      "Patinho → coxão duro, alcatra ou músculo",
+      "Batata-doce → mandioquinha ou inhame",
+      "Brócolis → couve-flor ou abobrinha",
+    ],
+    ajusteEstrategico: "Carne vermelha magra entrega ferro heme, creatina natural e B12 — combo essencial para performance e hipertrofia. Combinada com carbo de baixo IG, sustenta energia por 4-5h.",
+    dicaPratica: "Compre patinho em bifes finos (150-200g). Grelha em 6 minutos e fica suculento. Marmita de domingo: prepare 4 porções de uma vez.",
+  },
+  {
+    id: "41",
+    title: "Mexido de Ovos no Pão Integral",
+    image: recipeMexidoOvos,
+    time: "8 min",
+    kcal: 340,
+    category: "Café da manhã",
+    tags: ["Rápido", "Alto em Proteína"],
+    objetivo: "Hipertrofia / Manutenção",
+    ingredients: [
+      "3 ovos inteiros",
+      "2 fatias pão integral",
+      "½ abacate fatiado",
+      "5 tomates-cereja",
+      "Sal, pimenta e cebolinha",
+    ],
+    instructions:
+      "1. Bata os ovos com sal e pimenta.\n2. Cozinhe em fogo baixo mexendo até ponto cremoso (3 min).\n3. Toste o pão integral.\n4. Monte: pão como base, ovos por cima, abacate e tomate.\n5. Finalize com cebolinha picada.",
+    substituicoes: [
+      "Ovos inteiros → 2 ovos + 3 claras (versão low fat)",
+      "Pão integral → tapioca ou batata-doce",
+      "Abacate → cottage ou queijo branco",
+    ],
+    ajusteEstrategico: "Ovos são a proteína de maior valor biológico (PDCAAS 1.0). Combinados com gordura monoinsaturada do abacate e carbo complexo do pão, criam saciedade prolongada para começar o dia.",
+    dicaPratica: "Mexa os ovos em fogo BAIXO. Alta temperatura deixa borrachudo e perde nutrientes. Leve 1 min a mais, mas ganhe textura cremosa de chef.",
+  },
+  {
+    id: "42",
+    title: "Gelatina Proteica de Morango",
+    image: recipeGelatinaProteica,
+    time: "5 min + 2h gelar",
+    kcal: 90,
+    category: "Lanche da Tarde",
+    tags: ["Sem Açúcar", "Low Calorie"],
+    objetivo: "Emagrecimento / Definição",
+    ingredients: [
+      "1 sachê gelatina diet morango",
+      "200ml água quente + 200ml água gelada",
+      "15g whey protein morango",
+      "Morangos frescos picados",
+      "Folhas de hortelã",
+    ],
+    instructions:
+      "1. Dissolva a gelatina na água quente conforme embalagem.\n2. Adicione a água gelada e mexa.\n3. Quando começar a esfriar, misture o whey dissolvido em 50ml de água.\n4. Acrescente morangos picados.\n5. Leve à geladeira por 2h. Finalize com hortelã.",
+    substituicoes: [
+      "Whey morango → whey baunilha + 1 col. essência",
+      "Gelatina morango → uva, abacaxi ou frutas vermelhas",
+      "Morangos → kiwi, manga ou pêssego",
+    ],
+    ajusteEstrategico: "A gelatina é fonte natural de colágeno tipo I e II — essencial para articulações em quem treina pesado. Com adição de whey, vira lanche proteico (15g) com apenas 90 kcal.",
+    dicaPratica: "Faça em potinhos individuais de 100ml. Tenha sempre 5-6 na geladeira para emergências de fome ou vontade de doce sem culpa.",
+  },
+  {
+    id: "43",
+    title: "Almôndega Fit ao Forno",
+    image: recipeAlmondegaFit,
+    time: "30 min",
+    kcal: 450,
+    category: "Jantar",
+    tags: ["Carne Magra", "Comfort Food Fit"],
+    objetivo: "Hipertrofia",
+    ingredients: [
+      "200g patinho moído",
+      "1 ovo inteiro",
+      "2 col. sopa aveia em flocos",
+      "Cebola, alho, salsa picados",
+      "100g arroz integral cozido",
+      "20g queijo muçarela light",
+    ],
+    instructions:
+      "1. Misture carne, ovo, aveia, cebola, alho e salsa.\n2. Tempere com sal e pimenta.\n3. Modele 1 hambúrguer grande ou 4 almôndegas.\n4. Asse no forno a 200°C por 18 min.\n5. Adicione muçarela nos últimos 3 min.\n6. Sirva sobre arroz integral com salada.",
+    substituicoes: [
+      "Patinho → frango moído ou peru moído",
+      "Aveia → farinha de mandioca ou farinha de grão-de-bico",
+      "Arroz integral → quinoa ou batata-doce",
+    ],
+    ajusteEstrategico: "Receita comfort food saudável: ovo + aveia substituem farinha de rosca tradicional, mantendo textura sem peso glicêmico desnecessário. Carne magra entrega 40g+ de proteína completa.",
+    dicaPratica: "Faça 8 almôndegas, congele cruas em saco zip. À noite tira 4 do freezer e leva direto ao forno. Jantar caseiro pronto em 25 min sem planejamento.",
   },
 ];
 
