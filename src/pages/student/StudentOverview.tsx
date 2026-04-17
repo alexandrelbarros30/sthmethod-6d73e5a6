@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Salad, Dumbbell, ChevronRight, Flame, Clock, Utensils,
-  Play, UtensilsCrossed
+  Play, UtensilsCrossed, Newspaper, Sparkles
 } from "lucide-react";
 import { useMealTracking } from "@/hooks/useMealTracking";
 import DailyProgressRing from "@/components/student/DailyProgressRing";
@@ -176,6 +176,33 @@ const StudentOverview = () => {
         <p className="text-sm text-muted-foreground mt-0.5">Acompanhe seu progresso e conquiste seus objetivos.</p>
       </div>
       <SubscriptionAlerts subscription={subscription ? { ...subscription, plans: (subscription as any)?.plans } : null} />
+
+      {/* ===== ÚLTIMA MATÉRIA STH NEWS ===== */}
+      <Link to="/fitness-cenario-2026" className="block mb-6">
+        <Card className="overflow-hidden border-primary/20 bg-gradient-to-r from-primary/15 via-primary/5 to-transparent hover:shadow-lg transition-all group cursor-pointer relative">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
+          <CardContent className="py-3.5 px-4 flex items-center gap-3 relative">
+            <div className="w-11 h-11 rounded-xl bg-primary/15 border border-primary/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <Newspaper className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="text-[9px] font-black tracking-[0.18em] text-primary uppercase">STH News</span>
+                <span className="inline-flex items-center gap-0.5 text-[8px] font-bold uppercase bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full animate-pulse">
+                  <Sparkles className="w-2 h-2" /> Nova
+                </span>
+              </div>
+              <p className="font-bold text-foreground font-display text-sm leading-tight truncate">
+                Fitness — Cenário 2026
+              </p>
+              <p className="text-[11px] text-muted-foreground truncate">
+                Última matéria em destaque · Toque para ler
+              </p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-primary shrink-0 group-hover:translate-x-1 transition-transform" />
+          </CardContent>
+        </Card>
+      </Link>
 
       {/* ===== SEU TREINO DE HOJE ===== */}
       <Card
