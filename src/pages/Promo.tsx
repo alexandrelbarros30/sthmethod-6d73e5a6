@@ -249,13 +249,14 @@ const Promo = () => {
         </div>
       </section>
 
-      {/* Checkout dialog — only PIX is enabled because these plans have no card_price */}
+      {/* Checkout dialog — forced PIX-only */}
       <DynamicCheckoutDialog
         open={checkoutOpen}
         onOpenChange={setCheckoutOpen}
         selectedPlan={selectedPlan}
         calculateFinalPrice={calculateFinalPrice}
         actionType="new"
+        forcePixOnly
         onPaymentSuccess={() => {
           setCheckoutOpen(false);
           navigate("/dashboard/subscription");
