@@ -54,6 +54,7 @@ export interface Recipe {
   substituicoes: string[];
   ajusteEstrategico: string;
   dicaPratica: string;
+  isNew?: boolean;
 }
 
 export const recipes: Recipe[] = [
@@ -818,6 +819,7 @@ export const recipes: Recipe[] = [
     ],
     ajusteEstrategico: "Sobremesa proteica de baixa caloria que mata vontade de doce sem sair do plano. O cacau 100% acrescenta antioxidantes e dá cremosidade sem açúcar.",
     dicaPratica: "Faça 3 porções no domingo e congele em potinhos. Lanche da tarde resolvido para a semana inteira em 5 minutos.",
+    isNew: true,
   },
   {
     id: "40",
@@ -844,6 +846,7 @@ export const recipes: Recipe[] = [
     ],
     ajusteEstrategico: "Carne vermelha magra entrega ferro heme, creatina natural e B12 — combo essencial para performance e hipertrofia. Combinada com carbo de baixo IG, sustenta energia por 4-5h.",
     dicaPratica: "Compre patinho em bifes finos (150-200g). Grelha em 6 minutos e fica suculento. Marmita de domingo: prepare 4 porções de uma vez.",
+    isNew: true,
   },
   {
     id: "41",
@@ -870,6 +873,7 @@ export const recipes: Recipe[] = [
     ],
     ajusteEstrategico: "Ovos são a proteína de maior valor biológico (PDCAAS 1.0). Combinados com gordura monoinsaturada do abacate e carbo complexo do pão, criam saciedade prolongada para começar o dia.",
     dicaPratica: "Mexa os ovos em fogo BAIXO. Alta temperatura deixa borrachudo e perde nutrientes. Leve 1 min a mais, mas ganhe textura cremosa de chef.",
+    isNew: true,
   },
   {
     id: "42",
@@ -896,6 +900,7 @@ export const recipes: Recipe[] = [
     ],
     ajusteEstrategico: "A gelatina é fonte natural de colágeno tipo I e II — essencial para articulações em quem treina pesado. Com adição de whey, vira lanche proteico (15g) com apenas 90 kcal.",
     dicaPratica: "Faça em potinhos individuais de 100ml. Tenha sempre 5-6 na geladeira para emergências de fome ou vontade de doce sem culpa.",
+    isNew: true,
   },
   {
     id: "43",
@@ -923,6 +928,7 @@ export const recipes: Recipe[] = [
     ],
     ajusteEstrategico: "Receita comfort food saudável: ovo + aveia substituem farinha de rosca tradicional, mantendo textura sem peso glicêmico desnecessário. Carne magra entrega 40g+ de proteína completa.",
     dicaPratica: "Faça 8 almôndegas, congele cruas em saco zip. À noite tira 4 do freezer e leva direto ao forno. Jantar caseiro pronto em 25 min sem planejamento.",
+    isNew: true,
   },
 ];
 
