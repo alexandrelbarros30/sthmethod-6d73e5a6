@@ -432,18 +432,31 @@ const Cadastro = () => {
     }
   };
 
+  // Check if user came from a promo/specific page that should resume after signup
+  const redirectAfterSignup = new URLSearchParams(location.search).get("redirect");
+
   // Step 3 → 4 transition
   const handleImagesComplete = () => {
     setImagesComplete(true);
     refetchImages();
     supabase.from("profiles").update({ onboarding_complete: true }).eq("user_id", userId!);
+    if (redirectAfterSignup) {
+      toast.success("Cadastro concluído! Redirecionando para finalizar a promoção...");
+      setTimeout(() => navigate(redirectAfterSignup), 800);
+      return;
+    }
     toast.success("Fotos enviadas! Agora escolha seu plano.");
     setStep(4);
   };
 
-  // Skip images and go directly to plans
+  // Skip images and go directly to plans (or redirect)
   const handleSkipImages = () => {
     supabase.from("profiles").update({ onboarding_complete: true }).eq("user_id", userId!);
+    if (redirectAfterSignup) {
+      toast.info("Você pode enviar as fotos depois. Vamos finalizar sua promoção!");
+      setTimeout(() => navigate(redirectAfterSignup), 600);
+      return;
+    }
     toast.info("Você pode enviar as fotos depois. Escolha seu plano!");
     setStep(4);
   };
