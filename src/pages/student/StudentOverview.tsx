@@ -1,13 +1,10 @@
 import { useState, useMemo } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
-import AdFloatingButton from "@/components/student/AdFloatingButton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Salad, Dumbbell, ChevronRight, Flame, Clock, Utensils,
-  Play, UtensilsCrossed, MessageCircle, ExternalLink
+  Play, UtensilsCrossed
 } from "lucide-react";
 import { useMealTracking } from "@/hooks/useMealTracking";
 import DailyProgressRing from "@/components/student/DailyProgressRing";
@@ -130,25 +127,6 @@ const StudentOverview = () => {
   const { profile, user } = useAuth();
   const navigate = useNavigate();
   const [greeting] = useState(getGreeting);
-  const [adPopupOpen, setAdPopupOpen] = useState(() => {
-    const shown = sessionStorage.getItem("ads-auto-shown");
-    return !shown;
-  });
-  const [adIndex, setAdIndex] = useState(0);
-
-  const { data: dynamicAds } = useQuery({
-    queryKey: ["student-ads-overview"],
-    queryFn: async () => {
-      const now = new Date().toISOString().split("T")[0];
-      const { data } = await supabase
-        .from("ads")
-        .select("*")
-        .eq("active", true)
-        .lte("start_date", now)
-        .order("sort_order", { ascending: true });
-      return (data || []).filter((a: any) => !a.end_date || a.end_date >= now);
-    },
-  });
 
   const { data: fullProfile } = useQuery({
     queryKey: ["student-full-profile", user?.id],
@@ -188,7 +166,6 @@ const StudentOverview = () => {
 
   return (
     <DashboardLayout role="student" title="" subtitle="">
-      <AdFloatingButton onOpen={() => setAdPopupOpen(true)} />
       {/* ===== SAUDAÇÃO ===== */}
       <div className="mb-5">
         <h1 className="text-xl font-bold text-foreground font-display">
@@ -294,52 +271,6 @@ const StudentOverview = () => {
 
       {/* ===== PROGRESSO DIÁRIO ===== */}
       <DailyMealWidget />
-
-      {/* Dynamic ad popups - sequential */}
-      {dynamicAds && dynamicAds.length > 0 && (
-        <Dialog open={adPopupOpen} onOpenChange={(open) => {
-          if (!open) {
-            // Move to next ad or close
-            if (adIndex < dynamicAds.length - 1) {
-              setAdIndex(adIndex + 1);
-            } else {
-              setAdPopupOpen(false);
-              setAdIndex(0);
-              sessionStorage.setItem("ads-auto-shown", "1");
-            }
-          }
-        }}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>{dynamicAds[adIndex]?.title}</DialogTitle>
-            </DialogHeader>
-            <ScrollArea className="max-h-[70vh]">
-              <div className="space-y-4">
-                {dynamicAds[adIndex]?.image_url && (
-                  <img src={dynamicAds[adIndex].image_url} alt={dynamicAds[adIndex].title} className="w-full rounded-xl object-contain max-h-64" />
-                )}
-                {dynamicAds[adIndex]?.popup_content ? (
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{dynamicAds[adIndex].popup_content}</p>
-                ) : dynamicAds[adIndex]?.description ? (
-                  <p className="text-sm text-muted-foreground">{dynamicAds[adIndex].description}</p>
-                ) : null}
-                <div className="flex gap-2">
-                  {dynamicAds[adIndex]?.whatsapp_number && (
-                    <Button className="flex-1 bg-green-600 hover:bg-green-700 text-white gap-1.5" onClick={() => window.open(`https://wa.me/${dynamicAds[adIndex].whatsapp_number}`, "_blank")}>
-                      <MessageCircle className="w-4 h-4" /> WhatsApp
-                    </Button>
-                  )}
-                  {dynamicAds[adIndex]?.external_link && (
-                    <Button variant="outline" className="flex-1 gap-1.5" onClick={() => window.open(dynamicAds[adIndex].external_link, "_blank")}>
-                      <ExternalLink className="w-4 h-4" /> Site
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </ScrollArea>
-          </DialogContent>
-        </Dialog>
-      )}
     </DashboardLayout>
   );
 };
