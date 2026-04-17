@@ -296,7 +296,7 @@ const Login = () => {
             </Button>
           </form>
 
-          <div className="text-center">
+          <div className="text-center space-y-3">
             <button
               type="button"
               onClick={() => setIsSignUp(!isSignUp)}
@@ -304,6 +304,31 @@ const Login = () => {
             >
               {isSignUp ? "Já tem conta? Entrar" : "Não tem conta? Criar conta"}
             </button>
+            <div>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    if ("caches" in window) {
+                      const keys = await caches.keys();
+                      await Promise.all(keys.map(k => caches.delete(k)));
+                    }
+                    if ("serviceWorker" in navigator) {
+                      const regs = await navigator.serviceWorker.getRegistrations();
+                      await Promise.all(regs.map(r => r.unregister()));
+                    }
+                    localStorage.removeItem("sth-app-version");
+                    localStorage.removeItem("sth-auto-reload-version");
+                  } catch {}
+                  const url = new URL(window.location.href);
+                  url.searchParams.set("_v", Date.now().toString());
+                  window.location.replace(url.toString());
+                }}
+                className="text-[11px] text-muted-foreground/60 hover:text-foreground transition-colors underline-offset-2 hover:underline"
+              >
+                Problemas para entrar? Limpar cache e recarregar
+              </button>
+            </div>
           </div>
         </div>
       </div>
