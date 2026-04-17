@@ -69,39 +69,74 @@ const Login = () => {
           duration: 8000,
         });
       } else {
-        // Retry sign-in to mitigate transient "Failed to fetch" on mobile networks
+        // Retry sign-in with multiple strategies (mobile networks / Android Chromium often throw "Failed to fetch")
         let signInData: any = null;
         let error: any = null;
         for (let attempt = 0; attempt < 3; attempt++) {
-          const res = await supabase.auth.signInWithPassword({ email, password });
-          signInData = res.data;
-          error = res.error;
+          try {
+            const res = await supabase.auth.signInWithPassword({ email, password });
+            signInData = res.data;
+            error = res.error;
+          } catch (netErr: any) {
+            error = { message: netErr?.message || "Failed to fetch" };
+          }
           if (!error) break;
           const msg = (error.message || "").toLowerCase();
           const isNetwork = msg.includes("failed to fetch") || msg.includes("network") || msg.includes("load failed");
           if (!isNetwork) break;
           await new Promise(r => setTimeout(r, 600 * (attempt + 1)));
         }
+
+        // Fallback: direct REST call (bypasses SDK fetch wrapper that some Android Chromium builds choke on)
         if (error) {
           const msg = (error.message || "").toLowerCase();
-          if (msg.includes("failed to fetch") || msg.includes("network") || msg.includes("load failed")) {
-            // Force-clear caches & SW so next attempt uses fresh network stack
+          const isNetwork = msg.includes("failed to fetch") || msg.includes("network") || msg.includes("load failed");
+          if (isNetwork) {
             try {
-              if ("caches" in window) {
-                const keys = await caches.keys();
-                await Promise.all(keys.map(k => caches.delete(k)));
+              const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+              const ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+              const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  apikey: ANON,
+                  Authorization: `Bearer ${ANON}`,
+                },
+                body: JSON.stringify({ email, password }),
+                cache: "no-store",
+              });
+              if (r.ok) {
+                const session = await r.json();
+                const { error: setErr } = await supabase.auth.setSession({
+                  access_token: session.access_token,
+                  refresh_token: session.refresh_token,
+                });
+                if (!setErr) {
+                  signInData = { user: session.user };
+                  error = null;
+                }
+              } else {
+                const body = await r.json().catch(() => ({}));
+                error = { message: body?.error_description || body?.msg || `HTTP ${r.status}` };
               }
-              if ("serviceWorker" in navigator) {
-                const regs = await navigator.serviceWorker.getRegistrations();
-                await Promise.all(regs.map(r => r.unregister()));
-              }
-            } catch {}
-            toast.error("Falha de conexão. Recarregando...", { duration: 2000 });
-            setTimeout(() => window.location.reload(), 1500);
-            setLoading(false);
-            return;
+            } catch (e: any) {
+              // Still failing → caches/SW likely poisoned. Clear & reload.
+              try {
+                if ("caches" in window) {
+                  const keys = await caches.keys();
+                  await Promise.all(keys.map(k => caches.delete(k)));
+                }
+                if ("serviceWorker" in navigator) {
+                  const regs = await navigator.serviceWorker.getRegistrations();
+                  await Promise.all(regs.map(r => r.unregister()));
+                }
+              } catch {}
+              toast.error("Falha de conexão. Toque em 'Limpar cache' abaixo e tente novamente.", { duration: 5000 });
+              setLoading(false);
+              return;
+            }
           }
-          throw error;
+          if (error) throw error;
         }
 
         const userId = signInData.user?.id;
@@ -261,7 +296,7 @@ const Login = () => {
             </Button>
           </form>
 
-          <div className="text-center">
+          <div className="text-center space-y-3">
             <button
               type="button"
               onClick={() => setIsSignUp(!isSignUp)}
@@ -269,6 +304,31 @@ const Login = () => {
             >
               {isSignUp ? "Já tem conta? Entrar" : "Não tem conta? Criar conta"}
             </button>
+            <div>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    if ("caches" in window) {
+                      const keys = await caches.keys();
+                      await Promise.all(keys.map(k => caches.delete(k)));
+                    }
+                    if ("serviceWorker" in navigator) {
+                      const regs = await navigator.serviceWorker.getRegistrations();
+                      await Promise.all(regs.map(r => r.unregister()));
+                    }
+                    localStorage.removeItem("sth-app-version");
+                    localStorage.removeItem("sth-auto-reload-version");
+                  } catch {}
+                  const url = new URL(window.location.href);
+                  url.searchParams.set("_v", Date.now().toString());
+                  window.location.replace(url.toString());
+                }}
+                className="text-[11px] text-muted-foreground/60 hover:text-foreground transition-colors underline-offset-2 hover:underline"
+              >
+                Problemas para entrar? Limpar cache e recarregar
+              </button>
+            </div>
           </div>
         </div>
       </div>
