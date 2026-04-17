@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Salad, Dumbbell, ChevronRight, Flame, Clock, Utensils,
-  Play, UtensilsCrossed, MessageCircle, ExternalLink
+  Play, UtensilsCrossed
 } from "lucide-react";
 import { useMealTracking } from "@/hooks/useMealTracking";
 import DailyProgressRing from "@/components/student/DailyProgressRing";
