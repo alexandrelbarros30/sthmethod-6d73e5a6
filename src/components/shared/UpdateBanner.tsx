@@ -4,9 +4,26 @@ import { RefreshCw, X } from "lucide-react";
 
 const APP_VERSION = "1.4.9";
 const VERSION_KEY = "sth-app-version";
+const VERSION_URL = "/version.json";
+const POLL_INTERVAL_MS = 30_000;
+
+const fetchRemoteVersion = async (): Promise<string | null> => {
+  try {
+    const res = await fetch(`${VERSION_URL}?t=${Date.now()}`, {
+      cache: "no-store",
+      headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return typeof data?.version === "string" ? data.version : null;
+  } catch {
+    return null;
+  }
+};
 
 const UpdateBanner = () => {
   const [show, setShow] = useState(false);
+  const [remoteVersion, setRemoteVersion] = useState<string>(APP_VERSION);
 
   useEffect(() => {
     const stored = localStorage.getItem(VERSION_KEY);
@@ -14,6 +31,27 @@ const UpdateBanner = () => {
       setShow(true);
     }
     localStorage.setItem(VERSION_KEY, APP_VERSION);
+
+    let cancelled = false;
+    const check = async () => {
+      const remote = await fetchRemoteVersion();
+      if (cancelled || !remote) return;
+      if (remote !== APP_VERSION) {
+        setRemoteVersion(remote);
+        setShow(true);
+      }
+    };
+    check();
+    const interval = window.setInterval(check, POLL_INTERVAL_MS);
+    const onFocus = () => check();
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
   }, []);
 
   const handleUpdate = () => {
@@ -59,7 +97,7 @@ const UpdateBanner = () => {
                 Nova atualização disponível
               </p>
               <p className="text-[11px]" style={{ color: "hsl(0 0% 55%)" }}>
-                v{APP_VERSION} — Performance e novos recursos
+                v{remoteVersion} — Toque em Atualizar para aplicar
               </p>
             </div>
             <button
