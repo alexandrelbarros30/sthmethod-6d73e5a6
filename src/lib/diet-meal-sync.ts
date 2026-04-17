@@ -293,17 +293,50 @@ const sliceContentByMealHeading = (content: string): Array<{ headingText: string
     return slices;
   }
 
-  type Marker = { start: number; end: number; headingText: string };
+  // A marker locates a heading block. We capture both the heading text AND any
+  // "remainder" content that lives in the SAME block (e.g. text after a <br>).
+  type Marker = {
+    blockStart: number;
+    blockEnd: number;
+    headingText: string;
+    remainderHtml: string; // any extra content inside the same block, after the heading line
+  };
   const markers: Marker[] = [];
-  const re = /<(h[1-6]|p|div)\b[^>]*>([\s\S]*?)<\/\1>/gi;
+  const re = /<(h[1-6]|p|div|li)\b[^>]*>([\s\S]*?)<\/\1>/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(content)) !== null) {
-    const innerText = stripTags(m[2]);
+    const tag = m[1].toLowerCase();
+    const inner = m[2];
+    const innerText = stripTags(inner);
     if (!innerText) continue;
-    const isHeadingTag = /^h[1-6]$/i.test(m[1]);
-    if (HEADING_KEYWORDS_RE.test(innerText) || (isHeadingTag && HEADING_KEYWORDS_RE.test(innerText))) {
-      markers.push({ start: m.index, end: m.index + m[0].length, headingText: innerText });
+    const isHeadingTag = /^h[1-6]$/i.test(tag);
+
+    let headingLine = "";
+    let remainderHtml = "";
+
+    if (isHeadingTag) {
+      headingLine = innerText;
+    } else {
+      // Split the block by <br> and look for a heading on the FIRST non-empty line.
+      const segments = inner.split(/<br\s*\/?\s*>/gi);
+      const firstSegText = stripTags(segments[0] || "");
+      if (HEADING_KEYWORDS_RE.test(firstSegText)) {
+        headingLine = firstSegText;
+        // Anything after the first <br> in the same block belongs to this meal.
+        if (segments.length > 1) {
+          remainderHtml = segments.slice(1).join("<br>").trim();
+        }
+      }
     }
+
+    if (!headingLine || !HEADING_KEYWORDS_RE.test(headingLine)) continue;
+
+    markers.push({
+      blockStart: m.index,
+      blockEnd: m.index + m[0].length,
+      headingText: headingLine,
+      remainderHtml,
+    });
   }
 
   if (!markers.length) return [];
@@ -312,9 +345,13 @@ const sliceContentByMealHeading = (content: string): Array<{ headingText: string
   for (let i = 0; i < markers.length; i++) {
     const cur = markers[i];
     const next = markers[i + 1];
+    // Everything between the end of THIS heading block and the start of the NEXT
+    // heading block — guaranteed uninterrupted (lists, paragraphs, divs all included).
+    const between = content.slice(cur.blockEnd, next ? next.blockStart : content.length);
+    const htmlSlice = (cur.remainderHtml ? `<p>${cur.remainderHtml}</p>` : "") + between;
     slices.push({
       headingText: cur.headingText,
-      htmlSlice: content.slice(cur.end, next ? next.start : content.length).trim(),
+      htmlSlice: htmlSlice.trim(),
     });
   }
   return slices;
