@@ -320,13 +320,9 @@ const sliceContentByMealHeading = (content: string): Array<{ headingText: string
 };
 
 export const parseDietContentToMeals = (content: string): ParsedDietMeal[] => {
-  const tokens = htmlToTokens(content);
   const slices = sliceContentByMealHeading(content);
   const mealsMap = new Map<number, ParsedDietMeal>();
-  let currentOrder: number | null = null;
   let extraOrder = 6;
-  let substitutionIndex = 0;
-  let headingIndex = -1;
 
   const nextExtraOrder = () => {
     const value = extraOrder;
@@ -369,33 +365,57 @@ export const parseDietContentToMeals = (content: string): ParsedDietMeal[] => {
     });
   };
 
-  for (const token of tokens) {
-    const text = token.text;
-    if (!text || SECTION_TITLE_RE.test(text)) continue;
+  // If we have heading-based slices, parse each slice independently — this is the most reliable path.
+  if (slices.length > 0) {
+    for (const slice of slices) {
+      const heading = parseHeading(slice.headingText, nextExtraOrder);
+      if (!heading) continue;
+      const meal = ensureMeal(heading.sortOrder, heading.name, slice.htmlSlice);
+      if (heading.remainder && !SECTION_TITLE_RE.test(heading.remainder)) {
+        addFoodsFromText(meal, heading.remainder);
+      }
 
-    if (token.type === "HEADING") {
-      const heading = parseHeading(text, nextExtraOrder);
-      if (heading) {
-        currentOrder = heading.sortOrder;
-        substitutionIndex = 0;
-        headingIndex += 1;
-        const rawHtml = slices[headingIndex]?.htmlSlice;
-        const meal = ensureMeal(heading.sortOrder, heading.name, rawHtml);
-        if (heading.remainder && !SECTION_TITLE_RE.test(heading.remainder)) {
-          addFoodsFromText(meal, heading.remainder);
+      // Tokenize ONLY the slice's HTML — guarantees no cross-meal bleed.
+      const sliceTokens = htmlToTokens(slice.htmlSlice);
+      let substitutionIndex = 0;
+      for (const token of sliceTokens) {
+        const text = token.text;
+        if (!text || SECTION_TITLE_RE.test(text)) continue;
+        // Defensive: ignore any heading tokens inside a slice (shouldn't happen, but safe).
+        if (token.type === "HEADING") continue;
+        if (token.type === "SUB_ITEM") {
+          substitutionIndex += 1;
+          addFoodsFromText(meal, text, { isSubstitution: true, subIndex: substitutionIndex });
+        } else {
+          addFoodsFromText(meal, text);
         }
       }
-      continue;
     }
-
-    if (currentOrder === null) continue;
-    const meal = ensureMeal(currentOrder);
-
-    if (token.type === "SUB_ITEM") {
-      substitutionIndex += 1;
-      addFoodsFromText(meal, text, { isSubstitution: true, subIndex: substitutionIndex });
-    } else {
-      addFoodsFromText(meal, text);
+  } else {
+    // Fallback: no headings detected — flat tokenize and dump into a single default meal.
+    const tokens = htmlToTokens(content);
+    let currentOrder: number | null = null;
+    let substitutionIndex = 0;
+    for (const token of tokens) {
+      const text = token.text;
+      if (!text || SECTION_TITLE_RE.test(text)) continue;
+      if (token.type === "HEADING") {
+        const heading = parseHeading(text, nextExtraOrder);
+        if (heading) {
+          currentOrder = heading.sortOrder;
+          substitutionIndex = 0;
+          ensureMeal(heading.sortOrder, heading.name);
+        }
+        continue;
+      }
+      if (currentOrder === null) continue;
+      const meal = ensureMeal(currentOrder);
+      if (token.type === "SUB_ITEM") {
+        substitutionIndex += 1;
+        addFoodsFromText(meal, text, { isSubstitution: true, subIndex: substitutionIndex });
+      } else {
+        addFoodsFromText(meal, text);
+      }
     }
   }
 
