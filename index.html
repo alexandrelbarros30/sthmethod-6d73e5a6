@@ -22,6 +22,42 @@
     <meta name="twitter:title" content="STH Consultoria" />
     <meta name="twitter:description" content="Consultoria online personalizada para quem busca emagrecimento, definição, saúde hormonal e evolução no shape." />
     <meta name="twitter:image" content="https://tthahgwkkdyvxdbhsgyb.supabase.co/storage/v1/object/public/landing-assets/og-image/1772802656246.png" />
+
+    <script>
+      // Pre-boot version check: kills stale service worker / caches before React loads
+      (function () {
+        try {
+          var KEY = "sth-preboot-version";
+          var stored = localStorage.getItem(KEY);
+          fetch("/version.json?t=" + Date.now(), { cache: "no-store" })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              var remote = data && data.version;
+              if (!remote || stored === remote) return;
+              localStorage.setItem(KEY, remote);
+              var jobs = [];
+              if ("serviceWorker" in navigator) {
+                jobs.push(navigator.serviceWorker.getRegistrations().then(function (rs) {
+                  return Promise.all(rs.map(function (r) { return r.unregister(); }));
+                }));
+              }
+              if ("caches" in window) {
+                jobs.push(caches.keys().then(function (ks) {
+                  return Promise.all(ks.map(function (k) { return caches.delete(k); }));
+                }));
+              }
+              Promise.all(jobs).finally(function () {
+                if (stored && stored !== remote) {
+                  var u = new URL(window.location.href);
+                  u.searchParams.set("_v", remote);
+                  window.location.replace(u.toString());
+                }
+              });
+            })
+            .catch(function () {});
+        } catch (e) {}
+      })();
+    </script>
 </head>
 
   <body>
