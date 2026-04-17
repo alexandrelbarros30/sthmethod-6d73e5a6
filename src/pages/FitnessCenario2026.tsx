@@ -3,9 +3,10 @@ import { Link } from "react-router-dom";
 import {
   ArrowLeft, Newspaper, Globe, MessageCircle, Rocket,
   Trophy, Cpu, TrendingUp, Target, Layers, ChevronRight,
-  ExternalLink, Zap, Shield, Flame, Calendar,
+  ExternalLink, Zap, Shield, Flame, Calendar, Home,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import fiboImg from "@/assets/fibo-2026.jpg";
 import ifbbMemphisImg from "@/assets/ifbb-memphis-2026.jpg";
 import ifbbMercosurImg from "@/assets/ifbb-mercosur-2026.jpg";
@@ -20,6 +21,12 @@ const fadeUp = {
 };
 
 const FitnessCenario2026 = () => {
+  const { user, role } = useAuth();
+  const isStudent = !!user && role === "student";
+  const backTo = isStudent ? "/dashboard" : "/tendencias";
+  const backLabel = isStudent ? "Início" : "STH News";
+  const BackIcon = isStudent ? Home : ArrowLeft;
+
   const today = new Date().toLocaleDateString("pt-BR", {
     day: "2-digit",
     month: "long",
@@ -32,18 +39,26 @@ const FitnessCenario2026 = () => {
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border">
         <div className="max-w-3xl mx-auto px-4">
           <div className="h-12 flex items-center justify-between">
-            <Link to="/tendencias" className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-              <ArrowLeft className="w-3.5 h-3.5" /> STH News
+            <Link to={backTo} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+              <BackIcon className="w-3.5 h-3.5" /> {backLabel}
             </Link>
             <div className="flex items-center gap-1.5">
               <Newspaper className="w-3.5 h-3.5 text-primary" />
               <span className="text-[11px] font-black tracking-[0.2em] text-foreground uppercase">STH News</span>
             </div>
-            <Link to="/cadastro">
-              <Button size="sm" className="gradient-bg text-primary-foreground text-[10px] px-3 h-7 rounded-full font-bold">
-                Começar
-              </Button>
-            </Link>
+            {isStudent ? (
+              <Link to="/dashboard">
+                <Button size="sm" variant="ghost" className="text-[10px] px-3 h-7 rounded-full font-bold">
+                  Voltar
+                </Button>
+              </Link>
+            ) : (
+              <Link to="/cadastro">
+                <Button size="sm" className="gradient-bg text-primary-foreground text-[10px] px-3 h-7 rounded-full font-bold">
+                  Começar
+                </Button>
+              </Link>
+            )}
           </div>
           {/* Ticker */}
           <div className="h-7 flex items-center gap-3 border-t border-border/50 overflow-hidden">
