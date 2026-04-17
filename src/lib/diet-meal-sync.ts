@@ -11,6 +11,8 @@ export interface ParsedDietMeal {
   time: string;
   sort_order: number;
   foods: ParsedDietFood[];
+  /** Raw HTML/text slice of this meal section (between this REFEIÇÃO heading and the next one). */
+  raw_html?: string;
 }
 
 const DEFAULT_MEAL_NAMES: Record<number, string> = {
