@@ -54,6 +54,7 @@ export interface Recipe {
   substituicoes: string[];
   ajusteEstrategico: string;
   dicaPratica: string;
+  isNew?: boolean;
 }
 
 export const recipes: Recipe[] = [
