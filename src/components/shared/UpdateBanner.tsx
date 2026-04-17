@@ -40,6 +40,26 @@ const UpdateBanner = () => {
       if (remote !== APP_VERSION) {
         setRemoteVersion(remote);
         setShow(true);
+        // Auto-reload once per new version (Safari iOS / Chrome aggressive cache bypass)
+        const lastAutoReload = localStorage.getItem(AUTO_RELOAD_KEY);
+        if (lastAutoReload !== remote) {
+          localStorage.setItem(AUTO_RELOAD_KEY, remote);
+          try {
+            if ("caches" in window) {
+              const keys = await caches.keys();
+              await Promise.all(keys.map((k) => caches.delete(k)));
+            }
+            if ("serviceWorker" in navigator) {
+              const regs = await navigator.serviceWorker.getRegistrations();
+              await Promise.all(regs.map((r) => r.unregister()));
+            }
+          } catch {}
+          setTimeout(() => {
+            const url = new URL(window.location.href);
+            url.searchParams.set("_v", remote);
+            window.location.replace(url.toString());
+          }, 500);
+        }
       }
     };
     check();
