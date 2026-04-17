@@ -59,10 +59,25 @@ const Promo = () => {
     return parseFloat(priceStr) || 0;
   };
 
+  // Auto-resume checkout after signup/login
+  useEffect(() => {
+    if (!user || !plans?.length) return;
+    const pendingId = localStorage.getItem("promo_abril_plan_id");
+    if (!pendingId) return;
+    const plan = plans.find((p: any) => p.id === pendingId);
+    if (plan) {
+      localStorage.removeItem("promo_abril_plan_id");
+      setSelectedPlan(plan);
+      setCheckoutOpen(true);
+      toast.success("Tudo certo! Finalize seu pagamento via PIX para ativar a promoção.");
+    }
+  }, [user, plans]);
+
   const handleSelect = (plan: any) => {
     if (!user) {
-      toast.info("Faça login ou cadastre-se para garantir a promoção");
-      navigate(`/login?redirect=/promo`);
+      localStorage.setItem("promo_abril_plan_id", plan.id);
+      toast.info("Crie sua conta para garantir a promoção — você voltará direto para o pagamento PIX.");
+      navigate(`/cadastro?redirect=/promo`);
       return;
     }
     setSelectedPlan(plan);
