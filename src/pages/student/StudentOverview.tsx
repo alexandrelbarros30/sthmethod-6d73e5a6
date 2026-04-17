@@ -245,6 +245,11 @@ const StudentOverview = () => {
                   height={112}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                {recipe.isNew && (
+                  <span className="absolute top-1.5 left-1.5 text-[8px] font-bold tracking-wider bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full animate-pulse">
+                    NOVO
+                  </span>
+                )}
                 <span className="absolute bottom-1.5 left-1.5 text-[9px] text-white/80 flex items-center gap-0.5">
                   <Flame className="w-2.5 h-2.5" /> {recipe.kcal}
                 </span>
