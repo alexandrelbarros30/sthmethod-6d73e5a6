@@ -18,6 +18,8 @@ interface CheckoutDialogProps {
   onPaymentSuccess?: () => void;
   /** Override user id for cases like Cadastro where user might not be in AuthContext yet */
   overrideUserId?: string;
+  /** Force PIX-only checkout (hides credit/debit buttons regardless of global settings) */
+  forcePixOnly?: boolean;
 }
 
 const DynamicCheckoutDialog = ({
@@ -28,6 +30,7 @@ const DynamicCheckoutDialog = ({
   actionType = "new",
   onPaymentSuccess,
   overrideUserId,
+  forcePixOnly = false,
 }: CheckoutDialogProps) => {
   const { user } = useAuth();
   const userId = overrideUserId || user?.id;
@@ -225,10 +228,10 @@ const DynamicCheckoutDialog = ({
     }
   };
 
-  // Check which methods are enabled
+  // Check which methods are enabled (forcePixOnly overrides credit/debit)
   const pixEnabled = paymentSettings?.find((s: any) => s.key === "pix_enabled")?.value !== "false";
-  const creditEnabled = paymentSettings?.find((s: any) => s.key === "credit_enabled")?.value !== "false";
-  const debitEnabled = paymentSettings?.find((s: any) => s.key === "debit_enabled")?.value !== "false";
+  const creditEnabled = !forcePixOnly && paymentSettings?.find((s: any) => s.key === "credit_enabled")?.value !== "false";
+  const debitEnabled = !forcePixOnly && paymentSettings?.find((s: any) => s.key === "debit_enabled")?.value !== "false";
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
