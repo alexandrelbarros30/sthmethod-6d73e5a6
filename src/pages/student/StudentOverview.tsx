@@ -18,13 +18,13 @@ import SubscriptionAlerts from "@/components/student/SubscriptionAlerts";
 import recipePoke from "@/assets/recipe-poke.jpg";
 import recipeFrango from "@/assets/recipe-frango.jpg";
 import recipeAcai from "@/assets/recipe-acai.jpg";
-import recipeSmoothie from "@/assets/recipe-smoothie.jpg";
-import recipePanqueca from "@/assets/recipe-panqueca.jpg";
-import recipeSalada from "@/assets/recipe-salada.jpg";
 import recipeMoqueca from "@/assets/recipe-moqueca.jpg";
 import recipeTapioca from "@/assets/recipe-tapioca.jpg";
-import recipeCuscuz from "@/assets/recipe-cuscuz.jpg";
-import recipeEscondidinho from "@/assets/recipe-escondidinho.jpg";
+import recipeMousseWhey from "@/assets/recipe-mousse-whey.jpg";
+import recipePatinho from "@/assets/recipe-patinho-grelhado.jpg";
+import recipeMexidoOvos from "@/assets/recipe-mexido-ovos.jpg";
+import recipeGelatina from "@/assets/recipe-gelatina-proteica.jpg";
+import recipeAlmondega from "@/assets/recipe-almondega-fit.jpg";
 
 import workoutMale1 from "@/assets/workout-male-1.jpg";
 import workoutMale2 from "@/assets/workout-male-2.jpg";
@@ -52,14 +52,16 @@ const getGreeting = () => {
 };
 
 const recipeHighlights = [
+  { id: "39", title: "Mousse de Whey", image: recipeMousseWhey, kcal: 180, isNew: true },
+  { id: "40", title: "Patinho Grelhado", image: recipePatinho, kcal: 410, isNew: true },
+  { id: "41", title: "Mexido de Ovos", image: recipeMexidoOvos, kcal: 320, isNew: true },
+  { id: "42", title: "Gelatina Proteica", image: recipeGelatina, kcal: 90, isNew: true },
+  { id: "43", title: "Almôndega Fit", image: recipeAlmondega, kcal: 380, isNew: true },
   { id: "7", title: "Moqueca Fit", image: recipeMoqueca, kcal: 360 },
   { id: "1", title: "Poke Bowl", image: recipePoke, kcal: 420 },
   { id: "8", title: "Tapioca", image: recipeTapioca, kcal: 280 },
   { id: "3", title: "Açaí Proteico", image: recipeAcai, kcal: 350 },
-  { id: "9", title: "Cuscuz Fit", image: recipeCuscuz, kcal: 320 },
-  { id: "12", title: "Escondidinho", image: recipeEscondidinho, kcal: 370 },
   { id: "2", title: "Frango Fit", image: recipeFrango, kcal: 380 },
-  { id: "5", title: "Panqueca Fit", image: recipePanqueca, kcal: 290 },
 ];
 
 // Daily meal widget sub-component
@@ -243,6 +245,11 @@ const StudentOverview = () => {
                   height={112}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                {recipe.isNew && (
+                  <span className="absolute top-1.5 left-1.5 text-[8px] font-bold tracking-wider bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full animate-pulse">
+                    NOVO
+                  </span>
+                )}
                 <span className="absolute bottom-1.5 left-1.5 text-[9px] text-white/80 flex items-center gap-0.5">
                   <Flame className="w-2.5 h-2.5" /> {recipe.kcal}
                 </span>
