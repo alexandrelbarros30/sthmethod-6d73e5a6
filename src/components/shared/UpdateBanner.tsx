@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RefreshCw, X } from "lucide-react";
 
-const APP_VERSION = "1.6.5";
+const APP_VERSION = "1.6.6";
 const VERSION_KEY = "sth-app-version";
 const AUTO_RELOAD_KEY = "sth-auto-reload-version";
 const VERSION_URL = "/version.json";
