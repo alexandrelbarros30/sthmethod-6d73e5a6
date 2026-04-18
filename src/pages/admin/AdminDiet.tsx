@@ -112,6 +112,58 @@ const AdminDiet = () => {
     }
   };
 
+  const copyDietPrompt = async () => {
+    if (!selected) return;
+    const nome = selected.full_name || "[Não informado]";
+    let idade = "[Não informada]";
+    if (selected.birth_date) {
+      const b = new Date(selected.birth_date);
+      const diff = Date.now() - b.getTime();
+      const age = Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+      if (!isNaN(age)) idade = `${age} anos`;
+    }
+    // try latest weight log
+    let pesoAtual = selected.weight ? `${selected.weight} kg` : "[Não informado]";
+    try {
+      const { data: wl } = await supabase
+        .from("weight_logs")
+        .select("weight")
+        .eq("user_id", selected.user_id)
+        .order("logged_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (wl?.weight) pesoAtual = `${wl.weight} kg`;
+    } catch {}
+    const altura = selected.height ? `${selected.height} cm` : "[Não informada]";
+    const objetivo = selected.objective || "[Não informado]";
+
+    const prompt = `Solicito a criação de um novo Cardápio STH Method para o seguinte perfil:
+
+DADOS DO ALUNO
+
+Nome: ${nome}
+
+Idade: ${idade}
+
+Peso: ${pesoAtual}
+
+Altura: ${altura}
+
+Objetivo: ${objetivo}
+
+Cardápio STH Method:
+Meta: [Inserir kcal] | [Inserir macros: Prot/Gord/Carbo]
+
+Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substituição em cada refeição, garantindo a precisão das quantidades em gramas/ml.`;
+
+    try {
+      await navigator.clipboard.writeText(prompt);
+      toast.success("Prompt do cardápio copiado!");
+    } catch {
+      toast.error("Não foi possível copiar. Tente novamente.");
+    }
+  };
+
   const { data: students } = useQuery({
     queryKey: ["admin-students-diets", displayRole, user?.id],
     queryFn: async () => {
