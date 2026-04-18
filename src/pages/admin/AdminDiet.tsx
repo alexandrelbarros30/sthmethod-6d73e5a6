@@ -535,9 +535,14 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
             <div className="space-y-4">
               {/* Add new diet button */}
               {!showNewForm && !editingId && (
-                <Button onClick={() => setShowNewForm(true)} className="w-full" variant="outline">
-                  <Plus className="w-4 h-4 mr-2" /> Adicionar Nova Dieta
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button onClick={() => setShowNewForm(true)} className="flex-1" variant="outline">
+                    <Plus className="w-4 h-4 mr-2" /> Adicionar Nova Dieta
+                  </Button>
+                  <Button onClick={copyDietPrompt} variant="secondary" className="flex-1">
+                    <ClipboardCopy className="w-4 h-4 mr-2" /> Resgatar Dados p/ Cardápio
+                  </Button>
+                </div>
               )}
 
               {/* New diet form */}
