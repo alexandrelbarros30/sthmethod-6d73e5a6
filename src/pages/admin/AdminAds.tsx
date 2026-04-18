@@ -72,6 +72,7 @@ const AdminAds = () => {
   const [form, setForm] = useState<AdForm>(emptyForm);
   const [uploading, setUploading] = useState(false);
   const [previewTab, setPreviewTab] = useState("edit");
+  const [previewPopupOpen, setPreviewPopupOpen] = useState(false);
 
   const countdown = usePreviewCountdown(form.display_duration_seconds, previewTab === "preview");
 
@@ -436,7 +437,7 @@ const AdminAds = () => {
                           <h3 className="text-sm font-bold text-foreground">{form.title || "Sem título"}</h3>
                           <p className="text-xs text-muted-foreground mt-0.5">{form.description || "Sem descrição"}</p>
                         </div>
-                        <Button size="sm" variant="outline" className="text-xs shrink-0" disabled>Ver</Button>
+                        <Button size="sm" variant="outline" className="text-xs shrink-0" onClick={() => setPreviewPopupOpen(true)}>Ver</Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -483,6 +484,38 @@ const AdminAds = () => {
               </ScrollArea>
             </TabsContent>
           </Tabs>
+        </DialogContent>
+      </Dialog>
+
+      {/* Simulated student popup preview */}
+      <Dialog open={previewPopupOpen} onOpenChange={setPreviewPopupOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{form.title || "Sem título"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {form.image_url && (
+              <img src={form.image_url} alt={form.title} className="w-full rounded-xl object-contain max-h-64" />
+            )}
+            {form.popup_content ? (
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{form.popup_content}</p>
+            ) : form.description ? (
+              <p className="text-sm text-muted-foreground">{form.description}</p>
+            ) : null}
+            <div className="flex gap-2">
+              {form.whatsapp_number && (
+                <Button className="flex-1 bg-green-600 hover:bg-green-700 text-white gap-1.5" onClick={() => openWhatsApp(form.whatsapp_number)}>
+                  <MessageCircle className="w-4 h-4" /> WhatsApp
+                </Button>
+              )}
+              {form.external_link && (
+                <Button variant="outline" className="flex-1 gap-1.5" onClick={() => window.open(form.external_link, "_blank")}>
+                  <ExternalLink className="w-4 h-4" /> Site
+                </Button>
+              )}
+            </div>
+            <p className="text-[10px] text-muted-foreground text-center uppercase tracking-wider">Pré-visualização — visão do aluno</p>
+          </div>
         </DialogContent>
       </Dialog>
     </DashboardLayout>
