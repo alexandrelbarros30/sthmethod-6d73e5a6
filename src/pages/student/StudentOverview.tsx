@@ -26,6 +26,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import SubscriptionAlerts from "@/components/student/SubscriptionAlerts";
+import AdAutoPopup from "@/components/student/AdAutoPopup";
 
 import recipePoke from "@/assets/recipe-poke.jpg";
 import recipeFrango from "@/assets/recipe-frango.jpg";
@@ -188,6 +189,7 @@ const StudentOverview = () => {
         <p className="text-sm text-muted-foreground mt-0.5">Acompanhe seu progresso e conquiste seus objetivos.</p>
       </div>
       <SubscriptionAlerts subscription={subscription ? { ...subscription, plans: (subscription as any)?.plans } : null} />
+      <AdAutoPopup />
 
       {/* ===== ÚLTIMA MATÉRIA STH NEWS ===== */}
       <Link to="/tendencias/cenario-fitness-2026" className="block mb-6">
