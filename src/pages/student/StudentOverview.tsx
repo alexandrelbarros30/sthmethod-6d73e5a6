@@ -189,6 +189,7 @@ const StudentOverview = () => {
         <p className="text-sm text-muted-foreground mt-0.5">Acompanhe seu progresso e conquiste seus objetivos.</p>
       </div>
       <SubscriptionAlerts subscription={subscription ? { ...subscription, plans: (subscription as any)?.plans } : null} />
+      <AdAutoPopup />
 
       {/* ===== ÚLTIMA MATÉRIA STH NEWS ===== */}
       <Link to="/tendencias/cenario-fitness-2026" className="block mb-6">
