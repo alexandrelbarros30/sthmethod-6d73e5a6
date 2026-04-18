@@ -59,7 +59,7 @@ const AdAutoPopup = () => {
       <DialogContent className="max-w-md p-0 overflow-hidden gap-0">
         {/* Image section — fills 50% of viewport height */}
         {currentAd.image_url ? (
-          <div className="w-full bg-muted" style={{ height: "50vh" }}>
+          <div className="w-full bg-muted" style={{ height: "35vh" }}>
             <img
               src={currentAd.image_url}
               alt={currentAd.title}
@@ -67,7 +67,7 @@ const AdAutoPopup = () => {
             />
           </div>
         ) : (
-          <div className="w-full bg-muted flex items-center justify-center" style={{ height: "50vh" }}>
+          <div className="w-full bg-muted flex items-center justify-center" style={{ height: "35vh" }}>
             <ImageIcon className="w-16 h-16 text-muted-foreground/30" />
           </div>
         )}
