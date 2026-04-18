@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff, BookOpen, Save, Download } from "lucide-react";
+import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff, BookOpen, Save, Download, ClipboardCopy } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -591,6 +591,61 @@ const AdminProtocol = () => {
                   </Button>
                   <Button variant="outline" size="sm" className="text-xs" onClick={() => saveToLibraryMutation.mutate()} disabled={saveToLibraryMutation.isPending}>
                     <Save className="w-3.5 h-3.5 mr-1" /> {saveToLibraryMutation.isPending ? "Salvando..." : "Salvar na Biblioteca"}
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => {
+                      const p: any = selectedProfile || {};
+                      const idade = p.birth_date
+                        ? Math.floor((Date.now() - new Date(p.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) + " anos"
+                        : "[não informado]";
+                      const peso = p.weight ? `${p.weight} kg` : "[não informado]";
+                      const altura = p.height ? `${p.height} cm` : "[não informado]";
+                      const objetivo = p.objective || "[não informado]";
+                      const protocoloAtual = p.current_protocol?.trim() || "Nenhum protocolo registrado";
+                      const meta = p.daily_calories ? `${Math.round(p.daily_calories)} kcal` : "[não informado]";
+                      const nome = p.full_name || selected?.full_name || "[não informado]";
+
+                      const prompt = `Solicito a criação de um novo protocolo STH Method para o seguinte perfil:
+
+DADOS DO ALUNO
+
+Nome: ${nome}
+
+Idade: ${idade}
+
+Peso: ${peso}
+
+Altura: ${altura}
+
+Objetivo: ${objetivo}
+
+Protocolo Hormonal Atual (se houver): ${protocoloAtual}
+
+Meta Calórica: ${meta}
+
+ESTRUTURA DO PROTOCOLO:
+
+Por favor, desenvolva o plano contemplando os seguintes pilares de forma técnica e detalhada:
+
+Suporte Endócrino Hormonal: Otimização e estabilidade.
+
+Suporte Cardiovascular | Hepático | Renal: Estratégias de proteção, blindagem e controle de marcadores (com ênfase em hidratação e proteção endotelial).
+
+Suporte Metabólico e Performance: Suplementação baseada em eficiência mitocondrial e preservação tecidual.
+
+Sistema Pré e Pós-Treino: Protocolo de fluxo sanguíneo (Pré) e sinalização anabólica/recuperação (Pós).`;
+
+                      navigator.clipboard.writeText(prompt).then(
+                        () => toast.success("Prompt do protocolo copiado!"),
+                        () => toast.error("Não foi possível copiar. Tente novamente."),
+                      );
+                    }}
+                    disabled={!selectedProfile}
+                  >
+                    <ClipboardCopy className="w-3.5 h-3.5 mr-1" /> Resgatar Dados p/ Protocolo
                   </Button>
                 </div>
               )}
