@@ -287,22 +287,6 @@ const StudentOverview = () => {
         </div>
       </div>
 
-      {/* ===== SUA ROTINA ALIMENTAR DE HOJE ===== */}
-      <Link to="/dashboard/diet" className="block mb-6">
-        <Card className="border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent hover:shadow-lg transition-all group cursor-pointer">
-          <CardContent className="py-4 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-              <UtensilsCrossed className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-foreground font-display text-sm">Sua Rotina Alimentar de Hoje</p>
-              <p className="text-xs text-muted-foreground">Confira suas refeições e acompanhe seus macros</p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-primary shrink-0 group-hover:translate-x-1 transition-transform" />
-          </CardContent>
-        </Card>
-      </Link>
-
       {/* ===== PROGRESSO DIÁRIO ===== */}
       <DailyMealWidget />
     </DashboardLayout>
