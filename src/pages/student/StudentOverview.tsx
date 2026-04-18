@@ -26,6 +26,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import SubscriptionAlerts from "@/components/student/SubscriptionAlerts";
+import AdAutoPopup from "@/components/student/AdAutoPopup";
 
 import recipePoke from "@/assets/recipe-poke.jpg";
 import recipeFrango from "@/assets/recipe-frango.jpg";
