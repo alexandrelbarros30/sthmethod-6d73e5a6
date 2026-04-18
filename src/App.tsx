@@ -92,6 +92,7 @@ const App = () => (
             <Route path="/tendencias/cenario-fitness-2026" element={<FitnessCenario2026 />} />
             <Route path="/tendencias/recomposicao-avancada" element={<RecomposicaoAvancada />} />
             <Route path="/promo" element={<Promo />} />
+            <Route path="/promo/:slug" element={<Promo />} />
             {/* Student routes */}
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["student"]}><StudentOverview /></ProtectedRoute>} />
             <Route path="/dashboard/hub" element={<ProtectedRoute allowedRoles={["student"]}><StudentHub /></ProtectedRoute>} />
