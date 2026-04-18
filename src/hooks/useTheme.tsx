@@ -3,11 +3,8 @@ import { useState, useEffect, useCallback } from "react";
 type Theme = "dark" | "light";
 
 function getInitialTheme(): Theme {
-  if (typeof window !== "undefined") {
-    const stored = localStorage.getItem("app-theme");
-    if (stored === "dark" || stored === "light") return stored;
-  }
-  return "light";
+  // Theme is locked to dark globally for all users.
+  return "dark";
 }
 
 export function useTheme() {
