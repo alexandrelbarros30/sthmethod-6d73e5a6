@@ -77,11 +77,14 @@ const Cadastro = () => {
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [macroResult, setMacroResult] = useState<MacroResult | null>(null);
 
-  // Step 1 - Account
-  const [email, setEmail] = useState("");
+  // Step 1 - Account — pre-fill from URL params (admin-shared promo links)
+  const initialParams = new URLSearchParams(location.search);
+  const [email, setEmail] = useState(initialParams.get("email") || "");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [phoneVal, setPhoneVal] = useState("");
+  const [fullName, setFullName] = useState(initialParams.get("name") || "");
+  const [phoneVal, setPhoneVal] = useState(
+    initialParams.get("phone") ? phoneMask(initialParams.get("phone")!) : ""
+  );
   const [showPassword, setShowPassword] = useState(false);
 
   // Step 2 - Profile
