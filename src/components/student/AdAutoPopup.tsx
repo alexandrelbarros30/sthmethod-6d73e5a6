@@ -57,17 +57,17 @@ const AdAutoPopup = () => {
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
       <DialogContent className="max-w-md p-0 overflow-hidden gap-0">
-        {/* Image section — fills 50% of viewport height */}
+        {/* Image section — proporção 4:3 mantém enquadramento em desktop e mobile */}
         {currentAd.image_url ? (
-          <div className="w-full bg-muted" style={{ height: "35vh" }}>
+          <div className="w-full bg-muted aspect-[4/3] flex items-center justify-center overflow-hidden">
             <img
               src={currentAd.image_url}
               alt={currentAd.title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           </div>
         ) : (
-          <div className="w-full bg-muted flex items-center justify-center" style={{ height: "35vh" }}>
+          <div className="w-full bg-muted aspect-[4/3] flex items-center justify-center">
             <ImageIcon className="w-16 h-16 text-muted-foreground/30" />
           </div>
         )}
