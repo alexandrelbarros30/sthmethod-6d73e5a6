@@ -173,6 +173,9 @@ const Cadastro = () => {
 
   // Check if user is already logged in
   useEffect(() => {
+    // Pre-read redirect param to short-circuit normal flow when present
+    const pendingRedirect = new URLSearchParams(location.search).get("redirect");
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUserId(session.user.id);
@@ -201,6 +204,15 @@ const Cadastro = () => {
               cardio_intensity: (p as any).cardio_intensity || "",
             });
             const profileDone = p.full_name && p.phone && p.height && p.weight && (p as any).gender && (p as any).activity_type && p.objective && p.current_protocol && p.comorbidities;
+
+            // CRITICAL: if user has redirect (e.g. from /promo/:slug) and onboarding is complete,
+            // skip the public-plans step and go straight to the destination (promo checkout)
+            if (p.onboarding_complete && pendingRedirect) {
+              toast.success("Cadastro completo! Indo ao pagamento da promoção...");
+              setTimeout(() => navigate(pendingRedirect), 400);
+              return;
+            }
+
             if (p.onboarding_complete) {
               supabase.from("subscriptions").select("*").eq("user_id", session.user.id).eq("status", "active").limit(1).maybeSingle().then(({ data: sub }) => {
                 if (sub && new Date(sub.end_date) > new Date()) {
