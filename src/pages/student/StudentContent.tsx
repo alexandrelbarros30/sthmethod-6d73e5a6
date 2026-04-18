@@ -126,14 +126,15 @@ const StudentContent = () => {
 
           {/* Back button */}
           {(section || activeFamily) ? (
-            <button onClick={handleBack} className="flex items-center gap-2 text-sm font-medium" style={{ color: G.t60 }}>
-              <ArrowLeft className="w-4 h-4" />
-              {activeFamily ? "Famílias" : "Conteúdo"}
+            <button onClick={handleBack} className="flex items-center gap-2 text-sm font-medium hover:opacity-80 transition-opacity" style={{ color: G.t60 }}>
+              {activeFamily ? <ArrowLeft className="w-4 h-4" /> : (cameFromOverview ? <Home className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />)}
+              {activeFamily ? "Famílias" : (cameFromOverview ? "Início" : "Conteúdo")}
             </button>
           ) : (
-            <p className="text-[11px] uppercase tracking-[0.25em] font-medium" style={{ color: G.accent }}>
-              STH Method
-            </p>
+            <button onClick={() => navigate("/dashboard")} className="flex items-center gap-2 text-sm font-medium hover:opacity-80 transition-opacity" style={{ color: G.t60 }}>
+              <Home className="w-4 h-4" />
+              Início
+            </button>
           )}
 
           <h1 className="text-2xl font-bold tracking-tight" style={{ color: G.t96 }}>
