@@ -238,7 +238,7 @@ const StudentOverview = () => {
             return (
               <button
                 key={s.id}
-                onClick={() => navigate(s.id === "receitas" ? "/dashboard/recipes" : "/dashboard/content")}
+                onClick={() => navigate(s.id === "receitas" ? "/dashboard/recipes" : `/dashboard/content?section=${s.id}`)}
                 className="snap-center shrink-0 w-[72vw] max-w-[280px] text-left rounded-2xl overflow-hidden relative group border border-border/50"
               >
                 <div className="relative h-36 overflow-hidden">

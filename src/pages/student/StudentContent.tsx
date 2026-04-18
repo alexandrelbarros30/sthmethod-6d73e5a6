@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { motion } from "framer-motion";
-import { ArrowLeft, Brain, Shield, Zap, Lock, Unlock, Award, MessageCircle } from "lucide-react";
+import { ArrowLeft, Brain, Shield, Zap, Lock, Unlock, Award, MessageCircle, Home } from "lucide-react";
 import { families, TOTAL_COMPOUNDS, type Family } from "@/components/student/content/compoundData";
 import { supabase } from "@/integrations/supabase/client";
 import FamilyCard from "@/components/student/content/FamilyCard";
@@ -9,7 +9,7 @@ import CompoundDetail from "@/components/student/content/CompoundDetail";
 import InsightCarousel from "@/components/student/content/InsightCarousel";
 import CombinationsSection from "@/components/student/content/CombinationsSection";
 import ContentHubCards, { type ContentSection } from "@/components/student/content/ContentHubCards";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const G = {
   accent: "hsl(145 60% 42%)",
@@ -47,13 +47,16 @@ const whatsappUrl =
 
 const StudentContent = () => {
   const navigate = useNavigate();
-  const [section, setSection] = useState<ContentSection | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialSection = (searchParams.get("section") as ContentSection | null) ?? null;
+  const [section, setSection] = useState<ContentSection | null>(initialSection);
   const [activeFamily, setActiveFamily] = useState<Family | null>(null);
   const [selectedCompound, setSelectedCompound] = useState<string | null>(null);
   const [visited, setVisited] = useState<Set<string>>(new Set());
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   const progress = visited.size;
+  const cameFromOverview = !!initialSection;
 
   useEffect(() => {
     supabase.from("landing_settings").select("value").eq("key", "logo_url").maybeSingle()
@@ -74,8 +77,15 @@ const StudentContent = () => {
     if (activeFamily) {
       setActiveFamily(null);
       setSelectedCompound(null);
+    } else if (section) {
+      // Came directly from the home overview → go back home.
+      if (cameFromOverview) {
+        navigate("/dashboard");
+      } else {
+        setSection(null);
+      }
     } else {
-      setSection(null);
+      navigate("/dashboard");
     }
   };
 
@@ -85,6 +95,7 @@ const StudentContent = () => {
       return;
     }
     setSection(s);
+    setSearchParams({ section: s });
   };
 
   const getFamilyVisitedCount = (family: Family) =>
@@ -115,14 +126,15 @@ const StudentContent = () => {
 
           {/* Back button */}
           {(section || activeFamily) ? (
-            <button onClick={handleBack} className="flex items-center gap-2 text-sm font-medium" style={{ color: G.t60 }}>
-              <ArrowLeft className="w-4 h-4" />
-              {activeFamily ? "Famílias" : "Conteúdo"}
+            <button onClick={handleBack} className="flex items-center gap-2 text-sm font-medium hover:opacity-80 transition-opacity" style={{ color: G.t60 }}>
+              {activeFamily ? <ArrowLeft className="w-4 h-4" /> : (cameFromOverview ? <Home className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />)}
+              {activeFamily ? "Famílias" : (cameFromOverview ? "Início" : "Conteúdo")}
             </button>
           ) : (
-            <p className="text-[11px] uppercase tracking-[0.25em] font-medium" style={{ color: G.accent }}>
-              STH Method
-            </p>
+            <button onClick={() => navigate("/dashboard")} className="flex items-center gap-2 text-sm font-medium hover:opacity-80 transition-opacity" style={{ color: G.t60 }}>
+              <Home className="w-4 h-4" />
+              Início
+            </button>
           )}
 
           <h1 className="text-2xl font-bold tracking-tight" style={{ color: G.t96 }}>
