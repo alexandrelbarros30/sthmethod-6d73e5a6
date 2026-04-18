@@ -66,20 +66,113 @@ const PaymentLinksTab = () => {
   });
 
   return (
-    <div className="space-y-4">
-      {plans?.map((plan: any) => (
-        <PlanLinkCard
-          key={plan.id}
-          plan={plan}
-          link={getLink(plan.id)}
-          onSave={(data) => upsertMutation.mutate({ plan_id: plan.id, ...data })}
-          saving={upsertMutation.isPending}
-        />
-      ))}
-      {(!plans || plans.length === 0) && (
-        <p className="text-sm text-muted-foreground text-center py-8">Nenhum plano ativo encontrado.</p>
-      )}
+    <div className="space-y-6">
+      <PromoLinksSection />
+
+      <div>
+        <h3 className="text-sm font-display font-semibold text-foreground mb-3">
+          Links manuais por plano (PIX / Cartão)
+        </h3>
+        <div className="space-y-4">
+          {plans?.map((plan: any) => (
+            <PlanLinkCard
+              key={plan.id}
+              plan={plan}
+              link={getLink(plan.id)}
+              onSave={(data) => upsertMutation.mutate({ plan_id: plan.id, ...data })}
+              saving={upsertMutation.isPending}
+            />
+          ))}
+          {(!plans || plans.length === 0) && (
+            <p className="text-sm text-muted-foreground text-center py-8">Nenhum plano ativo encontrado.</p>
+          )}
+        </div>
+      </div>
     </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────
+// Promo Abril direct-link section
+// ─────────────────────────────────────────────────────────────
+const PROMO_LINKS = [
+  { slug: "turbo-30d", label: "Turbo 30D", price: "R$ 85,90", duration: "30 dias" },
+  { slug: "impulso-90d", label: "Impulso 90D", price: "R$ 209,90", duration: "90 dias" },
+  { slug: "premium-6m", label: "Premium 6M", price: "R$ 449,90", duration: "6 meses" },
+];
+
+const PromoLinksSection = () => {
+  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+
+  const copyLink = (slug: string) => {
+    const url = `${origin}/promo/${slug}`;
+    navigator.clipboard.writeText(url);
+    setCopiedSlug(slug);
+    toast.success("Link copiado!");
+    setTimeout(() => setCopiedSlug(null), 2500);
+  };
+
+  const sendWhatsApp = (slug: string, label: string, price: string) => {
+    const url = `${origin}/promo/${slug}`;
+    const msg = encodeURIComponent(
+      `🔥 *Promoção STH METHOD — válida até 24/04*\n\nPlano *${label}* por *${price}* (exclusivo PIX).\n\nClique para garantir agora:\n${url}`
+    );
+    window.open(`https://wa.me/?text=${msg}`, "_blank");
+  };
+
+  return (
+    <Card className="bg-gradient-to-br from-primary/5 to-card border-primary/30">
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-2">
+          <Flame className="w-4 h-4 text-primary" />
+          <CardTitle className="text-sm font-display">Promoção Abril — Links diretos PIX</CardTitle>
+        </div>
+        <p className="text-xs text-muted-foreground mt-1">
+          Compartilhe estes links com alunos. Cada link abre direto no checkout PIX do plano correspondente.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {PROMO_LINKS.map((p) => {
+          const url = `${origin}/promo/${p.slug}`;
+          return (
+            <div
+              key={p.slug}
+              className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-lg border border-border bg-background/50"
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-foreground">{p.label}</span>
+                  <Badge variant="outline" className="text-[10px]">{p.price}</Badge>
+                </div>
+                <p className="text-[11px] text-muted-foreground truncate mt-0.5">{url}</p>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => copyLink(p.slug)}
+                  className="h-8 px-3"
+                >
+                  {copiedSlug === p.slug ? (
+                    <><Check className="w-3.5 h-3.5 mr-1" />Copiado</>
+                  ) : (
+                    <><Copy className="w-3.5 h-3.5 mr-1" />Copiar</>
+                  )}
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => sendWhatsApp(p.slug, p.label, p.price)}
+                  className="h-8 px-3 bg-[#25D366] hover:bg-[#20BD5C] text-white"
+                >
+                  <MessageCircle className="w-3.5 h-3.5 mr-1" />WhatsApp
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
   );
 };
 
