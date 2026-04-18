@@ -192,7 +192,7 @@ const StudentOverview = () => {
       <AdAutoPopup />
 
       {/* ===== ÚLTIMA MATÉRIA STH NEWS ===== */}
-      <Link to="/tendencias/cenario-fitness-2026" className="block mb-6">
+      <Link to="/tendencias/recomposicao-avancada" className="block mb-6">
         <Card className="overflow-hidden border-primary/20 bg-gradient-to-r from-primary/15 via-primary/5 to-transparent hover:shadow-lg transition-all group cursor-pointer relative">
           <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
           <CardContent className="py-3.5 px-4 flex items-center gap-3 relative">
@@ -207,7 +207,7 @@ const StudentOverview = () => {
                 </span>
               </div>
               <p className="font-bold text-foreground font-display text-sm leading-tight truncate">
-                Fitness — Cenário 2026
+                🔥 Recomposição Corporal Avançada
               </p>
               <p className="text-[11px] text-muted-foreground truncate">
                 Última matéria em destaque · Toque para ler

@@ -15,6 +15,7 @@ import Free from "./pages/Free";
 import ComoFunciona from "./pages/ComoFunciona";
 import Tendencias from "./pages/Tendencias";
 import FitnessCenario2026 from "./pages/FitnessCenario2026";
+import RecomposicaoAvancada from "./pages/RecomposicaoAvancada";
 import Promo from "./pages/Promo";
 import StudentOverview from "./pages/student/StudentOverview";
 import StudentHub from "./pages/student/StudentHub";
@@ -89,6 +90,7 @@ const App = () => (
             <Route path="/free" element={<Free />} />
             <Route path="/tendencias" element={<Tendencias />} />
             <Route path="/tendencias/cenario-fitness-2026" element={<FitnessCenario2026 />} />
+            <Route path="/tendencias/recomposicao-avancada" element={<RecomposicaoAvancada />} />
             <Route path="/promo" element={<Promo />} />
             {/* Student routes */}
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["student"]}><StudentOverview /></ProtectedRoute>} />
