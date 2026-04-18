@@ -437,7 +437,7 @@ const AdminAds = () => {
                           <h3 className="text-sm font-bold text-foreground">{form.title || "Sem título"}</h3>
                           <p className="text-xs text-muted-foreground mt-0.5">{form.description || "Sem descrição"}</p>
                         </div>
-                        <Button size="sm" variant="outline" className="text-xs shrink-0" disabled>Ver</Button>
+                        <Button size="sm" variant="outline" className="text-xs shrink-0" onClick={() => setPreviewPopupOpen(true)}>Ver</Button>
                       </div>
                     </CardContent>
                   </Card>
