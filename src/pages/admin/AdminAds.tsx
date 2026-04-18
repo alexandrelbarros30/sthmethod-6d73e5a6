@@ -72,6 +72,7 @@ const AdminAds = () => {
   const [form, setForm] = useState<AdForm>(emptyForm);
   const [uploading, setUploading] = useState(false);
   const [previewTab, setPreviewTab] = useState("edit");
+  const [previewPopupOpen, setPreviewPopupOpen] = useState(false);
 
   const countdown = usePreviewCountdown(form.display_duration_seconds, previewTab === "preview");
 
