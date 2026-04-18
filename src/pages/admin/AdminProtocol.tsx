@@ -597,7 +597,7 @@ const AdminProtocol = () => {
                     size="sm"
                     className="text-xs"
                     onClick={() => {
-                      const p = selectedProfile || {};
+                      const p: any = selectedProfile || {};
                       const idade = p.birth_date
                         ? Math.floor((Date.now() - new Date(p.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) + " anos"
                         : "[não informado]";
