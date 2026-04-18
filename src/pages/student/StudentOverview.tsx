@@ -4,8 +4,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Salad, Dumbbell, ChevronRight, Flame, Clock, Utensils,
-  Play, UtensilsCrossed, Newspaper, Sparkles
+  Play, UtensilsCrossed, Newspaper, Sparkles,
+  Beaker, Brain, Layers
 } from "lucide-react";
+import cardHormoniosImg from "@/assets/card-hormonios.jpg";
+import cardDicasImg from "@/assets/card-dicas.jpg";
+import cardReceitasImg from "@/assets/card-receitas.jpg";
+import cardCombinacoesImg from "@/assets/card-combinacoes.jpg";
+
+const contentSections = [
+  { id: "hormonios", tag: "Compostos", title: "Hormônios e Compostos", subtitle: "3 famílias · 15 compostos", img: cardHormoniosImg, icon: Beaker, accentHue: "145", meta: "Gamificação interativa" },
+  { id: "dicas", tag: "Estratégia", title: "Dicas Estratégicas", subtitle: "8 temas fundamentais", img: cardDicasImg, icon: Brain, accentHue: "210", meta: "Narrativa interativa" },
+  { id: "receitas", tag: "Nutrição", title: "Receitas Saudáveis", subtitle: "Pratos inteligentes", img: cardReceitasImg, icon: UtensilsCrossed, accentHue: "30", meta: "Macros detalhados" },
+  { id: "combinacoes", tag: "Estratégia", title: "Combinações Estratégicas", subtitle: "Definição · Hipertrofia", img: cardCombinacoesImg, icon: Layers, accentHue: "270", meta: "6 combinações" },
+];
 import { useMealTracking } from "@/hooks/useMealTracking";
 import DailyProgressRing from "@/components/student/DailyProgressRing";
 import MacroProgressBar from "@/components/student/MacroProgressBar";
@@ -204,46 +216,57 @@ const StudentOverview = () => {
         </Card>
       </Link>
 
-      {/* ===== SEU TREINO DE HOJE ===== */}
-      <Card
-        className="mb-6 overflow-hidden cursor-pointer group border-border/50"
-        onClick={() => navigate("/dashboard/training")}
-      >
-        <div className="relative h-48 overflow-hidden">
-          <img
-            src={getDailyWorkoutImage(p?.gender)}
-            alt="Treino do dia"
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            width={640}
-            height={512}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10" />
-          <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
-            <p className="text-[10px] text-primary font-bold uppercase tracking-widest mb-1">Seu Treino de Hoje</p>
-            {featuredWorkout ? (
-              <>
-                <h3 className="text-lg font-bold text-white font-display leading-tight">{featuredWorkout.title}</h3>
-                {featuredWorkout.subtitle && (
-                  <p className="text-xs text-white/70 mt-0.5">{featuredWorkout.subtitle}</p>
-                )}
-                <div className="flex items-center gap-3 mt-2">
-                  {featuredWorkout.days_per_week && (
-                    <span className="text-[10px] text-white/60">{featuredWorkout.days_per_week}x/sem</span>
-                  )}
-                  {featuredWorkout.minutes_per_day && (
-                    <span className="text-[10px] text-white/60">{featuredWorkout.minutes_per_day} min</span>
-                  )}
-                </div>
-              </>
-            ) : (
-              <h3 className="text-lg font-bold text-white font-display leading-tight">Acesse seu treino</h3>
-            )}
+      {/* ===== CONTEÚDO STH METHOD (CARROSSEL) ===== */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <p className="text-[10px] text-primary font-bold uppercase tracking-widest">STH Method</p>
+            <h2 className="text-sm font-bold text-foreground font-display">Conteúdo</h2>
           </div>
-          <div className="absolute top-3 right-3 z-20 w-10 h-10 rounded-full bg-primary/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-            <Play className="w-5 h-5 text-primary-foreground ml-0.5" />
-          </div>
+          <Link to="/dashboard/content">
+            <Button variant="ghost" size="sm" className="text-xs text-primary gap-1">
+              Ver tudo <ChevronRight className="w-3 h-3" />
+            </Button>
+          </Link>
         </div>
-      </Card>
+        <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-1 px-1 pb-2">
+          {contentSections.map((s) => {
+            const accent = `hsl(${s.accentHue} 60% 42%)`;
+            const accentBg = `hsl(${s.accentHue} 60% 42% / 0.12)`;
+            const accentBorder = `hsl(${s.accentHue} 60% 42% / 0.3)`;
+            const Icon = s.icon;
+            return (
+              <button
+                key={s.id}
+                onClick={() => navigate(s.id === "receitas" ? "/dashboard/recipes" : "/dashboard/content")}
+                className="snap-center shrink-0 w-[72vw] max-w-[280px] text-left rounded-2xl overflow-hidden relative group border border-border/50"
+              >
+                <div className="relative h-36 overflow-hidden">
+                  <img src={s.img} alt={s.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" width={560} height={288} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                  <div className="absolute top-2.5 left-2.5">
+                    <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.18em] font-bold px-2 py-1 rounded-full backdrop-blur-md" style={{ background: accentBg, color: accent, border: `0.5px solid ${accentBorder}` }}>
+                      <Icon className="w-2.5 h-2.5" />
+                      {s.tag}
+                    </span>
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 p-3.5">
+                    <h3 className="text-[15px] font-bold tracking-tight leading-tight text-white">{s.title}</h3>
+                    <p className="text-[11px] text-white/60">{s.subtitle}</p>
+                  </div>
+                </div>
+                <div className="px-3.5 py-2.5 flex items-center justify-between bg-card">
+                  <span className="text-[10px] font-medium text-muted-foreground">{s.meta}</span>
+                  <div className="flex items-center gap-0.5">
+                    <span className="text-[10px] font-semibold" style={{ color: accent }}>Explorar</span>
+                    <ChevronRight className="w-3 h-3" style={{ color: accent }} />
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* ===== RECEITAS SAUDÁVEIS ===== */}
       <div className="mb-6">
