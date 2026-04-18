@@ -32,13 +32,22 @@ const useCountdown = (target: Date) => {
   return { days, hours, minutes, seconds, expired: diff === 0 };
 };
 
+// Slug → duration_days mapping for direct-link checkout
+const slugToDurationDays: Record<string, number> = {
+  "turbo-30d": 30,
+  "impulso-90d": 90,
+  "premium-6m": 180,
+};
+
 const Promo = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { slug } = useParams<{ slug?: string }>();
   const countdown = useCountdown(PROMO_END);
 
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [autoOpenedSlug, setAutoOpenedSlug] = useState<string | null>(null);
 
   const { data: plans, isLoading } = useQuery({
     queryKey: ["promo-abril-plans"],
@@ -59,7 +68,7 @@ const Promo = () => {
     return parseFloat(priceStr) || 0;
   };
 
-  // Auto-resume checkout after signup/login
+  // Auto-resume checkout after signup/login (uses localStorage)
   useEffect(() => {
     if (!user || !plans?.length) return;
     const pendingId = localStorage.getItem("promo_abril_plan_id");
@@ -72,6 +81,27 @@ const Promo = () => {
       toast.success("Tudo certo! Finalize seu pagamento via PIX para ativar a promoção.");
     }
   }, [user, plans]);
+
+  // Direct-link mode: /promo/:slug → auto-open checkout for that plan
+  useEffect(() => {
+    if (!slug || !plans?.length || autoOpenedSlug === slug) return;
+    const targetDays = slugToDurationDays[slug];
+    if (!targetDays) return;
+    const plan = plans.find((p: any) => p.duration_days === targetDays);
+    if (!plan) return;
+
+    if (!user) {
+      // Not logged in — store target plan and route through signup, returning to this slug URL
+      localStorage.setItem("promo_abril_plan_id", plan.id);
+      toast.info("Crie sua conta para garantir a promoção — você voltará direto para o pagamento PIX.");
+      navigate(`/cadastro?redirect=/promo/${slug}`);
+      return;
+    }
+
+    setSelectedPlan(plan);
+    setCheckoutOpen(true);
+    setAutoOpenedSlug(slug);
+  }, [slug, plans, user, navigate, autoOpenedSlug]);
 
   const handleSelect = (plan: any) => {
     if (!user) {
