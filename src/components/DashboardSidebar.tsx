@@ -16,6 +16,7 @@ interface SidebarProps {
 const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> = {
   student: [
     { to: "/dashboard", icon: LayoutDashboard, label: "Visão Geral" },
+    { to: "/dashboard/profile", icon: ClipboardList, label: "Minha Ficha" },
     { to: "/dashboard/evolution", icon: TrendingUp, label: "Atualização" },
     { to: "/dashboard/bioimpedance", icon: Activity, label: "Bioimpedância" },
     { to: "/dashboard/diet", icon: Salad, label: "Dieta" },
@@ -24,6 +25,8 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/dashboard/protocol", icon: FlaskConical, label: "Protocolo" },
     { to: "/dashboard/metabolic", icon: Microscope, label: "Painel Metabólico" },
     { to: "/dashboard/content", icon: BookOpen, label: "Conteúdo" },
+    { to: "/tendencias", icon: Newspaper, label: "STH News" },
+    { to: "/dashboard/ads", icon: Megaphone, label: "Propagandas" },
     { to: "/dashboard/subscription", icon: CreditCard, label: "Assinatura" },
   ],
   admin: [
