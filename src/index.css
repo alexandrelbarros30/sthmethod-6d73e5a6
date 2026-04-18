@@ -78,66 +78,69 @@ html, body {
     --gold-dark: 38 72% 38%;
   }
 
-  /* ── Dark theme ── */
+  /* ── Dark theme — Premium Apple-style: graphite black + muted green ── */
   .dark {
-    --background: 0 0% 0%;
+    /* Backgrounds: slightly warm graphite (not pure black) */
+    --background: 0 0% 7%;
     --foreground: 0 0% 96%;
 
-    --card: 0 0% 6%;
+    --card: 0 0% 10%;
     --card-foreground: 0 0% 96%;
 
-    --popover: 0 0% 6%;
+    --popover: 0 0% 10%;
     --popover-foreground: 0 0% 96%;
 
-    --primary: 155 65% 44%;
-    --primary-foreground: 0 0% 0%;
+    /* Muted, sage-leaning green — less neon, more refined */
+    --primary: 152 32% 52%;
+    --primary-foreground: 0 0% 8%;
 
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 80%;
+    --secondary: 0 0% 13%;
+    --secondary-foreground: 0 0% 82%;
 
-    --muted: 0 0% 10%;
-    --muted-foreground: 0 0% 50%;
+    --muted: 0 0% 13%;
+    --muted-foreground: 0 0% 58%;
 
-    --accent: 0 0% 10%;
+    --accent: 0 0% 13%;
     --accent-foreground: 0 0% 96%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 65% 52%;
     --destructive-foreground: 0 0% 96%;
 
-    --border: 0 0% 14%;
-    --input: 0 0% 14%;
-    --ring: 155 65% 44%;
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 152 32% 52%;
 
-    --sidebar-background: 0 0% 3%;
+    --sidebar-background: 0 0% 6%;
     --sidebar-foreground: 0 0% 88%;
-    --sidebar-primary: 155 65% 44%;
-    --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 0% 8%;
-    --sidebar-accent-foreground: 0 0% 88%;
-    --sidebar-border: 0 0% 12%;
-    --sidebar-ring: 155 65% 44%;
+    --sidebar-primary: 152 32% 52%;
+    --sidebar-primary-foreground: 0 0% 8%;
+    --sidebar-accent: 0 0% 11%;
+    --sidebar-accent-foreground: 0 0% 92%;
+    --sidebar-border: 0 0% 14%;
+    --sidebar-ring: 152 32% 52%;
 
-    --glow: 155 65% 44%;
-    --surface: 0 0% 6%;
-    --surface-hover: 0 0% 10%;
-    --gradient-start: 155 65% 44%;
-    --gradient-end: 165 55% 28%;
-    --text-subtle: 0 0% 42%;
+    /* Glow kept extremely subtle */
+    --glow: 152 32% 52%;
+    --surface: 0 0% 10%;
+    --surface-hover: 0 0% 13%;
+    --gradient-start: 152 32% 50%;
+    --gradient-end: 158 28% 36%;
+    --text-subtle: 0 0% 50%;
 
-    --success: 142 55% 42%;
+    --success: 152 32% 48%;
     --success-foreground: 0 0% 100%;
-    --warning: 35 92% 52%;
+    --warning: 35 80% 55%;
     --warning-foreground: 0 0% 100%;
-    --info: 211 80% 55%;
+    --info: 211 70% 58%;
     --info-foreground: 0 0% 100%;
 
-    --plan-entry: 185 55% 45%;
-    --plan-mid: 42 80% 50%;
-    --plan-premium: 270 50% 58%;
+    --plan-entry: 185 40% 50%;
+    --plan-mid: 42 65% 55%;
+    --plan-premium: 270 38% 60%;
 
-    --gold: 42 70% 52%;
-    --gold-light: 42 60% 68%;
-    --gold-dark: 38 72% 40%;
+    --gold: 42 55% 55%;
+    --gold-light: 42 50% 68%;
+    --gold-dark: 38 58% 42%;
   }
 }
 
