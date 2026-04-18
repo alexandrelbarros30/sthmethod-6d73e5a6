@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { QrCode, CreditCard, Save, Loader2, Flame, Copy, Check, MessageCircle } from "lucide-react";
+import { QrCode, CreditCard, Save, Loader2, Flame, Copy, Check, MessageCircle, UserPlus } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
