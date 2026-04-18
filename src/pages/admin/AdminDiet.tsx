@@ -13,7 +13,7 @@ import StudentInfoHeader from "@/components/student/StudentInfoHeader";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff, ToggleLeft, ToggleRight, CalendarClock, BookOpen, Save } from "lucide-react";
+import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff, ToggleLeft, ToggleRight, CalendarClock, BookOpen, Save, ClipboardCopy } from "lucide-react";
 import DietAIAnalysis from "@/components/admin/DietAIAnalysis";
 import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -109,6 +109,58 @@ const AdminDiet = () => {
       setNewFatG(item.fat_g != null ? String(item.fat_g) : "");
       setNewHydrationL(item.hydration_l != null && item.hydration_l > 0 ? String(item.hydration_l) : "");
       toast.success("Dieta carregada da biblioteca com macros e hidratação!");
+    }
+  };
+
+  const copyDietPrompt = async () => {
+    if (!selected) return;
+    const nome = selected.full_name || "[Não informado]";
+    let idade = "[Não informada]";
+    if (selected.birth_date) {
+      const b = new Date(selected.birth_date);
+      const diff = Date.now() - b.getTime();
+      const age = Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+      if (!isNaN(age)) idade = `${age} anos`;
+    }
+    // try latest weight log
+    let pesoAtual = selected.weight ? `${selected.weight} kg` : "[Não informado]";
+    try {
+      const { data: wl } = await supabase
+        .from("weight_logs")
+        .select("weight")
+        .eq("user_id", selected.user_id)
+        .order("logged_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (wl?.weight) pesoAtual = `${wl.weight} kg`;
+    } catch {}
+    const altura = selected.height ? `${selected.height} cm` : "[Não informada]";
+    const objetivo = selected.objective || "[Não informado]";
+
+    const prompt = `Solicito a criação de um novo Cardápio STH Method para o seguinte perfil:
+
+DADOS DO ALUNO
+
+Nome: ${nome}
+
+Idade: ${idade}
+
+Peso: ${pesoAtual}
+
+Altura: ${altura}
+
+Objetivo: ${objetivo}
+
+Cardápio STH Method:
+Meta: [Inserir kcal] | [Inserir macros: Prot/Gord/Carbo]
+
+Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substituição em cada refeição, garantindo a precisão das quantidades em gramas/ml.`;
+
+    try {
+      await navigator.clipboard.writeText(prompt);
+      toast.success("Prompt do cardápio copiado!");
+    } catch {
+      toast.error("Não foi possível copiar. Tente novamente.");
     }
   };
 
@@ -483,9 +535,14 @@ const AdminDiet = () => {
             <div className="space-y-4">
               {/* Add new diet button */}
               {!showNewForm && !editingId && (
-                <Button onClick={() => setShowNewForm(true)} className="w-full" variant="outline">
-                  <Plus className="w-4 h-4 mr-2" /> Adicionar Nova Dieta
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button onClick={() => setShowNewForm(true)} className="flex-1" variant="outline">
+                    <Plus className="w-4 h-4 mr-2" /> Adicionar Nova Dieta
+                  </Button>
+                  <Button onClick={copyDietPrompt} variant="secondary" className="flex-1">
+                    <ClipboardCopy className="w-4 h-4 mr-2" /> Resgatar Dados p/ Cardápio
+                  </Button>
+                </div>
               )}
 
               {/* New diet form */}
