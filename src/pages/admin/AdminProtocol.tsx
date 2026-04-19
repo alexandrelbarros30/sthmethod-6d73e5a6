@@ -244,6 +244,139 @@ const AdminProtocol = () => {
     onError: () => toast.error("Erro ao carregar da biblioteca"),
   });
 
+  // ===== Copy / Paste protocol between students =====
+  const CLIPBOARD_KEY = "sth:protocol-clipboard";
+  const [clipboardMeta, setClipboardMeta] = useState<{ studentName: string; copiedAt: string } | null>(() => {
+    try {
+      const raw = localStorage.getItem(CLIPBOARD_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return { studentName: parsed.studentName || "Aluno", copiedAt: parsed.copiedAt || "" };
+    } catch { return null; }
+  });
+
+  const copyProtocolMutation = useMutation({
+    mutationFn: async () => {
+      if (!selected?.user_id) throw new Error("Sem aluno");
+      const uid = selected.user_id;
+      const [items, extraCats, catContents, latest] = await Promise.all([
+        supabase.from("protocols").select("*").eq("user_id", uid),
+        supabase.from("protocol_extra_categories" as any).select("*").eq("user_id", uid),
+        supabase.from("protocol_category_content").select("*").eq("user_id", uid),
+        supabase.from("student_protocols").select("title, content, pdf_url").eq("user_id", uid).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+      ]);
+      const itemsArr = (items.data || []).map((i: any) => ({
+        name: i.name, dosage: i.dosage, frequency: i.frequency, category: i.category, notes: i.notes,
+      }));
+      const extraArr = ((extraCats.data || []) as any[]).map((c: any) => ({
+        name: c.name, content: c.content,
+      }));
+      const catObj: Record<string, string> = {};
+      ((catContents.data || []) as any[]).forEach((c: any) => { catObj[c.category] = c.content; });
+      const payload = {
+        studentName: selected.full_name || "Aluno",
+        copiedAt: new Date().toISOString(),
+        title: (latest.data as any)?.title || "Protocolo",
+        content: (latest.data as any)?.content || "",
+        pdf_url: (latest.data as any)?.pdf_url || "",
+        items_json: itemsArr,
+        extra_categories_json: extraArr,
+        category_contents_json: catObj,
+      };
+      localStorage.setItem(CLIPBOARD_KEY, JSON.stringify(payload));
+      setClipboardMeta({ studentName: payload.studentName, copiedAt: payload.copiedAt });
+    },
+    onSuccess: () => toast.success("Protocolo copiado! Selecione outro aluno e cole."),
+    onError: () => toast.error("Erro ao copiar protocolo"),
+  });
+
+  const pasteProtocolMutation = useMutation({
+    mutationFn: async () => {
+      if (!selected?.user_id) throw new Error("Sem aluno");
+      const raw = localStorage.getItem(CLIPBOARD_KEY);
+      if (!raw) throw new Error("Clipboard vazio");
+      const data = JSON.parse(raw);
+      // Reuse the same logic as loadFromLibrary
+      await loadFromLibraryMutation.mutateAsync(data);
+    },
+    onError: (e: any) => {
+      if (e?.message === "Clipboard vazio") toast.error("Nenhum protocolo copiado ainda.");
+      else toast.error("Erro ao colar protocolo");
+    },
+  });
+
+  // Copy protocol as plain text to system clipboard
+  const copyAsTextMutation = useMutation({
+    mutationFn: async () => {
+      if (!selected?.user_id) throw new Error("Sem aluno");
+      const uid = selected.user_id;
+      const [items, extraCats, catContents, latest] = await Promise.all([
+        supabase.from("protocols").select("*").eq("user_id", uid).order("category").order("sort_order"),
+        supabase.from("protocol_extra_categories" as any).select("*").eq("user_id", uid).order("sort_order"),
+        supabase.from("protocol_category_content").select("*").eq("user_id", uid),
+        supabase.from("student_protocols").select("title, content").eq("user_id", uid).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+      ]);
+
+      const stripHtml = (html: string) => {
+        if (!html) return "";
+        const tmp = document.createElement("div");
+        tmp.innerHTML = html;
+        return (tmp.textContent || tmp.innerText || "").trim();
+      };
+
+      const CAT_LABELS: Record<string, string> = {
+        endocrino: "Suporte Endócrino Hormonal",
+        cardiovascular: "Suporte Cardiovascular | Hepático | Renal",
+        metabolico: "Suporte Metabólico e Performance",
+        pre_pos_treino: "Sistema Pré e Pós-Treino",
+      };
+
+      let out = `PROTOCOLO — ${selected.full_name || "Aluno"}\n`;
+      out += `${(latest.data as any)?.title || ""}\n`;
+      out += "=".repeat(40) + "\n\n";
+
+      // Group items by category
+      const itemsByCat: Record<string, any[]> = {};
+      (items.data || []).forEach((it: any) => {
+        const k = it.category || "outros";
+        if (!itemsByCat[k]) itemsByCat[k] = [];
+        itemsByCat[k].push(it);
+      });
+
+      for (const [cat, list] of Object.entries(itemsByCat)) {
+        out += `## ${CAT_LABELS[cat] || cat.toUpperCase()}\n`;
+        list.forEach((it: any) => {
+          out += `• ${it.name}`;
+          if (it.dosage) out += ` — ${it.dosage}`;
+          if (it.frequency) out += ` (${it.frequency})`;
+          out += "\n";
+          if (it.notes) out += `  Obs: ${it.notes}\n`;
+        });
+        const catText = stripHtml(((catContents.data || []) as any[]).find((c: any) => c.category === cat)?.content || "");
+        if (catText) out += `${catText}\n`;
+        out += "\n";
+      }
+
+      // Extra categories
+      ((extraCats.data || []) as any[]).forEach((ec: any) => {
+        out += `## ${ec.name}\n`;
+        const t = stripHtml(ec.content || "");
+        if (t) out += `${t}\n`;
+        out += "\n";
+      });
+
+      // Latest rich content
+      const richText = stripHtml((latest.data as any)?.content || "");
+      if (richText) {
+        out += `## CONTEÚDO ADICIONAL\n${richText}\n`;
+      }
+
+      await navigator.clipboard.writeText(out.trim());
+    },
+    onSuccess: () => toast.success("Protocolo copiado como texto!"),
+    onError: () => toast.error("Erro ao copiar como texto"),
+  });
+
 
   useEffect(() => {
     const uid = searchParams.get("uid");
