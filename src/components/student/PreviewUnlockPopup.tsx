@@ -9,11 +9,11 @@ const STORAGE_KEY = "preview-unlock-popup-dismissed-at";
 const COOLDOWN_HOURS = 8;
 
 const PreviewUnlockPopup = () => {
-  const { isActive, previewUnlocked, isLoading } = useSubscriptionGuard();
+  const { isActive, isLoading } = useSubscriptionGuard();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (isLoading || isActive || !previewUnlocked) return;
+    if (isLoading || isActive) return;
     const dismissedAt = localStorage.getItem(STORAGE_KEY);
     if (dismissedAt) {
       const hours = (Date.now() - Number(dismissedAt)) / (1000 * 60 * 60);
@@ -21,14 +21,14 @@ const PreviewUnlockPopup = () => {
     }
     const t = setTimeout(() => setOpen(true), 1200);
     return () => clearTimeout(t);
-  }, [isActive, previewUnlocked, isLoading]);
+  }, [isActive, isLoading]);
 
   const handleClose = (next: boolean) => {
     if (!next) localStorage.setItem(STORAGE_KEY, String(Date.now()));
     setOpen(next);
   };
 
-  if (isActive || !previewUnlocked) return null;
+  if (isActive) return null;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
