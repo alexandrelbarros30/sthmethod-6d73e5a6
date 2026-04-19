@@ -45,7 +45,12 @@ const ProtectedRoute = ({ children, allowedRoles, requiredRole }: ProtectedRoute
   }
 
   if (roles && role && !roles.includes(role)) {
-    return <Navigate to={roleHomeMap[role] || "/dashboard"} replace />;
+    // Allow admin/consultor to access student routes when previewing a student
+    const params = new URLSearchParams(window.location.search);
+    const isPreviewing = params.has("preview_as") && (role === "admin" || role === "consultor") && roles.includes("student");
+    if (!isPreviewing) {
+      return <Navigate to={roleHomeMap[role] || "/dashboard"} replace />;
+    }
   }
 
   return <>{children}</>;
