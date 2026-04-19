@@ -73,7 +73,7 @@ const StudentProtocol = () => {
         .maybeSingle();
       return data;
     },
-    enabled: !!targetId && !isActive && previewUnlocked,
+    enabled: !!targetId && !isActive,
   });
 
   const { data: protocols, isLoading } = useQuery({
@@ -187,8 +187,8 @@ const StudentProtocol = () => {
   }
 
   if (!isActive) {
-    if (previewUnlocked) {
-      const txt = (previewProtocol?.content || "").replace(/<[^>]+>/g, "\n");
+    if (previewProtocol?.content) {
+      const txt = (previewProtocol.content || "").replace(/<[^>]+>/g, "\n");
       return (
         <DashboardLayout role="student" title="Protocolo" subtitle="Pré-estreia do seu protocolo personalizado.">
           <PreviewAsBanner />
