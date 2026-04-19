@@ -180,6 +180,7 @@ const StudentProtocol = () => {
   if (subLoading || isLoading) {
     return (
       <DashboardLayout role="student" title="Protocolo" subtitle="Suplementação e medicamentos prescritos.">
+        <PreviewAsBanner />
         <p className="text-muted-foreground font-body text-sm">Carregando...</p>
       </DashboardLayout>
     );
@@ -190,12 +191,14 @@ const StudentProtocol = () => {
       const txt = (previewProtocol?.content || "").replace(/<[^>]+>/g, "\n");
       return (
         <DashboardLayout role="student" title="Protocolo" subtitle="Pré-estreia do seu protocolo personalizado.">
+          <PreviewAsBanner />
           <PreviewLockedCard type="protocol" previewText={txt} />
         </DashboardLayout>
       );
     }
     return (
       <DashboardLayout role="student" title="Protocolo" subtitle="Suplementação e medicamentos prescritos.">
+        <PreviewAsBanner />
         <SubscriptionBlock />
       </DashboardLayout>
     );
@@ -203,6 +206,7 @@ const StudentProtocol = () => {
 
   return (
     <DashboardLayout role="student" title="Protocolo" subtitle="Suplementação e medicamentos prescritos.">
+      <PreviewAsBanner />
       <style>{`
         @media print { .content-protected { display: none !important; } body::after { content: "Impressão não permitida"; display: flex; align-items: center; justify-content: center; font-size: 2rem; height: 100vh; } }
         .content-protected { user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; -webkit-touch-callout: none; }
@@ -222,7 +226,7 @@ const StudentProtocol = () => {
         {buildStudentInfo()}
 
         {/* Protocol Info Panel */}
-        <ProtocolInfoPanel protocols={protocolItems} userId={user?.id} />
+        <ProtocolInfoPanel protocols={protocolItems} userId={targetId} />
 
         {!protocols || protocols.length === 0 ? (
           <Card><CardContent className="py-8 text-center">
