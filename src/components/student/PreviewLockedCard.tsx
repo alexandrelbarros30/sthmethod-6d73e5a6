@@ -87,7 +87,7 @@ const PreviewLockedCard = ({ previewText, type }: PreviewLockedCardProps) => {
               <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-background via-background/95 to-transparent pointer-events-none" />
               <div className="absolute inset-0 flex items-end justify-center pb-3 pointer-events-none">
                 <div className="flex items-center gap-1.5 text-[11px] font-semibold text-primary bg-background/95 border border-primary/30 rounded-full px-3 py-1.5 shadow-sm">
-                  <Lock className="w-3 h-3" /> +{Math.max(allLines.length - 3, 0)} linhas bloqueadas
+                  <Lock className="w-3 h-3" /> +{Math.max(allLines.length - 2, 0)} linhas bloqueadas
                 </div>
               </div>
             </div>
