@@ -735,6 +735,23 @@ const AdminProtocol = () => {
                   <Button variant="outline" size="sm" className="text-xs" onClick={() => saveToLibraryMutation.mutate()} disabled={saveToLibraryMutation.isPending}>
                     <Save className="w-3.5 h-3.5 mr-1" /> {saveToLibraryMutation.isPending ? "Salvando..." : "Salvar na Biblioteca"}
                   </Button>
+                  <Button variant="outline" size="sm" className="text-xs" onClick={() => copyProtocolMutation.mutate()} disabled={copyProtocolMutation.isPending}>
+                    <Copy className="w-3.5 h-3.5 mr-1" /> {copyProtocolMutation.isPending ? "Copiando..." : "Copiar Protocolo"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => pasteProtocolMutation.mutate()}
+                    disabled={pasteProtocolMutation.isPending || !clipboardMeta}
+                    title={clipboardMeta ? `Colar protocolo de ${clipboardMeta.studentName}` : "Nenhum protocolo copiado"}
+                  >
+                    <ClipboardPaste className="w-3.5 h-3.5 mr-1" />
+                    {pasteProtocolMutation.isPending ? "Colando..." : clipboardMeta ? `Colar (de ${clipboardMeta.studentName.split(" ")[0]})` : "Colar Protocolo"}
+                  </Button>
+                  <Button variant="outline" size="sm" className="text-xs" onClick={() => copyAsTextMutation.mutate()} disabled={copyAsTextMutation.isPending}>
+                    <FileTextIcon className="w-3.5 h-3.5 mr-1" /> {copyAsTextMutation.isPending ? "Copiando..." : "Copiar como Texto"}
+                  </Button>
                   <Button
                     variant="default"
                     size="sm"
