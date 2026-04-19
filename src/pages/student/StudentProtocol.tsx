@@ -3,6 +3,8 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
+import { usePreviewAs } from "@/hooks/usePreviewAs";
+import PreviewAsBanner from "@/components/student/PreviewAsBanner";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
 import PreviewLockedCard from "@/components/student/PreviewLockedCard";
 import { useQuery } from "@tanstack/react-query";
@@ -54,32 +56,34 @@ const useContentProtection = () => {
 const StudentProtocol = () => {
   useContentProtection();
   const { user } = useAuth();
+  const { effectiveUserId, isPreviewing } = usePreviewAs();
+  const targetId = effectiveUserId || user?.id;
   const { isActive, isLoading: subLoading, subscription, previewUnlocked } = useSubscriptionGuard();
 
   const { data: previewProtocol } = useQuery({
-    queryKey: ["preview-protocol", user?.id],
+    queryKey: ["preview-protocol", targetId],
     queryFn: async () => {
       const { data } = await supabase
         .from("student_protocols")
         .select("title, content")
-        .eq("user_id", user!.id)
+        .eq("user_id", targetId!)
         .eq("visible", true)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
       return data;
     },
-    enabled: !!user?.id && !isActive && previewUnlocked,
+    enabled: !!targetId && !isActive && previewUnlocked,
   });
 
   const { data: protocols, isLoading } = useQuery({
-    queryKey: ["student-protocols", user?.id],
+    queryKey: ["student-protocols", targetId, isPreviewing],
     queryFn: async () => {
       const today = new Date().toISOString().slice(0, 10);
       const { data } = await supabase
         .from("student_protocols")
         .select("*")
-        .eq("user_id", user!.id)
+        .eq("user_id", targetId!)
         .eq("visible", true)
         .order("created_at", { ascending: false });
       // Filter by release_date and end_date client-side
@@ -89,34 +93,34 @@ const StudentProtocol = () => {
         return true;
       });
     },
-    enabled: !!user?.id && isActive,
+    enabled: !!targetId && isActive,
   });
 
   const { data: protocolItems = [] } = useQuery({
-    queryKey: ["student-protocol-items", user?.id],
+    queryKey: ["student-protocol-items", targetId],
     queryFn: async () => {
       const { data } = await supabase
         .from("protocols")
         .select("*")
-        .eq("user_id", user!.id)
+        .eq("user_id", targetId!)
         .order("category")
         .order("sort_order");
       return data || [];
     },
-    enabled: !!user?.id && isActive,
+    enabled: !!targetId && isActive,
   });
 
   const { data: profile } = useQuery({
-    queryKey: ["profile", user?.id],
+    queryKey: ["profile", targetId],
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
         .select("*")
-        .eq("user_id", user!.id)
+        .eq("user_id", targetId!)
         .single();
       return data;
     },
-    enabled: !!user?.id,
+    enabled: !!targetId,
   });
 
   const buildStudentInfo = () => {
