@@ -22,13 +22,16 @@ const SUBTITLES = {
 };
 
 const PreviewLockedCard = ({ previewText, type }: PreviewLockedCardProps) => {
-  const lines = (previewText || "")
+  const allLines = (previewText || "")
     .split("\n")
     .map((l) => l.trim())
-    .filter(Boolean)
-    .slice(0, 5);
+    .filter(Boolean);
 
-  const hasPreview = lines.length > 0;
+  // Show first 3 lines fully readable (teaser), then 5 progressively blurred
+  const visibleLines = allLines.slice(0, 3);
+  const blurredLines = allLines.slice(3, 8);
+
+  const hasPreview = allLines.length > 0;
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">
@@ -51,25 +54,40 @@ const PreviewLockedCard = ({ previewText, type }: PreviewLockedCardProps) => {
 
           {hasPreview && (
             <div className="relative rounded-xl border border-border/60 bg-muted/30 p-4 overflow-hidden">
-              <div className="space-y-1.5">
-                {lines.map((l, i) => (
+              {/* Teaser real legível */}
+              <div className="space-y-1.5 mb-2">
+                {visibleLines.map((l, i) => (
                   <p
-                    key={i}
-                    className="text-sm text-foreground"
-                    style={{
-                      filter: `blur(${Math.min(0.5 + i * 1.2, 6)}px)`,
-                      opacity: 1 - i * 0.12,
-                      userSelect: "none",
-                    }}
+                    key={`v-${i}`}
+                    className="text-sm text-foreground leading-relaxed"
+                    style={{ userSelect: "none" }}
                   >
                     {l}
                   </p>
                 ))}
               </div>
-              <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-background via-background/90 to-transparent pointer-events-none" />
-              <div className="absolute inset-0 flex items-end justify-center pb-2 pointer-events-none">
+              {/* Linhas borradas progressivas */}
+              {blurredLines.length > 0 && (
+                <div className="space-y-1.5 pt-2 border-t border-border/40">
+                  {blurredLines.map((l, i) => (
+                    <p
+                      key={`b-${i}`}
+                      className="text-sm text-foreground"
+                      style={{
+                        filter: `blur(${Math.min(1.5 + i * 1.2, 7)}px)`,
+                        opacity: 1 - i * 0.12,
+                        userSelect: "none",
+                      }}
+                    >
+                      {l}
+                    </p>
+                  ))}
+                </div>
+              )}
+              <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-background via-background/95 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 flex items-end justify-center pb-3 pointer-events-none">
                 <div className="flex items-center gap-1.5 text-[11px] font-semibold text-primary bg-background/95 border border-primary/30 rounded-full px-3 py-1.5 shadow-sm">
-                  <Lock className="w-3 h-3" /> Conteúdo bloqueado
+                  <Lock className="w-3 h-3" /> +{Math.max(allLines.length - 3, 0)} linhas bloqueadas
                 </div>
               </div>
             </div>
