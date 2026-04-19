@@ -562,6 +562,16 @@ const AdminProtocol = () => {
           <DialogHeader className="pr-8">
             <DialogTitle className="font-display text-base sm:text-lg">Protocolos — {selected?.full_name}</DialogTitle>
             <DialogDescription className="text-xs sm:text-sm">Edite com clareza no mobile e desktop.</DialogDescription>
+            {selected?.user_id && (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="mt-2 w-full sm:w-auto"
+                onClick={() => window.open(`/dashboard/protocol?preview_as=${selected.user_id}`, "_blank", "noopener,noreferrer")}
+              >
+                <Eye className="w-4 h-4 mr-1" /> Visualizar como aluno
+              </Button>
+            )}
           </DialogHeader>
 
           <div className="flex-1 min-h-0 overflow-y-auto pr-1 sm:pr-4">

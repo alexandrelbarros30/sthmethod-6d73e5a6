@@ -3,6 +3,8 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
+import { usePreviewAs } from "@/hooks/usePreviewAs";
+import PreviewAsBanner from "@/components/student/PreviewAsBanner";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
 import PreviewLockedCard from "@/components/student/PreviewLockedCard";
 import { useQuery } from "@tanstack/react-query";
@@ -54,32 +56,34 @@ const useContentProtection = () => {
 const StudentProtocol = () => {
   useContentProtection();
   const { user } = useAuth();
+  const { effectiveUserId, isPreviewing } = usePreviewAs();
+  const targetId = effectiveUserId || user?.id;
   const { isActive, isLoading: subLoading, subscription, previewUnlocked } = useSubscriptionGuard();
 
   const { data: previewProtocol } = useQuery({
-    queryKey: ["preview-protocol", user?.id],
+    queryKey: ["preview-protocol", targetId],
     queryFn: async () => {
       const { data } = await supabase
         .from("student_protocols")
         .select("title, content")
-        .eq("user_id", user!.id)
+        .eq("user_id", targetId!)
         .eq("visible", true)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
       return data;
     },
-    enabled: !!user?.id && !isActive && previewUnlocked,
+    enabled: !!targetId && !isActive && previewUnlocked,
   });
 
   const { data: protocols, isLoading } = useQuery({
-    queryKey: ["student-protocols", user?.id],
+    queryKey: ["student-protocols", targetId, isPreviewing],
     queryFn: async () => {
       const today = new Date().toISOString().slice(0, 10);
       const { data } = await supabase
         .from("student_protocols")
         .select("*")
-        .eq("user_id", user!.id)
+        .eq("user_id", targetId!)
         .eq("visible", true)
         .order("created_at", { ascending: false });
       // Filter by release_date and end_date client-side
@@ -89,34 +93,34 @@ const StudentProtocol = () => {
         return true;
       });
     },
-    enabled: !!user?.id && isActive,
+    enabled: !!targetId && isActive,
   });
 
   const { data: protocolItems = [] } = useQuery({
-    queryKey: ["student-protocol-items", user?.id],
+    queryKey: ["student-protocol-items", targetId],
     queryFn: async () => {
       const { data } = await supabase
         .from("protocols")
         .select("*")
-        .eq("user_id", user!.id)
+        .eq("user_id", targetId!)
         .order("category")
         .order("sort_order");
       return data || [];
     },
-    enabled: !!user?.id && isActive,
+    enabled: !!targetId && isActive,
   });
 
   const { data: profile } = useQuery({
-    queryKey: ["profile", user?.id],
+    queryKey: ["profile", targetId],
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
         .select("*")
-        .eq("user_id", user!.id)
+        .eq("user_id", targetId!)
         .single();
       return data;
     },
-    enabled: !!user?.id,
+    enabled: !!targetId,
   });
 
   const buildStudentInfo = () => {
@@ -176,6 +180,7 @@ const StudentProtocol = () => {
   if (subLoading || isLoading) {
     return (
       <DashboardLayout role="student" title="Protocolo" subtitle="Suplementação e medicamentos prescritos.">
+        <PreviewAsBanner />
         <p className="text-muted-foreground font-body text-sm">Carregando...</p>
       </DashboardLayout>
     );
@@ -186,12 +191,14 @@ const StudentProtocol = () => {
       const txt = (previewProtocol?.content || "").replace(/<[^>]+>/g, "\n");
       return (
         <DashboardLayout role="student" title="Protocolo" subtitle="Pré-estreia do seu protocolo personalizado.">
+          <PreviewAsBanner />
           <PreviewLockedCard type="protocol" previewText={txt} />
         </DashboardLayout>
       );
     }
     return (
       <DashboardLayout role="student" title="Protocolo" subtitle="Suplementação e medicamentos prescritos.">
+        <PreviewAsBanner />
         <SubscriptionBlock />
       </DashboardLayout>
     );
@@ -199,6 +206,7 @@ const StudentProtocol = () => {
 
   return (
     <DashboardLayout role="student" title="Protocolo" subtitle="Suplementação e medicamentos prescritos.">
+      <PreviewAsBanner />
       <style>{`
         @media print { .content-protected { display: none !important; } body::after { content: "Impressão não permitida"; display: flex; align-items: center; justify-content: center; font-size: 2rem; height: 100vh; } }
         .content-protected { user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; -webkit-touch-callout: none; }
@@ -218,7 +226,7 @@ const StudentProtocol = () => {
         {buildStudentInfo()}
 
         {/* Protocol Info Panel */}
-        <ProtocolInfoPanel protocols={protocolItems} userId={user?.id} />
+        <ProtocolInfoPanel protocols={protocolItems} userId={targetId} />
 
         {!protocols || protocols.length === 0 ? (
           <Card><CardContent className="py-8 text-center">

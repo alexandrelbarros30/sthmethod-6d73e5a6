@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
+import { usePreviewAs } from "@/hooks/usePreviewAs";
+import PreviewAsBanner from "@/components/student/PreviewAsBanner";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
 import PreviewLockedCard from "@/components/student/PreviewLockedCard";
 import { useMealTracking } from "@/hooks/useMealTracking";
@@ -20,6 +22,8 @@ import { generateStudentPDF } from "@/lib/pdfGenerator";
 
 const StudentDiet = () => {
   const { user } = useAuth();
+  const { effectiveUserId } = usePreviewAs();
+  const targetId = effectiveUserId || user?.id;
   const { isActive, isLoading: subLoading, previewUnlocked } = useSubscriptionGuard();
   const [expandedMealId, setExpandedMealId] = useState<string | null>(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
@@ -51,6 +55,7 @@ const StudentDiet = () => {
   if (subLoading || isLoading) {
     return (
         <DashboardLayout role="student" title="Seu plano hoje" subtitle="Seu plano alimentar personalizado.">
+        <PreviewAsBanner />
         <div className="flex items-center justify-center py-20">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
@@ -66,12 +71,14 @@ const StudentDiet = () => {
         .join("\n");
       return (
         <DashboardLayout role="student" title="Seu plano hoje" subtitle="Pré-estreia da sua dieta personalizada.">
+          <PreviewAsBanner />
           <PreviewLockedCard type="diet" previewText={previewText} />
         </DashboardLayout>
       );
     }
     return (
       <DashboardLayout role="student" title="Seu plano hoje" subtitle="Seu plano alimentar personalizado.">
+        <PreviewAsBanner />
         <SubscriptionBlock />
       </DashboardLayout>
     );
@@ -80,6 +87,7 @@ const StudentDiet = () => {
   if (error) {
     return (
         <DashboardLayout role="student" title="Seu plano hoje" subtitle="Seu plano alimentar personalizado.">
+        <PreviewAsBanner />
         <Card className="premium-card">
           <CardContent className="py-8 text-center">
             <p className="text-sm font-semibold text-foreground">Não foi possível carregar sua dieta.</p>
@@ -93,6 +101,7 @@ const StudentDiet = () => {
   if (meals.length === 0) {
     return (
       <DashboardLayout role="student" title="Seu plano hoje" subtitle="Seu plano alimentar personalizado.">
+        <PreviewAsBanner />
         <Card className="premium-card">
           <CardContent className="py-12 text-center">
             <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-4">
@@ -159,11 +168,11 @@ const StudentDiet = () => {
     try {
       // Fetch profile data for PDF header
       let profileData: { full_name?: string; weight?: number; height?: number; objective?: string; birth_date?: string } | null = null;
-      if (user?.id) {
+      if (targetId) {
         const { data } = await supabase
           .from("profiles")
           .select("full_name, weight, height, objective, birth_date")
-          .eq("user_id", user.id)
+          .eq("user_id", targetId)
           .single();
         profileData = data;
       }
@@ -225,6 +234,7 @@ const StudentDiet = () => {
 
   return (
     <DashboardLayout role="student" title="Seu plano hoje" subtitle="Acompanhe suas refeições do dia.">
+      <PreviewAsBanner />
       <div className="space-y-5 max-w-lg mx-auto">
         {/* Date navigation */}
         <DietDateNav selectedDate={selectedDate} onDateChange={setSelectedDate} />

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePreviewAs } from "@/hooks/usePreviewAs";
 import { useState, useMemo } from "react";
 
 export interface MealWithFoods {
@@ -42,6 +43,8 @@ const todayStr = () => formatDate(new Date());
 
 export function useMealTracking() {
   const { user } = useAuth();
+  const { effectiveUserId, isPreviewing } = usePreviewAs();
+  const targetUserId = effectiveUserId || user?.id;
   const qc = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<string>(todayStr());
 
@@ -49,12 +52,12 @@ export function useMealTracking() {
 
   // Fetch admin-defined macros + hydration from student_diets
   const { data: dietMeta } = useQuery({
-    queryKey: ["student-diet-macros", user?.id],
+    queryKey: ["student-diet-macros", targetUserId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("student_diets")
         .select("energy_kcal, protein_g, carbs_g, fat_g, hydration_l")
-        .eq("user_id", user!.id)
+        .eq("user_id", targetUserId!)
         .eq("visible", true)
         .order("created_at", { ascending: false })
         .limit(1)
@@ -69,7 +72,7 @@ export function useMealTracking() {
         hydration_l: data.hydration_l || 0,
       };
     },
-    enabled: !!user?.id,
+    enabled: !!targetUserId,
   });
 
   const adminMacros = dietMeta ? {
@@ -82,53 +85,54 @@ export function useMealTracking() {
   const hydrationGoalL = dietMeta?.hydration_l || 0;
 
   const { data: meals = [], isLoading: mealsLoading, error: mealsError } = useQuery({
-    queryKey: ["diet-meals-tracking", user?.id],
+    queryKey: ["diet-meals-tracking", targetUserId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("diet_meals")
         .select("id, name, time, sort_order, image_url, diet_foods(id, item, quantity, energy_kcal, protein_g, carbs_g, fat_g, fiber_g, notes)")
-        .eq("user_id", user!.id)
+        .eq("user_id", targetUserId!)
         .order("sort_order", { ascending: true });
       if (error) throw error;
       return (data || []) as MealWithFoods[];
     },
-    enabled: !!user?.id,
+    enabled: !!targetUserId,
   });
 
   const { data: completions = [], isLoading: completionsLoading, error: completionsError } = useQuery({
-    queryKey: ["meal-completions", user?.id, selectedDate],
+    queryKey: ["meal-completions", targetUserId, selectedDate],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("meal_completions")
         .select("*")
-        .eq("user_id", user!.id)
+        .eq("user_id", targetUserId!)
         .eq("completed_date", selectedDate);
       if (error) throw error;
       return (data || []) as MealCompletion[];
     },
-    enabled: !!user?.id,
+    enabled: !!targetUserId,
   });
 
   // Water logs
   const { data: waterLogs = [] } = useQuery({
-    queryKey: ["water-logs", user?.id, selectedDate],
+    queryKey: ["water-logs", targetUserId, selectedDate],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("water_logs")
         .select("*")
-        .eq("user_id", user!.id)
+        .eq("user_id", targetUserId!)
         .eq("log_date", selectedDate)
         .order("logged_at", { ascending: true });
       if (error) throw error;
       return data || [];
     },
-    enabled: !!user?.id,
+    enabled: !!targetUserId,
   });
 
   const waterConsumedMl = useMemo(() => waterLogs.reduce((s, l: any) => s + (l.amount_ml || 0), 0), [waterLogs]);
 
   const addWater = useMutation({
     mutationFn: async (amountMl: number) => {
+      if (isPreviewing) return; // read-only preview mode
       const { error } = await supabase.from("water_logs").insert({
         user_id: user!.id,
         log_date: selectedDate,
@@ -137,24 +141,26 @@ export function useMealTracking() {
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["water-logs", user?.id, selectedDate] });
+      qc.invalidateQueries({ queryKey: ["water-logs", targetUserId, selectedDate] });
     },
   });
 
   const removeLastWater = useMutation({
     mutationFn: async () => {
+      if (isPreviewing) return;
       if (waterLogs.length === 0) return;
       const last = waterLogs[waterLogs.length - 1] as any;
       const { error } = await supabase.from("water_logs").delete().eq("id", last.id);
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["water-logs", user?.id, selectedDate] });
+      qc.invalidateQueries({ queryKey: ["water-logs", targetUserId, selectedDate] });
     },
   });
 
   const toggleMeal = useMutation({
     mutationFn: async ({ mealId, skipped = false }: { mealId: string; skipped?: boolean }) => {
+      if (isPreviewing) return;
       const existing = completions.find((c) => c.meal_id === mealId);
       if (existing) {
         const { error } = await supabase.from("meal_completions").delete().eq("id", existing.id);
@@ -170,7 +176,7 @@ export function useMealTracking() {
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["meal-completions", user?.id, selectedDate] });
+      qc.invalidateQueries({ queryKey: ["meal-completions", targetUserId, selectedDate] });
     },
   });
 
