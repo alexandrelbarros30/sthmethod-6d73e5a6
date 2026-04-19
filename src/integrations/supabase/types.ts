@@ -1467,6 +1467,7 @@ export type Database = {
           phone: string | null
           physical_activity: string | null
           physical_activity_level: string | null
+          preview_unlocked: boolean
           protein_g: number | null
           tdee: number | null
           training_days_per_week: number | null
@@ -1506,6 +1507,7 @@ export type Database = {
           phone?: string | null
           physical_activity?: string | null
           physical_activity_level?: string | null
+          preview_unlocked?: boolean
           protein_g?: number | null
           tdee?: number | null
           training_days_per_week?: number | null
@@ -1545,6 +1547,7 @@ export type Database = {
           phone?: string | null
           physical_activity?: string | null
           physical_activity_level?: string | null
+          preview_unlocked?: boolean
           protein_g?: number | null
           tdee?: number | null
           training_days_per_week?: number | null
