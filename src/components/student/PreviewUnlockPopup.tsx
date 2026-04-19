@@ -8,8 +8,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-const STORAGE_KEY = "preview-unlock-popup-dismissed-at";
-const COOLDOWN_HOURS = 8;
+// Popup reaparece a cada entrada na plataforma enquanto não houver pagamento ativo.
+// Após o pagamento (isActive=true), o componente retorna null e o popup nunca mais abre.
 
 const stripToLines = (html?: string | null, max = 2): string[] => {
   if (!html) return [];
@@ -57,17 +57,11 @@ const PreviewUnlockPopup = () => {
 
   useEffect(() => {
     if (isLoading || isActive) return;
-    const dismissedAt = localStorage.getItem(STORAGE_KEY);
-    if (dismissedAt) {
-      const hours = (Date.now() - Number(dismissedAt)) / (1000 * 60 * 60);
-      if (hours < COOLDOWN_HOURS) return;
-    }
     const t = setTimeout(() => setOpen(true), 1200);
     return () => clearTimeout(t);
   }, [isActive, isLoading]);
 
   const handleClose = (next: boolean) => {
-    if (!next) localStorage.setItem(STORAGE_KEY, String(Date.now()));
     setOpen(next);
   };
 
