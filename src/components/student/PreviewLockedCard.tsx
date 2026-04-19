@@ -27,9 +27,9 @@ const PreviewLockedCard = ({ previewText, type }: PreviewLockedCardProps) => {
     .map((l) => l.trim())
     .filter(Boolean);
 
-  // Show first 3 lines fully readable (teaser), then 5 progressively blurred
-  const visibleLines = allLines.slice(0, 3);
-  const blurredLines = allLines.slice(3, 8);
+  // Show first 2 lines fully readable (teaser), then 3 progressively blurred
+  const visibleLines = allLines.slice(0, 2);
+  const blurredLines = allLines.slice(2, 5);
 
   const hasPreview = allLines.length > 0;
 
