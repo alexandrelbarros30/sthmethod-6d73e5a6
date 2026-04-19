@@ -32,6 +32,7 @@ import ExcelJS from "exceljs";
 import AdminBioimpedance from "@/components/admin/AdminBioimpedance";
 import WhatsAppPopoverButton from "@/components/shared/WhatsAppPopoverButton";
 import AdminMetabolicPanel from "@/components/admin/AdminMetabolicPanel";
+import PreviewUnlockToggle from "@/components/admin/PreviewUnlockToggle";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
 import {
   objectiveLabels, activityLabels,
@@ -1969,6 +1970,12 @@ const AdminStudents = () => {
               </div>
             </DialogTitle>
           </DialogHeader>
+          {selected && (
+            <PreviewUnlockToggle
+              userId={selected.user_id}
+              onChanged={() => qc.invalidateQueries({ queryKey: ["admin-students-list"] })}
+            />
+          )}
           <div className="grid grid-cols-3 gap-2 pt-2">
             {[
               { icon: Eye, label: "Visão Geral", action: () => { setManageOpen(false); openView(selected); } },

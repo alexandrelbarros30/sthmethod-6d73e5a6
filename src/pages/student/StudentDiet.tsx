@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
+import PreviewLockedCard from "@/components/student/PreviewLockedCard";
 import { useMealTracking } from "@/hooks/useMealTracking";
 import DailyProgressRing from "@/components/student/DailyProgressRing";
 import MacroProgressBar from "@/components/student/MacroProgressBar";
@@ -19,7 +20,7 @@ import { generateStudentPDF } from "@/lib/pdfGenerator";
 
 const StudentDiet = () => {
   const { user } = useAuth();
-  const { isActive, isLoading: subLoading } = useSubscriptionGuard();
+  const { isActive, isLoading: subLoading, previewUnlocked } = useSubscriptionGuard();
   const [expandedMealId, setExpandedMealId] = useState<string | null>(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const {
@@ -58,8 +59,19 @@ const StudentDiet = () => {
   }
 
   if (!isActive) {
+    if (previewUnlocked && meals.length > 0) {
+      const previewText = meals
+        .slice(0, 2)
+        .flatMap((m) => [m.name, ...m.diet_foods.map((f: any) => `${f.quantity} - ${f.item}`)])
+        .join("\n");
+      return (
+        <DashboardLayout role="student" title="Seu plano hoje" subtitle="Pré-estreia da sua dieta personalizada.">
+          <PreviewLockedCard type="diet" previewText={previewText} />
+        </DashboardLayout>
+      );
+    }
     return (
-        <DashboardLayout role="student" title="Seu plano hoje" subtitle="Seu plano alimentar personalizado.">
+      <DashboardLayout role="student" title="Seu plano hoje" subtitle="Seu plano alimentar personalizado.">
         <SubscriptionBlock />
       </DashboardLayout>
     );

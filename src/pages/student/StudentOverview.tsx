@@ -27,6 +27,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import SubscriptionAlerts from "@/components/student/SubscriptionAlerts";
 import AdAutoPopup from "@/components/student/AdAutoPopup";
+import PreviewUnlockPopup from "@/components/student/PreviewUnlockPopup";
 
 import recipePoke from "@/assets/recipe-poke.jpg";
 import recipeFrango from "@/assets/recipe-frango.jpg";
@@ -190,6 +191,7 @@ const StudentOverview = () => {
       </div>
       <SubscriptionAlerts subscription={subscription ? { ...subscription, plans: (subscription as any)?.plans } : null} />
       <AdAutoPopup />
+      <PreviewUnlockPopup />
 
       {/* ===== ÚLTIMA MATÉRIA STH NEWS ===== */}
       <Link to="/tendencias/recomposicao-avancada" className="block mb-6">
