@@ -52,12 +52,12 @@ export function useMealTracking() {
 
   // Fetch admin-defined macros + hydration from student_diets
   const { data: dietMeta } = useQuery({
-    queryKey: ["student-diet-macros", user?.id],
+    queryKey: ["student-diet-macros", targetUserId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("student_diets")
         .select("energy_kcal, protein_g, carbs_g, fat_g, hydration_l")
-        .eq("user_id", user!.id)
+        .eq("user_id", targetUserId!)
         .eq("visible", true)
         .order("created_at", { ascending: false })
         .limit(1)
@@ -72,7 +72,7 @@ export function useMealTracking() {
         hydration_l: data.hydration_l || 0,
       };
     },
-    enabled: !!user?.id,
+    enabled: !!targetUserId,
   });
 
   const adminMacros = dietMeta ? {
@@ -85,47 +85,47 @@ export function useMealTracking() {
   const hydrationGoalL = dietMeta?.hydration_l || 0;
 
   const { data: meals = [], isLoading: mealsLoading, error: mealsError } = useQuery({
-    queryKey: ["diet-meals-tracking", user?.id],
+    queryKey: ["diet-meals-tracking", targetUserId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("diet_meals")
         .select("id, name, time, sort_order, image_url, diet_foods(id, item, quantity, energy_kcal, protein_g, carbs_g, fat_g, fiber_g, notes)")
-        .eq("user_id", user!.id)
+        .eq("user_id", targetUserId!)
         .order("sort_order", { ascending: true });
       if (error) throw error;
       return (data || []) as MealWithFoods[];
     },
-    enabled: !!user?.id,
+    enabled: !!targetUserId,
   });
 
   const { data: completions = [], isLoading: completionsLoading, error: completionsError } = useQuery({
-    queryKey: ["meal-completions", user?.id, selectedDate],
+    queryKey: ["meal-completions", targetUserId, selectedDate],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("meal_completions")
         .select("*")
-        .eq("user_id", user!.id)
+        .eq("user_id", targetUserId!)
         .eq("completed_date", selectedDate);
       if (error) throw error;
       return (data || []) as MealCompletion[];
     },
-    enabled: !!user?.id,
+    enabled: !!targetUserId,
   });
 
   // Water logs
   const { data: waterLogs = [] } = useQuery({
-    queryKey: ["water-logs", user?.id, selectedDate],
+    queryKey: ["water-logs", targetUserId, selectedDate],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("water_logs")
         .select("*")
-        .eq("user_id", user!.id)
+        .eq("user_id", targetUserId!)
         .eq("log_date", selectedDate)
         .order("logged_at", { ascending: true });
       if (error) throw error;
       return data || [];
     },
-    enabled: !!user?.id,
+    enabled: !!targetUserId,
   });
 
   const waterConsumedMl = useMemo(() => waterLogs.reduce((s, l: any) => s + (l.amount_ml || 0), 0), [waterLogs]);
@@ -140,7 +140,7 @@ export function useMealTracking() {
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["water-logs", user?.id, selectedDate] });
+      qc.invalidateQueries({ queryKey: ["water-logs", targetUserId, selectedDate] });
     },
   });
 
@@ -152,7 +152,7 @@ export function useMealTracking() {
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["water-logs", user?.id, selectedDate] });
+      qc.invalidateQueries({ queryKey: ["water-logs", targetUserId, selectedDate] });
     },
   });
 
@@ -173,7 +173,7 @@ export function useMealTracking() {
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["meal-completions", user?.id, selectedDate] });
+      qc.invalidateQueries({ queryKey: ["meal-completions", targetUserId, selectedDate] });
     },
   });
 
