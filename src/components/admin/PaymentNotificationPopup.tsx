@@ -5,13 +5,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, CheckCheck, Eye } from "lucide-react";
+import { Bell, CheckCheck, Eye, UserCog } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useNavigate } from "react-router-dom";
 
 const PaymentNotificationPopup = () => {
   const { user, role } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [hasShown, setHasShown] = useState(false);
@@ -110,9 +112,25 @@ const PaymentNotificationPopup = () => {
                     {format(new Date(n.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
                   </p>
                 </div>
-                <Button size="sm" variant="ghost" className="shrink-0 text-xs h-7" onClick={() => markSeen.mutate(n.id)}>
-                  <Eye className="w-3 h-3 mr-1" /> Visto
-                </Button>
+                <div className="flex flex-col gap-1 shrink-0">
+                  {(role === "admin" || role === "consultor") && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs h-7"
+                      onClick={() => {
+                        const base = role === "consultor" ? "/consultor/students" : "/admin/students";
+                        navigate(`${base}?manage=${n.student_user_id}`);
+                        setOpen(false);
+                      }}
+                    >
+                      <UserCog className="w-3 h-3 mr-1" /> Cadastro
+                    </Button>
+                  )}
+                  <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => markSeen.mutate(n.id)}>
+                    <Eye className="w-3 h-3 mr-1" /> Visto
+                  </Button>
+                </div>
               </div>
             ))}
             {unseen.length === 0 && (
