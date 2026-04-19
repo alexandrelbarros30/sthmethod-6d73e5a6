@@ -8,8 +8,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-const STORAGE_KEY = "preview-unlock-popup-dismissed-at";
-const COOLDOWN_HOURS = 8;
+// Popup reaparece a cada entrada na plataforma enquanto não houver pagamento ativo.
+// Após o pagamento (isActive=true), o componente retorna null e o popup nunca mais abre.
 
 const stripToLines = (html?: string | null, max = 2): string[] => {
   if (!html) return [];
