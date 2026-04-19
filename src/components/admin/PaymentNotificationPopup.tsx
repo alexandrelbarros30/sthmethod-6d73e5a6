@@ -112,9 +112,25 @@ const PaymentNotificationPopup = () => {
                     {format(new Date(n.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
                   </p>
                 </div>
-                <Button size="sm" variant="ghost" className="shrink-0 text-xs h-7" onClick={() => markSeen.mutate(n.id)}>
-                  <Eye className="w-3 h-3 mr-1" /> Visto
-                </Button>
+                <div className="flex flex-col gap-1 shrink-0">
+                  {(role === "admin" || role === "consultor") && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs h-7"
+                      onClick={() => {
+                        const base = role === "consultor" ? "/consultor/students" : "/admin/students";
+                        navigate(`${base}?manage=${n.student_user_id}`);
+                        setOpen(false);
+                      }}
+                    >
+                      <UserCog className="w-3 h-3 mr-1" /> Cadastro
+                    </Button>
+                  )}
+                  <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => markSeen.mutate(n.id)}>
+                    <Eye className="w-3 h-3 mr-1" /> Visto
+                  </Button>
+                </div>
               </div>
             ))}
             {unseen.length === 0 && (
