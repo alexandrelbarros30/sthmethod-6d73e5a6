@@ -205,6 +205,11 @@ const AdminStudents = () => {
     enabled: !!selected?.user_id,
   });
 
+  // Merge live profile data over the cached list row so the Ficha view always reflects latest edits
+  const selectedMerged: any = selected
+    ? { ...selected, ...(selectedFullProfile || {}) }
+    : null;
+
   const filteredStudents = searchTerm.trim().length < 2
     ? []
     : students?.filter((s: any) => {
