@@ -132,6 +132,7 @@ export function useMealTracking() {
 
   const addWater = useMutation({
     mutationFn: async (amountMl: number) => {
+      if (isPreviewing) return; // read-only preview mode
       const { error } = await supabase.from("water_logs").insert({
         user_id: user!.id,
         log_date: selectedDate,
@@ -146,6 +147,7 @@ export function useMealTracking() {
 
   const removeLastWater = useMutation({
     mutationFn: async () => {
+      if (isPreviewing) return;
       if (waterLogs.length === 0) return;
       const last = waterLogs[waterLogs.length - 1] as any;
       const { error } = await supabase.from("water_logs").delete().eq("id", last.id);
@@ -158,6 +160,7 @@ export function useMealTracking() {
 
   const toggleMeal = useMutation({
     mutationFn: async ({ mealId, skipped = false }: { mealId: string; skipped?: boolean }) => {
+      if (isPreviewing) return;
       const existing = completions.find((c) => c.meal_id === mealId);
       if (existing) {
         const { error } = await supabase.from("meal_completions").delete().eq("id", existing.id);
