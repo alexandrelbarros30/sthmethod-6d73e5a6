@@ -35,6 +35,8 @@ Vamos juntos nessa! 💪🚀`;
 
 const AdminNotifications = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const openStudent = (userId: string) => navigate(`/admin/students?manage=${userId}`);
   const [filter, setFilter] = useState<"all" | "unseen" | "seen">("all");
 
   // Payment notifications
