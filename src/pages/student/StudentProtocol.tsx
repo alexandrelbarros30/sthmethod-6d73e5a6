@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
+import PreviewLockedCard from "@/components/student/PreviewLockedCard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, FileText, Clock, Download } from "lucide-react";
@@ -53,7 +54,23 @@ const useContentProtection = () => {
 const StudentProtocol = () => {
   useContentProtection();
   const { user } = useAuth();
-  const { isActive, isLoading: subLoading, subscription } = useSubscriptionGuard();
+  const { isActive, isLoading: subLoading, subscription, previewUnlocked } = useSubscriptionGuard();
+
+  const { data: previewProtocol } = useQuery({
+    queryKey: ["preview-protocol", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("student_protocols")
+        .select("title, content")
+        .eq("user_id", user!.id)
+        .eq("visible", true)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user?.id && !isActive && previewUnlocked,
+  });
 
   const { data: protocols, isLoading } = useQuery({
     queryKey: ["student-protocols", user?.id],
@@ -165,6 +182,14 @@ const StudentProtocol = () => {
   }
 
   if (!isActive) {
+    if (previewUnlocked) {
+      const txt = (previewProtocol?.content || "").replace(/<[^>]+>/g, "\n");
+      return (
+        <DashboardLayout role="student" title="Protocolo" subtitle="Pré-estreia do seu protocolo personalizado.">
+          <PreviewLockedCard type="protocol" previewText={txt} />
+        </DashboardLayout>
+      );
+    }
     return (
       <DashboardLayout role="student" title="Protocolo" subtitle="Suplementação e medicamentos prescritos.">
         <SubscriptionBlock />
