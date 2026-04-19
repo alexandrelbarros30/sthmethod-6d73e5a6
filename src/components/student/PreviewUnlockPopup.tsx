@@ -57,17 +57,11 @@ const PreviewUnlockPopup = () => {
 
   useEffect(() => {
     if (isLoading || isActive) return;
-    const dismissedAt = localStorage.getItem(STORAGE_KEY);
-    if (dismissedAt) {
-      const hours = (Date.now() - Number(dismissedAt)) / (1000 * 60 * 60);
-      if (hours < COOLDOWN_HOURS) return;
-    }
     const t = setTimeout(() => setOpen(true), 1200);
     return () => clearTimeout(t);
   }, [isActive, isLoading]);
 
   const handleClose = (next: boolean) => {
-    if (!next) localStorage.setItem(STORAGE_KEY, String(Date.now()));
     setOpen(next);
   };
 
