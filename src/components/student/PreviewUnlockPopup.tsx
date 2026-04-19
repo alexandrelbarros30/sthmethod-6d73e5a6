@@ -114,9 +114,9 @@ const PreviewUnlockPopup = () => {
                     <p className="text-[10px] text-muted-foreground">Refeições + macros</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 text-[10px] text-primary font-semibold">
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground px-2.5 py-1 rounded-full shadow-[0_0_12px_hsl(var(--primary)/0.6)] animate-pulse">
                   Ver <ChevronRight className="w-3 h-3" />
-                </div>
+                </span>
               </div>
               {hasDiet ? (
                 <div className="relative rounded-lg bg-background/60 border border-border/40 p-2 overflow-hidden">
@@ -155,9 +155,9 @@ const PreviewUnlockPopup = () => {
                     <p className="text-[10px] text-muted-foreground">Suplementação</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 text-[10px] text-primary font-semibold">
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground px-2.5 py-1 rounded-full shadow-[0_0_12px_hsl(var(--primary)/0.6)] animate-pulse">
                   Ver <ChevronRight className="w-3 h-3" />
-                </div>
+                </span>
               </div>
               {hasProtocol ? (
                 <div className="relative rounded-lg bg-background/60 border border-border/40 p-2 overflow-hidden">

@@ -64,7 +64,7 @@ const StudentDiet = () => {
   }
 
   if (!isActive) {
-    if (previewUnlocked && meals.length > 0) {
+    if (meals.length > 0) {
       const previewText = meals
         .slice(0, 2)
         .flatMap((m) => [m.name, ...m.diet_foods.map((f: any) => `${f.quantity} - ${f.item}`)])
