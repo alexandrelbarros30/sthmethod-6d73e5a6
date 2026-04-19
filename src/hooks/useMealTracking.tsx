@@ -43,6 +43,8 @@ const todayStr = () => formatDate(new Date());
 
 export function useMealTracking() {
   const { user } = useAuth();
+  const { effectiveUserId, isPreviewing } = usePreviewAs();
+  const targetUserId = effectiveUserId || user?.id;
   const qc = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<string>(todayStr());
 
