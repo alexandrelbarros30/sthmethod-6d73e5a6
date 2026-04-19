@@ -1973,6 +1973,8 @@ const AdminStudents = () => {
           {selected && (
             <PreviewUnlockToggle
               userId={selected.user_id}
+              studentName={selected.full_name}
+              studentPhone={selected.phone}
               onChanged={() => qc.invalidateQueries({ queryKey: ["admin-students-list"] })}
             />
           )}
