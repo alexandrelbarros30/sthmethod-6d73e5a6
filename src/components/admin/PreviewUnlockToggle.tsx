@@ -57,11 +57,8 @@ const PreviewUnlockToggle = ({ userId, studentName, studentPhone, onChanged }: P
     if (!enabled) await toggle(true);
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     const link = `${origin}/login?redirect=${encodeURIComponent("/dashboard/diet")}`;
-    const teaserImg = "https://tthahgwkkdyvxdbhsgyb.supabase.co/storage/v1/object/public/landing-assets/whatsapp%2Fpreview-teaser.jpg";
     const firstName = (studentName || "").trim().split(" ")[0] || "tudo bem";
-    // Image URL on its own line first → WhatsApp renders it as inline media preview
     const msg =
-      `${teaserImg}\n\n` +
       `Olá ${firstName}! 👋\n\n` +
       `Sua *dieta* e *protocolo personalizados* já estão prontos na plataforma *STH METHOD*. ` +
       `Liberei uma *prévia exclusiva* para você visualizar agora 🎯\n\n` +
