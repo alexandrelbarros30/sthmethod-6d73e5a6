@@ -225,7 +225,7 @@ const AdminNotifications = () => {
                   <CardContent className="py-3 px-4 flex items-center justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-medium">{n.payment_status === "approved" ? "✅" : "⏳"} {n.student_name}</span>
+                        <button onClick={() => openStudent(n.student_user_id)} className="text-sm font-medium hover:text-primary hover:underline transition-colors text-left">{n.payment_status === "approved" ? "✅" : "⏳"} {n.student_name}</button>
                         <Badge variant="secondary" className="text-[10px]">{actionLabel(n.action_type)}</Badge>
                         <Badge variant="outline" className="text-[10px]">{n.method?.toUpperCase()}</Badge>
                         {!n.seen && <Badge variant="destructive" className="text-[10px]">Nova</Badge>}
