@@ -205,6 +205,11 @@ const AdminStudents = () => {
     enabled: !!selected?.user_id,
   });
 
+  // Merge live profile data over the cached list row so the Ficha view always reflects latest edits
+  const selectedMerged: any = selected
+    ? { ...selected, ...(selectedFullProfile || {}) }
+    : null;
+
   const filteredStudents = searchTerm.trim().length < 2
     ? []
     : students?.filter((s: any) => {
@@ -1339,11 +1344,11 @@ const AdminStudents = () => {
                   {/* Quick copy buttons */}
                   <div className="flex flex-wrap gap-1.5 mb-3">
                     {[
-                      { label: "Nome", value: selected.full_name },
-                      { label: "Email", value: selected.email },
-                      { label: "Tel", value: selected.phone },
-                      { label: "Altura", value: selected.height ? `${selected.height} cm` : "" },
-                      { label: "Peso", value: selected.weight ? `${selected.weight} kg` : "" },
+                      { label: "Nome", value: selectedMerged.full_name },
+                      { label: "Email", value: selectedMerged.email },
+                      { label: "Tel", value: selectedMerged.phone },
+                      { label: "Altura", value: selectedMerged.height ? `${selectedMerged.height} cm` : "" },
+                      { label: "Peso", value: selectedMerged.weight ? `${selectedMerged.weight} kg` : "" },
                     ].filter(i => i.value).map(item => (
                       <Button
                         key={item.label}
@@ -1361,20 +1366,20 @@ const AdminStudents = () => {
                     ))}
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                    <div className="sm:col-span-2"><span className="text-muted-foreground">Nome:</span> <span className="font-medium">{selected.full_name}</span></div>
-                    <div className="break-all"><span className="text-muted-foreground">Email:</span> <span className="font-medium">{selected.email}</span></div>
+                    <div className="sm:col-span-2"><span className="text-muted-foreground">Nome:</span> <span className="font-medium">{selectedMerged.full_name}</span></div>
+                    <div className="break-all"><span className="text-muted-foreground">Email:</span> <span className="font-medium">{selectedMerged.email}</span></div>
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground">Telefone:</span>
-                      <span className="font-medium">{selected.phone || "—"}</span>
-                      {selected.phone && selected.phone.replace(/\D/g, "").length >= 10 && (
-                        <WhatsAppPopoverButton phone={selected.phone} name={selected.full_name} size="sm" userId={selected.user_id} studentProfile={{ full_name: selected.full_name, email: selected.email, phone: selected.phone, weight: selected.weight, height: selected.height, objective: selected.objective, birth_date: selected.birth_date }} />
+                      <span className="font-medium">{selectedMerged.phone || "—"}</span>
+                      {selectedMerged.phone && selectedMerged.phone.replace(/\D/g, "").length >= 10 && (
+                        <WhatsAppPopoverButton phone={selectedMerged.phone} name={selectedMerged.full_name} size="sm" userId={selectedMerged.user_id} studentProfile={{ full_name: selectedMerged.full_name, email: selectedMerged.email, phone: selectedMerged.phone, weight: selectedMerged.weight, height: selectedMerged.height, objective: selectedMerged.objective, birth_date: selectedMerged.birth_date }} />
                       )}
                     </div>
-                    <div><span className="text-muted-foreground">Gênero:</span> <span className="font-medium capitalize">{(selectedFullProfile as any)?.gender || "—"}</span></div>
-                    <div><span className="text-muted-foreground">Nascimento:</span> <span className="font-medium">{selected.birth_date ? new Date(selected.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</span></div>
-                    <div><span className="text-muted-foreground">Idade:</span> <span className="font-medium">{selected.birth_date ? `${calculateAge(selected.birth_date)} anos` : "—"}</span></div>
-                    <div><span className="text-muted-foreground">Altura:</span> <span className="font-medium">{selected.height ? `${selected.height} cm` : "—"}</span></div>
-                    <div><span className="text-muted-foreground">Peso:</span> <span className="font-medium">{selected.weight ? `${selected.weight} kg` : "—"}</span></div>
+                    <div><span className="text-muted-foreground">Gênero:</span> <span className="font-medium capitalize">{selectedMerged.gender || "—"}</span></div>
+                    <div><span className="text-muted-foreground">Nascimento:</span> <span className="font-medium">{selectedMerged.birth_date ? new Date(selectedMerged.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</span></div>
+                    <div><span className="text-muted-foreground">Idade:</span> <span className="font-medium">{selectedMerged.birth_date ? `${calculateAge(selectedMerged.birth_date)} anos` : "—"}</span></div>
+                    <div><span className="text-muted-foreground">Altura:</span> <span className="font-medium">{selectedMerged.height ? `${selectedMerged.height} cm` : "—"}</span></div>
+                    <div><span className="text-muted-foreground">Peso:</span> <span className="font-medium">{selectedMerged.weight ? `${selectedMerged.weight} kg` : "—"}</span></div>
                     {/* Plan expiry date */}
                     <div><span className="text-muted-foreground">Plano:</span> <span className="font-medium">{selected.plan || "—"}</span></div>
                     <div>
@@ -1388,10 +1393,10 @@ const AdminStudents = () => {
                 <section>
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Atividade & Objetivo</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                    <div className="col-span-1 sm:col-span-2"><span className="text-muted-foreground">Nível atividade (NEAT):</span> <span className="font-medium">{physicalActivityLevelOptions.find(o => o.value === (selectedFullProfile as any)?.physical_activity_level)?.label || "—"}</span></div>
-                    <div><span className="text-muted-foreground">Atividade:</span> <span className="font-medium">{activityLabels[(selectedFullProfile as any)?.activity_type] || selected.physical_activity || "—"}</span></div>
-                    <div><span className="text-muted-foreground">Cardio:</span> <span className="font-medium">{(selectedFullProfile as any)?.does_cardio === true ? "Sim" : (selectedFullProfile as any)?.does_cardio === false ? "Não" : "—"}</span></div>
-                    <div className="col-span-1 sm:col-span-2"><span className="text-muted-foreground">Objetivo:</span> <span className="font-medium">{objectiveLabels[selected.objective] || selected.objective || "—"}</span></div>
+                    <div className="col-span-1 sm:col-span-2"><span className="text-muted-foreground">Nível atividade (NEAT):</span> <span className="font-medium">{physicalActivityLevelOptions.find(o => o.value === selectedMerged.physical_activity_level)?.label || "—"}</span></div>
+                    <div><span className="text-muted-foreground">Atividade:</span> <span className="font-medium">{activityLabels[selectedMerged.activity_type] || selectedMerged.physical_activity || "—"}</span></div>
+                    <div><span className="text-muted-foreground">Cardio:</span> <span className="font-medium">{selectedMerged.does_cardio === true ? "Sim" : selectedMerged.does_cardio === false ? "Não" : "—"}</span></div>
+                    <div className="col-span-1 sm:col-span-2"><span className="text-muted-foreground">Objetivo:</span> <span className="font-medium">{objectiveLabels[selectedMerged.objective] || selectedMerged.objective || "—"}</span></div>
                   </div>
                   {/* Training details */}
                   {((selectedFullProfile as any)?.activity_type === "musculacao" || (selectedFullProfile as any)?.activity_type === "crossfit") && (
