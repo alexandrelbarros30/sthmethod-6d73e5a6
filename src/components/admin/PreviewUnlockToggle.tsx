@@ -64,7 +64,17 @@ const PreviewUnlockToggle = ({ userId, studentName, studentPhone, onChanged }: P
       `Liberei uma *prévia exclusiva* para você visualizar agora 🎯\n\n` +
       `👉 Acesse: ${link}\n\n` +
       `Faça login com seu e-mail e confira o que preparamos. Após o pagamento, o acesso completo é liberado imediatamente.`;
-    const phoneDigits = (studentPhone || "").replace(/\D/g, "");
+    // Always fetch the latest phone from DB so edits to the student profile reflect here
+    let latestPhone = studentPhone || "";
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("phone")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if ((data as any)?.phone) latestPhone = (data as any).phone;
+    } catch {}
+    const phoneDigits = latestPhone.replace(/\D/g, "");
     const base = phoneDigits
       ? `https://wa.me/${phoneDigits.startsWith("55") ? phoneDigits : "55" + phoneDigits}`
       : "https://wa.me/";
