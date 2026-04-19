@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -34,6 +35,8 @@ Vamos juntos nessa! 💪🚀`;
 
 const AdminNotifications = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const openStudent = (userId: string) => navigate(`/admin/students?manage=${userId}`);
   const [filter, setFilter] = useState<"all" | "unseen" | "seen">("all");
 
   // Payment notifications
@@ -222,7 +225,7 @@ const AdminNotifications = () => {
                   <CardContent className="py-3 px-4 flex items-center justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-medium">{n.payment_status === "approved" ? "✅" : "⏳"} {n.student_name}</span>
+                        <button onClick={() => openStudent(n.student_user_id)} className="text-sm font-medium hover:text-primary hover:underline transition-colors text-left">{n.payment_status === "approved" ? "✅" : "⏳"} {n.student_name}</button>
                         <Badge variant="secondary" className="text-[10px]">{actionLabel(n.action_type)}</Badge>
                         <Badge variant="outline" className="text-[10px]">{n.method?.toUpperCase()}</Badge>
                         {!n.seen && <Badge variant="destructive" className="text-[10px]">Nova</Badge>}
@@ -261,7 +264,7 @@ const AdminNotifications = () => {
                   <CardContent className="py-3 px-4 flex items-center justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-medium">📸 {r.student_name}</span>
+                        <button onClick={() => openStudent(r.student_user_id)} className="text-sm font-medium hover:text-primary hover:underline transition-colors text-left">📸 {r.student_name}</button>
                         <Badge variant="secondary" className="text-[10px]">{r.cycle_number}º Ciclo</Badge>
                         {!r.seen && <Badge variant="destructive" className="text-[10px]">Nova</Badge>}
                       </div>
@@ -310,7 +313,7 @@ const AdminNotifications = () => {
                     <CardContent className="py-3 px-4 flex items-center justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-medium">📊 {n.student_name}</span>
+                          <button onClick={() => openStudent(n.student_user_id)} className="text-sm font-medium hover:text-primary hover:underline transition-colors text-left">📊 {n.student_name}</button>
                           <Badge variant="secondary" className="text-[10px]">
                             ⚖️ {Number(n.new_weight).toFixed(1)} kg
                           </Badge>
