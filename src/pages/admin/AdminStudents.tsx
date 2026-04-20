@@ -24,6 +24,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
 import DocumentUpload from "@/components/shared/DocumentUpload";
+import SignedImage from "@/components/shared/SignedImage";
+import { getSecureFileUrl, extractStoragePath } from "@/lib/secure-file-url";
 import AdminBodyImageUpload from "@/components/admin/AdminBodyImageUpload";
 import AdminImageHistory from "@/components/admin/AdminImageHistory";
 import EvolutionGenerator from "@/components/admin/EvolutionGenerator";
@@ -1491,30 +1493,32 @@ const AdminStudents = () => {
                             <p className="text-xs text-muted-foreground mb-1">{labels[type]}</p>
                             {img ? (
                               <div className="relative group">
-                                <img src={img.image_url} alt={labels[type]} className="w-full aspect-[3/4] object-cover rounded-lg border" />
-                                <a
-                                  href={img.image_url}
-                                  download={`${selected.full_name || "aluno"}_${type}.jpg`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
+                                <SignedImage bucket="body-images" storagePath={img.storage_path} publicUrl={img.image_url} alt={labels[type]} className="w-full aspect-[3/4] object-cover rounded-lg border" />
+                                <button
+                                  type="button"
                                   className="absolute bottom-1 right-1 p-1.5 bg-background/80 backdrop-blur-sm rounded-full border border-border/50 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
                                   title="Baixar imagem"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    fetch(img.image_url).then(r => r.blob()).then(blob => {
-                                      const url = URL.createObjectURL(blob);
-                                      const a = document.createElement("a");
-                                      a.href = url;
-                                      a.download = `${selected.full_name || "aluno"}_${type}.jpg`;
-                                      document.body.appendChild(a);
-                                      a.click();
-                                      document.body.removeChild(a);
-                                      URL.revokeObjectURL(url);
+                                  onClick={async () => {
+                                    const signed = await getSecureFileUrl({
+                                      bucket: "body-images",
+                                      storagePath: img.storage_path || extractStoragePath(img.image_url, "body-images"),
+                                      fallbackUrl: img.image_url,
                                     });
+                                    if (!signed) return;
+                                    const r = await fetch(signed);
+                                    const blob = await r.blob();
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement("a");
+                                    a.href = url;
+                                    a.download = `${selected.full_name || "aluno"}_${type}.jpg`;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                    URL.revokeObjectURL(url);
                                   }}
                                 >
                                   <Download className="w-3 h-3" />
-                                </a>
+                                </button>
                               </div>
                             ) : (
                               <div className="w-full aspect-[3/4] bg-muted rounded-lg flex items-center justify-center text-muted-foreground text-xs">Não enviada</div>
@@ -1635,13 +1639,7 @@ const AdminStudents = () => {
                           onClick={async () => {
                             try {
                               const filePaths = allBodyImages
-                                .map((img: any) => {
-                                  try {
-                                    const url = new URL(img.image_url);
-                                    const match = url.pathname.match(/\/body-images\/(.+)$/);
-                                    return match ? match[1] : null;
-                                  } catch { return null; }
-                                })
+                                .map((img: any) => img.storage_path || extractStoragePath(img.image_url, "body-images"))
                                 .filter(Boolean) as string[];
                               if (filePaths.length > 0) {
                                 await supabase.storage.from("body-images").remove(filePaths);
