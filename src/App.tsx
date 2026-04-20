@@ -8,6 +8,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Cadastro from "./pages/Cadastro";
 import Questionario from "./pages/Questionario";
 import Install from "./pages/Install";
@@ -83,6 +85,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/cadastro" element={<Cadastro />} />
             <Route path="/questionario" element={<Questionario />} />
             <Route path="/install" element={<Install />} />
