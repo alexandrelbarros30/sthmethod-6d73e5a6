@@ -93,6 +93,7 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
             user_id: userId,
             type: key,
             image_url: publicUrl,
+            storage_path: path,
             is_current: true,
           });
           if (error) throw error;
