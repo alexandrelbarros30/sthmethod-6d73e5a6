@@ -311,18 +311,21 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
   const saveMutation = useMutation({
     mutationFn: async () => {
       let pdfUrl = "";
+      let pdfStoragePath: string | null = null;
       if (newPdfFile) {
         const path = `${selected.user_id}/diet/${Date.now()}_${newPdfFile.name}`;
         const { error: uploadError } = await supabase.storage.from("documents").upload(path, newPdfFile, { upsert: true });
         if (uploadError) throw uploadError;
         const { data } = supabase.storage.from("documents").getPublicUrl(path);
         pdfUrl = data.publicUrl;
+        pdfStoragePath = path;
       }
       const payload: any = {
         user_id: selected.user_id,
         title: newTitle,
         content: newContent,
         pdf_url: pdfUrl,
+        storage_path: pdfStoragePath,
         release_date: newReleaseDate ? new Date(newReleaseDate + "T00:00:00").toISOString() : null,
         energy_kcal: newEnergyKcal ? parseFloat(newEnergyKcal) : null,
         protein_g: newProteinG ? parseFloat(newProteinG) : null,

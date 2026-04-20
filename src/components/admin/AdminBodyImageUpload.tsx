@@ -73,6 +73,7 @@ const AdminBodyImageUpload = ({ userId, onComplete }: AdminBodyImageUploadProps)
           user_id: userId,
           type: key,
           image_url: publicUrl,
+          storage_path: path,
           is_current: false,
           uploaded_at: uploadedAt,
         });

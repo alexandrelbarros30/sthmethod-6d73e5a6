@@ -64,6 +64,7 @@ export default function DocumentUpload({ userId, onUploaded }: DocumentUploadPro
           user_id: userId,
           type,
           file_url: urlData.publicUrl,
+          storage_path: path,
         });
       if (insertError) throw insertError;
 
