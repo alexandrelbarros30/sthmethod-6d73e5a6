@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { generateStudentPDF, canDownloadPDF } from "@/lib/pdfGenerator";
 import { toast } from "sonner";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import SignedPdfFrame from "@/components/shared/SignedPdfFrame";
 
 const useContentProtection = () => {
   useEffect(() => {
@@ -268,8 +269,10 @@ const StudentProtocol = () => {
                           <p className="text-xs text-primary flex items-center gap-1 mb-2">
                             <FileText className="w-3 h-3" /> Documento PDF
                           </p>
-                          <iframe
-                            src={protocol.pdf_url}
+                          <SignedPdfFrame
+                            bucket="documents"
+                            storagePath={(protocol as any).storage_path}
+                            publicUrl={protocol.pdf_url}
                             className="w-full h-[500px] rounded-lg border border-border"
                             title="Protocolo PDF"
                           />

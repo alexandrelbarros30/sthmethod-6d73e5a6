@@ -1838,6 +1838,7 @@ export type Database = {
           pdf_url: string | null
           release_date: string | null
           seen_by_student: boolean
+          storage_path: string | null
           title: string
           updated_at: string
           user_id: string
@@ -1851,6 +1852,7 @@ export type Database = {
           pdf_url?: string | null
           release_date?: string | null
           seen_by_student?: boolean
+          storage_path?: string | null
           title?: string
           updated_at?: string
           user_id: string
@@ -1864,6 +1866,7 @@ export type Database = {
           pdf_url?: string | null
           release_date?: string | null
           seen_by_student?: boolean
+          storage_path?: string | null
           title?: string
           updated_at?: string
           user_id?: string

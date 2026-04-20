@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import ChangePasswordDialog from "@/components/student/ChangePasswordDialog";
 import StudentProfileForm, { profileFromDb, getPendingFields, type ProfileFormData } from "@/components/student/StudentProfileForm";
 import DocumentUpload from "@/components/shared/DocumentUpload";
+import SignedImage from "@/components/shared/SignedImage";
 import { calculateAge } from "@/lib/macro-calculator";
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
 import {
@@ -369,7 +370,7 @@ const StudentProfile = () => {
                       <div key={type} className="text-center">
                         <p className="text-[10px] text-muted-foreground mb-0.5">{labels[type]}</p>
                         {img ? (
-                          <img src={img.image_url} alt={labels[type]} className="w-full aspect-[3/4] object-cover rounded border" />
+                          <SignedImage bucket="body-images" storagePath={img.storage_path} publicUrl={img.image_url} alt={labels[type]} className="w-full aspect-[3/4] object-cover rounded border" />
                         ) : (
                           <div className="w-full aspect-[3/4] bg-muted rounded flex items-center justify-center text-muted-foreground text-[10px]">—</div>
                         )}

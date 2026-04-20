@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { FileText, Upload, Loader2, ExternalLink } from "lucide-react";
+import SignedLink from "@/components/shared/SignedLink";
 
 interface DocumentUploadProps {
   userId: string;
@@ -24,7 +25,7 @@ export default function DocumentUpload({ userId, onUploaded }: DocumentUploadPro
     queryFn: async () => {
       const { data, error } = await supabase
         .from("clinical_documents")
-        .select("id, type, file_url, uploaded_at")
+        .select("id, type, file_url, storage_path, uploaded_at")
         .eq("user_id", userId)
         .order("uploaded_at", { ascending: false });
       if (error) throw error;
@@ -101,15 +102,15 @@ export default function DocumentUpload({ userId, onUploaded }: DocumentUploadPro
         <div className="space-y-1.5">
           {docs.map((doc, idx) => (
             <div key={doc.id} className="flex items-center gap-2">
-              <a
-                href={doc.file_url}
-                target="_blank"
-                rel="noopener noreferrer"
+              <SignedLink
+                bucket="documents"
+                storagePath={(doc as any).storage_path}
+                publicUrl={doc.file_url}
                 className="text-sm text-primary underline flex items-center gap-1 truncate flex-1"
               >
                 <ExternalLink className="w-3 h-3 shrink-0" />
                 {formatDate(doc.uploaded_at)}
-              </a>
+              </SignedLink>
               {idx === 0 && (
                 <Badge variant="secondary" className="text-[10px] shrink-0">
                   Atual
