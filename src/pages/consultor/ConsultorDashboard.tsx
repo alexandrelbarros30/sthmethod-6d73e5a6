@@ -15,6 +15,7 @@ import { Link } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
+import SignedImage from "@/components/shared/SignedImage";
 import { Input } from "@/components/ui/input";
 import WhatsAppBulkSender from "@/components/shared/WhatsAppBulkSender";
 import AdminEvolutionUpdate from "@/components/admin/AdminEvolutionUpdate";

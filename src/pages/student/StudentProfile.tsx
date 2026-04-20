@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import ChangePasswordDialog from "@/components/student/ChangePasswordDialog";
 import StudentProfileForm, { profileFromDb, getPendingFields, type ProfileFormData } from "@/components/student/StudentProfileForm";
 import DocumentUpload from "@/components/shared/DocumentUpload";
+import SignedImage from "@/components/shared/SignedImage";
 import { calculateAge } from "@/lib/macro-calculator";
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
 import {
