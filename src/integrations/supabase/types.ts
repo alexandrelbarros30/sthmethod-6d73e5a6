@@ -242,6 +242,7 @@ export type Database = {
           id: string
           image_url: string
           is_current: boolean
+          storage_path: string | null
           type: string
           uploaded_at: string
           user_id: string
@@ -251,6 +252,7 @@ export type Database = {
           id?: string
           image_url: string
           is_current?: boolean
+          storage_path?: string | null
           type: string
           uploaded_at?: string
           user_id: string
@@ -260,6 +262,7 @@ export type Database = {
           id?: string
           image_url?: string
           is_current?: boolean
+          storage_path?: string | null
           type?: string
           uploaded_at?: string
           user_id?: string
@@ -271,6 +274,7 @@ export type Database = {
           created_at: string
           file_url: string
           id: string
+          storage_path: string | null
           type: string
           uploaded_at: string
           user_id: string
@@ -279,6 +283,7 @@ export type Database = {
           created_at?: string
           file_url: string
           id?: string
+          storage_path?: string | null
           type: string
           uploaded_at?: string
           user_id: string
@@ -287,6 +292,7 @@ export type Database = {
           created_at?: string
           file_url?: string
           id?: string
+          storage_path?: string | null
           type?: string
           uploaded_at?: string
           user_id?: string
@@ -1734,6 +1740,7 @@ export type Database = {
           protein_g: number | null
           release_date: string | null
           seen_by_student: boolean
+          storage_path: string | null
           title: string
           updated_at: string
           user_id: string
@@ -1751,6 +1758,7 @@ export type Database = {
           protein_g?: number | null
           release_date?: string | null
           seen_by_student?: boolean
+          storage_path?: string | null
           title?: string
           updated_at?: string
           user_id: string
@@ -1768,6 +1776,7 @@ export type Database = {
           protein_g?: number | null
           release_date?: string | null
           seen_by_student?: boolean
+          storage_path?: string | null
           title?: string
           updated_at?: string
           user_id?: string
