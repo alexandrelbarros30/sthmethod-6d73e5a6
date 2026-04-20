@@ -239,25 +239,34 @@ const AdminStudents = () => {
     onError: (e: any) => { if (e.message !== "empty") toast.error("Erro ao salvar anamnese"); },
   });
 
-  const uploadPdf = async (file: File, folder: string): Promise<string> => {
-    const ext = file.name.split(".").pop();
-    const path = `${folder}/${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("documents").upload(path, file);
+  const uploadPdf = async (file: File, ownerUserId: string, type: "lab_exam" | "medical_prescription"): Promise<string> => {
+    // Salva sempre dentro da pasta do dono (userId) para casar com as policies de storage privadas
+    const path = `${ownerUserId}/${type}_${Date.now()}.pdf`;
+    const { error } = await supabase.storage.from("documents").upload(path, file, { upsert: true });
     if (error) throw error;
     const { data } = supabase.storage.from("documents").getPublicUrl(path);
-    return data.publicUrl;
+    // Registra também na tabela clinical_documents (com storage_path, para signed URL)
+    await supabase.from("clinical_documents").insert({
+      user_id: ownerUserId,
+      type,
+      file_url: data.publicUrl,
+      storage_path: path,
+    });
+    return path;
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: "lab_exam_url" | "medical_prescription_url") => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.type !== "application/pdf") { toast.error("Apenas arquivos PDF são aceitos."); return; }
+    const ownerUserId = editing?.user_id || form.user_id;
+    if (!ownerUserId) { toast.error("Salve o aluno antes de enviar documentos."); return; }
     setUploading(field);
     try {
-      const url = await uploadPdf(file, field === "lab_exam_url" ? "exames" : "receitas");
-      setForm({ ...form, [field]: url });
+      const path = await uploadPdf(file, ownerUserId, field === "lab_exam_url" ? "lab_exam" : "medical_prescription");
+      setForm({ ...form, [field]: path });
       toast.success("Arquivo enviado!");
-    } catch { toast.error("Erro no upload"); }
+    } catch (err: any) { toast.error(err?.message || "Erro no upload"); }
     setUploading(null);
   };
 
