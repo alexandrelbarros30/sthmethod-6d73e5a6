@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,7 @@ const PaymentLinksTab = () => {
   const upsertMutation = useMutation({
     mutationFn: async (payload: {
       plan_id: string;
+      title: string;
       pix_code: string;
       pix_enabled: boolean;
       card_link: string;
@@ -46,6 +47,7 @@ const PaymentLinksTab = () => {
         const { error } = await supabase
           .from("plan_payment_links")
           .update({
+            title: payload.title,
             pix_code: payload.pix_code,
             pix_enabled: payload.pix_enabled,
             card_link: payload.card_link,
@@ -345,31 +347,51 @@ const PlanLinkCard = ({
 }: {
   plan: any;
   link: any;
-  onSave: (data: { pix_code: string; pix_enabled: boolean; card_link: string; card_enabled: boolean }) => void;
+  onSave: (data: { title: string; pix_code: string; pix_enabled: boolean; card_link: string; card_enabled: boolean }) => void;
   saving: boolean;
 }) => {
+  const [title, setTitle] = useState(link?.title || plan.name);
   const [pixCode, setPixCode] = useState(link?.pix_code || "");
   const [pixEnabled, setPixEnabled] = useState(link?.pix_enabled ?? false);
   const [cardLink, setCardLink] = useState(link?.card_link || "");
   const [cardEnabled, setCardEnabled] = useState(link?.card_enabled ?? false);
 
   // Sync when data loads
-  const linkId = link?.id;
-  useState(() => {
+  useEffect(() => {
     if (link) {
+      setTitle(link.title || plan.name);
       setPixCode(link.pix_code || "");
       setPixEnabled(link.pix_enabled ?? false);
       setCardLink(link.card_link || "");
       setCardEnabled(link.card_enabled ?? false);
     }
-  });
+  }, [link, plan.name]);
 
   return (
     <Card className="bg-card border-border">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-display">{plan.name}</CardTitle>
-          <Badge variant="outline" className="text-xs">{plan.duration}</Badge>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-sm font-display">{plan.name}</CardTitle>
+              {plan.visibility === 'promo_abril' && (
+                <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px]">
+                  <Flame className="w-3 h-3 mr-1" />
+                  PROMOÇÃO
+                </Badge>
+              )}
+            </div>
+            <Badge variant="outline" className="text-xs">{plan.duration}</Badge>
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Título do link (para identificação)</Label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Ex: Turbo 30D (PROMOÇÃO ABRIL)"
+              className="mt-1 text-sm"
+            />
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -422,7 +444,7 @@ const PlanLinkCard = ({
           size="sm"
           className="w-full"
           disabled={saving}
-          onClick={() => onSave({ pix_code: pixCode, pix_enabled: pixEnabled, card_link: cardLink, card_enabled: cardEnabled })}
+          onClick={() => onSave({ title, pix_code: pixCode, pix_enabled: pixEnabled, card_link: cardLink, card_enabled: cardEnabled })}
         >
           {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
           Salvar Links
