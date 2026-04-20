@@ -6,6 +6,31 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+async function validateMpSignature(req: Request, rawBody: string, dataId: string): Promise<boolean> {
+  const secret = Deno.env.get("MP_WEBHOOK_SECRET");
+  if (!secret) {
+    console.warn("MP_WEBHOOK_SECRET not configured — skipping signature validation");
+    return true; // fail-open until secret configured
+  }
+  const xSignature = req.headers.get("x-signature");
+  const xRequestId = req.headers.get("x-request-id");
+  if (!xSignature || !xRequestId) return false;
+
+  const parts = Object.fromEntries(xSignature.split(",").map((p) => p.trim().split("=")));
+  const ts = parts.ts;
+  const v1 = parts.v1;
+  if (!ts || !v1) return false;
+
+  const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
+  const key = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(manifest));
+  const hex = Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  return hex === v1;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -18,8 +43,9 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const body = await req.json();
-    console.log("Webhook received:", JSON.stringify(body));
+    const rawBody = await req.text();
+    const body = JSON.parse(rawBody);
+    console.log("Webhook received:", rawBody);
 
     // MP sends different notification types
     if (body.type !== "payment" && body.action !== "payment.created" && body.action !== "payment.updated") {
@@ -29,6 +55,15 @@ serve(async (req) => {
     const paymentId = body.data?.id;
     if (!paymentId) {
       return new Response(JSON.stringify({ received: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Validate signature (when secret configured)
+    const valid = await validateMpSignature(req, rawBody, String(paymentId));
+    if (!valid) {
+      console.warn("Invalid MP webhook signature — rejecting");
+      return new Response(JSON.stringify({ error: "invalid signature" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Fetch payment details from MP
