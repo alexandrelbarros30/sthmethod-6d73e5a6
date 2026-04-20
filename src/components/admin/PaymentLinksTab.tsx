@@ -360,6 +360,7 @@ const PlanLinkCard = ({
   const linkId = link?.id;
   useState(() => {
     if (link) {
+      setTitle(link.title || plan.name);
       setPixCode(link.pix_code || "");
       setPixEnabled(link.pix_enabled ?? false);
       setCardLink(link.card_link || "");
@@ -370,9 +371,28 @@ const PlanLinkCard = ({
   return (
     <Card className="bg-card border-border">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-display">{plan.name}</CardTitle>
-          <Badge variant="outline" className="text-xs">{plan.duration}</Badge>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-sm font-display">{plan.name}</CardTitle>
+              {plan.visibility === 'promo_abril' && (
+                <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px]">
+                  <Flame className="w-3 h-3 mr-1" />
+                  PROMOÇÃO
+                </Badge>
+              )}
+            </div>
+            <Badge variant="outline" className="text-xs">{plan.duration}</Badge>
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Título do link (para identificação)</Label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Ex: Turbo 30D (PROMOÇÃO ABRIL)"
+              className="mt-1 text-sm"
+            />
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -425,7 +445,7 @@ const PlanLinkCard = ({
           size="sm"
           className="w-full"
           disabled={saving}
-          onClick={() => onSave({ pix_code: pixCode, pix_enabled: pixEnabled, card_link: cardLink, card_enabled: cardEnabled })}
+          onClick={() => onSave({ title, pix_code: pixCode, pix_enabled: pixEnabled, card_link: cardLink, card_enabled: cardEnabled })}
         >
           {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
           Salvar Links
