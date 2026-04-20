@@ -297,10 +297,20 @@ const Login = () => {
           </form>
 
           <div className="text-center space-y-3">
+            {!isSignUp && (
+              <div>
+                <Link
+                  to="/forgot-password"
+                  className="text-sm text-primary hover:underline font-body"
+                >
+                  Esqueci minha senha
+                </Link>
+              </div>
+            )}
             <button
               type="button"
               onClick={() => setIsSignUp(!isSignUp)}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors font-body"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors font-body block w-full"
             >
               {isSignUp ? "Já tem conta? Entrar" : "Não tem conta? Criar conta"}
             </button>
