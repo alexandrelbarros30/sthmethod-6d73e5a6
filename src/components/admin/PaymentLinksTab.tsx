@@ -357,8 +357,7 @@ const PlanLinkCard = ({
   const [cardEnabled, setCardEnabled] = useState(link?.card_enabled ?? false);
 
   // Sync when data loads
-  const linkId = link?.id;
-  useState(() => {
+  useEffect(() => {
     if (link) {
       setTitle(link.title || plan.name);
       setPixCode(link.pix_code || "");
@@ -366,7 +365,7 @@ const PlanLinkCard = ({
       setCardLink(link.card_link || "");
       setCardEnabled(link.card_enabled ?? false);
     }
-  });
+  }, [link, plan.name]);
 
   return (
     <Card className="bg-card border-border">
