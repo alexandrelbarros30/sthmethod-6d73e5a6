@@ -6,11 +6,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { ImagePlus, Download, Loader2 } from "lucide-react";
 import evolutionFrame from "@/assets/evolution-frame.png";
+import { getSecureFileUrl, extractStoragePath } from "@/lib/secure-file-url";
 
 interface BodyImage {
   id: string;
   type: string;
   image_url: string;
+  storage_path?: string | null;
   uploaded_at: string;
   is_current: boolean;
 }
@@ -118,10 +120,20 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
 
         if (!oldImg || !newImg) continue;
 
-        const [oldEl, newEl] = await Promise.all([
-          loadImage(oldImg.image_url),
-          loadImage(newImg.image_url),
+        const [oldUrl, newUrl] = await Promise.all([
+          getSecureFileUrl({
+            bucket: "body-images",
+            storagePath: oldImg.storage_path || extractStoragePath(oldImg.image_url, "body-images"),
+            fallbackUrl: oldImg.image_url,
+          }),
+          getSecureFileUrl({
+            bucket: "body-images",
+            storagePath: newImg.storage_path || extractStoragePath(newImg.image_url, "body-images"),
+            fallbackUrl: newImg.image_url,
+          }),
         ]);
+        if (!oldUrl || !newUrl) continue;
+        const [oldEl, newEl] = await Promise.all([loadImage(oldUrl), loadImage(newUrl)]);
 
         const canvas = document.createElement("canvas");
         canvas.width = CANVAS_WIDTH;

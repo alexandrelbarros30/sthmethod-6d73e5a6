@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
+import SignedPdfFrame from "@/components/shared/SignedPdfFrame";
 
 const AdminProtocol = () => {
   const qc = useQueryClient();
@@ -974,8 +975,10 @@ Sistema Pré e Pós-Treino: Protocolo de fluxo sanguíneo (Pré) e sinalização
                                 <p className="text-xs text-primary flex items-center gap-1 mb-2">
                                   <FileText className="w-3 h-3" /> Documento PDF
                                 </p>
-                                <iframe
-                                  src={protocol.pdf_url}
+                                <SignedPdfFrame
+                                  bucket="documents"
+                                  storagePath={(protocol as any).storage_path}
+                                  publicUrl={protocol.pdf_url}
                                   className="w-full h-[500px] rounded-lg border border-border"
                                   title="Protocolo PDF"
                                 />

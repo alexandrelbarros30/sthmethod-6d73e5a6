@@ -24,6 +24,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { syncStudentDietMeals, MealMacros } from "@/lib/diet-meal-sync";
+import SignedPdfFrame from "@/components/shared/SignedPdfFrame";
+import SignedLink from "@/components/shared/SignedLink";
 
 const AdminDiet = () => {
   const { user, role } = useAuth();
@@ -801,9 +803,14 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
                                 )}
 
                                 {diet.pdf_url && (
-                                  <a href={diet.pdf_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mb-1">
+                                  <SignedLink
+                                    bucket="documents"
+                                    storagePath={(diet as any).storage_path}
+                                    publicUrl={diet.pdf_url}
+                                    className="text-xs text-primary hover:underline flex items-center gap-1 mb-1"
+                                  >
                                     <FileText className="w-3 h-3" /> Ver PDF
-                                  </a>
+                                  </SignedLink>
                                 )}
 
                                 {diet.content && !previewDiet && (
@@ -883,7 +890,13 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
                                   );
                                 })()}
                                 {diet.pdf_url && (
-                                  <iframe src={diet.pdf_url} className="w-full h-[400px] rounded-lg border border-border mb-3" title="Dieta PDF" />
+                                  <SignedPdfFrame
+                                    bucket="documents"
+                                    storagePath={(diet as any).storage_path}
+                                    publicUrl={diet.pdf_url}
+                                    className="w-full h-[400px] rounded-lg border border-border mb-3"
+                                    title="Dieta PDF"
+                                  />
                                 )}
                                 {diet.content && (
                                   /<[a-z][\s\S]*>/i.test(diet.content)
