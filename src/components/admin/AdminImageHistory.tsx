@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { History, Pencil, Check, X, Trash2, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import SignedImage from "@/components/shared/SignedImage";
+import { getSecureFileUrl, extractStoragePath } from "@/lib/secure-file-url";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -68,23 +70,16 @@ const AdminImageHistory = ({ allImages, onUpdate }: Props) => {
     setSaving(false);
   };
 
-  const extractStoragePath = (url: string): string | null => {
-    try {
-      const match = url.match(/\/body-images\/(.+)$/);
-      return match ? match[1] : null;
-    } catch {
-      return null;
-    }
-  };
-
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
       const imgs = deleteTarget.type === "group" ? deleteTarget.imgs : [deleteTarget.img];
 
-      // Delete from storage
-      const storagePaths = imgs.map((i: any) => extractStoragePath(i.image_url)).filter(Boolean) as string[];
+      // Delete from storage — prefer storage_path, fall back to extracting from URL
+      const storagePaths = imgs
+        .map((i: any) => i.storage_path || extractStoragePath(i.image_url, "body-images"))
+        .filter(Boolean) as string[];
       if (storagePaths.length) {
         await supabase.storage.from("body-images").remove(storagePaths);
       }
@@ -169,21 +164,27 @@ const AdminImageHistory = ({ allImages, onUpdate }: Props) => {
                         <p className="text-[10px] text-muted-foreground mb-0.5">{labels[type]}</p>
                         {img ? (
                           <div className="relative">
-                            <img src={img.image_url} alt={labels[type]} className="w-full aspect-[3/4] object-cover rounded border" />
+                            <SignedImage bucket="body-images" storagePath={img.storage_path} publicUrl={img.image_url} alt={labels[type]} className="w-full aspect-[3/4] object-cover rounded border" />
                             <div className="absolute top-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button
                                 className="p-1 bg-background/80 backdrop-blur-sm rounded-full border border-border/50 hover:bg-background"
-                                onClick={() => {
-                                  fetch(img.image_url).then(r => r.blob()).then(blob => {
-                                    const url = URL.createObjectURL(blob);
-                                    const a = document.createElement("a");
-                                    a.href = url;
-                                    a.download = `${type}_${groupKey}.jpg`;
-                                    document.body.appendChild(a);
-                                    a.click();
-                                    document.body.removeChild(a);
-                                    URL.revokeObjectURL(url);
+                                onClick={async () => {
+                                  const signed = await getSecureFileUrl({
+                                    bucket: "body-images",
+                                    storagePath: img.storage_path || extractStoragePath(img.image_url, "body-images"),
+                                    fallbackUrl: img.image_url,
                                   });
+                                  if (!signed) return;
+                                  const r = await fetch(signed);
+                                  const blob = await r.blob();
+                                  const url = URL.createObjectURL(blob);
+                                  const a = document.createElement("a");
+                                  a.href = url;
+                                  a.download = `${type}_${groupKey}.jpg`;
+                                  document.body.appendChild(a);
+                                  a.click();
+                                  document.body.removeChild(a);
+                                  URL.revokeObjectURL(url);
                                 }}
                                 title="Baixar imagem"
                               >
