@@ -36,6 +36,7 @@ const PaymentLinksTab = () => {
   const upsertMutation = useMutation({
     mutationFn: async (payload: {
       plan_id: string;
+      title: string;
       pix_code: string;
       pix_enabled: boolean;
       card_link: string;
@@ -46,6 +47,7 @@ const PaymentLinksTab = () => {
         const { error } = await supabase
           .from("plan_payment_links")
           .update({
+            title: payload.title,
             pix_code: payload.pix_code,
             pix_enabled: payload.pix_enabled,
             card_link: payload.card_link,
@@ -345,9 +347,10 @@ const PlanLinkCard = ({
 }: {
   plan: any;
   link: any;
-  onSave: (data: { pix_code: string; pix_enabled: boolean; card_link: string; card_enabled: boolean }) => void;
+  onSave: (data: { title: string; pix_code: string; pix_enabled: boolean; card_link: string; card_enabled: boolean }) => void;
   saving: boolean;
 }) => {
+  const [title, setTitle] = useState(link?.title || plan.name);
   const [pixCode, setPixCode] = useState(link?.pix_code || "");
   const [pixEnabled, setPixEnabled] = useState(link?.pix_enabled ?? false);
   const [cardLink, setCardLink] = useState(link?.card_link || "");
