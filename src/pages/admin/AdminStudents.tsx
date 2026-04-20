@@ -259,7 +259,7 @@ const AdminStudents = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.type !== "application/pdf") { toast.error("Apenas arquivos PDF são aceitos."); return; }
-    const ownerUserId = editing?.user_id || form.user_id;
+    const ownerUserId = selected?.user_id;
     if (!ownerUserId) { toast.error("Salve o aluno antes de enviar documentos."); return; }
     setUploading(field);
     try {
