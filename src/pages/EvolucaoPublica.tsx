@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import Cropper, { Area } from "react-easy-crop";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -20,13 +21,15 @@ interface Slot {
 
 interface Transform {
   zoom: number;
-  offsetX: number;
-  offsetY: number;
-  rotation: number; // 0, 90, 180, 270
+  rotation: number;
   flipH: boolean;
+  // Pixel crop area in source image coords (set by Cropper)
+  cropArea?: Area;
+  // UI state for Cropper
+  crop: { x: number; y: number };
 }
 
-const DEFAULT_T: Transform = { zoom: 1, offsetX: 0, offsetY: 0, rotation: 0, flipH: false };
+const DEFAULT_T: Transform = { zoom: 1, rotation: 0, flipH: false, crop: { x: 0, y: 0 } };
 
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
