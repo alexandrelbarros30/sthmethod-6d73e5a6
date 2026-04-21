@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Cropper, { Area } from "react-easy-crop";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ImagePlus, Lock, Sparkles, Upload, X, ArrowRight, RotateCcw, Wand2, RotateCw, FlipHorizontal2 } from "lucide-react";
+import { Lock, Sparkles, Upload, X, RotateCcw, Wand2, RotateCw, FlipHorizontal2, FlipVertical2, Crop as CropIcon, Move } from "lucide-react";
 import evolutionFrame from "@/assets/evolution-frame.png";
 
 const CANVAS_WIDTH = 1080;
@@ -23,13 +22,13 @@ interface Transform {
   zoom: number;
   rotation: number;
   flipH: boolean;
-  // Pixel crop area in source image coords (set by Cropper)
-  cropArea?: Area;
-  // UI state for Cropper
-  crop: { x: number; y: number };
+  flipV: boolean;
+  // Offset as percentage of box size (-1 to 1), applied AFTER cover-fit
+  offsetX: number;
+  offsetY: number;
 }
 
-const DEFAULT_T: Transform = { zoom: 1, rotation: 0, flipH: false, crop: { x: 0, y: 0 } };
+const DEFAULT_T: Transform = { zoom: 1, rotation: 0, flipH: false, flipV: false, offsetX: 0, offsetY: 0 };
 
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
