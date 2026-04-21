@@ -144,7 +144,11 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
       const initT: Partial<TransformMap> = {};
       for (const type of IMAGE_TYPES) {
         for (const [side, group] of [["old", oldGroup], ["new", newGroup]] as const) {
-          const img = group.images.find((i) => i.type === type);
+          const key = makeKey(side, type);
+          const overrideId = overrides[key];
+          const img = overrideId
+            ? group.images.find((i) => i.id === overrideId)
+            : group.images.find((i) => i.type === type);
           if (!img) continue;
           const url = await getSecureFileUrl({
             bucket: "body-images",
@@ -155,8 +159,8 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
           try {
             const el = await loadImage(url);
             if (cancelled) return;
-            next[makeKey(side, type)] = el;
-            initT[makeKey(side, type)] = { ...DEFAULT_TRANSFORM };
+            next[key] = el;
+            initT[key] = { ...DEFAULT_TRANSFORM };
           } catch {}
         }
       }
@@ -165,7 +169,7 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
       setTransforms((prev) => ({ ...initT, ...prev } as TransformMap));
     })();
     return () => { cancelled = true; };
-  }, [oldGroup, newGroup]);
+  }, [oldGroup, newGroup, overrides]);
 
   // Render live preview for a given type
   const renderPreview = (type: ImageType): string | null => {
