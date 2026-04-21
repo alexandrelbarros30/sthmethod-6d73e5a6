@@ -254,14 +254,40 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
     updateTransform(side, type, DEFAULT_TRANSFORM);
   };
 
-  const matchProportions = (type: ImageType) => {
-    // Iguala o zoom da foto antiga e nova: usa o maior zoom entre os dois para aproximar o aluno proporcionalmente
+  const matchProportions = (type: ImageType, mode: "average" | "old-to-new" | "new-to-old" = "average") => {
+    // Iguala zoom + alinhamento vertical entre Antes e Depois para deixar o aluno do mesmo tamanho.
     const tOld = transforms[makeKey("old", type)] || DEFAULT_TRANSFORM;
     const tNew = transforms[makeKey("new", type)] || DEFAULT_TRANSFORM;
-    const avg = (tOld.zoom + tNew.zoom) / 2;
-    updateTransform("old", type, { zoom: avg });
-    updateTransform("new", type, { zoom: avg });
-    toast.success("Proporções igualadas para esta posição.");
+    let targetZoom: number;
+    let targetOffsetY: number;
+    if (mode === "old-to-new") {
+      targetZoom = tNew.zoom;
+      targetOffsetY = tNew.offsetY;
+    } else if (mode === "new-to-old") {
+      targetZoom = tOld.zoom;
+      targetOffsetY = tOld.offsetY;
+    } else {
+      targetZoom = (tOld.zoom + tNew.zoom) / 2;
+      targetOffsetY = (tOld.offsetY + tNew.offsetY) / 2;
+    }
+    updateTransform("old", type, { zoom: targetZoom, offsetY: targetOffsetY });
+    updateTransform("new", type, { zoom: targetZoom, offsetY: targetOffsetY });
+    toast.success("Tamanho e alinhamento igualados.");
+  };
+
+  const applyToAllPositions = (type: ImageType) => {
+    // Replica os ajustes da posição atual (Antes e Depois) para as outras posições.
+    const tOld = transforms[makeKey("old", type)] || DEFAULT_TRANSFORM;
+    const tNew = transforms[makeKey("new", type)] || DEFAULT_TRANSFORM;
+    setTransforms((prev) => {
+      const next = { ...prev };
+      for (const t of IMAGE_TYPES) {
+        if (loadedImages[makeKey("old", t)]) next[makeKey("old", t)] = { ...tOld };
+        if (loadedImages[makeKey("new", t)]) next[makeKey("new", t)] = { ...tNew };
+      }
+      return next;
+    });
+    toast.success("Ajustes aplicados a todas as posições.");
   };
 
   if (groups.length < 2) {
