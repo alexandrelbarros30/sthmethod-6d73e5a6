@@ -45,7 +45,11 @@ function drawWithTransform(
   t: Transform
 ) {
   const { x, y, w, h } = box;
-  const imgRatio = img.width / img.height;
+  // Swap dimensions for 90/270 rotations
+  const rotated = t.rotation % 180 !== 0;
+  const effW = rotated ? img.height : img.width;
+  const effH = rotated ? img.width : img.height;
+  const imgRatio = effW / effH;
   const boxRatio = w / h;
   let baseW: number, baseH: number;
   if (imgRatio > boxRatio) {
@@ -57,13 +61,19 @@ function drawWithTransform(
   }
   const dw = baseW * t.zoom;
   const dh = baseH * t.zoom;
-  const dx = x + (w - dw) / 2 + (t.offsetX / 100) * w;
-  const dy = y + (h - dh) / 2 + (t.offsetY / 100) * h;
+  const cx = x + w / 2 + (t.offsetX / 100) * w;
+  const cy = y + h / 2 + (t.offsetY / 100) * h;
   ctx.save();
   ctx.beginPath();
   ctx.rect(x, y, w, h);
   ctx.clip();
-  ctx.drawImage(img, dx, dy, dw, dh);
+  ctx.translate(cx, cy);
+  ctx.rotate((t.rotation * Math.PI) / 180);
+  if (t.flipH) ctx.scale(-1, 1);
+  // Draw using the un-rotated dims (rotation handled by ctx)
+  const drawW = rotated ? dh : dw;
+  const drawH = rotated ? dw : dh;
+  ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
   ctx.restore();
 }
 
