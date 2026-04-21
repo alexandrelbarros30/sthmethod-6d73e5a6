@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RefreshCw, X } from "lucide-react";
+import { APP_VERSION, VERSION_KEY, VERSION_URL } from "@/lib/app-version";
 
-const APP_VERSION = "1.8.1";
-const VERSION_KEY = "sth-app-version";
-const AUTO_RELOAD_KEY = "sth-auto-reload-version";
-const VERSION_URL = "/version.json";
 const POLL_INTERVAL_MS = 15_000;
+const MAX_AUTO_RELOADS = 2;
+const getReloadAttemptKey = (version: string) => `sth-update-attempts:${version}`;
+
+const getReleaseVersion = (version: string) => version.split("+")[0] || version;
 
 const clearClientCaches = async () => {
   try {
@@ -25,9 +26,10 @@ const clearClientCaches = async () => {
 
 const forceRefreshToVersion = async (version: string) => {
   await clearClientCaches();
+  localStorage.setItem(VERSION_KEY, version);
 
   const url = new URL(window.location.href);
-  url.searchParams.set("_v", version);
+  url.searchParams.set("_v", version.replace(/\+/g, "-"));
   url.searchParams.set("_rt", Date.now().toString());
   window.location.replace(url.toString());
 };
@@ -53,6 +55,7 @@ const UpdateBanner = () => {
   useEffect(() => {
     const stored = localStorage.getItem(VERSION_KEY);
     if (stored && stored !== APP_VERSION) {
+      setRemoteVersion(stored);
       setShow(true);
     }
     localStorage.setItem(VERSION_KEY, APP_VERSION);
@@ -64,10 +67,10 @@ const UpdateBanner = () => {
       if (remote !== APP_VERSION) {
         setRemoteVersion(remote);
         setShow(true);
-        // Auto-reload once per new version (Safari iOS / Chrome aggressive cache bypass)
-        const lastAutoReload = localStorage.getItem(AUTO_RELOAD_KEY);
-        if (lastAutoReload !== remote) {
-          localStorage.setItem(AUTO_RELOAD_KEY, remote);
+        const reloadKey = getReloadAttemptKey(remote);
+        const attempts = Number(sessionStorage.getItem(reloadKey) || "0");
+        if (attempts < MAX_AUTO_RELOADS) {
+          sessionStorage.setItem(reloadKey, String(attempts + 1));
           setTimeout(() => {
             void forceRefreshToVersion(remote);
           }, 500);
@@ -121,7 +124,7 @@ const UpdateBanner = () => {
                 Nova atualização disponível
               </p>
               <p className="text-[11px]" style={{ color: "hsl(0 0% 55%)" }}>
-                v{remoteVersion} — Toque em Atualizar para aplicar
+                v{getReleaseVersion(remoteVersion)} — Toque em Atualizar para aplicar
               </p>
             </div>
             <button
