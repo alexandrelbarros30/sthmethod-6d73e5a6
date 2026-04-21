@@ -290,19 +290,35 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
 
     setGenerating(true);
     setPreviews([]);
+    setPreviewLabels([]);
 
     try {
       const results: string[] = [];
+      const generated: ImageType[] = [];
+      const skipped: ImageType[] = [];
       for (const type of IMAGE_TYPES) {
         const dataUrl = renderPreview(type);
-        if (dataUrl) results.push(dataUrl);
+        if (dataUrl) {
+          results.push(dataUrl);
+          generated.push(type);
+        } else {
+          skipped.push(type);
+        }
       }
 
       if (results.length === 0) {
-        toast.error("Nenhuma posição correspondente encontrada entre as datas.");
+        toast.error("Nenhuma posição pôde ser gerada. Use 'Mapear fotos' para escolher manualmente quais imagens comparar.");
       } else {
         setPreviews(results);
-        toast.success(`${results.length} imagem(ns) de evolução gerada(s)!`);
+        setPreviewLabels(generated);
+        if (skipped.length > 0) {
+          toast.success(
+            `${results.length} gerada(s): ${generated.map((t) => TYPE_LABELS[t]).join(", ")}. Pulada(s): ${skipped.map((t) => TYPE_LABELS[t]).join(", ")} (sem foto correspondente).`,
+            { duration: 6000 }
+          );
+        } else {
+          toast.success(`${results.length} imagem(ns) de evolução gerada(s)!`);
+        }
       }
     } catch (err: any) {
       console.error("Evolution generation error:", err);
