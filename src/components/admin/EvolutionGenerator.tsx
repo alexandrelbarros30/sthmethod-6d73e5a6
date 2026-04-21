@@ -372,6 +372,98 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
           )}
         </Button>
 
+        {/* Editor de fotos ao vivo */}
+        {oldDate && newDate && Object.keys(loadedImages).length > 0 && (
+          <div className="space-y-3 rounded-lg border border-border p-3 bg-muted/30">
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-xs font-semibold flex items-center gap-1">
+                <Move className="w-3 h-3" /> Editar Fotos
+              </Label>
+              <Select value={activeType} onValueChange={(v) => setActiveType(v as ImageType)}>
+                <SelectTrigger className="text-xs h-8 w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {IMAGE_TYPES.map((t) => (
+                    <SelectItem key={t} value={t} className="text-xs">{TYPE_LABELS[t]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {livePreviews[activeType] && (
+              <img
+                src={livePreviews[activeType]}
+                alt="Preview ao vivo"
+                className="w-full rounded border border-border"
+              />
+            )}
+
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs"
+              onClick={() => matchProportions(activeType)}
+            >
+              <ZoomIn className="w-3 h-3 mr-1" /> Igualar Proporções (Antes/Depois)
+            </Button>
+
+            {(["old", "new"] as const).map((side) => {
+              const key = makeKey(side, activeType);
+              const t = transforms[key] || DEFAULT_TRANSFORM;
+              const exists = !!loadedImages[key];
+              if (!exists) return null;
+              return (
+                <div key={side} className="space-y-2 pt-2 border-t border-border/50">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      {side === "old" ? "Antes" : "Depois"}
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-[10px]"
+                      onClick={() => resetTransform(side, activeType)}
+                    >
+                      <RotateCcw className="w-3 h-3 mr-1" /> Resetar
+                    </Button>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[10px] text-muted-foreground">
+                      <span>Zoom</span><span>{t.zoom.toFixed(2)}x</span>
+                    </div>
+                    <Slider
+                      min={0.5} max={3} step={0.05}
+                      value={[t.zoom]}
+                      onValueChange={([v]) => updateTransform(side, activeType, { zoom: v })}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[10px] text-muted-foreground">
+                      <span>Horizontal</span><span>{t.offsetX.toFixed(0)}%</span>
+                    </div>
+                    <Slider
+                      min={-50} max={50} step={1}
+                      value={[t.offsetX]}
+                      onValueChange={([v]) => updateTransform(side, activeType, { offsetX: v })}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[10px] text-muted-foreground">
+                      <span>Vertical</span><span>{t.offsetY.toFixed(0)}%</span>
+                    </div>
+                    <Slider
+                      min={-50} max={50} step={1}
+                      value={[t.offsetY]}
+                      onValueChange={([v]) => updateTransform(side, activeType, { offsetY: v })}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {previews.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
