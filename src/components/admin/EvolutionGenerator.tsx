@@ -397,6 +397,58 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
           )}
         </Button>
 
+        {/* Mapeamento manual: permite escolher qual foto da galeria usar para cada posição */}
+        {oldGroup && newGroup && (
+          <div className="space-y-2 rounded-lg border border-border p-3 bg-muted/30">
+            <div className="flex items-center gap-1.5">
+              <Link2 className="w-3 h-3 text-muted-foreground" />
+              <Label className="text-xs font-semibold">Mapear Fotos (opcional)</Label>
+            </div>
+            <p className="text-[10px] text-muted-foreground -mt-1">
+              Use quando o aluno enviou uma foto fora do padrão (ex: selfie). Escolha manualmente qual imagem usar em cada posição.
+            </p>
+            {IMAGE_TYPES.map((type) => {
+              const oldKey = makeKey("old", type);
+              const newKey = makeKey("new", type);
+              const defaultOld = oldGroup.images.find((i) => i.type === type)?.id || "";
+              const defaultNew = newGroup.images.find((i) => i.type === type)?.id || "";
+              return (
+                <div key={type} className="grid grid-cols-[60px_1fr_1fr] gap-1.5 items-center">
+                  <span className="text-[11px] font-medium text-muted-foreground">{TYPE_LABELS[type]}</span>
+                  <Select
+                    value={overrides[oldKey] || defaultOld || "__none__"}
+                    onValueChange={(v) => setOverrides((p) => ({ ...p, [oldKey]: v === "__none__" ? undefined : v }))}
+                  >
+                    <SelectTrigger className="h-7 text-[10px]"><SelectValue placeholder="Antes" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__" className="text-[10px]">— Nenhuma —</SelectItem>
+                      {oldGroup.images.map((img) => (
+                        <SelectItem key={img.id} value={img.id} className="text-[10px]">
+                          {TYPE_LABELS[img.type] || img.type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={overrides[newKey] || defaultNew || "__none__"}
+                    onValueChange={(v) => setOverrides((p) => ({ ...p, [newKey]: v === "__none__" ? undefined : v }))}
+                  >
+                    <SelectTrigger className="h-7 text-[10px]"><SelectValue placeholder="Depois" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__" className="text-[10px]">— Nenhuma —</SelectItem>
+                      {newGroup.images.map((img) => (
+                        <SelectItem key={img.id} value={img.id} className="text-[10px]">
+                          {TYPE_LABELS[img.type] || img.type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Editor de fotos ao vivo */}
         {oldDate && newDate && Object.keys(loadedImages).length > 0 && (
           <div className="space-y-3 rounded-lg border border-border p-3 bg-muted/30">
