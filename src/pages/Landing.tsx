@@ -460,8 +460,8 @@ const Landing = () => {
                 transition={{ delay: 0.4 }}
                 className="mt-5 pt-5 border-t border-border/50"
               >
-                <p className="text-xs text-muted-foreground">
-                  Já utilizado por <span className="text-primary font-medium">+12.000 pessoas</span>
+              <p className="text-xs text-muted-foreground">
+                  Já utilizado por <span className="text-primary font-medium">+1000 pessoas</span>
                 </p>
               </motion.div>
             </motion.div>
