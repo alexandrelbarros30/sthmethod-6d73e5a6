@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import Cropper, { Area } from "react-easy-crop";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -20,13 +21,15 @@ interface Slot {
 
 interface Transform {
   zoom: number;
-  offsetX: number;
-  offsetY: number;
-  rotation: number; // 0, 90, 180, 270
+  rotation: number;
   flipH: boolean;
+  // Pixel crop area in source image coords (set by Cropper)
+  cropArea?: Area;
+  // UI state for Cropper
+  crop: { x: number; y: number };
 }
 
-const DEFAULT_T: Transform = { zoom: 1, offsetX: 0, offsetY: 0, rotation: 0, flipH: false };
+const DEFAULT_T: Transform = { zoom: 1, rotation: 0, flipH: false, crop: { x: 0, y: 0 } };
 
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -45,35 +48,31 @@ function drawWithTransform(
   t: Transform
 ) {
   const { x, y, w, h } = box;
-  // Swap dimensions for 90/270 rotations
-  const rotated = t.rotation % 180 !== 0;
-  const effW = rotated ? img.height : img.width;
-  const effH = rotated ? img.width : img.height;
-  const imgRatio = effW / effH;
-  const boxRatio = w / h;
-  let baseW: number, baseH: number;
-  if (imgRatio > boxRatio) {
-    baseW = w;
-    baseH = w / imgRatio;
-  } else {
-    baseH = h;
-    baseW = h * imgRatio;
-  }
-  const dw = baseW * t.zoom;
-  const dh = baseH * t.zoom;
-  const cx = x + w / 2 + (t.offsetX / 100) * w;
-  const cy = y + h / 2 + (t.offsetY / 100) * h;
   ctx.save();
   ctx.beginPath();
   ctx.rect(x, y, w, h);
   ctx.clip();
-  ctx.translate(cx, cy);
+
+  // Apply rotation/flip on a centered transform
+  ctx.translate(x + w / 2, y + h / 2);
   ctx.rotate((t.rotation * Math.PI) / 180);
   if (t.flipH) ctx.scale(-1, 1);
-  // Draw using the un-rotated dims (rotation handled by ctx)
-  const drawW = rotated ? dh : dw;
-  const drawH = rotated ? dw : dh;
-  ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+
+  if (t.cropArea && t.cropArea.width > 0 && t.cropArea.height > 0) {
+    // Draw exact pixel crop scaled to the box
+    const { x: sx, y: sy, width: sw, height: sh } = t.cropArea;
+    ctx.drawImage(img, sx, sy, sw, sh, -w / 2, -h / 2, w, h);
+  } else {
+    // Fallback: cover-fit the full image
+    const rotated = t.rotation % 180 !== 0;
+    const effW = rotated ? img.height : img.width;
+    const effH = rotated ? img.width : img.height;
+    const imgRatio = effW / effH;
+    const boxRatio = w / h;
+    let dw: number, dh: number;
+    if (imgRatio > boxRatio) { dh = h; dw = h * imgRatio; } else { dw = w; dh = w / imgRatio; }
+    ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
+  }
   ctx.restore();
 }
 
@@ -166,10 +165,9 @@ const EvolucaoPublica = () => {
 
   const matchSize = () => {
     const z = (transforms.before.zoom + transforms.after.zoom) / 2;
-    const oy = (transforms.before.offsetY + transforms.after.offsetY) / 2;
     setTransforms({
-      before: { ...transforms.before, zoom: z, offsetY: oy },
-      after: { ...transforms.after, zoom: z, offsetY: oy },
+      before: { ...transforms.before, zoom: z },
+      after: { ...transforms.after, zoom: z },
     });
     toast.success("Tamanho igualado.");
   };
@@ -276,81 +274,92 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
     }, 100);
   };
 
-  const SlotBox = ({ side, label }: { side: "before" | "after"; label: string }) => {
+  const renderSlot = (side: "before" | "after", label: string) => {
     const slot = slots[side];
+    const t = transforms[side];
     const ref = side === "before" ? beforeInput : afterInput;
     return (
       <div className="space-y-2">
         <Label className="text-xs uppercase tracking-wider text-muted-foreground">{label}</Label>
-        <div
-          className={`relative aspect-[3/4] rounded-2xl border-2 border-dashed flex items-center justify-center overflow-hidden cursor-pointer transition-all ${
-            slot.preview ? "border-primary/40 bg-primary/5" : "border-border hover:border-primary/60 bg-muted/30"
-          }`}
-          onClick={() => ref.current?.click()}
-        >
-          {slot.preview ? (
-            <>
-              <img src={slot.preview} alt={label} className="w-full h-full object-cover" />
-              <button
-                className="absolute top-2 right-2 p-1.5 bg-destructive/80 rounded-full text-white hover:bg-destructive"
-                onClick={(e) => { e.stopPropagation(); removeSlot(side); }}
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </>
-          ) : (
+        {!slot.preview ? (
+          <div
+            className="relative aspect-[3/4] rounded-2xl border-2 border-dashed flex items-center justify-center overflow-hidden cursor-pointer transition-all border-border hover:border-primary/60 bg-muted/30"
+            onClick={() => ref.current?.click()}
+          >
             <div className="flex flex-col items-center gap-2 text-muted-foreground p-4 text-center">
               <Upload className="w-7 h-7" />
               <span className="text-xs">Toque para enviar</span>
             </div>
-          )}
-          <input
-            ref={ref}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => handleFile(side, e)}
-          />
-        </div>
-
-        {slot.preview && (
-          <div className="space-y-2 px-1">
-            <div>
-              <div className="flex justify-between text-[10px] text-muted-foreground"><span>Zoom</span><span>{transforms[side].zoom.toFixed(2)}x</span></div>
-              <Slider value={[transforms[side].zoom]} min={1} max={3} step={0.05} onValueChange={([v]) => updateT(side, { zoom: v })} />
-            </div>
-            <div>
-              <div className="flex justify-between text-[10px] text-muted-foreground"><span>↔ Horizontal</span><span>{transforms[side].offsetX}%</span></div>
-              <Slider value={[transforms[side].offsetX]} min={-50} max={50} step={1} onValueChange={([v]) => updateT(side, { offsetX: v })} />
-            </div>
-            <div>
-              <div className="flex justify-between text-[10px] text-muted-foreground"><span>↕ Vertical</span><span>{transforms[side].offsetY}%</span></div>
-              <Slider value={[transforms[side].offsetY]} min={-50} max={50} step={1} onValueChange={([v]) => updateT(side, { offsetY: v })} />
-            </div>
-            <div className="grid grid-cols-3 gap-1">
-              <Button
-                variant="outline" size="sm" className="h-7 text-[10px] px-1"
-                onClick={() => updateT(side, { rotation: ((transforms[side].rotation + 90) % 360) })}
-                title="Girar 90°"
-              >
-                <RotateCw className="w-3 h-3" />
-              </Button>
-              <Button
-                variant="outline" size="sm" className="h-7 text-[10px] px-1"
-                onClick={() => updateT(side, { flipH: !transforms[side].flipH })}
-                title="Espelhar"
-              >
-                <FlipHorizontal2 className="w-3 h-3" />
-              </Button>
-              <Button
-                variant="ghost" size="sm" className="h-7 text-[10px] px-1"
-                onClick={() => setTransforms((p) => ({ ...p, [side]: { ...DEFAULT_T } }))}
-                title="Resetar"
-              >
-                <RotateCcw className="w-3 h-3" />
-              </Button>
-            </div>
+            <input ref={ref} type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(side, e)} />
           </div>
+        ) : (
+          <>
+            <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-black border border-primary/40">
+              <Cropper
+                image={slot.preview}
+                crop={t.crop}
+                zoom={t.zoom}
+                rotation={t.rotation}
+                aspect={3 / 4}
+                minZoom={1}
+                maxZoom={4}
+                zoomSpeed={0.5}
+                showGrid={true}
+                restrictPosition={true}
+                onCropChange={(crop) => updateT(side, { crop })}
+                onZoomChange={(zoom) => updateT(side, { zoom })}
+                onRotationChange={(rotation) => updateT(side, { rotation })}
+                onCropComplete={(_area, areaPixels) => updateT(side, { cropArea: areaPixels })}
+                style={{
+                  containerStyle: { background: "#000", borderRadius: 16 },
+                }}
+              />
+              <button
+                className="absolute top-2 right-2 z-10 p-1.5 bg-destructive/80 rounded-full text-white hover:bg-destructive"
+                onClick={(e) => { e.stopPropagation(); removeSlot(side); }}
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <input ref={ref} type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(side, e)} />
+
+            <div className="space-y-2 px-1">
+              <div>
+                <div className="flex justify-between text-[10px] text-muted-foreground"><span>Zoom</span><span>{t.zoom.toFixed(2)}x</span></div>
+                <Slider value={[t.zoom]} min={1} max={4} step={0.01} onValueChange={([v]) => updateT(side, { zoom: v })} />
+              </div>
+              <div>
+                <div className="flex justify-between text-[10px] text-muted-foreground"><span>Rotação</span><span>{Math.round(t.rotation)}°</span></div>
+                <Slider value={[t.rotation]} min={-180} max={180} step={1} onValueChange={([v]) => updateT(side, { rotation: v })} />
+              </div>
+              <div className="grid grid-cols-3 gap-1 pt-1">
+                <Button
+                  variant="outline" size="sm" className="h-7 text-[10px] px-1"
+                  onClick={() => updateT(side, { rotation: (t.rotation + 90) % 360 })}
+                  title="Girar 90°"
+                >
+                  <RotateCw className="w-3 h-3" />
+                </Button>
+                <Button
+                  variant="outline" size="sm" className="h-7 text-[10px] px-1"
+                  onClick={() => updateT(side, { flipH: !t.flipH })}
+                  title="Espelhar"
+                >
+                  <FlipHorizontal2 className="w-3 h-3" />
+                </Button>
+                <Button
+                  variant="ghost" size="sm" className="h-7 text-[10px] px-1"
+                  onClick={() => setTransforms((p) => ({ ...p, [side]: { ...DEFAULT_T } }))}
+                  title="Resetar"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                </Button>
+              </div>
+              <p className="text-[10px] text-muted-foreground/70 text-center pt-1">
+                Arraste para mover · pinça/scroll para zoom
+              </p>
+            </div>
+          </>
         )}
       </div>
     );
@@ -388,8 +397,8 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
         <Card className="border-border/60">
           <CardContent className="p-5 md:p-6 space-y-5">
             <div className="grid grid-cols-2 gap-4 md:gap-6">
-              <SlotBox side="before" label="Foto Antes" />
-              <SlotBox side="after" label="Foto Depois" />
+              {renderSlot("before", "Foto Antes")}
+              {renderSlot("after", "Foto Depois")}
             </div>
 
             {canGenerate && (
