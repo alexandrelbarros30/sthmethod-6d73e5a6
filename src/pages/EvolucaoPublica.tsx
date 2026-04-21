@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ImagePlus, Lock, Sparkles, Upload, X, ArrowRight, RotateCcw, Wand2 } from "lucide-react";
+import { ImagePlus, Lock, Sparkles, Upload, X, ArrowRight, RotateCcw, Wand2, RotateCw, FlipHorizontal2 } from "lucide-react";
 import evolutionFrame from "@/assets/evolution-frame.png";
 
 const CANVAS_WIDTH = 1080;
@@ -22,9 +22,11 @@ interface Transform {
   zoom: number;
   offsetX: number;
   offsetY: number;
+  rotation: number; // 0, 90, 180, 270
+  flipH: boolean;
 }
 
-const DEFAULT_T: Transform = { zoom: 1, offsetX: 0, offsetY: 0 };
+const DEFAULT_T: Transform = { zoom: 1, offsetX: 0, offsetY: 0, rotation: 0, flipH: false };
 
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
