@@ -1,10 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ImagePlus, Download, Loader2 } from "lucide-react";
+import { ImagePlus, Download, Loader2, ZoomIn, RotateCcw, Move } from "lucide-react";
 import evolutionFrame from "@/assets/evolution-frame.png";
 import { getSecureFileUrl, extractStoragePath } from "@/lib/secure-file-url";
 
@@ -24,6 +25,7 @@ interface EvolutionGeneratorProps {
 
 const TYPE_LABELS: Record<string, string> = { front: "Frente", back: "Costas", profile: "Perfil" };
 const IMAGE_TYPES = ["front", "back", "profile"] as const;
+type ImageType = typeof IMAGE_TYPES[number];
 
 // Canvas dimensions matching the frame aspect ratio
 const CANVAS_WIDTH = 1080;
@@ -55,20 +57,57 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
-function drawImageContain(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number) {
+/**
+ * Draws an image inside a box with a "cover" base + user transforms (zoom, offsetX, offsetY).
+ * Zoom 1 = contain (full body visible). Higher zoom = ampliar (cortar bordas). offsets em % do box.
+ */
+function drawImageWithTransform(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  box: { x: number; y: number; w: number; h: number },
+  transform: { zoom: number; offsetX: number; offsetY: number }
+) {
+  const { x, y, w, h } = box;
+  const { zoom, offsetX, offsetY } = transform;
+
+  // Base size = contain
   const imgRatio = img.width / img.height;
   const boxRatio = w / h;
-  let dw: number, dh: number;
+  let baseW: number, baseH: number;
   if (imgRatio > boxRatio) {
-    dw = w;
-    dh = w / imgRatio;
+    baseW = w;
+    baseH = w / imgRatio;
   } else {
-    dh = h;
-    dw = h * imgRatio;
+    baseH = h;
+    baseW = h * imgRatio;
   }
-  const dx = x + (w - dw) / 2;
-  const dy = y + (h - dh) / 2;
+
+  const dw = baseW * zoom;
+  const dh = baseH * zoom;
+  const dx = x + (w - dw) / 2 + (offsetX / 100) * w;
+  const dy = y + (h - dh) / 2 + (offsetY / 100) * h;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
   ctx.drawImage(img, dx, dy, dw, dh);
+  ctx.restore();
+}
+
+interface PhotoTransform {
+  zoom: number;     // 0.5 - 3
+  offsetX: number;  // -50 - 50 (% do box)
+  offsetY: number;  // -50 - 50 (% do box)
+}
+
+const DEFAULT_TRANSFORM: PhotoTransform = { zoom: 1, offsetX: 0, offsetY: 0 };
+
+type TransformKey = `${"old" | "new"}_${ImageType}`;
+type TransformMap = Record<TransformKey, PhotoTransform>;
+
+function makeKey(side: "old" | "new", type: ImageType): TransformKey {
+  return `${side}_${type}` as TransformKey;
 }
 
 const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps) => {
@@ -77,7 +116,145 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
   const [newDate, setNewDate] = useState("");
   const [generating, setGenerating] = useState(false);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [transforms, setTransforms] = useState<TransformMap>({} as TransformMap);
+  const [loadedImages, setLoadedImages] = useState<Partial<Record<TransformKey, HTMLImageElement>>>({});
+  const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
+  const [activeType, setActiveType] = useState<ImageType>("front");
+  const [livePreviews, setLivePreviews] = useState<Partial<Record<ImageType, string>>>({});
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Load frame once
+  useEffect(() => {
+    loadImage(evolutionFrame).then(setFrameImage).catch(() => {});
+  }, []);
+
+  const oldGroup = useMemo(() => groups.find((g) => g.date === oldDate), [groups, oldDate]);
+  const newGroup = useMemo(() => groups.find((g) => g.date === newDate), [groups, newDate]);
+
+  // Load images when both dates selected
+  useEffect(() => {
+    if (!oldGroup || !newGroup) return;
+    let cancelled = false;
+    (async () => {
+      const next: Partial<Record<TransformKey, HTMLImageElement>> = {};
+      const initT: Partial<TransformMap> = {};
+      for (const type of IMAGE_TYPES) {
+        for (const [side, group] of [["old", oldGroup], ["new", newGroup]] as const) {
+          const img = group.images.find((i) => i.type === type);
+          if (!img) continue;
+          const url = await getSecureFileUrl({
+            bucket: "body-images",
+            storagePath: img.storage_path || extractStoragePath(img.image_url, "body-images"),
+            fallbackUrl: img.image_url,
+          });
+          if (!url) continue;
+          try {
+            const el = await loadImage(url);
+            if (cancelled) return;
+            next[makeKey(side, type)] = el;
+            initT[makeKey(side, type)] = { ...DEFAULT_TRANSFORM };
+          } catch {}
+        }
+      }
+      if (cancelled) return;
+      setLoadedImages(next);
+      setTransforms((prev) => ({ ...initT, ...prev } as TransformMap));
+    })();
+    return () => { cancelled = true; };
+  }, [oldGroup, newGroup]);
+
+  // Render live preview for a given type
+  const renderPreview = (type: ImageType): string | null => {
+    if (!frameImage) return null;
+    const oldEl = loadedImages[makeKey("old", type)];
+    const newEl = loadedImages[makeKey("new", type)];
+    if (!oldEl || !newEl) return null;
+    const tOld = transforms[makeKey("old", type)] || DEFAULT_TRANSFORM;
+    const tNew = transforms[makeKey("new", type)] || DEFAULT_TRANSFORM;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
+    const ctx = canvas.getContext("2d")!;
+
+    ctx.drawImage(frameImage, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    const headerHeight = Math.round(CANVAS_HEIGHT * 0.19);
+    const footerHeight = Math.round(CANVAS_HEIGHT * 0.05);
+    const photoAreaY = headerHeight;
+    const photoAreaH = CANVAS_HEIGHT - headerHeight - footerHeight;
+    const halfWidth = CANVAS_WIDTH / 2;
+    const gap = 2;
+
+    drawImageWithTransform(ctx, oldEl, { x: 0, y: photoAreaY, w: halfWidth - gap, h: photoAreaH }, tOld);
+    drawImageWithTransform(ctx, newEl, { x: halfWidth + gap, y: photoAreaY, w: halfWidth - gap, h: photoAreaH }, tNew);
+
+    // Re-draw header and footer
+    const headerSrcH = Math.round(frameImage.height * 0.19);
+    ctx.drawImage(frameImage, 0, 0, frameImage.width, headerSrcH, 0, 0, CANVAS_WIDTH, headerHeight);
+    const footerSrcY = Math.round(frameImage.height * 0.95);
+    ctx.drawImage(
+      frameImage,
+      0, footerSrcY, frameImage.width, frameImage.height - footerSrcY,
+      0, CANVAS_HEIGHT - footerHeight, CANVAS_WIDTH, footerHeight
+    );
+
+    ctx.strokeStyle = "rgba(180,180,180,0.5)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(halfWidth, photoAreaY);
+    ctx.lineTo(halfWidth, CANVAS_HEIGHT - footerHeight);
+    ctx.stroke();
+
+    const badgeW = 140;
+    const badgeH = 32;
+    const badgeX = halfWidth - badgeW / 2;
+    const badgeY = photoAreaY + photoAreaH - badgeH - 10;
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.beginPath();
+    ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 4);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 16px Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(TYPE_LABELS[type].toUpperCase(), halfWidth, badgeY + badgeH / 2 + 5);
+
+    return canvas.toDataURL("image/jpeg", 0.92);
+  };
+
+  // Re-render live preview for active type whenever transforms change
+  useEffect(() => {
+    if (!frameImage || Object.keys(loadedImages).length === 0) return;
+    const updates: Partial<Record<ImageType, string>> = {};
+    for (const type of IMAGE_TYPES) {
+      const dataUrl = renderPreview(type);
+      if (dataUrl) updates[type] = dataUrl;
+    }
+    setLivePreviews(updates);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [frameImage, loadedImages, transforms]);
+
+  const updateTransform = (side: "old" | "new", type: ImageType, patch: Partial<PhotoTransform>) => {
+    setTransforms((prev) => {
+      const key = makeKey(side, type);
+      const current = prev[key] || DEFAULT_TRANSFORM;
+      return { ...prev, [key]: { ...current, ...patch } };
+    });
+  };
+
+  const resetTransform = (side: "old" | "new", type: ImageType) => {
+    updateTransform(side, type, DEFAULT_TRANSFORM);
+  };
+
+  const matchProportions = (type: ImageType) => {
+    // Iguala o zoom da foto antiga e nova: usa o maior zoom entre os dois para aproximar o aluno proporcionalmente
+    const tOld = transforms[makeKey("old", type)] || DEFAULT_TRANSFORM;
+    const tNew = transforms[makeKey("new", type)] || DEFAULT_TRANSFORM;
+    const avg = (tOld.zoom + tNew.zoom) / 2;
+    updateTransform("old", type, { zoom: avg });
+    updateTransform("new", type, { zoom: avg });
+    toast.success("Proporções igualadas para esta posição.");
+  };
 
   if (groups.length < 2) {
     return (
@@ -101,98 +278,16 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
       return;
     }
 
-    const oldGroup = groups.find((g) => g.date === oldDate);
-    const newGroup = groups.find((g) => g.date === newDate);
     if (!oldGroup || !newGroup) return;
 
     setGenerating(true);
     setPreviews([]);
 
     try {
-      // Load the frame image
-      const frameImg = await loadImage(evolutionFrame);
-
       const results: string[] = [];
-
       for (const type of IMAGE_TYPES) {
-        const oldImg = oldGroup.images.find((i) => i.type === type);
-        const newImg = newGroup.images.find((i) => i.type === type);
-
-        if (!oldImg || !newImg) continue;
-
-        const [oldUrl, newUrl] = await Promise.all([
-          getSecureFileUrl({
-            bucket: "body-images",
-            storagePath: oldImg.storage_path || extractStoragePath(oldImg.image_url, "body-images"),
-            fallbackUrl: oldImg.image_url,
-          }),
-          getSecureFileUrl({
-            bucket: "body-images",
-            storagePath: newImg.storage_path || extractStoragePath(newImg.image_url, "body-images"),
-            fallbackUrl: newImg.image_url,
-          }),
-        ]);
-        if (!oldUrl || !newUrl) continue;
-        const [oldEl, newEl] = await Promise.all([loadImage(oldUrl), loadImage(newUrl)]);
-
-        const canvas = document.createElement("canvas");
-        canvas.width = CANVAS_WIDTH;
-        canvas.height = CANVAS_HEIGHT;
-        const ctx = canvas.getContext("2d")!;
-
-        // Draw the frame as background, scaled to fill canvas
-        ctx.drawImage(frameImg, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-        // Photo areas match the gray lines in the template
-        // Header with logo: ~19% from top
-        // Footer with "antes/depois": ~5% from bottom
-        const headerHeight = Math.round(CANVAS_HEIGHT * 0.19);
-        const footerHeight = Math.round(CANVAS_HEIGHT * 0.05);
-        const photoAreaY = headerHeight;
-        const photoAreaH = CANVAS_HEIGHT - headerHeight - footerHeight;
-        const halfWidth = CANVAS_WIDTH / 2;
-        const gap = 2; // thin center divider
-
-        // Draw photos using "contain" approach to keep body proportional
-        // This ensures the full body is visible and proportional on both sides
-        drawImageContain(ctx, oldEl, 0, photoAreaY, halfWidth - gap, photoAreaH);
-        drawImageContain(ctx, newEl, halfWidth + gap, photoAreaY, halfWidth - gap, photoAreaH);
-
-        // Re-draw header and footer over photos to preserve frame elements
-        // Header (logo area)
-        const headerSrcH = Math.round(frameImg.height * 0.19);
-        ctx.drawImage(frameImg, 0, 0, frameImg.width, headerSrcH, 0, 0, CANVAS_WIDTH, headerHeight);
-        // Footer ("antes" / "depois" labels)
-        const footerSrcY = Math.round(frameImg.height * 0.95);
-        ctx.drawImage(
-          frameImg,
-          0, footerSrcY, frameImg.width, frameImg.height - footerSrcY,
-          0, CANVAS_HEIGHT - footerHeight, CANVAS_WIDTH, footerHeight
-        );
-
-        // Center divider line matching frame style
-        ctx.strokeStyle = "rgba(180,180,180,0.5)";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(halfWidth, photoAreaY);
-        ctx.lineTo(halfWidth, CANVAS_HEIGHT - footerHeight);
-        ctx.stroke();
-
-        // Type label badge
-        const badgeW = 140;
-        const badgeH = 32;
-        const badgeX = halfWidth - badgeW / 2;
-        const badgeY = photoAreaY + photoAreaH - badgeH - 10;
-        ctx.fillStyle = "rgba(0,0,0,0.6)";
-        ctx.beginPath();
-        ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 4);
-        ctx.fill();
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 16px Arial, sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText(TYPE_LABELS[type].toUpperCase(), halfWidth, badgeY + badgeH / 2 + 5);
-
-        results.push(canvas.toDataURL("image/jpeg", 0.92));
+        const dataUrl = renderPreview(type);
+        if (dataUrl) results.push(dataUrl);
       }
 
       if (results.length === 0) {
