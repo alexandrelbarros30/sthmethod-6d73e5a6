@@ -19,6 +19,7 @@ import Tendencias from "./pages/Tendencias";
 import FitnessCenario2026 from "./pages/FitnessCenario2026";
 import RecomposicaoAvancada from "./pages/RecomposicaoAvancada";
 import Promo from "./pages/Promo";
+import EvolucaoPublica from "./pages/EvolucaoPublica";
 import StudentOverview from "./pages/student/StudentOverview";
 import StudentHub from "./pages/student/StudentHub";
 import StudentRecipes from "./pages/student/StudentRecipes";
@@ -98,6 +99,7 @@ const App = () => (
             <Route path="/tendencias/recomposicao-avancada" element={<RecomposicaoAvancada />} />
             <Route path="/promo" element={<Promo />} />
             <Route path="/promo/:slug" element={<Promo />} />
+            <Route path="/evolucao" element={<EvolucaoPublica />} />
             {/* Student routes */}
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["student"]}><StudentOverview /></ProtectedRoute>} />
             <Route path="/dashboard/hub" element={<ProtectedRoute allowedRoles={["student"]}><StudentHub /></ProtectedRoute>} />
