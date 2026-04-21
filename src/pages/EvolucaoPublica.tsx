@@ -6,9 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ImagePlus, Loader2, Lock, Sparkles, Upload, X, ArrowRight, RotateCcw, Wand2 } from "lucide-react";
+import { ImagePlus, Lock, Sparkles, Upload, X, ArrowRight, RotateCcw, Wand2 } from "lucide-react";
 import evolutionFrame from "@/assets/evolution-frame.png";
-import { supabase } from "@/integrations/supabase/client";
 
 const CANVAS_WIDTH = 1080;
 const CANVAS_HEIGHT = 1350;
@@ -114,7 +113,6 @@ const EvolucaoPublica = () => {
   });
   const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<string | null>(null);
   const beforeInput = useRef<HTMLInputElement>(null);
   const afterInput = useRef<HTMLInputElement>(null);
@@ -253,30 +251,17 @@ const EvolucaoPublica = () => {
       toast.error("Envie as duas fotos primeiro.");
       return;
     }
-    setAnalyzing(true);
-    setAnalysis(null);
-    try {
-      const [b, a] = await Promise.all([
-        fileToDataUrl(slots.before.file!),
-        fileToDataUrl(slots.after.file!),
-      ]);
-      const { data, error } = await supabase.functions.invoke("analyze-evolution-public", {
-        body: { images: [b, a] },
-      });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      const txt = (data as any)?.analysis as string;
-      if (!txt) throw new Error("Sem resposta da IA.");
-      setAnalysis(txt);
-      toast.success("Análise gerada!");
-      setTimeout(() => {
-        document.getElementById("analise-result")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 100);
-    } catch (e: any) {
-      console.error(e);
-      toast.error(e.message || "Erro ao analisar. Tente novamente.");
-    }
-    setAnalyzing(false);
+    // Mensagem fixa em vez de análise por IA
+    const mensagemFixa = `Agora imagina isso sendo feito com estratégia aplicada no seu dia a dia…
+
+Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu corpo, sua rotina e seu objetivo.
+
+É exatamente isso que a STH Method faz.`;
+    setAnalysis(mensagemFixa);
+    toast.success("Análise gerada!");
+    setTimeout(() => {
+      document.getElementById("analise-result")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
   };
 
   const SlotBox = ({ side, label }: { side: "before" | "after"; label: string }) => {
@@ -358,12 +343,12 @@ const EvolucaoPublica = () => {
 
       <main className="max-w-5xl mx-auto px-4 py-8 md:py-12 space-y-8">
         <section className="text-center space-y-3 max-w-2xl mx-auto">
-          <Badge variant="secondary" className="gap-1.5"><Sparkles className="w-3 h-3" /> Análise gratuita por IA</Badge>
+          <Badge variant="secondary" className="gap-1.5"><Sparkles className="w-3 h-3" /> Visualize sua evolução</Badge>
           <h1 className="font-display text-3xl md:text-5xl tracking-tight">
             Veja sua <span className="text-primary">evolução real</span>.
           </h1>
           <p className="text-muted-foreground text-sm md:text-base">
-            Envie uma foto antiga e uma atual. Em segundos, mostramos o que mudou e o que ainda pode evoluir.
+            Envie uma foto antiga e uma atual. Visualize sua transformação e descubra como a STH Method pode acelerar seus resultados.
           </p>
         </section>
 
@@ -386,14 +371,10 @@ const EvolucaoPublica = () => {
             <Button
               size="lg"
               className="w-full text-base"
-              disabled={!canGenerate || analyzing}
+              disabled={!canGenerate}
               onClick={handleAnalyze}
             >
-              {analyzing ? (
-                <><Loader2 className="w-5 h-5 animate-spin" /> Analisando sua evolução...</>
-              ) : (
-                <><Sparkles className="w-5 h-5" /> Gerar minha análise</>
-              )}
+              <Sparkles className="w-5 h-5" /> Ver minha evolução
             </Button>
           </CardContent>
         </Card>
@@ -465,7 +446,7 @@ const EvolucaoPublica = () => {
           <section className="grid md:grid-cols-3 gap-3 max-w-3xl mx-auto pt-4">
             {[
               { n: "1", t: "Envie 2 fotos", d: "Uma antiga, uma atual." },
-              { n: "2", t: "Receba a leitura", d: "IA aponta o que mudou e o que pode evoluir." },
+              { n: "2", t: "Veja a comparação", d: "Visualize sua transformação lado a lado." },
               { n: "3", t: "Ative seu plano", d: "Estratégia personalizada e download liberado." },
             ].map((s) => (
               <Card key={s.n} className="border-border/40">
