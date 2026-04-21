@@ -116,11 +116,15 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
   const [newDate, setNewDate] = useState("");
   const [generating, setGenerating] = useState(false);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [previewLabels, setPreviewLabels] = useState<ImageType[]>([]);
   const [transforms, setTransforms] = useState<TransformMap>({} as TransformMap);
   const [loadedImages, setLoadedImages] = useState<Partial<Record<TransformKey, HTMLImageElement>>>({});
   const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
   const [activeType, setActiveType] = useState<ImageType>("front");
   const [livePreviews, setLivePreviews] = useState<Partial<Record<ImageType, string>>>({});
+  // Manual override: para cada posição (front/back/profile), permite escolher
+  // qual imagem específica (id) usar de cada lado. Default = procurar pelo type.
+  const [overrides, setOverrides] = useState<Partial<Record<TransformKey, string>>>({});
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Load frame once
