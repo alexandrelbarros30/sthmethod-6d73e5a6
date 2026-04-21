@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { defineConfig } from "vite";
+import { defineConfig, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
@@ -12,7 +12,7 @@ const releaseVersion = packageJson.version || "0.0.0";
 const buildId = new Date().toISOString().replace(/[-:.TZ]/g, "");
 const appVersion = `${releaseVersion}+${buildId}`;
 
-const appVersionAssetPlugin = () => ({
+const appVersionAssetPlugin = (): PluginOption => ({
   name: "app-version-asset",
   generateBundle() {
     this.emitFile({
