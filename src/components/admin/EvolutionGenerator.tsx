@@ -502,14 +502,47 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
               />
             )}
 
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full text-xs"
-              onClick={() => matchProportions(activeType)}
-            >
-              <ZoomIn className="w-3 h-3 mr-1" /> Igualar Proporções (Antes/Depois)
-            </Button>
+            <div className="space-y-1.5">
+              <p className="text-[10px] text-muted-foreground">Igualar tamanho/altura do aluno entre Antes e Depois:</p>
+              <div className="grid grid-cols-3 gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-[10px] h-8 px-1"
+                  onClick={() => matchProportions(activeType, "average")}
+                  title="Faz a média do zoom e altura entre as duas fotos"
+                >
+                  <ZoomIn className="w-3 h-3 mr-1" /> Média
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-[10px] h-8 px-1"
+                  onClick={() => matchProportions(activeType, "new-to-old")}
+                  title="Aplica o ajuste do Antes também no Depois"
+                >
+                  Usar Antes
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-[10px] h-8 px-1"
+                  onClick={() => matchProportions(activeType, "old-to-new")}
+                  title="Aplica o ajuste do Depois também no Antes"
+                >
+                  Usar Depois
+                </Button>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full text-[10px] h-7"
+                onClick={() => applyToAllPositions(activeType)}
+                title="Replica zoom e posição para Frente, Costas e Perfil"
+              >
+                <Link2 className="w-3 h-3 mr-1" /> Aplicar a todas as posições
+              </Button>
+            </div>
 
             {(["old", "new"] as const).map((side) => {
               const key = makeKey(side, activeType);
