@@ -554,7 +554,7 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
                 <div key={i} className="relative group">
                   <img
                     src={src}
-                    alt={`Evolução ${IMAGE_TYPES[i]}`}
+                    alt={`Evolução ${TYPE_LABELS[previewLabels[i]] || ""}`}
                     className="w-full rounded-lg border border-border"
                   />
                   <Button
