@@ -253,30 +253,17 @@ const EvolucaoPublica = () => {
       toast.error("Envie as duas fotos primeiro.");
       return;
     }
-    setAnalyzing(true);
-    setAnalysis(null);
-    try {
-      const [b, a] = await Promise.all([
-        fileToDataUrl(slots.before.file!),
-        fileToDataUrl(slots.after.file!),
-      ]);
-      const { data, error } = await supabase.functions.invoke("analyze-evolution-public", {
-        body: { images: [b, a] },
-      });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      const txt = (data as any)?.analysis as string;
-      if (!txt) throw new Error("Sem resposta da IA.");
-      setAnalysis(txt);
-      toast.success("Análise gerada!");
-      setTimeout(() => {
-        document.getElementById("analise-result")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 100);
-    } catch (e: any) {
-      console.error(e);
-      toast.error(e.message || "Erro ao analisar. Tente novamente.");
-    }
-    setAnalyzing(false);
+    // Mensagem fixa em vez de análise por IA
+    const mensagemFixa = `Agora imagina isso sendo feito com estratégia aplicada no seu dia a dia…
+
+Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu corpo, sua rotina e seu objetivo.
+
+É exatamente isso que a STH Method faz.`;
+    setAnalysis(mensagemFixa);
+    toast.success("Análise gerada!");
+    setTimeout(() => {
+      document.getElementById("analise-result")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
   };
 
   const SlotBox = ({ side, label }: { side: "before" | "after"; label: string }) => {
