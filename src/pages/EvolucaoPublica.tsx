@@ -6,9 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ImagePlus, Loader2, Lock, Sparkles, Upload, X, ArrowRight, RotateCcw, Wand2 } from "lucide-react";
+import { ImagePlus, Lock, Sparkles, Upload, X, ArrowRight, RotateCcw, Wand2 } from "lucide-react";
 import evolutionFrame from "@/assets/evolution-frame.png";
-import { supabase } from "@/integrations/supabase/client";
 
 const CANVAS_WIDTH = 1080;
 const CANVAS_HEIGHT = 1350;
@@ -114,7 +113,6 @@ const EvolucaoPublica = () => {
   });
   const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<string | null>(null);
   const beforeInput = useRef<HTMLInputElement>(null);
   const afterInput = useRef<HTMLInputElement>(null);
@@ -373,14 +371,10 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
             <Button
               size="lg"
               className="w-full text-base"
-              disabled={!canGenerate || analyzing}
+              disabled={!canGenerate}
               onClick={handleAnalyze}
             >
-              {analyzing ? (
-                <><Loader2 className="w-5 h-5 animate-spin" /> Analisando sua evolução...</>
-              ) : (
-                <><Sparkles className="w-5 h-5" /> Gerar minha análise</>
-              )}
+              <Sparkles className="w-5 h-5" /> Ver minha evolução
             </Button>
           </CardContent>
         </Card>
