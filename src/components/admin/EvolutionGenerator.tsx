@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ImagePlus, Download, Loader2, ZoomIn, RotateCcw, Move } from "lucide-react";
+import { ImagePlus, Download, Loader2, ZoomIn, RotateCcw, Move, Link2 } from "lucide-react";
 import evolutionFrame from "@/assets/evolution-frame.png";
 import { getSecureFileUrl, extractStoragePath } from "@/lib/secure-file-url";
 
@@ -116,11 +116,15 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
   const [newDate, setNewDate] = useState("");
   const [generating, setGenerating] = useState(false);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [previewLabels, setPreviewLabels] = useState<ImageType[]>([]);
   const [transforms, setTransforms] = useState<TransformMap>({} as TransformMap);
   const [loadedImages, setLoadedImages] = useState<Partial<Record<TransformKey, HTMLImageElement>>>({});
   const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
   const [activeType, setActiveType] = useState<ImageType>("front");
   const [livePreviews, setLivePreviews] = useState<Partial<Record<ImageType, string>>>({});
+  // Manual override: para cada posição (front/back/profile), permite escolher
+  // qual imagem específica (id) usar de cada lado. Default = procurar pelo type.
+  const [overrides, setOverrides] = useState<Partial<Record<TransformKey, string>>>({});
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Load frame once
@@ -140,7 +144,11 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
       const initT: Partial<TransformMap> = {};
       for (const type of IMAGE_TYPES) {
         for (const [side, group] of [["old", oldGroup], ["new", newGroup]] as const) {
-          const img = group.images.find((i) => i.type === type);
+          const key = makeKey(side, type);
+          const overrideId = overrides[key];
+          const img = overrideId
+            ? group.images.find((i) => i.id === overrideId)
+            : group.images.find((i) => i.type === type);
           if (!img) continue;
           const url = await getSecureFileUrl({
             bucket: "body-images",
@@ -151,8 +159,8 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
           try {
             const el = await loadImage(url);
             if (cancelled) return;
-            next[makeKey(side, type)] = el;
-            initT[makeKey(side, type)] = { ...DEFAULT_TRANSFORM };
+            next[key] = el;
+            initT[key] = { ...DEFAULT_TRANSFORM };
           } catch {}
         }
       }
@@ -161,7 +169,7 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
       setTransforms((prev) => ({ ...initT, ...prev } as TransformMap));
     })();
     return () => { cancelled = true; };
-  }, [oldGroup, newGroup]);
+  }, [oldGroup, newGroup, overrides]);
 
   // Render live preview for a given type
   const renderPreview = (type: ImageType): string | null => {
@@ -282,19 +290,35 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
 
     setGenerating(true);
     setPreviews([]);
+    setPreviewLabels([]);
 
     try {
       const results: string[] = [];
+      const generated: ImageType[] = [];
+      const skipped: ImageType[] = [];
       for (const type of IMAGE_TYPES) {
         const dataUrl = renderPreview(type);
-        if (dataUrl) results.push(dataUrl);
+        if (dataUrl) {
+          results.push(dataUrl);
+          generated.push(type);
+        } else {
+          skipped.push(type);
+        }
       }
 
       if (results.length === 0) {
-        toast.error("Nenhuma posição correspondente encontrada entre as datas.");
+        toast.error("Nenhuma posição pôde ser gerada. Use 'Mapear fotos' para escolher manualmente quais imagens comparar.");
       } else {
         setPreviews(results);
-        toast.success(`${results.length} imagem(ns) de evolução gerada(s)!`);
+        setPreviewLabels(generated);
+        if (skipped.length > 0) {
+          toast.success(
+            `${results.length} gerada(s): ${generated.map((t) => TYPE_LABELS[t]).join(", ")}. Pulada(s): ${skipped.map((t) => TYPE_LABELS[t]).join(", ")} (sem foto correspondente).`,
+            { duration: 6000 }
+          );
+        } else {
+          toast.success(`${results.length} imagem(ns) de evolução gerada(s)!`);
+        }
       }
     } catch (err: any) {
       console.error("Evolution generation error:", err);
@@ -306,7 +330,8 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
 
   const handleDownload = (dataUrl: string, index: number) => {
     const link = document.createElement("a");
-    link.download = `evolucao_${studentName.replace(/\s+/g, "_")}_${IMAGE_TYPES[index] || index}.jpg`;
+    const labelType = previewLabels[index] || IMAGE_TYPES[index] || `img_${index}`;
+    link.download = `evolucao_${studentName.replace(/\s+/g, "_")}_${labelType}.jpg`;
     link.href = dataUrl;
     link.click();
   };
@@ -371,6 +396,58 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
             </>
           )}
         </Button>
+
+        {/* Mapeamento manual: permite escolher qual foto da galeria usar para cada posição */}
+        {oldGroup && newGroup && (
+          <div className="space-y-2 rounded-lg border border-border p-3 bg-muted/30">
+            <div className="flex items-center gap-1.5">
+              <Link2 className="w-3 h-3 text-muted-foreground" />
+              <Label className="text-xs font-semibold">Mapear Fotos (opcional)</Label>
+            </div>
+            <p className="text-[10px] text-muted-foreground -mt-1">
+              Use quando o aluno enviou uma foto fora do padrão (ex: selfie). Escolha manualmente qual imagem usar em cada posição.
+            </p>
+            {IMAGE_TYPES.map((type) => {
+              const oldKey = makeKey("old", type);
+              const newKey = makeKey("new", type);
+              const defaultOld = oldGroup.images.find((i) => i.type === type)?.id || "";
+              const defaultNew = newGroup.images.find((i) => i.type === type)?.id || "";
+              return (
+                <div key={type} className="grid grid-cols-[60px_1fr_1fr] gap-1.5 items-center">
+                  <span className="text-[11px] font-medium text-muted-foreground">{TYPE_LABELS[type]}</span>
+                  <Select
+                    value={overrides[oldKey] || defaultOld || "__none__"}
+                    onValueChange={(v) => setOverrides((p) => ({ ...p, [oldKey]: v === "__none__" ? undefined : v }))}
+                  >
+                    <SelectTrigger className="h-7 text-[10px]"><SelectValue placeholder="Antes" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__" className="text-[10px]">— Nenhuma —</SelectItem>
+                      {oldGroup.images.map((img) => (
+                        <SelectItem key={img.id} value={img.id} className="text-[10px]">
+                          {TYPE_LABELS[img.type] || img.type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={overrides[newKey] || defaultNew || "__none__"}
+                    onValueChange={(v) => setOverrides((p) => ({ ...p, [newKey]: v === "__none__" ? undefined : v }))}
+                  >
+                    <SelectTrigger className="h-7 text-[10px]"><SelectValue placeholder="Depois" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__" className="text-[10px]">— Nenhuma —</SelectItem>
+                      {newGroup.images.map((img) => (
+                        <SelectItem key={img.id} value={img.id} className="text-[10px]">
+                          {TYPE_LABELS[img.type] || img.type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Editor de fotos ao vivo */}
         {oldDate && newDate && Object.keys(loadedImages).length > 0 && (
@@ -477,7 +554,7 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
                 <div key={i} className="relative group">
                   <img
                     src={src}
-                    alt={`Evolução ${IMAGE_TYPES[i]}`}
+                    alt={`Evolução ${TYPE_LABELS[previewLabels[i]] || ""}`}
                     className="w-full rounded-lg border border-border"
                   />
                   <Button
