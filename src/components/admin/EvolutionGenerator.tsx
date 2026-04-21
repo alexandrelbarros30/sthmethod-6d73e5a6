@@ -146,6 +146,8 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
         for (const [side, group] of [["old", oldGroup], ["new", newGroup]] as const) {
           const key = makeKey(side, type);
           const overrideId = overrides[key];
+          // "__none__" = aluno explicitamente pediu para pular essa posição
+          if (overrideId === "__none__") continue;
           const img = overrideId
             ? group.images.find((i) => i.id === overrideId)
             : group.images.find((i) => i.type === type);
@@ -443,7 +445,7 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
                   <span className="text-[11px] font-medium text-muted-foreground">{TYPE_LABELS[type]}</span>
                   <Select
                     value={overrides[oldKey] || defaultOld || "__none__"}
-                    onValueChange={(v) => setOverrides((p) => ({ ...p, [oldKey]: v === "__none__" ? undefined : v }))}
+                    onValueChange={(v) => setOverrides((p) => ({ ...p, [oldKey]: v }))}
                   >
                     <SelectTrigger className="h-7 text-[10px]"><SelectValue placeholder="Antes" /></SelectTrigger>
                     <SelectContent>
@@ -457,7 +459,7 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
                   </Select>
                   <Select
                     value={overrides[newKey] || defaultNew || "__none__"}
-                    onValueChange={(v) => setOverrides((p) => ({ ...p, [newKey]: v === "__none__" ? undefined : v }))}
+                    onValueChange={(v) => setOverrides((p) => ({ ...p, [newKey]: v }))}
                   >
                     <SelectTrigger className="h-7 text-[10px]"><SelectValue placeholder="Depois" /></SelectTrigger>
                     <SelectContent>
