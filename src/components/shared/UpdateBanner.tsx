@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RefreshCw, X } from "lucide-react";
-import { APP_RELEASE_VERSION, APP_VERSION, VERSION_KEY, VERSION_URL } from "@/lib/app-version";
+import { APP_VERSION, VERSION_KEY, VERSION_URL } from "@/lib/app-version";
 
 const POLL_INTERVAL_MS = 15_000;
 const MAX_AUTO_RELOADS = 2;
