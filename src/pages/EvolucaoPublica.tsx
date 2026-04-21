@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ImagePlus, Lock, Sparkles, Upload, X, ArrowRight, RotateCcw, Wand2 } from "lucide-react";
+import { ImagePlus, Lock, Sparkles, Upload, X, ArrowRight, RotateCcw, Wand2, RotateCw, FlipHorizontal2 } from "lucide-react";
 import evolutionFrame from "@/assets/evolution-frame.png";
 
 const CANVAS_WIDTH = 1080;
@@ -22,9 +22,11 @@ interface Transform {
   zoom: number;
   offsetX: number;
   offsetY: number;
+  rotation: number; // 0, 90, 180, 270
+  flipH: boolean;
 }
 
-const DEFAULT_T: Transform = { zoom: 1, offsetX: 0, offsetY: 0 };
+const DEFAULT_T: Transform = { zoom: 1, offsetX: 0, offsetY: 0, rotation: 0, flipH: false };
 
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -43,7 +45,11 @@ function drawWithTransform(
   t: Transform
 ) {
   const { x, y, w, h } = box;
-  const imgRatio = img.width / img.height;
+  // Swap dimensions for 90/270 rotations
+  const rotated = t.rotation % 180 !== 0;
+  const effW = rotated ? img.height : img.width;
+  const effH = rotated ? img.width : img.height;
+  const imgRatio = effW / effH;
   const boxRatio = w / h;
   let baseW: number, baseH: number;
   if (imgRatio > boxRatio) {
@@ -55,13 +61,19 @@ function drawWithTransform(
   }
   const dw = baseW * t.zoom;
   const dh = baseH * t.zoom;
-  const dx = x + (w - dw) / 2 + (t.offsetX / 100) * w;
-  const dy = y + (h - dh) / 2 + (t.offsetY / 100) * h;
+  const cx = x + w / 2 + (t.offsetX / 100) * w;
+  const cy = y + h / 2 + (t.offsetY / 100) * h;
   ctx.save();
   ctx.beginPath();
   ctx.rect(x, y, w, h);
   ctx.clip();
-  ctx.drawImage(img, dx, dy, dw, dh);
+  ctx.translate(cx, cy);
+  ctx.rotate((t.rotation * Math.PI) / 180);
+  if (t.flipH) ctx.scale(-1, 1);
+  // Draw using the un-rotated dims (rotation handled by ctx)
+  const drawW = rotated ? dh : dw;
+  const drawH = rotated ? dw : dh;
+  ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
   ctx.restore();
 }
 
@@ -305,19 +317,39 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
           <div className="space-y-2 px-1">
             <div>
               <div className="flex justify-between text-[10px] text-muted-foreground"><span>Zoom</span><span>{transforms[side].zoom.toFixed(2)}x</span></div>
-              <Slider value={[transforms[side].zoom]} min={0.5} max={3} step={0.05} onValueChange={([v]) => updateT(side, { zoom: v })} />
+              <Slider value={[transforms[side].zoom]} min={1} max={3} step={0.05} onValueChange={([v]) => updateT(side, { zoom: v })} />
+            </div>
+            <div>
+              <div className="flex justify-between text-[10px] text-muted-foreground"><span>↔ Horizontal</span><span>{transforms[side].offsetX}%</span></div>
+              <Slider value={[transforms[side].offsetX]} min={-50} max={50} step={1} onValueChange={([v]) => updateT(side, { offsetX: v })} />
             </div>
             <div>
               <div className="flex justify-between text-[10px] text-muted-foreground"><span>↕ Vertical</span><span>{transforms[side].offsetY}%</span></div>
               <Slider value={[transforms[side].offsetY]} min={-50} max={50} step={1} onValueChange={([v]) => updateT(side, { offsetY: v })} />
             </div>
-            <Button
-              variant="ghost" size="sm"
-              className="w-full h-7 text-[10px]"
-              onClick={() => setTransforms((p) => ({ ...p, [side]: { ...DEFAULT_T } }))}
-            >
-              <RotateCcw className="w-3 h-3" /> Resetar
-            </Button>
+            <div className="grid grid-cols-3 gap-1">
+              <Button
+                variant="outline" size="sm" className="h-7 text-[10px] px-1"
+                onClick={() => updateT(side, { rotation: ((transforms[side].rotation + 90) % 360) })}
+                title="Girar 90°"
+              >
+                <RotateCw className="w-3 h-3" />
+              </Button>
+              <Button
+                variant="outline" size="sm" className="h-7 text-[10px] px-1"
+                onClick={() => updateT(side, { flipH: !transforms[side].flipH })}
+                title="Espelhar"
+              >
+                <FlipHorizontal2 className="w-3 h-3" />
+              </Button>
+              <Button
+                variant="ghost" size="sm" className="h-7 text-[10px] px-1"
+                onClick={() => setTransforms((p) => ({ ...p, [side]: { ...DEFAULT_T } }))}
+                title="Resetar"
+              >
+                <RotateCcw className="w-3 h-3" />
+              </Button>
+            </div>
           </div>
         )}
       </div>
