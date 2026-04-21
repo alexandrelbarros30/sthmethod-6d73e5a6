@@ -397,8 +397,8 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
         <Card className="border-border/60">
           <CardContent className="p-5 md:p-6 space-y-5">
             <div className="grid grid-cols-2 gap-4 md:gap-6">
-              <SlotBox side="before" label="Foto Antes" />
-              <SlotBox side="after" label="Foto Depois" />
+              {renderSlot("before", "Foto Antes")}
+              {renderSlot("after", "Foto Depois")}
             </div>
 
             {canGenerate && (
