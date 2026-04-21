@@ -254,14 +254,40 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
     updateTransform(side, type, DEFAULT_TRANSFORM);
   };
 
-  const matchProportions = (type: ImageType) => {
-    // Iguala o zoom da foto antiga e nova: usa o maior zoom entre os dois para aproximar o aluno proporcionalmente
+  const matchProportions = (type: ImageType, mode: "average" | "old-to-new" | "new-to-old" = "average") => {
+    // Iguala zoom + alinhamento vertical entre Antes e Depois para deixar o aluno do mesmo tamanho.
     const tOld = transforms[makeKey("old", type)] || DEFAULT_TRANSFORM;
     const tNew = transforms[makeKey("new", type)] || DEFAULT_TRANSFORM;
-    const avg = (tOld.zoom + tNew.zoom) / 2;
-    updateTransform("old", type, { zoom: avg });
-    updateTransform("new", type, { zoom: avg });
-    toast.success("Proporções igualadas para esta posição.");
+    let targetZoom: number;
+    let targetOffsetY: number;
+    if (mode === "old-to-new") {
+      targetZoom = tNew.zoom;
+      targetOffsetY = tNew.offsetY;
+    } else if (mode === "new-to-old") {
+      targetZoom = tOld.zoom;
+      targetOffsetY = tOld.offsetY;
+    } else {
+      targetZoom = (tOld.zoom + tNew.zoom) / 2;
+      targetOffsetY = (tOld.offsetY + tNew.offsetY) / 2;
+    }
+    updateTransform("old", type, { zoom: targetZoom, offsetY: targetOffsetY });
+    updateTransform("new", type, { zoom: targetZoom, offsetY: targetOffsetY });
+    toast.success("Tamanho e alinhamento igualados.");
+  };
+
+  const applyToAllPositions = (type: ImageType) => {
+    // Replica os ajustes da posição atual (Antes e Depois) para as outras posições.
+    const tOld = transforms[makeKey("old", type)] || DEFAULT_TRANSFORM;
+    const tNew = transforms[makeKey("new", type)] || DEFAULT_TRANSFORM;
+    setTransforms((prev) => {
+      const next = { ...prev };
+      for (const t of IMAGE_TYPES) {
+        if (loadedImages[makeKey("old", t)]) next[makeKey("old", t)] = { ...tOld };
+        if (loadedImages[makeKey("new", t)]) next[makeKey("new", t)] = { ...tNew };
+      }
+      return next;
+    });
+    toast.success("Ajustes aplicados a todas as posições.");
   };
 
   if (groups.length < 2) {
@@ -476,14 +502,47 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
               />
             )}
 
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full text-xs"
-              onClick={() => matchProportions(activeType)}
-            >
-              <ZoomIn className="w-3 h-3 mr-1" /> Igualar Proporções (Antes/Depois)
-            </Button>
+            <div className="space-y-1.5">
+              <p className="text-[10px] text-muted-foreground">Igualar tamanho/altura do aluno entre Antes e Depois:</p>
+              <div className="grid grid-cols-3 gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-[10px] h-8 px-1"
+                  onClick={() => matchProportions(activeType, "average")}
+                  title="Faz a média do zoom e altura entre as duas fotos"
+                >
+                  <ZoomIn className="w-3 h-3 mr-1" /> Média
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-[10px] h-8 px-1"
+                  onClick={() => matchProportions(activeType, "new-to-old")}
+                  title="Aplica o ajuste do Antes também no Depois"
+                >
+                  Usar Antes
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-[10px] h-8 px-1"
+                  onClick={() => matchProportions(activeType, "old-to-new")}
+                  title="Aplica o ajuste do Depois também no Antes"
+                >
+                  Usar Depois
+                </Button>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full text-[10px] h-7"
+                onClick={() => applyToAllPositions(activeType)}
+                title="Replica zoom e posição para Frente, Costas e Perfil"
+              >
+                <Link2 className="w-3 h-3 mr-1" /> Aplicar a todas as posições
+              </Button>
+            </div>
 
             {(["old", "new"] as const).map((side) => {
               const key = makeKey(side, activeType);
