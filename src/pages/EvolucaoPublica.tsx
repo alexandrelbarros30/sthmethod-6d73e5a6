@@ -317,19 +317,39 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
           <div className="space-y-2 px-1">
             <div>
               <div className="flex justify-between text-[10px] text-muted-foreground"><span>Zoom</span><span>{transforms[side].zoom.toFixed(2)}x</span></div>
-              <Slider value={[transforms[side].zoom]} min={0.5} max={3} step={0.05} onValueChange={([v]) => updateT(side, { zoom: v })} />
+              <Slider value={[transforms[side].zoom]} min={1} max={3} step={0.05} onValueChange={([v]) => updateT(side, { zoom: v })} />
+            </div>
+            <div>
+              <div className="flex justify-between text-[10px] text-muted-foreground"><span>↔ Horizontal</span><span>{transforms[side].offsetX}%</span></div>
+              <Slider value={[transforms[side].offsetX]} min={-50} max={50} step={1} onValueChange={([v]) => updateT(side, { offsetX: v })} />
             </div>
             <div>
               <div className="flex justify-between text-[10px] text-muted-foreground"><span>↕ Vertical</span><span>{transforms[side].offsetY}%</span></div>
               <Slider value={[transforms[side].offsetY]} min={-50} max={50} step={1} onValueChange={([v]) => updateT(side, { offsetY: v })} />
             </div>
-            <Button
-              variant="ghost" size="sm"
-              className="w-full h-7 text-[10px]"
-              onClick={() => setTransforms((p) => ({ ...p, [side]: { ...DEFAULT_T } }))}
-            >
-              <RotateCcw className="w-3 h-3" /> Resetar
-            </Button>
+            <div className="grid grid-cols-3 gap-1">
+              <Button
+                variant="outline" size="sm" className="h-7 text-[10px] px-1"
+                onClick={() => updateT(side, { rotation: ((transforms[side].rotation + 90) % 360) })}
+                title="Girar 90°"
+              >
+                <RotateCw className="w-3 h-3" />
+              </Button>
+              <Button
+                variant="outline" size="sm" className="h-7 text-[10px] px-1"
+                onClick={() => updateT(side, { flipH: !transforms[side].flipH })}
+                title="Espelhar"
+              >
+                <FlipHorizontal2 className="w-3 h-3" />
+              </Button>
+              <Button
+                variant="ghost" size="sm" className="h-7 text-[10px] px-1"
+                onClick={() => setTransforms((p) => ({ ...p, [side]: { ...DEFAULT_T } }))}
+                title="Resetar"
+              >
+                <RotateCcw className="w-3 h-3" />
+              </Button>
+            </div>
           </div>
         )}
       </div>
