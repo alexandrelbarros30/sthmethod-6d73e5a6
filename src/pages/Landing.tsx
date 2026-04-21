@@ -417,19 +417,19 @@ const Landing = () => {
                 transition={{ delay: 0.15, type: "spring" }}
                 className="w-14 h-14 rounded-2xl gradient-bg flex items-center justify-center mx-auto mb-4"
               >
-                <Calculator className="w-7 h-7 text-primary-foreground" />
+                <Sparkles className="w-7 h-7 text-primary-foreground" />
               </motion.div>
               <h3 className="text-xl font-display font-bold text-foreground mb-2">
-                Descubra seus Macros ideais
+                Veja sua evolução agora
               </h3>
               <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-                Calcule gratuitamente sua meta de calorias, proteínas, carboidratos e gorduras com base no seu perfil e objetivos.
+                Envie suas fotos (antes e depois ou atual) e receba uma análise visual gratuita da sua evolução com IA.
               </p>
               <div className="flex flex-col gap-3">
-                <Link to="/questionario" onClick={dismissPopup}>
+                <Link to="/evolucao" onClick={dismissPopup}>
                   <Button size="lg" className="w-full gradient-bg text-primary-foreground hover:opacity-90">
                     <Sparkles className="w-4 h-4 mr-2" />
-                    Calcular meus Macros
+                    Gerar minha evolução
                   </Button>
                 </Link>
                 <button onClick={dismissPopup} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
