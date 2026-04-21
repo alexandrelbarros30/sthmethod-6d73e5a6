@@ -62,6 +62,7 @@ import { useDynamicFavicon } from "@/hooks/useDynamicFavicon";
 import { useAdminTheme } from "@/hooks/useAdminTheme";
 import { useAccessLog } from "@/hooks/useAccessLog";
 import UpdateBanner from "@/components/shared/UpdateBanner";
+import { APP_RELEASE_VERSION } from "@/lib/app-version";
 
 // Lazy load pages that use Tiptap editor to avoid blocking the app
 const AdminDiet = lazy(() => import("./pages/admin/AdminDiet"));
@@ -159,7 +160,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           <div className="fixed bottom-1 right-1 text-[9px] text-muted-foreground/40 pointer-events-none z-50 font-mono">
-            Versão 1.7.7
+            Versão {APP_RELEASE_VERSION}
           </div>
         </AuthProvider>
       </BrowserRouter>
