@@ -330,7 +330,8 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
 
   const handleDownload = (dataUrl: string, index: number) => {
     const link = document.createElement("a");
-    link.download = `evolucao_${studentName.replace(/\s+/g, "_")}_${IMAGE_TYPES[index] || index}.jpg`;
+    const labelType = previewLabels[index] || IMAGE_TYPES[index] || `img_${index}`;
+    link.download = `evolucao_${studentName.replace(/\s+/g, "_")}_${labelType}.jpg`;
     link.href = dataUrl;
     link.click();
   };
