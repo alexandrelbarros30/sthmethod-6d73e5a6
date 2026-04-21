@@ -388,7 +388,7 @@ const Landing = () => {
           <p>© 2026 ST&H — Consultoria Científica em Performance e Saúde. Todos os direitos reservados.</p>
         </div>
       </footer>
-      {/* Macro Calculator Popup */}
+      {/* Evolution Generator Popup */}
       <AnimatePresence>
         {popupOpen && (
           <motion.div
@@ -397,45 +397,73 @@ const Landing = () => {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] flex items-center justify-center px-4"
           >
-            <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" onClick={dismissPopup} />
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={dismissPopup} />
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="relative glass rounded-2xl p-8 max-w-md w-full glow-border text-center"
+              className="relative glass rounded-3xl p-8 sm:p-10 max-w-lg w-full glow-border text-center border-2 border-primary/20"
             >
               <button
                 onClick={dismissPopup}
-                className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
+                className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
+              
+              {/* Badge de destaque */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-5"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                NOVO — Gratuito
+              </motion.div>
+              
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.15, type: "spring" }}
-                className="w-14 h-14 rounded-2xl gradient-bg flex items-center justify-center mx-auto mb-4"
+                className="w-20 h-20 rounded-3xl gradient-bg flex items-center justify-center mx-auto mb-5 shadow-2xl shadow-primary/20"
               >
-                <Sparkles className="w-7 h-7 text-primary-foreground" />
+                <Sparkles className="w-10 h-10 text-primary-foreground" />
               </motion.div>
-              <h3 className="text-xl font-display font-bold text-foreground mb-2">
-                Veja sua evolução agora
+              
+              <h3 className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-3">
+                Veja sua evolução em segundos
               </h3>
-              <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-                Envie suas fotos (antes e depois ou atual) e receba uma análise visual gratuita da sua evolução com IA.
+              
+              <p className="text-sm sm:text-base text-muted-foreground mb-6 leading-relaxed max-w-sm mx-auto">
+                Envie suas fotos (antes e depois) e visualize sua transformação com um comparativo profissional. 
+                <span className="text-foreground font-medium">Grátis e instantâneo.</span>
               </p>
+              
               <div className="flex flex-col gap-3">
                 <Link to="/evolucao" onClick={dismissPopup}>
-                  <Button size="lg" className="w-full gradient-bg text-primary-foreground hover:opacity-90">
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Gerar minha evolução
+                  <Button size="lg" className="w-full gradient-bg text-primary-foreground hover:opacity-90 text-base py-6 shadow-xl shadow-primary/20">
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    Gerar minha evolução agora
                   </Button>
                 </Link>
-                <button onClick={dismissPopup} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-                  Agora não, obrigado
+                <button onClick={dismissPopup} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-2">
+                  Talvez depois
                 </button>
               </div>
+              
+              {/* Social proof */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="mt-5 pt-5 border-t border-border/50"
+              >
+                <p className="text-xs text-muted-foreground">
+                  Já utilizado por <span className="text-primary font-medium">+12.000 pessoas</span>
+                </p>
+              </motion.div>
             </motion.div>
           </motion.div>
         )}
