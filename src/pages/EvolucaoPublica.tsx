@@ -343,12 +343,12 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
 
       <main className="max-w-5xl mx-auto px-4 py-8 md:py-12 space-y-8">
         <section className="text-center space-y-3 max-w-2xl mx-auto">
-          <Badge variant="secondary" className="gap-1.5"><Sparkles className="w-3 h-3" /> Análise gratuita por IA</Badge>
+          <Badge variant="secondary" className="gap-1.5"><Sparkles className="w-3 h-3" /> Visualize sua evolução</Badge>
           <h1 className="font-display text-3xl md:text-5xl tracking-tight">
             Veja sua <span className="text-primary">evolução real</span>.
           </h1>
           <p className="text-muted-foreground text-sm md:text-base">
-            Envie uma foto antiga e uma atual. Em segundos, mostramos o que mudou e o que ainda pode evoluir.
+            Envie uma foto antiga e uma atual. Visualize sua transformação e descubra como a STH Method pode acelerar seus resultados.
           </p>
         </section>
 
@@ -446,7 +446,7 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
           <section className="grid md:grid-cols-3 gap-3 max-w-3xl mx-auto pt-4">
             {[
               { n: "1", t: "Envie 2 fotos", d: "Uma antiga, uma atual." },
-              { n: "2", t: "Receba a leitura", d: "IA aponta o que mudou e o que pode evoluir." },
+              { n: "2", t: "Veja a comparação", d: "Visualize sua transformação lado a lado." },
               { n: "3", t: "Ative seu plano", d: "Estratégia personalizada e download liberado." },
             ].map((s) => (
               <Card key={s.n} className="border-border/40">
