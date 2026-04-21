@@ -165,10 +165,9 @@ const EvolucaoPublica = () => {
 
   const matchSize = () => {
     const z = (transforms.before.zoom + transforms.after.zoom) / 2;
-    const oy = (transforms.before.offsetY + transforms.after.offsetY) / 2;
     setTransforms({
-      before: { ...transforms.before, zoom: z, offsetY: oy },
-      after: { ...transforms.after, zoom: z, offsetY: oy },
+      before: { ...transforms.before, zoom: z },
+      after: { ...transforms.after, zoom: z },
     });
     toast.success("Tamanho igualado.");
   };
