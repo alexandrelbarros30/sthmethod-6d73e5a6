@@ -2,11 +2,35 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RefreshCw, X } from "lucide-react";
 
-const APP_VERSION = "1.8.0";
+const APP_VERSION = "1.8.1";
 const VERSION_KEY = "sth-app-version";
 const AUTO_RELOAD_KEY = "sth-auto-reload-version";
 const VERSION_URL = "/version.json";
 const POLL_INTERVAL_MS = 15_000;
+
+const clearClientCaches = async () => {
+  try {
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+    }
+    if ("serviceWorker" in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map((r) => r.unregister()));
+    }
+  } catch {
+    // noop
+  }
+};
+
+const forceRefreshToVersion = async (version: string) => {
+  await clearClientCaches();
+
+  const url = new URL(window.location.href);
+  url.searchParams.set("_v", version);
+  url.searchParams.set("_rt", Date.now().toString());
+  window.location.replace(url.toString());
+};
 
 const fetchRemoteVersion = async (): Promise<string | null> => {
   try {
@@ -44,20 +68,8 @@ const UpdateBanner = () => {
         const lastAutoReload = localStorage.getItem(AUTO_RELOAD_KEY);
         if (lastAutoReload !== remote) {
           localStorage.setItem(AUTO_RELOAD_KEY, remote);
-          try {
-            if ("caches" in window) {
-              const keys = await caches.keys();
-              await Promise.all(keys.map((k) => caches.delete(k)));
-            }
-            if ("serviceWorker" in navigator) {
-              const regs = await navigator.serviceWorker.getRegistrations();
-              await Promise.all(regs.map((r) => r.unregister()));
-            }
-          } catch {}
           setTimeout(() => {
-            const url = new URL(window.location.href);
-            url.searchParams.set("_v", remote);
-            window.location.replace(url.toString());
+            void forceRefreshToVersion(remote);
           }, 500);
         }
       }
@@ -76,16 +88,7 @@ const UpdateBanner = () => {
   }, []);
 
   const handleUpdate = () => {
-    // Clear caches and reload
-    if ("caches" in window) {
-      caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))));
-    }
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.getRegistrations().then((regs) =>
-        regs.forEach((r) => r.unregister())
-      );
-    }
-    setTimeout(() => window.location.reload(), 300);
+    void forceRefreshToVersion(remoteVersion);
   };
 
   return (
