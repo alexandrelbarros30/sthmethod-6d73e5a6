@@ -69,6 +69,7 @@ const DailyProgressRing = ({
           strokeDashoffset={offset}
           className="transition-all duration-1000 ease-out"
           filter="url(#glow-filter)"
+          style={{ filter: `drop-shadow(0 0 6px hsl(var(--primary) / 0.7)) drop-shadow(0 0 14px hsl(var(--primary) / 0.4))` }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">

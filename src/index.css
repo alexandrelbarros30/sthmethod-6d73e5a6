@@ -292,6 +292,47 @@ html, body {
     animation: fill-bar 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   }
 
+  /* ===== Neon glow utilities ===== */
+  .neon-icon {
+    filter:
+      drop-shadow(0 0 4px hsl(var(--primary) / 0.85))
+      drop-shadow(0 0 10px hsl(var(--primary) / 0.45));
+  }
+  .neon-icon-soft {
+    filter:
+      drop-shadow(0 0 3px hsl(var(--primary) / 0.6))
+      drop-shadow(0 0 7px hsl(var(--primary) / 0.3));
+  }
+  .neon-icon-white {
+    filter:
+      drop-shadow(0 0 3px rgb(255 255 255 / 0.7))
+      drop-shadow(0 0 8px hsl(var(--primary) / 0.5));
+  }
+  .neon-bar {
+    box-shadow:
+      0 0 6px hsl(var(--primary) / 0.7),
+      0 0 12px hsl(var(--primary) / 0.45),
+      0 0 20px hsl(var(--primary) / 0.25),
+      inset 0 0 4px rgb(255 255 255 / 0.35);
+  }
+  .neon-ring-pulse {
+    animation: neon-ring-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes neon-ring-pulse {
+    0%, 100% {
+      box-shadow:
+        0 0 0 1px hsl(var(--primary) / 0.35),
+        0 0 12px hsl(var(--primary) / 0.4),
+        inset 0 1px 0 rgb(255 255 255 / 0.08);
+    }
+    50% {
+      box-shadow:
+        0 0 0 1px hsl(var(--primary) / 0.55),
+        0 0 22px hsl(var(--primary) / 0.65),
+        inset 0 1px 0 rgb(255 255 255 / 0.12);
+    }
+  }
+
   /* Subtle hover lift – Apple-style */
   .hover-lift {
     @apply transition-all duration-300;
