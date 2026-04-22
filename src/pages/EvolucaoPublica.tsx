@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Cropper, { Area } from "react-easy-crop";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ImagePlus, Lock, Sparkles, Upload, X, ArrowRight, RotateCcw, Wand2, RotateCw, FlipHorizontal2 } from "lucide-react";
+import { Lock, Sparkles, Upload, X, RotateCcw, Wand2, RotateCw, FlipHorizontal2, FlipVertical2, ArrowRight } from "lucide-react";
 import evolutionFrame from "@/assets/evolution-frame.png";
 
 const CANVAS_WIDTH = 1080;
@@ -23,13 +22,13 @@ interface Transform {
   zoom: number;
   rotation: number;
   flipH: boolean;
-  // Pixel crop area in source image coords (set by Cropper)
-  cropArea?: Area;
-  // UI state for Cropper
-  crop: { x: number; y: number };
+  flipV: boolean;
+  // Offset as percentage of box size (-1 to 1), applied AFTER cover-fit
+  offsetX: number;
+  offsetY: number;
 }
 
-const DEFAULT_T: Transform = { zoom: 1, rotation: 0, flipH: false, crop: { x: 0, y: 0 } };
+const DEFAULT_T: Transform = { zoom: 1, rotation: 0, flipH: false, flipV: false, offsetX: 0, offsetY: 0 };
 
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -53,26 +52,34 @@ function drawWithTransform(
   ctx.rect(x, y, w, h);
   ctx.clip();
 
-  // Apply rotation/flip on a centered transform
-  ctx.translate(x + w / 2, y + h / 2);
+  // Cover-fit base size considering rotation
+  const rotated = t.rotation % 180 !== 0;
+  const effW = rotated ? img.height : img.width;
+  const effH = rotated ? img.width : img.height;
+  const imgRatio = effW / effH;
+  const boxRatio = w / h;
+  let dw: number, dh: number;
+  if (imgRatio > boxRatio) { dh = h; dw = h * imgRatio; } else { dw = w; dh = w / imgRatio; }
+  // Apply zoom
+  dw *= t.zoom;
+  dh *= t.zoom;
+
+  // Compute offset in pixels (clamped so image always covers the box)
+  const maxOffX = Math.max(0, (dw - w) / 2);
+  const maxOffY = Math.max(0, (dh - h) / 2);
+  const offX = t.offsetX * maxOffX;
+  const offY = t.offsetY * maxOffY;
+
+  ctx.translate(x + w / 2 + offX, y + h / 2 + offY);
   ctx.rotate((t.rotation * Math.PI) / 180);
   if (t.flipH) ctx.scale(-1, 1);
+  if (t.flipV) ctx.scale(1, -1);
 
-  if (t.cropArea && t.cropArea.width > 0 && t.cropArea.height > 0) {
-    // Draw exact pixel crop scaled to the box
-    const { x: sx, y: sy, width: sw, height: sh } = t.cropArea;
-    ctx.drawImage(img, sx, sy, sw, sh, -w / 2, -h / 2, w, h);
-  } else {
-    // Fallback: cover-fit the full image
-    const rotated = t.rotation % 180 !== 0;
-    const effW = rotated ? img.height : img.width;
-    const effH = rotated ? img.width : img.height;
-    const imgRatio = effW / effH;
-    const boxRatio = w / h;
-    let dw: number, dh: number;
-    if (imgRatio > boxRatio) { dh = h; dw = h * imgRatio; } else { dw = w; dh = w / imgRatio; }
-    ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
-  }
+  // After rotation, draw the image centered. Since dw/dh were derived from the
+  // rotated bounding box, swap them back to the source orientation when rotated.
+  const drawW = rotated ? dh : dw;
+  const drawH = rotated ? dw : dh;
+  ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
   ctx.restore();
 }
 
@@ -113,6 +120,37 @@ function formatInline(s: string) {
   return s
     .replace(/\*\*(.+?)\*\*/g, '<strong class="text-foreground">$1</strong>')
     .replace(/\*(.+?)\*/g, '<em class="text-primary">$1</em>');
+}
+
+// Live canvas preview for a single slot — shows the exact final framing (3:4)
+function SlotPreview({ slot, t }: { slot: Slot; t: Transform }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !slot.imgEl) return;
+    const W = 300;
+    const H = 400;
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, W, H);
+    drawWithTransform(ctx, slot.imgEl, { x: 0, y: 0, w: W, h: H }, t);
+  }, [slot.imgEl, t]);
+
+  return (
+    <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-black border border-primary/40">
+      <canvas ref={canvasRef} className="w-full h-full block" />
+      {/* center grid for alignment reference */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute left-1/3 top-0 bottom-0 w-px bg-white/15" />
+        <div className="absolute left-2/3 top-0 bottom-0 w-px bg-white/15" />
+        <div className="absolute top-1/3 left-0 right-0 h-px bg-white/15" />
+        <div className="absolute top-2/3 left-0 right-0 h-px bg-white/15" />
+      </div>
+    </div>
+  );
 }
 
 const EvolucaoPublica = () => {
@@ -294,70 +332,65 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
           </div>
         ) : (
           <>
-            <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-black border border-primary/40">
-              <Cropper
-                image={slot.preview}
-                crop={t.crop}
-                zoom={t.zoom}
-                rotation={t.rotation}
-                aspect={3 / 4}
-                minZoom={1}
-                maxZoom={4}
-                zoomSpeed={0.5}
-                showGrid={true}
-                restrictPosition={true}
-                onCropChange={(crop) => updateT(side, { crop })}
-                onZoomChange={(zoom) => updateT(side, { zoom })}
-                onRotationChange={(rotation) => updateT(side, { rotation })}
-                onCropComplete={(_area, areaPixels) => updateT(side, { cropArea: areaPixels })}
-                style={{
-                  containerStyle: { background: "#000", borderRadius: 16 },
-                }}
-              />
+            <SlotPreview slot={slot} t={t} />
+            <div className="flex justify-end -mt-1">
               <button
-                className="absolute top-2 right-2 z-10 p-1.5 bg-destructive/80 rounded-full text-white hover:bg-destructive"
-                onClick={(e) => { e.stopPropagation(); removeSlot(side); }}
+                className="p-1.5 bg-destructive/80 rounded-full text-white hover:bg-destructive"
+                onClick={() => removeSlot(side)}
+                title="Remover"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
             <input ref={ref} type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(side, e)} />
 
-            <div className="space-y-2 px-1">
+            <div className="space-y-2 px-1 pt-1 border-t border-border/40">
               <div>
                 <div className="flex justify-between text-[10px] text-muted-foreground"><span>Zoom</span><span>{t.zoom.toFixed(2)}x</span></div>
-                <Slider value={[t.zoom]} min={1} max={4} step={0.01} onValueChange={([v]) => updateT(side, { zoom: v })} />
+                <Slider value={[t.zoom]} min={1} max={3} step={0.01} onValueChange={([v]) => updateT(side, { zoom: v })} />
+              </div>
+              <div>
+                <div className="flex justify-between text-[10px] text-muted-foreground"><span>Horizontal</span><span>{t.offsetX.toFixed(2)}</span></div>
+                <Slider value={[t.offsetX]} min={-1} max={1} step={0.01} onValueChange={([v]) => updateT(side, { offsetX: v })} />
+              </div>
+              <div>
+                <div className="flex justify-between text-[10px] text-muted-foreground"><span>Vertical</span><span>{t.offsetY.toFixed(2)}</span></div>
+                <Slider value={[t.offsetY]} min={-1} max={1} step={0.01} onValueChange={([v]) => updateT(side, { offsetY: v })} />
               </div>
               <div>
                 <div className="flex justify-between text-[10px] text-muted-foreground"><span>Rotação</span><span>{Math.round(t.rotation)}°</span></div>
                 <Slider value={[t.rotation]} min={-180} max={180} step={1} onValueChange={([v]) => updateT(side, { rotation: v })} />
               </div>
-              <div className="grid grid-cols-3 gap-1 pt-1">
+              <div className="grid grid-cols-4 gap-1 pt-1">
                 <Button
-                  variant="outline" size="sm" className="h-7 text-[10px] px-1"
-                  onClick={() => updateT(side, { rotation: (t.rotation + 90) % 360 })}
+                  variant="outline" size="sm" className="h-8 px-1"
+                  onClick={() => updateT(side, { rotation: Math.round((t.rotation + 90) % 360) })}
                   title="Girar 90°"
                 >
-                  <RotateCw className="w-3 h-3" />
+                  <RotateCw className="w-3.5 h-3.5" />
                 </Button>
                 <Button
-                  variant="outline" size="sm" className="h-7 text-[10px] px-1"
+                  variant="outline" size="sm" className="h-8 px-1"
                   onClick={() => updateT(side, { flipH: !t.flipH })}
-                  title="Espelhar"
+                  title="Espelhar horizontal"
                 >
-                  <FlipHorizontal2 className="w-3 h-3" />
+                  <FlipHorizontal2 className="w-3.5 h-3.5" />
                 </Button>
                 <Button
-                  variant="ghost" size="sm" className="h-7 text-[10px] px-1"
+                  variant="outline" size="sm" className="h-8 px-1"
+                  onClick={() => updateT(side, { flipV: !t.flipV })}
+                  title="Espelhar vertical"
+                >
+                  <FlipVertical2 className="w-3.5 h-3.5" />
+                </Button>
+                <Button
+                  variant="ghost" size="sm" className="h-8 px-1"
                   onClick={() => setTransforms((p) => ({ ...p, [side]: { ...DEFAULT_T } }))}
                   title="Resetar"
                 >
-                  <RotateCcw className="w-3 h-3" />
+                  <RotateCcw className="w-3.5 h-3.5" />
                 </Button>
               </div>
-              <p className="text-[10px] text-muted-foreground/70 text-center pt-1">
-                Arraste para mover · pinça/scroll para zoom
-              </p>
             </div>
           </>
         )}
