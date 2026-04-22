@@ -213,14 +213,18 @@ const StudentOverview = () => {
 
         {/* Progress card — Apple-grade: profundidade real, glow contido, tipografia premium */}
         <div className="relative w-full max-w-[8.25rem] shrink-0 aspect-square mt-5 sm:mt-7 sm:w-[46%] sm:max-w-none">
-          {/* Aura externa — insinuação de luz verde difusa */}
-          <div className="absolute -inset-3 rounded-[36px] pointer-events-none opacity-70" style={{ background: "radial-gradient(60% 60% at 75% 50%, hsl(150 80% 45% / 0.22), transparent 70%)", filter: "blur(24px)" }} />
+          {/* Aura externa — luz verde difusa, mais luminosa */}
+          <div className="absolute -inset-4 rounded-[40px] pointer-events-none opacity-90" style={{ background: "radial-gradient(60% 60% at 75% 50%, hsl(150 85% 50% / 0.32), transparent 70%)", filter: "blur(28px)" }} />
+          {/* Halo branco frio — brilho de vidro */}
+          <div className="absolute -inset-2 rounded-[34px] pointer-events-none opacity-60" style={{ background: "radial-gradient(50% 40% at 30% 0%, rgb(255 255 255 / 0.18), transparent 70%)", filter: "blur(16px)" }} />
 
-          {/* Borda gradiente premium (técnica padding-box/border-box) */}
-          <div className="relative w-full h-full rounded-[26px] p-[1px]" style={{ background: "linear-gradient(160deg, rgb(255 255 255 / 0.14) 0%, rgb(255 255 255 / 0.04) 35%, rgb(255 255 255 / 0.02) 65%, hsl(150 70% 50% / 0.18) 100%)" }}>
-            <div className="relative w-full h-full rounded-[25px] overflow-hidden bg-gradient-to-br from-[#161616] via-[#0c0c0c] to-[#050505] shadow-[0_12px_36px_-10px_rgb(0_0_0_/_0.6),0_4px_12px_-4px_rgb(0_0_0_/_0.4),inset_0_1px_0_rgb(255_255_255_/_0.05)]">
-              {/* Highlight superior — reflexo de vidro */}
-              <div className="absolute inset-x-0 top-0 h-[60%] pointer-events-none" style={{ background: "linear-gradient(180deg, rgb(255 255 255 / 0.06) 0%, rgb(255 255 255 / 0.015) 40%, transparent 100%)" }} />
+          {/* Borda gradiente premium — mais luminosa */}
+          <div className="relative w-full h-full rounded-[26px] p-[1.5px]" style={{ background: "linear-gradient(160deg, rgb(255 255 255 / 0.28) 0%, rgb(255 255 255 / 0.08) 30%, rgb(255 255 255 / 0.04) 60%, hsl(150 80% 55% / 0.32) 100%)" }}>
+            <div className="relative w-full h-full rounded-[25px] overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#0e0e0e] to-[#050505] shadow-[0_16px_44px_-10px_rgb(0_0_0_/_0.7),0_4px_12px_-4px_rgb(0_0_0_/_0.4),inset_0_1.5px_0_rgb(255_255_255_/_0.09),inset_0_-1px_0_rgb(255_255_255_/_0.02)]">
+              {/* Highlight superior — reflexo de vidro mais brilhoso */}
+              <div className="absolute inset-x-0 top-0 h-[65%] pointer-events-none" style={{ background: "linear-gradient(180deg, rgb(255 255 255 / 0.14) 0%, rgb(255 255 255 / 0.04) 35%, transparent 100%)" }} />
+              {/* Specular sheen diagonal — efeito de luz passando no vidro */}
+              <div className="absolute inset-0 pointer-events-none opacity-70" style={{ background: "linear-gradient(115deg, transparent 30%, rgb(255 255 255 / 0.08) 45%, rgb(255 255 255 / 0.12) 50%, rgb(255 255 255 / 0.04) 55%, transparent 70%)" }} />
               {/* Vinheta inferior — peso e profundidade */}
               <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(120% 80% at 50% 110%, rgb(0 0 0 / 0.4), transparent 60%)" }} />
               {/* Glow radial INTERNO atrás do arco */}
@@ -295,10 +299,15 @@ const StudentOverview = () => {
 
       {/* ===== STH NEWS ===== */}
       <Link to="/tendencias/recomposicao-avancada" className="block mb-8">
-        <div className="relative rounded-[20px] p-[1px] group" style={{ background: "linear-gradient(135deg, rgb(255 255 255 / 0.1) 0%, rgb(255 255 255 / 0.02) 50%, hsl(150 70% 50% / 0.18) 100%)" }}>
-          <div className="relative rounded-[19px] overflow-hidden bg-gradient-to-br from-[#0f0f0f] via-[#0a0a0a] to-[#080808] backdrop-blur-xl shadow-[0_8px_24px_-8px_rgb(0_0_0_/_0.5),0_2px_6px_-2px_rgb(0_0_0_/_0.3),inset_0_1px_0_rgb(255_255_255_/_0.04)] transition-all duration-300">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/[0.06] via-transparent to-transparent pointer-events-none" />
-            <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-primary/[0.08] blur-3xl pointer-events-none" />
+        <div className="relative rounded-[20px] p-[1.5px] group" style={{ background: "linear-gradient(135deg, rgb(255 255 255 / 0.24) 0%, rgb(255 255 255 / 0.06) 50%, hsl(150 80% 55% / 0.32) 100%)" }}>
+          {/* Aura externa */}
+          <div className="absolute -inset-2 rounded-[26px] pointer-events-none opacity-60" style={{ background: "radial-gradient(50% 70% at 90% 50%, hsl(150 85% 50% / 0.22), transparent 70%)", filter: "blur(20px)" }} />
+          <div className="relative rounded-[19px] overflow-hidden bg-gradient-to-br from-[#131313] via-[#0a0a0a] to-[#070707] backdrop-blur-2xl shadow-[0_10px_28px_-8px_rgb(0_0_0_/_0.55),0_2px_6px_-2px_rgb(0_0_0_/_0.3),inset_0_1.5px_0_rgb(255_255_255_/_0.08),inset_0_-1px_0_rgb(255_255_255_/_0.02)] transition-all duration-300">
+            {/* Sheen diagonal */}
+            <div className="absolute inset-0 pointer-events-none opacity-60" style={{ background: "linear-gradient(115deg, transparent 35%, rgb(255 255 255 / 0.07) 48%, rgb(255 255 255 / 0.1) 52%, transparent 68%)" }} />
+            <div className="absolute inset-x-0 top-0 h-1/2 pointer-events-none" style={{ background: "linear-gradient(180deg, rgb(255 255 255 / 0.08) 0%, transparent 100%)" }} />
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/[0.1] via-transparent to-transparent pointer-events-none" />
+            <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-primary/[0.14] blur-3xl pointer-events-none" />
             <div className="relative flex items-center gap-3.5 p-4">
               <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/[0.18] to-primary/[0.04] border border-primary/20 flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.06),0_4px_12px_-4px_hsl(var(--primary)/0.3)]">
                 <Newspaper className="w-[20px] h-[20px] text-primary" strokeWidth={1.8} />
@@ -433,10 +442,15 @@ const StudentOverview = () => {
       </div>
 
       {/* ===== RESUMO DO DIA - HORIZONTAL ===== */}
-      <div className="mb-5 relative rounded-[22px] p-[1px]" style={{ background: "linear-gradient(135deg, rgb(255 255 255 / 0.1) 0%, rgb(255 255 255 / 0.02) 50%, hsl(150 70% 50% / 0.15) 100%)" }}>
-        <div className="relative rounded-[21px] overflow-hidden bg-gradient-to-br from-[#0f0f0f] via-[#0a0a0a] to-[#070707] p-4 shadow-[0_8px_24px_-8px_rgb(0_0_0_/_0.5),inset_0_1px_0_rgb(255_255_255_/_0.04)]">
-          <div className="absolute -bottom-24 -left-20 w-52 h-52 rounded-full bg-primary/[0.08] blur-3xl pointer-events-none" />
-          <div className="absolute -top-20 -right-20 w-44 h-44 rounded-full bg-primary/[0.05] blur-3xl pointer-events-none" />
+      <div className="mb-5 relative rounded-[22px] p-[1.5px]" style={{ background: "linear-gradient(135deg, rgb(255 255 255 / 0.22) 0%, rgb(255 255 255 / 0.05) 50%, hsl(150 80% 55% / 0.28) 100%)" }}>
+        <div className="absolute -inset-2 rounded-[28px] pointer-events-none opacity-50" style={{ background: "radial-gradient(50% 60% at 50% 100%, hsl(150 85% 50% / 0.2), transparent 70%)", filter: "blur(22px)" }} />
+        <div className="relative rounded-[21px] overflow-hidden bg-gradient-to-br from-[#131313] via-[#0a0a0a] to-[#060606] backdrop-blur-2xl p-4 shadow-[0_10px_28px_-8px_rgb(0_0_0_/_0.55),inset_0_1.5px_0_rgb(255_255_255_/_0.08),inset_0_-1px_0_rgb(255_255_255_/_0.02)]">
+          {/* Sheen diagonal */}
+          <div className="absolute inset-0 pointer-events-none opacity-50" style={{ background: "linear-gradient(115deg, transparent 35%, rgb(255 255 255 / 0.06) 48%, rgb(255 255 255 / 0.09) 52%, transparent 68%)" }} />
+          {/* Highlight superior */}
+          <div className="absolute inset-x-0 top-0 h-2/5 pointer-events-none" style={{ background: "linear-gradient(180deg, rgb(255 255 255 / 0.07) 0%, transparent 100%)" }} />
+          <div className="absolute -bottom-24 -left-20 w-52 h-52 rounded-full bg-primary/[0.14] blur-3xl pointer-events-none" />
+          <div className="absolute -top-20 -right-20 w-44 h-44 rounded-full bg-primary/[0.1] blur-3xl pointer-events-none" />
           <div className="relative">
             <div className="flex items-center justify-between mb-3.5">
               <div className="flex items-center gap-1.5">
