@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Lock, Sparkles, Upload, X, RotateCcw, Wand2, RotateCw, FlipHorizontal2, FlipVertical2, ArrowRight } from "lucide-react";
+import { Lock, Sparkles, Upload, X, RotateCcw, Wand2, FlipHorizontal2, FlipVertical2, ArrowRight } from "lucide-react";
 import evolutionFrame from "@/assets/evolution-frame.png";
 
 const CANVAS_WIDTH = 1080;
@@ -343,55 +343,6 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
               </button>
             </div>
             <input ref={ref} type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(side, e)} />
-
-            <div className="space-y-2 px-1 pt-1 border-t border-border/40">
-              <div>
-                <div className="flex justify-between text-[10px] text-muted-foreground"><span>Zoom</span><span>{t.zoom.toFixed(2)}x</span></div>
-                <Slider value={[t.zoom]} min={1} max={3} step={0.01} onValueChange={([v]) => updateT(side, { zoom: v })} />
-              </div>
-              <div>
-                <div className="flex justify-between text-[10px] text-muted-foreground"><span>Horizontal</span><span>{t.offsetX.toFixed(2)}</span></div>
-                <Slider value={[t.offsetX]} min={-1} max={1} step={0.01} onValueChange={([v]) => updateT(side, { offsetX: v })} />
-              </div>
-              <div>
-                <div className="flex justify-between text-[10px] text-muted-foreground"><span>Vertical</span><span>{t.offsetY.toFixed(2)}</span></div>
-                <Slider value={[t.offsetY]} min={-1} max={1} step={0.01} onValueChange={([v]) => updateT(side, { offsetY: v })} />
-              </div>
-              <div>
-                <div className="flex justify-between text-[10px] text-muted-foreground"><span>Rotação</span><span>{Math.round(t.rotation)}°</span></div>
-                <Slider value={[t.rotation]} min={-180} max={180} step={1} onValueChange={([v]) => updateT(side, { rotation: v })} />
-              </div>
-              <div className="grid grid-cols-4 gap-1 pt-1">
-                <Button
-                  variant="outline" size="sm" className="h-8 px-1"
-                  onClick={() => updateT(side, { rotation: Math.round((t.rotation + 90) % 360) })}
-                  title="Girar 90°"
-                >
-                  <RotateCw className="w-3.5 h-3.5" />
-                </Button>
-                <Button
-                  variant="outline" size="sm" className="h-8 px-1"
-                  onClick={() => updateT(side, { flipH: !t.flipH })}
-                  title="Espelhar horizontal"
-                >
-                  <FlipHorizontal2 className="w-3.5 h-3.5" />
-                </Button>
-                <Button
-                  variant="outline" size="sm" className="h-8 px-1"
-                  onClick={() => updateT(side, { flipV: !t.flipV })}
-                  title="Espelhar vertical"
-                >
-                  <FlipVertical2 className="w-3.5 h-3.5" />
-                </Button>
-                <Button
-                  variant="ghost" size="sm" className="h-8 px-1"
-                  onClick={() => setTransforms((p) => ({ ...p, [side]: { ...DEFAULT_T } }))}
-                  title="Resetar"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                </Button>
-              </div>
-            </div>
           </>
         )}
       </div>
