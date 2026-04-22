@@ -160,6 +160,7 @@ const EvolucaoPublica = () => {
     before: { ...DEFAULT_T },
     after: { ...DEFAULT_T },
   });
+  const [editSide, setEditSide] = useState<"before" | "after">("before");
   const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<string | null>(null);
@@ -418,6 +419,62 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
             <p className="text-center text-xs text-muted-foreground">
               Pré-visualização com marca d'água. Libere a versão limpa após o cadastro.
             </p>
+
+            {/* Edit controls under generated photo */}
+            <Card className="max-w-md mx-auto border-border/60">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">Editar foto</Label>
+                  <div className="inline-flex rounded-md border border-border overflow-hidden">
+                    <button
+                      className={`px-3 py-1 text-xs ${editSide === "before" ? "bg-primary text-primary-foreground" : "bg-background"}`}
+                      onClick={() => setEditSide("before")}
+                    >
+                      Antes
+                    </button>
+                    <button
+                      className={`px-3 py-1 text-xs ${editSide === "after" ? "bg-primary text-primary-foreground" : "bg-background"}`}
+                      onClick={() => setEditSide("after")}
+                    >
+                      Depois
+                    </button>
+                  </div>
+                </div>
+                {(() => {
+                  const t = transforms[editSide];
+                  return (
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex justify-between text-[11px] text-muted-foreground"><span>Zoom</span><span>{t.zoom.toFixed(2)}x</span></div>
+                        <Slider value={[t.zoom]} min={1} max={3} step={0.01} onValueChange={([v]) => updateT(editSide, { zoom: v })} />
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-[11px] text-muted-foreground"><span>Horizontal</span><span>{t.offsetX.toFixed(2)}</span></div>
+                        <Slider value={[t.offsetX]} min={-1} max={1} step={0.01} onValueChange={([v]) => updateT(editSide, { offsetX: v })} />
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-[11px] text-muted-foreground"><span>Vertical</span><span>{t.offsetY.toFixed(2)}</span></div>
+                        <Slider value={[t.offsetY]} min={-1} max={1} step={0.01} onValueChange={([v]) => updateT(editSide, { offsetY: v })} />
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 pt-1">
+                        <Button variant="outline" size="sm" onClick={() => updateT(editSide, { flipH: !t.flipH })}>
+                          <FlipHorizontal2 className="w-3.5 h-3.5" /> Espelhar
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => updateT(editSide, { flipV: !t.flipV })}>
+                          <FlipVertical2 className="w-3.5 h-3.5" /> Inverter
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setTransforms((p) => ({ ...p, [editSide]: { ...DEFAULT_T } }))}>
+                          <RotateCcw className="w-3.5 h-3.5" /> Resetar
+                        </Button>
+                      </div>
+                      <Button variant="outline" size="sm" className="w-full" onClick={matchSize}>
+                        <Wand2 className="w-3.5 h-3.5" /> Igualar tamanho dos dois
+                      </Button>
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
           </section>
         )}
 
