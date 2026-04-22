@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Lock, Sparkles, Upload, X, RotateCcw, Wand2, RotateCw, FlipHorizontal2, FlipVertical2, Crop as CropIcon, Move } from "lucide-react";
+import { Lock, Sparkles, Upload, X, RotateCcw, Wand2, RotateCw, FlipHorizontal2, FlipVertical2, ArrowRight } from "lucide-react";
 import evolutionFrame from "@/assets/evolution-frame.png";
 
 const CANVAS_WIDTH = 1080;
