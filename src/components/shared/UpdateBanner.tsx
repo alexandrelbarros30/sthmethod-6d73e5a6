@@ -6,6 +6,10 @@ import { APP_RELEASE_VERSION, APP_VERSION, VERSION_KEY, VERSION_URL } from "@/li
 const POLL_INTERVAL_MS = 15_000;
 const MAX_AUTO_RELOADS = 2;
 const getReloadAttemptKey = (version: string) => `sth-update-attempts:${version}`;
+const isPreviewHost = () =>
+  typeof window !== "undefined" &&
+  (window.location.hostname.includes("lovableproject.com") ||
+    window.location.hostname.includes("preview--"));
 
 const getReleaseVersion = (version: string) => version.split("+")[0] || version;
 
@@ -53,6 +57,11 @@ const UpdateBanner = () => {
   const [remoteVersion, setRemoteVersion] = useState<string>(APP_VERSION);
 
   useEffect(() => {
+    if (isPreviewHost()) {
+      setShow(false);
+      return;
+    }
+
     // Sempre sincroniza o storage com a versão atual ao montar.
     // Não mostra banner baseado em storage — apenas comparação real com servidor.
     localStorage.setItem(VERSION_KEY, APP_VERSION);
