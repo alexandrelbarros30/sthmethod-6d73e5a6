@@ -208,18 +208,20 @@ const StudentOverview = () => {
         </div>
 
         {/* Progress card — neon bloom real (SVG feGaussianBlur) */}
-        <div className="relative w-[46%] shrink-0 aspect-[0.95] mt-7">
+        <div className="relative w-[46%] shrink-0 aspect-square mt-7">
           {/* Aura externa multi-camada (cria o "vazamento" de luz pra fora do card) */}
           <div className="absolute -inset-6 rounded-[40px] pointer-events-none" style={{ background: "radial-gradient(60% 60% at 80% 50%, hsl(var(--primary) / 0.55), transparent 70%)", filter: "blur(28px)" }} />
           <div className="absolute -inset-4 rounded-[36px] pointer-events-none animate-pulse-glow" style={{ background: "radial-gradient(50% 50% at 85% 50%, hsl(var(--primary) / 0.45), transparent 65%)", filter: "blur(20px)" }} />
 
-          <div className="relative w-full h-full rounded-[28px] overflow-hidden border border-primary/30 bg-[#0a0a0a]/90 backdrop-blur-xl shadow-[0_0_60px_-12px_hsl(var(--primary)/0.7),inset_0_1px_0_hsl(var(--primary)/0.2),inset_0_0_40px_-12px_hsl(var(--primary)/0.35)]">
+          <div className="relative w-full h-full rounded-[28px] border border-primary/30 bg-[#0a0a0a]/90 backdrop-blur-xl shadow-[0_0_60px_-12px_hsl(var(--primary)/0.7),inset_0_1px_0_hsl(var(--primary)/0.2),inset_0_0_40px_-12px_hsl(var(--primary)/0.35)]">
             {/* Glow radial INTERNO atrás do arco (núcleo de luz quente) */}
-            <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(45% 55% at 88% 50%, hsl(150 100% 60% / 0.55), hsl(150 95% 45% / 0.18) 35%, transparent 65%)" }} />
-            <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(20% 25% at 92% 50%, hsl(0 0% 100% / 0.35), transparent 70%)" }} />
+            <div className="absolute inset-0 rounded-[28px] overflow-hidden pointer-events-none">
+              <div className="absolute inset-0" style={{ background: "radial-gradient(45% 55% at 88% 50%, hsl(150 100% 60% / 0.55), hsl(150 95% 45% / 0.18) 35%, transparent 65%)" }} />
+              <div className="absolute inset-0" style={{ background: "radial-gradient(20% 25% at 92% 50%, hsl(0 0% 100% / 0.45), transparent 70%)" }} />
+            </div>
 
             {/* Arco com bloom REAL via feGaussianBlur + feMerge */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible" viewBox="0 0 200 210" preserveAspectRatio="none">
+            <svg className="absolute -inset-8 w-[calc(100%+4rem)] h-[calc(100%+4rem)] pointer-events-none overflow-visible" viewBox="0 0 280 280" preserveAspectRatio="xMidYMid meet">
               <defs>
                 <linearGradient id="bigArcGrad" x1="50%" y1="0%" x2="50%" y2="100%">
                   <stop offset="0%" stopColor="#ffffff" />
@@ -260,28 +262,28 @@ const StudentOverview = () => {
               {/* Arco principal — uma única path com bloom forte */}
               <g filter="url(#neonBloomStrong)">
                 <path
-                  d="M 178 22 A 110 110 0 0 1 178 188"
+                  d="M 218 62 A 110 110 0 0 1 218 228"
                   fill="none"
                   stroke="url(#bigArcGrad)"
-                  strokeWidth="5"
+                  strokeWidth="6"
                   strokeLinecap="round"
                 />
               </g>
               {/* Núcleo branco quente sobreposto (a "linha viva" no meio do brilho) */}
               <path
-                d="M 178 22 A 110 110 0 0 1 178 188"
+                d="M 218 62 A 110 110 0 0 1 218 228"
                 fill="none"
                 stroke="white"
-                strokeWidth="1.6"
+                strokeWidth="2"
                 strokeLinecap="round"
-                opacity="0.95"
+                opacity="1"
               />
               {/* Tip superior com bloom quente */}
               <g filter="url(#tipBloom)">
-                <circle cx="178" cy="22" r="4.5" fill="white" />
-                <circle cx="178" cy="22" r="7" fill="hsl(150 100% 70%)" opacity="0.9" />
+                <circle cx="218" cy="62" r="5" fill="white" />
+                <circle cx="218" cy="62" r="9" fill="hsl(150 100% 70%)" opacity="0.9" />
               </g>
-              <circle cx="178" cy="22" r="2" fill="white" />
+              <circle cx="218" cy="62" r="2.5" fill="white" />
             </svg>
 
             {/* Conteúdo */}
