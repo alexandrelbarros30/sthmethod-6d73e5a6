@@ -174,8 +174,12 @@ const StudentOverview = () => {
   const firstName = profile?.full_name?.split(" ")[0] || "Aluno";
 
   const {
+    totalMacros: dayTargetMacros,
     consumedMacros: dayMacros,
     progressPercent: dayProgress,
+    waterConsumedMl: dayWaterMl,
+    hydrationGoalL: dayHydrationGoalL,
+    isLoading: mealsLoading,
   } = useMealTracking();
 
   return (
