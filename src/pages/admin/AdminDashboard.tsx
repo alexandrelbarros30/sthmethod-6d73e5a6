@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, AlertCircle, Clock, Bell, CheckCircle, ExternalLink, Check, CreditCard, DollarSign, Link2, ChevronDown, Search, Settings, Sparkles, UserPlus } from "lucide-react";
+import { Users, UserCheck, AlertCircle, Clock, Bell, CheckCircle, ExternalLink, Check, CreditCard, DollarSign, Link2, ChevronDown, Search, Settings, Sparkles, UserPlus, Radio, UserX } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -79,6 +79,34 @@ const AdminDashboard = () => {
     },
   });
 
+  // Online students (last 5 minutes activity in access_logs, role=student)
+  const { data: onlineData } = useQuery({
+    queryKey: ["admin-online-students"],
+    queryFn: async () => {
+      const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      const { data: logs } = await supabase
+        .from("access_logs")
+        .select("user_id, logged_in_at")
+        .gte("logged_in_at", fiveMinAgo)
+        .not("user_id", "is", null);
+      const ids = Array.from(new Set((logs || []).map((l: any) => l.user_id)));
+      if (ids.length === 0) return { ids: [], names: [] as { user_id: string; full_name: string }[] };
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .in("user_id", ids)
+        .eq("role", "student");
+      const studentIds = (roles || []).map((r: any) => r.user_id);
+      if (studentIds.length === 0) return { ids: [], names: [] };
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("user_id, full_name")
+        .in("user_id", studentIds);
+      return { ids: studentIds, names: profs || [] };
+    },
+    refetchInterval: 30_000,
+  });
+
   const { data: recentOnboardings } = useQuery({
     queryKey: ["admin-recent-onboardings"],
     queryFn: async () => {
@@ -153,6 +181,8 @@ const AdminDashboard = () => {
     const end = new Date(s.end_date);
     return s.status === "active" && end > now && end <= in7Days;
   }).length || 0;
+  const onlineCount = onlineData?.ids.length || 0;
+  const inactiveCount = Math.max(0, totalStudents - activeCount);
 
   const metrics = [
     { label: "Total de alunos", value: totalStudents, icon: Users, color: "text-primary" },
@@ -256,6 +286,57 @@ const AdminDashboard = () => {
           </Card>
         ))}
       </div>
+
+      {/* Atividade ao vivo */}
+      <Card className="mb-6 border-success/20 bg-success/5">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base font-display flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-success"></span>
+            </span>
+            Atividade ao vivo
+            <Badge variant="outline" className="ml-auto text-[10px]">atualiza a cada 30s</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-3 mb-3">
+            <div className="rounded-lg bg-background/60 p-3 text-center">
+              <Radio className="w-4 h-4 mx-auto mb-1 text-success" />
+              <p className="text-2xl font-bold text-foreground font-body">{onlineCount}</p>
+              <p className="text-[11px] text-muted-foreground font-body">Online agora</p>
+            </div>
+            <div className="rounded-lg bg-background/60 p-3 text-center">
+              <UserCheck className="w-4 h-4 mx-auto mb-1 text-primary" />
+              <p className="text-2xl font-bold text-foreground font-body">{activeCount}</p>
+              <p className="text-[11px] text-muted-foreground font-body">Ativos</p>
+            </div>
+            <div className="rounded-lg bg-background/60 p-3 text-center">
+              <UserX className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
+              <p className="text-2xl font-bold text-foreground font-body">{inactiveCount}</p>
+              <p className="text-[11px] text-muted-foreground font-body">Inativos</p>
+            </div>
+          </div>
+          {onlineCount > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-2 border-t border-border/50">
+              {onlineData!.names.slice(0, 12).map((p: any) => (
+                <Badge
+                  key={p.user_id}
+                  variant="outline"
+                  className="text-[10px] cursor-pointer hover:bg-success/10"
+                  onClick={() => navigate(`/admin/students?manage=${p.user_id}`)}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-success mr-1.5"></span>
+                  {p.full_name?.split(" ")[0] || "Aluno"}
+                </Badge>
+              ))}
+              {onlineCount > 12 && (
+                <Badge variant="outline" className="text-[10px]">+{onlineCount - 12}</Badge>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="space-y-4">
         {/* 1. Alunos Recentes (moved up) */}
