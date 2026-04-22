@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   Salad, Dumbbell, ChevronRight, Flame, Clock, Utensils,
   Play, UtensilsCrossed, Newspaper, Sparkles,
-  Beaker, Brain, Layers
+  Beaker, Brain, Layers, Bell, Heart, Plus, Droplets, Activity, Target
 } from "lucide-react";
 import cardHormoniosImg from "@/assets/card-hormonios.jpg";
 import cardDicasImg from "@/assets/card-dicas.jpg";
@@ -13,10 +13,10 @@ import cardReceitasImg from "@/assets/card-receitas.jpg";
 import cardCombinacoesImg from "@/assets/card-combinacoes.jpg";
 
 const contentSections = [
-  { id: "hormonios", tag: "Compostos", title: "Hormônios e Compostos", subtitle: "3 famílias · 15 compostos", img: cardHormoniosImg, icon: Beaker, accentHue: "145", meta: "Gamificação interativa" },
-  { id: "dicas", tag: "Estratégia", title: "Dicas Estratégicas", subtitle: "8 temas fundamentais", img: cardDicasImg, icon: Brain, accentHue: "210", meta: "Narrativa interativa" },
-  { id: "receitas", tag: "Nutrição", title: "Receitas Saudáveis", subtitle: "Pratos inteligentes", img: cardReceitasImg, icon: UtensilsCrossed, accentHue: "30", meta: "Macros detalhados" },
-  { id: "combinacoes", tag: "Estratégia", title: "Combinações Estratégicas", subtitle: "Definição · Hipertrofia", img: cardCombinacoesImg, icon: Layers, accentHue: "270", meta: "6 combinações" },
+  { id: "hormonios", tag: "Compostos", title: "Hormônios e Compostos", subtitle: "3 famílias • 15 compostos", img: cardHormoniosImg, icon: Beaker, meta: "Gamificação interativa", progress: 85 },
+  { id: "dicas", tag: "Estratégias", title: "Dicas Essenciais", subtitle: "8 temas • 24 aulas", img: cardDicasImg, icon: Brain, meta: "Narrativas práticas", progress: 40 },
+  { id: "receitas", tag: "Nutrição", title: "Receitas Saudáveis", subtitle: "Pratos inteligentes", img: cardReceitasImg, icon: UtensilsCrossed, meta: "Macros detalhados", progress: 22 },
+  { id: "combinacoes", tag: "Estratégia", title: "Combinações Estratégicas", subtitle: "Definição • Hipertrofia", img: cardCombinacoesImg, icon: Layers, meta: "6 combinações", progress: 10 },
 ];
 import { useMealTracking } from "@/hooks/useMealTracking";
 import DailyProgressRing from "@/components/student/DailyProgressRing";
