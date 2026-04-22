@@ -188,54 +188,77 @@ const StudentOverview = () => {
       <div className="flex items-start gap-3 mb-6 relative">
         <button
           onClick={() => navigate("/dashboard/ads")}
-          className="absolute top-0 right-0 w-9 h-9 rounded-full flex items-center justify-center"
+          className="absolute -top-1 right-0 w-9 h-9 rounded-full flex items-center justify-center z-10"
           aria-label="Notificações"
         >
-          <Bell className="w-[20px] h-[20px] text-foreground/80" />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary))]" />
+          <Bell className="w-[22px] h-[22px] text-foreground/85" strokeWidth={1.6} />
+          <span className="absolute top-1 right-1.5 w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary))]" />
         </button>
 
-        <div className="flex-1 min-w-0 pt-1 pr-10">
-          <p className="text-[15px] text-muted-foreground leading-tight">
+        <div className="flex-1 min-w-0 pt-2">
+          <p className="text-[14px] text-muted-foreground leading-tight">
             {greeting},
           </p>
-          <h1 className="text-[30px] leading-[1.05] font-extrabold text-foreground font-display tracking-tight mt-0.5">
+          <h1 className="text-[34px] leading-[1] font-extrabold text-foreground font-display tracking-tight mt-1">
             {firstName}! <span className="inline-block">👋</span>
           </h1>
-          <p className="text-[12.5px] text-muted-foreground mt-2 leading-snug">
+          <p className="text-[12.5px] text-muted-foreground mt-3 leading-snug max-w-[200px]">
             Acompanhe seu progresso e conquiste seus objetivos.
           </p>
         </div>
 
-        <div className="relative w-[48%] shrink-0 rounded-3xl overflow-hidden border border-primary/30 bg-gradient-to-br from-primary/[0.12] via-white/[0.04] to-transparent backdrop-blur-md p-3.5 mt-6 shadow-[0_0_40px_-8px_hsl(var(--primary)/0.55),inset_0_1px_0_hsl(var(--primary)/0.2)]">
-          {/* Outer aura */}
-          <div className="absolute -inset-4 rounded-[2rem] bg-primary/25 blur-2xl pointer-events-none opacity-70 animate-pulse-glow" />
-          {/* Top-right glow orb */}
-          <div className="absolute -top-14 -right-14 w-36 h-36 rounded-full bg-primary/50 blur-3xl pointer-events-none" />
-          {/* Bottom-left subtle glow */}
-          <div className="absolute -bottom-10 -left-10 w-24 h-24 rounded-full bg-primary/30 blur-3xl pointer-events-none" />
-          <div className="relative">
-            <p className="text-[8.5px] font-bold tracking-[0.22em] text-primary uppercase">Progresso</p>
-            <p className="text-[28px] leading-none font-extrabold text-foreground font-display tracking-tight mt-1.5 tabular-nums">
-              {dayProgress || 72}%
-            </p>
-            <p className="text-[10.5px] text-foreground/70 mt-0.5">da meta mensal</p>
-            <div className="mt-2.5 inline-flex items-center gap-1 text-[9.5px] text-muted-foreground border border-white/[0.08] rounded-full px-2 py-1 bg-white/[0.02]">
-              <Target className="w-2.5 h-2.5 text-primary/80" /> Faltam 8 dias
+        {/* Progress card — fiel à referência */}
+        <div className="relative w-[46%] shrink-0 aspect-[0.95] rounded-[28px] overflow-hidden border border-white/[0.07] bg-[#0d0d0d]/80 backdrop-blur-xl mt-7 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.04)]">
+          {/* Big background glow on right side */}
+          <div className="absolute -right-12 top-1/2 -translate-y-1/2 w-40 h-40 rounded-full bg-primary/35 blur-3xl pointer-events-none" />
+          <div className="absolute -right-8 -top-8 w-28 h-28 rounded-full bg-primary/30 blur-2xl pointer-events-none" />
+
+          {/* The big arc — covers right side from top to bottom, like reference */}
+          <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 200 210" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="bigArcGrad" x1="0%" y1="0%" x2="50%" y2="100%">
+                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="1" />
+                <stop offset="60%" stopColor="hsl(150 95% 48%)" stopOpacity="1" />
+                <stop offset="100%" stopColor="hsl(150 95% 45%)" stopOpacity="0.95" />
+              </linearGradient>
+            </defs>
+            {/* Soft outer glow arc */}
+            <path
+              d="M 178 22 A 110 110 0 0 1 178 188"
+              fill="none"
+              stroke="hsl(var(--primary))"
+              strokeWidth="14"
+              strokeLinecap="round"
+              opacity="0.18"
+              style={{ filter: "blur(6px)" }}
+            />
+            {/* Main arc */}
+            <path
+              d="M 178 22 A 110 110 0 0 1 178 188"
+              fill="none"
+              stroke="url(#bigArcGrad)"
+              strokeWidth="6"
+              strokeLinecap="round"
+              style={{ filter: "drop-shadow(0 0 8px hsl(var(--primary))) drop-shadow(0 0 16px hsl(var(--primary) / 0.6))" }}
+            />
+            {/* Tip glowing dot */}
+            <circle cx="178" cy="22" r="5" fill="hsl(var(--primary))" style={{ filter: "drop-shadow(0 0 10px hsl(var(--primary))) drop-shadow(0 0 18px hsl(var(--primary)))" }} />
+            <circle cx="178" cy="22" r="2.5" fill="white" />
+          </svg>
+
+          {/* Content */}
+          <div className="relative h-full flex flex-col justify-between p-4">
+            <div>
+              <p className="text-[9px] font-bold tracking-[0.24em] text-primary uppercase">Progresso</p>
+              <p className="text-[40px] leading-none font-extrabold text-foreground font-display tracking-tight mt-2 tabular-nums">
+                {dayProgress || 72}%
+              </p>
+              <p className="text-[11px] text-foreground/65 mt-1.5">da meta mensal</p>
             </div>
-            {/* Decorative ring arc with intense glow */}
-            <svg className="absolute -top-1 -right-1 w-20 h-20 -rotate-90 pointer-events-none" viewBox="0 0 80 80">
-              <defs>
-                <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="1" />
-                  <stop offset="100%" stopColor="hsl(170 85% 50%)" stopOpacity="0.9" />
-                </linearGradient>
-              </defs>
-              <circle cx="40" cy="40" r="32" fill="none" stroke="hsl(var(--primary))" strokeWidth="4" strokeLinecap="round" strokeDasharray={2 * Math.PI * 32} strokeDashoffset={2 * Math.PI * 32 * (1 - (dayProgress || 72) / 100)} style={{ filter: "drop-shadow(0 0 10px hsl(var(--primary))) drop-shadow(0 0 20px hsl(var(--primary) / 0.6))" }} opacity="0.4" />
-              <circle cx="40" cy="40" r="32" fill="none" stroke="url(#ringGrad)" strokeWidth="3" strokeLinecap="round" strokeDasharray={2 * Math.PI * 32} strokeDashoffset={2 * Math.PI * 32 * (1 - (dayProgress || 72) / 100)} style={{ filter: "drop-shadow(0 0 4px hsl(var(--primary)))" }} />
-              <circle cx="40" cy="8" r="3" fill="hsl(var(--primary))" style={{ filter: "drop-shadow(0 0 8px hsl(var(--primary))) drop-shadow(0 0 14px hsl(var(--primary)))" }} />
-              <circle cx="40" cy="8" r="1.5" fill="white" />
-            </svg>
+            <div className="inline-flex w-fit items-center gap-1.5 text-[10px] text-foreground/70 border border-white/[0.08] rounded-full px-2.5 py-1.5 bg-white/[0.025] backdrop-blur-sm">
+              <Target className="w-3 h-3 text-foreground/55" />
+              <span>Faltam 8 dias</span>
+            </div>
           </div>
         </div>
       </div>
