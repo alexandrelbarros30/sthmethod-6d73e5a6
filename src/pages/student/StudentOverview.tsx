@@ -185,73 +185,64 @@ const StudentOverview = () => {
       <PreviewUnlockPopup />
 
       {/* ===== HEADER + PROGRESSO LADO A LADO ===== */}
-      <div className="grid grid-cols-[minmax(0,1fr)_8.25rem] items-start gap-3 pr-12 mb-6 relative sm:flex sm:pr-0">
+      <div className="grid grid-cols-[minmax(0,1fr)_8.25rem] items-start gap-4 pr-12 mb-9 relative sm:flex sm:pr-0">
         <button
           onClick={() => navigate("/dashboard/ads")}
-          className="absolute -top-1 right-0 w-9 h-9 rounded-full flex items-center justify-center z-10"
+          className="absolute -top-1 right-0 w-10 h-10 rounded-full flex items-center justify-center z-10 hover:bg-foreground/[0.04] transition-colors"
           aria-label="Notificações"
         >
-          <Bell className="w-[22px] h-[22px] text-foreground/85" strokeWidth={1.6} />
-          <span className="absolute top-1 right-1.5 w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary)),0_0_16px_hsl(var(--primary))]" />
+          <Bell className="w-[21px] h-[21px] text-foreground/80" strokeWidth={1.5} />
+          <span className="absolute top-1.5 right-2 w-[7px] h-[7px] rounded-full bg-primary ring-2 ring-background" />
         </button>
 
-        <div className="flex-1 min-w-0 pt-2">
-          <p className="text-[14px] text-muted-foreground leading-tight">
+        <div className="flex-1 min-w-0 pt-3">
+          <p className="text-[13px] text-muted-foreground/90 leading-tight font-medium tracking-tight">
             {greeting},
           </p>
-          <h1 className="text-[34px] leading-[1] font-extrabold text-foreground font-display tracking-tight mt-1">
-            {firstName}! <span className="inline-block">👋</span>
+          <h1 className="text-[32px] leading-[1.05] font-bold text-foreground font-display tracking-[-0.025em] mt-1.5">
+            {firstName}<span className="text-primary">.</span>
           </h1>
-          <p className="text-[12.5px] text-muted-foreground mt-3 leading-snug max-w-[200px]">
-            Acompanhe seu progresso e conquiste seus objetivos.
+          <p className="text-[12px] text-muted-foreground/80 mt-3.5 leading-relaxed max-w-[200px] tracking-tight">
+            Acompanhe sua jornada e supere seus limites.
           </p>
         </div>
 
-        {/* Progress card — neon bloom real (SVG feGaussianBlur) */}
+        {/* Progress card — Apple-grade: profundidade real, glow contido, tipografia premium */}
         <div className="relative w-full max-w-[8.25rem] shrink-0 aspect-square mt-5 sm:mt-7 sm:w-[46%] sm:max-w-none">
-          {/* Aura externa multi-camada (cria o "vazamento" de luz pra fora do card) */}
-          <div className="absolute -inset-3 sm:-inset-6 rounded-[40px] pointer-events-none" style={{ background: "radial-gradient(60% 60% at 80% 50%, hsl(var(--primary) / 0.55), transparent 70%)", filter: "blur(28px)" }} />
-          <div className="absolute -inset-2 sm:-inset-4 rounded-[36px] pointer-events-none animate-pulse-glow" style={{ background: "radial-gradient(50% 50% at 85% 50%, hsl(var(--primary) / 0.45), transparent 65%)", filter: "blur(20px)" }} />
+          {/* Aura externa MUITO sutil — apenas insinuação de luz */}
+          <div className="absolute -inset-2 rounded-[34px] pointer-events-none opacity-60" style={{ background: "radial-gradient(55% 55% at 78% 50%, hsl(var(--primary) / 0.18), transparent 70%)", filter: "blur(20px)" }} />
 
-          <div className="relative w-full h-full rounded-[28px] border border-primary/30 bg-[#0a0a0a]/90 backdrop-blur-xl shadow-[0_0_60px_-12px_hsl(var(--primary)/0.7),inset_0_1px_0_hsl(var(--primary)/0.2),inset_0_0_40px_-12px_hsl(var(--primary)/0.35)]">
-            {/* Glow radial INTERNO atrás do arco (núcleo de luz quente) */}
-            <div className="absolute inset-0 rounded-[28px] overflow-hidden pointer-events-none">
-              <div className="absolute inset-0" style={{ background: "radial-gradient(45% 55% at 88% 50%, hsl(150 100% 60% / 0.55), hsl(150 95% 45% / 0.18) 35%, transparent 65%)" }} />
-              <div className="absolute inset-0" style={{ background: "radial-gradient(20% 25% at 92% 50%, hsl(0 0% 100% / 0.45), transparent 70%)" }} />
+          <div className="relative w-full h-full rounded-[26px] overflow-hidden bg-gradient-to-br from-[#141414] via-[#0d0d0d] to-[#080808] border border-white/[0.06] shadow-[0_8px_32px_-8px_rgb(0_0_0_/_0.5),0_2px_8px_-2px_rgb(0_0_0_/_0.3),inset_0_1px_0_rgb(255_255_255_/_0.04)]">
+            {/* Highlight superior — vidro fosco premium */}
+            <div className="absolute inset-x-0 top-0 h-[55%] pointer-events-none" style={{ background: "linear-gradient(180deg, rgb(255 255 255 / 0.04) 0%, transparent 100%)" }} />
+
+            {/* Glow radial INTERNO sutil atrás do arco */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute inset-0" style={{ background: "radial-gradient(40% 50% at 85% 50%, hsl(150 80% 50% / 0.22), transparent 65%)" }} />
             </div>
 
-            {/* Arco com bloom REAL via feGaussianBlur + feMerge */}
-            <svg className="absolute -inset-4 sm:-inset-8 w-[calc(100%+2rem)] h-[calc(100%+2rem)] sm:w-[calc(100%+4rem)] sm:h-[calc(100%+4rem)] pointer-events-none overflow-visible" viewBox="0 0 280 280" preserveAspectRatio="xMidYMid meet">
+            {/* Arco com bloom contido e elegante */}
+            <svg className="absolute -inset-2 w-[calc(100%+1rem)] h-[calc(100%+1rem)] pointer-events-none overflow-visible" viewBox="0 0 280 280" preserveAspectRatio="xMidYMid meet">
               <defs>
                 <linearGradient id="bigArcGrad" x1="50%" y1="0%" x2="50%" y2="100%">
-                  <stop offset="0%" stopColor="#ffffff" />
-                  <stop offset="8%" stopColor="hsl(150 100% 88%)" />
-                  <stop offset="25%" stopColor="hsl(150 100% 60%)" />
-                  <stop offset="60%" stopColor="hsl(var(--primary))" />
-                  <stop offset="100%" stopColor="hsl(150 90% 38%)" />
+                  <stop offset="0%" stopColor="hsl(150 90% 80%)" />
+                  <stop offset="35%" stopColor="hsl(150 75% 55%)" />
+                  <stop offset="100%" stopColor="hsl(150 70% 38%)" />
                 </linearGradient>
-                {/* Bloom forte: 3 níveis de blur somados ao traço original */}
-                <filter id="neonBloomStrong" x="-100%" y="-100%" width="300%" height="300%">
-                  <feGaussianBlur stdDeviation="2" result="b1" />
+                {/* Bloom sutil — Apple style: presente mas refinado */}
+                <filter id="neonBloomStrong" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="2.5" result="b1" />
                   <feGaussianBlur stdDeviation="6" result="b2" />
-                  <feGaussianBlur stdDeviation="14" result="b3" />
-                  <feGaussianBlur stdDeviation="24" result="b4" />
                   <feMerge>
-                    <feMergeNode in="b4" />
-                    <feMergeNode in="b3" />
-                    <feMergeNode in="b3" />
-                    <feMergeNode in="b2" />
                     <feMergeNode in="b2" />
                     <feMergeNode in="b1" />
                     <feMergeNode in="SourceGraphic" />
                   </feMerge>
                 </filter>
-                <filter id="tipBloom" x="-200%" y="-200%" width="500%" height="500%">
-                  <feGaussianBlur stdDeviation="3" result="t1" />
-                  <feGaussianBlur stdDeviation="10" result="t2" />
-                  <feGaussianBlur stdDeviation="20" result="t3" />
+                <filter id="tipBloom" x="-100%" y="-100%" width="300%" height="300%">
+                  <feGaussianBlur stdDeviation="2" result="t1" />
+                  <feGaussianBlur stdDeviation="5" result="t2" />
                   <feMerge>
-                    <feMergeNode in="t3" />
                     <feMergeNode in="t2" />
                     <feMergeNode in="t1" />
                     <feMergeNode in="SourceGraphic" />
@@ -259,45 +250,56 @@ const StudentOverview = () => {
                 </filter>
               </defs>
 
-              {/* Arco principal — uma única path com bloom forte */}
+              {/* Trilha de fundo — sutil */}
+              <path
+                d="M 218 62 A 110 110 0 0 1 218 228"
+                fill="none"
+                stroke="rgb(255 255 255 / 0.06)"
+                strokeWidth="5"
+                strokeLinecap="round"
+              />
+              {/* Arco principal — bloom contido */}
               <g filter="url(#neonBloomStrong)">
                 <path
                   d="M 218 62 A 110 110 0 0 1 218 228"
                   fill="none"
                   stroke="url(#bigArcGrad)"
-                  strokeWidth="6"
+                  strokeWidth="5"
                   strokeLinecap="round"
                 />
               </g>
-              {/* Núcleo branco quente sobreposto (a "linha viva" no meio do brilho) */}
+              {/* Núcleo brilhante — fina linha viva */}
               <path
                 d="M 218 62 A 110 110 0 0 1 218 228"
                 fill="none"
                 stroke="white"
-                strokeWidth="2"
+                strokeWidth="1.5"
                 strokeLinecap="round"
-                opacity="1"
+                opacity="0.85"
               />
-              {/* Tip superior com bloom quente */}
+              {/* Tip superior — ponto de luz refinado */}
               <g filter="url(#tipBloom)">
-                <circle cx="218" cy="62" r="5" fill="white" />
-                <circle cx="218" cy="62" r="9" fill="hsl(150 100% 70%)" opacity="0.9" />
+                <circle cx="218" cy="62" r="4" fill="white" />
+                <circle cx="218" cy="62" r="7" fill="hsl(150 95% 65%)" opacity="0.7" />
               </g>
-              <circle cx="218" cy="62" r="2.5" fill="white" />
+              <circle cx="218" cy="62" r="2" fill="white" />
             </svg>
 
             {/* Conteúdo */}
-            <div className="relative h-full flex flex-col justify-between p-3 sm:p-4">
+            <div className="relative h-full flex flex-col justify-between p-3.5 sm:p-4">
               <div>
-                <p className="text-[9px] font-bold tracking-[0.24em] text-primary uppercase" style={{ textShadow: "0 0 12px hsl(var(--primary) / 0.7)" }}>Progresso</p>
-                <p className="text-[32px] sm:text-[40px] leading-none font-extrabold text-foreground font-display tracking-tight mt-2 tabular-nums" style={{ textShadow: "0 0 18px hsl(var(--primary) / 0.45), 0 0 36px hsl(var(--primary) / 0.25)" }}>
-                  {dayProgress || 72}%
-                </p>
-                <p className="text-[10px] sm:text-[11px] text-foreground/70 mt-1.5">da meta mensal</p>
+                <p className="text-[8.5px] font-semibold tracking-[0.28em] text-primary/90 uppercase">Progresso</p>
+                <div className="flex items-baseline gap-0.5 mt-2.5">
+                  <p className="text-[34px] sm:text-[40px] leading-[0.9] font-bold text-white font-display tracking-[-0.04em] tabular-nums">
+                    {dayProgress || 72}
+                  </p>
+                  <span className="text-[16px] font-semibold text-white/50 tracking-tight">%</span>
+                </div>
+                <p className="text-[10px] text-white/45 mt-2 tracking-tight font-medium">meta mensal</p>
               </div>
-              <div className="inline-flex w-fit max-w-full items-center gap-1 text-[9px] sm:text-[10px] text-foreground/85 border border-primary/30 rounded-full px-2 py-1.5 sm:px-2.5 bg-primary/10 backdrop-blur-sm shadow-[0_0_18px_-4px_hsl(var(--primary)/0.5),inset_0_0_8px_-2px_hsl(var(--primary)/0.3)]">
-                <Target className="w-3 h-3 text-primary" style={{ filter: "drop-shadow(0 0 4px hsl(var(--primary)))" }} />
-                <span>Faltam 8 dias</span>
+              <div className="inline-flex w-fit max-w-full items-center gap-1.5 text-[9.5px] text-white/85 rounded-full px-2 py-1 bg-white/[0.06] border border-white/[0.08] backdrop-blur-md font-medium tracking-tight">
+                <Target className="w-2.5 h-2.5 text-primary" strokeWidth={2.2} />
+                <span>8 dias</span>
               </div>
             </div>
           </div>
@@ -305,44 +307,43 @@ const StudentOverview = () => {
       </div>
 
       {/* ===== STH NEWS ===== */}
-      <Link to="/tendencias/recomposicao-avancada" className="block mb-7">
-        <div className="relative rounded-2xl overflow-hidden border border-white/[0.08] bg-white/[0.035] backdrop-blur-md hover:border-primary/25 transition-all group">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/8 via-transparent to-transparent pointer-events-none" />
-          <div className="absolute -inset-px rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" style={{ boxShadow: "inset 0 0 0 1px hsl(var(--primary) / 0.25), 0 0 24px hsl(var(--primary) / 0.12)" }} />
-          <div className="relative flex items-center gap-3 p-3.5">
-            <div className="w-11 h-11 rounded-xl bg-primary/12 border border-primary/20 flex items-center justify-center shrink-0">
-              <Newspaper className="w-5 h-5 text-primary" />
+      <Link to="/tendencias/recomposicao-avancada" className="block mb-8">
+        <div className="relative rounded-[20px] overflow-hidden border border-white/[0.06] bg-gradient-to-br from-white/[0.04] to-white/[0.015] backdrop-blur-xl hover:border-primary/20 transition-all duration-300 group shadow-[0_4px_16px_-4px_rgb(0_0_0_/_0.3),inset_0_1px_0_rgb(255_255_255_/_0.04)]">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/[0.04] via-transparent to-transparent pointer-events-none" />
+          <div className="relative flex items-center gap-3.5 p-4">
+            <div className="w-12 h-12 rounded-2xl bg-primary/[0.08] border border-primary/15 flex items-center justify-center shrink-0">
+              <Newspaper className="w-[20px] h-[20px] text-primary" strokeWidth={1.8} />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="text-[9px] font-black tracking-[0.22em] text-primary uppercase">STH News</span>
-                <span className="inline-flex items-center gap-0.5 text-[8px] font-bold uppercase bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">
-                  <Sparkles className="w-2 h-2" /> Nova
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <span className="text-[9px] font-bold tracking-[0.24em] text-primary uppercase">STH News</span>
+                <span className="inline-flex items-center gap-0.5 text-[8px] font-semibold uppercase tracking-wider bg-primary/15 text-primary px-1.5 py-0.5 rounded-full border border-primary/20">
+                  <Sparkles className="w-2 h-2" strokeWidth={2.5} /> Nova
                 </span>
               </div>
-              <p className="font-semibold text-foreground text-[13.5px] leading-tight truncate">
-                🔥 Reposição Corporal: o guia completo
+              <p className="font-semibold text-foreground text-[13.5px] leading-tight truncate tracking-tight">
+                Recomposição Corporal: o guia completo
               </p>
-              <p className="text-[11px] text-muted-foreground truncate mt-0.5">
-                Última matéria em destaque • Toque para ler
+              <p className="text-[11px] text-muted-foreground/80 truncate mt-1 tracking-tight">
+                Última matéria em destaque
               </p>
             </div>
-            <ChevronRight className="w-4 h-4 text-primary/80 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+            <ChevronRight className="w-4 h-4 text-foreground/40 shrink-0 group-hover:text-primary group-hover:translate-x-0.5 transition-all" strokeWidth={2} />
           </div>
         </div>
       </Link>
 
       {/* ===== CONTEÚDO STH METHOD ===== */}
-      <div className="mb-7">
-        <div className="flex items-end justify-between mb-3.5">
+      <div className="mb-9">
+        <div className="flex items-end justify-between mb-4">
           <div>
-            <p className="text-[10px] text-primary font-bold uppercase tracking-[0.22em]">STH Method</p>
-            <h2 className="text-[19px] font-bold text-foreground font-display tracking-tight leading-tight mt-0.5">
+            <p className="text-[9.5px] text-primary/90 font-semibold uppercase tracking-[0.24em]">STH Method</p>
+            <h2 className="text-[20px] font-bold text-foreground font-display tracking-[-0.025em] leading-tight mt-1">
               Conteúdo
             </h2>
           </div>
-          <Link to="/dashboard/content" className="text-[12px] text-primary font-medium flex items-center gap-0.5 pb-1">
-            Ver tudo <ChevronRight className="w-3.5 h-3.5" />
+          <Link to="/dashboard/content" className="text-[12px] text-primary font-medium flex items-center gap-0.5 pb-1 tracking-tight">
+            Ver tudo <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
           </Link>
         </div>
         <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-4 px-4 pb-2">
@@ -352,35 +353,35 @@ const StudentOverview = () => {
               <button
                 key={s.id}
                 onClick={() => navigate(s.id === "receitas" ? "/dashboard/recipes" : `/dashboard/content?section=${s.id}`)}
-                className="snap-start shrink-0 w-[78vw] max-w-[300px] text-left rounded-2xl overflow-hidden relative group border border-white/[0.08] bg-white/[0.03] backdrop-blur-md active:scale-[0.98] transition-transform"
+                className="snap-start shrink-0 w-[78vw] max-w-[300px] text-left rounded-[22px] overflow-hidden relative group border border-white/[0.06] bg-white/[0.025] backdrop-blur-xl active:scale-[0.98] transition-all duration-300 shadow-[0_8px_24px_-8px_rgb(0_0_0_/_0.4),0_2px_6px_-2px_rgb(0_0_0_/_0.2),inset_0_1px_0_rgb(255_255_255_/_0.04)] hover:border-white/[0.1]"
               >
-                <div className="relative h-44 overflow-hidden">
+                <div className="relative h-48 overflow-hidden">
                   <img src={s.img} alt={s.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" width={600} height={352} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/10" />
-                  <div className="absolute top-3 left-3">
-                    <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.22em] font-bold px-2 py-1 rounded-full backdrop-blur-md bg-primary/12 text-primary border border-primary/25">
-                      <Icon className="w-2.5 h-2.5" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-transparent" />
+                  <div className="absolute top-3.5 left-3.5">
+                    <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.24em] font-semibold px-2.5 py-1 rounded-full backdrop-blur-xl bg-white/10 text-white border border-white/15">
+                      <Icon className="w-2.5 h-2.5" strokeWidth={2.2} />
                       {s.tag}
                     </span>
                   </div>
                   {/* progress mini ring */}
-                  <div className="absolute bottom-3 right-3 w-11 h-11 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center">
+                  <div className="absolute bottom-3.5 right-3.5 w-11 h-11 rounded-full bg-black/50 backdrop-blur-xl border border-white/10 flex items-center justify-center">
                     <svg className="absolute inset-0 -rotate-90" viewBox="0 0 44 44">
-                      <circle cx="22" cy="22" r="18" fill="none" stroke="hsl(var(--muted))" strokeWidth="3" opacity="0.3" />
-                      <circle cx="22" cy="22" r="18" fill="none" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" strokeDasharray={2 * Math.PI * 18} strokeDashoffset={2 * Math.PI * 18 * (1 - s.progress / 100)} style={{ filter: "drop-shadow(0 0 4px hsl(var(--primary) / 0.6))" }} />
+                      <circle cx="22" cy="22" r="18" fill="none" stroke="rgb(255 255 255 / 0.12)" strokeWidth="2.5" />
+                      <circle cx="22" cy="22" r="18" fill="none" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" strokeDasharray={2 * Math.PI * 18} strokeDashoffset={2 * Math.PI * 18 * (1 - s.progress / 100)} />
                     </svg>
-                    <span className="relative text-[9px] font-bold text-foreground tabular-nums">{s.progress}%</span>
+                    <span className="relative text-[9.5px] font-semibold text-white tabular-nums tracking-tight">{s.progress}%</span>
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 p-3.5 pr-16">
-                    <h3 className="text-[15.5px] font-bold tracking-tight leading-tight text-white">{s.title}</h3>
-                    <p className="text-[11px] text-white/60 mt-0.5">{s.subtitle}</p>
+                  <div className="absolute bottom-0 left-0 right-0 p-4 pr-16">
+                    <h3 className="text-[16px] font-semibold tracking-[-0.02em] leading-tight text-white">{s.title}</h3>
+                    <p className="text-[11px] text-white/55 mt-1 tracking-tight">{s.subtitle}</p>
                   </div>
                 </div>
-                <div className="px-3.5 py-2.5 flex items-center justify-between bg-white/[0.02] border-t border-white/[0.06]">
-                  <span className="text-[10.5px] font-medium text-muted-foreground">{s.meta}</span>
+                <div className="px-4 py-3 flex items-center justify-between bg-white/[0.015] border-t border-white/[0.04]">
+                  <span className="text-[10.5px] font-medium text-muted-foreground/80 tracking-tight">{s.meta}</span>
                   <div className="flex items-center gap-0.5 text-primary">
-                    <span className="text-[10.5px] font-semibold">Explorar</span>
-                    <ChevronRight className="w-3 h-3" />
+                    <span className="text-[10.5px] font-semibold tracking-tight">Explorar</span>
+                    <ChevronRight className="w-3 h-3" strokeWidth={2.2} />
                   </div>
                 </div>
               </button>
@@ -390,11 +391,14 @@ const StudentOverview = () => {
       </div>
 
       {/* ===== RECEITAS SAUDÁVEIS ===== */}
-      <div className="mb-7">
-        <div className="flex items-end justify-between mb-3.5">
-          <h2 className="text-[17px] font-bold text-foreground font-display tracking-tight">Receitas Saudáveis</h2>
-          <Link to="/dashboard/recipes" className="text-[12px] text-primary font-medium flex items-center gap-0.5 pb-0.5">
-            Ver todas <ChevronRight className="w-3.5 h-3.5" />
+      <div className="mb-9">
+        <div className="flex items-end justify-between mb-4">
+          <div>
+            <p className="text-[9.5px] text-primary/90 font-semibold uppercase tracking-[0.24em]">Cozinha</p>
+            <h2 className="text-[20px] font-bold text-foreground font-display tracking-[-0.025em] leading-tight mt-1">Receitas</h2>
+          </div>
+          <Link to="/dashboard/recipes" className="text-[12px] text-primary font-medium flex items-center gap-0.5 pb-1 tracking-tight">
+            Ver todas <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
           </Link>
         </div>
         <div className="grid grid-cols-3 gap-2.5">
@@ -402,35 +406,35 @@ const StudentOverview = () => {
             <button
               key={recipe.id}
               onClick={() => navigate("/dashboard/recipes")}
-              className="text-left rounded-2xl overflow-hidden relative group border border-white/[0.08] bg-white/[0.03] backdrop-blur-md active:scale-[0.97] transition-transform"
+              className="text-left rounded-[18px] overflow-hidden relative group border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl active:scale-[0.97] transition-all duration-300 shadow-[0_4px_16px_-4px_rgb(0_0_0_/_0.35),inset_0_1px_0_rgb(255_255_255_/_0.04)]"
             >
               <div className="relative aspect-[4/5] overflow-hidden">
                 <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" width={200} height={250} />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
                 {recipe.isNew && (
-                  <span className="absolute top-1.5 left-1.5 text-[8px] font-bold tracking-[0.15em] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">
-                    NOVO
+                  <span className="absolute top-2 left-2 text-[7.5px] font-semibold tracking-[0.18em] bg-white/15 backdrop-blur-xl text-white px-1.5 py-0.5 rounded-full border border-white/20">
+                    NEW
                   </span>
                 )}
                 <button
                   onClick={(e) => e.stopPropagation()}
-                  className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/40 backdrop-blur-md border border-white/15 flex items-center justify-center"
+                  className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/35 backdrop-blur-xl border border-white/15 flex items-center justify-center"
                   aria-label="Favoritar"
                 >
-                  <Heart className="w-3 h-3 text-white/85" />
+                  <Heart className="w-3 h-3 text-white/85" strokeWidth={2} />
                 </button>
-                <div className="absolute bottom-1.5 left-1.5 right-9">
-                  <p className="text-[10px] font-bold text-white leading-tight line-clamp-2">{recipe.title}</p>
-                  <p className="text-[8.5px] text-white/65 mt-0.5 flex items-center gap-1">
-                    <Clock className="w-2 h-2" /> {recipe.time} min • {recipe.kcal} kcal
+                <div className="absolute bottom-2 left-2 right-9">
+                  <p className="text-[10.5px] font-semibold text-white leading-tight line-clamp-2 tracking-[-0.01em]">{recipe.title}</p>
+                  <p className="text-[8.5px] text-white/60 mt-1 flex items-center gap-1 tracking-tight">
+                    <Clock className="w-2 h-2" strokeWidth={2.2} /> {recipe.time}min · {recipe.kcal}kcal
                   </p>
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); navigate("/dashboard/recipes"); }}
-                  className="absolute bottom-1.5 right-1.5 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-[0_0_10px_hsl(var(--primary)/0.5)]"
+                  className="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-white text-black flex items-center justify-center shadow-[0_2px_8px_rgb(0_0_0_/_0.3)]"
                   aria-label="Abrir receita"
                 >
-                  <Plus className="w-3 h-3" />
+                  <Plus className="w-3 h-3" strokeWidth={2.5} />
                 </button>
               </div>
             </button>
@@ -439,45 +443,35 @@ const StudentOverview = () => {
       </div>
 
       {/* ===== RESUMO DO DIA - HORIZONTAL ===== */}
-      <div className="mb-4 relative rounded-3xl overflow-hidden border border-primary/15 bg-white/[0.03] backdrop-blur-md p-3.5 shadow-[0_0_30px_-12px_hsl(var(--primary)/0.4),inset_0_1px_0_hsl(var(--primary)/0.08)]">
-        <div className="absolute -bottom-20 -left-16 w-48 h-48 rounded-full bg-primary/15 blur-3xl pointer-events-none" />
-        <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-primary/12 blur-3xl pointer-events-none" />
+      <div className="mb-5 relative rounded-[22px] overflow-hidden border border-white/[0.06] bg-gradient-to-br from-white/[0.04] to-white/[0.015] backdrop-blur-xl p-4 shadow-[0_8px_24px_-8px_rgb(0_0_0_/_0.4),inset_0_1px_0_rgb(255_255_255_/_0.04)]">
+        <div className="absolute -bottom-24 -left-20 w-52 h-52 rounded-full bg-primary/[0.06] blur-3xl pointer-events-none" />
         <div className="relative">
-          <p className="text-[9px] font-bold tracking-[0.22em] text-primary uppercase mb-2.5">Resumo do dia</p>
-          <div className="flex items-center gap-2">
+          <p className="text-[9px] font-semibold tracking-[0.26em] text-primary/90 uppercase mb-3.5">Resumo do dia</p>
+          <div className="flex items-center gap-2.5">
             <div className="flex-1 min-w-0 flex items-start gap-2">
-              <Flame className="w-4 h-4 text-primary shrink-0 mt-0.5" style={{ filter: "drop-shadow(0 0 6px hsl(var(--primary))) drop-shadow(0 0 12px hsl(var(--primary)/0.6))" }} />
+              <Flame className="w-[15px] h-[15px] text-primary shrink-0 mt-0.5" strokeWidth={1.8} />
               <div className="min-w-0">
-                <p className="text-[14px] font-bold text-foreground tabular-nums leading-none truncate">
+                <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none truncate tracking-[-0.02em]">
                   {dayMacros?.kcal ? Math.round(dayMacros.kcal).toLocaleString("pt-BR") : "1.842"}
                 </p>
-                <p className="text-[9px] text-muted-foreground mt-1 leading-tight">kcal consumidas</p>
+                <p className="text-[9px] text-muted-foreground/75 mt-1.5 leading-tight tracking-tight">kcal</p>
               </div>
             </div>
-            <div className="w-px h-9 bg-gradient-to-b from-transparent via-primary/30 to-transparent" />
+            <div className="w-px h-10 bg-gradient-to-b from-transparent via-white/10 to-transparent" />
             <div className="flex-1 min-w-0 flex items-start gap-2">
-              <Activity className="w-4 h-4 text-primary shrink-0 mt-0.5" style={{ filter: "drop-shadow(0 0 6px hsl(var(--primary))) drop-shadow(0 0 12px hsl(var(--primary)/0.6))" }} />
+              <Activity className="w-[15px] h-[15px] text-primary shrink-0 mt-0.5" strokeWidth={1.8} />
               <div className="min-w-0">
-                <p className="text-[14px] font-bold text-foreground tabular-nums leading-none">82 min</p>
-                <p className="text-[9px] text-muted-foreground mt-1 leading-tight">treino concluído</p>
+                <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none tracking-[-0.02em]">82<span className="text-[10px] font-medium text-muted-foreground ml-0.5">min</span></p>
+                <p className="text-[9px] text-muted-foreground/75 mt-1.5 leading-tight tracking-tight">treino</p>
               </div>
             </div>
-            <div className="w-px h-9 bg-gradient-to-b from-transparent via-primary/30 to-transparent" />
+            <div className="w-px h-10 bg-gradient-to-b from-transparent via-white/10 to-transparent" />
             <div className="flex-1 min-w-0 flex items-start gap-2">
-              <Droplets className="w-4 h-4 text-primary shrink-0 mt-0.5" style={{ filter: "drop-shadow(0 0 6px hsl(var(--primary))) drop-shadow(0 0 12px hsl(var(--primary)/0.6))" }} />
+              <Droplets className="w-[15px] h-[15px] text-primary shrink-0 mt-0.5" strokeWidth={1.8} />
               <div className="min-w-0">
-                <p className="text-[14px] font-bold text-foreground tabular-nums leading-none">2,1 L</p>
-                <p className="text-[9px] text-muted-foreground mt-1 leading-tight">água ingerida</p>
+                <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none tracking-[-0.02em]">2,1<span className="text-[10px] font-medium text-muted-foreground ml-0.5">L</span></p>
+                <p className="text-[9px] text-muted-foreground/75 mt-1.5 leading-tight tracking-tight">água</p>
               </div>
-            </div>
-            <div className="w-px h-9 bg-gradient-to-b from-transparent via-primary/30 to-transparent" />
-            <div className="shrink-0 rounded-2xl bg-primary/12 border border-primary/35 px-2.5 py-2 flex items-center gap-1.5 relative overflow-hidden shadow-[0_0_20px_-6px_hsl(var(--primary)/0.6),inset_0_0_12px_-4px_hsl(var(--primary)/0.4)]">
-              <div className="absolute -top-4 -right-4 w-14 h-14 rounded-full bg-primary/40 blur-2xl" />
-              <div className="w-6 h-6 rounded-full border border-primary/60 flex items-center justify-center relative" style={{ boxShadow: "0 0 10px hsl(var(--primary)/0.6), inset 0 0 6px hsl(var(--primary)/0.4)" }}>
-                <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary)),0_0_14px_hsl(var(--primary))]" />
-              </div>
-              <p className="text-[10px] font-bold text-foreground leading-tight relative max-w-[60px]">Foco no processo!</p>
-              <ChevronRight className="w-3 h-3 text-primary/70 relative" />
             </div>
           </div>
         </div>
