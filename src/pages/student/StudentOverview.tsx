@@ -88,14 +88,16 @@ const DailyMealWidget = () => {
   if (isLoading || meals.length === 0) return null;
 
   return (
-    <Card className="mb-6 premium-card border-primary/10 overflow-hidden animate-fade-in">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
-      <CardHeader className="pb-2 relative">
-        <CardTitle className="text-sm font-bold flex items-center gap-2 tracking-tight">
-          <Utensils className="w-4 h-4 text-primary" /> Progresso do Dia
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="relative">
+    <div className="mb-6 relative rounded-[22px] overflow-hidden border border-white/[0.06] bg-white/[0.025] backdrop-blur-xl shadow-[0_8px_24px_-8px_rgb(0_0_0_/_0.4),0_2px_6px_-2px_rgb(0_0_0_/_0.2),inset_0_1px_0_rgb(255_255_255_/_0.05)] animate-fade-in">
+      <div className="absolute inset-0 pointer-events-none opacity-50" style={{ background: "linear-gradient(115deg, transparent 38%, rgb(255 255 255 / 0.05) 50%, transparent 65%)" }} />
+      <div className="absolute inset-x-0 top-0 h-2/5 pointer-events-none" style={{ background: "linear-gradient(180deg, rgb(255 255 255 / 0.04) 0%, transparent 100%)" }} />
+      <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-primary/[0.08] blur-3xl pointer-events-none" />
+      <div className="px-6 pt-6 pb-2 relative">
+        <h3 className="text-sm font-bold flex items-center gap-2 tracking-tight text-foreground">
+          <Utensils className="w-4 h-4 text-primary neon-icon" /> Progresso do Dia
+        </h3>
+      </div>
+      <div className="px-6 pb-6 relative">
         <div className="flex items-center gap-4">
           <DailyProgressRing
             percent={progressPercent}
@@ -127,8 +129,8 @@ const DailyMealWidget = () => {
             </Button>
           </Link>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 
