@@ -58,7 +58,7 @@ const FloatingDock = () => {
           initial={{ y: 60, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: "spring", stiffness: 380, damping: 28, delay: 0.1 }}
-          className="relative flex items-center justify-around rounded-[22px] bg-card border border-border shadow-apple-lg px-2 py-2.5"
+          className="relative flex items-center justify-around rounded-[26px] border border-white/[0.08] bg-black/70 backdrop-blur-xl px-2 py-2.5 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)]"
         >
           {mainItems.map((item) => {
             const Icon = item.icon;
@@ -73,14 +73,16 @@ const FloatingDock = () => {
                 >
                   <motion.div
                     whileTap={{ scale: 0.92 }}
+                    animate={{ boxShadow: [
+                      "0 0 0 0 hsl(var(--primary) / 0.45), 0 8px 24px -6px hsl(var(--primary) / 0.5)",
+                      "0 0 0 8px hsl(var(--primary) / 0), 0 8px 24px -6px hsl(var(--primary) / 0.5)",
+                    ]}}
+                    transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut" }}
                     className={cn(
-                      "w-[52px] h-[52px] rounded-full flex items-center justify-center transition-all duration-300",
-                      active
-                        ? "bg-primary shadow-apple"
-                        : "bg-primary/85 shadow-apple-sm"
+                      "w-[54px] h-[54px] rounded-full flex items-center justify-center bg-primary"
                     )}
                   >
-                    <Icon className="w-5 h-5 text-primary-foreground" />
+                    <Icon className="w-[22px] h-[22px] text-primary-foreground" />
                   </motion.div>
                   <span className={cn(
                     "text-[10px] mt-1 font-medium transition-colors",
