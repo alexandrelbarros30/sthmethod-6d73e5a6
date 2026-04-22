@@ -291,27 +291,30 @@ const StudentOverview = () => {
 
       {/* ===== STH NEWS ===== */}
       <Link to="/tendencias/recomposicao-avancada" className="block mb-8">
-        <div className="relative rounded-[20px] overflow-hidden border border-white/[0.06] bg-gradient-to-br from-white/[0.04] to-white/[0.015] backdrop-blur-xl hover:border-primary/20 transition-all duration-300 group shadow-[0_4px_16px_-4px_rgb(0_0_0_/_0.3),inset_0_1px_0_rgb(255_255_255_/_0.04)]">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/[0.04] via-transparent to-transparent pointer-events-none" />
-          <div className="relative flex items-center gap-3.5 p-4">
-            <div className="w-12 h-12 rounded-2xl bg-primary/[0.08] border border-primary/15 flex items-center justify-center shrink-0">
-              <Newspaper className="w-[20px] h-[20px] text-primary" strokeWidth={1.8} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <span className="text-[9px] font-bold tracking-[0.24em] text-primary uppercase">STH News</span>
-                <span className="inline-flex items-center gap-0.5 text-[8px] font-semibold uppercase tracking-wider bg-primary/15 text-primary px-1.5 py-0.5 rounded-full border border-primary/20">
-                  <Sparkles className="w-2 h-2" strokeWidth={2.5} /> Nova
-                </span>
+        <div className="relative rounded-[20px] p-[1px] group" style={{ background: "linear-gradient(135deg, rgb(255 255 255 / 0.1) 0%, rgb(255 255 255 / 0.02) 50%, hsl(150 70% 50% / 0.18) 100%)" }}>
+          <div className="relative rounded-[19px] overflow-hidden bg-gradient-to-br from-[#0f0f0f] via-[#0a0a0a] to-[#080808] backdrop-blur-xl shadow-[0_8px_24px_-8px_rgb(0_0_0_/_0.5),0_2px_6px_-2px_rgb(0_0_0_/_0.3),inset_0_1px_0_rgb(255_255_255_/_0.04)] transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/[0.06] via-transparent to-transparent pointer-events-none" />
+            <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-primary/[0.08] blur-3xl pointer-events-none" />
+            <div className="relative flex items-center gap-3.5 p-4">
+              <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/[0.18] to-primary/[0.04] border border-primary/20 flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.06),0_4px_12px_-4px_hsl(var(--primary)/0.3)]">
+                <Newspaper className="w-[20px] h-[20px] text-primary" strokeWidth={1.8} />
               </div>
-              <p className="font-semibold text-foreground text-[13.5px] leading-tight truncate tracking-tight">
-                Recomposição Corporal: o guia completo
-              </p>
-              <p className="text-[11px] text-muted-foreground/80 truncate mt-1 tracking-tight">
-                Última matéria em destaque
-              </p>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <span className="text-[9px] font-bold tracking-[0.24em] text-primary/95 uppercase">STH News</span>
+                  <span className="inline-flex items-center gap-0.5 text-[8px] font-semibold uppercase tracking-wider bg-primary/15 text-primary px-1.5 py-0.5 rounded-full border border-primary/20">
+                    <span className="w-1 h-1 rounded-full bg-primary animate-pulse" /> Nova
+                  </span>
+                </div>
+                <p className="font-semibold text-foreground text-[13.5px] leading-tight truncate tracking-[-0.015em]">
+                  Recomposição Corporal: o guia completo
+                </p>
+                <p className="text-[11px] text-muted-foreground/70 truncate mt-1 tracking-tight">
+                  Última matéria em destaque
+                </p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-foreground/40 shrink-0 group-hover:text-primary group-hover:translate-x-0.5 transition-all" strokeWidth={2} />
             </div>
-            <ChevronRight className="w-4 h-4 text-foreground/40 shrink-0 group-hover:text-primary group-hover:translate-x-0.5 transition-all" strokeWidth={2} />
           </div>
         </div>
       </Link>
