@@ -386,14 +386,6 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
               {renderSlot("after", "Foto Depois")}
             </div>
 
-            {canGenerate && (
-              <div className="flex flex-wrap gap-2 justify-center pt-1">
-                <Button variant="outline" size="sm" onClick={matchSize}>
-                  <Wand2 className="w-3.5 h-3.5" /> Igualar tamanho
-                </Button>
-              </div>
-            )}
-
             <Button
               size="lg"
               className="w-full text-base"
