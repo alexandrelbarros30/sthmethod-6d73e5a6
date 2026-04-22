@@ -310,7 +310,7 @@ const StudentOverview = () => {
             <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-primary/[0.14] blur-3xl pointer-events-none" />
             <div className="relative flex items-center gap-3.5 p-4">
               <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/[0.18] to-primary/[0.04] border border-primary/20 flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.06),0_4px_12px_-4px_hsl(var(--primary)/0.3)]">
-                <Newspaper className="w-[20px] h-[20px] text-primary" strokeWidth={1.8} />
+                <Newspaper className="w-[20px] h-[20px] text-primary neon-icon" strokeWidth={1.8} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-1.5">

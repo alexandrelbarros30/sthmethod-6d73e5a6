@@ -82,7 +82,7 @@ const FloatingDock = () => {
                       "w-[54px] h-[54px] rounded-full flex items-center justify-center bg-primary"
                     )}
                   >
-                    <Icon className="w-[22px] h-[22px] text-primary-foreground" />
+                    <Icon className="w-[22px] h-[22px] text-primary-foreground drop-shadow-[0_0_6px_rgb(255_255_255_/_0.6)]" />
                   </motion.div>
                   <span className={cn(
                     "text-[10px] mt-1 font-medium transition-colors",
@@ -105,11 +105,11 @@ const FloatingDock = () => {
                   className={cn(
                     "w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-200",
                     active
-                      ? "bg-primary/12 text-primary"
+                      ? "bg-primary/15 text-primary shadow-[0_0_14px_-2px_hsl(var(--primary)/0.55),inset_0_0_8px_hsl(var(--primary)/0.15)]"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <Icon className="w-[18px] h-[18px]" />
+                  <Icon className={cn("w-[18px] h-[18px]", active && "neon-icon")} />
                 </motion.div>
                 <span className={cn(
                   "text-[10px] font-medium transition-colors",
