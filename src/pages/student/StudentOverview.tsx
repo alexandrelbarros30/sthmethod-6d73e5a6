@@ -209,97 +209,80 @@ const StudentOverview = () => {
 
         {/* Progress card — Apple-grade: profundidade real, glow contido, tipografia premium */}
         <div className="relative w-full max-w-[8.25rem] shrink-0 aspect-square mt-5 sm:mt-7 sm:w-[46%] sm:max-w-none">
-          {/* Aura externa MUITO sutil — apenas insinuação de luz */}
-          <div className="absolute -inset-2 rounded-[34px] pointer-events-none opacity-60" style={{ background: "radial-gradient(55% 55% at 78% 50%, hsl(var(--primary) / 0.18), transparent 70%)", filter: "blur(20px)" }} />
+          {/* Aura externa — insinuação de luz verde difusa */}
+          <div className="absolute -inset-3 rounded-[36px] pointer-events-none opacity-70" style={{ background: "radial-gradient(60% 60% at 75% 50%, hsl(150 80% 45% / 0.22), transparent 70%)", filter: "blur(24px)" }} />
 
-          <div className="relative w-full h-full rounded-[26px] overflow-hidden bg-gradient-to-br from-[#141414] via-[#0d0d0d] to-[#080808] border border-white/[0.06] shadow-[0_8px_32px_-8px_rgb(0_0_0_/_0.5),0_2px_8px_-2px_rgb(0_0_0_/_0.3),inset_0_1px_0_rgb(255_255_255_/_0.04)]">
-            {/* Highlight superior — vidro fosco premium */}
-            <div className="absolute inset-x-0 top-0 h-[55%] pointer-events-none" style={{ background: "linear-gradient(180deg, rgb(255 255 255 / 0.04) 0%, transparent 100%)" }} />
+          {/* Borda gradiente premium (técnica padding-box/border-box) */}
+          <div className="relative w-full h-full rounded-[26px] p-[1px]" style={{ background: "linear-gradient(160deg, rgb(255 255 255 / 0.14) 0%, rgb(255 255 255 / 0.04) 35%, rgb(255 255 255 / 0.02) 65%, hsl(150 70% 50% / 0.18) 100%)" }}>
+            <div className="relative w-full h-full rounded-[25px] overflow-hidden bg-gradient-to-br from-[#161616] via-[#0c0c0c] to-[#050505] shadow-[0_12px_36px_-10px_rgb(0_0_0_/_0.6),0_4px_12px_-4px_rgb(0_0_0_/_0.4),inset_0_1px_0_rgb(255_255_255_/_0.05)]">
+              {/* Highlight superior — reflexo de vidro */}
+              <div className="absolute inset-x-0 top-0 h-[60%] pointer-events-none" style={{ background: "linear-gradient(180deg, rgb(255 255 255 / 0.06) 0%, rgb(255 255 255 / 0.015) 40%, transparent 100%)" }} />
+              {/* Vinheta inferior — peso e profundidade */}
+              <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(120% 80% at 50% 110%, rgb(0 0 0 / 0.4), transparent 60%)" }} />
+              {/* Glow radial INTERNO atrás do arco */}
+              <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(45% 55% at 88% 50%, hsl(150 85% 50% / 0.28), transparent 65%)" }} />
+              {/* Noise sutil — textura de produto premium */}
+              <div className="absolute inset-0 pointer-events-none opacity-[0.025] mix-blend-overlay" style={{ backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")" }} />
 
-            {/* Glow radial INTERNO sutil atrás do arco */}
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute inset-0" style={{ background: "radial-gradient(40% 50% at 85% 50%, hsl(150 80% 50% / 0.22), transparent 65%)" }} />
-            </div>
+              {/* Arco com bloom contido e elegante */}
+              <svg className="absolute -inset-2 w-[calc(100%+1rem)] h-[calc(100%+1rem)] pointer-events-none overflow-visible" viewBox="0 0 280 280" preserveAspectRatio="xMidYMid meet">
+                <defs>
+                  <linearGradient id="bigArcGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+                    <stop offset="0%" stopColor="hsl(150 95% 82%)" />
+                    <stop offset="35%" stopColor="hsl(150 78% 56%)" />
+                    <stop offset="100%" stopColor="hsl(150 72% 36%)" />
+                  </linearGradient>
+                  <filter id="neonBloomStrong" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="2.5" result="b1" />
+                    <feGaussianBlur stdDeviation="6" result="b2" />
+                    <feMerge>
+                      <feMergeNode in="b2" />
+                      <feMergeNode in="b1" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                  <filter id="tipBloom" x="-100%" y="-100%" width="300%" height="300%">
+                    <feGaussianBlur stdDeviation="2" result="t1" />
+                    <feGaussianBlur stdDeviation="5" result="t2" />
+                    <feMerge>
+                      <feMergeNode in="t2" />
+                      <feMergeNode in="t1" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
 
-            {/* Arco com bloom contido e elegante */}
-            <svg className="absolute -inset-2 w-[calc(100%+1rem)] h-[calc(100%+1rem)] pointer-events-none overflow-visible" viewBox="0 0 280 280" preserveAspectRatio="xMidYMid meet">
-              <defs>
-                <linearGradient id="bigArcGrad" x1="50%" y1="0%" x2="50%" y2="100%">
-                  <stop offset="0%" stopColor="hsl(150 90% 80%)" />
-                  <stop offset="35%" stopColor="hsl(150 75% 55%)" />
-                  <stop offset="100%" stopColor="hsl(150 70% 38%)" />
-                </linearGradient>
-                {/* Bloom sutil — Apple style: presente mas refinado */}
-                <filter id="neonBloomStrong" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur stdDeviation="2.5" result="b1" />
-                  <feGaussianBlur stdDeviation="6" result="b2" />
-                  <feMerge>
-                    <feMergeNode in="b2" />
-                    <feMergeNode in="b1" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-                <filter id="tipBloom" x="-100%" y="-100%" width="300%" height="300%">
-                  <feGaussianBlur stdDeviation="2" result="t1" />
-                  <feGaussianBlur stdDeviation="5" result="t2" />
-                  <feMerge>
-                    <feMergeNode in="t2" />
-                    <feMergeNode in="t1" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-              </defs>
+                <path d="M 218 62 A 110 110 0 0 1 218 228" fill="none" stroke="rgb(255 255 255 / 0.06)" strokeWidth="5" strokeLinecap="round" />
+                <g filter="url(#neonBloomStrong)">
+                  <path d="M 218 62 A 110 110 0 0 1 218 228" fill="none" stroke="url(#bigArcGrad)" strokeWidth="5" strokeLinecap="round" />
+                </g>
+                <path d="M 218 62 A 110 110 0 0 1 218 228" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.85" />
+                <g filter="url(#tipBloom)">
+                  <circle cx="218" cy="62" r="4" fill="white" />
+                  <circle cx="218" cy="62" r="7" fill="hsl(150 95% 65%)" opacity="0.7" />
+                </g>
+                <circle cx="218" cy="62" r="2" fill="white" />
+              </svg>
 
-              {/* Trilha de fundo — sutil */}
-              <path
-                d="M 218 62 A 110 110 0 0 1 218 228"
-                fill="none"
-                stroke="rgb(255 255 255 / 0.06)"
-                strokeWidth="5"
-                strokeLinecap="round"
-              />
-              {/* Arco principal — bloom contido */}
-              <g filter="url(#neonBloomStrong)">
-                <path
-                  d="M 218 62 A 110 110 0 0 1 218 228"
-                  fill="none"
-                  stroke="url(#bigArcGrad)"
-                  strokeWidth="5"
-                  strokeLinecap="round"
-                />
-              </g>
-              {/* Núcleo brilhante — fina linha viva */}
-              <path
-                d="M 218 62 A 110 110 0 0 1 218 228"
-                fill="none"
-                stroke="white"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                opacity="0.85"
-              />
-              {/* Tip superior — ponto de luz refinado */}
-              <g filter="url(#tipBloom)">
-                <circle cx="218" cy="62" r="4" fill="white" />
-                <circle cx="218" cy="62" r="7" fill="hsl(150 95% 65%)" opacity="0.7" />
-              </g>
-              <circle cx="218" cy="62" r="2" fill="white" />
-            </svg>
-
-            {/* Conteúdo */}
-            <div className="relative h-full flex flex-col justify-between p-3.5 sm:p-4">
-              <div>
-                <p className="text-[8.5px] font-semibold tracking-[0.28em] text-primary/90 uppercase">Progresso</p>
-                <div className="flex items-baseline gap-0.5 mt-2.5">
-                  <p className="text-[34px] sm:text-[40px] leading-[0.9] font-bold text-white font-display tracking-[-0.04em] tabular-nums">
-                    {dayProgress || 72}
-                  </p>
-                  <span className="text-[16px] font-semibold text-white/50 tracking-tight">%</span>
+              {/* Conteúdo */}
+              <div className="relative h-full flex flex-col justify-between p-3.5 sm:p-4">
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="block w-1 h-1 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary))]" />
+                    <p className="text-[8.5px] font-semibold tracking-[0.28em] text-primary/90 uppercase">Progresso</p>
+                  </div>
+                  <div className="flex items-baseline gap-0.5 mt-2.5">
+                    <p className="text-[34px] sm:text-[40px] leading-[0.9] font-bold text-white font-display tracking-[-0.04em] tabular-nums">
+                      {dayProgress || 72}
+                    </p>
+                    <span className="text-[16px] font-semibold text-white/40 tracking-tight">%</span>
+                  </div>
+                  <p className="text-[10px] text-white/45 mt-2 tracking-tight font-medium">meta mensal</p>
                 </div>
-                <p className="text-[10px] text-white/45 mt-2 tracking-tight font-medium">meta mensal</p>
-              </div>
-              <div className="inline-flex w-fit max-w-full items-center gap-1.5 text-[9.5px] text-white/85 rounded-full px-2 py-1 bg-white/[0.06] border border-white/[0.08] backdrop-blur-md font-medium tracking-tight">
-                <Target className="w-2.5 h-2.5 text-primary" strokeWidth={2.2} />
-                <span>8 dias</span>
+                <div className="inline-flex w-fit max-w-full items-center gap-1.5 text-[9.5px] text-white/90 rounded-full pl-1.5 pr-2 py-1 bg-white/[0.05] border border-white/[0.08] backdrop-blur-xl font-medium tracking-tight shadow-[inset_0_1px_0_rgb(255_255_255_/_0.06)]">
+                  <Target className="w-2.5 h-2.5 text-primary" strokeWidth={2.2} />
+                  <span>8 dias</span>
+                </div>
               </div>
             </div>
           </div>
