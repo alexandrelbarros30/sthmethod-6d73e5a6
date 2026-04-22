@@ -442,10 +442,15 @@ const StudentOverview = () => {
       </div>
 
       {/* ===== RESUMO DO DIA - HORIZONTAL ===== */}
-      <div className="mb-5 relative rounded-[22px] p-[1px]" style={{ background: "linear-gradient(135deg, rgb(255 255 255 / 0.1) 0%, rgb(255 255 255 / 0.02) 50%, hsl(150 70% 50% / 0.15) 100%)" }}>
-        <div className="relative rounded-[21px] overflow-hidden bg-gradient-to-br from-[#0f0f0f] via-[#0a0a0a] to-[#070707] p-4 shadow-[0_8px_24px_-8px_rgb(0_0_0_/_0.5),inset_0_1px_0_rgb(255_255_255_/_0.04)]">
-          <div className="absolute -bottom-24 -left-20 w-52 h-52 rounded-full bg-primary/[0.08] blur-3xl pointer-events-none" />
-          <div className="absolute -top-20 -right-20 w-44 h-44 rounded-full bg-primary/[0.05] blur-3xl pointer-events-none" />
+      <div className="mb-5 relative rounded-[22px] p-[1.5px]" style={{ background: "linear-gradient(135deg, rgb(255 255 255 / 0.22) 0%, rgb(255 255 255 / 0.05) 50%, hsl(150 80% 55% / 0.28) 100%)" }}>
+        <div className="absolute -inset-2 rounded-[28px] pointer-events-none opacity-50" style={{ background: "radial-gradient(50% 60% at 50% 100%, hsl(150 85% 50% / 0.2), transparent 70%)", filter: "blur(22px)" }} />
+        <div className="relative rounded-[21px] overflow-hidden bg-gradient-to-br from-[#131313] via-[#0a0a0a] to-[#060606] backdrop-blur-2xl p-4 shadow-[0_10px_28px_-8px_rgb(0_0_0_/_0.55),inset_0_1.5px_0_rgb(255_255_255_/_0.08),inset_0_-1px_0_rgb(255_255_255_/_0.02)]">
+          {/* Sheen diagonal */}
+          <div className="absolute inset-0 pointer-events-none opacity-50" style={{ background: "linear-gradient(115deg, transparent 35%, rgb(255 255 255 / 0.06) 48%, rgb(255 255 255 / 0.09) 52%, transparent 68%)" }} />
+          {/* Highlight superior */}
+          <div className="absolute inset-x-0 top-0 h-2/5 pointer-events-none" style={{ background: "linear-gradient(180deg, rgb(255 255 255 / 0.07) 0%, transparent 100%)" }} />
+          <div className="absolute -bottom-24 -left-20 w-52 h-52 rounded-full bg-primary/[0.14] blur-3xl pointer-events-none" />
+          <div className="absolute -top-20 -right-20 w-44 h-44 rounded-full bg-primary/[0.1] blur-3xl pointer-events-none" />
           <div className="relative">
             <div className="flex items-center justify-between mb-3.5">
               <div className="flex items-center gap-1.5">
