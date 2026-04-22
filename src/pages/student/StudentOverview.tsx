@@ -452,7 +452,13 @@ const StudentOverview = () => {
                 </div>
                 <div className="min-w-0">
                   <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none truncate tracking-[-0.025em]">
-                    {dayMacros?.kcal ? Math.round(dayMacros.kcal).toLocaleString("pt-BR") : "1.842"}
+                    {mealsLoading
+                      ? "—"
+                      : dayMacros?.kcal
+                      ? Math.round(dayMacros.kcal).toLocaleString("pt-BR")
+                      : dayTargetMacros?.kcal
+                      ? Math.round(dayTargetMacros.kcal).toLocaleString("pt-BR")
+                      : "—"}
                   </p>
                   <p className="text-[9px] text-muted-foreground/70 mt-1.5 leading-tight tracking-tight font-medium">kcal</p>
                 </div>
