@@ -184,40 +184,45 @@ const StudentOverview = () => {
       <AdAutoPopup />
       <PreviewUnlockPopup />
 
-      {/* ===== HEADER + PROGRESSO ===== */}
-      <div className="flex items-start justify-between gap-3 mb-5">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-[22px] leading-tight font-bold text-foreground font-display tracking-tight">
-            {greeting}, {firstName}! <span className="inline-block">👋</span>
+      {/* ===== HEADER + PROGRESSO LADO A LADO ===== */}
+      <div className="flex items-start gap-3 mb-6 relative">
+        <button
+          onClick={() => navigate("/dashboard/ads")}
+          className="absolute top-0 right-0 w-9 h-9 rounded-full flex items-center justify-center"
+          aria-label="Notificações"
+        >
+          <Bell className="w-[20px] h-[20px] text-foreground/80" />
+          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary))]" />
+        </button>
+
+        <div className="flex-1 min-w-0 pt-1 pr-10">
+          <p className="text-[15px] text-muted-foreground leading-tight">
+            {greeting},
+          </p>
+          <h1 className="text-[30px] leading-[1.05] font-extrabold text-foreground font-display tracking-tight mt-0.5">
+            {firstName}! <span className="inline-block">👋</span>
           </h1>
-          <p className="text-[13px] text-muted-foreground mt-1 leading-snug">
+          <p className="text-[12.5px] text-muted-foreground mt-2 leading-snug">
             Acompanhe seu progresso e conquiste seus objetivos.
           </p>
         </div>
-        <button
-          onClick={() => navigate("/dashboard/ads")}
-          className="relative w-10 h-10 rounded-full flex items-center justify-center shrink-0 border border-white/[0.08] bg-white/[0.03] backdrop-blur-md hover:bg-white/[0.06] transition-colors"
-          aria-label="Notificações"
-        >
-          <Bell className="w-[18px] h-[18px] text-foreground/80" />
-          <span className="absolute top-2 right-2.5 w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary))]" />
-        </button>
-      </div>
 
-      {/* ===== CARD PROGRESSO PREMIUM ===== */}
-      <div className="relative mb-5 rounded-3xl overflow-hidden border border-white/[0.08] bg-white/[0.03] backdrop-blur-md p-5">
-        <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-primary/15 blur-3xl pointer-events-none" />
-        <div className="relative flex items-center gap-5">
-          <DailyProgressRing percent={dayProgress || 72} size={112} strokeWidth={9} />
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold tracking-[0.22em] text-primary uppercase">Progresso</p>
-            <p className="text-[34px] leading-none font-extrabold text-foreground font-display tracking-tight mt-1.5 tabular-nums">
+        <div className="relative w-[48%] shrink-0 rounded-3xl overflow-hidden border border-white/[0.08] bg-white/[0.03] backdrop-blur-md p-3.5 mt-6">
+          <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
+          <div className="relative">
+            <p className="text-[8.5px] font-bold tracking-[0.22em] text-primary uppercase">Progresso</p>
+            <p className="text-[28px] leading-none font-extrabold text-foreground font-display tracking-tight mt-1.5 tabular-nums">
               {dayProgress || 72}%
             </p>
-            <p className="text-[12px] text-foreground/70 mt-1">da meta mensal</p>
-            <p className="text-[11px] text-muted-foreground mt-2 flex items-center gap-1.5">
-              <Target className="w-3 h-3 text-primary/80" /> Faltam 8 dias
-            </p>
+            <p className="text-[10.5px] text-foreground/70 mt-0.5">da meta mensal</p>
+            <div className="mt-2.5 inline-flex items-center gap-1 text-[9.5px] text-muted-foreground border border-white/[0.08] rounded-full px-2 py-1 bg-white/[0.02]">
+              <Target className="w-2.5 h-2.5 text-primary/80" /> Faltam 8 dias
+            </div>
+            {/* Decorative ring arc */}
+            <svg className="absolute -top-1 -right-1 w-20 h-20 -rotate-90 pointer-events-none" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="32" fill="none" stroke="hsl(var(--primary))" strokeWidth="4" strokeLinecap="round" strokeDasharray={2 * Math.PI * 32} strokeDashoffset={2 * Math.PI * 32 * (1 - (dayProgress || 72) / 100)} style={{ filter: "drop-shadow(0 0 6px hsl(var(--primary) / 0.7))" }} opacity="0.95" />
+              <circle cx="40" cy="8" r="2.5" fill="hsl(var(--primary))" style={{ filter: "drop-shadow(0 0 4px hsl(var(--primary)))" }} />
+            </svg>
           </div>
         </div>
       </div>
