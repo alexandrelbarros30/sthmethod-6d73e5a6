@@ -417,30 +417,45 @@ html, body {
       inset 0 0 6px rgb(255 255 255 / 0.4);
   }
 
-  /* ===== GLOBAL GLASS BOOST (dark theme) =====
-     Intensifica automaticamente todo card que já usa o padrão
-     "rounded-[XXpx] + backdrop-blur-xl + bg-white/[0.025]"
-     trazendo o visual para o nível da imagem de referência. */
-  .dark [class*="rounded-["][class*="backdrop-blur-xl"] {
-    background-color: rgb(255 255 255 / 0.045) !important;
-    backdrop-filter: blur(24px) saturate(150%);
-    -webkit-backdrop-filter: blur(24px) saturate(150%);
+  /* ===== GLOBAL GLASS BOOST (light + dark) =====
+     Aplica visual de vidro límpido e cristalino em QUALQUER elemento
+     que use backdrop-blur (sm/md/lg/xl/2xl/3xl). Funciona nos dois temas. */
+  [class*="backdrop-blur"] {
+    backdrop-filter: blur(22px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(160%) !important;
+  }
+
+  /* Dark — vidro escuro translúcido com halo neon primary */
+  .dark [class*="backdrop-blur"]:not(.no-glass-boost):not([data-radix-popper-content-wrapper] *) {
+    background-color: rgb(255 255 255 / 0.05) !important;
+    border: 1px solid rgb(255 255 255 / 0.12) !important;
     box-shadow:
-      0 12px 36px -10px rgb(0 0 0 / 0.65),
-      0 0 28px -6px hsl(var(--primary) / 0.40),
-      inset 0 1px 0 rgb(255 255 255 / 0.12),
-      inset 0 -1px 0 rgb(0 0 0 / 0.30) !important;
-    border-color: rgb(255 255 255 / 0.11) !important;
+      0 14px 40px -12px rgb(0 0 0 / 0.7),
+      0 0 32px -6px hsl(var(--primary) / 0.45),
+      inset 0 1px 0 rgb(255 255 255 / 0.14),
+      inset 0 -1px 0 rgb(0 0 0 / 0.32) !important;
+  }
+
+  /* Light — vidro branco límpido com leve halo */
+  :root:not(.dark) [class*="backdrop-blur"]:not(.no-glass-boost):not([data-radix-popper-content-wrapper] *) {
+    background-color: rgb(255 255 255 / 0.65) !important;
+    border: 1px solid rgb(255 255 255 / 0.7) !important;
+    box-shadow:
+      0 10px 30px -12px rgb(0 0 0 / 0.18),
+      0 0 24px -8px hsl(var(--primary) / 0.22),
+      inset 0 1px 0 rgb(255 255 255 / 0.9),
+      inset 0 -1px 0 rgb(0 0 0 / 0.05) !important;
   }
 
   /* Reforça reflexos dos pseudo-elementos (sheen) já existentes */
-  .dark [class*="rounded-["][class*="backdrop-blur-xl"] > [class*="opacity-50"][class*="pointer-events-none"] {
-    opacity: 0.85 !important;
+  [class*="backdrop-blur"] > [class*="opacity-50"][class*="pointer-events-none"],
+  [class*="backdrop-blur"] > [class*="opacity-40"][class*="pointer-events-none"] {
+    opacity: 0.9 !important;
   }
 
   /* Barras de progresso com brilho neon (Radix Progress Indicator) */
-  .dark [data-state][class*="bg-primary"],
-  .dark [class*="Progress"] > [style*="translateX"] {
+  [data-state][class*="bg-primary"],
+  [class*="Progress"] > [style*="translateX"] {
     box-shadow:
       0 0 6px hsl(var(--primary) / 0.7),
       0 0 14px hsl(var(--primary) / 0.45),
@@ -448,8 +463,8 @@ html, body {
   }
 
   /* Ícones lucide dentro de containers glass ganham leve halo neon */
-  .dark [class*="backdrop-blur-xl"] svg.lucide {
-    filter: drop-shadow(0 0 4px hsl(var(--primary) / 0.35));
+  [class*="backdrop-blur"] svg.lucide {
+    filter: drop-shadow(0 0 4px hsl(var(--primary) / 0.4));
   }
   @keyframes neon-ring-pulse {
     0%, 100% {
