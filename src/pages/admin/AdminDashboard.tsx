@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, AlertCircle, Clock, Bell, CheckCircle, ExternalLink, Check, CreditCard, DollarSign, Link2, ChevronDown, Search, Settings, Sparkles, UserPlus } from "lucide-react";
+import { Users, UserCheck, AlertCircle, Clock, Bell, CheckCircle, ExternalLink, Check, CreditCard, DollarSign, Link2, ChevronDown, Search, Settings, Sparkles, UserPlus, Radio, UserX } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -79,6 +79,34 @@ const AdminDashboard = () => {
     },
   });
 
+  // Online students (last 5 minutes activity in access_logs, role=student)
+  const { data: onlineData } = useQuery({
+    queryKey: ["admin-online-students"],
+    queryFn: async () => {
+      const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      const { data: logs } = await supabase
+        .from("access_logs")
+        .select("user_id, logged_in_at")
+        .gte("logged_in_at", fiveMinAgo)
+        .not("user_id", "is", null);
+      const ids = Array.from(new Set((logs || []).map((l: any) => l.user_id)));
+      if (ids.length === 0) return { ids: [], names: [] as { user_id: string; full_name: string }[] };
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .in("user_id", ids)
+        .eq("role", "student");
+      const studentIds = (roles || []).map((r: any) => r.user_id);
+      if (studentIds.length === 0) return { ids: [], names: [] };
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("user_id, full_name")
+        .in("user_id", studentIds);
+      return { ids: studentIds, names: profs || [] };
+    },
+    refetchInterval: 30_000,
+  });
+
   const { data: recentOnboardings } = useQuery({
     queryKey: ["admin-recent-onboardings"],
     queryFn: async () => {
@@ -153,6 +181,8 @@ const AdminDashboard = () => {
     const end = new Date(s.end_date);
     return s.status === "active" && end > now && end <= in7Days;
   }).length || 0;
+  const onlineCount = onlineData?.ids.length || 0;
+  const inactiveCount = Math.max(0, totalStudents - activeCount);
 
   const metrics = [
     { label: "Total de alunos", value: totalStudents, icon: Users, color: "text-primary" },
