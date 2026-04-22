@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import { APP_VERSION, VERSION_KEY, VERSION_URL } from "./lib/app-version";
+import { APP_RELEASE_VERSION, APP_VERSION, VERSION_KEY, VERSION_URL } from "./lib/app-version";
 
 const MAX_BOOT_RELOADS = 2;
 const getBootReloadKey = (version: string) => `sth-boot-update-attempts:${version}`;
@@ -50,7 +50,9 @@ const syncLatestBuild = async () => {
 
     const data = await res.json();
     const remoteVersion = typeof data?.version === "string" ? data.version : null;
-    if (!remoteVersion || remoteVersion === APP_VERSION) return;
+    if (!remoteVersion) return;
+    const remoteRelease = remoteVersion.split("+")[0] || remoteVersion;
+    if (remoteRelease === APP_RELEASE_VERSION) return;
 
     const reloadKey = getBootReloadKey(remoteVersion);
     const attempts = Number(sessionStorage.getItem(reloadKey) || "0");
