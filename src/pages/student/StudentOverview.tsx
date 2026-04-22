@@ -213,14 +213,18 @@ const StudentOverview = () => {
 
         {/* Progress card — Apple-grade: profundidade real, glow contido, tipografia premium */}
         <div className="relative w-full max-w-[8.25rem] shrink-0 aspect-square mt-5 sm:mt-7 sm:w-[46%] sm:max-w-none">
-          {/* Aura externa — insinuação de luz verde difusa */}
-          <div className="absolute -inset-3 rounded-[36px] pointer-events-none opacity-70" style={{ background: "radial-gradient(60% 60% at 75% 50%, hsl(150 80% 45% / 0.22), transparent 70%)", filter: "blur(24px)" }} />
+          {/* Aura externa — luz verde difusa, mais luminosa */}
+          <div className="absolute -inset-4 rounded-[40px] pointer-events-none opacity-90" style={{ background: "radial-gradient(60% 60% at 75% 50%, hsl(150 85% 50% / 0.32), transparent 70%)", filter: "blur(28px)" }} />
+          {/* Halo branco frio — brilho de vidro */}
+          <div className="absolute -inset-2 rounded-[34px] pointer-events-none opacity-60" style={{ background: "radial-gradient(50% 40% at 30% 0%, rgb(255 255 255 / 0.18), transparent 70%)", filter: "blur(16px)" }} />
 
-          {/* Borda gradiente premium (técnica padding-box/border-box) */}
-          <div className="relative w-full h-full rounded-[26px] p-[1px]" style={{ background: "linear-gradient(160deg, rgb(255 255 255 / 0.14) 0%, rgb(255 255 255 / 0.04) 35%, rgb(255 255 255 / 0.02) 65%, hsl(150 70% 50% / 0.18) 100%)" }}>
-            <div className="relative w-full h-full rounded-[25px] overflow-hidden bg-gradient-to-br from-[#161616] via-[#0c0c0c] to-[#050505] shadow-[0_12px_36px_-10px_rgb(0_0_0_/_0.6),0_4px_12px_-4px_rgb(0_0_0_/_0.4),inset_0_1px_0_rgb(255_255_255_/_0.05)]">
-              {/* Highlight superior — reflexo de vidro */}
-              <div className="absolute inset-x-0 top-0 h-[60%] pointer-events-none" style={{ background: "linear-gradient(180deg, rgb(255 255 255 / 0.06) 0%, rgb(255 255 255 / 0.015) 40%, transparent 100%)" }} />
+          {/* Borda gradiente premium — mais luminosa */}
+          <div className="relative w-full h-full rounded-[26px] p-[1.5px]" style={{ background: "linear-gradient(160deg, rgb(255 255 255 / 0.28) 0%, rgb(255 255 255 / 0.08) 30%, rgb(255 255 255 / 0.04) 60%, hsl(150 80% 55% / 0.32) 100%)" }}>
+            <div className="relative w-full h-full rounded-[25px] overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#0e0e0e] to-[#050505] shadow-[0_16px_44px_-10px_rgb(0_0_0_/_0.7),0_4px_12px_-4px_rgb(0_0_0_/_0.4),inset_0_1.5px_0_rgb(255_255_255_/_0.09),inset_0_-1px_0_rgb(255_255_255_/_0.02)]">
+              {/* Highlight superior — reflexo de vidro mais brilhoso */}
+              <div className="absolute inset-x-0 top-0 h-[65%] pointer-events-none" style={{ background: "linear-gradient(180deg, rgb(255 255 255 / 0.14) 0%, rgb(255 255 255 / 0.04) 35%, transparent 100%)" }} />
+              {/* Specular sheen diagonal — efeito de luz passando no vidro */}
+              <div className="absolute inset-0 pointer-events-none opacity-70" style={{ background: "linear-gradient(115deg, transparent 30%, rgb(255 255 255 / 0.08) 45%, rgb(255 255 255 / 0.12) 50%, rgb(255 255 255 / 0.04) 55%, transparent 70%)" }} />
               {/* Vinheta inferior — peso e profundidade */}
               <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(120% 80% at 50% 110%, rgb(0 0 0 / 0.4), transparent 60%)" }} />
               {/* Glow radial INTERNO atrás do arco */}
