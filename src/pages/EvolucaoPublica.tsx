@@ -301,70 +301,65 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
           </div>
         ) : (
           <>
-            <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-black border border-primary/40">
-              <Cropper
-                image={slot.preview}
-                crop={t.crop}
-                zoom={t.zoom}
-                rotation={t.rotation}
-                aspect={3 / 4}
-                minZoom={1}
-                maxZoom={4}
-                zoomSpeed={0.5}
-                showGrid={true}
-                restrictPosition={true}
-                onCropChange={(crop) => updateT(side, { crop })}
-                onZoomChange={(zoom) => updateT(side, { zoom })}
-                onRotationChange={(rotation) => updateT(side, { rotation })}
-                onCropComplete={(_area, areaPixels) => updateT(side, { cropArea: areaPixels })}
-                style={{
-                  containerStyle: { background: "#000", borderRadius: 16 },
-                }}
-              />
+            <SlotPreview slot={slot} t={t} />
+            <div className="flex justify-end -mt-1">
               <button
-                className="absolute top-2 right-2 z-10 p-1.5 bg-destructive/80 rounded-full text-white hover:bg-destructive"
-                onClick={(e) => { e.stopPropagation(); removeSlot(side); }}
+                className="p-1.5 bg-destructive/80 rounded-full text-white hover:bg-destructive"
+                onClick={() => removeSlot(side)}
+                title="Remover"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
             <input ref={ref} type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(side, e)} />
 
-            <div className="space-y-2 px-1">
+            <div className="space-y-2 px-1 pt-1 border-t border-border/40">
               <div>
                 <div className="flex justify-between text-[10px] text-muted-foreground"><span>Zoom</span><span>{t.zoom.toFixed(2)}x</span></div>
-                <Slider value={[t.zoom]} min={1} max={4} step={0.01} onValueChange={([v]) => updateT(side, { zoom: v })} />
+                <Slider value={[t.zoom]} min={1} max={3} step={0.01} onValueChange={([v]) => updateT(side, { zoom: v })} />
+              </div>
+              <div>
+                <div className="flex justify-between text-[10px] text-muted-foreground"><span>Horizontal</span><span>{t.offsetX.toFixed(2)}</span></div>
+                <Slider value={[t.offsetX]} min={-1} max={1} step={0.01} onValueChange={([v]) => updateT(side, { offsetX: v })} />
+              </div>
+              <div>
+                <div className="flex justify-between text-[10px] text-muted-foreground"><span>Vertical</span><span>{t.offsetY.toFixed(2)}</span></div>
+                <Slider value={[t.offsetY]} min={-1} max={1} step={0.01} onValueChange={([v]) => updateT(side, { offsetY: v })} />
               </div>
               <div>
                 <div className="flex justify-between text-[10px] text-muted-foreground"><span>Rotação</span><span>{Math.round(t.rotation)}°</span></div>
                 <Slider value={[t.rotation]} min={-180} max={180} step={1} onValueChange={([v]) => updateT(side, { rotation: v })} />
               </div>
-              <div className="grid grid-cols-3 gap-1 pt-1">
+              <div className="grid grid-cols-4 gap-1 pt-1">
                 <Button
-                  variant="outline" size="sm" className="h-7 text-[10px] px-1"
-                  onClick={() => updateT(side, { rotation: (t.rotation + 90) % 360 })}
+                  variant="outline" size="sm" className="h-8 px-1"
+                  onClick={() => updateT(side, { rotation: Math.round((t.rotation + 90) % 360) })}
                   title="Girar 90°"
                 >
-                  <RotateCw className="w-3 h-3" />
+                  <RotateCw className="w-3.5 h-3.5" />
                 </Button>
                 <Button
-                  variant="outline" size="sm" className="h-7 text-[10px] px-1"
+                  variant="outline" size="sm" className="h-8 px-1"
                   onClick={() => updateT(side, { flipH: !t.flipH })}
-                  title="Espelhar"
+                  title="Espelhar horizontal"
                 >
-                  <FlipHorizontal2 className="w-3 h-3" />
+                  <FlipHorizontal2 className="w-3.5 h-3.5" />
                 </Button>
                 <Button
-                  variant="ghost" size="sm" className="h-7 text-[10px] px-1"
+                  variant="outline" size="sm" className="h-8 px-1"
+                  onClick={() => updateT(side, { flipV: !t.flipV })}
+                  title="Espelhar vertical"
+                >
+                  <FlipVertical2 className="w-3.5 h-3.5" />
+                </Button>
+                <Button
+                  variant="ghost" size="sm" className="h-8 px-1"
                   onClick={() => setTransforms((p) => ({ ...p, [side]: { ...DEFAULT_T } }))}
                   title="Resetar"
                 >
-                  <RotateCcw className="w-3 h-3" />
+                  <RotateCcw className="w-3.5 h-3.5" />
                 </Button>
               </div>
-              <p className="text-[10px] text-muted-foreground/70 text-center pt-1">
-                Arraste para mover · pinça/scroll para zoom
-              </p>
             </div>
           </>
         )}
