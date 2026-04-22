@@ -309,8 +309,8 @@ const StudentOverview = () => {
             <div className="absolute inset-0 bg-gradient-to-r from-primary/[0.1] via-transparent to-transparent pointer-events-none" />
             <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-primary/[0.14] blur-3xl pointer-events-none" />
             <div className="relative flex items-center gap-3.5 p-4">
-              <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/[0.18] to-primary/[0.04] border border-primary/20 flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.06),0_4px_12px_-4px_hsl(var(--primary)/0.3)]">
-                <Newspaper className="w-[20px] h-[20px] text-primary neon-icon" strokeWidth={1.8} />
+              <div className="relative w-12 h-12 rounded-2xl glass-icon glass-icon-active flex items-center justify-center shrink-0">
+                <Newspaper className="w-[20px] h-[20px] text-primary neon-icon relative z-10" strokeWidth={1.8} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-1.5">
@@ -461,8 +461,8 @@ const StudentOverview = () => {
             </div>
             <div className="flex items-center gap-2.5">
               <div className="flex-1 min-w-0 flex items-center gap-2">
-                <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-primary/[0.22] to-primary/[0.05] border border-primary/25 flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.08),0_0_12px_-2px_hsl(var(--primary)/0.55)]">
-                  <Flame className="w-[13px] h-[13px] text-primary neon-icon" strokeWidth={2} />
+                <div className="w-7 h-7 rounded-xl glass-icon glass-icon-active flex items-center justify-center shrink-0">
+                  <Flame className="w-[13px] h-[13px] text-primary neon-icon relative z-10" strokeWidth={2} />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none truncate tracking-[-0.025em]">
@@ -479,8 +479,8 @@ const StudentOverview = () => {
               </div>
               <div className="w-px h-10 bg-gradient-to-b from-transparent via-white/[0.08] to-transparent" />
               <div className="flex-1 min-w-0 flex items-center gap-2">
-                <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-primary/[0.22] to-primary/[0.05] border border-primary/25 flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.08),0_0_12px_-2px_hsl(var(--primary)/0.55)]">
-                  <Activity className="w-[13px] h-[13px] text-primary neon-icon" strokeWidth={2} />
+                <div className="w-7 h-7 rounded-xl glass-icon glass-icon-active flex items-center justify-center shrink-0">
+                  <Activity className="w-[13px] h-[13px] text-primary neon-icon relative z-10" strokeWidth={2} />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none tracking-[-0.025em]">82<span className="text-[10px] font-medium text-muted-foreground/70 ml-0.5">min</span></p>
@@ -489,8 +489,8 @@ const StudentOverview = () => {
               </div>
               <div className="w-px h-10 bg-gradient-to-b from-transparent via-white/[0.08] to-transparent" />
               <div className="flex-1 min-w-0 flex items-center gap-2">
-                <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-primary/[0.22] to-primary/[0.05] border border-primary/25 flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.08),0_0_12px_-2px_hsl(var(--primary)/0.55)]">
-                  <Droplets className="w-[13px] h-[13px] text-primary neon-icon" strokeWidth={2} />
+                <div className="w-7 h-7 rounded-xl glass-icon glass-icon-active flex items-center justify-center shrink-0">
+                  <Droplets className="w-[13px] h-[13px] text-primary neon-icon relative z-10" strokeWidth={2} />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none tracking-[-0.025em]">
