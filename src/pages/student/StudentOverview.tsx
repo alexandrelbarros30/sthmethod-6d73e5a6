@@ -299,16 +299,12 @@ const StudentOverview = () => {
 
       {/* ===== STH NEWS ===== */}
       <Link to="/tendencias/recomposicao-avancada" className="block mb-8">
-        <div className="relative rounded-[20px] p-[1.5px] group" style={{ background: "linear-gradient(135deg, rgb(255 255 255 / 0.24) 0%, rgb(255 255 255 / 0.06) 50%, hsl(150 80% 55% / 0.32) 100%)" }}>
-          {/* Aura externa */}
-          <div className="absolute -inset-2 rounded-[26px] pointer-events-none opacity-60" style={{ background: "radial-gradient(50% 70% at 90% 50%, hsl(150 85% 50% / 0.22), transparent 70%)", filter: "blur(20px)" }} />
-          <div className="relative rounded-[19px] overflow-hidden bg-gradient-to-br from-[#131313] via-[#0a0a0a] to-[#070707] backdrop-blur-2xl shadow-[0_10px_28px_-8px_rgb(0_0_0_/_0.55),0_2px_6px_-2px_rgb(0_0_0_/_0.3),inset_0_1.5px_0_rgb(255_255_255_/_0.08),inset_0_-1px_0_rgb(255_255_255_/_0.02)] transition-all duration-300">
-            {/* Sheen diagonal */}
-            <div className="absolute inset-0 pointer-events-none opacity-60" style={{ background: "linear-gradient(115deg, transparent 35%, rgb(255 255 255 / 0.07) 48%, rgb(255 255 255 / 0.1) 52%, transparent 68%)" }} />
-            <div className="absolute inset-x-0 top-0 h-1/2 pointer-events-none" style={{ background: "linear-gradient(180deg, rgb(255 255 255 / 0.08) 0%, transparent 100%)" }} />
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/[0.1] via-transparent to-transparent pointer-events-none" />
-            <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-primary/[0.14] blur-3xl pointer-events-none" />
-            <div className="relative flex items-center gap-3.5 p-4">
+        <div className="relative rounded-[20px] overflow-hidden border border-white/[0.06] bg-white/[0.025] backdrop-blur-xl shadow-[0_8px_24px_-8px_rgb(0_0_0_/_0.4),0_2px_6px_-2px_rgb(0_0_0_/_0.2),inset_0_1px_0_rgb(255_255_255_/_0.05)] hover:border-white/[0.1] transition-all duration-300 group">
+          {/* Sheen diagonal sutil */}
+          <div className="absolute inset-0 pointer-events-none opacity-50" style={{ background: "linear-gradient(115deg, transparent 38%, rgb(255 255 255 / 0.05) 50%, transparent 65%)" }} />
+          <div className="absolute inset-x-0 top-0 h-1/2 pointer-events-none" style={{ background: "linear-gradient(180deg, rgb(255 255 255 / 0.04) 0%, transparent 100%)" }} />
+          <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-primary/[0.1] blur-3xl pointer-events-none" />
+          <div className="relative flex items-center gap-3.5 p-4">
               <div className="relative w-12 h-12 rounded-2xl glass-icon glass-icon-active flex items-center justify-center shrink-0">
                 <Newspaper className="w-[20px] h-[20px] text-primary neon-icon relative z-10" strokeWidth={1.8} />
               </div>
@@ -327,7 +323,6 @@ const StudentOverview = () => {
                 </p>
               </div>
               <ChevronRight className="w-4 h-4 text-foreground/40 shrink-0 group-hover:text-primary group-hover:translate-x-0.5 transition-all" strokeWidth={2} />
-            </div>
           </div>
         </div>
       </Link>
