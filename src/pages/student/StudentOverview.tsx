@@ -361,37 +361,45 @@ const StudentOverview = () => {
         </div>
       </div>
 
-      {/* ===== RESUMO DO DIA ===== */}
-      <div className="mb-4 relative rounded-3xl overflow-hidden border border-white/[0.08] bg-white/[0.03] backdrop-blur-md p-5">
-        <div className="absolute -bottom-20 -left-16 w-48 h-48 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+      {/* ===== RESUMO DO DIA - HORIZONTAL ===== */}
+      <div className="mb-4 relative rounded-3xl overflow-hidden border border-white/[0.08] bg-white/[0.03] backdrop-blur-md p-3.5">
+        <div className="absolute -bottom-20 -left-16 w-48 h-48 rounded-full bg-primary/8 blur-3xl pointer-events-none" />
         <div className="relative">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-[10px] font-bold tracking-[0.22em] text-primary uppercase">Resumo do dia</p>
-            <span className="text-[10px] text-muted-foreground">hoje</span>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl bg-white/[0.025] border border-white/[0.06] p-3">
-              <Flame className="w-4 h-4 text-primary mb-2" />
-              <p className="text-[17px] font-bold text-foreground tabular-nums leading-none">
-                {dayMacros?.kcal ? Math.round(dayMacros.kcal).toLocaleString("pt-BR") : "1.842"}
-              </p>
-              <p className="text-[10.5px] text-muted-foreground mt-1">kcal consumidas</p>
+          <p className="text-[9px] font-bold tracking-[0.22em] text-primary uppercase mb-2.5">Resumo do dia</p>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0 flex items-start gap-2">
+              <Flame className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <p className="text-[14px] font-bold text-foreground tabular-nums leading-none truncate">
+                  {dayMacros?.kcal ? Math.round(dayMacros.kcal).toLocaleString("pt-BR") : "1.842"}
+                </p>
+                <p className="text-[9px] text-muted-foreground mt-1 leading-tight">kcal consumidas</p>
+              </div>
             </div>
-            <div className="rounded-2xl bg-white/[0.025] border border-white/[0.06] p-3">
-              <Activity className="w-4 h-4 text-primary mb-2" />
-              <p className="text-[17px] font-bold text-foreground tabular-nums leading-none">82 min</p>
-              <p className="text-[10.5px] text-muted-foreground mt-1">treino concluído</p>
+            <div className="w-px h-9 bg-white/[0.06]" />
+            <div className="flex-1 min-w-0 flex items-start gap-2">
+              <Activity className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <p className="text-[14px] font-bold text-foreground tabular-nums leading-none">82 min</p>
+                <p className="text-[9px] text-muted-foreground mt-1 leading-tight">treino concluído</p>
+              </div>
             </div>
-            <div className="rounded-2xl bg-white/[0.025] border border-white/[0.06] p-3">
-              <Droplets className="w-4 h-4 text-primary mb-2" />
-              <p className="text-[17px] font-bold text-foreground tabular-nums leading-none">2,1 L</p>
-              <p className="text-[10.5px] text-muted-foreground mt-1">água ingerida</p>
+            <div className="w-px h-9 bg-white/[0.06]" />
+            <div className="flex-1 min-w-0 flex items-start gap-2">
+              <Droplets className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <p className="text-[14px] font-bold text-foreground tabular-nums leading-none">2,1 L</p>
+                <p className="text-[9px] text-muted-foreground mt-1 leading-tight">água ingerida</p>
+              </div>
             </div>
-            <div className="rounded-2xl bg-primary/10 border border-primary/25 p-3 relative overflow-hidden">
-              <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-primary/20 blur-2xl" />
-              <Sparkles className="w-4 h-4 text-primary mb-2 relative" />
-              <p className="text-[14px] font-bold text-foreground leading-tight relative">Foco no processo!</p>
-              <p className="text-[10px] text-primary/80 mt-1 relative">Mantenha o ritmo</p>
+            <div className="w-px h-9 bg-white/[0.06]" />
+            <div className="shrink-0 rounded-2xl bg-primary/8 border border-primary/20 px-2.5 py-2 flex items-center gap-1.5 relative overflow-hidden">
+              <div className="absolute -top-4 -right-4 w-12 h-12 rounded-full bg-primary/20 blur-2xl" />
+              <div className="w-6 h-6 rounded-full border border-primary/40 flex items-center justify-center relative">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary))]" />
+              </div>
+              <p className="text-[10px] font-bold text-foreground leading-tight relative max-w-[60px]">Foco no processo!</p>
+              <ChevronRight className="w-3 h-3 text-primary/70 relative" />
             </div>
           </div>
         </div>
