@@ -53,11 +53,8 @@ const UpdateBanner = () => {
   const [remoteVersion, setRemoteVersion] = useState<string>(APP_VERSION);
 
   useEffect(() => {
-    const stored = localStorage.getItem(VERSION_KEY);
-    if (stored && stored !== APP_VERSION) {
-      setRemoteVersion(stored);
-      setShow(true);
-    }
+    // Sempre sincroniza o storage com a versão atual ao montar.
+    // Não mostra banner baseado em storage — apenas comparação real com servidor.
     localStorage.setItem(VERSION_KEY, APP_VERSION);
 
     let cancelled = false;
@@ -75,6 +72,10 @@ const UpdateBanner = () => {
             void forceRefreshToVersion(remote);
           }, 500);
         }
+      } else {
+        // Versão remota igual à atual — garante que banner não apareça
+        setShow(false);
+        localStorage.setItem(VERSION_KEY, APP_VERSION);
       }
     };
     check();
