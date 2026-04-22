@@ -103,13 +103,13 @@ const FloatingDock = () => {
                 <motion.div
                   whileTap={{ scale: 0.88 }}
                   className={cn(
-                    "w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-200",
+                    "w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-200 glass-icon",
                     active
-                      ? "bg-primary/15 text-primary shadow-[0_0_14px_-2px_hsl(var(--primary)/0.55),inset_0_0_8px_hsl(var(--primary)/0.15)]"
+                      ? "glass-icon-active text-primary"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <Icon className={cn("w-[18px] h-[18px]", active && "neon-icon")} />
+                  <Icon className={cn("w-[18px] h-[18px] relative z-10", active ? "neon-icon" : "neon-icon-soft")} />
                 </motion.div>
                 <span className={cn(
                   "text-[10px] font-medium transition-colors",
@@ -127,13 +127,13 @@ const FloatingDock = () => {
               whileTap={{ scale: 0.88 }}
               onClick={() => setMenuOpen(!menuOpen)}
               className={cn(
-                "w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-200",
+                "w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-200 glass-icon",
                 menuOpen
-                  ? "bg-primary/12 text-primary"
+                  ? "glass-icon-active text-primary"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <Avatar className="w-7 h-7">
+              <Avatar className="w-7 h-7 relative z-10">
                 <AvatarImage src={profile?.avatar_url || ""} alt={firstName} />
                 <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">
                   {firstName.charAt(0).toUpperCase() || <User className="w-3.5 h-3.5" />}
