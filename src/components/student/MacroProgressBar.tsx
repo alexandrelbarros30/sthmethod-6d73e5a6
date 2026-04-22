@@ -22,10 +22,13 @@ const MacroProgressBar = ({ label, consumed, total, unit = "g", color, className
       </div>
       <div className="h-2.5 w-full rounded-full bg-muted/60 overflow-hidden">
         <div
-          className={cn("h-full rounded-full animate-fill-bar", color)}
+          className={cn("h-full rounded-full animate-fill-bar neon-bar", color)}
           style={{
             width: `${pct}%`,
-            boxShadow: pct > 0 ? `0 0 8px hsl(var(--primary) / 0.3)` : "none",
+            boxShadow:
+              pct > 0
+                ? `0 0 8px hsl(var(--primary) / 0.75), 0 0 16px hsl(var(--primary) / 0.45), 0 0 28px hsl(var(--primary) / 0.25), inset 0 0 4px rgb(255 255 255 / 0.4)`
+                : "none",
           }}
         />
       </div>
