@@ -416,6 +416,41 @@ html, body {
       0 0 26px hsl(var(--primary) / 0.3),
       inset 0 0 6px rgb(255 255 255 / 0.4);
   }
+
+  /* ===== GLOBAL GLASS BOOST (dark theme) =====
+     Intensifica automaticamente todo card que já usa o padrão
+     "rounded-[XXpx] + backdrop-blur-xl + bg-white/[0.025]"
+     trazendo o visual para o nível da imagem de referência. */
+  .dark [class*="rounded-["][class*="backdrop-blur-xl"] {
+    background-color: rgb(255 255 255 / 0.045) !important;
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    box-shadow:
+      0 12px 36px -10px rgb(0 0 0 / 0.65),
+      0 0 28px -6px hsl(var(--primary) / 0.40),
+      inset 0 1px 0 rgb(255 255 255 / 0.12),
+      inset 0 -1px 0 rgb(0 0 0 / 0.30) !important;
+    border-color: rgb(255 255 255 / 0.11) !important;
+  }
+
+  /* Reforça reflexos dos pseudo-elementos (sheen) já existentes */
+  .dark [class*="rounded-["][class*="backdrop-blur-xl"] > [class*="opacity-50"][class*="pointer-events-none"] {
+    opacity: 0.85 !important;
+  }
+
+  /* Barras de progresso com brilho neon (Radix Progress Indicator) */
+  .dark [data-state][class*="bg-primary"],
+  .dark [class*="Progress"] > [style*="translateX"] {
+    box-shadow:
+      0 0 6px hsl(var(--primary) / 0.7),
+      0 0 14px hsl(var(--primary) / 0.45),
+      inset 0 0 4px rgb(255 255 255 / 0.35);
+  }
+
+  /* Ícones lucide dentro de containers glass ganham leve halo neon */
+  .dark [class*="backdrop-blur-xl"] svg.lucide {
+    filter: drop-shadow(0 0 4px hsl(var(--primary) / 0.35));
+  }
   @keyframes neon-ring-pulse {
     0%, 100% {
       box-shadow:
