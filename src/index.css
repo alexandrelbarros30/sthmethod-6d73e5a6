@@ -417,54 +417,95 @@ html, body {
       inset 0 0 6px rgb(255 255 255 / 0.4);
   }
 
-  /* ===== GLOBAL GLASS BOOST (light + dark) =====
-     Aplica visual de vidro límpido e cristalino em QUALQUER elemento
-     que use backdrop-blur (sm/md/lg/xl/2xl/3xl). Funciona nos dois temas. */
-  [class*="backdrop-blur"] {
-    backdrop-filter: blur(22px) saturate(160%) !important;
-    -webkit-backdrop-filter: blur(22px) saturate(160%) !important;
-  }
-
-  /* Dark — vidro escuro translúcido com halo neon primary */
-  .dark [class*="backdrop-blur"]:not(.no-glass-boost):not([data-radix-popper-content-wrapper] *) {
-    background-color: rgb(255 255 255 / 0.05) !important;
-    border: 1px solid rgb(255 255 255 / 0.12) !important;
+  /* ===== STH GLASS — vidro límpido e cristalino =====
+     Marcador opt-in para cards que devem receber o tratamento "premium glass"
+     da imagem de referência (fundo preto + halos verdes neon). */
+  .sth-glass {
+    position: relative;
+    border-radius: 22px;
+    overflow: hidden;
+    background: rgb(255 255 255 / 0.035);
+    border: 1px solid rgb(255 255 255 / 0.10);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
     box-shadow:
-      0 14px 40px -12px rgb(0 0 0 / 0.7),
-      0 0 32px -6px hsl(var(--primary) / 0.45),
+      0 14px 40px -14px rgb(0 0 0 / 0.7),
+      0 0 30px -8px hsl(var(--primary) / 0.38),
+      inset 0 1px 0 rgb(255 255 255 / 0.12),
+      inset 0 -1px 0 rgb(0 0 0 / 0.30);
+    isolation: isolate;
+  }
+  .sth-glass::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(115deg, transparent 36%, rgb(255 255 255 / 0.10) 50%, transparent 66%);
+    pointer-events: none;
+    opacity: 0.85;
+    z-index: 0;
+  }
+  .sth-glass::after {
+    content: "";
+    position: absolute;
+    inset: 0 0 55% 0;
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.07) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .sth-glass > * { position: relative; z-index: 1; }
+
+  .sth-glass-strong {
+    box-shadow:
+      0 16px 44px -12px rgb(0 0 0 / 0.78),
+      0 0 42px -6px hsl(var(--primary) / 0.55),
+      0 0 0 1px hsl(var(--primary) / 0.14),
       inset 0 1px 0 rgb(255 255 255 / 0.14),
-      inset 0 -1px 0 rgb(0 0 0 / 0.32) !important;
+      inset 0 -1px 0 rgb(0 0 0 / 0.32);
   }
 
-  /* Light — vidro branco límpido com leve halo */
-  :root:not(.dark) [class*="backdrop-blur"]:not(.no-glass-boost):not([data-radix-popper-content-wrapper] *) {
-    background-color: rgb(255 255 255 / 0.65) !important;
-    border: 1px solid rgb(255 255 255 / 0.7) !important;
+  /* Light — vidro branco límpido para o tema claro */
+  :root:not(.dark) .sth-glass {
+    background: rgb(255 255 255 / 0.7);
+    border: 1px solid rgb(255 255 255 / 0.8);
     box-shadow:
-      0 10px 30px -12px rgb(0 0 0 / 0.18),
-      0 0 24px -8px hsl(var(--primary) / 0.22),
+      0 12px 36px -14px rgb(0 0 0 / 0.18),
+      0 0 24px -10px hsl(var(--primary) / 0.18),
       inset 0 1px 0 rgb(255 255 255 / 0.9),
-      inset 0 -1px 0 rgb(0 0 0 / 0.05) !important;
+      inset 0 -1px 0 rgb(0 0 0 / 0.04);
+  }
+
+  /* Auto-promote — qualquer card que já segue o padrão antigo da home
+     (rounded-[XXpx] + backdrop-blur-xl + bg-white/[0.025]) ganha o boost
+     cristalino sem precisar editar cada arquivo. Aplicado APENAS em dark
+     e SEM mexer em layout interno. */
+  .dark [class*="rounded-["][class*="backdrop-blur-xl"][class*="bg-white/[0.025]"] {
+    background-color: rgb(255 255 255 / 0.045) !important;
+    border-color: rgb(255 255 255 / 0.11) !important;
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    box-shadow:
+      0 14px 40px -14px rgb(0 0 0 / 0.7),
+      0 0 32px -8px hsl(var(--primary) / 0.42),
+      inset 0 1px 0 rgb(255 255 255 / 0.13),
+      inset 0 -1px 0 rgb(0 0 0 / 0.30) !important;
   }
 
   /* Reforça reflexos dos pseudo-elementos (sheen) já existentes */
-  [class*="backdrop-blur"] > [class*="opacity-50"][class*="pointer-events-none"],
-  [class*="backdrop-blur"] > [class*="opacity-40"][class*="pointer-events-none"] {
+  [class*="rounded-["][class*="backdrop-blur-xl"] > [class*="opacity-50"][class*="pointer-events-none"] {
     opacity: 0.9 !important;
   }
 
-  /* Barras de progresso com brilho neon (Radix Progress Indicator) */
-  [data-state][class*="bg-primary"],
-  [class*="Progress"] > [style*="translateX"] {
+  /* Barras de progresso (Radix) ganham brilho neon */
+  .dark [data-state][class*="bg-primary"] {
     box-shadow:
       0 0 6px hsl(var(--primary) / 0.7),
       0 0 14px hsl(var(--primary) / 0.45),
       inset 0 0 4px rgb(255 255 255 / 0.35);
   }
 
-  /* Ícones lucide dentro de containers glass ganham leve halo neon */
-  [class*="backdrop-blur"] svg.lucide {
-    filter: drop-shadow(0 0 4px hsl(var(--primary) / 0.4));
+  /* Ícones lucide dentro de cards glass ganham leve halo neon (apenas dark) */
+  .dark [class*="rounded-["][class*="backdrop-blur-xl"] svg.lucide {
+    filter: drop-shadow(0 0 3px hsl(var(--primary) / 0.35));
   }
   @keyframes neon-ring-pulse {
     0%, 100% {
