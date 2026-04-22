@@ -385,19 +385,10 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
               {renderSlot("before", "Foto Antes")}
               {renderSlot("after", "Foto Depois")}
             </div>
-
-            <Button
-              size="lg"
-              className="w-full text-base"
-              disabled={!canGenerate}
-              onClick={handleAnalyze}
-            >
-              <Sparkles className="w-5 h-5" /> Ver minha evolução
-            </Button>
           </CardContent>
         </Card>
 
-        {/* Visual preview (locked) */}
+        {/* Visual preview (locked) - aparece automaticamente quando fotos enviadas */}
         {previewUrl && (
           <section className="space-y-3">
             <div className="flex items-center justify-between">
@@ -467,6 +458,17 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
                 })()}
               </CardContent>
             </Card>
+
+            {/* Botão Ver minha evolução - agora abaixo da foto gerada e controles */}
+            <div className="max-w-md mx-auto">
+              <Button
+                size="lg"
+                className="w-full text-base"
+                onClick={handleAnalyze}
+              >
+                <Sparkles className="w-5 h-5" /> Ver minha evolução
+              </Button>
+            </div>
           </section>
         )}
 
