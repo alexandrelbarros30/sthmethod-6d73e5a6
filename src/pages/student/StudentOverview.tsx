@@ -207,57 +207,70 @@ const StudentOverview = () => {
           </p>
         </div>
 
-        {/* Progress card — fiel à referência */}
-        <div className="relative w-[46%] shrink-0 aspect-[0.95] rounded-[28px] overflow-hidden border border-white/[0.07] bg-[#0d0d0d]/80 backdrop-blur-xl mt-7 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.04)]">
-          {/* Big background glow on right side */}
-          <div className="absolute -right-12 top-1/2 -translate-y-1/2 w-40 h-40 rounded-full bg-primary/35 blur-3xl pointer-events-none" />
-          <div className="absolute -right-8 -top-8 w-28 h-28 rounded-full bg-primary/30 blur-2xl pointer-events-none" />
+        {/* Progress card — bloom neon premium */}
+        <div className="relative w-[46%] shrink-0 aspect-[0.95] mt-7">
+          {/* Aura externa pulsante */}
+          <div className="absolute -inset-3 rounded-[32px] bg-primary/30 blur-3xl opacity-80 animate-pulse-glow pointer-events-none" />
+          <div className="absolute -inset-1 rounded-[30px] bg-primary/25 blur-2xl pointer-events-none" />
 
-          {/* The big arc — covers right side from top to bottom, like reference */}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 200 210" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="bigArcGrad" x1="0%" y1="0%" x2="50%" y2="100%">
-                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="1" />
-                <stop offset="60%" stopColor="hsl(150 95% 48%)" stopOpacity="1" />
-                <stop offset="100%" stopColor="hsl(150 95% 45%)" stopOpacity="0.95" />
-              </linearGradient>
-            </defs>
-            {/* Soft outer glow arc */}
-            <path
-              d="M 178 22 A 110 110 0 0 1 178 188"
-              fill="none"
-              stroke="hsl(var(--primary))"
-              strokeWidth="14"
-              strokeLinecap="round"
-              opacity="0.18"
-              style={{ filter: "blur(6px)" }}
-            />
-            {/* Main arc */}
-            <path
-              d="M 178 22 A 110 110 0 0 1 178 188"
-              fill="none"
-              stroke="url(#bigArcGrad)"
-              strokeWidth="6"
-              strokeLinecap="round"
-              style={{ filter: "drop-shadow(0 0 8px hsl(var(--primary))) drop-shadow(0 0 16px hsl(var(--primary) / 0.6))" }}
-            />
-            {/* Tip glowing dot */}
-            <circle cx="178" cy="22" r="5" fill="hsl(var(--primary))" style={{ filter: "drop-shadow(0 0 10px hsl(var(--primary))) drop-shadow(0 0 18px hsl(var(--primary)))" }} />
-            <circle cx="178" cy="22" r="2.5" fill="white" />
-          </svg>
+          <div className="relative w-full h-full rounded-[28px] overflow-hidden border border-primary/25 bg-[#0a0a0a]/90 backdrop-blur-xl shadow-[0_0_50px_-10px_hsl(var(--primary)/0.6),inset_0_1px_0_hsl(var(--primary)/0.18),inset_0_0_30px_-10px_hsl(var(--primary)/0.25)]">
+            {/* Glows internos intensos no lado direito */}
+            <div className="absolute -right-16 top-1/2 -translate-y-1/2 w-48 h-48 rounded-full bg-primary/55 blur-3xl pointer-events-none" />
+            <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full bg-primary/45 blur-2xl pointer-events-none" />
+            <div className="absolute right-0 top-0 w-20 h-full bg-gradient-to-l from-primary/20 to-transparent pointer-events-none" />
 
-          {/* Content */}
-          <div className="relative h-full flex flex-col justify-between p-4">
-            <div>
-              <p className="text-[9px] font-bold tracking-[0.24em] text-primary uppercase">Progresso</p>
-              <p className="text-[40px] leading-none font-extrabold text-foreground font-display tracking-tight mt-2 tabular-nums">
-                {dayProgress || 72}%
-              </p>
-              <p className="text-[11px] text-foreground/65 mt-1.5">da meta mensal</p>
-            </div>
-            <div className="inline-flex w-fit items-center gap-1.5 text-[10px] text-foreground/70 border border-white/[0.08] rounded-full px-2.5 py-1.5 bg-white/[0.025] backdrop-blur-sm">
-              <Target className="w-3 h-3 text-foreground/55" />
-              <span>Faltam 8 dias</span>
+            {/* Arco principal com bloom triplo */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 200 210" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="bigArcGrad" x1="0%" y1="0%" x2="50%" y2="100%">
+                  <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
+                  <stop offset="15%" stopColor="hsl(var(--primary))" stopOpacity="1" />
+                  <stop offset="60%" stopColor="hsl(150 95% 50%)" stopOpacity="1" />
+                  <stop offset="100%" stopColor="hsl(150 95% 42%)" stopOpacity="0.95" />
+                </linearGradient>
+                <filter id="neonBloom" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="4" result="b1" />
+                  <feGaussianBlur stdDeviation="10" result="b2" />
+                  <feMerge>
+                    <feMergeNode in="b2" />
+                    <feMergeNode in="b1" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+              {/* Halo arco (largo + blur forte) */}
+              <path d="M 178 22 A 110 110 0 0 1 178 188" fill="none" stroke="hsl(var(--primary))" strokeWidth="22" strokeLinecap="round" opacity="0.22" style={{ filter: "blur(10px)" }} />
+              <path d="M 178 22 A 110 110 0 0 1 178 188" fill="none" stroke="hsl(var(--primary))" strokeWidth="14" strokeLinecap="round" opacity="0.35" style={{ filter: "blur(5px)" }} />
+              {/* Arco principal */}
+              <path
+                d="M 178 22 A 110 110 0 0 1 178 188"
+                fill="none"
+                stroke="url(#bigArcGrad)"
+                strokeWidth="6"
+                strokeLinecap="round"
+                style={{ filter: "drop-shadow(0 0 6px hsl(var(--primary))) drop-shadow(0 0 14px hsl(var(--primary) / 0.85)) drop-shadow(0 0 24px hsl(var(--primary) / 0.5))" }}
+              />
+              {/* Núcleo branco fino */}
+              <path d="M 178 22 A 110 110 0 0 1 178 188" fill="none" stroke="white" strokeWidth="1.2" strokeLinecap="round" opacity="0.55" />
+              {/* Tip */}
+              <circle cx="178" cy="22" r="9" fill="hsl(var(--primary))" opacity="0.4" style={{ filter: "blur(6px)" }} />
+              <circle cx="178" cy="22" r="5" fill="hsl(var(--primary))" style={{ filter: "drop-shadow(0 0 8px hsl(var(--primary))) drop-shadow(0 0 16px hsl(var(--primary)))" }} />
+              <circle cx="178" cy="22" r="2.2" fill="white" />
+            </svg>
+
+            {/* Conteúdo */}
+            <div className="relative h-full flex flex-col justify-between p-4">
+              <div>
+                <p className="text-[9px] font-bold tracking-[0.24em] text-primary uppercase" style={{ textShadow: "0 0 12px hsl(var(--primary) / 0.7)" }}>Progresso</p>
+                <p className="text-[40px] leading-none font-extrabold text-foreground font-display tracking-tight mt-2 tabular-nums" style={{ textShadow: "0 0 18px hsl(var(--primary) / 0.45), 0 0 36px hsl(var(--primary) / 0.25)" }}>
+                  {dayProgress || 72}%
+                </p>
+                <p className="text-[11px] text-foreground/70 mt-1.5">da meta mensal</p>
+              </div>
+              <div className="inline-flex w-fit items-center gap-1.5 text-[10px] text-foreground/85 border border-primary/30 rounded-full px-2.5 py-1.5 bg-primary/10 backdrop-blur-sm shadow-[0_0_18px_-4px_hsl(var(--primary)/0.5),inset_0_0_8px_-2px_hsl(var(--primary)/0.3)]">
+                <Target className="w-3 h-3 text-primary" style={{ filter: "drop-shadow(0 0 4px hsl(var(--primary)))" }} />
+                <span>Faltam 8 dias</span>
+              </div>
             </div>
           </div>
         </div>
