@@ -207,8 +207,13 @@ const StudentOverview = () => {
           </p>
         </div>
 
-        <div className="relative w-[48%] shrink-0 rounded-3xl overflow-hidden border border-white/[0.08] bg-white/[0.03] backdrop-blur-md p-3.5 mt-6">
-          <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
+        <div className="relative w-[48%] shrink-0 rounded-3xl overflow-hidden border border-primary/30 bg-gradient-to-br from-primary/[0.12] via-white/[0.04] to-transparent backdrop-blur-md p-3.5 mt-6 shadow-[0_0_40px_-8px_hsl(var(--primary)/0.55),inset_0_1px_0_hsl(var(--primary)/0.2)]">
+          {/* Outer aura */}
+          <div className="absolute -inset-4 rounded-[2rem] bg-primary/25 blur-2xl pointer-events-none opacity-70 animate-pulse-glow" />
+          {/* Top-right glow orb */}
+          <div className="absolute -top-14 -right-14 w-36 h-36 rounded-full bg-primary/50 blur-3xl pointer-events-none" />
+          {/* Bottom-left subtle glow */}
+          <div className="absolute -bottom-10 -left-10 w-24 h-24 rounded-full bg-primary/30 blur-3xl pointer-events-none" />
           <div className="relative">
             <p className="text-[8.5px] font-bold tracking-[0.22em] text-primary uppercase">Progresso</p>
             <p className="text-[28px] leading-none font-extrabold text-foreground font-display tracking-tight mt-1.5 tabular-nums">
@@ -218,10 +223,18 @@ const StudentOverview = () => {
             <div className="mt-2.5 inline-flex items-center gap-1 text-[9.5px] text-muted-foreground border border-white/[0.08] rounded-full px-2 py-1 bg-white/[0.02]">
               <Target className="w-2.5 h-2.5 text-primary/80" /> Faltam 8 dias
             </div>
-            {/* Decorative ring arc */}
+            {/* Decorative ring arc with intense glow */}
             <svg className="absolute -top-1 -right-1 w-20 h-20 -rotate-90 pointer-events-none" viewBox="0 0 80 80">
-              <circle cx="40" cy="40" r="32" fill="none" stroke="hsl(var(--primary))" strokeWidth="4" strokeLinecap="round" strokeDasharray={2 * Math.PI * 32} strokeDashoffset={2 * Math.PI * 32 * (1 - (dayProgress || 72) / 100)} style={{ filter: "drop-shadow(0 0 6px hsl(var(--primary) / 0.7))" }} opacity="0.95" />
-              <circle cx="40" cy="8" r="2.5" fill="hsl(var(--primary))" style={{ filter: "drop-shadow(0 0 4px hsl(var(--primary)))" }} />
+              <defs>
+                <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="1" />
+                  <stop offset="100%" stopColor="hsl(170 85% 50%)" stopOpacity="0.9" />
+                </linearGradient>
+              </defs>
+              <circle cx="40" cy="40" r="32" fill="none" stroke="hsl(var(--primary))" strokeWidth="4" strokeLinecap="round" strokeDasharray={2 * Math.PI * 32} strokeDashoffset={2 * Math.PI * 32 * (1 - (dayProgress || 72) / 100)} style={{ filter: "drop-shadow(0 0 10px hsl(var(--primary))) drop-shadow(0 0 20px hsl(var(--primary) / 0.6))" }} opacity="0.4" />
+              <circle cx="40" cy="40" r="32" fill="none" stroke="url(#ringGrad)" strokeWidth="3" strokeLinecap="round" strokeDasharray={2 * Math.PI * 32} strokeDashoffset={2 * Math.PI * 32 * (1 - (dayProgress || 72) / 100)} style={{ filter: "drop-shadow(0 0 4px hsl(var(--primary)))" }} />
+              <circle cx="40" cy="8" r="3" fill="hsl(var(--primary))" style={{ filter: "drop-shadow(0 0 8px hsl(var(--primary))) drop-shadow(0 0 14px hsl(var(--primary)))" }} />
+              <circle cx="40" cy="8" r="1.5" fill="white" />
             </svg>
           </div>
         </div>
