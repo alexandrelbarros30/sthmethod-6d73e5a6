@@ -83,9 +83,21 @@ const ContentHubCards = ({ onNavigate }: Props) => (
           transition={{ delay: 0.08 * i, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
           whileTap={{ scale: 0.96 }}
           onClick={() => onNavigate(s.id)}
-          className="snap-center flex-shrink-0 w-[72vw] max-w-[280px] text-left rounded-2xl overflow-hidden relative group"
-          style={{ border: `0.5px solid ${G.border}` }}
+          className="snap-center flex-shrink-0 w-[72vw] max-w-[280px] text-left rounded-[22px] overflow-hidden relative group backdrop-blur-xl"
+          style={{
+            border: `1px solid hsl(${s.accentHue} 60% 42% / 0.18)`,
+            background: "rgb(255 255 255 / 0.025)",
+            boxShadow: `0 8px 28px -10px rgb(0 0 0 / 0.55), 0 0 22px -6px hsl(${s.accentHue} 60% 42% / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.06)`,
+          }}
         >
+          {/* Diagonal glass sheen */}
+          <div
+            className="absolute inset-0 pointer-events-none z-20 opacity-60"
+            style={{
+              background:
+                "linear-gradient(115deg, transparent 38%, rgb(255 255 255 / 0.08) 50%, transparent 65%)",
+            }}
+          />
           {/* Image */}
           <div className="relative h-36 overflow-hidden">
             <img
@@ -109,7 +121,12 @@ const ContentHubCards = ({ onNavigate }: Props) => (
             <div className="absolute top-2.5 left-2.5">
               <span
                 className="inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.18em] font-bold px-2 py-1 rounded-full backdrop-blur-md"
-                style={{ background: accentBg, color: accent, border: `0.5px solid ${accentBorder}` }}
+                style={{
+                  background: accentBg,
+                  color: accent,
+                  border: `0.5px solid ${accentBorder}`,
+                  boxShadow: `0 0 10px hsl(${s.accentHue} 60% 42% / 0.35)`,
+                }}
               >
                 <s.icon className="w-2.5 h-2.5" />
                 {s.tag}
@@ -128,12 +145,21 @@ const ContentHubCards = ({ onNavigate }: Props) => (
           </div>
 
           {/* Footer */}
-          <div className="px-3.5 py-2.5 flex items-center justify-between" style={{ background: G.card }}>
+          <div
+            className="px-3.5 py-2.5 flex items-center justify-between relative z-10"
+            style={{
+              background: "rgb(255 255 255 / 0.02)",
+              borderTop: `1px solid hsl(${s.accentHue} 60% 42% / 0.12)`,
+            }}
+          >
             <span className="text-[10px] font-medium" style={{ color: G.t40 }}>
               {s.meta}
             </span>
             <div className="flex items-center gap-0.5">
-              <span className="text-[10px] font-semibold" style={{ color: accent }}>
+              <span
+                className="text-[10px] font-semibold"
+                style={{ color: accent, textShadow: `0 0 8px hsl(${s.accentHue} 60% 42% / 0.6)` }}
+              >
                 Explorar
               </span>
               <motion.div

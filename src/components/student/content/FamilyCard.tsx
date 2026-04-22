@@ -36,9 +36,21 @@ const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
       transition={{ delay: 0.08 * index, duration: 0.5 }}
       whileTap={{ scale: 0.97 }}
       onClick={onClick}
-      className="w-full text-left rounded-2xl overflow-hidden group"
-      style={{ border: `0.5px solid ${G.border}` }}
+      className="w-full text-left rounded-[22px] overflow-hidden group relative backdrop-blur-xl"
+      style={{
+        border: `1px solid hsl(${family.accentHue} 60% 42% / 0.18)`,
+        background: "rgb(255 255 255 / 0.025)",
+        boxShadow: `0 8px 28px -10px rgb(0 0 0 / 0.55), 0 0 22px -6px hsl(${family.accentHue} 60% 42% / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.06)`,
+      }}
     >
+      {/* Diagonal glass sheen */}
+      <div
+        className="absolute inset-0 pointer-events-none z-20 opacity-60"
+        style={{
+          background:
+            "linear-gradient(115deg, transparent 38%, rgb(255 255 255 / 0.08) 50%, transparent 65%)",
+        }}
+      />
       {/* Cinematic image */}
       <div className="relative h-40 overflow-hidden">
         <motion.img
@@ -60,7 +72,12 @@ const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
         <div className="absolute top-3 left-3">
           <span
             className="text-[10px] uppercase tracking-[0.2em] font-bold px-3 py-1.5 rounded-full backdrop-blur-md"
-            style={{ background: accentBg, color: accent, border: `0.5px solid ${accentBorder}` }}
+            style={{
+              background: accentBg,
+              color: accent,
+              border: `0.5px solid ${accentBorder}`,
+              boxShadow: `0 0 12px hsl(${family.accentHue} 60% 42% / 0.4)`,
+            }}
           >
             {family.id === "testosterona" ? "Base" : family.id === "dht" ? "Estética" : "19-nor"}
           </span>
@@ -78,7 +95,13 @@ const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
       </div>
 
       {/* Content area */}
-      <div className="p-4 space-y-3" style={{ background: G.card }}>
+      <div
+        className="p-4 space-y-3 relative z-10"
+        style={{
+          background: "rgb(255 255 255 / 0.02)",
+          borderTop: `1px solid hsl(${family.accentHue} 60% 42% / 0.12)`,
+        }}
+      >
         <p className="text-[13px] leading-relaxed" style={{ color: G.t55 }}>
           {family.description}
         </p>
@@ -88,8 +111,12 @@ const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
           {family.compounds.map((c) => (
             <span
               key={c.id}
-              className="text-[11px] font-medium px-2 py-1 rounded-lg"
-              style={{ background: G.t10, color: G.t80 }}
+              className="text-[11px] font-medium px-2 py-1 rounded-lg backdrop-blur-md"
+              style={{
+                background: "rgb(255 255 255 / 0.04)",
+                color: G.t80,
+                border: "0.5px solid rgb(255 255 255 / 0.06)",
+              }}
             >
               {c.name}
             </span>
@@ -102,7 +129,10 @@ const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
             {visitedCount}/{total} explorados
           </span>
           <div className="flex items-center gap-1">
-            <span className="text-[11px] font-semibold" style={{ color: accent }}>
+            <span
+              className="text-[11px] font-semibold"
+              style={{ color: accent, textShadow: `0 0 8px hsl(${family.accentHue} 60% 42% / 0.6)` }}
+            >
               Explorar
             </span>
             <motion.div
@@ -115,10 +145,13 @@ const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
         </div>
 
         {/* Progress bar */}
-        <div className="h-1 rounded-full overflow-hidden" style={{ background: G.t10 }}>
+        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgb(255 255 255 / 0.05)" }}>
           <motion.div
             className="h-full rounded-full"
-            style={{ background: `linear-gradient(90deg, ${accent}, ${accentSoft})` }}
+            style={{
+              background: `linear-gradient(90deg, ${accent}, ${accentSoft})`,
+              boxShadow: `0 0 8px hsl(${family.accentHue} 60% 42% / 0.7), 0 0 16px hsl(${family.accentHue} 60% 42% / 0.4), inset 0 0 4px rgb(255 255 255 / 0.4)`,
+            }}
             initial={{ width: 0 }}
             animate={{ width: `${pct}%` }}
             transition={{ duration: 0.6, ease: "easeOut" }}
