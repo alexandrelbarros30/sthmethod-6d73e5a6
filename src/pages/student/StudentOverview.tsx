@@ -353,35 +353,35 @@ const StudentOverview = () => {
               <button
                 key={s.id}
                 onClick={() => navigate(s.id === "receitas" ? "/dashboard/recipes" : `/dashboard/content?section=${s.id}`)}
-                className="snap-start shrink-0 w-[78vw] max-w-[300px] text-left rounded-2xl overflow-hidden relative group border border-white/[0.08] bg-white/[0.03] backdrop-blur-md active:scale-[0.98] transition-transform"
+                className="snap-start shrink-0 w-[78vw] max-w-[300px] text-left rounded-[22px] overflow-hidden relative group border border-white/[0.06] bg-white/[0.025] backdrop-blur-xl active:scale-[0.98] transition-all duration-300 shadow-[0_8px_24px_-8px_rgb(0_0_0_/_0.4),0_2px_6px_-2px_rgb(0_0_0_/_0.2),inset_0_1px_0_rgb(255_255_255_/_0.04)] hover:border-white/[0.1]"
               >
-                <div className="relative h-44 overflow-hidden">
+                <div className="relative h-48 overflow-hidden">
                   <img src={s.img} alt={s.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" width={600} height={352} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/10" />
-                  <div className="absolute top-3 left-3">
-                    <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.22em] font-bold px-2 py-1 rounded-full backdrop-blur-md bg-primary/12 text-primary border border-primary/25">
-                      <Icon className="w-2.5 h-2.5" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-transparent" />
+                  <div className="absolute top-3.5 left-3.5">
+                    <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.24em] font-semibold px-2.5 py-1 rounded-full backdrop-blur-xl bg-white/10 text-white border border-white/15">
+                      <Icon className="w-2.5 h-2.5" strokeWidth={2.2} />
                       {s.tag}
                     </span>
                   </div>
                   {/* progress mini ring */}
-                  <div className="absolute bottom-3 right-3 w-11 h-11 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center">
+                  <div className="absolute bottom-3.5 right-3.5 w-11 h-11 rounded-full bg-black/50 backdrop-blur-xl border border-white/10 flex items-center justify-center">
                     <svg className="absolute inset-0 -rotate-90" viewBox="0 0 44 44">
-                      <circle cx="22" cy="22" r="18" fill="none" stroke="hsl(var(--muted))" strokeWidth="3" opacity="0.3" />
-                      <circle cx="22" cy="22" r="18" fill="none" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" strokeDasharray={2 * Math.PI * 18} strokeDashoffset={2 * Math.PI * 18 * (1 - s.progress / 100)} style={{ filter: "drop-shadow(0 0 4px hsl(var(--primary) / 0.6))" }} />
+                      <circle cx="22" cy="22" r="18" fill="none" stroke="rgb(255 255 255 / 0.12)" strokeWidth="2.5" />
+                      <circle cx="22" cy="22" r="18" fill="none" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" strokeDasharray={2 * Math.PI * 18} strokeDashoffset={2 * Math.PI * 18 * (1 - s.progress / 100)} />
                     </svg>
-                    <span className="relative text-[9px] font-bold text-foreground tabular-nums">{s.progress}%</span>
+                    <span className="relative text-[9.5px] font-semibold text-white tabular-nums tracking-tight">{s.progress}%</span>
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 p-3.5 pr-16">
-                    <h3 className="text-[15.5px] font-bold tracking-tight leading-tight text-white">{s.title}</h3>
-                    <p className="text-[11px] text-white/60 mt-0.5">{s.subtitle}</p>
+                  <div className="absolute bottom-0 left-0 right-0 p-4 pr-16">
+                    <h3 className="text-[16px] font-semibold tracking-[-0.02em] leading-tight text-white">{s.title}</h3>
+                    <p className="text-[11px] text-white/55 mt-1 tracking-tight">{s.subtitle}</p>
                   </div>
                 </div>
-                <div className="px-3.5 py-2.5 flex items-center justify-between bg-white/[0.02] border-t border-white/[0.06]">
-                  <span className="text-[10.5px] font-medium text-muted-foreground">{s.meta}</span>
+                <div className="px-4 py-3 flex items-center justify-between bg-white/[0.015] border-t border-white/[0.04]">
+                  <span className="text-[10.5px] font-medium text-muted-foreground/80 tracking-tight">{s.meta}</span>
                   <div className="flex items-center gap-0.5 text-primary">
-                    <span className="text-[10.5px] font-semibold">Explorar</span>
-                    <ChevronRight className="w-3 h-3" />
+                    <span className="text-[10.5px] font-semibold tracking-tight">Explorar</span>
+                    <ChevronRight className="w-3 h-3" strokeWidth={2.2} />
                   </div>
                 </div>
               </button>
@@ -391,11 +391,14 @@ const StudentOverview = () => {
       </div>
 
       {/* ===== RECEITAS SAUDÁVEIS ===== */}
-      <div className="mb-7">
-        <div className="flex items-end justify-between mb-3.5">
-          <h2 className="text-[17px] font-bold text-foreground font-display tracking-tight">Receitas Saudáveis</h2>
-          <Link to="/dashboard/recipes" className="text-[12px] text-primary font-medium flex items-center gap-0.5 pb-0.5">
-            Ver todas <ChevronRight className="w-3.5 h-3.5" />
+      <div className="mb-9">
+        <div className="flex items-end justify-between mb-4">
+          <div>
+            <p className="text-[9.5px] text-primary/90 font-semibold uppercase tracking-[0.24em]">Cozinha</p>
+            <h2 className="text-[20px] font-bold text-foreground font-display tracking-[-0.025em] leading-tight mt-1">Receitas</h2>
+          </div>
+          <Link to="/dashboard/recipes" className="text-[12px] text-primary font-medium flex items-center gap-0.5 pb-1 tracking-tight">
+            Ver todas <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
           </Link>
         </div>
         <div className="grid grid-cols-3 gap-2.5">
@@ -403,35 +406,35 @@ const StudentOverview = () => {
             <button
               key={recipe.id}
               onClick={() => navigate("/dashboard/recipes")}
-              className="text-left rounded-2xl overflow-hidden relative group border border-white/[0.08] bg-white/[0.03] backdrop-blur-md active:scale-[0.97] transition-transform"
+              className="text-left rounded-[18px] overflow-hidden relative group border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl active:scale-[0.97] transition-all duration-300 shadow-[0_4px_16px_-4px_rgb(0_0_0_/_0.35),inset_0_1px_0_rgb(255_255_255_/_0.04)]"
             >
               <div className="relative aspect-[4/5] overflow-hidden">
                 <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" width={200} height={250} />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
                 {recipe.isNew && (
-                  <span className="absolute top-1.5 left-1.5 text-[8px] font-bold tracking-[0.15em] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">
-                    NOVO
+                  <span className="absolute top-2 left-2 text-[7.5px] font-semibold tracking-[0.18em] bg-white/15 backdrop-blur-xl text-white px-1.5 py-0.5 rounded-full border border-white/20">
+                    NEW
                   </span>
                 )}
                 <button
                   onClick={(e) => e.stopPropagation()}
-                  className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/40 backdrop-blur-md border border-white/15 flex items-center justify-center"
+                  className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/35 backdrop-blur-xl border border-white/15 flex items-center justify-center"
                   aria-label="Favoritar"
                 >
-                  <Heart className="w-3 h-3 text-white/85" />
+                  <Heart className="w-3 h-3 text-white/85" strokeWidth={2} />
                 </button>
-                <div className="absolute bottom-1.5 left-1.5 right-9">
-                  <p className="text-[10px] font-bold text-white leading-tight line-clamp-2">{recipe.title}</p>
-                  <p className="text-[8.5px] text-white/65 mt-0.5 flex items-center gap-1">
-                    <Clock className="w-2 h-2" /> {recipe.time} min • {recipe.kcal} kcal
+                <div className="absolute bottom-2 left-2 right-9">
+                  <p className="text-[10.5px] font-semibold text-white leading-tight line-clamp-2 tracking-[-0.01em]">{recipe.title}</p>
+                  <p className="text-[8.5px] text-white/60 mt-1 flex items-center gap-1 tracking-tight">
+                    <Clock className="w-2 h-2" strokeWidth={2.2} /> {recipe.time}min · {recipe.kcal}kcal
                   </p>
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); navigate("/dashboard/recipes"); }}
-                  className="absolute bottom-1.5 right-1.5 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-[0_0_10px_hsl(var(--primary)/0.5)]"
+                  className="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-white text-black flex items-center justify-center shadow-[0_2px_8px_rgb(0_0_0_/_0.3)]"
                   aria-label="Abrir receita"
                 >
-                  <Plus className="w-3 h-3" />
+                  <Plus className="w-3 h-3" strokeWidth={2.5} />
                 </button>
               </div>
             </button>
@@ -440,45 +443,35 @@ const StudentOverview = () => {
       </div>
 
       {/* ===== RESUMO DO DIA - HORIZONTAL ===== */}
-      <div className="mb-4 relative rounded-3xl overflow-hidden border border-primary/15 bg-white/[0.03] backdrop-blur-md p-3.5 shadow-[0_0_30px_-12px_hsl(var(--primary)/0.4),inset_0_1px_0_hsl(var(--primary)/0.08)]">
-        <div className="absolute -bottom-20 -left-16 w-48 h-48 rounded-full bg-primary/15 blur-3xl pointer-events-none" />
-        <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-primary/12 blur-3xl pointer-events-none" />
+      <div className="mb-5 relative rounded-[22px] overflow-hidden border border-white/[0.06] bg-gradient-to-br from-white/[0.04] to-white/[0.015] backdrop-blur-xl p-4 shadow-[0_8px_24px_-8px_rgb(0_0_0_/_0.4),inset_0_1px_0_rgb(255_255_255_/_0.04)]">
+        <div className="absolute -bottom-24 -left-20 w-52 h-52 rounded-full bg-primary/[0.06] blur-3xl pointer-events-none" />
         <div className="relative">
-          <p className="text-[9px] font-bold tracking-[0.22em] text-primary uppercase mb-2.5">Resumo do dia</p>
-          <div className="flex items-center gap-2">
+          <p className="text-[9px] font-semibold tracking-[0.26em] text-primary/90 uppercase mb-3.5">Resumo do dia</p>
+          <div className="flex items-center gap-2.5">
             <div className="flex-1 min-w-0 flex items-start gap-2">
-              <Flame className="w-4 h-4 text-primary shrink-0 mt-0.5" style={{ filter: "drop-shadow(0 0 6px hsl(var(--primary))) drop-shadow(0 0 12px hsl(var(--primary)/0.6))" }} />
+              <Flame className="w-[15px] h-[15px] text-primary shrink-0 mt-0.5" strokeWidth={1.8} />
               <div className="min-w-0">
-                <p className="text-[14px] font-bold text-foreground tabular-nums leading-none truncate">
+                <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none truncate tracking-[-0.02em]">
                   {dayMacros?.kcal ? Math.round(dayMacros.kcal).toLocaleString("pt-BR") : "1.842"}
                 </p>
-                <p className="text-[9px] text-muted-foreground mt-1 leading-tight">kcal consumidas</p>
+                <p className="text-[9px] text-muted-foreground/75 mt-1.5 leading-tight tracking-tight">kcal</p>
               </div>
             </div>
-            <div className="w-px h-9 bg-gradient-to-b from-transparent via-primary/30 to-transparent" />
+            <div className="w-px h-10 bg-gradient-to-b from-transparent via-white/10 to-transparent" />
             <div className="flex-1 min-w-0 flex items-start gap-2">
-              <Activity className="w-4 h-4 text-primary shrink-0 mt-0.5" style={{ filter: "drop-shadow(0 0 6px hsl(var(--primary))) drop-shadow(0 0 12px hsl(var(--primary)/0.6))" }} />
+              <Activity className="w-[15px] h-[15px] text-primary shrink-0 mt-0.5" strokeWidth={1.8} />
               <div className="min-w-0">
-                <p className="text-[14px] font-bold text-foreground tabular-nums leading-none">82 min</p>
-                <p className="text-[9px] text-muted-foreground mt-1 leading-tight">treino concluído</p>
+                <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none tracking-[-0.02em]">82<span className="text-[10px] font-medium text-muted-foreground ml-0.5">min</span></p>
+                <p className="text-[9px] text-muted-foreground/75 mt-1.5 leading-tight tracking-tight">treino</p>
               </div>
             </div>
-            <div className="w-px h-9 bg-gradient-to-b from-transparent via-primary/30 to-transparent" />
+            <div className="w-px h-10 bg-gradient-to-b from-transparent via-white/10 to-transparent" />
             <div className="flex-1 min-w-0 flex items-start gap-2">
-              <Droplets className="w-4 h-4 text-primary shrink-0 mt-0.5" style={{ filter: "drop-shadow(0 0 6px hsl(var(--primary))) drop-shadow(0 0 12px hsl(var(--primary)/0.6))" }} />
+              <Droplets className="w-[15px] h-[15px] text-primary shrink-0 mt-0.5" strokeWidth={1.8} />
               <div className="min-w-0">
-                <p className="text-[14px] font-bold text-foreground tabular-nums leading-none">2,1 L</p>
-                <p className="text-[9px] text-muted-foreground mt-1 leading-tight">água ingerida</p>
+                <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none tracking-[-0.02em]">2,1<span className="text-[10px] font-medium text-muted-foreground ml-0.5">L</span></p>
+                <p className="text-[9px] text-muted-foreground/75 mt-1.5 leading-tight tracking-tight">água</p>
               </div>
-            </div>
-            <div className="w-px h-9 bg-gradient-to-b from-transparent via-primary/30 to-transparent" />
-            <div className="shrink-0 rounded-2xl bg-primary/12 border border-primary/35 px-2.5 py-2 flex items-center gap-1.5 relative overflow-hidden shadow-[0_0_20px_-6px_hsl(var(--primary)/0.6),inset_0_0_12px_-4px_hsl(var(--primary)/0.4)]">
-              <div className="absolute -top-4 -right-4 w-14 h-14 rounded-full bg-primary/40 blur-2xl" />
-              <div className="w-6 h-6 rounded-full border border-primary/60 flex items-center justify-center relative" style={{ boxShadow: "0 0 10px hsl(var(--primary)/0.6), inset 0 0 6px hsl(var(--primary)/0.4)" }}>
-                <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary)),0_0_14px_hsl(var(--primary))]" />
-              </div>
-              <p className="text-[10px] font-bold text-foreground leading-tight relative max-w-[60px]">Foco no processo!</p>
-              <ChevronRight className="w-3 h-3 text-primary/70 relative" />
             </div>
           </div>
         </div>
