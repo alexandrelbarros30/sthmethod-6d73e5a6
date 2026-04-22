@@ -192,7 +192,7 @@ const StudentOverview = () => {
           aria-label="Notificações"
         >
           <Bell className="w-[22px] h-[22px] text-foreground/85" strokeWidth={1.6} />
-          <span className="absolute top-1 right-1.5 w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary))]" />
+          <span className="absolute top-1 right-1.5 w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary)),0_0_16px_hsl(var(--primary))]" />
         </button>
 
         <div className="flex-1 min-w-0 pt-2">
@@ -411,13 +411,14 @@ const StudentOverview = () => {
       </div>
 
       {/* ===== RESUMO DO DIA - HORIZONTAL ===== */}
-      <div className="mb-4 relative rounded-3xl overflow-hidden border border-white/[0.08] bg-white/[0.03] backdrop-blur-md p-3.5">
-        <div className="absolute -bottom-20 -left-16 w-48 h-48 rounded-full bg-primary/8 blur-3xl pointer-events-none" />
+      <div className="mb-4 relative rounded-3xl overflow-hidden border border-primary/15 bg-white/[0.03] backdrop-blur-md p-3.5 shadow-[0_0_30px_-12px_hsl(var(--primary)/0.4),inset_0_1px_0_hsl(var(--primary)/0.08)]">
+        <div className="absolute -bottom-20 -left-16 w-48 h-48 rounded-full bg-primary/15 blur-3xl pointer-events-none" />
+        <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-primary/12 blur-3xl pointer-events-none" />
         <div className="relative">
           <p className="text-[9px] font-bold tracking-[0.22em] text-primary uppercase mb-2.5">Resumo do dia</p>
           <div className="flex items-center gap-2">
             <div className="flex-1 min-w-0 flex items-start gap-2">
-              <Flame className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+              <Flame className="w-4 h-4 text-primary shrink-0 mt-0.5" style={{ filter: "drop-shadow(0 0 6px hsl(var(--primary))) drop-shadow(0 0 12px hsl(var(--primary)/0.6))" }} />
               <div className="min-w-0">
                 <p className="text-[14px] font-bold text-foreground tabular-nums leading-none truncate">
                   {dayMacros?.kcal ? Math.round(dayMacros.kcal).toLocaleString("pt-BR") : "1.842"}
@@ -425,27 +426,27 @@ const StudentOverview = () => {
                 <p className="text-[9px] text-muted-foreground mt-1 leading-tight">kcal consumidas</p>
               </div>
             </div>
-            <div className="w-px h-9 bg-white/[0.06]" />
+            <div className="w-px h-9 bg-gradient-to-b from-transparent via-primary/30 to-transparent" />
             <div className="flex-1 min-w-0 flex items-start gap-2">
-              <Activity className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+              <Activity className="w-4 h-4 text-primary shrink-0 mt-0.5" style={{ filter: "drop-shadow(0 0 6px hsl(var(--primary))) drop-shadow(0 0 12px hsl(var(--primary)/0.6))" }} />
               <div className="min-w-0">
                 <p className="text-[14px] font-bold text-foreground tabular-nums leading-none">82 min</p>
                 <p className="text-[9px] text-muted-foreground mt-1 leading-tight">treino concluído</p>
               </div>
             </div>
-            <div className="w-px h-9 bg-white/[0.06]" />
+            <div className="w-px h-9 bg-gradient-to-b from-transparent via-primary/30 to-transparent" />
             <div className="flex-1 min-w-0 flex items-start gap-2">
-              <Droplets className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+              <Droplets className="w-4 h-4 text-primary shrink-0 mt-0.5" style={{ filter: "drop-shadow(0 0 6px hsl(var(--primary))) drop-shadow(0 0 12px hsl(var(--primary)/0.6))" }} />
               <div className="min-w-0">
                 <p className="text-[14px] font-bold text-foreground tabular-nums leading-none">2,1 L</p>
                 <p className="text-[9px] text-muted-foreground mt-1 leading-tight">água ingerida</p>
               </div>
             </div>
-            <div className="w-px h-9 bg-white/[0.06]" />
-            <div className="shrink-0 rounded-2xl bg-primary/8 border border-primary/20 px-2.5 py-2 flex items-center gap-1.5 relative overflow-hidden">
-              <div className="absolute -top-4 -right-4 w-12 h-12 rounded-full bg-primary/20 blur-2xl" />
-              <div className="w-6 h-6 rounded-full border border-primary/40 flex items-center justify-center relative">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary))]" />
+            <div className="w-px h-9 bg-gradient-to-b from-transparent via-primary/30 to-transparent" />
+            <div className="shrink-0 rounded-2xl bg-primary/12 border border-primary/35 px-2.5 py-2 flex items-center gap-1.5 relative overflow-hidden shadow-[0_0_20px_-6px_hsl(var(--primary)/0.6),inset_0_0_12px_-4px_hsl(var(--primary)/0.4)]">
+              <div className="absolute -top-4 -right-4 w-14 h-14 rounded-full bg-primary/40 blur-2xl" />
+              <div className="w-6 h-6 rounded-full border border-primary/60 flex items-center justify-center relative" style={{ boxShadow: "0 0 10px hsl(var(--primary)/0.6), inset 0 0 6px hsl(var(--primary)/0.4)" }}>
+                <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary)),0_0_14px_hsl(var(--primary))]" />
               </div>
               <p className="text-[10px] font-bold text-foreground leading-tight relative max-w-[60px]">Foco no processo!</p>
               <ChevronRight className="w-3 h-3 text-primary/70 relative" />
