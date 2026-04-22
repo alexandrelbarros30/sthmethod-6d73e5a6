@@ -185,7 +185,7 @@ const StudentOverview = () => {
       <PreviewUnlockPopup />
 
       {/* ===== HEADER + PROGRESSO LADO A LADO ===== */}
-      <div className="flex items-start gap-3 mb-6 relative">
+      <div className="grid grid-cols-[minmax(0,1fr)_8.25rem] items-start gap-3 pr-12 mb-6 relative sm:flex sm:pr-0">
         <button
           onClick={() => navigate("/dashboard/ads")}
           className="absolute -top-1 right-0 w-9 h-9 rounded-full flex items-center justify-center z-10"
@@ -208,10 +208,10 @@ const StudentOverview = () => {
         </div>
 
         {/* Progress card — neon bloom real (SVG feGaussianBlur) */}
-        <div className="relative w-[46%] shrink-0 aspect-square mt-7">
+        <div className="relative w-full max-w-[8.25rem] shrink-0 aspect-square mt-5 sm:mt-7 sm:w-[46%] sm:max-w-none">
           {/* Aura externa multi-camada (cria o "vazamento" de luz pra fora do card) */}
-          <div className="absolute -inset-6 rounded-[40px] pointer-events-none" style={{ background: "radial-gradient(60% 60% at 80% 50%, hsl(var(--primary) / 0.55), transparent 70%)", filter: "blur(28px)" }} />
-          <div className="absolute -inset-4 rounded-[36px] pointer-events-none animate-pulse-glow" style={{ background: "radial-gradient(50% 50% at 85% 50%, hsl(var(--primary) / 0.45), transparent 65%)", filter: "blur(20px)" }} />
+          <div className="absolute -inset-3 sm:-inset-6 rounded-[40px] pointer-events-none" style={{ background: "radial-gradient(60% 60% at 80% 50%, hsl(var(--primary) / 0.55), transparent 70%)", filter: "blur(28px)" }} />
+          <div className="absolute -inset-2 sm:-inset-4 rounded-[36px] pointer-events-none animate-pulse-glow" style={{ background: "radial-gradient(50% 50% at 85% 50%, hsl(var(--primary) / 0.45), transparent 65%)", filter: "blur(20px)" }} />
 
           <div className="relative w-full h-full rounded-[28px] border border-primary/30 bg-[#0a0a0a]/90 backdrop-blur-xl shadow-[0_0_60px_-12px_hsl(var(--primary)/0.7),inset_0_1px_0_hsl(var(--primary)/0.2),inset_0_0_40px_-12px_hsl(var(--primary)/0.35)]">
             {/* Glow radial INTERNO atrás do arco (núcleo de luz quente) */}
@@ -221,7 +221,7 @@ const StudentOverview = () => {
             </div>
 
             {/* Arco com bloom REAL via feGaussianBlur + feMerge */}
-            <svg className="absolute -inset-8 w-[calc(100%+4rem)] h-[calc(100%+4rem)] pointer-events-none overflow-visible" viewBox="0 0 280 280" preserveAspectRatio="xMidYMid meet">
+            <svg className="absolute -inset-4 sm:-inset-8 w-[calc(100%+2rem)] h-[calc(100%+2rem)] sm:w-[calc(100%+4rem)] sm:h-[calc(100%+4rem)] pointer-events-none overflow-visible" viewBox="0 0 280 280" preserveAspectRatio="xMidYMid meet">
               <defs>
                 <linearGradient id="bigArcGrad" x1="50%" y1="0%" x2="50%" y2="100%">
                   <stop offset="0%" stopColor="#ffffff" />
@@ -287,15 +287,15 @@ const StudentOverview = () => {
             </svg>
 
             {/* Conteúdo */}
-            <div className="relative h-full flex flex-col justify-between p-4">
+            <div className="relative h-full flex flex-col justify-between p-3 sm:p-4">
               <div>
                 <p className="text-[9px] font-bold tracking-[0.24em] text-primary uppercase" style={{ textShadow: "0 0 12px hsl(var(--primary) / 0.7)" }}>Progresso</p>
-                <p className="text-[40px] leading-none font-extrabold text-foreground font-display tracking-tight mt-2 tabular-nums" style={{ textShadow: "0 0 18px hsl(var(--primary) / 0.45), 0 0 36px hsl(var(--primary) / 0.25)" }}>
+                <p className="text-[32px] sm:text-[40px] leading-none font-extrabold text-foreground font-display tracking-tight mt-2 tabular-nums" style={{ textShadow: "0 0 18px hsl(var(--primary) / 0.45), 0 0 36px hsl(var(--primary) / 0.25)" }}>
                   {dayProgress || 72}%
                 </p>
-                <p className="text-[11px] text-foreground/70 mt-1.5">da meta mensal</p>
+                <p className="text-[10px] sm:text-[11px] text-foreground/70 mt-1.5">da meta mensal</p>
               </div>
-              <div className="inline-flex w-fit items-center gap-1.5 text-[10px] text-foreground/85 border border-primary/30 rounded-full px-2.5 py-1.5 bg-primary/10 backdrop-blur-sm shadow-[0_0_18px_-4px_hsl(var(--primary)/0.5),inset_0_0_8px_-2px_hsl(var(--primary)/0.3)]">
+              <div className="inline-flex w-fit max-w-full items-center gap-1 text-[9px] sm:text-[10px] text-foreground/85 border border-primary/30 rounded-full px-2 py-1.5 sm:px-2.5 bg-primary/10 backdrop-blur-sm shadow-[0_0_18px_-4px_hsl(var(--primary)/0.5),inset_0_0_8px_-2px_hsl(var(--primary)/0.3)]">
                 <Target className="w-3 h-3 text-primary" style={{ filter: "drop-shadow(0 0 4px hsl(var(--primary)))" }} />
                 <span>Faltam 8 dias</span>
               </div>
