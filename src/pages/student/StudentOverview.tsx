@@ -207,55 +207,81 @@ const StudentOverview = () => {
           </p>
         </div>
 
-        {/* Progress card — bloom neon premium */}
+        {/* Progress card — neon bloom real (SVG feGaussianBlur) */}
         <div className="relative w-[46%] shrink-0 aspect-[0.95] mt-7">
-          {/* Aura externa pulsante */}
-          <div className="absolute -inset-3 rounded-[32px] bg-primary/30 blur-3xl opacity-80 animate-pulse-glow pointer-events-none" />
-          <div className="absolute -inset-1 rounded-[30px] bg-primary/25 blur-2xl pointer-events-none" />
+          {/* Aura externa multi-camada (cria o "vazamento" de luz pra fora do card) */}
+          <div className="absolute -inset-6 rounded-[40px] pointer-events-none" style={{ background: "radial-gradient(60% 60% at 80% 50%, hsl(var(--primary) / 0.55), transparent 70%)", filter: "blur(28px)" }} />
+          <div className="absolute -inset-4 rounded-[36px] pointer-events-none animate-pulse-glow" style={{ background: "radial-gradient(50% 50% at 85% 50%, hsl(var(--primary) / 0.45), transparent 65%)", filter: "blur(20px)" }} />
 
-          <div className="relative w-full h-full rounded-[28px] overflow-hidden border border-primary/25 bg-[#0a0a0a]/90 backdrop-blur-xl shadow-[0_0_50px_-10px_hsl(var(--primary)/0.6),inset_0_1px_0_hsl(var(--primary)/0.18),inset_0_0_30px_-10px_hsl(var(--primary)/0.25)]">
-            {/* Glows internos intensos no lado direito */}
-            <div className="absolute -right-16 top-1/2 -translate-y-1/2 w-48 h-48 rounded-full bg-primary/55 blur-3xl pointer-events-none" />
-            <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full bg-primary/45 blur-2xl pointer-events-none" />
-            <div className="absolute right-0 top-0 w-20 h-full bg-gradient-to-l from-primary/20 to-transparent pointer-events-none" />
+          <div className="relative w-full h-full rounded-[28px] overflow-hidden border border-primary/30 bg-[#0a0a0a]/90 backdrop-blur-xl shadow-[0_0_60px_-12px_hsl(var(--primary)/0.7),inset_0_1px_0_hsl(var(--primary)/0.2),inset_0_0_40px_-12px_hsl(var(--primary)/0.35)]">
+            {/* Glow radial INTERNO atrás do arco (núcleo de luz quente) */}
+            <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(45% 55% at 88% 50%, hsl(150 100% 60% / 0.55), hsl(150 95% 45% / 0.18) 35%, transparent 65%)" }} />
+            <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(20% 25% at 92% 50%, hsl(0 0% 100% / 0.35), transparent 70%)" }} />
 
-            {/* Arco principal com bloom triplo */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 200 210" preserveAspectRatio="none">
+            {/* Arco com bloom REAL via feGaussianBlur + feMerge */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible" viewBox="0 0 200 210" preserveAspectRatio="none">
               <defs>
-                <linearGradient id="bigArcGrad" x1="0%" y1="0%" x2="50%" y2="100%">
-                  <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
-                  <stop offset="15%" stopColor="hsl(var(--primary))" stopOpacity="1" />
-                  <stop offset="60%" stopColor="hsl(150 95% 50%)" stopOpacity="1" />
-                  <stop offset="100%" stopColor="hsl(150 95% 42%)" stopOpacity="0.95" />
+                <linearGradient id="bigArcGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+                  <stop offset="0%" stopColor="#ffffff" />
+                  <stop offset="8%" stopColor="hsl(150 100% 88%)" />
+                  <stop offset="25%" stopColor="hsl(150 100% 60%)" />
+                  <stop offset="60%" stopColor="hsl(var(--primary))" />
+                  <stop offset="100%" stopColor="hsl(150 90% 38%)" />
                 </linearGradient>
-                <filter id="neonBloom" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur stdDeviation="4" result="b1" />
-                  <feGaussianBlur stdDeviation="10" result="b2" />
+                {/* Bloom forte: 3 níveis de blur somados ao traço original */}
+                <filter id="neonBloomStrong" x="-100%" y="-100%" width="300%" height="300%">
+                  <feGaussianBlur stdDeviation="2" result="b1" />
+                  <feGaussianBlur stdDeviation="6" result="b2" />
+                  <feGaussianBlur stdDeviation="14" result="b3" />
+                  <feGaussianBlur stdDeviation="24" result="b4" />
                   <feMerge>
+                    <feMergeNode in="b4" />
+                    <feMergeNode in="b3" />
+                    <feMergeNode in="b3" />
+                    <feMergeNode in="b2" />
                     <feMergeNode in="b2" />
                     <feMergeNode in="b1" />
                     <feMergeNode in="SourceGraphic" />
                   </feMerge>
                 </filter>
+                <filter id="tipBloom" x="-200%" y="-200%" width="500%" height="500%">
+                  <feGaussianBlur stdDeviation="3" result="t1" />
+                  <feGaussianBlur stdDeviation="10" result="t2" />
+                  <feGaussianBlur stdDeviation="20" result="t3" />
+                  <feMerge>
+                    <feMergeNode in="t3" />
+                    <feMergeNode in="t2" />
+                    <feMergeNode in="t1" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
               </defs>
-              {/* Halo arco (largo + blur forte) */}
-              <path d="M 178 22 A 110 110 0 0 1 178 188" fill="none" stroke="hsl(var(--primary))" strokeWidth="22" strokeLinecap="round" opacity="0.22" style={{ filter: "blur(10px)" }} />
-              <path d="M 178 22 A 110 110 0 0 1 178 188" fill="none" stroke="hsl(var(--primary))" strokeWidth="14" strokeLinecap="round" opacity="0.35" style={{ filter: "blur(5px)" }} />
-              {/* Arco principal */}
+
+              {/* Arco principal — uma única path com bloom forte */}
+              <g filter="url(#neonBloomStrong)">
+                <path
+                  d="M 178 22 A 110 110 0 0 1 178 188"
+                  fill="none"
+                  stroke="url(#bigArcGrad)"
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                />
+              </g>
+              {/* Núcleo branco quente sobreposto (a "linha viva" no meio do brilho) */}
               <path
                 d="M 178 22 A 110 110 0 0 1 178 188"
                 fill="none"
-                stroke="url(#bigArcGrad)"
-                strokeWidth="6"
+                stroke="white"
+                strokeWidth="1.6"
                 strokeLinecap="round"
-                style={{ filter: "drop-shadow(0 0 6px hsl(var(--primary))) drop-shadow(0 0 14px hsl(var(--primary) / 0.85)) drop-shadow(0 0 24px hsl(var(--primary) / 0.5))" }}
+                opacity="0.95"
               />
-              {/* Núcleo branco fino */}
-              <path d="M 178 22 A 110 110 0 0 1 178 188" fill="none" stroke="white" strokeWidth="1.2" strokeLinecap="round" opacity="0.55" />
-              {/* Tip */}
-              <circle cx="178" cy="22" r="9" fill="hsl(var(--primary))" opacity="0.4" style={{ filter: "blur(6px)" }} />
-              <circle cx="178" cy="22" r="5" fill="hsl(var(--primary))" style={{ filter: "drop-shadow(0 0 8px hsl(var(--primary))) drop-shadow(0 0 16px hsl(var(--primary)))" }} />
-              <circle cx="178" cy="22" r="2.2" fill="white" />
+              {/* Tip superior com bloom quente */}
+              <g filter="url(#tipBloom)">
+                <circle cx="178" cy="22" r="4.5" fill="white" />
+                <circle cx="178" cy="22" r="7" fill="hsl(150 100% 70%)" opacity="0.9" />
+              </g>
+              <circle cx="178" cy="22" r="2" fill="white" />
             </svg>
 
             {/* Conteúdo */}
