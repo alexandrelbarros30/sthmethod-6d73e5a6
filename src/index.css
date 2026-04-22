@@ -80,18 +80,18 @@ html, body {
 
   /* ── Dark theme — Premium Apple-style: graphite black + muted green ── */
   .dark {
-    /* Backgrounds: slightly warm graphite (not pure black) */
-    --background: 0 0% 7%;
+    /* Backgrounds: pure black to match reference image */
+    --background: 0 0% 0%;
     --foreground: 0 0% 96%;
 
-    --card: 0 0% 10%;
+    --card: 0 0% 5%;
     --card-foreground: 0 0% 96%;
 
-    --popover: 0 0% 10%;
+    --popover: 0 0% 6%;
     --popover-foreground: 0 0% 96%;
 
-    /* Muted, sage-leaning green — less neon, more refined */
-    --primary: 152 32% 52%;
+    /* Vibrant neon green to match reference */
+    --primary: 150 75% 50%;
     --primary-foreground: 0 0% 8%;
 
     --secondary: 0 0% 13%;
@@ -106,25 +106,25 @@ html, body {
     --destructive: 0 65% 52%;
     --destructive-foreground: 0 0% 96%;
 
-    --border: 0 0% 16%;
-    --input: 0 0% 16%;
-    --ring: 152 32% 52%;
+    --border: 0 0% 14%;
+    --input: 0 0% 14%;
+    --ring: 150 75% 50%;
 
-    --sidebar-background: 0 0% 6%;
+    --sidebar-background: 0 0% 0%;
     --sidebar-foreground: 0 0% 88%;
-    --sidebar-primary: 152 32% 52%;
+    --sidebar-primary: 150 75% 50%;
     --sidebar-primary-foreground: 0 0% 8%;
     --sidebar-accent: 0 0% 11%;
     --sidebar-accent-foreground: 0 0% 92%;
     --sidebar-border: 0 0% 14%;
-    --sidebar-ring: 152 32% 52%;
+    --sidebar-ring: 150 75% 50%;
 
-    /* Glow kept extremely subtle */
-    --glow: 152 32% 52%;
-    --surface: 0 0% 10%;
-    --surface-hover: 0 0% 13%;
-    --gradient-start: 152 32% 50%;
-    --gradient-end: 158 28% 36%;
+    /* Strong neon glow for reference look */
+    --glow: 150 75% 50%;
+    --surface: 0 0% 6%;
+    --surface-hover: 0 0% 10%;
+    --gradient-start: 150 80% 55%;
+    --gradient-end: 158 60% 35%;
     --text-subtle: 0 0% 50%;
 
     --success: 152 32% 48%;
@@ -479,15 +479,16 @@ html, body {
      cristalino sem precisar editar cada arquivo. Aplicado APENAS em dark
      e SEM mexer em layout interno. */
   .dark [class*="rounded-["][class*="backdrop-blur-xl"][class*="bg-white/[0.025]"] {
-    background-color: rgb(255 255 255 / 0.045) !important;
-    border-color: rgb(255 255 255 / 0.11) !important;
+    background-color: rgb(255 255 255 / 0.025) !important;
+    border-color: hsl(var(--primary) / 0.18) !important;
     backdrop-filter: blur(24px) saturate(160%);
     -webkit-backdrop-filter: blur(24px) saturate(160%);
     box-shadow:
-      0 14px 40px -14px rgb(0 0 0 / 0.7),
-      0 0 32px -8px hsl(var(--primary) / 0.42),
-      inset 0 1px 0 rgb(255 255 255 / 0.13),
-      inset 0 -1px 0 rgb(0 0 0 / 0.30) !important;
+      0 16px 44px -14px rgb(0 0 0 / 0.85),
+      0 0 0 1px hsl(var(--primary) / 0.12),
+      0 0 36px -6px hsl(var(--primary) / 0.55),
+      inset 0 1px 0 rgb(255 255 255 / 0.10),
+      inset 0 -1px 0 rgb(0 0 0 / 0.45) !important;
   }
 
   /* Reforça reflexos dos pseudo-elementos (sheen) já existentes */
