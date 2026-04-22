@@ -461,8 +461,8 @@ const StudentOverview = () => {
             </div>
             <div className="flex items-center gap-2.5">
               <div className="flex-1 min-w-0 flex items-center gap-2">
-                <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-primary/[0.18] to-primary/[0.04] border border-primary/15 flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.06)]">
-                  <Flame className="w-[13px] h-[13px] text-primary" strokeWidth={2} />
+                <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-primary/[0.22] to-primary/[0.05] border border-primary/25 flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.08),0_0_12px_-2px_hsl(var(--primary)/0.55)]">
+                  <Flame className="w-[13px] h-[13px] text-primary neon-icon" strokeWidth={2} />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none truncate tracking-[-0.025em]">
@@ -479,8 +479,8 @@ const StudentOverview = () => {
               </div>
               <div className="w-px h-10 bg-gradient-to-b from-transparent via-white/[0.08] to-transparent" />
               <div className="flex-1 min-w-0 flex items-center gap-2">
-                <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-primary/[0.18] to-primary/[0.04] border border-primary/15 flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.06)]">
-                  <Activity className="w-[13px] h-[13px] text-primary" strokeWidth={2} />
+                <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-primary/[0.22] to-primary/[0.05] border border-primary/25 flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.08),0_0_12px_-2px_hsl(var(--primary)/0.55)]">
+                  <Activity className="w-[13px] h-[13px] text-primary neon-icon" strokeWidth={2} />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none tracking-[-0.025em]">82<span className="text-[10px] font-medium text-muted-foreground/70 ml-0.5">min</span></p>
@@ -489,8 +489,8 @@ const StudentOverview = () => {
               </div>
               <div className="w-px h-10 bg-gradient-to-b from-transparent via-white/[0.08] to-transparent" />
               <div className="flex-1 min-w-0 flex items-center gap-2">
-                <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-primary/[0.18] to-primary/[0.04] border border-primary/15 flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.06)]">
-                  <Droplets className="w-[13px] h-[13px] text-primary" strokeWidth={2} />
+                <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-primary/[0.22] to-primary/[0.05] border border-primary/25 flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.08),0_0_12px_-2px_hsl(var(--primary)/0.55)]">
+                  <Droplets className="w-[13px] h-[13px] text-primary neon-icon" strokeWidth={2} />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none tracking-[-0.025em]">
