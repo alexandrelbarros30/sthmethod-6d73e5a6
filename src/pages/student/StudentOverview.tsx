@@ -479,8 +479,15 @@ const StudentOverview = () => {
                   <Droplets className="w-[13px] h-[13px] text-primary" strokeWidth={2} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none tracking-[-0.025em]">2,1<span className="text-[10px] font-medium text-muted-foreground/70 ml-0.5">L</span></p>
-                  <p className="text-[9px] text-muted-foreground/70 mt-1.5 leading-tight tracking-tight font-medium">água</p>
+                  <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none tracking-[-0.025em]">
+                    {mealsLoading
+                      ? "—"
+                      : (dayWaterMl / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+                    <span className="text-[10px] font-medium text-muted-foreground/70 ml-0.5">L</span>
+                  </p>
+                  <p className="text-[9px] text-muted-foreground/70 mt-1.5 leading-tight tracking-tight font-medium">
+                    {dayHydrationGoalL > 0 ? `de ${dayHydrationGoalL}L` : "água"}
+                  </p>
                 </div>
               </div>
             </div>
