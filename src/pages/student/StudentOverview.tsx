@@ -277,11 +277,11 @@ const StudentOverview = () => {
                   </div>
                   <div className="flex items-baseline gap-0.5 mt-2.5">
                     <p className="text-[34px] sm:text-[40px] leading-[0.9] font-bold text-white font-display tracking-[-0.04em] tabular-nums">
-                      {dayProgress || 72}
+                      {mealsLoading ? "—" : dayProgress}
                     </p>
                     <span className="text-[16px] font-semibold text-white/40 tracking-tight">%</span>
                   </div>
-                  <p className="text-[10px] text-white/45 mt-2 tracking-tight font-medium">meta mensal</p>
+                  <p className="text-[10px] text-white/45 mt-2 tracking-tight font-medium">refeições hoje</p>
                 </div>
                 <div className="inline-flex w-fit max-w-full items-center gap-1.5 text-[9.5px] text-white/90 rounded-full pl-1.5 pr-2 py-1 bg-white/[0.05] border border-white/[0.08] backdrop-blur-xl font-medium tracking-tight shadow-[inset_0_1px_0_rgb(255_255_255_/_0.06)]">
                   <Target className="w-2.5 h-2.5 text-primary" strokeWidth={2.2} />
