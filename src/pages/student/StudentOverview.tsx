@@ -429,34 +429,49 @@ const StudentOverview = () => {
       </div>
 
       {/* ===== RESUMO DO DIA - HORIZONTAL ===== */}
-      <div className="mb-5 relative rounded-[22px] overflow-hidden border border-white/[0.06] bg-gradient-to-br from-white/[0.04] to-white/[0.015] backdrop-blur-xl p-4 shadow-[0_8px_24px_-8px_rgb(0_0_0_/_0.4),inset_0_1px_0_rgb(255_255_255_/_0.04)]">
-        <div className="absolute -bottom-24 -left-20 w-52 h-52 rounded-full bg-primary/[0.06] blur-3xl pointer-events-none" />
-        <div className="relative">
-          <p className="text-[9px] font-semibold tracking-[0.26em] text-primary/90 uppercase mb-3.5">Resumo do dia</p>
-          <div className="flex items-center gap-2.5">
-            <div className="flex-1 min-w-0 flex items-start gap-2">
-              <Flame className="w-[15px] h-[15px] text-primary shrink-0 mt-0.5" strokeWidth={1.8} />
-              <div className="min-w-0">
-                <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none truncate tracking-[-0.02em]">
-                  {dayMacros?.kcal ? Math.round(dayMacros.kcal).toLocaleString("pt-BR") : "1.842"}
-                </p>
-                <p className="text-[9px] text-muted-foreground/75 mt-1.5 leading-tight tracking-tight">kcal</p>
+      <div className="mb-5 relative rounded-[22px] p-[1px]" style={{ background: "linear-gradient(135deg, rgb(255 255 255 / 0.1) 0%, rgb(255 255 255 / 0.02) 50%, hsl(150 70% 50% / 0.15) 100%)" }}>
+        <div className="relative rounded-[21px] overflow-hidden bg-gradient-to-br from-[#0f0f0f] via-[#0a0a0a] to-[#070707] p-4 shadow-[0_8px_24px_-8px_rgb(0_0_0_/_0.5),inset_0_1px_0_rgb(255_255_255_/_0.04)]">
+          <div className="absolute -bottom-24 -left-20 w-52 h-52 rounded-full bg-primary/[0.08] blur-3xl pointer-events-none" />
+          <div className="absolute -top-20 -right-20 w-44 h-44 rounded-full bg-primary/[0.05] blur-3xl pointer-events-none" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-3.5">
+              <div className="flex items-center gap-1.5">
+                <span className="block w-1 h-1 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary))]" />
+                <p className="text-[9px] font-semibold tracking-[0.26em] text-primary/90 uppercase">Resumo do dia</p>
               </div>
+              <span className="text-[9px] text-muted-foreground/60 font-medium tracking-tight uppercase">Hoje</span>
             </div>
-            <div className="w-px h-10 bg-gradient-to-b from-transparent via-white/10 to-transparent" />
-            <div className="flex-1 min-w-0 flex items-start gap-2">
-              <Activity className="w-[15px] h-[15px] text-primary shrink-0 mt-0.5" strokeWidth={1.8} />
-              <div className="min-w-0">
-                <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none tracking-[-0.02em]">82<span className="text-[10px] font-medium text-muted-foreground ml-0.5">min</span></p>
-                <p className="text-[9px] text-muted-foreground/75 mt-1.5 leading-tight tracking-tight">treino</p>
+            <div className="flex items-center gap-2.5">
+              <div className="flex-1 min-w-0 flex items-center gap-2">
+                <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-primary/[0.18] to-primary/[0.04] border border-primary/15 flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.06)]">
+                  <Flame className="w-[13px] h-[13px] text-primary" strokeWidth={2} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none truncate tracking-[-0.025em]">
+                    {dayMacros?.kcal ? Math.round(dayMacros.kcal).toLocaleString("pt-BR") : "1.842"}
+                  </p>
+                  <p className="text-[9px] text-muted-foreground/70 mt-1.5 leading-tight tracking-tight font-medium">kcal</p>
+                </div>
               </div>
-            </div>
-            <div className="w-px h-10 bg-gradient-to-b from-transparent via-white/10 to-transparent" />
-            <div className="flex-1 min-w-0 flex items-start gap-2">
-              <Droplets className="w-[15px] h-[15px] text-primary shrink-0 mt-0.5" strokeWidth={1.8} />
-              <div className="min-w-0">
-                <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none tracking-[-0.02em]">2,1<span className="text-[10px] font-medium text-muted-foreground ml-0.5">L</span></p>
-                <p className="text-[9px] text-muted-foreground/75 mt-1.5 leading-tight tracking-tight">água</p>
+              <div className="w-px h-10 bg-gradient-to-b from-transparent via-white/[0.08] to-transparent" />
+              <div className="flex-1 min-w-0 flex items-center gap-2">
+                <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-primary/[0.18] to-primary/[0.04] border border-primary/15 flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.06)]">
+                  <Activity className="w-[13px] h-[13px] text-primary" strokeWidth={2} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none tracking-[-0.025em]">82<span className="text-[10px] font-medium text-muted-foreground/70 ml-0.5">min</span></p>
+                  <p className="text-[9px] text-muted-foreground/70 mt-1.5 leading-tight tracking-tight font-medium">treino</p>
+                </div>
+              </div>
+              <div className="w-px h-10 bg-gradient-to-b from-transparent via-white/[0.08] to-transparent" />
+              <div className="flex-1 min-w-0 flex items-center gap-2">
+                <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-primary/[0.18] to-primary/[0.04] border border-primary/15 flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.06)]">
+                  <Droplets className="w-[13px] h-[13px] text-primary" strokeWidth={2} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none tracking-[-0.025em]">2,1<span className="text-[10px] font-medium text-muted-foreground/70 ml-0.5">L</span></p>
+                  <p className="text-[9px] text-muted-foreground/70 mt-1.5 leading-tight tracking-tight font-medium">água</p>
+                </div>
               </div>
             </div>
           </div>
