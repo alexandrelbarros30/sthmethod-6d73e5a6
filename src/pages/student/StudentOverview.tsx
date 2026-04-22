@@ -174,8 +174,12 @@ const StudentOverview = () => {
   const firstName = profile?.full_name?.split(" ")[0] || "Aluno";
 
   const {
+    totalMacros: dayTargetMacros,
     consumedMacros: dayMacros,
     progressPercent: dayProgress,
+    waterConsumedMl: dayWaterMl,
+    hydrationGoalL: dayHydrationGoalL,
+    isLoading: mealsLoading,
   } = useMealTracking();
 
   return (
@@ -273,11 +277,11 @@ const StudentOverview = () => {
                   </div>
                   <div className="flex items-baseline gap-0.5 mt-2.5">
                     <p className="text-[34px] sm:text-[40px] leading-[0.9] font-bold text-white font-display tracking-[-0.04em] tabular-nums">
-                      {dayProgress || 72}
+                      {mealsLoading ? "—" : dayProgress}
                     </p>
                     <span className="text-[16px] font-semibold text-white/40 tracking-tight">%</span>
                   </div>
-                  <p className="text-[10px] text-white/45 mt-2 tracking-tight font-medium">meta mensal</p>
+                  <p className="text-[10px] text-white/45 mt-2 tracking-tight font-medium">refeições hoje</p>
                 </div>
                 <div className="inline-flex w-fit max-w-full items-center gap-1.5 text-[9.5px] text-white/90 rounded-full pl-1.5 pr-2 py-1 bg-white/[0.05] border border-white/[0.08] backdrop-blur-xl font-medium tracking-tight shadow-[inset_0_1px_0_rgb(255_255_255_/_0.06)]">
                   <Target className="w-2.5 h-2.5 text-primary" strokeWidth={2.2} />
@@ -448,7 +452,13 @@ const StudentOverview = () => {
                 </div>
                 <div className="min-w-0">
                   <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none truncate tracking-[-0.025em]">
-                    {dayMacros?.kcal ? Math.round(dayMacros.kcal).toLocaleString("pt-BR") : "1.842"}
+                    {mealsLoading
+                      ? "—"
+                      : dayMacros?.kcal
+                      ? Math.round(dayMacros.kcal).toLocaleString("pt-BR")
+                      : dayTargetMacros?.kcal
+                      ? Math.round(dayTargetMacros.kcal).toLocaleString("pt-BR")
+                      : "—"}
                   </p>
                   <p className="text-[9px] text-muted-foreground/70 mt-1.5 leading-tight tracking-tight font-medium">kcal</p>
                 </div>
@@ -469,8 +479,15 @@ const StudentOverview = () => {
                   <Droplets className="w-[13px] h-[13px] text-primary" strokeWidth={2} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none tracking-[-0.025em]">2,1<span className="text-[10px] font-medium text-muted-foreground/70 ml-0.5">L</span></p>
-                  <p className="text-[9px] text-muted-foreground/70 mt-1.5 leading-tight tracking-tight font-medium">água</p>
+                  <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none tracking-[-0.025em]">
+                    {mealsLoading
+                      ? "—"
+                      : (dayWaterMl / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+                    <span className="text-[10px] font-medium text-muted-foreground/70 ml-0.5">L</span>
+                  </p>
+                  <p className="text-[9px] text-muted-foreground/70 mt-1.5 leading-tight tracking-tight font-medium">
+                    {dayHydrationGoalL > 0 ? `de ${dayHydrationGoalL}L` : "água"}
+                  </p>
                 </div>
               </div>
             </div>
