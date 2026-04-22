@@ -209,7 +209,18 @@ const StudentContent = () => {
 
         {section === "hormonios" && activeFamily && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-            <div className="rounded-xl p-4 space-y-2" style={{ background: G.card, border: `0.5px solid ${G.border}` }}>
+            <div
+              className="relative rounded-[20px] p-4 space-y-2 overflow-hidden backdrop-blur-xl"
+              style={{
+                background: "rgb(255 255 255 / 0.025)",
+                border: `1px solid hsl(${activeFamily.accentHue} 60% 42% / 0.18)`,
+                boxShadow: `0 8px 24px -10px rgb(0 0 0 / 0.5), 0 0 18px -6px hsl(${activeFamily.accentHue} 60% 42% / 0.3), inset 0 1px 0 rgb(255 255 255 / 0.06)`,
+              }}
+            >
+              <div
+                className="absolute inset-0 pointer-events-none opacity-50"
+                style={{ background: "linear-gradient(115deg, transparent 38%, rgb(255 255 255 / 0.06) 50%, transparent 65%)" }}
+              />
               <p className="text-[11px] uppercase tracking-widest font-medium" style={{ color: G.t40 }}>Perfil da família</p>
               <p className="text-sm leading-relaxed" style={{ color: G.t80 }}>{activeFamily.description}</p>
               <p className="text-xs leading-relaxed pt-1" style={{ color: `hsl(${activeFamily.accentHue} 50% 55%)` }}>
@@ -249,10 +260,21 @@ const StudentContent = () => {
                     key={gm.min}
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="rounded-xl p-4 flex items-center gap-3"
-                    style={{ background: G.accentText06, border: `0.5px solid ${G.accentText15}` }}
+                    className="relative rounded-[18px] p-4 flex items-center gap-3 overflow-hidden backdrop-blur-xl"
+                    style={{
+                      background: "rgb(255 255 255 / 0.025)",
+                      border: `1px solid hsl(145 60% 42% / 0.22)`,
+                      boxShadow: `0 6px 20px -8px rgb(0 0 0 / 0.5), 0 0 16px -4px hsl(145 60% 42% / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.06)`,
+                    }}
                   >
-                    <gm.icon className="w-5 h-5 flex-shrink-0" style={{ color: G.accent }} />
+                    <div
+                      className="absolute inset-0 pointer-events-none opacity-50"
+                      style={{ background: "linear-gradient(115deg, transparent 38%, rgb(255 255 255 / 0.06) 50%, transparent 65%)" }}
+                    />
+                    <gm.icon
+                      className="w-5 h-5 flex-shrink-0 relative z-10"
+                      style={{ color: G.accent, filter: `drop-shadow(0 0 6px ${G.accentGlow})` }}
+                    />
                     <p className="text-sm font-medium" style={{ color: G.accentSoft }}>{gm.text}</p>
                   </motion.div>
                 )
@@ -266,9 +288,17 @@ const StudentContent = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="relative rounded-2xl p-5 space-y-3 overflow-hidden"
-            style={{ background: G.card, border: `0.5px solid ${G.border}` }}
+            className="relative rounded-[22px] p-5 space-y-3 overflow-hidden backdrop-blur-xl"
+            style={{
+              background: "rgb(255 255 255 / 0.025)",
+              border: `1px solid hsl(145 60% 42% / 0.18)`,
+              boxShadow: `0 8px 28px -10px rgb(0 0 0 / 0.55), 0 0 22px -6px hsl(145 60% 42% / 0.3), inset 0 1px 0 rgb(255 255 255 / 0.06)`,
+            }}
           >
+            <div
+              className="absolute inset-0 pointer-events-none opacity-50 z-0"
+              style={{ background: "linear-gradient(115deg, transparent 38%, rgb(255 255 255 / 0.06) 50%, transparent 65%)" }}
+            />
             {progress < TOTAL_COMPOUNDS && (
               <div
                 className="absolute inset-0 z-10 backdrop-blur-md flex flex-col items-center justify-center gap-3"
@@ -280,21 +310,21 @@ const StudentContent = () => {
                 </p>
               </div>
             )}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 relative">
               {progress === TOTAL_COMPOUNDS ? (
-                <Unlock className="w-4 h-4" style={{ color: G.accent }} />
+                <Unlock className="w-4 h-4" style={{ color: G.accent, filter: `drop-shadow(0 0 6px ${G.accentGlow})` }} />
               ) : (
                 <Lock className="w-4 h-4" style={{ color: G.t30 }} />
               )}
               <h3 className="text-base font-semibold" style={{ color: G.t92 }}>Nível Avançado STH</h3>
             </div>
-            <p className="text-sm leading-relaxed" style={{ color: G.t55 }}>
+            <p className="text-sm leading-relaxed relative" style={{ color: G.t55 }}>
               Combinação de compostos, ajuste fino e controle real de resultado.
             </p>
             {progress === TOTAL_COMPOUNDS && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pt-2 space-y-3">
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pt-2 space-y-3 relative">
                 <div className="flex items-center gap-2">
-                  <Award className="w-4 h-4" style={{ color: G.accent }} />
+                  <Award className="w-4 h-4" style={{ color: G.accent, filter: `drop-shadow(0 0 6px ${G.accentGlow})` }} />
                   <p className="text-xs font-semibold" style={{ color: G.accent }}>Conteúdo desbloqueado!</p>
                 </div>
                 <p className="text-sm leading-relaxed" style={{ color: G.t65 }}>
@@ -311,24 +341,29 @@ const StudentContent = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="rounded-2xl p-6 text-center space-y-4"
+            className="relative rounded-[22px] p-6 text-center space-y-4 overflow-hidden backdrop-blur-xl"
             style={{
-              background: `linear-gradient(160deg, ${G.accentText06}, ${G.card})`,
-              border: `0.5px solid ${G.accentBorderSoft}`,
+              background: "rgb(255 255 255 / 0.025)",
+              border: `1px solid hsl(145 60% 42% / 0.22)`,
+              boxShadow: `0 8px 28px -10px rgb(0 0 0 / 0.55), 0 0 26px -6px hsl(145 60% 42% / 0.4), inset 0 1px 0 rgb(255 255 255 / 0.08)`,
             }}
           >
-            <h3 className="text-lg font-bold" style={{ color: G.t96 }}>Não é o composto que define o resultado.</h3>
-            <p className="text-sm" style={{ color: G.t50 }}>É a estratégia, o contexto e o acompanhamento.</p>
+            <div
+              className="absolute inset-0 pointer-events-none opacity-60"
+              style={{ background: "linear-gradient(115deg, transparent 38%, rgb(255 255 255 / 0.08) 50%, transparent 65%)" }}
+            />
+            <h3 className="text-lg font-bold relative" style={{ color: G.t96 }}>Não é o composto que define o resultado.</h3>
+            <p className="text-sm relative" style={{ color: G.t50 }}>É a estratégia, o contexto e o acompanhamento.</p>
             <motion.a
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
               whileTap={{ scale: 0.97 }}
-              className="inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all"
+              className="relative inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all"
               style={{
                 background: `linear-gradient(135deg, ${G.accent}, hsl(150 55% 32%))`,
                 color: "hsl(0 0% 100%)",
-                boxShadow: `0 4px 20px ${G.accentGlow}`,
+                boxShadow: `0 4px 20px ${G.accentGlow}, 0 0 22px hsl(145 60% 42% / 0.5), inset 0 1px 0 rgb(255 255 255 / 0.25)`,
               }}
             >
               <MessageCircle className="w-4 h-4" />
