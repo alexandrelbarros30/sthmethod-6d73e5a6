@@ -52,26 +52,34 @@ function drawWithTransform(
   ctx.rect(x, y, w, h);
   ctx.clip();
 
-  // Apply rotation/flip on a centered transform
-  ctx.translate(x + w / 2, y + h / 2);
+  // Cover-fit base size considering rotation
+  const rotated = t.rotation % 180 !== 0;
+  const effW = rotated ? img.height : img.width;
+  const effH = rotated ? img.width : img.height;
+  const imgRatio = effW / effH;
+  const boxRatio = w / h;
+  let dw: number, dh: number;
+  if (imgRatio > boxRatio) { dh = h; dw = h * imgRatio; } else { dw = w; dh = w / imgRatio; }
+  // Apply zoom
+  dw *= t.zoom;
+  dh *= t.zoom;
+
+  // Compute offset in pixels (clamped so image always covers the box)
+  const maxOffX = Math.max(0, (dw - w) / 2);
+  const maxOffY = Math.max(0, (dh - h) / 2);
+  const offX = t.offsetX * maxOffX;
+  const offY = t.offsetY * maxOffY;
+
+  ctx.translate(x + w / 2 + offX, y + h / 2 + offY);
   ctx.rotate((t.rotation * Math.PI) / 180);
   if (t.flipH) ctx.scale(-1, 1);
+  if (t.flipV) ctx.scale(1, -1);
 
-  if (t.cropArea && t.cropArea.width > 0 && t.cropArea.height > 0) {
-    // Draw exact pixel crop scaled to the box
-    const { x: sx, y: sy, width: sw, height: sh } = t.cropArea;
-    ctx.drawImage(img, sx, sy, sw, sh, -w / 2, -h / 2, w, h);
-  } else {
-    // Fallback: cover-fit the full image
-    const rotated = t.rotation % 180 !== 0;
-    const effW = rotated ? img.height : img.width;
-    const effH = rotated ? img.width : img.height;
-    const imgRatio = effW / effH;
-    const boxRatio = w / h;
-    let dw: number, dh: number;
-    if (imgRatio > boxRatio) { dh = h; dw = h * imgRatio; } else { dw = w; dh = w / imgRatio; }
-    ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
-  }
+  // After rotation, draw the image centered. Since dw/dh were derived from the
+  // rotated bounding box, swap them back to the source orientation when rotated.
+  const drawW = rotated ? dh : dw;
+  const drawH = rotated ? dw : dh;
+  ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
   ctx.restore();
 }
 
