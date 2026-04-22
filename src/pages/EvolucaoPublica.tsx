@@ -122,6 +122,37 @@ function formatInline(s: string) {
     .replace(/\*(.+?)\*/g, '<em class="text-primary">$1</em>');
 }
 
+// Live canvas preview for a single slot — shows the exact final framing (3:4)
+function SlotPreview({ slot, t }: { slot: Slot; t: Transform }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !slot.imgEl) return;
+    const W = 300;
+    const H = 400;
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, W, H);
+    drawWithTransform(ctx, slot.imgEl, { x: 0, y: 0, w: W, h: H }, t);
+  }, [slot.imgEl, t]);
+
+  return (
+    <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-black border border-primary/40">
+      <canvas ref={canvasRef} className="w-full h-full block" />
+      {/* center grid for alignment reference */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute left-1/3 top-0 bottom-0 w-px bg-white/15" />
+        <div className="absolute left-2/3 top-0 bottom-0 w-px bg-white/15" />
+        <div className="absolute top-1/3 left-0 right-0 h-px bg-white/15" />
+        <div className="absolute top-2/3 left-0 right-0 h-px bg-white/15" />
+      </div>
+    </div>
+  );
+}
+
 const EvolucaoPublica = () => {
   const navigate = useNavigate();
   const [slots, setSlots] = useState<{ before: Slot; after: Slot }>({ before: {}, after: {} });
