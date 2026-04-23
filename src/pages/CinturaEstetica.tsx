@@ -6,6 +6,10 @@ import heroImg from "@/assets/sthnews-cintura-hero.jpg";
 import treinoImg from "@/assets/sthnews-cintura-treino.jpg";
 import nutricaoImg from "@/assets/sthnews-cintura-nutricao.jpg";
 import composicaoImg from "@/assets/sthnews-cintura-composicao.jpg";
+import anatomiaImg from "@/assets/sthnews-cintura-anatomia.jpg";
+import pratoImg from "@/assets/sthnews-cintura-prato.jpg";
+import coreImg from "@/assets/sthnews-cintura-core.jpg";
+import medicaoImg from "@/assets/sthnews-cintura-medicao.jpg";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
