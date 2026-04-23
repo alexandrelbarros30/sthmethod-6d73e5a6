@@ -11,6 +11,7 @@ import cardHormoniosImg from "@/assets/card-hormonios.jpg";
 import cardDicasImg from "@/assets/card-dicas.jpg";
 import cardReceitasImg from "@/assets/card-receitas.jpg";
 import cardCombinacoesImg from "@/assets/card-combinacoes.jpg";
+import sthNewsLatestImg from "@/assets/sthnews-cintura-hero.jpg";
 
 const contentSections = [
   { id: "hormonios", tag: "Compostos", title: "Hormônios e Compostos", subtitle: "3 famílias • 15 compostos", img: cardHormoniosImg, icon: Beaker, meta: "Gamificação interativa", progress: 85 },
@@ -287,15 +288,16 @@ const StudentOverview = () => {
       </div>
 
       {/* ===== STH NEWS ===== */}
-      <Link to="/tendencias/recomposicao-avancada" className="block mb-8">
-        <div className="relative rounded-[20px] overflow-hidden border border-white/[0.06] bg-white/[0.025] backdrop-blur-xl shadow-[0_8px_24px_-8px_rgb(0_0_0_/_0.4),0_2px_6px_-2px_rgb(0_0_0_/_0.2),inset_0_1px_0_rgb(255_255_255_/_0.05)] hover:border-white/[0.1] transition-all duration-300 group">
+      <Link to="/tendencias/cintura-estetica" className="block mb-8">
+        <div className="relative rounded-[20px] overflow-hidden border border-white/[0.08] bg-white/[0.03] backdrop-blur-2xl shadow-[0_8px_24px_-8px_rgb(0_0_0_/_0.4),0_2px_6px_-2px_rgb(0_0_0_/_0.2),inset_0_1px_0_rgb(255_255_255_/_0.06)] hover:border-white/[0.14] transition-all duration-300 group">
           {/* Sheen diagonal sutil */}
-          <div className="absolute inset-0 pointer-events-none opacity-50" style={{ background: "linear-gradient(115deg, transparent 38%, rgb(255 255 255 / 0.05) 50%, transparent 65%)" }} />
-          <div className="absolute inset-x-0 top-0 h-1/2 pointer-events-none" style={{ background: "linear-gradient(180deg, rgb(255 255 255 / 0.04) 0%, transparent 100%)" }} />
-          <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-primary/[0.1] blur-3xl pointer-events-none" />
+          <div className="absolute inset-0 pointer-events-none opacity-60" style={{ background: "linear-gradient(115deg, transparent 38%, rgb(255 255 255 / 0.07) 50%, transparent 65%)" }} />
+          <div className="absolute inset-x-0 top-0 h-1/2 pointer-events-none" style={{ background: "linear-gradient(180deg, rgb(255 255 255 / 0.05) 0%, transparent 100%)" }} />
           <div className="relative flex items-center gap-3.5 p-4">
-              <div className="relative w-12 h-12 rounded-2xl glass-icon glass-icon-active flex items-center justify-center shrink-0">
-                <Newspaper className="w-[20px] h-[20px] text-primary neon-icon relative z-10" strokeWidth={1.8} />
+              <div className="relative w-12 h-12 rounded-2xl overflow-hidden shrink-0 border border-white/15 shadow-[0_4px_12px_-2px_rgb(0_0_0_/_0.4),inset_0_1px_0_rgb(255_255_255_/_0.15)]">
+                <img src={sthNewsLatestImg} alt="STH News" className="absolute inset-0 w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 pointer-events-none" />
+                <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(135deg, rgb(255 255 255 / 0.18) 0%, transparent 45%, transparent 60%, rgb(255 255 255 / 0.08) 100%)" }} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-1.5">
@@ -305,10 +307,10 @@ const StudentOverview = () => {
                   </span>
                 </div>
                 <p className="font-semibold text-foreground text-[13.5px] leading-tight truncate tracking-[-0.015em]">
-                  Recomposição Corporal: o guia completo
+                  A estética da cintura não é só genética
                 </p>
                 <p className="text-[11px] text-muted-foreground/70 truncate mt-1 tracking-tight">
-                  Última matéria em destaque
+                  Última matéria · 22 Abr 2026
                 </p>
               </div>
               <ChevronRight className="w-4 h-4 text-foreground/40 shrink-0 group-hover:text-primary group-hover:translate-x-0.5 transition-all" strokeWidth={2} />
@@ -336,8 +338,10 @@ const StudentOverview = () => {
               <button
                 key={s.id}
                 onClick={() => navigate(s.id === "receitas" ? "/dashboard/recipes" : `/dashboard/content?section=${s.id}`)}
-                className="snap-start shrink-0 w-[78vw] max-w-[300px] text-left rounded-[22px] overflow-hidden relative group border border-white/[0.06] bg-white/[0.025] backdrop-blur-xl active:scale-[0.98] transition-all duration-300 shadow-[0_8px_24px_-8px_rgb(0_0_0_/_0.4),0_2px_6px_-2px_rgb(0_0_0_/_0.2),inset_0_1px_0_rgb(255_255_255_/_0.04)] hover:border-white/[0.1]"
+                className="snap-start shrink-0 w-[78vw] max-w-[300px] text-left rounded-[22px] overflow-hidden relative group border border-white/[0.1] bg-white/[0.04] backdrop-blur-2xl active:scale-[0.98] transition-all duration-300 shadow-[0_10px_28px_-10px_rgb(0_0_0_/_0.5),0_2px_8px_-2px_rgb(0_0_0_/_0.25),inset_0_1px_0_rgb(255_255_255_/_0.1),inset_0_-1px_0_rgb(255_255_255_/_0.04)] hover:border-white/[0.18]"
               >
+                {/* Diagonal glass sheen */}
+                <div className="absolute inset-0 pointer-events-none z-20 opacity-70" style={{ background: "linear-gradient(115deg, transparent 35%, rgb(255 255 255 / 0.09) 50%, transparent 68%)" }} />
                 <div className="relative h-48 overflow-hidden">
                   <img src={s.img} alt={s.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" width={600} height={352} />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-transparent" />
@@ -360,7 +364,7 @@ const StudentOverview = () => {
                     <p className="text-[11px] text-white/55 mt-1 tracking-tight">{s.subtitle}</p>
                   </div>
                 </div>
-                <div className="px-4 py-3 flex items-center justify-between bg-white/[0.015] border-t border-white/[0.04]">
+                <div className="relative z-10 px-4 py-3 flex items-center justify-between bg-white/[0.025] border-t border-white/[0.06]">
                   <span className="text-[10.5px] font-medium text-muted-foreground/80 tracking-tight">{s.meta}</span>
                   <div className="flex items-center gap-0.5 text-primary">
                     <span className="text-[10.5px] font-semibold tracking-tight">Explorar</span>
