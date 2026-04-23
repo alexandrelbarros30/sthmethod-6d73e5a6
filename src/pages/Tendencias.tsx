@@ -125,6 +125,22 @@ const Tendencias = () => {
         >
           <div className="space-y-3">
             <Link
+              to="/tendencias/cintura-estetica"
+              className="block rounded-2xl border border-primary/40 bg-gradient-to-r from-primary/10 via-background to-primary/5 p-4 hover:border-primary/60 transition-colors group"
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[9px] font-black bg-primary text-primary-foreground px-2 py-0.5 rounded tracking-wider animate-pulse">NOVO</span>
+                <span className="text-[10px] text-muted-foreground">22 Abr 2026</span>
+              </div>
+              <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors leading-tight">
+                ⚡ A estética da cintura não é só genética: o que treino e alimentação realmente fazem
+              </h3>
+              <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+                Estrutura, estímulo e estratégia · Ler matéria <ChevronRight className="w-3 h-3" />
+              </p>
+            </Link>
+
+            <Link
               to="/tendencias/subcutanea-estrategia"
               className="block rounded-2xl border border-destructive/40 bg-gradient-to-r from-destructive/10 via-background to-primary/5 p-4 hover:border-destructive/60 transition-colors group"
             >

@@ -19,6 +19,7 @@ import Tendencias from "./pages/Tendencias";
 import FitnessCenario2026 from "./pages/FitnessCenario2026";
 import RecomposicaoAvancada from "./pages/RecomposicaoAvancada";
 import SubcutaneaEstrategia from "./pages/SubcutaneaEstrategia";
+import CinturaEstetica from "./pages/CinturaEstetica";
 import Promo from "./pages/Promo";
 import EvolucaoPublica from "./pages/EvolucaoPublica";
 import StudentOverview from "./pages/student/StudentOverview";
@@ -99,6 +100,7 @@ const App = () => (
             <Route path="/tendencias/cenario-fitness-2026" element={<FitnessCenario2026 />} />
             <Route path="/tendencias/recomposicao-avancada" element={<RecomposicaoAvancada />} />
             <Route path="/tendencias/subcutanea-estrategia" element={<SubcutaneaEstrategia />} />
+            <Route path="/tendencias/cintura-estetica" element={<CinturaEstetica />} />
             <Route path="/promo" element={<Promo />} />
             <Route path="/promo/:slug" element={<Promo />} />
             <Route path="/evolucao" element={<EvolucaoPublica />} />
