@@ -364,7 +364,7 @@ const StudentOverview = () => {
                     <p className="text-[11px] text-white/55 mt-1 tracking-tight">{s.subtitle}</p>
                   </div>
                 </div>
-                <div className="px-4 py-3 flex items-center justify-between bg-white/[0.015] border-t border-white/[0.04]">
+                <div className="relative z-10 px-4 py-3 flex items-center justify-between bg-white/[0.025] border-t border-white/[0.06]">
                   <span className="text-[10.5px] font-medium text-muted-foreground/80 tracking-tight">{s.meta}</span>
                   <div className="flex items-center gap-0.5 text-primary">
                     <span className="text-[10.5px] font-semibold tracking-tight">Explorar</span>
