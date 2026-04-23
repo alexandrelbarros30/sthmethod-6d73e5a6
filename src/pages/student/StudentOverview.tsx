@@ -11,6 +11,7 @@ import cardHormoniosImg from "@/assets/card-hormonios.jpg";
 import cardDicasImg from "@/assets/card-dicas.jpg";
 import cardReceitasImg from "@/assets/card-receitas.jpg";
 import cardCombinacoesImg from "@/assets/card-combinacoes.jpg";
+import sthNewsLatestImg from "@/assets/sthnews-cintura-hero.jpg";
 
 const contentSections = [
   { id: "hormonios", tag: "Compostos", title: "Hormônios e Compostos", subtitle: "3 famílias • 15 compostos", img: cardHormoniosImg, icon: Beaker, meta: "Gamificação interativa", progress: 85 },
