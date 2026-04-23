@@ -81,6 +81,9 @@ const CinturaEsteticaArticle = () => {
             <p>Quando se fala em estética corporal — principalmente na definição da cintura — a maioria das pessoas aponta imediatamente para a genética. Mas essa é apenas parte da equação.</p>
             <p className="font-semibold text-foreground">Na prática, o formato da cintura é resultado direto da interação entre estrutura corporal, estímulos de treino e estratégia alimentar.</p>
           </motion.div>
+          <motion.div variants={fadeUp} custom={2}>
+            <GlassImage src={anatomiaImg} alt="Anatomia da cintura definida" caption="Anatomia em foco: a cintura é desenhada por estímulo, não por acaso." />
+          </motion.div>
         </motion.section>
 
         {/* Treino */}
@@ -99,6 +102,9 @@ const CinturaEsteticaArticle = () => {
           </motion.div>
           <motion.div variants={fadeUp} custom={2}>
             <GlassImage src={treinoImg} alt="Treino estratégico de core" caption="Estímulo direcionado: o desenho da cintura começa na escolha do exercício." />
+          </motion.div>
+          <motion.div variants={fadeUp} custom={3}>
+            <GlassImage src={coreImg} alt="Exercício controlado de core e estabilização" caption="Controle e técnica: estabilidade que protege e modela." />
           </motion.div>
         </motion.section>
 
@@ -124,6 +130,9 @@ const CinturaEsteticaArticle = () => {
           </motion.div>
           <motion.div variants={fadeUp} custom={2}>
             <GlassImage src={nutricaoImg} alt="Alimentação estratégica" caption="A escolha alimentar molda volume, digestão e composição." />
+          </motion.div>
+          <motion.div variants={fadeUp} custom={3}>
+            <GlassImage src={pratoImg} alt="Refeição estratégica balanceada" caption="Macros calculados: precisão substitui restrição." />
           </motion.div>
         </motion.section>
 
@@ -151,6 +160,9 @@ const CinturaEsteticaArticle = () => {
           </motion.div>
           <motion.div variants={fadeUp} custom={2}>
             <GlassImage src={composicaoImg} alt="Análise de composição corporal" caption="Estética é a soma integrada de variáveis — não um único fator." />
+          </motion.div>
+          <motion.div variants={fadeUp} custom={3}>
+            <GlassImage src={medicaoImg} alt="Avaliação física profissional" caption="Medição objetiva: o que se mede, se gerencia." />
           </motion.div>
         </motion.section>
 
