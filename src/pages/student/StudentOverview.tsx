@@ -338,8 +338,10 @@ const StudentOverview = () => {
               <button
                 key={s.id}
                 onClick={() => navigate(s.id === "receitas" ? "/dashboard/recipes" : `/dashboard/content?section=${s.id}`)}
-                className="snap-start shrink-0 w-[78vw] max-w-[300px] text-left rounded-[22px] overflow-hidden relative group border border-white/[0.06] bg-white/[0.025] backdrop-blur-xl active:scale-[0.98] transition-all duration-300 shadow-[0_8px_24px_-8px_rgb(0_0_0_/_0.4),0_2px_6px_-2px_rgb(0_0_0_/_0.2),inset_0_1px_0_rgb(255_255_255_/_0.04)] hover:border-white/[0.1]"
+                className="snap-start shrink-0 w-[78vw] max-w-[300px] text-left rounded-[22px] overflow-hidden relative group border border-white/[0.1] bg-white/[0.04] backdrop-blur-2xl active:scale-[0.98] transition-all duration-300 shadow-[0_10px_28px_-10px_rgb(0_0_0_/_0.5),0_2px_8px_-2px_rgb(0_0_0_/_0.25),inset_0_1px_0_rgb(255_255_255_/_0.1),inset_0_-1px_0_rgb(255_255_255_/_0.04)] hover:border-white/[0.18]"
               >
+                {/* Diagonal glass sheen */}
+                <div className="absolute inset-0 pointer-events-none z-20 opacity-70" style={{ background: "linear-gradient(115deg, transparent 35%, rgb(255 255 255 / 0.09) 50%, transparent 68%)" }} />
                 <div className="relative h-48 overflow-hidden">
                   <img src={s.img} alt={s.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" width={600} height={352} />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-transparent" />
