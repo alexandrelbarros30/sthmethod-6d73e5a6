@@ -14,6 +14,7 @@ import PaymentNotificationPopup from "./admin/PaymentNotificationPopup";
 import EvolutionReminderPopup from "./admin/EvolutionReminderPopup";
 import EvolutionUpdatePopup from "./admin/EvolutionUpdatePopup";
 import { useEvolutionReminders } from "@/hooks/useEvolutionReminders";
+import { usePaymentReconciliation } from "@/hooks/usePaymentReconciliation";
 
 const BIRTHDAY_MESSAGES = [
   "🎉 Feliz Aniversário! Que este novo ciclo traga muita saúde, energia e conquistas. Você merece!",
@@ -40,6 +41,7 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
   const showDock = isStudent && isMobile;
   usePaymentNotifications();
   useEvolutionReminders();
+  usePaymentReconciliation(isStudent);
 
   const { user } = useAuth();
 
