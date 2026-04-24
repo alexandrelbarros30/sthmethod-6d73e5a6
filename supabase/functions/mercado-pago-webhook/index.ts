@@ -14,12 +14,18 @@ async function validateMpSignature(req: Request, rawBody: string, dataId: string
   }
   const xSignature = req.headers.get("x-signature");
   const xRequestId = req.headers.get("x-request-id");
-  if (!xSignature || !xRequestId) return false;
+  if (!xSignature || !xRequestId) {
+    console.warn("Missing x-signature or x-request-id headers", { xSignature, xRequestId });
+    return false;
+  }
 
   const parts = Object.fromEntries(xSignature.split(",").map((p) => p.trim().split("=")));
   const ts = parts.ts;
   const v1 = parts.v1;
-  if (!ts || !v1) return false;
+  if (!ts || !v1) {
+    console.warn("Malformed x-signature header", { xSignature });
+    return false;
+  }
 
   const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
   const key = await crypto.subtle.importKey(
@@ -28,7 +34,16 @@ async function validateMpSignature(req: Request, rawBody: string, dataId: string
   );
   const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(manifest));
   const hex = Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
-  return hex === v1;
+  const ok = hex === v1;
+  if (!ok) {
+    console.warn("Signature mismatch", {
+      manifest,
+      expected_v1: v1,
+      computed: hex,
+      secret_length: secret.length,
+    });
+  }
+  return ok;
 }
 
 serve(async (req) => {
