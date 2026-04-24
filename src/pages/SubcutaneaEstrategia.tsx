@@ -7,9 +7,10 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import heroImg from "@/assets/sthnews-subq-hero.jpg";
-import pkImg from "@/assets/sthnews-subq-farmacocinetica.jpg";
-import sitesImg from "@/assets/sthnews-subq-rotacao-sitios.jpg";
+import heroImg from "@/assets/sthnews-subq-glass-1.jpg";
+import pkImg from "@/assets/sthnews-subq-glass-2.jpg";
+import sitesImg from "@/assets/sthnews-subq-glass-3.jpg";
+import vialImg from "@/assets/sthnews-subq-glass-4.jpg";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -195,6 +196,11 @@ const SubcutaneaEstrategia = () => {
             <p className="text-xs text-muted-foreground leading-relaxed">
               Use apenas ésteres de testosterona em <strong className="text-foreground">veículo oleoso de alta pureza</strong>. Solventes agressivos ou alta concentração de álcool benzílico podem causar necrose tecidual ou inflamação severa (lipohipertrofia).
             </p>
+          </motion.div>
+
+          {/* Imagem vial — vidro límpido */}
+          <motion.div variants={fadeUp} custom={2} className="rounded-2xl overflow-hidden border border-primary/20 mb-3 aspect-[16/10] bg-muted">
+            <img src={vialImg} alt="Frasco de éster de testosterona em veículo oleoso de alta pureza" className="w-full h-full object-cover" width={1280} height={800} loading="lazy" />
           </motion.div>
 
           {/* Técnica */}
