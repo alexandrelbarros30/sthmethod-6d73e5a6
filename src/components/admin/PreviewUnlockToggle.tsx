@@ -56,14 +56,18 @@ const PreviewUnlockToggle = ({ userId, studentName, studentPhone, onChanged }: P
   const sendWhatsApp = async () => {
     if (!enabled) await toggle(true);
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const link = `${origin}/login?redirect=${encodeURIComponent("/dashboard/diet")}`;
+    const link = `${origin}/login?redirect=${encodeURIComponent("/dashboard/metabolic")}`;
     const firstName = (studentName || "").trim().split(" ")[0] || "tudo bem";
     const msg =
       `Olá ${firstName}! 👋\n\n` +
-      `Sua *dieta* e *protocolo personalizados* já estão prontos na plataforma *STH METHOD*. ` +
-      `Liberei uma *prévia exclusiva* para você visualizar agora 🎯\n\n` +
-      `👉 Acesse: ${link}\n\n` +
-      `Faça login com seu e-mail e confira o que preparamos. Após o pagamento, o acesso completo é liberado imediatamente.`;
+      `Seu *Painel Metabólico* personalizado já está pronto na plataforma *STH METHOD*. ` +
+      `Liberei uma *prévia exclusiva* para você entender o que foi identificado na sua análise gratuita 🎯\n\n` +
+      `*Como acessar o seu Painel Metabólico:*\n` +
+      `1️⃣ Acesse: ${link}\n` +
+      `2️⃣ Faça login com seu e-mail cadastrado\n` +
+      `3️⃣ No menu lateral, toque em *Painel Metabólico*\n` +
+      `4️⃣ Confira seu perfil bioenergético e o direcionamento estratégico\n\n` +
+      `Esse painel é a base da sua *dieta* e *protocolo personalizados*, que ficam liberados na íntegra após a confirmação do pagamento. 🚀`;
     // Always fetch the latest phone from DB so edits to the student profile reflect here
     let latestPhone = studentPhone || "";
     try {
