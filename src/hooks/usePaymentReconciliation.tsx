@@ -91,6 +91,10 @@ export const usePaymentReconciliation = (enabled: boolean) => {
         return;
       }
 
+      if (paymentStatus === "approved" && (data?.pending_count ?? 0) === 0) {
+        toast.success("Pagamento confirmado e plano atualizado automaticamente.");
+      }
+
       if (paymentStatus && (data?.pending_count ?? 0) === 0) {
         await refreshStudentPaymentState();
         clearStatusParam();
