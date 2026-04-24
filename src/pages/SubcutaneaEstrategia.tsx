@@ -7,9 +7,10 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import heroImg from "@/assets/sthnews-subq-hero.jpg";
-import pkImg from "@/assets/sthnews-subq-farmacocinetica.jpg";
-import sitesImg from "@/assets/sthnews-subq-rotacao-sitios.jpg";
+import heroImg from "@/assets/sthnews-subq-glass-1.jpg";
+import pkImg from "@/assets/sthnews-subq-glass-2.jpg";
+import sitesImg from "@/assets/sthnews-subq-glass-3.jpg";
+import vialImg from "@/assets/sthnews-subq-glass-4.jpg";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
