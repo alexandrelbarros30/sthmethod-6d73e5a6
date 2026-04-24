@@ -182,6 +182,7 @@ const Landing = () => {
             <a href="#guia-alimentar" className="hover:text-foreground transition-colors py-1">Guia</a>
             <a href="#diagnostico" className="hover:text-foreground transition-colors py-1">Diagnóstico</a>
             <a href="#simulador" className="hover:text-foreground transition-colors py-1">Simulador</a>
+            <a href="#sth-news" className="hover:text-foreground transition-colors py-1">STH News</a>
             <Link to="/questionario" className="hover:text-foreground transition-colors font-medium gradient-text py-1">Macros</Link>
           </div>
 
@@ -227,6 +228,7 @@ const Landing = () => {
                   { href: "#diagnostico", label: "Diagnóstico" },
                   { href: "#plano-alimentar", label: "Plano Alimentar" },
                   { href: "#simulador", label: "Simulador Corporal" },
+                  { href: "#sth-news", label: "STH News" },
                 ].map((item) => (
                   <LinkOrA
                     key={item.href}
