@@ -198,6 +198,11 @@ const SubcutaneaEstrategia = () => {
             </p>
           </motion.div>
 
+          {/* Imagem vial — vidro límpido */}
+          <motion.div variants={fadeUp} custom={2} className="rounded-2xl overflow-hidden border border-primary/20 mb-3 aspect-[16/10] bg-muted">
+            <img src={vialImg} alt="Frasco de éster de testosterona em veículo oleoso de alta pureza" className="w-full h-full object-cover" width={1280} height={800} loading="lazy" />
+          </motion.div>
+
           {/* Técnica */}
           <motion.div variants={fadeUp} custom={3} className="rounded-2xl border border-border/60 bg-card p-5 mb-3">
             <div className="flex items-center gap-2 mb-3">
