@@ -79,30 +79,33 @@ const AdminDashboard = () => {
     },
   });
 
-  // Online students (last 5 minutes activity in access_logs, role=student)
+  // Online users (last 5 minutes activity in access_logs, ainda sem logout)
   const { data: onlineData } = useQuery({
     queryKey: ["admin-online-students"],
     queryFn: async () => {
       const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      // Considera ativo: log recente OU sessão ainda aberta (sem logged_out_at) iniciada na última hora
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
       const { data: logs } = await supabase
         .from("access_logs")
-        .select("user_id, logged_in_at")
-        .gte("logged_in_at", fiveMinAgo)
+        .select("user_id, logged_in_at, logged_out_at")
+        .gte("logged_in_at", oneHourAgo)
         .not("user_id", "is", null);
-      const ids = Array.from(new Set((logs || []).map((l: any) => l.user_id)));
-      if (ids.length === 0) return { ids: [], names: [] as { user_id: string; full_name: string }[] };
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .in("user_id", ids)
-        .eq("role", "student");
-      const studentIds = (roles || []).map((r: any) => r.user_id);
-      if (studentIds.length === 0) return { ids: [], names: [] };
-      const { data: profs } = await supabase
-        .from("profiles")
-        .select("user_id, full_name")
-        .in("user_id", studentIds);
-      return { ids: studentIds, names: profs || [] };
+      const activeLogs = (logs || []).filter((l: any) =>
+        l.logged_in_at >= fiveMinAgo || !l.logged_out_at
+      );
+      const ids = Array.from(new Set(activeLogs.map((l: any) => l.user_id)));
+      if (ids.length === 0) return { ids: [], names: [] as { user_id: string; full_name: string; role: string }[] };
+      const [rolesRes, profsRes] = await Promise.all([
+        supabase.from("user_roles").select("user_id, role").in("user_id", ids),
+        supabase.from("profiles").select("user_id, full_name").in("user_id", ids),
+      ]);
+      const roleMap = new Map((rolesRes.data || []).map((r: any) => [r.user_id, r.role]));
+      const names = (profsRes.data || []).map((p: any) => ({
+        ...p,
+        role: roleMap.get(p.user_id) || "student",
+      }));
+      return { ids, names };
     },
     refetchInterval: 30_000,
   });
