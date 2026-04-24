@@ -7,10 +7,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Microscope, AlertCircle } from "lucide-react";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
+import { usePreviewAs } from "@/hooks/usePreviewAs";
 
 const StudentMetabolic = () => {
   const { user } = useAuth();
-  const { isActive, isLoading: guardLoading } = useSubscriptionGuard();
+  const { isActive, isLoading: guardLoading, previewUnlocked } = useSubscriptionGuard();
+  const { isPreviewing } = usePreviewAs();
   const qc = useQueryClient();
   const { data: panels = [], isLoading } = useQuery({
     queryKey: ["metabolic-panel-student", user?.id],
@@ -38,7 +40,7 @@ const StudentMetabolic = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["metabolic-panel-student"] }),
   });
 
-  if (!guardLoading && !isActive) {
+  if (!guardLoading && !isActive && !previewUnlocked && !isPreviewing) {
     return <DashboardLayout role="student" title="Painel Metabólico"><SubscriptionBlock /></DashboardLayout>;
   }
 
