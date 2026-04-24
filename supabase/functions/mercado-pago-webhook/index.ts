@@ -65,7 +65,7 @@ function isPaymentNotification(body: any): boolean {
     || body?.topic === "payment";
 }
 
-async function activateSubscriptionForPayment(supabase: ReturnType<typeof createClient>, payment: any) {
+async function activateSubscriptionForPayment(supabase: any, payment: any) {
   const startDate = new Date();
   const endDate = new Date();
   const durationDays = payment?.plans?.duration_days || 30;
