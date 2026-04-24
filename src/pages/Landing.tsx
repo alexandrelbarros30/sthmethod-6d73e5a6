@@ -16,6 +16,7 @@ import NutritionQuizSection from "@/components/landing/NutritionQuizSection";
 import MealPlanSection from "@/components/landing/MealPlanSection";
 import BodySimulatorSection from "@/components/landing/BodySimulatorSection";
 import WhatsAppButton from "@/components/landing/WhatsAppButton";
+import STHNewsSection from "@/components/landing/STHNewsSection";
 import { useLandingSettings, useLandingSections } from "@/hooks/useLandingData";
 
 const sectionComponents: Record<string, React.ReactNode> = {
@@ -347,6 +348,9 @@ const Landing = () => {
       <NutritionQuizSection />
       <MealPlanSection />
       <BodySimulatorSection />
+
+      {/* STH News */}
+      <STHNewsSection />
 
       {/* Final CTA */}
       <section className="py-16 sm:py-24 px-4 sm:px-6">
