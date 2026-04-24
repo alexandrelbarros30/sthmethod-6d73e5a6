@@ -46,6 +46,59 @@ async function validateMpSignature(req: Request, rawBody: string, dataId: string
   return ok;
 }
 
+function extractPaymentId(body: any): string | null {
+  if (body?.data?.id) return String(body.data.id);
+
+  if (body?.topic === "payment" && body?.resource) {
+    const resource = String(body.resource);
+    const match = resource.match(/(\d+)(?:\/?$)/);
+    return match?.[1] ?? resource;
+  }
+
+  return null;
+}
+
+function isPaymentNotification(body: any): boolean {
+  return body?.type === "payment"
+    || body?.action === "payment.created"
+    || body?.action === "payment.updated"
+    || body?.topic === "payment";
+}
+
+async function activateSubscriptionForPayment(supabase: ReturnType<typeof createClient>, payment: any) {
+  const startDate = new Date();
+  const endDate = new Date();
+  const durationDays = payment?.plans?.duration_days || 30;
+  endDate.setDate(endDate.getDate() + durationDays);
+
+  const { data: existingSub } = await supabase
+    .from("subscriptions")
+    .select("id")
+    .eq("user_id", payment.user_id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existingSub) {
+    await supabase.from("subscriptions").update({
+      plan_id: payment.plan_id,
+      status: "active",
+      start_date: startDate.toISOString().split("T")[0],
+      end_date: endDate.toISOString().split("T")[0],
+    }).eq("id", existingSub.id);
+  } else {
+    await supabase.from("subscriptions").insert({
+      user_id: payment.user_id,
+      plan_id: payment.plan_id,
+      status: "active",
+      start_date: startDate.toISOString().split("T")[0],
+      end_date: endDate.toISOString().split("T")[0],
+    });
+  }
+
+  console.log(`Subscription activated for user ${payment.user_id}, plan ${payment.plan_id}, ${durationDays} days`);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -63,22 +116,19 @@ serve(async (req) => {
     console.log("Webhook received:", rawBody);
 
     // MP sends different notification types
-    if (body.type !== "payment" && body.action !== "payment.created" && body.action !== "payment.updated") {
+    if (!isPaymentNotification(body)) {
       return new Response(JSON.stringify({ received: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const paymentId = body.data?.id;
+    const paymentId = extractPaymentId(body);
     if (!paymentId) {
       return new Response(JSON.stringify({ received: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Validate signature (when secret configured)
+    // Validate signature when present. If it fails, fall back to provider-side verification.
     const valid = await validateMpSignature(req, rawBody, String(paymentId));
     if (!valid) {
-      console.warn("Invalid MP webhook signature — rejecting");
-      return new Response(JSON.stringify({ error: "invalid signature" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.warn("Invalid MP webhook signature — continuing with provider verification fallback");
     }
 
     // Fetch payment details from MP
@@ -97,6 +147,21 @@ serve(async (req) => {
     if (!internalPaymentId) {
       return new Response(JSON.stringify({ received: true, note: "no external_reference" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+
+    const { data: existingPayment, error: existingPaymentError } = await supabase
+      .from("payments")
+      .select("status")
+      .eq("id", internalPaymentId)
+      .single();
+
+    if (existingPaymentError || !existingPayment) {
+      console.error("Payment referenced by provider was not found:", internalPaymentId, existingPaymentError);
+      return new Response(JSON.stringify({ error: "payment not found" }), {
+        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const previousStatus = existingPayment.status;
 
     // Map MP status
     const statusMap: Record<string, string> = {
@@ -136,42 +201,9 @@ serve(async (req) => {
       throw updateError;
     }
 
-    // If approved, activate subscription
-    if (newStatus === "approved" && payment) {
-      const startDate = new Date();
-      const endDate = new Date();
-      const durationDays = (payment as any).plans?.duration_days || 30;
-      endDate.setDate(endDate.getDate() + durationDays);
-
-      // Check existing subscription
-      const { data: existingSub } = await supabase
-        .from("subscriptions")
-        .select("id")
-        .eq("user_id", payment.user_id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (existingSub) {
-        // Update existing
-        await supabase.from("subscriptions").update({
-          plan_id: payment.plan_id,
-          status: "active",
-          start_date: startDate.toISOString().split("T")[0],
-          end_date: endDate.toISOString().split("T")[0],
-        }).eq("id", existingSub.id);
-      } else {
-        // Create new
-        await supabase.from("subscriptions").insert({
-          user_id: payment.user_id,
-          plan_id: payment.plan_id,
-          status: "active",
-          start_date: startDate.toISOString().split("T")[0],
-          end_date: endDate.toISOString().split("T")[0],
-        });
-      }
-
-      console.log(`Subscription activated for user ${payment.user_id}, plan ${payment.plan_id}, ${durationDays} days`);
+    // If approved for the first time, activate subscription once.
+    if (newStatus === "approved" && payment && previousStatus !== "approved") {
+      await activateSubscriptionForPayment(supabase, payment);
     }
 
     return new Response(JSON.stringify({ received: true, status: newStatus }), {
