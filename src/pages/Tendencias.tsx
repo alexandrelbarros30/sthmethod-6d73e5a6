@@ -125,6 +125,22 @@ const Tendencias = () => {
         >
           <div className="space-y-3">
             <Link
+              to="/tendencias/triade-intestino-hormonio"
+              className="block rounded-2xl border border-destructive/40 bg-gradient-to-r from-destructive/10 via-background to-primary/5 p-4 hover:border-destructive/60 transition-colors group"
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[9px] font-black bg-destructive text-destructive-foreground px-2 py-0.5 rounded tracking-wider animate-pulse">EXCLUSIVO</span>
+                <span className="text-[10px] text-muted-foreground">Nova matéria</span>
+              </div>
+              <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors leading-tight">
+                🧬 Tríade SII, SOP e DRGE: o eixo intestino-hormônio-inflamação
+              </h3>
+              <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+                Mesma raiz, três expressões · Ler matéria <ChevronRight className="w-3 h-3" />
+              </p>
+            </Link>
+
+            <Link
               to="/tendencias/cintura-estetica"
               className="block rounded-2xl border border-primary/40 bg-gradient-to-r from-primary/10 via-background to-primary/5 p-4 hover:border-primary/60 transition-colors group"
             >

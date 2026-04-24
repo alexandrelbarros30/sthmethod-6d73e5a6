@@ -3,9 +3,18 @@ import { Link } from "react-router-dom";
 import { Newspaper, ChevronRight, ArrowRight } from "lucide-react";
 import subqImg from "@/assets/sthnews-subq-glass-1.jpg";
 import cinturaImg from "@/assets/sthnews-subq-glass-2.jpg";
-import recompImg from "@/assets/sthnews-subq-glass-4.jpg";
+import triadeImg from "@/assets/sthnews-triade-thumb.jpg";
 
 const articles = [
+  {
+    to: "/tendencias/triade-intestino-hormonio",
+    tag: "EXCLUSIVO",
+    tagClass: "bg-destructive text-destructive-foreground",
+    date: "Nova matéria",
+    title: "🧬 Tríade SII, SOP e DRGE: o eixo intestino-hormônio-inflamação",
+    desc: "Mesma raiz, três expressões.",
+    img: triadeImg,
+  },
   {
     to: "/tendencias/subcutanea-estrategia",
     tag: "EXCLUSIVO",
@@ -23,15 +32,6 @@ const articles = [
     title: "⚡ A estética da cintura: o que treino e alimentação realmente fazem",
     desc: "Estrutura, estímulo e estratégia.",
     img: cinturaImg,
-  },
-  {
-    to: "/tendencias/recomposicao-avancada",
-    tag: "EXCLUSIVO",
-    tagClass: "bg-destructive text-destructive-foreground",
-    date: "Abr 2026",
-    title: "🔥 Recomposição corporal avançada: o novo cenário da performance",
-    desc: "Tirzepatida + estratégia anabólica.",
-    img: recompImg,
   },
 ];
 
