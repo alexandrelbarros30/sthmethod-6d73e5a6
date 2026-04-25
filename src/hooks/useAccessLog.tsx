@@ -22,12 +22,34 @@ export function useAccessLog() {
   const startRef = useRef<number>(Date.now());
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || document.visibilityState === "hidden") return;
 
     const sessionId = getSessionId();
-    startRef.current = Date.now();
     let cancelled = false;
     let retryTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const closeLog = async () => {
+      const currentLogId = logIdRef.current;
+      if (!currentLogId) return;
+
+      const dur = Math.max(0, Math.round((Date.now() - startRef.current) / 1000));
+      let query = supabase
+        .from("access_logs" as any)
+        .update({ logged_out_at: new Date().toISOString(), duration_seconds: dur } as any)
+        .eq("id", currentLogId);
+
+      query = user?.id
+        ? query.eq("user_id", user.id)
+        : query.is("user_id", null).eq("is_free", true);
+
+      const { error } = await query;
+      if (error) {
+        console.warn("[access_logs] update failed", error.message);
+        return;
+      }
+
+      logIdRef.current = null;
+    };
 
     const scheduleRetry = (attempt: number) => {
       if (!user?.id || attempt >= AUTH_RETRY_DELAYS_MS.length || cancelled) return;
@@ -36,8 +58,9 @@ export function useAccessLog() {
       }, AUTH_RETRY_DELAYS_MS[attempt]);
     };
 
-    const insertLog = async (attempt = 0) => {
+    const insertLog = async (attempt = 0, nextLogId = crypto.randomUUID()) => {
       if (cancelled) return;
+      if (document.visibilityState === "hidden") return;
 
       if (user?.id) {
         const { data: sessionData } = await supabase.auth.getSession();
@@ -52,48 +75,52 @@ export function useAccessLog() {
       const { data, error } = await supabase
         .from("access_logs" as any)
         .insert({
+          id: nextLogId,
           user_id: user?.id || null,
           session_id: sessionId,
           page_path: location.pathname,
           is_free: !user,
         } as any)
-        .select("id")
-        .single();
+        ;
 
       if (error) {
         console.warn("[access_logs] insert failed", error.message);
         scheduleRetry(attempt);
+        return;
       }
 
-      if (data && !cancelled) logIdRef.current = (data as any).id;
+      if (!cancelled) {
+        logIdRef.current = nextLogId;
+        startRef.current = Date.now();
+      }
     };
 
     void insertLog();
 
-    const updateDuration = () => {
-      if (!logIdRef.current) return;
-      const dur = Math.round((Date.now() - startRef.current) / 1000);
-      supabase
-        .from("access_logs" as any)
-        .update({ logged_out_at: new Date().toISOString(), duration_seconds: dur } as any)
-        .eq("id", logIdRef.current)
-        .then();
+    const handleVisChange = () => {
+      if (document.visibilityState === "hidden") {
+        void closeLog();
+        return;
+      }
+
+      if (!logIdRef.current) {
+        void insertLog();
+      }
     };
 
-    const handleVisChange = () => {
-      if (document.visibilityState === "hidden") updateDuration();
+    const handleBeforeUnload = () => {
+      void closeLog();
     };
 
     document.addEventListener("visibilitychange", handleVisChange);
-    window.addEventListener("beforeunload", updateDuration);
+    window.addEventListener("beforeunload", handleBeforeUnload);
 
     return () => {
       cancelled = true;
       if (retryTimeout) clearTimeout(retryTimeout);
-      updateDuration();
+      void closeLog();
       document.removeEventListener("visibilitychange", handleVisChange);
-      window.removeEventListener("beforeunload", updateDuration);
-      logIdRef.current = null;
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [user?.id, location.pathname, loading]);
 }

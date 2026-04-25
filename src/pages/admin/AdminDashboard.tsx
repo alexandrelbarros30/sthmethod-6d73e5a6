@@ -87,11 +87,11 @@ const AdminDashboard = () => {
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const { data: logs } = await supabase
         .from("access_logs")
-        .select("user_id, logged_in_at, logged_out_at")
+        .select("user_id, logged_in_at, logged_out_at, duration_seconds")
         .gte("logged_in_at", oneDayAgo)
         .not("user_id", "is", null);
       const activeLogs = (logs || []).filter((l: any) =>
-        l.logged_in_at >= fiveMinAgo || !l.logged_out_at
+        l.logged_in_at >= fiveMinAgo || (!l.logged_out_at && (!l.duration_seconds || l.duration_seconds <= 0))
       );
       const ids = Array.from(new Set(activeLogs.map((l: any) => l.user_id)));
       if (ids.length === 0) return { ids: [], names: [] as { user_id: string; full_name: string; role: string }[] };
