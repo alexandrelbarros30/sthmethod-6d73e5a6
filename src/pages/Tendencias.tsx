@@ -133,10 +133,10 @@ const Tendencias = () => {
                 <span className="text-[10px] text-muted-foreground">Nova matéria</span>
               </div>
               <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors leading-tight">
-                🧬 Drostanolona (Masteron): o derivado de DHT que separa densidade de risco
+                🧬 Drostanolona (Masteron): o derivado de DHT que define densidade e performance
               </h3>
               <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
-                Densidade muscular, virilização e os limites do uso feminino · Ler matéria <ChevronRight className="w-3 h-3" />
+                Densidade muscular, estética e os limites do uso feminino · Ler matéria <ChevronRight className="w-3 h-3" />
               </p>
             </Link>
 
