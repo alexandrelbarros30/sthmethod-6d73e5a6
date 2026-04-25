@@ -79,7 +79,7 @@ const MasteronAndrogenico = () => {
           initial="hidden" animate="visible" variants={fadeUp} custom={2}
           className="text-sm md:text-base text-muted-foreground leading-relaxed border-l-2 border-primary pl-4 mb-6"
         >
-          Antes de qualquer análise: <strong className="text-foreground">emagrecimento e hipertrofia dependem de déficit/superávit calórico, treino resistido bem estruturado e constância</strong>. Nenhum recurso ergogênico compensa base nutricional deficiente. Substâncias androgênicas <em>potencializam</em> uma base sólida — e trazem riscos sistêmicos que exigem cautela máxima.
+          Antes de qualquer análise: <strong className="text-foreground">emagrecimento e hipertrofia dependem de déficit/superávit calórico, treino resistido bem estruturado e constância</strong>. Nenhum recurso ergogênico compensa base nutricional deficiente. Substâncias androgênicas <em>potencializam</em> uma base sólida — e exigem monitoramento clínico rigoroso para sustentar performance com segurança.
         </motion.p>
 
         {/* Hero image */}
@@ -165,7 +165,7 @@ const MasteronAndrogenico = () => {
               <h3 className="text-base font-bold text-foreground">Afinidade androgênica altíssima</h3>
             </div>
             <p className="text-xs text-foreground leading-relaxed">
-              Por ser derivado de DHT, tem <strong className="text-destructive">altíssima afinidade pelos receptores androgênicos</strong>. No corpo feminino, essa característica é a <strong>principal causa dos riscos de virilização</strong> — o organismo não é adaptado a esses níveis de andrógeno.
+              Por ser derivado de DHT, tem <strong className="text-destructive">altíssima afinidade pelos receptores androgênicos</strong>. No corpo feminino, essa característica explica a <strong>necessidade de protocolos individualizados e acompanhamento próximo</strong> — preservando a expressão estética sem comprometer o equilíbrio hormonal.
             </p>
           </motion.div>
         </motion.section>
@@ -240,13 +240,13 @@ const MasteronAndrogenico = () => {
               <h3 className="text-base font-bold text-foreground">Perfil lipídico</h3>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Impacto <strong className="text-foreground">severo na redução do HDL (bom)</strong> e aumento do LDL (ruim), elevando significativamente o risco cardiovascular.
+              Impacto <strong className="text-foreground">expressivo na redução do HDL (bom)</strong> e aumento do LDL (ruim), exigindo acompanhamento cardiovascular contínuo para manter a saúde do sistema circulatório.
             </p>
           </motion.div>
 
           <motion.div variants={fadeUp} custom={4} className="rounded-2xl border border-border/60 bg-card p-5 mb-3">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-[9px] font-black bg-destructive/15 text-destructive px-2 py-0.5 rounded tracking-wider">RISCO</span>
+              <span className="text-[9px] font-black bg-primary/15 text-primary px-2 py-0.5 rounded tracking-wider">ATENÇÃO</span>
               <h3 className="text-sm font-bold text-foreground">Saúde hepática e renal</h3>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
@@ -320,7 +320,7 @@ const MasteronAndrogenico = () => {
           <motion.div variants={fadeUp} custom={0} className="rounded-2xl bg-gradient-to-br from-primary/15 via-background to-primary/5 border border-primary/30 p-6">
             <p className="text-[9px] uppercase tracking-[0.25em] text-primary font-black mb-2">⚡ Insight Brutal</p>
             <p className="text-sm text-foreground leading-relaxed">
-              A introdução de qualquer derivado de DHT em mulheres é uma <strong className="gradient-text">decisão clínica de risco elevado</strong>. A avaliação de um profissional de saúde, acompanhada de exames laboratoriais prévios, é o <strong className="text-foreground">único caminho seguro</strong> para entender a viabilidade de qualquer protocolo de performance.
+              A introdução de qualquer derivado de DHT em mulheres é uma <strong className="gradient-text">decisão clínica de alta responsabilidade</strong>. A avaliação de um profissional de saúde, acompanhada de exames laboratoriais prévios, é o <strong className="text-foreground">caminho consciente</strong> para construir um protocolo de performance sustentável e personalizado.
             </p>
           </motion.div>
         </motion.section>
@@ -375,7 +375,7 @@ const MasteronAndrogenico = () => {
             </div>
             <div className="p-3 rounded-xl bg-card border border-border/40">
               <p className="font-bold text-foreground text-[11px] uppercase tracking-wider mb-1">SBEM</p>
-              <p>Sociedade Brasileira de Endocrinologia e Metabologia — Diretrizes sobre o uso inadequado de esteroides anabolizantes e riscos à saúde.</p>
+              <p>Sociedade Brasileira de Endocrinologia e Metabologia — Diretrizes sobre o uso responsável de esteroides anabolizantes e cuidados com a saúde.</p>
             </div>
           </div>
         </motion.section>
