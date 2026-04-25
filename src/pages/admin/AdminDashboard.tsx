@@ -14,7 +14,6 @@ import AdminReminders from "@/components/admin/AdminReminders";
 import ServiceQueue from "@/components/admin/ServiceQueue";
 import { toast } from "sonner";
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
-import WhatsAppQuickLink from "@/components/admin/WhatsAppQuickLink";
 import WhatsAppBulkSender from "@/components/shared/WhatsAppBulkSender";
 
 const copyRenewLink = (userId: string) => {
