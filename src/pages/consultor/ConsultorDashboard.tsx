@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import WhatsAppBulkSender from "@/components/shared/WhatsAppBulkSender";
 import AdminEvolutionUpdate from "@/components/admin/AdminEvolutionUpdate";
 import AdminBioimpedance from "@/components/admin/AdminBioimpedance";
+import ServiceQueue from "@/components/admin/ServiceQueue";
 
 const ConsultorDashboard = () => {
   const { user } = useAuth();
@@ -150,6 +151,15 @@ const ConsultorDashboard = () => {
             <div className="text-2xl font-bold">{linkedStudents.length}</div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Fila de Atendimento — prioridade máxima */}
+      <div className="mb-6">
+        <ServiceQueue
+          compact
+          manageBasePath="/consultor/students"
+          allowedUserIds={linkedStudents.map((s: any) => s.user_id)}
+        />
       </div>
 
       <Card>
