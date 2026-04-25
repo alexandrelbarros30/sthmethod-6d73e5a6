@@ -4,8 +4,18 @@ import { Newspaper, ChevronRight, ArrowRight } from "lucide-react";
 import subqImg from "@/assets/sthnews-subq-glass-1.jpg";
 import cinturaImg from "@/assets/sthnews-subq-glass-2.jpg";
 import triadeImg from "@/assets/sthnews-triade-thumb.jpg";
+import masteronImg from "@/assets/sthnews-masteron-glass-1.jpg";
 
 const articles = [
+  {
+    to: "/tendencias/drostanolona-masteron",
+    tag: "EXCLUSIVO",
+    tagClass: "bg-destructive text-destructive-foreground",
+    date: "Nova matéria",
+    title: "🧬 Drostanolona (Masteron): o derivado de DHT que separa densidade de risco",
+    desc: "Densidade muscular, virilização e os limites do uso feminino.",
+    img: masteronImg,
+  },
   {
     to: "/tendencias/triade-intestino-hormonio",
     tag: "EXCLUSIVO",
