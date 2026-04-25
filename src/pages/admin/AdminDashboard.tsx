@@ -341,6 +341,15 @@ const AdminDashboard = () => {
       </Card>
 
       <div className="space-y-4">
+        {/* 1. Lembretes Inteligentes (prioridade no topo) */}
+        <CollapsiblePanel
+          title="Lembretes Inteligentes"
+          icon={<Bell className="w-4 h-4 text-primary" />}
+          defaultOpen={true}
+        >
+          <AdminReminders />
+        </CollapsiblePanel>
+
         {/* 1. Alunos Recentes (moved up) */}
         <RecentStudents profiles={profiles} subscriptions={subscriptions} navigate={navigate} queryClient={queryClient} activeSubUserIds={activeSubUserIds} />
 
@@ -497,15 +506,6 @@ const AdminDashboard = () => {
             })}
           </CollapsiblePanel>
         )}
-
-        {/* 5. Lembretes Inteligentes */}
-        <CollapsiblePanel
-          title="Lembretes Inteligentes"
-          icon={<Bell className="w-4 h-4 text-primary" />}
-          defaultOpen={false}
-        >
-          <AdminReminders />
-        </CollapsiblePanel>
 
         {/* 6. Pagamentos Pendentes */}
         <PendingPayments />
