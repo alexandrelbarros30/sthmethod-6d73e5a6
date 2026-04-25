@@ -92,7 +92,7 @@ const MasteronAndrogenico = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-4">
             <span className="text-[9px] font-bold uppercase tracking-widest text-primary">DHT · Análogo</span>
-            <p className="text-sm font-bold text-foreground">Não aromatiza. Alta afinidade androgênica. Risco real.</p>
+          <p className="text-sm font-bold text-foreground">Não aromatiza. Alta afinidade androgênica. Performance refinada.</p>
           </div>
         </motion.div>
 
@@ -207,11 +207,11 @@ const MasteronAndrogenico = () => {
           </motion.div>
         </motion.section>
 
-        {/* ETAPA 4 — RISCOS */}
+        {/* ETAPA 4 — PONTOS DE ATENÇÃO */}
         <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-10">
           <motion.div variants={fadeUp} custom={0} className="flex items-center gap-2 mb-4">
             <AlertTriangle className="w-4 h-4 text-destructive" />
-            <h2 className="text-sm font-black uppercase tracking-widest text-foreground">Etapa 4 · Riscos e efeitos colaterais</h2>
+            <h2 className="text-sm font-black uppercase tracking-widest text-foreground">Etapa 4 · Pontos de atenção e monitoramento</h2>
             <div className="flex-1 h-px bg-border" />
           </motion.div>
 
@@ -256,7 +256,7 @@ const MasteronAndrogenico = () => {
 
           <motion.div variants={fadeUp} custom={5} className="rounded-2xl border border-border/60 bg-card p-5">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-[9px] font-black bg-destructive/15 text-destructive px-2 py-0.5 rounded tracking-wider">RISCO</span>
+              <span className="text-[9px] font-black bg-primary/15 text-primary px-2 py-0.5 rounded tracking-wider">ATENÇÃO</span>
               <h3 className="text-sm font-bold text-foreground">Eixo hormonal feminino</h3>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
