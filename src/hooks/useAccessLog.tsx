@@ -15,19 +15,20 @@ function getSessionId() {
 }
 
 export function useAccessLog() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const location = useLocation();
   const logIdRef = useRef<string | null>(null);
   const startRef = useRef<number>(Date.now());
 
-  const isFree = !user && (location.pathname === "/free" || location.pathname === "/");
-
   useEffect(() => {
+    // Wait until auth has resolved to avoid logging an authenticated user as anonymous
+    if (loading) return;
+
     const sessionId = getSessionId();
     startRef.current = Date.now();
 
     const insertLog = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("access_logs" as any)
         .insert({
           user_id: user?.id || null,
@@ -37,6 +38,9 @@ export function useAccessLog() {
         } as any)
         .select("id")
         .single();
+      if (error) {
+        console.warn("[access_logs] insert failed", error.message);
+      }
       if (data) logIdRef.current = (data as any).id;
     };
 
@@ -65,5 +69,5 @@ export function useAccessLog() {
       window.removeEventListener("beforeunload", updateDuration);
       logIdRef.current = null;
     };
-  }, [user?.id, location.pathname]);
+  }, [user?.id, location.pathname, loading]);
 }
