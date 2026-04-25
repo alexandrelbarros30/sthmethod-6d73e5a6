@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, AlertCircle, Clock, Bell, CheckCircle, ExternalLink, Check, CreditCard, DollarSign, Link2, ChevronDown, Search, Settings, Sparkles, UserPlus, Radio, UserX } from "lucide-react";
+import { Users, UserCheck, AlertCircle, Clock, Bell, ExternalLink, Check, CreditCard, Link2, ChevronDown, Search, Settings, Sparkles, UserPlus, Radio, UserX } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,6 @@ import AdminReminders from "@/components/admin/AdminReminders";
 import ServiceQueue from "@/components/admin/ServiceQueue";
 import { toast } from "sonner";
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
-import WhatsAppQuickLink from "@/components/admin/WhatsAppQuickLink";
 import WhatsAppBulkSender from "@/components/shared/WhatsAppBulkSender";
 
 const copyRenewLink = (userId: string) => {
@@ -449,76 +448,8 @@ const AdminDashboard = () => {
         )}
 
 
-        {completedCount > 0 && (
-          <CollapsiblePanel
-            title="Cadastros Completos"
-            icon={<CheckCircle className="w-4 h-4 text-primary" />}
-            badge={completedCount}
-            defaultOpen={false}
-            cardClassName="border-primary/20 bg-primary/5"
-          >
-            {recentOnboardings!.map((s: any) => (
-              <div key={s.id} className="flex flex-col gap-1 py-2 border-b border-border/50 last:border-0">
-                <div className="flex items-center gap-2 min-w-0">
-                  <CheckCircle className="w-4 h-4 text-primary shrink-0" />
-                  <p className="text-sm font-medium truncate flex-1">{(s as any).profiles?.full_name || "Aluno"}</p>
-                  <Badge variant="outline" className="text-xs text-primary border-primary/30 shrink-0">Completo</Badge>
-                </div>
-                <div className="flex items-center justify-between pl-6">
-                  <p className="text-xs text-muted-foreground truncate">
-                    {(s as any).plans?.name} • {new Date(s.created_at).toLocaleDateString("pt-BR")}
-                  </p>
-                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1 shrink-0" onClick={() => navigate(`/admin/students?edit=${s.user_id}`)}>
-                    <ExternalLink className="w-3.5 h-3.5" /> Ficha
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </CollapsiblePanel>
-        )}
-
-        {/* 4. Cadastros Incompletos */}
-        {incompleteCount > 0 && (
-          <CollapsiblePanel
-            title="Cadastros Incompletos"
-            icon={<AlertCircle className="w-4 h-4 text-warning" />}
-            badge={incompleteCount}
-            badgeClassName="bg-warning text-warning-foreground"
-            defaultOpen={false}
-            cardClassName="border-warning/20 bg-warning/5"
-          >
-            {filteredIncompleteOnboardings.map((p: any) => {
-              const days = Math.floor((Date.now() - new Date(p.created_at).getTime()) / 86400000);
-              const dayLabel = days === 0 ? "Hoje" : `${days}d atrás`;
-              return (
-                <div key={p.id} className="flex flex-col gap-1 py-2 border-b border-border/50 last:border-0">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Clock className="w-4 h-4 text-warning shrink-0" />
-                    <p className="text-sm font-medium truncate flex-1">{p.full_name?.trim() || p.email || "Sem nome"}</p>
-                    <Badge variant="outline" className="text-xs text-warning border-warning/30 shrink-0">Incompleto</Badge>
-                  </div>
-                  <div className="flex items-center justify-between pl-6">
-                    <p className="text-xs text-muted-foreground truncate">{p.email} • {dayLabel}</p>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => navigate(`/admin/students?manage=${p.user_id}`)}>
-                        <Settings className="w-3.5 h-3.5" /> Gerenciar
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </CollapsiblePanel>
-        )}
-
-        {/* 6. Pagamentos Pendentes */}
-        <PendingPayments />
-
         {/* WhatsApp em Massa */}
         <WhatsAppBulkSender />
-
-        {/* WhatsApp Quick Link */}
-        <WhatsAppQuickLink />
       </div>
     </DashboardLayout>
   );
@@ -653,87 +584,5 @@ const RecentStudents = ({ profiles, subscriptions, navigate, queryClient, active
   );
 };
 
-const PendingPayments = () => {
-  const navigate = useNavigate();
-  const { data: pendingPayments } = useQuery({
-    queryKey: ["admin-pending-payments"],
-    queryFn: async () => {
-      const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
-      const { data } = await supabase
-        .from("payments")
-        .select("*, plans(name, duration_days)")
-        .eq("status", "pending")
-        .gte("created_at", sevenDaysAgo)
-        .order("created_at", { ascending: false });
-      if (!data || data.length === 0) return [];
-      const userIds = data.map((p: any) => p.user_id);
-      const { data: activeSubs } = await supabase
-        .from("subscriptions")
-        .select("user_id, status, end_date")
-        .in("user_id", userIds)
-        .eq("status", "active");
-      const activeUserIds = new Set(
-        (activeSubs || [])
-          .filter((s: any) => new Date(s.end_date) > new Date())
-          .map((s: any) => s.user_id)
-      );
-      const filteredData = data.filter((p: any) => !activeUserIds.has(p.user_id));
-      if (filteredData.length === 0) return [];
-      const filteredUserIds = filteredData.map((p: any) => p.user_id);
-      const { data: profilesData } = await supabase
-        .from("profiles")
-        .select("user_id, full_name, email")
-        .in("user_id", filteredUserIds);
-      const profileMap = new Map((profilesData || []).map((p: any) => [p.user_id, p]));
-      return filteredData.map((p: any) => ({ ...p, profile: profileMap.get(p.user_id) }));
-    },
-  });
-
-  if (!pendingPayments || pendingPayments.length === 0) return null;
-
-  return (
-    <CollapsiblePanel
-      title="Pagamentos Pendentes"
-      icon={<DollarSign className="w-4 h-4 text-warning" />}
-      badge={pendingPayments.length}
-      badgeClassName="bg-warning text-warning-foreground"
-      defaultOpen={true}
-      cardClassName="border-warning/20 bg-warning/5"
-    >
-      {pendingPayments.map((p: any) => {
-        const tierClasses = getPlanTierClasses(getPlanTier(p.plans?.duration_days));
-        return (
-          <div key={p.id} className="py-3 border-b border-border/50 last:border-0">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <CreditCard className="w-4 h-4 text-warning shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{p.profile?.full_name || "Aluno"}</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    R$ {Number(p.amount).toFixed(2)} • {p.method === "manual" ? "Manual" : p.method}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
-                {p.plans?.name && (
-                  <Badge variant="outline" className={`text-[10px] font-medium ${tierClasses.badge}`}>
-                    {p.plans.name}
-                  </Badge>
-                )}
-                <Badge
-                  variant="outline"
-                  className="text-[10px] border-warning/30 text-warning cursor-pointer hover:bg-warning/10 transition-colors"
-                  onClick={() => navigate(`/admin/students?sub=${p.user_id}`)}
-                >
-                  Pendente →
-                </Badge>
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </CollapsiblePanel>
-  );
-};
 
 export default AdminDashboard;
