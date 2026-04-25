@@ -42,6 +42,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminStudents from "./pages/admin/AdminStudents";
 import AdminPlans from "./pages/admin/AdminPlans";
 import AdminPayments from "./pages/admin/AdminPayments";
+import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminNutrition from "./pages/admin/AdminNutrition";
 import AdminTraining from "./pages/admin/AdminTraining";
 import AdminExerciseLibrary from "./pages/admin/AdminExerciseLibrary";
@@ -127,6 +128,7 @@ const App = () => (
             <Route path="/admin/students" element={<ProtectedRoute allowedRoles={["admin"]}><AdminStudents /></ProtectedRoute>} />
             <Route path="/admin/plans" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPlans /></ProtectedRoute>} />
             <Route path="/admin/payments" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPayments /></ProtectedRoute>} />
+            <Route path="/admin/revenue" element={<ProtectedRoute allowedRoles={["admin"]}><AdminRevenue /></ProtectedRoute>} />
             <Route path="/admin/diet" element={<ProtectedRoute allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><AdminDiet /></Suspense></ProtectedRoute>} />
             <Route path="/admin/nutrition" element={<ProtectedRoute allowedRoles={["admin"]}><AdminNutrition /></ProtectedRoute>} />
             <Route path="/admin/diet-library" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDietLibrary /></ProtectedRoute>} />
@@ -165,6 +167,7 @@ const App = () => (
             <Route path="/financeiro/payments" element={<ProtectedRoute allowedRoles={["financeiro"]}><AdminPayments /></ProtectedRoute>} />
             <Route path="/financeiro/plans" element={<ProtectedRoute allowedRoles={["financeiro"]}><AdminPlans /></ProtectedRoute>} />
             <Route path="/financeiro/revenue" element={<ProtectedRoute allowedRoles={["financeiro"]}><FinanceiroDashboard /></ProtectedRoute>} />
+            <Route path="/financeiro/billing" element={<ProtectedRoute allowedRoles={["financeiro"]}><AdminRevenue /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <div className="fixed bottom-1 right-1 text-[9px] text-muted-foreground/40 pointer-events-none z-50 font-mono">

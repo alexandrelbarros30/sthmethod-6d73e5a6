@@ -34,6 +34,7 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/admin/students", icon: User, label: "Alunos" },
     { to: "/admin/plans", icon: CreditCard, label: "Planos" },
     { to: "/admin/payments", icon: Wallet, label: "Pagamentos" },
+    { to: "/admin/revenue", icon: TrendingUp, label: "Faturamento" },
     { to: "/admin/diet", icon: Salad, label: "Dietas" },
     { to: "/admin/diet-library", icon: BookOpen, label: "Bib. Dietas" },
     { to: "/admin/nutrition", icon: Apple, label: "Cardápio" },
@@ -73,6 +74,7 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
   financeiro: [
     { to: "/financeiro", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/financeiro/payments", icon: Wallet, label: "Pagamentos" },
+    { to: "/financeiro/billing", icon: Receipt, label: "Faturamento" },
     { to: "/financeiro/plans", icon: CreditCard, label: "Planos" },
     { to: "/financeiro/revenue", icon: TrendingUp, label: "Receita" },
   ],
