@@ -258,7 +258,7 @@ const AdminReminders = () => {
 
           <div className="flex items-center gap-1 flex-wrap">
             {/* Quick action shortcuts */}
-            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => navigate("/admin/alunos")} title="Ver cadastro do aluno">
+            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => navigate(`/admin/alunos?manage=${r.user_id}`)} title="Ver cadastro do aluno">
               <User className="w-3 h-3 mr-1" /> Cadastro
             </Button>
 
