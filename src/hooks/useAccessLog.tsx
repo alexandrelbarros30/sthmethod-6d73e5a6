@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLocation } from "react-router-dom";
 
 const SESSION_KEY = "access_log_session_id";
+const AUTH_RETRY_DELAYS_MS = [600, 1500, 3000];
 
 function getSessionId() {
   let sid = sessionStorage.getItem(SESSION_KEY);
@@ -21,13 +22,33 @@ export function useAccessLog() {
   const startRef = useRef<number>(Date.now());
 
   useEffect(() => {
-    // Wait until auth has resolved to avoid logging an authenticated user as anonymous
     if (loading) return;
 
     const sessionId = getSessionId();
     startRef.current = Date.now();
+    let cancelled = false;
+    let retryTimeout: ReturnType<typeof setTimeout> | null = null;
 
-    const insertLog = async () => {
+    const scheduleRetry = (attempt: number) => {
+      if (!user?.id || attempt >= AUTH_RETRY_DELAYS_MS.length || cancelled) return;
+      retryTimeout = setTimeout(() => {
+        void insertLog(attempt + 1);
+      }, AUTH_RETRY_DELAYS_MS[attempt]);
+    };
+
+    const insertLog = async (attempt = 0) => {
+      if (cancelled) return;
+
+      if (user?.id) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const sessionUserId = sessionData.session?.user?.id;
+
+        if (sessionUserId !== user.id) {
+          scheduleRetry(attempt);
+          return;
+        }
+      }
+
       const { data, error } = await supabase
         .from("access_logs" as any)
         .insert({
@@ -38,13 +59,16 @@ export function useAccessLog() {
         } as any)
         .select("id")
         .single();
+
       if (error) {
         console.warn("[access_logs] insert failed", error.message);
+        scheduleRetry(attempt);
       }
-      if (data) logIdRef.current = (data as any).id;
+
+      if (data && !cancelled) logIdRef.current = (data as any).id;
     };
 
-    insertLog();
+    void insertLog();
 
     const updateDuration = () => {
       if (!logIdRef.current) return;
@@ -64,6 +88,8 @@ export function useAccessLog() {
     window.addEventListener("beforeunload", updateDuration);
 
     return () => {
+      cancelled = true;
+      if (retryTimeout) clearTimeout(retryTimeout);
       updateDuration();
       document.removeEventListener("visibilitychange", handleVisChange);
       window.removeEventListener("beforeunload", updateDuration);

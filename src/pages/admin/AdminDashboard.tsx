@@ -84,12 +84,11 @@ const AdminDashboard = () => {
     queryKey: ["admin-online-students"],
     queryFn: async () => {
       const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-      // Considera ativo: log recente OU sessão ainda aberta (sem logged_out_at) iniciada na última hora
-      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const { data: logs } = await supabase
         .from("access_logs")
         .select("user_id, logged_in_at, logged_out_at")
-        .gte("logged_in_at", oneHourAgo)
+        .gte("logged_in_at", oneDayAgo)
         .not("user_id", "is", null);
       const activeLogs = (logs || []).filter((l: any) =>
         l.logged_in_at >= fiveMinAgo || !l.logged_out_at
