@@ -72,7 +72,7 @@ const MasteronAndrogenico = () => {
           className="text-2xl md:text-4xl font-black text-foreground leading-[1.12] mb-3 tracking-tight"
         >
           🧬 Drostanolona (Masteron):{" "}
-          <span className="gradient-text">o derivado de DHT que separa densidade de risco</span>
+          <span className="gradient-text">o derivado de DHT que define densidade e performance</span>
         </motion.h1>
 
         <motion.p
