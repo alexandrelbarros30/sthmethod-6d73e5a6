@@ -11,6 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminReminders from "@/components/admin/AdminReminders";
+import ServiceQueue from "@/components/admin/ServiceQueue";
 import { toast } from "sonner";
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
 import WhatsAppQuickLink from "@/components/admin/WhatsAppQuickLink";
@@ -341,6 +342,9 @@ const AdminDashboard = () => {
       </Card>
 
       <div className="space-y-4">
+        {/* 0. Fila de Atendimento (prioridade máxima) */}
+        <ServiceQueue compact manageBasePath="/admin/students" />
+
         {/* 1. Lembretes Inteligentes (prioridade no topo) */}
         <CollapsiblePanel
           title="Lembretes Inteligentes"

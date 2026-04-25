@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Layers, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper } from "lucide-react";
+import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Layers, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,6 +31,7 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
   ],
   admin: [
     { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
+    { to: "/admin/queue", icon: ListOrdered, label: "Fila Atendimento" },
     { to: "/admin/students", icon: User, label: "Alunos" },
     { to: "/admin/plans", icon: CreditCard, label: "Planos" },
     { to: "/admin/payments", icon: Wallet, label: "Pagamentos" },
@@ -56,6 +57,7 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
   ],
   consultor: [
     { to: "/consultor", icon: LayoutDashboard, label: "Dashboard" },
+    { to: "/consultor/queue", icon: ListOrdered, label: "Fila Atendimento" },
     { to: "/consultor/students", icon: Users, label: "Meus Alunos" },
     { to: "/consultor/diet", icon: Salad, label: "Dietas" },
     { to: "/consultor/diet-library", icon: BookOpen, label: "Bib. Dietas" },
