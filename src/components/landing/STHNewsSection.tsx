@@ -12,8 +12,8 @@ const articles = [
     tag: "EXCLUSIVO",
     tagClass: "bg-destructive text-destructive-foreground",
     date: "Nova matéria",
-    title: "🧬 Drostanolona (Masteron): o derivado de DHT que separa densidade de risco",
-    desc: "Densidade muscular, virilização e os limites do uso feminino.",
+    title: "🧬 Drostanolona (Masteron): o derivado de DHT que define densidade e performance",
+    desc: "Densidade muscular, estética e os limites do uso feminino.",
     img: masteronImg,
   },
   {
