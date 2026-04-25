@@ -125,6 +125,22 @@ const Tendencias = () => {
         >
           <div className="space-y-3">
             <Link
+              to="/tendencias/drostanolona-masteron"
+              className="block rounded-2xl border border-destructive/40 bg-gradient-to-r from-destructive/10 via-background to-primary/5 p-4 hover:border-destructive/60 transition-colors group"
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[9px] font-black bg-destructive text-destructive-foreground px-2 py-0.5 rounded tracking-wider animate-pulse">EXCLUSIVO</span>
+                <span className="text-[10px] text-muted-foreground">Nova matéria</span>
+              </div>
+              <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors leading-tight">
+                🧬 Drostanolona (Masteron): o derivado de DHT que separa densidade de risco
+              </h3>
+              <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+                Densidade muscular, virilização e os limites do uso feminino · Ler matéria <ChevronRight className="w-3 h-3" />
+              </p>
+            </Link>
+
+            <Link
               to="/tendencias/triade-intestino-hormonio"
               className="block rounded-2xl border border-destructive/40 bg-gradient-to-r from-destructive/10 via-background to-primary/5 p-4 hover:border-destructive/60 transition-colors group"
             >
