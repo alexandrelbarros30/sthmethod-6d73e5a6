@@ -9,8 +9,8 @@ import { Camera, CheckCheck, Eye, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-const UPDATE_TEMPLATE_SLUG = "atualizacao";
+import { sendSystemTemplate } from "@/lib/system-templates";
+import { toast } from "@/hooks/use-toast";
 
 const EvolutionReminderPopup = () => {
   const { user, role } = useAuth();
@@ -78,48 +78,25 @@ const EvolutionReminderPopup = () => {
   });
 
   const handleSendWhatsApp = async (reminder: any) => {
-    // Fetch student phone
     const { data: profile } = await supabase
       .from("profiles")
       .select("phone, full_name")
       .eq("user_id", reminder.student_user_id)
       .single();
 
-    if (!profile?.phone) return;
-
-    // Try to find "atualização" template
-    const { data: categories } = await supabase
-      .from("message_categories")
-      .select("id")
-      .ilike("slug", `%${UPDATE_TEMPLATE_SLUG}%`)
-      .limit(1);
-
-    let message = "";
-    if (categories && categories.length > 0) {
-      const { data: templates } = await supabase
-        .from("message_templates")
-        .select("content")
-        .eq("category_id", categories[0].id)
-        .limit(1);
-
-      if (templates && templates.length > 0) {
-        const firstName = profile.full_name?.split(" ")[0] || "Aluno";
-        message = templates[0].content
-          .replace(/\{nome\}/g, firstName)
-          .replace(/\{nome_completo\}/g, profile.full_name || "Aluno");
-      }
+    const result = await sendSystemTemplate(
+      "evolution_update_reminder",
+      {
+        full_name: profile?.full_name,
+        phone: profile?.phone,
+        user_id: reminder.student_user_id,
+      },
+      { logHistory: true }
+    );
+    if (!result.ok) {
+      toast({ title: "Não foi possível enviar", description: result.reason, variant: "destructive" });
+      return;
     }
-
-    if (!message) {
-      const firstName = profile.full_name?.split(" ")[0] || "Aluno";
-      message = `Olá, ${firstName}! 👋📸\n\nChegou o momento de atualizarmos sua evolução — essa etapa é essencial para ajustar sua estratégia e manter o progresso acelerado 🚀\n\nAcesse a plataforma no menu ATUALIZAÇÃO e envie:\n\n📷 FOTO FRONTAL\n\n📷 FOTO LATERAL\n\n📷 FOTO COSTAS\n\n⚖️ PESO ATUAL\n\n👉 Essas informações permitem ajustes mais precisos na sua dieta, treino e protocolo.\n\n🔥 Resultado não é sorte. É acompanhamento + ajuste estratégico.\n\nVamos juntos nessa! 💪🚀`;
-    }
-
-    const phone = profile.phone.replace(/\D/g, "");
-    const fullPhone = phone.startsWith("55") ? phone : `55${phone}`;
-    window.open(`https://wa.me/${fullPhone}?text=${encodeURIComponent(message)}`, "_blank");
-
-    // Mark as seen after sending
     markSeen.mutate(reminder.id);
   };
 
