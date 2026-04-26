@@ -11,6 +11,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
+import DocumentUpload from "@/components/shared/DocumentUpload";
 import { calculateAge, calculateMacros } from "@/lib/macro-calculator";
 import EvolutionMacroDisplay from "@/components/student/EvolutionMacroDisplay";
 import EvolutionWeightHistory from "@/components/student/EvolutionWeightHistory";
@@ -304,6 +305,11 @@ const StudentEvolution = () => {
               Fotos salvas com sucesso
             </div>
           )}
+
+          {/* Exames laboratoriais e receita médica (PDF) */}
+          <div className="pt-2 border-t">
+            <DocumentUpload userId={user!.id} />
+          </div>
 
           <Button
             className="w-full"
