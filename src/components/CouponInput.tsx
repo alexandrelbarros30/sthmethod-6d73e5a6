@@ -88,36 +88,46 @@ const CouponInput = ({ planId, originalPrice, onCouponApplied }: CouponInputProp
 
   if (applied) {
     return (
-      <div className="flex items-center justify-between p-3 rounded-lg border border-primary/30 bg-primary/5">
-        <div className="flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-primary" />
-          <span className="text-sm font-mono font-medium text-foreground">{applied.code}</span>
-          <Badge variant="outline" className="text-xs text-primary border-primary/30">
-            -R$ {applied.discountAmount.toFixed(2)}
-          </Badge>
+      <div className="space-y-1">
+        <div className="flex items-center justify-between p-3 rounded-lg border border-primary/30 bg-primary/5">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-primary" />
+            <span className="text-sm font-mono font-medium text-foreground">{applied.code}</span>
+            <Badge variant="outline" className="text-xs text-primary border-primary/30">
+              -R$ {applied.discountAmount.toFixed(2)}
+            </Badge>
+          </div>
+          <Button variant="ghost" size="sm" onClick={removeCoupon} className="h-7 w-7 p-0">
+            <X className="w-4 h-4" />
+          </Button>
         </div>
-        <Button variant="ghost" size="sm" onClick={removeCoupon} className="h-7 w-7 p-0">
-          <X className="w-4 h-4" />
-        </Button>
+        <p className="text-[11px] text-muted-foreground px-1">
+          * Desconto válido apenas para pagamento via PIX. Cartão de crédito e débito mantêm o valor cheio.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="flex gap-2">
-      <div className="relative flex-1">
-        <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          value={code}
-          onChange={(e) => setCode(e.target.value.toUpperCase())}
-          placeholder="Cupom de desconto"
-          className="pl-9 font-mono"
-          onKeyDown={(e) => e.key === "Enter" && validateCoupon()}
-        />
+    <div className="space-y-1">
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            placeholder="Cupom de desconto (somente PIX)"
+            className="pl-9 font-mono"
+            onKeyDown={(e) => e.key === "Enter" && validateCoupon()}
+          />
+        </div>
+        <Button variant="outline" size="sm" onClick={validateCoupon} disabled={loading || !code.trim()}>
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Aplicar"}
+        </Button>
       </div>
-      <Button variant="outline" size="sm" onClick={validateCoupon} disabled={loading || !code.trim()}>
-        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Aplicar"}
-      </Button>
+      <p className="text-[11px] text-muted-foreground px-1">
+        * Cupons concedem desconto apenas no pagamento via PIX.
+      </p>
     </div>
   );
 };
