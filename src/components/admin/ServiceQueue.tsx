@@ -217,7 +217,14 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
                     <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="text-sm font-medium truncate">{it.name}</p>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`${manageBasePath}?manage=${it.user_id}`)}
+                          className="text-sm font-medium truncate text-left hover:text-primary hover:underline transition-colors"
+                          title="Abrir cadastro do aluno"
+                        >
+                          {it.name}
+                        </button>
                         <Badge variant="outline" className={`text-[9px] ${meta.badgeCls}`}>
                           {meta.label}
                         </Badge>
