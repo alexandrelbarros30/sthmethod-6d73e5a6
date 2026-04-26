@@ -17,6 +17,9 @@ interface Slot {
   file?: File;
   preview?: string;
   imgEl?: HTMLImageElement;
+  /** dataURL da imagem ORIGINAL enviada pelo usuário (preservado para permitir
+   *  recortes não-destrutivos: cada novo recorte parte sempre desta fonte). */
+  originalDataUrl?: string;
 }
 
 interface Transform {
@@ -182,6 +185,8 @@ const EvolucaoPublica = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [cropperSide, setCropperSide] = useState<"before" | "after" | null>(null);
+  // Quando true, o cropper aparece inline na seção de edição (na própria foto).
+  const [showInlineCropper, setShowInlineCropper] = useState(false);
   const beforeInput = useRef<HTMLInputElement>(null);
   const afterInput = useRef<HTMLInputElement>(null);
 
@@ -200,7 +205,7 @@ const EvolucaoPublica = () => {
     try {
       const dataUrl = await fileToDataUrl(file);
       const imgEl = await loadImage(dataUrl);
-      setSlots((p) => ({ ...p, [side]: { file, preview, imgEl } }));
+      setSlots((p) => ({ ...p, [side]: { file, preview, imgEl, originalDataUrl: dataUrl } }));
       setPreviewUrl(null);
       setAnalysis(null);
     } catch {
