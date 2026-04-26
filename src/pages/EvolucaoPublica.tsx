@@ -6,11 +6,49 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Lock, Sparkles, Upload, X, RotateCcw, Wand2, FlipHorizontal2, FlipVertical2, ArrowRight } from "lucide-react";
+import { Lock, Sparkles, Upload, X, RotateCcw, Wand2, FlipHorizontal2, FlipVertical2, ArrowRight, Crop } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import evolutionFrame from "@/assets/evolution-frame.png";
 
 const CANVAS_WIDTH = 1080;
 const CANVAS_HEIGHT = 1350;
+
+// Proporções disponíveis para redimensionar o resultado final
+const ASPECT_RATIOS: { label: string; value: string; ratio: number | null }[] = [
+  { label: "Original (4:5)", value: "original", ratio: null },
+  { label: "1:1", value: "1:1", ratio: 1 / 1 },
+  { label: "2:3", value: "2:3", ratio: 2 / 3 },
+  { label: "3:4", value: "3:4", ratio: 3 / 4 },
+  { label: "4:5", value: "4:5", ratio: 4 / 5 },
+  { label: "3:5", value: "3:5", ratio: 3 / 5 },
+  { label: "5:7", value: "5:7", ratio: 5 / 7 },
+  { label: "9:16", value: "9:16", ratio: 9 / 16 },
+  { label: "16:9", value: "16:9", ratio: 16 / 9 },
+  { label: "3:2", value: "3:2", ratio: 3 / 2 },
+  { label: "4:3", value: "4:3", ratio: 4 / 3 },
+  { label: "5:4", value: "5:4", ratio: 5 / 4 },
+  { label: "7:5", value: "7:5", ratio: 7 / 5 },
+  { label: "5:3", value: "5:3", ratio: 5 / 3 },
+];
+
+function cropDataUrlToRatio(dataUrl: string, targetRatio: number | null): Promise<string> {
+  if (!targetRatio) return Promise.resolve(dataUrl);
+  return loadImage(dataUrl).then((img) => {
+    const srcRatio = img.width / img.height;
+    let cropW = img.width;
+    let cropH = img.height;
+    if (srcRatio > targetRatio) cropW = Math.round(img.height * targetRatio);
+    else cropH = Math.round(img.width / targetRatio);
+    const cropX = Math.round((img.width - cropW) / 2);
+    const cropY = Math.round((img.height - cropH) / 2);
+    const c = document.createElement("canvas");
+    c.width = cropW;
+    c.height = cropH;
+    const cx = c.getContext("2d")!;
+    cx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+    return c.toDataURL("image/jpeg", 0.9);
+  });
+}
 
 interface Slot {
   file?: File;
@@ -163,6 +201,7 @@ const EvolucaoPublica = () => {
   const [editSide, setEditSide] = useState<"before" | "after">("before");
   const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [aspectRatio, setAspectRatio] = useState<string>("original");
   const [analysis, setAnalysis] = useState<string | null>(null);
   const beforeInput = useRef<HTMLInputElement>(null);
   const afterInput = useRef<HTMLInputElement>(null);
@@ -288,10 +327,13 @@ const EvolucaoPublica = () => {
   useEffect(() => {
     if (slots.before.imgEl && slots.after.imgEl && frameImage) {
       const url = renderEvolution();
-      if (url) setPreviewUrl(url);
+      if (url) {
+        const target = ASPECT_RATIOS.find((r) => r.value === aspectRatio)?.ratio ?? null;
+        cropDataUrlToRatio(url, target).then(setPreviewUrl).catch(() => setPreviewUrl(url));
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transforms, slots.before.imgEl, slots.after.imgEl, frameImage]);
+  }, [transforms, slots.before.imgEl, slots.after.imgEl, frameImage, aspectRatio]);
 
   const canGenerate = !!slots.before.file && !!slots.after.file;
 
@@ -453,6 +495,23 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
                       <Button variant="outline" size="sm" className="w-full" onClick={matchSize}>
                         <Wand2 className="w-3.5 h-3.5" /> Igualar tamanho dos dois
                       </Button>
+                      <div className="space-y-1.5 pt-2 border-t border-border/50">
+                        <Label className="text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                          <Crop className="w-3 h-3" /> Redimensionar
+                        </Label>
+                        <Select value={aspectRatio} onValueChange={setAspectRatio}>
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ASPECT_RATIOS.map((r) => (
+                              <SelectItem key={r.value} value={r.value} className="text-xs">
+                                {r.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   );
                 })()}
