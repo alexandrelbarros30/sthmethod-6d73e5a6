@@ -69,7 +69,8 @@ serve(async (req) => {
     let couponDiscount = 0;
     let validCouponId: string | null = null;
 
-    if (coupon_id) {
+    // IMPORTANT: Coupons are PIX-ONLY. Other methods always pay full price.
+    if (coupon_id && method === "pix") {
       const { data: coupon } = await supabaseAdmin
         .from("coupons")
         .select("*")
