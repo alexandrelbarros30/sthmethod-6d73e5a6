@@ -2,8 +2,7 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
-
-const WELCOME_TEMPLATE_ID = "c6aefbd6-049c-4d8e-aa55-ebece3b638ca";
+import { sendSystemTemplate } from "@/lib/system-templates";
 
 const notifyAdminWhatsApp = async (
   studentName: string,
@@ -55,46 +54,22 @@ const notifyAdminWhatsApp = async (
 
 const openWhatsAppWelcome = async (userId: string) => {
   try {
-    // Fetch profile and template in parallel
-    const [profileRes, templateRes] = await Promise.all([
-      supabase.from("profiles").select("full_name, phone").eq("user_id", userId).single(),
-      supabase.from("message_templates").select("content").eq("id", WELCOME_TEMPLATE_ID).single(),
-    ]);
-
-    const profile = profileRes.data;
-    const template = templateRes.data;
-    if (!profile?.phone || !template?.content) return;
-
-    // Replace variables
-    const firstName = profile.full_name?.split(" ")[0] || "Aluno";
-    let message = template.content
-      .replace(/\{nome\}/g, firstName)
-      .replace(/\{nome_completo\}/g, profile.full_name || "Aluno")
-      .replace(/\{email\}/g, "")
-      .replace(/\{telefone\}/g, profile.phone || "");
-
-    // Clean phone number
-    const phone = profile.phone.replace(/\D/g, "");
-    if (!phone) return;
-
-    const fullPhone = phone.startsWith("55") ? phone : `55${phone}`;
-    const waUrl = `https://wa.me/${fullPhone}?text=${encodeURIComponent(message)}`;
-
-    window.open(waUrl, "_blank");
-
-    // Log in message_history
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from("message_history").insert({
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, phone, email")
+      .eq("user_id", userId)
+      .single();
+    if (!profile?.phone) return;
+    await sendSystemTemplate(
+      "payment_welcome",
+      {
+        full_name: profile.full_name,
+        phone: profile.phone,
+        email: profile.email,
         user_id: userId,
-        content: message,
-        recipient_phone: profile.phone,
-        recipient_name: profile.full_name,
-        template_id: WELCOME_TEMPLATE_ID,
-        status: "sent",
-        sent_at: new Date().toISOString(),
-      });
-    }
+      },
+      { logHistory: true }
+    );
   } catch (err) {
     console.error("Error opening WhatsApp welcome:", err);
   }
