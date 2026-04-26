@@ -13,19 +13,6 @@ import evolutionFrame from "@/assets/evolution-frame.png";
 const CANVAS_WIDTH = 1080;
 const CANVAS_HEIGHT = 1350;
 
-  { label: "3:4", value: "3:4", ratio: 3 / 4 },
-  { label: "4:5", value: "4:5", ratio: 4 / 5 },
-  { label: "3:5", value: "3:5", ratio: 3 / 5 },
-  { label: "5:7", value: "5:7", ratio: 5 / 7 },
-  { label: "9:16", value: "9:16", ratio: 9 / 16 },
-  { label: "16:9", value: "16:9", ratio: 16 / 9 },
-  { label: "3:2", value: "3:2", ratio: 3 / 2 },
-  { label: "4:3", value: "4:3", ratio: 4 / 3 },
-  { label: "5:4", value: "5:4", ratio: 5 / 4 },
-  { label: "7:5", value: "7:5", ratio: 7 / 5 },
-  { label: "5:3", value: "5:3", ratio: 5 / 3 },
-];
-
 interface Slot {
   file?: File;
   preview?: string;
