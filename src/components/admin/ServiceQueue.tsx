@@ -198,7 +198,7 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
             Nenhum atendimento pendente nos últimos 7 dias.
           </p>
         ) : (
-          <ScrollArea className={compact ? "max-h-[420px]" : "max-h-[70vh]"}>
+          <ScrollArea className={compact ? "h-[380px] pr-3" : "h-[70vh] pr-3"}>
             <div className="space-y-2">
               {items.map((it, idx) => {
                 const meta = TYPE_META[it.type];
