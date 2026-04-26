@@ -420,10 +420,11 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
             </div>
             <div className="relative max-w-md mx-auto">
               {showInlineCropper && slots[editSide].originalDataUrl ? (
-                <div className="rounded-2xl overflow-hidden shadow-2xl border border-border/40">
+                <div className="rounded-2xl overflow-hidden shadow-2xl border border-border/40 [&_>div]:space-y-0">
                   <InteractiveCropper
                     inline
                     bare
+                    onCloseInline={() => setShowInlineCropper(false)}
                     imageSrc={slots[editSide].originalDataUrl!}
                     onApply={async ({ dataUrl }) => {
                       const side = editSide;
@@ -437,6 +438,7 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
                         if (oldPreview && oldPreview.startsWith("blob:")) URL.revokeObjectURL(oldPreview);
                         setTransforms((p) => ({ ...p, [side]: { ...DEFAULT_T } }));
                         toast.success("Recorte aplicado!");
+                        setShowInlineCropper(false);
                       } catch {
                         toast.error("Falha ao aplicar recorte.");
                       }
