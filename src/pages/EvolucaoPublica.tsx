@@ -566,6 +566,33 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
           STH METHOD • As fotos são processadas apenas para gerar sua análise e não ficam salvas.
         </footer>
       </main>
+
+      {cropperSide && slots[cropperSide].preview && (
+        <InteractiveCropper
+          open={!!cropperSide}
+          imageSrc={slots[cropperSide].preview!}
+          title={`Recortar foto (${cropperSide === "before" ? "Antes" : "Depois"})`}
+          onClose={() => setCropperSide(null)}
+          onApply={async ({ dataUrl }) => {
+            const side = cropperSide!;
+            try {
+              const newImg = await loadImage(dataUrl);
+              // libera o objectURL antigo e usa o dataURL do crop como novo preview
+              const oldPreview = slots[side].preview;
+              setSlots((p) => ({
+                ...p,
+                [side]: { ...p[side], preview: dataUrl, imgEl: newImg },
+              }));
+              if (oldPreview && oldPreview.startsWith("blob:")) URL.revokeObjectURL(oldPreview);
+              setTransforms((p) => ({ ...p, [side]: { ...DEFAULT_T } }));
+              setCropperSide(null);
+              toast.success("Recorte aplicado!");
+            } catch {
+              toast.error("Falha ao aplicar recorte.");
+            }
+          }}
+        />
+      )}
     </div>
   );
 };
