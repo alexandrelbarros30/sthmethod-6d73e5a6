@@ -400,6 +400,11 @@ const AdminMessages = () => {
           )}
         </TabsContent>
 
+        {/* SYSTEM AUTOMATIC TEMPLATES TAB */}
+        <TabsContent value="system">
+          <SystemTemplatesPanel />
+        </TabsContent>
+
         {/* VARIABLES TAB */}
         <TabsContent value="variables">
           <div className="flex items-center justify-between mb-4">
