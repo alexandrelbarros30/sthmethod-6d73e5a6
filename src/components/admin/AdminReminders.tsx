@@ -224,32 +224,32 @@ const AdminReminders = () => {
     const daysLeft = differenceInDays(new Date(r.subscription?.end_date || r.due_date), new Date());
 
     return (
-      <div className={`rounded-lg border ${isOverdue ? "border-destructive/30 bg-destructive/5" : "border-border"} overflow-hidden`}>
+      <div className={`rounded-lg border ${isOverdue ? "border-destructive/30 bg-destructive/5" : "border-border"} overflow-hidden max-w-full`}>
         {/* Student identification header */}
-        <div className="flex items-center justify-between py-3 px-4 bg-muted/30">
-          <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <span className="text-sm font-bold text-primary">
+        <div className="flex items-start justify-between gap-2 py-2.5 px-3 sm:px-4 bg-muted/30">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <span className="text-[10px] sm:text-sm font-bold text-primary">
                 {r.profile?.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "?"}
               </span>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-foreground truncate">{r.profile?.full_name || "Aluno"}</p>
-              <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5 flex-wrap">
-                <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {r.profile?.email || "—"}</span>
+              <p className="text-xs sm:text-sm font-semibold text-foreground truncate">{r.profile?.full_name || "Aluno"}</p>
+              <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-muted-foreground mt-0.5 flex-wrap">
+                <span className="flex items-center gap-1 min-w-0"><Mail className="w-3 h-3 shrink-0" /> <span className="truncate">{r.profile?.email || "—"}</span></span>
                 {r.profile?.phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {r.profile.phone}</span>}
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Badge variant={cfg.variant}>{cfg.label}</Badge>
-            {isOverdue && <Badge variant="destructive" className="text-xs">Atrasado!</Badge>}
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <Badge variant={cfg.variant} className="text-[10px]">{cfg.label}</Badge>
+            {isOverdue && <Badge variant="destructive" className="text-[10px]">Atrasado!</Badge>}
           </div>
         </div>
 
         {/* Details & actions */}
-        <div className="px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+        <div className="px-3 sm:px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2 sm:gap-4 text-[10px] sm:text-xs text-muted-foreground flex-wrap">
             <span>📋 {r.subscription?.plans?.name || "Sem plano"}</span>
             <span>📅 Vence: {r.subscription?.end_date ? format(new Date(r.subscription.end_date), "dd/MM/yyyy") : "—"}</span>
             {r.subscription && daysLeft >= 0 && <span className={daysLeft <= 3 ? "text-destructive font-medium" : ""}>{daysLeft === 0 ? "Vence hoje!" : `${daysLeft} dias restantes`}</span>}
@@ -258,7 +258,7 @@ const AdminReminders = () => {
 
           <div className="flex items-center gap-1 flex-wrap">
             {/* Quick action shortcuts */}
-            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => navigate(`/admin/alunos?manage=${r.user_id}`)} title="Ver cadastro do aluno">
+            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => navigate(`/admin/students?manage=${r.user_id}`)} title="Ver cadastro do aluno">
               <User className="w-3 h-3 mr-1" /> Cadastro
             </Button>
 
