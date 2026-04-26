@@ -50,7 +50,7 @@ type DragMode =
   | { kind: "move"; startX: number; startY: number; startRect: Rect }
   | { kind: "resize"; startX: number; startY: number; startRect: Rect; handle: ResizeHandle };
 
-const InteractiveCropper = ({ open = true, imageSrc, initialRect, onClose, onApply, title = "Recortar foto", inline = false, bare = false }: Props & { bare?: boolean }) => {
+const InteractiveCropper = ({ open = true, imageSrc, initialRect, onClose, onApply, title = "Recortar foto", inline = false, bare = false, onCloseInline }: Props & { bare?: boolean; onCloseInline?: () => void }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const [imgSize, setImgSize] = useState<{ w: number; h: number } | null>(null);
@@ -371,6 +371,15 @@ const InteractiveCropper = ({ open = true, imageSrc, initialRect, onClose, onApp
               <Check className="w-3.5 h-3.5 mr-1" /> Aplicar recorte
             </Button>
           </div>
+        )}
+        {bare && onCloseInline && (
+          <button
+            onClick={onCloseInline}
+            aria-label="Fechar recorte"
+            className="absolute top-2 right-2 z-20 w-8 h-8 rounded-full bg-black/70 hover:bg-black/90 text-white flex items-center justify-center shadow-lg"
+          >
+            <X className="w-4 h-4" />
+          </button>
         )}
       </div>
 
