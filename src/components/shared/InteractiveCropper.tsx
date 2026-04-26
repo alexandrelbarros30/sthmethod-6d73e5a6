@@ -129,13 +129,12 @@ const InteractiveCropper = ({ open = true, imageSrc, initialRect, onClose, onApp
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aspectValue]);
 
-  // Helpers de evento (mouse/touch normalizados)
-  const getPoint = (e: React.PointerEvent) => ({ x: e.clientX, y: e.clientY });
+  const getPoint = (e: { clientX: number; clientY: number }) => ({ x: e.clientX, y: e.clientY });
 
   const onPointerDownArea = (e: React.PointerEvent, handle?: ResizeHandle) => {
     if (!rect) return;
     e.preventDefault();
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    e.stopPropagation();
     const p = getPoint(e);
     if (handle) {
       setDrag({ kind: "resize", startX: p.x, startY: p.y, startRect: { ...rect }, handle });
@@ -144,9 +143,28 @@ const InteractiveCropper = ({ open = true, imageSrc, initialRect, onClose, onApp
     }
   };
 
-  const onPointerMove = (e: React.PointerEvent) => {
+  // Tracking global em window para que o gesto não seja perdido se o dedo
+  // sair da área do handle (essencial em touchscreens).
+  useEffect(() => {
+    if (drag.kind === "none") return;
+    const move = (ev: PointerEvent) => {
+      ev.preventDefault();
+      handlePointerMove({ x: ev.clientX, y: ev.clientY });
+    };
+    const up = () => setDrag({ kind: "none" });
+    window.addEventListener("pointermove", move, { passive: false });
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drag, scale, aspectRatio, imgSize]);
+
+  const handlePointerMove = (p: { x: number; y: number }) => {
     if (drag.kind === "none" || !rect || !imgSize) return;
-    const p = getPoint(e);
     const dx = (p.x - drag.startX) / scale;
     const dy = (p.y - drag.startY) / scale;
     if (drag.kind === "move") {
@@ -185,8 +203,6 @@ const InteractiveCropper = ({ open = true, imageSrc, initialRect, onClose, onApp
       setRect(constrainRect({ x, y, w, h }));
     }
   };
-
-  const onPointerUp = () => setDrag({ kind: "none" });
 
   const handleReset = () => {
     if (!imgSize) return;
@@ -265,17 +281,15 @@ const InteractiveCropper = ({ open = true, imageSrc, initialRect, onClose, onApp
             </svg>
 
             <div
-              className="absolute border border-white/90 cursor-move touch-none"
+              className="absolute border-2 border-white cursor-move touch-none"
               style={{
                 left: rect.x * scale,
                 top: rect.y * scale,
                 width: rect.w * scale,
                 height: rect.h * scale,
+                boxShadow: "0 0 0 1px rgba(0,0,0,0.4)",
               }}
               onPointerDown={(e) => onPointerDownArea(e)}
-              onPointerMove={onPointerMove}
-              onPointerUp={onPointerUp}
-              onPointerCancel={onPointerUp}
             >
               <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute left-1/3 top-0 bottom-0 w-px bg-white/50" />
@@ -285,40 +299,56 @@ const InteractiveCropper = ({ open = true, imageSrc, initialRect, onClose, onApp
               </div>
 
               {(["nw", "ne", "sw", "se"] as const).map((h) => {
-                const base: React.CSSProperties = { width: 22, height: 22 };
+                const base: React.CSSProperties = { width: 36, height: 36 };
                 const pos: Record<string, React.CSSProperties> = {
-                  nw: { ...base, left: -3, top: -3, cursor: "nwse-resize", borderLeft: "4px solid white", borderTop: "4px solid white" },
-                  ne: { ...base, right: -3, top: -3, cursor: "nesw-resize", borderRight: "4px solid white", borderTop: "4px solid white" },
-                  sw: { ...base, left: -3, bottom: -3, cursor: "nesw-resize", borderLeft: "4px solid white", borderBottom: "4px solid white" },
-                  se: { ...base, right: -3, bottom: -3, cursor: "nwse-resize", borderRight: "4px solid white", borderBottom: "4px solid white" },
+                  nw: { ...base, left: -12, top: -12, cursor: "nwse-resize" },
+                  ne: { ...base, right: -12, top: -12, cursor: "nesw-resize" },
+                  sw: { ...base, left: -12, bottom: -12, cursor: "nesw-resize" },
+                  se: { ...base, right: -12, bottom: -12, cursor: "nwse-resize" },
                 };
                 return (
                   <div
                     key={h}
                     className={cornerBracket}
                     style={pos[h]}
-                    onPointerDown={(e) => { e.stopPropagation(); onPointerDownArea(e, h); }}
-                    onPointerMove={onPointerMove}
-                    onPointerUp={onPointerUp}
-                    onPointerCancel={onPointerUp}
-                  />
+                    onPointerDown={(e) => onPointerDownArea(e, h)}
+                  >
+                    <div
+                      className="absolute pointer-events-none"
+                      style={{
+                        width: 22,
+                        height: 22,
+                        left: h.includes("w") ? 7 : "auto",
+                        right: h.includes("e") ? 7 : "auto",
+                        top: h.includes("n") ? 7 : "auto",
+                        bottom: h.includes("s") ? 7 : "auto",
+                        borderLeft: h.includes("w") ? "4px solid white" : undefined,
+                        borderRight: h.includes("e") ? "4px solid white" : undefined,
+                        borderTop: h.includes("n") ? "4px solid white" : undefined,
+                        borderBottom: h.includes("s") ? "4px solid white" : undefined,
+                        boxShadow: "0 0 6px rgba(0,0,0,0.6)",
+                      }}
+                    />
+                  </div>
                 );
               })}
               {(["n", "s", "e", "w"] as const).map((h) => {
                 const horizontal = h === "n" || h === "s";
                 const pos: React.CSSProperties = horizontal
-                  ? { left: "50%", transform: "translateX(-50%)", width: 36, height: 4, [h === "n" ? "top" : "bottom"]: -2, cursor: "ns-resize" }
-                  : { top: "50%", transform: "translateY(-50%)", width: 4, height: 36, [h === "w" ? "left" : "right"]: -2, cursor: "ew-resize" };
+                  ? { left: "50%", transform: "translateX(-50%)", width: 60, height: 28, [h === "n" ? "top" : "bottom"]: -14, cursor: "ns-resize" }
+                  : { top: "50%", transform: "translateY(-50%)", width: 28, height: 60, [h === "w" ? "left" : "right"]: -14, cursor: "ew-resize" };
                 return (
                   <div
                     key={h}
-                    className={edgeBar}
+                    className="absolute touch-none pointer-events-auto flex items-center justify-center"
                     style={pos}
-                    onPointerDown={(e) => { e.stopPropagation(); onPointerDownArea(e, h); }}
-                    onPointerMove={onPointerMove}
-                    onPointerUp={onPointerUp}
-                    onPointerCancel={onPointerUp}
-                  />
+                    onPointerDown={(e) => onPointerDownArea(e, h)}
+                  >
+                    <div
+                      className="bg-white/95 rounded-full pointer-events-none shadow"
+                      style={horizontal ? { width: 40, height: 5 } : { width: 5, height: 40 }}
+                    />
+                  </div>
                 );
               })}
 
