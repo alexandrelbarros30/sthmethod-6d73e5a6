@@ -419,11 +419,51 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
               <Badge variant="outline" className="gap-1.5"><Lock className="w-3 h-3" /> Bloqueado</Badge>
             </div>
             <div className="relative max-w-md mx-auto">
-              <img src={previewUrl} alt="Pré-visualização da evolução" className="w-full rounded-2xl shadow-2xl border border-border/40" />
-              <div className="absolute inset-0 rounded-2xl pointer-events-none ring-1 ring-primary/20" />
+              {showInlineCropper && slots[editSide].originalDataUrl ? (
+                <div className="rounded-2xl border border-primary/40 bg-black/90 p-3 shadow-2xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <Badge variant="secondary" className="text-[10px]">
+                      Editando: {editSide === "before" ? "ANTES" : "DEPOIS"}
+                    </Badge>
+                    <button
+                      className="text-xs text-white/80 hover:text-white inline-flex items-center gap-1"
+                      onClick={() => setShowInlineCropper(false)}
+                    >
+                      <X className="w-3 h-3" /> Fechar
+                    </button>
+                  </div>
+                  <InteractiveCropper
+                    inline
+                    imageSrc={slots[editSide].originalDataUrl!}
+                    onApply={async ({ dataUrl }) => {
+                      const side = editSide;
+                      try {
+                        const newImg = await loadImage(dataUrl);
+                        const oldPreview = slots[side].preview;
+                        setSlots((p) => ({
+                          ...p,
+                          [side]: { ...p[side], preview: dataUrl, imgEl: newImg },
+                        }));
+                        if (oldPreview && oldPreview.startsWith("blob:")) URL.revokeObjectURL(oldPreview);
+                        setTransforms((p) => ({ ...p, [side]: { ...DEFAULT_T } }));
+                        toast.success("Recorte aplicado!");
+                      } catch {
+                        toast.error("Falha ao aplicar recorte.");
+                      }
+                    }}
+                  />
+                </div>
+              ) : (
+                <>
+                  <img src={previewUrl} alt="Pré-visualização da evolução" className="w-full rounded-2xl shadow-2xl border border-border/40" />
+                  <div className="absolute inset-0 rounded-2xl pointer-events-none ring-1 ring-primary/20" />
+                </>
+              )}
             </div>
             <p className="text-center text-xs text-muted-foreground">
-              Pré-visualização com marca d'água. Libere a versão limpa após o cadastro.
+              {showInlineCropper
+                ? "Arraste o quadro e os cantos para recortar diretamente sobre a foto."
+                : "Pré-visualização com marca d'água. Libere a versão limpa após o cadastro."}
             </p>
 
             {/* Edit controls under generated photo */}
@@ -483,7 +523,7 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
                         onClick={() => setShowInlineCropper((v) => !v)}
                       >
                         <Crop className="w-3.5 h-3.5 mr-1" />
-                        {showInlineCropper ? "Fechar recorte" : "Recortar foto manualmente"}
+                        {showInlineCropper ? "Fechar recorte" : `Recortar foto ${editSide === "before" ? "Antes" : "Depois"}`}
                       </Button>
                       {slots[editSide].originalDataUrl && slots[editSide].preview !== slots[editSide].originalDataUrl && (
                         <Button
@@ -508,32 +548,10 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
                           <RotateCcw className="w-3.5 h-3.5 mr-1" /> Restaurar foto original
                         </Button>
                       )}
-                      {showInlineCropper && slots[editSide].originalDataUrl && (
-                        <div className="pt-2 border-t">
-                          <p className="text-[11px] text-muted-foreground mb-2">
-                            Cada recorte parte sempre da foto <strong>original</strong> — sem perda de qualidade ao refazer.
-                          </p>
-                          <InteractiveCropper
-                            inline
-                            imageSrc={slots[editSide].originalDataUrl!}
-                            onApply={async ({ dataUrl }) => {
-                              const side = editSide;
-                              try {
-                                const newImg = await loadImage(dataUrl);
-                                const oldPreview = slots[side].preview;
-                                setSlots((p) => ({
-                                  ...p,
-                                  [side]: { ...p[side], preview: dataUrl, imgEl: newImg },
-                                }));
-                                if (oldPreview && oldPreview.startsWith("blob:")) URL.revokeObjectURL(oldPreview);
-                                setTransforms((p) => ({ ...p, [side]: { ...DEFAULT_T } }));
-                                toast.success("Recorte aplicado!");
-                              } catch {
-                                toast.error("Falha ao aplicar recorte.");
-                              }
-                            }}
-                          />
-                        </div>
+                      {showInlineCropper && (
+                        <p className="text-[11px] text-muted-foreground text-center pt-1">
+                          ↑ O recorte está aberto na foto acima. Cada novo recorte parte sempre da imagem original — sem perda de qualidade.
+                        </p>
                       )}
                     </div>
                   );
