@@ -309,7 +309,7 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
                     <Button
                       variant="default"
                       size="sm"
-                      className="mt-2 ml-auto flex h-7 px-2 text-[11px] gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                      className="mt-2 mr-auto flex h-7 px-2 text-[11px] gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
                       onClick={() => dismissMutation.mutate(it)}
                       disabled={dismissMutation.isPending}
                       title="Marcar como atendido (remove da fila)"
