@@ -152,7 +152,13 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
   const [previewLabels, setPreviewLabels] = useState<ImageType[]>([]);
   const [transforms, setTransforms] = useState<TransformMap>({} as TransformMap);
   const [loadedImages, setLoadedImages] = useState<Partial<Record<TransformKey, HTMLImageElement>>>({});
+  // Mantemos referência da imagem ORIGINAL (URL inicial) por posição, para que
+  // recortes manuais sejam SEMPRE feitos a partir da fonte original e possam
+  // ser desfeitos sem perda de qualidade.
+  const [originalImages, setOriginalImages] = useState<Partial<Record<TransformKey, HTMLImageElement>>>({});
   const [cropperKey, setCropperKey] = useState<TransformKey | null>(null);
+  // Toggle do cropper inline por posição (admin)
+  const [inlineCropperKey, setInlineCropperKey] = useState<TransformKey | null>(null);
   const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
   const [activeType, setActiveType] = useState<ImageType>("front");
   const [livePreviews, setLivePreviews] = useState<Partial<Record<ImageType, string>>>({});
@@ -202,6 +208,7 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
       }
       if (cancelled) return;
       setLoadedImages(next);
+      setOriginalImages(next);
       setTransforms((prev) => ({ ...initT, ...prev } as TransformMap));
     })();
     return () => { cancelled = true; };
