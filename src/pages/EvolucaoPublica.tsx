@@ -64,9 +64,12 @@ interface Transform {
   // Offset as percentage of box size (-1 to 1), applied AFTER cover-fit
   offsetX: number;
   offsetY: number;
+  // Recorte manual da imagem fonte para uma proporção alvo (largura/altura).
+  // null = usar imagem original sem recorte.
+  aspectRatio: number | null;
 }
 
-const DEFAULT_T: Transform = { zoom: 1, rotation: 0, flipH: false, flipV: false, offsetX: 0, offsetY: 0 };
+const DEFAULT_T: Transform = { zoom: 1, rotation: 0, flipH: false, flipV: false, offsetX: 0, offsetY: 0, aspectRatio: null };
 
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -90,10 +93,23 @@ function drawWithTransform(
   ctx.rect(x, y, w, h);
   ctx.clip();
 
-  // Cover-fit base size considering rotation
+  // Recorte manual: define a janela source da imagem com base em aspectRatio.
+  let srcX = 0, srcY = 0, srcW = img.width, srcH = img.height;
+  if (t.aspectRatio && t.aspectRatio > 0) {
+    const imgRatio = img.width / img.height;
+    if (imgRatio > t.aspectRatio) {
+      srcW = Math.round(img.height * t.aspectRatio);
+      srcX = Math.round((img.width - srcW) / 2);
+    } else {
+      srcH = Math.round(img.width / t.aspectRatio);
+      srcY = Math.round((img.height - srcH) / 2);
+    }
+  }
+
+  // Cover-fit base size considering rotation (sobre o recorte)
   const rotated = t.rotation % 180 !== 0;
-  const effW = rotated ? img.height : img.width;
-  const effH = rotated ? img.width : img.height;
+  const effW = rotated ? srcH : srcW;
+  const effH = rotated ? srcW : srcH;
   const imgRatio = effW / effH;
   const boxRatio = w / h;
   let dw: number, dh: number;
@@ -117,7 +133,7 @@ function drawWithTransform(
   // rotated bounding box, swap them back to the source orientation when rotated.
   const drawW = rotated ? dh : dw;
   const drawH = rotated ? dw : dh;
-  ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+  ctx.drawImage(img, srcX, srcY, srcW, srcH, -drawW / 2, -drawH / 2, drawW, drawH);
   ctx.restore();
 }
 
