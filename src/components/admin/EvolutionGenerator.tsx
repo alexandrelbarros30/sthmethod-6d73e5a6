@@ -641,10 +641,56 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
                     variant="outline"
                     size="sm"
                     className="w-full h-7 text-[10px]"
-                    onClick={() => setCropperKey(makeKey(side, activeType))}
+                    onClick={() => {
+                      const k = makeKey(side, activeType);
+                      setInlineCropperKey((cur) => (cur === k ? null : k));
+                    }}
                   >
-                    <Crop className="w-3 h-3 mr-1" /> Recortar foto manualmente
+                    <Crop className="w-3 h-3 mr-1" />
+                    {inlineCropperKey === makeKey(side, activeType) ? "Fechar recorte" : "Recortar foto manualmente"}
                   </Button>
+                  {originalImages[makeKey(side, activeType)] &&
+                    loadedImages[makeKey(side, activeType)] !== originalImages[makeKey(side, activeType)] && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full h-7 text-[10px]"
+                        onClick={() => {
+                          const k = makeKey(side, activeType);
+                          const orig = originalImages[k];
+                          if (!orig) return;
+                          setLoadedImages((p) => ({ ...p, [k]: orig }));
+                          setTransforms((p) => ({ ...p, [k]: { ...DEFAULT_TRANSFORM } }));
+                          toast.success("Foto original restaurada.");
+                        }}
+                      >
+                        <RotateCcw className="w-3 h-3 mr-1" /> Restaurar foto original
+                      </Button>
+                    )}
+                  {inlineCropperKey === makeKey(side, activeType) &&
+                    originalImages[makeKey(side, activeType)]?.src && (
+                      <div className="pt-2 border-t border-border/50">
+                        <p className="text-[10px] text-muted-foreground mb-2">
+                          Cada recorte parte sempre da foto <strong>original</strong> — sem perda de qualidade ao refazer.
+                        </p>
+                        <InteractiveCropper
+                          inline
+                          imageSrc={originalImages[makeKey(side, activeType)]!.src}
+                          onApply={async ({ dataUrl }) => {
+                            const k = makeKey(side, activeType);
+                            try {
+                              const newImg = await loadImage(dataUrl);
+                              setLoadedImages((p) => ({ ...p, [k]: newImg }));
+                              setTransforms((p) => ({ ...p, [k]: { ...DEFAULT_TRANSFORM } }));
+                              setInlineCropperKey(null);
+                              toast.success("Recorte aplicado!");
+                            } catch {
+                              toast.error("Falha ao aplicar recorte.");
+                            }
+                          }}
+                        />
+                      </div>
+                    )}
                 </div>
               );
             })}
