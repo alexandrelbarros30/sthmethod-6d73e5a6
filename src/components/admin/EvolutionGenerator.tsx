@@ -152,6 +152,7 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
   const [previewLabels, setPreviewLabels] = useState<ImageType[]>([]);
   const [transforms, setTransforms] = useState<TransformMap>({} as TransformMap);
   const [loadedImages, setLoadedImages] = useState<Partial<Record<TransformKey, HTMLImageElement>>>({});
+  const [cropperKey, setCropperKey] = useState<TransformKey | null>(null);
   const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
   const [activeType, setActiveType] = useState<ImageType>("front");
   const [livePreviews, setLivePreviews] = useState<Partial<Record<ImageType, string>>>({});
