@@ -5,8 +5,18 @@ import subqImg from "@/assets/sthnews-subq-glass-1.jpg";
 import cinturaImg from "@/assets/sthnews-subq-glass-2.jpg";
 import triadeImg from "@/assets/sthnews-triade-thumb.jpg";
 import masteronImg from "@/assets/sthnews-masteron-glass-1.jpg";
+import glowImg from "@/assets/sthnews-glow-hero.jpg";
 
 const articles = [
+  {
+    to: "/tendencias/glow-blend",
+    tag: "EXCLUSIVO",
+    tagClass: "bg-destructive text-destructive-foreground",
+    date: "Nova matéria",
+    title: "✨ Glow Blend: o trio de peptídeos que regenera, repara e faz o corpo brilhar",
+    desc: "BPC-157 + TB-500 + GHK-Cu — beleza nascida da saúde celular.",
+    img: glowImg,
+  },
   {
     to: "/tendencias/drostanolona-masteron",
     tag: "EXCLUSIVO",
