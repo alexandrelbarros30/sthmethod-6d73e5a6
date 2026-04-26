@@ -1064,6 +1064,8 @@ export type Database = {
           id: string
           image_url: string | null
           is_reusable: boolean
+          system_description: string | null
+          system_key: string | null
           title: string
           updated_at: string
         }
@@ -1074,6 +1076,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_reusable?: boolean
+          system_description?: string | null
+          system_key?: string | null
           title: string
           updated_at?: string
         }
@@ -1084,6 +1088,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_reusable?: boolean
+          system_description?: string | null
+          system_key?: string | null
           title?: string
           updated_at?: string
         }
