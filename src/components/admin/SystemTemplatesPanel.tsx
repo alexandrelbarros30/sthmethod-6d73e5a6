@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Bot, Save, AlertTriangle, Sparkles } from "lucide-react";
+import { Bot, Save, AlertTriangle, Sparkles, ImagePlus, X } from "lucide-react";
 import { SYSTEM_TEMPLATE_DEFINITIONS, SystemTemplateKey } from "@/lib/system-templates";
 
 const SystemTemplatesPanel = () => {
@@ -19,7 +19,7 @@ const SystemTemplatesPanel = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("message_templates")
-        .select("id, title, content, system_key, system_description, category_id")
+        .select("id, title, content, image_url, system_key, system_description, category_id")
         .not("system_key", "is", null);
       if (error) throw error;
       return data || [];
@@ -34,29 +34,32 @@ const SystemTemplatesPanel = () => {
     },
   });
 
-  const [drafts, setDrafts] = useState<Record<string, { title: string; content: string }>>({});
+  const [drafts, setDrafts] = useState<Record<string, { title: string; content: string; image_url: string }>>({});
+  const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [uploadingKey, setUploadingKey] = useState<string | null>(null);
 
   useEffect(() => {
-    const next: Record<string, { title: string; content: string }> = {};
+    const next: Record<string, { title: string; content: string; image_url: string }> = {};
     SYSTEM_TEMPLATE_DEFINITIONS.forEach((def) => {
       const existing = templates.find((t: any) => t.system_key === def.key);
       next[def.key] = {
         title: existing?.title || def.label,
         content: existing?.content || def.defaultContent,
+        image_url: existing?.image_url || "",
       };
     });
     setDrafts(next);
   }, [templates]);
 
   const saveMutation = useMutation({
-    mutationFn: async ({ key, title, content }: { key: SystemTemplateKey; title: string; content: string }) => {
+    mutationFn: async ({ key, title, content, image_url }: { key: SystemTemplateKey; title: string; content: string; image_url: string }) => {
       const def = SYSTEM_TEMPLATE_DEFINITIONS.find((d) => d.key === key)!;
       const existing = templates.find((t: any) => t.system_key === key);
 
       if (existing) {
         const { error } = await supabase
           .from("message_templates")
-          .update({ title, content, system_description: def.description })
+          .update({ title, content, image_url: image_url || null, system_description: def.description })
           .eq("id", existing.id);
         if (error) throw error;
       } else {
@@ -65,6 +68,7 @@ const SystemTemplatesPanel = () => {
           category_id: systemCategoryId,
           title,
           content,
+          image_url: image_url || null,
           system_key: key,
           system_description: def.description,
           is_reusable: true,
@@ -78,6 +82,23 @@ const SystemTemplatesPanel = () => {
     },
     onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
+
+  const handleUpload = async (key: string, file: File) => {
+    setUploadingKey(key);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `messages/system-${key}-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("landing-assets").upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from("landing-assets").getPublicUrl(path);
+      setDrafts((prev) => ({ ...prev, [key]: { ...prev[key], image_url: urlData.publicUrl } }));
+      toast({ title: "Imagem enviada", description: "Lembre-se de clicar em Salvar." });
+    } catch (e: any) {
+      toast({ title: "Erro no upload", description: e.message, variant: "destructive" });
+    } finally {
+      setUploadingKey(null);
+    }
+  };
 
   const variables = useMemo(
     () => ["{nome}", "{nome_completo}", "{email}", "{telefone}", "{plano}", "{vencimento}", "{dias_restantes}", "{link}", "{valor}"],
@@ -103,7 +124,7 @@ const SystemTemplatesPanel = () => {
       {isLoading && <p className="text-sm text-muted-foreground">Carregando…</p>}
 
       {SYSTEM_TEMPLATE_DEFINITIONS.map((def) => {
-        const draft = drafts[def.key] || { title: def.label, content: def.defaultContent };
+        const draft = drafts[def.key] || { title: def.label, content: def.defaultContent, image_url: "" };
         const exists = templates.some((t: any) => t.system_key === def.key);
         return (
           <Card key={def.key} className="overflow-hidden">
@@ -142,11 +163,73 @@ const SystemTemplatesPanel = () => {
                   className="text-sm font-mono"
                 />
               </div>
+              <div>
+                <Label className="text-xs">Imagem (opcional)</Label>
+                <p className="text-[10px] text-muted-foreground mb-1">
+                  A URL da imagem será anexada ao final da mensagem do WhatsApp para pré-visualização automática.
+                </p>
+                {draft.image_url ? (
+                  <div className="flex items-start gap-2">
+                    <img src={draft.image_url} alt="" className="w-20 h-20 object-cover rounded border" />
+                    <div className="flex-1 space-y-1">
+                      <Input
+                        value={draft.image_url}
+                        onChange={(e) =>
+                          setDrafts((prev) => ({ ...prev, [def.key]: { ...prev[def.key], image_url: e.target.value } }))
+                        }
+                        className="h-8 text-xs"
+                      />
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs text-destructive"
+                        onClick={() =>
+                          setDrafts((prev) => ({ ...prev, [def.key]: { ...prev[def.key], image_url: "" } }))
+                        }
+                      >
+                        <X className="w-3 h-3 mr-1" /> Remover
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs"
+                      disabled={uploadingKey === def.key}
+                      onClick={() => fileRefs.current[def.key]?.click()}
+                    >
+                      <ImagePlus className="w-3.5 h-3.5 mr-1" />
+                      {uploadingKey === def.key ? "Enviando..." : "Anexar imagem"}
+                    </Button>
+                    <Input
+                      placeholder="ou cole a URL"
+                      value={draft.image_url}
+                      onChange={(e) =>
+                        setDrafts((prev) => ({ ...prev, [def.key]: { ...prev[def.key], image_url: e.target.value } }))
+                      }
+                      className="h-8 text-xs flex-1"
+                    />
+                  </div>
+                )}
+                <input
+                  ref={(el) => (fileRefs.current[def.key] = el)}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleUpload(def.key, f);
+                    e.target.value = "";
+                  }}
+                />
+              </div>
               <div className="flex justify-end">
                 <Button
                   size="sm"
                   className="h-8"
-                  onClick={() => saveMutation.mutate({ key: def.key, title: draft.title, content: draft.content })}
+                  onClick={() => saveMutation.mutate({ key: def.key, title: draft.title, content: draft.content, image_url: draft.image_url })}
                   disabled={saveMutation.isPending}
                 >
                   <Save className="w-3.5 h-3.5 mr-1" /> Salvar
