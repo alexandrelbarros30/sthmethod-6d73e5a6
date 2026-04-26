@@ -1700,6 +1700,33 @@ export type Database = {
         }
         Relationships: []
       }
+      service_queue_dismissals: {
+        Row: {
+          dismissed_at: string
+          dismissed_by: string
+          id: string
+          occurred_at: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          dismissed_at?: string
+          dismissed_by: string
+          id?: string
+          occurred_at: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          dismissed_at?: string
+          dismissed_by?: string
+          id?: string
+          occurred_at?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       site_content: {
         Row: {
           category: string
