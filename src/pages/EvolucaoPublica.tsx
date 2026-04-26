@@ -420,23 +420,12 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
             </div>
             <div className="relative max-w-md mx-auto">
               {showInlineCropper && slots[editSide].originalDataUrl ? (
-                <div className="rounded-2xl shadow-2xl border border-border/40 overflow-hidden bg-background">
-                  <div className="flex items-center justify-between px-3 py-2 border-b border-border/40 bg-muted/40">
-                    <Badge variant="secondary" className="text-[10px]">
-                      Editando: {editSide === "before" ? "ANTES" : "DEPOIS"}
-                    </Badge>
-                    <button
-                      className="text-xs inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
-                      onClick={() => setShowInlineCropper(false)}
-                    >
-                      <X className="w-3 h-3" /> Fechar
-                    </button>
-                  </div>
-                  <div className="p-2">
-                    <InteractiveCropper
-                      inline
-                      imageSrc={slots[editSide].originalDataUrl!}
-                      onApply={async ({ dataUrl }) => {
+                <div className="rounded-2xl overflow-hidden shadow-2xl border border-border/40">
+                  <InteractiveCropper
+                    inline
+                    bare
+                    imageSrc={slots[editSide].originalDataUrl!}
+                    onApply={async ({ dataUrl }) => {
                       const side = editSide;
                       try {
                         const newImg = await loadImage(dataUrl);
@@ -451,9 +440,8 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
                       } catch {
                         toast.error("Falha ao aplicar recorte.");
                       }
-                      }}
-                    />
-                  </div>
+                    }}
+                  />
                 </div>
               ) : (
                 <>
