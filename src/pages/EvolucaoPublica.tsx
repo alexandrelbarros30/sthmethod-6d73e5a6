@@ -6,8 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Lock, Sparkles, Upload, X, RotateCcw, Wand2, FlipHorizontal2, FlipVertical2, ArrowRight } from "lucide-react";
-import { Crop } from "lucide-react";
+import { Lock, Sparkles, Upload, X, RotateCcw, Wand2, FlipHorizontal2, FlipVertical2, ArrowRight, Crop } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import evolutionFrame from "@/assets/evolution-frame.png";
 
@@ -496,6 +495,23 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
                       <Button variant="outline" size="sm" className="w-full" onClick={matchSize}>
                         <Wand2 className="w-3.5 h-3.5" /> Igualar tamanho dos dois
                       </Button>
+                      <div className="space-y-1.5 pt-2 border-t border-border/50">
+                        <Label className="text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                          <Crop className="w-3 h-3" /> Redimensionar
+                        </Label>
+                        <Select value={aspectRatio} onValueChange={setAspectRatio}>
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ASPECT_RATIOS.map((r) => (
+                              <SelectItem key={r.value} value={r.value} className="text-xs">
+                                {r.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   );
                 })()}
