@@ -194,7 +194,7 @@ const Landing = () => {
               </Button>
             </Link>
             <Link to="/login">
-              <Button size="sm" className="gradient-bg text-primary-foreground hover:opacity-90 text-xs sm:text-sm px-3 sm:px-4">
+              <Button size="sm" className="gradient-bg text-primary-foreground hover:opacity-90 text-xs sm:text-sm px-3 sm:px-4 cta-glow font-semibold">
                 Acessar
               </Button>
             </Link>
@@ -300,12 +300,12 @@ const Landing = () => {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <LinkOrA to={ctaLink}>
-              <Button size="lg" className="gradient-bg text-primary-foreground hover:opacity-90 px-8 text-base">
+              <Button size="lg" className="gradient-bg text-primary-foreground hover:opacity-90 px-8 text-base cta-glow font-semibold">
                 {ctaText}
               </Button>
             </LinkOrA>
             <LinkOrA to={cta2Link}>
-              <Button size="lg" variant="outline" className="px-8 text-base">
+              <Button size="lg" variant="outline" className="px-8 text-base cta-glow-soft font-semibold">
                 {cta2Text}
               </Button>
             </LinkOrA>
@@ -370,12 +370,12 @@ const Landing = () => {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <LinkOrA to={ctaFinalBtn1Link}>
-              <Button size="lg" className="gradient-bg text-primary-foreground hover:opacity-90 px-10 text-base">
+              <Button size="lg" className="gradient-bg text-primary-foreground hover:opacity-90 px-10 text-base cta-glow font-semibold">
                 {ctaFinalBtn1Text}
               </Button>
             </LinkOrA>
             <LinkOrA to={ctaFinalBtn2Link}>
-              <Button size="lg" variant="outline" className="px-10 text-base">
+              <Button size="lg" variant="outline" className="px-10 text-base cta-glow-soft font-semibold">
                 {ctaFinalBtn2Text}
               </Button>
             </LinkOrA>
