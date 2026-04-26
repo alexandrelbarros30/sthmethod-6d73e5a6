@@ -382,12 +382,10 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
       const results: string[] = [];
       const generated: ImageType[] = [];
       const skipped: ImageType[] = [];
-      const targetRatio = ASPECT_RATIOS.find((r) => r.value === aspectRatio)?.ratio ?? null;
       for (const type of IMAGE_TYPES) {
         const dataUrl = renderPreview(type);
         if (dataUrl) {
-          const finalUrl = await applyAspectRatio(dataUrl, targetRatio);
-          results.push(finalUrl);
+          results.push(dataUrl);
           generated.push(type);
         } else {
           skipped.push(type);
