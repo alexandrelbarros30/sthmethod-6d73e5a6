@@ -39,14 +39,12 @@ interface Props {
   title?: string;
 }
 
+type ResizeHandle = "nw" | "ne" | "sw" | "se" | "n" | "s" | "e" | "w";
+
 type DragMode =
   | { kind: "none" }
   | { kind: "move"; startX: number; startY: number; startRect: Rect }
-  | {
-      kind: "resize";
-      startX: number; startY: number; startRect: Rect;
-      handle: "nw" | "ne" | "sw" | "se" | "n" | "s" | "e" | "w";
-    };
+  | { kind: "resize"; startX: number; startY: number; startRect: Rect; handle: ResizeHandle };
 
 const InteractiveCropper = ({ open, imageSrc, initialRect, onClose, onApply, title = "Recortar foto" }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -130,7 +128,7 @@ const InteractiveCropper = ({ open, imageSrc, initialRect, onClose, onApply, tit
   // Helpers de evento (mouse/touch normalizados)
   const getPoint = (e: React.PointerEvent) => ({ x: e.clientX, y: e.clientY });
 
-  const onPointerDownArea = (e: React.PointerEvent, handle?: DragMode extends infer D ? (D & { kind: "resize" })["handle"] : never) => {
+  const onPointerDownArea = (e: React.PointerEvent, handle?: ResizeHandle) => {
     if (!rect) return;
     e.preventDefault();
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
