@@ -420,22 +420,31 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
             </div>
             <div className="relative max-w-md mx-auto">
               {showInlineCropper && slots[editSide].originalDataUrl ? (
-                <div className="rounded-2xl border border-primary/40 bg-black/90 p-3 shadow-2xl">
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge variant="secondary" className="text-[10px]">
-                      Editando: {editSide === "before" ? "ANTES" : "DEPOIS"}
-                    </Badge>
-                    <button
-                      className="text-xs text-white/80 hover:text-white inline-flex items-center gap-1"
-                      onClick={() => setShowInlineCropper(false)}
-                    >
-                      <X className="w-3 h-3" /> Fechar
-                    </button>
-                  </div>
-                  <InteractiveCropper
-                    inline
-                    imageSrc={slots[editSide].originalDataUrl!}
-                    onApply={async ({ dataUrl }) => {
+                <div className="relative">
+                  {/* Apresentação ao fundo (visível para comparação) */}
+                  <img
+                    src={previewUrl ?? undefined}
+                    alt="Pré-visualização da evolução"
+                    className="w-full rounded-2xl shadow-2xl border border-border/40 opacity-30"
+                  />
+                  {/* Cropper sobre a própria foto, ocupando o mesmo espaço */}
+                  <div className="absolute inset-0 rounded-2xl overflow-hidden">
+                    <div className="absolute top-2 left-2 right-2 z-10 flex items-center justify-between">
+                      <Badge variant="secondary" className="text-[10px]">
+                        Editando: {editSide === "before" ? "ANTES" : "DEPOIS"}
+                      </Badge>
+                      <button
+                        className="text-xs px-2 py-1 rounded bg-black/60 text-white hover:bg-black/80 inline-flex items-center gap-1"
+                        onClick={() => setShowInlineCropper(false)}
+                      >
+                        <X className="w-3 h-3" /> Fechar
+                      </button>
+                    </div>
+                    <div className="h-full w-full pt-10 pb-2 px-2">
+                      <InteractiveCropper
+                        inline
+                        imageSrc={slots[editSide].originalDataUrl!}
+                        onApply={async ({ dataUrl }) => {
                       const side = editSide;
                       try {
                         const newImg = await loadImage(dataUrl);
@@ -450,8 +459,10 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
                       } catch {
                         toast.error("Falha ao aplicar recorte.");
                       }
-                    }}
-                  />
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <>
