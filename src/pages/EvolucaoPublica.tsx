@@ -15,7 +15,7 @@ const CANVAS_HEIGHT = 1350;
 
 // Proporções disponíveis para redimensionar o resultado final
 const ASPECT_RATIOS: { label: string; value: string; ratio: number | null }[] = [
-  { label: "Original (4:5)", value: "original", ratio: null },
+  { label: "Original", value: "original", ratio: null },
   { label: "1:1", value: "1:1", ratio: 1 / 1 },
   { label: "2:3", value: "2:3", ratio: 2 / 3 },
   { label: "3:4", value: "3:4", ratio: 3 / 4 },
