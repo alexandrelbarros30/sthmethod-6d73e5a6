@@ -394,6 +394,18 @@ const AdminDashboard = () => {
                       <ExternalLink className="w-3 h-3" /> WhatsApp
                     </Button>
                   </div>
+                  <Button
+                    size="sm"
+                    className="mt-2 w-full h-8 text-xs gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                    onClick={async () => {
+                      const { error } = await supabase.from("free_leads").update({ converted: true }).eq("id", lead.id);
+                      if (error) { toast.error("Erro ao marcar como atendido"); return; }
+                      toast.success("Lead atendido");
+                      queryClient.invalidateQueries({ queryKey: ["admin-free-leads"] });
+                    }}
+                  >
+                    <Check className="w-3.5 h-3.5" /> Atendido
+                  </Button>
                 </div>
               );
             })}
@@ -441,6 +453,18 @@ const AdminDashboard = () => {
                       </Button>
                     </div>
                   </div>
+                  <Button
+                    size="sm"
+                    className="mt-2 w-full h-8 text-xs gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                    onClick={async () => {
+                      const { error } = await supabase.from("profiles").update({ admin_confirmed: true }).eq("id", p.id);
+                      if (error) { toast.error("Erro ao marcar como atendido"); return; }
+                      toast.success("Aluno atendido");
+                      queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
+                    }}
+                  >
+                    <Check className="w-3.5 h-3.5" /> Atendido
+                  </Button>
                 </div>
               );
             })}
@@ -572,6 +596,14 @@ const RecentStudents = ({ profiles, subscriptions, navigate, queryClient, active
                           )}
                         </div>
                       )}
+                      <Button
+                        size="sm"
+                        className="mt-2 w-full h-8 text-xs gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={() => confirmMutation.mutate(p.id)}
+                        disabled={confirmMutation.isPending}
+                      >
+                        <Check className="w-3.5 h-3.5" /> Atendido
+                      </Button>
                     </div>
                   );
                 })}

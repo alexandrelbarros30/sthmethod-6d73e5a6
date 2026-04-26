@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ListOrdered, UserPlus, RefreshCw, TrendingUp, Settings, MessageCircle, Check } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ListOrdered, UserPlus, RefreshCw, TrendingUp, Settings, MessageCircle, Check, ChevronDown } from "lucide-react";
 
 type QueueType = "new" | "renewal" | "update";
 
@@ -60,6 +61,7 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["service-queue", allowedUserIds?.join(",") || "all"],
@@ -214,23 +216,30 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
   };
 
   return (
-    <Card className="border-primary/20 w-full max-w-full overflow-hidden">
-      <CardHeader className="pb-2 px-3 sm:px-6">
-        <CardTitle className="text-sm sm:text-base font-display flex items-center gap-1.5 flex-wrap">
-          <ListOrdered className="w-4 h-4 text-primary shrink-0" />
-          <span>Fila de Atendimento</span>
-          <Badge variant="default" className="ml-1">{items.length}</Badge>
-          <div className="flex items-center gap-1 sm:ml-auto text-[9px] sm:text-[10px] flex-wrap w-full sm:w-auto">
-            <Badge variant="outline" className={`px-1.5 py-0 ${TYPE_META.new.badgeCls}`}>Novos: {counts.new}</Badge>
-            <Badge variant="outline" className={`px-1.5 py-0 ${TYPE_META.renewal.badgeCls}`}>Renov: {counts.renewal}</Badge>
-            <Badge variant="outline" className={`px-1.5 py-0 ${TYPE_META.update.badgeCls}`}>Atual: {counts.update}</Badge>
-          </div>
-        </CardTitle>
-        <p className="text-[10px] sm:text-[11px] text-muted-foreground font-body leading-tight">
-          Últimos 7 dias · Mais recentes primeiro · Novo &gt; Renov &gt; Atual em empates
-        </p>
-      </CardHeader>
-      <CardContent className="pt-0 px-2 sm:px-6">
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <Card className="border-primary/20 w-full max-w-full overflow-hidden">
+        <CollapsibleTrigger asChild>
+          <CardHeader className="pb-2 px-3 sm:px-6 cursor-pointer hover:bg-muted/30 transition-colors rounded-t-lg">
+            <CardTitle className="text-sm sm:text-base font-display flex items-center gap-1.5 flex-wrap">
+              <ListOrdered className="w-4 h-4 text-primary shrink-0" />
+              <span>Fila de Atendimento</span>
+              <Badge variant="default" className="ml-1">{items.length}</Badge>
+              <div className="flex items-center gap-1 text-[9px] sm:text-[10px] flex-wrap">
+                <Badge variant="outline" className={`px-1.5 py-0 ${TYPE_META.new.badgeCls}`}>Novos: {counts.new}</Badge>
+                <Badge variant="outline" className={`px-1.5 py-0 ${TYPE_META.renewal.badgeCls}`}>Renov: {counts.renewal}</Badge>
+                <Badge variant="outline" className={`px-1.5 py-0 ${TYPE_META.update.badgeCls}`}>Atual: {counts.update}</Badge>
+              </div>
+              <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${open ? "rotate-180" : ""}`} />
+            </CardTitle>
+            {open && (
+              <p className="text-[10px] sm:text-[11px] text-muted-foreground font-body leading-tight">
+                Últimos 7 dias · Mais recentes primeiro · Novo &gt; Renov &gt; Atual em empates
+              </p>
+            )}
+          </CardHeader>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent className="pt-0 px-2 sm:px-6">
         {isLoading ? (
           <p className="text-sm text-muted-foreground py-4 text-center">Carregando fila...</p>
         ) : items.length === 0 ? (
@@ -238,7 +247,7 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
             Nenhum atendimento pendente nos últimos 7 dias.
           </p>
         ) : (
-          <ScrollArea className={compact ? "h-[380px] pr-1 sm:pr-3" : "h-[70vh] pr-1 sm:pr-3"}>
+          <ScrollArea className={compact ? "h-[280px] sm:h-[380px] pr-1 sm:pr-3" : "h-[60vh] sm:h-[70vh] pr-1 sm:pr-3"}>
             <div className="space-y-2">
               {items.map((it, idx) => {
                 const meta = TYPE_META[it.type];
@@ -313,8 +322,10 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
             </div>
           </ScrollArea>
         )}
-      </CardContent>
-    </Card>
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 };
 
