@@ -214,23 +214,23 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
   };
 
   return (
-    <Card className="border-primary/20">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base font-display flex items-center gap-2 flex-wrap">
-          <ListOrdered className="w-4 h-4 text-primary" />
-          Fila de Atendimento
+    <Card className="border-primary/20 w-full max-w-full overflow-hidden">
+      <CardHeader className="pb-2 px-3 sm:px-6">
+        <CardTitle className="text-sm sm:text-base font-display flex items-center gap-1.5 flex-wrap">
+          <ListOrdered className="w-4 h-4 text-primary shrink-0" />
+          <span>Fila de Atendimento</span>
           <Badge variant="default" className="ml-1">{items.length}</Badge>
-          <div className="flex items-center gap-1.5 ml-auto text-[10px] flex-wrap">
-            <Badge variant="outline" className={TYPE_META.new.badgeCls}>Novos: {counts.new}</Badge>
-            <Badge variant="outline" className={TYPE_META.renewal.badgeCls}>Renov: {counts.renewal}</Badge>
-            <Badge variant="outline" className={TYPE_META.update.badgeCls}>Atual: {counts.update}</Badge>
+          <div className="flex items-center gap-1 sm:ml-auto text-[9px] sm:text-[10px] flex-wrap w-full sm:w-auto">
+            <Badge variant="outline" className={`px-1.5 py-0 ${TYPE_META.new.badgeCls}`}>Novos: {counts.new}</Badge>
+            <Badge variant="outline" className={`px-1.5 py-0 ${TYPE_META.renewal.badgeCls}`}>Renov: {counts.renewal}</Badge>
+            <Badge variant="outline" className={`px-1.5 py-0 ${TYPE_META.update.badgeCls}`}>Atual: {counts.update}</Badge>
           </div>
         </CardTitle>
-        <p className="text-[11px] text-muted-foreground font-body">
-          Últimos 7 dias · Ordem por data/hora (mais recente primeiro) · prioridade Novo &gt; Renovação &gt; Atualização em empates · sem duplicidade
+        <p className="text-[10px] sm:text-[11px] text-muted-foreground font-body leading-tight">
+          Últimos 7 dias · Mais recentes primeiro · Novo &gt; Renov &gt; Atual em empates
         </p>
       </CardHeader>
-      <CardContent className="pt-0">
+      <CardContent className="pt-0 px-2 sm:px-6">
         {isLoading ? (
           <p className="text-sm text-muted-foreground py-4 text-center">Carregando fila...</p>
         ) : items.length === 0 ? (
@@ -238,7 +238,7 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
             Nenhum atendimento pendente nos últimos 7 dias.
           </p>
         ) : (
-          <ScrollArea className={compact ? "h-[380px] pr-3" : "h-[70vh] pr-3"}>
+          <ScrollArea className={compact ? "h-[380px] pr-1 sm:pr-3" : "h-[70vh] pr-1 sm:pr-3"}>
             <div className="space-y-2">
               {items.map((it, idx) => {
                 const meta = TYPE_META[it.type];
@@ -249,37 +249,37 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
                 return (
                   <div
                     key={`${it.user_id}-${it.type}`}
-                    className={`p-2.5 rounded-lg bg-card hover:bg-muted/40 transition-colors ${meta.cls}`}
+                    className={`p-2 sm:p-2.5 rounded-lg bg-card hover:bg-muted/40 transition-colors ${meta.cls}`}
                   >
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center shrink-0 text-xs font-bold text-foreground">
+                    <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                      <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-muted flex items-center justify-center shrink-0 text-[10px] sm:text-xs font-bold text-foreground">
                         {idx + 1}
                       </div>
-                      <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 flex-wrap">
+                        <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap min-w-0">
                           <button
                             type="button"
                             onClick={() => navigate(`${manageBasePath}?manage=${it.user_id}`)}
-                            className="text-sm font-medium truncate text-left hover:text-primary hover:underline transition-colors"
+                            className="text-xs sm:text-sm font-medium truncate text-left hover:text-primary hover:underline transition-colors max-w-full"
                             title="Abrir cadastro do aluno"
                           >
                             {it.name}
                           </button>
-                          <Badge variant="outline" className={`text-[9px] ${meta.badgeCls}`}>
+                          <Badge variant="outline" className={`text-[8px] sm:text-[9px] px-1 py-0 ${meta.badgeCls}`}>
                             {meta.label}
                           </Badge>
                         </div>
-                        <p className="text-[11px] text-muted-foreground truncate">
+                        <p className="text-[10px] sm:text-[11px] text-muted-foreground truncate">
                           {it.detail} · {whenLabel}
                         </p>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
                         {it.phone && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 w-7 p-0 text-success"
+                            className="h-7 w-7 p-0 text-success shrink-0"
                             onClick={() => openWhatsApp(it.phone, it.name)}
                             title="WhatsApp"
                           >
@@ -289,10 +289,11 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-7 px-2 text-xs gap-1"
+                          className="h-7 px-1.5 sm:px-2 text-[10px] sm:text-xs gap-1 shrink-0"
                           onClick={() => navigate(`${manageBasePath}?manage=${it.user_id}`)}
                         >
-                          <Settings className="w-3 h-3" /> Atender
+                          <Settings className="w-3 h-3" />
+                          <span className="hidden sm:inline">Atender</span>
                         </Button>
                       </div>
                     </div>
