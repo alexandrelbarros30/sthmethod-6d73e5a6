@@ -629,30 +629,14 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
                       onValueChange={([v]) => updateTransform(side, activeType, { offsetY: v })}
                     />
                   </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                      <Crop className="w-3 h-3" /> <span>Redimensionar (proporção da foto)</span>
-                    </div>
-                    <Select
-                      value={
-                        ASPECT_RATIOS.find((r) =>
-                          (r.ratio == null && t.aspectRatio == null) ||
-                          (r.ratio != null && t.aspectRatio != null && Math.abs(r.ratio - t.aspectRatio) < 0.001)
-                        )?.value || "original"
-                      }
-                      onValueChange={(v) => {
-                        const ratio = ASPECT_RATIOS.find((r) => r.value === v)?.ratio ?? null;
-                        updateTransform(side, activeType, { aspectRatio: ratio });
-                      }}
-                    >
-                      <SelectTrigger className="h-7 text-[10px]"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {ASPECT_RATIOS.map((r) => (
-                          <SelectItem key={r.value} value={r.value} className="text-[10px]">{r.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full h-7 text-[10px]"
+                    onClick={() => setCropperKey(makeKey(side, activeType))}
+                  >
+                    <Crop className="w-3 h-3 mr-1" /> Recortar foto manualmente
+                  </Button>
                 </div>
               );
             })}
