@@ -108,13 +108,26 @@ function drawImageWithTransform(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
   box: { x: number; y: number; w: number; h: number },
-  transform: { zoom: number; offsetX: number; offsetY: number }
+  transform: { zoom: number; offsetX: number; offsetY: number; aspectRatio?: number | null }
 ) {
   const { x, y, w, h } = box;
-  const { zoom, offsetX, offsetY } = transform;
+  const { zoom, offsetX, offsetY, aspectRatio } = transform;
 
-  // Base size = contain
-  const imgRatio = img.width / img.height;
+  // Recorte manual da imagem fonte para a proporção escolhida (centralizado).
+  let srcX = 0, srcY = 0, srcW = img.width, srcH = img.height;
+  if (aspectRatio && aspectRatio > 0) {
+    const r = img.width / img.height;
+    if (r > aspectRatio) {
+      srcW = Math.round(img.height * aspectRatio);
+      srcX = Math.round((img.width - srcW) / 2);
+    } else {
+      srcH = Math.round(img.width / aspectRatio);
+      srcY = Math.round((img.height - srcH) / 2);
+    }
+  }
+
+  // Base size = contain (sobre o recorte)
+  const imgRatio = srcW / srcH;
   const boxRatio = w / h;
   let baseW: number, baseH: number;
   if (imgRatio > boxRatio) {
@@ -134,7 +147,7 @@ function drawImageWithTransform(
   ctx.beginPath();
   ctx.rect(x, y, w, h);
   ctx.clip();
-  ctx.drawImage(img, dx, dy, dw, dh);
+  ctx.drawImage(img, srcX, srcY, srcW, srcH, dx, dy, dw, dh);
   ctx.restore();
 }
 
@@ -142,9 +155,10 @@ interface PhotoTransform {
   zoom: number;     // 0.5 - 3
   offsetX: number;  // -50 - 50 (% do box)
   offsetY: number;  // -50 - 50 (% do box)
+  aspectRatio: number | null; // recorte manual da imagem fonte
 }
 
-const DEFAULT_TRANSFORM: PhotoTransform = { zoom: 1, offsetX: 0, offsetY: 0 };
+const DEFAULT_TRANSFORM: PhotoTransform = { zoom: 1, offsetX: 0, offsetY: 0, aspectRatio: null };
 
 type TransformKey = `${"old" | "new"}_${ImageType}`;
 type TransformMap = Record<TransformKey, PhotoTransform>;
