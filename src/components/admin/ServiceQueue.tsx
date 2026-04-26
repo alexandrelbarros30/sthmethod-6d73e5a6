@@ -1,12 +1,14 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ListOrdered, UserPlus, RefreshCw, TrendingUp, Settings, MessageCircle } from "lucide-react";
+import { ListOrdered, UserPlus, RefreshCw, TrendingUp, Settings, MessageCircle, Check } from "lucide-react";
 
 type QueueType = "new" | "renewal" | "update";
 
@@ -56,6 +58,8 @@ const sevenDaysAgoISO = () => new Date(Date.now() - 7 * 86400000).toISOString();
 
 const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admin/students" }: Props) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ["service-queue", allowedUserIds?.join(",") || "all"],
@@ -76,6 +80,15 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
         .select("student_user_id, student_name, created_at, has_photos, new_weight")
         .gte("created_at", since)
         .order("created_at", { ascending: false });
+
+      // 3. Dismissed (atendidos) — chave (user_id, type, occurred_at)
+      const { data: dismissals } = await supabase
+        .from("service_queue_dismissals")
+        .select("user_id, type, occurred_at")
+        .gte("occurred_at", since);
+      const dismissedKeys = new Set(
+        (dismissals || []).map((d: any) => `${d.user_id}|${d.type}|${new Date(d.occurred_at).toISOString()}`),
+      );
 
       // Collect user ids
       const userIds = new Set<string>();
@@ -102,14 +115,18 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
         if (allowedUserIds && !allowedUserIds.includes(p.user_id)) return;
         const prof = pmap.get(p.user_id);
         const isNew = (p.action_type || "new") === "new";
+        const occurred = p.updated_at || p.created_at;
+        const type: QueueType = isNew ? "new" : "renewal";
+        const key = `${p.user_id}|${type}|${new Date(occurred).toISOString()}`;
+        if (dismissedKeys.has(key)) return;
         items.push({
           user_id: p.user_id,
           name: prof?.full_name || prof?.email || "Aluno",
           email: prof?.email,
           phone: prof?.phone,
-          type: isNew ? "new" : "renewal",
+          type,
           detail: isNew ? "Pagamento de novo aluno aprovado" : "Renovação de plano aprovada",
-          occurred_at: p.updated_at || p.created_at,
+          occurred_at: occurred,
         });
       });
 
@@ -120,6 +137,8 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
         const parts: string[] = [];
         if (e.new_weight) parts.push(`peso ${Number(e.new_weight).toFixed(1)}kg`);
         if (e.has_photos) parts.push("fotos");
+        const key = `${e.student_user_id}|update|${new Date(e.created_at).toISOString()}`;
+        if (dismissedKeys.has(key)) return;
         items.push({
           user_id: e.student_user_id,
           name: prof?.full_name || e.student_name || "Aluno",
@@ -158,6 +177,26 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
   });
 
   const items = data || [];
+
+  const dismissMutation = useMutation({
+    mutationFn: async (it: QueueItem) => {
+      if (!user?.id) throw new Error("Sem usuário");
+      const { error } = await supabase.from("service_queue_dismissals").insert({
+        user_id: it.user_id,
+        type: it.type,
+        occurred_at: it.occurred_at,
+        dismissed_by: user.id,
+      });
+      if (error && !String(error.message).includes("duplicate")) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Atendido", description: "Aluno removido da fila." });
+      queryClient.invalidateQueries({ queryKey: ["service-queue"] });
+    },
+    onError: (e: any) => {
+      toast({ title: "Erro", description: e.message || "Falha ao marcar como atendido", variant: "destructive" });
+    },
+  });
 
   const counts = useMemo(() => {
     const c = { new: 0, renewal: 0, update: 0 };
@@ -252,6 +291,16 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
                         onClick={() => navigate(`${manageBasePath}?manage=${it.user_id}`)}
                       >
                         <Settings className="w-3 h-3" /> Atender
+                      </Button>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="h-7 px-2 text-xs gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={() => dismissMutation.mutate(it)}
+                        disabled={dismissMutation.isPending}
+                        title="Marcar como atendido (remove da fila)"
+                      >
+                        <Check className="w-3 h-3" /> Atendido
                       </Button>
                     </div>
                   </div>
