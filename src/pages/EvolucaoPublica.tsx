@@ -7,17 +7,12 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Lock, Sparkles, Upload, X, RotateCcw, Wand2, FlipHorizontal2, FlipVertical2, ArrowRight, Crop } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import InteractiveCropper from "@/components/shared/InteractiveCropper";
 import evolutionFrame from "@/assets/evolution-frame.png";
 
 const CANVAS_WIDTH = 1080;
 const CANVAS_HEIGHT = 1350;
 
-// Proporções disponíveis para redimensionar o resultado final
-const ASPECT_RATIOS: { label: string; value: string; ratio: number | null }[] = [
-  { label: "Original", value: "original", ratio: null },
-  { label: "1:1", value: "1:1", ratio: 1 / 1 },
-  { label: "2:3", value: "2:3", ratio: 2 / 3 },
   { label: "3:4", value: "3:4", ratio: 3 / 4 },
   { label: "4:5", value: "4:5", ratio: 4 / 5 },
   { label: "3:5", value: "3:5", ratio: 3 / 5 },
