@@ -7,29 +7,11 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Lock, Sparkles, Upload, X, RotateCcw, Wand2, FlipHorizontal2, FlipVertical2, ArrowRight, Crop } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import InteractiveCropper from "@/components/shared/InteractiveCropper";
 import evolutionFrame from "@/assets/evolution-frame.png";
 
 const CANVAS_WIDTH = 1080;
 const CANVAS_HEIGHT = 1350;
-
-// Proporções disponíveis para redimensionar o resultado final
-const ASPECT_RATIOS: { label: string; value: string; ratio: number | null }[] = [
-  { label: "Original", value: "original", ratio: null },
-  { label: "1:1", value: "1:1", ratio: 1 / 1 },
-  { label: "2:3", value: "2:3", ratio: 2 / 3 },
-  { label: "3:4", value: "3:4", ratio: 3 / 4 },
-  { label: "4:5", value: "4:5", ratio: 4 / 5 },
-  { label: "3:5", value: "3:5", ratio: 3 / 5 },
-  { label: "5:7", value: "5:7", ratio: 5 / 7 },
-  { label: "9:16", value: "9:16", ratio: 9 / 16 },
-  { label: "16:9", value: "16:9", ratio: 16 / 9 },
-  { label: "3:2", value: "3:2", ratio: 3 / 2 },
-  { label: "4:3", value: "4:3", ratio: 4 / 3 },
-  { label: "5:4", value: "5:4", ratio: 5 / 4 },
-  { label: "7:5", value: "7:5", ratio: 7 / 5 },
-  { label: "5:3", value: "5:3", ratio: 5 / 3 },
-];
 
 interface Slot {
   file?: File;
@@ -199,6 +181,7 @@ const EvolucaoPublica = () => {
   const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<string | null>(null);
+  const [cropperSide, setCropperSide] = useState<"before" | "after" | null>(null);
   const beforeInput = useRef<HTMLInputElement>(null);
   const afterInput = useRef<HTMLInputElement>(null);
 
@@ -488,37 +471,14 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
                       <Button variant="outline" size="sm" className="w-full" onClick={matchSize}>
                         <Wand2 className="w-3.5 h-3.5" /> Igualar tamanho dos dois
                       </Button>
-                      <div className="space-y-1.5 pt-2 border-t border-border/50">
-                        <Label className="text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                          <Crop className="w-3 h-3" /> Redimensionar (proporção da foto)
-                        </Label>
-                        <Select
-                          value={
-                            ASPECT_RATIOS.find((r) =>
-                              (r.ratio == null && t.aspectRatio == null) ||
-                              (r.ratio != null && t.aspectRatio != null && Math.abs(r.ratio - t.aspectRatio) < 0.001)
-                            )?.value || "original"
-                          }
-                          onValueChange={(v) => {
-                            const ratio = ASPECT_RATIOS.find((r) => r.value === v)?.ratio ?? null;
-                            updateT(editSide, { aspectRatio: ratio });
-                          }}
-                        >
-                          <SelectTrigger className="h-8 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {ASPECT_RATIOS.map((r) => (
-                              <SelectItem key={r.value} value={r.value} className="text-xs">
-                                {r.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <p className="text-[10px] text-muted-foreground">
-                          Aplica apenas à foto selecionada ({editSide === "before" ? "Antes" : "Depois"}).
-                        </p>
-                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => setCropperSide(editSide)}
+                      >
+                        <Crop className="w-3.5 h-3.5 mr-1" /> Recortar foto manualmente
+                      </Button>
                     </div>
                   );
                 })()}
@@ -606,6 +566,33 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
           STH METHOD • As fotos são processadas apenas para gerar sua análise e não ficam salvas.
         </footer>
       </main>
+
+      {cropperSide && slots[cropperSide].preview && (
+        <InteractiveCropper
+          open={!!cropperSide}
+          imageSrc={slots[cropperSide].preview!}
+          title={`Recortar foto (${cropperSide === "before" ? "Antes" : "Depois"})`}
+          onClose={() => setCropperSide(null)}
+          onApply={async ({ dataUrl }) => {
+            const side = cropperSide!;
+            try {
+              const newImg = await loadImage(dataUrl);
+              // libera o objectURL antigo e usa o dataURL do crop como novo preview
+              const oldPreview = slots[side].preview;
+              setSlots((p) => ({
+                ...p,
+                [side]: { ...p[side], preview: dataUrl, imgEl: newImg },
+              }));
+              if (oldPreview && oldPreview.startsWith("blob:")) URL.revokeObjectURL(oldPreview);
+              setTransforms((p) => ({ ...p, [side]: { ...DEFAULT_T } }));
+              setCropperSide(null);
+              toast.success("Recorte aplicado!");
+            } catch {
+              toast.error("Falha ao aplicar recorte.");
+            }
+          }}
+        />
+      )}
     </div>
   );
 };
