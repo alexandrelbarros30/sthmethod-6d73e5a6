@@ -596,6 +596,14 @@ const RecentStudents = ({ profiles, subscriptions, navigate, queryClient, active
                           )}
                         </div>
                       )}
+                      <Button
+                        size="sm"
+                        className="mt-2 w-full h-8 text-xs gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={() => confirmMutation.mutate(p.id)}
+                        disabled={confirmMutation.isPending}
+                      >
+                        <Check className="w-3.5 h-3.5" /> Atendido
+                      </Button>
                     </div>
                   );
                 })}
