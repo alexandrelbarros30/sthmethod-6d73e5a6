@@ -179,7 +179,6 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
   const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
   const [activeType, setActiveType] = useState<ImageType>("front");
   const [livePreviews, setLivePreviews] = useState<Partial<Record<ImageType, string>>>({});
-  const [aspectRatio, setAspectRatio] = useState<string>("original");
   // Manual override: para cada posição (front/back/profile), permite escolher
   // qual imagem específica (id) usar de cada lado. Default = procurar pelo type.
   const [overrides, setOverrides] = useState<Partial<Record<TransformKey, string>>>({});
@@ -482,28 +481,6 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
             </>
           )}
         </Button>
-
-        {/* Redimensionar proporção do resultado final */}
-        <div className="space-y-1.5 rounded-lg border border-border p-3 bg-muted/30">
-          <Label className="text-xs font-semibold flex items-center gap-1.5">
-            <Crop className="w-3 h-3" /> Redimensionar (proporção do resultado)
-          </Label>
-          <Select value={aspectRatio} onValueChange={setAspectRatio}>
-            <SelectTrigger className="text-xs h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ASPECT_RATIOS.map((r) => (
-                <SelectItem key={r.value} value={r.value} className="text-xs">
-                  {r.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-[10px] text-muted-foreground">
-            Aplicado ao gerar. Recorta a partir do centro mantendo as fotos alinhadas.
-          </p>
-        </div>
 
         {/* Mapeamento manual: permite escolher qual foto da galeria usar para cada posição */}
         {oldGroup && newGroup && (
