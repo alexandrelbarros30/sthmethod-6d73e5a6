@@ -15,6 +15,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, Copy, Eye, Send, Clock, Search, MessageSquare, Image, Phone, Calendar, Users, Filter, Variable, Save, X } from "lucide-react";
+import SystemTemplatesPanel from "@/components/admin/SystemTemplatesPanel";
+import { Bot } from "lucide-react";
 
 const SYSTEM_VARIABLE_KEYS = ["{nome}", "{nome_completo}", "{email}", "{telefone}", "{plano}", "{vencimento}", "{link}", "{dias_restantes}", "{valor}"];
 
@@ -348,6 +350,7 @@ const AdminMessages = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4">
           <TabsTrigger value="templates"><MessageSquare className="w-4 h-4 mr-1" />Templates</TabsTrigger>
+          <TabsTrigger value="system"><Bot className="w-4 h-4 mr-1" />Automáticos</TabsTrigger>
           <TabsTrigger value="variables"><Variable className="w-4 h-4 mr-1" />Variáveis</TabsTrigger>
           <TabsTrigger value="history"><Clock className="w-4 h-4 mr-1" />Histórico</TabsTrigger>
         </TabsList>
