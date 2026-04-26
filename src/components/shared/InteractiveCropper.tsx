@@ -254,7 +254,7 @@ const InteractiveCropper = ({ open = true, imageSrc, initialRect, onClose, onApp
       </div>
       )}
 
-      <div ref={containerRef} className={`relative w-full overflow-hidden flex items-center justify-center ${bare ? "" : "bg-black/80 rounded-lg"}`} style={{ minHeight: 200 }}>
+      <div ref={containerRef} className={`relative w-full overflow-hidden flex items-center justify-center ${bare ? "bg-black" : "bg-black/80 rounded-lg"}`} style={{ minHeight: 200 }}>
         {imgSize && rect && displaySize.w > 0 && (
           <div
             className="relative select-none touch-none"
@@ -360,6 +360,16 @@ const InteractiveCropper = ({ open = true, imageSrc, initialRect, onClose, onApp
                 </span>
               </div>
             </div>
+          </div>
+        )}
+        {bare && rect && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+            <Button size="sm" variant="secondary" onClick={handleReset} className="h-8 text-xs shadow-lg">
+              <RotateCcw className="w-3 h-3 mr-1" /> Resetar
+            </Button>
+            <Button size="sm" onClick={handleApply} className="h-8 text-xs shadow-lg">
+              <Check className="w-3.5 h-3.5 mr-1" /> Aplicar recorte
+            </Button>
           </div>
         )}
       </div>
