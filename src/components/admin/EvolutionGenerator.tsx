@@ -676,6 +676,28 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
 
         <canvas ref={canvasRef} className="hidden" />
       </CardContent>
+
+      {cropperKey && loadedImages[cropperKey]?.src && (
+        <InteractiveCropper
+          open={!!cropperKey}
+          imageSrc={loadedImages[cropperKey]!.src}
+          title="Recortar foto manualmente"
+          onClose={() => setCropperKey(null)}
+          onApply={async ({ dataUrl }) => {
+            const key = cropperKey!;
+            try {
+              const newImg = await loadImage(dataUrl);
+              setLoadedImages((p) => ({ ...p, [key]: newImg }));
+              // Reset transform da posição para refletir o novo recorte
+              setTransforms((p) => ({ ...p, [key]: { ...DEFAULT_TRANSFORM } }));
+              setCropperKey(null);
+              toast.success("Recorte aplicado!");
+            } catch {
+              toast.error("Falha ao aplicar recorte.");
+            }
+          }}
+        />
+      )}
     </Card>
   );
 };
