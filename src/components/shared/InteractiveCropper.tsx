@@ -31,12 +31,16 @@ export const DEFAULT_ASPECT_GUIDES: AspectGuide[] = [
 interface Rect { x: number; y: number; w: number; h: number; } // em coordenadas da imagem (px reais)
 
 interface Props {
-  open: boolean;
+  open?: boolean;
   imageSrc: string; // dataURL ou URL
   initialRect?: Rect | null;
-  onClose: () => void;
+  onClose?: () => void;
   onApply: (cropped: { dataUrl: string; rect: Rect }) => void;
   title?: string;
+  /** Quando true, renderiza inline (sem Dialog), ideal para edição embutida na página. */
+  inline?: boolean;
+  /** Texto opcional do botão de aplicar (apenas modo modal) */
+  applyLabel?: string;
 }
 
 type ResizeHandle = "nw" | "ne" | "sw" | "se" | "n" | "s" | "e" | "w";
@@ -46,7 +50,7 @@ type DragMode =
   | { kind: "move"; startX: number; startY: number; startRect: Rect }
   | { kind: "resize"; startX: number; startY: number; startRect: Rect; handle: ResizeHandle };
 
-const InteractiveCropper = ({ open, imageSrc, initialRect, onClose, onApply, title = "Recortar foto" }: Props) => {
+const InteractiveCropper = ({ open = true, imageSrc, initialRect, onClose, onApply, title = "Recortar foto", inline = false }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const [imgSize, setImgSize] = useState<{ w: number; h: number } | null>(null);
@@ -59,7 +63,7 @@ const InteractiveCropper = ({ open, imageSrc, initialRect, onClose, onApply, tit
 
   // Carregar dimensões da imagem
   useEffect(() => {
-    if (!open || !imageSrc) return;
+    if ((!inline && !open) || !imageSrc) return;
     const i = new Image();
     i.crossOrigin = "anonymous";
     i.onload = () => {
@@ -75,7 +79,7 @@ const InteractiveCropper = ({ open, imageSrc, initialRect, onClose, onApply, tit
       });
     };
     i.src = imageSrc;
-  }, [open, imageSrc, initialRect]);
+  }, [open, inline, imageSrc, initialRect]);
 
   // Calcular tamanho de display (fit no container)
   useEffect(() => {
@@ -210,6 +214,132 @@ const InteractiveCropper = ({ open, imageSrc, initialRect, onClose, onApply, tit
   const cornerBracket = "absolute w-6 h-6 touch-none pointer-events-auto";
   const edgeBar = "absolute bg-white/95 rounded-full touch-none pointer-events-auto shadow";
 
+  const editor = (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 flex-wrap">
+        <Label className="text-xs text-muted-foreground whitespace-nowrap">Guia de proporção:</Label>
+        <Select value={aspectValue} onValueChange={setAspectValue}>
+          <SelectTrigger className="h-8 text-xs w-32"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {DEFAULT_ASPECT_GUIDES.map((g) => (
+              <SelectItem key={g.value} value={g.value} className="text-xs">{g.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button variant="ghost" size="sm" onClick={handleReset} className="h-8 text-xs">
+          <RotateCcw className="w-3 h-3 mr-1" /> Resetar enquadramento
+        </Button>
+        {inline && (
+          <Button size="sm" onClick={handleApply} disabled={!rect} className="h-8 text-xs ml-auto">
+            <Check className="w-3.5 h-3.5 mr-1" /> Aplicar recorte
+          </Button>
+        )}
+      </div>
+
+      <div ref={containerRef} className="relative w-full bg-black/80 rounded-lg overflow-hidden flex items-center justify-center" style={{ minHeight: 200 }}>
+        {imgSize && rect && displaySize.w > 0 && (
+          <div
+            className="relative select-none touch-none"
+            style={{ width: displaySize.w, height: displaySize.h }}
+          >
+            <img
+              ref={imgRef}
+              src={imageSrc}
+              alt="Recortar"
+              className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+              draggable={false}
+            />
+
+            <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox={`0 0 ${displaySize.w} ${displaySize.h}`}>
+              <defs>
+                <mask id="crop-mask">
+                  <rect width={displaySize.w} height={displaySize.h} fill="white" />
+                  <rect
+                    x={rect.x * scale} y={rect.y * scale}
+                    width={rect.w * scale} height={rect.h * scale}
+                    fill="black"
+                  />
+                </mask>
+              </defs>
+              <rect width={displaySize.w} height={displaySize.h} fill="rgba(0,0,0,0.55)" mask="url(#crop-mask)" />
+            </svg>
+
+            <div
+              className="absolute border border-white/90 cursor-move touch-none"
+              style={{
+                left: rect.x * scale,
+                top: rect.y * scale,
+                width: rect.w * scale,
+                height: rect.h * scale,
+              }}
+              onPointerDown={(e) => onPointerDownArea(e)}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerCancel={onPointerUp}
+            >
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute left-1/3 top-0 bottom-0 w-px bg-white/50" />
+                <div className="absolute left-2/3 top-0 bottom-0 w-px bg-white/50" />
+                <div className="absolute top-1/3 left-0 right-0 h-px bg-white/50" />
+                <div className="absolute top-2/3 left-0 right-0 h-px bg-white/50" />
+              </div>
+
+              {(["nw", "ne", "sw", "se"] as const).map((h) => {
+                const base: React.CSSProperties = { width: 22, height: 22 };
+                const pos: Record<string, React.CSSProperties> = {
+                  nw: { ...base, left: -3, top: -3, cursor: "nwse-resize", borderLeft: "4px solid white", borderTop: "4px solid white" },
+                  ne: { ...base, right: -3, top: -3, cursor: "nesw-resize", borderRight: "4px solid white", borderTop: "4px solid white" },
+                  sw: { ...base, left: -3, bottom: -3, cursor: "nesw-resize", borderLeft: "4px solid white", borderBottom: "4px solid white" },
+                  se: { ...base, right: -3, bottom: -3, cursor: "nwse-resize", borderRight: "4px solid white", borderBottom: "4px solid white" },
+                };
+                return (
+                  <div
+                    key={h}
+                    className={cornerBracket}
+                    style={pos[h]}
+                    onPointerDown={(e) => { e.stopPropagation(); onPointerDownArea(e, h); }}
+                    onPointerMove={onPointerMove}
+                    onPointerUp={onPointerUp}
+                    onPointerCancel={onPointerUp}
+                  />
+                );
+              })}
+              {(["n", "s", "e", "w"] as const).map((h) => {
+                const horizontal = h === "n" || h === "s";
+                const pos: React.CSSProperties = horizontal
+                  ? { left: "50%", transform: "translateX(-50%)", width: 36, height: 4, [h === "n" ? "top" : "bottom"]: -2, cursor: "ns-resize" }
+                  : { top: "50%", transform: "translateY(-50%)", width: 4, height: 36, [h === "w" ? "left" : "right"]: -2, cursor: "ew-resize" };
+                return (
+                  <div
+                    key={h}
+                    className={edgeBar}
+                    style={pos}
+                    onPointerDown={(e) => { e.stopPropagation(); onPointerDownArea(e, h); }}
+                    onPointerMove={onPointerMove}
+                    onPointerUp={onPointerUp}
+                    onPointerCancel={onPointerUp}
+                  />
+                );
+              })}
+
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                <span className="px-2.5 py-1 rounded-full bg-black/55 text-white text-[11px] font-medium tracking-wide">
+                  {aspectRatio ? (DEFAULT_ASPECT_GUIDES.find(g => g.value === aspectValue)?.label) : `${Math.round(rect.w)} × ${Math.round(rect.h)}`}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <p className="text-[11px] text-muted-foreground">
+        Arraste o quadro para reposicionar. Use os cantos/bordas para redimensionar. As proporções são apenas guias.
+      </p>
+    </div>
+  );
+
+  if (inline) return editor;
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-3xl">
@@ -219,147 +349,10 @@ const InteractiveCropper = ({ open, imageSrc, initialRect, onClose, onApply, tit
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Label className="text-xs text-muted-foreground whitespace-nowrap">Guia de proporção:</Label>
-            <Select value={aspectValue} onValueChange={setAspectValue}>
-              <SelectTrigger className="h-8 text-xs w-40"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {DEFAULT_ASPECT_GUIDES.map((g) => (
-                  <SelectItem key={g.value} value={g.value} className="text-xs">{g.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button variant="ghost" size="sm" onClick={handleReset} className="h-8 text-xs">
-              <RotateCcw className="w-3 h-3 mr-1" /> Resetar
-            </Button>
-          </div>
-
-          <div ref={containerRef} className="relative w-full bg-black/80 rounded-lg overflow-hidden flex items-center justify-center" style={{ minHeight: 200 }}>
-            {imgSize && rect && displaySize.w > 0 && (
-              <div
-                className="relative select-none touch-none"
-                style={{ width: displaySize.w, height: displaySize.h }}
-              >
-                <img
-                  ref={imgRef}
-                  src={imageSrc}
-                  alt="Recortar"
-                  className="absolute inset-0 w-full h-full object-contain pointer-events-none"
-                  draggable={false}
-                />
-
-                {/* Overlay escurecido fora do crop */}
-                <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox={`0 0 ${displaySize.w} ${displaySize.h}`}>
-                  <defs>
-                    <mask id="crop-mask">
-                      <rect width={displaySize.w} height={displaySize.h} fill="white" />
-                      <rect
-                        x={rect.x * scale} y={rect.y * scale}
-                        width={rect.w * scale} height={rect.h * scale}
-                        fill="black"
-                      />
-                    </mask>
-                  </defs>
-                  <rect width={displaySize.w} height={displaySize.h} fill="rgba(0,0,0,0.55)" mask="url(#crop-mask)" />
-                </svg>
-
-                {/* Retângulo de crop interativo */}
-                <div
-                  className="absolute border border-white/90 cursor-move touch-none"
-                  style={{
-                    left: rect.x * scale,
-                    top: rect.y * scale,
-                    width: rect.w * scale,
-                    height: rect.h * scale,
-                  }}
-                  onPointerDown={(e) => onPointerDownArea(e)}
-                  onPointerMove={onPointerMove}
-                  onPointerUp={onPointerUp}
-                  onPointerCancel={onPointerUp}
-                >
-                  {/* Linhas guia (regra dos terços) */}
-                  <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute left-1/3 top-0 bottom-0 w-px bg-white/50" />
-                    <div className="absolute left-2/3 top-0 bottom-0 w-px bg-white/50" />
-                    <div className="absolute top-1/3 left-0 right-0 h-px bg-white/50" />
-                    <div className="absolute top-2/3 left-0 right-0 h-px bg-white/50" />
-                  </div>
-
-                  {/* Brackets em L nos cantos (estilo Samsung Gallery) */}
-                  {(["nw", "ne", "sw", "se"] as const).map((h) => {
-                    const base: React.CSSProperties = {
-                      width: 22, height: 22,
-                    };
-                    const pos: Record<string, React.CSSProperties> = {
-                      nw: { ...base, left: -3, top: -3, cursor: "nwse-resize",
-                        borderLeft: "4px solid white", borderTop: "4px solid white" },
-                      ne: { ...base, right: -3, top: -3, cursor: "nesw-resize",
-                        borderRight: "4px solid white", borderTop: "4px solid white" },
-                      sw: { ...base, left: -3, bottom: -3, cursor: "nesw-resize",
-                        borderLeft: "4px solid white", borderBottom: "4px solid white" },
-                      se: { ...base, right: -3, bottom: -3, cursor: "nwse-resize",
-                        borderRight: "4px solid white", borderBottom: "4px solid white" },
-                    };
-                    return (
-                      <div
-                        key={h}
-                        className={cornerBracket}
-                        style={pos[h]}
-                        onPointerDown={(e) => { e.stopPropagation(); onPointerDownArea(e, h); }}
-                        onPointerMove={onPointerMove}
-                        onPointerUp={onPointerUp}
-                        onPointerCancel={onPointerUp}
-                      />
-                    );
-                  })}
-                  {/* Barras nas bordas (sempre visíveis; em modo aspect fixo arrastam mantendo proporção) */}
-                  {(["n", "s", "e", "w"] as const).map((h) => {
-                    const horizontal = h === "n" || h === "s";
-                    const pos: React.CSSProperties = horizontal
-                      ? {
-                          left: "50%", transform: "translateX(-50%)",
-                          width: 36, height: 4,
-                          [h === "n" ? "top" : "bottom"]: -2,
-                          cursor: "ns-resize",
-                        }
-                      : {
-                          top: "50%", transform: "translateY(-50%)",
-                          width: 4, height: 36,
-                          [h === "w" ? "left" : "right"]: -2,
-                          cursor: "ew-resize",
-                        };
-                    return (
-                      <div
-                        key={h}
-                        className={edgeBar}
-                        style={pos}
-                        onPointerDown={(e) => { e.stopPropagation(); onPointerDownArea(e, h); }}
-                        onPointerMove={onPointerMove}
-                        onPointerUp={onPointerUp}
-                        onPointerCancel={onPointerUp}
-                      />
-                    );
-                  })}
-
-                  {/* Badge de proporção no centro (durante interação ou sempre, leve) */}
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-                    <span className="px-2.5 py-1 rounded-full bg-black/55 text-white text-[11px] font-medium tracking-wide">
-                      {aspectRatio ? (DEFAULT_ASPECT_GUIDES.find(g => g.value === aspectValue)?.label) : `${Math.round(rect.w)} × ${Math.round(rect.h)}`}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <p className="text-[11px] text-muted-foreground">
-            Arraste o quadro para reposicionar. Use os pontos azuis para redimensionar. As proporções são apenas guias.
-          </p>
-        </div>
+        {editor}
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={() => onClose?.()}>
             <X className="w-4 h-4 mr-1" /> Cancelar
           </Button>
           <Button onClick={handleApply} disabled={!rect}>
