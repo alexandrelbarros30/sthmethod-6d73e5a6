@@ -217,7 +217,6 @@ const EvolucaoPublica = () => {
   const [editSide, setEditSide] = useState<"before" | "after">("before");
   const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [aspectRatio, setAspectRatio] = useState<string>("original");
   const [analysis, setAnalysis] = useState<string | null>(null);
   const beforeInput = useRef<HTMLInputElement>(null);
   const afterInput = useRef<HTMLInputElement>(null);
@@ -343,13 +342,10 @@ const EvolucaoPublica = () => {
   useEffect(() => {
     if (slots.before.imgEl && slots.after.imgEl && frameImage) {
       const url = renderEvolution();
-      if (url) {
-        const target = ASPECT_RATIOS.find((r) => r.value === aspectRatio)?.ratio ?? null;
-        cropDataUrlToRatio(url, target).then(setPreviewUrl).catch(() => setPreviewUrl(url));
-      }
+      if (url) setPreviewUrl(url);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transforms, slots.before.imgEl, slots.after.imgEl, frameImage, aspectRatio]);
+  }, [transforms, slots.before.imgEl, slots.after.imgEl, frameImage]);
 
   const canGenerate = !!slots.before.file && !!slots.after.file;
 
