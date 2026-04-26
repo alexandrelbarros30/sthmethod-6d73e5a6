@@ -166,11 +166,12 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
         }
       });
 
-      // Ordenar por prioridade e depois por data desc
+      // Ordenar por data/hora desc (mais recente primeiro);
+      // empates de timestamp respeitam prioridade (Novo > Renovação > Atualização)
       return Array.from(byUser.values()).sort((a, b) => {
-        const p = PRIORITY[a.type] - PRIORITY[b.type];
-        if (p !== 0) return p;
-        return new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime();
+        const diff = new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime();
+        if (diff !== 0) return diff;
+        return PRIORITY[a.type] - PRIORITY[b.type];
       });
     },
     refetchInterval: 60_000,
@@ -226,7 +227,7 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
           </div>
         </CardTitle>
         <p className="text-[11px] text-muted-foreground font-body">
-          Últimos 7 dias · Ordem por prioridade (Novo &gt; Renovação &gt; Atualização) · sem duplicidade
+          Últimos 7 dias · Ordem por data/hora (mais recente primeiro) · prioridade Novo &gt; Renovação &gt; Atualização em empates · sem duplicidade
         </p>
       </CardHeader>
       <CardContent className="pt-0">
