@@ -31,25 +31,6 @@ const ASPECT_RATIOS: { label: string; value: string; ratio: number | null }[] = 
   { label: "5:3", value: "5:3", ratio: 5 / 3 },
 ];
 
-function cropDataUrlToRatio(dataUrl: string, targetRatio: number | null): Promise<string> {
-  if (!targetRatio) return Promise.resolve(dataUrl);
-  return loadImage(dataUrl).then((img) => {
-    const srcRatio = img.width / img.height;
-    let cropW = img.width;
-    let cropH = img.height;
-    if (srcRatio > targetRatio) cropW = Math.round(img.height * targetRatio);
-    else cropH = Math.round(img.width / targetRatio);
-    const cropX = Math.round((img.width - cropW) / 2);
-    const cropY = Math.round((img.height - cropH) / 2);
-    const c = document.createElement("canvas");
-    c.width = cropW;
-    c.height = cropH;
-    const cx = c.getContext("2d")!;
-    cx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-    return c.toDataURL("image/jpeg", 0.9);
-  });
-}
-
 interface Slot {
   file?: File;
   preview?: string;
