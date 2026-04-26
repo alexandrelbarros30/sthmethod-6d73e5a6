@@ -50,7 +50,7 @@ type DragMode =
   | { kind: "move"; startX: number; startY: number; startRect: Rect }
   | { kind: "resize"; startX: number; startY: number; startRect: Rect; handle: ResizeHandle };
 
-const InteractiveCropper = ({ open = true, imageSrc, initialRect, onClose, onApply, title = "Recortar foto", inline = false }: Props) => {
+const InteractiveCropper = ({ open = true, imageSrc, initialRect, onClose, onApply, title = "Recortar foto", inline = false, bare = false }: Props & { bare?: boolean }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const [imgSize, setImgSize] = useState<{ w: number; h: number } | null>(null);
@@ -232,6 +232,7 @@ const InteractiveCropper = ({ open = true, imageSrc, initialRect, onClose, onApp
 
   const editor = (
     <div className="space-y-3">
+      {!bare && (
       <div className="flex items-center gap-2 flex-wrap">
         <Label className="text-xs text-muted-foreground whitespace-nowrap">Guia de proporção:</Label>
         <Select value={aspectValue} onValueChange={setAspectValue}>
@@ -251,8 +252,9 @@ const InteractiveCropper = ({ open = true, imageSrc, initialRect, onClose, onApp
           </Button>
         )}
       </div>
+      )}
 
-      <div ref={containerRef} className="relative w-full bg-black/80 rounded-lg overflow-hidden flex items-center justify-center" style={{ minHeight: 200 }}>
+      <div ref={containerRef} className={`relative w-full overflow-hidden flex items-center justify-center ${bare ? "" : "bg-black/80 rounded-lg"}`} style={{ minHeight: 200 }}>
         {imgSize && rect && displaySize.w > 0 && (
           <div
             className="relative select-none touch-none"
@@ -362,9 +364,11 @@ const InteractiveCropper = ({ open = true, imageSrc, initialRect, onClose, onApp
         )}
       </div>
 
-      <p className="text-[11px] text-muted-foreground">
-        Arraste o quadro para reposicionar. Use os cantos/bordas para redimensionar. As proporções são apenas guias.
-      </p>
+      {!bare && (
+        <p className="text-[11px] text-muted-foreground">
+          Arraste o quadro para reposicionar. Use os cantos/bordas para redimensionar. As proporções são apenas guias.
+        </p>
+      )}
     </div>
   );
 
