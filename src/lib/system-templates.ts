@@ -14,6 +14,7 @@ export interface ResolvedTemplate {
   title: string;
   content: string;
   system_key: string;
+  image_url?: string | null;
 }
 
 export interface TemplateContext {
@@ -31,7 +32,7 @@ export interface TemplateContext {
 export const getSystemTemplate = async (key: SystemTemplateKey): Promise<ResolvedTemplate | null> => {
   const { data, error } = await supabase
     .from("message_templates")
-    .select("id, title, content, system_key")
+    .select("id, title, content, image_url, system_key")
     .eq("system_key", key)
     .maybeSingle();
   if (error || !data) return null;
@@ -83,7 +84,8 @@ export const sendSystemTemplate = async (
   if (!ctx.phone) return { ok: false, reason: "Aluno sem telefone cadastrado." };
 
   const message = renderTemplate(tpl.content, ctx);
-  const url = buildWhatsAppUrl(ctx.phone, message);
+  const finalMessage = tpl.image_url ? `${message}\n\n${tpl.image_url}` : message;
+  const url = buildWhatsAppUrl(ctx.phone, finalMessage);
   if (!url) return { ok: false, reason: "Telefone inválido." };
 
   window.open(url, "_blank");
@@ -92,10 +94,11 @@ export const sendSystemTemplate = async (
     try {
       await supabase.from("message_history").insert({
         user_id: ctx.user_id,
-        content: message,
+        content: finalMessage,
         recipient_phone: ctx.phone,
         recipient_name: ctx.full_name || null,
         template_id: tpl.id,
+        image_url: tpl.image_url || null,
         status: "sent",
         sent_at: new Date().toISOString(),
       });
@@ -104,7 +107,7 @@ export const sendSystemTemplate = async (
     }
   }
 
-  return { ok: true, templateId: tpl.id, message };
+  return { ok: true, templateId: tpl.id, message: finalMessage };
 };
 
 export const SYSTEM_TEMPLATE_DEFINITIONS: Array<{
