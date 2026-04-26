@@ -15,7 +15,7 @@ const CANVAS_HEIGHT = 1350;
 
 // Proporções disponíveis para redimensionar o resultado final
 const ASPECT_RATIOS: { label: string; value: string; ratio: number | null }[] = [
-  { label: "Original (4:5)", value: "original", ratio: null },
+  { label: "Original", value: "original", ratio: null },
   { label: "1:1", value: "1:1", ratio: 1 / 1 },
   { label: "2:3", value: "2:3", ratio: 2 / 3 },
   { label: "3:4", value: "3:4", ratio: 3 / 4 },
@@ -31,25 +31,6 @@ const ASPECT_RATIOS: { label: string; value: string; ratio: number | null }[] = 
   { label: "5:3", value: "5:3", ratio: 5 / 3 },
 ];
 
-function cropDataUrlToRatio(dataUrl: string, targetRatio: number | null): Promise<string> {
-  if (!targetRatio) return Promise.resolve(dataUrl);
-  return loadImage(dataUrl).then((img) => {
-    const srcRatio = img.width / img.height;
-    let cropW = img.width;
-    let cropH = img.height;
-    if (srcRatio > targetRatio) cropW = Math.round(img.height * targetRatio);
-    else cropH = Math.round(img.width / targetRatio);
-    const cropX = Math.round((img.width - cropW) / 2);
-    const cropY = Math.round((img.height - cropH) / 2);
-    const c = document.createElement("canvas");
-    c.width = cropW;
-    c.height = cropH;
-    const cx = c.getContext("2d")!;
-    cx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-    return c.toDataURL("image/jpeg", 0.9);
-  });
-}
-
 interface Slot {
   file?: File;
   preview?: string;
@@ -64,9 +45,12 @@ interface Transform {
   // Offset as percentage of box size (-1 to 1), applied AFTER cover-fit
   offsetX: number;
   offsetY: number;
+  // Recorte manual da imagem fonte para uma proporção alvo (largura/altura).
+  // null = usar imagem original sem recorte.
+  aspectRatio: number | null;
 }
 
-const DEFAULT_T: Transform = { zoom: 1, rotation: 0, flipH: false, flipV: false, offsetX: 0, offsetY: 0 };
+const DEFAULT_T: Transform = { zoom: 1, rotation: 0, flipH: false, flipV: false, offsetX: 0, offsetY: 0, aspectRatio: null };
 
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -90,10 +74,23 @@ function drawWithTransform(
   ctx.rect(x, y, w, h);
   ctx.clip();
 
-  // Cover-fit base size considering rotation
+  // Recorte manual: define a janela source da imagem com base em aspectRatio.
+  let srcX = 0, srcY = 0, srcW = img.width, srcH = img.height;
+  if (t.aspectRatio && t.aspectRatio > 0) {
+    const imgRatio = img.width / img.height;
+    if (imgRatio > t.aspectRatio) {
+      srcW = Math.round(img.height * t.aspectRatio);
+      srcX = Math.round((img.width - srcW) / 2);
+    } else {
+      srcH = Math.round(img.width / t.aspectRatio);
+      srcY = Math.round((img.height - srcH) / 2);
+    }
+  }
+
+  // Cover-fit base size considering rotation (sobre o recorte)
   const rotated = t.rotation % 180 !== 0;
-  const effW = rotated ? img.height : img.width;
-  const effH = rotated ? img.width : img.height;
+  const effW = rotated ? srcH : srcW;
+  const effH = rotated ? srcW : srcH;
   const imgRatio = effW / effH;
   const boxRatio = w / h;
   let dw: number, dh: number;
@@ -117,7 +114,7 @@ function drawWithTransform(
   // rotated bounding box, swap them back to the source orientation when rotated.
   const drawW = rotated ? dh : dw;
   const drawH = rotated ? dw : dh;
-  ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+  ctx.drawImage(img, srcX, srcY, srcW, srcH, -drawW / 2, -drawH / 2, drawW, drawH);
   ctx.restore();
 }
 
@@ -201,7 +198,6 @@ const EvolucaoPublica = () => {
   const [editSide, setEditSide] = useState<"before" | "after">("before");
   const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [aspectRatio, setAspectRatio] = useState<string>("original");
   const [analysis, setAnalysis] = useState<string | null>(null);
   const beforeInput = useRef<HTMLInputElement>(null);
   const afterInput = useRef<HTMLInputElement>(null);
@@ -327,13 +323,10 @@ const EvolucaoPublica = () => {
   useEffect(() => {
     if (slots.before.imgEl && slots.after.imgEl && frameImage) {
       const url = renderEvolution();
-      if (url) {
-        const target = ASPECT_RATIOS.find((r) => r.value === aspectRatio)?.ratio ?? null;
-        cropDataUrlToRatio(url, target).then(setPreviewUrl).catch(() => setPreviewUrl(url));
-      }
+      if (url) setPreviewUrl(url);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transforms, slots.before.imgEl, slots.after.imgEl, frameImage, aspectRatio]);
+  }, [transforms, slots.before.imgEl, slots.after.imgEl, frameImage]);
 
   const canGenerate = !!slots.before.file && !!slots.after.file;
 
@@ -497,9 +490,20 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
                       </Button>
                       <div className="space-y-1.5 pt-2 border-t border-border/50">
                         <Label className="text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                          <Crop className="w-3 h-3" /> Redimensionar
+                          <Crop className="w-3 h-3" /> Redimensionar (proporção da foto)
                         </Label>
-                        <Select value={aspectRatio} onValueChange={setAspectRatio}>
+                        <Select
+                          value={
+                            ASPECT_RATIOS.find((r) =>
+                              (r.ratio == null && t.aspectRatio == null) ||
+                              (r.ratio != null && t.aspectRatio != null && Math.abs(r.ratio - t.aspectRatio) < 0.001)
+                            )?.value || "original"
+                          }
+                          onValueChange={(v) => {
+                            const ratio = ASPECT_RATIOS.find((r) => r.value === v)?.ratio ?? null;
+                            updateT(editSide, { aspectRatio: ratio });
+                          }}
+                        >
                           <SelectTrigger className="h-8 text-xs">
                             <SelectValue />
                           </SelectTrigger>
@@ -511,6 +515,9 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
                             ))}
                           </SelectContent>
                         </Select>
+                        <p className="text-[10px] text-muted-foreground">
+                          Aplica apenas à foto selecionada ({editSide === "before" ? "Antes" : "Depois"}).
+                        </p>
                       </div>
                     </div>
                   );

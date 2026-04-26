@@ -27,9 +27,9 @@ const TYPE_LABELS: Record<string, string> = { front: "Frente", back: "Costas", p
 const IMAGE_TYPES = ["front", "back", "profile"] as const;
 type ImageType = typeof IMAGE_TYPES[number];
 
-// Aspect ratios disponíveis para redimensionar o resultado final
+// Aspect ratios disponíveis para redimensionar cada foto individualmente
 const ASPECT_RATIOS: { label: string; value: string; ratio: number | null }[] = [
-  { label: "Original (4:5)", value: "original", ratio: null },
+  { label: "Original", value: "original", ratio: null },
   { label: "1:1", value: "1:1", ratio: 1 / 1 },
   { label: "2:3", value: "2:3", ratio: 2 / 3 },
   { label: "3:4", value: "3:4", ratio: 3 / 4 },
@@ -44,31 +44,6 @@ const ASPECT_RATIOS: { label: string; value: string; ratio: number | null }[] = 
   { label: "7:5", value: "7:5", ratio: 7 / 5 },
   { label: "5:3", value: "5:3", ratio: 5 / 3 },
 ];
-
-/**
- * Recorta um dataURL para a proporção alvo, centralizando o conteúdo.
- * Retorna o próprio dataURL se ratio for null.
- */
-async function applyAspectRatio(dataUrl: string, targetRatio: number | null): Promise<string> {
-  if (!targetRatio) return dataUrl;
-  const img = await loadImage(dataUrl);
-  const srcRatio = img.width / img.height;
-  let cropW = img.width;
-  let cropH = img.height;
-  if (srcRatio > targetRatio) {
-    cropW = Math.round(img.height * targetRatio);
-  } else {
-    cropH = Math.round(img.width / targetRatio);
-  }
-  const cropX = Math.round((img.width - cropW) / 2);
-  const cropY = Math.round((img.height - cropH) / 2);
-  const canvas = document.createElement("canvas");
-  canvas.width = cropW;
-  canvas.height = cropH;
-  const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-  return canvas.toDataURL("image/jpeg", 0.92);
-}
 
 // Canvas dimensions matching the frame aspect ratio
 const CANVAS_WIDTH = 1080;
@@ -108,13 +83,26 @@ function drawImageWithTransform(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
   box: { x: number; y: number; w: number; h: number },
-  transform: { zoom: number; offsetX: number; offsetY: number }
+  transform: { zoom: number; offsetX: number; offsetY: number; aspectRatio?: number | null }
 ) {
   const { x, y, w, h } = box;
-  const { zoom, offsetX, offsetY } = transform;
+  const { zoom, offsetX, offsetY, aspectRatio } = transform;
 
-  // Base size = contain
-  const imgRatio = img.width / img.height;
+  // Recorte manual da imagem fonte para a proporção escolhida (centralizado).
+  let srcX = 0, srcY = 0, srcW = img.width, srcH = img.height;
+  if (aspectRatio && aspectRatio > 0) {
+    const r = img.width / img.height;
+    if (r > aspectRatio) {
+      srcW = Math.round(img.height * aspectRatio);
+      srcX = Math.round((img.width - srcW) / 2);
+    } else {
+      srcH = Math.round(img.width / aspectRatio);
+      srcY = Math.round((img.height - srcH) / 2);
+    }
+  }
+
+  // Base size = contain (sobre o recorte)
+  const imgRatio = srcW / srcH;
   const boxRatio = w / h;
   let baseW: number, baseH: number;
   if (imgRatio > boxRatio) {
@@ -134,7 +122,7 @@ function drawImageWithTransform(
   ctx.beginPath();
   ctx.rect(x, y, w, h);
   ctx.clip();
-  ctx.drawImage(img, dx, dy, dw, dh);
+  ctx.drawImage(img, srcX, srcY, srcW, srcH, dx, dy, dw, dh);
   ctx.restore();
 }
 
@@ -142,9 +130,10 @@ interface PhotoTransform {
   zoom: number;     // 0.5 - 3
   offsetX: number;  // -50 - 50 (% do box)
   offsetY: number;  // -50 - 50 (% do box)
+  aspectRatio: number | null; // recorte manual da imagem fonte
 }
 
-const DEFAULT_TRANSFORM: PhotoTransform = { zoom: 1, offsetX: 0, offsetY: 0 };
+const DEFAULT_TRANSFORM: PhotoTransform = { zoom: 1, offsetX: 0, offsetY: 0, aspectRatio: null };
 
 type TransformKey = `${"old" | "new"}_${ImageType}`;
 type TransformMap = Record<TransformKey, PhotoTransform>;
@@ -165,7 +154,6 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
   const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
   const [activeType, setActiveType] = useState<ImageType>("front");
   const [livePreviews, setLivePreviews] = useState<Partial<Record<ImageType, string>>>({});
-  const [aspectRatio, setAspectRatio] = useState<string>("original");
   // Manual override: para cada posição (front/back/profile), permite escolher
   // qual imagem específica (id) usar de cada lado. Default = procurar pelo type.
   const [overrides, setOverrides] = useState<Partial<Record<TransformKey, string>>>({});
@@ -368,12 +356,10 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
       const results: string[] = [];
       const generated: ImageType[] = [];
       const skipped: ImageType[] = [];
-      const targetRatio = ASPECT_RATIOS.find((r) => r.value === aspectRatio)?.ratio ?? null;
       for (const type of IMAGE_TYPES) {
         const dataUrl = renderPreview(type);
         if (dataUrl) {
-          const finalUrl = await applyAspectRatio(dataUrl, targetRatio);
-          results.push(finalUrl);
+          results.push(dataUrl);
           generated.push(type);
         } else {
           skipped.push(type);
@@ -470,28 +456,6 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
             </>
           )}
         </Button>
-
-        {/* Redimensionar proporção do resultado final */}
-        <div className="space-y-1.5 rounded-lg border border-border p-3 bg-muted/30">
-          <Label className="text-xs font-semibold flex items-center gap-1.5">
-            <Crop className="w-3 h-3" /> Redimensionar (proporção do resultado)
-          </Label>
-          <Select value={aspectRatio} onValueChange={setAspectRatio}>
-            <SelectTrigger className="text-xs h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ASPECT_RATIOS.map((r) => (
-                <SelectItem key={r.value} value={r.value} className="text-xs">
-                  {r.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-[10px] text-muted-foreground">
-            Aplicado ao gerar. Recorta a partir do centro mantendo as fotos alinhadas.
-          </p>
-        </div>
 
         {/* Mapeamento manual: permite escolher qual foto da galeria usar para cada posição */}
         {oldGroup && newGroup && (
@@ -663,6 +627,30 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
                       value={[t.offsetY]}
                       onValueChange={([v]) => updateTransform(side, activeType, { offsetY: v })}
                     />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                      <Crop className="w-3 h-3" /> <span>Redimensionar (proporção da foto)</span>
+                    </div>
+                    <Select
+                      value={
+                        ASPECT_RATIOS.find((r) =>
+                          (r.ratio == null && t.aspectRatio == null) ||
+                          (r.ratio != null && t.aspectRatio != null && Math.abs(r.ratio - t.aspectRatio) < 0.001)
+                        )?.value || "original"
+                      }
+                      onValueChange={(v) => {
+                        const ratio = ASPECT_RATIOS.find((r) => r.value === v)?.ratio ?? null;
+                        updateTransform(side, activeType, { aspectRatio: ratio });
+                      }}
+                    >
+                      <SelectTrigger className="h-7 text-[10px]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {ASPECT_RATIOS.map((r) => (
+                          <SelectItem key={r.value} value={r.value} className="text-[10px]">{r.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               );
