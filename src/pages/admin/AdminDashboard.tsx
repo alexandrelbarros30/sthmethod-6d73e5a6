@@ -598,7 +598,7 @@ const RecentStudents = ({ profiles, subscriptions, navigate, queryClient, active
                       )}
                       <Button
                         size="sm"
-                        className="mt-2 ml-auto h-7 px-2 text-[11px] gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                        className="mt-2 ml-auto flex h-7 px-2 text-[11px] gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
                         onClick={() => confirmMutation.mutate(p.id)}
                         disabled={confirmMutation.isPending}
                       >
