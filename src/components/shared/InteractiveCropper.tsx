@@ -159,11 +159,24 @@ const InteractiveCropper = ({ open, imageSrc, initialRect, onClose, onApply, tit
       if (handle.includes("s")) h = drag.startRect.h + dy;
       if (handle.includes("w")) { w = drag.startRect.w - dx; x = drag.startRect.x + dx; }
       if (handle.includes("n")) { h = drag.startRect.h - dy; y = drag.startRect.y + dy; }
-      // Se aspect fixo, força h = w/ratio (ancorado pelo handle)
+      // Se aspect fixo, força proporção mantendo o lado oposto ancorado
       if (aspectRatio) {
-        const newH = w / aspectRatio;
-        if (handle.includes("n")) y = drag.startRect.y + (drag.startRect.h - newH);
-        h = newH;
+        const isVertical = handle === "n" || handle === "s";
+        if (isVertical) {
+          // arrastando borda horizontal: ajusta w pelo h
+          const newW = h * aspectRatio;
+          x = drag.startRect.x + (drag.startRect.w - newW) / 2;
+          w = newW;
+        } else {
+          // arrastando borda vertical ou canto: ajusta h pelo w
+          const newH = w / aspectRatio;
+          if (handle.includes("n")) y = drag.startRect.y + (drag.startRect.h - newH);
+          else if (!handle.includes("s")) {
+            // handles e/w puros: centraliza verticalmente
+            y = drag.startRect.y + (drag.startRect.h - newH) / 2;
+          }
+          h = newH;
+        }
       }
       setRect(constrainRect({ x, y, w, h }));
     }
