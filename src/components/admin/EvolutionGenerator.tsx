@@ -730,10 +730,10 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
         <canvas ref={canvasRef} className="hidden" />
       </CardContent>
 
-      {cropperKey && loadedImages[cropperKey]?.src && (
+      {cropperKey && (originalImages[cropperKey]?.src || loadedImages[cropperKey]?.src) && (
         <InteractiveCropper
           open={!!cropperKey}
-          imageSrc={loadedImages[cropperKey]!.src}
+          imageSrc={(originalImages[cropperKey] || loadedImages[cropperKey])!.src}
           title="Recortar foto manualmente"
           onClose={() => setCropperKey(null)}
           onApply={async ({ dataUrl }) => {
