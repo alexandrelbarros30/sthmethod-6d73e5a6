@@ -248,61 +248,63 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
                 return (
                   <div
                     key={`${it.user_id}-${it.type}`}
-                    className={`flex items-center gap-2 p-2.5 rounded-lg bg-card hover:bg-muted/40 transition-colors ${meta.cls}`}
+                    className={`p-2.5 rounded-lg bg-card hover:bg-muted/40 transition-colors ${meta.cls}`}
                   >
-                    <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center shrink-0 text-xs font-bold text-foreground">
-                      {idx + 1}
-                    </div>
-                    <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <button
-                          type="button"
-                          onClick={() => navigate(`${manageBasePath}?manage=${it.user_id}`)}
-                          className="text-sm font-medium truncate text-left hover:text-primary hover:underline transition-colors"
-                          title="Abrir cadastro do aluno"
-                        >
-                          {it.name}
-                        </button>
-                        <Badge variant="outline" className={`text-[9px] ${meta.badgeCls}`}>
-                          {meta.label}
-                        </Badge>
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center shrink-0 text-xs font-bold text-foreground">
+                        {idx + 1}
                       </div>
-                      <p className="text-[11px] text-muted-foreground truncate">
-                        {it.detail} · {whenLabel}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      {it.phone && (
+                      <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <button
+                            type="button"
+                            onClick={() => navigate(`${manageBasePath}?manage=${it.user_id}`)}
+                            className="text-sm font-medium truncate text-left hover:text-primary hover:underline transition-colors"
+                            title="Abrir cadastro do aluno"
+                          >
+                            {it.name}
+                          </button>
+                          <Badge variant="outline" className={`text-[9px] ${meta.badgeCls}`}>
+                            {meta.label}
+                          </Badge>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          {it.detail} · {whenLabel}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {it.phone && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-success"
+                            onClick={() => openWhatsApp(it.phone, it.name)}
+                            title="WhatsApp"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
-                          className="h-7 w-7 p-0 text-success"
-                          onClick={() => openWhatsApp(it.phone, it.name)}
-                          title="WhatsApp"
+                          className="h-7 px-2 text-xs gap-1"
+                          onClick={() => navigate(`${manageBasePath}?manage=${it.user_id}`)}
                         >
-                          <MessageCircle className="w-3.5 h-3.5" />
+                          <Settings className="w-3 h-3" /> Atender
                         </Button>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2 text-xs gap-1"
-                        onClick={() => navigate(`${manageBasePath}?manage=${it.user_id}`)}
-                      >
-                        <Settings className="w-3 h-3" /> Atender
-                      </Button>
-                      <Button
-                        variant="default"
-                        size="sm"
-                        className="h-7 px-2 text-xs gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                        onClick={() => dismissMutation.mutate(it)}
-                        disabled={dismissMutation.isPending}
-                        title="Marcar como atendido (remove da fila)"
-                      >
-                        <Check className="w-3 h-3" /> Atendido
-                      </Button>
+                      </div>
                     </div>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="mt-2 w-full h-8 text-xs gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                      onClick={() => dismissMutation.mutate(it)}
+                      disabled={dismissMutation.isPending}
+                      title="Marcar como atendido (remove da fila)"
+                    >
+                      <Check className="w-3.5 h-3.5" /> Atendido
+                    </Button>
                   </div>
                 );
               })}
