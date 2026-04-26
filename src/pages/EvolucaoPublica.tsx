@@ -181,6 +181,7 @@ const EvolucaoPublica = () => {
   const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<string | null>(null);
+  const [cropperSide, setCropperSide] = useState<"before" | "after" | null>(null);
   const beforeInput = useRef<HTMLInputElement>(null);
   const afterInput = useRef<HTMLInputElement>(null);
 
