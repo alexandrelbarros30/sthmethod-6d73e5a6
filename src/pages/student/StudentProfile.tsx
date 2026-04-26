@@ -335,31 +335,6 @@ const StudentProfile = () => {
               <div><span className="text-muted-foreground">Peso:</span> <span className="font-medium">{p.weight ? `${p.weight} kg` : "—"}</span></div>
               <div><span className="text-muted-foreground">Objetivo:</span> <span className="font-medium">{objectiveLabels[p.objective] || p.objective || "—"}</span></div>
             </div>
-            <div className="mt-4 space-y-3 border-t pt-4">
-              <div>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Nível de Atividade Física (NEAT)</p>
-                <p className="text-sm">{physicalActivityLevelOptions.find(o => o.value === p.physical_activity_level)?.label || "—"}</p>
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Atividade Física</p>
-                <p className="text-sm">{activityLabels[p.activity_type] || p.physical_activity || "—"}</p>
-                {(p.activity_type === "musculacao" || p.activity_type === "crossfit") && p.training_days_per_week && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {p.training_days_per_week}x/sem • {p.training_duration_minutes} min • {trainingIntensityOptions.find(o => o.value === p.training_intensity)?.label || "—"}
-                  </p>
-                )}
-              </div>
-              {p.does_cardio && (
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Cardio</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {p.cardio_days_per_week}x/sem • {p.cardio_duration_minutes} min • {cardioIntensityOptions.find(o => o.value === p.cardio_intensity)?.label || "—"}
-                  </p>
-                </div>
-              )}
-              {p.current_protocol && <div><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Protocolo Atual</p><p className="text-sm whitespace-pre-wrap">{p.current_protocol}</p></div>}
-              {p.comorbidities && <div><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Comorbidades</p><p className="text-sm whitespace-pre-wrap">{p.comorbidities}</p></div>}
-            </div>
             <div className="mt-4 border-t pt-4">
               <DocumentUpload userId={p.user_id} />
             </div>
