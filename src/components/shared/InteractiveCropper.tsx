@@ -193,8 +193,9 @@ const InteractiveCropper = ({ open, imageSrc, initialRect, onClose, onApply, tit
     img.src = imageSrc;
   };
 
-  // Handles visuais
-  const handleStyle = "absolute w-3 h-3 bg-primary border border-white rounded-sm touch-none";
+  // Handles visuais (estilo Samsung Gallery: brackets nos cantos + barras nas bordas)
+  const cornerBracket = "absolute w-6 h-6 touch-none pointer-events-auto";
+  const edgeBar = "absolute bg-white/95 rounded-full touch-none pointer-events-auto shadow";
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -252,7 +253,7 @@ const InteractiveCropper = ({ open, imageSrc, initialRect, onClose, onApply, tit
 
                 {/* Retângulo de crop interativo */}
                 <div
-                  className="absolute border-2 border-primary cursor-move touch-none"
+                  className="absolute border border-white/90 cursor-move touch-none"
                   style={{
                     left: rect.x * scale,
                     top: rect.y * scale,
@@ -266,24 +267,31 @@ const InteractiveCropper = ({ open, imageSrc, initialRect, onClose, onApply, tit
                 >
                   {/* Linhas guia (regra dos terços) */}
                   <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute left-1/3 top-0 bottom-0 w-px bg-white/40" />
-                    <div className="absolute left-2/3 top-0 bottom-0 w-px bg-white/40" />
-                    <div className="absolute top-1/3 left-0 right-0 h-px bg-white/40" />
-                    <div className="absolute top-2/3 left-0 right-0 h-px bg-white/40" />
+                    <div className="absolute left-1/3 top-0 bottom-0 w-px bg-white/50" />
+                    <div className="absolute left-2/3 top-0 bottom-0 w-px bg-white/50" />
+                    <div className="absolute top-1/3 left-0 right-0 h-px bg-white/50" />
+                    <div className="absolute top-2/3 left-0 right-0 h-px bg-white/50" />
                   </div>
 
-                  {/* Handles de canto */}
+                  {/* Brackets em L nos cantos (estilo Samsung Gallery) */}
                   {(["nw", "ne", "sw", "se"] as const).map((h) => {
+                    const base: React.CSSProperties = {
+                      width: 22, height: 22,
+                    };
                     const pos: Record<string, React.CSSProperties> = {
-                      nw: { left: -6, top: -6, cursor: "nwse-resize" },
-                      ne: { right: -6, top: -6, cursor: "nesw-resize" },
-                      sw: { left: -6, bottom: -6, cursor: "nesw-resize" },
-                      se: { right: -6, bottom: -6, cursor: "nwse-resize" },
+                      nw: { ...base, left: -3, top: -3, cursor: "nwse-resize",
+                        borderLeft: "4px solid white", borderTop: "4px solid white" },
+                      ne: { ...base, right: -3, top: -3, cursor: "nesw-resize",
+                        borderRight: "4px solid white", borderTop: "4px solid white" },
+                      sw: { ...base, left: -3, bottom: -3, cursor: "nesw-resize",
+                        borderLeft: "4px solid white", borderBottom: "4px solid white" },
+                      se: { ...base, right: -3, bottom: -3, cursor: "nwse-resize",
+                        borderRight: "4px solid white", borderBottom: "4px solid white" },
                     };
                     return (
                       <div
                         key={h}
-                        className={handleStyle}
+                        className={cornerBracket}
                         style={pos[h]}
                         onPointerDown={(e) => { e.stopPropagation(); onPointerDownArea(e, h); }}
                         onPointerMove={onPointerMove}
@@ -292,19 +300,27 @@ const InteractiveCropper = ({ open, imageSrc, initialRect, onClose, onApply, tit
                       />
                     );
                   })}
-                  {/* Handles de meio (apenas no modo livre) */}
-                  {!aspectRatio && (["n", "s", "e", "w"] as const).map((h) => {
-                    const pos: Record<string, React.CSSProperties> = {
-                      n: { left: "50%", top: -6, transform: "translateX(-50%)", cursor: "ns-resize" },
-                      s: { left: "50%", bottom: -6, transform: "translateX(-50%)", cursor: "ns-resize" },
-                      e: { right: -6, top: "50%", transform: "translateY(-50%)", cursor: "ew-resize" },
-                      w: { left: -6, top: "50%", transform: "translateY(-50%)", cursor: "ew-resize" },
-                    };
+                  {/* Barras nas bordas (sempre visíveis; em modo aspect fixo arrastam mantendo proporção) */}
+                  {(["n", "s", "e", "w"] as const).map((h) => {
+                    const horizontal = h === "n" || h === "s";
+                    const pos: React.CSSProperties = horizontal
+                      ? {
+                          left: "50%", transform: "translateX(-50%)",
+                          width: 36, height: 4,
+                          [h === "n" ? "top" : "bottom"]: -2,
+                          cursor: "ns-resize",
+                        }
+                      : {
+                          top: "50%", transform: "translateY(-50%)",
+                          width: 4, height: 36,
+                          [h === "w" ? "left" : "right"]: -2,
+                          cursor: "ew-resize",
+                        };
                     return (
                       <div
                         key={h}
-                        className={handleStyle}
-                        style={pos[h]}
+                        className={edgeBar}
+                        style={pos}
                         onPointerDown={(e) => { e.stopPropagation(); onPointerDownArea(e, h); }}
                         onPointerMove={onPointerMove}
                         onPointerUp={onPointerUp}
@@ -312,6 +328,13 @@ const InteractiveCropper = ({ open, imageSrc, initialRect, onClose, onApply, tit
                       />
                     );
                   })}
+
+                  {/* Badge de proporção no centro (durante interação ou sempre, leve) */}
+                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                    <span className="px-2.5 py-1 rounded-full bg-black/55 text-white text-[11px] font-medium tracking-wide">
+                      {aspectRatio ? (DEFAULT_ASPECT_GUIDES.find(g => g.value === aspectValue)?.label) : `${Math.round(rect.w)} × ${Math.round(rect.h)}`}
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
