@@ -480,10 +480,61 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
                         variant="outline"
                         size="sm"
                         className="w-full"
-                        onClick={() => setCropperSide(editSide)}
+                        onClick={() => setShowInlineCropper((v) => !v)}
                       >
-                        <Crop className="w-3.5 h-3.5 mr-1" /> Recortar foto manualmente
+                        <Crop className="w-3.5 h-3.5 mr-1" />
+                        {showInlineCropper ? "Fechar recorte" : "Recortar foto manualmente"}
                       </Button>
+                      {slots[editSide].originalDataUrl && slots[editSide].preview !== slots[editSide].originalDataUrl && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full"
+                          onClick={async () => {
+                            const side = editSide;
+                            const orig = slots[side].originalDataUrl!;
+                            try {
+                              const newImg = await loadImage(orig);
+                              const oldPreview = slots[side].preview;
+                              setSlots((p) => ({ ...p, [side]: { ...p[side], preview: orig, imgEl: newImg } }));
+                              if (oldPreview && oldPreview.startsWith("blob:")) URL.revokeObjectURL(oldPreview);
+                              setTransforms((p) => ({ ...p, [side]: { ...DEFAULT_T } }));
+                              toast.success("Foto original restaurada.");
+                            } catch {
+                              toast.error("Não foi possível restaurar.");
+                            }
+                          }}
+                        >
+                          <RotateCcw className="w-3.5 h-3.5 mr-1" /> Restaurar foto original
+                        </Button>
+                      )}
+                      {showInlineCropper && slots[editSide].originalDataUrl && (
+                        <div className="pt-2 border-t">
+                          <p className="text-[11px] text-muted-foreground mb-2">
+                            Cada recorte parte sempre da foto <strong>original</strong> — sem perda de qualidade ao refazer.
+                          </p>
+                          <InteractiveCropper
+                            inline
+                            imageSrc={slots[editSide].originalDataUrl!}
+                            onApply={async ({ dataUrl }) => {
+                              const side = editSide;
+                              try {
+                                const newImg = await loadImage(dataUrl);
+                                const oldPreview = slots[side].preview;
+                                setSlots((p) => ({
+                                  ...p,
+                                  [side]: { ...p[side], preview: dataUrl, imgEl: newImg },
+                                }));
+                                if (oldPreview && oldPreview.startsWith("blob:")) URL.revokeObjectURL(oldPreview);
+                                setTransforms((p) => ({ ...p, [side]: { ...DEFAULT_T } }));
+                                toast.success("Recorte aplicado!");
+                              } catch {
+                                toast.error("Falha ao aplicar recorte.");
+                              }
+                            }}
+                          />
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
