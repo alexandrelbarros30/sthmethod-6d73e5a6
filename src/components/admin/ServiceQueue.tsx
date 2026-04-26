@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ListOrdered, UserPlus, RefreshCw, TrendingUp, Settings, MessageCircle, Check, ChevronDown } from "lucide-react";
+import { sendSystemTemplate } from "@/lib/system-templates";
 
 type QueueType = "new" | "renewal" | "update";
 
@@ -207,12 +208,15 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
     return c;
   }, [items]);
 
-  const openWhatsApp = (phone?: string, name?: string) => {
-    if (!phone) return;
-    const digits = phone.replace(/\D/g, "");
-    if (!digits) return;
-    const msg = encodeURIComponent(`Olá ${name?.split(" ")[0] || ""}, tudo bem? Aqui é da equipe STH Method.`);
-    window.open(`https://wa.me/${digits.startsWith("55") ? digits : `55${digits}`}?text=${msg}`, "_blank");
+  const openWhatsApp = async (phone?: string, name?: string, userId?: string) => {
+    const result = await sendSystemTemplate(
+      "service_queue_first_contact",
+      { full_name: name, phone, user_id: userId },
+      { logHistory: true }
+    );
+    if (!result.ok) {
+      toast({ title: "Não foi possível abrir o WhatsApp", description: result.reason, variant: "destructive" });
+    }
   };
 
   return (
@@ -289,7 +293,7 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
                             variant="ghost"
                             size="sm"
                             className="h-7 w-7 p-0 text-success shrink-0"
-                            onClick={() => openWhatsApp(it.phone, it.name)}
+                            onClick={() => openWhatsApp(it.phone, it.name, it.user_id)}
                             title="WhatsApp"
                           >
                             <MessageCircle className="w-3.5 h-3.5" />
