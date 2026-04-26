@@ -6,6 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { ImagePlus, Download, Loader2, ZoomIn, RotateCcw, Move, Link2 } from "lucide-react";
+import { Crop } from "lucide-react";
 import evolutionFrame from "@/assets/evolution-frame.png";
 import { getSecureFileUrl, extractStoragePath } from "@/lib/secure-file-url";
 
@@ -26,6 +27,49 @@ interface EvolutionGeneratorProps {
 const TYPE_LABELS: Record<string, string> = { front: "Frente", back: "Costas", profile: "Perfil" };
 const IMAGE_TYPES = ["front", "back", "profile"] as const;
 type ImageType = typeof IMAGE_TYPES[number];
+
+// Aspect ratios disponíveis para redimensionar o resultado final
+const ASPECT_RATIOS: { label: string; value: string; ratio: number | null }[] = [
+  { label: "Original (4:5)", value: "original", ratio: null },
+  { label: "1:1", value: "1:1", ratio: 1 / 1 },
+  { label: "2:3", value: "2:3", ratio: 2 / 3 },
+  { label: "3:4", value: "3:4", ratio: 3 / 4 },
+  { label: "4:5", value: "4:5", ratio: 4 / 5 },
+  { label: "3:5", value: "3:5", ratio: 3 / 5 },
+  { label: "5:7", value: "5:7", ratio: 5 / 7 },
+  { label: "9:16", value: "9:16", ratio: 9 / 16 },
+  { label: "16:9", value: "16:9", ratio: 16 / 9 },
+  { label: "3:2", value: "3:2", ratio: 3 / 2 },
+  { label: "4:3", value: "4:3", ratio: 4 / 3 },
+  { label: "5:4", value: "5:4", ratio: 5 / 4 },
+  { label: "7:5", value: "7:5", ratio: 7 / 5 },
+  { label: "5:3", value: "5:3", ratio: 5 / 3 },
+];
+
+/**
+ * Recorta um dataURL para a proporção alvo, centralizando o conteúdo.
+ * Retorna o próprio dataURL se ratio for null.
+ */
+async function applyAspectRatio(dataUrl: string, targetRatio: number | null): Promise<string> {
+  if (!targetRatio) return dataUrl;
+  const img = await loadImage(dataUrl);
+  const srcRatio = img.width / img.height;
+  let cropW = img.width;
+  let cropH = img.height;
+  if (srcRatio > targetRatio) {
+    cropW = Math.round(img.height * targetRatio);
+  } else {
+    cropH = Math.round(img.width / targetRatio);
+  }
+  const cropX = Math.round((img.width - cropW) / 2);
+  const cropY = Math.round((img.height - cropH) / 2);
+  const canvas = document.createElement("canvas");
+  canvas.width = cropW;
+  canvas.height = cropH;
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+  return canvas.toDataURL("image/jpeg", 0.92);
+}
 
 // Canvas dimensions matching the frame aspect ratio
 const CANVAS_WIDTH = 1080;
@@ -122,6 +166,7 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
   const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
   const [activeType, setActiveType] = useState<ImageType>("front");
   const [livePreviews, setLivePreviews] = useState<Partial<Record<ImageType, string>>>({});
+  const [aspectRatio, setAspectRatio] = useState<string>("original");
   // Manual override: para cada posição (front/back/profile), permite escolher
   // qual imagem específica (id) usar de cada lado. Default = procurar pelo type.
   const [overrides, setOverrides] = useState<Partial<Record<TransformKey, string>>>({});
@@ -324,10 +369,12 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
       const results: string[] = [];
       const generated: ImageType[] = [];
       const skipped: ImageType[] = [];
+      const targetRatio = ASPECT_RATIOS.find((r) => r.value === aspectRatio)?.ratio ?? null;
       for (const type of IMAGE_TYPES) {
         const dataUrl = renderPreview(type);
         if (dataUrl) {
-          results.push(dataUrl);
+          const finalUrl = await applyAspectRatio(dataUrl, targetRatio);
+          results.push(finalUrl);
           generated.push(type);
         } else {
           skipped.push(type);
