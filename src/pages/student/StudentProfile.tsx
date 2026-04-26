@@ -17,6 +17,8 @@ import { supabase } from "@/integrations/supabase/client";
 import ChangePasswordDialog from "@/components/student/ChangePasswordDialog";
 import StudentProfileForm, { profileFromDb, getPendingFields, type ProfileFormData } from "@/components/student/StudentProfileForm";
 import DocumentUpload from "@/components/shared/DocumentUpload";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import SignedImage from "@/components/shared/SignedImage";
 import { calculateAge } from "@/lib/macro-calculator";
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
@@ -90,6 +92,8 @@ const StudentProfile = () => {
   const hasImages = bodyImages && bodyImages.length >= 3;
 
   const [form, setForm] = useState<ProfileFormData>(profileFromDb({}));
+  const [phoneEdit, setPhoneEdit] = useState("");
+  const [savingPhone, setSavingPhone] = useState(false);
 
   useEffect(() => {
     if (p) setForm(profileFromDb(p));
@@ -115,6 +119,34 @@ const StudentProfile = () => {
   const planDurationDays = (subscription as any)?.plans?.duration_days || null;
   const tierClasses = getPlanTierClasses(getPlanTier(planDurationDays));
   const showEditableForm = !isOnboarded || editing;
+  const phoneOnlyEdit = isOnboarded && editing;
+
+  const phoneMask = (v: string) => {
+    const d = v.replace(/\D/g, "").slice(0, 11);
+    if (d.length <= 2) return `(${d}`;
+    if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  };
+
+  const handleSavePhone = async () => {
+    const clean = phoneEdit.replace(/\D/g, "");
+    if (clean.length < 10) {
+      toast.error("Telefone inválido");
+      return;
+    }
+    setSavingPhone(true);
+    try {
+      const { error } = await supabase.from("profiles").update({ phone: phoneEdit }).eq("user_id", user!.id);
+      if (error) throw error;
+      toast.success("Telefone atualizado!");
+      setEditing(false);
+      refetchProfile();
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao salvar telefone");
+    } finally {
+      setSavingPhone(false);
+    }
+  };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -237,7 +269,7 @@ const StudentProfile = () => {
       )}
 
       {/* ===== FORMULÁRIO EDITÁVEL ===== */}
-      {showEditableForm && (
+      {showEditableForm && !phoneOnlyEdit && (
         <StudentProfileForm
           form={form}
           onChange={setForm}
@@ -255,6 +287,34 @@ const StudentProfile = () => {
           }}
           onCancel={isOnboarded ? () => setEditing(false) : undefined}
         />
+      )}
+
+      {/* ===== EDIÇÃO RÁPIDA: APENAS TELEFONE ===== */}
+      {phoneOnlyEdit && (
+        <Card className="mb-4 animate-fade-in">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-display flex items-center gap-2">
+              <FileText className="w-4 h-4" /> Editar Telefone
+            </CardTitle>
+            <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>Cancelar</Button>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <Label className="font-body">Telefone *</Label>
+              <Input
+                value={phoneEdit || p?.phone || ""}
+                onChange={(e) => setPhoneEdit(phoneMask(e.target.value))}
+                placeholder="(00) 00000-0000"
+              />
+            </div>
+            <Button className="w-full" onClick={handleSavePhone} disabled={savingPhone}>
+              {savingPhone ? "Salvando..." : "Salvar telefone"}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Demais dados pessoais não podem ser editados aqui. Para alterar nível de atividade, peso e outros, use a tela de <Link to="/dashboard/evolution" className="text-primary underline">Atualização</Link>.
+            </p>
+          </CardContent>
+        </Card>
       )}
 
       {/* ===== MINHA FICHA (somente leitura) ===== */}
