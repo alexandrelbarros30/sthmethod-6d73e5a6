@@ -509,9 +509,20 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
                       </Button>
                       <div className="space-y-1.5 pt-2 border-t border-border/50">
                         <Label className="text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                          <Crop className="w-3 h-3" /> Redimensionar
+                          <Crop className="w-3 h-3" /> Redimensionar (proporção da foto)
                         </Label>
-                        <Select value={aspectRatio} onValueChange={setAspectRatio}>
+                        <Select
+                          value={
+                            ASPECT_RATIOS.find((r) =>
+                              (r.ratio == null && t.aspectRatio == null) ||
+                              (r.ratio != null && t.aspectRatio != null && Math.abs(r.ratio - t.aspectRatio) < 0.001)
+                            )?.value || "original"
+                          }
+                          onValueChange={(v) => {
+                            const ratio = ASPECT_RATIOS.find((r) => r.value === v)?.ratio ?? null;
+                            updateT(editSide, { aspectRatio: ratio });
+                          }}
+                        >
                           <SelectTrigger className="h-8 text-xs">
                             <SelectValue />
                           </SelectTrigger>
@@ -523,6 +534,9 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
                             ))}
                           </SelectContent>
                         </Select>
+                        <p className="text-[10px] text-muted-foreground">
+                          Aplica apenas à foto selecionada ({editSide === "before" ? "Antes" : "Depois"}).
+                        </p>
                       </div>
                     </div>
                   );
