@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ImagePlus, Download, Loader2, ZoomIn, RotateCcw, Move, Link2, Crop } from "lucide-react";
 import evolutionFrame from "@/assets/evolution-frame.png";
 import { getSecureFileUrl, extractStoragePath } from "@/lib/secure-file-url";
+import InteractiveCropper from "@/components/shared/InteractiveCropper";
 
 interface BodyImage {
   id: string;
