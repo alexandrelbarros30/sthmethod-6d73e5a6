@@ -598,14 +598,49 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                       {side === "old" ? "Antes" : "Depois"}
                     </p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 px-2 text-[10px]"
-                      onClick={() => resetTransform(side, activeType)}
-                    >
-                      <RotateCcw className="w-3 h-3 mr-1" /> Resetar
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-[10px]"
+                        onClick={() => {
+                          const k = makeKey(side, activeType);
+                          const el = loadedImages[k];
+                          if (!el) {
+                            toast.error("Foto não carregada.");
+                            return;
+                          }
+                          try {
+                            const c = document.createElement("canvas");
+                            c.width = el.naturalWidth || el.width;
+                            c.height = el.naturalHeight || el.height;
+                            const cx = c.getContext("2d")!;
+                            cx.drawImage(el, 0, 0);
+                            const dataUrl = c.toDataURL("image/jpeg", 0.95);
+                            const a = document.createElement("a");
+                            a.href = dataUrl;
+                            a.download = `${studentName.replace(/\s+/g, "_")}_${activeType}_${side === "old" ? "antes" : "depois"}.jpg`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            toast.success("Download iniciado.");
+                          } catch {
+                            toast.error("Falha ao baixar.");
+                          }
+                        }}
+                        title="Baixar esta foto editada"
+                      >
+                        <Download className="w-3 h-3 mr-1" /> Baixar
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-[10px]"
+                        onClick={() => resetTransform(side, activeType)}
+                      >
+                        <RotateCcw className="w-3 h-3 mr-1" /> Resetar
+                      </Button>
+                    </div>
                   </div>
                   <div className="space-y-1">
                     <div className="flex justify-between text-[10px] text-muted-foreground">
