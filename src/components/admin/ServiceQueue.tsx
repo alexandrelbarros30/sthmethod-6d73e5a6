@@ -24,6 +24,8 @@ interface QueueItem {
   occurred_at: string; // ISO
   /** id of queue_join_requests row, if applicable */
   join_request_id?: string;
+  /** true when this entry came from an anonymous visitor (no account) */
+  is_visitor?: boolean;
 }
 
 const PRIORITY: Record<QueueType, number> = { new: 1, renewal: 2, update: 3, link_join: 3 };
@@ -95,7 +97,7 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
       // 2b. Solicitações de fila via link público (status waiting)
       const { data: joinReqs } = await supabase
         .from("queue_join_requests")
-        .select("id, student_user_id, student_name, status, joined_at")
+        .select("id, student_user_id, student_name, visitor_name, visitor_phone, source, status, joined_at")
         .eq("status", "waiting")
         .gte("joined_at", since)
         .order("joined_at", { ascending: true });
@@ -171,7 +173,22 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
       });
 
       (joinReqs || []).forEach((j: any) => {
-        if (!j.student_user_id) return;
+        // Visitor flow (sem cadastro): student_user_id is null
+        if (!j.student_user_id) {
+          // Consultor view: do not show anonymous visitors (they aren't linked)
+          if (allowedUserIds) return;
+          items.push({
+            user_id: `visitor:${j.id}`,
+            name: j.visitor_name || "Visitante",
+            phone: j.visitor_phone,
+            type: "link_join",
+            detail: "Novo visitante solicitou atendimento",
+            occurred_at: j.joined_at,
+            join_request_id: j.id,
+            is_visitor: true,
+          });
+          return;
+        }
         if (allowedUserIds && !allowedUserIds.includes(j.student_user_id)) return;
         const prof = pmap.get(j.student_user_id);
         items.push({
