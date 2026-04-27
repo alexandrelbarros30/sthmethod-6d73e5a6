@@ -6,8 +6,18 @@ import cinturaImg from "@/assets/sthnews-subq-glass-2.jpg";
 import triadeImg from "@/assets/sthnews-triade-thumb.jpg";
 import masteronImg from "@/assets/sthnews-masteron-glass-1.jpg";
 import glowImg from "@/assets/sthnews-glow-hero.jpg";
+import gestrinonaImg from "@/assets/sthnews-gestrinona-hero.jpg";
 
 const articles = [
+  {
+    to: "/tendencias/gestrinona",
+    tag: "EXCLUSIVO",
+    tagClass: "bg-destructive text-destructive-foreground",
+    date: "Nova matéria",
+    title: "💊 Gestrinona: a molécula de tripla ação — cápsulas e chip subdérmico",
+    desc: "Densidade, secura e equilíbrio hormonal feminino.",
+    img: gestrinonaImg,
+  },
   {
     to: "/tendencias/glow-blend",
     tag: "EXCLUSIVO",
