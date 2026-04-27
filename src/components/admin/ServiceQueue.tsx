@@ -9,10 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ListOrdered, UserPlus, RefreshCw, TrendingUp, Settings, MessageCircle, Check, ChevronDown } from "lucide-react";
+import { ListOrdered, UserPlus, RefreshCw, TrendingUp, Settings, MessageCircle, Check, ChevronDown, LinkIcon } from "lucide-react";
 import { sendSystemTemplate } from "@/lib/system-templates";
 
-type QueueType = "new" | "renewal" | "update";
+type QueueType = "new" | "renewal" | "update" | "link_join";
 
 interface QueueItem {
   user_id: string;
@@ -22,9 +22,11 @@ interface QueueItem {
   type: QueueType;
   detail: string;
   occurred_at: string; // ISO
+  /** id of queue_join_requests row, if applicable */
+  join_request_id?: string;
 }
 
-const PRIORITY: Record<QueueType, number> = { new: 1, renewal: 2, update: 3 };
+const PRIORITY: Record<QueueType, number> = { new: 1, renewal: 2, update: 3, link_join: 3 };
 
 const TYPE_META: Record<QueueType, { label: string; icon: any; cls: string; badgeCls: string }> = {
   new: {
@@ -44,6 +46,12 @@ const TYPE_META: Record<QueueType, { label: string; icon: any; cls: string; badg
     icon: TrendingUp,
     cls: "border-l-4 border-l-amber-500",
     badgeCls: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30",
+  },
+  link_join: {
+    label: "Solicitou atendimento",
+    icon: LinkIcon,
+    cls: "border-l-4 border-l-sky-500",
+    badgeCls: "bg-sky-500/15 text-sky-700 dark:text-sky-400 border-sky-500/30",
   },
 };
 
