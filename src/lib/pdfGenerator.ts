@@ -63,6 +63,90 @@ const isMealHeading = (line: string) =>
 const isSectionTitle = (line: string) =>
   /^(ROTINA\s*ALIMENTAR|PLANO\s*ALIMENTAR|DIETA)\b/i.test(line.trim());
 
+// ---------------- HTML parsing for faithful screen-like rendering ----------------
+
+const decodeEntities = (s: string) =>
+  s
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&[a-z0-9#]+;/gi, " ");
+
+const stripInlineTags = (html: string) =>
+  decodeEntities(
+    html
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/(p|div|h[1-6]|li)>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+  )
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n[ \t]+/g, "\n")
+    .trim();
+
+type HtmlBlock =
+  | { kind: "heading"; text: string }
+  | { kind: "para"; text: string }
+  | { kind: "ul"; items: string[] }
+  | { kind: "ol"; items: string[] };
+
+/** Extract structured blocks from a meal HTML chunk. */
+const parseMealHtml = (html: string): HtmlBlock[] => {
+  const blocks: HtmlBlock[] = [];
+  // Unwrap nested lists inside <li> so siblings don't get swallowed.
+  let normalized = html;
+  for (let i = 0; i < 3; i++) {
+    const before = normalized;
+    normalized = normalized.replace(
+      /<li\b[^>]*>((?:(?!<li\b|<\/li>)[\s\S])*?<(?:ol|ul)\b[\s\S]*?<\/(?:ol|ul)>(?:(?!<li\b|<\/li>)[\s\S])*?)<\/li>/gi,
+      "$1"
+    );
+    if (normalized === before) break;
+  }
+
+  const blockRe = /<(h[1-6]|ul|ol|p|div)\b([^>]*)>([\s\S]*?)<\/\1>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = blockRe.exec(normalized)) !== null) {
+    const tag = m[1].toLowerCase();
+    const inner = m[3];
+    if (/^h[1-6]$/.test(tag)) {
+      const text = stripInlineTags(inner);
+      if (text) blocks.push({ kind: "heading", text });
+    } else if (tag === "ul" || tag === "ol") {
+      const items: string[] = [];
+      const liRe = /<li\b[^>]*>([\s\S]*?)<\/li>/gi;
+      let liM: RegExpExecArray | null;
+      while ((liM = liRe.exec(inner)) !== null) {
+        // Skip <li>s that contain nested lists (they are unwrapped above)
+        if (/<(ol|ul)\b/i.test(liM[1])) continue;
+        const t = stripInlineTags(liM[1]);
+        if (!t) continue;
+        if (/^\s*(alimentos|substitui[cç][õo]es|op[cç][õo]es)\s*[:\-–]?\s*$/i.test(t)) continue;
+        items.push(t);
+      }
+      if (items.length) blocks.push({ kind: tag === "ol" ? "ol" : "ul", items });
+    } else {
+      // p / div — split lines
+      const text = stripInlineTags(inner);
+      if (!text) continue;
+      text
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean)
+        .forEach((line) => {
+          if (/^(alimenta[cç][ãa]o\s+(principal|base)|op[cç][õo]es|substitui[cç][õo]es|notas|observa[cç][õo]es)\b/i.test(line)) {
+            blocks.push({ kind: "heading", text: line });
+          } else {
+            blocks.push({ kind: "para", text: line });
+          }
+        });
+    }
+  }
+  return blocks;
+};
+
 // Quantity+unit regex for bolding
 const QTY_RE = /(\d+[.,\/]?\d*)\s*(g|gr|grama|gramas|kg|mg|mcg|ml|l|litro|litros|un|und|unidade|unidades|colher|colheres|xícara|xícaras|fatia|fatias|cápsula|cápsulas|cap|caps|scoop|scoops|dose|doses|gota|gotas|pedaço|pedaços|pote|potes|copo|copos|ovo|ovos|clara|claras|barra|barras|tablete|tabletes|lata|latas|sachê|saches|porção|porções)\b/gi;
 
@@ -234,6 +318,36 @@ export const generateStudentPDF = async (options: PDFContentOptions): Promise<Bl
 
   const lines = content.split('\n');
 
+  // Helper renderers shared across modes
+  const renderSubHeading = (text: string) => {
+    ensurePage(lineH * 2);
+    y += lineH * 0.4;
+    pdf.setFont('times', 'bold');
+    pdf.setFontSize(fontSize);
+    pdf.setTextColor(black);
+    const wrapped = pdf.splitTextToSize(text, cw);
+    for (const wl of wrapped) {
+      ensurePage();
+      pdf.text(wl, ml, y);
+      y += lineH;
+    }
+    y += 1;
+  };
+
+  const renderBodyLine = (text: string, indent = 0) => {
+    ensurePage();
+    const isNote = text.startsWith('(') && text.endsWith(')');
+    pdf.setFont('times', isNote ? 'bolditalic' : 'normal');
+    pdf.setFontSize(fontSize);
+    pdf.setTextColor(black);
+    const wrapped = pdf.splitTextToSize(text, cw - indent);
+    for (const wl of wrapped) {
+      ensurePage();
+      pdf.text(wl, ml + indent, y);
+      y += lineH;
+    }
+  };
+
   for (let i = 0; i < lines.length; i++) {
     const trimmed = lines[i].trim();
     if (!trimmed) {
@@ -242,6 +356,37 @@ export const generateStudentPDF = async (options: PDFContentOptions): Promise<Bl
     }
 
     if (isSectionTitle(trimmed)) continue;
+
+    // ----- Structured HTML block from screen -----
+    if (trimmed === '__HTML_BLOCK_START__') {
+      const buf: string[] = [];
+      i++;
+      while (i < lines.length && lines[i].trim() !== '__HTML_BLOCK_END__') {
+        buf.push(lines[i]);
+        i++;
+      }
+      const html = buf.join('\n');
+      const blocks = parseMealHtml(html);
+      for (const b of blocks) {
+        if (b.kind === 'heading') {
+          renderSubHeading(b.text);
+        } else if (b.kind === 'para') {
+          renderBodyLine(b.text);
+          y += 1;
+        } else if (b.kind === 'ul') {
+          for (const it of b.items) {
+            renderBodyLine(`• ${it}`, 4);
+            y += 0.5;
+          }
+        } else if (b.kind === 'ol') {
+          b.items.forEach((it, idx) => {
+            renderBodyLine(`${idx + 1}. ${it}`, 4);
+            y += 0.5;
+          });
+        }
+      }
+      continue;
+    }
 
     if (isMealHeading(trimmed)) {
       // Extra spacing before meal heading
