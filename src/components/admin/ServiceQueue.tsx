@@ -92,6 +92,14 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
         .gte("created_at", since)
         .order("created_at", { ascending: false });
 
+      // 2b. Solicitações de fila via link público (status waiting)
+      const { data: joinReqs } = await supabase
+        .from("queue_join_requests")
+        .select("id, student_user_id, student_name, status, joined_at")
+        .eq("status", "waiting")
+        .gte("joined_at", since)
+        .order("joined_at", { ascending: true });
+
       // 3. Dismissed (atendidos) — chave (user_id, type, occurred_at)
       const { data: dismissals } = await supabase
         .from("service_queue_dismissals")
@@ -105,6 +113,7 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
       const userIds = new Set<string>();
       (payments || []).forEach((p: any) => p.user_id && userIds.add(p.user_id));
       (evolutions || []).forEach((e: any) => e.student_user_id && userIds.add(e.student_user_id));
+      (joinReqs || []).forEach((j: any) => j.student_user_id && userIds.add(j.student_user_id));
 
       let ids = Array.from(userIds);
       if (allowedUserIds) {
@@ -158,6 +167,22 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
           type: "update",
           detail: parts.length ? `Atualização: ${parts.join(" + ")}` : "Atualização enviada",
           occurred_at: e.created_at,
+        });
+      });
+
+      (joinReqs || []).forEach((j: any) => {
+        if (!j.student_user_id) return;
+        if (allowedUserIds && !allowedUserIds.includes(j.student_user_id)) return;
+        const prof = pmap.get(j.student_user_id);
+        items.push({
+          user_id: j.student_user_id,
+          name: prof?.full_name || j.student_name || "Aluno",
+          email: prof?.email,
+          phone: prof?.phone,
+          type: "link_join",
+          detail: "Solicitou atendimento via link",
+          occurred_at: j.joined_at,
+          join_request_id: j.id,
         });
       });
 
