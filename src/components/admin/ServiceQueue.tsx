@@ -24,6 +24,8 @@ interface QueueItem {
   occurred_at: string; // ISO
   /** id of queue_join_requests row, if applicable */
   join_request_id?: string;
+  /** true when this entry came from an anonymous visitor (no account) */
+  is_visitor?: boolean;
 }
 
 const PRIORITY: Record<QueueType, number> = { new: 1, renewal: 2, update: 3, link_join: 3 };
@@ -95,7 +97,7 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
       // 2b. Solicitações de fila via link público (status waiting)
       const { data: joinReqs } = await supabase
         .from("queue_join_requests")
-        .select("id, student_user_id, student_name, status, joined_at")
+        .select("id, student_user_id, student_name, visitor_name, visitor_phone, source, status, joined_at")
         .eq("status", "waiting")
         .gte("joined_at", since)
         .order("joined_at", { ascending: true });
@@ -171,7 +173,22 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
       });
 
       (joinReqs || []).forEach((j: any) => {
-        if (!j.student_user_id) return;
+        // Visitor flow (sem cadastro): student_user_id is null
+        if (!j.student_user_id) {
+          // Consultor view: do not show anonymous visitors (they aren't linked)
+          if (allowedUserIds) return;
+          items.push({
+            user_id: `visitor:${j.id}`,
+            name: j.visitor_name || "Visitante",
+            phone: j.visitor_phone,
+            type: "link_join",
+            detail: "Novo visitante solicitou atendimento",
+            occurred_at: j.joined_at,
+            join_request_id: j.id,
+            is_visitor: true,
+          });
+          return;
+        }
         if (allowedUserIds && !allowedUserIds.includes(j.student_user_id)) return;
         const prof = pmap.get(j.student_user_id);
         items.push({
@@ -331,14 +348,20 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
                       <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground shrink-0" />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap min-w-0">
-                          <button
-                            type="button"
-                            onClick={() => navigate(`${manageBasePath}?manage=${it.user_id}`)}
-                            className="text-xs sm:text-sm font-medium truncate text-left hover:text-primary hover:underline transition-colors max-w-full"
-                            title="Abrir cadastro do aluno"
-                          >
-                            {it.name}
-                          </button>
+                         {it.is_visitor ? (
+                           <span className="text-xs sm:text-sm font-medium truncate max-w-full">
+                             {it.name}
+                           </span>
+                         ) : (
+                           <button
+                             type="button"
+                             onClick={() => navigate(`${manageBasePath}?manage=${it.user_id}`)}
+                             className="text-xs sm:text-sm font-medium truncate text-left hover:text-primary hover:underline transition-colors max-w-full"
+                             title="Abrir cadastro do aluno"
+                           >
+                             {it.name}
+                           </button>
+                         )}
                           <Badge variant="outline" className={`text-[8px] sm:text-[9px] px-1 py-0 ${meta.badgeCls}`}>
                             {meta.label}
                           </Badge>
@@ -353,21 +376,23 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
                             variant="ghost"
                             size="sm"
                             className="h-7 w-7 p-0 text-success shrink-0"
-                            onClick={() => openWhatsApp(it.phone, it.name, it.user_id)}
+                            onClick={() => openWhatsApp(it.phone, it.name, it.is_visitor ? undefined : it.user_id)}
                             title="WhatsApp"
                           >
                             <MessageCircle className="w-3.5 h-3.5" />
                           </Button>
                         )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 px-1.5 sm:px-2 text-[10px] sm:text-xs gap-1 shrink-0"
-                          onClick={() => navigate(`${manageBasePath}?manage=${it.user_id}`)}
-                        >
-                          <Settings className="w-3 h-3" />
-                          <span className="hidden sm:inline">Atender</span>
-                        </Button>
+                        {!it.is_visitor && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-1.5 sm:px-2 text-[10px] sm:text-xs gap-1 shrink-0"
+                            onClick={() => navigate(`${manageBasePath}?manage=${it.user_id}`)}
+                          >
+                            <Settings className="w-3 h-3" />
+                            <span className="hidden sm:inline">Atender</span>
+                          </Button>
+                        )}
                       </div>
                     </div>
                     <Button
