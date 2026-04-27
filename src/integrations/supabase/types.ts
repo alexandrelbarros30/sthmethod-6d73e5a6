@@ -1716,8 +1716,10 @@ export type Database = {
           source: string
           status: string
           student_name: string
-          student_user_id: string
+          student_user_id: string | null
           updated_at: string
+          visitor_name: string | null
+          visitor_phone: string | null
         }
         Insert: {
           called_at?: string | null
@@ -1728,8 +1730,10 @@ export type Database = {
           source?: string
           status?: string
           student_name?: string
-          student_user_id: string
+          student_user_id?: string | null
           updated_at?: string
+          visitor_name?: string | null
+          visitor_phone?: string | null
         }
         Update: {
           called_at?: string | null
@@ -1740,8 +1744,10 @@ export type Database = {
           source?: string
           status?: string
           student_name?: string
-          student_user_id?: string
+          student_user_id?: string | null
           updated_at?: string
+          visitor_name?: string | null
+          visitor_phone?: string | null
         }
         Relationships: []
       }
