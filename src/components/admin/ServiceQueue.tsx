@@ -291,6 +291,7 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
                 <Badge variant="outline" className={`px-1.5 py-0 ${TYPE_META.new.badgeCls}`}>Novos: {counts.new}</Badge>
                 <Badge variant="outline" className={`px-1.5 py-0 ${TYPE_META.renewal.badgeCls}`}>Renov: {counts.renewal}</Badge>
                 <Badge variant="outline" className={`px-1.5 py-0 ${TYPE_META.update.badgeCls}`}>Atual: {counts.update}</Badge>
+                <Badge variant="outline" className={`px-1.5 py-0 ${TYPE_META.link_join.badgeCls}`}>Link: {counts.link_join}</Badge>
               </div>
               <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${open ? "rotate-180" : ""}`} />
             </CardTitle>
@@ -379,6 +380,18 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
                     >
                       <Check className="w-3.5 h-3.5" /> Atendido
                     </Button>
+                    {it.type === "link_join" && it.join_request_id && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-2 ml-2 h-7 px-2 text-[11px] gap-1 border-sky-500/50 text-sky-700 dark:text-sky-400 hover:bg-sky-500/10"
+                        onClick={() => callMutation.mutate(it)}
+                        disabled={callMutation.isPending}
+                        title="Avisar aluno na tela: 'É a sua vez'"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" /> Avisar aluno
+                      </Button>
+                    )}
                   </div>
                 );
               })}
