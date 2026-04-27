@@ -348,14 +348,20 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
                       <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground shrink-0" />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap min-w-0">
-                          <button
-                            type="button"
-                            onClick={() => navigate(`${manageBasePath}?manage=${it.user_id}`)}
-                            className="text-xs sm:text-sm font-medium truncate text-left hover:text-primary hover:underline transition-colors max-w-full"
-                            title="Abrir cadastro do aluno"
-                          >
-                            {it.name}
-                          </button>
+                         {it.is_visitor ? (
+                           <span className="text-xs sm:text-sm font-medium truncate max-w-full">
+                             {it.name}
+                           </span>
+                         ) : (
+                           <button
+                             type="button"
+                             onClick={() => navigate(`${manageBasePath}?manage=${it.user_id}`)}
+                             className="text-xs sm:text-sm font-medium truncate text-left hover:text-primary hover:underline transition-colors max-w-full"
+                             title="Abrir cadastro do aluno"
+                           >
+                             {it.name}
+                           </button>
+                         )}
                           <Badge variant="outline" className={`text-[8px] sm:text-[9px] px-1 py-0 ${meta.badgeCls}`}>
                             {meta.label}
                           </Badge>
@@ -376,15 +382,17 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
                             <MessageCircle className="w-3.5 h-3.5" />
                           </Button>
                         )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 px-1.5 sm:px-2 text-[10px] sm:text-xs gap-1 shrink-0"
-                          onClick={() => navigate(`${manageBasePath}?manage=${it.user_id}`)}
-                        >
-                          <Settings className="w-3 h-3" />
-                          <span className="hidden sm:inline">Atender</span>
-                        </Button>
+                        {!it.is_visitor && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-1.5 sm:px-2 text-[10px] sm:text-xs gap-1 shrink-0"
+                            onClick={() => navigate(`${manageBasePath}?manage=${it.user_id}`)}
+                          >
+                            <Settings className="w-3 h-3" />
+                            <span className="hidden sm:inline">Atender</span>
+                          </Button>
+                        )}
                       </div>
                     </div>
                     <Button
