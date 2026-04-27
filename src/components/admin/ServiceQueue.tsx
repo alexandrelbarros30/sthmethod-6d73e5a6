@@ -218,6 +218,14 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
   const dismissMutation = useMutation({
     mutationFn: async (it: QueueItem) => {
       if (!user?.id) throw new Error("Sem usuário");
+      if (it.type === "link_join" && it.join_request_id) {
+        const { error } = await supabase
+          .from("queue_join_requests")
+          .update({ status: "done", done_at: new Date().toISOString() })
+          .eq("id", it.join_request_id);
+        if (error) throw error;
+        return;
+      }
       const { error } = await supabase.from("service_queue_dismissals").insert({
         user_id: it.user_id,
         type: it.type,
@@ -235,8 +243,26 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
     },
   });
 
+  const callMutation = useMutation({
+    mutationFn: async (it: QueueItem) => {
+      if (!it.join_request_id) throw new Error("Não é um pedido via link");
+      const { error } = await supabase
+        .from("queue_join_requests")
+        .update({ status: "called", called_at: new Date().toISOString() })
+        .eq("id", it.join_request_id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Aluno avisado", description: "Aluno verá 'É a sua vez' na tela." });
+      queryClient.invalidateQueries({ queryKey: ["service-queue"] });
+    },
+    onError: (e: any) => {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    },
+  });
+
   const counts = useMemo(() => {
-    const c = { new: 0, renewal: 0, update: 0 };
+    const c = { new: 0, renewal: 0, update: 0, link_join: 0 };
     items.forEach((i) => c[i.type]++);
     return c;
   }, [items]);
