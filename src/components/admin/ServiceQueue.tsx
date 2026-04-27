@@ -376,7 +376,7 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
                             variant="ghost"
                             size="sm"
                             className="h-7 w-7 p-0 text-success shrink-0"
-                            onClick={() => openWhatsApp(it.phone, it.name, it.user_id)}
+                            onClick={() => openWhatsApp(it.phone, it.name, it.is_visitor ? undefined : it.user_id)}
                             title="WhatsApp"
                           >
                             <MessageCircle className="w-3.5 h-3.5" />
