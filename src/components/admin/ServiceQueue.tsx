@@ -164,17 +164,17 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
         if (PRIORITY[it.type] < PRIORITY[cur.type]) {
           byUser.set(it.user_id, it);
         } else if (PRIORITY[it.type] === PRIORITY[cur.type]) {
-          // mesma prioridade: manter o mais recente
-          if (new Date(it.occurred_at) > new Date(cur.occurred_at)) byUser.set(it.user_id, it);
+          // mesma prioridade: manter o mais antigo (entrou antes na fila)
+          if (new Date(it.occurred_at) < new Date(cur.occurred_at)) byUser.set(it.user_id, it);
         }
       });
 
-      // Ordenar por data/hora desc (mais recente primeiro);
-      // empates de timestamp respeitam prioridade (Novo > Renovação > Atualização)
+      // Ordenar primeiro por PRIORIDADE (Novo > Renovação > Atualização);
+      // dentro de cada prioridade, mais antigos primeiro (FIFO — quem espera há mais tempo é atendido antes)
       return Array.from(byUser.values()).sort((a, b) => {
-        const diff = new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime();
-        if (diff !== 0) return diff;
-        return PRIORITY[a.type] - PRIORITY[b.type];
+        const pdiff = PRIORITY[a.type] - PRIORITY[b.type];
+        if (pdiff !== 0) return pdiff;
+        return new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime();
       });
     },
     refetchInterval: 60_000,
@@ -237,7 +237,7 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
             </CardTitle>
             {open && (
               <p className="text-[10px] sm:text-[11px] text-muted-foreground font-body leading-tight">
-                Últimos 7 dias · Mais recentes primeiro · Novo &gt; Renov &gt; Atual em empates
+                Últimos 7 dias · Prioridade: Novo &gt; Renov &gt; Atual · Mais antigos primeiro dentro de cada prioridade
               </p>
             )}
           </CardHeader>
