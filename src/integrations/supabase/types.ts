@@ -1706,6 +1706,66 @@ export type Database = {
         }
         Relationships: []
       }
+      queue_join_requests: {
+        Row: {
+          called_at: string | null
+          created_at: string
+          done_at: string | null
+          id: string
+          joined_at: string
+          source: string
+          status: string
+          student_name: string
+          student_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          called_at?: string | null
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          joined_at?: string
+          source?: string
+          status?: string
+          student_name?: string
+          student_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          called_at?: string | null
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          joined_at?: string
+          source?: string
+          status?: string
+          student_name?: string
+          student_user_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      queue_link_tokens: {
+        Row: {
+          created_at: string
+          id: string
+          student_user_id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          student_user_id: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          student_user_id?: string
+          token?: string
+        }
+        Relationships: []
+      }
       service_queue_dismissals: {
         Row: {
           dismissed_at: string

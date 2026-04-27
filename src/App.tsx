@@ -26,6 +26,7 @@ import GlowBlend from "./pages/GlowBlend";
 import Gestrinona from "./pages/Gestrinona";
 import Promo from "./pages/Promo";
 import EvolucaoPublica from "./pages/EvolucaoPublica";
+import FilaPublica from "./pages/FilaPublica";
 import StudentOverview from "./pages/student/StudentOverview";
 import StudentHub from "./pages/student/StudentHub";
 import StudentRecipes from "./pages/student/StudentRecipes";
@@ -114,6 +115,7 @@ const App = () => (
             <Route path="/promo" element={<Promo />} />
             <Route path="/promo/:slug" element={<Promo />} />
             <Route path="/evolucao" element={<EvolucaoPublica />} />
+            <Route path="/fila/:token" element={<FilaPublica />} />
             {/* Student routes */}
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["student"]}><StudentOverview /></ProtectedRoute>} />
             <Route path="/dashboard/hub" element={<ProtectedRoute allowedRoles={["student"]}><StudentHub /></ProtectedRoute>} />

@@ -9,10 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ListOrdered, UserPlus, RefreshCw, TrendingUp, Settings, MessageCircle, Check, ChevronDown } from "lucide-react";
+import { ListOrdered, UserPlus, RefreshCw, TrendingUp, Settings, MessageCircle, Check, ChevronDown, LinkIcon, Sparkles } from "lucide-react";
 import { sendSystemTemplate } from "@/lib/system-templates";
 
-type QueueType = "new" | "renewal" | "update";
+type QueueType = "new" | "renewal" | "update" | "link_join";
 
 interface QueueItem {
   user_id: string;
@@ -22,9 +22,11 @@ interface QueueItem {
   type: QueueType;
   detail: string;
   occurred_at: string; // ISO
+  /** id of queue_join_requests row, if applicable */
+  join_request_id?: string;
 }
 
-const PRIORITY: Record<QueueType, number> = { new: 1, renewal: 2, update: 3 };
+const PRIORITY: Record<QueueType, number> = { new: 1, renewal: 2, update: 3, link_join: 3 };
 
 const TYPE_META: Record<QueueType, { label: string; icon: any; cls: string; badgeCls: string }> = {
   new: {
@@ -44,6 +46,12 @@ const TYPE_META: Record<QueueType, { label: string; icon: any; cls: string; badg
     icon: TrendingUp,
     cls: "border-l-4 border-l-amber-500",
     badgeCls: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30",
+  },
+  link_join: {
+    label: "Solicitou atendimento",
+    icon: LinkIcon,
+    cls: "border-l-4 border-l-sky-500",
+    badgeCls: "bg-sky-500/15 text-sky-700 dark:text-sky-400 border-sky-500/30",
   },
 };
 
@@ -84,6 +92,14 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
         .gte("created_at", since)
         .order("created_at", { ascending: false });
 
+      // 2b. Solicitações de fila via link público (status waiting)
+      const { data: joinReqs } = await supabase
+        .from("queue_join_requests")
+        .select("id, student_user_id, student_name, status, joined_at")
+        .eq("status", "waiting")
+        .gte("joined_at", since)
+        .order("joined_at", { ascending: true });
+
       // 3. Dismissed (atendidos) — chave (user_id, type, occurred_at)
       const { data: dismissals } = await supabase
         .from("service_queue_dismissals")
@@ -97,6 +113,7 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
       const userIds = new Set<string>();
       (payments || []).forEach((p: any) => p.user_id && userIds.add(p.user_id));
       (evolutions || []).forEach((e: any) => e.student_user_id && userIds.add(e.student_user_id));
+      (joinReqs || []).forEach((j: any) => j.student_user_id && userIds.add(j.student_user_id));
 
       let ids = Array.from(userIds);
       if (allowedUserIds) {
@@ -153,6 +170,22 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
         });
       });
 
+      (joinReqs || []).forEach((j: any) => {
+        if (!j.student_user_id) return;
+        if (allowedUserIds && !allowedUserIds.includes(j.student_user_id)) return;
+        const prof = pmap.get(j.student_user_id);
+        items.push({
+          user_id: j.student_user_id,
+          name: prof?.full_name || j.student_name || "Aluno",
+          email: prof?.email,
+          phone: prof?.phone,
+          type: "link_join",
+          detail: "Solicitou atendimento via link",
+          occurred_at: j.joined_at,
+          join_request_id: j.id,
+        });
+      });
+
       // Dedup por user_id mantendo o de maior prioridade (menor número)
       const byUser = new Map<string, QueueItem>();
       items.forEach((it) => {
@@ -185,6 +218,14 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
   const dismissMutation = useMutation({
     mutationFn: async (it: QueueItem) => {
       if (!user?.id) throw new Error("Sem usuário");
+      if (it.type === "link_join" && it.join_request_id) {
+        const { error } = await supabase
+          .from("queue_join_requests")
+          .update({ status: "done", done_at: new Date().toISOString() })
+          .eq("id", it.join_request_id);
+        if (error) throw error;
+        return;
+      }
       const { error } = await supabase.from("service_queue_dismissals").insert({
         user_id: it.user_id,
         type: it.type,
@@ -202,8 +243,26 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
     },
   });
 
+  const callMutation = useMutation({
+    mutationFn: async (it: QueueItem) => {
+      if (!it.join_request_id) throw new Error("Não é um pedido via link");
+      const { error } = await supabase
+        .from("queue_join_requests")
+        .update({ status: "called", called_at: new Date().toISOString() })
+        .eq("id", it.join_request_id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Aluno avisado", description: "Aluno verá 'É a sua vez' na tela." });
+      queryClient.invalidateQueries({ queryKey: ["service-queue"] });
+    },
+    onError: (e: any) => {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    },
+  });
+
   const counts = useMemo(() => {
-    const c = { new: 0, renewal: 0, update: 0 };
+    const c = { new: 0, renewal: 0, update: 0, link_join: 0 };
     items.forEach((i) => c[i.type]++);
     return c;
   }, [items]);
@@ -232,6 +291,7 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
                 <Badge variant="outline" className={`px-1.5 py-0 ${TYPE_META.new.badgeCls}`}>Novos: {counts.new}</Badge>
                 <Badge variant="outline" className={`px-1.5 py-0 ${TYPE_META.renewal.badgeCls}`}>Renov: {counts.renewal}</Badge>
                 <Badge variant="outline" className={`px-1.5 py-0 ${TYPE_META.update.badgeCls}`}>Atual: {counts.update}</Badge>
+                <Badge variant="outline" className={`px-1.5 py-0 ${TYPE_META.link_join.badgeCls}`}>Link: {counts.link_join}</Badge>
               </div>
               <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${open ? "rotate-180" : ""}`} />
             </CardTitle>
@@ -320,6 +380,18 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
                     >
                       <Check className="w-3.5 h-3.5" /> Atendido
                     </Button>
+                    {it.type === "link_join" && it.join_request_id && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-2 ml-2 h-7 px-2 text-[11px] gap-1 border-sky-500/50 text-sky-700 dark:text-sky-400 hover:bg-sky-500/10"
+                        onClick={() => callMutation.mutate(it)}
+                        disabled={callMutation.isPending}
+                        title="Avisar aluno na tela: 'É a sua vez'"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" /> Avisar aluno
+                      </Button>
+                    )}
                   </div>
                 );
               })}
