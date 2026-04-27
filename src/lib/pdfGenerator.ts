@@ -63,6 +63,90 @@ const isMealHeading = (line: string) =>
 const isSectionTitle = (line: string) =>
   /^(ROTINA\s*ALIMENTAR|PLANO\s*ALIMENTAR|DIETA)\b/i.test(line.trim());
 
+// ---------------- HTML parsing for faithful screen-like rendering ----------------
+
+const decodeEntities = (s: string) =>
+  s
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&[a-z0-9#]+;/gi, " ");
+
+const stripInlineTags = (html: string) =>
+  decodeEntities(
+    html
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/(p|div|h[1-6]|li)>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+  )
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n[ \t]+/g, "\n")
+    .trim();
+
+type HtmlBlock =
+  | { kind: "heading"; text: string }
+  | { kind: "para"; text: string }
+  | { kind: "ul"; items: string[] }
+  | { kind: "ol"; items: string[] };
+
+/** Extract structured blocks from a meal HTML chunk. */
+const parseMealHtml = (html: string): HtmlBlock[] => {
+  const blocks: HtmlBlock[] = [];
+  // Unwrap nested lists inside <li> so siblings don't get swallowed.
+  let normalized = html;
+  for (let i = 0; i < 3; i++) {
+    const before = normalized;
+    normalized = normalized.replace(
+      /<li\b[^>]*>((?:(?!<li\b|<\/li>)[\s\S])*?<(?:ol|ul)\b[\s\S]*?<\/(?:ol|ul)>(?:(?!<li\b|<\/li>)[\s\S])*?)<\/li>/gi,
+      "$1"
+    );
+    if (normalized === before) break;
+  }
+
+  const blockRe = /<(h[1-6]|ul|ol|p|div)\b([^>]*)>([\s\S]*?)<\/\1>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = blockRe.exec(normalized)) !== null) {
+    const tag = m[1].toLowerCase();
+    const inner = m[3];
+    if (/^h[1-6]$/.test(tag)) {
+      const text = stripInlineTags(inner);
+      if (text) blocks.push({ kind: "heading", text });
+    } else if (tag === "ul" || tag === "ol") {
+      const items: string[] = [];
+      const liRe = /<li\b[^>]*>([\s\S]*?)<\/li>/gi;
+      let liM: RegExpExecArray | null;
+      while ((liM = liRe.exec(inner)) !== null) {
+        // Skip <li>s that contain nested lists (they are unwrapped above)
+        if (/<(ol|ul)\b/i.test(liM[1])) continue;
+        const t = stripInlineTags(liM[1]);
+        if (!t) continue;
+        if (/^\s*(alimentos|substitui[cç][õo]es|op[cç][õo]es)\s*[:\-–]?\s*$/i.test(t)) continue;
+        items.push(t);
+      }
+      if (items.length) blocks.push({ kind: tag === "ol" ? "ol" : "ul", items });
+    } else {
+      // p / div — split lines
+      const text = stripInlineTags(inner);
+      if (!text) continue;
+      text
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean)
+        .forEach((line) => {
+          if (/^(alimenta[cç][ãa]o\s+(principal|base)|op[cç][õo]es|substitui[cç][õo]es|notas|observa[cç][õo]es)\b/i.test(line)) {
+            blocks.push({ kind: "heading", text: line });
+          } else {
+            blocks.push({ kind: "para", text: line });
+          }
+        });
+    }
+  }
+  return blocks;
+};
+
 // Quantity+unit regex for bolding
 const QTY_RE = /(\d+[.,\/]?\d*)\s*(g|gr|grama|gramas|kg|mg|mcg|ml|l|litro|litros|un|und|unidade|unidades|colher|colheres|xícara|xícaras|fatia|fatias|cápsula|cápsulas|cap|caps|scoop|scoops|dose|doses|gota|gotas|pedaço|pedaços|pote|potes|copo|copos|ovo|ovos|clara|claras|barra|barras|tablete|tabletes|lata|latas|sachê|saches|porção|porções)\b/gi;
 
