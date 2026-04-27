@@ -318,6 +318,36 @@ export const generateStudentPDF = async (options: PDFContentOptions): Promise<Bl
 
   const lines = content.split('\n');
 
+  // Helper renderers shared across modes
+  const renderSubHeading = (text: string) => {
+    ensurePage(lineH * 2);
+    y += lineH * 0.4;
+    pdf.setFont('times', 'bold');
+    pdf.setFontSize(fontSize);
+    pdf.setTextColor(black);
+    const wrapped = pdf.splitTextToSize(text, cw);
+    for (const wl of wrapped) {
+      ensurePage();
+      pdf.text(wl, ml, y);
+      y += lineH;
+    }
+    y += 1;
+  };
+
+  const renderBodyLine = (text: string, indent = 0) => {
+    ensurePage();
+    const isNote = text.startsWith('(') && text.endsWith(')');
+    pdf.setFont('times', isNote ? 'bolditalic' : 'normal');
+    pdf.setFontSize(fontSize);
+    pdf.setTextColor(black);
+    const wrapped = pdf.splitTextToSize(text, cw - indent);
+    for (const wl of wrapped) {
+      ensurePage();
+      pdf.text(wl, ml + indent, y);
+      y += lineH;
+    }
+  };
+
   for (let i = 0; i < lines.length; i++) {
     const trimmed = lines[i].trim();
     if (!trimmed) {
@@ -326,6 +356,37 @@ export const generateStudentPDF = async (options: PDFContentOptions): Promise<Bl
     }
 
     if (isSectionTitle(trimmed)) continue;
+
+    // ----- Structured HTML block from screen -----
+    if (trimmed === '__HTML_BLOCK_START__') {
+      const buf: string[] = [];
+      i++;
+      while (i < lines.length && lines[i].trim() !== '__HTML_BLOCK_END__') {
+        buf.push(lines[i]);
+        i++;
+      }
+      const html = buf.join('\n');
+      const blocks = parseMealHtml(html);
+      for (const b of blocks) {
+        if (b.kind === 'heading') {
+          renderSubHeading(b.text);
+        } else if (b.kind === 'para') {
+          renderBodyLine(b.text);
+          y += 1;
+        } else if (b.kind === 'ul') {
+          for (const it of b.items) {
+            renderBodyLine(`• ${it}`, 4);
+            y += 0.5;
+          }
+        } else if (b.kind === 'ol') {
+          b.items.forEach((it, idx) => {
+            renderBodyLine(`${idx + 1}. ${it}`, 4);
+            y += 0.5;
+          });
+        }
+      }
+      continue;
+    }
 
     if (isMealHeading(trimmed)) {
       // Extra spacing before meal heading
