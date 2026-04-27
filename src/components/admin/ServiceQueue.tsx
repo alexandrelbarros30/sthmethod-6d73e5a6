@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ListOrdered, UserPlus, RefreshCw, TrendingUp, Settings, MessageCircle, Check, ChevronDown, LinkIcon } from "lucide-react";
+import { ListOrdered, UserPlus, RefreshCw, TrendingUp, Settings, MessageCircle, Check, ChevronDown, LinkIcon, Sparkles } from "lucide-react";
 import { sendSystemTemplate } from "@/lib/system-templates";
 
 type QueueType = "new" | "renewal" | "update" | "link_join";
