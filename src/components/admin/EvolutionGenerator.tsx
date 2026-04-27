@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ImagePlus, Download, Loader2, ZoomIn, RotateCcw, Move, Link2, Crop } from "lucide-react";
+import { ImagePlus, Loader2, ZoomIn, RotateCcw, Move, Link2, Crop } from "lucide-react";
 import evolutionFrame from "@/assets/evolution-frame.png";
 import { getSecureFileUrl, extractStoragePath } from "@/lib/secure-file-url";
 import InteractiveCropper from "@/components/shared/InteractiveCropper";
@@ -397,17 +397,7 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
     setGenerating(false);
   };
 
-  const handleDownload = (dataUrl: string, index: number) => {
-    const link = document.createElement("a");
-    const labelType = previewLabels[index] || IMAGE_TYPES[index] || `img_${index}`;
-    link.download = `evolucao_${studentName.replace(/\s+/g, "_")}_${labelType}.jpg`;
-    link.href = dataUrl;
-    link.click();
-  };
-
-  const handleDownloadAll = () => {
-    previews.forEach((p, i) => handleDownload(p, i));
-  };
+  // Download de imagens de evolução desabilitado para Admin/Consultor (proteção de conteúdo).
 
   return (
     <Card>
@@ -701,9 +691,7 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-muted-foreground">Resultado</p>
-              <Button variant="outline" size="sm" onClick={handleDownloadAll}>
-                <Download className="w-3 h-3 mr-1" /> Baixar Todas
-              </Button>
+              <span className="text-[10px] text-muted-foreground italic">Visualização apenas</span>
             </div>
             <div className="grid grid-cols-1 gap-3">
               {previews.map((src, i) => (
@@ -711,16 +699,10 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
                   <img
                     src={src}
                     alt={`Evolução ${TYPE_LABELS[previewLabels[i]] || ""}`}
-                    className="w-full rounded-lg border border-border"
+                    className="w-full rounded-lg border border-border select-none pointer-events-none"
+                    draggable={false}
+                    onContextMenu={(e) => e.preventDefault()}
                   />
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => handleDownload(src, i)}
-                  >
-                    <Download className="w-3 h-3" />
-                  </Button>
                 </div>
               ))}
             </div>
