@@ -369,6 +369,16 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
                         <p className="text-[10px] sm:text-[11px] text-muted-foreground truncate">
                           {it.detail} · {whenLabel}
                         </p>
+                        {it.is_visitor && it.phone && (
+                          <a
+                            href={`https://wa.me/55${it.phone.replace(/\D/g, "")}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] sm:text-[11px] font-mono text-emerald-600 hover:underline"
+                          >
+                            📱 {it.phone}
+                          </a>
+                        )}
                       </div>
                       <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
                         {it.phone && (
@@ -376,7 +386,14 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
                             variant="ghost"
                             size="sm"
                             className="h-7 w-7 p-0 text-success shrink-0"
-                            onClick={() => openWhatsApp(it.phone, it.name, it.is_visitor ? undefined : it.user_id)}
+                            onClick={() => {
+                              if (it.is_visitor) {
+                                const digits = (it.phone || "").replace(/\D/g, "");
+                                window.open(`https://wa.me/55${digits}`, "_blank", "noopener,noreferrer");
+                              } else {
+                                openWhatsApp(it.phone, it.name, it.user_id);
+                              }
+                            }}
                             title="WhatsApp"
                           >
                             <MessageCircle className="w-3.5 h-3.5" />
