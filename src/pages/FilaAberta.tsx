@@ -21,6 +21,7 @@ const FilaAberta = () => {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [submittedName, setSubmittedName] = useState("");
+  const [submittedPhone, setSubmittedPhone] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +42,7 @@ const FilaAberta = () => {
       });
       if (error) throw error;
       setSubmittedName(parsed.data.name.split(" ")[0]);
+      setSubmittedPhone(phoneDigits);
       setDone(true);
     } catch (err: any) {
       toast({ title: "Erro ao entrar na fila", description: err.message, variant: "destructive" });
@@ -92,9 +94,15 @@ const FilaAberta = () => {
                   <strong>Não é necessário enviar mensagens agora</strong> — pode fechar essa tela tranquilamente.
                 </p>
                 <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
-                <Link to="/">
-                  <Button variant="ghost" size="sm" className="text-xs">Voltar ao site</Button>
-                </Link>
+                <a
+                  href={`https://wa.me/55${submittedPhone}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button variant="ghost" size="sm" className="text-xs">
+                    Voltar ao WhatsApp
+                  </Button>
+                </a>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
