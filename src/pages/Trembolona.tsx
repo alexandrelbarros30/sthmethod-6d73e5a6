@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft, Newspaper, Home, Sparkles, Activity, Shield, Layers,
-  AlertTriangle, Zap, Heart, Flame, Pill, Beaker, Target,
+  AlertTriangle, Zap, Heart, Flame, Pill, Beaker, Target, Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
