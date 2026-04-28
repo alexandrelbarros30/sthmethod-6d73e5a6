@@ -314,7 +314,7 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
             </CardTitle>
             {open && (
               <p className="text-[10px] sm:text-[11px] text-muted-foreground font-body leading-tight">
-                Últimos 7 dias · Prioridade: Novo &gt; Renov &gt; Atual · Mais antigos primeiro dentro de cada prioridade
+                Últimos 7 dias · Prioridade: Novo &gt; Renov &gt; Atual · Dentro de cada prioridade, da data mais antiga para a mais nova (FIFO)
               </p>
             )}
           </CardHeader>
