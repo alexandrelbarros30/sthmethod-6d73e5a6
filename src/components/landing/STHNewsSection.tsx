@@ -8,8 +8,18 @@ import masteronImg from "@/assets/sthnews-masteron-glass-1.jpg";
 import glowImg from "@/assets/sthnews-glow-hero.jpg";
 import gestrinonaImg from "@/assets/sthnews-gestrinona-hero.jpg";
 import platoImg from "@/assets/sthnews-plato-hero.jpg";
+import trembolonaImg from "@/assets/sthnews-trembolona-hero.jpg";
 
 const articles = [
+  {
+    to: "/tendencias/trembolona",
+    tag: "CAPA",
+    tagClass: "bg-primary text-primary-foreground",
+    date: "Nova matéria",
+    title: "🧬 Trembolona: a arquitetura corporal no patamar de elite",
+    desc: "Densidade, secura e detalhamento — o manejo clínico que entrega o próximo nível.",
+    img: trembolonaImg,
+  },
   {
     to: "/tendencias/plato-metabolico",
     tag: "CAPA",
