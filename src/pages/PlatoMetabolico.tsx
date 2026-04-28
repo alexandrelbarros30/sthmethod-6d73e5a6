@@ -67,9 +67,16 @@ const PlatoMetabolico = () => {
           initial="hidden" animate="visible" variants={fadeUp} custom={1}
           className="text-2xl md:text-4xl font-black text-foreground leading-[1.12] mb-3 tracking-tight"
         >
-          🧬 Platô Metabólico:{" "}
-          <span className="gradient-text">a constelação de marcadores que destrava o emagrecimento real</span>
+          Por que seu corpo parou de emagrecer{" "}
+          <span className="gradient-text">(mesmo fazendo tudo certo)</span>
         </motion.h1>
+
+        <motion.p
+          initial="hidden" animate="visible" variants={fadeUp} custom={1}
+          className="text-[11px] font-black tracking-[0.25em] text-primary uppercase mb-3"
+        >
+          Platô Metabólico
+        </motion.p>
 
         <motion.p
           initial="hidden" animate="visible" variants={fadeUp} custom={2}

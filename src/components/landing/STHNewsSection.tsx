@@ -15,8 +15,8 @@ const articles = [
     tag: "CAPA",
     tagClass: "bg-primary text-primary-foreground",
     date: "Nova matéria",
-    title: "🧬 Platô Metabólico: a constelação de marcadores que destrava o emagrecimento real",
-    desc: "Não é menos comida — é mais saúde metabólica.",
+    title: "Por que seu corpo parou de emagrecer (mesmo fazendo tudo certo)",
+    desc: "Platô Metabólico — não é menos comida, é mais saúde metabólica.",
     img: platoImg,
   },
   {
