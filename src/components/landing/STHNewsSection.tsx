@@ -7,8 +7,18 @@ import triadeImg from "@/assets/sthnews-triade-thumb.jpg";
 import masteronImg from "@/assets/sthnews-masteron-glass-1.jpg";
 import glowImg from "@/assets/sthnews-glow-hero.jpg";
 import gestrinonaImg from "@/assets/sthnews-gestrinona-hero.jpg";
+import platoImg from "@/assets/sthnews-plato-hero.jpg";
 
 const articles = [
+  {
+    to: "/tendencias/plato-metabolico",
+    tag: "CAPA",
+    tagClass: "bg-primary text-primary-foreground",
+    date: "Nova matéria",
+    title: "🧬 Platô Metabólico: a constelação de marcadores que destrava o emagrecimento real",
+    desc: "Não é menos comida — é mais saúde metabólica.",
+    img: platoImg,
+  },
   {
     to: "/tendencias/gestrinona",
     tag: "EXCLUSIVO",
