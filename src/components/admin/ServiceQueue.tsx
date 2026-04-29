@@ -350,6 +350,70 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
         </CollapsibleTrigger>
         <CollapsibleContent>
           <CardContent className="pt-0 px-2 sm:px-6">
+        <div className="flex flex-col gap-2 mb-3 pb-3 border-b border-border/50">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Filter className="w-3 h-3 text-muted-foreground shrink-0" />
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium mr-1">Tipo:</span>
+            <ToggleGroup
+              type="multiple"
+              value={typeFilters}
+              onValueChange={(v) => setTypeFilters(v as QueueType[])}
+              className="flex flex-wrap gap-1"
+            >
+              {(Object.keys(TYPE_META) as QueueType[]).map((t) => (
+                <ToggleGroupItem
+                  key={t}
+                  value={t}
+                  size="sm"
+                  className={`h-6 px-2 text-[10px] data-[state=on]:${TYPE_META[t].badgeCls.split(" ")[0]} data-[state=on]:border-primary`}
+                >
+                  {TYPE_META[t].label}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+            {typeFilters.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-1.5 text-[10px] text-muted-foreground"
+                onClick={() => setTypeFilters([])}
+              >
+                Limpar
+              </Button>
+            )}
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <ArrowUpDown className="w-3 h-3 text-muted-foreground shrink-0" />
+              <span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium">Ordem:</span>
+              <Select value={sortMode} onValueChange={(v) => setSortMode(v as any)}>
+                <SelectTrigger className="h-7 text-[11px] w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="priority_fifo">Prioridade · Antigos primeiro</SelectItem>
+                  <SelectItem value="priority_lifo">Prioridade · Recentes primeiro</SelectItem>
+                  <SelectItem value="oldest">Apenas data · Mais antigos</SelectItem>
+                  <SelectItem value="newest">Apenas data · Mais recentes</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium">Período:</span>
+              <Select value={dateRange} onValueChange={(v) => setDateRange(v as any)}>
+                <SelectTrigger className="h-7 text-[11px] w-[110px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">24 horas</SelectItem>
+                  <SelectItem value="3">3 dias</SelectItem>
+                  <SelectItem value="7">7 dias</SelectItem>
+                  <SelectItem value="30">30 dias</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
         {isLoading ? (
           <p className="text-sm text-muted-foreground py-4 text-center">Carregando fila...</p>
         ) : items.length === 0 ? (
