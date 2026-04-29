@@ -96,12 +96,22 @@ type HtmlBlock =
 const parseMealHtml = (html: string): HtmlBlock[] => {
   const blocks: HtmlBlock[] = [];
   // Unwrap nested lists inside <li> so siblings don't get swallowed.
+  // We must PRESERVE any text/inline content that appears in the parent <li>
+  // BEFORE the nested list (this is the "base"/"alimentação principal" item).
+  // Strategy: wrap the leading text in <p>...</p> so the main blockRe captures it,
+  // then keep the nested list as its own block.
   let normalized = html;
   for (let i = 0; i < 3; i++) {
     const before = normalized;
     normalized = normalized.replace(
-      /<li\b[^>]*>((?:(?!<li\b|<\/li>)[\s\S])*?<(?:ol|ul)\b[\s\S]*?<\/(?:ol|ul)>(?:(?!<li\b|<\/li>)[\s\S])*?)<\/li>/gi,
-      "$1"
+      /<li\b[^>]*>([\s\S]*?)(<(?:ol|ul)\b[\s\S]*?<\/(?:ol|ul)>)([\s\S]*?)<\/li>/gi,
+      (_full, pre: string, nested: string, post: string) => {
+        const preTrim = pre.replace(/\s+/g, " ").trim();
+        const postTrim = post.replace(/\s+/g, " ").trim();
+        const preBlock = preTrim ? `<p>${preTrim}</p>` : "";
+        const postBlock = postTrim ? `<p>${postTrim}</p>` : "";
+        return `${preBlock}${nested}${postBlock}`;
+      }
     );
     if (normalized === before) break;
   }
