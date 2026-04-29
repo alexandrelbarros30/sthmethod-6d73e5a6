@@ -66,7 +66,10 @@ const StudentSubscription = () => {
   const isOnboarded = profile?.onboarding_complete;
   const profileComplete = profile?.full_name && profile?.phone && profile?.height && profile?.weight && profile?.physical_activity && profile?.objective && profile?.current_protocol && profile?.comorbidities;
 
-  const needsOnboarding = !isOnboarded && !isActive;
+  // Renewal: if the student already has any subscription (even expired),
+  // skip onboarding gate so they can pay/renew without re-completing the cadastro.
+  const isRenewing = !!subscription;
+  const needsOnboarding = !isOnboarded && !isActive && !isRenewing;
   const effectiveOnboardingStep = needsOnboarding
     ? (!profileComplete ? 1 : 3)
     : onboardingStep;
