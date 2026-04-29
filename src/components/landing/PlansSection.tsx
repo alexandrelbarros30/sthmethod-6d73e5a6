@@ -81,23 +81,7 @@ const PlansSection = () => {
                   <span className="text-4xl font-display font-bold gradient-text">{plan.price}</span>
                   <span className="text-muted-foreground text-sm">/ {plan.duration}</span>
                 </div>
-                {plan.card_price && (() => {
-                  const cardNum = parseFloat(
-                    String(plan.card_price).replace(/[^\d,\.]/g, "").replace(",", ".")
-                  ) || 0;
-                  const maxInst = plan.duration_days >= 180 ? 6 : plan.duration_days >= 90 ? 3 : 1;
-                  const inst = (cardNum / maxInst).toLocaleString("pt-BR", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  });
-                  return (
-                    <p className="text-xs text-muted-foreground mb-4">
-                      {maxInst > 1
-                        ? `ou ${plan.card_price} no cartão em até ${maxInst}x de R$ ${inst}`
-                        : `ou ${plan.card_price} no cartão à vista`}
-                    </p>
-                  );
-                })()}
+                <div className="mb-4" />
                 <ul className="space-y-3 mb-8">
                   {plan.benefits?.map((f: string) => (
                     <li key={f} className="flex items-center gap-2 text-sm text-secondary-foreground">
