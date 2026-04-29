@@ -225,18 +225,41 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
         }
       });
 
-      // Ordenar primeiro por PRIORIDADE (Novo > Renovação > Atualização);
-      // dentro de cada prioridade, mais antigos primeiro (FIFO — quem espera há mais tempo é atendido antes)
-      return Array.from(byUser.values()).sort((a, b) => {
-        const pdiff = PRIORITY[a.type] - PRIORITY[b.type];
-        if (pdiff !== 0) return pdiff;
-        return new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime();
-      });
+      return Array.from(byUser.values());
     },
     refetchInterval: 60_000,
   });
 
-  const items = data || [];
+  const allItems = data || [];
+
+  const items = useMemo(() => {
+    let arr = [...allItems];
+    if (typeFilters.length > 0) {
+      arr = arr.filter((it) => typeFilters.includes(it.type));
+    }
+    arr.sort((a, b) => {
+      const ta = new Date(a.occurred_at).getTime();
+      const tb = new Date(b.occurred_at).getTime();
+      switch (sortMode) {
+        case "oldest":
+          return ta - tb;
+        case "newest":
+          return tb - ta;
+        case "priority_lifo": {
+          const pdiff = PRIORITY[a.type] - PRIORITY[b.type];
+          if (pdiff !== 0) return pdiff;
+          return tb - ta;
+        }
+        case "priority_fifo":
+        default: {
+          const pdiff = PRIORITY[a.type] - PRIORITY[b.type];
+          if (pdiff !== 0) return pdiff;
+          return ta - tb;
+        }
+      }
+    });
+    return arr;
+  }, [allItems, typeFilters, sortMode]);
 
   const dismissMutation = useMutation({
     mutationFn: async (it: QueueItem) => {
