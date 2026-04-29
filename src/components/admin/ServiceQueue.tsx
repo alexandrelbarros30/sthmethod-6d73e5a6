@@ -9,7 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ListOrdered, UserPlus, RefreshCw, TrendingUp, Settings, MessageCircle, Check, ChevronDown, LinkIcon, Sparkles } from "lucide-react";
+import { ListOrdered, UserPlus, RefreshCw, TrendingUp, Settings, MessageCircle, Check, ChevronDown, LinkIcon, Sparkles, Filter, ArrowUpDown } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { sendSystemTemplate } from "@/lib/system-templates";
 
 type QueueType = "new" | "renewal" | "update" | "link_join";
@@ -73,11 +75,15 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [typeFilters, setTypeFilters] = useState<QueueType[]>([]);
+  const [sortMode, setSortMode] = useState<"priority_fifo" | "priority_lifo" | "oldest" | "newest">("priority_fifo");
+  const [dateRange, setDateRange] = useState<"1" | "3" | "7" | "30">("7");
 
   const { data, isLoading } = useQuery({
-    queryKey: ["service-queue", allowedUserIds?.join(",") || "all"],
+    queryKey: ["service-queue", allowedUserIds?.join(",") || "all", dateRange],
     queryFn: async () => {
-      const since = sevenDaysAgoISO();
+      const days = parseInt(dateRange, 10);
+      const since = new Date(Date.now() - days * 86400000).toISOString();
 
       // 1. Approved payments in last 7 days (new + renewal)
       const { data: payments } = await supabase
@@ -219,18 +225,41 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
         }
       });
 
-      // Ordenar primeiro por PRIORIDADE (Novo > Renovação > Atualização);
-      // dentro de cada prioridade, mais antigos primeiro (FIFO — quem espera há mais tempo é atendido antes)
-      return Array.from(byUser.values()).sort((a, b) => {
-        const pdiff = PRIORITY[a.type] - PRIORITY[b.type];
-        if (pdiff !== 0) return pdiff;
-        return new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime();
-      });
+      return Array.from(byUser.values());
     },
     refetchInterval: 60_000,
   });
 
-  const items = data || [];
+  const allItems = data || [];
+
+  const items = useMemo(() => {
+    let arr = [...allItems];
+    if (typeFilters.length > 0) {
+      arr = arr.filter((it) => typeFilters.includes(it.type));
+    }
+    arr.sort((a, b) => {
+      const ta = new Date(a.occurred_at).getTime();
+      const tb = new Date(b.occurred_at).getTime();
+      switch (sortMode) {
+        case "oldest":
+          return ta - tb;
+        case "newest":
+          return tb - ta;
+        case "priority_lifo": {
+          const pdiff = PRIORITY[a.type] - PRIORITY[b.type];
+          if (pdiff !== 0) return pdiff;
+          return tb - ta;
+        }
+        case "priority_fifo":
+        default: {
+          const pdiff = PRIORITY[a.type] - PRIORITY[b.type];
+          if (pdiff !== 0) return pdiff;
+          return ta - tb;
+        }
+      }
+    });
+    return arr;
+  }, [allItems, typeFilters, sortMode]);
 
   const dismissMutation = useMutation({
     mutationFn: async (it: QueueItem) => {
@@ -321,6 +350,70 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
         </CollapsibleTrigger>
         <CollapsibleContent>
           <CardContent className="pt-0 px-2 sm:px-6">
+        <div className="flex flex-col gap-2 mb-3 pb-3 border-b border-border/50">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Filter className="w-3 h-3 text-muted-foreground shrink-0" />
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium mr-1">Tipo:</span>
+            <ToggleGroup
+              type="multiple"
+              value={typeFilters}
+              onValueChange={(v) => setTypeFilters(v as QueueType[])}
+              className="flex flex-wrap gap-1"
+            >
+              {(Object.keys(TYPE_META) as QueueType[]).map((t) => (
+                <ToggleGroupItem
+                  key={t}
+                  value={t}
+                  size="sm"
+                  className={`h-6 px-2 text-[10px] data-[state=on]:${TYPE_META[t].badgeCls.split(" ")[0]} data-[state=on]:border-primary`}
+                >
+                  {TYPE_META[t].label}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+            {typeFilters.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-1.5 text-[10px] text-muted-foreground"
+                onClick={() => setTypeFilters([])}
+              >
+                Limpar
+              </Button>
+            )}
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <ArrowUpDown className="w-3 h-3 text-muted-foreground shrink-0" />
+              <span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium">Ordem:</span>
+              <Select value={sortMode} onValueChange={(v) => setSortMode(v as any)}>
+                <SelectTrigger className="h-7 text-[11px] w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="priority_fifo">Prioridade · Antigos primeiro</SelectItem>
+                  <SelectItem value="priority_lifo">Prioridade · Recentes primeiro</SelectItem>
+                  <SelectItem value="oldest">Apenas data · Mais antigos</SelectItem>
+                  <SelectItem value="newest">Apenas data · Mais recentes</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium">Período:</span>
+              <Select value={dateRange} onValueChange={(v) => setDateRange(v as any)}>
+                <SelectTrigger className="h-7 text-[11px] w-[110px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">24 horas</SelectItem>
+                  <SelectItem value="3">3 dias</SelectItem>
+                  <SelectItem value="7">7 dias</SelectItem>
+                  <SelectItem value="30">30 dias</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
         {isLoading ? (
           <p className="text-sm text-muted-foreground py-4 text-center">Carregando fila...</p>
         ) : items.length === 0 ? (
