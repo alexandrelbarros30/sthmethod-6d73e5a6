@@ -75,11 +75,15 @@ const ServiceQueue = ({ allowedUserIds, compact = false, manageBasePath = "/admi
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [typeFilters, setTypeFilters] = useState<QueueType[]>([]);
+  const [sortMode, setSortMode] = useState<"priority_fifo" | "priority_lifo" | "oldest" | "newest">("priority_fifo");
+  const [dateRange, setDateRange] = useState<"1" | "3" | "7" | "30">("7");
 
   const { data, isLoading } = useQuery({
-    queryKey: ["service-queue", allowedUserIds?.join(",") || "all"],
+    queryKey: ["service-queue", allowedUserIds?.join(",") || "all", dateRange],
     queryFn: async () => {
-      const since = sevenDaysAgoISO();
+      const days = parseInt(dateRange, 10);
+      const since = new Date(Date.now() - days * 86400000).toISOString();
 
       // 1. Approved payments in last 7 days (new + renewal)
       const { data: payments } = await supabase
