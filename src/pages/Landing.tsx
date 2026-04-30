@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import heroBgFallback from "@/assets/hero-clients.jpg";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Calculator, Sparkles, Info } from "lucide-react";
+import { Menu, X, Calculator, Sparkles } from "lucide-react";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import ResultsSection from "@/components/landing/ResultsSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
@@ -40,14 +40,6 @@ const Landing = () => {
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupDismissed, setPopupDismissed] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [noticeOpen, setNoticeOpen] = useState(() => {
-    if (typeof window === "undefined") return true;
-    return localStorage.getItem("dns-notice-dismissed-v1") !== "1";
-  });
-  const dismissNotice = () => {
-    setNoticeOpen(false);
-    try { localStorage.setItem("dns-notice-dismissed-v1", "1"); } catch {}
-  };
 
   // Track scroll for navbar background
   useEffect(() => {
@@ -167,29 +159,6 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen bg-background overflow-hidden">
-      {/* Aviso temporário de instabilidade de domínio */}
-      {noticeOpen && (
-        <div
-          className="fixed top-0 left-0 right-0 z-[60] bg-amber-500/95 text-black backdrop-blur-md border-b border-amber-600/50"
-          style={{ paddingTop: 'env(safe-area-inset-top)' }}
-          role="alert"
-        >
-          <div className="max-w-7xl mx-auto px-4 py-2 flex items-start sm:items-center gap-3">
-            <Info className="w-4 h-4 shrink-0 mt-0.5 sm:mt-0" />
-            <p className="text-xs sm:text-sm font-body leading-snug flex-1">
-              <strong className="font-bold">Aviso:</strong> estamos ajustando o domínio <strong>sthmethod.com.br</strong>. Seu acesso, dados e assinatura estão <strong>100% seguros</strong>. Use o link atual <a href="https://sthmethod.lovable.app" className="underline font-semibold">sthmethod.lovable.app</a> normalmente. Tudo voltará ao normal em poucas horas.
-            </p>
-            <button
-              onClick={dismissNotice}
-              aria-label="Fechar aviso"
-              className="shrink-0 p-1 rounded hover:bg-black/10 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Navbar */}
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-background/90 backdrop-blur-xl shadow-lg border-b border-border/50' : 'bg-transparent backdrop-blur-sm'}`}
