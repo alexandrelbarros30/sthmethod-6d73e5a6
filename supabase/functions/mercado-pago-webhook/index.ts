@@ -67,17 +67,26 @@ function isPaymentNotification(body: any): boolean {
 
 async function activateSubscriptionForPayment(supabase: any, payment: any) {
   const startDate = new Date();
-  const endDate = new Date();
   const durationDays = payment?.plans?.duration_days || 30;
-  endDate.setDate(endDate.getDate() + durationDays);
 
   const { data: existingSub } = await supabase
     .from("subscriptions")
-    .select("id")
+    .select("id, end_date, status")
     .eq("user_id", payment.user_id)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+
+  // If renewing before expiry, carry over remaining days
+  let baseDate = new Date(startDate);
+  if (existingSub?.end_date) {
+    const currentEnd = new Date(existingSub.end_date + "T23:59:59");
+    if (currentEnd > startDate && existingSub.status === "active") {
+      baseDate = currentEnd;
+    }
+  }
+  const endDate = new Date(baseDate);
+  endDate.setDate(endDate.getDate() + durationDays);
 
   if (existingSub) {
     await supabase.from("subscriptions").update({
