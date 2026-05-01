@@ -88,7 +88,9 @@ const StudentEvolution = () => {
 
     setSaving(true);
     try {
-      const newWeight = weight ? Number(weight) : Number(fullProfile?.weight);
+      const hasNewWeight = Boolean(weight);
+      const currentStoredWeight = fullProfile?.weight ? Number(fullProfile.weight) : null;
+      const newWeight = hasNewWeight ? Number(weight) : currentStoredWeight;
 
       if (weight) {
         const { error } = await supabase.from("weight_logs").insert({
@@ -112,7 +114,7 @@ const StudentEvolution = () => {
         cardioIntensity: fullProfile?.cardio_intensity ?? undefined,
       };
 
-      let macroUpdate: Record<string, any> = { weight: newWeight };
+      let macroUpdate: Record<string, any> = hasNewWeight ? { weight: newWeight } : {};
 
       // If activity changed, also persist the new activity fields
       if (activityChange) {
@@ -130,7 +132,7 @@ const StudentEvolution = () => {
         };
       }
 
-      if (fullProfile?.birth_date && fullProfile?.height && fullProfile?.gender) {
+      if (fullProfile?.birth_date && fullProfile?.height && fullProfile?.gender && typeof newWeight === "number" && Number.isFinite(newWeight)) {
         const age = calculateAge(fullProfile.birth_date);
         const macros = calculateMacros({
           gender: fullProfile.gender as "masculino" | "feminino",
@@ -169,8 +171,12 @@ const StudentEvolution = () => {
       const weightDirection = weightDiff && Number(weightDiff) > 0 ? "+" : "";
 
       let anamnesisNote = `📊 ATUALIZAÇÃO DE EVOLUÇÃO — ${timestamp}\n\n`;
-      anamnesisNote += `⚖️ Peso: ${newWeight.toFixed(1)} kg`;
-      if (prevWeight) {
+      if (hasNewWeight && typeof newWeight === "number" && Number.isFinite(newWeight)) {
+        anamnesisNote += `⚖️ Peso: ${newWeight.toFixed(1)} kg`;
+      } else {
+        anamnesisNote += `⚖️ Peso: sem alteração informada`;
+      }
+      if (hasNewWeight && prevWeight) {
         anamnesisNote += ` (anterior: ${prevWeight.toFixed(1)} kg | variação: ${weightDirection}${weightDiff} kg)`;
       }
       anamnesisNote += "\n";
