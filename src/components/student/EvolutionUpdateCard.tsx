@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
 import { calculateAge, calculateMacros } from "@/lib/macro-calculator";
+import EvolutionActivityChange, { ActivityData } from "@/components/student/EvolutionActivityChange";
 
 interface EvolutionUpdateCardProps {
   userId: string;
@@ -24,6 +25,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [imagesSaved, setImagesSaved] = useState(false);
+  const [activityChange, setActivityChange] = useState<ActivityData | null>(null);
 
   const handleSaveWeight = async () => {
     if (!weight) {
@@ -47,21 +49,32 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
 
       if (profile?.birth_date && profile?.height && profile?.gender) {
         const age = calculateAge(profile.birth_date);
+        const effectiveActivity = {
+          activityType: activityChange?.activityType ?? (profile.activity_type || "nenhuma"),
+          doesCardio: activityChange?.doesCardio ?? (profile.does_cardio || false),
+          physicalActivityLevel: activityChange?.physicalActivityLevel ?? (profile.physical_activity_level || "sedentario"),
+          trainingDaysPerWeek: activityChange?.trainingDaysPerWeek ?? profile.training_days_per_week ?? undefined,
+          trainingDurationMinutes: activityChange?.trainingDurationMinutes ?? profile.training_duration_minutes ?? undefined,
+          trainingIntensity: activityChange?.trainingIntensity ?? profile.training_intensity ?? undefined,
+          cardioDaysPerWeek: activityChange?.cardioDaysPerWeek ?? profile.cardio_days_per_week ?? undefined,
+          cardioDurationMinutes: activityChange?.cardioDurationMinutes ?? profile.cardio_duration_minutes ?? undefined,
+          cardioIntensity: activityChange?.cardioIntensity ?? profile.cardio_intensity ?? undefined,
+        };
         const macros = calculateMacros({
           gender: profile.gender as "masculino" | "feminino",
           age,
           weight: newWeight,
           height: Number(profile.height),
-          activityType: profile.activity_type || "nenhuma",
-          doesCardio: profile.does_cardio || false,
+          activityType: effectiveActivity.activityType,
+          doesCardio: effectiveActivity.doesCardio,
           objective: profile.objective || "manter_peso",
-          physicalActivityLevel: profile.physical_activity_level || "sedentario",
-          trainingDaysPerWeek: profile.training_days_per_week || undefined,
-          trainingDurationMinutes: profile.training_duration_minutes || undefined,
-          trainingIntensity: profile.training_intensity || undefined,
-          cardioDaysPerWeek: profile.cardio_days_per_week || undefined,
-          cardioDurationMinutes: profile.cardio_duration_minutes || undefined,
-          cardioIntensity: profile.cardio_intensity || undefined,
+          physicalActivityLevel: effectiveActivity.physicalActivityLevel,
+          trainingDaysPerWeek: effectiveActivity.trainingDaysPerWeek || undefined,
+          trainingDurationMinutes: effectiveActivity.trainingDurationMinutes || undefined,
+          trainingIntensity: effectiveActivity.trainingIntensity || undefined,
+          cardioDaysPerWeek: effectiveActivity.cardioDaysPerWeek || undefined,
+          cardioDurationMinutes: effectiveActivity.cardioDurationMinutes || undefined,
+          cardioIntensity: effectiveActivity.cardioIntensity || undefined,
         });
 
         macroUpdate = {
@@ -73,6 +86,21 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
           carbs_g: macros.carbsG,
           fat_g: macros.fatG,
         };
+
+        if (activityChange) {
+          macroUpdate = {
+            ...macroUpdate,
+            activity_type: effectiveActivity.activityType,
+            does_cardio: effectiveActivity.doesCardio,
+            physical_activity_level: effectiveActivity.physicalActivityLevel,
+            training_days_per_week: effectiveActivity.trainingDaysPerWeek ?? null,
+            training_duration_minutes: effectiveActivity.trainingDurationMinutes ?? null,
+            training_intensity: effectiveActivity.trainingIntensity ?? null,
+            cardio_days_per_week: effectiveActivity.cardioDaysPerWeek ?? null,
+            cardio_duration_minutes: effectiveActivity.cardioDurationMinutes ?? null,
+            cardio_intensity: effectiveActivity.cardioIntensity ?? null,
+          };
+        }
       }
 
       await supabase.from("profiles").update(macroUpdate).eq("user_id", userId);
@@ -102,6 +130,20 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
         anamnesisNote += `\n📝 Observações do aluno: ${notes}\n`;
       }
 
+      if (activityChange) {
+        anamnesisNote += `\n🏋️ Alteração na rotina de atividades:\n`;
+        anamnesisNote += `  • NEAT: ${activityChange.physicalActivityLevel}\n`;
+        anamnesisNote += `  • Tipo: ${activityChange.activityType}`;
+        if (activityChange.activityType !== "nenhuma") {
+          anamnesisNote += ` (${activityChange.trainingDaysPerWeek ?? "?"}x/sem, ${activityChange.trainingDurationMinutes ?? "?"}min, ${activityChange.trainingIntensity ?? "?"})`;
+        }
+        anamnesisNote += `\n  • Cardio: ${activityChange.doesCardio ? "sim" : "não"}`;
+        if (activityChange.doesCardio) {
+          anamnesisNote += ` (${activityChange.cardioDaysPerWeek ?? "?"}x/sem, ${activityChange.cardioDurationMinutes ?? "?"}min, ${activityChange.cardioIntensity ?? "?"})`;
+        }
+        anamnesisNote += `\n`;
+      }
+
       if (imagesSaved) {
         anamnesisNote += `\n📸 Novas fotos corporais enviadas.\n`;
       }
@@ -115,6 +157,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
       setWeight("");
       setNotes("");
       setImagesSaved(false);
+      setActivityChange(null);
       setExpanded(false);
       onComplete();
     } catch (err: any) {
@@ -165,6 +208,8 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
               rows={2}
             />
           </div>
+
+          <EvolutionActivityChange profile={profile} onChange={setActivityChange} />
 
           <div className="space-y-2">
             <div className="flex items-center gap-2 mb-1">
