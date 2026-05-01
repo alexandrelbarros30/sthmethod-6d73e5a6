@@ -26,23 +26,26 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
   const [saving, setSaving] = useState(false);
   const [imagesSaved, setImagesSaved] = useState(false);
   const [activityChange, setActivityChange] = useState<ActivityData | null>(null);
+  const canSubmitUpdate = Boolean(weight || activityChange);
 
   const handleSaveWeight = async () => {
-    if (!weight) {
-      toast.error("Informe seu peso atual.");
+    if (!weight && !activityChange) {
+      toast.error("Informe seu peso atual ou registre a mudança na rotina.");
       return;
     }
 
     setSaving(true);
     try {
-      const newWeight = Number(weight);
+      const newWeight = weight ? Number(weight) : Number(profile?.weight);
 
-      const { error } = await supabase.from("weight_logs").insert({
-        user_id: userId,
-        weight: newWeight,
-        notes: notes || "",
-      });
-      if (error) throw error;
+      if (weight) {
+        const { error } = await supabase.from("weight_logs").insert({
+          user_id: userId,
+          weight: newWeight,
+          notes: notes || "",
+        });
+        if (error) throw error;
+      }
 
       // Recalculate macros
       let macroUpdate: Record<string, any> = { weight: newWeight };
@@ -219,7 +222,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
               variant="outline"
               className="w-full"
               onClick={handleSaveWeight}
-              disabled={saving || !weight}
+              disabled={saving || !canSubmitUpdate}
             >
               {saving ? "Salvando..." : "Salvar atualização agora"}
             </Button>
@@ -248,7 +251,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
           <Button
             className="w-full"
             onClick={handleSaveWeight}
-            disabled={saving || !weight}
+            disabled={saving || !canSubmitUpdate}
           >
             {saving ? "Salvando..." : "Registrar Evolução e Atualizar Macros"}
           </Button>
