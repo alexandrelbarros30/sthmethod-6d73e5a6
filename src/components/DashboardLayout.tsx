@@ -78,6 +78,32 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
     return BIRTHDAY_MESSAGES[idx];
   }, []);
 
+  // 90D theme — alunos com plano de 90 dias recebem paleta azul ciano
+  const [is90dPlan, setIs90dPlan] = useState(false);
+  useEffect(() => {
+    if (!isStudent || !user?.id) { setIs90dPlan(false); return; }
+    let cancelled = false;
+    (async () => {
+      const { data: subs } = await supabase
+        .from("subscriptions")
+        .select("plan_id, status, end_date")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(1);
+      const sub = subs?.[0];
+      if (!sub?.plan_id) return;
+      if (sub.end_date && new Date(sub.end_date) < new Date()) return;
+      const { data: plan } = await supabase
+        .from("plans")
+        .select("duration_days")
+        .eq("id", sub.plan_id)
+        .maybeSingle();
+      if (!cancelled && plan?.duration_days === 90) setIs90dPlan(true);
+    })();
+    return () => { cancelled = true; };
+  }, [isStudent, user?.id]);
+
   useEffect(() => {
     if (!isStudent || !user?.id) return;
 
