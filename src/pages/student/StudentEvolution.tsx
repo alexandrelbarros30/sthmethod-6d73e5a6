@@ -27,6 +27,7 @@ const StudentEvolution = () => {
   const [saving, setSaving] = useState(false);
   const [imagesSaved, setImagesSaved] = useState(false);
   const [activityChange, setActivityChange] = useState<ActivityData | null>(null);
+  const canSubmitUpdate = Boolean(weight || activityChange);
 
   const { data: fullProfile } = useQuery({
     queryKey: ["student-profile-evo", user?.id],
@@ -80,21 +81,23 @@ const StudentEvolution = () => {
   const currentWeight = fullProfile?.weight;
 
   const handleSaveWeight = async () => {
-    if (!weight) {
-      toast.error("Informe seu peso atual.");
+    if (!weight && !activityChange) {
+      toast.error("Informe seu peso atual ou registre a mudança na rotina.");
       return;
     }
 
     setSaving(true);
     try {
-      const newWeight = Number(weight);
+      const newWeight = weight ? Number(weight) : Number(fullProfile?.weight);
 
-      const { error } = await supabase.from("weight_logs").insert({
-        user_id: user!.id,
-        weight: newWeight,
-        notes: notes || "",
-      });
-      if (error) throw error;
+      if (weight) {
+        const { error } = await supabase.from("weight_logs").insert({
+          user_id: user!.id,
+          weight: newWeight,
+          notes: notes || "",
+        });
+        if (error) throw error;
+      }
 
       // Use activity change data if provided, otherwise use profile values
       const act = activityChange || {
@@ -272,7 +275,7 @@ const StudentEvolution = () => {
               variant="outline"
               className="w-full"
               onClick={handleSaveWeight}
-              disabled={saving || !weight}
+              disabled={saving || !canSubmitUpdate}
             >
               {saving ? "Salvando..." : "Salvar atualização agora"}
             </Button>
@@ -328,7 +331,7 @@ const StudentEvolution = () => {
           <Button
             className="w-full"
             onClick={handleSaveWeight}
-            disabled={saving || !weight}
+            disabled={saving || !canSubmitUpdate}
           >
             {saving ? "Salvando..." : "Registrar Evolução e Atualizar Macros"}
           </Button>
