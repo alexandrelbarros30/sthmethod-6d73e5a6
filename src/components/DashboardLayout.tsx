@@ -79,8 +79,12 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
   }, []);
 
   // Theme por duração de plano: 90d (ciano) · 180d (roxo premium)
-  const [is90dPlan, setIs90dPlan] = useState(false);
-  const [is180dPlan, setIs180dPlan] = useState(false);
+  // Inicializa de forma SÍNCRONA via cache local p/ evitar "flash" do tema verde padrão.
+  const cachedTheme = isStudent && user?.id
+    ? localStorage.getItem(`plan_theme_${user.id}`)
+    : null;
+  const [is90dPlan, setIs90dPlan] = useState(cachedTheme === "90");
+  const [is180dPlan, setIs180dPlan] = useState(cachedTheme === "180");
   useEffect(() => {
     if (!isStudent || !user?.id) { setIs90dPlan(false); setIs180dPlan(false); return; }
     let cancelled = false;
@@ -93,16 +97,28 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
         .order("created_at", { ascending: false })
         .limit(1);
       const sub = subs?.[0];
-      if (!sub?.plan_id) return;
-      if (sub.end_date && new Date(sub.end_date) < new Date()) return;
+      const key = `plan_theme_${user.id}`;
+      if (!sub?.plan_id || (sub.end_date && new Date(sub.end_date) < new Date())) {
+        if (!cancelled) { setIs90dPlan(false); setIs180dPlan(false); }
+        localStorage.removeItem(key);
+        return;
+      }
       const { data: plan } = await supabase
         .from("plans")
         .select("duration_days")
         .eq("id", sub.plan_id)
         .maybeSingle();
       if (cancelled) return;
-      if (plan?.duration_days === 90) setIs90dPlan(true);
-      else if (plan?.duration_days === 180) setIs180dPlan(true);
+      if (plan?.duration_days === 90) {
+        setIs90dPlan(true); setIs180dPlan(false);
+        localStorage.setItem(key, "90");
+      } else if (plan?.duration_days === 180) {
+        setIs180dPlan(true); setIs90dPlan(false);
+        localStorage.setItem(key, "180");
+      } else {
+        setIs90dPlan(false); setIs180dPlan(false);
+        localStorage.setItem(key, "default");
+      }
     })();
     return () => { cancelled = true; };
   }, [isStudent, user?.id]);
