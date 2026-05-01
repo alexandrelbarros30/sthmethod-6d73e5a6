@@ -116,8 +116,8 @@ serve(async (req) => {
     }
     // PIX and debit: ALWAYS 1 installment, no exceptions
 
-    // Create payment record
-    const paymentInsert: any = {
+    // Create payment record (reuse a recent pending one for the same plan to avoid trigger conflict)
+    const paymentPayload: any = {
       user_id: userId,
       plan_id,
       amount: finalAmount,
@@ -126,14 +126,46 @@ serve(async (req) => {
       action_type: action_type || "new",
       status: "pending",
       installments: maxInstallments,
+      coupon_id: validCouponId,
+      coupon_discount: validCouponId ? couponDiscount : 0,
     };
-    if (validCouponId) {
-      paymentInsert.coupon_id = validCouponId;
-      paymentInsert.coupon_discount = couponDiscount;
-    }
 
-    const { data: payment, error: paymentError } = await supabaseAdmin.from("payments").insert(paymentInsert).select().single();
-    if (paymentError) throw paymentError;
+    const { data: existingPending } = await supabaseAdmin
+      .from("payments")
+      .select("id, created_at")
+      .eq("user_id", userId)
+      .eq("plan_id", plan_id)
+      .eq("status", "pending")
+      .gt("created_at", new Date(Date.now() - 10 * 60 * 1000).toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    let payment: any;
+    if (existingPending?.id) {
+      const { data: updated, error: updateError } = await supabaseAdmin
+        .from("payments")
+        .update(paymentPayload)
+        .eq("id", existingPending.id)
+        .select()
+        .single();
+      if (updateError) {
+        console.error("Failed to update existing pending payment:", updateError);
+        throw new Error(`DB update error: ${updateError.message}`);
+      }
+      payment = updated;
+    } else {
+      const { data: inserted, error: paymentError } = await supabaseAdmin
+        .from("payments")
+        .insert(paymentPayload)
+        .select()
+        .single();
+      if (paymentError) {
+        console.error("Failed to insert payment:", paymentError);
+        throw new Error(`DB insert error: ${paymentError.message}`);
+      }
+      payment = inserted;
+    }
 
     // Mercado Pago payment type exclusions (correct type IDs)
     // These are PAYMENT TYPES, not payment method IDs
@@ -201,7 +233,8 @@ serve(async (req) => {
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (error: unknown) {
-    console.error("Error creating payment:", error);
-    return new Response(JSON.stringify({ error: "Falha ao criar pagamento. Tente novamente." }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const message = error instanceof Error ? error.message : "Falha ao criar pagamento. Tente novamente.";
+    console.error("Error creating payment:", message, error);
+    return new Response(JSON.stringify({ error: message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
