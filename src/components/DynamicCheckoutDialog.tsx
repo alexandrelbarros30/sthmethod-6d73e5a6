@@ -229,9 +229,15 @@ const DynamicCheckoutDialog = ({
   };
 
   // Check which methods are enabled (forcePixOnly overrides credit/debit)
+  // Cupons PIX-only: forçam o checkout a aceitar somente PIX
+  const PIX_ONLY_COUPONS = ["DESFOCADOS30", "DESFOCADOS90"];
+  const isPixOnlyCoupon = appliedCoupon?.code
+    ? PIX_ONLY_COUPONS.includes(String(appliedCoupon.code).toUpperCase())
+    : false;
+  const effectivePixOnly = forcePixOnly || isPixOnlyCoupon;
   const pixEnabled = paymentSettings?.find((s: any) => s.key === "pix_enabled")?.value !== "false";
-  const creditEnabled = !forcePixOnly && paymentSettings?.find((s: any) => s.key === "credit_enabled")?.value !== "false";
-  const debitEnabled = !forcePixOnly && paymentSettings?.find((s: any) => s.key === "debit_enabled")?.value !== "false";
+  const creditEnabled = !effectivePixOnly && paymentSettings?.find((s: any) => s.key === "credit_enabled")?.value !== "false";
+  const debitEnabled = !effectivePixOnly && paymentSettings?.find((s: any) => s.key === "debit_enabled")?.value !== "false";
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
