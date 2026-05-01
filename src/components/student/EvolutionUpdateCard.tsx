@@ -211,6 +211,20 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
 
           <EvolutionActivityChange profile={profile} onChange={setActivityChange} />
 
+          <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3">
+            <p className="text-xs text-muted-foreground">
+              Se preferir, você já pode salvar esta atualização por aqui.
+            </p>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={handleSaveWeight}
+              disabled={saving || !weight}
+            >
+              {saving ? "Salvando..." : "Salvar atualização agora"}
+            </Button>
+          </div>
+
           <div className="space-y-2">
             <div className="flex items-center gap-2 mb-1">
               <Camera className="w-4 h-4 text-primary" />

@@ -264,6 +264,20 @@ const StudentEvolution = () => {
             <EvolutionActivityChange profile={fullProfile} onChange={setActivityChange} />
           )}
 
+          <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3">
+            <p className="text-xs text-muted-foreground">
+              Se preferir, você já pode salvar esta atualização por aqui.
+            </p>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={handleSaveWeight}
+              disabled={saving || !weight}
+            >
+              {saving ? "Salvando..." : "Salvar atualização agora"}
+            </Button>
+          </div>
+
           {/* Notes */}
           <div className="space-y-2">
             <Label className="font-body text-sm">Observações (opcional)</Label>
