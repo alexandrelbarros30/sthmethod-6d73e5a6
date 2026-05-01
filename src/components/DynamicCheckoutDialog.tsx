@@ -341,7 +341,7 @@ const DynamicCheckoutDialog = ({
             {!isDynamic && (() => {
               const link = getPlanLink(selectedPlan.id);
               const hasPix = link?.pix_enabled && link?.pix_code;
-              const hasCard = link?.card_enabled && link?.card_link;
+              const hasCard = !effectivePixOnly && link?.card_enabled && link?.card_link;
               const hasAny = hasPix || hasCard;
               return (
                 <div className="space-y-3">
