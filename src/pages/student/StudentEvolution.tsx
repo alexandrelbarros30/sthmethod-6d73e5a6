@@ -27,6 +27,7 @@ const StudentEvolution = () => {
   const [saving, setSaving] = useState(false);
   const [imagesSaved, setImagesSaved] = useState(false);
   const [activityChange, setActivityChange] = useState<ActivityData | null>(null);
+  const canSubmitUpdate = Boolean(weight || activityChange);
 
   const { data: fullProfile } = useQuery({
     queryKey: ["student-profile-evo", user?.id],
@@ -80,21 +81,25 @@ const StudentEvolution = () => {
   const currentWeight = fullProfile?.weight;
 
   const handleSaveWeight = async () => {
-    if (!weight) {
-      toast.error("Informe seu peso atual.");
+    if (!weight && !activityChange) {
+      toast.error("Informe seu peso atual ou registre a mudança na rotina.");
       return;
     }
 
     setSaving(true);
     try {
-      const newWeight = Number(weight);
+      const hasNewWeight = Boolean(weight);
+      const currentStoredWeight = fullProfile?.weight ? Number(fullProfile.weight) : null;
+      const newWeight = hasNewWeight ? Number(weight) : currentStoredWeight;
 
-      const { error } = await supabase.from("weight_logs").insert({
-        user_id: user!.id,
-        weight: newWeight,
-        notes: notes || "",
-      });
-      if (error) throw error;
+      if (weight) {
+        const { error } = await supabase.from("weight_logs").insert({
+          user_id: user!.id,
+          weight: newWeight,
+          notes: notes || "",
+        });
+        if (error) throw error;
+      }
 
       // Use activity change data if provided, otherwise use profile values
       const act = activityChange || {
@@ -109,7 +114,7 @@ const StudentEvolution = () => {
         cardioIntensity: fullProfile?.cardio_intensity ?? undefined,
       };
 
-      let macroUpdate: Record<string, any> = { weight: newWeight };
+      let macroUpdate: Record<string, any> = hasNewWeight ? { weight: newWeight } : {};
 
       // If activity changed, also persist the new activity fields
       if (activityChange) {
@@ -127,7 +132,7 @@ const StudentEvolution = () => {
         };
       }
 
-      if (fullProfile?.birth_date && fullProfile?.height && fullProfile?.gender) {
+      if (fullProfile?.birth_date && fullProfile?.height && fullProfile?.gender && typeof newWeight === "number" && Number.isFinite(newWeight)) {
         const age = calculateAge(fullProfile.birth_date);
         const macros = calculateMacros({
           gender: fullProfile.gender as "masculino" | "feminino",
@@ -166,8 +171,12 @@ const StudentEvolution = () => {
       const weightDirection = weightDiff && Number(weightDiff) > 0 ? "+" : "";
 
       let anamnesisNote = `📊 ATUALIZAÇÃO DE EVOLUÇÃO — ${timestamp}\n\n`;
-      anamnesisNote += `⚖️ Peso: ${newWeight.toFixed(1)} kg`;
-      if (prevWeight) {
+      if (hasNewWeight && typeof newWeight === "number" && Number.isFinite(newWeight)) {
+        anamnesisNote += `⚖️ Peso: ${newWeight.toFixed(1)} kg`;
+      } else {
+        anamnesisNote += `⚖️ Peso: sem alteração informada`;
+      }
+      if (hasNewWeight && prevWeight) {
         anamnesisNote += ` (anterior: ${prevWeight.toFixed(1)} kg | variação: ${weightDirection}${weightDiff} kg)`;
       }
       anamnesisNote += "\n";
@@ -272,7 +281,7 @@ const StudentEvolution = () => {
               variant="outline"
               className="w-full"
               onClick={handleSaveWeight}
-              disabled={saving || !weight}
+              disabled={saving || !canSubmitUpdate}
             >
               {saving ? "Salvando..." : "Salvar atualização agora"}
             </Button>
@@ -328,7 +337,7 @@ const StudentEvolution = () => {
           <Button
             className="w-full"
             onClick={handleSaveWeight}
-            disabled={saving || !weight}
+            disabled={saving || !canSubmitUpdate}
           >
             {saving ? "Salvando..." : "Registrar Evolução e Atualizar Macros"}
           </Button>
