@@ -78,10 +78,11 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
     return BIRTHDAY_MESSAGES[idx];
   }, []);
 
-  // 90D theme — alunos com plano de 90 dias recebem paleta azul ciano
+  // Theme por duração de plano: 90d (ciano) · 180d (roxo premium)
   const [is90dPlan, setIs90dPlan] = useState(false);
+  const [is180dPlan, setIs180dPlan] = useState(false);
   useEffect(() => {
-    if (!isStudent || !user?.id) { setIs90dPlan(false); return; }
+    if (!isStudent || !user?.id) { setIs90dPlan(false); setIs180dPlan(false); return; }
     let cancelled = false;
     (async () => {
       const { data: subs } = await supabase
@@ -99,7 +100,9 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
         .select("duration_days")
         .eq("id", sub.plan_id)
         .maybeSingle();
-      if (!cancelled && plan?.duration_days === 90) setIs90dPlan(true);
+      if (cancelled) return;
+      if (plan?.duration_days === 90) setIs90dPlan(true);
+      else if (plan?.duration_days === 180) setIs180dPlan(true);
     })();
     return () => { cancelled = true; };
   }, [isStudent, user?.id]);
@@ -297,7 +300,8 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
   return (
     <div className={cn(
       "min-h-screen w-full max-w-full bg-background overflow-x-hidden",
-      is90dPlan && "theme-90d"
+      is90dPlan && "theme-90d",
+      is180dPlan && "theme-180d"
     )}>
       {!(isStudent && isMobile) && <DashboardSidebar role={role} />}
       <main className={cn(
