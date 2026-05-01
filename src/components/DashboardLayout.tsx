@@ -85,6 +85,17 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
     : null;
   const [is90dPlan, setIs90dPlan] = useState(cachedTheme === "90");
   const [is180dPlan, setIs180dPlan] = useState(cachedTheme === "180");
+  // Espelha a classe no <html> p/ que o tema valha desde antes do mount
+  // (evita flash verde em navegações internas e troca de usuário).
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle("theme-90d", is90dPlan);
+    root.classList.toggle("theme-180d", is180dPlan);
+    return () => {
+      // ao desmontar (ex: logout), limpa para não vazar p/ outras telas
+      root.classList.remove("theme-90d", "theme-180d");
+    };
+  }, [is90dPlan, is180dPlan]);
   useEffect(() => {
     if (!isStudent || !user?.id) { setIs90dPlan(false); setIs180dPlan(false); return; }
     let cancelled = false;
