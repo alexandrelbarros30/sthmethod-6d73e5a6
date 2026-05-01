@@ -602,6 +602,87 @@ html, body {
   }
 }
 
+/* =====================================================================
+   THEME 90D — Alunos com plano de 90 dias
+   Override de tokens semânticos: paleta azul ciano "cirúrgica".
+   Base: #0A0F1C · Primária: #00D4FF · Secundária: #007BFF
+   Glow mais refinado (menos espalhado) que o tema padrão verde neon.
+   ===================================================================== */
+.theme-90d {
+  /* Background azulado em vez de preto puro */
+  --background: 222 47% 7%;          /* #0A0F1C */
+  --foreground: 210 40% 96%;
+
+  --card: 222 45% 9%;
+  --card-foreground: 210 40% 96%;
+
+  --popover: 222 45% 10%;
+  --popover-foreground: 210 40% 96%;
+
+  /* Primária ciano elétrico #00D4FF */
+  --primary: 190 100% 50%;
+  --primary-foreground: 222 47% 8%;
+
+  --secondary: 222 35% 14%;
+  --secondary-foreground: 210 30% 88%;
+
+  --muted: 222 30% 13%;
+  --muted-foreground: 215 20% 62%;
+
+  --accent: 222 35% 14%;
+  --accent-foreground: 210 40% 96%;
+
+  --border: 215 35% 18%;
+  --input: 215 35% 18%;
+  --ring: 190 100% 50%;
+
+  --sidebar-background: 222 47% 7%;
+  --sidebar-foreground: 210 30% 88%;
+  --sidebar-primary: 190 100% 50%;
+  --sidebar-primary-foreground: 222 47% 8%;
+  --sidebar-accent: 222 35% 12%;
+  --sidebar-accent-foreground: 210 40% 94%;
+  --sidebar-border: 215 35% 18%;
+  --sidebar-ring: 190 100% 50%;
+
+  /* Glow refinado — mais sutil, "cirúrgico" */
+  --glow: 190 100% 50%;
+  --surface: 222 40% 10%;
+  --surface-hover: 222 38% 13%;
+  /* Gradiente azul profundo → ciano */
+  --gradient-start: 211 100% 50%;    /* #007BFF */
+  --gradient-end: 190 100% 50%;      /* #00D4FF */
+  --text-subtle: 215 20% 55%;
+
+  --info: 211 100% 55%;
+  --info-foreground: 0 0% 100%;
+}
+
+/* Glow mais contido nos elementos automáticos do tema 90D */
+.theme-90d [class*="rounded-["][class*="backdrop-blur-xl"][class*="bg-white/[0.025]"] {
+  border-color: hsl(var(--primary) / 0.22) !important;
+  box-shadow:
+    0 14px 40px -16px rgb(0 0 0 / 0.85),
+    0 0 0 1px hsl(var(--primary) / 0.14),
+    0 0 22px -8px hsl(var(--primary) / 0.42),
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    inset 0 -1px 0 rgb(0 0 0 / 0.4) !important;
+}
+
+.theme-90d .neon-bar,
+.theme-90d .neon-progress-fill {
+  box-shadow:
+    0 0 5px hsl(var(--primary) / 0.6),
+    0 0 10px hsl(var(--primary) / 0.35),
+    inset 0 0 4px rgb(255 255 255 / 0.35);
+}
+
+.theme-90d .neon-icon {
+  filter:
+    drop-shadow(0 0 3px hsl(var(--primary) / 0.7))
+    drop-shadow(0 0 7px hsl(var(--primary) / 0.35));
+}
+
 /* Rich text editor */
 .scrollbar-none::-webkit-scrollbar { display: none; }
 .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
