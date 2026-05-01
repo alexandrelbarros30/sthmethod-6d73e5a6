@@ -282,6 +282,15 @@ const DynamicCheckoutDialog = ({
               onCouponApplied={setAppliedCoupon}
             />
 
+            {isPixOnlyCoupon && (
+              <div className="flex items-start gap-2 p-3 rounded-lg border border-primary/30 bg-primary/5 text-xs text-foreground">
+                <QrCode className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                <span>
+                  Cupom <strong className="font-mono">{appliedCoupon.code}</strong> válido apenas para pagamento via PIX. Cartão de crédito e débito ficam indisponíveis enquanto este cupom estiver aplicado.
+                </span>
+              </div>
+            )}
+
             {/* Dynamic Payments (API Mercado Pago) */}
             {isDynamic && (
               <div className="space-y-2">
