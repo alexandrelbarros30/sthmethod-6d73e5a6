@@ -226,7 +226,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
             </p>
             <Button
               variant="outline"
-              className="w-full"
+              className={`w-full transition-colors ${canSubmitUpdate && !saving ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90 shadow-[0_0_20px_hsl(var(--primary)/0.4)]" : ""}`}
               onClick={handleSaveWeight}
               disabled={saving || !canSubmitUpdate}
             >
@@ -255,7 +255,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
           </div>
 
           <Button
-            className="w-full"
+            className={`w-full transition-colors ${canSubmitUpdate && !saving ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_20px_hsl(var(--primary)/0.4)]" : ""}`}
             onClick={handleSaveWeight}
             disabled={saving || !canSubmitUpdate}
           >
