@@ -35,8 +35,8 @@ const DailyProgressRing = ({
       <svg width={size} height={size} className="transform -rotate-90">
         <defs>
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="hsl(var(--primary))" />
-            <stop offset="100%" stopColor="hsl(170, 70%, 28%)" />
+            <stop offset="0%" stopColor="hsl(var(--gradient-start))" />
+            <stop offset="100%" stopColor="hsl(var(--gradient-end))" />
           </linearGradient>
           <filter id="glow-filter">
             <feGaussianBlur stdDeviation="3" result="coloredBlur" />

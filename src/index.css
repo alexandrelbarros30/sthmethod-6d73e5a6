@@ -685,99 +685,110 @@ html, body {
 
 /* =====================================================================
    THEME 180D — Alunos com plano de 180 dias (6 meses) — PREMIUM
-   Override de tokens semânticos: paleta roxo profundo + dourado sutil.
-   Base: #050508 · Primária: #7B2CFF · Secundária (dourado): #D4AF37
-   Glow mínimo, sólido — sensação de luxo (≠ neon exagerado).
+   BLACK ELITE — Domínio e excelência.
+   Base: #050508 (preto profundo) · Primária dourada #D4AF37 · Acento roxo sutil.
+   Glow mínimo, sólido, metálico — sensação de luxo (≠ neon exagerado).
+   Bordas quase invisíveis (efeito vidro premium).
    ===================================================================== */
 .theme-180d {
   /* Preto profundo levemente arroxeado */
   --background: 240 20% 3%;          /* #050508 */
-  --foreground: 270 20% 96%;
+  --foreground: 45 20% 96%;
 
-  --card: 250 25% 6%;
-  --card-foreground: 270 20% 96%;
+  --card: 240 15% 5%;
+  --card-foreground: 45 20% 96%;
 
-  --popover: 250 25% 7%;
-  --popover-foreground: 270 20% 96%;
+  --popover: 240 15% 6%;
+  --popover-foreground: 45 20% 96%;
 
-  /* Primária roxo premium #7B2CFF */
-  --primary: 264 100% 59%;
+  /* Primária dourado Black Elite #D4AF37 */
+  --primary: 45 65% 53%;
   --primary-foreground: 240 20% 4%;
 
-  --secondary: 250 22% 11%;
-  --secondary-foreground: 270 15% 88%;
+  --secondary: 240 12% 10%;
+  --secondary-foreground: 45 15% 88%;
 
-  --muted: 250 18% 10%;
-  --muted-foreground: 260 10% 62%;
+  --muted: 240 10% 9%;
+  --muted-foreground: 45 8% 62%;
 
-  --accent: 45 65% 53%;              /* dourado #D4AF37 como acento */
+  --accent: 264 70% 55%;             /* roxo #7B2CFF como acento sutil */
   --accent-foreground: 240 20% 4%;
 
   /* Bordas quase invisíveis (vidro premium) */
-  --border: 260 25% 14%;
-  --input: 260 25% 14%;
-  --ring: 264 100% 59%;
+  --border: 45 15% 12%;
+  --input: 45 15% 12%;
+  --ring: 45 65% 53%;
 
   --sidebar-background: 240 20% 3%;
-  --sidebar-foreground: 270 15% 88%;
-  --sidebar-primary: 264 100% 59%;
+  --sidebar-foreground: 45 15% 88%;
+  --sidebar-primary: 45 65% 53%;
   --sidebar-primary-foreground: 240 20% 4%;
-  --sidebar-accent: 250 22% 9%;
-  --sidebar-accent-foreground: 270 20% 94%;
-  --sidebar-border: 260 25% 14%;
-  --sidebar-ring: 264 100% 59%;
+  --sidebar-accent: 240 12% 8%;
+  --sidebar-accent-foreground: 45 20% 94%;
+  --sidebar-border: 45 15% 12%;
+  --sidebar-ring: 45 65% 53%;
 
-  /* Glow mínimo, sólido (luxo) */
-  --glow: 264 100% 59%;
-  --surface: 250 25% 7%;
-  --surface-hover: 250 25% 10%;
-  /* Gradiente roxo profundo → reflexo dourado */
-  --gradient-start: 264 100% 45%;    /* roxo profundo */
-  --gradient-end: 45 65% 53%;        /* dourado #D4AF37 */
-  --text-subtle: 260 10% 58%;
+  /* Glow mínimo, sólido, dourado metálico */
+  --glow: 45 65% 53%;
+  --surface: 240 15% 6%;
+  --surface-hover: 240 15% 9%;
+  /* Gradiente dourado escuro → dourado claro (metálico) */
+  --gradient-start: 38 72% 42%;      /* dourado escuro */
+  --gradient-end: 45 75% 62%;        /* dourado claro */
+  --text-subtle: 45 8% 58%;
 
-  --info: 264 100% 65%;
+  --info: 45 65% 60%;
   --info-foreground: 0 0% 100%;
 }
 
-/* Cards premium — bordas quase invisíveis com leve reflexo dourado */
+/* Cards Black Elite — bordas quase invisíveis com halo dourado metálico */
 .theme-180d [class*="rounded-["][class*="backdrop-blur-xl"][class*="bg-white/[0.025]"] {
-  border-color: hsl(var(--primary) / 0.12) !important;
+  border-color: hsl(var(--primary) / 0.15) !important;
   box-shadow:
     0 14px 40px -16px rgb(0 0 0 / 0.9),
-    0 0 0 1px hsl(var(--primary) / 0.10),
-    0 0 18px -10px hsl(var(--primary) / 0.35),
-    inset 0 1px 0 hsl(45 65% 60% / 0.06),
+    0 0 0 1px hsl(var(--primary) / 0.12),
+    0 0 16px -8px hsl(var(--primary) / 0.35),
+    inset 0 1px 0 hsl(45 75% 70% / 0.10),
     inset 0 -1px 0 rgb(0 0 0 / 0.5) !important;
 }
 
-/* Progresso com roxo profundo + leve reflexo dourado */
+/* Progresso dourado metálico — sólido, mínimo glow */
 .theme-180d .neon-bar,
 .theme-180d .neon-progress-fill {
   background: linear-gradient(90deg,
-    hsl(264 100% 55%) 0%,
-    hsl(264 100% 62%) 60%,
-    hsl(45 65% 58%) 100%) !important;
+    hsl(38 72% 42%) 0%,
+    hsl(45 70% 55%) 50%,
+    hsl(45 80% 68%) 100%) !important;
   box-shadow:
-    0 0 4px hsl(var(--primary) / 0.55),
-    0 0 9px hsl(var(--primary) / 0.28),
-    inset 0 0 3px hsl(45 65% 70% / 0.35) !important;
+    0 0 4px hsl(45 70% 55% / 0.55),
+    0 0 9px hsl(45 70% 55% / 0.28),
+    inset 0 0 3px hsl(45 80% 80% / 0.4) !important;
 }
 
-/* Ícones — roxo dominante, glow contido */
+/* Ícones — dourado dominante, glow contido */
 .theme-180d .neon-icon {
   filter:
-    drop-shadow(0 0 2px hsl(var(--primary) / 0.65))
-    drop-shadow(0 0 6px hsl(var(--primary) / 0.3));
+    drop-shadow(0 0 2px hsl(var(--primary) / 0.7))
+    drop-shadow(0 0 5px hsl(var(--primary) / 0.32));
 }
 
 /* Micro detalhes dourados: status ativo / conquistas */
 .theme-180d .status-active,
 .theme-180d [data-status="active"],
 .theme-180d .achievement-badge {
-  color: hsl(45 65% 60%) !important;
-  border-color: hsl(45 65% 53% / 0.45) !important;
+  color: hsl(45 75% 62%) !important;
+  border-color: hsl(45 65% 53% / 0.5) !important;
 }
+
+/* CTAs e botões primários ficam metálicos no Black Elite */
+.theme-180d .cta-glow,
+.theme-180d .premium-btn {
+  background: linear-gradient(135deg, hsl(38 72% 42%), hsl(45 75% 58%)) !important;
+  color: hsl(240 20% 5%) !important;
+}
+
+/* Cor refinada para texto "primary" no tema (links, labels) */
+.theme-180d .text-primary { color: hsl(45 75% 62%) !important; }
 
 /* Rich text editor */
 .scrollbar-none::-webkit-scrollbar { display: none; }
