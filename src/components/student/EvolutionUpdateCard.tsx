@@ -36,7 +36,9 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
 
     setSaving(true);
     try {
-      const newWeight = weight ? Number(weight) : Number(profile?.weight);
+      const hasNewWeight = Boolean(weight);
+      const currentStoredWeight = profile?.weight ? Number(profile.weight) : null;
+      const newWeight = hasNewWeight ? Number(weight) : currentStoredWeight;
 
       if (weight) {
         const { error } = await supabase.from("weight_logs").insert({
@@ -48,9 +50,9 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
       }
 
       // Recalculate macros
-      let macroUpdate: Record<string, any> = { weight: newWeight };
+      let macroUpdate: Record<string, any> = hasNewWeight ? { weight: newWeight } : {};
 
-      if (profile?.birth_date && profile?.height && profile?.gender) {
+      if (profile?.birth_date && profile?.height && profile?.gender && typeof newWeight === "number" && Number.isFinite(newWeight)) {
         const age = calculateAge(profile.birth_date);
         const effectiveActivity = {
           activityType: activityChange?.activityType ?? (profile.activity_type || "nenhuma"),
@@ -115,8 +117,12 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
       const weightDirection = weightDiff && Number(weightDiff) > 0 ? "+" : "";
 
       let anamnesisNote = `📊 ATUALIZAÇÃO DE EVOLUÇÃO — ${timestamp}\n\n`;
-      anamnesisNote += `⚖️ Peso: ${newWeight.toFixed(1)} kg`;
-      if (prevWeight) {
+      if (hasNewWeight && typeof newWeight === "number" && Number.isFinite(newWeight)) {
+        anamnesisNote += `⚖️ Peso: ${newWeight.toFixed(1)} kg`;
+      } else {
+        anamnesisNote += `⚖️ Peso: sem alteração informada`;
+      }
+      if (hasNewWeight && prevWeight) {
         anamnesisNote += ` (anterior: ${prevWeight.toFixed(1)} kg | variação: ${weightDirection}${weightDiff} kg)`;
       }
       anamnesisNote += "\n";
