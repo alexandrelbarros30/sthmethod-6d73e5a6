@@ -229,9 +229,15 @@ const DynamicCheckoutDialog = ({
   };
 
   // Check which methods are enabled (forcePixOnly overrides credit/debit)
+  // Cupons PIX-only: forçam o checkout a aceitar somente PIX
+  const PIX_ONLY_COUPONS = ["DESFOCADOS30", "DESFOCADOS90"];
+  const isPixOnlyCoupon = appliedCoupon?.code
+    ? PIX_ONLY_COUPONS.includes(String(appliedCoupon.code).toUpperCase())
+    : false;
+  const effectivePixOnly = forcePixOnly || isPixOnlyCoupon;
   const pixEnabled = paymentSettings?.find((s: any) => s.key === "pix_enabled")?.value !== "false";
-  const creditEnabled = !forcePixOnly && paymentSettings?.find((s: any) => s.key === "credit_enabled")?.value !== "false";
-  const debitEnabled = !forcePixOnly && paymentSettings?.find((s: any) => s.key === "debit_enabled")?.value !== "false";
+  const creditEnabled = !effectivePixOnly && paymentSettings?.find((s: any) => s.key === "credit_enabled")?.value !== "false";
+  const debitEnabled = !effectivePixOnly && paymentSettings?.find((s: any) => s.key === "debit_enabled")?.value !== "false";
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -275,6 +281,15 @@ const DynamicCheckoutDialog = ({
               originalPrice={baseFinalPrice}
               onCouponApplied={setAppliedCoupon}
             />
+
+            {isPixOnlyCoupon && (
+              <div className="flex items-start gap-2 p-3 rounded-lg border border-primary/30 bg-primary/5 text-xs text-foreground">
+                <QrCode className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                <span>
+                  Cupom <strong className="font-mono">{appliedCoupon.code}</strong> válido apenas para pagamento via PIX. Cartão de crédito e débito ficam indisponíveis enquanto este cupom estiver aplicado.
+                </span>
+              </div>
+            )}
 
             {/* Dynamic Payments (API Mercado Pago) */}
             {isDynamic && (
@@ -335,7 +350,7 @@ const DynamicCheckoutDialog = ({
             {!isDynamic && (() => {
               const link = getPlanLink(selectedPlan.id);
               const hasPix = link?.pix_enabled && link?.pix_code;
-              const hasCard = link?.card_enabled && link?.card_link;
+              const hasCard = !effectivePixOnly && link?.card_enabled && link?.card_link;
               const hasAny = hasPix || hasCard;
               return (
                 <div className="space-y-3">
