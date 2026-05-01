@@ -295,7 +295,10 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
   };
 
   return (
-    <div className="min-h-screen w-full max-w-full bg-background overflow-x-hidden">
+    <div className={cn(
+      "min-h-screen w-full max-w-full bg-background overflow-x-hidden",
+      is90dPlan && "theme-90d"
+    )}>
       {!(isStudent && isMobile) && <DashboardSidebar role={role} />}
       <main className={cn(
         "min-w-0 overflow-x-hidden",
