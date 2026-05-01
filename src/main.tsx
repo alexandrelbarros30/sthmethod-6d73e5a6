@@ -68,6 +68,20 @@ const theme = localStorage.getItem("app-theme") || "light";
 document.documentElement.classList.remove("dark", "light");
 document.documentElement.classList.add(theme);
 
+// Aplica tema do plano (90d ciano / 180d roxo) ANTES do React montar,
+// evitando o "flash" verde do tema padrão. Lê o cache salvo por usuário.
+try {
+  const root = document.documentElement;
+  root.classList.remove("theme-90d", "theme-180d");
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k || !k.startsWith("plan_theme_")) continue;
+    const v = localStorage.getItem(k);
+    if (v === "90") { root.classList.add("theme-90d"); break; }
+    if (v === "180") { root.classList.add("theme-180d"); break; }
+  }
+} catch (_) {}
+
 // Always kill any leftover SW/caches in production (do not block render)
 if (import.meta.env.PROD && !isPreviewHost()) {
   void killServiceWorkers().then(syncLatestBuild);
