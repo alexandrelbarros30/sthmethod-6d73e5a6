@@ -42,6 +42,7 @@ const AdminDiet = () => {
 
   // New entry form
   const [newTitle, setNewTitle] = useState("Dieta");
+  const [newTabLabel, setNewTabLabel] = useState("");
   const [newContent, setNewContent] = useState("");
   const [newPdfFile, setNewPdfFile] = useState<File | null>(null);
   const [newReleaseDate, setNewReleaseDate] = useState("");
@@ -57,6 +58,7 @@ const AdminDiet = () => {
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
+  const [editTabLabel, setEditTabLabel] = useState("");
   const [editContent, setEditContent] = useState("");
   const [editDate, setEditDate] = useState("");
   const [editTime, setEditTime] = useState("");
@@ -274,6 +276,7 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
 
   const resetNewForm = () => {
     setNewTitle("Dieta");
+    setNewTabLabel("");
     setNewContent("");
     setNewPdfFile(null);
     setNewReleaseDate("");
@@ -291,6 +294,7 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
     const d = new Date(diet.created_at);
     setEditingId(diet.id);
     setEditTitle(diet.title || "");
+    setEditTabLabel(diet.tab_label || "");
     setEditContent(diet.content || "");
     setEditDate(d.toISOString().slice(0, 10));
     setEditTime(d.toTimeString().slice(0, 5));
@@ -308,6 +312,7 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
   const cancelEdit = () => {
     setEditingId(null);
     setEditTitle("");
+    setEditTabLabel("");
     setEditContent("");
     setEditDate("");
     setEditTime("");
@@ -334,6 +339,7 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
       const payload: any = {
         user_id: selected.user_id,
         title: newTitle,
+        tab_label: newTabLabel || null,
         content: newContent,
         pdf_url: pdfUrl,
         storage_path: pdfStoragePath,
@@ -383,6 +389,7 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
         .from("student_diets")
         .update({
           title: editTitle,
+          tab_label: editTabLabel || null,
           content: editContent,
           created_at: newCreatedAt,
           release_date: editReleaseDate ? new Date(editReleaseDate + "T00:00:00").toISOString() : null,
@@ -635,6 +642,12 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
                     <div>
                       <Label className="font-body">Título</Label>
                       <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
+                      <p className="text-[10px] text-muted-foreground mt-1">Nome interno (também usado ao salvar na biblioteca).</p>
+                    </div>
+                    <div>
+                      <Label className="font-body">Nome da aba (visível ao aluno)</Label>
+                      <Input value={newTabLabel} onChange={(e) => setNewTabLabel(e.target.value)} placeholder="Ex.: Dia de treino, Dia OFF" />
+                      <p className="text-[10px] text-muted-foreground mt-1">Aparece no botão de escolha do aluno. Se vazio, usa o título.</p>
                     </div>
                     <div>
                       <Label className="font-body">Upload PDF</Label>
@@ -730,6 +743,12 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
                             <div>
                               <Label className="font-body text-xs">Título</Label>
                               <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+                              <p className="text-[10px] text-muted-foreground mt-1">Nome interno (também usado ao salvar na biblioteca).</p>
+                            </div>
+                            <div>
+                              <Label className="font-body text-xs">Nome da aba (visível ao aluno)</Label>
+                              <Input value={editTabLabel} onChange={(e) => setEditTabLabel(e.target.value)} placeholder="Ex.: Dia de treino, Dia OFF" />
+                              <p className="text-[10px] text-muted-foreground mt-1">Aparece no botão de escolha do aluno. Se vazio, usa o título.</p>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               <div>

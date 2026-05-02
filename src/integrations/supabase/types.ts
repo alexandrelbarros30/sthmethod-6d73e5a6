@@ -1849,6 +1849,7 @@ export type Database = {
           seen_by_student: boolean
           start_date: string | null
           storage_path: string | null
+          tab_label: string | null
           title: string
           updated_at: string
           user_id: string
@@ -1870,6 +1871,7 @@ export type Database = {
           seen_by_student?: boolean
           start_date?: string | null
           storage_path?: string | null
+          tab_label?: string | null
           title?: string
           updated_at?: string
           user_id: string
@@ -1891,6 +1893,7 @@ export type Database = {
           seen_by_student?: boolean
           start_date?: string | null
           storage_path?: string | null
+          tab_label?: string | null
           title?: string
           updated_at?: string
           user_id?: string
