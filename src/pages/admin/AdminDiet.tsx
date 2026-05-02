@@ -276,6 +276,7 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
 
   const resetNewForm = () => {
     setNewTitle("Dieta");
+    setNewTabLabel("");
     setNewContent("");
     setNewPdfFile(null);
     setNewReleaseDate("");
