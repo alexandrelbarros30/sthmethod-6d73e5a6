@@ -11,50 +11,37 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const body = await req.json();
-    const { action, ...payload } = body;
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const hotfixAction = "hotfix_curty_login_swap";
-    const hotfixSetAction = "hotfix_curty_set_emails";
-    const hotfixToken = "curty-hotfix-2026-05-02-6f7a3c91";
-    const hotfixUserA = "8f2f580a-f703-46bb-bb6d-59e91a2a2260";
-    const hotfixUserB = "7d0d035b-c149-44c6-8b58-4c08b8cf89a6";
-    const isHotfixRequest =
-      (action === hotfixAction || action === hotfixSetAction) &&
-      payload?.token === hotfixToken &&
-      payload?.user_a === hotfixUserA &&
-      payload?.user_b === hotfixUserB;
+    const authHeader = req.headers.get("Authorization");
+
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Não autorizado" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Verify caller is admin
+    const callerClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user: caller } } = await callerClient.auth.getUser();
+    if (!caller) {
+      return new Response(JSON.stringify({ error: "Não autorizado" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
-
-    if (!isHotfixRequest) {
-      const authHeader = req.headers.get("Authorization");
-      if (!authHeader) {
-        return new Response(JSON.stringify({ error: "Não autorizado" }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // Verify caller is admin
-      const callerClient = createClient(supabaseUrl, anonKey, {
-        global: { headers: { Authorization: authHeader } },
+    const { data: isAdmin } = await adminClient.rpc("has_role", { _user_id: caller.id, _role: "admin" });
+    if (!isAdmin) {
+      return new Response(JSON.stringify({ error: "Acesso negado" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
-      const { data: { user: caller } } = await callerClient.auth.getUser();
-      if (!caller) {
-        return new Response(JSON.stringify({ error: "Não autorizado" }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const { data: isAdmin } = await adminClient.rpc("has_role", { _user_id: caller.id, _role: "admin" });
-      if (!isAdmin) {
-        return new Response(JSON.stringify({ error: "Acesso negado" }), {
-          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
     }
+
+    const { action, ...payload } = await req.json();
 
     if (action === "create") {
       const { email, password, full_name, role } = payload;
@@ -217,7 +204,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (action === "swap_emails" || action === hotfixAction) {
+    if (action === "swap_emails") {
       const { user_a, user_b } = payload;
       if (!user_a || !user_b) {
         return new Response(JSON.stringify({ error: "user_a e user_b são obrigatórios" }), {
@@ -261,56 +248,6 @@ Deno.serve(async (req) => {
       await adminClient.from("profiles").update({ email: emailB }).eq("user_id", user_a);
       await adminClient.from("profiles").update({ email: emailA }).eq("user_id", user_b);
       return new Response(JSON.stringify({ success: true, user_a_email: emailB, user_b_email: emailA }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (action === hotfixSetAction) {
-      const { user_a, user_b } = payload;
-      const targetEmailA = "nalobr0602@gmail.com";
-      const targetEmailB = "financeiro.supdedicado@gmail.com";
-
-      const { data: ua, error: eA } = await adminClient.auth.admin.getUserById(user_a);
-      const { data: ub, error: eB } = await adminClient.auth.admin.getUserById(user_b);
-      if (eA || eB || !ua?.user || !ub?.user) {
-        return new Response(JSON.stringify({ error: "Usuário não encontrado" }), {
-          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const currentEmailA = ua.user.email!;
-      const currentEmailB = ub.user.email!;
-      const tempEmail = `temp-set-${crypto.randomUUID()}@swap.local`;
-
-      if (currentEmailA !== targetEmailA) {
-        let res = await adminClient.auth.admin.updateUserById(user_a, { email: tempEmail, email_confirm: true });
-        if (res.error) {
-          return new Response(JSON.stringify({ error: `Falha preparando Bruno: ${res.error.message}` }), {
-            status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        res = await adminClient.auth.admin.updateUserById(user_a, { email: targetEmailA, email_confirm: true });
-        if (res.error) {
-          await adminClient.auth.admin.updateUserById(user_a, { email: currentEmailA, email_confirm: true });
-          return new Response(JSON.stringify({ error: `Falha definindo email do Bruno: ${res.error.message}` }), {
-            status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-      }
-
-      if (currentEmailB !== targetEmailB) {
-        const res = await adminClient.auth.admin.updateUserById(user_b, { email: targetEmailB, email_confirm: true });
-        if (res.error) {
-          return new Response(JSON.stringify({ error: `Falha definindo email da Natasha: ${res.error.message}` }), {
-            status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-      }
-
-      await adminClient.from("profiles").update({ email: targetEmailA }).eq("user_id", user_a);
-      await adminClient.from("profiles").update({ email: targetEmailB }).eq("user_id", user_b);
-
-      return new Response(JSON.stringify({ success: true, user_a_email: targetEmailA, user_b_email: targetEmailB }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
