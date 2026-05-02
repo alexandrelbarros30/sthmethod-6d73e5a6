@@ -14,7 +14,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff, ToggleLeft, ToggleRight, CalendarClock, BookOpen, Save, ClipboardCopy } from "lucide-react";
-import { Star, StarOff } from "lucide-react";
 import DietAIAnalysis from "@/components/admin/DietAIAnalysis";
 import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -449,38 +448,19 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
     setConfirmDeleteOpen(true);
   };
 
-  const toggleVisibility = useMutation({
-    mutationFn: async ({ id, visible }: { id: string; visible: boolean }) => {
-      const { error } = await supabase.from("student_diets").update({ visible }).eq("id", id);
+  const toggleActive = useMutation({
+    mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
+      const { error } = await supabase
+        .from("student_diets")
+        .update({ is_active: active, visible: active })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-students-diets"] });
       refetchDiets();
     },
-    onError: () => toast.error("Erro ao alterar visibilidade"),
-  });
-
-  const setActiveMutation = useMutation({
-    mutationFn: async (dietId: string) => {
-      // Deactivate all others first
-      const { error: e1 } = await supabase
-        .from("student_diets")
-        .update({ is_active: false })
-        .eq("user_id", selected.user_id);
-      if (e1) throw e1;
-      const { error: e2 } = await supabase
-        .from("student_diets")
-        .update({ is_active: true })
-        .eq("id", dietId);
-      if (e2) throw e2;
-    },
-    onSuccess: () => {
-      toast.success("Cardápio definido como ativo!");
-      qc.invalidateQueries({ queryKey: ["admin-students-diets"] });
-      refetchDiets();
-    },
-    onError: (e: any) => toast.error(e?.message || "Erro ao definir como ativo"),
+    onError: () => toast.error("Erro ao alterar status do cardápio"),
   });
 
   const filteredStudents = search.trim().length < 2
@@ -838,13 +818,10 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
                                   <Badge variant="outline" className="text-[10px] shrink-0">
                                     {new Date(diet.created_at).toLocaleDateString("pt-BR")} às {new Date(diet.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                                   </Badge>
-                                  {!diet.visible && (
-                                    <Badge variant="secondary" className="text-[10px] bg-destructive/10 text-destructive">
-                                      Oculta
-                                    </Badge>
-                                  )}
-                                  {diet.is_active && (
-                                    <Badge className="text-[10px] bg-primary text-primary-foreground">Ativa</Badge>
+                                  {diet.is_active ? (
+                                    <Badge className="text-[10px] bg-primary text-primary-foreground">Ativo</Badge>
+                                  ) : (
+                                    <Badge variant="secondary" className="text-[10px] bg-muted text-muted-foreground">Inativo</Badge>
                                   )}
                                   {diet.end_date && new Date(diet.end_date) < new Date() && (
                                     <Badge variant="secondary" className="text-[10px] bg-muted text-muted-foreground">Encerrada</Badge>
@@ -917,16 +894,16 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
 
                               <div className="flex items-center gap-1 sm:flex-col sm:items-center shrink-0 self-end sm:self-auto">
                                 <div
-                                  className={`flex items-center gap-1.5 px-2 py-1 rounded-md border ${diet.visible ? "border-primary/40 bg-primary/10" : "border-border bg-muted/40"}`}
-                                  title={diet.visible ? "Habilitado nas abas do aluno" : "Oculta — aluno não vê esta aba"}
+                                  className={`flex items-center gap-1.5 px-2 py-1 rounded-md border ${diet.is_active ? "border-primary/40 bg-primary/10" : "border-border bg-muted/40"}`}
+                                  title={diet.is_active ? "Ativo — aparece como aba no aluno" : "Inativo — aluno não vê esta aba"}
                                 >
                                   <Switch
-                                    checked={diet.visible !== false}
-                                    onCheckedChange={(checked) => toggleVisibility.mutate({ id: diet.id, visible: checked })}
+                                    checked={!!diet.is_active}
+                                    onCheckedChange={(checked) => toggleActive.mutate({ id: diet.id, active: checked })}
                                     className="scale-75"
                                   />
                                   <span className="text-[10px] font-semibold uppercase tracking-wide">
-                                    {diet.visible ? "Habilitada" : "Oculta"}
+                                    {diet.is_active ? "Ativo" : "Inativo"}
                                   </span>
                                 </div>
                                 <Button
@@ -937,16 +914,6 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
                                   title="Visualizar"
                                 >
                                   {previewDiet === diet.id ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className={diet.is_active ? "text-primary" : "text-muted-foreground hover:text-primary"}
-                                  onClick={() => !diet.is_active && setActiveMutation.mutate(diet.id)}
-                                  title={diet.is_active ? "Cardápio ativo" : "Definir como ativo"}
-                                  disabled={diet.is_active || setActiveMutation.isPending}
-                                >
-                                  {diet.is_active ? <Star className="w-4 h-4 fill-current" /> : <StarOff className="w-4 h-4" />}
                                 </Button>
                                 <Button
                                   variant="ghost"
