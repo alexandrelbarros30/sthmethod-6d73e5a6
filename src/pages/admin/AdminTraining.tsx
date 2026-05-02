@@ -55,6 +55,8 @@ const AdminTraining = () => {
   const [exerciseDialogOpen, setExerciseDialogOpen] = useState(false);
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
   const [weekName, setWeekName] = useState("");
+  const [weekStartDate, setWeekStartDate] = useState("");
+  const [weekEndDate, setWeekEndDate] = useState("");
   const [weekDialogOpen, setWeekDialogOpen] = useState(false);
   const [editingWeekId, setEditingWeekId] = useState<string | null>(null);
   const [expandedWeeks, setExpandedWeeks] = useState<Set<string>>(new Set());
@@ -144,10 +146,13 @@ const AdminTraining = () => {
   const saveWeekMutation = useMutation({
     mutationFn: async () => {
       if (editingWeekId) {
-        await supabase.from("training_weeks").update({ name: weekName }).eq("id", editingWeekId);
+        await supabase.from("training_weeks").update({ name: weekName, start_date: weekStartDate || null, end_date: weekEndDate || null }).eq("id", editingWeekId);
       } else {
+        if ((weeks || []).length >= 5) {
+          throw new Error("Limite de 5 abas de treino por aluno atingido.");
+        }
         const maxOrder = (weeks || []).reduce((m: number, w: any) => Math.max(m, w.sort_order), -1);
-        await supabase.from("training_weeks").insert({ user_id: selectedStudent.user_id, name: weekName, sort_order: maxOrder + 1 });
+        await supabase.from("training_weeks").insert({ user_id: selectedStudent.user_id, name: weekName, sort_order: maxOrder + 1, start_date: weekStartDate || null, end_date: weekEndDate || null });
       }
     },
     onSuccess: () => {
@@ -155,8 +160,20 @@ const AdminTraining = () => {
       qc.invalidateQueries({ queryKey: ["admin-training-weeks"] });
       qc.invalidateQueries({ queryKey: ["admin-students-training-list"] });
       setWeekDialogOpen(false);
+      setWeekStartDate(""); setWeekEndDate("");
     },
-    onError: () => toast.error("Erro ao salvar"),
+    onError: (e: any) => toast.error(e?.message || "Erro ao salvar"),
+  });
+
+  const setActiveWeekMutation = useMutation({
+    mutationFn: async (weekId: string) => {
+      await supabase.from("training_weeks").update({ is_active: false }).eq("user_id", selectedStudent.user_id);
+      await supabase.from("training_weeks").update({ is_active: true }).eq("id", weekId);
+    },
+    onSuccess: () => {
+      toast.success("Treino definido como ativo!");
+      qc.invalidateQueries({ queryKey: ["admin-training-weeks"] });
+    },
   });
 
   const deleteWeekMutation = useMutation({
