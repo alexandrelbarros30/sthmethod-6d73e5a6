@@ -1834,14 +1834,17 @@ export type Database = {
           carbs_g: number | null
           content: string | null
           created_at: string
+          end_date: string | null
           energy_kcal: number | null
           fat_g: number | null
           hydration_l: number | null
           id: string
+          is_active: boolean
           pdf_url: string | null
           protein_g: number | null
           release_date: string | null
           seen_by_student: boolean
+          start_date: string | null
           storage_path: string | null
           title: string
           updated_at: string
@@ -1852,14 +1855,17 @@ export type Database = {
           carbs_g?: number | null
           content?: string | null
           created_at?: string
+          end_date?: string | null
           energy_kcal?: number | null
           fat_g?: number | null
           hydration_l?: number | null
           id?: string
+          is_active?: boolean
           pdf_url?: string | null
           protein_g?: number | null
           release_date?: string | null
           seen_by_student?: boolean
+          start_date?: string | null
           storage_path?: string | null
           title?: string
           updated_at?: string
@@ -1870,14 +1876,17 @@ export type Database = {
           carbs_g?: number | null
           content?: string | null
           created_at?: string
+          end_date?: string | null
           energy_kcal?: number | null
           fat_g?: number | null
           hydration_l?: number | null
           id?: string
+          is_active?: boolean
           pdf_url?: string | null
           protein_g?: number | null
           release_date?: string | null
           seen_by_student?: boolean
+          start_date?: string | null
           storage_path?: string | null
           title?: string
           updated_at?: string
@@ -1980,9 +1989,12 @@ export type Database = {
         Row: {
           content: string | null
           created_at: string
+          end_date: string | null
           id: string
+          is_active: boolean
           pdf_url: string | null
           seen_by_student: boolean
+          start_date: string | null
           title: string
           updated_at: string
           user_id: string
@@ -1991,9 +2003,12 @@ export type Database = {
         Insert: {
           content?: string | null
           created_at?: string
+          end_date?: string | null
           id?: string
+          is_active?: boolean
           pdf_url?: string | null
           seen_by_student?: boolean
+          start_date?: string | null
           title?: string
           updated_at?: string
           user_id: string
@@ -2002,9 +2017,12 @@ export type Database = {
         Update: {
           content?: string | null
           created_at?: string
+          end_date?: string | null
           id?: string
+          is_active?: boolean
           pdf_url?: string | null
           seen_by_student?: boolean
+          start_date?: string | null
           title?: string
           updated_at?: string
           user_id?: string
