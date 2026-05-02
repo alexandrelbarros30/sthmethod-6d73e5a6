@@ -198,6 +198,54 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "swap_emails") {
+      const { user_a, user_b } = payload;
+      if (!user_a || !user_b) {
+        return new Response(JSON.stringify({ error: "user_a e user_b são obrigatórios" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: ua, error: eA } = await adminClient.auth.admin.getUserById(user_a);
+      const { data: ub, error: eB } = await adminClient.auth.admin.getUserById(user_b);
+      if (eA || eB || !ua?.user || !ub?.user) {
+        return new Response(JSON.stringify({ error: "Usuário não encontrado" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const emailA = ua.user.email!;
+      const emailB = ub.user.email!;
+      const tempEmail = `temp-swap-${crypto.randomUUID()}@swap.local`;
+      // Step 1: park A on temp
+      let res = await adminClient.auth.admin.updateUserById(user_a, { email: tempEmail, email_confirm: true });
+      if (res.error) {
+        return new Response(JSON.stringify({ error: `Falha passo 1: ${res.error.message}` }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Step 2: B -> emailA
+      res = await adminClient.auth.admin.updateUserById(user_b, { email: emailA, email_confirm: true });
+      if (res.error) {
+        // rollback
+        await adminClient.auth.admin.updateUserById(user_a, { email: emailA, email_confirm: true });
+        return new Response(JSON.stringify({ error: `Falha passo 2: ${res.error.message}` }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Step 3: A (temp) -> emailB
+      res = await adminClient.auth.admin.updateUserById(user_a, { email: emailB, email_confirm: true });
+      if (res.error) {
+        return new Response(JSON.stringify({ error: `Falha passo 3 (estado inconsistente!): ${res.error.message}` }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Also sync profiles.email so they stay consistent
+      await adminClient.from("profiles").update({ email: emailB }).eq("user_id", user_a);
+      await adminClient.from("profiles").update({ email: emailA }).eq("user_id", user_b);
+      return new Response(JSON.stringify({ success: true, user_a_email: emailB, user_b_email: emailA }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify({ error: "Ação inválida" }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
