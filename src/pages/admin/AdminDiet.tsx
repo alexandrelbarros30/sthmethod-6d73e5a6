@@ -460,7 +460,10 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
       qc.invalidateQueries({ queryKey: ["admin-students-diets"] });
       refetchDiets();
     },
-    onError: () => toast.error("Erro ao alterar status do cardápio"),
+    onError: (e: any) => {
+      console.error("toggleActive error", e);
+      toast.error(e?.message || "Erro ao alterar status do cardápio");
+    },
   });
 
   const filteredStudents = search.trim().length < 2
