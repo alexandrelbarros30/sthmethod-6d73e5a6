@@ -16,6 +16,7 @@ import MealCard from "@/components/student/MealCard";
 import MealDetailPanel from "@/components/student/MealDetailPanel";
 import DietDateNav from "@/components/student/DietDateNav";
 import HydrationTracker from "@/components/student/HydrationTracker";
+import DietSelector from "@/components/student/DietSelector";
 import { Utensils, Flame, Zap, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { generateStudentPDF } from "@/lib/pdfGenerator";
@@ -50,6 +51,9 @@ const StudentDiet = () => {
     waterConsumedMl,
     addWater,
     removeLastWater,
+    availableDiets,
+    selectedDietId,
+    setSelectedDietId,
   } = useMealTracking();
 
   if (subLoading || isLoading) {
@@ -335,6 +339,13 @@ const StudentDiet = () => {
             disabled={!isToday}
           />
         )}
+
+        {/* Diet selector tabs (between hydration and meals) */}
+        <DietSelector
+          diets={availableDiets as any}
+          selectedId={selectedDietId}
+          onSelect={setSelectedDietId}
+        />
 
         {/* Meal List */}
         <div className="space-y-3" style={{ animationDelay: "0.2s" }}>
