@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Plus, Search, GripVertical, Video, ChevronDown, ChevronUp, Copy, FileText } from "lucide-react";
+import { Pencil, Trash2, Plus, Search, GripVertical, Video, ChevronDown, ChevronUp, Copy, FileText, Star, StarOff } from "lucide-react";
 import ExerciseLibraryPicker from "@/components/admin/ExerciseLibraryPicker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -443,16 +443,26 @@ const AdminTraining = () => {
             const weekExercises = (exercises || []).filter((e: any) => e.week_id === week.id).sort((a: any, b: any) => a.sort_order - b.sort_order);
             const isExpanded = expandedWeeks.has(week.id);
             return (
-              <Card key={week.id}>
+              <Card key={week.id} className={`${week.end_date && new Date(week.end_date) < new Date() ? "opacity-50 grayscale" : ""} ${week.is_active ? "ring-2 ring-primary" : ""}`}>
                 <CardHeader className="cursor-pointer" onClick={() => toggleWeek(week.id)}>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-base font-display flex items-center gap-2">
                       {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                       {week.name}
                       <Badge variant="outline" className="text-xs ml-2">{weekExercises.length} exercício(s)</Badge>
+                      {week.is_active && <Badge className="text-[10px] bg-primary text-primary-foreground">Ativo</Badge>}
+                      {week.end_date && new Date(week.end_date) < new Date() && <Badge variant="secondary" className="text-[10px]">Encerrado</Badge>}
+                      {(week.start_date || week.end_date) && (
+                        <Badge variant="outline" className="text-[10px]">
+                          {week.start_date ? new Date(week.start_date).toLocaleDateString("pt-BR") : "—"} → {week.end_date ? new Date(week.end_date).toLocaleDateString("pt-BR") : "—"}
+                        </Badge>
+                      )}
                     </CardTitle>
                     <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="sm" onClick={() => { setEditingWeekId(week.id); setWeekName(week.name); setWeekDialogOpen(true); }}>
+                      <Button variant="ghost" size="sm" title={week.is_active ? "Ativo" : "Definir como ativo"} disabled={week.is_active} onClick={() => setActiveWeekMutation.mutate(week.id)}>
+                        {week.is_active ? <Star className="w-3 h-3 fill-current text-primary" /> : <StarOff className="w-3 h-3" />}
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => { setEditingWeekId(week.id); setWeekName(week.name); setWeekStartDate(week.start_date || ""); setWeekEndDate(week.end_date || ""); setWeekDialogOpen(true); }}>
                         <Pencil className="w-3 h-3" />
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => { if (confirm("Remover este treino e todos os exercícios?")) deleteWeekMutation.mutate(week.id); }}>
@@ -514,7 +524,13 @@ const AdminTraining = () => {
       <Dialog open={weekDialogOpen} onOpenChange={setWeekDialogOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle className="font-display">{editingWeekId ? "Editar Treino" : "Novo Treino"}</DialogTitle></DialogHeader>
-          <div><Label className="font-body">Nome do treino</Label><Input value={weekName} onChange={(e) => setWeekName(e.target.value)} placeholder="Ex: Treino A - Peito e Tríceps" /></div>
+          <div className="space-y-3">
+            <div><Label className="font-body">Nome do treino</Label><Input value={weekName} onChange={(e) => setWeekName(e.target.value)} placeholder="Ex: Treino A - Peito e Tríceps" /></div>
+            <div className="grid grid-cols-2 gap-2">
+              <div><Label className="font-body text-xs">Início</Label><Input type="date" value={weekStartDate} onChange={(e) => setWeekStartDate(e.target.value)} /></div>
+              <div><Label className="font-body text-xs">Encerramento</Label><Input type="date" value={weekEndDate} onChange={(e) => setWeekEndDate(e.target.value)} /></div>
+            </div>
+          </div>
           <DialogFooter>
             <Button onClick={() => saveWeekMutation.mutate()} disabled={!weekName.trim() || saveWeekMutation.isPending}>
               {saveWeekMutation.isPending ? "Salvando..." : "Salvar"}
