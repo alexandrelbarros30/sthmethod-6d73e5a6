@@ -59,6 +59,7 @@ export function useMealTracking() {
         .select("energy_kcal, protein_g, carbs_g, fat_g, hydration_l")
         .eq("user_id", targetUserId!)
         .eq("visible", true)
+        .eq("is_active", true)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
