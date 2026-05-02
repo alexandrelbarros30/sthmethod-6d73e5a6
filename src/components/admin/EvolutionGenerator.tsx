@@ -149,7 +149,7 @@ function makeKey(side: "old" | "new", type: ImageType): TransformKey {
 }
 
 const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps) => {
-  const groups = groupByDate(allImages);
+  const groups = useMemo(() => groupByDate(allImages), [allImages]);
   const [oldDate, setOldDate] = useState("");
   const [newDate, setNewDate] = useState("");
   const [generating, setGenerating] = useState(false);
@@ -212,12 +212,22 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
         }
       }
       if (cancelled) return;
-      setLoadedImages(next);
+      setLoadedImages((prev) => {
+        const merged = { ...next };
+        for (const key of Object.keys(next) as TransformKey[]) {
+          const current = prev[key];
+          const original = next[key];
+          if (current && original && current.src !== original.src) {
+            merged[key] = current;
+          }
+        }
+        return merged;
+      });
       setOriginalImages(next);
       setTransforms((prev) => ({ ...initT, ...prev } as TransformMap));
     })();
     return () => { cancelled = true; };
-  }, [oldGroup, newGroup, overrides]);
+  }, [oldDate, newDate, oldGroup, newGroup, overrides]);
 
   // Render live preview for a given type
   const renderPreview = (type: ImageType): string | null => {
