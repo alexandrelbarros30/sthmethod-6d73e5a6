@@ -741,7 +741,7 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
                     <Clock className="w-4 h-4" /> Histórico de Dietas
                   </h3>
                   {studentDiets.map((diet: any) => (
-                    <Card key={diet.id} className="relative">
+                    <Card key={diet.id} className={`relative ${diet.end_date && new Date(diet.end_date) < new Date() ? "opacity-50 grayscale" : ""} ${diet.is_active ? "ring-2 ring-primary" : ""}`}>
                       <CardContent className="pt-4 pb-3">
                         {editingId === diet.id ? (
                           /* Edit mode */
@@ -843,6 +843,17 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
                                       Oculta
                                     </Badge>
                                   )}
+                                  {diet.is_active && (
+                                    <Badge className="text-[10px] bg-primary text-primary-foreground">Ativa</Badge>
+                                  )}
+                                  {diet.end_date && new Date(diet.end_date) < new Date() && (
+                                    <Badge variant="secondary" className="text-[10px] bg-muted text-muted-foreground">Encerrada</Badge>
+                                  )}
+                                  {(diet.start_date || diet.end_date) && (
+                                    <Badge variant="outline" className="text-[10px]">
+                                      {diet.start_date ? new Date(diet.start_date).toLocaleDateString("pt-BR") : "—"} → {diet.end_date ? new Date(diet.end_date).toLocaleDateString("pt-BR") : "—"}
+                                    </Badge>
+                                  )}
                                   {diet.release_date && new Date(diet.release_date) > new Date() && (
                                     <Badge variant="secondary" className="text-[10px] bg-amber-500/10 text-amber-600">
                                       <CalendarClock className="w-2.5 h-2.5 mr-0.5" />
@@ -920,6 +931,16 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
                                   title="Visualizar"
                                 >
                                   {previewDiet === diet.id ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className={diet.is_active ? "text-primary" : "text-muted-foreground hover:text-primary"}
+                                  onClick={() => !diet.is_active && setActiveMutation.mutate(diet.id)}
+                                  title={diet.is_active ? "Cardápio ativo" : "Definir como ativo"}
+                                  disabled={diet.is_active || setActiveMutation.isPending}
+                                >
+                                  {diet.is_active ? <Star className="w-4 h-4 fill-current" /> : <StarOff className="w-4 h-4" />}
                                 </Button>
                                 <Button
                                   variant="ghost"
