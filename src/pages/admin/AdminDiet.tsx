@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff, ToggleLeft, ToggleRight, CalendarClock, BookOpen, Save, ClipboardCopy } from "lucide-react";
+import { Star, StarOff } from "lucide-react";
 import DietAIAnalysis from "@/components/admin/DietAIAnalysis";
 import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -44,6 +45,8 @@ const AdminDiet = () => {
   const [newContent, setNewContent] = useState("");
   const [newPdfFile, setNewPdfFile] = useState<File | null>(null);
   const [newReleaseDate, setNewReleaseDate] = useState("");
+  const [newStartDate, setNewStartDate] = useState("");
+  const [newEndDate, setNewEndDate] = useState("");
   const [showNewForm, setShowNewForm] = useState(false);
   const [newEnergyKcal, setNewEnergyKcal] = useState("");
   const [newProteinG, setNewProteinG] = useState("");
@@ -58,6 +61,8 @@ const AdminDiet = () => {
   const [editDate, setEditDate] = useState("");
   const [editTime, setEditTime] = useState("");
   const [editReleaseDate, setEditReleaseDate] = useState("");
+  const [editStartDate, setEditStartDate] = useState("");
+  const [editEndDate, setEditEndDate] = useState("");
   const [editEnergyKcal, setEditEnergyKcal] = useState("");
   const [editProteinG, setEditProteinG] = useState("");
   const [editCarbsG, setEditCarbsG] = useState("");
@@ -272,6 +277,8 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
     setNewContent("");
     setNewPdfFile(null);
     setNewReleaseDate("");
+    setNewStartDate("");
+    setNewEndDate("");
     setNewEnergyKcal("");
     setNewProteinG("");
     setNewCarbsG("");
@@ -288,6 +295,8 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
     setEditDate(d.toISOString().slice(0, 10));
     setEditTime(d.toTimeString().slice(0, 5));
     setEditReleaseDate(diet.release_date ? new Date(diet.release_date).toISOString().slice(0, 10) : "");
+    setEditStartDate(diet.start_date || "");
+    setEditEndDate(diet.end_date || "");
     setEditEnergyKcal(diet.energy_kcal != null ? String(diet.energy_kcal) : "");
     setEditProteinG(diet.protein_g != null ? String(diet.protein_g) : "");
     setEditCarbsG(diet.carbs_g != null ? String(diet.carbs_g) : "");
@@ -329,6 +338,8 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
         pdf_url: pdfUrl,
         storage_path: pdfStoragePath,
         release_date: newReleaseDate ? new Date(newReleaseDate + "T00:00:00").toISOString() : null,
+        start_date: newStartDate || null,
+        end_date: newEndDate || null,
         energy_kcal: newEnergyKcal ? parseFloat(newEnergyKcal) : null,
         protein_g: newProteinG ? parseFloat(newProteinG) : null,
         carbs_g: newCarbsG ? parseFloat(newCarbsG) : null,
@@ -336,10 +347,26 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
         hydration_l: newHydrationL ? parseFloat(newHydrationL) : null,
       };
 
+      // Limit 5 abas
+      const { count } = await supabase
+        .from("student_diets")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", selected.user_id);
+      if ((count || 0) >= 5) {
+        throw new Error("Limite de 5 cardápios por aluno atingido. Exclua um antes de criar outro.");
+      }
       const { error: insertError } = await supabase.from("student_diets").insert(payload);
       if (insertError) throw insertError;
-
-      await syncStudentDietMeals(selected.user_id, newContent, newMealMacros || undefined);
+      // Sync interactive meals only if there is no other active diet (preserves the active one)
+      const { data: activeRow } = await supabase
+        .from("student_diets")
+        .select("id")
+        .eq("user_id", selected.user_id)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (!activeRow) {
+        await syncStudentDietMeals(selected.user_id, newContent, newMealMacros || undefined);
+      }
     },
     onSuccess: () => {
       toast.success("Dieta adicionada e vinculada ao aluno!");
@@ -361,6 +388,8 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
           content: editContent,
           created_at: newCreatedAt,
           release_date: editReleaseDate ? new Date(editReleaseDate + "T00:00:00").toISOString() : null,
+          start_date: editStartDate || null,
+          end_date: editEndDate || null,
           energy_kcal: editEnergyKcal ? parseFloat(editEnergyKcal) : null,
           protein_g: editProteinG ? parseFloat(editProteinG) : null,
           carbs_g: editCarbsG ? parseFloat(editCarbsG) : null,
@@ -371,8 +400,16 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
         .eq("id", editingId!);
 
       if (updateError) throw updateError;
-
-      await syncStudentDietMeals(selected.user_id, editContent, editMealMacros || undefined);
+      // Re-sync meals only if this is the active diet
+      const { data: activeRow } = await supabase
+        .from("student_diets")
+        .select("id")
+        .eq("id", editingId!)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (activeRow) {
+        await syncStudentDietMeals(selected.user_id, editContent, editMealMacros || undefined);
+      }
     },
     onSuccess: () => {
       toast.success("Dieta atualizada e sincronizada com o aluno!");
@@ -427,6 +464,35 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
       refetchDiets();
     },
     onError: () => toast.error("Erro ao alterar visibilidade"),
+  });
+
+  const setActiveMutation = useMutation({
+    mutationFn: async (dietId: string) => {
+      // Deactivate all others first
+      const { error: e1 } = await supabase
+        .from("student_diets")
+        .update({ is_active: false })
+        .eq("user_id", selected.user_id);
+      if (e1) throw e1;
+      const { error: e2 } = await supabase
+        .from("student_diets")
+        .update({ is_active: true })
+        .eq("id", dietId);
+      if (e2) throw e2;
+      // Re-sync interactive meals from the newly-active diet content
+      const { data: row } = await supabase
+        .from("student_diets")
+        .select("content")
+        .eq("id", dietId)
+        .maybeSingle();
+      await syncStudentDietMeals(selected.user_id, row?.content || "");
+    },
+    onSuccess: () => {
+      toast.success("Cardápio definido como ativo!");
+      qc.invalidateQueries({ queryKey: ["admin-students-diets"] });
+      refetchDiets();
+    },
+    onError: (e: any) => toast.error(e?.message || "Erro ao definir como ativo"),
   });
 
   const filteredStudents = search.trim().length < 2
