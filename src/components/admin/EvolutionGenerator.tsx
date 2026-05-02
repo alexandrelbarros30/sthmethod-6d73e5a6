@@ -69,7 +69,12 @@ function groupByDate(images: BodyImage[]): { date: string; label: string; images
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = "anonymous";
+    // crossOrigin não deve ser definido para data: URLs ou blob: URLs —
+    // alguns navegadores móveis disparam onerror nesse caso, fazendo o
+    // recorte aplicado "voltar ao original" silenciosamente.
+    if (!/^(data:|blob:)/i.test(url)) {
+      img.crossOrigin = "anonymous";
+    }
     img.onload = () => resolve(img);
     img.onerror = () => reject(new Error("Falha ao carregar imagem"));
     img.src = url;
