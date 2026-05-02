@@ -642,6 +642,12 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
                     <div>
                       <Label className="font-body">Título</Label>
                       <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
+                      <p className="text-[10px] text-muted-foreground mt-1">Nome interno (também usado ao salvar na biblioteca).</p>
+                    </div>
+                    <div>
+                      <Label className="font-body">Nome da aba (visível ao aluno)</Label>
+                      <Input value={newTabLabel} onChange={(e) => setNewTabLabel(e.target.value)} placeholder="Ex.: Dia de treino, Dia OFF" />
+                      <p className="text-[10px] text-muted-foreground mt-1">Aparece no botão de escolha do aluno. Se vazio, usa o título.</p>
                     </div>
                     <div>
                       <Label className="font-body">Upload PDF</Label>
@@ -737,6 +743,12 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
                             <div>
                               <Label className="font-body text-xs">Título</Label>
                               <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+                              <p className="text-[10px] text-muted-foreground mt-1">Nome interno (também usado ao salvar na biblioteca).</p>
+                            </div>
+                            <div>
+                              <Label className="font-body text-xs">Nome da aba (visível ao aluno)</Label>
+                              <Input value={editTabLabel} onChange={(e) => setEditTabLabel(e.target.value)} placeholder="Ex.: Dia de treino, Dia OFF" />
+                              <p className="text-[10px] text-muted-foreground mt-1">Aparece no botão de escolha do aluno. Se vazio, usa o título.</p>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               <div>
