@@ -42,6 +42,7 @@ const AdminDiet = () => {
 
   // New entry form
   const [newTitle, setNewTitle] = useState("Dieta");
+  const [newTabLabel, setNewTabLabel] = useState("");
   const [newContent, setNewContent] = useState("");
   const [newPdfFile, setNewPdfFile] = useState<File | null>(null);
   const [newReleaseDate, setNewReleaseDate] = useState("");
@@ -57,6 +58,7 @@ const AdminDiet = () => {
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
+  const [editTabLabel, setEditTabLabel] = useState("");
   const [editContent, setEditContent] = useState("");
   const [editDate, setEditDate] = useState("");
   const [editTime, setEditTime] = useState("");
