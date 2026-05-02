@@ -257,10 +257,22 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName, studentPhon
               </Label>
             </div>
 
-            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full">
-              <Save className="w-4 h-4 mr-2" />
-              {saveMutation.isPending ? "Salvando..." : editingId ? "Atualizar Painel" : "Salvar Novo Painel"}
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="flex-1">
+                <Save className="w-4 h-4 mr-2" />
+                {saveMutation.isPending ? "Salvando..." : editingId ? "Atualizar Painel" : "Salvar Novo Painel"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => sendViaWhatsApp({ title, content })}
+                disabled={!content.trim()}
+                className="sm:w-auto border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-600"
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Enviar WhatsApp
+              </Button>
+            </div>
           </div>
         )}
       </DialogContent>
