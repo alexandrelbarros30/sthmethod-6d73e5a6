@@ -916,12 +916,18 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
                               </div>
 
                               <div className="flex items-center gap-1 sm:flex-col sm:items-center shrink-0 self-end sm:self-auto">
-                                <div className="flex items-center gap-1" title={diet.visible ? "Visível para o aluno" : "Oculta para o aluno"}>
+                                <div
+                                  className={`flex items-center gap-1.5 px-2 py-1 rounded-md border ${diet.visible ? "border-primary/40 bg-primary/10" : "border-border bg-muted/40"}`}
+                                  title={diet.visible ? "Habilitado nas abas do aluno" : "Oculta — aluno não vê esta aba"}
+                                >
                                   <Switch
                                     checked={diet.visible !== false}
                                     onCheckedChange={(checked) => toggleVisibility.mutate({ id: diet.id, visible: checked })}
                                     className="scale-75"
                                   />
+                                  <span className="text-[10px] font-semibold uppercase tracking-wide">
+                                    {diet.visible ? "Habilitada" : "Oculta"}
+                                  </span>
                                 </div>
                                 <Button
                                   variant="ghost"
