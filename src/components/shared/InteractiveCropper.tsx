@@ -65,7 +65,9 @@ const InteractiveCropper = ({ open = true, imageSrc, initialRect, onClose, onApp
   useEffect(() => {
     if ((!inline && !open) || !imageSrc) return;
     const i = new Image();
-    i.crossOrigin = "anonymous";
+    if (!/^(data:|blob:)/i.test(imageSrc)) {
+      i.crossOrigin = "anonymous";
+    }
     i.onload = () => {
       setImgSize({ w: i.naturalWidth, h: i.naturalHeight });
       // Reset rect: centralizado, 80%
@@ -230,7 +232,9 @@ const InteractiveCropper = ({ open = true, imageSrc, initialRect, onClose, onApp
         console.error("[InteractiveCropper] Falha ao gerar recorte:", err);
         // Fallback: tenta recarregar com crossOrigin
         const img = new Image();
-        img.crossOrigin = "anonymous";
+        if (!/^(data:|blob:)/i.test(imageSrc)) {
+          img.crossOrigin = "anonymous";
+        }
         img.onload = () => {
           try {
             const c = document.createElement("canvas");
@@ -253,7 +257,9 @@ const InteractiveCropper = ({ open = true, imageSrc, initialRect, onClose, onApp
       drawAndEmit(live);
     } else {
       const img = new Image();
-      img.crossOrigin = "anonymous";
+      if (!/^(data:|blob:)/i.test(imageSrc)) {
+        img.crossOrigin = "anonymous";
+      }
       img.onload = () => drawAndEmit(img);
       img.onerror = () => console.error("[InteractiveCropper] Falha ao carregar imagem para recorte.");
       img.src = imageSrc;
