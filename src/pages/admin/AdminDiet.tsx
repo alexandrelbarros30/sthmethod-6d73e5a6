@@ -664,6 +664,16 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
                       <Input type="date" value={newReleaseDate} onChange={(e) => setNewReleaseDate(e.target.value)} />
                       <p className="text-[10px] text-muted-foreground mt-1">Se preenchida, o aluno só verá a dieta a partir desta data.</p>
                     </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="font-body text-xs">Início da aba</Label>
+                        <Input type="date" value={newStartDate} onChange={(e) => setNewStartDate(e.target.value)} />
+                      </div>
+                      <div>
+                        <Label className="font-body text-xs">Encerramento</Label>
+                        <Input type="date" value={newEndDate} onChange={(e) => setNewEndDate(e.target.value)} />
+                      </div>
+                    </div>
                     {/* Macronutrientes */}
                     <div>
                       <Label className="font-body text-xs font-semibold">Macronutrientes (opcional)</Label>
@@ -753,6 +763,14 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
                                 <Label className="font-body text-xs flex items-center gap-1"><CalendarClock className="w-3 h-3" /> Data de liberação</Label>
                                 <Input type="date" value={editReleaseDate} onChange={(e) => setEditReleaseDate(e.target.value)} />
                                 <p className="text-[10px] text-muted-foreground mt-1">Deixe vazio para liberar imediatamente.</p>
+                              </div>
+                              <div>
+                                <Label className="font-body text-xs">Início da aba</Label>
+                                <Input type="date" value={editStartDate} onChange={(e) => setEditStartDate(e.target.value)} />
+                              </div>
+                              <div>
+                                <Label className="font-body text-xs">Encerramento</Label>
+                                <Input type="date" value={editEndDate} onChange={(e) => setEditEndDate(e.target.value)} />
                               </div>
                             </div>
                             {/* Macronutrientes */}
