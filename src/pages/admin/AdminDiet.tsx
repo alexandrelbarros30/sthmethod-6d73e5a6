@@ -355,17 +355,15 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
       if ((count || 0) >= 5) {
         throw new Error("Limite de 5 cardápios por aluno atingido. Exclua um antes de criar outro.");
       }
-      const { error: insertError } = await supabase.from("student_diets").insert(payload);
-      if (insertError) throw insertError;
-      // Sync interactive meals only if there is no other active diet (preserves the active one)
-      const { data: activeRow } = await supabase
+      const { data: inserted, error: insertError } = await supabase
         .from("student_diets")
+        .insert(payload)
         .select("id")
-        .eq("user_id", selected.user_id)
-        .eq("is_active", true)
-        .maybeSingle();
-      if (!activeRow) {
-        await syncStudentDietMeals(selected.user_id, newContent, newMealMacros || undefined);
+        .single();
+      if (insertError) throw insertError;
+      // Each diet has its own set of interactive meals
+      if (inserted?.id) {
+        await syncStudentDietMeals(selected.user_id, newContent, newMealMacros || undefined, inserted.id);
       }
     },
     onSuccess: () => {
@@ -400,16 +398,8 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
         .eq("id", editingId!);
 
       if (updateError) throw updateError;
-      // Re-sync meals only if this is the active diet
-      const { data: activeRow } = await supabase
-        .from("student_diets")
-        .select("id")
-        .eq("id", editingId!)
-        .eq("is_active", true)
-        .maybeSingle();
-      if (activeRow) {
-        await syncStudentDietMeals(selected.user_id, editContent, editMealMacros || undefined);
-      }
+      // Re-sync this diet's own meals
+      await syncStudentDietMeals(selected.user_id, editContent, editMealMacros || undefined, editingId!);
     },
     onSuccess: () => {
       toast.success("Dieta atualizada e sincronizada com o aluno!");
@@ -424,20 +414,18 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
     mutationFn: async () => {
       if (!deletingId) return;
 
+      // Remove this diet's own meals/foods first (in case FK is not set up)
+      const { data: dmeals } = await supabase
+        .from("diet_meals")
+        .select("id")
+        .eq("diet_id", deletingId as any);
+      if (dmeals?.length) {
+        const ids = dmeals.map((d: any) => d.id);
+        await supabase.from("diet_foods").delete().in("meal_id", ids);
+        await supabase.from("diet_meals").delete().in("id", ids);
+      }
       const { error: deleteError } = await supabase.from("student_diets").delete().eq("id", deletingId);
       if (deleteError) throw deleteError;
-
-      const { data: latestDiet, error: latestDietError } = await supabase
-        .from("student_diets")
-        .select("content")
-        .eq("user_id", selected.user_id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (latestDietError) throw latestDietError;
-
-      await syncStudentDietMeals(selected.user_id, latestDiet?.content || "");
     },
     onSuccess: () => {
       toast.success("Dieta removida e visão do aluno atualizada!");
@@ -479,13 +467,6 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
         .update({ is_active: true })
         .eq("id", dietId);
       if (e2) throw e2;
-      // Re-sync interactive meals from the newly-active diet content
-      const { data: row } = await supabase
-        .from("student_diets")
-        .select("content")
-        .eq("id", dietId)
-        .maybeSingle();
-      await syncStudentDietMeals(selected.user_id, row?.content || "");
     },
     onSuccess: () => {
       toast.success("Cardápio definido como ativo!");

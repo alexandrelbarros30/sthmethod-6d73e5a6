@@ -473,20 +473,23 @@ export interface MealMacros {
 export const syncStudentDietMeals = async (
   studentId: string,
   content: string,
-  perMealMacros?: MealMacros[]
+  perMealMacros?: MealMacros[],
+  dietId?: string
 ) => {
   const meals = parseDietContentToMeals(content);
 
   // If no per-meal macros from AI, try to fetch totals from student_diets and distribute equally
   let fallbackPerMealMacros: MealMacros[] | undefined;
   if (!perMealMacros?.length && meals.length > 0) {
-    const { data: dietRecord } = await supabase
+    let dietQuery = supabase
       .from("student_diets")
-      .select("energy_kcal, protein_g, carbs_g, fat_g")
-      .eq("user_id", studentId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .select("energy_kcal, protein_g, carbs_g, fat_g");
+    if (dietId) {
+      dietQuery = dietQuery.eq("id", dietId);
+    } else {
+      dietQuery = dietQuery.eq("user_id", studentId).order("created_at", { ascending: false }).limit(1);
+    }
+    const { data: dietRecord } = await dietQuery.maybeSingle();
 
     if (dietRecord && (dietRecord.energy_kcal || dietRecord.protein_g)) {
       const totalKcal = dietRecord.energy_kcal || 0;
@@ -507,10 +510,12 @@ export const syncStudentDietMeals = async (
 
   const effectiveMacros = perMealMacros?.length ? perMealMacros : fallbackPerMealMacros;
 
-  const { data: existingMeals, error: existingMealsError } = await supabase
+  let existingQuery = supabase
     .from("diet_meals")
     .select("id")
     .eq("user_id", studentId);
+  if (dietId) existingQuery = existingQuery.eq("diet_id", dietId);
+  const { data: existingMeals, error: existingMealsError } = await existingQuery;
 
   if (existingMealsError) throw existingMealsError;
 
@@ -519,7 +524,7 @@ export const syncStudentDietMeals = async (
     const { error: deleteFoodsError } = await supabase.from("diet_foods").delete().in("meal_id", mealIds);
     if (deleteFoodsError) throw deleteFoodsError;
 
-    const { error: deleteMealsError } = await supabase.from("diet_meals").delete().eq("user_id", studentId);
+    const { error: deleteMealsError } = await supabase.from("diet_meals").delete().in("id", mealIds);
     if (deleteMealsError) throw deleteMealsError;
   }
 
@@ -534,7 +539,8 @@ export const syncStudentDietMeals = async (
         name: meal.name,
         time: meal.time,
         sort_order: i,
-      })
+        diet_id: dietId ?? null,
+      } as any)
       .select("id")
       .single();
 
