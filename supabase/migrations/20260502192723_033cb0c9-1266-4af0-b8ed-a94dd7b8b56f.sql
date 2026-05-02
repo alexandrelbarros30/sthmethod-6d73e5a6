@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS public.idx_student_diets_one_active;
