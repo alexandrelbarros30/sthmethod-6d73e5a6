@@ -1,0 +1,1 @@
+ALTER TABLE public.student_diets ADD COLUMN IF NOT EXISTS tab_label TEXT;
