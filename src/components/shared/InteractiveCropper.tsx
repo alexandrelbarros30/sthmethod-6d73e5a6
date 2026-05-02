@@ -213,17 +213,51 @@ const InteractiveCropper = ({ open = true, imageSrc, initialRect, onClose, onApp
 
   const handleApply = () => {
     if (!rect || !imgSize) return;
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const c = document.createElement("canvas");
-      c.width = Math.round(rect.w);
-      c.height = Math.round(rect.h);
-      const ctx = c.getContext("2d")!;
-      ctx.drawImage(img, rect.x, rect.y, rect.w, rect.h, 0, 0, rect.w, rect.h);
-      onApply({ dataUrl: c.toDataURL("image/jpeg", 0.92), rect });
+    // Prefer the already-rendered <img>: it's decoded, in cache and avoids
+    // a second network roundtrip which on mobile/Safari may resolve without
+    // CORS headers and taint the canvas (causing toDataURL to throw and the
+    // crop to silently revert to the original).
+    const drawAndEmit = (source: CanvasImageSource) => {
+      try {
+        const c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(rect.w));
+        c.height = Math.max(1, Math.round(rect.h));
+        const ctx = c.getContext("2d")!;
+        ctx.drawImage(source, rect.x, rect.y, rect.w, rect.h, 0, 0, rect.w, rect.h);
+        const dataUrl = c.toDataURL("image/jpeg", 0.92);
+        onApply({ dataUrl, rect });
+      } catch (err) {
+        console.error("[InteractiveCropper] Falha ao gerar recorte:", err);
+        // Fallback: tenta recarregar com crossOrigin
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          try {
+            const c = document.createElement("canvas");
+            c.width = Math.max(1, Math.round(rect.w));
+            c.height = Math.max(1, Math.round(rect.h));
+            const ctx = c.getContext("2d")!;
+            ctx.drawImage(img, rect.x, rect.y, rect.w, rect.h, 0, 0, rect.w, rect.h);
+            onApply({ dataUrl: c.toDataURL("image/jpeg", 0.92), rect });
+          } catch (e) {
+            console.error("[InteractiveCropper] Fallback também falhou:", e);
+          }
+        };
+        img.onerror = () => console.error("[InteractiveCropper] Falha ao recarregar imagem para recorte.");
+        img.src = imageSrc;
+      }
     };
-    img.src = imageSrc;
+
+    const live = imgRef.current;
+    if (live && live.complete && live.naturalWidth > 0) {
+      drawAndEmit(live);
+    } else {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => drawAndEmit(img);
+      img.onerror = () => console.error("[InteractiveCropper] Falha ao carregar imagem para recorte.");
+      img.src = imageSrc;
+    }
   };
 
   // Handles visuais (estilo Samsung Gallery: brackets nos cantos + barras nas bordas)
