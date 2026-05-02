@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Microscope, Save, Plus, Pencil, History, ChevronLeft, Trash2, X } from "lucide-react";
+import { Microscope, Save, Plus, Pencil, History, ChevronLeft, Trash2, X, MessageCircle } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent as AlertContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle as AlertTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { buildWhatsAppUrl } from "@/lib/system-templates";
 
 const RichTextEditor = lazy(() => import("@/components/shared/RichTextEditor"));
 
@@ -21,11 +22,20 @@ interface AdminMetabolicPanelProps {
   onOpenChange: (open: boolean) => void;
   userId: string;
   userName: string;
+  studentPhone?: string | null;
 }
 
 type ViewMode = "list" | "edit";
 
-const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName }: AdminMetabolicPanelProps) => {
+const stripHtml = (html: string): string => {
+  if (!html) return "";
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  const text = tmp.textContent || tmp.innerText || "";
+  return text.replace(/\n{3,}/g, "\n\n").trim();
+};
+
+const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName, studentPhone }: AdminMetabolicPanelProps) => {
   const qc = useQueryClient();
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
@@ -113,6 +123,27 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName }: AdminMeta
     setEditingId(null);
   };
 
+  const sendViaWhatsApp = (panel: { title?: string | null; content?: string | null }) => {
+    if (!studentPhone) {
+      toast.error("Aluno sem telefone cadastrado.");
+      return;
+    }
+    const firstName = (userName || "Aluno").split(" ")[0];
+    const body = stripHtml(panel.content || "");
+    if (!body) {
+      toast.error("Painel sem conteúdo para enviar.");
+      return;
+    }
+    const header = panel.title ? `*${panel.title}*\n\n` : "";
+    const message = `Olá ${firstName}! 👋\n\nSegue seu *Painel Metabólico* — STH METHOD:\n\n${header}${body}`;
+    const url = buildWhatsAppUrl(studentPhone, message);
+    if (!url) {
+      toast.error("Telefone inválido.");
+      return;
+    }
+    window.open(url, "_blank");
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
@@ -154,6 +185,17 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName }: AdminMeta
                           <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => startEdit(panel)}>
                             <Pencil className="w-3.5 h-3.5" />
                           </Button>
+                          {panel.visible && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0 text-emerald-600 hover:text-emerald-700"
+                              onClick={() => sendViaWhatsApp(panel)}
+                              title="Enviar via WhatsApp"
+                            >
+                              <MessageCircle className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive hover:text-destructive">
@@ -215,10 +257,22 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName }: AdminMeta
               </Label>
             </div>
 
-            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full">
-              <Save className="w-4 h-4 mr-2" />
-              {saveMutation.isPending ? "Salvando..." : editingId ? "Atualizar Painel" : "Salvar Novo Painel"}
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="flex-1">
+                <Save className="w-4 h-4 mr-2" />
+                {saveMutation.isPending ? "Salvando..." : editingId ? "Atualizar Painel" : "Salvar Novo Painel"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => sendViaWhatsApp({ title, content })}
+                disabled={!content.trim()}
+                className="sm:w-auto border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-600"
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Enviar WhatsApp
+              </Button>
+            </div>
           </div>
         )}
       </DialogContent>

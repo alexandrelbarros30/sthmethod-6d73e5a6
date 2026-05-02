@@ -2030,6 +2030,7 @@ const AdminStudents = () => {
           onOpenChange={(o) => { setMetabolicOpen(o); if (!o) setManageOpen(true); }}
           userId={selected.user_id}
           userName={selected.full_name || selected.email}
+          studentPhone={selected.phone}
         />
       )}
 
