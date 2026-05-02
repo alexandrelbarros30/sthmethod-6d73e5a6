@@ -293,6 +293,7 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
     const d = new Date(diet.created_at);
     setEditingId(diet.id);
     setEditTitle(diet.title || "");
+    setEditTabLabel(diet.tab_label || "");
     setEditContent(diet.content || "");
     setEditDate(d.toISOString().slice(0, 10));
     setEditTime(d.toTimeString().slice(0, 5));
@@ -310,6 +311,7 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
   const cancelEdit = () => {
     setEditingId(null);
     setEditTitle("");
+    setEditTabLabel("");
     setEditContent("");
     setEditDate("");
     setEditTime("");
@@ -336,6 +338,7 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
       const payload: any = {
         user_id: selected.user_id,
         title: newTitle,
+        tab_label: newTabLabel || null,
         content: newContent,
         pdf_url: pdfUrl,
         storage_path: pdfStoragePath,
@@ -385,6 +388,7 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
         .from("student_diets")
         .update({
           title: editTitle,
+          tab_label: editTabLabel || null,
           content: editContent,
           created_at: newCreatedAt,
           release_date: editReleaseDate ? new Date(editReleaseDate + "T00:00:00").toISOString() : null,
