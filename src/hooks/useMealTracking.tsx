@@ -72,7 +72,7 @@ export function useMealTracking() {
         .from("student_diets")
         .select("id, title, tab_label, energy_kcal, protein_g, carbs_g, fat_g, hydration_l, start_date, end_date, is_active, created_at")
         .eq("user_id", targetUserId!)
-        .eq("visible", true)
+        .eq("is_active", true)
         .order("created_at", { ascending: true });
       if (error) throw error;
       return data || [];
@@ -84,9 +84,8 @@ export function useMealTracking() {
   const today = todayStr();
   const isExpired = (d: any) => d.end_date && d.end_date < today;
   const validSelected = availableDiets.find((d: any) => d.id === selectedDietId && !isExpired(d));
-  const activeDefault = availableDiets.find((d: any) => d.is_active && !isExpired(d));
   const firstValid = availableDiets.find((d: any) => !isExpired(d));
-  const currentDiet: any = validSelected || activeDefault || firstValid || availableDiets[0] || null;
+  const currentDiet: any = validSelected || firstValid || availableDiets[0] || null;
 
   const dietMeta = currentDiet
     ? {
