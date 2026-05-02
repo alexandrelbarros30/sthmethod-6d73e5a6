@@ -185,6 +185,17 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName, studentPhon
                           <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => startEdit(panel)}>
                             <Pencil className="w-3.5 h-3.5" />
                           </Button>
+                          {panel.visible && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0 text-emerald-600 hover:text-emerald-700"
+                              onClick={() => sendViaWhatsApp(panel)}
+                              title="Enviar via WhatsApp"
+                            >
+                              <MessageCircle className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive hover:text-destructive">
