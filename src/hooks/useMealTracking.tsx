@@ -41,40 +41,62 @@ export interface AdminMacros {
 const formatDate = (d: Date) => d.toISOString().split("T")[0];
 const todayStr = () => formatDate(new Date());
 
+const STORAGE_KEY = (uid: string) => `selected_diet_${uid}`;
+
 export function useMealTracking() {
   const { user } = useAuth();
   const { effectiveUserId, isPreviewing } = usePreviewAs();
   const targetUserId = effectiveUserId || user?.id;
   const qc = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<string>(todayStr());
+  const [selectedDietId, setSelectedDietIdState] = useState<string | null>(() => {
+    if (typeof window === "undefined" || !targetUserId) return null;
+    return localStorage.getItem(STORAGE_KEY(targetUserId));
+  });
+
+  const setSelectedDietId = (id: string | null) => {
+    setSelectedDietIdState(id);
+    if (typeof window !== "undefined" && targetUserId) {
+      if (id) localStorage.setItem(STORAGE_KEY(targetUserId), id);
+      else localStorage.removeItem(STORAGE_KEY(targetUserId));
+    }
+  };
 
   const isToday = selectedDate === todayStr();
 
-  // Fetch admin-defined macros + hydration from student_diets
-  const { data: dietMeta } = useQuery({
-    queryKey: ["student-diet-macros", targetUserId],
+  // Fetch all visible diets to populate tabs
+  const { data: availableDiets = [] } = useQuery({
+    queryKey: ["student-diets-list", targetUserId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("student_diets")
-        .select("energy_kcal, protein_g, carbs_g, fat_g, hydration_l")
+        .select("id, title, energy_kcal, protein_g, carbs_g, fat_g, hydration_l, start_date, end_date, is_active, created_at")
         .eq("user_id", targetUserId!)
         .eq("visible", true)
-        .eq("is_active", true)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .order("created_at", { ascending: true });
       if (error) throw error;
-      if (!data) return null;
-      return {
-        energy_kcal: data.energy_kcal || 0,
-        protein_g: data.protein_g || 0,
-        carbs_g: data.carbs_g || 0,
-        fat_g: data.fat_g || 0,
-        hydration_l: data.hydration_l || 0,
-      };
+      return data || [];
     },
     enabled: !!targetUserId,
   });
+
+  // Determine effective diet: stored selection > active > first not-expired > first
+  const today = todayStr();
+  const isExpired = (d: any) => d.end_date && d.end_date < today;
+  const validSelected = availableDiets.find((d: any) => d.id === selectedDietId && !isExpired(d));
+  const activeDefault = availableDiets.find((d: any) => d.is_active && !isExpired(d));
+  const firstValid = availableDiets.find((d: any) => !isExpired(d));
+  const currentDiet: any = validSelected || activeDefault || firstValid || availableDiets[0] || null;
+
+  const dietMeta = currentDiet
+    ? {
+        energy_kcal: currentDiet.energy_kcal || 0,
+        protein_g: currentDiet.protein_g || 0,
+        carbs_g: currentDiet.carbs_g || 0,
+        fat_g: currentDiet.fat_g || 0,
+        hydration_l: currentDiet.hydration_l || 0,
+      }
+    : null;
 
   const adminMacros = dietMeta ? {
     energy_kcal: dietMeta.energy_kcal,
@@ -86,13 +108,14 @@ export function useMealTracking() {
   const hydrationGoalL = dietMeta?.hydration_l || 0;
 
   const { data: meals = [], isLoading: mealsLoading, error: mealsError } = useQuery({
-    queryKey: ["diet-meals-tracking", targetUserId],
+    queryKey: ["diet-meals-tracking", targetUserId, currentDiet?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("diet_meals")
         .select("id, name, time, sort_order, image_url, diet_foods(id, item, quantity, energy_kcal, protein_g, carbs_g, fat_g, fiber_g, notes)")
-        .eq("user_id", targetUserId!)
-        .order("sort_order", { ascending: true });
+        .eq("user_id", targetUserId!);
+      if (currentDiet?.id) q = q.eq("diet_id", currentDiet.id);
+      const { data, error } = await q.order("sort_order", { ascending: true });
       if (error) throw error;
       return (data || []) as MealWithFoods[];
     },
@@ -311,5 +334,10 @@ export function useMealTracking() {
     waterConsumedMl,
     addWater,
     removeLastWater,
+    // Diet tabs
+    availableDiets,
+    currentDiet,
+    selectedDietId: currentDiet?.id || null,
+    setSelectedDietId,
   };
 }
