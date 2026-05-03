@@ -70,46 +70,47 @@ const NutritionQuizSection = () => {
   const progress = done ? 100 : (step / totalSteps) * 100;
 
   return (
-    <section id="diagnostico" className="py-20 px-6">
+    <section id="diagnostico" className="py-24 md:py-32 px-6 border-t border-border/40">
       <div className="max-w-2xl mx-auto">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-10"
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="text-center mb-12"
         >
-          <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-4 text-sm text-muted-foreground">
-            <Brain className="w-4 h-4" /> Quiz rápido
+          <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5 inline-flex items-center gap-2">
+            <Brain className="w-3.5 h-3.5" /> Quiz rápido
           </div>
-          <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground">
-            Descubra seu <span className="gradient-text">Perfil Nutricional</span>
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] text-foreground">
+            Descubra seu perfil.
           </h2>
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="glass rounded-2xl p-8 glow-border"
+          className="border border-border/40 rounded-2xl p-8 md:p-10 bg-background"
         >
           {/* Progress bar */}
-          <div className="w-full h-1.5 rounded-full bg-muted/30 mb-8">
-            <motion.div className="h-full rounded-full gradient-bg" animate={{ width: `${progress}%` }} transition={{ duration: 0.3 }} />
+          <div className="w-full h-1 rounded-full bg-muted/40 mb-8 overflow-hidden">
+            <motion.div className="h-full rounded-full bg-foreground" animate={{ width: `${progress}%` }} transition={{ duration: 0.3 }} />
           </div>
 
           <AnimatePresence mode="wait">
             {!done && step < questions.length && (
               <motion.div key={step} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                <h3 className="text-lg font-display font-semibold text-foreground">{questions[step].q}</h3>
+                <h3 className="text-xl font-semibold tracking-[-0.02em] text-foreground">{questions[step].q}</h3>
                 <div className="grid gap-3">
                   {questions[step].options.map((opt) => (
                     <button
                       key={opt}
                       onClick={() => selectOption(opt)}
-                      className={`w-full text-left px-4 py-3 rounded-xl border transition-all text-sm ${
+                      className={`w-full text-left px-5 py-3.5 rounded-xl border transition-all text-[14px] font-light ${
                         answers[step] === opt
-                          ? "border-primary bg-primary/10 text-foreground"
-                          : "border-border hover:border-primary/50 text-muted-foreground hover:text-foreground"
+                          ? "border-foreground bg-foreground/5 text-foreground"
+                          : "border-border/60 hover:border-foreground/40 text-muted-foreground hover:text-foreground"
                       }`}
                     >
                       {opt}
@@ -117,7 +118,7 @@ const NutritionQuizSection = () => {
                   ))}
                 </div>
                 {step > 0 && (
-                  <button onClick={() => setStep(step - 1)} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                  <button onClick={() => setStep(step - 1)} className="flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground transition-colors">
                     <ArrowLeft className="w-3 h-3" /> Voltar
                   </button>
                 )}
@@ -126,13 +127,13 @@ const NutritionQuizSection = () => {
 
             {!done && step === questions.length && (
               <motion.div key="weight" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                <h3 className="text-lg font-display font-semibold text-foreground">Informe seu peso atual (kg)</h3>
+                <h3 className="text-xl font-semibold tracking-[-0.02em] text-foreground">Informe seu peso atual (kg)</h3>
                 <Input type="number" placeholder="Ex: 80" value={weight} onChange={(e) => setWeight(e.target.value)} />
                 <div className="flex gap-3">
-                  <button onClick={() => setStep(step - 1)} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                  <button onClick={() => setStep(step - 1)} className="flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground transition-colors">
                     <ArrowLeft className="w-3 h-3" /> Voltar
                   </button>
-                  <Button onClick={submitWeight} className="flex-1 gradient-bg text-primary-foreground hover:opacity-90">
+                  <Button onClick={submitWeight} className="flex-1 rounded-full h-11 bg-foreground text-background hover:bg-foreground/90 text-[14px] font-medium">
                     Ver resultado
                   </Button>
                 </div>
@@ -141,18 +142,16 @@ const NutritionQuizSection = () => {
 
             {done && (
               <motion.div key="result" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center space-y-6">
-                <div className="w-14 h-14 rounded-2xl gradient-bg flex items-center justify-center mx-auto">
-                  <Sparkles className="w-7 h-7 text-primary-foreground" />
-                </div>
-                <p className="text-foreground font-medium leading-relaxed">"{getResult(answers)}"</p>
-                <p className="text-sm text-muted-foreground">Peso informado: <span className="text-foreground font-semibold">{weight} kg</span></p>
+                <Sparkles className="w-7 h-7 text-foreground mx-auto" />
+                <p className="text-foreground text-lg font-light leading-relaxed tracking-[-0.01em]">"{getResult(answers)}"</p>
+                <p className="text-[13px] text-muted-foreground font-light">Peso informado: <span className="text-foreground font-medium">{weight} kg</span></p>
                 <div className="flex flex-col gap-3">
                   <Link to="/questionario">
-                    <Button className="w-full gradient-bg text-primary-foreground hover:opacity-90 gap-2">
+                    <Button className="w-full rounded-full h-11 bg-foreground text-background hover:bg-foreground/90 gap-2 text-[14px] font-medium">
                       Calcular meus Macros <ArrowRight className="w-4 h-4" />
                     </Button>
                   </Link>
-                  <button onClick={reset} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                  <button onClick={reset} className="text-[12px] text-muted-foreground hover:text-foreground transition-colors">
                     Refazer quiz
                   </button>
                 </div>

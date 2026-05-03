@@ -27,28 +27,29 @@ const BMICalculatorSection = () => {
   };
 
   return (
-    <section id="imc" className="py-20 px-6">
+    <section id="imc" className="py-24 md:py-32 px-6 border-t border-border/40">
       <div className="max-w-2xl mx-auto">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-10"
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="text-center mb-12"
         >
-          <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-4 text-sm text-muted-foreground">
-            <Scale className="w-4 h-4" /> Ferramenta gratuita
+          <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5 inline-flex items-center gap-2">
+            <Scale className="w-3.5 h-3.5" /> Ferramenta gratuita
           </div>
-          <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground">
-            Calculadora de <span className="gradient-text">IMC</span>
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] text-foreground">
+            Calculadora de IMC.
           </h2>
-          <p className="text-muted-foreground mt-2">Descubra em segundos sua classificação corporal.</p>
+          <p className="text-base md:text-lg text-muted-foreground font-light mt-5">Descubra em segundos sua classificação corporal.</p>
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="glass rounded-2xl p-8 glow-border"
+          className="border border-border/40 rounded-2xl p-8 md:p-10 bg-background"
         >
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="space-y-2">
@@ -73,7 +74,7 @@ const BMICalculatorSection = () => {
             </div>
           </div>
 
-          <Button onClick={calculate} className="w-full gradient-bg text-primary-foreground hover:opacity-90 gap-2">
+          <Button onClick={calculate} className="w-full rounded-full h-11 bg-foreground text-background hover:bg-foreground/90 gap-2 text-[14px] font-medium">
             <Calculator className="w-4 h-4" /> Calcular IMC
           </Button>
 
@@ -83,13 +84,13 @@ const BMICalculatorSection = () => {
               animate={{ opacity: 1, scale: 1 }}
               className="mt-6 text-center space-y-4"
             >
-              <div className={`inline-flex items-center gap-3 rounded-xl px-6 py-4 ${result.classification.bg}`}>
-                <span className="text-3xl font-display font-bold text-foreground">{result.bmi.toFixed(1)}</span>
-                <span className={`text-sm font-semibold ${result.classification.color}`}>{result.classification.label}</span>
+              <div className={`inline-flex items-center gap-3 rounded-2xl px-6 py-4 ${result.classification.bg}`}>
+                <span className="text-3xl font-semibold tracking-[-0.03em] text-foreground">{result.bmi.toFixed(1)}</span>
+                <span className={`text-[13px] font-medium tracking-wide ${result.classification.color}`}>{result.classification.label}</span>
               </div>
               <div>
                 <Link to="/questionario">
-                  <Button variant="outline" className="gap-2">
+                  <Button variant="outline" className="gap-2 rounded-full border-border/60 h-10 text-[13px] font-medium">
                     Descubra seus Macros Ideais <ArrowRight className="w-4 h-4" />
                   </Button>
                 </Link>

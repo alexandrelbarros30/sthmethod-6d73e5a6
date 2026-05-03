@@ -21,55 +21,54 @@ const HowItWorksSection = () => {
   if (active.length === 0) return null;
 
   return (
-    <section id="como-funciona" className="py-24 px-6">
+    <section id="como-funciona" className="py-24 md:py-32 px-6">
       <div className="max-w-6xl mx-auto">
-        <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
-            Como Funciona a <span className="gradient-text">STH METHOD</span>
+        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }} className="text-center mb-16 md:mb-20">
+          <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5">Método</div>
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] text-foreground">
+            Como funciona a STH METHOD.
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Um método completo, do diagnóstico à transformação — cada etapa pensada para o seu resultado.
+          <p className="text-base md:text-lg text-muted-foreground font-light max-w-2xl mx-auto mt-5">
+            Do diagnóstico à transformação. Cada etapa pensada para o seu resultado.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-border/40 rounded-2xl overflow-hidden border border-border/40">
           {active.map((step, i) => (
             <motion.div
               key={step.id}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.08, duration: 0.5 }}
-              className="glass rounded-2xl p-6 group hover:glow-border transition-all duration-500 relative"
+              transition={{ delay: i * 0.05, duration: 0.5 }}
+              className="bg-background p-7 md:p-8 relative"
             >
               {step.is_optional && (
-                <span className="absolute -top-3 right-4 text-xs font-semibold px-3 py-1 rounded-full bg-muted text-muted-foreground">
+                <span className="absolute top-5 right-5 text-[10px] font-medium tracking-wider uppercase text-muted-foreground">
                   Opcional
                 </span>
               )}
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-xl gradient-bg flex items-center justify-center text-primary-foreground shrink-0">
+              <div className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted-foreground mb-3">
+                Etapa {String(i + 1).padStart(2, "0")}
+              </div>
+              <div className="flex items-start gap-3 mb-5">
+                <div className="text-foreground shrink-0">
                   {iconMap[step.icon] || <Brain className="w-7 h-7" />}
                 </div>
-                <div>
-                  <span className="text-xs font-semibold gradient-text uppercase tracking-wider">
-                    Etapa {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <h3 className="font-display text-lg font-semibold text-foreground leading-tight">
-                    {step.title}
-                  </h3>
-                </div>
+                <h3 className="text-xl md:text-2xl font-semibold tracking-[-0.02em] leading-tight text-foreground">
+                  {step.title}
+                </h3>
               </div>
               <ul className="space-y-2 mb-4">
                 {step.items.map((item, j) => (
-                  <li key={j} className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <span className="text-primary mt-1 text-xs">●</span>
+                  <li key={j} className="flex items-start gap-2 text-[14px] text-muted-foreground font-light leading-relaxed">
+                    <span className="text-foreground/40 mt-1.5 text-[8px]">●</span>
                     {item}
                   </li>
                 ))}
               </ul>
               {step.footer && (
-                <p className="text-sm font-medium text-foreground/80 italic border-t border-border/50 pt-3">
+                <p className="text-[13px] text-foreground/70 font-light border-t border-border/40 pt-3 mt-4">
                   {step.footer}
                 </p>
               )}

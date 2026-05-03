@@ -28,25 +28,26 @@ const EvolutionsSection = () => {
   if (active.length === 0) return null;
 
   return (
-    <section className="py-24 px-6">
+    <section className="py-24 md:py-32 px-6 border-t border-border/40">
       <div className="max-w-6xl mx-auto">
-        <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
-            Evoluções <span className="gradient-text">Reais</span>
+        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }} className="text-center mb-16">
+          <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5">Transformações</div>
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] text-foreground">
+            Evoluções reais.
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Resultados reais de alunos que confiaram no método e no processo.
+          <p className="text-base md:text-lg text-muted-foreground font-light max-w-2xl mx-auto mt-5">
+            Alunos que confiaram no método e no processo.
           </p>
         </motion.div>
 
         <div className="relative">
           {canScrollLeft && (
-            <Button size="icon" variant="outline" className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 rounded-full bg-card/80 backdrop-blur" onClick={() => scroll("left")}>
+            <Button size="icon" variant="outline" className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 rounded-full bg-background/80 backdrop-blur border-border/60" onClick={() => scroll("left")}>
               <ChevronLeft className="w-5 h-5" />
             </Button>
           )}
           {canScrollRight && (
-            <Button size="icon" variant="outline" className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 rounded-full bg-card/80 backdrop-blur" onClick={() => scroll("right")}>
+            <Button size="icon" variant="outline" className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 rounded-full bg-background/80 backdrop-blur border-border/60" onClick={() => scroll("right")}>
               <ChevronRight className="w-5 h-5" />
             </Button>
           )}
@@ -61,12 +62,12 @@ const EvolutionsSection = () => {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.05 }}
-                className="snap-center shrink-0 w-72 md:w-80 rounded-2xl overflow-hidden border border-border group"
+                className="snap-center shrink-0 w-72 md:w-80 rounded-2xl overflow-hidden border border-border/40 group"
               >
                 <img src={ev.image_url} alt={ev.caption || "Evolução"} className="w-full h-80 object-cover" loading="lazy" />
                 {ev.caption && (
-                  <div className="p-3 bg-card">
-                    <p className="text-sm text-muted-foreground">{ev.caption}</p>
+                  <div className="p-4 bg-background">
+                    <p className="text-[13px] text-muted-foreground font-light">{ev.caption}</p>
                   </div>
                 )}
               </motion.div>
