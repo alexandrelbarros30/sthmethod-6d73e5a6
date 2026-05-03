@@ -50,6 +50,16 @@ const Landing = () => {
     return () => window.removeEventListener("scroll", handleNavScroll);
   }, []);
 
+  // Force light theme on landing (Apple style: white/gray alternating sections)
+  useEffect(() => {
+    const root = document.documentElement;
+    const hadDark = root.classList.contains("dark");
+    root.classList.remove("dark");
+    return () => {
+      if (hadDark) root.classList.add("dark");
+    };
+  }, []);
+
   const showPopup = useCallback(() => {
     if (!popupDismissed) setPopupOpen(true);
   }, [popupDismissed]);
