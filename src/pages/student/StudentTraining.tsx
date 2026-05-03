@@ -158,19 +158,11 @@ const StudentTraining = () => {
         )}
 
         {/* Program header card */}
-        <Card className="bg-gradient-to-br from-foreground/10 to-foreground/5 border-foreground/15">
-          <CardContent className="py-5">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-foreground/15 flex items-center justify-center">
-                <Dumbbell className="w-6 h-6 text-foreground" />
-              </div>
-              <div>
-                <h2 className="font-display font-bold text-lg">Programa de Treino</h2>
-                <p className="text-sm text-muted-foreground">{weeks.length} treino(s) configurado(s)</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="rounded-3xl border border-border/40 bg-background p-6">
+          <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground">Programa</p>
+          <h2 className="text-[28px] font-semibold text-foreground tracking-[-0.035em] leading-tight mt-2">Treino</h2>
+          <p className="text-[12px] text-muted-foreground font-light mt-2 tracking-tight">{weeks.length} treino(s) configurado(s)</p>
+        </div>
 
         {/* ST Coach App Button */}
         <StCoachButton />

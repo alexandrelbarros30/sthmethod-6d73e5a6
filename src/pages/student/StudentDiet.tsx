@@ -258,14 +258,12 @@ const StudentDiet = () => {
         </div>
 
         {/* Daily Progress Header */}
-        <Card className="premium-card border-foreground/10 animate-fade-in overflow-hidden">
-          <CardContent className="py-6 relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-foreground/5 via-transparent to-transparent pointer-events-none" />
-            <div className="relative">
-              <div className="mb-3">
-                <h3 className="text-sm font-bold text-foreground tracking-tight">Consistência de Hoje</h3>
-                <p className="text-[10px] text-muted-foreground">Continue assim para manter sua evolução.</p>
-              </div>
+        <div className="rounded-3xl border border-border/40 bg-background overflow-hidden animate-fade-in">
+          <div className="py-6 px-6">
+            <div className="mb-4">
+              <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground">Hoje</p>
+              <h3 className="text-[20px] font-semibold text-foreground tracking-[-0.025em] mt-2">Consistência</h3>
+            </div>
               <div className="flex items-center gap-5">
               <DailyProgressRing
                 percent={progressPercent}
@@ -275,46 +273,37 @@ const StudentDiet = () => {
               />
               <div className="flex-1 space-y-3">
                 <div>
-                  <p className="text-lg font-bold text-foreground tracking-tight tabular-nums">
-                    {completedCount}<span className="text-muted-foreground font-normal text-sm">/{totalMeals}</span>
+                  <p className="text-[28px] font-semibold text-foreground tracking-[-0.035em] tabular-nums leading-none">
+                    {completedCount}<span className="text-muted-foreground/60 font-light text-base">/{totalMeals}</span>
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[11px] text-muted-foreground font-light mt-1.5 tracking-tight">
                     {progressPercent === 100 ? "Dia completo! 🎉" : `${totalMeals - completedCount} refeições restantes`}
                   </p>
                 </div>
 
                 {isToday && nextMeal && !isMealCompleted(nextMeal.id) && (
-                  <div className="p-2.5 rounded-xl bg-foreground/8 border border-foreground/15">
-                    <p className="text-[9px] text-foreground font-bold uppercase tracking-wider flex items-center gap-1">
+                  <div className="p-3 rounded-2xl border border-border/40">
+                    <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-[0.2em] flex items-center gap-1">
                       <Zap className="w-3 h-3" /> Próxima Refeição
                     </p>
-                    <p className="text-sm font-semibold text-foreground mt-0.5">
+                    <p className="text-sm font-medium text-foreground mt-1 tracking-tight">
                       {nextMeal.name} <span className="text-muted-foreground text-xs font-normal">{nextMeal.time}</span>
                     </p>
                   </div>
                 )}
 
                 {!isToday && (
-                  <div className="p-2 rounded-xl bg-muted/30 border border-border/30">
-                    <p className="text-[10px] text-muted-foreground font-medium">
-                      Visualizando histórico
-                    </p>
-                  </div>
+                  <p className="text-[10px] text-muted-foreground font-light tracking-tight">Visualizando histórico</p>
                 )}
               </div>
             </div>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Macro Progress */}
-        <Card className="premium-card animate-fade-in" style={{ animationDelay: "0.1s" }}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-bold flex items-center gap-2 tracking-tight">
-              <Flame className="w-4 h-4 text-foreground" /> Seu dia até agora
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <div className="rounded-3xl border border-border/40 bg-background p-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+          <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-4">Macros</p>
+          <div className="space-y-3">
             <MacroProgressBar label="Calorias" consumed={consumedMacros.kcal} total={totalMacros.kcal} unit="kcal" color="bg-foreground" />
             <MacroProgressBar label="Proteína" consumed={consumedMacros.protein} total={totalMacros.protein} color="bg-info" />
             <MacroProgressBar label="Carboidrato" consumed={consumedMacros.carbs} total={totalMacros.carbs} color="bg-warning" />
@@ -325,8 +314,8 @@ const StudentDiet = () => {
                 ⚠️ +{Math.round(redistributedPerMeal.kcal)} kcal redistribuídos por refeição
               </p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Hydration Tracker */}
         {hydrationGoalL > 0 && (
