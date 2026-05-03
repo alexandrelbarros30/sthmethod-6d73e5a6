@@ -23,7 +23,7 @@ const blocks = [
 ];
 
 const FoodGuideSection = () => (
-  <section id="guia-alimentar" className="py-24 md:py-32 px-6 border-t border-border/40">
+  <section id="guia-alimentar" className="py-24 md:py-32 px-6 bg-background">
     <div className="max-w-6xl mx-auto">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
