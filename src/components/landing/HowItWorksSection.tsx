@@ -21,7 +21,7 @@ const HowItWorksSection = () => {
   if (active.length === 0) return null;
 
   return (
-    <section id="como-funciona" className="py-24 md:py-32 px-6">
+    <section id="como-funciona" className="py-24 md:py-32 px-6 bg-[hsl(var(--surface))]">
       <div className="max-w-6xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }} className="text-center mb-16 md:mb-20">
           <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5">Método</div>
