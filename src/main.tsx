@@ -63,10 +63,11 @@ const syncLatestBuild = async () => {
   } catch (_) {}
 };
 
-// Apply stored theme (admin-controlled via DB)
-const theme = localStorage.getItem("app-theme") || "light";
+// Always boot in LIGHT for public routes (Apple.com style).
+// Authenticated areas (dashboard/admin) re-apply dark via useAdminTheme().
 document.documentElement.classList.remove("dark", "light");
-document.documentElement.classList.add(theme);
+document.documentElement.classList.add("light");
+localStorage.setItem("app-theme", "light");
 
 // Garante que NENHUM tema de plano (90d ciano / 180d roxo) vaze para telas
 // administrativas, cadastro de aluno, login, etc. O tema do plano é aplicado

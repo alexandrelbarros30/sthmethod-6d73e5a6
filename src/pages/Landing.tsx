@@ -112,9 +112,9 @@ const Landing = () => {
       root.style.setProperty("--accent", `${ah} ${as_}% ${al}%`);
       root.style.setProperty("--gradient-end", `${ah} ${as_}% ${al}%`);
     }
-    if (bh) {
-      root.style.setProperty("--background", `${bh} ${bs}% ${bl}%`);
-    }
+    // NÃO sobrescrever --background: a landing usa o tema Apple light
+    // (branco) controlado por usePublicAppleTheme. Cores de fundo do banco
+    // são ignoradas para preservar o estilo apple.com.
 
     return () => {
       // Reset on unmount
@@ -261,11 +261,11 @@ const Landing = () => {
             src={bgSrc}
             alt="Background"
             className="absolute inset-0 w-full h-full object-cover"
-            style={{ opacity: bgOpacity }}
+            style={{ opacity: Math.min(bgOpacity, 0.12) }}
             loading="lazy"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/90 to-background" />
 
         <motion.div
           initial={{ opacity: 0, y: 24 }}
