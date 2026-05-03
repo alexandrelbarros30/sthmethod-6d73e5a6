@@ -261,11 +261,11 @@ const Landing = () => {
             src={bgSrc}
             alt="Background"
             className="absolute inset-0 w-full h-full object-cover"
-            style={{ opacity: bgOpacity }}
+            style={{ opacity: Math.min(bgOpacity, 0.12) }}
             loading="lazy"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/90 to-background" />
 
         <motion.div
           initial={{ opacity: 0, y: 24 }}
