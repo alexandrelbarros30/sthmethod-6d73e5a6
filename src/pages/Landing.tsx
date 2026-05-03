@@ -16,7 +16,6 @@ import NutritionQuizSection from "@/components/landing/NutritionQuizSection";
 import MealPlanSection from "@/components/landing/MealPlanSection";
 import BodySimulatorSection from "@/components/landing/BodySimulatorSection";
 import WhatsAppButton from "@/components/landing/WhatsAppButton";
-import STHNewsSection from "@/components/landing/STHNewsSection";
 import AppleHighlightsSection from "@/components/landing/AppleHighlightsSection";
 import { useLandingSettings, useLandingSections } from "@/hooks/useLandingData";
 
@@ -223,7 +222,7 @@ const Landing = () => {
                   { href: "#diagnostico", label: "Diagnóstico" },
                   { href: "#plano-alimentar", label: "Plano Alimentar" },
                   { href: "#simulador", label: "Simulador Corporal" },
-                  { href: "#sth-news", label: "STH News" },
+                  { href: "/tendencias", label: "STH News" },
                 ].map((item) => (
                   <LinkOrA
                     key={item.href}
@@ -354,9 +353,6 @@ const Landing = () => {
       <NutritionQuizSection />
       <MealPlanSection />
       <BodySimulatorSection />
-
-      {/* STH News */}
-      <STHNewsSection />
 
       {/* Final CTA */}
       <section className="py-32 md:py-40 px-6 text-center bg-[hsl(0_0%_4%)] text-white">
