@@ -1,9 +1,9 @@
 import { motion } from "framer-motion";
 import { ChevronRight, Beaker, Brain, UtensilsCrossed, Layers } from "lucide-react";
-import cardHormoniosImg from "@/assets/card-hormonios.jpg";
-import cardDicasImg from "@/assets/card-dicas.jpg";
-import cardReceitasImg from "@/assets/card-receitas.jpg";
-import cardCombinacoesImg from "@/assets/card-combinacoes.jpg";
+import cardHormoniosImg from "@/assets/sthnews-subq-glass-1.jpg";
+import cardDicasImg from "@/assets/sthnews-triade-thumb.jpg";
+import cardReceitasImg from "@/assets/recipe-salmao-aspargos.jpg";
+import cardCombinacoesImg from "@/assets/sthnews-masteron-glass-1.jpg";
 
 export type ContentSection = "hormonios" | "dicas" | "receitas" | "combinacoes";
 
