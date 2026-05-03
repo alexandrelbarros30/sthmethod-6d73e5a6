@@ -488,7 +488,7 @@ const Cadastro = () => {
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-sm">ST</span>
             </div>
-            <span className="font-display text-xl font-bold text-foreground">ST&H</span>
+            <span className="text-xl font-bold text-foreground">ST&H</span>
           </Link>
           <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors font-body">
             Já tem conta? Entrar
@@ -524,7 +524,7 @@ const Cadastro = () => {
         {step === 1 && (
           <Card className="animate-fade-in">
             <CardHeader>
-              <CardTitle className="font-display text-xl">Crie sua conta</CardTitle>
+              <CardTitle className="text-xl">Crie sua conta</CardTitle>
               <p className="text-sm text-muted-foreground font-body">
                 Preencha seus dados para começar sua jornada na ST&H.
               </p>
@@ -574,7 +574,7 @@ const Cadastro = () => {
         {step === 2 && userId && (
           <Card className="animate-fade-in">
             <CardHeader>
-              <CardTitle className="font-display text-xl">Complete seu perfil</CardTitle>
+              <CardTitle className="text-xl">Complete seu perfil</CardTitle>
               <p className="text-sm text-muted-foreground font-body">
                 Essas informações são essenciais para montar seu plano personalizado.
               </p>
@@ -813,7 +813,7 @@ const Cadastro = () => {
           <div className="animate-fade-in space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="font-display text-xl">Fotos corporais (opcional)</CardTitle>
+                <CardTitle className="text-xl">Fotos corporais (opcional)</CardTitle>
                 <p className="text-sm text-muted-foreground font-body">
                   Envie 3 fotos: frente, costas e perfil. Você pode pular e enviar depois com seu consultor.
                 </p>

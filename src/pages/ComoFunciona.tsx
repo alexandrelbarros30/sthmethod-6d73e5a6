@@ -18,12 +18,12 @@ const cards = [
     accent: "from-primary/20 to-primary/5",
     content: (
       <div className="flex flex-col items-center text-center gap-6">
-        <div className="w-20 h-20 rounded-2xl gradient-bg flex items-center justify-center shadow-lg">
-          <Zap className="w-10 h-10 text-primary-foreground" />
+        <div className="w-20 h-20 rounded-2xl bg-foreground flex items-center justify-center shadow-lg">
+          <Zap className="w-10 h-10 text-background" />
         </div>
         <h2 className="text-2xl md:text-4xl font-extrabold text-foreground leading-tight">
           COMO FUNCIONA A<br />
-          <span className="gradient-text">STH METHOD</span>
+          <span className="text-muted-foreground">STH METHOD</span>
         </h2>
         <div className="space-y-3 max-w-sm">
           <p className="text-base text-muted-foreground leading-relaxed">
@@ -45,7 +45,7 @@ const cards = [
     content: (
       <div className="space-y-5 w-full">
         <h2 className="text-xl md:text-2xl font-extrabold text-foreground text-center mb-6">
-          Base da <span className="gradient-text">Consultoria</span>
+          Base da <span className="text-muted-foreground">Consultoria</span>
         </h2>
         {[
           { icon: Utensils, label: "Dieta Personalizada", color: "text-emerald-500" },
@@ -81,7 +81,7 @@ const cards = [
     content: (
       <div className="space-y-5 w-full">
         <h2 className="text-xl md:text-2xl font-extrabold text-foreground text-center mb-4">
-          Diferença dos <span className="gradient-text">Planos</span>
+          Diferença dos <span className="text-muted-foreground">Planos</span>
         </h2>
         <div className="p-5 rounded-2xl bg-muted/50 border border-border/50">
           <div className="flex items-center gap-3 mb-3">
@@ -91,7 +91,7 @@ const cards = [
           <p className="text-sm text-muted-foreground">👉 Execução do mês — dieta, treino, protocolo e suporte focados no período.</p>
         </div>
         <div className="p-5 rounded-2xl bg-primary/5 border-2 border-primary/20 relative">
-          <div className="absolute -top-2.5 right-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full gradient-bg text-primary-foreground">
+          <div className="absolute -top-2.5 right-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-foreground text-background">
             Recomendado
           </div>
           <div className="flex items-center gap-3 mb-3">
@@ -116,7 +116,7 @@ const cards = [
     content: (
       <div className="space-y-5 w-full">
         <h2 className="text-xl md:text-2xl font-extrabold text-foreground text-center mb-4">
-          Visão de <span className="gradient-text">Projeto</span>
+          Visão de <span className="text-muted-foreground">Projeto</span>
         </h2>
         <div className="space-y-0">
           {[
@@ -131,8 +131,8 @@ const cards = [
               transition={{ delay: i * 0.15 }}
               className="flex items-center gap-4 p-4 border-b border-border/30 last:border-b-0"
             >
-              <div className="w-14 h-14 rounded-xl gradient-bg flex items-center justify-center shrink-0 shadow-lg">
-                <span className="text-primary-foreground font-extrabold text-xs">
+              <div className="w-14 h-14 rounded-xl bg-foreground flex items-center justify-center shrink-0 shadow-lg">
+                <span className="text-background font-extrabold text-xs">
                   SEM<br />{phase.weeks}
                 </span>
               </div>
@@ -158,7 +158,7 @@ const cards = [
     content: (
       <div className="space-y-5 w-full">
         <h2 className="text-xl md:text-2xl font-extrabold text-foreground text-center mb-4">
-          Análise de <span className="gradient-text">Exames</span>
+          Análise de <span className="text-muted-foreground">Exames</span>
         </h2>
         <div className="p-5 rounded-2xl bg-muted/50 border border-border/50">
           <div className="flex items-center gap-4">
@@ -200,7 +200,7 @@ const cards = [
     content: (
       <div className="space-y-5 w-full">
         <h2 className="text-xl md:text-2xl font-extrabold text-foreground text-center mb-4">
-          Organização e <span className="gradient-text">Controle</span>
+          Organização e <span className="text-muted-foreground">Controle</span>
         </h2>
         {[
           { icon: BarChart3, label: "Visão completa do que será feito", color: "text-blue-500" },
@@ -231,8 +231,8 @@ const cards = [
     accent: "from-primary/20 to-emerald-500/10",
     content: (
       <div className="flex flex-col items-center text-center gap-6">
-        <div className="w-20 h-20 rounded-full gradient-bg flex items-center justify-center shadow-lg">
-          <Rocket className="w-10 h-10 text-primary-foreground" />
+        <div className="w-20 h-20 rounded-full bg-foreground flex items-center justify-center shadow-lg">
+          <Rocket className="w-10 h-10 text-background" />
         </div>
         <div className="space-y-4">
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
@@ -245,11 +245,11 @@ const cards = [
         </div>
         <h2 className="text-xl md:text-2xl font-extrabold text-foreground">
           🎯 Quer começar com<br />
-          estratégia de <span className="gradient-text">verdade</span>?
+          estratégia de <span className="text-muted-foreground">verdade</span>?
         </h2>
         <div className="flex flex-col gap-3 w-full max-w-xs">
           <Link to="/cadastro" className="w-full">
-            <Button size="lg" className="gradient-bg text-primary-foreground w-full font-semibold">
+            <Button size="lg" className="bg-foreground text-background hover:bg-foreground/90 rounded-full w-full font-medium">
               Começar agora <Rocket className="w-4 h-4 ml-2" />
             </Button>
           </Link>
@@ -308,14 +308,14 @@ const ComoFunciona = () => {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Voltar
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/70 backdrop-blur-2xl border-b border-border/40">
+        <div className="max-w-6xl mx-auto px-5 h-12 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="w-3.5 h-3.5" /> Voltar
           </Link>
-          <span className="text-sm font-bold tracking-wider text-foreground">STH METHOD</span>
+          <span className="text-[11px] font-medium tracking-[0.2em] text-foreground uppercase">STH METHOD</span>
           <Link to="/cadastro">
-            <Button size="sm" className="gradient-bg text-primary-foreground text-xs px-4">
+            <Button size="sm" className="bg-foreground text-background hover:bg-foreground/90 rounded-full text-xs px-4 h-8">
               Começar
             </Button>
           </Link>
@@ -330,9 +330,9 @@ const ComoFunciona = () => {
             onClick={() => goTo(i)}
             className={`h-1 rounded-full transition-all duration-300 ${
               i === current
-                ? "w-8 bg-primary"
+                ? "w-8 bg-foreground"
                 : i < current
-                ? "w-4 bg-primary/40"
+                ? "w-4 bg-foreground/40"
                 : "w-4 bg-border"
             }`}
           />
