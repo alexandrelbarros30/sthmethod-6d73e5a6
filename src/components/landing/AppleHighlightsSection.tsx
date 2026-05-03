@@ -96,7 +96,7 @@ const AppleHighlightsSection = () => (
               <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/70" />
 
               <div className="absolute top-0 left-0 right-0 p-6 sm:p-8 text-center">
-                <p className="text-[11px] sm:text-[12px] font-semibold tracking-[0.18em] uppercase text-white/85 mb-2">
+                <p className="text-[11px] sm:text-[12px] font-semibold tracking-[0.18em] uppercase text-brand mb-2" style={{ textShadow: "0 1px 8px rgba(0,0,0,0.35)" }}>
                   {h.eyebrow}
                 </p>
                 <h3 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-[-0.03em] leading-[1.05] text-white whitespace-pre-line">

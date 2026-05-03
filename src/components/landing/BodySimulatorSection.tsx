@@ -29,7 +29,7 @@ const BodySimulatorSection = () => {
   };
 
   return (
-    <section id="simulador" className="py-24 md:py-32 px-6 border-t border-border/40">
+    <section id="simulador" className="py-24 md:py-32 px-6 border-t border-border/40 bg-[hsl(var(--surface))]">
       <div className="max-w-3xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
