@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ginecoImg from "@/assets/sthnews-gineco-hero.jpg";
+import bfAltoImg from "@/assets/sthnews-bfalto-hero.jpg";
 import trembolonaImg from "@/assets/sthnews-trembolona-hero.jpg";
 import platoImg from "@/assets/sthnews-plato-hero.jpg";
 import gestrinonaImg from "@/assets/sthnews-gestrinona-hero.jpg";
@@ -18,6 +19,7 @@ const fadeUp = {
 };
 
 const articles = [
+  { to: "/tendencias/hormonios-bf-alto", kicker: "Hormonal & metabólico", title: "🧬 Hormônio com BF alto: o fim do mito.", desc: "Não é proibido — é cirúrgico. Exames acima do medo.", img: bfAltoImg },
   { to: "/tendencias/ginecomastia", kicker: "Hormonal masculino", title: "🧬 Ginecomastia: o caroço silencioso que trava sua definição.", desc: "O termômetro do equilíbrio hormonal — e o freio invisível dos seus resultados.", img: ginecoImg },
   { to: "/tendencias/trembolona", kicker: "Anabolizantes", title: "🧬 Trembolona: arquitetura corporal no patamar de elite.", desc: "O segredo nunca foi a dose. É o manejo.", img: trembolonaImg },
   { to: "/tendencias/plato-metabolico", kicker: "Metabolismo", title: "Platô metabólico: por que o corpo para de responder.", desc: "Quando consistência vira repetição.", img: platoImg },
