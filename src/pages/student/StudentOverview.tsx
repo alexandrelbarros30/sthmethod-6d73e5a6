@@ -1,27 +1,16 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  Salad, Dumbbell, ChevronRight, Flame, Clock, Utensils,
-  Play, UtensilsCrossed, Newspaper, Sparkles,
-  Beaker, Brain, Layers, Bell, Heart, Plus, Droplets, Activity, Target
+  Salad, ChevronRight, Flame, Clock, Utensils,
+  UtensilsCrossed, Beaker, Brain, Layers, Bell, Droplets, Activity, Target
 } from "lucide-react";
 import cardHormoniosImg from "@/assets/card-hormonios.jpg";
 import cardDicasImg from "@/assets/card-dicas.jpg";
 import cardReceitasImg from "@/assets/card-receitas.jpg";
 import cardCombinacoesImg from "@/assets/card-combinacoes.jpg";
 import sthNewsLatestImg from "@/assets/sthnews-cintura-hero.jpg";
-
-const contentSections = [
-  { id: "hormonios", tag: "Compostos", title: "Hormônios e Compostos", subtitle: "3 famílias • 15 compostos", img: cardHormoniosImg, icon: Beaker, meta: "Gamificação interativa", progress: 85 },
-  { id: "dicas", tag: "Estratégias", title: "Dicas Essenciais", subtitle: "8 temas • 24 aulas", img: cardDicasImg, icon: Brain, meta: "Narrativas práticas", progress: 40 },
-  { id: "receitas", tag: "Nutrição", title: "Receitas Saudáveis", subtitle: "Pratos inteligentes", img: cardReceitasImg, icon: UtensilsCrossed, meta: "Macros detalhados", progress: 22 },
-  { id: "combinacoes", tag: "Estratégia", title: "Combinações Estratégicas", subtitle: "Definição • Hipertrofia", img: cardCombinacoesImg, icon: Layers, meta: "6 combinações", progress: 10 },
-];
 import { useMealTracking } from "@/hooks/useMealTracking";
-import DailyProgressRing from "@/components/student/DailyProgressRing";
-import MacroProgressBar from "@/components/student/MacroProgressBar";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -29,107 +18,70 @@ import { supabase } from "@/integrations/supabase/client";
 import SubscriptionAlerts from "@/components/student/SubscriptionAlerts";
 import AdAutoPopup from "@/components/student/AdAutoPopup";
 import PreviewUnlockPopup from "@/components/student/PreviewUnlockPopup";
-
-import recipePoke from "@/assets/recipe-poke.jpg";
-import recipeFrango from "@/assets/recipe-frango.jpg";
-import recipeAcai from "@/assets/recipe-acai.jpg";
-import recipeMoqueca from "@/assets/recipe-moqueca.jpg";
-import recipeTapioca from "@/assets/recipe-tapioca.jpg";
 import recipeMousseWhey from "@/assets/recipe-mousse-whey.jpg";
 import recipePatinho from "@/assets/recipe-patinho-grelhado.jpg";
 import recipeMexidoOvos from "@/assets/recipe-mexido-ovos.jpg";
-import recipeGelatina from "@/assets/recipe-gelatina-proteica.jpg";
-import recipeAlmondega from "@/assets/recipe-almondega-fit.jpg";
 
-import workoutMale1 from "@/assets/workout-male-1.jpg";
-import workoutMale2 from "@/assets/workout-male-2.jpg";
-import workoutMale3 from "@/assets/workout-male-3.jpg";
-import workoutFemale1 from "@/assets/workout-female-1.jpg";
-import workoutFemale2 from "@/assets/workout-female-2.jpg";
-import workoutFemale3 from "@/assets/workout-female-3.jpg";
-
-const maleWorkoutImages = [workoutMale1, workoutMale2, workoutMale3];
-const femaleWorkoutImages = [workoutFemale1, workoutFemale2, workoutFemale3];
-
-const getDailyWorkoutImage = (gender: string | null | undefined) => {
-  const images = gender === "feminino" ? femaleWorkoutImages : maleWorkoutImages;
-  const dayIndex = Math.floor(Date.now() / 86400000) % images.length;
-  return images[dayIndex];
-};
-
-const greetings = [
-  "Olá", "Oi", "Seja bem-vindo", "E aí", "Fala", "Bom te ver",
-  "Bem-vindo de volta", "Hey"
+const contentSections = [
+  { id: "hormonios", tag: "Compostos", title: "Hormônios e Compostos", subtitle: "3 famílias · 15 compostos", img: cardHormoniosImg, icon: Beaker },
+  { id: "dicas", tag: "Estratégias", title: "Dicas Essenciais", subtitle: "8 temas · 24 aulas", img: cardDicasImg, icon: Brain },
+  { id: "receitas", tag: "Nutrição", title: "Receitas Saudáveis", subtitle: "Pratos inteligentes", img: cardReceitasImg, icon: UtensilsCrossed },
+  { id: "combinacoes", tag: "Estratégia", title: "Combinações", subtitle: "Definição · Hipertrofia", img: cardCombinacoesImg, icon: Layers },
 ];
-
-const getGreeting = () => {
-  return greetings[Math.floor(Math.random() * greetings.length)];
-};
 
 const recipeHighlights = [
-  { id: "39", title: "Mousse Proteico com Morango", image: recipeMousseWhey, kcal: 320, time: 15, isNew: true },
-  { id: "40", title: "Patinho com Batata Doce", image: recipePatinho, kcal: 480, time: 25, isNew: true },
-  { id: "41", title: "Torrada com Ovo e Tomate", image: recipeMexidoOvos, kcal: 250, time: 10, isNew: true },
+  { id: "39", title: "Mousse Proteico com Morango", image: recipeMousseWhey, kcal: 320, time: 15 },
+  { id: "40", title: "Patinho com Batata Doce", image: recipePatinho, kcal: 480, time: 25 },
+  { id: "41", title: "Torrada com Ovo e Tomate", image: recipeMexidoOvos, kcal: 250, time: 10 },
 ];
 
-// Daily meal widget sub-component
+const greetings = ["Olá", "Oi", "Bom te ver", "Bem-vindo de volta", "Hey"];
+const getGreeting = () => greetings[Math.floor(Math.random() * greetings.length)];
+
 const DailyMealWidget = () => {
   const {
-    meals,
-    totalMacros,
-    consumedMacros,
-    completedCount,
-    totalMeals,
-    progressPercent,
-    nextMeal,
-    isLoading,
-    isMealCompleted,
+    meals, completedCount, totalMeals, progressPercent, nextMeal,
+    isLoading, isMealCompleted,
   } = useMealTracking();
 
   if (isLoading || meals.length === 0) return null;
 
   return (
-    <div className="mb-6 relative rounded-[22px] overflow-hidden border border-white/[0.06] bg-white/[0.025] backdrop-blur-xl shadow-[0_8px_24px_-8px_rgb(0_0_0_/_0.4),0_2px_6px_-2px_rgb(0_0_0_/_0.2),inset_0_1px_0_rgb(255_255_255_/_0.05)] animate-fade-in">
-      <div className="absolute inset-0 pointer-events-none opacity-50" style={{ background: "linear-gradient(115deg, transparent 38%, rgb(255 255 255 / 0.05) 50%, transparent 65%)" }} />
-      <div className="absolute inset-x-0 top-0 h-2/5 pointer-events-none" style={{ background: "linear-gradient(180deg, rgb(255 255 255 / 0.04) 0%, transparent 100%)" }} />
-      <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-primary/[0.08] blur-3xl pointer-events-none" />
-      <div className="px-6 pt-6 pb-2 relative">
-        <h3 className="text-sm font-bold flex items-center gap-2 tracking-tight text-foreground">
-          <Utensils className="w-4 h-4 text-primary neon-icon" /> Progresso do Dia
-        </h3>
-      </div>
-      <div className="px-6 pb-6 relative">
-        <div className="flex items-center gap-4">
-          <DailyProgressRing
-            percent={progressPercent}
-            size={90}
-            strokeWidth={7}
-            sublabel={nextMeal?.name}
-          />
-          <div className="flex-1 space-y-2">
-            <p className="text-lg font-bold text-foreground tabular-nums">
-              {completedCount}<span className="text-muted-foreground font-normal text-sm">/{totalMeals}</span>
-              <span className="text-xs text-muted-foreground font-normal ml-1">refeições</span>
-            </p>
-            {nextMeal && !isMealCompleted(nextMeal.id) && (
-              <div className="p-2.5 rounded-xl bg-primary/8 border border-primary/15">
-                <p className="text-[9px] text-primary font-bold uppercase tracking-wider">Próxima</p>
-                <p className="text-xs font-semibold text-foreground flex items-center gap-1 mt-0.5">
-                  <Clock className="w-3 h-3 text-muted-foreground" />
-                  {nextMeal.name} — {nextMeal.time}
-                </p>
-              </div>
-            )}
-            <MacroProgressBar label="Calorias" consumed={consumedMacros.kcal} total={totalMacros.kcal} unit="kcal" color="bg-primary" />
+    <div className="mb-8 rounded-3xl border border-border/40 bg-background overflow-hidden">
+      <div className="p-6">
+        <div className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-4 flex items-center gap-1.5">
+          <Utensils className="w-3 h-3" /> Progresso do dia
+        </div>
+        <div className="flex items-end justify-between mb-5">
+          <div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-[44px] leading-none font-semibold tracking-[-0.04em] text-foreground tabular-nums">{completedCount}</span>
+              <span className="text-2xl text-muted-foreground/60 font-light tracking-[-0.02em]">/{totalMeals}</span>
+            </div>
+            <p className="text-[12px] text-muted-foreground font-light mt-2 tracking-tight">refeições concluídas</p>
+          </div>
+          <div className="text-right">
+            <span className="text-[28px] leading-none font-semibold tabular-nums tracking-[-0.03em] text-foreground">{progressPercent}<span className="text-base text-muted-foreground/60 font-light">%</span></span>
           </div>
         </div>
-        <div className="mt-4 text-center">
-          <Link to="/dashboard/diet">
-            <Button size="sm" className="text-xs gap-1.5 premium-btn bg-primary text-primary-foreground hover:bg-primary/90 px-5">
-              <Salad className="w-3.5 h-3.5" /> Ver refeições <ChevronRight className="w-3.5 h-3.5" />
-            </Button>
-          </Link>
+        <div className="h-px w-full bg-foreground/10 overflow-hidden rounded-full mb-5">
+          <div className="h-full bg-foreground rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }} />
         </div>
+        {nextMeal && !isMealCompleted(nextMeal.id) && (
+          <div className="flex items-center justify-between py-3 border-t border-border/40">
+            <div>
+              <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground">Próxima</p>
+              <p className="text-[14px] font-medium text-foreground mt-1 flex items-center gap-1.5 tracking-tight">
+                <Clock className="w-3 h-3 text-muted-foreground" /> {nextMeal.name} · {nextMeal.time}
+              </p>
+            </div>
+          </div>
+        )}
+        <Link to="/dashboard/diet" className="block mt-4">
+          <Button className="w-full rounded-full h-11 bg-foreground text-background hover:bg-foreground/90 text-[13px] font-medium gap-1.5">
+            <Salad className="w-3.5 h-3.5" /> Ver refeições
+          </Button>
+        </Link>
       </div>
     </div>
   );
@@ -140,15 +92,6 @@ const StudentOverview = () => {
   const navigate = useNavigate();
   const [greeting] = useState(getGreeting);
 
-  const { data: fullProfile } = useQuery({
-    queryKey: ["student-full-profile", user?.id],
-    queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("gender").eq("user_id", user!.id).single();
-      return data;
-    },
-    enabled: !!user?.id,
-  });
-
   const { data: subscription } = useQuery({
     queryKey: ["subscription", user?.id],
     queryFn: async () => {
@@ -158,22 +101,6 @@ const StudentOverview = () => {
     enabled: !!user?.id,
   });
 
-  const { data: featuredWorkout } = useQuery({
-    queryKey: ["featured-workout", user?.id],
-    queryFn: async () => {
-      const { data: assignments } = await supabase
-        .from("student_workout_assignments")
-        .select("*, workout_templates(id, title, subtitle, description, days_per_week, minutes_per_day)")
-        .eq("user_id", user!.id)
-        .eq("active", true)
-        .limit(1)
-        .maybeSingle();
-      return assignments?.workout_templates || null;
-    },
-    enabled: !!user?.id,
-  });
-
-  const p = fullProfile as any;
   const firstName = profile?.full_name?.split(" ")[0] || "Aluno";
 
   const {
@@ -191,143 +118,71 @@ const StudentOverview = () => {
       <AdAutoPopup />
       <PreviewUnlockPopup />
 
-      {/* ===== HEADER + PROGRESSO LADO A LADO ===== */}
-      <div className="grid grid-cols-[minmax(0,1fr)_8.25rem] items-start gap-4 pr-12 mb-9 relative sm:flex sm:pr-0">
-        <button
-          onClick={() => navigate("/dashboard/ads")}
-          className="absolute -top-1 right-0 w-10 h-10 rounded-full flex items-center justify-center z-10 hover:bg-foreground/[0.04] transition-colors"
-          aria-label="Notificações"
-        >
-          <Bell className="w-[21px] h-[21px] text-foreground/80" strokeWidth={1.5} />
-          <span className="absolute top-1.5 right-2 w-[7px] h-[7px] rounded-full bg-primary ring-2 ring-background" />
-        </button>
-
-        <div className="flex-1 min-w-0 pt-3">
-          <p className="text-[13px] text-muted-foreground/90 leading-tight font-medium tracking-tight">
-            {greeting},
-          </p>
-          <h1 className="text-[32px] leading-[1.05] font-bold text-foreground font-display tracking-[-0.025em] mt-1.5">
-            {firstName}<span className="text-primary">.</span>
+      {/* HEADER */}
+      <div className="flex items-start justify-between mb-10 relative">
+        <div className="flex-1 min-w-0 pt-2">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted-foreground">{greeting}</p>
+          <h1 className="text-[42px] sm:text-[56px] leading-[0.95] font-semibold text-foreground tracking-[-0.045em] mt-3">
+            {firstName}.
           </h1>
-          <p className="text-[12px] text-muted-foreground/80 mt-3.5 leading-relaxed max-w-[200px] tracking-tight">
+          <p className="text-[13px] text-muted-foreground font-light mt-4 tracking-tight max-w-[260px]">
             Acompanhe sua jornada e supere seus limites.
           </p>
         </div>
-
-        {/* Progress card — vidro translúcido igual aos cards de receita */}
-        <div className="relative w-full max-w-[8.25rem] shrink-0 aspect-square mt-5 sm:mt-7 sm:w-[46%] sm:max-w-none">
-          <div className="relative w-full h-full rounded-[22px] overflow-hidden border border-white/[0.06] bg-white/[0.025] backdrop-blur-xl shadow-[0_8px_24px_-8px_rgb(0_0_0_/_0.4),0_2px_6px_-2px_rgb(0_0_0_/_0.2),inset_0_1px_0_rgb(255_255_255_/_0.05)]">
-              {/* Sheen diagonal sutil */}
-              <div className="absolute inset-0 pointer-events-none opacity-50" style={{ background: "linear-gradient(115deg, transparent 38%, rgb(255 255 255 / 0.05) 50%, transparent 65%)" }} />
-              <div className="absolute inset-x-0 top-0 h-2/5 pointer-events-none" style={{ background: "linear-gradient(180deg, rgb(255 255 255 / 0.04) 0%, transparent 100%)" }} />
-              {/* Glow radial INTERNO atrás do arco */}
-              <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(45% 55% at 88% 50%, hsl(150 85% 50% / 0.18), transparent 65%)" }} />
-
-              {/* Arco com bloom contido e elegante */}
-              <svg className="absolute -inset-2 w-[calc(100%+1rem)] h-[calc(100%+1rem)] pointer-events-none overflow-visible" viewBox="0 0 280 280" preserveAspectRatio="xMidYMid meet">
-                <defs>
-                  <linearGradient id="bigArcGrad" x1="50%" y1="0%" x2="50%" y2="100%">
-                    <stop offset="0%" stopColor="hsl(150 95% 82%)" />
-                    <stop offset="35%" stopColor="hsl(150 78% 56%)" />
-                    <stop offset="100%" stopColor="hsl(150 72% 36%)" />
-                  </linearGradient>
-                  <filter id="neonBloomStrong" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur stdDeviation="2.5" result="b1" />
-                    <feGaussianBlur stdDeviation="6" result="b2" />
-                    <feMerge>
-                      <feMergeNode in="b2" />
-                      <feMergeNode in="b1" />
-                      <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                  </filter>
-                  <filter id="tipBloom" x="-100%" y="-100%" width="300%" height="300%">
-                    <feGaussianBlur stdDeviation="2" result="t1" />
-                    <feGaussianBlur stdDeviation="5" result="t2" />
-                    <feMerge>
-                      <feMergeNode in="t2" />
-                      <feMergeNode in="t1" />
-                      <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                  </filter>
-                </defs>
-
-                <path d="M 218 62 A 110 110 0 0 1 218 228" fill="none" stroke="rgb(255 255 255 / 0.06)" strokeWidth="5" strokeLinecap="round" />
-                <g filter="url(#neonBloomStrong)">
-                  <path d="M 218 62 A 110 110 0 0 1 218 228" fill="none" stroke="url(#bigArcGrad)" strokeWidth="5" strokeLinecap="round" />
-                </g>
-                <path d="M 218 62 A 110 110 0 0 1 218 228" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.85" />
-                <g filter="url(#tipBloom)">
-                  <circle cx="218" cy="62" r="4" fill="white" />
-                  <circle cx="218" cy="62" r="7" fill="hsl(150 95% 65%)" opacity="0.7" />
-                </g>
-                <circle cx="218" cy="62" r="2" fill="white" />
-              </svg>
-
-              {/* Conteúdo */}
-              <div className="relative h-full flex flex-col justify-between p-3.5 sm:p-4">
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="block w-1 h-1 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary))]" />
-                    <p className="text-[8.5px] font-semibold tracking-[0.28em] text-primary/90 uppercase">Progresso</p>
-                  </div>
-                  <div className="flex items-baseline gap-0.5 mt-2.5">
-                    <p className="text-[34px] sm:text-[40px] leading-[0.9] font-bold text-white font-display tracking-[-0.04em] tabular-nums">
-                      {mealsLoading ? "—" : dayProgress}
-                    </p>
-                    <span className="text-[16px] font-semibold text-white/40 tracking-tight">%</span>
-                  </div>
-                  <p className="text-[10px] text-white/45 mt-2 tracking-tight font-medium">refeições hoje</p>
-                </div>
-                <div className="inline-flex w-fit max-w-full items-center gap-1.5 text-[9.5px] text-white/90 rounded-full pl-1.5 pr-2 py-1 bg-white/[0.05] border border-white/[0.08] backdrop-blur-xl font-medium tracking-tight shadow-[inset_0_1px_0_rgb(255_255_255_/_0.06)]">
-                  <Target className="w-2.5 h-2.5 text-primary" strokeWidth={2.2} />
-                  <span>8 dias</span>
-                </div>
-              </div>
-          </div>
-        </div>
+        <button
+          onClick={() => navigate("/dashboard/ads")}
+          className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-muted/40 transition-colors relative"
+          aria-label="Notificações"
+        >
+          <Bell className="w-5 h-5 text-foreground" strokeWidth={1.5} />
+          <span className="absolute top-2 right-2.5 w-1.5 h-1.5 rounded-full bg-foreground" />
+        </button>
       </div>
 
-      {/* ===== STH NEWS ===== */}
-      <Link to="/tendencias/cintura-estetica" className="block mb-8">
-        <div className="relative rounded-[20px] overflow-hidden border border-white/[0.08] bg-white/[0.03] backdrop-blur-2xl shadow-[0_8px_24px_-8px_rgb(0_0_0_/_0.4),0_2px_6px_-2px_rgb(0_0_0_/_0.2),inset_0_1px_0_rgb(255_255_255_/_0.06)] hover:border-white/[0.14] transition-all duration-300 group">
-          {/* Sheen diagonal sutil */}
-          <div className="absolute inset-0 pointer-events-none opacity-60" style={{ background: "linear-gradient(115deg, transparent 38%, rgb(255 255 255 / 0.07) 50%, transparent 65%)" }} />
-          <div className="absolute inset-x-0 top-0 h-1/2 pointer-events-none" style={{ background: "linear-gradient(180deg, rgb(255 255 255 / 0.05) 0%, transparent 100%)" }} />
-          <div className="relative flex items-center gap-3.5 p-4">
-              <div className="relative w-12 h-12 rounded-2xl overflow-hidden shrink-0 border border-white/15 shadow-[0_4px_12px_-2px_rgb(0_0_0_/_0.4),inset_0_1px_0_rgb(255_255_255_/_0.15)]">
-                <img src={sthNewsLatestImg} alt="STH News" className="absolute inset-0 w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 pointer-events-none" />
-                <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(135deg, rgb(255 255 255 / 0.18) 0%, transparent 45%, transparent 60%, rgb(255 255 255 / 0.08) 100%)" }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <span className="text-[9px] font-bold tracking-[0.24em] text-primary/95 uppercase">STH News</span>
-                  <span className="inline-flex items-center gap-0.5 text-[8px] font-semibold uppercase tracking-wider bg-primary/15 text-primary px-1.5 py-0.5 rounded-full border border-primary/20">
-                    <span className="w-1 h-1 rounded-full bg-primary animate-pulse" /> Nova
-                  </span>
-                </div>
-                <p className="font-semibold text-foreground text-[13.5px] leading-tight truncate tracking-[-0.015em]">
-                  A estética da cintura não é só genética
-                </p>
-                <p className="text-[11px] text-muted-foreground/70 truncate mt-1 tracking-tight">
-                  Última matéria · 22 Abr 2026
-                </p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-foreground/40 shrink-0 group-hover:text-primary group-hover:translate-x-0.5 transition-all" strokeWidth={2} />
+      {/* PROGRESSO DESTAQUE */}
+      <div className="mb-10 rounded-3xl border border-border/40 bg-background p-7">
+        <div className="flex items-end justify-between mb-6">
+          <div>
+            <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground">Hoje</p>
+            <div className="flex items-baseline gap-1.5 mt-3">
+              <span className="text-[64px] sm:text-[80px] leading-[0.85] font-semibold text-foreground tracking-[-0.05em] tabular-nums">
+                {mealsLoading ? "—" : dayProgress}
+              </span>
+              <span className="text-2xl text-muted-foreground/60 font-light tracking-[-0.02em]">%</span>
+            </div>
           </div>
+          <div className="inline-flex items-center gap-1.5 text-[11px] text-foreground/80 rounded-full px-3 py-1.5 bg-muted/50 font-medium tracking-tight">
+            <Target className="w-3 h-3" strokeWidth={2} /> 8 dias
+          </div>
+        </div>
+        <p className="text-[12px] text-muted-foreground font-light tracking-tight">refeições concluídas hoje</p>
+      </div>
+
+      {/* STH NEWS */}
+      <Link to="/tendencias/cintura-estetica" className="block mb-10 group">
+        <div className="rounded-3xl border border-border/40 hover:border-border transition-colors p-5 flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0">
+            <img src={sthNewsLatestImg} alt="STH News" className="w-full h-full object-cover" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-1.5">STH News</p>
+            <p className="text-[14px] font-semibold text-foreground tracking-[-0.015em] truncate">
+              A estética da cintura não é só genética
+            </p>
+            <p className="text-[11px] text-muted-foreground font-light mt-0.5 tracking-tight">22 Abr 2026</p>
+          </div>
+          <ChevronRight className="w-4 h-4 text-foreground/40 shrink-0 group-hover:translate-x-0.5 transition-transform" strokeWidth={2} />
         </div>
       </Link>
 
-      {/* ===== CONTEÚDO STH METHOD ===== */}
-      <div className="mb-9">
-        <div className="flex items-end justify-between mb-4">
+      {/* CONTEÚDO STH METHOD */}
+      <div className="mb-10">
+        <div className="flex items-end justify-between mb-5">
           <div>
-            <p className="text-[9.5px] text-primary/90 font-semibold uppercase tracking-[0.24em]">STH Method</p>
-            <h2 className="text-[20px] font-bold text-foreground font-display tracking-[-0.025em] leading-tight mt-1">
-              Conteúdo
-            </h2>
+            <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground">STH Method</p>
+            <h2 className="text-[26px] font-semibold text-foreground tracking-[-0.03em] leading-tight mt-2">Conteúdo</h2>
           </div>
-          <Link to="/dashboard/content" className="text-[12px] text-primary font-medium flex items-center gap-0.5 pb-1 tracking-tight">
+          <Link to="/dashboard/content" className="text-[12px] text-foreground font-medium flex items-center gap-0.5 pb-1 tracking-tight">
             Ver tudo <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
           </Link>
         </div>
@@ -338,37 +193,20 @@ const StudentOverview = () => {
               <button
                 key={s.id}
                 onClick={() => navigate(s.id === "receitas" ? "/dashboard/recipes" : `/dashboard/content?section=${s.id}`)}
-                className="snap-start shrink-0 w-[78vw] max-w-[300px] text-left rounded-[22px] overflow-hidden relative group border border-white/[0.1] bg-white/[0.04] backdrop-blur-2xl active:scale-[0.98] transition-all duration-300 shadow-[0_10px_28px_-10px_rgb(0_0_0_/_0.5),0_2px_8px_-2px_rgb(0_0_0_/_0.25),inset_0_1px_0_rgb(255_255_255_/_0.1),inset_0_-1px_0_rgb(255_255_255_/_0.04)] hover:border-white/[0.18]"
+                className="snap-start shrink-0 w-[78vw] max-w-[300px] text-left rounded-3xl overflow-hidden relative group border border-border/40 bg-background active:scale-[0.98] transition-all duration-300"
               >
-                {/* Diagonal glass sheen */}
-                <div className="absolute inset-0 pointer-events-none z-20 opacity-70" style={{ background: "linear-gradient(115deg, transparent 35%, rgb(255 255 255 / 0.09) 50%, transparent 68%)" }} />
                 <div className="relative h-48 overflow-hidden">
-                  <img src={s.img} alt={s.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" width={600} height={352} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-transparent" />
-                  <div className="absolute top-3.5 left-3.5">
-                    <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.24em] font-semibold px-2.5 py-1 rounded-full backdrop-blur-xl bg-white/10 text-white border border-white/15">
-                      <Icon className="w-2.5 h-2.5" strokeWidth={2.2} />
+                  <img src={s.img} alt={s.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                  <div className="absolute top-4 left-4">
+                    <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.25em] font-medium px-2.5 py-1 rounded-full bg-white/15 backdrop-blur text-white">
+                      <Icon className="w-2.5 h-2.5" strokeWidth={2} />
                       {s.tag}
                     </span>
                   </div>
-                  {/* progress mini ring */}
-                  <div className="absolute bottom-3.5 right-3.5 w-11 h-11 rounded-full bg-black/50 backdrop-blur-xl border border-white/10 flex items-center justify-center">
-                    <svg className="absolute inset-0 -rotate-90" viewBox="0 0 44 44">
-                      <circle cx="22" cy="22" r="18" fill="none" stroke="rgb(255 255 255 / 0.12)" strokeWidth="2.5" />
-                      <circle cx="22" cy="22" r="18" fill="none" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" strokeDasharray={2 * Math.PI * 18} strokeDashoffset={2 * Math.PI * 18 * (1 - s.progress / 100)} />
-                    </svg>
-                    <span className="relative text-[9.5px] font-semibold text-white tabular-nums tracking-tight">{s.progress}%</span>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 p-4 pr-16">
-                    <h3 className="text-[16px] font-semibold tracking-[-0.02em] leading-tight text-white">{s.title}</h3>
-                    <p className="text-[11px] text-white/55 mt-1 tracking-tight">{s.subtitle}</p>
-                  </div>
-                </div>
-                <div className="relative z-10 px-4 py-3 flex items-center justify-between bg-white/[0.025] border-t border-white/[0.06]">
-                  <span className="text-[10.5px] font-medium text-muted-foreground/80 tracking-tight">{s.meta}</span>
-                  <div className="flex items-center gap-0.5 text-primary">
-                    <span className="text-[10.5px] font-semibold tracking-tight">Explorar</span>
-                    <ChevronRight className="w-3 h-3" strokeWidth={2.2} />
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <h3 className="text-[17px] font-semibold tracking-[-0.02em] leading-tight text-white">{s.title}</h3>
+                    <p className="text-[11px] text-white/60 mt-1 tracking-tight font-light">{s.subtitle}</p>
                   </div>
                 </div>
               </button>
@@ -377,14 +215,14 @@ const StudentOverview = () => {
         </div>
       </div>
 
-      {/* ===== RECEITAS SAUDÁVEIS ===== */}
-      <div className="mb-9">
-        <div className="flex items-end justify-between mb-4">
+      {/* RECEITAS */}
+      <div className="mb-10">
+        <div className="flex items-end justify-between mb-5">
           <div>
-            <p className="text-[9.5px] text-primary/90 font-semibold uppercase tracking-[0.24em]">Cozinha</p>
-            <h2 className="text-[20px] font-bold text-foreground font-display tracking-[-0.025em] leading-tight mt-1">Receitas</h2>
+            <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground">Cozinha</p>
+            <h2 className="text-[26px] font-semibold text-foreground tracking-[-0.03em] leading-tight mt-2">Receitas</h2>
           </div>
-          <Link to="/dashboard/recipes" className="text-[12px] text-primary font-medium flex items-center gap-0.5 pb-1 tracking-tight">
+          <Link to="/dashboard/recipes" className="text-[12px] text-foreground font-medium flex items-center gap-0.5 pb-1 tracking-tight">
             Ver todas <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
           </Link>
         </div>
@@ -393,105 +231,47 @@ const StudentOverview = () => {
             <button
               key={recipe.id}
               onClick={() => navigate("/dashboard/recipes")}
-              className="text-left rounded-[18px] overflow-hidden relative group border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl active:scale-[0.97] transition-all duration-300 shadow-[0_4px_16px_-4px_rgb(0_0_0_/_0.35),inset_0_1px_0_rgb(255_255_255_/_0.04)]"
+              className="text-left rounded-2xl overflow-hidden relative group border border-border/40 active:scale-[0.97] transition-all duration-300"
             >
               <div className="relative aspect-[4/5] overflow-hidden">
-                <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" width={200} height={250} />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-                {recipe.isNew && (
-                  <span className="absolute top-2 left-2 text-[7.5px] font-semibold tracking-[0.18em] bg-white/15 backdrop-blur-xl text-white px-1.5 py-0.5 rounded-full border border-white/20">
-                    NEW
-                  </span>
-                )}
-                <button
-                  onClick={(e) => e.stopPropagation()}
-                  className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/35 backdrop-blur-xl border border-white/15 flex items-center justify-center"
-                  aria-label="Favoritar"
-                >
-                  <Heart className="w-3 h-3 text-white/85" strokeWidth={2} />
-                </button>
-                <div className="absolute bottom-2 left-2 right-9">
+                <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+                <div className="absolute bottom-2 left-2 right-2">
                   <p className="text-[10.5px] font-semibold text-white leading-tight line-clamp-2 tracking-[-0.01em]">{recipe.title}</p>
-                  <p className="text-[8.5px] text-white/60 mt-1 flex items-center gap-1 tracking-tight">
-                    <Clock className="w-2 h-2" strokeWidth={2.2} /> {recipe.time}min · {recipe.kcal}kcal
+                  <p className="text-[8.5px] text-white/60 mt-1 flex items-center gap-1 tracking-tight font-light">
+                    <Clock className="w-2 h-2" strokeWidth={2} /> {recipe.time}min · {recipe.kcal}kcal
                   </p>
                 </div>
-                <button
-                  onClick={(e) => { e.stopPropagation(); navigate("/dashboard/recipes"); }}
-                  className="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-white text-black flex items-center justify-center shadow-[0_2px_8px_rgb(0_0_0_/_0.3)]"
-                  aria-label="Abrir receita"
-                >
-                  <Plus className="w-3 h-3" strokeWidth={2.5} />
-                </button>
               </div>
             </button>
           ))}
         </div>
       </div>
 
-      {/* ===== RESUMO DO DIA - HORIZONTAL ===== */}
-      <div className="mb-5 relative rounded-[22px] overflow-hidden border border-white/[0.06] bg-white/[0.025] backdrop-blur-xl p-4 shadow-[0_8px_24px_-8px_rgb(0_0_0_/_0.4),0_2px_6px_-2px_rgb(0_0_0_/_0.2),inset_0_1px_0_rgb(255_255_255_/_0.05)]">
-        {/* Sheen diagonal sutil */}
-        <div className="absolute inset-0 pointer-events-none opacity-50" style={{ background: "linear-gradient(115deg, transparent 38%, rgb(255 255 255 / 0.05) 50%, transparent 65%)" }} />
-        {/* Highlight superior */}
-        <div className="absolute inset-x-0 top-0 h-2/5 pointer-events-none" style={{ background: "linear-gradient(180deg, rgb(255 255 255 / 0.04) 0%, transparent 100%)" }} />
-        <div className="absolute -bottom-24 -left-20 w-52 h-52 rounded-full bg-primary/[0.08] blur-3xl pointer-events-none" />
-        <div className="absolute -top-20 -right-20 w-44 h-44 rounded-full bg-primary/[0.06] blur-3xl pointer-events-none" />
-        <div className="relative">
-            <div className="flex items-center justify-between mb-3.5">
-              <div className="flex items-center gap-1.5">
-                <span className="block w-1 h-1 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary))]" />
-                <p className="text-[9px] font-semibold tracking-[0.26em] text-primary/90 uppercase">Resumo do dia</p>
-              </div>
-              <span className="text-[9px] text-muted-foreground/60 font-medium tracking-tight uppercase">Hoje</span>
-            </div>
-            <div className="flex items-center gap-2.5">
-              <div className="flex-1 min-w-0 flex items-center gap-2">
-                <div className="w-7 h-7 rounded-xl glass-icon glass-icon-active flex items-center justify-center shrink-0">
-                  <Flame className="w-[13px] h-[13px] text-primary neon-icon relative z-10" strokeWidth={2} />
+      {/* RESUMO DO DIA */}
+      <div className="mb-6 rounded-3xl border border-border/40 bg-background overflow-hidden">
+        <div className="p-6">
+          <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5">Resumo do dia</p>
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              { icon: Flame, value: mealsLoading ? "—" : (dayMacros?.kcal ? Math.round(dayMacros.kcal).toLocaleString("pt-BR") : (dayTargetMacros?.kcal ? Math.round(dayTargetMacros.kcal).toLocaleString("pt-BR") : "—")), unit: "kcal", label: "calorias" },
+              { icon: Activity, value: "82", unit: "min", label: "treino" },
+              { icon: Droplets, value: mealsLoading ? "—" : (dayWaterMl / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }), unit: "L", label: dayHydrationGoalL > 0 ? `de ${dayHydrationGoalL}L` : "água" },
+            ].map((s, i) => {
+              const Icon = s.icon;
+              return (
+                <div key={i} className="text-center">
+                  <Icon className="w-4 h-4 text-foreground mx-auto mb-3" strokeWidth={1.8} />
+                  <div className="flex items-baseline justify-center gap-0.5">
+                    <span className="text-[22px] font-semibold text-foreground tabular-nums tracking-[-0.03em] leading-none">{s.value}</span>
+                    <span className="text-[10px] text-muted-foreground font-light">{s.unit}</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground font-light mt-2 tracking-tight">{s.label}</p>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none truncate tracking-[-0.025em]">
-                    {mealsLoading
-                      ? "—"
-                      : dayMacros?.kcal
-                      ? Math.round(dayMacros.kcal).toLocaleString("pt-BR")
-                      : dayTargetMacros?.kcal
-                      ? Math.round(dayTargetMacros.kcal).toLocaleString("pt-BR")
-                      : "—"}
-                  </p>
-                  <p className="text-[9px] text-muted-foreground/70 mt-1.5 leading-tight tracking-tight font-medium">kcal</p>
-                </div>
-              </div>
-              <div className="w-px h-10 bg-gradient-to-b from-transparent via-white/[0.08] to-transparent" />
-              <div className="flex-1 min-w-0 flex items-center gap-2">
-                <div className="w-7 h-7 rounded-xl glass-icon glass-icon-active flex items-center justify-center shrink-0">
-                  <Activity className="w-[13px] h-[13px] text-primary neon-icon relative z-10" strokeWidth={2} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none tracking-[-0.025em]">82<span className="text-[10px] font-medium text-muted-foreground/70 ml-0.5">min</span></p>
-                  <p className="text-[9px] text-muted-foreground/70 mt-1.5 leading-tight tracking-tight font-medium">treino</p>
-                </div>
-              </div>
-              <div className="w-px h-10 bg-gradient-to-b from-transparent via-white/[0.08] to-transparent" />
-              <div className="flex-1 min-w-0 flex items-center gap-2">
-                <div className="w-7 h-7 rounded-xl glass-icon glass-icon-active flex items-center justify-center shrink-0">
-                  <Droplets className="w-[13px] h-[13px] text-primary neon-icon relative z-10" strokeWidth={2} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[15px] font-semibold text-foreground tabular-nums leading-none tracking-[-0.025em]">
-                    {mealsLoading
-                      ? "—"
-                      : (dayWaterMl / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
-                    <span className="text-[10px] font-medium text-muted-foreground/70 ml-0.5">L</span>
-                  </p>
-                  <p className="text-[9px] text-muted-foreground/70 mt-1.5 leading-tight tracking-tight font-medium">
-                    {dayHydrationGoalL > 0 ? `de ${dayHydrationGoalL}L` : "água"}
-                  </p>
-                </div>
-              </div>
-            </div>
+              );
+            })}
           </div>
+        </div>
       </div>
 
       <DailyMealWidget />
