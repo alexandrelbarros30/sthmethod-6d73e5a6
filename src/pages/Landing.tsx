@@ -221,8 +221,6 @@ const Landing = () => {
                   { href: "#plano-alimentar", label: "Plano Alimentar" },
                   { href: "#simulador", label: "Simulador Corporal" },
                   { href: "#sth-news", label: "STH News" },
-                  { href: "/tendencias/plato-metabolico", label: "Platô Metabólico" },
-                  { href: "/tendencias/trembolona", label: "Trembolona" },
                 ].map((item) => (
                   <LinkOrA
                     key={item.href}
@@ -236,16 +234,15 @@ const Landing = () => {
                 <Link
                   to="/questionario"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="py-2.5 px-3 rounded-lg font-medium gradient-text hover:bg-muted/50 transition-colors"
+                  className="py-2.5 px-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                 >
                   Calcule seus Macros
                 </Link>
                 <Link
                   to="/free"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="py-2.5 px-3 rounded-lg font-medium text-primary hover:bg-muted/50 transition-colors flex items-center gap-2"
+                  className="py-2.5 px-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                 >
-                  <Sparkles className="w-4 h-4" />
                   Versão Gratuita
                 </Link>
               </div>
