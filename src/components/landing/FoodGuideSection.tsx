@@ -23,7 +23,7 @@ const blocks = [
 ];
 
 const FoodGuideSection = () => (
-  <section id="guia-alimentar" className="py-24 md:py-32 px-6 bg-background">
+  <section id="guia-alimentar" className="py-24 md:py-32 px-6 bg-[hsl(var(--surface))]">
     <div className="max-w-6xl mx-auto">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -32,9 +32,9 @@ const FoodGuideSection = () => (
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         className="text-center mb-16 md:mb-20"
       >
-        <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5">Nutrição</div>
+        <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-brand mb-5">Nutrição</div>
         <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] text-foreground">
-          Guia básico de alimentação.
+          <span className="text-brand">Guia básico</span> de alimentação.
         </h2>
         <p className="text-base md:text-lg text-muted-foreground font-light mt-5 max-w-xl mx-auto">
           Os pilares de uma alimentação equilibrada para potencializar resultados.

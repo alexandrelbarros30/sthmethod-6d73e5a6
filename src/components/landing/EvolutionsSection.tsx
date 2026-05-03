@@ -33,7 +33,7 @@ const EvolutionsSection = () => {
         <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }} className="text-center mb-16">
           <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-brand mb-5">Transformações</div>
           <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] text-foreground">
-            Evoluções reais.
+            <span className="text-brand">Evoluções</span> reais.
           </h2>
           <p className="text-base md:text-lg text-muted-foreground font-light max-w-2xl mx-auto mt-5">
             Alunos que confiaram no método e no processo.

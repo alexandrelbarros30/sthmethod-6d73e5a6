@@ -32,7 +32,7 @@ const PlansSection = () => {
   const midIndex = Math.floor(plans.length / 2);
 
   return (
-    <section id="planos" className="py-24 md:py-32 px-6 bg-background border-t border-border/40">
+    <section id="planos" className="py-24 md:py-32 px-6 bg-[hsl(var(--surface))]">
       <div className="max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -43,7 +43,7 @@ const PlansSection = () => {
         >
           <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-brand mb-5">Planos</div>
           <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] text-foreground">
-            Acompanhamento real, personalizado.
+            <span className="text-brand">Acompanhamento</span> real, personalizado.
           </h2>
           <p className="text-base md:text-lg text-muted-foreground font-light max-w-2xl mx-auto mt-5">
             Escolha o plano ideal para o seu momento e objetivo.

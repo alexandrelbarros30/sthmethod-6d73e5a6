@@ -32,7 +32,7 @@ const macros = [
 ];
 
 const MealPlanSection = () => (
-  <section id="plano-alimentar" className="py-24 md:py-32 px-6 bg-[hsl(var(--surface))]">
+  <section id="plano-alimentar" className="py-24 md:py-32 px-6 bg-[hsl(0_0%_4%)] text-white">
     <div className="max-w-4xl mx-auto">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -41,13 +41,13 @@ const MealPlanSection = () => (
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         className="text-center mb-16"
       >
-        <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5 inline-flex items-center gap-2">
+        <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-brand mb-5 inline-flex items-center gap-2">
           <UtensilsCrossed className="w-3.5 h-3.5" /> Exemplo prático
         </div>
-        <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] text-foreground">
-          Plano alimentar diário.
+        <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] text-white">
+          <span className="text-brand">Plano alimentar</span> diário.
         </h2>
-        <p className="text-base md:text-lg text-muted-foreground font-light mt-5">Referência de 2.000 kcal — personalizado para cada aluno.</p>
+        <p className="text-base md:text-lg text-white/60 font-light mt-5">Referência de 2.000 kcal — personalizado para cada aluno.</p>
       </motion.div>
 
       <div className="grid sm:grid-cols-2 gap-px bg-border/40 rounded-2xl overflow-hidden border border-border/40 mb-6">

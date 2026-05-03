@@ -21,12 +21,12 @@ const HowItWorksSection = () => {
   if (active.length === 0) return null;
 
   return (
-    <section id="como-funciona" className="py-24 md:py-32 px-6 bg-[hsl(var(--surface))]">
+    <section id="como-funciona" className="py-24 md:py-32 px-6 bg-background">
       <div className="max-w-6xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }} className="text-center mb-16 md:mb-20">
           <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-brand mb-5">Método</div>
           <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] text-foreground">
-            Como funciona a STH METHOD.
+            <span className="text-brand">Como funciona</span> a STH METHOD.
           </h2>
           <p className="text-base md:text-lg text-muted-foreground font-light max-w-2xl mx-auto mt-5">
             Do diagnóstico à transformação. Cada etapa pensada para o seu resultado.
