@@ -78,7 +78,7 @@ const EvolutionUpdatePopup = () => {
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
-            <TrendingUp className="w-5 h-5 text-primary" />
+            <TrendingUp className="w-5 h-5 text-foreground" />
             Atualizações de Alunos
             {unseen.length > 0 && <Badge variant="destructive" className="text-xs">{unseen.length}</Badge>}
           </DialogTitle>
@@ -93,7 +93,7 @@ const EvolutionUpdatePopup = () => {
               const diffLabel = diff ? (Number(diff) > 0 ? `+${diff}` : diff) : null;
 
               return (
-                <div key={n.id} className="flex items-start justify-between gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                <div key={n.id} className="flex items-start justify-between gap-2 p-3 rounded-lg bg-foreground/5 border border-foreground/15">
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium">📊 {n.student_name}</p>
                     <div className="flex gap-1 mt-1 flex-wrap">

@@ -107,7 +107,7 @@ const EvolutionReminderPopup = () => {
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
-            <Camera className="w-5 h-5 text-primary" />
+            <Camera className="w-5 h-5 text-foreground" />
             Atualizações de Evolução
             {unseen.length > 0 && <Badge variant="destructive" className="text-xs">{unseen.length}</Badge>}
           </DialogTitle>
@@ -116,7 +116,7 @@ const EvolutionReminderPopup = () => {
         <ScrollArea className="max-h-[60vh]">
           <div className="space-y-2 pr-2">
             {unseen.map((r: any) => (
-              <div key={r.id} className="flex items-start justify-between gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+              <div key={r.id} className="flex items-start justify-between gap-2 p-3 rounded-lg bg-foreground/5 border border-foreground/15">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium">📸 {r.student_name}</p>
                   <div className="flex gap-1 mt-1 flex-wrap">
