@@ -70,7 +70,7 @@ const NutritionQuizSection = () => {
   const progress = done ? 100 : (step / totalSteps) * 100;
 
   return (
-    <section id="diagnostico" className="py-24 md:py-32 px-6 bg-[hsl(var(--surface))]">
+    <section id="diagnostico" className="py-24 md:py-32 px-6 bg-background">
       <div className="max-w-2xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 16 }}

@@ -8,7 +8,7 @@ const pillars = [
 ];
 
 const ResultsSection = () => (
-  <section id="resultados" className="py-24 md:py-32 px-6 bg-background">
+  <section id="resultados" className="py-24 md:py-32 px-6 bg-[hsl(0_0%_4%)] text-white">
     <div className="max-w-5xl mx-auto">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -18,10 +18,10 @@ const ResultsSection = () => (
         className="text-center mb-16 md:mb-20"
       >
         <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-brand mb-5">Evolução</div>
-        <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] text-foreground">
-          Resultados são consequência.
+        <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] text-white">
+          <span className="text-brand">Resultados</span> são consequência.
         </h2>
-        <p className="text-base md:text-lg text-muted-foreground font-light max-w-2xl mx-auto mt-5">
+        <p className="text-base md:text-lg text-white/60 font-light max-w-2xl mx-auto mt-5">
           Método, constância e acompanhamento. Nesta ordem.
         </p>
       </motion.div>
@@ -30,10 +30,10 @@ const ResultsSection = () => (
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="border border-border/40 rounded-2xl p-10 md:p-14 mb-16"
+        className="border border-white/10 rounded-2xl p-10 md:p-14 mb-16"
       >
         <div className="flex flex-col md:flex-row items-center justify-between gap-12 relative">
-          <div className="hidden md:block absolute top-[28%] left-[12%] right-[12%] h-px bg-border/60" />
+          <div className="hidden md:block absolute top-[28%] left-[12%] right-[12%] h-px bg-white/20" />
           {[
             { month: "Mês 01", label: "Organização & Ritmo" },
             { month: "Mês 03", label: "Evolução Consistente" },
@@ -47,17 +47,17 @@ const ResultsSection = () => (
               transition={{ delay: i * 0.1 }}
               className="text-center relative z-10 flex-1"
             >
-              <div className="w-2 h-2 rounded-full bg-foreground mx-auto mb-5" />
-              <div className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted-foreground mb-2">
+              <div className="w-2 h-2 rounded-full bg-brand mx-auto mb-5" />
+              <div className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-2">
                 {step.month}
               </div>
-              <p className="text-foreground text-lg md:text-xl font-semibold tracking-[-0.02em]">{step.label}</p>
+              <p className="text-white text-lg md:text-xl font-semibold tracking-[-0.02em]">{step.label}</p>
             </motion.div>
           ))}
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-border/40 rounded-2xl overflow-hidden border border-border/40">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/10 rounded-2xl overflow-hidden border border-white/10">
         {pillars.map((p, i) => (
           <motion.div
             key={p.title}
@@ -65,11 +65,11 @@ const ResultsSection = () => (
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: i * 0.08 }}
-            className="bg-background text-center p-8"
+            className="bg-[hsl(0_0%_4%)] text-center p-8"
           >
             <div className="text-brand mb-4 inline-flex">{p.icon}</div>
-            <h3 className="text-foreground text-lg font-semibold tracking-[-0.02em] mb-2">{p.title}</h3>
-            <p className="text-muted-foreground text-[14px] font-light leading-relaxed">{p.desc}</p>
+            <h3 className="text-white text-lg font-semibold tracking-[-0.02em] mb-2">{p.title}</h3>
+            <p className="text-white/60 text-[14px] font-light leading-relaxed">{p.desc}</p>
           </motion.div>
         ))}
       </div>
