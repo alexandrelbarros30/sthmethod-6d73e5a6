@@ -302,10 +302,10 @@ const StudentContent = () => {
             {progress < TOTAL_COMPOUNDS && (
               <div
                 className="absolute inset-0 z-10 backdrop-blur-md flex flex-col items-center justify-center gap-3"
-                style={{ background: "hsl(0 0% 96% / 0.7)" }}
+                style={{ background: "hsl(0 0% 0% / 0.55)" }}
               >
-                <Lock className="w-6 h-6" style={{ color: G.t30 }} />
-                <p className="text-xs font-medium text-center" style={{ color: G.t40 }}>
+                <Lock className="w-6 h-6" style={{ color: G.t65 }} />
+                <p className="text-xs font-medium text-center" style={{ color: G.t80 }}>
                   Explore todos os {TOTAL_COMPOUNDS} compostos para desbloquear
                 </p>
               </div>
@@ -361,9 +361,9 @@ const StudentContent = () => {
               whileTap={{ scale: 0.97 }}
               className="relative inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all"
               style={{
-                background: `linear-gradient(135deg, ${G.accent}, hsl(0 0% 96%))`,
-                color: "hsl(0 0% 96%)",
-                boxShadow: `0 4px 20px ${G.accentGlow}, 0 0 22px hsl(0 0% 96% / 0.5), inset 0 1px 0 rgb(255 255 255 / 0.25)`,
+                background: G.t96,
+                color: "hsl(0 0% 0%)",
+                boxShadow: `0 8px 24px -8px hsl(0 0% 100% / 0.25)`,
               }}
             >
               <MessageCircle className="w-4 h-4" />
