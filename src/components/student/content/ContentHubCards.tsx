@@ -72,8 +72,8 @@ const ContentHubCards = ({ onNavigate }: Props) => (
   <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-none -mx-4 px-4 pb-2">
     {sections.map((s, i) => {
       const accent = `hsl(0 0% 96%)`;
-      const accentBg = `hsl(0 0% 96% / 0.12)`;
-      const accentBorder = `hsl(0 0% 96% / 0.3)`;
+      const accentBg = `hsl(0 0% 0% / 0.45)`;
+      const accentBorder = `hsl(0 0% 100% / 0.2)`;
 
       return (
         <motion.button
@@ -85,17 +85,17 @@ const ContentHubCards = ({ onNavigate }: Props) => (
           onClick={() => onNavigate(s.id)}
           className="snap-center flex-shrink-0 w-[72vw] max-w-[280px] text-left rounded-[22px] overflow-hidden relative group backdrop-blur-xl"
           style={{
-            border: `1px solid hsl(0 0% 96% / 0.18)`,
-            background: "rgb(255 255 255 / 0.025)",
-            boxShadow: `0 8px 28px -10px rgb(0 0 0 / 0.55), 0 0 22px -6px hsl(0 0% 96% / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.06)`,
+            border: `1px solid hsl(0 0% 100% / 0.12)`,
+            background: "rgb(255 255 255 / 0.03)",
+            boxShadow: `0 10px 30px -12px rgb(0 0 0 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.08)`,
           }}
         >
           {/* Diagonal glass sheen */}
           <div
-            className="absolute inset-0 pointer-events-none z-20 opacity-60"
+            className="absolute inset-0 pointer-events-none z-20 opacity-40"
             style={{
               background:
-                "linear-gradient(115deg, transparent 38%, rgb(255 255 255 / 0.08) 50%, transparent 65%)",
+                "linear-gradient(115deg, transparent 40%, rgb(255 255 255 / 0.06) 50%, transparent 60%)",
             }}
           />
           {/* Image */}
@@ -113,7 +113,7 @@ const ContentHubCards = ({ onNavigate }: Props) => (
             <div
               className="absolute inset-0"
               style={{
-                background: `linear-gradient(to top, hsl(0 0% 96% / 1) 0%, hsl(0 0% 96% / 0.4) 55%, transparent 100%)`,
+                background: `linear-gradient(to top, hsl(0 0% 0% / 0.9) 0%, hsl(0 0% 0% / 0.3) 55%, transparent 100%)`,
               }}
             />
 
@@ -123,9 +123,8 @@ const ContentHubCards = ({ onNavigate }: Props) => (
                 className="inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.18em] font-bold px-2 py-1 rounded-full backdrop-blur-md"
                 style={{
                   background: accentBg,
-                  color: accent,
+                  color: G.t96,
                   border: `0.5px solid ${accentBorder}`,
-                  boxShadow: `0 0 10px hsl(0 0% 96% / 0.35)`,
                 }}
               >
                 <s.icon className="w-2.5 h-2.5" />
@@ -148,8 +147,8 @@ const ContentHubCards = ({ onNavigate }: Props) => (
           <div
             className="px-3.5 py-2.5 flex items-center justify-between relative z-10"
             style={{
-              background: "rgb(255 255 255 / 0.02)",
-              borderTop: `1px solid hsl(0 0% 96% / 0.12)`,
+              background: "rgb(255 255 255 / 0.015)",
+              borderTop: `1px solid hsl(0 0% 100% / 0.08)`,
             }}
           >
             <span className="text-[10px] font-medium" style={{ color: G.t40 }}>
@@ -158,7 +157,7 @@ const ContentHubCards = ({ onNavigate }: Props) => (
             <div className="flex items-center gap-0.5">
               <span
                 className="text-[10px] font-semibold"
-                style={{ color: accent, textShadow: `0 0 8px hsl(0 0% 96% / 0.6)` }}
+                style={{ color: accent }}
               >
                 Explorar
               </span>
