@@ -32,12 +32,12 @@ interface Props {
 }
 
 const CompoundDetail = ({ family, selected, visited, onSelect }: Props) => {
-  const accent = `hsl(${family.accentHue} 60% 42%)`;
-  const accentSoft = `hsl(${family.accentHue} 50% 55%)`;
-  const accentBg = `hsl(${family.accentHue} 60% 42% / 0.12)`;
-  const accentBorder = `hsl(${family.accentHue} 60% 42% / 0.4)`;
-  const accentBorderSoft = `hsl(${family.accentHue} 60% 42% / 0.2)`;
-  const accentText06 = `hsl(${family.accentHue} 60% 42% / 0.06)`;
+  const accent = `hsl(0 0% 96%)`;
+  const accentSoft = `hsl(0 0% 70%)`;
+  const accentBg = `hsl(0 0% 96% / 0.12)`;
+  const accentBorder = `hsl(0 0% 96% / 0.4)`;
+  const accentBorderSoft = `hsl(0 0% 96% / 0.2)`;
+  const accentText06 = `hsl(0 0% 96% / 0.06)`;
   const compound = family.compounds.find((c) => c.id === selected);
 
   return (
@@ -74,7 +74,7 @@ const CompoundDetail = ({ family, selected, visited, onSelect }: Props) => {
                 className="absolute inset-0 flex flex-col items-center justify-end pb-2"
                 style={{
                   background: isActive
-                    ? `linear-gradient(to top, hsl(${family.accentHue} 40% 8% / 0.9), transparent 70%)`
+                    ? `linear-gradient(to top, hsl(0 0% 6% / 0.9), transparent 70%)`
                     : "linear-gradient(to top, hsl(0 0% 3% / 0.85), transparent 60%)",
                 }}
               >

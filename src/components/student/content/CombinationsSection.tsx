@@ -252,10 +252,10 @@ const InfoBlock = ({ icon, title, children, accentColor }: { icon: React.ReactNo
 const ComboCardComponent = ({ card, index }: { card: ComboCard; index: number }) => {
   const [expanded, setExpanded] = useState(false);
   const lc = levelColors[card.level];
-  const accent = `hsl(${lc.hue} 60% 42%)`;
-  const accentSoft = `hsl(${lc.hue} 50% 55%)`;
-  const accentBg = `hsl(${lc.hue} 60% 42% / 0.12)`;
-  const accentBorder = `hsl(${lc.hue} 60% 42% / 0.25)`;
+  const accent = `hsl(0 0% 96%)`;
+  const accentSoft = `hsl(0 0% 70%)`;
+  const accentBg = `hsl(0 0% 96% / 0.12)`;
+  const accentBorder = `hsl(0 0% 96% / 0.25)`;
 
   return (
     <motion.div
