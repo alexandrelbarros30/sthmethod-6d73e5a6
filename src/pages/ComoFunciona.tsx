@@ -308,14 +308,14 @@ const ComoFunciona = () => {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Voltar
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/70 backdrop-blur-2xl border-b border-border/40">
+        <div className="max-w-6xl mx-auto px-5 h-12 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="w-3.5 h-3.5" /> Voltar
           </Link>
-          <span className="text-sm font-bold tracking-wider text-foreground">STH METHOD</span>
+          <span className="text-[11px] font-medium tracking-[0.2em] text-foreground uppercase">STH METHOD</span>
           <Link to="/cadastro">
-            <Button size="sm" className="gradient-bg text-primary-foreground text-xs px-4">
+            <Button size="sm" className="bg-foreground text-background hover:bg-foreground/90 rounded-full text-xs px-4 h-8">
               Começar
             </Button>
           </Link>
@@ -330,9 +330,9 @@ const ComoFunciona = () => {
             onClick={() => goTo(i)}
             className={`h-1 rounded-full transition-all duration-300 ${
               i === current
-                ? "w-8 bg-primary"
+                ? "w-8 bg-foreground"
                 : i < current
-                ? "w-4 bg-primary/40"
+                ? "w-4 bg-foreground/40"
                 : "w-4 bg-border"
             }`}
           />
