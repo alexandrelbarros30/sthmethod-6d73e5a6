@@ -275,13 +275,23 @@ const Landing = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="text-[12px] font-medium tracking-[0.25em] uppercase text-primary mb-8"
+            className="text-[12px] font-medium tracking-[0.25em] uppercase text-brand mb-8"
           >
             STH METHOD
           </motion.div>
 
           <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-semibold tracking-[-0.04em] leading-[0.95] text-foreground mb-8">
-            {heroTitle}
+            {(() => {
+              const words = heroTitle.split(" ");
+              const firstTwo = words.slice(0, 2).join(" ");
+              const rest = words.slice(2).join(" ");
+              return (
+                <>
+                  <span className="text-brand">{firstTwo}</span>
+                  {rest ? " " + rest : ""}
+                </>
+              );
+            })()}
           </h1>
 
           <p className="text-lg md:text-xl text-muted-foreground font-light max-w-2xl mx-auto mb-10 leading-relaxed">
