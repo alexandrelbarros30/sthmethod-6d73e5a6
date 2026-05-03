@@ -112,202 +112,272 @@ const StudentOverview = () => {
     isLoading: mealsLoading,
   } = useMealTracking();
 
+  // BLACK ELITE palette
+  const GOLD = "#D4AF37";
+  const BG = "#050508";
+  const SURFACE = "#0A0A0F";
+  const BORDER = "rgba(212,175,55,0.10)";
+  const BORDER_STRONG = "rgba(212,175,55,0.22)";
+  const TEXT = "#EAEAEA";
+  const SUBTLE = "rgba(234,234,234,0.55)";
+  const ULTRA_SUBTLE = "rgba(234,234,234,0.35)";
+
+  const ringSize = 168;
+  const stroke = 8;
+  const r = (ringSize - stroke) / 2;
+  const circumference = 2 * Math.PI * r;
+  const progressVal = mealsLoading ? 0 : (dayProgress || 0);
+  const dash = (progressVal / 100) * circumference;
+
   return (
     <DashboardLayout role="student" title="" subtitle="">
       <SubscriptionAlerts subscription={subscription ? { ...subscription, plans: (subscription as any)?.plans } : null} />
       <AdAutoPopup />
       <PreviewUnlockPopup />
 
-      {/* HEADER */}
-      <div className="flex items-start justify-between mb-10 relative">
-        <div className="flex-1 min-w-0 pt-2">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted-foreground">{greeting}</p>
-          <h1 className="text-[42px] sm:text-[56px] leading-[0.95] font-semibold text-foreground tracking-[-0.045em] mt-3">
-            {firstName}.
-          </h1>
-          <p className="text-[13px] text-muted-foreground font-light mt-4 tracking-tight max-w-[260px]">
-            Acompanhe sua jornada e supere seus limites.
-          </p>
+      {/* BLACK ELITE wrapper — overrides parent surface to deep black */}
+      <div
+        className="-mx-4 -mt-4 px-4 pt-6 pb-10 min-h-[100dvh]"
+        style={{ background: BG, color: TEXT }}
+      >
+        {/* HEADER */}
+        <div className="flex items-start justify-between mb-8 relative">
+          <div className="flex-1 min-w-0 pt-1">
+            <p className="text-[10px] font-medium tracking-[0.3em] uppercase" style={{ color: GOLD }}>
+              ◆ Black Elite
+            </p>
+            <h1
+              className="text-[44px] sm:text-[56px] leading-[0.95] font-semibold mt-3 tracking-[-0.045em]"
+              style={{ color: TEXT }}
+            >
+              {firstName}
+              <span style={{ color: GOLD }}>.</span>
+            </h1>
+            <p className="text-[12px] font-light mt-3 tracking-tight max-w-[260px]" style={{ color: SUBTLE }}>
+              {greeting}. Sua jornada premium continua.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate("/dashboard/ads")}
+            className="w-10 h-10 rounded-full flex items-center justify-center relative transition-colors"
+            style={{ border: `0.5px solid ${BORDER_STRONG}`, background: SURFACE }}
+            aria-label="Notificações"
+          >
+            <Bell className="w-4 h-4" strokeWidth={1.5} style={{ color: TEXT }} />
+            <span className="absolute top-2 right-2.5 w-1.5 h-1.5 rounded-full" style={{ background: GOLD, boxShadow: `0 0 6px ${GOLD}` }} />
+          </button>
         </div>
-        <button
-          onClick={() => navigate("/dashboard/ads")}
-          className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-muted/40 transition-colors relative"
-          aria-label="Notificações"
-        >
-          <Bell className="w-5 h-5 text-foreground" strokeWidth={1.5} />
-          <span className="absolute top-2 right-2.5 w-1.5 h-1.5 rounded-full bg-foreground" />
-        </button>
-      </div>
 
-      {/* PROGRESSO DESTAQUE */}
-      <div className="mb-10 rounded-3xl border border-border/40 bg-background p-7">
-        <div className="flex items-end justify-between mb-6">
-          <div>
-            <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground">Hoje</p>
-            <div className="flex items-baseline gap-1.5 mt-3">
-              <span className="text-[64px] sm:text-[80px] leading-[0.85] font-semibold text-foreground tracking-[-0.05em] tabular-nums">
-                {mealsLoading ? "—" : dayProgress}
-              </span>
-              <span className="text-2xl text-muted-foreground/60 font-light tracking-[-0.02em]">%</span>
+        {/* PROGRESSO — anel dourado */}
+        <div
+          className="mb-8 rounded-[24px] p-7 relative overflow-hidden"
+          style={{
+            background: `radial-gradient(120% 100% at 0% 0%, rgba(212,175,55,0.06) 0%, ${SURFACE} 55%)`,
+            border: `0.5px solid ${BORDER}`,
+            boxShadow: "0 1px 0 rgba(255,255,255,0.03) inset, 0 20px 40px -20px rgba(0,0,0,0.6)",
+          }}
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col">
+              <p className="text-[10px] font-medium tracking-[0.3em] uppercase mb-3" style={{ color: ULTRA_SUBTLE }}>
+                Hoje
+              </p>
+              <div className="flex items-baseline gap-1">
+                <span className="text-[44px] leading-none font-semibold tabular-nums tracking-[-0.04em]" style={{ color: TEXT }}>
+                  {mealsLoading ? "—" : dayProgress}
+                </span>
+                <span className="text-xl font-light" style={{ color: SUBTLE }}>%</span>
+              </div>
+              <p className="text-[11px] font-light mt-3 tracking-tight" style={{ color: SUBTLE }}>
+                refeições concluídas
+              </p>
+              <div className="inline-flex w-fit items-center gap-1.5 text-[10px] mt-4 rounded-full px-3 py-1.5 font-medium tracking-[0.1em] uppercase"
+                style={{ background: "rgba(212,175,55,0.08)", border: `0.5px solid ${BORDER_STRONG}`, color: GOLD }}>
+                <Target className="w-2.5 h-2.5" strokeWidth={2} /> 8 dias
+              </div>
+            </div>
+            <div className="relative shrink-0" style={{ width: ringSize, height: ringSize }}>
+              <svg width={ringSize} height={ringSize} className="-rotate-90">
+                <defs>
+                  <linearGradient id="goldRing" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#F4D77A" />
+                    <stop offset="50%" stopColor={GOLD} />
+                    <stop offset="100%" stopColor="#9A7B1F" />
+                  </linearGradient>
+                </defs>
+                <circle
+                  cx={ringSize / 2} cy={ringSize / 2} r={r}
+                  stroke="rgba(255,255,255,0.05)" strokeWidth={stroke} fill="none"
+                />
+                <circle
+                  cx={ringSize / 2} cy={ringSize / 2} r={r}
+                  stroke="url(#goldRing)" strokeWidth={stroke} fill="none"
+                  strokeLinecap="round"
+                  strokeDasharray={`${dash} ${circumference}`}
+                  style={{ transition: "stroke-dasharray 0.8s ease", filter: `drop-shadow(0 0 4px rgba(212,175,55,0.35))` }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-[10px] tracking-[0.25em] uppercase" style={{ color: ULTRA_SUBTLE }}>Meta</span>
+                <span className="text-[28px] font-semibold tabular-nums tracking-[-0.03em] mt-1" style={{ color: TEXT }}>
+                  {mealsLoading ? "—" : dayProgress}%
+                </span>
+              </div>
             </div>
           </div>
-          <div className="inline-flex items-center gap-1.5 text-[11px] text-foreground/80 rounded-full px-3 py-1.5 bg-muted/50 font-medium tracking-tight">
-            <Target className="w-3 h-3" strokeWidth={2} /> 8 dias
-          </div>
         </div>
-        <p className="text-[12px] text-muted-foreground font-light tracking-tight">refeições concluídas hoje</p>
-      </div>
 
-      {/* STH NEWS */}
-      <Link to="/tendencias/cintura-estetica" className="block mb-10 group">
-        <div className="rounded-3xl border border-border/40 hover:border-border transition-colors p-5 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0">
-            <img src={sthNewsLatestImg} alt="STH News" className="w-full h-full object-cover" />
+        {/* STH NEWS */}
+        <Link to="/tendencias/cintura-estetica" className="block mb-8 group">
+          <div
+            className="rounded-[22px] p-4 flex items-center gap-4"
+            style={{ background: SURFACE, border: `0.5px solid ${BORDER}` }}
+          >
+            <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0 relative" style={{ border: `0.5px solid ${BORDER_STRONG}` }}>
+              <img src={sthNewsLatestImg} alt="STH News" className="w-full h-full object-cover" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-medium tracking-[0.25em] uppercase mb-1.5" style={{ color: GOLD }}>STH News</p>
+              <p className="text-[14px] font-semibold tracking-[-0.015em] truncate" style={{ color: TEXT }}>
+                A estética da cintura não é só genética
+              </p>
+              <p className="text-[11px] font-light mt-0.5 tracking-tight" style={{ color: SUBTLE }}>22 Abr 2026</p>
+            </div>
+            <ChevronRight className="w-4 h-4 shrink-0 group-hover:translate-x-0.5 transition-transform" strokeWidth={2} style={{ color: GOLD }} />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-1.5">STH News</p>
-            <p className="text-[14px] font-semibold text-foreground tracking-[-0.015em] truncate">
-              A estética da cintura não é só genética
-            </p>
-            <p className="text-[11px] text-muted-foreground font-light mt-0.5 tracking-tight">22 Abr 2026</p>
-          </div>
-          <ChevronRight className="w-4 h-4 text-foreground/40 shrink-0 group-hover:translate-x-0.5 transition-transform" strokeWidth={2} />
-        </div>
-      </Link>
+        </Link>
 
-      {/* CONTEÚDO STH METHOD */}
-      <div className="mb-10">
-        <div className="flex items-end justify-between mb-5">
-          <div>
-            <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground">STH Method</p>
-            <h2 className="text-[26px] font-semibold text-foreground tracking-[-0.03em] leading-tight mt-2">Conteúdo</h2>
+        {/* CONTEÚDO */}
+        <div className="mb-8">
+          <div className="flex items-end justify-between mb-5">
+            <div>
+              <p className="text-[10px] font-medium tracking-[0.3em] uppercase" style={{ color: GOLD }}>STH Method</p>
+              <h2 className="text-[24px] font-semibold tracking-[-0.03em] leading-tight mt-2" style={{ color: TEXT }}>Conteúdo</h2>
+            </div>
+            <Link to="/dashboard/content" className="text-[12px] font-medium flex items-center gap-0.5 pb-1 tracking-tight" style={{ color: GOLD }}>
+              Ver tudo <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
+            </Link>
           </div>
-          <Link to="/dashboard/content" className="text-[12px] text-foreground font-medium flex items-center gap-0.5 pb-1 tracking-tight">
-            Ver tudo <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
-          </Link>
-        </div>
-        <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-4 px-4 pb-2">
-          {contentSections.map((s) => {
-            const Icon = s.icon;
-            return (
-              <button
-                key={s.id}
-                onClick={() => navigate(s.id === "receitas" ? "/dashboard/recipes" : `/dashboard/content?section=${s.id}`)}
-                className="snap-start shrink-0 w-[78vw] max-w-[300px] text-left rounded-3xl overflow-hidden relative group border border-border/40 bg-background active:scale-[0.98] transition-all duration-300"
-              >
-                <div className="relative h-48 overflow-hidden">
-                  <img
-                    src={s.img}
-                    alt={s.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    style={{ filter: "brightness(1.2) contrast(1.03) saturate(0.9)" }}
-                    loading="lazy"
-                  />
-                  {/* Liquid glass overlays */}
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      background:
-                        "linear-gradient(to top, hsl(0 0% 0% / 0.18) 0%, transparent 38%, hsl(0 0% 100% / 0.2) 100%)",
-                    }}
-                  />
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      background:
-                        "linear-gradient(135deg, hsl(0 0% 100% / 0.24) 0%, transparent 30%, transparent 68%, hsl(0 0% 100% / 0.1) 100%)",
-                    }}
-                  />
-                  <div
-                    className="absolute inset-0 pointer-events-none opacity-40"
-                    style={{
-                      background:
-                        "linear-gradient(115deg, transparent 40%, rgb(255 255 255 / 0.06) 50%, transparent 60%)",
-                    }}
-                  />
-                  <div className="absolute top-4 left-4">
-                    <span
-                      className="inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.25em] font-medium px-2.5 py-1 rounded-full backdrop-blur-md text-white"
-                      style={{
-                        background: "hsl(0 0% 100% / 0.16)",
-                        border: "0.5px solid hsl(0 0% 100% / 0.22)",
-                      }}
-                    >
-                      <Icon className="w-2.5 h-2.5" strokeWidth={2} />
-                      {s.tag}
-                    </span>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <h3 className="text-[17px] font-semibold tracking-[-0.02em] leading-tight text-white" style={{ textShadow: "0 2px 14px rgb(0 0 0 / 0.5)" }}>{s.title}</h3>
-                    <p className="text-[11px] text-white/80 mt-1 tracking-tight font-light" style={{ textShadow: "0 2px 10px rgb(0 0 0 / 0.4)" }}>{s.subtitle}</p>
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* RECEITAS */}
-      <div className="mb-10">
-        <div className="flex items-end justify-between mb-5">
-          <div>
-            <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground">Cozinha</p>
-            <h2 className="text-[26px] font-semibold text-foreground tracking-[-0.03em] leading-tight mt-2">Receitas</h2>
-          </div>
-          <Link to="/dashboard/recipes" className="text-[12px] text-foreground font-medium flex items-center gap-0.5 pb-1 tracking-tight">
-            Ver todas <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
-          </Link>
-        </div>
-        <div className="grid grid-cols-3 gap-2.5">
-          {recipeHighlights.map((recipe) => (
-            <button
-              key={recipe.id}
-              onClick={() => navigate("/dashboard/recipes")}
-              className="text-left rounded-2xl overflow-hidden relative group border border-border/40 active:scale-[0.97] transition-all duration-300"
-            >
-              <div className="relative aspect-[4/5] overflow-hidden">
-                <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
-                <div className="absolute bottom-2 left-2 right-2">
-                  <p className="text-[10.5px] font-semibold text-white leading-tight line-clamp-2 tracking-[-0.01em]">{recipe.title}</p>
-                  <p className="text-[8.5px] text-white/60 mt-1 flex items-center gap-1 tracking-tight font-light">
-                    <Clock className="w-2 h-2" strokeWidth={2} /> {recipe.time}min · {recipe.kcal}kcal
-                  </p>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* RESUMO DO DIA */}
-      <div className="mb-6 rounded-3xl border border-border/40 bg-background overflow-hidden">
-        <div className="p-6">
-          <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5">Resumo do dia</p>
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              { icon: Flame, value: mealsLoading ? "—" : (dayMacros?.kcal ? Math.round(dayMacros.kcal).toLocaleString("pt-BR") : (dayTargetMacros?.kcal ? Math.round(dayTargetMacros.kcal).toLocaleString("pt-BR") : "—")), unit: "kcal", label: "calorias" },
-              { icon: Activity, value: "82", unit: "min", label: "treino" },
-              { icon: Droplets, value: mealsLoading ? "—" : (dayWaterMl / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }), unit: "L", label: dayHydrationGoalL > 0 ? `de ${dayHydrationGoalL}L` : "água" },
-            ].map((s, i) => {
+          <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-4 px-4 pb-2">
+            {contentSections.map((s) => {
               const Icon = s.icon;
               return (
-                <div key={i} className="text-center">
-                  <Icon className="w-4 h-4 text-foreground mx-auto mb-3" strokeWidth={1.8} />
-                  <div className="flex items-baseline justify-center gap-0.5">
-                    <span className="text-[22px] font-semibold text-foreground tabular-nums tracking-[-0.03em] leading-none">{s.value}</span>
-                    <span className="text-[10px] text-muted-foreground font-light">{s.unit}</span>
+                <button
+                  key={s.id}
+                  onClick={() => navigate(s.id === "receitas" ? "/dashboard/recipes" : `/dashboard/content?section=${s.id}`)}
+                  className="snap-start shrink-0 w-[78vw] max-w-[300px] text-left rounded-[22px] overflow-hidden relative group active:scale-[0.98] transition-all duration-300"
+                  style={{ background: SURFACE, border: `0.5px solid ${BORDER}` }}
+                >
+                  <div className="relative h-44 overflow-hidden">
+                    <img
+                      src={s.img}
+                      alt={s.title}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      style={{ filter: "brightness(0.65) contrast(1.05) saturate(0.85)" }}
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(5,5,8,0.95) 0%, rgba(5,5,8,0.35) 50%, rgba(5,5,8,0.15) 100%)" }} />
+                    <div className="absolute top-4 left-4">
+                      <span
+                        className="inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.25em] font-medium px-2.5 py-1 rounded-full backdrop-blur-md"
+                        style={{ background: "rgba(212,175,55,0.10)", border: `0.5px solid ${BORDER_STRONG}`, color: GOLD }}
+                      >
+                        <Icon className="w-2.5 h-2.5" strokeWidth={2} />
+                        {s.tag}
+                      </span>
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <h3 className="text-[17px] font-semibold tracking-[-0.02em] leading-tight" style={{ color: TEXT }}>{s.title}</h3>
+                      <p className="text-[11px] mt-1 tracking-tight font-light" style={{ color: SUBTLE }}>{s.subtitle}</p>
+                    </div>
                   </div>
-                  <p className="text-[10px] text-muted-foreground font-light mt-2 tracking-tight">{s.label}</p>
-                </div>
+                </button>
               );
             })}
           </div>
         </div>
-      </div>
 
-      <DailyMealWidget />
+        {/* RECEITAS */}
+        <div className="mb-8">
+          <div className="flex items-end justify-between mb-5">
+            <div>
+              <p className="text-[10px] font-medium tracking-[0.3em] uppercase" style={{ color: GOLD }}>Cozinha</p>
+              <h2 className="text-[24px] font-semibold tracking-[-0.03em] leading-tight mt-2" style={{ color: TEXT }}>Receitas</h2>
+            </div>
+            <Link to="/dashboard/recipes" className="text-[12px] font-medium flex items-center gap-0.5 pb-1 tracking-tight" style={{ color: GOLD }}>
+              Ver todas <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
+            </Link>
+          </div>
+          <div className="grid grid-cols-3 gap-2.5">
+            {recipeHighlights.map((recipe) => (
+              <button
+                key={recipe.id}
+                onClick={() => navigate("/dashboard/recipes")}
+                className="text-left rounded-2xl overflow-hidden relative group active:scale-[0.97] transition-all duration-300"
+                style={{ border: `0.5px solid ${BORDER}`, background: SURFACE }}
+              >
+                <div className="relative aspect-[4/5] overflow-hidden">
+                  <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" style={{ filter: "brightness(0.75) saturate(0.85)" }} loading="lazy" />
+                  <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(5,5,8,0.95), rgba(5,5,8,0.2) 60%, transparent)" }} />
+                  <div className="absolute bottom-2 left-2 right-2">
+                    <p className="text-[10.5px] font-semibold leading-tight line-clamp-2 tracking-[-0.01em]" style={{ color: TEXT }}>{recipe.title}</p>
+                    <p className="text-[8.5px] mt-1 flex items-center gap-1 tracking-tight font-light" style={{ color: SUBTLE }}>
+                      <Clock className="w-2 h-2" strokeWidth={2} style={{ color: GOLD }} /> {recipe.time}min · {recipe.kcal}kcal
+                    </p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* RESUMO DO DIA */}
+        <div
+          className="mb-6 rounded-[24px] overflow-hidden"
+          style={{
+            background: `radial-gradient(120% 100% at 100% 0%, rgba(212,175,55,0.05) 0%, ${SURFACE} 55%)`,
+            border: `0.5px solid ${BORDER}`,
+          }}
+        >
+          <div className="p-6">
+            <p className="text-[10px] font-medium tracking-[0.3em] uppercase mb-5" style={{ color: ULTRA_SUBTLE }}>Resumo do dia</p>
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { icon: Flame, value: mealsLoading ? "—" : (dayMacros?.kcal ? Math.round(dayMacros.kcal).toLocaleString("pt-BR") : (dayTargetMacros?.kcal ? Math.round(dayTargetMacros.kcal).toLocaleString("pt-BR") : "—")), unit: "kcal", label: "calorias" },
+                { icon: Activity, value: "82", unit: "min", label: "treino" },
+                { icon: Droplets, value: mealsLoading ? "—" : (dayWaterMl / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }), unit: "L", label: dayHydrationGoalL > 0 ? `de ${dayHydrationGoalL}L` : "água" },
+              ].map((s, i) => {
+                const Icon = s.icon;
+                return (
+                  <div key={i} className="text-center">
+                    <Icon className="w-4 h-4 mx-auto mb-3" strokeWidth={1.6} style={{ color: GOLD }} />
+                    <div className="flex items-baseline justify-center gap-0.5">
+                      <span className="text-[22px] font-semibold tabular-nums tracking-[-0.03em] leading-none" style={{ color: TEXT }}>{s.value}</span>
+                      <span className="text-[10px] font-light" style={{ color: SUBTLE }}>{s.unit}</span>
+                    </div>
+                    <p className="text-[10px] font-light mt-2 tracking-tight" style={{ color: SUBTLE }}>{s.label}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* CTA Refeições */}
+        <Link to="/dashboard/diet" className="block">
+          <button
+            className="w-full rounded-full h-12 text-[13px] font-medium tracking-tight inline-flex items-center justify-center gap-2 transition-all"
+            style={{
+              background: "linear-gradient(180deg, rgba(212,175,55,0.10), rgba(212,175,55,0.04))",
+              border: `0.5px solid ${BORDER_STRONG}`,
+              color: GOLD,
+              boxShadow: "0 8px 24px -12px rgba(212,175,55,0.25)",
+            }}
+          >
+            <Salad className="w-3.5 h-3.5" /> Ver minhas refeições
+          </button>
+        </Link>
+      </div>
     </DashboardLayout>
   );
 };
