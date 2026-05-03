@@ -26,6 +26,7 @@ import GlowBlend from "./pages/GlowBlend";
 import Gestrinona from "./pages/Gestrinona";
 import PlatoMetabolico from "./pages/PlatoMetabolico";
 import Trembolona from "./pages/Trembolona";
+import Ginecomastia from "./pages/Ginecomastia";
 import Promo from "./pages/Promo";
 import EvolucaoPublica from "./pages/EvolucaoPublica";
 import FilaPublica from "./pages/FilaPublica";
@@ -119,6 +120,7 @@ const App = () => (
             <Route path="/tendencias/gestrinona" element={<Gestrinona />} />
             <Route path="/tendencias/plato-metabolico" element={<PlatoMetabolico />} />
             <Route path="/tendencias/trembolona" element={<Trembolona />} />
+            <Route path="/tendencias/ginecomastia" element={<Ginecomastia />} />
             <Route path="/promo" element={<Promo />} />
             <Route path="/promo/:slug" element={<Promo />} />
             <Route path="/evolucao" element={<EvolucaoPublica />} />
