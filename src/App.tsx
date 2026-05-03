@@ -75,6 +75,7 @@ import NotFound from "./pages/NotFound";
 import { useDynamicFavicon } from "@/hooks/useDynamicFavicon";
 import { useAdminTheme } from "@/hooks/useAdminTheme";
 import { useAccessLog } from "@/hooks/useAccessLog";
+import { usePublicAppleTheme } from "@/hooks/usePublicAppleTheme";
 import UpdateBanner from "@/components/shared/UpdateBanner";
 import { APP_RELEASE_VERSION } from "@/lib/app-version";
 
@@ -86,7 +87,7 @@ const LazyFallback = () => <div className="flex items-center justify-center min-
 
 const queryClient = new QueryClient();
 
-const DynamicHead = () => { useDynamicFavicon(); useAdminTheme(); useAccessLog(); return null; };
+const DynamicHead = () => { useDynamicFavicon(); useAdminTheme(); useAccessLog(); usePublicAppleTheme(); return null; };
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
