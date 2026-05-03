@@ -50,25 +50,6 @@ const Landing = () => {
     return () => window.removeEventListener("scroll", handleNavScroll);
   }, []);
 
-  // Force pure Apple light theme on landing (apple.com style)
-  useEffect(() => {
-    const root = document.documentElement;
-    const hadDark = root.classList.contains("dark");
-    root.classList.remove("dark");
-    root.style.setProperty("--background", "0 0% 100%");
-    root.style.setProperty("--foreground", "0 0% 7%");
-    root.style.setProperty("--surface", "240 6% 97%"); // apple #f5f5f7
-    root.style.setProperty("--muted", "240 6% 97%");
-    root.style.setProperty("--muted-foreground", "0 0% 40%");
-    return () => {
-      if (hadDark) root.classList.add("dark");
-      root.style.removeProperty("--background");
-      root.style.removeProperty("--foreground");
-      root.style.removeProperty("--surface");
-      root.style.removeProperty("--muted");
-      root.style.removeProperty("--muted-foreground");
-    };
-  }, []);
 
 
   const showPopup = useCallback(() => {
