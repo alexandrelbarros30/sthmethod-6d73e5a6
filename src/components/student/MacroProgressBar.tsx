@@ -27,7 +27,7 @@ const MacroProgressBar = ({ label, consumed, total, unit = "g", color, className
             width: `${pct}%`,
             boxShadow:
               pct > 0
-                ? `0 0 8px hsl(var(--primary) / 0.75), 0 0 16px hsl(var(--primary) / 0.45), 0 0 28px hsl(var(--primary) / 0.25), inset 0 0 4px rgb(255 255 255 / 0.4)`
+                ? `0 0 8px hsl(var(--foreground) / 0.5), 0 0 16px hsl(var(--foreground) / 0.3), 0 0 28px hsl(var(--foreground) / 0.15), inset 0 0 4px rgb(255 255 255 / 0.4)`
                 : "none",
           }}
         />

@@ -279,7 +279,7 @@ const StudentEvolution = () => {
             </p>
             <Button
               variant="outline"
-              className={`w-full transition-colors ${canSubmitUpdate && !saving ? "bg-foreground text-background border-foreground hover:bg-foreground/90 shadow-[0_0_20px_hsl(var(--primary)/0.4)]" : ""}`}
+              className={`w-full transition-colors ${canSubmitUpdate && !saving ? "bg-foreground text-background border-foreground hover:bg-foreground/90 shadow-[0_0_20px_hsl(var(--foreground)/0.2)]" : ""}`}
               onClick={handleSaveWeight}
               disabled={saving || !canSubmitUpdate}
             >
@@ -335,7 +335,7 @@ const StudentEvolution = () => {
           </div>
 
           <Button
-            className={`w-full transition-colors ${canSubmitUpdate && !saving ? "bg-foreground text-background hover:bg-foreground/90 shadow-[0_0_20px_hsl(var(--primary)/0.4)]" : ""}`}
+            className={`w-full transition-colors ${canSubmitUpdate && !saving ? "bg-foreground text-background hover:bg-foreground/90 shadow-[0_0_20px_hsl(var(--foreground)/0.2)]" : ""}`}
             onClick={handleSaveWeight}
             disabled={saving || !canSubmitUpdate}
           >

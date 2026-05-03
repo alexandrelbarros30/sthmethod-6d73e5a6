@@ -98,7 +98,7 @@ const MealCard = ({ meal, mealLabel, isCompleted, isSkipped, isActive, isNext, i
               className={cn(
                 "w-9 h-9 rounded-xl flex items-center justify-center border transition-all duration-200",
                 isCompleted
-                  ? "bg-foreground border-foreground text-background shadow-[0_0_12px_-3px_hsl(var(--primary)/0.4)]"
+                  ? "bg-foreground border-foreground text-background shadow-[0_0_12px_-3px_hsl(var(--foreground)/0.2)]"
                   : "border-border/60 hover:border-foreground hover:bg-foreground/10 text-muted-foreground hover:text-foreground"
               )}
             >

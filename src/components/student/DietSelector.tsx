@@ -62,7 +62,7 @@ export default function DietSelector({ diets, selectedId, onSelect }: DietSelect
                 className={cn(
                   "relative text-left p-3 rounded-xl border transition-all",
                   isSelected
-                    ? "border-foreground bg-foreground/10 shadow-[0_0_0_1px_hsl(var(--primary))]"
+                    ? "border-foreground bg-foreground/10 shadow-[0_0_0_1px_hsl(var(--foreground))]"
                     : "border-border bg-card hover:border-foreground/50",
                   disabled && "opacity-40 grayscale cursor-not-allowed"
                 )}
