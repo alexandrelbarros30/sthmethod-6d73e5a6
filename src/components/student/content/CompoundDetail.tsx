@@ -132,7 +132,7 @@ const CompoundDetail = ({ family, selected, visited, onSelect }: Props) => {
               <div
                 className="absolute inset-0 flex items-end p-5"
                 style={{
-                  background: `linear-gradient(to top, hsl(0 0% 0% / 0.88) 0%, hsl(0 0% 0% / 0.3) 50%, transparent 100%)`,
+                  background: `linear-gradient(to top, hsl(0 0% 0% / 0.7) 0%, hsl(0 0% 0% / 0.15) 55%, transparent 100%)`,
                 }}
               >
                 <div className="space-y-1.5">
