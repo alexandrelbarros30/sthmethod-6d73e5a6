@@ -28,7 +28,7 @@ const EvolutionsSection = () => {
   if (active.length === 0) return null;
 
   return (
-    <section className="py-24 md:py-32 px-6 border-t border-border/40 bg-[hsl(var(--surface))]">
+    <section className="py-24 md:py-32 px-6 border-t border-border/40">
       <div className="max-w-6xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }} className="text-center mb-16">
           <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5">Transformações</div>
