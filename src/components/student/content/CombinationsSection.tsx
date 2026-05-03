@@ -254,7 +254,7 @@ const ComboCardComponent = ({ card, index }: { card: ComboCard; index: number })
   const lc = levelColors[card.level];
   const accent = `hsl(0 0% 96%)`;
   const accentSoft = `hsl(0 0% 96%)`;
-  const accentBg = `hsl(0 0% 96% / 0.12)`;
+  const accentBg = `hsl(0 0% 96% / 0.16)`;
   const accentBorder = `hsl(0 0% 96% / 0.25)`;
 
   return (
@@ -271,6 +271,7 @@ const ComboCardComponent = ({ card, index }: { card: ComboCard; index: number })
           src={card.img}
           alt={card.title}
           className="w-full h-full object-cover"
+          style={{ filter: "brightness(1.2) contrast(1.03) saturate(0.9)" }}
           loading="lazy"
           width={640}
           height={896}
@@ -280,7 +281,7 @@ const ComboCardComponent = ({ card, index }: { card: ComboCard; index: number })
         <div
           className="absolute inset-0"
           style={{
-            background: `linear-gradient(to top, hsl(0 0% 96% / 0.95) 0%, hsl(0 0% 96% / 0.4) 50%, transparent 100%)`,
+            background: `linear-gradient(to top, hsl(0 0% 0% / 0.16) 0%, transparent 40%, hsl(0 0% 100% / 0.18) 100%)`,
           }}
         />
         <div className="absolute top-3 left-3">
@@ -292,8 +293,8 @@ const ComboCardComponent = ({ card, index }: { card: ComboCard; index: number })
           </span>
         </div>
         <div className="absolute bottom-0 left-0 right-0 p-4 space-y-1">
-          <h3 className="text-lg font-bold tracking-tight" style={{ color: G.t96 }}>{card.title}</h3>
-          <p className="text-[12px] font-medium" style={{ color: accent }}>{card.subheadline}</p>
+          <h3 className="text-lg font-bold tracking-tight" style={{ color: G.t96, textShadow: "0 2px 14px rgb(0 0 0 / 0.5)" }}>{card.title}</h3>
+          <p className="text-[12px] font-medium" style={{ color: G.t92, textShadow: "0 2px 10px rgb(0 0 0 / 0.4)" }}>{card.subheadline}</p>
         </div>
       </div>
 
