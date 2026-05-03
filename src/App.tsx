@@ -27,6 +27,7 @@ import Gestrinona from "./pages/Gestrinona";
 import PlatoMetabolico from "./pages/PlatoMetabolico";
 import Trembolona from "./pages/Trembolona";
 import Ginecomastia from "./pages/Ginecomastia";
+import HormoniosBfAlto from "./pages/HormoniosBfAlto";
 import Promo from "./pages/Promo";
 import EvolucaoPublica from "./pages/EvolucaoPublica";
 import FilaPublica from "./pages/FilaPublica";
