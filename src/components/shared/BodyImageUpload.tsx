@@ -131,7 +131,7 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
                 </Label>
                 <div
                   className={`relative aspect-[3/4] rounded-lg border-2 border-dashed flex items-center justify-center overflow-hidden cursor-pointer transition-colors ${
-                    src ? "border-primary/30 bg-primary/5" : "border-border hover:border-primary/50 bg-muted/30"
+                    src ? "border-foreground/20 bg-foreground/5" : "border-border hover:border-foreground/50 bg-muted/30"
                   }`}
                   onClick={() => fileRefs.current[key]?.click()}
                 >
@@ -147,7 +147,7 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
                         </button>
                       )}
                       <div className="absolute bottom-1 left-1">
-                        <CheckCircle2 className="w-4 h-4 text-primary" />
+                        <CheckCircle2 className="w-4 h-4 text-foreground" />
                       </div>
                     </>
                   ) : (

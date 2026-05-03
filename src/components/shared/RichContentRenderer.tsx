@@ -47,7 +47,7 @@ const RichContentRenderer = ({ content, className }: RichContentRendererProps) =
           "[&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:text-foreground",
           "[&_li]:text-foreground [&_li]:mb-0.5",
           "[&_strong]:font-bold [&_em]:italic [&_u]:underline",
-          "[&_mark]:bg-primary/20 [&_mark]:text-foreground [&_mark]:px-0.5 [&_mark]:rounded",
+          "[&_mark]:bg-foreground/15 [&_mark]:text-foreground [&_mark]:px-0.5 [&_mark]:rounded",
           "[&_hr]:border-foreground/20 [&_hr]:my-3",
           "[&_s]:line-through",
           className

@@ -105,8 +105,8 @@ const SidebarNav = ({ role, links, onNavClick }: { role: string; links: { to: st
       {/* Header */}
       <div className="px-5 py-5 border-b border-sidebar-border/60">
         <Link to="/" className="flex items-center gap-2.5" onClick={onNavClick}>
-          <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-xs tracking-tight">ST</span>
+          <div className="w-8 h-8 rounded-xl bg-foreground flex items-center justify-center">
+            <span className="text-background font-bold text-xs tracking-tight">ST</span>
           </div>
           <span className="font-display text-lg font-semibold text-sidebar-foreground tracking-tight">ST&H</span>
         </Link>
@@ -132,7 +132,7 @@ const SidebarNav = ({ role, links, onNavClick }: { role: string; links: { to: st
               className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-200 font-body",
                 isActive
-                  ? "bg-primary/10 text-primary"
+                  ? "bg-foreground/10 text-foreground"
                   : "text-sidebar-foreground/65 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
               )}
             >
@@ -180,8 +180,8 @@ const DashboardSidebar = ({ role }: SidebarProps) => {
             </SheetContent>
           </Sheet>
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-[10px]">ST</span>
+            <div className="w-7 h-7 rounded-lg bg-foreground flex items-center justify-center">
+              <span className="text-background font-bold text-[10px]">ST</span>
             </div>
             <span className="font-display text-base font-semibold text-foreground tracking-tight">ST&H</span>
           </Link>

@@ -94,7 +94,7 @@ export default function DocumentUpload({ userId, onUploaded }: DocumentUploadPro
   ) => (
     <div className="border rounded-lg p-3 bg-muted/30 space-y-2">
       <Label className="font-body text-sm flex items-center gap-2">
-        <FileText className="w-4 h-4 text-primary" /> {label}
+        <FileText className="w-4 h-4 text-foreground" /> {label}
       </Label>
 
       {/* History */}
@@ -106,7 +106,7 @@ export default function DocumentUpload({ userId, onUploaded }: DocumentUploadPro
                 bucket="documents"
                 storagePath={(doc as any).storage_path}
                 publicUrl={doc.file_url}
-                className="text-sm text-primary underline flex items-center gap-1 truncate flex-1"
+                className="text-sm text-foreground underline flex items-center gap-1 truncate flex-1"
               >
                 <ExternalLink className="w-3 h-3 shrink-0" />
                 {formatDate(doc.uploaded_at)}
