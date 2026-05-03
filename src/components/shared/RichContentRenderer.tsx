@@ -26,7 +26,7 @@ function addBulletsAndZebraToHTML(html: string): string {
     if (text.startsWith("(") && text.endsWith(")")) return match;
     itemIndex++;
     const bg = itemIndex % 2 === 0 ? 'background:hsl(var(--muted)/0.5);border-radius:0.25rem;' : '';
-    return `<p${attrs} style="padding:0.375rem 0.5rem;${bg}"><span style="color:hsl(var(--primary));font-weight:700;margin-right:0.375rem;">•</span>${inner}</p>`;
+    return `<p${attrs} style="padding:0.375rem 0.5rem;${bg}"><span style="color:hsl(var(--foreground));font-weight:700;margin-right:0.375rem;">•</span>${inner}</p>`;
   });
 }
 
