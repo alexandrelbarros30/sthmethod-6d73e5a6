@@ -4,9 +4,9 @@ import type { Family } from "./compoundData";
 import { cardFields } from "./compoundData";
 
 const G = {
-  card: "hsl(0 0% 96%)",
-  border: "hsl(0 0% 96%)",
-  borderSoft: "hsl(0 0% 96%)",
+  card: "hsl(0 0% 6%)",
+  border: "hsl(0 0% 14%)",
+  borderSoft: "hsl(0 0% 12%)",
   t96: "hsl(0 0% 96%)",
   t92: "hsl(0 0% 92%)",
   t80: "hsl(0 0% 80%)",
