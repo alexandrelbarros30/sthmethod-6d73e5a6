@@ -23,41 +23,41 @@ const blocks = [
 ];
 
 const FoodGuideSection = () => (
-  <section id="guia-alimentar" className="py-20 px-6">
+  <section id="guia-alimentar" className="py-24 md:py-32 px-6 border-t border-border/40">
     <div className="max-w-6xl mx-auto">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="text-center mb-12"
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        className="text-center mb-16 md:mb-20"
       >
-        <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground">
-          Guia Básico de <span className="gradient-text">Alimentação Saudável</span>
+        <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5">Nutrição</div>
+        <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] text-foreground">
+          Guia básico de alimentação.
         </h2>
-        <p className="text-muted-foreground mt-2 max-w-xl mx-auto">
-          Conheça os pilares de uma alimentação equilibrada para potencializar seus resultados.
+        <p className="text-base md:text-lg text-muted-foreground font-light mt-5 max-w-xl mx-auto">
+          Os pilares de uma alimentação equilibrada para potencializar resultados.
         </p>
       </motion.div>
 
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-3 gap-px bg-border/40 rounded-2xl overflow-hidden border border-border/40">
         {blocks.map((block, i) => (
           <motion.div
             key={block.title}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: i * 0.15 }}
-            className="glass rounded-2xl p-6 glow-border"
+            transition={{ delay: i * 0.08 }}
+            className="bg-background p-8 md:p-10"
           >
-            <div className="w-12 h-12 rounded-xl gradient-bg flex items-center justify-center mb-4">
-              <block.icon className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <h3 className="text-lg font-display font-bold text-foreground mb-2">{block.title}</h3>
-            <p className="text-sm text-muted-foreground mb-4">{block.description}</p>
-            <ul className="space-y-1.5">
+            <block.icon className="w-6 h-6 text-foreground mb-4" />
+            <h3 className="text-xl font-semibold tracking-[-0.02em] text-foreground mb-2">{block.title}</h3>
+            <p className="text-[14px] text-muted-foreground font-light mb-5 leading-relaxed">{block.description}</p>
+            <ul className="space-y-2">
               {block.items.map((item) => (
-                <li key={item} className="flex items-center gap-2 text-sm text-foreground/80">
-                  <span className="w-1.5 h-1.5 rounded-full gradient-bg flex-shrink-0" />
+                <li key={item} className="flex items-center gap-2.5 text-[14px] text-foreground/80 font-light">
+                  <span className="w-1 h-1 rounded-full bg-foreground/40 flex-shrink-0" />
                   {item}
                 </li>
               ))}

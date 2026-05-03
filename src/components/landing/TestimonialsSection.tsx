@@ -9,44 +9,45 @@ const TestimonialsSection = () => {
   if (active.length === 0) return null;
 
   return (
-    <section id="depoimentos" className="py-24 px-6">
+    <section id="depoimentos" className="py-24 md:py-32 px-6 border-t border-border/40">
       <div className="max-w-6xl mx-auto">
-        <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
-            O Que Dizem Nossos <span className="gradient-text">Alunos</span>
+        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }} className="text-center mb-16 md:mb-20">
+          <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5">Depoimentos</div>
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] text-foreground">
+            O que dizem nossos alunos.
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Histórias reais de quem decidiu evoluir com método e acompanhamento.
+          <p className="text-base md:text-lg text-muted-foreground font-light max-w-2xl mx-auto mt-5">
+            Histórias reais de quem decidiu evoluir com método.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border/40 rounded-2xl overflow-hidden border border-border/40">
           {active.map((t, i) => (
             <motion.div
               key={t.id}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.1, duration: 0.5 }}
-              className="glass rounded-2xl p-6 relative group hover:glow-border transition-all duration-500"
+              transition={{ delay: i * 0.06, duration: 0.5 }}
+              className="bg-background p-8 md:p-10 relative"
             >
               {t.tag && (
-                <span className="absolute -top-3 right-4 gradient-bg text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full">
+                <span className="absolute top-6 right-6 text-[10px] font-medium tracking-wider uppercase text-muted-foreground">
                   {t.tag}
                 </span>
               )}
-              <div className="flex items-start gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full gradient-bg flex items-center justify-center text-primary-foreground shrink-0">
-                  <MessageCircle className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="font-display font-semibold text-foreground">{t.name}</p>
-                  <p className="text-xs text-muted-foreground">Aluno(a) ST&H</p>
-                </div>
-              </div>
-              <p className="text-secondary-foreground text-sm leading-relaxed italic">
+              <p className="text-foreground text-lg md:text-xl font-light leading-relaxed tracking-[-0.01em] mb-6">
                 "{t.text}"
               </p>
+              <div className="flex items-center gap-3 pt-4 border-t border-border/40">
+                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-foreground shrink-0">
+                  <MessageCircle className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="font-medium text-foreground text-sm">{t.name}</p>
+                  <p className="text-[11px] tracking-[0.15em] uppercase text-muted-foreground">Aluno STH</p>
+                </div>
+              </div>
             </motion.div>
           ))}
         </div>

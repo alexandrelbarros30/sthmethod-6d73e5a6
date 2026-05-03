@@ -8,70 +8,68 @@ const pillars = [
 ];
 
 const ResultsSection = () => (
-  <section id="resultados" className="py-24 px-6 surface">
+  <section id="resultados" className="py-24 md:py-32 px-6 border-t border-border/40">
     <div className="max-w-5xl mx-auto">
       <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
+        initial={{ opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="text-center mb-16"
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        className="text-center mb-16 md:mb-20"
       >
-        <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
-          Resultados &amp; <span className="gradient-text">Evolução</span>
+        <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5">Evolução</div>
+        <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] text-foreground">
+          Resultados são consequência.
         </h2>
-        <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
-          Resultados são consequência de método, constância e acompanhamento.
+        <p className="text-base md:text-lg text-muted-foreground font-light max-w-2xl mx-auto mt-5">
+          Método, constância e acompanhamento. Nesta ordem.
         </p>
       </motion.div>
 
-      {/* Timeline visual */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="glass rounded-2xl p-8 md:p-12 mb-12"
+        className="border border-border/40 rounded-2xl p-10 md:p-14 mb-16"
       >
-        <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative">
-          <div className="hidden md:block absolute top-1/2 left-[10%] right-[10%] h-px bg-gradient-to-r from-primary/0 via-primary/50 to-primary/0" />
+        <div className="flex flex-col md:flex-row items-center justify-between gap-12 relative">
+          <div className="hidden md:block absolute top-[28%] left-[12%] right-[12%] h-px bg-border/60" />
           {[
-            { month: "Mês 1", label: "Organização & Ritmo", emoji: "🔄" },
-            { month: "Mês 3", label: "Evolução Consistente", emoji: "📈" },
-            { month: "Mês 6", label: "Transformação Real", emoji: "🏆" },
+            { month: "Mês 01", label: "Organização & Ritmo" },
+            { month: "Mês 03", label: "Evolução Consistente" },
+            { month: "Mês 06", label: "Transformação Real" },
           ].map((step, i) => (
             <motion.div
               key={step.month}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.15 }}
+              transition={{ delay: i * 0.1 }}
               className="text-center relative z-10 flex-1"
             >
-              <div className="text-4xl mb-3">{step.emoji}</div>
-              <div className="text-sm font-semibold gradient-text uppercase tracking-wider mb-1">
+              <div className="w-2 h-2 rounded-full bg-foreground mx-auto mb-5" />
+              <div className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted-foreground mb-2">
                 {step.month}
               </div>
-              <p className="text-foreground font-display font-semibold">{step.label}</p>
+              <p className="text-foreground text-lg md:text-xl font-semibold tracking-[-0.02em]">{step.label}</p>
             </motion.div>
           ))}
         </div>
       </motion.div>
 
-      {/* Pillars */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-border/40 rounded-2xl overflow-hidden border border-border/40">
         {pillars.map((p, i) => (
           <motion.div
             key={p.title}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: i * 0.1 }}
-            className="text-center p-6"
+            transition={{ delay: i * 0.08 }}
+            className="bg-background text-center p-8"
           >
-            <div className="w-14 h-14 rounded-full gradient-bg flex items-center justify-center mx-auto mb-4 text-primary-foreground">
-              {p.icon}
-            </div>
-            <h3 className="font-display font-semibold text-foreground text-lg mb-2">{p.title}</h3>
-            <p className="text-muted-foreground text-sm">{p.desc}</p>
+            <div className="text-foreground mb-4 inline-flex">{p.icon}</div>
+            <h3 className="text-foreground text-lg font-semibold tracking-[-0.02em] mb-2">{p.title}</h3>
+            <p className="text-muted-foreground text-[14px] font-light leading-relaxed">{p.desc}</p>
           </motion.div>
         ))}
       </div>

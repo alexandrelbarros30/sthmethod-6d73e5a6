@@ -29,27 +29,28 @@ const BodySimulatorSection = () => {
   };
 
   return (
-    <section id="simulador" className="py-20 px-6">
+    <section id="simulador" className="py-24 md:py-32 px-6 border-t border-border/40">
       <div className="max-w-3xl mx-auto">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-10"
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="text-center mb-12"
         >
-          <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-4 text-sm text-muted-foreground">
-            <Target className="w-4 h-4" /> Simulador
+          <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5 inline-flex items-center gap-2">
+            <Target className="w-3.5 h-3.5" /> Simulador
           </div>
-          <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground">
-            Simule sua <span className="gradient-text">Evolução Corporal</span>
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] text-foreground">
+            Simule sua evolução.
           </h2>
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="glass rounded-2xl p-8 glow-border"
+          className="border border-border/40 rounded-2xl p-8 md:p-10 bg-background"
         >
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="space-y-2">
@@ -66,15 +67,15 @@ const BodySimulatorSection = () => {
             </div>
           </div>
 
-          <Button onClick={simulate} className="w-full gradient-bg text-primary-foreground hover:opacity-90 gap-2">
+          <Button onClick={simulate} className="w-full rounded-full h-11 bg-foreground text-background hover:bg-foreground/90 gap-2 text-[14px] font-medium">
             <TrendingDown className="w-4 h-4" /> Simular evolução
           </Button>
 
           {result && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-8 space-y-6">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground">
-                  Estimativa: <span className="text-foreground font-bold">{result.weeks} semanas</span> para atingir sua meta
+                <p className="text-[13px] text-muted-foreground font-light">
+                  Estimativa: <span className="text-foreground font-semibold">{result.weeks} semanas</span> para atingir sua meta
                 </p>
               </div>
 
@@ -90,12 +91,12 @@ const BodySimulatorSection = () => {
                 </ResponsiveContainer>
               </div>
 
-              <p className="text-center text-sm text-muted-foreground italic">
-                "Com consistência e acompanhamento adequado, sua meta pode ser alcançada de forma saudável."
+              <p className="text-center text-[13px] text-muted-foreground font-light">
+                Com consistência e acompanhamento adequado, sua meta pode ser alcançada de forma saudável.
               </p>
 
               <Link to="/login" className="block">
-                <Button className="w-full gradient-bg text-primary-foreground hover:opacity-90 gap-2">
+                <Button className="w-full rounded-full h-11 bg-foreground text-background hover:bg-foreground/90 gap-2 text-[14px] font-medium">
                   Iniciar meu acompanhamento <ArrowRight className="w-4 h-4" />
                 </Button>
               </Link>
