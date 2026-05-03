@@ -161,48 +161,38 @@ const Landing = () => {
     <div className="min-h-screen bg-background overflow-hidden">
       {/* Navbar */}
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-background/90 backdrop-blur-xl shadow-lg border-b border-border/50' : 'bg-transparent backdrop-blur-sm'}`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-background/80 backdrop-blur-2xl border-b border-border/40' : 'bg-transparent'}`}
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 h-12 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 shrink-0">
             {logoUrl ? (
               <img src={logoUrl} alt="Logo" style={{ height: `${logoSize}px` }} className="object-contain" />
             ) : (
-              <span className="font-display text-xl font-bold gradient-text">ST&H</span>
+              <span className="text-[13px] font-semibold tracking-tight text-foreground">STH METHOD</span>
             )}
           </Link>
 
           {/* Desktop links */}
-          <div className="hidden lg:flex items-center gap-5 text-sm text-muted-foreground">
-            <Link to="/como-funciona" className="hover:text-foreground transition-colors py-1">Como Funciona</Link>
-            <a href="#resultados" className="hover:text-foreground transition-colors py-1">Resultados</a>
-            <a href="#planos" className="hover:text-foreground transition-colors py-1">Planos</a>
-            <a href="#imc" className="hover:text-foreground transition-colors py-1">IMC</a>
-            <a href="#guia-alimentar" className="hover:text-foreground transition-colors py-1">Guia</a>
-            <a href="#diagnostico" className="hover:text-foreground transition-colors py-1">Diagnóstico</a>
-            <a href="#simulador" className="hover:text-foreground transition-colors py-1">Simulador</a>
-            <a href="#sth-news" className="hover:text-foreground transition-colors py-1">STH News</a>
-            <Link to="/tendencias/plato-metabolico" className="hover:text-foreground transition-colors py-1">Platô Metabólico</Link>
-            <Link to="/tendencias/trembolona" className="hover:text-foreground transition-colors py-1">Trembolona</Link>
-            <Link to="/questionario" className="hover:text-foreground transition-colors font-medium gradient-text py-1">Macros</Link>
+          <div className="hidden lg:flex items-center gap-7 text-[12px] text-muted-foreground">
+            <Link to="/como-funciona" className="hover:text-foreground transition-colors">Como Funciona</Link>
+            <a href="#planos" className="hover:text-foreground transition-colors">Planos</a>
+            <Link to="/tendencias" className="hover:text-foreground transition-colors">STH News</Link>
+            <a href="#resultados" className="hover:text-foreground transition-colors">Resultados</a>
+            <Link to="/questionario" className="hover:text-foreground transition-colors">Macros</Link>
           </div>
 
           {/* Right side: CTA + hamburger */}
           <div className="flex items-center gap-2 shrink-0">
             <Link to="/free">
-              <Button size="sm" variant="outline" className="text-xs sm:text-sm px-3 sm:px-4 border-primary/30 hover:bg-primary/10">
-                Free
-              </Button>
+              <Button size="sm" variant="ghost" className="text-[11px] h-7 rounded-full hidden sm:inline-flex">Free</Button>
             </Link>
             <Link to="/login">
-              <Button size="sm" className="gradient-bg text-primary-foreground hover:opacity-90 text-xs sm:text-sm px-3 sm:px-4 cta-glow font-semibold">
-                Acessar
-              </Button>
+              <Button size="sm" className="text-[11px] h-7 rounded-full bg-foreground text-background hover:bg-foreground/90">Acessar</Button>
             </Link>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors text-foreground"
+              className="lg:hidden p-1.5 rounded-full hover:bg-muted/50 transition-colors text-foreground"
               aria-label="Menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -265,65 +255,62 @@ const Landing = () => {
       </nav>
 
       {/* Hero */}
-      <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 pt-20">
-        <div className="absolute inset-0 grid-pattern opacity-20" />
+      <section className="relative min-h-screen flex items-center justify-center px-6 pt-24">
         {bgEnabled && (
           <img
             src={bgSrc}
             alt="Background"
-            className="absolute inset-0 w-full h-full object-cover mix-blend-lighten"
+            className="absolute inset-0 w-full h-full object-cover"
             style={{ opacity: bgOpacity }}
             loading="lazy"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/70 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
 
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="relative z-10 text-center max-w-4xl"
+          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          className="relative z-10 text-center max-w-5xl"
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-8 text-sm text-muted-foreground"
+            className="text-[12px] font-medium tracking-[0.25em] uppercase text-primary mb-8"
           >
-            <span className="w-2 h-2 rounded-full gradient-bg animate-pulse" />
-            Consultoria Online em Performance &amp; Saúde
+            STH METHOD
           </motion.div>
 
-          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-display font-bold text-foreground leading-tight mb-6">
+          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-semibold tracking-[-0.04em] leading-[0.95] text-foreground mb-8">
             {heroTitle}
           </h1>
 
-          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed">
+          <p className="text-lg md:text-xl text-muted-foreground font-light max-w-2xl mx-auto mb-10 leading-relaxed">
             {heroSubtitle}
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <LinkOrA to={ctaLink}>
-              <Button size="lg" className="gradient-bg text-primary-foreground hover:opacity-90 px-8 text-base cta-glow font-semibold">
+              <Button size="lg" className="rounded-full bg-foreground text-background hover:bg-foreground/90 px-8 h-12 text-[15px] font-medium">
                 {ctaText}
               </Button>
             </LinkOrA>
             <LinkOrA to={cta2Link}>
-              <Button size="lg" variant="outline" className="px-8 text-base cta-glow-soft font-semibold">
+              <Button size="lg" variant="ghost" className="rounded-full px-8 h-12 text-[15px] font-medium text-foreground hover:bg-muted/50">
                 {cta2Text}
               </Button>
             </LinkOrA>
           </div>
 
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="mt-6"
+            className="mt-8"
           >
             <Link to="/free">
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground gap-2 text-sm">
-                <Sparkles className="w-4 h-4" />
+              <Button variant="ghost" size="sm" className="text-[13px] text-muted-foreground hover:text-foreground rounded-full">
                 Experimentar versão gratuita
               </Button>
             </Link>
@@ -333,12 +320,12 @@ const Landing = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="flex items-center justify-center gap-6 sm:gap-8 md:gap-16 mt-12 sm:mt-16"
+            className="flex items-center justify-center gap-10 md:gap-20 mt-16 sm:mt-20"
           >
             {stats.map((stat) => (
               <div key={stat.label} className="text-center">
-                <div className="text-xl sm:text-2xl md:text-3xl font-display font-bold gradient-text">{stat.value}</div>
-                <div className="text-xs text-muted-foreground mt-1">{stat.label}</div>
+                <div className="text-2xl md:text-4xl font-semibold tracking-tight text-foreground">{stat.value}</div>
+                <div className="text-[11px] tracking-[0.15em] uppercase text-muted-foreground mt-2">{stat.label}</div>
               </div>
             ))}
           </motion.div>
@@ -359,27 +346,28 @@ const Landing = () => {
       <STHNewsSection />
 
       {/* Final CTA */}
-      <section className="py-16 sm:py-24 px-4 sm:px-6">
+      <section className="py-32 md:py-40 px-6 text-center border-t border-border/40">
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="max-w-4xl mx-auto text-center glass rounded-2xl sm:rounded-3xl p-6 sm:p-12 md:p-16 glow-border"
+          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          className="max-w-3xl mx-auto"
         >
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
+          <h2 className="text-4xl md:text-7xl font-semibold tracking-[-0.04em] leading-[1] text-foreground mb-6">
             {ctaFinalTitle}
           </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto mb-8 text-lg">
+          <p className="text-lg md:text-xl text-muted-foreground font-light max-w-xl mx-auto mb-10">
             {ctaFinalSubtitle}
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <LinkOrA to={ctaFinalBtn1Link}>
-              <Button size="lg" className="gradient-bg text-primary-foreground hover:opacity-90 px-10 text-base cta-glow font-semibold">
+              <Button size="lg" className="rounded-full bg-foreground text-background hover:bg-foreground/90 px-8 h-12 text-[15px] font-medium">
                 {ctaFinalBtn1Text}
               </Button>
             </LinkOrA>
             <LinkOrA to={ctaFinalBtn2Link}>
-              <Button size="lg" variant="outline" className="px-10 text-base cta-glow-soft font-semibold">
+              <Button size="lg" variant="ghost" className="rounded-full px-8 h-12 text-[15px] font-medium text-foreground hover:bg-muted/50">
                 {ctaFinalBtn2Text}
               </Button>
             </LinkOrA>
@@ -388,14 +376,10 @@ const Landing = () => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-6 sm:py-8 px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 text-xs sm:text-sm text-muted-foreground text-center">
-          {logoUrl ? (
-            <img src={logoUrl} alt="Logo" className="h-6 object-contain" />
-          ) : (
-            <span className="font-display font-bold gradient-text">ST&H</span>
-          )}
-          <p>© 2026 ST&H — Consultoria Científica em Performance e Saúde. Todos os direitos reservados.</p>
+      <footer className="border-t border-border/40 py-10 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 text-[12px] text-muted-foreground font-light text-center">
+          <span className="text-[12px] font-semibold tracking-tight text-foreground">STH METHOD</span>
+          <p>© 2026 STH METHOD — Consultoria Científica em Performance e Saúde.</p>
         </div>
       </footer>
       {/* Evolution Generator Popup */}
