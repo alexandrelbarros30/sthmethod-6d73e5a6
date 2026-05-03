@@ -24,7 +24,7 @@ interface Props {
 const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
   const accent = `hsl(0 0% 96%)`;
   const accentSoft = `hsl(0 0% 96%)`;
-  const accentBg = `hsl(0 0% 100% / 0.12)`;
+  const accentBg = `hsl(0 0% 100% / 0.16)`;
   const accentBorder = `hsl(0 0% 100% / 0.24)`;
   const total = family.compounds.length;
   const pct = total > 0 ? (visitedCount / total) * 100 : 0;
@@ -57,7 +57,7 @@ const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
           src={family.image}
           alt={family.title}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-          style={{ filter: "brightness(1.12) contrast(1.04) saturate(0.92)" }}
+          style={{ filter: "brightness(1.2) contrast(1.03) saturate(0.9)" }}
           width={800}
           height={512}
           loading={index === 0 ? undefined : "lazy"}
@@ -65,13 +65,13 @@ const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
         <div
           className="absolute inset-0"
           style={{
-            background: `linear-gradient(to top, hsl(0 0% 0% / 0.34) 0%, hsl(0 0% 0% / 0.08) 34%, hsl(0 0% 100% / 0.12) 100%)`,
+            background: `linear-gradient(to top, hsl(0 0% 0% / 0.18) 0%, transparent 38%, hsl(0 0% 100% / 0.2) 100%)`,
           }}
         />
         <div
           className="absolute inset-0"
           style={{
-            background: "linear-gradient(135deg, hsl(0 0% 100% / 0.18) 0%, transparent 32%, transparent 68%, hsl(0 0% 100% / 0.08) 100%)",
+            background: "linear-gradient(135deg, hsl(0 0% 100% / 0.24) 0%, transparent 30%, transparent 68%, hsl(0 0% 100% / 0.1) 100%)",
           }}
         />
 
@@ -91,10 +91,10 @@ const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
 
         {/* Title over image */}
         <div className="absolute bottom-0 left-0 right-0 p-4 space-y-1">
-          <h3 className="text-lg font-bold tracking-tight" style={{ color: G.t96 }}>
+          <h3 className="text-lg font-bold tracking-tight" style={{ color: G.t96, textShadow: "0 2px 14px rgb(0 0 0 / 0.5)" }}>
             {family.title}
           </h3>
-          <p className="text-[12px] font-medium" style={{ color: G.t80 }}>
+          <p className="text-[12px] font-medium" style={{ color: G.t92, textShadow: "0 2px 10px rgb(0 0 0 / 0.4)" }}>
             {family.subheadline}
           </p>
         </div>
