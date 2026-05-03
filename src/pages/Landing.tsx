@@ -17,6 +17,7 @@ import MealPlanSection from "@/components/landing/MealPlanSection";
 import BodySimulatorSection from "@/components/landing/BodySimulatorSection";
 import WhatsAppButton from "@/components/landing/WhatsAppButton";
 import STHNewsSection from "@/components/landing/STHNewsSection";
+import AppleHighlightsSection from "@/components/landing/AppleHighlightsSection";
 import { useLandingSettings, useLandingSections } from "@/hooks/useLandingData";
 
 const sectionComponents: Record<string, React.ReactNode> = {
@@ -328,6 +329,9 @@ const Landing = () => {
           </motion.div>
         </motion.div>
       </section>
+
+      {/* Apple-style highlights — preço/CTA bar + carrossel */}
+      <AppleHighlightsSection />
 
       {/* Dynamic Sections */}
       {activeSections.map((sec) => sectionComponents[sec.key] ?? null)}
