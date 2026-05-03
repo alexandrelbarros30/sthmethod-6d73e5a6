@@ -58,7 +58,7 @@ const FloatingDock = () => {
           initial={{ y: 60, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: "spring", stiffness: 380, damping: 28, delay: 0.1 }}
-          className="relative flex items-center justify-around rounded-[26px] border border-white/[0.08] bg-black/70 backdrop-blur-xl px-2 py-2.5 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)]"
+          className="relative flex items-center justify-around rounded-full border border-border/60 bg-background/90 backdrop-blur-xl px-2 py-2 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)]"
         >
           {mainItems.map((item) => {
             const Icon = item.icon;
@@ -73,20 +73,13 @@ const FloatingDock = () => {
                 >
                   <motion.div
                     whileTap={{ scale: 0.92 }}
-                    animate={{ boxShadow: [
-                      "0 0 0 0 hsl(var(--primary) / 0.45), 0 8px 24px -6px hsl(var(--primary) / 0.5)",
-                      "0 0 0 8px hsl(var(--primary) / 0), 0 8px 24px -6px hsl(var(--primary) / 0.5)",
-                    ]}}
-                    transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut" }}
-                    className={cn(
-                      "w-[54px] h-[54px] rounded-full flex items-center justify-center bg-primary"
-                    )}
+                    className="w-[54px] h-[54px] rounded-full flex items-center justify-center bg-foreground shadow-[0_8px_24px_-6px_rgba(0,0,0,0.4)]"
                   >
-                    <Icon className="w-[22px] h-[22px] text-primary-foreground drop-shadow-[0_0_6px_rgb(255_255_255_/_0.6)]" />
+                    <Icon className="w-[22px] h-[22px] text-background" strokeWidth={1.8} />
                   </motion.div>
                   <span className={cn(
-                    "text-[10px] mt-1 font-medium transition-colors",
-                    active ? "text-primary" : "text-muted-foreground"
+                    "text-[10px] mt-1 font-medium transition-colors tracking-tight",
+                    active ? "text-foreground" : "text-muted-foreground"
                   )}>
                     {item.label}
                   </span>
@@ -103,17 +96,15 @@ const FloatingDock = () => {
                 <motion.div
                   whileTap={{ scale: 0.88 }}
                   className={cn(
-                    "w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-200 glass-icon",
-                    active
-                      ? "glass-icon-active text-primary"
-                      : "text-muted-foreground hover:text-foreground"
+                    "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200",
+                    active ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <Icon className={cn("w-[18px] h-[18px] relative z-10", active ? "neon-icon" : "neon-icon-soft")} />
+                  <Icon className="w-[18px] h-[18px]" strokeWidth={active ? 2 : 1.6} />
                 </motion.div>
                 <span className={cn(
-                  "text-[10px] font-medium transition-colors",
-                  active ? "text-primary" : "text-muted-foreground"
+                  "text-[10px] font-medium transition-colors tracking-tight",
+                  active ? "text-foreground" : "text-muted-foreground"
                 )}>
                   {item.label}
                 </span>
@@ -127,22 +118,20 @@ const FloatingDock = () => {
               whileTap={{ scale: 0.88 }}
               onClick={() => setMenuOpen(!menuOpen)}
               className={cn(
-                "w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-200 glass-icon",
-                menuOpen
-                  ? "glass-icon-active text-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200",
+                menuOpen ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Avatar className="w-7 h-7 relative z-10">
                 <AvatarImage src={profile?.avatar_url || ""} alt={firstName} />
-                <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">
+                <AvatarFallback className="text-[10px] font-medium bg-foreground/10 text-foreground">
                   {firstName.charAt(0).toUpperCase() || <User className="w-3.5 h-3.5" />}
                 </AvatarFallback>
               </Avatar>
             </motion.button>
             <span className={cn(
-              "text-[10px] font-medium transition-colors",
-              menuOpen ? "text-primary" : "text-muted-foreground"
+              "text-[10px] font-medium transition-colors tracking-tight",
+              menuOpen ? "text-foreground" : "text-muted-foreground"
             )}>
               Perfil
             </span>
@@ -153,7 +142,7 @@ const FloatingDock = () => {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.96 }}
                 transition={{ duration: 0.18, ease: [0.32, 0.72, 0, 1] }}
-                className="absolute bottom-full right-0 mb-3 w-52 rounded-2xl bg-card border border-border shadow-apple-lg p-1.5 space-y-0.5"
+                className="absolute bottom-full right-0 mb-3 w-56 rounded-3xl bg-background border border-border/60 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] p-2 space-y-0.5"
               >
                 {menuItems.map((item) => {
                   const Icon = item.icon;
@@ -163,13 +152,13 @@ const FloatingDock = () => {
                       key={item.to}
                       onClick={() => { navigate(item.to); setMenuOpen(false); }}
                       className={cn(
-                        "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-colors",
+                        "w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-[13px] font-medium transition-colors tracking-tight",
                         active
-                          ? "bg-primary/10 text-primary"
-                          : "text-foreground/80 hover:bg-accent"
+                          ? "bg-foreground/10 text-foreground"
+                          : "text-foreground/70 hover:bg-muted/60 hover:text-foreground"
                       )}
                     >
-                      <Icon className="w-4 h-4" />
+                      <Icon className="w-4 h-4" strokeWidth={1.8} />
                       {item.label}
                     </button>
                   );
@@ -177,9 +166,9 @@ const FloatingDock = () => {
                 <div className="h-px bg-border/40 my-1" />
                 <button
                   onClick={() => { signOut(); navigate("/"); setMenuOpen(false); }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-destructive hover:bg-destructive/8 transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-[13px] font-medium text-foreground/60 hover:bg-muted/60 hover:text-foreground transition-colors tracking-tight"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-4 h-4" strokeWidth={1.8} />
                   Sair
                 </button>
               </motion.div>
