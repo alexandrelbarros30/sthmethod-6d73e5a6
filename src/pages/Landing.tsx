@@ -112,9 +112,9 @@ const Landing = () => {
       root.style.setProperty("--accent", `${ah} ${as_}% ${al}%`);
       root.style.setProperty("--gradient-end", `${ah} ${as_}% ${al}%`);
     }
-    if (bh) {
-      root.style.setProperty("--background", `${bh} ${bs}% ${bl}%`);
-    }
+    // NÃO sobrescrever --background: a landing usa o tema Apple light
+    // (branco) controlado por usePublicAppleTheme. Cores de fundo do banco
+    // são ignoradas para preservar o estilo apple.com.
 
     return () => {
       // Reset on unmount
