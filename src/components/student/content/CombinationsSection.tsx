@@ -391,9 +391,9 @@ const ComboCardComponent = ({ card, index }: { card: ComboCard; index: number })
 
               {/* Erro comum */}
               <div className="rounded-xl p-3 flex items-start gap-2.5" style={{ background: "hsl(0 70% 45% / 0.08)", border: `0.5px solid hsl(0 70% 45% / 0.2)` }}>
-                <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: "hsl(0 70% 55%)" }} />
+                <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: "hsl(0 0% 65%)" }} />
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: "hsl(0 70% 55%)" }}>Erro comum</p>
+                  <p className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: "hsl(0 0% 65%)" }}>Erro comum</p>
                   <p className="text-[12px] leading-relaxed" style={{ color: G.t80 }}>{card.erroComum}</p>
                 </div>
               </div>
@@ -435,7 +435,7 @@ const CombinationsSection = () => (
     <div className="space-y-4">
       <div className="flex items-center gap-2.5">
         <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "hsl(210 70% 50% / 0.12)" }}>
-          <Dumbbell className="w-4 h-4" style={{ color: "hsl(210 70% 55%)" }} />
+          <Dumbbell className="w-4 h-4" style={{ color: "hsl(0 0% 75%)" }} />
         </div>
         <div>
           <h2 className="text-base font-bold tracking-tight" style={{ color: G.t96 }}>Hipertrofia / Construção</h2>
