@@ -213,10 +213,10 @@ const InsightCarousel = () => {
 
         {/* Hero image */}
         <div className="rounded-2xl overflow-hidden relative" style={{ border: `0.5px solid ${G.border}` }}>
-          <img src={openTopic.img} alt={openTopic.title} className="w-full h-44 object-cover" width={800} height={512} />
+          <img src={openTopic.img} alt={openTopic.title} className="w-full h-44 object-cover" style={{ filter: "brightness(1.2) contrast(1.03) saturate(0.9)" }} width={800} height={512} />
           <div
             className="absolute inset-0 flex flex-col justify-end p-5 space-y-1.5"
-            style={{ background: "linear-gradient(to top, hsl(0 0% 96% / 0.95), hsl(0 0% 96% / 0.3))" }}
+            style={{ background: "linear-gradient(to top, hsl(0 0% 0% / 0.16) 0%, transparent 40%, hsl(0 0% 100% / 0.18) 100%)" }}
           >
             <span
               className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm w-fit"
@@ -225,7 +225,7 @@ const InsightCarousel = () => {
               <openTopic.icon className="w-3 h-3" />
               {openTopic.tag}
             </span>
-            <h2 className="text-lg font-bold tracking-tight leading-tight" style={{ color: G.t96 }}>
+            <h2 className="text-lg font-bold tracking-tight leading-tight" style={{ color: G.t96, textShadow: "0 2px 14px rgb(0 0 0 / 0.5)" }}>
               {openTopic.title}
             </h2>
           </div>
@@ -355,6 +355,7 @@ const InsightCarousel = () => {
                 src={topic.img}
                 alt={topic.title}
                 className="w-full h-36 object-cover transition-transform duration-700 group-hover:scale-105"
+                style={{ filter: "brightness(1.2) contrast(1.03) saturate(0.9)" }}
                 width={800}
                 height={512}
                 loading="lazy"
@@ -363,7 +364,7 @@ const InsightCarousel = () => {
               {/* Overlay */}
               <div
                 className="absolute inset-0 flex flex-col justify-end p-4 space-y-1.5"
-                style={{ background: "linear-gradient(to top, hsl(0 0% 96% / 0.95) 0%, hsl(0 0% 96% / 0.4) 60%, transparent 100%)" }}
+                style={{ background: "linear-gradient(to top, hsl(0 0% 0% / 0.16) 0%, transparent 40%, hsl(0 0% 100% / 0.18) 100%)" }}
               >
                 {/* Tag */}
                 <span
@@ -375,12 +376,12 @@ const InsightCarousel = () => {
                 </span>
 
                 {/* Title */}
-                <h3 className="text-[15px] font-bold tracking-tight leading-snug" style={{ color: G.t96 }}>
+                <h3 className="text-[15px] font-bold tracking-tight leading-snug" style={{ color: G.t96, textShadow: "0 2px 14px rgb(0 0 0 / 0.5)" }}>
                   {topic.title}
                 </h3>
 
                 {/* Subtitle preview */}
-                <p className="text-[11px] leading-relaxed line-clamp-2" style={{ color: G.t50 }}>
+                <p className="text-[11px] leading-relaxed line-clamp-2" style={{ color: G.t80, textShadow: "0 2px 10px rgb(0 0 0 / 0.4)" }}>
                   {topic.subheadline}
                 </p>
 
