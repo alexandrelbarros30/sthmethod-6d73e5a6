@@ -77,6 +77,10 @@ html, body {
     --gold: 42 70% 50%;
     --gold-light: 42 60% 65%;
     --gold-dark: 38 72% 38%;
+
+    /* Brand green — destaque tipo Apple (palavra-chave colorida) */
+    --brand: 142 72% 38%;
+    --brand-foreground: 0 0% 100%;
   }
 
   /* ── Dark theme — Premium Apple-style: graphite black + muted green ── */
