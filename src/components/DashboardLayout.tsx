@@ -78,61 +78,15 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
     return BIRTHDAY_MESSAGES[idx];
   }, []);
 
-  // Theme por duração de plano: 90d (ciano) · 180d (roxo premium)
-  // Inicializa de forma SÍNCRONA via cache local p/ evitar "flash" do tema verde padrão.
-  const cachedTheme = isStudent && user?.id
-    ? localStorage.getItem(`plan_theme_${user.id}`)
-    : null;
-  const [is90dPlan, setIs90dPlan] = useState(cachedTheme === "90");
-  const [is180dPlan, setIs180dPlan] = useState(cachedTheme === "180");
-  // Espelha a classe no <html> p/ que o tema valha desde antes do mount
-  // (evita flash verde em navegações internas e troca de usuário).
+  // Apple puro: tema único B&W para todos os alunos.
+  // Os temas 90d (ciano) / 180d (dourado) foram desativados conforme decisão de design.
+  const is90dPlan = false;
+  const is180dPlan = false;
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.toggle("theme-90d", is90dPlan);
-    root.classList.toggle("theme-180d", is180dPlan);
-    return () => {
-      // ao desmontar (ex: logout), limpa para não vazar p/ outras telas
-      root.classList.remove("theme-90d", "theme-180d");
-    };
-  }, [is90dPlan, is180dPlan]);
-  useEffect(() => {
-    if (!isStudent || !user?.id) { setIs90dPlan(false); setIs180dPlan(false); return; }
-    let cancelled = false;
-    (async () => {
-      const { data: subs } = await supabase
-        .from("subscriptions")
-        .select("plan_id, status, end_date")
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .order("created_at", { ascending: false })
-        .limit(1);
-      const sub = subs?.[0];
-      const key = `plan_theme_${user.id}`;
-      if (!sub?.plan_id || (sub.end_date && new Date(sub.end_date) < new Date())) {
-        if (!cancelled) { setIs90dPlan(false); setIs180dPlan(false); }
-        localStorage.removeItem(key);
-        return;
-      }
-      const { data: plan } = await supabase
-        .from("plans")
-        .select("duration_days")
-        .eq("id", sub.plan_id)
-        .maybeSingle();
-      if (cancelled) return;
-      if (plan?.duration_days === 90) {
-        setIs90dPlan(true); setIs180dPlan(false);
-        localStorage.setItem(key, "90");
-      } else if (plan?.duration_days === 180) {
-        setIs180dPlan(true); setIs90dPlan(false);
-        localStorage.setItem(key, "180");
-      } else {
-        setIs90dPlan(false); setIs180dPlan(false);
-        localStorage.setItem(key, "default");
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [isStudent, user?.id]);
+    root.classList.remove("theme-90d", "theme-180d");
+    if (user?.id) localStorage.removeItem(`plan_theme_${user.id}`);
+  }, [user?.id]);
 
   useEffect(() => {
     if (!isStudent || !user?.id) return;
