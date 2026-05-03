@@ -12,13 +12,13 @@ import ContentHubCards, { type ContentSection } from "@/components/student/conte
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 const G = {
-  accent: "hsl(145 60% 42%)",
-  accentSoft: "hsl(145 50% 55%)",
-  accentBg: "hsl(145 60% 42% / 0.12)",
-  accentBorderSoft: "hsl(145 60% 42% / 0.2)",
-  accentGlow: "hsl(145 60% 42% / 0.25)",
-  accentText06: "hsl(145 60% 42% / 0.06)",
-  accentText15: "hsl(145 60% 42% / 0.15)",
+  accent: "hsl(0 0% 96%)",
+  accentSoft: "hsl(0 0% 70%)",
+  accentBg: "hsl(0 0% 96% / 0.12)",
+  accentBorderSoft: "hsl(0 0% 96% / 0.2)",
+  accentGlow: "hsl(0 0% 96% / 0.25)",
+  accentText06: "hsl(0 0% 96% / 0.06)",
+  accentText15: "hsl(0 0% 96% / 0.15)",
   bg: "hsl(0 0% 3%)",
   card: "hsl(0 0% 6%)",
   border: "hsl(0 0% 14%)",
@@ -263,8 +263,8 @@ const StudentContent = () => {
                     className="relative rounded-[18px] p-4 flex items-center gap-3 overflow-hidden backdrop-blur-xl"
                     style={{
                       background: "rgb(255 255 255 / 0.025)",
-                      border: `1px solid hsl(145 60% 42% / 0.22)`,
-                      boxShadow: `0 6px 20px -8px rgb(0 0 0 / 0.5), 0 0 16px -4px hsl(145 60% 42% / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.06)`,
+                      border: `1px solid hsl(0 0% 96% / 0.22)`,
+                      boxShadow: `0 6px 20px -8px rgb(0 0 0 / 0.5), 0 0 16px -4px hsl(0 0% 96% / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.06)`,
                     }}
                   >
                     <div
@@ -291,8 +291,8 @@ const StudentContent = () => {
             className="relative rounded-[22px] p-5 space-y-3 overflow-hidden backdrop-blur-xl"
             style={{
               background: "rgb(255 255 255 / 0.025)",
-              border: `1px solid hsl(145 60% 42% / 0.18)`,
-              boxShadow: `0 8px 28px -10px rgb(0 0 0 / 0.55), 0 0 22px -6px hsl(145 60% 42% / 0.3), inset 0 1px 0 rgb(255 255 255 / 0.06)`,
+              border: `1px solid hsl(0 0% 96% / 0.18)`,
+              boxShadow: `0 8px 28px -10px rgb(0 0 0 / 0.55), 0 0 22px -6px hsl(0 0% 96% / 0.3), inset 0 1px 0 rgb(255 255 255 / 0.06)`,
             }}
           >
             <div
@@ -302,7 +302,7 @@ const StudentContent = () => {
             {progress < TOTAL_COMPOUNDS && (
               <div
                 className="absolute inset-0 z-10 backdrop-blur-md flex flex-col items-center justify-center gap-3"
-                style={{ background: "hsl(0 0% 3% / 0.7)" }}
+                style={{ background: "hsl(0 0% 96% / 0.7)" }}
               >
                 <Lock className="w-6 h-6" style={{ color: G.t30 }} />
                 <p className="text-xs font-medium text-center" style={{ color: G.t40 }}>
@@ -344,8 +344,8 @@ const StudentContent = () => {
             className="relative rounded-[22px] p-6 text-center space-y-4 overflow-hidden backdrop-blur-xl"
             style={{
               background: "rgb(255 255 255 / 0.025)",
-              border: `1px solid hsl(145 60% 42% / 0.22)`,
-              boxShadow: `0 8px 28px -10px rgb(0 0 0 / 0.55), 0 0 26px -6px hsl(145 60% 42% / 0.4), inset 0 1px 0 rgb(255 255 255 / 0.08)`,
+              border: `1px solid hsl(0 0% 96% / 0.22)`,
+              boxShadow: `0 8px 28px -10px rgb(0 0 0 / 0.55), 0 0 26px -6px hsl(0 0% 96% / 0.4), inset 0 1px 0 rgb(255 255 255 / 0.08)`,
             }}
           >
             <div
@@ -361,9 +361,9 @@ const StudentContent = () => {
               whileTap={{ scale: 0.97 }}
               className="relative inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all"
               style={{
-                background: `linear-gradient(135deg, ${G.accent}, hsl(150 55% 32%))`,
-                color: "hsl(0 0% 100%)",
-                boxShadow: `0 4px 20px ${G.accentGlow}, 0 0 22px hsl(145 60% 42% / 0.5), inset 0 1px 0 rgb(255 255 255 / 0.25)`,
+                background: `linear-gradient(135deg, ${G.accent}, hsl(0 0% 96%))`,
+                color: "hsl(0 0% 96%)",
+                boxShadow: `0 4px 20px ${G.accentGlow}, 0 0 22px hsl(0 0% 96% / 0.5), inset 0 1px 0 rgb(255 255 255 / 0.25)`,
               }}
             >
               <MessageCircle className="w-4 h-4" />

@@ -22,10 +22,10 @@ interface Props {
 }
 
 const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
-  const accent = `hsl(${family.accentHue} 60% 42%)`;
-  const accentSoft = `hsl(${family.accentHue} 50% 55%)`;
-  const accentBg = `hsl(${family.accentHue} 60% 42% / 0.12)`;
-  const accentBorder = `hsl(${family.accentHue} 60% 42% / 0.25)`;
+  const accent = `hsl(0 0% 96%)`;
+  const accentSoft = `hsl(0 0% 96%)`;
+  const accentBg = `hsl(0 0% 96% / 0.12)`;
+  const accentBorder = `hsl(0 0% 96% / 0.25)`;
   const total = family.compounds.length;
   const pct = total > 0 ? (visitedCount / total) * 100 : 0;
 
@@ -38,9 +38,9 @@ const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
       onClick={onClick}
       className="w-full text-left rounded-[22px] overflow-hidden group relative backdrop-blur-xl"
       style={{
-        border: `1px solid hsl(${family.accentHue} 60% 42% / 0.18)`,
+        border: `1px solid hsl(0 0% 96% / 0.18)`,
         background: "rgb(255 255 255 / 0.025)",
-        boxShadow: `0 8px 28px -10px rgb(0 0 0 / 0.55), 0 0 22px -6px hsl(${family.accentHue} 60% 42% / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.06)`,
+        boxShadow: `0 8px 28px -10px rgb(0 0 0 / 0.55), 0 0 22px -6px hsl(0 0% 96% / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.06)`,
       }}
     >
       {/* Diagonal glass sheen */}
@@ -64,7 +64,7 @@ const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
         <div
           className="absolute inset-0"
           style={{
-            background: `linear-gradient(to top, hsl(0 0% 3% / 0.95) 0%, hsl(0 0% 3% / 0.4) 50%, transparent 100%)`,
+            background: `linear-gradient(to top, hsl(0 0% 96% / 0.95) 0%, hsl(0 0% 96% / 0.4) 50%, transparent 100%)`,
           }}
         />
 
@@ -76,7 +76,7 @@ const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
               background: accentBg,
               color: accent,
               border: `0.5px solid ${accentBorder}`,
-              boxShadow: `0 0 12px hsl(${family.accentHue} 60% 42% / 0.4)`,
+              boxShadow: `0 0 12px hsl(0 0% 96% / 0.4)`,
             }}
           >
             {family.id === "testosterona" ? "Base" : family.id === "dht" ? "Estética" : "19-nor"}
@@ -99,7 +99,7 @@ const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
         className="p-4 space-y-3 relative z-10"
         style={{
           background: "rgb(255 255 255 / 0.02)",
-          borderTop: `1px solid hsl(${family.accentHue} 60% 42% / 0.12)`,
+          borderTop: `1px solid hsl(0 0% 96% / 0.12)`,
         }}
       >
         <p className="text-[13px] leading-relaxed" style={{ color: G.t55 }}>
@@ -131,7 +131,7 @@ const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
           <div className="flex items-center gap-1">
             <span
               className="text-[11px] font-semibold"
-              style={{ color: accent, textShadow: `0 0 8px hsl(${family.accentHue} 60% 42% / 0.6)` }}
+              style={{ color: accent, textShadow: `0 0 8px hsl(0 0% 96% / 0.6)` }}
             >
               Explorar
             </span>
@@ -150,7 +150,7 @@ const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
             className="h-full rounded-full"
             style={{
               background: `linear-gradient(90deg, ${accent}, ${accentSoft})`,
-              boxShadow: `0 0 8px hsl(${family.accentHue} 60% 42% / 0.7), 0 0 16px hsl(${family.accentHue} 60% 42% / 0.4), inset 0 0 4px rgb(255 255 255 / 0.4)`,
+              boxShadow: `0 0 8px hsl(0 0% 96% / 0.7), 0 0 16px hsl(0 0% 96% / 0.4), inset 0 0 4px rgb(255 255 255 / 0.4)`,
             }}
             initial={{ width: 0 }}
             animate={{ width: `${pct}%` }}

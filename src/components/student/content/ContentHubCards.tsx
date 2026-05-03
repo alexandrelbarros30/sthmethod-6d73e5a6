@@ -8,7 +8,7 @@ import cardCombinacoesImg from "@/assets/card-combinacoes.jpg";
 export type ContentSection = "hormonios" | "dicas" | "receitas" | "combinacoes";
 
 const G = {
-  accent: "hsl(145 60% 42%)",
+  accent: "hsl(0 0% 96%)",
   card: "hsl(0 0% 6%)",
   border: "hsl(0 0% 14%)",
   t96: "hsl(0 0% 96%)",
@@ -71,9 +71,9 @@ interface Props {
 const ContentHubCards = ({ onNavigate }: Props) => (
   <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-none -mx-4 px-4 pb-2">
     {sections.map((s, i) => {
-      const accent = `hsl(${s.accentHue} 60% 42%)`;
-      const accentBg = `hsl(${s.accentHue} 60% 42% / 0.12)`;
-      const accentBorder = `hsl(${s.accentHue} 60% 42% / 0.3)`;
+      const accent = `hsl(0 0% 96%)`;
+      const accentBg = `hsl(0 0% 96% / 0.12)`;
+      const accentBorder = `hsl(0 0% 96% / 0.3)`;
 
       return (
         <motion.button
@@ -85,9 +85,9 @@ const ContentHubCards = ({ onNavigate }: Props) => (
           onClick={() => onNavigate(s.id)}
           className="snap-center flex-shrink-0 w-[72vw] max-w-[280px] text-left rounded-[22px] overflow-hidden relative group backdrop-blur-xl"
           style={{
-            border: `1px solid hsl(${s.accentHue} 60% 42% / 0.18)`,
+            border: `1px solid hsl(0 0% 96% / 0.18)`,
             background: "rgb(255 255 255 / 0.025)",
-            boxShadow: `0 8px 28px -10px rgb(0 0 0 / 0.55), 0 0 22px -6px hsl(${s.accentHue} 60% 42% / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.06)`,
+            boxShadow: `0 8px 28px -10px rgb(0 0 0 / 0.55), 0 0 22px -6px hsl(0 0% 96% / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.06)`,
           }}
         >
           {/* Diagonal glass sheen */}
@@ -113,7 +113,7 @@ const ContentHubCards = ({ onNavigate }: Props) => (
             <div
               className="absolute inset-0"
               style={{
-                background: `linear-gradient(to top, hsl(0 0% 4% / 1) 0%, hsl(0 0% 4% / 0.4) 55%, transparent 100%)`,
+                background: `linear-gradient(to top, hsl(0 0% 96% / 1) 0%, hsl(0 0% 96% / 0.4) 55%, transparent 100%)`,
               }}
             />
 
@@ -125,7 +125,7 @@ const ContentHubCards = ({ onNavigate }: Props) => (
                   background: accentBg,
                   color: accent,
                   border: `0.5px solid ${accentBorder}`,
-                  boxShadow: `0 0 10px hsl(${s.accentHue} 60% 42% / 0.35)`,
+                  boxShadow: `0 0 10px hsl(0 0% 96% / 0.35)`,
                 }}
               >
                 <s.icon className="w-2.5 h-2.5" />
@@ -149,7 +149,7 @@ const ContentHubCards = ({ onNavigate }: Props) => (
             className="px-3.5 py-2.5 flex items-center justify-between relative z-10"
             style={{
               background: "rgb(255 255 255 / 0.02)",
-              borderTop: `1px solid hsl(${s.accentHue} 60% 42% / 0.12)`,
+              borderTop: `1px solid hsl(0 0% 96% / 0.12)`,
             }}
           >
             <span className="text-[10px] font-medium" style={{ color: G.t40 }}>
@@ -158,7 +158,7 @@ const ContentHubCards = ({ onNavigate }: Props) => (
             <div className="flex items-center gap-0.5">
               <span
                 className="text-[10px] font-semibold"
-                style={{ color: accent, textShadow: `0 0 8px hsl(${s.accentHue} 60% 42% / 0.6)` }}
+                style={{ color: accent, textShadow: `0 0 8px hsl(0 0% 96% / 0.6)` }}
               >
                 Explorar
               </span>

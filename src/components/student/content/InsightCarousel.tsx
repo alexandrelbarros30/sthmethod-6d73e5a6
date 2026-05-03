@@ -15,9 +15,9 @@ import imgExames from "@/assets/dica-exames.jpg";
 import imgMentiras from "@/assets/dica-mentiras.jpg";
 
 const G = {
-  accent: "hsl(145 60% 42%)",
-  accentSoft: "hsl(145 50% 55%)",
-  accentBg: "hsl(145 60% 42% / 0.10)",
+  accent: "hsl(0 0% 96%)",
+  accentSoft: "hsl(0 0% 70%)",
+  accentBg: "hsl(0 0% 96% / 0.10)",
   bg: "hsl(0 0% 3%)",
   card: "hsl(0 0% 6%)",
   border: "hsl(0 0% 14%)",
@@ -29,16 +29,16 @@ const G = {
   t40: "hsl(0 0% 40%)",
   t30: "hsl(0 0% 30%)",
   t10: "hsl(0 0% 10%)",
-  orange: "hsl(25 90% 55%)",
-  orangeBg: "hsl(25 90% 55% / 0.12)",
-  red: "hsl(0 70% 55%)",
-  redBg: "hsl(0 70% 55% / 0.12)",
-  blue: "hsl(210 70% 55%)",
-  blueBg: "hsl(210 70% 55% / 0.12)",
-  yellow: "hsl(45 90% 55%)",
-  yellowBg: "hsl(45 90% 55% / 0.12)",
-  purple: "hsl(270 60% 60%)",
-  purpleBg: "hsl(270 60% 60% / 0.12)",
+  orange: "hsl(0 0% 96%)",
+  orangeBg: "hsl(0 0% 96% / 0.12)",
+  red: "hsl(0 0% 96%)",
+  redBg: "hsl(0 0% 96% / 0.12)",
+  blue: "hsl(0 0% 96%)",
+  blueBg: "hsl(0 0% 96% / 0.12)",
+  yellow: "hsl(0 0% 96%)",
+  yellowBg: "hsl(0 0% 96% / 0.12)",
+  purple: "hsl(0 0% 96%)",
+  purpleBg: "hsl(0 0% 96% / 0.12)",
 };
 
 interface InsightCard {
@@ -216,7 +216,7 @@ const InsightCarousel = () => {
           <img src={openTopic.img} alt={openTopic.title} className="w-full h-44 object-cover" width={800} height={512} />
           <div
             className="absolute inset-0 flex flex-col justify-end p-5 space-y-1.5"
-            style={{ background: "linear-gradient(to top, hsl(0 0% 2% / 0.95), hsl(0 0% 2% / 0.3))" }}
+            style={{ background: "linear-gradient(to top, hsl(0 0% 96% / 0.95), hsl(0 0% 96% / 0.3))" }}
           >
             <span
               className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm w-fit"
@@ -301,7 +301,7 @@ const InsightCarousel = () => {
                 initial={{ scale: 0.9 }}
                 animate={{ scale: 1 }}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold"
-                style={{ background: openTopic.accentColor, color: "hsl(0 0% 100%)" }}
+                style={{ background: openTopic.accentColor, color: "hsl(0 0% 96%)" }}
               >
                 <MessageCircle className="w-3.5 h-3.5" />
                 {openTopic.cta}
@@ -363,7 +363,7 @@ const InsightCarousel = () => {
               {/* Overlay */}
               <div
                 className="absolute inset-0 flex flex-col justify-end p-4 space-y-1.5"
-                style={{ background: "linear-gradient(to top, hsl(0 0% 2% / 0.95) 0%, hsl(0 0% 2% / 0.4) 60%, transparent 100%)" }}
+                style={{ background: "linear-gradient(to top, hsl(0 0% 96% / 0.95) 0%, hsl(0 0% 96% / 0.4) 60%, transparent 100%)" }}
               >
                 {/* Tag */}
                 <span
