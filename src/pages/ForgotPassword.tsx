@@ -54,7 +54,7 @@ const ForgotPassword = () => {
         </motion.p>
         <motion.h1
           initial="hidden" animate="visible" variants={fadeUp}
-          className="max-w-3xl mx-auto text-5xl md:text-7xl font-semibold tracking-[-0.04em] leading-[0.95] text-foreground"
+          className="max-w-3xl mx-auto text-4xl sm:text-5xl md:text-7xl font-semibold tracking-[-0.04em] leading-[0.95] text-foreground"
         >
           Esqueci <br /><span className="text-muted-foreground">minha senha.</span>
         </motion.h1>

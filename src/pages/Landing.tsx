@@ -282,7 +282,7 @@ const Landing = () => {
             STH METHOD
           </motion.div>
 
-          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-semibold tracking-[-0.04em] leading-[0.95] text-foreground mb-8">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-semibold tracking-[-0.04em] leading-[0.95] text-foreground mb-8">
             {heroTitle}
           </h1>
 

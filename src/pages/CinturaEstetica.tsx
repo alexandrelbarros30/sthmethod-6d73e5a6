@@ -59,7 +59,7 @@ const CinturaEstetica = () => {
       <section className="pt-32 md:pt-40 pb-16 md:pb-24 text-center px-6">
         <motion.p initial="hidden" animate="visible" variants={fadeUp} className="text-[12px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-6">Estética da cintura</motion.p>
         <motion.h1 initial="hidden" animate="visible" variants={fadeUp}
-          className="max-w-4xl mx-auto text-5xl md:text-7xl lg:text-8xl font-semibold tracking-[-0.04em] leading-[0.95] text-foreground">
+          className="max-w-4xl mx-auto text-4xl sm:text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-semibold tracking-[-0.04em] leading-[0.95] text-foreground">
           Não é só genética.<br />
           <span className="text-muted-foreground">É estímulo certo.</span>
         </motion.h1>

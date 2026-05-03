@@ -75,7 +75,7 @@ const Install = () => {
         <motion.p initial="hidden" animate="visible" variants={fadeUp} className="text-[12px] font-medium tracking-[0.25em] uppercase text-primary mb-6">
           App
         </motion.p>
-        <motion.h1 initial="hidden" animate="visible" variants={fadeUp} className="max-w-3xl mx-auto text-5xl md:text-7xl lg:text-8xl font-semibold tracking-[-0.04em] leading-[0.95] text-foreground">
+        <motion.h1 initial="hidden" animate="visible" variants={fadeUp} className="max-w-3xl mx-auto text-4xl sm:text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-semibold tracking-[-0.04em] leading-[0.95] text-foreground">
           Direto na sua <br /><span className="text-muted-foreground">tela inicial.</span>
         </motion.h1>
         <motion.p initial="hidden" animate="visible" variants={fadeUp} className="max-w-md mx-auto mt-6 text-lg text-muted-foreground font-light">
