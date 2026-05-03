@@ -72,8 +72,8 @@ const ContentHubCards = ({ onNavigate }: Props) => (
   <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-none -mx-4 px-4 pb-2">
     {sections.map((s, i) => {
       const accent = `hsl(0 0% 96%)`;
-      const accentBg = `hsl(0 0% 0% / 0.45)`;
-      const accentBorder = `hsl(0 0% 100% / 0.2)`;
+      const accentBg = `hsl(0 0% 100% / 0.12)`;
+      const accentBorder = `hsl(0 0% 100% / 0.22)`;
 
       return (
         <motion.button
@@ -104,6 +104,7 @@ const ContentHubCards = ({ onNavigate }: Props) => (
               src={s.img}
               alt={s.title}
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              style={{ filter: "brightness(1.12) contrast(1.04) saturate(0.92)" }}
               width={800}
               height={512}
               loading={i === 0 ? undefined : "lazy"}
@@ -113,7 +114,13 @@ const ContentHubCards = ({ onNavigate }: Props) => (
             <div
               className="absolute inset-0"
               style={{
-                background: `linear-gradient(to top, hsl(0 0% 0% / 0.65) 0%, hsl(0 0% 0% / 0.1) 60%, transparent 100%)`,
+                background: `linear-gradient(to top, hsl(0 0% 0% / 0.34) 0%, hsl(0 0% 0% / 0.08) 34%, hsl(0 0% 100% / 0.12) 100%)`,
+              }}
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background: "linear-gradient(135deg, hsl(0 0% 100% / 0.18) 0%, transparent 32%, transparent 68%, hsl(0 0% 100% / 0.08) 100%)",
               }}
             />
 
