@@ -24,7 +24,8 @@ html, body {
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 11%;
 
-    --primary: 155 65% 38%;
+    /* Apple pure: primary = preto */
+    --primary: 0 0% 7%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 95.5%;
@@ -41,25 +42,25 @@ html, body {
 
     --border: 0 0% 91%;
     --input: 0 0% 91%;
-    --ring: 155 65% 38%;
+    --ring: 0 0% 7%;
 
     --radius: 0.875rem;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 25%;
-    --sidebar-primary: 155 65% 38%;
+    --sidebar-primary: 0 0% 7%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 94%;
     --sidebar-accent-foreground: 0 0% 11%;
     --sidebar-border: 0 0% 92%;
-    --sidebar-ring: 155 65% 38%;
+    --sidebar-ring: 0 0% 7%;
 
-    /* Apple-clean tokens */
-    --glow: 155 65% 38%;
+    /* Apple-clean tokens — monocromático */
+    --glow: 0 0% 7%;
     --surface: 0 0% 96%;
     --surface-hover: 0 0% 93%;
-    --gradient-start: 155 65% 38%;
-    --gradient-end: 165 55% 30%;
+    --gradient-start: 0 0% 7%;
+    --gradient-end: 0 0% 25%;
     --text-subtle: 0 0% 55%;
 
     --success: 142 60% 40%;
@@ -90,9 +91,9 @@ html, body {
     --popover: 0 0% 6%;
     --popover-foreground: 0 0% 96%;
 
-    /* Vibrant neon green to match reference */
-    --primary: 150 75% 50%;
-    --primary-foreground: 0 0% 8%;
+    /* Apple pure dark: primary = branco */
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 7%;
 
     --secondary: 0 0% 13%;
     --secondary-foreground: 0 0% 82%;
@@ -108,23 +109,23 @@ html, body {
 
     --border: 0 0% 14%;
     --input: 0 0% 14%;
-    --ring: 150 75% 50%;
+    --ring: 0 0% 100%;
 
     --sidebar-background: 0 0% 0%;
     --sidebar-foreground: 0 0% 88%;
-    --sidebar-primary: 150 75% 50%;
-    --sidebar-primary-foreground: 0 0% 8%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 0 0% 7%;
     --sidebar-accent: 0 0% 11%;
     --sidebar-accent-foreground: 0 0% 92%;
     --sidebar-border: 0 0% 14%;
-    --sidebar-ring: 150 75% 50%;
+    --sidebar-ring: 0 0% 100%;
 
-    /* Strong neon glow for reference look */
-    --glow: 150 75% 50%;
+    /* Apple monocromático — sem neon */
+    --glow: 0 0% 100%;
     --surface: 0 0% 6%;
     --surface-hover: 0 0% 10%;
-    --gradient-start: 150 80% 55%;
-    --gradient-end: 158 60% 35%;
+    --gradient-start: 0 0% 100%;
+    --gradient-end: 0 0% 70%;
     --text-subtle: 0 0% 50%;
 
     --success: 152 32% 48%;
