@@ -17,7 +17,7 @@ const ResultsSection = () => (
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         className="text-center mb-16 md:mb-20"
       >
-        <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5">Evolução</div>
+        <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-brand mb-5">Evolução</div>
         <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] text-foreground">
           Resultados são consequência.
         </h2>
@@ -67,7 +67,7 @@ const ResultsSection = () => (
             transition={{ delay: i * 0.08 }}
             className="bg-background text-center p-8"
           >
-            <div className="text-foreground mb-4 inline-flex">{p.icon}</div>
+            <div className="text-brand mb-4 inline-flex">{p.icon}</div>
             <h3 className="text-foreground text-lg font-semibold tracking-[-0.02em] mb-2">{p.title}</h3>
             <p className="text-muted-foreground text-[14px] font-light leading-relaxed">{p.desc}</p>
           </motion.div>

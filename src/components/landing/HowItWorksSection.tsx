@@ -24,7 +24,7 @@ const HowItWorksSection = () => {
     <section id="como-funciona" className="py-24 md:py-32 px-6 bg-[hsl(var(--surface))]">
       <div className="max-w-6xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }} className="text-center mb-16 md:mb-20">
-          <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5">Método</div>
+          <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-brand mb-5">Método</div>
           <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] text-foreground">
             Como funciona a STH METHOD.
           </h2>
@@ -52,7 +52,7 @@ const HowItWorksSection = () => {
                 Etapa {String(i + 1).padStart(2, "0")}
               </div>
               <div className="flex items-start gap-3 mb-5">
-                <div className="text-foreground shrink-0">
+                <div className="text-brand shrink-0">
                   {iconMap[step.icon] || <Brain className="w-7 h-7" />}
                 </div>
                 <h3 className="text-xl md:text-2xl font-semibold tracking-[-0.02em] leading-tight text-foreground">

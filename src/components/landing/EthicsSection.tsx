@@ -8,7 +8,7 @@ const values = [
 ];
 
 const EthicsSection = () => (
-  <section className="py-24 md:py-32 px-6 border-t border-border/40">
+  <section className="py-24 md:py-32 px-6 bg-[hsl(0_0%_4%)] text-white">
     <div className="max-w-5xl mx-auto">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -17,16 +17,16 @@ const EthicsSection = () => (
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         className="text-center mb-16 md:mb-20"
       >
-        <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5">Compromisso</div>
-        <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] text-foreground">
+        <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-brand mb-5">Compromisso</div>
+        <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] text-white">
           Orientar, acompanhar e educar.
         </h2>
-        <p className="text-base md:text-lg text-muted-foreground font-light max-w-2xl mx-auto mt-5">
+        <p className="text-base md:text-lg text-white/60 font-light max-w-2xl mx-auto mt-5">
           Resultados vêm com constância e responsabilidade.
         </p>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-border/40 rounded-2xl overflow-hidden border border-border/40">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/10 rounded-2xl overflow-hidden border border-white/10">
         {values.map((v, i) => (
           <motion.div
             key={v.title}
@@ -34,11 +34,11 @@ const EthicsSection = () => (
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: i * 0.08 }}
-            className="bg-background text-center p-8 md:p-10"
+            className="bg-[hsl(0_0%_4%)] text-center p-8 md:p-10"
           >
-            <div className="text-foreground mb-4 inline-flex">{v.icon}</div>
-            <h3 className="text-foreground text-lg font-semibold tracking-[-0.02em] mb-2">{v.title}</h3>
-            <p className="text-muted-foreground text-[14px] font-light leading-relaxed">{v.desc}</p>
+            <div className="text-brand mb-4 inline-flex">{v.icon}</div>
+            <h3 className="text-white text-lg font-semibold tracking-[-0.02em] mb-2">{v.title}</h3>
+            <p className="text-white/60 text-[14px] font-light leading-relaxed">{v.desc}</p>
           </motion.div>
         ))}
       </div>

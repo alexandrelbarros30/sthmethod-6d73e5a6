@@ -32,7 +32,7 @@ const PlansSection = () => {
   const midIndex = Math.floor(plans.length / 2);
 
   return (
-    <section id="planos" className="py-24 md:py-32 px-6 border-t border-border/40">
+    <section id="planos" className="py-24 md:py-32 px-6 bg-background border-t border-border/40">
       <div className="max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -41,7 +41,7 @@ const PlansSection = () => {
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           className="text-center mb-16 md:mb-20"
         >
-          <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5">Planos</div>
+          <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-brand mb-5">Planos</div>
           <h2 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-[-0.04em] leading-[1.05] text-foreground">
             Acompanhamento real, personalizado.
           </h2>
