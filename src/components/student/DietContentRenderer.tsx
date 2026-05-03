@@ -26,7 +26,7 @@ function highlightQuantities(text: string): React.ReactNode[] {
       parts.push(formatOuKeyword(text.slice(lastIndex, match.index), `pre-${match.index}`));
     }
     parts.push(
-      <strong key={match.index} className="text-primary font-bold">
+      <strong key={match.index} className="text-foreground font-bold">
         {match[0]}
       </strong>
     );
@@ -41,7 +41,7 @@ function highlightQuantities(text: string): React.ReactNode[] {
     const standaloneMatch = STANDALONE_NUM_RE.exec(text);
     if (standaloneMatch) {
       return [
-        <strong key="num" className="text-primary font-bold">
+        <strong key="num" className="text-foreground font-bold">
           {standaloneMatch[1]}
         </strong>,
         formatOuKeyword(text.slice(standaloneMatch[1].length), "rest"),
@@ -133,7 +133,7 @@ const DietContentRenderer: React.FC<DietContentRendererProps> = ({
       elements.push(
         <div key={`food-${i}`} className={`py-1.5 px-2 flex items-start gap-2 rounded ${foodItemIndex % 2 === 0 ? 'bg-muted/50' : ''}`}>
           {!isNote && (
-            <span className="text-primary font-bold text-sm leading-relaxed select-none mt-px">•</span>
+            <span className="text-foreground font-bold text-sm leading-relaxed select-none mt-px">•</span>
           )}
           <p
             className={`text-sm leading-relaxed font-body ${
@@ -230,7 +230,7 @@ const MacroBadge = ({
   <div
     className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
       accent
-        ? "bg-primary/15 text-primary border border-primary/20"
+        ? "bg-foreground/10 text-foreground border border-foreground/15"
         : "bg-muted text-muted-foreground border border-border"
     }`}
   >

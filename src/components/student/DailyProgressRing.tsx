@@ -76,7 +76,7 @@ const DailyProgressRing = ({
         <span className="text-3xl font-extrabold text-foreground tracking-tight">{percent}%</span>
         {label && <span className="text-[11px] text-muted-foreground mt-0.5">{label}</span>}
         {sublabel && (
-          <span className="text-[10px] text-primary font-semibold mt-1 px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/20">
+          <span className="text-[10px] text-foreground font-semibold mt-1 px-2.5 py-0.5 rounded-full bg-foreground/10 border border-foreground/15">
             {sublabel}
           </span>
         )}

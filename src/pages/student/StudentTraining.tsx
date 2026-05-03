@@ -158,11 +158,11 @@ const StudentTraining = () => {
         )}
 
         {/* Program header card */}
-        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+        <Card className="bg-gradient-to-br from-foreground/10 to-foreground/5 border-foreground/15">
           <CardContent className="py-5">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
-                <Dumbbell className="w-6 h-6 text-primary" />
+              <div className="w-12 h-12 rounded-xl bg-foreground/15 flex items-center justify-center">
+                <Dumbbell className="w-6 h-6 text-foreground" />
               </div>
               <div>
                 <h2 className="font-display font-bold text-lg">Programa de Treino</h2>
@@ -182,7 +182,7 @@ const StudentTraining = () => {
               <TabsTrigger
                 key={week.id}
                 value={week.id}
-                className="flex-1 min-w-[120px] text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                className="flex-1 min-w-[120px] text-xs sm:text-sm data-[state=active]:bg-foreground data-[state=active]:text-background"
               >
                 {week.name}
               </TabsTrigger>
@@ -210,21 +210,21 @@ const StudentTraining = () => {
                     return (
                       <Card
                         key={ex.id}
-                        className={`overflow-hidden transition-all ${isExpanded ? "ring-1 ring-primary/30 shadow-md" : "hover:shadow-sm"}`}
+                        className={`overflow-hidden transition-all ${isExpanded ? "ring-1 ring-foreground/30 shadow-md" : "hover:shadow-sm"}`}
                       >
                         {/* Exercise header */}
                         <button
                           className="w-full flex items-center gap-3 p-4 text-left hover:bg-muted/30 transition-colors"
                           onClick={() => toggleExercise(ex.id)}
                         >
-                          <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary text-primary-foreground text-sm font-bold shrink-0">
+                          <div className="flex items-center justify-center w-9 h-9 rounded-full bg-foreground text-background text-sm font-bold shrink-0">
                             {idx + 1}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold text-sm font-body">{ex.name}</p>
                             <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
                               {ex.reps && (
-                                <span className="font-semibold text-primary">{ex.reps}</span>
+                                <span className="font-semibold text-foreground">{ex.reps}</span>
                               )}
                               {ex.rest_interval && (
                                 <span className="flex items-center gap-0.5">
@@ -235,8 +235,8 @@ const StudentTraining = () => {
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             {ex.video_url && (
-                              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
-                                <Play className="w-3.5 h-3.5 text-primary" />
+                              <div className="w-7 h-7 rounded-full bg-foreground/10 flex items-center justify-center">
+                                <Play className="w-3.5 h-3.5 text-foreground" />
                               </div>
                             )}
                             {isExpanded
@@ -266,7 +266,7 @@ const StudentTraining = () => {
                               {ex.reps && (
                                 <div className="rounded-xl bg-background p-3 border border-border text-center">
                                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Séries x Reps</p>
-                                  <p className="font-bold text-primary text-sm">{ex.reps}</p>
+                                  <p className="font-bold text-foreground text-sm">{ex.reps}</p>
                                 </div>
                               )}
                               {ex.rest_interval && (
@@ -289,7 +289,7 @@ const StudentTraining = () => {
                             {ex.description && (
                               <div className="rounded-xl bg-background p-4 border border-border">
                                 <div className="flex items-center gap-1.5 mb-2">
-                                  <Info className="w-3.5 h-3.5 text-primary" />
+                                  <Info className="w-3.5 h-3.5 text-foreground" />
                                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Execução</p>
                                 </div>
                                 <p className="text-sm text-foreground font-body leading-relaxed whitespace-pre-wrap">{ex.description}</p>
@@ -298,8 +298,8 @@ const StudentTraining = () => {
 
                             {/* Notes */}
                             {ex.notes && (
-                              <div className="rounded-xl bg-primary/5 p-4 border border-primary/10">
-                                <p className="text-xs font-semibold text-primary mb-1">Observações</p>
+                              <div className="rounded-xl bg-foreground/5 p-4 border border-foreground/10">
+                                <p className="text-xs font-semibold text-foreground mb-1">Observações</p>
                                 <p className="text-sm text-muted-foreground font-body whitespace-pre-wrap">{ex.notes}</p>
                               </div>
                             )}

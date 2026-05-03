@@ -34,25 +34,25 @@ const DietDateNav = ({ selectedDate, onDateChange }: DietDateNavProps) => {
         className={cn(
           "flex flex-col items-center gap-0.5 px-5 py-1.5 rounded-xl transition-all duration-300",
           today
-            ? "bg-primary/10 border border-primary/20 shadow-sm"
+            ? "bg-foreground/10 border border-foreground/15 shadow-sm"
             : "hover:bg-muted/50 cursor-pointer border border-transparent"
         )}
       >
         <span className={cn(
           "text-sm font-bold tracking-tight flex items-center gap-1.5",
-          today ? "text-primary" : "text-foreground"
+          today ? "text-foreground" : "text-foreground"
         )}>
           <CalendarDays className="w-3.5 h-3.5" />
           {label}
         </span>
         <span className={cn(
           "text-[11px] tabular-nums",
-          today ? "text-primary/70 font-medium" : "text-muted-foreground"
+          today ? "text-foreground/70 font-medium" : "text-muted-foreground"
         )}>
           {dateStr}
         </span>
         {!today && (
-          <span className="text-[9px] text-primary font-semibold mt-0.5">Toque para voltar a hoje</span>
+          <span className="text-[9px] text-foreground font-semibold mt-0.5">Toque para voltar a hoje</span>
         )}
       </button>
 

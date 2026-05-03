@@ -85,7 +85,7 @@ const MacroBadge = ({
       colorClass
         ? colorClass
         : accent
-        ? "bg-primary/15 text-primary border-primary/20"
+        ? "bg-foreground/10 text-foreground border-foreground/15"
         : "bg-muted text-muted-foreground border-border"
     }`}
   >

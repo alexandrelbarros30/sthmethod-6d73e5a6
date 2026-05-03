@@ -50,7 +50,7 @@ const ChangePasswordDialog = () => {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-display flex items-center gap-2">
-            <Lock className="w-5 h-5 text-primary" /> Alterar senha
+            <Lock className="w-5 h-5 text-foreground" /> Alterar senha
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">

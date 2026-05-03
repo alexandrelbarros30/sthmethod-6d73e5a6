@@ -67,7 +67,7 @@ const MealDetailPanel = ({ meal, mealLabel, onClose }: MealDetailPanelProps) => 
 
   return (
     <div className="mt-2 animate-scale-in">
-      <Card className="premium-card border-primary/15 overflow-hidden">
+      <Card className="premium-card border-foreground/15 overflow-hidden">
         {/* Food Image Section */}
         {imageUrl ? (
           <div className="relative w-full aspect-[16/9] overflow-hidden">
@@ -86,16 +86,16 @@ const MealDetailPanel = ({ meal, mealLabel, onClose }: MealDetailPanelProps) => 
                 <span>•</span>
                 <Clock className="w-3 h-3" />
                 <span>{meal.time}</span>
-                <Badge className="bg-primary/80 text-primary-foreground text-[10px] border-0">
+                <Badge className="bg-foreground/80 text-background text-[10px] border-0">
                   {Math.round(mealMacros.kcal)} kcal
                 </Badge>
               </div>
             </div>
           </div>
         ) : (
-          <div className="relative w-full aspect-[16/9] bg-gradient-to-br from-muted/80 via-muted/40 to-primary/5 flex flex-col items-center justify-center gap-3">
-            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <ImageIcon className="w-8 h-8 text-primary/50" />
+          <div className="relative w-full aspect-[16/9] bg-gradient-to-br from-muted/80 via-muted/40 to-foreground/5 flex flex-col items-center justify-center gap-3">
+            <div className="w-16 h-16 rounded-2xl bg-foreground/10 flex items-center justify-center">
+              <ImageIcon className="w-8 h-8 text-foreground/50" />
             </div>
             <div className="text-center">
               <h3 className="text-base font-bold text-foreground tracking-tight">{displayTitle}</h3>
@@ -111,12 +111,12 @@ const MealDetailPanel = ({ meal, mealLabel, onClose }: MealDetailPanelProps) => 
               size="sm"
               onClick={handleGenerateImage}
               disabled={generatingImage}
-              className="text-xs gap-1.5 border-primary/20 hover:bg-primary/10 hover:border-primary/40"
+              className="text-xs gap-1.5 border-foreground/15 hover:bg-foreground/10 hover:border-foreground/40"
             >
               {generatingImage ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
-                <Sparkles className="w-3.5 h-3.5 text-primary" />
+                <Sparkles className="w-3.5 h-3.5 text-foreground" />
               )}
               {generatingImage ? "Gerando..." : "Gerar foto do prato"}
             </Button>
@@ -173,7 +173,7 @@ const MealDetailPanel = ({ meal, mealLabel, onClose }: MealDetailPanelProps) => 
                 <div className="space-y-1.5">
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mb-2">Cardápio</p>
                   <div
-                    className="diet-rich-content text-sm leading-relaxed text-foreground space-y-2 [&_strong]:text-foreground [&_strong]:font-semibold [&_p]:my-1.5 [&_ul]:pl-5 [&_ul]:list-disc [&_ol]:pl-5 [&_ol]:list-decimal [&_li]:my-0.5 [&_h1]:text-base [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-bold [&_h3]:text-sm [&_h3]:font-bold [&_h3]:uppercase [&_h3]:tracking-wider [&_h3]:text-primary [&_h3]:mt-3"
+                    className="diet-rich-content text-sm leading-relaxed text-foreground space-y-2 [&_strong]:text-foreground [&_strong]:font-semibold [&_p]:my-1.5 [&_ul]:pl-5 [&_ul]:list-disc [&_ol]:pl-5 [&_ol]:list-decimal [&_li]:my-0.5 [&_h1]:text-base [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-bold [&_h3]:text-sm [&_h3]:font-bold [&_h3]:uppercase [&_h3]:tracking-wider [&_h3]:text-foreground [&_h3]:mt-3"
                     dangerouslySetInnerHTML={isHtml ? { __html: rawHtmlMatch } : undefined}
                   >
                     {!isHtml ? rawHtmlMatch : undefined}
@@ -191,11 +191,11 @@ const MealDetailPanel = ({ meal, mealLabel, onClose }: MealDetailPanelProps) => 
                     className={cn(
                       "flex items-start justify-between py-2.5 px-3 rounded-xl text-sm transition-all duration-200",
                       i % 2 === 0 ? "bg-muted/15" : "bg-transparent",
-                      "hover:bg-primary/5"
+                      "hover:bg-foreground/5"
                     )}
                   >
                     <div className="flex items-start gap-2.5 min-w-0 flex-1">
-                      <span className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0 glow-sm" />
+                      <span className="w-2 h-2 rounded-full bg-foreground mt-1.5 shrink-0 glow-sm" />
                       <div className="min-w-0">
                         <span className="block text-foreground font-semibold leading-tight">{food.item}</span>
                         {food.notes && !food.notes.startsWith("__RAW_HTML__") && (

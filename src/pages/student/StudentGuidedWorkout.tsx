@@ -150,7 +150,7 @@ const StudentGuidedWorkout = () => {
             <Card key={assignment.id}>
               <CardContent className="py-5">
                 <div className="flex items-center gap-2 mb-1">
-                  <Dumbbell className="w-5 h-5 text-primary" />
+                  <Dumbbell className="w-5 h-5 text-foreground" />
                   <h3 className="font-display font-semibold text-lg">{template.title}</h3>
                 </div>
                 {template.description && <p className="text-sm text-muted-foreground mb-2">{template.description}</p>}
@@ -170,19 +170,19 @@ const StudentGuidedWorkout = () => {
                     return (
                       <div key={ex.id} className="rounded-lg border border-border overflow-hidden">
                         <button className="w-full flex items-center gap-3 p-4 text-left hover:bg-muted/50 transition-colors" onClick={() => toggleEx(ex.id)}>
-                          <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-sm font-bold shrink-0">
+                          <span className="flex items-center justify-center w-7 h-7 rounded-full bg-foreground/10 text-foreground text-sm font-bold shrink-0">
                             {idx + 1}
                           </span>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-sm">{ex.custom_name || "Exercício"}</p>
                             <div className="flex flex-wrap gap-2 mt-0.5 text-xs text-muted-foreground">
-                              {ex.sets && ex.reps && <span className="text-primary font-semibold">{ex.sets}x{ex.reps}</span>}
+                              {ex.sets && ex.reps && <span className="text-foreground font-semibold">{ex.sets}x{ex.reps}</span>}
                               {ex.rest_interval && <span>Int: {ex.rest_interval}</span>}
-                              {lastLog && <span className="text-primary">Última carga: {lastLog.load_used}</span>}
+                              {lastLog && <span className="text-foreground">Última carga: {lastLog.load_used}</span>}
                             </div>
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0">
-                            {ex.video_url && <Video className="w-4 h-4 text-primary" />}
+                            {ex.video_url && <Video className="w-4 h-4 text-foreground" />}
                             {isOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                           </div>
                         </button>
@@ -199,13 +199,13 @@ const StudentGuidedWorkout = () => {
                               {ex.sets && (
                                 <div className="rounded-lg bg-background p-3 border border-border">
                                   <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><Repeat className="w-3 h-3" /> Séries</p>
-                                  <p className="font-semibold text-primary">{ex.sets}</p>
+                                  <p className="font-semibold text-foreground">{ex.sets}</p>
                                 </div>
                               )}
                               {ex.reps && (
                                 <div className="rounded-lg bg-background p-3 border border-border">
                                   <p className="text-xs text-muted-foreground mb-1">Repetições</p>
-                                  <p className="font-semibold text-primary">{ex.reps}</p>
+                                  <p className="font-semibold text-foreground">{ex.reps}</p>
                                 </div>
                               )}
                               {ex.rest_interval && (

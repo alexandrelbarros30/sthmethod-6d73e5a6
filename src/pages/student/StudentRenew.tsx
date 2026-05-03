@@ -93,7 +93,7 @@ const StudentRenew = () => {
                 {hasDiscount && <p className="text-sm line-through text-muted-foreground/60">R$ {originalPrice.toFixed(2)}</p>}
                 <p className="text-2xl font-bold text-foreground mt-1">R$ {finalPrice.toFixed(2)}</p>
                 {hasDiscount && (
-                  <Badge variant="outline" className="text-xs text-primary border-primary/30">
+                  <Badge variant="outline" className="text-xs text-foreground border-foreground/20">
                     {plan.discount_type === "percentage" ? `${plan.discount_value}% OFF` : `R$ ${plan.discount_value} OFF`}
                   </Badge>
                 )}
@@ -103,7 +103,7 @@ const StudentRenew = () => {
                 <ul className="space-y-2">
                   {plan.benefits?.map((b: string, j: number) => (
                     <li key={j} className="flex items-start gap-2 text-sm font-body">
-                      <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                      <Check className="w-4 h-4 text-foreground shrink-0 mt-0.5" />
                       <span className="text-muted-foreground">{b}</span>
                     </li>
                   ))}

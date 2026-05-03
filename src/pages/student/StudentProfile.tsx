@@ -173,16 +173,16 @@ const StudentProfile = () => {
       {/* ===== AVATAR + NOME ===== */}
       <div className="flex flex-col items-center mb-6">
         <div className="relative mb-3">
-          <Avatar className="w-24 h-24 border-2 border-primary/20">
+          <Avatar className="w-24 h-24 border-2 border-foreground/15">
             <AvatarImage src={p?.avatar_url || ""} alt={firstName} />
-            <AvatarFallback className="text-2xl font-bold bg-primary/10 text-primary">
+            <AvatarFallback className="text-2xl font-bold bg-foreground/10 text-foreground">
               {firstName.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors"
+            className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center shadow-lg hover:bg-foreground/90 transition-colors"
           >
             <Camera className="w-4 h-4" />
           </button>
@@ -196,7 +196,7 @@ const StudentProfile = () => {
         </div>
         <h2 className="text-lg font-bold text-foreground font-display">{p?.full_name || firstName}</h2>
         <p className="text-sm text-muted-foreground">{p?.email}</p>
-        {uploading && <p className="text-xs text-primary mt-1 animate-pulse">Enviando foto...</p>}
+        {uploading && <p className="text-xs text-foreground mt-1 animate-pulse">Enviando foto...</p>}
       </div>
 
       {/* ===== ASSINATURA ATIVA ===== */}
@@ -311,7 +311,7 @@ const StudentProfile = () => {
               {savingPhone ? "Salvando..." : "Salvar telefone"}
             </Button>
             <p className="text-xs text-muted-foreground">
-              Demais dados pessoais não podem ser editados aqui. Para alterar nível de atividade, peso e outros, use a tela de <Link to="/dashboard/evolution" className="text-primary underline">Atualização</Link>.
+              Demais dados pessoais não podem ser editados aqui. Para alterar nível de atividade, peso e outros, use a tela de <Link to="/dashboard/evolution" className="text-foreground underline">Atualização</Link>.
             </p>
           </CardContent>
         </Card>
@@ -347,7 +347,7 @@ const StudentProfile = () => {
         <Card className="mb-4">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-display flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-primary" /> Última Evolução
+              <TrendingUp className="w-4 h-4 text-foreground" /> Última Evolução
             </CardTitle>
             <Link to="/dashboard/evolution">
               <Button variant="outline" size="sm" className="text-xs gap-1">
@@ -357,8 +357,8 @@ const StudentProfile = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                <Scale className="w-5 h-5 text-primary" />
+              <div className="w-10 h-10 rounded-xl bg-foreground/10 flex items-center justify-center shrink-0">
+                <Scale className="w-5 h-5 text-foreground" />
               </div>
               <div>
                 <p className="text-sm font-medium text-foreground">

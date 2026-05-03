@@ -242,10 +242,10 @@ const StudentEvolution = () => {
     <DashboardLayout role="student" title="Atualização" subtitle="Registre seu progresso para acompanhamento profissional.">
       {fullProfile && <EvolutionMacroDisplay profile={fullProfile} />}
 
-      <Card className="mb-6 border-primary/20 bg-primary/[0.03]">
+      <Card className="mb-6 border-foreground/15 bg-foreground/[0.03]">
         <CardHeader>
           <CardTitle className="text-base font-display flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-primary" />
+            <TrendingUp className="w-5 h-5 text-foreground" />
             Nova Atualização de Evolução
           </CardTitle>
           <p className="text-sm text-muted-foreground">
@@ -256,7 +256,7 @@ const StudentEvolution = () => {
           {/* Weight */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Scale className="w-4 h-4 text-primary" />
+              <Scale className="w-4 h-4 text-foreground" />
               <Label className="font-body font-medium">Peso Atual (kg) *</Label>
             </div>
             <Input
@@ -279,7 +279,7 @@ const StudentEvolution = () => {
             </p>
             <Button
               variant="outline"
-              className={`w-full transition-colors ${canSubmitUpdate && !saving ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90 shadow-[0_0_20px_hsl(var(--primary)/0.4)]" : ""}`}
+              className={`w-full transition-colors ${canSubmitUpdate && !saving ? "bg-foreground text-background border-foreground hover:bg-foreground/90 shadow-[0_0_20px_hsl(var(--primary)/0.4)]" : ""}`}
               onClick={handleSaveWeight}
               disabled={saving || !canSubmitUpdate}
             >
@@ -301,7 +301,7 @@ const StudentEvolution = () => {
           {/* Body images */}
           <div className="space-y-2">
             <div className="flex items-center gap-2 mb-1">
-              <Camera className="w-4 h-4 text-primary" />
+              <Camera className="w-4 h-4 text-foreground" />
               <Label className="font-body font-medium">Novas Fotos Corporais (3 obrigatórias)</Label>
             </div>
             <p className="text-xs text-muted-foreground mb-2">
@@ -323,7 +323,7 @@ const StudentEvolution = () => {
           </div>
 
           {imagesSaved && (
-            <div className="flex items-center gap-2 text-sm text-primary">
+            <div className="flex items-center gap-2 text-sm text-foreground">
               <CheckCircle2 className="w-4 h-4" />
               Fotos salvas com sucesso
             </div>
@@ -335,7 +335,7 @@ const StudentEvolution = () => {
           </div>
 
           <Button
-            className={`w-full transition-colors ${canSubmitUpdate && !saving ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_20px_hsl(var(--primary)/0.4)]" : ""}`}
+            className={`w-full transition-colors ${canSubmitUpdate && !saving ? "bg-foreground text-background hover:bg-foreground/90 shadow-[0_0_20px_hsl(var(--primary)/0.4)]" : ""}`}
             onClick={handleSaveWeight}
             disabled={saving || !canSubmitUpdate}
           >
