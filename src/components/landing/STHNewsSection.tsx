@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Newspaper, ChevronRight, ArrowRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import subqImg from "@/assets/sthnews-subq-glass-1.jpg";
 import cinturaImg from "@/assets/sthnews-subq-glass-2.jpg";
 import triadeImg from "@/assets/sthnews-triade-thumb.jpg";
@@ -87,61 +87,101 @@ const articles = [
 
 const STHNewsSection = () => {
   return (
-    <section id="sth-news" className="py-16 sm:py-24 px-4 sm:px-6">
+    <section id="sth-news" className="py-20 sm:py-32 px-4 sm:px-6 bg-background">
       <div className="max-w-6xl mx-auto">
+        {/* Header — Apple style: tipografia grande, silenciosa, centrada */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="flex items-center justify-between mb-8"
+          transition={{ duration: 0.6 }}
+          className="text-center mb-14 sm:mb-20"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl glass border border-primary/30 flex items-center justify-center">
-              <Newspaper className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-[10px] font-black tracking-[0.25em] text-primary uppercase">STH News</p>
-              <h2 className="text-xl sm:text-2xl font-display font-bold text-foreground">Inteligência aplicada ao corpo</h2>
-            </div>
-          </div>
-          <Link to="/tendencias" className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-            Ver todas <ArrowRight className="w-3 h-3" />
-          </Link>
+          <p className="text-[11px] font-semibold tracking-[0.3em] text-primary uppercase mb-4">
+            STH News
+          </p>
+          <h2 className="text-4xl sm:text-6xl font-display font-semibold text-foreground tracking-tight leading-[1.05] mb-4">
+            Inteligência aplicada
+            <br />
+            <span className="text-muted-foreground">ao corpo.</span>
+          </h2>
+          <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto font-light">
+            Matérias clínicas. Linguagem clara. Decisões melhores.
+          </p>
         </motion.div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {articles.map((a, i) => (
+        {/* Matéria de capa — destaque editorial */}
+        {articles[0] && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+            className="mb-6"
+          >
+            <Link
+              to={articles[0].to}
+              className="group relative block rounded-3xl overflow-hidden bg-card border border-border/40 hover:border-border transition-all duration-500"
+            >
+              <div className="aspect-[16/9] sm:aspect-[21/9] overflow-hidden bg-muted">
+                <img
+                  src={articles[0].img}
+                  alt={articles[0].title}
+                  className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
+                <p className="text-[10px] font-semibold tracking-[0.25em] text-primary uppercase mb-3">
+                  Em destaque
+                </p>
+                <h3 className="text-xl sm:text-3xl font-display font-semibold text-foreground tracking-tight leading-tight mb-2 max-w-3xl">
+                  {articles[0].title}
+                </h3>
+                <p className="text-sm sm:text-base text-muted-foreground font-light max-w-2xl mb-4">
+                  {articles[0].desc}
+                </p>
+                <span className="inline-flex items-center gap-1.5 text-sm text-primary font-medium">
+                  Ler matéria
+                  <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </span>
+              </div>
+            </Link>
+          </motion.div>
+        )}
+
+        {/* Grid secundário — minimalista, ar generoso */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {articles.slice(1).map((a, i) => (
             <motion.div
               key={a.to}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.08 }}
+              transition={{ delay: i * 0.06, duration: 0.5 }}
             >
               <Link
                 to={a.to}
-                className="group block rounded-2xl overflow-hidden border border-border/60 bg-card/40 backdrop-blur-xl hover:border-primary/40 transition-all hover:-translate-y-0.5"
+                className="group block rounded-2xl overflow-hidden bg-card border border-border/40 hover:border-border transition-all duration-500"
               >
                 <div className="aspect-[16/10] overflow-hidden bg-muted">
                   <img
                     src={a.img}
                     alt={a.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700"
                     loading="lazy"
-                    width={1280}
-                    height={800}
                   />
                 </div>
-                <div className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={`text-[9px] font-black px-2 py-0.5 rounded tracking-wider ${a.tagClass}`}>{a.tag}</span>
-                    <span className="text-[10px] text-muted-foreground">{a.date}</span>
-                  </div>
-                  <h3 className="text-sm font-bold text-foreground leading-tight mb-1.5 group-hover:text-primary transition-colors">
+                <div className="p-5 sm:p-6">
+                  <p className="text-[10px] font-semibold tracking-[0.2em] text-muted-foreground uppercase mb-2">
+                    {a.tag === "CAPA" ? "Nova matéria" : a.tag === "EXCLUSIVO" ? "Exclusivo" : a.date}
+                  </p>
+                  <h3 className="text-base sm:text-lg font-display font-semibold text-foreground leading-snug tracking-tight mb-2 group-hover:text-primary transition-colors">
                     {a.title}
                   </h3>
-                  <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                    {a.desc} <ChevronRight className="w-3 h-3" />
+                  <p className="text-sm text-muted-foreground font-light line-clamp-2">
+                    {a.desc}
                   </p>
                 </div>
               </Link>
@@ -149,9 +189,14 @@ const STHNewsSection = () => {
           ))}
         </div>
 
-        <div className="mt-6 sm:hidden text-center">
-          <Link to="/tendencias" className="inline-flex items-center gap-1 text-xs text-primary font-bold">
-            Ver todas as matérias <ArrowRight className="w-3 h-3" />
+        {/* CTA Apple style */}
+        <div className="mt-14 text-center">
+          <Link
+            to="/tendencias"
+            className="inline-flex items-center gap-1.5 text-base text-primary font-medium hover:opacity-70 transition-opacity"
+          >
+            Ver todas as matérias
+            <ArrowUpRight className="w-4 h-4" />
           </Link>
         </div>
       </div>
