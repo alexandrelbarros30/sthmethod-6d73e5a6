@@ -320,12 +320,12 @@ const Landing = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="flex items-center justify-center gap-10 md:gap-20 mt-16 sm:mt-20"
+            className="grid grid-cols-3 gap-4 sm:gap-10 md:gap-20 mt-16 sm:mt-20 max-w-md sm:max-w-none mx-auto"
           >
             {stats.map((stat) => (
               <div key={stat.label} className="text-center">
-                <div className="text-2xl md:text-4xl font-semibold tracking-tight text-foreground">{stat.value}</div>
-                <div className="text-[11px] tracking-[0.15em] uppercase text-muted-foreground mt-2">{stat.label}</div>
+                <div className="text-xl sm:text-2xl md:text-4xl font-semibold tracking-[-0.03em] text-foreground whitespace-nowrap">{stat.value}</div>
+                <div className="text-[10px] sm:text-[11px] tracking-[0.15em] uppercase text-muted-foreground mt-2">{stat.label}</div>
               </div>
             ))}
           </motion.div>
@@ -397,7 +397,7 @@ const Landing = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="relative glass rounded-3xl p-8 sm:p-10 max-w-lg w-full glow-border text-center border-2 border-primary/20"
+              className="relative bg-background rounded-3xl p-8 sm:p-12 max-w-md w-full text-center border border-border/60"
             >
               <button
                 onClick={dismissPopup}
@@ -405,59 +405,33 @@ const Landing = () => {
               >
                 <X className="w-5 h-5" />
               </button>
-              
-              {/* Badge de destaque */}
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-5"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                NOVO — Gratuito
-              </motion.div>
-              
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.15, type: "spring" }}
-                className="w-20 h-20 rounded-3xl gradient-bg flex items-center justify-center mx-auto mb-5 shadow-2xl shadow-primary/20"
-              >
-                <Sparkles className="w-10 h-10 text-primary-foreground" />
-              </motion.div>
-              
-              <h3 className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-3">
-                Veja sua evolução em segundos
+
+              <div className="text-[11px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5">
+                Novo · Gratuito
+              </div>
+
+              <h3 className="text-2xl sm:text-3xl font-semibold tracking-[-0.03em] leading-[1.1] text-foreground mb-4">
+                Veja sua evolução<br />em segundos.
               </h3>
-              
-              <p className="text-sm sm:text-base text-muted-foreground mb-6 leading-relaxed max-w-sm mx-auto">
-                Envie suas fotos (antes e depois) e visualize sua transformação com um comparativo profissional. 
-                <span className="text-foreground font-medium">Grátis e instantâneo.</span>
+
+              <p className="text-[14px] sm:text-[15px] text-muted-foreground font-light leading-relaxed mb-8 max-w-sm mx-auto">
+                Envie suas fotos antes e depois. Receba um comparativo profissional, instantâneo.
               </p>
-              
+
               <div className="flex flex-col gap-3">
                 <Link to="/evolucao" onClick={dismissPopup}>
-                  <Button size="lg" className="w-full gradient-bg text-primary-foreground hover:opacity-90 text-base py-6 shadow-xl shadow-primary/20">
-                    <Sparkles className="w-5 h-5 mr-2" />
-                    Gerar minha evolução agora
+                  <Button className="w-full rounded-full h-12 bg-foreground text-background hover:bg-foreground/90 text-[14px] font-medium">
+                    Gerar minha evolução
                   </Button>
                 </Link>
-                <button onClick={dismissPopup} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-2">
+                <button onClick={dismissPopup} className="text-[13px] text-muted-foreground hover:text-foreground transition-colors py-1">
                   Talvez depois
                 </button>
               </div>
-              
-              {/* Social proof */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="mt-5 pt-5 border-t border-border/50"
-              >
-              <p className="text-xs text-muted-foreground">
-                  Já utilizado por <span className="text-primary font-medium">+1000 pessoas</span>
-                </p>
-              </motion.div>
+
+              <p className="text-[11px] text-muted-foreground font-light mt-8 pt-6 border-t border-border/40">
+                Já utilizado por <span className="text-foreground font-medium">+1000 pessoas</span>
+              </p>
             </motion.div>
           </motion.div>
         )}
