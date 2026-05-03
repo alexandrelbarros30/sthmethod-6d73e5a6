@@ -340,10 +340,12 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
             : "ml-60 w-[calc(100%-15rem)] px-6 py-6 lg:px-8 lg:py-8"
       )}>
         <div className="max-w-5xl mx-auto">
-          <div className="mb-6 md:mb-8">
-            <h1 className="text-xl md:text-2xl font-semibold text-foreground font-display tracking-tight">{title}</h1>
-            {subtitle && <p className="text-sm text-muted-foreground mt-1 font-body">{subtitle}</p>}
-          </div>
+          {(title || subtitle) && (
+            <div className="mb-8 md:mb-10">
+              {title && <h1 className="text-2xl md:text-4xl font-semibold text-foreground tracking-[-0.035em] leading-tight">{title}</h1>}
+              {subtitle && <p className="text-[13px] md:text-[14px] text-muted-foreground mt-2 font-light tracking-tight">{subtitle}</p>}
+            </div>
+          )}
           <div className="w-full min-w-0">{children}</div>
         </div>
       </main>
@@ -353,8 +355,8 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
       <Dialog open={metabolicPopup} onOpenChange={(open) => { if (!open) handleCloseMetabolic(); }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-primary">
-              <Microscope className="w-5 h-5" />
+            <DialogTitle className="flex items-center gap-2 text-foreground tracking-[-0.02em]">
+              <Microscope className="w-5 h-5" strokeWidth={1.8} />
               Nova Análise Metabólica
             </DialogTitle>
           </DialogHeader>
@@ -362,8 +364,8 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
             Seu painel metabólico foi atualizado com novas informações. Confira agora!
           </p>
           <div className="flex gap-2 mt-2">
-            <Button onClick={handleGoToMetabolic} className="flex-1">Ver Painel</Button>
-            <Button variant="outline" onClick={handleCloseMetabolic} className="flex-1">Fechar</Button>
+            <Button onClick={handleGoToMetabolic} className="flex-1 rounded-full bg-foreground text-background hover:bg-foreground/90">Ver Painel</Button>
+            <Button variant="outline" onClick={handleCloseMetabolic} className="flex-1 rounded-full">Fechar</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -372,15 +374,15 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
       <Dialog open={dietPopup} onOpenChange={(open) => { if (!open) handleCloseDiet(); }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-primary">
-              <UtensilsCrossed className="w-5 h-5" />
-              Nova Dieta Liberada! 🎉
+            <DialogTitle className="flex items-center gap-2 text-foreground tracking-[-0.02em]">
+              <UtensilsCrossed className="w-5 h-5" strokeWidth={1.8} />
+              Nova Dieta liberada
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             Sua nova dieta <span className="font-semibold text-foreground">"{pendingDietTitle}"</span> foi liberada e está disponível para consulta. Confira agora seu novo plano alimentar!
           </p>
-          <Button onClick={handleGoToDiet} className="w-full mt-2">
+          <Button onClick={handleGoToDiet} className="w-full mt-2 rounded-full bg-foreground text-background hover:bg-foreground/90">
             Ver Minha Dieta
           </Button>
         </DialogContent>
@@ -390,15 +392,15 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
       <Dialog open={trainingPopup} onOpenChange={(open) => { if (!open) handleCloseTraining(); }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-primary">
-              <Dumbbell className="w-5 h-5" />
-              Novo Treino Liberado! 💪
+            <DialogTitle className="flex items-center gap-2 text-foreground tracking-[-0.02em]">
+              <Dumbbell className="w-5 h-5" strokeWidth={1.8} />
+              Novo Treino liberado
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             Seu novo treino <span className="font-semibold text-foreground">"{pendingTrainingTitle}"</span> foi atribuído e está pronto para você começar. Bora treinar!
           </p>
-          <Button onClick={handleGoToTraining} className="w-full mt-2">
+          <Button onClick={handleGoToTraining} className="w-full mt-2 rounded-full bg-foreground text-background hover:bg-foreground/90">
             Ver Meu Treino
           </Button>
         </DialogContent>
@@ -408,15 +410,15 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
       <Dialog open={protocolPopup} onOpenChange={(open) => { if (!open) handleCloseProtocol(); }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-primary">
-              <FileText className="w-5 h-5" />
-              Novo Protocolo Liberado! 📋
+            <DialogTitle className="flex items-center gap-2 text-foreground tracking-[-0.02em]">
+              <FileText className="w-5 h-5" strokeWidth={1.8} />
+              Novo Protocolo liberado
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             Seu novo protocolo <span className="font-semibold text-foreground">"{pendingProtocolTitle}"</span> foi liberado. Confira todas as orientações agora!
           </p>
-          <Button onClick={handleGoToProtocol} className="w-full mt-2">
+          <Button onClick={handleGoToProtocol} className="w-full mt-2 rounded-full bg-foreground text-background hover:bg-foreground/90">
             Ver Meu Protocolo
           </Button>
         </DialogContent>
@@ -426,16 +428,16 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
       <Dialog open={birthdayPopup} onOpenChange={(open) => { if (!open) handleCloseBirthday(); }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-primary">
-              <PartyPopper className="w-5 h-5" />
-              Feliz Aniversário! 🎂
+            <DialogTitle className="flex items-center gap-2 text-foreground tracking-[-0.02em]">
+              <PartyPopper className="w-5 h-5" strokeWidth={1.8} />
+              Feliz Aniversário
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground leading-relaxed">
             {birthdayMessage}
           </p>
-          <Button onClick={handleCloseBirthday} className="w-full mt-2">
-            Obrigado! 🥰
+          <Button onClick={handleCloseBirthday} className="w-full mt-2 rounded-full bg-foreground text-background hover:bg-foreground/90">
+            Obrigado
           </Button>
         </DialogContent>
       </Dialog>
@@ -444,8 +446,8 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
       <Dialog open={customPopupOpen} onOpenChange={(open) => { if (!open) handleDismissCustomPopup(); }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-primary">
-              <Megaphone className="w-5 h-5" />
+            <DialogTitle className="flex items-center gap-2 text-foreground tracking-[-0.02em]">
+              <Megaphone className="w-5 h-5" strokeWidth={1.8} />
               {customPopup?.title || "Aviso"}
             </DialogTitle>
           </DialogHeader>
@@ -455,15 +457,15 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
           <div className="flex gap-2 mt-2">
             {customPopup?.button_text && customPopup?.button_route && customPopup.button_route !== "none" ? (
               <>
-                <Button onClick={handleCustomPopupAction} className="flex-1">
+                <Button onClick={handleCustomPopupAction} className="flex-1 rounded-full bg-foreground text-background hover:bg-foreground/90">
                   {customPopup.button_text}
                 </Button>
-                <Button variant="outline" onClick={handleDismissCustomPopup} className="flex-1">
+                <Button variant="outline" onClick={handleDismissCustomPopup} className="flex-1 rounded-full">
                   Fechar
                 </Button>
               </>
             ) : (
-              <Button onClick={handleDismissCustomPopup} className="w-full">
+              <Button onClick={handleDismissCustomPopup} className="w-full rounded-full bg-foreground text-background hover:bg-foreground/90">
                 Fechar
               </Button>
             )}
