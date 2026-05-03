@@ -34,7 +34,7 @@ interface Props {
 const CompoundDetail = ({ family, selected, visited, onSelect }: Props) => {
   const accent = `hsl(0 0% 96%)`;
   const accentSoft = `hsl(0 0% 96%)`;
-  const accentBg = `hsl(0 0% 0% / 0.5)`;
+  const accentBg = `hsl(0 0% 100% / 0.12)`;
   const accentBorder = `hsl(0 0% 100% / 0.25)`;
   const accentBorderSoft = `hsl(0 0% 100% / 0.12)`;
   const accentText06 = `hsl(0 0% 100% / 0.04)`;
@@ -65,6 +65,7 @@ const CompoundDetail = ({ family, selected, visited, onSelect }: Props) => {
                 src={c.image}
                 alt={c.name}
                 className="w-full h-full object-cover"
+                style={{ filter: "brightness(1.1) contrast(1.03) saturate(0.92)" }}
                 loading="lazy"
                 width={200}
                 height={144}
@@ -73,8 +74,8 @@ const CompoundDetail = ({ family, selected, visited, onSelect }: Props) => {
                 className="absolute inset-0 flex flex-col items-center justify-end pb-2"
                 style={{
                   background: isActive
-                    ? `linear-gradient(to top, hsl(0 0% 0% / 0.85), transparent 70%)`
-                    : "linear-gradient(to top, hsl(0 0% 0% / 0.75), transparent 60%)",
+                    ? `linear-gradient(to top, hsl(0 0% 0% / 0.42), hsl(0 0% 0% / 0.06) 56%, hsl(0 0% 100% / 0.1) 100%)`
+                    : "linear-gradient(to top, hsl(0 0% 0% / 0.28), hsl(0 0% 0% / 0.05) 52%, hsl(0 0% 100% / 0.08) 100%)",
                 }}
               >
                 <span
@@ -122,6 +123,7 @@ const CompoundDetail = ({ family, selected, visited, onSelect }: Props) => {
                 src={compound.image}
                 alt={compound.name}
                 className="w-full h-full object-cover"
+                style={{ filter: "brightness(1.14) contrast(1.04) saturate(0.92)" }}
                 loading="lazy"
                 width={800}
                 height={512}
@@ -132,9 +134,15 @@ const CompoundDetail = ({ family, selected, visited, onSelect }: Props) => {
               <div
                 className="absolute inset-0 flex items-end p-5"
                 style={{
-                  background: `linear-gradient(to top, hsl(0 0% 0% / 0.7) 0%, hsl(0 0% 0% / 0.15) 55%, transparent 100%)`,
+                  background: `linear-gradient(to top, hsl(0 0% 0% / 0.34) 0%, hsl(0 0% 0% / 0.08) 34%, hsl(0 0% 100% / 0.12) 100%)`,
                 }}
               >
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background: "linear-gradient(135deg, hsl(0 0% 100% / 0.18) 0%, transparent 34%, transparent 68%, hsl(0 0% 100% / 0.08) 100%)",
+                  }}
+                />
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2.5">
                     <span className="text-xl font-bold" style={{ color: G.t96 }}>
