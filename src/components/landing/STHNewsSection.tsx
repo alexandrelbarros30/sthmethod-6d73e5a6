@@ -10,8 +10,18 @@ import gestrinonaImg from "@/assets/sthnews-gestrinona-hero.jpg";
 import platoImg from "@/assets/sthnews-plato-hero.jpg";
 import trembolonaImg from "@/assets/sthnews-trembolona-hero.jpg";
 import ginecoImg from "@/assets/sthnews-gineco-hero.jpg";
+import bfAltoImg from "@/assets/sthnews-bfalto-hero.jpg";
 
 const articles = [
+  {
+    to: "/tendencias/hormonios-bf-alto",
+    tag: "CAPA",
+    tagClass: "bg-primary text-primary-foreground",
+    date: "Nova matéria",
+    title: "🧬 Hormônio com BF alto: o fim do mito (e a verdade técnica)",
+    desc: "Não é proibido. É cirúrgico — quando os exames falam mais alto que o medo.",
+    img: bfAltoImg,
+  },
   {
     to: "/tendencias/ginecomastia",
     tag: "CAPA",
