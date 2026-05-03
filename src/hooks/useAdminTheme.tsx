@@ -1,16 +1,38 @@
 import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
+
+const PUBLIC_PREFIXES = [
+  "/login", "/forgot-password", "/reset-password", "/cadastro",
+  "/questionario", "/install", "/como-funciona", "/free",
+  "/tendencias", "/promo", "/evolucao", "/fila",
+];
+
+const isPublicPath = (p: string) => {
+  if (p === "/") return true;
+  return PUBLIC_PREFIXES.some((prefix) => p === prefix || p.startsWith(prefix + "/"));
+};
 
 /**
- * Forces dark theme globally for all users (admin, consultor, students, etc).
- * Pure black background with green accents — Apple-style premium dark look.
+ * Forces dark theme for AUTHENTICATED areas only (admin, consultor, students).
+ * Public/external pages keep the Apple light theme (handled by usePublicAppleTheme).
  */
 export function useAdminTheme() {
+  const { pathname } = useLocation();
+
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.remove("light");
-    root.classList.add("dark");
-    localStorage.setItem("app-theme", "dark");
-  }, []);
+    if (isPublicPath(pathname)) {
+      // Public area: ensure light Apple theme
+      root.classList.remove("dark");
+      root.classList.add("light");
+      localStorage.setItem("app-theme", "light");
+    } else {
+      // Authenticated area: force dark
+      root.classList.remove("light");
+      root.classList.add("dark");
+      localStorage.setItem("app-theme", "dark");
+    }
+  }, [pathname]);
 
   return "dark" as const;
 }
