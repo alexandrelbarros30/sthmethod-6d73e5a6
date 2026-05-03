@@ -104,7 +104,7 @@ export default function Questionario() {
       {/* Navbar */}
       <nav className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="font-display text-lg font-bold gradient-text">ST&H</Link>
+          <Link to="/" className="text-[11px] font-medium tracking-[0.2em] uppercase text-foreground">ST&H</Link>
           <Link to="/login">
             <Button variant="outline" size="sm">Acessar Plataforma</Button>
           </Link>
@@ -122,7 +122,7 @@ export default function Questionario() {
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
                 <motion.div
-                  className="h-full gradient-bg rounded-full"
+                  className="h-full bg-foreground rounded-full"
                   initial={{ width: 0 }}
                   animate={{ width: `${((step + 1) / totalSteps) * 100}%` }}
                   transition={{ duration: 0.4 }}
@@ -137,7 +137,7 @@ export default function Questionario() {
               <motion.div key="s0" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-xl font-display">Dados Básicos</CardTitle>
+                    <CardTitle className="text-xl ">Dados Básicos</CardTitle>
                     <p className="text-sm text-muted-foreground">Precisamos de algumas informações para calcular seus macros.</p>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -175,7 +175,7 @@ export default function Questionario() {
               <motion.div key="s1" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-xl font-display">Nível de Atividade Diária (NEAT)</CardTitle>
+                    <CardTitle className="text-xl ">Nível de Atividade Diária (NEAT)</CardTitle>
                     <p className="text-sm text-muted-foreground">Fora dos treinos — sua rotina diária de movimento.</p>
                   </CardHeader>
                   <CardContent>
@@ -200,7 +200,7 @@ export default function Questionario() {
               <motion.div key="s2" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-xl font-display">Treino e Cardio</CardTitle>
+                    <CardTitle className="text-xl ">Treino e Cardio</CardTitle>
                     <p className="text-sm text-muted-foreground">Detalhe sua rotina de exercícios.</p>
                   </CardHeader>
                   <CardContent className="space-y-5">
@@ -315,7 +315,7 @@ export default function Questionario() {
               <motion.div key="s3" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-xl font-display">Qual seu objetivo?</CardTitle>
+                    <CardTitle className="text-xl ">Qual seu objetivo?</CardTitle>
                     <p className="text-sm text-muted-foreground">Escolha o foco principal da sua meta atual.</p>
                   </CardHeader>
                   <CardContent>
@@ -336,11 +336,11 @@ export default function Questionario() {
             {step === totalSteps && result && (
               <motion.div key="result" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
                 <Card className="overflow-hidden">
-                  <CardHeader className="gradient-bg text-primary-foreground text-center pb-8">
+                  <CardHeader className="bg-foreground text-background text-center pb-8">
                     <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring" }}>
                       <CheckCircle2 className="w-12 h-12 mx-auto mb-3" />
                     </motion.div>
-                    <CardTitle className="text-2xl font-display">Seus Macronutrientes</CardTitle>
+                    <CardTitle className="text-2xl ">Seus Macronutrientes</CardTitle>
                     <p className="text-primary-foreground/80 text-sm mt-1">
                       Calculado com base na equação de Mifflin-St Jeor
                     </p>
@@ -351,20 +351,20 @@ export default function Questionario() {
                       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
                         className="p-4 rounded-xl bg-muted/50 border border-border">
                         <p className="text-xs text-muted-foreground mb-1">TMB</p>
-                        <p className="text-xl font-bold font-display">{result.bmr}</p>
+                        <p className="text-xl font-bold ">{result.bmr}</p>
                         <p className="text-xs text-muted-foreground">kcal</p>
                       </motion.div>
                       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
                         className="p-4 rounded-xl bg-muted/50 border border-border">
                         <p className="text-xs text-muted-foreground mb-1">TDEE</p>
-                        <p className="text-xl font-bold font-display">{result.tdee}</p>
+                        <p className="text-xl font-bold ">{result.tdee}</p>
                         <p className="text-xs text-muted-foreground">kcal</p>
                       </motion.div>
                       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
-                        className="p-4 rounded-xl gradient-bg text-primary-foreground">
+                        className="p-4 rounded-xl bg-foreground text-background">
                         <Flame className="w-4 h-4 mx-auto mb-1" />
                         <p className="text-xs opacity-80 mb-1">Meta Diária</p>
-                        <p className="text-xl font-bold font-display">{result.dailyCalories}</p>
+                        <p className="text-xl font-bold ">{result.dailyCalories}</p>
                         <p className="text-xs opacity-80">kcal</p>
                       </motion.div>
                     </div>
@@ -374,21 +374,21 @@ export default function Questionario() {
                       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
                         className="text-center p-4 rounded-xl border border-border">
                         <Beef className="w-5 h-5 mx-auto mb-2 text-red-500" />
-                        <p className="text-2xl font-bold font-display">{result.proteinG}g</p>
+                        <p className="text-2xl font-bold ">{result.proteinG}g</p>
                         <p className="text-xs text-muted-foreground">Proteína</p>
                         <p className="text-xs text-muted-foreground">{result.proteinG * 4} kcal</p>
                       </motion.div>
                       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}
                         className="text-center p-4 rounded-xl border border-border">
                         <Wheat className="w-5 h-5 mx-auto mb-2 text-amber-500" />
-                        <p className="text-2xl font-bold font-display">{result.carbsG}g</p>
+                        <p className="text-2xl font-bold ">{result.carbsG}g</p>
                         <p className="text-xs text-muted-foreground">Carboidratos</p>
                         <p className="text-xs text-muted-foreground">{result.carbsG * 4} kcal</p>
                       </motion.div>
                       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}
                         className="text-center p-4 rounded-xl border border-border">
                         <Droplets className="w-5 h-5 mx-auto mb-2 text-blue-500" />
-                        <p className="text-2xl font-bold font-display">{result.fatG}g</p>
+                        <p className="text-2xl font-bold ">{result.fatG}g</p>
                         <p className="text-xs text-muted-foreground">Gorduras</p>
                         <p className="text-xs text-muted-foreground">{result.fatG * 9} kcal</p>
                       </motion.div>
@@ -409,14 +409,14 @@ export default function Questionario() {
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}
                       className="text-center space-y-4 pt-4">
                       <div className="glass rounded-xl p-6 glow-border">
-                        <h3 className="text-lg font-display font-bold mb-2">
+                        <h3 className="text-lg  font-bold mb-2">
                           Quer um plano personalizado para alcançar seus resultados?
                         </h3>
                         <p className="text-sm text-muted-foreground mb-4">
                           Cadastre-se e tenha acesso a acompanhamento profissional com dieta, treino e protocolos sob medida.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                          <Button size="lg" className="gradient-bg text-primary-foreground hover:opacity-90 px-8"
+                          <Button size="lg" className="bg-foreground text-background hover:bg-foreground/90 rounded-full px-8"
                             onClick={() => navigate("/cadastro", { state: { quizData: form } })}>
                             Quero me cadastrar <ArrowRight className="w-4 h-4 ml-2" />
                           </Button>
@@ -444,7 +444,7 @@ export default function Questionario() {
               <Button variant="ghost" onClick={() => setStep(s => s - 1)} disabled={step === 0}>
                 <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
               </Button>
-              <Button onClick={next} disabled={!canAdvanceStep(step)} className="gradient-bg text-primary-foreground hover:opacity-90">
+              <Button onClick={next} disabled={!canAdvanceStep(step)} className="bg-foreground text-background hover:bg-foreground/90 rounded-full">
                 {step === totalSteps - 1 ? (
                   <><Calculator className="w-4 h-4 mr-2" /> Calcular Macros</>
                 ) : (
