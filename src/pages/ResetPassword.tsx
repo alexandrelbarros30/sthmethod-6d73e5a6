@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Lock, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const } },
+};
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -16,11 +22,9 @@ const ResetPassword = () => {
   const [recoveryReady, setRecoveryReady] = useState(false);
 
   useEffect(() => {
-    // Supabase places recovery params in the URL hash and fires PASSWORD_RECOVERY
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") setRecoveryReady(true);
     });
-    // If user already has a session from the recovery link, allow update
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setRecoveryReady(true);
     });
@@ -46,55 +50,46 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8 bg-background">
-      <div className="w-full max-w-md space-y-8">
-        <div>
-          <Link to="/login" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8">
-            <ArrowLeft className="w-4 h-4" /> Voltar ao login
+    <div className="min-h-screen bg-background text-foreground antialiased">
+      <header className="fixed top-0 inset-x-0 z-50 bg-background/80 backdrop-blur-2xl border-b border-border/40">
+        <div className="max-w-6xl mx-auto px-6 h-11 flex items-center justify-between">
+          <Link to="/login" className="flex items-center gap-1.5 text-[12px] text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Login</span>
           </Link>
-          <h2 className="text-2xl font-bold text-foreground font-display">Redefinir senha</h2>
-          <p className="text-muted-foreground mt-2 font-body text-sm">
-            Digite sua nova senha abaixo. Após salvar, faça login normalmente.
-          </p>
+          <span className="text-[12px] font-semibold tracking-tight">STH METHOD</span>
+          <span className="w-12" />
         </div>
+      </header>
 
+      <section className="pt-32 md:pt-40 pb-12 text-center px-6">
+        <motion.p initial="hidden" animate="visible" variants={fadeUp} className="text-[12px] font-medium tracking-[0.25em] uppercase text-primary mb-6">
+          Nova senha
+        </motion.p>
+        <motion.h1
+          initial="hidden" animate="visible" variants={fadeUp}
+          className="max-w-3xl mx-auto text-5xl md:text-7xl font-semibold tracking-[-0.04em] leading-[0.95] text-foreground"
+        >
+          Redefinir <br /><span className="text-muted-foreground">senha.</span>
+        </motion.h1>
+      </section>
+
+      <motion.section initial="hidden" animate="visible" variants={fadeUp} className="max-w-md mx-auto px-6 pb-32">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="password" className="font-body">Nova senha</Label>
+            <Label htmlFor="password" className="text-[13px] font-medium text-muted-foreground">Nova senha</Label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 pr-10"
-                required
-                minLength={6}
-              />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+              <Input id="password" type={showPassword ? "text" : "password"} placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="h-12 rounded-2xl border-border/60 bg-muted/30 px-4 pr-12 text-base" required minLength={6} />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirm" className="font-body">Confirmar nova senha</Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                id="confirm"
-                type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                className="pl-10"
-                required
-                minLength={6}
-              />
-            </div>
+            <Label htmlFor="confirm" className="text-[13px] font-medium text-muted-foreground">Confirmar nova senha</Label>
+            <Input id="confirm" type={showPassword ? "text" : "password"} placeholder="••••••••" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="h-12 rounded-2xl border-border/60 bg-muted/30 px-4 text-base" required minLength={6} />
           </div>
-          <Button type="submit" className="w-full" size="lg" disabled={loading}>
+          <Button type="submit" disabled={loading} className="w-full h-12 rounded-full bg-foreground text-background hover:bg-foreground/90 text-[15px] font-medium">
             {loading ? "Atualizando..." : "Salvar nova senha"}
           </Button>
           {!recoveryReady && (
@@ -103,7 +98,7 @@ const ResetPassword = () => {
             </p>
           )}
         </form>
-      </div>
+      </motion.section>
     </div>
   );
 };
