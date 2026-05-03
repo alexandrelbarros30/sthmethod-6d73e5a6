@@ -5,10 +5,10 @@ import {
   Salad, ChevronRight, Flame, Clock, Utensils,
   UtensilsCrossed, Beaker, Brain, Layers, Bell, Droplets, Activity, Target
 } from "lucide-react";
-import cardHormoniosImg from "@/assets/card-hormonios.jpg";
-import cardDicasImg from "@/assets/card-dicas.jpg";
-import cardReceitasImg from "@/assets/card-receitas.jpg";
-import cardCombinacoesImg from "@/assets/card-combinacoes.jpg";
+import cardHormoniosImg from "@/assets/sthnews-subq-glass-1.jpg";
+import cardDicasImg from "@/assets/sthnews-triade-thumb.jpg";
+import cardReceitasImg from "@/assets/recipe-salmao-aspargos.jpg";
+import cardCombinacoesImg from "@/assets/sthnews-masteron-glass-1.jpg";
 import sthNewsLatestImg from "@/assets/sthnews-cintura-hero.jpg";
 import { useMealTracking } from "@/hooks/useMealTracking";
 import { Link, useNavigate } from "react-router-dom";
@@ -196,17 +196,50 @@ const StudentOverview = () => {
                 className="snap-start shrink-0 w-[78vw] max-w-[300px] text-left rounded-3xl overflow-hidden relative group border border-border/40 bg-background active:scale-[0.98] transition-all duration-300"
               >
                 <div className="relative h-48 overflow-hidden">
-                  <img src={s.img} alt={s.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                  <img
+                    src={s.img}
+                    alt={s.title}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    style={{ filter: "brightness(1.2) contrast(1.03) saturate(0.9)" }}
+                    loading="lazy"
+                  />
+                  {/* Liquid glass overlays */}
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background:
+                        "linear-gradient(to top, hsl(0 0% 0% / 0.18) 0%, transparent 38%, hsl(0 0% 100% / 0.2) 100%)",
+                    }}
+                  />
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, hsl(0 0% 100% / 0.24) 0%, transparent 30%, transparent 68%, hsl(0 0% 100% / 0.1) 100%)",
+                    }}
+                  />
+                  <div
+                    className="absolute inset-0 pointer-events-none opacity-40"
+                    style={{
+                      background:
+                        "linear-gradient(115deg, transparent 40%, rgb(255 255 255 / 0.06) 50%, transparent 60%)",
+                    }}
+                  />
                   <div className="absolute top-4 left-4">
-                    <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.25em] font-medium px-2.5 py-1 rounded-full bg-white/15 backdrop-blur text-white">
+                    <span
+                      className="inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.25em] font-medium px-2.5 py-1 rounded-full backdrop-blur-md text-white"
+                      style={{
+                        background: "hsl(0 0% 100% / 0.16)",
+                        border: "0.5px solid hsl(0 0% 100% / 0.22)",
+                      }}
+                    >
                       <Icon className="w-2.5 h-2.5" strokeWidth={2} />
                       {s.tag}
                     </span>
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <h3 className="text-[17px] font-semibold tracking-[-0.02em] leading-tight text-white">{s.title}</h3>
-                    <p className="text-[11px] text-white/60 mt-1 tracking-tight font-light">{s.subtitle}</p>
+                    <h3 className="text-[17px] font-semibold tracking-[-0.02em] leading-tight text-white" style={{ textShadow: "0 2px 14px rgb(0 0 0 / 0.5)" }}>{s.title}</h3>
+                    <p className="text-[11px] text-white/80 mt-1 tracking-tight font-light" style={{ textShadow: "0 2px 10px rgb(0 0 0 / 0.4)" }}>{s.subtitle}</p>
                   </div>
                 </div>
               </button>
