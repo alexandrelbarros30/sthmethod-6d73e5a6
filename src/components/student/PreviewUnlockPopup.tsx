@@ -108,7 +108,7 @@ const PreviewUnlockPopup = () => {
                     <p className="text-[10px] text-muted-foreground">Refeições + macros</p>
                   </div>
                 </div>
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-foreground text-background px-2.5 py-1 rounded-full shadow-[0_0_12px_hsl(var(--primary)/0.6)] animate-pulse">
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-foreground text-background px-2.5 py-1 rounded-full  animate-pulse">
                   Ver <ChevronRight className="w-3 h-3" />
                 </span>
               </div>
@@ -149,7 +149,7 @@ const PreviewUnlockPopup = () => {
                     <p className="text-[10px] text-muted-foreground">Suplementação</p>
                   </div>
                 </div>
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-foreground text-background px-2.5 py-1 rounded-full shadow-[0_0_12px_hsl(var(--primary)/0.6)] animate-pulse">
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-foreground text-background px-2.5 py-1 rounded-full  animate-pulse">
                   Ver <ChevronRight className="w-3 h-3" />
                 </span>
               </div>
