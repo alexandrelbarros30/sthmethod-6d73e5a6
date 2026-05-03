@@ -35,14 +35,14 @@ const PreviewLockedCard = ({ previewText, type }: PreviewLockedCardProps) => {
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">
-      <Card className="border-primary/30 overflow-hidden">
+      <Card className="border-foreground/20 overflow-hidden">
         <CardContent className="py-6 space-y-4">
           <div className="flex items-start gap-3">
-            <div className="w-11 h-11 rounded-xl bg-primary/15 border border-primary/20 flex items-center justify-center shrink-0">
-              <Sparkles className="w-5 h-5 text-primary" />
+            <div className="w-11 h-11 rounded-xl bg-foreground/10 border border-foreground/15 flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5 text-foreground" />
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] font-bold tracking-[0.18em] text-primary uppercase">
+              <p className="text-[10px] font-bold tracking-[0.18em] text-foreground uppercase">
                 Pré-estreia liberada
               </p>
               <h2 className="text-lg font-bold font-display text-foreground leading-tight mt-0.5">
@@ -86,7 +86,7 @@ const PreviewLockedCard = ({ previewText, type }: PreviewLockedCardProps) => {
               )}
               <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-background via-background/95 to-transparent pointer-events-none" />
               <div className="absolute inset-0 flex items-end justify-center pb-3 pointer-events-none">
-                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-primary bg-background/95 border border-primary/30 rounded-full px-3 py-1.5 shadow-sm">
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-foreground bg-background/95 border border-foreground/20 rounded-full px-3 py-1.5 shadow-sm">
                   <Lock className="w-3 h-3" /> +{Math.max(allLines.length - 2, 0)} linhas bloqueadas
                 </div>
               </div>

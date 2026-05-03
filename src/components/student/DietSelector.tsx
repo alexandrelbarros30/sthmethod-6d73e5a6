@@ -32,14 +32,14 @@ export default function DietSelector({ diets, selectedId, onSelect }: DietSelect
   const today = todayStr();
 
   return (
-    <Card className="premium-card border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent animate-fade-in">
+    <Card className="premium-card border-foreground/20 bg-gradient-to-br from-foreground/10 via-foreground/5 to-transparent animate-fade-in">
       <CardContent className="py-4 space-y-3">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center">
-            <Utensils className="w-4 h-4 text-primary" />
+          <div className="w-8 h-8 rounded-xl bg-foreground/15 flex items-center justify-center">
+            <Utensils className="w-4 h-4 text-foreground" />
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-wider text-primary font-bold">Escolha seu cardápio</p>
+            <p className="text-[10px] uppercase tracking-wider text-foreground font-bold">Escolha seu cardápio</p>
             <p className="text-xs text-muted-foreground">Toque para alternar entre os planos disponíveis hoje</p>
           </div>
         </div>
@@ -62,8 +62,8 @@ export default function DietSelector({ diets, selectedId, onSelect }: DietSelect
                 className={cn(
                   "relative text-left p-3 rounded-xl border transition-all",
                   isSelected
-                    ? "border-primary bg-primary/15 shadow-[0_0_0_1px_hsl(var(--primary))]"
-                    : "border-border bg-card hover:border-primary/50",
+                    ? "border-foreground bg-foreground/10 shadow-[0_0_0_1px_hsl(var(--foreground))]"
+                    : "border-border bg-card hover:border-foreground/50",
                   disabled && "opacity-40 grayscale cursor-not-allowed"
                 )}
               >
@@ -78,7 +78,7 @@ export default function DietSelector({ diets, selectedId, onSelect }: DietSelect
                     )}
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">
-                    {isSelected && <CheckCircle2 className="w-4 h-4 text-primary" />}
+                    {isSelected && <CheckCircle2 className="w-4 h-4 text-foreground" />}
                     {expired && <Badge variant="secondary" className="text-[9px]"><Lock className="w-2.5 h-2.5 mr-0.5" />Encerrada</Badge>}
                     {notStarted && <Badge variant="secondary" className="text-[9px]">Em breve</Badge>}
                   </div>

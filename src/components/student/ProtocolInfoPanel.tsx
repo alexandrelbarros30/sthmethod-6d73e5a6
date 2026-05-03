@@ -181,7 +181,7 @@ const ProtocolInfoPanel = ({ protocols = [], userId, editable = false }: Protoco
         transition={{ duration: 0.6 }}
         className="text-center space-y-3"
       >
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold tracking-wider uppercase">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-foreground/10 border border-foreground/15 text-foreground text-xs font-semibold tracking-wider uppercase">
           <FlaskConical className="w-3.5 h-3.5" />
           Protocolo Personalizado
         </div>
@@ -339,7 +339,7 @@ const ProtocolInfoPanel = ({ protocols = [], userId, editable = false }: Protoco
                       <button
                         type="button"
                         onClick={() => setViewingCategory(cat.key)}
-                        className="text-xs text-primary hover:underline font-body"
+                        className="text-xs text-foreground hover:underline font-body"
                       >
                         +{items.length - 3} itens... ver todos
                       </button>

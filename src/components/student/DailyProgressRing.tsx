@@ -69,14 +69,14 @@ const DailyProgressRing = ({
           strokeDashoffset={offset}
           className="transition-all duration-1000 ease-out"
           filter="url(#glow-filter)"
-          style={{ filter: `drop-shadow(0 0 6px hsl(var(--primary) / 0.7)) drop-shadow(0 0 14px hsl(var(--primary) / 0.4))` }}
+          style={{ filter: `drop-shadow(0 0 6px hsl(var(--foreground) / 0.5)) drop-shadow(0 0 14px hsl(var(--foreground) / 0.25))` }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-3xl font-extrabold text-foreground tracking-tight">{percent}%</span>
         {label && <span className="text-[11px] text-muted-foreground mt-0.5">{label}</span>}
         {sublabel && (
-          <span className="text-[10px] text-primary font-semibold mt-1 px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/20">
+          <span className="text-[10px] text-foreground font-semibold mt-1 px-2.5 py-0.5 rounded-full bg-foreground/10 border border-foreground/15">
             {sublabel}
           </span>
         )}

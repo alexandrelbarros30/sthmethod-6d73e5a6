@@ -266,7 +266,7 @@ const StudentProtocol = () => {
                       )}
                       {protocol.pdf_url && (
                         <div>
-                          <p className="text-xs text-primary flex items-center gap-1 mb-2">
+                          <p className="text-xs text-foreground flex items-center gap-1 mb-2">
                             <FileText className="w-3 h-3" /> Documento PDF
                           </p>
                           <SignedPdfFrame

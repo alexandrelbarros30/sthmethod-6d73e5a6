@@ -121,7 +121,7 @@ const StudentSubscription = () => {
           ].map(({ n, label }, idx, arr) => (
             <div key={n} className="flex items-center gap-2">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                effectiveOnboardingStep >= n ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                effectiveOnboardingStep >= n ? "bg-foreground text-background" : "bg-muted text-muted-foreground"
               }`}>
                 {effectiveOnboardingStep > n ? <Check className="w-4 h-4" /> : n}
               </div>
@@ -208,7 +208,7 @@ const StudentSubscription = () => {
                 <p className="text-sm text-muted-foreground">Plano atual</p>
                 <p className="text-lg font-bold text-foreground">{(subscription as any).plans?.name || "—"}</p>
               </div>
-              <Badge className={isActive ? "bg-primary/20 text-primary" : "bg-destructive/20 text-destructive"}>
+              <Badge className={isActive ? "bg-foreground/15 text-foreground" : "bg-destructive/20 text-destructive"}>
                 {isActive ? "Ativo" : isExpired ? "Vencido" : "Inativo"}
               </Badge>
               <div className="text-sm text-muted-foreground">
@@ -285,20 +285,20 @@ const PlanCards = ({ plans, currentPlanId, isActive, isExpired, subscription, ca
       const originalPrice = parseFloat(plan.price.replace(/[^\d,\.]/g, "").replace(",", ".")) || 0;
       const hasDiscount = plan.discount_type !== "none" && plan.discount_value > 0;
       return (
-        <Card key={plan.id} className={`animate-fade-in relative ${isCurrent ? "border-primary shadow-card-hover ring-2 ring-primary/20" : ""}`} style={{ animationDelay: `${i * 100}ms` }}>
-          {isCurrent && <div className="absolute -top-3 left-1/2 -translate-x-1/2"><Badge className="bg-primary text-primary-foreground">Seu plano</Badge></div>}
+        <Card key={plan.id} className={`animate-fade-in relative ${isCurrent ? "border-foreground shadow-card-hover ring-2 ring-foreground/20" : ""}`} style={{ animationDelay: `${i * 100}ms` }}>
+          {isCurrent && <div className="absolute -top-3 left-1/2 -translate-x-1/2"><Badge className="bg-foreground text-background">Seu plano</Badge></div>}
           <CardHeader className="text-center pb-2 pt-6">
             <CardTitle className="text-lg font-display">{plan.name}</CardTitle>
             {plan.subtitle && <p className="text-xs text-muted-foreground font-body">{plan.subtitle}</p>}
             {hasDiscount && <p className="text-sm line-through text-muted-foreground/60">R$ {originalPrice.toFixed(2)}</p>}
             <p className="text-2xl font-bold text-foreground mt-1">R$ {finalPrice.toFixed(2)}</p>
-            {hasDiscount && <Badge variant="outline" className="text-xs text-primary border-primary/30">{plan.discount_type === "percentage" ? `${plan.discount_value}% OFF` : `R$ ${plan.discount_value} OFF`}</Badge>}
+            {hasDiscount && <Badge variant="outline" className="text-xs text-foreground border-foreground/20">{plan.discount_type === "percentage" ? `${plan.discount_value}% OFF` : `R$ ${plan.discount_value} OFF`}</Badge>}
             <p className="text-xs text-muted-foreground font-body">{plan.duration}</p>
           </CardHeader>
           <CardContent className="space-y-4">
             <ul className="space-y-2">
               {plan.benefits?.map((b: string, j: number) => (
-                <li key={j} className="flex items-start gap-2 text-sm font-body"><Check className="w-4 h-4 text-primary shrink-0 mt-0.5" /><span className="text-muted-foreground">{b}</span></li>
+                <li key={j} className="flex items-start gap-2 text-sm font-body"><Check className="w-4 h-4 text-foreground shrink-0 mt-0.5" /><span className="text-muted-foreground">{b}</span></li>
               ))}
             </ul>
             <Button className="w-full" onClick={() => onSelect(plan)}>

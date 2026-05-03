@@ -26,7 +26,7 @@ const EvolutionMacroDisplay = ({ profile }: Props) => {
     <Card className="mb-6">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-display flex items-center gap-2">
-          <Activity className="w-5 h-5 text-primary" />
+          <Activity className="w-5 h-5 text-foreground" />
           Seus Macros Atuais
         </CardTitle>
         <p className="text-xs text-muted-foreground">
@@ -39,7 +39,7 @@ const EvolutionMacroDisplay = ({ profile }: Props) => {
           <MacroCard icon={<Scale className="w-3.5 sm:w-4 h-3.5 sm:h-4" />} label="Peso" value={`${Number(profile.weight).toFixed(1)} kg`} color="text-foreground" />
           <MacroCard icon={<Flame className="w-3.5 sm:w-4 h-3.5 sm:h-4" />} label="TMB" value={`${profile.bmr} kcal`} color="text-destructive" />
           <MacroCard icon={<Zap className="w-3.5 sm:w-4 h-3.5 sm:h-4" />} label="TDEE" value={`${profile.tdee} kcal`} color="text-warning" />
-          <MacroCard icon={<Activity className="w-3.5 sm:w-4 h-3.5 sm:h-4" />} label="Meta Calórica" value={`${profile.daily_calories} kcal`} color="text-primary" />
+          <MacroCard icon={<Activity className="w-3.5 sm:w-4 h-3.5 sm:h-4" />} label="Meta Calórica" value={`${profile.daily_calories} kcal`} color="text-foreground" />
         </div>
         <div className="grid grid-cols-3 gap-2 sm:gap-3">
           <MacroCard icon={<Droplets className="w-4 h-4" />} label="Proteína" value={`${profile.protein_g}g`} color="text-info" />

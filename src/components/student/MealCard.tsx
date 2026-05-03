@@ -42,10 +42,10 @@ const MealCard = ({ meal, mealLabel, isCompleted, isSkipped, isActive, isNext, i
     <div
       className={cn(
         "rounded-2xl border p-4 transition-all duration-300 cursor-pointer hover-lift",
-        isCompleted && "border-primary/20 bg-primary/5 opacity-85",
+        isCompleted && "border-foreground/15 bg-foreground/5 opacity-85",
         isSkipped && "border-warning/20 bg-warning/5 opacity-60",
         isActive && !isCompleted && !isSkipped && "premium-card-active scale-[1.01]",
-        isNext && !isActive && !isCompleted && !isSkipped && "border-primary/15 bg-primary/5",
+        isNext && !isActive && !isCompleted && !isSkipped && "border-foreground/15 bg-foreground/5",
         !isCompleted && !isSkipped && !isActive && !isNext && "border-border/50 bg-card"
       )}
       onClick={onExpand}
@@ -54,9 +54,9 @@ const MealCard = ({ meal, mealLabel, isCompleted, isSkipped, isActive, isNext, i
         {/* Status icon */}
         <div className={cn(
           "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300",
-          isCompleted ? "bg-primary text-primary-foreground" :
+          isCompleted ? "bg-foreground text-background" :
           isSkipped ? "bg-warning/20 text-warning" :
-          isActive ? "bg-primary/15 text-primary glow-sm" :
+          isActive ? "bg-foreground/10 text-foreground glow-sm" :
           "bg-muted/60 text-muted-foreground"
         )}>
           {isCompleted ? <Check className="w-4.5 h-4.5" /> :
@@ -69,17 +69,17 @@ const MealCard = ({ meal, mealLabel, isCompleted, isSkipped, isActive, isNext, i
           <div className="flex items-center gap-2">
             <span className={cn(
               "font-semibold text-sm tracking-tight",
-              isCompleted ? "text-primary line-through decoration-primary/40" : "text-foreground"
+              isCompleted ? "text-foreground line-through decoration-primary/40" : "text-foreground"
             )}>
               {mealLabel || meal.name}
             </span>
             {isActive && !isCompleted && !isSkipped && (
-              <span className="text-[9px] text-primary font-bold flex items-center gap-1 bg-primary/10 px-1.5 py-0.5 rounded-full border border-primary/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" /> AGORA
+              <span className="text-[9px] text-foreground font-bold flex items-center gap-1 bg-foreground/10 px-1.5 py-0.5 rounded-full border border-foreground/15">
+                <span className="w-1.5 h-1.5 rounded-full bg-foreground animate-pulse" /> AGORA
               </span>
             )}
             {isNext && !isActive && !isCompleted && !isSkipped && (
-              <span className="text-[9px] text-primary/70 font-semibold bg-primary/5 px-1.5 py-0.5 rounded-full">PRÓXIMA</span>
+              <span className="text-[9px] text-foreground/70 font-semibold bg-foreground/5 px-1.5 py-0.5 rounded-full">PRÓXIMA</span>
             )}
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
@@ -98,8 +98,8 @@ const MealCard = ({ meal, mealLabel, isCompleted, isSkipped, isActive, isNext, i
               className={cn(
                 "w-9 h-9 rounded-xl flex items-center justify-center border transition-all duration-200",
                 isCompleted
-                  ? "bg-primary border-primary text-primary-foreground shadow-[0_0_12px_-3px_hsl(var(--primary)/0.4)]"
-                  : "border-border/60 hover:border-primary hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                  ? "bg-foreground border-foreground text-background shadow-[0_0_12px_-3px_hsl(var(--foreground)/0.2)]"
+                  : "border-border/60 hover:border-foreground hover:bg-foreground/10 text-muted-foreground hover:text-foreground"
               )}
             >
               <Check className="w-4 h-4" />

@@ -42,10 +42,10 @@ const RecipeDetailModal = ({ recipe, onClose }: { recipe: Recipe; onClose: () =>
 
       <div className="p-4 space-y-5">
         {/* Objetivo */}
-        <SectionBlock icon={<Target className="w-4 h-4 text-primary" />} title="Objetivo">
+        <SectionBlock icon={<Target className="w-4 h-4 text-foreground" />} title="Objetivo">
           <div className="flex gap-2">
             {objectives.map((obj) => (
-              <span key={obj} className={`text-sm font-bold ${objectiveColor[obj] || "text-primary"}`}>
+              <span key={obj} className={`text-sm font-bold ${objectiveColor[obj] || "text-foreground"}`}>
                 {obj}
               </span>
             ))}
@@ -53,11 +53,11 @@ const RecipeDetailModal = ({ recipe, onClose }: { recipe: Recipe; onClose: () =>
         </SectionBlock>
 
         {/* Composição Base */}
-        <SectionBlock icon={<Utensils className="w-4 h-4 text-primary" />} title="Composição Base">
+        <SectionBlock icon={<Utensils className="w-4 h-4 text-foreground" />} title="Composição Base">
           <ul className="space-y-1.5">
             {recipe.ingredients.map((ing, i) => (
               <li key={i} className="text-xs text-muted-foreground flex items-start gap-2 leading-relaxed">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                <span className="w-1.5 h-1.5 rounded-full bg-foreground mt-1.5 shrink-0" />
                 {ing}
               </li>
             ))}
@@ -91,10 +91,10 @@ const RecipeDetailModal = ({ recipe, onClose }: { recipe: Recipe; onClose: () =>
         </SectionBlock>
 
         {/* Dica Prática */}
-        <div className="rounded-xl bg-primary/8 border border-primary/15 p-3">
+        <div className="rounded-xl bg-foreground/8 border border-foreground/15 p-3">
           <div className="flex items-center gap-2 mb-1.5">
-            <Rocket className="w-4 h-4 text-primary" />
-            <span className="text-xs font-bold text-primary uppercase tracking-wider">Dica Prática</span>
+            <Rocket className="w-4 h-4 text-foreground" />
+            <span className="text-xs font-bold text-foreground uppercase tracking-wider">Dica Prática</span>
           </div>
           <p className="text-xs text-foreground leading-relaxed">{recipe.dicaPratica}</p>
         </div>
@@ -141,7 +141,7 @@ const StudentRecipes = () => {
             onClick={() => setFilter(cat)}
             className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
               filter === cat
-                ? "bg-primary text-primary-foreground"
+                ? "bg-foreground text-background"
                 : "bg-muted text-muted-foreground hover:bg-muted/80"
             }`}
           >
@@ -172,7 +172,7 @@ const StudentRecipes = () => {
                 {recipe.category}
               </Badge>
               {recipe.isNew && (
-                <Badge className="absolute top-2 left-2 text-[9px] bg-primary text-primary-foreground border-0 font-bold tracking-wider animate-pulse">
+                <Badge className="absolute top-2 left-2 text-[9px] bg-foreground text-background border-0 font-bold tracking-wider animate-pulse">
                   NOVO
                 </Badge>
               )}

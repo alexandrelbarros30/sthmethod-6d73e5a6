@@ -171,7 +171,7 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
           label="Massa Magra"
           value={latest.lean_mass_kg ? `${Number(latest.lean_mass_kg).toFixed(1)} kg` : "—"}
           delta={<DeltaIndicator value={delta(latest.lean_mass_kg, previous?.lean_mass_kg)} />}
-          color="text-primary"
+          color="text-foreground"
         />
         <MetricCard
           icon={<Droplets className="w-4 h-4" />}
@@ -232,7 +232,7 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-display flex items-center gap-2">
-              <Scale className="w-4 h-4 text-primary" />
+              <Scale className="w-4 h-4 text-foreground" />
               Composição Corporal
             </CardTitle>
           </CardHeader>
@@ -276,7 +276,7 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-display flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-primary" />
+              <TrendingUp className="w-4 h-4 text-foreground" />
               Evolução ao Longo do Tempo
             </CardTitle>
           </CardHeader>
@@ -301,7 +301,7 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-display flex items-center gap-2">
-              <Activity className="w-4 h-4 text-primary" />
+              <Activity className="w-4 h-4 text-foreground" />
               Mapa Corporal & Distribuição Segmentar
             </CardTitle>
           </CardHeader>

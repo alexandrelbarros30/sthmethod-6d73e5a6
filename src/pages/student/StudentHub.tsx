@@ -72,7 +72,7 @@ const StudentHub = () => {
             key={i}
             onClick={() => setActiveIndex(i)}
             className={`h-1.5 rounded-full transition-all duration-300 ${
-              i === activeIndex ? "w-8 bg-primary" : "w-1.5 bg-muted-foreground/30"
+              i === activeIndex ? "w-8 bg-foreground" : "w-1.5 bg-muted-foreground/30"
             }`}
           />
         ))}

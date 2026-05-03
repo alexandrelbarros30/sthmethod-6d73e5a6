@@ -54,7 +54,7 @@ const StudentMetabolic = () => {
             <Card key={p.id} className="border-border/50 bg-card/80 backdrop-blur">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                  <Microscope className="w-5 h-5 text-primary" />
+                  <Microscope className="w-5 h-5 text-foreground" />
                   Painel Metabólico
                   <span className="text-xs font-normal text-muted-foreground ml-auto">
                     {new Date(p.created_at).toLocaleDateString("pt-BR")}

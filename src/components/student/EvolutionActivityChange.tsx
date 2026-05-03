@@ -56,7 +56,7 @@ const EvolutionActivityChange = ({ profile, onChange }: Props) => {
     <div className="space-y-4 border border-border rounded-lg p-4 bg-muted/30">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Activity className="w-4 h-4 text-primary" />
+          <Activity className="w-4 h-4 text-foreground" />
           <Label className="font-body font-medium text-sm">Houve alteração na rotina de atividades físicas?</Label>
         </div>
         <Switch checked={changed} onCheckedChange={setChanged} />
@@ -86,7 +86,7 @@ const EvolutionActivityChange = ({ profile, onChange }: Props) => {
           {/* Activity Type */}
           <div className="space-y-1">
             <div className="flex items-center gap-1.5">
-              <Dumbbell className="w-3.5 h-3.5 text-primary" />
+              <Dumbbell className="w-3.5 h-3.5 text-foreground" />
               <Label className="text-xs text-muted-foreground">Tipo de Atividade</Label>
             </div>
             <Select value={data.activityType} onValueChange={(v) => update({ activityType: v })}>
@@ -135,7 +135,7 @@ const EvolutionActivityChange = ({ profile, onChange }: Props) => {
           {/* Cardio toggle */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <HeartPulse className="w-3.5 h-3.5 text-primary" />
+              <HeartPulse className="w-3.5 h-3.5 text-foreground" />
               <Label className="text-xs text-muted-foreground">Pratica cardio?</Label>
             </div>
             <Switch checked={data.doesCardio} onCheckedChange={(v) => update({ doesCardio: v })} />

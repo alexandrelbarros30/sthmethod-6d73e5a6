@@ -75,12 +75,12 @@ const PreviewUnlockPopup = () => {
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-sm p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
-        <div className="bg-gradient-to-br from-primary/15 via-primary/5 to-transparent p-5">
+        <div className="bg-gradient-to-br from-foreground/15 via-foreground/5 to-transparent p-5">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-[10px] font-bold tracking-[0.18em] text-primary uppercase">
+            <span className="text-[10px] font-bold tracking-[0.18em] text-foreground uppercase">
               Pré-estreia
             </span>
-            <span className="inline-flex items-center gap-0.5 text-[8px] font-bold uppercase bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">
+            <span className="inline-flex items-center gap-0.5 text-[8px] font-bold uppercase bg-foreground text-background px-1.5 py-0.5 rounded-full">
               <Sparkles className="w-2 h-2" /> Novo
             </span>
           </div>
@@ -98,17 +98,17 @@ const PreviewUnlockPopup = () => {
             <Link
               to="/dashboard/diet"
               onClick={() => setOpen(false)}
-              className="rounded-xl border border-border/60 p-3 bg-muted/20 relative overflow-hidden hover:border-primary/50 transition-colors block"
+              className="rounded-xl border border-border/60 p-3 bg-muted/20 relative overflow-hidden hover:border-foreground/50 transition-colors block"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <UtensilsCrossed className="w-4 h-4 text-primary" />
+                  <UtensilsCrossed className="w-4 h-4 text-foreground" />
                   <div>
                     <p className="text-[12px] font-semibold text-foreground leading-tight">Dieta</p>
                     <p className="text-[10px] text-muted-foreground">Refeições + macros</p>
                   </div>
                 </div>
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground px-2.5 py-1 rounded-full shadow-[0_0_12px_hsl(var(--primary)/0.6)] animate-pulse">
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-foreground text-background px-2.5 py-1 rounded-full  animate-pulse">
                   Ver <ChevronRight className="w-3 h-3" />
                 </span>
               </div>
@@ -139,17 +139,17 @@ const PreviewUnlockPopup = () => {
             <Link
               to="/dashboard/protocol"
               onClick={() => setOpen(false)}
-              className="rounded-xl border border-border/60 p-3 bg-muted/20 relative overflow-hidden hover:border-primary/50 transition-colors block"
+              className="rounded-xl border border-border/60 p-3 bg-muted/20 relative overflow-hidden hover:border-foreground/50 transition-colors block"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Pill className="w-4 h-4 text-primary" />
+                  <Pill className="w-4 h-4 text-foreground" />
                   <div>
                     <p className="text-[12px] font-semibold text-foreground leading-tight">Protocolo</p>
                     <p className="text-[10px] text-muted-foreground">Suplementação</p>
                   </div>
                 </div>
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground px-2.5 py-1 rounded-full shadow-[0_0_12px_hsl(var(--primary)/0.6)] animate-pulse">
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-foreground text-background px-2.5 py-1 rounded-full  animate-pulse">
                   Ver <ChevronRight className="w-3 h-3" />
                 </span>
               </div>

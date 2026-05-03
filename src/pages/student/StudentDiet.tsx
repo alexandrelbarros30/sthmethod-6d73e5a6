@@ -61,7 +61,7 @@ const StudentDiet = () => {
         <DashboardLayout role="student" title="Seu plano hoje" subtitle="Seu plano alimentar personalizado.">
         <PreviewAsBanner />
         <div className="flex items-center justify-center py-20">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-foreground border-t-transparent rounded-full animate-spin" />
         </div>
       </DashboardLayout>
     );
@@ -258,9 +258,9 @@ const StudentDiet = () => {
         </div>
 
         {/* Daily Progress Header */}
-        <Card className="premium-card border-primary/10 animate-fade-in overflow-hidden">
+        <Card className="premium-card border-foreground/10 animate-fade-in overflow-hidden">
           <CardContent className="py-6 relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-br from-foreground/5 via-transparent to-transparent pointer-events-none" />
             <div className="relative">
               <div className="mb-3">
                 <h3 className="text-sm font-bold text-foreground tracking-tight">Consistência de Hoje</h3>
@@ -284,8 +284,8 @@ const StudentDiet = () => {
                 </div>
 
                 {isToday && nextMeal && !isMealCompleted(nextMeal.id) && (
-                  <div className="p-2.5 rounded-xl bg-primary/8 border border-primary/15">
-                    <p className="text-[9px] text-primary font-bold uppercase tracking-wider flex items-center gap-1">
+                  <div className="p-2.5 rounded-xl bg-foreground/8 border border-foreground/15">
+                    <p className="text-[9px] text-foreground font-bold uppercase tracking-wider flex items-center gap-1">
                       <Zap className="w-3 h-3" /> Próxima Refeição
                     </p>
                     <p className="text-sm font-semibold text-foreground mt-0.5">
@@ -311,11 +311,11 @@ const StudentDiet = () => {
         <Card className="premium-card animate-fade-in" style={{ animationDelay: "0.1s" }}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-bold flex items-center gap-2 tracking-tight">
-              <Flame className="w-4 h-4 text-primary" /> Seu dia até agora
+              <Flame className="w-4 h-4 text-foreground" /> Seu dia até agora
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <MacroProgressBar label="Calorias" consumed={consumedMacros.kcal} total={totalMacros.kcal} unit="kcal" color="bg-primary" />
+            <MacroProgressBar label="Calorias" consumed={consumedMacros.kcal} total={totalMacros.kcal} unit="kcal" color="bg-foreground" />
             <MacroProgressBar label="Proteína" consumed={consumedMacros.protein} total={totalMacros.protein} color="bg-info" />
             <MacroProgressBar label="Carboidrato" consumed={consumedMacros.carbs} total={totalMacros.carbs} color="bg-warning" />
             <MacroProgressBar label="Gordura" consumed={consumedMacros.fat} total={totalMacros.fat} color="bg-[hsl(25,85%,55%)]" />
@@ -351,7 +351,7 @@ const StudentDiet = () => {
         <div className="space-y-3" style={{ animationDelay: "0.2s" }}>
           <h3 className="text-sm font-bold text-muted-foreground flex items-center gap-2 tracking-tight">
             <Utensils className="w-4 h-4" /> Refeições
-            <span className="text-primary tabular-nums">{completedCount}/{totalMeals}</span>
+            <span className="text-foreground tabular-nums">{completedCount}/{totalMeals}</span>
           </h3>
 
           {meals.map((meal, idx) => (

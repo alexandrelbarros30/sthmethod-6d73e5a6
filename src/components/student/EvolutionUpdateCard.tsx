@@ -177,14 +177,14 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
   };
 
   return (
-    <Card className="border-primary/20 bg-primary/[0.03]">
+    <Card className="border-foreground/15 bg-foreground/[0.03]">
       <CardHeader
         className="cursor-pointer select-none pb-3"
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-display flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-primary" />
+            <TrendingUp className="w-4 h-4 text-foreground" />
             Atualização de Evolução
           </CardTitle>
           {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
@@ -196,7 +196,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
         <CardContent className="space-y-5">
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Scale className="w-4 h-4 text-primary" />
+              <Scale className="w-4 h-4 text-foreground" />
               <Label className="font-body font-medium">Peso Atual (kg) *</Label>
             </div>
             <Input
@@ -226,7 +226,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
             </p>
             <Button
               variant="outline"
-              className={`w-full transition-colors ${canSubmitUpdate && !saving ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90 shadow-[0_0_20px_hsl(var(--primary)/0.4)]" : ""}`}
+              className={`w-full transition-colors ${canSubmitUpdate && !saving ? "bg-foreground text-background border-foreground hover:bg-foreground/90 shadow-[0_0_20px_hsl(var(--foreground)/0.2)]" : ""}`}
               onClick={handleSaveWeight}
               disabled={saving || !canSubmitUpdate}
             >
@@ -236,7 +236,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
 
           <div className="space-y-2">
             <div className="flex items-center gap-2 mb-1">
-              <Camera className="w-4 h-4 text-primary" />
+              <Camera className="w-4 h-4 text-foreground" />
               <Label className="font-body font-medium">Novas Fotos Corporais</Label>
             </div>
             <p className="text-xs text-muted-foreground mb-2">
@@ -255,7 +255,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
           </div>
 
           <Button
-            className={`w-full transition-colors ${canSubmitUpdate && !saving ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_20px_hsl(var(--primary)/0.4)]" : ""}`}
+            className={`w-full transition-colors ${canSubmitUpdate && !saving ? "bg-foreground text-background hover:bg-foreground/90 shadow-[0_0_20px_hsl(var(--foreground)/0.2)]" : ""}`}
             onClick={handleSaveWeight}
             disabled={saving || !canSubmitUpdate}
           >

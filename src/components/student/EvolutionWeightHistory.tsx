@@ -21,7 +21,7 @@ const EvolutionWeightHistory = ({ weightLogs }: Props) => {
           {weightLogs.map((log: any, i: number) => (
             <div key={log.id} className="flex items-center justify-between border-b border-border/50 pb-2 last:border-0 last:pb-0">
               <div className="flex items-center gap-3">
-                <span className={`text-sm font-bold ${i === 0 ? "text-primary" : "text-foreground"}`}>
+                <span className={`text-sm font-bold ${i === 0 ? "text-foreground" : "text-foreground"}`}>
                   {Number(log.weight).toFixed(1)} kg
                 </span>
                 {i === 0 && <Badge variant="secondary" className="text-[10px]">Atual</Badge>}
