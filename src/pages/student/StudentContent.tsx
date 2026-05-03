@@ -13,27 +13,27 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 
 const G = {
   accent: "hsl(0 0% 96%)",
-  accentSoft: "hsl(0 0% 70%)",
+  accentSoft: "hsl(0 0% 96%)",
   accentBg: "hsl(0 0% 96% / 0.12)",
   accentBorderSoft: "hsl(0 0% 96% / 0.2)",
   accentGlow: "hsl(0 0% 96% / 0.25)",
   accentText06: "hsl(0 0% 96% / 0.06)",
   accentText15: "hsl(0 0% 96% / 0.15)",
-  bg: "hsl(0 0% 3%)",
-  card: "hsl(0 0% 6%)",
-  border: "hsl(0 0% 14%)",
+  bg: "hsl(0 0% 96%)",
+  card: "hsl(0 0% 96%)",
+  border: "hsl(0 0% 96%)",
   t96: "hsl(0 0% 96%)",
-  t92: "hsl(0 0% 92%)",
-  t80: "hsl(0 0% 80%)",
-  t65: "hsl(0 0% 65%)",
-  t60: "hsl(0 0% 60%)",
-  t55: "hsl(0 0% 55%)",
-  t50: "hsl(0 0% 50%)",
-  t45: "hsl(0 0% 45%)",
-  t40: "hsl(0 0% 40%)",
-  t35: "hsl(0 0% 35%)",
-  t30: "hsl(0 0% 30%)",
-  t10: "hsl(0 0% 10%)",
+  t92: "hsl(0 0% 96%)",
+  t80: "hsl(0 0% 96%)",
+  t65: "hsl(0 0% 96%)",
+  t60: "hsl(0 0% 96%)",
+  t55: "hsl(0 0% 96%)",
+  t50: "hsl(0 0% 96%)",
+  t45: "hsl(0 0% 96%)",
+  t40: "hsl(0 0% 96%)",
+  t35: "hsl(0 0% 96%)",
+  t30: "hsl(0 0% 96%)",
+  t10: "hsl(0 0% 96%)",
 };
 
 const gamificationMessages = [
@@ -302,7 +302,7 @@ const StudentContent = () => {
             {progress < TOTAL_COMPOUNDS && (
               <div
                 className="absolute inset-0 z-10 backdrop-blur-md flex flex-col items-center justify-center gap-3"
-                style={{ background: "hsl(0 0% 3% / 0.7)" }}
+                style={{ background: "hsl(0 0% 96% / 0.7)" }}
               >
                 <Lock className="w-6 h-6" style={{ color: G.t30 }} />
                 <p className="text-xs font-medium text-center" style={{ color: G.t40 }}>
@@ -361,8 +361,8 @@ const StudentContent = () => {
               whileTap={{ scale: 0.97 }}
               className="relative inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all"
               style={{
-                background: `linear-gradient(135deg, ${G.accent}, hsl(0 0% 30%))`,
-                color: "hsl(0 0% 100%)",
+                background: `linear-gradient(135deg, ${G.accent}, hsl(0 0% 96%))`,
+                color: "hsl(0 0% 96%)",
                 boxShadow: `0 4px 20px ${G.accentGlow}, 0 0 22px hsl(0 0% 96% / 0.5), inset 0 1px 0 rgb(255 255 255 / 0.25)`,
               }}
             >

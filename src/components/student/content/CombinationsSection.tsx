@@ -10,23 +10,23 @@ import comboHipInt from "@/assets/combo-hiper-intermediario.jpg";
 import comboHipAdv from "@/assets/combo-hiper-avancado.jpg";
 
 const G = {
-  accent: "hsl(145 60% 42%)",
-  accentSoft: "hsl(145 50% 55%)",
-  accentBg: "hsl(145 60% 42% / 0.10)",
-  accentBorder: "hsl(145 60% 42% / 0.2)",
-  accentGlow: "hsl(145 60% 42% / 0.25)",
-  bg: "hsl(0 0% 3%)",
-  card: "hsl(0 0% 6%)",
-  border: "hsl(0 0% 14%)",
+  accent: "hsl(0 0% 96%)",
+  accentSoft: "hsl(0 0% 96%)",
+  accentBg: "hsl(0 0% 96% / 0.10)",
+  accentBorder: "hsl(0 0% 96% / 0.2)",
+  accentGlow: "hsl(0 0% 96% / 0.25)",
+  bg: "hsl(0 0% 96%)",
+  card: "hsl(0 0% 96%)",
+  border: "hsl(0 0% 96%)",
   t96: "hsl(0 0% 96%)",
-  t92: "hsl(0 0% 92%)",
-  t80: "hsl(0 0% 80%)",
-  t65: "hsl(0 0% 65%)",
-  t50: "hsl(0 0% 50%)",
-  t45: "hsl(0 0% 45%)",
-  t40: "hsl(0 0% 40%)",
-  t30: "hsl(0 0% 30%)",
-  t10: "hsl(0 0% 10%)",
+  t92: "hsl(0 0% 96%)",
+  t80: "hsl(0 0% 96%)",
+  t65: "hsl(0 0% 96%)",
+  t50: "hsl(0 0% 96%)",
+  t45: "hsl(0 0% 96%)",
+  t40: "hsl(0 0% 96%)",
+  t30: "hsl(0 0% 96%)",
+  t10: "hsl(0 0% 96%)",
 };
 
 const levelColors = {
@@ -253,7 +253,7 @@ const ComboCardComponent = ({ card, index }: { card: ComboCard; index: number })
   const [expanded, setExpanded] = useState(false);
   const lc = levelColors[card.level];
   const accent = `hsl(0 0% 96%)`;
-  const accentSoft = `hsl(0 0% 70%)`;
+  const accentSoft = `hsl(0 0% 96%)`;
   const accentBg = `hsl(0 0% 96% / 0.12)`;
   const accentBorder = `hsl(0 0% 96% / 0.25)`;
 
@@ -280,7 +280,7 @@ const ComboCardComponent = ({ card, index }: { card: ComboCard; index: number })
         <div
           className="absolute inset-0"
           style={{
-            background: `linear-gradient(to top, hsl(0 0% 3% / 0.95) 0%, hsl(0 0% 3% / 0.4) 50%, transparent 100%)`,
+            background: `linear-gradient(to top, hsl(0 0% 96% / 0.95) 0%, hsl(0 0% 96% / 0.4) 50%, transparent 100%)`,
           }}
         />
         <div className="absolute top-3 left-3">
@@ -345,12 +345,12 @@ const ComboCardComponent = ({ card, index }: { card: ComboCard; index: number })
               </InfoBlock>
 
               {/* Lógica hormonal */}
-              <InfoBlock icon={<Beaker className="w-3.5 h-3.5" style={{ color: "hsl(200 60% 55%)" }} />} title="Lógica hormonal" accentColor="hsl(200 60% 55%)">
+              <InfoBlock icon={<Beaker className="w-3.5 h-3.5" style={{ color: "hsl(0 0% 96%)" }} />} title="Lógica hormonal" accentColor="hsl(0 0% 96%)">
                 <p className="text-[12px] leading-relaxed" style={{ color: G.t80 }}>{card.logicaHormonal}</p>
               </InfoBlock>
 
               {/* Sinergia explicada */}
-              <InfoBlock icon={<TrendingUp className="w-3.5 h-3.5" style={{ color: "hsl(280 50% 60%)" }} />} title="Sinergia explicada" accentColor="hsl(280 50% 60%)">
+              <InfoBlock icon={<TrendingUp className="w-3.5 h-3.5" style={{ color: "hsl(0 0% 96%)" }} />} title="Sinergia explicada" accentColor="hsl(0 0% 96%)">
                 <p className="text-[12px] leading-relaxed" style={{ color: G.t80 }}>{card.sinergiaExplicada}</p>
               </InfoBlock>
 
@@ -367,11 +367,11 @@ const ComboCardComponent = ({ card, index }: { card: ComboCard; index: number })
               </InfoBlock>
 
               {/* Sinais de atenção */}
-              <InfoBlock icon={<Shield className="w-3.5 h-3.5" style={{ color: "hsl(45 80% 55%)" }} />} title="Sinais de atenção" accentColor="hsl(45 80% 55%)">
+              <InfoBlock icon={<Shield className="w-3.5 h-3.5" style={{ color: "hsl(0 0% 96%)" }} />} title="Sinais de atenção" accentColor="hsl(0 0% 96%)">
                 <ul className="space-y-1.5">
                   {card.sinaisDeAtencao.map((item, i) => (
                     <li key={i} className="text-[12px] leading-relaxed flex items-start gap-2" style={{ color: G.t80 }}>
-                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "hsl(45 80% 55%)" }} />
+                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "hsl(0 0% 96%)" }} />
                       {item}
                     </li>
                   ))}
@@ -379,10 +379,10 @@ const ComboCardComponent = ({ card, index }: { card: ComboCard; index: number })
               </InfoBlock>
 
               {/* Exames */}
-              <InfoBlock icon={<Activity className="w-3.5 h-3.5" style={{ color: "hsl(0 60% 55%)" }} />} title="Exames recomendados" accentColor="hsl(0 60% 55%)">
+              <InfoBlock icon={<Activity className="w-3.5 h-3.5" style={{ color: "hsl(0 0% 96%)" }} />} title="Exames recomendados" accentColor="hsl(0 0% 96%)">
                 <div className="flex flex-wrap gap-1.5">
                   {card.examesToWatch.map((exam) => (
-                    <span key={exam} className="text-[10px] font-medium px-2 py-1 rounded-md" style={{ background: "hsl(0 60% 55% / 0.1)", color: "hsl(0 60% 60%)", border: "0.5px solid hsl(0 60% 55% / 0.2)" }}>
+                    <span key={exam} className="text-[10px] font-medium px-2 py-1 rounded-md" style={{ background: "hsl(0 0% 96% / 0.1)", color: "hsl(0 0% 96%)", border: "0.5px solid hsl(0 0% 96% / 0.2)" }}>
                       {exam}
                     </span>
                   ))}
@@ -390,10 +390,10 @@ const ComboCardComponent = ({ card, index }: { card: ComboCard; index: number })
               </InfoBlock>
 
               {/* Erro comum */}
-              <div className="rounded-xl p-3 flex items-start gap-2.5" style={{ background: "hsl(0 70% 45% / 0.08)", border: `0.5px solid hsl(0 70% 45% / 0.2)` }}>
-                <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: "hsl(0 0% 65%)" }} />
+              <div className="rounded-xl p-3 flex items-start gap-2.5" style={{ background: "hsl(0 0% 96% / 0.08)", border: `0.5px solid hsl(0 0% 96% / 0.2)` }}>
+                <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: "hsl(0 0% 96%)" }} />
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: "hsl(0 0% 65%)" }}>Erro comum</p>
+                  <p className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: "hsl(0 0% 96%)" }}>Erro comum</p>
                   <p className="text-[12px] leading-relaxed" style={{ color: G.t80 }}>{card.erroComum}</p>
                 </div>
               </div>
@@ -416,8 +416,8 @@ const CombinationsSection = () => (
     {/* Section 1 — Definição */}
     <div className="space-y-4">
       <div className="flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "hsl(15 80% 50% / 0.12)" }}>
-          <Flame className="w-4 h-4" style={{ color: "hsl(15 80% 55%)" }} />
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "hsl(0 0% 96% / 0.12)" }}>
+          <Flame className="w-4 h-4" style={{ color: "hsl(0 0% 96%)" }} />
         </div>
         <div>
           <h2 className="text-base font-bold tracking-tight" style={{ color: G.t96 }}>Emagrecimento / Definição</h2>
@@ -434,8 +434,8 @@ const CombinationsSection = () => (
     {/* Section 2 — Hipertrofia */}
     <div className="space-y-4">
       <div className="flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "hsl(210 70% 50% / 0.12)" }}>
-          <Dumbbell className="w-4 h-4" style={{ color: "hsl(0 0% 75%)" }} />
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "hsl(0 0% 96% / 0.12)" }}>
+          <Dumbbell className="w-4 h-4" style={{ color: "hsl(0 0% 96%)" }} />
         </div>
         <div>
           <h2 className="text-base font-bold tracking-tight" style={{ color: G.t96 }}>Hipertrofia / Construção</h2>
@@ -455,11 +455,11 @@ const CombinationsSection = () => (
       animate={{ opacity: 1 }}
       transition={{ delay: 0.5 }}
       className="rounded-2xl p-5 space-y-2"
-      style={{ background: G.t10, border: `0.5px solid hsl(45 80% 50% / 0.2)` }}
+      style={{ background: G.t10, border: `0.5px solid hsl(0 0% 96% / 0.2)` }}
     >
       <div className="flex items-center gap-2">
-        <AlertTriangle className="w-4 h-4" style={{ color: "hsl(45 80% 55%)" }} />
-        <h3 className="text-sm font-bold" style={{ color: "hsl(45 80% 55%)" }}>Isso não é protocolo</h3>
+        <AlertTriangle className="w-4 h-4" style={{ color: "hsl(0 0% 96%)" }} />
+        <h3 className="text-sm font-bold" style={{ color: "hsl(0 0% 96%)" }}>Isso não é protocolo</h3>
       </div>
       <p className="text-[13px] leading-relaxed" style={{ color: G.t65 }}>
         Essas combinações representam padrões observados na prática clínica. Cada organismo responde de forma individual. O resultado real depende de exames atualizados, histórico de saúde, dieta, treino e acompanhamento profissional contínuo. Nenhuma informação aqui substitui uma consulta individualizada.
@@ -473,7 +473,7 @@ const CombinationsSection = () => (
       transition={{ delay: 0.6 }}
       className="rounded-2xl p-6 text-center space-y-4"
       style={{
-        background: `linear-gradient(160deg, hsl(145 60% 42% / 0.06), ${G.card})`,
+        background: `linear-gradient(160deg, hsl(0 0% 96% / 0.06), ${G.card})`,
         border: `0.5px solid ${G.accentBorder}`,
       }}
     >
@@ -488,8 +488,8 @@ const CombinationsSection = () => (
         whileTap={{ scale: 0.97 }}
         className="inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all"
         style={{
-          background: `linear-gradient(135deg, ${G.accent}, hsl(150 55% 32%))`,
-          color: "hsl(0 0% 100%)",
+          background: `linear-gradient(135deg, ${G.accent}, hsl(0 0% 96%))`,
+          color: "hsl(0 0% 96%)",
           boxShadow: `0 4px 20px ${G.accentGlow}`,
         }}
       >

@@ -8,17 +8,17 @@ import cardCombinacoesImg from "@/assets/card-combinacoes.jpg";
 export type ContentSection = "hormonios" | "dicas" | "receitas" | "combinacoes";
 
 const G = {
-  accent: "hsl(145 60% 42%)",
-  card: "hsl(0 0% 6%)",
-  border: "hsl(0 0% 14%)",
+  accent: "hsl(0 0% 96%)",
+  card: "hsl(0 0% 96%)",
+  border: "hsl(0 0% 96%)",
   t96: "hsl(0 0% 96%)",
-  t92: "hsl(0 0% 92%)",
-  t80: "hsl(0 0% 80%)",
-  t60: "hsl(0 0% 60%)",
-  t50: "hsl(0 0% 50%)",
-  t45: "hsl(0 0% 45%)",
-  t40: "hsl(0 0% 40%)",
-  t10: "hsl(0 0% 10%)",
+  t92: "hsl(0 0% 96%)",
+  t80: "hsl(0 0% 96%)",
+  t60: "hsl(0 0% 96%)",
+  t50: "hsl(0 0% 96%)",
+  t45: "hsl(0 0% 96%)",
+  t40: "hsl(0 0% 96%)",
+  t10: "hsl(0 0% 96%)",
 };
 
 const sections = [
@@ -113,7 +113,7 @@ const ContentHubCards = ({ onNavigate }: Props) => (
             <div
               className="absolute inset-0"
               style={{
-                background: `linear-gradient(to top, hsl(0 0% 4% / 1) 0%, hsl(0 0% 4% / 0.4) 55%, transparent 100%)`,
+                background: `linear-gradient(to top, hsl(0 0% 96% / 1) 0%, hsl(0 0% 96% / 0.4) 55%, transparent 100%)`,
               }}
             />
 

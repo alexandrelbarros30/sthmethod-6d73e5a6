@@ -4,17 +4,17 @@ import type { Family } from "./compoundData";
 import { cardFields } from "./compoundData";
 
 const G = {
-  card: "hsl(0 0% 6%)",
-  border: "hsl(0 0% 14%)",
-  borderSoft: "hsl(0 0% 12%)",
+  card: "hsl(0 0% 96%)",
+  border: "hsl(0 0% 96%)",
+  borderSoft: "hsl(0 0% 96%)",
   t96: "hsl(0 0% 96%)",
-  t92: "hsl(0 0% 92%)",
-  t80: "hsl(0 0% 80%)",
-  t65: "hsl(0 0% 65%)",
-  t50: "hsl(0 0% 50%)",
-  t45: "hsl(0 0% 45%)",
-  t40: "hsl(0 0% 40%)",
-  t10: "hsl(0 0% 10%)",
+  t92: "hsl(0 0% 96%)",
+  t80: "hsl(0 0% 96%)",
+  t65: "hsl(0 0% 96%)",
+  t50: "hsl(0 0% 96%)",
+  t45: "hsl(0 0% 96%)",
+  t40: "hsl(0 0% 96%)",
+  t10: "hsl(0 0% 96%)",
 };
 
 const fieldIcons = {
@@ -33,7 +33,7 @@ interface Props {
 
 const CompoundDetail = ({ family, selected, visited, onSelect }: Props) => {
   const accent = `hsl(0 0% 96%)`;
-  const accentSoft = `hsl(0 0% 70%)`;
+  const accentSoft = `hsl(0 0% 96%)`;
   const accentBg = `hsl(0 0% 96% / 0.12)`;
   const accentBorder = `hsl(0 0% 96% / 0.4)`;
   const accentBorderSoft = `hsl(0 0% 96% / 0.2)`;
@@ -74,8 +74,8 @@ const CompoundDetail = ({ family, selected, visited, onSelect }: Props) => {
                 className="absolute inset-0 flex flex-col items-center justify-end pb-2"
                 style={{
                   background: isActive
-                    ? `linear-gradient(to top, hsl(0 0% 6% / 0.9), transparent 70%)`
-                    : "linear-gradient(to top, hsl(0 0% 3% / 0.85), transparent 60%)",
+                    ? `linear-gradient(to top, hsl(0 0% 96% / 0.9), transparent 70%)`
+                    : "linear-gradient(to top, hsl(0 0% 96% / 0.85), transparent 60%)",
                 }}
               >
                 <span
@@ -93,7 +93,7 @@ const CompoundDetail = ({ family, selected, visited, onSelect }: Props) => {
               {isVisited && !isActive && (
                 <div
                   className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full flex items-center justify-center"
-                  style={{ background: "hsl(142 60% 40% / 0.9)" }}
+                  style={{ background: "hsl(0 0% 96% / 0.9)" }}
                 >
                   <Check className="w-2.5 h-2.5 text-white" />
                 </div>
@@ -133,7 +133,7 @@ const CompoundDetail = ({ family, selected, visited, onSelect }: Props) => {
               <div
                 className="absolute inset-0 flex items-end p-5"
                 style={{
-                  background: `linear-gradient(to top, hsl(0 0% 3% / 0.92) 0%, hsl(0 0% 3% / 0.3) 50%, transparent 100%)`,
+                  background: `linear-gradient(to top, hsl(0 0% 96% / 0.92) 0%, hsl(0 0% 96% / 0.3) 50%, transparent 100%)`,
                 }}
               >
                 <div className="space-y-1.5">

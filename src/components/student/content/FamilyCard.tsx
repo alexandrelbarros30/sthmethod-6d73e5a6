@@ -3,15 +3,15 @@ import { ChevronRight } from "lucide-react";
 import type { Family } from "./compoundData";
 
 const G = {
-  card: "hsl(0 0% 6%)",
-  border: "hsl(0 0% 14%)",
+  card: "hsl(0 0% 96%)",
+  border: "hsl(0 0% 96%)",
   t96: "hsl(0 0% 96%)",
-  t92: "hsl(0 0% 92%)",
-  t80: "hsl(0 0% 80%)",
-  t55: "hsl(0 0% 55%)",
-  t45: "hsl(0 0% 45%)",
-  t40: "hsl(0 0% 40%)",
-  t10: "hsl(0 0% 10%)",
+  t92: "hsl(0 0% 96%)",
+  t80: "hsl(0 0% 96%)",
+  t55: "hsl(0 0% 96%)",
+  t45: "hsl(0 0% 96%)",
+  t40: "hsl(0 0% 96%)",
+  t10: "hsl(0 0% 96%)",
 };
 
 interface Props {
@@ -23,7 +23,7 @@ interface Props {
 
 const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
   const accent = `hsl(0 0% 96%)`;
-  const accentSoft = `hsl(0 0% 70%)`;
+  const accentSoft = `hsl(0 0% 96%)`;
   const accentBg = `hsl(0 0% 96% / 0.12)`;
   const accentBorder = `hsl(0 0% 96% / 0.25)`;
   const total = family.compounds.length;
@@ -64,7 +64,7 @@ const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
         <div
           className="absolute inset-0"
           style={{
-            background: `linear-gradient(to top, hsl(0 0% 3% / 0.95) 0%, hsl(0 0% 3% / 0.4) 50%, transparent 100%)`,
+            background: `linear-gradient(to top, hsl(0 0% 96% / 0.95) 0%, hsl(0 0% 96% / 0.4) 50%, transparent 100%)`,
           }}
         />
 
