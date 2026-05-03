@@ -209,7 +209,6 @@ const Promo = () => {
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    transition={{ delay: i * 0.1 }}
                     transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: i * 0.1 }}
                     className={`relative rounded-3xl p-8 border transition-all duration-500 bg-card ${
                       isPopular
