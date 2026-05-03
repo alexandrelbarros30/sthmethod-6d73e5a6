@@ -170,7 +170,7 @@ const Login = () => {
         </motion.p>
         <motion.h1
           initial="hidden" animate="visible" variants={fadeUp}
-          className="max-w-3xl mx-auto text-5xl md:text-7xl font-semibold tracking-[-0.04em] leading-[0.95] text-foreground"
+          className="max-w-3xl mx-auto text-4xl sm:text-5xl md:text-7xl font-semibold tracking-[-0.04em] leading-[0.95] text-foreground"
         >
           {isSignUp ? <>Comece sua <br /><span className="text-muted-foreground">jornada.</span></> : <>Bem-vindo <br /><span className="text-muted-foreground">de volta.</span></>}
         </motion.h1>

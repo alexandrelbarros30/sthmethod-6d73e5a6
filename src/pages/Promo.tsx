@@ -140,7 +140,7 @@ const Promo = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
-            className="text-5xl md:text-7xl lg:text-8xl font-semibold text-foreground mb-6 tracking-[-0.04em] leading-[0.95]"
+            className="text-4xl sm:text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-semibold text-foreground mb-6 tracking-[-0.04em] leading-[0.95]"
           >
             Promoção
             <br />

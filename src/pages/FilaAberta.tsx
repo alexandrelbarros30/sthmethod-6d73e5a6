@@ -66,7 +66,7 @@ const FilaAberta = () => {
         <motion.p initial="hidden" animate="visible" variants={fadeUp} className="text-[12px] font-medium tracking-[0.25em] uppercase text-primary mb-6">
           {done ? "Tudo certo" : "Fila de atendimento"}
         </motion.p>
-        <motion.h1 initial="hidden" animate="visible" variants={fadeUp} className="max-w-3xl mx-auto text-5xl md:text-7xl font-semibold tracking-[-0.04em] leading-[0.95] text-foreground">
+        <motion.h1 initial="hidden" animate="visible" variants={fadeUp} className="max-w-3xl mx-auto text-4xl sm:text-5xl md:text-7xl font-semibold tracking-[-0.04em] leading-[0.95] text-foreground">
           {done ? <>Você está <br /><span className="text-muted-foreground">na fila, {submittedName}.</span></> : <>Entrar na <br /><span className="text-muted-foreground">fila.</span></>}
         </motion.h1>
       </section>
