@@ -29,32 +29,33 @@ const StudentAds = () => {
   return (
     <DashboardLayout role="student" title="Propagandas" subtitle="Ofertas e promoções exclusivas">
       {isLoading ? (
-        <p className="text-sm text-muted-foreground text-center py-8">Carregando...</p>
+        <p className="text-[13px] text-muted-foreground text-center py-10 font-light tracking-tight">Carregando...</p>
       ) : !ads?.length ? (
-        <p className="text-sm text-muted-foreground text-center py-8">Nenhuma promoção disponível no momento.</p>
+        <div className="rounded-3xl border border-border/40 bg-background py-14 px-6 text-center">
+          <ImageIcon className="w-8 h-8 mx-auto text-muted-foreground/40 mb-4" strokeWidth={1.5} />
+          <p className="text-[14px] text-foreground font-medium tracking-tight">Sem promoções no momento</p>
+        </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {ads.map((ad: any) => (
-            <Card key={ad.id} className="overflow-hidden border-border/50">
-              <CardContent className="p-0">
-                <div className="flex items-center gap-4 p-4">
-                  {ad.image_url ? (
-                    <img src={ad.image_url} alt={ad.title} className="w-16 h-16 rounded-xl object-cover" />
-                  ) : (
-                    <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                      <ImageIcon className="w-6 h-6 text-muted-foreground/40" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-bold text-foreground">{ad.title}</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">{ad.description}</p>
+            <div key={ad.id} className="rounded-3xl border border-border/40 bg-background overflow-hidden">
+              <div className="flex items-center gap-4 p-4">
+                {ad.image_url ? (
+                  <img src={ad.image_url} alt={ad.title} className="w-14 h-14 rounded-2xl object-cover" />
+                ) : (
+                  <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center shrink-0">
+                    <ImageIcon className="w-5 h-5 text-muted-foreground/40" />
                   </div>
-                  <Button size="sm" variant="outline" className="text-xs shrink-0" onClick={() => setSelectedAd(ad)}>
-                    Ver
-                  </Button>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-[14px] font-semibold text-foreground tracking-[-0.015em] truncate">{ad.title}</h3>
+                  <p className="text-[11px] text-muted-foreground font-light mt-0.5 tracking-tight line-clamp-1">{ad.description}</p>
                 </div>
-              </CardContent>
-            </Card>
+                <Button size="sm" className="rounded-full bg-foreground text-background hover:bg-foreground/90 text-[12px] h-8 px-4 shrink-0" onClick={() => setSelectedAd(ad)}>
+                  Ver
+                </Button>
+              </div>
+            </div>
           ))}
 
           {/* Global action buttons for first ad with whatsapp/link */}

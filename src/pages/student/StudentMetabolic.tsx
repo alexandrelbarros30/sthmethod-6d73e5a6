@@ -51,33 +51,27 @@ const StudentMetabolic = () => {
           <p className="text-sm text-muted-foreground">Carregando...</p>
         ) : panels.length > 0 ? (
           panels.map((p: any) => (
-            <Card key={p.id} className="border-border/50 bg-card/80 backdrop-blur">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                  <Microscope className="w-5 h-5 text-foreground" />
-                  Painel Metabólico
-                  <span className="text-xs font-normal text-muted-foreground ml-auto">
-                    {new Date(p.created_at).toLocaleDateString("pt-BR")}
-                  </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <RichContentRenderer content={p.content} />
+            <div key={p.id} className="rounded-3xl border border-border/40 bg-background p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground">Painel Metabólico</p>
+                  <h3 className="text-[20px] font-semibold text-foreground tracking-[-0.025em] mt-2">Análise</h3>
                 </div>
-              </CardContent>
-            </Card>
+                <span className="text-[11px] text-muted-foreground font-light tracking-tight">
+                  {new Date(p.created_at).toLocaleDateString("pt-BR")}
+                </span>
+              </div>
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                <RichContentRenderer content={p.content} />
+              </div>
+            </div>
           ))
         ) : (
-          <Card className="border-border/50 bg-card/80 backdrop-blur">
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center gap-3 py-10 text-muted-foreground">
-                <AlertCircle className="w-10 h-10 opacity-40" />
-                <p className="text-sm">Nenhuma análise metabólica disponível no momento.</p>
-                <p className="text-xs opacity-60">Seu consultor publicará aqui os resultados assim que estiverem prontos.</p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="rounded-3xl border border-border/40 bg-background py-14 px-6 text-center">
+            <AlertCircle className="w-8 h-8 mx-auto text-muted-foreground/40 mb-4" strokeWidth={1.5} />
+            <p className="text-[14px] text-foreground font-medium tracking-tight">Nenhuma análise disponível</p>
+            <p className="text-[12px] text-muted-foreground font-light mt-1.5 tracking-tight">Seu consultor publicará os resultados aqui em breve.</p>
+          </div>
         )}
       </div>
 

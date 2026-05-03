@@ -214,14 +214,12 @@ const StudentProtocol = () => {
       `}</style>
       <div className="space-y-4 max-w-4xl content-protected">
         {/* Legal disclaimer */}
-        <Card className="border-warning/30 bg-warning/5">
-          <CardContent className="flex items-start gap-3 py-4">
-            <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
-            <p className="text-sm text-muted-foreground font-body">
-              As informações aqui apresentadas não substituem avaliação e acompanhamento médico.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="rounded-2xl border border-border/40 bg-muted/30 px-4 py-3 flex items-start gap-3">
+          <AlertTriangle className="w-4 h-4 text-foreground/70 shrink-0 mt-0.5" strokeWidth={1.8} />
+          <p className="text-[12px] text-muted-foreground font-light tracking-tight leading-relaxed">
+            As informações aqui apresentadas não substituem avaliação e acompanhamento médico.
+          </p>
+        </div>
 
         {/* Student info */}
         {buildStudentInfo()}
@@ -235,9 +233,9 @@ const StudentProtocol = () => {
           </CardContent></Card>
         ) : (
           <>
-            <h3 className="text-sm font-semibold text-muted-foreground font-display flex items-center gap-2">
-              <Clock className="w-4 h-4" /> Histórico de Protocolos ({protocols.length})
-            </h3>
+            <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground flex items-center gap-1.5 pt-2">
+              <Clock className="w-3 h-3" strokeWidth={2} /> Histórico · {protocols.length}
+            </p>
 
             <Accordion type="single" collapsible className="space-y-2">
               {protocols.map((protocol: any) => (

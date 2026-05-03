@@ -147,18 +147,15 @@ const StudentGuidedWorkout = () => {
           const exercises = (templateExercises || []).filter((e: any) => e.template_id === template.id);
 
           return (
-            <Card key={assignment.id}>
-              <CardContent className="py-5">
-                <div className="flex items-center gap-2 mb-1">
-                  <Dumbbell className="w-5 h-5 text-foreground" />
-                  <h3 className="font-display font-semibold text-lg">{template.title}</h3>
-                </div>
-                {template.description && <p className="text-sm text-muted-foreground mb-2">{template.description}</p>}
-                <div className="flex gap-2 mb-4 text-xs text-muted-foreground">
-                  <Badge variant="outline">{template.weeks} sem</Badge>
-                  <Badge variant="outline">{template.days_per_week}x/sem</Badge>
-                  <Badge variant="outline">{template.minutes_per_day} min/dia</Badge>
-                </div>
+            <div key={assignment.id} className="rounded-3xl border border-border/40 bg-background p-6">
+              <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground">Treino</p>
+              <h3 className="text-[22px] font-semibold text-foreground tracking-[-0.03em] leading-tight mt-2">{template.title}</h3>
+              {template.description && <p className="text-[12px] text-muted-foreground font-light mt-2 tracking-tight">{template.description}</p>}
+              <div className="flex gap-2 mt-4 mb-4 text-[11px]">
+                <Badge variant="outline" className="rounded-full border-border/50 font-light">{template.weeks} sem</Badge>
+                <Badge variant="outline" className="rounded-full border-border/50 font-light">{template.days_per_week}x/sem</Badge>
+                <Badge variant="outline" className="rounded-full border-border/50 font-light">{template.minutes_per_day} min/dia</Badge>
+              </div>
 
                 <div className="space-y-3">
                   {exercises.map((ex: any, idx: number) => {
@@ -264,9 +261,8 @@ const StudentGuidedWorkout = () => {
                       </div>
                     );
                   })}
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           );
         })}
       </div>

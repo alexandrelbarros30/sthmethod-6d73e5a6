@@ -242,17 +242,14 @@ const StudentEvolution = () => {
     <DashboardLayout role="student" title="Atualização" subtitle="Registre seu progresso para acompanhamento profissional.">
       {fullProfile && <EvolutionMacroDisplay profile={fullProfile} />}
 
-      <Card className="mb-6 border-foreground/15 bg-foreground/[0.03]">
-        <CardHeader>
-          <CardTitle className="text-base font-display flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-foreground" />
-            Nova Atualização de Evolução
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
+      <div className="rounded-3xl border border-border/40 bg-background p-6 mb-6 space-y-5">
+        <div>
+          <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground">Atualização</p>
+          <h2 className="text-[24px] font-semibold text-foreground tracking-[-0.03em] leading-tight mt-2">Nova evolução</h2>
+          <p className="text-[12px] text-muted-foreground font-light mt-2 tracking-tight">
             Envie novas fotos corporais e registre seu peso atual. Os macros serão recalculados automaticamente.
           </p>
-        </CardHeader>
-        <CardContent className="space-y-5">
+        </div>
           {/* Weight */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -341,8 +338,7 @@ const StudentEvolution = () => {
           >
             {saving ? "Salvando..." : "Registrar Evolução e Atualizar Macros"}
           </Button>
-        </CardContent>
-      </Card>
+      </div>
 
       <EvolutionWeightHistory weightLogs={weightLogs || []} />
 

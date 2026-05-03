@@ -201,24 +201,18 @@ const StudentSubscription = () => {
   return (
     <DashboardLayout role="student" title="Assinatura" subtitle="Gerencie seu plano e veja os benefícios.">
       {subscription && (
-        <Card className="mb-6 bg-card border-border">
-          <CardContent className="pt-6">
-            <div className="flex flex-wrap items-center gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Plano atual</p>
-                <p className="text-lg font-bold text-foreground">{(subscription as any).plans?.name || "—"}</p>
-              </div>
-              <Badge className={isActive ? "bg-foreground/15 text-foreground" : "bg-destructive/20 text-destructive"}>
-                {isActive ? "Ativo" : isExpired ? "Vencido" : "Inativo"}
-              </Badge>
-              <div className="text-sm text-muted-foreground">
-                <span>Início: {new Date(subscription.start_date).toLocaleDateString("pt-BR")}</span>
-                <span className="mx-2">•</span>
-                <span>Término: {new Date(subscription.end_date).toLocaleDateString("pt-BR")}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="mb-6 rounded-3xl border border-border/40 bg-background p-6">
+          <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground">Plano atual</p>
+          <div className="flex items-baseline gap-3 mt-3">
+            <h2 className="text-[28px] font-semibold text-foreground tracking-[-0.035em] leading-none">{(subscription as any).plans?.name || "—"}</h2>
+            <Badge variant="outline" className="text-[10px] rounded-full border-border/50 font-medium">
+              {isActive ? "Ativo" : isExpired ? "Vencido" : "Inativo"}
+            </Badge>
+          </div>
+          <p className="text-[12px] text-muted-foreground font-light mt-3 tracking-tight">
+            {new Date(subscription.start_date).toLocaleDateString("pt-BR")} — {new Date(subscription.end_date).toLocaleDateString("pt-BR")}
+          </p>
+        </div>
       )}
 
       <PlanCards
