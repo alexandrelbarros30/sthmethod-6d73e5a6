@@ -9,8 +9,18 @@ import glowImg from "@/assets/sthnews-glow-hero.jpg";
 import gestrinonaImg from "@/assets/sthnews-gestrinona-hero.jpg";
 import platoImg from "@/assets/sthnews-plato-hero.jpg";
 import trembolonaImg from "@/assets/sthnews-trembolona-hero.jpg";
+import ginecoImg from "@/assets/sthnews-gineco-hero.jpg";
 
 const articles = [
+  {
+    to: "/tendencias/ginecomastia",
+    tag: "CAPA",
+    tagClass: "bg-primary text-primary-foreground",
+    date: "Nova matéria",
+    title: "🧬 Ginecomastia: o caroço silencioso que trava sua definição",
+    desc: "O termômetro do equilíbrio hormonal — e o freio invisível dos seus resultados.",
+    img: ginecoImg,
+  },
   {
     to: "/tendencias/trembolona",
     tag: "CAPA",
