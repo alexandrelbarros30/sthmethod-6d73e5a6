@@ -359,7 +359,7 @@ const Landing = () => {
       <STHNewsSection />
 
       {/* Final CTA */}
-      <section className="py-32 md:py-40 px-6 text-center border-t border-border/40">
+      <section className="py-32 md:py-40 px-6 text-center bg-[hsl(0_0%_4%)] text-white">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -367,20 +367,20 @@ const Landing = () => {
           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
           className="max-w-3xl mx-auto"
         >
-          <h2 className="text-4xl md:text-7xl font-semibold tracking-[-0.04em] leading-[1] text-foreground mb-6">
+          <h2 className="text-4xl md:text-7xl font-semibold tracking-[-0.04em] leading-[1] text-white mb-6">
             {ctaFinalTitle}
           </h2>
-          <p className="text-lg md:text-xl text-muted-foreground font-light max-w-xl mx-auto mb-10">
+          <p className="text-lg md:text-xl text-white/60 font-light max-w-xl mx-auto mb-10">
             {ctaFinalSubtitle}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <LinkOrA to={ctaFinalBtn1Link}>
-              <Button size="lg" className="rounded-full bg-foreground text-background hover:bg-foreground/90 px-8 h-12 text-[15px] font-medium">
+              <Button size="lg" className="rounded-full bg-brand text-brand-foreground hover:opacity-90 px-8 h-12 text-[15px] font-medium">
                 {ctaFinalBtn1Text}
               </Button>
             </LinkOrA>
             <LinkOrA to={ctaFinalBtn2Link}>
-              <Button size="lg" variant="ghost" className="rounded-full px-8 h-12 text-[15px] font-medium text-foreground hover:bg-muted/50">
+              <Button size="lg" variant="ghost" className="rounded-full px-8 h-12 text-[15px] font-medium text-white hover:bg-white/10">
                 {ctaFinalBtn2Text}
               </Button>
             </LinkOrA>

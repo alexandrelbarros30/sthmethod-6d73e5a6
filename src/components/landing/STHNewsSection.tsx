@@ -87,7 +87,7 @@ const articles = [
 
 const STHNewsSection = () => {
   return (
-    <section id="sth-news" className="py-20 sm:py-32 px-4 sm:px-6 bg-background">
+    <section id="sth-news" className="py-20 sm:py-32 px-4 sm:px-6 bg-[hsl(var(--surface))]">
       <div className="max-w-6xl mx-auto">
         {/* Header — Apple style: tipografia grande, silenciosa, centrada */}
         <motion.div
