@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { TrendingUp, Target, ShieldCheck } from "lucide-react";
+import physiqueImg from "@/assets/apple-bw-physique.jpg";
 
 const pillars = [
   { icon: <Target className="w-6 h-6" />, title: "Método", desc: "Protocolo individualizado, nada genérico." },
@@ -24,6 +25,21 @@ const ResultsSection = () => (
         <p className="text-base md:text-lg text-white/60 font-light max-w-2xl mx-auto mt-5">
           Método, constância e acompanhamento. Nesta ordem.
         </p>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, scale: 1.02 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+        className="relative w-full aspect-[21/9] rounded-3xl overflow-hidden mb-16 border border-white/10"
+      >
+        <img src={physiqueImg} alt="Evolução física" width={1920} height={1080} loading="lazy" className="w-full h-full object-cover grayscale" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[hsl(0_0%_4%)] via-transparent to-transparent" />
+        <div className="absolute bottom-6 left-6 md:bottom-10 md:left-10">
+          <div className="text-[10px] tracking-[0.25em] uppercase text-brand mb-2">Disciplina</div>
+          <p className="text-white text-xl md:text-3xl font-semibold tracking-[-0.02em] max-w-md">Forma é resultado de processo.</p>
+        </div>
       </motion.div>
 
       <motion.div

@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { UtensilsCrossed, Coffee, Sun, Cookie, Moon } from "lucide-react";
+import nutritionImg from "@/assets/apple-bw-nutrition.jpg";
 
 const meals = [
   {
@@ -48,6 +49,21 @@ const MealPlanSection = () => (
           <span className="text-brand">Plano alimentar</span> diário.
         </h2>
         <p className="text-base md:text-lg text-white/60 font-light mt-5">Referência de 2.000 kcal — personalizado para cada aluno.</p>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, scale: 1.02 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+        className="relative w-full aspect-[21/9] rounded-3xl overflow-hidden mb-10 border border-white/10"
+      >
+        <img src={nutritionImg} alt="Alimentos" width={1920} height={1080} loading="lazy" className="w-full h-full object-cover grayscale" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[hsl(0_0%_4%)] via-transparent to-transparent" />
+        <div className="absolute bottom-6 left-6 md:bottom-10 md:left-10">
+          <div className="text-[10px] tracking-[0.25em] uppercase text-brand mb-2">Nutrição</div>
+          <p className="text-white text-xl md:text-3xl font-semibold tracking-[-0.02em] max-w-md">Comida de verdade. Resultado real.</p>
+        </div>
       </motion.div>
 
       <div className="grid sm:grid-cols-2 gap-px bg-border/40 rounded-2xl overflow-hidden border border-border/40 mb-6">

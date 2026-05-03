@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { ShieldCheck, BookOpen, HeartPulse } from "lucide-react";
+import ethicsImg from "@/assets/apple-bw-ethics.jpg";
 
 const values = [
   { icon: <HeartPulse className="w-6 h-6" />, title: "Acompanhamento", desc: "Cada aluno é acompanhado de perto, com ajustes constantes e comunicação direta." },
@@ -24,6 +25,21 @@ const EthicsSection = () => (
         <p className="text-base md:text-lg text-white/60 font-light max-w-2xl mx-auto mt-5">
           Resultados vêm com constância e responsabilidade.
         </p>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, scale: 1.02 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+        className="relative w-full aspect-[21/9] rounded-3xl overflow-hidden mb-16 border border-white/10"
+      >
+        <img src={ethicsImg} alt="Ética & saúde" width={1920} height={1080} loading="lazy" className="w-full h-full object-cover grayscale" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[hsl(0_0%_4%)] via-transparent to-transparent" />
+        <div className="absolute bottom-6 right-6 md:bottom-10 md:right-10 text-right">
+          <div className="text-[10px] tracking-[0.25em] uppercase text-brand mb-2">Saúde primeiro</div>
+          <p className="text-white text-xl md:text-3xl font-semibold tracking-[-0.02em] max-w-md">Ciência. Cuidado. Verdade.</p>
+        </div>
       </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/10 rounded-2xl overflow-hidden border border-white/10">

@@ -3,6 +3,7 @@ import {
   Brain, Utensils, Dumbbell, Pill, FlaskConical, Headphones, FileText,
 } from "lucide-react";
 import { useLandingSteps } from "@/hooks/useLandingData";
+import trainingImg from "@/assets/apple-bw-training.jpg";
 
 const iconMap: Record<string, React.ReactNode> = {
   Brain: <Brain className="w-7 h-7" />,
@@ -31,6 +32,21 @@ const HowItWorksSection = () => {
           <p className="text-base md:text-lg text-muted-foreground font-light max-w-2xl mx-auto mt-5">
             Do diagnóstico à transformação. Cada etapa pensada para o seu resultado.
           </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 1.02 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+          className="relative w-full aspect-[21/9] rounded-3xl overflow-hidden mb-16 border border-border/40"
+        >
+          <img src={trainingImg} alt="Treino" width={1920} height={1080} loading="lazy" className="w-full h-full object-cover grayscale" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+          <div className="absolute bottom-6 left-6 md:bottom-10 md:left-10">
+            <div className="text-[10px] tracking-[0.25em] uppercase text-brand mb-2">Treino</div>
+            <p className="text-white text-xl md:text-3xl font-semibold tracking-[-0.02em] max-w-md">Do diagnóstico à execução.</p>
+          </div>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-border/40 rounded-2xl overflow-hidden border border-border/40">
