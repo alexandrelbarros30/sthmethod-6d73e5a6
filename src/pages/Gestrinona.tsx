@@ -1,10 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import {
-  ArrowLeft, Newspaper, Home, Rocket, MessageCircle,
-  Sparkles, FlaskConical, Activity, Shield, Layers,
-  Clock, AlertTriangle, BookOpen, Star, Pill, Cpu, Zap, Heart,
-} from "lucide-react";
+import { ArrowLeft, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import heroImg from "@/assets/sthnews-gestrinona-hero.jpg";
@@ -15,427 +11,176 @@ import moleculaImg from "@/assets/sthnews-gestrinona-molecula.jpg";
 import resultadoImg from "@/assets/sthnews-gestrinona-resultado.jpg";
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i: number) => ({
-    opacity: 1, y: 0,
-    transition: { delay: i * 0.06, duration: 0.5, ease: "easeOut" as const },
-  }),
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const } },
 };
+
+const Section = ({
+  number, kicker, title, image, alt, children,
+}: { number: string; kicker: string; title: string; image: string; alt: string; children: React.ReactNode }) => (
+  <motion.section
+    initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={fadeUp}
+    className="py-20 md:py-32 border-t border-border/40"
+  >
+    <div className="max-w-2xl mx-auto px-6">
+      <p className="text-[11px] font-medium tracking-[0.2em] text-muted-foreground uppercase mb-4">
+        {number} — {kicker}
+      </p>
+      <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-foreground mb-10 leading-[1.05]">
+        {title}
+      </h2>
+    </div>
+    <div className="max-w-4xl mx-auto px-6 mb-10">
+      <div className="rounded-3xl overflow-hidden bg-muted aspect-[16/10]">
+        <img src={image} alt={alt} className="w-full h-full object-cover" loading="lazy" />
+      </div>
+    </div>
+    <div className="max-w-2xl mx-auto px-6 space-y-6 text-[17px] leading-[1.6] text-muted-foreground font-light">
+      {children}
+    </div>
+  </motion.section>
+);
 
 const Gestrinona = () => {
   const { user, role } = useAuth();
   const isStudent = !!user && role === "student";
   const backTo = isStudent ? "/dashboard" : "/tendencias";
-  const backLabel = isStudent ? "Início" : "STH News";
   const BackIcon = isStudent ? Home : ArrowLeft;
 
-  const today = new Date().toLocaleDateString("pt-BR", {
-    day: "2-digit", month: "long", year: "numeric",
-  });
-
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border">
-        <div className="max-w-3xl mx-auto px-4">
-          <div className="h-12 flex items-center justify-between">
-            <Link to={backTo} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-              <BackIcon className="w-3.5 h-3.5" /> {backLabel}
-            </Link>
-            <div className="flex items-center gap-1.5">
-              <Newspaper className="w-3.5 h-3.5 text-primary" />
-              <span className="text-[11px] font-black tracking-[0.2em] text-foreground uppercase">STH News</span>
-            </div>
-            {isStudent ? (
-              <Link to="/dashboard">
-                <Button size="sm" variant="ghost" className="text-[10px] px-3 h-7 rounded-full font-bold">Voltar</Button>
-              </Link>
-            ) : (
-              <Link to="/cadastro">
-                <Button size="sm" className="gradient-bg text-primary-foreground text-[10px] px-3 h-7 rounded-full font-bold">Começar</Button>
-              </Link>
-            )}
-          </div>
+    <div className="min-h-screen bg-background text-foreground antialiased">
+      <header className="fixed top-0 inset-x-0 z-50 bg-background/80 backdrop-blur-2xl border-b border-border/40">
+        <div className="max-w-6xl mx-auto px-6 h-11 flex items-center justify-between">
+          <Link to={backTo} className="flex items-center gap-1.5 text-[12px] text-muted-foreground hover:text-foreground transition-colors">
+            <BackIcon className="w-3.5 h-3.5" />
+            <span>{isStudent ? "Início" : "STH News"}</span>
+          </Link>
+          <span className="text-[12px] font-semibold tracking-tight">STH News</span>
+          {isStudent ? (
+            <Link to="/dashboard"><Button size="sm" variant="ghost" className="text-[11px] h-7 rounded-full">Voltar</Button></Link>
+          ) : (
+            <Link to="/cadastro"><Button size="sm" className="text-[11px] h-7 rounded-full bg-foreground text-background hover:bg-foreground/90">Começar</Button></Link>
+          )}
         </div>
       </header>
 
-      <main className="pt-20 pb-16 px-4 max-w-3xl mx-auto">
-        {/* Tag */}
-        <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={0} className="flex items-center gap-2 mb-3">
-          <span className="text-[9px] font-black bg-destructive text-destructive-foreground px-2 py-0.5 rounded tracking-wider animate-pulse">EXCLUSIVO</span>
-          <span className="text-[10px] text-muted-foreground">{today} · STH News · Endocrinologia & Estética</span>
-        </motion.div>
-
-        {/* Title */}
-        <motion.h1
-          initial="hidden" animate="visible" variants={fadeUp} custom={1}
-          className="text-2xl md:text-4xl font-black text-foreground leading-[1.12] mb-3 tracking-tight"
-        >
-          💊 Gestrinona:{" "}
-          <span className="gradient-text">a molécula de tripla ação que redefine densidade, secura e performance</span>
-        </motion.h1>
-
-        <motion.p
-          initial="hidden" animate="visible" variants={fadeUp} custom={2}
-          className="text-sm md:text-base text-muted-foreground leading-relaxed border-l-2 border-primary pl-4 mb-6"
-        >
-          Da <strong className="text-foreground">cápsula manipulada</strong> ao <strong className="text-foreground">chip subdérmico de liberação contínua</strong>: como a Gestrinona se tornou uma das ferramentas mais sofisticadas da endocrinologia aplicada à composição corporal feminina.
+      <section className="pt-32 md:pt-40 pb-16 md:pb-24 text-center px-6">
+        <motion.p initial="hidden" animate="visible" variants={fadeUp} className="text-[12px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-6">
+          Gestrinona
         </motion.p>
-
-        {/* Hero image */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6 }}
-          className="relative rounded-2xl overflow-hidden border border-primary/20 mb-8 aspect-[16/10] bg-muted"
+        <motion.h1
+          initial="hidden" animate="visible" variants={fadeUp}
+          className="max-w-4xl mx-auto text-5xl md:text-7xl lg:text-8xl font-semibold tracking-[-0.04em] leading-[0.95] text-foreground"
         >
-          <img src={heroImg} alt="Frasco premium de Gestrinona manipulada com cápsulas douradas" className="w-full h-full object-cover" width={1280} height={800} />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-4">
-            <span className="text-[9px] font-bold uppercase tracking-widest text-primary">GESTRINONA · Endocrinologia aplicada</span>
-            <p className="text-sm font-bold text-foreground">Densidade, secura e equilíbrio — em uma única molécula.</p>
-          </div>
-        </motion.div>
+          Densidade, secura<br />
+          <span className="text-muted-foreground">e equilíbrio.</span>
+        </motion.h1>
+        <motion.p
+          initial="hidden" animate="visible" variants={fadeUp}
+          className="max-w-xl mx-auto mt-8 text-lg md:text-xl text-muted-foreground font-light leading-relaxed"
+        >
+          Uma molécula. Tripla ação. Endocrinologia aplicada à composição feminina.
+        </motion.p>
+      </section>
 
-        {/* INTRO */}
-        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-10">
-          <motion.div variants={fadeUp} custom={0} className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-background to-primary/5 p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="w-4 h-4 text-primary" />
-              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-primary">Antes de começar</p>
-            </div>
-            <p className="text-sm text-foreground leading-relaxed">
-              A Gestrinona <strong className="gradient-text">amplifica</strong> — não substitui. Ela cria o ambiente hormonal ideal para que treino sério e nutrição precisa se traduzam em resultado visível. Sem rotina sólida, nenhuma molécula faz milagre. Com rotina sólida, ela faz toda a diferença.
-            </p>
-          </motion.div>
-        </motion.section>
-
-        {/* O QUE É */}
-        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-10">
-          <motion.div variants={fadeUp} custom={0} className="flex items-center gap-2 mb-4">
-            <FlaskConical className="w-4 h-4 text-primary" />
-            <h2 className="text-sm font-black uppercase tracking-widest text-foreground">O que é · Molécula de tripla ação</h2>
-            <div className="flex-1 h-px bg-border" />
-          </motion.div>
-
-          <motion.p variants={fadeUp} custom={1} className="text-sm text-muted-foreground mb-4 leading-relaxed">
-            A Gestrinona (<em>etil-nortestosterona</em>) é um esteroide sintético derivado da <strong className="text-foreground">19-nortestosterona</strong>. Seu diferencial é o perfil farmacológico <strong className="text-foreground">híbrido</strong>: três propriedades operando em sinergia dentro de uma única molécula.
-          </motion.p>
-
-          <motion.div variants={fadeUp} custom={2} className="rounded-2xl overflow-hidden border border-primary/20 mb-5 aspect-[16/10] bg-muted">
-            <img src={moleculaImg} alt="Visualização molecular da Gestrinona" className="w-full h-full object-cover" width={1280} height={800} loading="lazy" />
-          </motion.div>
-
-          <div className="space-y-3">
-            <motion.div variants={fadeUp} custom={3} className="rounded-2xl border border-border/60 bg-card p-5">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-rose-700 flex items-center justify-center shadow-lg">
-                  <Shield className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-rose-500">01 · Antiprogestogênica</p>
-                  <h3 className="text-base font-bold text-foreground">Modulação da progesterona</h3>
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Regula a atividade da progesterona, contribuindo para o controle de quadros como <strong className="text-foreground">endometriose</strong> e ajustando a homeostase hormonal feminina em protocolos estéticos avançados.
-              </p>
-            </motion.div>
-
-            <motion.div variants={fadeUp} custom={4} className="rounded-2xl border border-border/60 bg-card p-5">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center shadow-lg">
-                  <Activity className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-amber-500">02 · Androgênica</p>
-                  <h3 className="text-base font-bold text-foreground">Densidade muscular e força</h3>
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Aumenta a síntese proteica e a <strong className="text-foreground">qualidade do tecido muscular</strong> — entrega aquele aspecto de músculo cheio, denso e duro que poucas estratégias atingem.
-              </p>
-            </motion.div>
-
-            <motion.div variants={fadeUp} custom={5} className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-card to-card p-5">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-700 flex items-center justify-center shadow-lg">
-                  <Zap className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-cyan-500">03 · Antiestrogênica</p>
-                  <h3 className="text-base font-bold text-foreground">Pele colada, sem retenção</h3>
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Reduz a ação do estrogênio livre — combate <strong className="text-foreground">retenção hídrica</strong> e celulite, revelando o contorno real do músculo construído com esforço.
-              </p>
-            </motion.div>
-          </div>
-        </motion.section>
-
-        {/* FORMAS DE APLICAÇÃO */}
-        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-10">
-          <motion.div variants={fadeUp} custom={0} className="flex items-center gap-2 mb-4">
-            <Layers className="w-4 h-4 text-primary" />
-            <h2 className="text-sm font-black uppercase tracking-widest text-foreground">Formas de aplicação · Conveniência vs. Constância</h2>
-            <div className="flex-1 h-px bg-border" />
-          </motion.div>
-
-          <motion.p variants={fadeUp} custom={1} className="text-sm text-muted-foreground mb-5 leading-relaxed">
-            A administração evoluiu para atender dois perfis: quem busca <strong className="text-foreground">flexibilidade imediata</strong> e quem busca <strong className="text-foreground">estabilidade de elite</strong>.
-          </motion.p>
-
-          {/* CÁPSULAS — DESTAQUE */}
-          <motion.div variants={fadeUp} custom={2} className="rounded-2xl border border-amber-500/40 bg-gradient-to-br from-amber-500/10 via-card to-card p-5 mb-4 relative overflow-hidden">
-            <span className="absolute top-3 right-3 text-[8px] font-black bg-amber-500 text-background px-2 py-0.5 rounded tracking-wider">DESTAQUE</span>
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center shadow-xl">
-                <Pill className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-amber-500">Forma 01 · Praticidade oral</p>
-                <h3 className="text-lg font-bold text-foreground">Cápsulas manipuladas</h3>
-              </div>
-            </div>
-
-            <div className="rounded-xl overflow-hidden border border-amber-500/20 mb-4 aspect-[16/10] bg-muted">
-              <img src={capsulasImg} alt="Cápsulas douradas de Gestrinona manipulada" className="w-full h-full object-cover" width={1280} height={800} loading="lazy" />
-            </div>
-
-            <p className="text-xs text-muted-foreground leading-relaxed mb-3">
-              A manipulação em cápsulas oferece a <strong className="text-foreground">flexibilidade</strong> necessária para ajustes frequentes de dose conforme a evolução estética e a resposta individual.
-            </p>
-
-            <div className="space-y-2">
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-background/50 border border-border/40">
-                <Star className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-foreground"><strong>Diferencial:</strong> permite ao médico monitorar a resposta e ajustar o protocolo com precisão clínica.</p>
-              </div>
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-background/50 border border-border/40">
-                <Star className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-foreground"><strong>Ideal para:</strong> quem inicia o protocolo e quer testar a resposta do corpo antes de migrar para opções de longa duração.</p>
-              </div>
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-background/50 border border-border/40">
-                <Star className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-foreground"><strong>Atenção:</strong> exige <em>disciplina absoluta</em> nos horários — a estabilidade metabólica depende dela.</p>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* CHIP */}
-          <motion.div variants={fadeUp} custom={3} className="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 via-card to-card p-5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-700 flex items-center justify-center shadow-xl">
-                <Cpu className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-cyan-500">Forma 02 · Constância de elite</p>
-                <h3 className="text-lg font-bold text-foreground">Implante hormonal ("Chip")</h3>
-              </div>
-            </div>
-
-            <div className="rounded-xl overflow-hidden border border-cyan-500/20 mb-4 aspect-[16/10] bg-muted">
-              <img src={chipImg} alt="Chip implante subdérmico de Gestrinona em pinça cirúrgica" className="w-full h-full object-cover" width={1280} height={800} loading="lazy" />
-            </div>
-
-            <p className="text-xs text-muted-foreground leading-relaxed mb-3">
-              Os implantes subdérmicos de <strong className="text-foreground">liberação lenta</strong> são o padrão-ouro de quem busca performance sem a preocupação da rotina diária — sem picos, sem vales.
-            </p>
-
-            <div className="space-y-2">
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-background/50 border border-border/40">
-                <Star className="w-3.5 h-3.5 text-cyan-500 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-foreground"><strong>Liberação contínua:</strong> níveis hormonais em platô estável, sem oscilações de humor ou inconstância.</p>
-              </div>
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-background/50 border border-border/40">
-                <Star className="w-3.5 h-3.5 text-cyan-500 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-foreground"><strong>Vantagem metabólica:</strong> síntese proteica e oxidação lipídica otimizadas <em>24h por dia</em>.</p>
-              </div>
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-background/50 border border-border/40">
-                <Star className="w-3.5 h-3.5 text-cyan-500 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-foreground"><strong>Para quem busca:</strong> máxima eficiência com mínima interrupção da rotina.</p>
-              </div>
-            </div>
-          </motion.div>
-
-          <motion.div variants={fadeUp} custom={4} className="mt-4 p-4 rounded-xl bg-primary/5 border border-primary/20">
-            <p className="text-xs text-foreground leading-relaxed text-center">
-              <strong className="text-amber-500">Cápsula</strong> = ajuste fino e flexibilidade · <strong className="text-cyan-500">Chip</strong> = estabilidade contínua e zero rotina diária.
-            </p>
-          </motion.div>
-        </motion.section>
-
-        {/* BENEFÍCIOS */}
-        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-10">
-          <motion.div variants={fadeUp} custom={0} className="flex items-center gap-2 mb-4">
-            <Star className="w-4 h-4 text-primary" />
-            <h2 className="text-sm font-black uppercase tracking-widest text-foreground">Benefícios · Por que se destaca</h2>
-            <div className="flex-1 h-px bg-border" />
-          </motion.div>
-
-          <motion.div variants={fadeUp} custom={1} className="rounded-2xl overflow-hidden border border-primary/20 mb-5 aspect-[16/10] bg-muted relative">
-            <img src={densidadeImg} alt="Costas femininas musculares destacando densidade e definição" className="w-full h-full object-cover" width={1280} height={800} loading="lazy" />
-            <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-4">
-              <span className="text-[9px] font-bold uppercase tracking-widest text-primary">Densidade real</span>
-              <p className="text-sm font-bold text-foreground">Músculo cheio, pele colada, contorno definido.</p>
-            </div>
-          </motion.div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <motion.div variants={fadeUp} custom={2} className="rounded-2xl border border-border/60 bg-card p-4">
-              <div className="flex items-center gap-2 mb-1.5">
-                <Activity className="w-4 h-4 text-primary" />
-                <h3 className="text-sm font-bold text-foreground">Densidade muscular</h3>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">Dureza ao tecido que a testosterona pura nem sempre entrega — músculo "mais cheio" e definido.</p>
-            </motion.div>
-
-            <motion.div variants={fadeUp} custom={3} className="rounded-2xl border border-border/60 bg-card p-4">
-              <div className="flex items-center gap-2 mb-1.5">
-                <Zap className="w-4 h-4 text-primary" />
-                <h3 className="text-sm font-bold text-foreground">Gestão de gordura</h3>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">Ação antiestrogênica reduz gordura localizada e a retenção crônica de líquidos.</p>
-            </motion.div>
-
-            <motion.div variants={fadeUp} custom={4} className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-card to-card p-4">
-              <div className="flex items-center gap-2 mb-1.5">
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                <h3 className="text-sm font-bold text-foreground">Energia & "drive"</h3>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">Aumento de disposição que se traduz em treinos mais produtivos e foco para sustentar a dieta.</p>
-            </motion.div>
-
-            <motion.div variants={fadeUp} custom={5} className="rounded-2xl border border-border/60 bg-card p-4">
-              <div className="flex items-center gap-2 mb-1.5">
-                <Heart className="w-4 h-4 text-primary" />
-                <h3 className="text-sm font-bold text-foreground">Equilíbrio hormonal</h3>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">Sensação de bem-estar e estabilidade emocional — base para constância no protocolo.</p>
-            </motion.div>
-          </div>
-        </motion.section>
-
-        {/* TEMPO DE RESPOSTA */}
-        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-10">
-          <motion.div variants={fadeUp} custom={0} className="flex items-center gap-2 mb-4">
-            <Clock className="w-4 h-4 text-primary" />
-            <h2 className="text-sm font-black uppercase tracking-widest text-foreground">Resposta & Resultados</h2>
-            <div className="flex-1 h-px bg-border" />
-          </motion.div>
-
-          <motion.div variants={fadeUp} custom={1} className="rounded-2xl overflow-hidden border border-primary/20 mb-4 aspect-[16/10] bg-muted relative">
-            <img src={resultadoImg} alt="Costas femininas com pele radiante mostrando resultado do protocolo" className="w-full h-full object-cover" width={1280} height={800} loading="lazy" />
-            <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-4">
-              <p className="text-sm font-bold text-foreground">A constância separa o resultado moderado da transformação de elite.</p>
-            </div>
-          </motion.div>
-
-          <motion.div variants={fadeUp} custom={2} className="rounded-2xl border border-border/60 bg-card p-5">
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              A Gestrinona é um fármaco de <strong className="text-foreground">construção cumulativa</strong>. As primeiras semanas são de adaptação. A partir do <strong className="text-foreground">primeiro mês de constância</strong>, a alteração na composição corporal — ganho de massa magra e redução de gordura subcutânea — começa a se tornar visível no espelho.
-            </p>
-          </motion.div>
-        </motion.section>
-
-        {/* SAFETY */}
-        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-10">
-          <motion.div variants={fadeUp} custom={0} className="rounded-2xl border border-destructive/40 bg-destructive/5 p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <AlertTriangle className="w-4 h-4 text-destructive" />
-              <h3 className="text-sm font-bold text-foreground">Pilar de segurança · Monitoramento obrigatório</h3>
-            </div>
-            <p className="text-xs text-foreground leading-relaxed mb-3">
-              A Gestrinona é potente — seu uso deve ser <strong className="text-destructive">precedido e acompanhado</strong> por exames laboratoriais rigorosos.
-            </p>
-            <ul className="space-y-2 text-xs text-muted-foreground">
-              <li className="flex items-start gap-2"><span className="text-destructive mt-0.5">●</span><strong className="text-foreground">Perfil lipídico:</strong>&nbsp;HDL/LDL — pode reduzir o HDL.</li>
-              <li className="flex items-start gap-2"><span className="text-destructive mt-0.5">●</span><strong className="text-foreground">Saúde hepática:</strong>&nbsp;TGO/TGP — monitoramento contínuo do fígado.</li>
-              <li className="flex items-start gap-2"><span className="text-destructive mt-0.5">●</span><strong className="text-foreground">Hematócrito:</strong>&nbsp;acompanhamento da viscosidade sanguínea.</li>
-              <li className="flex items-start gap-2"><span className="text-destructive mt-0.5">●</span><strong className="text-foreground">Sensibilidade androgênica:</strong>&nbsp;oleosidade, acne, alterações na voz e ciclo menstrual.</li>
-            </ul>
-          </motion.div>
-        </motion.section>
-
-        {/* INSIGHT */}
-        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-10">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0} className="rounded-2xl bg-gradient-to-br from-primary/15 via-background to-primary/5 border border-primary/30 p-6">
-            <p className="text-[9px] uppercase tracking-[0.25em] text-primary font-black mb-2">⚡ Insight Brutal</p>
-            <p className="text-sm text-foreground leading-relaxed">
-              A Gestrinona <strong className="gradient-text">não substitui o esforço — ela amplifica</strong>. O chip ou a cápsula não fazem o trabalho pesado: garantem que o ambiente hormonal esteja otimizado para que o seu trabalho no treino seja <em>recompensado de verdade</em>.
-            </p>
-          </motion.div>
-        </motion.section>
-
-        {/* CTA */}
-        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-10">
-          <motion.div variants={fadeUp} custom={0} className="rounded-2xl bg-gradient-to-br from-primary/15 via-background to-primary/5 border border-primary/30 p-6 text-center">
-            <p className="text-[9px] uppercase tracking-[0.25em] text-primary font-black mb-2">⚡ STH METHOD</p>
-            <h2 className="text-xl md:text-2xl font-black text-foreground mb-3 leading-tight">
-              Cápsula ou chip? <br />
-              <span className="gradient-text">Sua escolha define o ritmo.</span>
-            </h2>
-            <p className="text-xs text-muted-foreground mb-5 max-w-md mx-auto leading-relaxed">
-              Você busca otimização sistêmica e contínua (chip) ou prefere a flexibilidade das cápsulas? Tudo depende do seu estilo de vida e nível de comprometimento. Nossa consultoria te orienta com segurança e estratégia.
-            </p>
-
-            <div className="flex flex-col gap-2.5 max-w-xs mx-auto">
-              <Link to={isStudent ? "/dashboard" : "/cadastro"} className="w-full">
-                <Button size="lg" className="gradient-bg text-primary-foreground w-full font-bold gap-2 rounded-xl cta-glow">
-                  {isStudent ? "Voltar ao painel" : "Começar agora"} <Rocket className="w-4 h-4" />
-                </Button>
-              </Link>
-              <a
-                href="https://wa.me/5521998496289?text=Ol%C3%A1!%20Vi%20a%20mat%C3%A9ria%20sobre%20a%20Gestrinona%20e%20quero%20entender%20qual%20forma%20%C3%A9%20ideal%20para%20mim."
-                target="_blank" rel="noopener noreferrer" className="w-full"
-              >
-                <Button size="lg" variant="outline" className="w-full gap-2 rounded-xl cta-glow-soft">
-                  <MessageCircle className="w-4 h-4" /> Falar com especialista
-                </Button>
-              </a>
-            </div>
-          </motion.div>
-        </motion.section>
-
-        {/* Notas */}
-        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-8">
-          <motion.div variants={fadeUp} custom={0} className="flex items-center gap-2 mb-4">
-            <BookOpen className="w-4 h-4 text-primary" />
-            <h2 className="text-sm font-black uppercase tracking-widest text-foreground">Referências científicas</h2>
-            <div className="flex-1 h-px bg-border" />
-          </motion.div>
-
-          <div className="space-y-3 text-xs text-muted-foreground leading-relaxed">
-            <div className="p-3 rounded-xl bg-card border border-border/40">
-              <p className="font-bold text-foreground text-[11px] uppercase tracking-wider mb-1">Coutinho & Silva (1995)</p>
-              <p><em>Gestrinone: a steroid with progestogenic, androgenic and anti-oestrogenic properties.</em> — Fundamentos da tripla ação farmacológica.</p>
-            </div>
-            <div className="p-3 rounded-xl bg-card border border-border/40">
-              <p className="font-bold text-foreground text-[11px] uppercase tracking-wider mb-1">Barbosa et al. (1992)</p>
-              <p><em>Gestrinone: its effect on the endocrine, metabolic and haemostatic parameters.</em> — Impactos sistêmicos e metabólicos.</p>
-            </div>
-            <div className="p-3 rounded-xl bg-card border border-border/40">
-              <p className="font-bold text-foreground text-[11px] uppercase tracking-wider mb-1">Kicman, A. T. (2008)</p>
-              <p><em>Pharmacology of anabolic steroids. British Journal of Pharmacology.</em> — Diferenciação entre esteroides e derivados de 19-nortestosterona.</p>
-            </div>
-          </div>
-        </motion.section>
-
-        {/* Disclaimer */}
-        <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="rounded-xl bg-muted/30 border border-border/40 p-4 mb-8">
-          <p className="text-[10px] text-muted-foreground leading-relaxed text-center">
-            <strong className="text-foreground">Nota:</strong> Conteúdo de finalidade informativa técnica. O uso de hormônios e moduladores deve ser orientado e acompanhado por profissional habilitado, com avaliação clínica e laboratorial individualizada.
-          </p>
-        </motion.div>
-
-        {/* Footer */}
-        <div className="text-center space-y-1">
-          <p className="text-[9px] text-muted-foreground/40 uppercase tracking-widest">STH News — Informação que transforma</p>
-          <p className="text-[9px] text-muted-foreground/30">Consultoria Estratégica em Saúde & Performance</p>
+      <motion.div
+        initial={{ opacity: 0, scale: 1.02 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+        className="max-w-6xl mx-auto px-6 mb-16 md:mb-24"
+      >
+        <div className="rounded-[2rem] overflow-hidden bg-muted aspect-[16/9]">
+          <img src={heroImg} alt="Frasco premium de Gestrinona manipulada" className="w-full h-full object-cover" />
         </div>
-      </main>
+      </motion.div>
+
+      <section className="max-w-2xl mx-auto px-6 pb-12">
+        <motion.p
+          initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}
+          className="text-2xl md:text-3xl font-light leading-[1.35] text-foreground tracking-tight"
+        >
+          A Gestrinona não substitui — <span className="text-foreground font-medium">amplifica</span>. Cria o ambiente hormonal ideal para que treino e nutrição se traduzam em resultado visível.
+        </motion.p>
+      </section>
+
+      <Section number="01" kicker="A molécula" title="Tripla ação em uma única estrutura."
+        image={moleculaImg} alt="Visualização molecular">
+        <p>Derivada da 19-nortestosterona (etil-nortestosterona), a Gestrinona opera com perfil farmacológico híbrido: três propriedades em sinergia.</p>
+        <div className="grid gap-4 pt-4">
+          <div className="py-5 border-t border-border/40">
+            <p className="text-foreground font-medium text-base mb-1">Antiprogestogênica</p>
+            <p className="text-[15px]">Modula a atividade da progesterona, ajustando a homeostase hormonal feminina.</p>
+          </div>
+          <div className="py-5 border-t border-border/40">
+            <p className="text-foreground font-medium text-base mb-1">Androgênica</p>
+            <p className="text-[15px]">Aumenta síntese proteica e qualidade do tecido muscular — músculo cheio, denso, definido.</p>
+          </div>
+          <div className="py-5 border-t border-border/40">
+            <p className="text-foreground font-medium text-base mb-1">Antiestrogênica</p>
+            <p className="text-[15px]">Reduz a ação do estrogênio livre — combate retenção hídrica e revela o contorno real.</p>
+          </div>
+        </div>
+      </Section>
+
+      <Section number="02" kicker="Cápsulas" title="Flexibilidade e ajuste fino."
+        image={capsulasImg} alt="Cápsulas manipuladas">
+        <p>A manipulação em cápsulas oferece <span className="text-foreground font-medium">flexibilidade</span> para ajustes frequentes conforme a evolução estética e a resposta individual.</p>
+        <p>Permite ao médico monitorar a resposta com precisão clínica — ideal para quem inicia o protocolo.</p>
+        <p>Exige <span className="text-foreground font-medium">disciplina absoluta</span> nos horários: a estabilidade metabólica depende dela.</p>
+      </Section>
+
+      <Section number="03" kicker="Implante (chip)" title="Constância de elite, zero rotina."
+        image={chipImg} alt="Implante subdérmico">
+        <p>Os implantes subdérmicos de <span className="text-foreground font-medium">liberação lenta</span> são o padrão-ouro de quem busca performance sem a preocupação da rotina diária.</p>
+        <p>Níveis hormonais em platô estável — sem picos, sem vales, sem oscilações de humor.</p>
+        <p>Síntese proteica e oxidação lipídica otimizadas <span className="text-foreground font-medium">24h por dia</span>.</p>
+      </Section>
+
+      <Section number="04" kicker="Resposta" title="Construção cumulativa."
+        image={densidadeImg} alt="Densidade muscular real">
+        <p>A Gestrinona é um fármaco de construção cumulativa. As primeiras semanas são de adaptação.</p>
+        <p>A partir do <span className="text-foreground font-medium">primeiro mês de constância</span>, a alteração na composição corporal — ganho de massa magra e redução de gordura subcutânea — começa a se tornar visível.</p>
+      </Section>
+
+      <Section number="05" kicker="Suporte clínico" title="Potência exige monitoramento."
+        image={resultadoImg} alt="Acompanhamento clínico">
+        <p>Seu uso deve ser precedido e acompanhado por exames laboratoriais rigorosos.</p>
+        <div className="grid gap-4 pt-4">
+          {[
+            ["Perfil lipídico", "HDL/LDL — pode reduzir o HDL."],
+            ["Saúde hepática", "TGO/TGP — monitoramento contínuo."],
+            ["Hematócrito", "Acompanhamento da viscosidade sanguínea."],
+            ["Sensibilidade androgênica", "Oleosidade, acne, voz, ciclo menstrual."],
+          ].map(([t, d]) => (
+            <div key={t} className="py-5 border-t border-border/40">
+              <p className="text-foreground font-medium text-base mb-1">{t}</p>
+              <p className="text-[15px]">{d}</p>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      <section className="py-32 md:py-40 px-6 text-center border-t border-border/40">
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
+          <h2 className="text-4xl md:text-6xl font-semibold tracking-[-0.03em] leading-[1] text-foreground mb-6">
+            Cápsula ou chip?
+          </h2>
+          <p className="max-w-md mx-auto text-lg text-muted-foreground font-light mb-10">
+            Sua escolha define o ritmo. Comece pelo check-up endócrino completo.
+          </p>
+          {!isStudent && (
+            <Link to="/cadastro">
+              <Button size="lg" className="rounded-full bg-foreground text-background hover:bg-foreground/90 px-8 h-12 text-[15px] font-medium">
+                Começar agora
+              </Button>
+            </Link>
+          )}
+        </motion.div>
+      </section>
+
+      <footer className="border-t border-border/40 py-10 px-6 text-center">
+        <p className="max-w-xl mx-auto text-[12px] text-muted-foreground font-light leading-relaxed">
+          Conteúdo informativo técnico. O uso de hormônios e moduladores deve ser orientado e acompanhado por profissional habilitado, com avaliação clínica e laboratorial individualizada.
+        </p>
+      </footer>
     </div>
   );
 };
