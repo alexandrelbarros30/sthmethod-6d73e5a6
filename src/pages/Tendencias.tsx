@@ -9,6 +9,7 @@ const fadeUp = {
 };
 
 const articles = [
+  { to: "/tendencias/ginecomastia", kicker: "Hormonal masculino", title: "Ginecomastia: o caroço silencioso que trava sua definição.", desc: "O termômetro do equilíbrio hormonal." },
   { to: "/tendencias/trembolona", kicker: "Anabolizantes", title: "Trembolona: arquitetura corporal no patamar de elite.", desc: "O segredo nunca foi a dose. É o manejo." },
   { to: "/tendencias/plato-metabolico", kicker: "Metabolismo", title: "Platô metabólico: por que o corpo para de responder.", desc: "Quando consistência vira repetição." },
   { to: "/tendencias/gestrinona", kicker: "Hormonal feminino", title: "Gestrinona: a molécula de tripla ação.", desc: "Densidade, secura e equilíbrio hormonal." },
