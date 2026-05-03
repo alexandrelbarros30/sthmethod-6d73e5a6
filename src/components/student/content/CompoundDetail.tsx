@@ -34,10 +34,10 @@ interface Props {
 const CompoundDetail = ({ family, selected, visited, onSelect }: Props) => {
   const accent = `hsl(0 0% 96%)`;
   const accentSoft = `hsl(0 0% 96%)`;
-  const accentBg = `hsl(0 0% 96% / 0.12)`;
-  const accentBorder = `hsl(0 0% 96% / 0.4)`;
-  const accentBorderSoft = `hsl(0 0% 96% / 0.2)`;
-  const accentText06 = `hsl(0 0% 96% / 0.06)`;
+  const accentBg = `hsl(0 0% 0% / 0.5)`;
+  const accentBorder = `hsl(0 0% 100% / 0.25)`;
+  const accentBorderSoft = `hsl(0 0% 100% / 0.12)`;
+  const accentText06 = `hsl(0 0% 100% / 0.04)`;
   const compound = family.compounds.find((c) => c.id === selected);
 
   return (
@@ -55,10 +55,9 @@ const CompoundDetail = ({ family, selected, visited, onSelect }: Props) => {
               transition={{ delay: i * 0.05 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => onSelect(c.id)}
-              className="snap-center flex-shrink-0 rounded-xl overflow-hidden relative min-w-[100px] h-[72px] transition-all duration-200"
+              className="snap-center flex-shrink-0 rounded-xl overflow-hidden relative min-w-[100px] h-[72px] transition-all duration-200 backdrop-blur-xl"
               style={{
-                border: isActive ? `1.5px solid ${accentBorder}` : `0.5px solid ${G.border}`,
-                boxShadow: isActive ? `0 0 16px ${accentText06}` : "none",
+                border: isActive ? `1px solid hsl(0 0% 100% / 0.4)` : `0.5px solid hsl(0 0% 100% / 0.1)`,
               }}
             >
               {/* Mini image */}
@@ -74,17 +73,17 @@ const CompoundDetail = ({ family, selected, visited, onSelect }: Props) => {
                 className="absolute inset-0 flex flex-col items-center justify-end pb-2"
                 style={{
                   background: isActive
-                    ? `linear-gradient(to top, hsl(0 0% 96% / 0.9), transparent 70%)`
-                    : "linear-gradient(to top, hsl(0 0% 96% / 0.85), transparent 60%)",
+                    ? `linear-gradient(to top, hsl(0 0% 0% / 0.85), transparent 70%)`
+                    : "linear-gradient(to top, hsl(0 0% 0% / 0.75), transparent 60%)",
                 }}
               >
                 <span
                   className="text-[11px] font-semibold"
-                  style={{ color: isActive ? accent : G.t92 }}
+                  style={{ color: G.t96 }}
                 >
                   {c.name}
                 </span>
-                <span className="text-[9px]" style={{ color: isActive ? accentSoft : G.t45 }}>
+                <span className="text-[9px]" style={{ color: isActive ? G.t80 : G.t50 }}>
                   {c.tag}
                 </span>
               </div>
@@ -93,9 +92,9 @@ const CompoundDetail = ({ family, selected, visited, onSelect }: Props) => {
               {isVisited && !isActive && (
                 <div
                   className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full flex items-center justify-center"
-                  style={{ background: "hsl(0 0% 96% / 0.9)" }}
+                  style={{ background: "hsl(0 0% 0% / 0.7)", border: "0.5px solid hsl(0 0% 100% / 0.3)" }}
                 >
-                  <Check className="w-2.5 h-2.5 text-white" />
+                  <Check className="w-2.5 h-2.5" style={{ color: G.t96 }} />
                 </div>
               )}
             </motion.button>
@@ -116,8 +115,8 @@ const CompoundDetail = ({ family, selected, visited, onSelect }: Props) => {
           >
             {/* Hero image */}
             <div
-              className="rounded-2xl overflow-hidden relative h-52"
-              style={{ border: `0.5px solid ${G.border}` }}
+              className="rounded-2xl overflow-hidden relative h-52 backdrop-blur-xl"
+              style={{ border: `1px solid hsl(0 0% 100% / 0.12)` }}
             >
               <motion.img
                 src={compound.image}
@@ -133,7 +132,7 @@ const CompoundDetail = ({ family, selected, visited, onSelect }: Props) => {
               <div
                 className="absolute inset-0 flex items-end p-5"
                 style={{
-                  background: `linear-gradient(to top, hsl(0 0% 96% / 0.92) 0%, hsl(0 0% 96% / 0.3) 50%, transparent 100%)`,
+                  background: `linear-gradient(to top, hsl(0 0% 0% / 0.88) 0%, hsl(0 0% 0% / 0.3) 50%, transparent 100%)`,
                 }}
               >
                 <div className="space-y-1.5">
@@ -145,14 +144,14 @@ const CompoundDetail = ({ family, selected, visited, onSelect }: Props) => {
                       className="text-[10px] px-2.5 py-1 rounded-full font-semibold backdrop-blur-sm"
                       style={{
                         background: accentBg,
-                        color: accent,
+                        color: G.t96,
                         border: `0.5px solid ${accentBorderSoft}`,
                       }}
                     >
                       {compound.tag}
                     </span>
                   </div>
-                  <p className="text-[13px] font-medium" style={{ color: accentSoft }}>
+                  <p className="text-[13px] font-medium" style={{ color: G.t80 }}>
                     {compound.subheadline}
                   </p>
                 </div>

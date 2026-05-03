@@ -24,8 +24,8 @@ interface Props {
 const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
   const accent = `hsl(0 0% 96%)`;
   const accentSoft = `hsl(0 0% 96%)`;
-  const accentBg = `hsl(0 0% 96% / 0.12)`;
-  const accentBorder = `hsl(0 0% 96% / 0.25)`;
+  const accentBg = `hsl(0 0% 0% / 0.45)`;
+  const accentBorder = `hsl(0 0% 100% / 0.25)`;
   const total = family.compounds.length;
   const pct = total > 0 ? (visitedCount / total) * 100 : 0;
 
@@ -38,17 +38,17 @@ const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
       onClick={onClick}
       className="w-full text-left rounded-[22px] overflow-hidden group relative backdrop-blur-xl"
       style={{
-        border: `1px solid hsl(0 0% 96% / 0.18)`,
-        background: "rgb(255 255 255 / 0.025)",
-        boxShadow: `0 8px 28px -10px rgb(0 0 0 / 0.55), 0 0 22px -6px hsl(0 0% 96% / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.06)`,
+        border: `1px solid hsl(0 0% 100% / 0.12)`,
+        background: "rgb(255 255 255 / 0.03)",
+        boxShadow: `0 10px 30px -12px rgb(0 0 0 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.08)`,
       }}
     >
       {/* Diagonal glass sheen */}
       <div
-        className="absolute inset-0 pointer-events-none z-20 opacity-60"
+        className="absolute inset-0 pointer-events-none z-20 opacity-40"
         style={{
           background:
-            "linear-gradient(115deg, transparent 38%, rgb(255 255 255 / 0.08) 50%, transparent 65%)",
+            "linear-gradient(115deg, transparent 40%, rgb(255 255 255 / 0.06) 50%, transparent 60%)",
         }}
       />
       {/* Cinematic image */}
@@ -64,7 +64,7 @@ const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
         <div
           className="absolute inset-0"
           style={{
-            background: `linear-gradient(to top, hsl(0 0% 96% / 0.95) 0%, hsl(0 0% 96% / 0.4) 50%, transparent 100%)`,
+            background: `linear-gradient(to top, hsl(0 0% 0% / 0.85) 0%, hsl(0 0% 0% / 0.3) 55%, transparent 100%)`,
           }}
         />
 
@@ -74,9 +74,8 @@ const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
             className="text-[10px] uppercase tracking-[0.2em] font-bold px-3 py-1.5 rounded-full backdrop-blur-md"
             style={{
               background: accentBg,
-              color: accent,
+              color: G.t96,
               border: `0.5px solid ${accentBorder}`,
-              boxShadow: `0 0 12px hsl(0 0% 96% / 0.4)`,
             }}
           >
             {family.id === "testosterona" ? "Base" : family.id === "dht" ? "Estética" : "19-nor"}
@@ -88,7 +87,7 @@ const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
           <h3 className="text-lg font-bold tracking-tight" style={{ color: G.t96 }}>
             {family.title}
           </h3>
-          <p className="text-[12px] font-medium" style={{ color: accent }}>
+          <p className="text-[12px] font-medium" style={{ color: G.t80 }}>
             {family.subheadline}
           </p>
         </div>
@@ -98,8 +97,8 @@ const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
       <div
         className="p-4 space-y-3 relative z-10"
         style={{
-          background: "rgb(255 255 255 / 0.02)",
-          borderTop: `1px solid hsl(0 0% 96% / 0.12)`,
+          background: "rgb(255 255 255 / 0.015)",
+          borderTop: `1px solid hsl(0 0% 100% / 0.08)`,
         }}
       >
         <p className="text-[13px] leading-relaxed" style={{ color: G.t55 }}>
@@ -131,7 +130,7 @@ const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
           <div className="flex items-center gap-1">
             <span
               className="text-[11px] font-semibold"
-              style={{ color: accent, textShadow: `0 0 8px hsl(0 0% 96% / 0.6)` }}
+              style={{ color: accent }}
             >
               Explorar
             </span>
@@ -145,12 +144,11 @@ const FamilyCard = ({ family, index, visitedCount, onClick }: Props) => {
         </div>
 
         {/* Progress bar */}
-        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgb(255 255 255 / 0.05)" }}>
+        <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgb(255 255 255 / 0.06)" }}>
           <motion.div
             className="h-full rounded-full"
             style={{
-              background: `linear-gradient(90deg, ${accent}, ${accentSoft})`,
-              boxShadow: `0 0 8px hsl(0 0% 96% / 0.7), 0 0 16px hsl(0 0% 96% / 0.4), inset 0 0 4px rgb(255 255 255 / 0.4)`,
+              background: accent,
             }}
             initial={{ width: 0 }}
             animate={{ width: `${pct}%` }}
