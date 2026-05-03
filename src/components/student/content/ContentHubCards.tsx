@@ -72,7 +72,7 @@ const ContentHubCards = ({ onNavigate }: Props) => (
   <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-none -mx-4 px-4 pb-2">
     {sections.map((s, i) => {
       const accent = `hsl(0 0% 96%)`;
-      const accentBg = `hsl(0 0% 100% / 0.12)`;
+      const accentBg = `hsl(0 0% 100% / 0.16)`;
       const accentBorder = `hsl(0 0% 100% / 0.22)`;
 
       return (
@@ -104,7 +104,7 @@ const ContentHubCards = ({ onNavigate }: Props) => (
               src={s.img}
               alt={s.title}
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              style={{ filter: "brightness(1.12) contrast(1.04) saturate(0.92)" }}
+              style={{ filter: "brightness(1.2) contrast(1.03) saturate(0.9)" }}
               width={800}
               height={512}
               loading={i === 0 ? undefined : "lazy"}
@@ -114,13 +114,13 @@ const ContentHubCards = ({ onNavigate }: Props) => (
             <div
               className="absolute inset-0"
               style={{
-                background: `linear-gradient(to top, hsl(0 0% 0% / 0.34) 0%, hsl(0 0% 0% / 0.08) 34%, hsl(0 0% 100% / 0.12) 100%)`,
+                background: `linear-gradient(to top, hsl(0 0% 0% / 0.18) 0%, transparent 38%, hsl(0 0% 100% / 0.2) 100%)`,
               }}
             />
             <div
               className="absolute inset-0"
               style={{
-                background: "linear-gradient(135deg, hsl(0 0% 100% / 0.18) 0%, transparent 32%, transparent 68%, hsl(0 0% 100% / 0.08) 100%)",
+                background: "linear-gradient(135deg, hsl(0 0% 100% / 0.24) 0%, transparent 30%, transparent 68%, hsl(0 0% 100% / 0.1) 100%)",
               }}
             />
 
@@ -141,10 +141,10 @@ const ContentHubCards = ({ onNavigate }: Props) => (
 
             {/* Title over image */}
             <div className="absolute bottom-0 left-0 right-0 p-3.5 space-y-0.5">
-              <h3 className="text-[15px] font-bold tracking-tight leading-tight" style={{ color: G.t96 }}>
+              <h3 className="text-[15px] font-bold tracking-tight leading-tight" style={{ color: G.t96, textShadow: "0 2px 14px rgb(0 0 0 / 0.5)" }}>
                 {s.title}
               </h3>
-              <p className="text-[11px]" style={{ color: G.t50 }}>
+              <p className="text-[11px]" style={{ color: G.t80, textShadow: "0 2px 10px rgb(0 0 0 / 0.4)" }}>
                 {s.subtitle}
               </p>
             </div>
