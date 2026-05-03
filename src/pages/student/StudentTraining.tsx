@@ -200,23 +200,23 @@ const StudentTraining = () => {
                     const isExpanded = expandedExercises.has(ex.id);
 
                     return (
-                      <Card
+                      <div
                         key={ex.id}
-                        className={`overflow-hidden transition-all ${isExpanded ? "ring-1 ring-foreground/30 shadow-md" : "hover:shadow-sm"}`}
+                        className={`rounded-3xl border bg-background overflow-hidden transition-all ${isExpanded ? "border-foreground/40" : "border-border/40"}`}
                       >
                         {/* Exercise header */}
                         <button
-                          className="w-full flex items-center gap-3 p-4 text-left hover:bg-muted/30 transition-colors"
+                          className="w-full flex items-center gap-4 p-5 text-left transition-colors"
                           onClick={() => toggleExercise(ex.id)}
                         >
-                          <div className="flex items-center justify-center w-9 h-9 rounded-full bg-foreground text-background text-sm font-bold shrink-0">
+                          <div className="flex items-center justify-center w-9 h-9 rounded-full bg-foreground text-background text-[13px] font-semibold shrink-0 tabular-nums tracking-tight">
                             {idx + 1}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-sm font-body">{ex.name}</p>
-                            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
+                            <p className="text-[14px] font-semibold text-foreground tracking-[-0.015em]">{ex.name}</p>
+                            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-[11px] text-muted-foreground font-light tracking-tight">
                               {ex.reps && (
-                                <span className="font-semibold text-foreground">{ex.reps}</span>
+                                <span className="font-medium text-foreground">{ex.reps}</span>
                               )}
                               {ex.rest_interval && (
                                 <span className="flex items-center gap-0.5">
@@ -227,23 +227,21 @@ const StudentTraining = () => {
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             {ex.video_url && (
-                              <div className="w-7 h-7 rounded-full bg-foreground/10 flex items-center justify-center">
-                                <Play className="w-3.5 h-3.5 text-foreground" />
-                              </div>
+                              <Play className="w-4 h-4 text-foreground/60" strokeWidth={1.8} />
                             )}
                             {isExpanded
-                              ? <ChevronUp className="w-4 h-4 text-muted-foreground" />
-                              : <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                              ? <ChevronUp className="w-4 h-4 text-foreground/40" strokeWidth={2} />
+                              : <ChevronDown className="w-4 h-4 text-foreground/40" strokeWidth={2} />
                             }
                           </div>
                         </button>
 
                         {/* Expanded content */}
                         {isExpanded && (
-                          <div className="border-t border-border p-4 space-y-4 bg-muted/10">
+                          <div className="border-t border-border/40 p-5 space-y-4">
                             {/* Video embed */}
                             {embedUrl && (
-                              <div className="aspect-video rounded-xl overflow-hidden border border-border shadow-sm">
+                              <div className="aspect-video rounded-2xl overflow-hidden border border-border/40">
                                 <iframe
                                   src={embedUrl}
                                   className="w-full h-full"
@@ -256,48 +254,43 @@ const StudentTraining = () => {
                             {/* Stats grid */}
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                               {ex.reps && (
-                                <div className="rounded-xl bg-background p-3 border border-border text-center">
-                                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Séries x Reps</p>
-                                  <p className="font-bold text-foreground text-sm">{ex.reps}</p>
+                                <div className="rounded-2xl border border-border/40 p-3 text-center">
+                                  <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground mb-1.5 font-medium">Séries x Reps</p>
+                                  <p className="font-semibold text-foreground text-[13px] tabular-nums tracking-tight">{ex.reps}</p>
                                 </div>
                               )}
                               {ex.rest_interval && (
-                                <div className="rounded-xl bg-background p-3 border border-border text-center">
-                                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 flex items-center justify-center gap-1">
-                                    <Timer className="w-3 h-3" /> Intervalo
-                                  </p>
-                                  <p className="font-bold text-sm">{ex.rest_interval}</p>
+                                <div className="rounded-2xl border border-border/40 p-3 text-center">
+                                  <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground mb-1.5 font-medium">Intervalo</p>
+                                  <p className="font-semibold text-foreground text-[13px] tabular-nums tracking-tight">{ex.rest_interval}</p>
                                 </div>
                               )}
                               {ex.load_suggestion && (
-                                <div className="rounded-xl bg-background p-3 border border-border text-center">
-                                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Carga</p>
-                                  <p className="font-bold text-sm">{ex.load_suggestion}</p>
+                                <div className="rounded-2xl border border-border/40 p-3 text-center">
+                                  <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground mb-1.5 font-medium">Carga</p>
+                                  <p className="font-semibold text-foreground text-[13px] tabular-nums tracking-tight">{ex.load_suggestion}</p>
                                 </div>
                               )}
                             </div>
 
                             {/* Description */}
                             {ex.description && (
-                              <div className="rounded-xl bg-background p-4 border border-border">
-                                <div className="flex items-center gap-1.5 mb-2">
-                                  <Info className="w-3.5 h-3.5 text-foreground" />
-                                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Execução</p>
-                                </div>
-                                <p className="text-sm text-foreground font-body leading-relaxed whitespace-pre-wrap">{ex.description}</p>
+                              <div className="rounded-2xl border border-border/40 p-4">
+                                <p className="text-[9px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-2">Execução</p>
+                                <p className="text-[13px] text-foreground leading-relaxed whitespace-pre-wrap font-light tracking-tight">{ex.description}</p>
                               </div>
                             )}
 
                             {/* Notes */}
                             {ex.notes && (
-                              <div className="rounded-xl bg-foreground/5 p-4 border border-foreground/10">
-                                <p className="text-xs font-semibold text-foreground mb-1">Observações</p>
-                                <p className="text-sm text-muted-foreground font-body whitespace-pre-wrap">{ex.notes}</p>
+                              <div className="rounded-2xl border border-border/40 p-4">
+                                <p className="text-[9px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-2">Observações</p>
+                                <p className="text-[13px] text-muted-foreground whitespace-pre-wrap font-light tracking-tight leading-relaxed">{ex.notes}</p>
                               </div>
                             )}
                           </div>
                         )}
-                      </Card>
+                      </div>
                     );
                   })}
 
