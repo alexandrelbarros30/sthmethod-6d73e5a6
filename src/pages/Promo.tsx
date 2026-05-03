@@ -127,30 +127,31 @@ const Promo = () => {
         />
         <div className="relative max-w-5xl mx-auto px-6 pt-16 pb-12 text-center">
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6"
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            className="inline-flex items-center gap-2 mb-8 text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground"
           >
-            <Flame className="w-4 h-4 text-primary" />
-            <span className="text-xs font-semibold text-primary uppercase tracking-wider">
-              Promoção por tempo limitado
-            </span>
+            <Flame className="w-3 h-3" />
+            Promoção por tempo limitado
           </motion.div>
 
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-4xl md:text-6xl font-display font-bold text-foreground mb-4"
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+            className="text-5xl md:text-7xl lg:text-8xl font-semibold text-foreground mb-6 tracking-[-0.04em] leading-[0.95]"
           >
-            Promoção <span className="gradient-text">STH METHOD</span>
+            Promoção
+            <br />
+            <span className="text-muted-foreground">STH METHOD</span>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto mb-8"
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+            className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 font-light tracking-tight"
           >
             Condições especiais de pagamento exclusivas via PIX. Aproveite antes que acabe.
           </motion.p>
@@ -175,12 +176,12 @@ const Promo = () => {
               ].map((unit) => (
                 <div
                   key={unit.label}
-                  className="min-w-[64px] md:min-w-[80px] rounded-xl bg-card border border-border px-3 py-3 shadow-sm"
+                  className="min-w-[64px] md:min-w-[80px] rounded-2xl bg-card border border-border/40 px-3 py-3"
                 >
-                  <div className="text-2xl md:text-3xl font-display font-bold gradient-text tabular-nums">
+                  <div className="text-2xl md:text-3xl font-semibold text-foreground tabular-nums tracking-tight">
                     {String(unit.value).padStart(2, "0")}
                   </div>
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mt-1">
                     {unit.label}
                   </div>
                 </div>
@@ -209,21 +210,22 @@ const Promo = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.1 }}
-                    className={`relative rounded-2xl p-7 border transition-all duration-500 bg-card ${
+                    transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: i * 0.1 }}
+                    className={`relative rounded-3xl p-8 border transition-all duration-500 bg-card ${
                       isPopular
-                        ? "border-primary shadow-[0_0_40px_-10px_hsl(var(--primary)/0.5)] scale-[1.02]"
-                        : "border-border"
+                        ? "border-foreground/30 scale-[1.02]"
+                        : "border-border/40"
                     }`}
                   >
                     {isPopular && (
-                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 gradient-bg text-primary-foreground text-xs font-semibold px-4 py-1 rounded-full whitespace-nowrap">
+                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-foreground text-background text-[10px] font-medium uppercase tracking-[0.15em] px-4 py-1 rounded-full whitespace-nowrap">
                         Mais Escolhido
                       </span>
                     )}
 
-                    <div className="flex items-center gap-2 mb-2 text-primary">
+                    <div className="flex items-center gap-2 mb-2 text-foreground">
                       {iconMap[i]}
-                      <h3 className="font-display text-xl font-bold text-foreground">{plan.name}</h3>
+                      <h3 className="text-xl font-semibold text-foreground tracking-tight">{plan.name}</h3>
                     </div>
 
                     <Badge variant="outline" className="mb-4 text-xs">
@@ -233,7 +235,7 @@ const Promo = () => {
                     <div className="mb-1">
                       <div className="flex items-baseline gap-1">
                         <span className="text-sm text-muted-foreground">R$</span>
-                        <span className="text-5xl font-display font-bold gradient-text">
+                        <span className="text-5xl font-semibold text-foreground tracking-[-0.04em]">
                           {String(plan.price).replace(/R\$\s?/i, "").trim()}
                         </span>
                       </div>
@@ -255,8 +257,8 @@ const Promo = () => {
                     </ul>
 
                     <Button
-                      className={`w-full ${
-                        isPopular ? "gradient-bg text-primary-foreground hover:opacity-90" : ""
+                      className={`w-full rounded-full ${
+                        isPopular ? "bg-foreground text-background hover:bg-foreground/90" : ""
                       }`}
                       variant={isPopular ? "default" : "outline"}
                       onClick={() => handleSelect(plan)}
