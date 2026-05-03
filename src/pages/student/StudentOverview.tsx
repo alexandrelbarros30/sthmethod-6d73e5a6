@@ -112,15 +112,29 @@ const StudentOverview = () => {
     isLoading: mealsLoading,
   } = useMealTracking();
 
-  // BLACK ELITE palette
-  const GOLD = "#D4AF37";
+  // BLACK ELITE — variação por plano
+  const durationDays = (subscription as any)?.plans?.duration_days ?? 30;
+  const planTier =
+    durationDays >= 180 ? "180D" : durationDays >= 90 ? "90D" : "30D";
+  const planMeta = {
+    "30D":  { color: "#1DB954", label: "Início Controlado" },
+    "90D":  { color: "#2962FF", label: "Consistência" },
+    "180D": { color: "#D4AF37", label: "Elite" },
+  }[planTier];
+  const ACCENT = planMeta.color;
+  const hexToRgb = (hex: string) => {
+    const h = hex.replace("#", "");
+    return `${parseInt(h.slice(0, 2), 16)},${parseInt(h.slice(2, 4), 16)},${parseInt(h.slice(4, 6), 16)}`;
+  };
+  const A = hexToRgb(ACCENT);
   const BG = "#050508";
   const SURFACE = "#0A0A0F";
-  const BORDER = "rgba(212,175,55,0.10)";
-  const BORDER_STRONG = "rgba(212,175,55,0.22)";
+  const BORDER = `rgba(${A},0.10)`;
+  const BORDER_STRONG = `rgba(${A},0.22)`;
   const TEXT = "#EAEAEA";
   const SUBTLE = "rgba(234,234,234,0.55)";
   const ULTRA_SUBTLE = "rgba(234,234,234,0.35)";
+  const GOLD = ACCENT; // back-compat for refs below
 
   const ringSize = 168;
   const stroke = 8;
@@ -143,8 +157,8 @@ const StudentOverview = () => {
         {/* HEADER */}
         <div className="flex items-start justify-between mb-8 relative">
           <div className="flex-1 min-w-0 pt-1">
-            <p className="text-[10px] font-medium tracking-[0.3em] uppercase" style={{ color: GOLD }}>
-              ◆ Black Elite
+            <p className="text-[10px] font-medium tracking-[0.3em] uppercase" style={{ color: ACCENT }}>
+              ◆ Black Elite · {planTier}
             </p>
             <h1
               className="text-[44px] sm:text-[56px] leading-[0.95] font-semibold mt-3 tracking-[-0.045em]"
@@ -172,7 +186,7 @@ const StudentOverview = () => {
         <div
           className="mb-8 rounded-[24px] p-7 relative overflow-hidden"
           style={{
-            background: `radial-gradient(120% 100% at 0% 0%, rgba(212,175,55,0.06) 0%, ${SURFACE} 55%)`,
+            background: `radial-gradient(120% 100% at 0% 0%, rgba(${A},0.06) 0%, ${SURFACE} 55%)`,
             border: `0.5px solid ${BORDER}`,
             boxShadow: "0 1px 0 rgba(255,255,255,0.03) inset, 0 20px 40px -20px rgba(0,0,0,0.6)",
           }}
@@ -192,17 +206,17 @@ const StudentOverview = () => {
                 refeições concluídas
               </p>
               <div className="inline-flex w-fit items-center gap-1.5 text-[10px] mt-4 rounded-full px-3 py-1.5 font-medium tracking-[0.1em] uppercase"
-                style={{ background: "rgba(212,175,55,0.08)", border: `0.5px solid ${BORDER_STRONG}`, color: GOLD }}>
-                <Target className="w-2.5 h-2.5" strokeWidth={2} /> 8 dias
+                style={{ background: `rgba(${A},0.08)`, border: `0.5px solid ${BORDER_STRONG}`, color: ACCENT }}>
+                <Target className="w-2.5 h-2.5" strokeWidth={2} /> {planMeta.label}
               </div>
             </div>
             <div className="relative shrink-0" style={{ width: ringSize, height: ringSize }}>
               <svg width={ringSize} height={ringSize} className="-rotate-90">
                 <defs>
-                  <linearGradient id="goldRing" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#F4D77A" />
-                    <stop offset="50%" stopColor={GOLD} />
-                    <stop offset="100%" stopColor="#9A7B1F" />
+                  <linearGradient id="planRing" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor={ACCENT} stopOpacity="0.55" />
+                    <stop offset="50%" stopColor={ACCENT} />
+                    <stop offset="100%" stopColor={ACCENT} stopOpacity="0.4" />
                   </linearGradient>
                 </defs>
                 <circle
@@ -211,10 +225,10 @@ const StudentOverview = () => {
                 />
                 <circle
                   cx={ringSize / 2} cy={ringSize / 2} r={r}
-                  stroke="url(#goldRing)" strokeWidth={stroke} fill="none"
+                  stroke="url(#planRing)" strokeWidth={stroke} fill="none"
                   strokeLinecap="round"
                   strokeDasharray={`${dash} ${circumference}`}
-                  style={{ transition: "stroke-dasharray 0.8s ease", filter: `drop-shadow(0 0 4px rgba(212,175,55,0.35))` }}
+                  style={{ transition: "stroke-dasharray 0.8s ease", filter: `drop-shadow(0 0 4px rgba(${A},0.30))` }}
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -335,7 +349,7 @@ const StudentOverview = () => {
         <div
           className="mb-6 rounded-[24px] overflow-hidden"
           style={{
-            background: `radial-gradient(120% 100% at 100% 0%, rgba(212,175,55,0.05) 0%, ${SURFACE} 55%)`,
+            background: `radial-gradient(120% 100% at 100% 0%, rgba(${A},0.05) 0%, ${SURFACE} 55%)`,
             border: `0.5px solid ${BORDER}`,
           }}
         >
@@ -368,10 +382,10 @@ const StudentOverview = () => {
           <button
             className="w-full rounded-full h-12 text-[13px] font-medium tracking-tight inline-flex items-center justify-center gap-2 transition-all"
             style={{
-              background: "linear-gradient(180deg, rgba(212,175,55,0.10), rgba(212,175,55,0.04))",
+              background: `linear-gradient(180deg, rgba(${A},0.10), rgba(${A},0.04))`,
               border: `0.5px solid ${BORDER_STRONG}`,
-              color: GOLD,
-              boxShadow: "0 8px 24px -12px rgba(212,175,55,0.25)",
+              color: ACCENT,
+              boxShadow: `0 8px 24px -12px rgba(${A},0.25)`,
             }}
           >
             <Salad className="w-3.5 h-3.5" /> Ver minhas refeições
