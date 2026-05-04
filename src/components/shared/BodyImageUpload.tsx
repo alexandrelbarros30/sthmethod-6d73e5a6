@@ -6,10 +6,11 @@ import { toast } from "sonner";
 import { Camera, Upload, X, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { processAndUpload, validateImageFile } from "@/lib/image-upload";
+import SignedImage from "@/components/shared/SignedImage";
 
 interface BodyImageUploadProps {
   userId: string;
-  existingImages?: { type: string; image_url: string; id: string }[];
+  existingImages?: { type: string; image_url: string; id: string; storage_path?: string | null }[];
   onComplete: () => void;
   required?: boolean;
   canDeleteExisting?: boolean;
@@ -22,11 +23,11 @@ const IMAGE_TYPES = [
 ] as const;
 
 const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = false, canDeleteExisting = true }: BodyImageUploadProps) => {
-  const [images, setImages] = useState<Record<string, { file?: File; preview?: string; url?: string }>>(() => {
+  const [images, setImages] = useState<Record<string, { file?: File; preview?: string; url?: string; storagePath?: string | null }>>(() => {
     const initial: Record<string, any> = {};
     IMAGE_TYPES.forEach(({ key }) => {
       const existing = existingImages.find((i) => i.type === key);
-      if (existing) initial[key] = { url: existing.image_url };
+      if (existing) initial[key] = { url: existing.image_url, storagePath: existing.storage_path };
     });
     return initial;
   });
@@ -122,7 +123,8 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
         <div className="grid grid-cols-3 gap-4">
           {IMAGE_TYPES.map(({ key, label, icon }) => {
             const img = images[key];
-            const src = img?.preview || img?.url;
+            const localSrc = img?.preview;
+            const hasExisting = !localSrc && (img?.url || img?.storagePath);
 
             return (
               <div key={key} className="space-y-2">
@@ -131,13 +133,40 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
                 </Label>
                 <div
                   className={`relative aspect-[3/4] rounded-lg border-2 border-dashed flex items-center justify-center overflow-hidden cursor-pointer transition-colors ${
-                    src ? "border-foreground/20 bg-foreground/5" : "border-border hover:border-foreground/50 bg-muted/30"
+                    (localSrc || hasExisting) ? "border-foreground/20 bg-foreground/5" : "border-border hover:border-foreground/50 bg-muted/30"
                   }`}
                   onClick={() => fileRefs.current[key]?.click()}
                 >
-                  {src ? (
+                  {localSrc ? (
                     <>
-                      <img src={src} alt={label} className="w-full h-full object-cover" />
+                      <img src={localSrc} alt={label} className="w-full h-full object-cover" />
+                      {(img?.file || canDeleteExisting) && (
+                        <button
+                          className="absolute top-1 right-1 p-1 bg-destructive/80 rounded-full text-white hover:bg-destructive"
+                          onClick={(e) => { e.stopPropagation(); removeImage(key); }}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                      <div className="absolute bottom-1 left-1">
+                        <CheckCircle2 className="w-4 h-4 text-foreground" />
+                      </div>
+                    </>
+                  ) : hasExisting ? (
+                    <>
+                      <SignedImage
+                        bucket="body-images"
+                        storagePath={img?.storagePath}
+                        publicUrl={img?.url}
+                        alt={label}
+                        className="w-full h-full object-cover"
+                        fallback={
+                          <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                            <Upload className="w-6 h-6" />
+                            <span className="text-xs">Substituir</span>
+                          </div>
+                        }
+                      />
                       {(img?.file || canDeleteExisting) && (
                         <button
                           className="absolute top-1 right-1 p-1 bg-destructive/80 rounded-full text-white hover:bg-destructive"
