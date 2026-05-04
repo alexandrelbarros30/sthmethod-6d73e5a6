@@ -154,19 +154,54 @@ const AdminBudgets = () => {
       }
     });
 
+    // Helper: convert HTML to plain text lines without breaking inline formatting
+    const htmlToLines = (html: string): string[] => {
+      const withBreaks = html
+        .replace(/<\s*br\s*\/?>/gi, "\n")
+        .replace(/<\/(p|div|li|h[1-6]|tr)>/gi, "\n")
+        .replace(/<li[^>]*>/gi, "• ");
+      const stripped = withBreaks
+        .replace(/<[^>]+>/g, "") // strip remaining inline tags
+        .replace(/&nbsp;/g, " ")
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">");
+      return stripped
+        .split("\n")
+        .map((l) => l.replace(/^[•\-\*\u2022\s]+/, "").trim())
+        .filter((l) => l.length > 2);
+    };
+
+    // Helper: split a line into "name" and "dosage"
+    // e.g. "Tadalafila: 5 mg (Diário)" → { name: "Tadalafila", dosage: "5 mg (Diário)" }
+    // e.g. "Ômega-3 (TG): 4g / dia" → { name: "Ômega-3 (TG)", dosage: "4g / dia" }
+    const splitNameDosage = (line: string): { name: string; dosage: string } => {
+      // Prefer split on first " — ", " - " or ":" that comes AFTER a closing parenthesis or letter
+      const colonIdx = line.search(/\s*[:–—]\s+/);
+      if (colonIdx > 0) {
+        const name = line.slice(0, colonIdx).trim();
+        const dosage = line.slice(colonIdx).replace(/^\s*[:–—]\s+/, "").trim();
+        if (name.length > 1 && dosage.length > 0) return { name, dosage };
+      }
+      // Fallback: detect dosage pattern at end (e.g. "5 mg", "200 UI", "4g")
+      const m = line.match(/^(.+?)\s+(\d[\d.,]*\s?(?:mg|g|mcg|ui|ml|µg|kcal)\b.*)$/i);
+      if (m) return { name: m[1].trim().replace(/[:\-–—]\s*$/, ""), dosage: m[2].trim() };
+      return { name: line, dosage: "" };
+    };
+
     // From category content - parse text lines
     (protocolData.categoryContent || []).forEach((cc: any) => {
       if (targetCategories.includes(cc.category) && cc.content) {
-        const text = cc.content.replace(/<[^>]*>/g, "\n");
-        const lines = text.split("\n").map((l: string) => l.trim()).filter((l: string) => l.length > 3 && l !== "&nbsp;");
+        const lines = htmlToLines(cc.content);
         lines.forEach((line: string) => {
           // Skip headers/titles
-          if (line.match(/^(suporte|sistema|pré|pós|cardiovascular|metabólico|hepático|renal)/i)) return;
-          const existing = items.find((i) => i.name.toLowerCase() === line.toLowerCase());
+          if (line.match(/^(suporte|sistema|pré|pós|cardiovascular|metabólico|hepático|renal)\b/i)) return;
+          const { name, dosage } = splitNameDosage(line);
+          const existing = items.find((i) => i.name.toLowerCase() === name.toLowerCase());
           if (!existing) {
             items.push({
-              name: line,
-              dosage: "",
+              name,
+              dosage,
               quantity: "1",
               unit_price: 0,
               subtotal: 0,
@@ -180,12 +215,12 @@ const AdminBudgets = () => {
     // From extra categories
     (protocolData.extraCats || []).forEach((ec: any) => {
       if (ec.content) {
-        const text = ec.content.replace(/<[^>]*>/g, "\n");
-        const lines = text.split("\n").map((l: string) => l.trim()).filter((l: string) => l.length > 3 && l !== "&nbsp;");
+        const lines = htmlToLines(ec.content);
         lines.forEach((line: string) => {
+          const { name, dosage } = splitNameDosage(line);
           items.push({
-            name: line,
-            dosage: "",
+            name,
+            dosage,
             quantity: "1",
             unit_price: 0,
             subtotal: 0,
@@ -375,8 +410,8 @@ const AdminBudgets = () => {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="text-xs">Item</TableHead>
-                            <TableHead className="text-xs w-28">Dosagem</TableHead>
+                            <TableHead className="text-xs min-w-[200px]">Item</TableHead>
+                            <TableHead className="text-xs w-32">Dosagem</TableHead>
                             <TableHead className="text-xs w-16">Qtd</TableHead>
                             <TableHead className="text-xs w-24">Preço (R$)</TableHead>
                             <TableHead className="text-xs w-24">Subtotal</TableHead>
@@ -386,11 +421,11 @@ const AdminBudgets = () => {
                         <TableBody>
                           {budgetItems.map((item, idx) => (
                             <TableRow key={idx}>
-                              <TableCell className="py-1.5">
+                              <TableCell className="py-1.5 min-w-[200px]">
                                 <Input
                                   value={item.name}
                                   onChange={(e) => updateItem(idx, "name", e.target.value)}
-                                  className="h-8 text-xs"
+                                  className="h-9 text-sm w-full"
                                   placeholder="Nome do suplemento"
                                 />
                                 <span className={`text-[10px] px-1.5 py-0.5 rounded mt-0.5 inline-block ${categoryColors[item.category] || categoryColors.extra}`}>
