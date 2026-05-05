@@ -37,8 +37,24 @@ export default function DocumentUpload({ userId, onUploaded }: DocumentUploadPro
   const examDocs = documents.filter((d) => d.type === "lab_exam");
   const prescriptionDocs = documents.filter((d) => d.type === "medical_prescription");
 
+  const isPdfFile = (file: File) => {
+    const mime = file.type?.toLowerCase();
+    const name = file.name?.toLowerCase() || "";
+    return mime === "application/pdf" || name.endsWith(".pdf");
+  };
+
+  const normalizePdfForUpload = async (file: File) => {
+    const buffer = await file.arrayBuffer();
+
+    if (!buffer.byteLength) {
+      throw new Error("Não foi possível ler o arquivo selecionado. Tente baixar o PDF no aparelho e enviar novamente.");
+    }
+
+    return new Blob([buffer], { type: "application/pdf" });
+  };
+
   const uploadFile = async (file: File, type: "lab_exam" | "medical_prescription") => {
-    if (file.type !== "application/pdf") {
+    if (!isPdfFile(file)) {
       toast.error("Apenas arquivos PDF são aceitos");
       return;
     }
@@ -51,10 +67,17 @@ export default function DocumentUpload({ userId, onUploaded }: DocumentUploadPro
     setter(true);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) throw new Error("Sessão expirada. Faça login novamente.");
+
+      const normalizedFile = await normalizePdfForUpload(file);
       const path = `${userId}/${type}_${Date.now()}.pdf`;
       const { error: storageError } = await supabase.storage
         .from("documents")
-        .upload(path, file, { upsert: true });
+        .upload(path, normalizedFile, {
+          contentType: "application/pdf",
+          upsert: false,
+        });
       if (storageError) throw storageError;
 
       const { data: urlData } = supabase.storage.from("documents").getPublicUrl(path);
@@ -125,7 +148,7 @@ export default function DocumentUpload({ userId, onUploaded }: DocumentUploadPro
       <input
         ref={inputRef}
         type="file"
-        accept=".pdf"
+        accept="application/pdf,.pdf"
         className="hidden"
         onChange={(e) => {
           if (e.target.files?.[0]) uploadFile(e.target.files[0], type);
