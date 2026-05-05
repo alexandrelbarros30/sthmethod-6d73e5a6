@@ -43,9 +43,12 @@ interface ProgramForm {
   objective: string;
   difficulty: string;
   status: string;
+  poster_url: string;
+  video_url: string;
+  expires_at: string;
 }
 
-const emptyForm: ProgramForm = { title: "", details: "", objective: "general", difficulty: "intermediate", status: "published" };
+const emptyForm: ProgramForm = { title: "", details: "", objective: "general", difficulty: "intermediate", status: "published", poster_url: "", video_url: "", expires_at: "" };
 
 const AdminTrainingPrograms = () => {
   const { user, role } = useAuth();
@@ -108,6 +111,8 @@ const AdminTrainingPrograms = () => {
         const { error } = await supabase.from("training_programs").update({
           title: form.title, details: form.details,
           objective: form.objective, difficulty: form.difficulty, status: form.status,
+          poster_url: form.poster_url, video_url: form.video_url,
+          expires_at: form.expires_at || null,
           updated_at: new Date().toISOString(),
         }).eq("id", editingProgram);
         if (error) throw error;
@@ -115,8 +120,10 @@ const AdminTrainingPrograms = () => {
         const { error } = await supabase.from("training_programs").insert({
           title: form.title, details: form.details,
           objective: form.objective, difficulty: form.difficulty, status: form.status,
+          poster_url: form.poster_url, video_url: form.video_url,
+          expires_at: form.expires_at || null,
           created_by: user!.id,
-        });
+        } as any);
         if (error) throw error;
       }
     },
@@ -213,6 +220,8 @@ const AdminTrainingPrograms = () => {
       title: p.title, details: p.details || "",
       objective: p.objective || "general", difficulty: p.difficulty || "intermediate",
       status: p.status || "published",
+      poster_url: p.poster_url || "", video_url: p.video_url || "",
+      expires_at: p.expires_at || "",
     });
     setProgramDialog(true);
   };
@@ -381,6 +390,23 @@ const AdminTrainingPrograms = () => {
               <div>
                 <Label>Detalhes</Label>
                 <Textarea value={form.details} onChange={e => setForm(p => ({ ...p, details: e.target.value }))} rows={3} placeholder="Descrição do programa..." />
+              </div>
+              <div>
+                <Label>Poster do Programa (URL da imagem)</Label>
+                <Input value={form.poster_url} onChange={e => setForm(p => ({ ...p, poster_url: e.target.value }))} placeholder="https://..." />
+                {form.poster_url && (
+                  <img src={form.poster_url} alt="Poster" className="mt-2 max-h-32 rounded-lg border" onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} />
+                )}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label>Vídeo de apresentação (URL)</Label>
+                  <Input value={form.video_url} onChange={e => setForm(p => ({ ...p, video_url: e.target.value }))} placeholder="https://player.vimeo.com/..." />
+                </div>
+                <div>
+                  <Label>Vencimento do Programa</Label>
+                  <Input type="date" value={form.expires_at} onChange={e => setForm(p => ({ ...p, expires_at: e.target.value }))} />
+                </div>
               </div>
               <div className="flex gap-2 justify-end">
                 <Button variant="outline" onClick={closeProgramDialog}>Cancelar</Button>
