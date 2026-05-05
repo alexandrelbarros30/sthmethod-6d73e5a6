@@ -1946,6 +1946,41 @@ export type Database = {
           },
         ]
       }
+      student_program_assignments: {
+        Row: {
+          active: boolean
+          assigned_at: string
+          assigned_by: string
+          id: string
+          program_id: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          assigned_at?: string
+          assigned_by: string
+          id?: string
+          program_id: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          assigned_at?: string
+          assigned_by?: string
+          id?: string
+          program_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_program_assignments_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "training_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_protocols: {
         Row: {
           content: string | null
@@ -2067,6 +2102,51 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "student_workout_assignments_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "workout_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_workout_sessions: {
+        Row: {
+          assignment_id: string
+          feedback: string | null
+          finished_at: string | null
+          id: string
+          started_at: string
+          template_id: string
+          user_id: string
+        }
+        Insert: {
+          assignment_id: string
+          feedback?: string | null
+          finished_at?: string | null
+          id?: string
+          started_at?: string
+          template_id: string
+          user_id: string
+        }
+        Update: {
+          assignment_id?: string
+          feedback?: string | null
+          finished_at?: string | null
+          id?: string
+          started_at?: string
+          template_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_workout_sessions_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "student_workout_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_workout_sessions_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "workout_templates"
@@ -2212,6 +2292,7 @@ export type Database = {
           objective: string
           poster_url: string | null
           status: string
+          subtitle: string | null
           title: string
           updated_at: string
           video_url: string | null
@@ -2226,6 +2307,7 @@ export type Database = {
           objective?: string
           poster_url?: string | null
           status?: string
+          subtitle?: string | null
           title: string
           updated_at?: string
           video_url?: string | null
@@ -2240,6 +2322,7 @@ export type Database = {
           objective?: string
           poster_url?: string | null
           status?: string
+          subtitle?: string | null
           title?: string
           updated_at?: string
           video_url?: string | null
