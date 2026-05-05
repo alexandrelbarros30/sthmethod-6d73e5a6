@@ -166,12 +166,26 @@ const StudentGuidedWorkout = () => {
 
                     return (
                       <div key={ex.id} className="rounded-lg border border-border overflow-hidden">
-                        <button className="w-full flex items-center gap-3 p-4 text-left hover:bg-muted/50 transition-colors" onClick={() => toggleEx(ex.id)}>
+                        <button
+                          className="w-full flex items-center gap-3 p-4 text-left hover:bg-muted/50 transition-colors"
+                          onClick={() => toggleEx(ex.id)}
+                          style={ex.group_color ? { borderLeft: `4px solid ${ex.group_color}` } : undefined}
+                        >
                           <span className="flex items-center justify-center w-7 h-7 rounded-full bg-foreground/10 text-foreground text-sm font-bold shrink-0">
                             {idx + 1}
                           </span>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm">{ex.custom_name || "Exercício"}</p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-medium text-sm">{ex.custom_name || "Exercício"}</p>
+                              {ex.group_name && (
+                                <span
+                                  className="text-[10px] px-1.5 py-0.5 rounded-full border"
+                                  style={{ backgroundColor: `${ex.group_color}22`, borderColor: ex.group_color, color: ex.group_color }}
+                                >
+                                  {ex.group_name}
+                                </span>
+                              )}
+                            </div>
                             <div className="flex flex-wrap gap-2 mt-0.5 text-xs text-muted-foreground">
                               {ex.sets && ex.reps && <span className="text-foreground font-semibold">{ex.sets}x{ex.reps}</span>}
                               {ex.rest_interval && <span>Int: {ex.rest_interval}</span>}

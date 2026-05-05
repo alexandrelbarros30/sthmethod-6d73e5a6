@@ -11,12 +11,21 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Dumbbell, Video, ChevronDown, ChevronUp, Copy, GripVertical } from "lucide-react";
+import { Plus, Pencil, Trash2, Dumbbell, Video, ChevronDown, ChevronUp, Copy, GripVertical, Library, Layers, Unlink } from "lucide-react";
 import { toast } from "sonner";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import SortableExerciseRow, { ExerciseRow } from "@/components/admin/SortableExerciseRow";
+import LibraryMultiSelectDialog from "@/components/admin/LibraryMultiSelectDialog";
+
+const GROUP_COLOR_PRESETS = [
+  { name: "Biset", color: "#f59e0b" },
+  { name: "Triset", color: "#8b5cf6" },
+  { name: "Drop-set", color: "#ef4444" },
+  { name: "Super Série", color: "#10b981" },
+  { name: "Circuito", color: "#06b6d4" },
+];
 
 interface Props {
   programId: string;
@@ -122,6 +131,10 @@ const ProgramWorkouts = ({ programId }: Props) => {
   const [form, setForm] = useState<WorkoutForm>(emptyWorkout);
   const [exerciseRows, setExerciseRows] = useState<ExerciseRow[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [libraryDialogOpen, setLibraryDialogOpen] = useState(false);
+  const [groupDialogOpen, setGroupDialogOpen] = useState(false);
+  const [selectedRowUids, setSelectedRowUids] = useState<Set<string>>(new Set());
+  const [groupForm, setGroupForm] = useState({ name: "Biset", color: "#f59e0b" });
 
   const { data: workouts, isLoading } = useQuery({
     queryKey: ["program-workouts", programId],
@@ -199,6 +212,9 @@ const ProgramWorkouts = ({ programId }: Props) => {
             custom_name: r.custom_name, custom_description: r.custom_description,
             sets: r.sets, reps: r.reps, rest_interval: r.rest_interval,
             load_suggestion: r.load_suggestion, video_url: r.video_url, sort_order: i,
+            group_id: r.group_id || null,
+            group_name: r.group_name || "",
+            group_color: r.group_color || "",
           }));
           const { error: exErr } = await supabase.from("workout_template_exercises").insert(rows);
           if (exErr) throw exErr;
@@ -245,6 +261,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
             custom_name: e.custom_name, custom_description: e.custom_description,
             sets: e.sets, reps: e.reps, rest_interval: e.rest_interval,
             load_suggestion: e.load_suggestion, video_url: e.video_url, sort_order: e.sort_order,
+            group_id: e.group_id || null, group_name: e.group_name || "", group_color: e.group_color || "",
           }))
         );
       }
@@ -284,6 +301,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
     setEditingWorkout(null);
     setForm(emptyWorkout);
     setExerciseRows([]);
+    setSelectedRowUids(new Set());
   };
 
   const openEditWorkout = (w: any) => {
@@ -298,8 +316,10 @@ const ProgramWorkouts = ({ programId }: Props) => {
       custom_description: e.custom_description || "", sets: e.sets || "", reps: e.reps || "",
       rest_interval: e.rest_interval || "", load_suggestion: e.load_suggestion || "",
       video_url: e.video_url || "", sort_order: e.sort_order, _uid: e.id || crypto.randomUUID(),
+      group_id: e.group_id || null, group_name: e.group_name || "", group_color: e.group_color || "",
     }));
     setExerciseRows(exs);
+    setSelectedRowUids(new Set());
     setWorkoutDialog(true);
   };
 
@@ -308,7 +328,62 @@ const ProgramWorkouts = ({ programId }: Props) => {
       exercise_id: null, custom_name: "", custom_description: "",
       sets: "", reps: "", rest_interval: "", load_suggestion: "", video_url: "",
       sort_order: prev.length, _uid: crypto.randomUUID(),
+      group_id: null, group_name: "", group_color: "",
     }]);
+  };
+
+  const addFromLibrary = (items: any[]) => {
+    setExerciseRows(prev => [
+      ...prev,
+      ...items.map((lib, i) => ({
+        exercise_id: lib.id,
+        custom_name: lib.name,
+        custom_description: lib.description || "",
+        sets: "", reps: "", rest_interval: "", load_suggestion: "",
+        video_url: lib.video_url || "",
+        sort_order: prev.length + i,
+        _uid: crypto.randomUUID(),
+        group_id: null, group_name: "", group_color: "",
+      })),
+    ]);
+    toast.success(`${items.length} exercício(s) adicionado(s)!`);
+  };
+
+  const toggleRowSelected = (idx: number) => {
+    const uid = exerciseRows[idx]?._uid;
+    if (!uid) return;
+    setSelectedRowUids(prev => {
+      const next = new Set(prev);
+      next.has(uid) ? next.delete(uid) : next.add(uid);
+      return next;
+    });
+  };
+
+  const applyGroup = () => {
+    if (selectedRowUids.size < 2) {
+      toast.error("Selecione pelo menos 2 exercícios para agrupar.");
+      return;
+    }
+    const groupId = crypto.randomUUID();
+    setExerciseRows(prev => prev.map(r =>
+      selectedRowUids.has(r._uid)
+        ? { ...r, group_id: groupId, group_name: groupForm.name, group_color: groupForm.color }
+        : r
+    ));
+    setSelectedRowUids(new Set());
+    setGroupDialogOpen(false);
+    toast.success(`Agrupados como ${groupForm.name}!`);
+  };
+
+  const ungroupSelected = () => {
+    if (!selectedRowUids.size) return;
+    setExerciseRows(prev => prev.map(r =>
+      selectedRowUids.has(r._uid)
+        ? { ...r, group_id: null, group_name: "", group_color: "" }
+        : r
+    ));
+    setSelectedRowUids(new Set());
+    toast.success("Desagrupado!");
   };
 
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
@@ -428,12 +503,35 @@ const ProgramWorkouts = ({ programId }: Props) => {
             <div className="border-t pt-4">
               <div className="flex justify-between items-center mb-3">
                 <Label className="text-base font-semibold">Exercícios ({exerciseRows.length})</Label>
-                <Button size="sm" variant="outline" onClick={addExerciseRow}>
-                  <Plus className="w-3 h-3 mr-1" /> Adicionar
-                </Button>
+                <div className="flex gap-1.5 flex-wrap justify-end">
+                  <Button size="sm" variant="outline" onClick={addExerciseRow}>
+                    <Plus className="w-3 h-3 mr-1" /> Adicionar
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setLibraryDialogOpen(true)}>
+                    <Library className="w-3 h-3 mr-1" /> Biblioteca
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={selectedRowUids.size < 2}
+                    onClick={() => setGroupDialogOpen(true)}
+                  >
+                    <Layers className="w-3 h-3 mr-1" /> Agrupar ({selectedRowUids.size})
+                  </Button>
+                  {selectedRowUids.size > 0 && (
+                    <Button size="sm" variant="ghost" onClick={ungroupSelected}>
+                      <Unlink className="w-3 h-3 mr-1" /> Desagrupar
+                    </Button>
+                  )}
+                </div>
               </div>
+              {exerciseRows.length > 0 && (
+                <p className="text-[11px] text-muted-foreground mb-2">
+                  Marque os checkboxes dos exercícios para agrupar como Biset, Triset, Drop-set etc.
+                </p>
+              )}
               {exerciseRows.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">Nenhum exercício. Clique em "Adicionar".</p>
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhum exercício. Use "Adicionar" ou "Biblioteca".</p>
               )}
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleExerciseDragEnd}>
                 <SortableContext items={exerciseRows.map(r => r._uid)} strategy={verticalListSortingStrategy}>
@@ -447,6 +545,8 @@ const ProgramWorkouts = ({ programId }: Props) => {
                         onRemove={removeExerciseRow}
                         onUpdate={updateExerciseRow}
                         onSelectFromLibrary={selectFromLibrary}
+                        selected={selectedRowUids.has(row._uid)}
+                        onToggleSelected={toggleRowSelected}
                       />
                     ))}
                   </div>
@@ -459,6 +559,51 @@ const ProgramWorkouts = ({ programId }: Props) => {
               <Button onClick={() => saveWorkoutMutation.mutate()} disabled={saveWorkoutMutation.isPending}>
                 {saveWorkoutMutation.isPending ? "Salvando..." : "Salvar"}
               </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <LibraryMultiSelectDialog
+        open={libraryDialogOpen}
+        onOpenChange={setLibraryDialogOpen}
+        libraryExercises={libraryExercises || []}
+        onAdd={addFromLibrary}
+      />
+
+      <Dialog open={groupDialogOpen} onOpenChange={setGroupDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Agrupar exercícios ({selectedRowUids.size})</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Nome do agrupamento</Label>
+              <Input value={groupForm.name} maxLength={40} onChange={e => setGroupForm(p => ({ ...p, name: e.target.value }))} />
+            </div>
+            <div>
+              <Label className="text-xs">Tipo / Cor</Label>
+              <div className="flex gap-2 flex-wrap mt-1">
+                {GROUP_COLOR_PRESETS.map(p => (
+                  <button
+                    key={p.name}
+                    type="button"
+                    onClick={() => setGroupForm({ name: p.name, color: p.color })}
+                    className={`px-3 py-1.5 rounded-full text-xs border transition-all ${groupForm.color === p.color ? "ring-2 ring-offset-1 ring-offset-background" : ""}`}
+                    style={{ backgroundColor: `${p.color}22`, borderColor: p.color, color: p.color }}
+                  >
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <Label className="text-xs">Cor customizada:</Label>
+                <input type="color" value={groupForm.color} onChange={e => setGroupForm(p => ({ ...p, color: e.target.value }))} className="w-10 h-8 rounded border cursor-pointer" />
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end pt-2">
+              <Button variant="outline" onClick={() => setGroupDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={applyGroup}>Salvar série</Button>
             </div>
           </div>
         </DialogContent>

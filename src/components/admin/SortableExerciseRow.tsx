@@ -21,6 +21,9 @@ export interface ExerciseRow {
   video_url: string;
   sort_order: number;
   _uid: string;
+  group_id?: string | null;
+  group_name?: string;
+  group_color?: string;
 }
 
 interface Props {
@@ -30,6 +33,8 @@ interface Props {
   onRemove: (idx: number) => void;
   onUpdate: (idx: number, field: keyof ExerciseRow, value: string | null) => void;
   onSelectFromLibrary: (idx: number, exerciseId: string) => void;
+  selected?: boolean;
+  onToggleSelected?: (idx: number) => void;
 }
 
 const MUSCLE_GROUPS = [
@@ -37,7 +42,7 @@ const MUSCLE_GROUPS = [
   "Posterior", "Glúteos", "Panturrilha", "Abdômen", "Cardio", "Outro"
 ];
 
-const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, onSelectFromLibrary }: Props) => {
+const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, onSelectFromLibrary, selected, onToggleSelected }: Props) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row._uid });
   const [libSearch, setLibSearch] = useState("");
   const [libGroup, setLibGroup] = useState("all");
@@ -46,6 +51,7 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+    borderLeft: row.group_color ? `4px solid ${row.group_color}` : undefined,
   };
 
   const filteredLibrary = (libraryExercises || []).filter((e: any) => {
@@ -58,10 +64,28 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
     <div ref={setNodeRef} style={style} className="border rounded-lg p-3 space-y-3 bg-muted/20">
       <div className="flex items-center gap-2 justify-between">
         <div className="flex items-center gap-2">
+          {onToggleSelected && (
+            <input
+              type="checkbox"
+              checked={!!selected}
+              onChange={() => onToggleSelected(idx)}
+              className="w-4 h-4 cursor-pointer accent-primary"
+              aria-label="Selecionar exercício"
+            />
+          )}
           <button type="button" className="cursor-grab touch-none text-muted-foreground hover:text-foreground" {...attributes} {...listeners}>
             <GripVertical className="w-4 h-4" />
           </button>
           <Badge variant="outline" className="text-xs">#{idx + 1}</Badge>
+          {row.group_name && (
+            <Badge
+              variant="outline"
+              className="text-[10px]"
+              style={{ backgroundColor: row.group_color ? `${row.group_color}22` : undefined, borderColor: row.group_color || undefined, color: row.group_color || undefined }}
+            >
+              {row.group_name}
+            </Badge>
+          )}
         </div>
         <Button size="icon" variant="ghost" onClick={() => onRemove(idx)}>
           <Trash2 className="w-3.5 h-3.5 text-destructive" />

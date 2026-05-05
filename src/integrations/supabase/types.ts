@@ -2207,36 +2207,42 @@ export type Database = {
           created_by: string
           details: string | null
           difficulty: string
+          expires_at: string | null
           id: string
           objective: string
           poster_url: string | null
           status: string
           title: string
           updated_at: string
+          video_url: string | null
         }
         Insert: {
           created_at?: string
           created_by: string
           details?: string | null
           difficulty?: string
+          expires_at?: string | null
           id?: string
           objective?: string
           poster_url?: string | null
           status?: string
           title: string
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
           created_at?: string
           created_by?: string
           details?: string | null
           difficulty?: string
+          expires_at?: string | null
           id?: string
           objective?: string
           poster_url?: string | null
           status?: string
           title?: string
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: []
       }
@@ -2347,6 +2353,9 @@ export type Database = {
           custom_description: string | null
           custom_name: string | null
           exercise_id: string | null
+          group_color: string | null
+          group_id: string | null
+          group_name: string | null
           id: string
           load_suggestion: string | null
           reps: string | null
@@ -2360,6 +2369,9 @@ export type Database = {
           custom_description?: string | null
           custom_name?: string | null
           exercise_id?: string | null
+          group_color?: string | null
+          group_id?: string | null
+          group_name?: string | null
           id?: string
           load_suggestion?: string | null
           reps?: string | null
@@ -2373,6 +2385,9 @@ export type Database = {
           custom_description?: string | null
           custom_name?: string | null
           exercise_id?: string | null
+          group_color?: string | null
+          group_id?: string | null
+          group_name?: string | null
           id?: string
           load_suggestion?: string | null
           reps?: string | null
