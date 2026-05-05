@@ -191,22 +191,32 @@ const AdminTrainingPrograms = () => {
 
   const assignMutation = useMutation({
     mutationFn: async ({ programId, userIds }: { programId: string; userIds: string[] }) => {
-      const templateIds = programTemplateIds || [];
-      if (!templateIds.length) throw new Error("Programa sem treinos para atribuir");
       if (!userIds.length) throw new Error("Selecione ao menos um aluno");
+      // Fetch templates fresh inside the mutation to avoid stale/empty cache
+      const { data: tpls, error: tplErr } = await supabase
+        .from("workout_templates")
+        .select("id")
+        .eq("program_id", programId);
+      if (tplErr) throw tplErr;
+      const templateIds = (tpls || []).map((t: any) => t.id);
+      if (!templateIds.length) throw new Error("Este programa ainda não possui treinos. Crie ao menos 1 treino antes de compartilhar.");
       const rows = userIds.flatMap((uid) =>
         templateIds.map((templateId) => ({
           user_id: uid, template_id: templateId, assigned_by: user!.id, active: true, seen_by_student: false,
         }))
       );
-      const { error } = await supabase.from("student_workout_assignments").upsert(rows as any, { onConflict: "user_id,template_id" });
+      const { error } = await supabase
+        .from("student_workout_assignments")
+        .upsert(rows as any, { onConflict: "user_id,template_id" });
       if (error) throw error;
+      return { count: rows.length };
     },
-    onSuccess: () => {
-      toast.success("Programa compartilhado com os alunos selecionados!");
+    onSuccess: ({ count }) => {
+      toast.success(`Programa compartilhado! ${count} atribuição(ões) criada(s).`);
       setAssignDialog(null);
       setSelectedStudents([]);
       setStudentSearch("");
+      queryClient.invalidateQueries({ queryKey: ["sgw-assignments"] });
     },
     onError: (e: any) => toast.error(e.message || "Erro ao atribuir."),
   });
