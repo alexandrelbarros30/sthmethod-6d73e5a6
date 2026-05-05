@@ -261,6 +261,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
             custom_name: e.custom_name, custom_description: e.custom_description,
             sets: e.sets, reps: e.reps, rest_interval: e.rest_interval,
             load_suggestion: e.load_suggestion, video_url: e.video_url, sort_order: e.sort_order,
+            group_id: e.group_id || null, group_name: e.group_name || "", group_color: e.group_color || "",
           }))
         );
       }
