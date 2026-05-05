@@ -502,12 +502,35 @@ const ProgramWorkouts = ({ programId }: Props) => {
             <div className="border-t pt-4">
               <div className="flex justify-between items-center mb-3">
                 <Label className="text-base font-semibold">Exercícios ({exerciseRows.length})</Label>
-                <Button size="sm" variant="outline" onClick={addExerciseRow}>
-                  <Plus className="w-3 h-3 mr-1" /> Adicionar
-                </Button>
+                <div className="flex gap-1.5 flex-wrap justify-end">
+                  <Button size="sm" variant="outline" onClick={addExerciseRow}>
+                    <Plus className="w-3 h-3 mr-1" /> Adicionar
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setLibraryDialogOpen(true)}>
+                    <Library className="w-3 h-3 mr-1" /> Biblioteca
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={selectedRowUids.size < 2}
+                    onClick={() => setGroupDialogOpen(true)}
+                  >
+                    <Layers className="w-3 h-3 mr-1" /> Agrupar ({selectedRowUids.size})
+                  </Button>
+                  {selectedRowUids.size > 0 && (
+                    <Button size="sm" variant="ghost" onClick={ungroupSelected}>
+                      <Unlink className="w-3 h-3 mr-1" /> Desagrupar
+                    </Button>
+                  )}
+                </div>
               </div>
+              {exerciseRows.length > 0 && (
+                <p className="text-[11px] text-muted-foreground mb-2">
+                  Marque os checkboxes dos exercícios para agrupar como Biset, Triset, Drop-set etc.
+                </p>
+              )}
               {exerciseRows.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">Nenhum exercício. Clique em "Adicionar".</p>
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhum exercício. Use "Adicionar" ou "Biblioteca".</p>
               )}
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleExerciseDragEnd}>
                 <SortableContext items={exerciseRows.map(r => r._uid)} strategy={verticalListSortingStrategy}>
@@ -521,6 +544,8 @@ const ProgramWorkouts = ({ programId }: Props) => {
                         onRemove={removeExerciseRow}
                         onUpdate={updateExerciseRow}
                         onSelectFromLibrary={selectFromLibrary}
+                        selected={selectedRowUids.has(row._uid)}
+                        onToggleSelected={toggleRowSelected}
                       />
                     ))}
                   </div>
@@ -533,6 +558,51 @@ const ProgramWorkouts = ({ programId }: Props) => {
               <Button onClick={() => saveWorkoutMutation.mutate()} disabled={saveWorkoutMutation.isPending}>
                 {saveWorkoutMutation.isPending ? "Salvando..." : "Salvar"}
               </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <LibraryMultiSelectDialog
+        open={libraryDialogOpen}
+        onOpenChange={setLibraryDialogOpen}
+        libraryExercises={libraryExercises || []}
+        onAdd={addFromLibrary}
+      />
+
+      <Dialog open={groupDialogOpen} onOpenChange={setGroupDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Agrupar exercícios ({selectedRowUids.size})</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Nome do agrupamento</Label>
+              <Input value={groupForm.name} maxLength={40} onChange={e => setGroupForm(p => ({ ...p, name: e.target.value }))} />
+            </div>
+            <div>
+              <Label className="text-xs">Tipo / Cor</Label>
+              <div className="flex gap-2 flex-wrap mt-1">
+                {GROUP_COLOR_PRESETS.map(p => (
+                  <button
+                    key={p.name}
+                    type="button"
+                    onClick={() => setGroupForm({ name: p.name, color: p.color })}
+                    className={`px-3 py-1.5 rounded-full text-xs border transition-all ${groupForm.color === p.color ? "ring-2 ring-offset-1 ring-offset-background" : ""}`}
+                    style={{ backgroundColor: `${p.color}22`, borderColor: p.color, color: p.color }}
+                  >
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <Label className="text-xs">Cor customizada:</Label>
+                <input type="color" value={groupForm.color} onChange={e => setGroupForm(p => ({ ...p, color: e.target.value }))} className="w-10 h-8 rounded border cursor-pointer" />
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end pt-2">
+              <Button variant="outline" onClick={() => setGroupDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={applyGroup}>Salvar série</Button>
             </div>
           </div>
         </DialogContent>
