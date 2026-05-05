@@ -8,17 +8,17 @@ import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Dumbbell, ChevronLeft, ChevronDown, History, Play, Calendar, ChevronsDown, Save, Eraser } from "lucide-react";
+import { Dumbbell, ChevronLeft, ChevronDown, History, Play, Calendar, ChevronsDown, Save, Eraser, VideoOff } from "lucide-react";
 import StCoachButton from "@/components/student/StCoachButton";
 import { toast } from "sonner";
 
-const getEmbedUrl = (url: string) => {
+const getVideoSource = (url: string): { kind: "embed" | "file"; url: string } | null => {
   if (!url) return null;
   const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-  if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
+  if (yt) return { kind: "embed", url: `https://www.youtube.com/embed/${yt[1]}` };
   const v = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-  if (v) return `https://player.vimeo.com/video/${v[1]}`;
-  return url;
+  if (v) return { kind: "embed", url: `https://player.vimeo.com/video/${v[1]}` };
+  return { kind: "file", url };
 };
 
 type View =
