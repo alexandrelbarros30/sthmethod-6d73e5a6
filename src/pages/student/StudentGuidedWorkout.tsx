@@ -243,6 +243,7 @@ const StudentGuidedWorkout = () => {
                   {letter}. {t.title}
                 </p>
                 {t.subtitle && <p className="text-xs text-muted-foreground mt-0.5">{t.subtitle}</p>}
+                {t.description && <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap">{t.description}</p>}
                 <div className="flex items-center justify-between gap-3 mt-3">
                   <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-2.5 py-1.5 rounded-full">
                     <History className="w-3.5 h-3.5" /> Histórico
@@ -294,6 +295,8 @@ const StudentGuidedWorkout = () => {
         <div className="rounded-2xl bg-primary text-primary-foreground p-5 text-center">
           <ChevronDown className="w-5 h-5 mx-auto opacity-70" />
           <h2 className="text-xl font-bold mt-1">{template.title}</h2>
+          {template.subtitle && <p className="mt-2 text-sm opacity-90">{template.subtitle}</p>}
+          {template.description && <p className="mt-3 text-sm opacity-80 whitespace-pre-wrap">{template.description}</p>}
           <Button
             variant="secondary"
             className="mt-4 w-full rounded-full bg-white text-black font-bold uppercase tracking-wide"
@@ -306,7 +309,7 @@ const StudentGuidedWorkout = () => {
         {/* Exercises list */}
         <div className="space-y-6">
           {exList.map((ex: any, idx: number) => {
-            const embedUrl = getEmbedUrl(ex.video_url || "");
+            const videoSource = getVideoSource(ex.video_url || "");
             const last = lastLog(ex.id);
             const key = `${assignment.id}-${ex.id}`;
             return (
@@ -334,9 +337,15 @@ const StudentGuidedWorkout = () => {
                   )}
                 </div>
 
-                {embedUrl && (
+                {videoSource?.kind === "embed" && (
                   <div className="aspect-video rounded-2xl overflow-hidden border border-border/40 relative">
-                    <iframe src={embedUrl} className="w-full h-full" allowFullScreen title={ex.custom_name} />
+                    <iframe src={videoSource.url} className="w-full h-full" allowFullScreen title={ex.custom_name} />
+                  </div>
+                )}
+
+                {videoSource?.kind === "file" && (
+                  <div className="aspect-video rounded-2xl overflow-hidden border border-border/40 bg-black/30">
+                    <video src={videoSource.url} className="w-full h-full" controls playsInline preload="metadata" />
                   </div>
                 )}
 
@@ -347,6 +356,12 @@ const StudentGuidedWorkout = () => {
                     </summary>
                     <p className="text-muted-foreground whitespace-pre-wrap mt-2 leading-relaxed">{ex.custom_description}</p>
                   </details>
+                )}
+
+                {!videoSource && (
+                  <div className="inline-flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 px-3 py-2 rounded-full">
+                    <VideoOff className="w-3.5 h-3.5" /> Vídeo não cadastrado para este exercício.
+                  </div>
                 )}
 
                 {/* Load input */}
