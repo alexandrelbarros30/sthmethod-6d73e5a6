@@ -11,12 +11,21 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Dumbbell, Video, ChevronDown, ChevronUp, Copy, GripVertical } from "lucide-react";
+import { Plus, Pencil, Trash2, Dumbbell, Video, ChevronDown, ChevronUp, Copy, GripVertical, Library, Layers, Unlink } from "lucide-react";
 import { toast } from "sonner";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import SortableExerciseRow, { ExerciseRow } from "@/components/admin/SortableExerciseRow";
+import LibraryMultiSelectDialog from "@/components/admin/LibraryMultiSelectDialog";
+
+const GROUP_COLOR_PRESETS = [
+  { name: "Biset", color: "#f59e0b" },
+  { name: "Triset", color: "#8b5cf6" },
+  { name: "Drop-set", color: "#ef4444" },
+  { name: "Super Série", color: "#10b981" },
+  { name: "Circuito", color: "#06b6d4" },
+];
 
 interface Props {
   programId: string;
@@ -122,6 +131,10 @@ const ProgramWorkouts = ({ programId }: Props) => {
   const [form, setForm] = useState<WorkoutForm>(emptyWorkout);
   const [exerciseRows, setExerciseRows] = useState<ExerciseRow[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [libraryDialogOpen, setLibraryDialogOpen] = useState(false);
+  const [groupDialogOpen, setGroupDialogOpen] = useState(false);
+  const [selectedRowUids, setSelectedRowUids] = useState<Set<string>>(new Set());
+  const [groupForm, setGroupForm] = useState({ name: "Biset", color: "#f59e0b" });
 
   const { data: workouts, isLoading } = useQuery({
     queryKey: ["program-workouts", programId],
@@ -199,6 +212,9 @@ const ProgramWorkouts = ({ programId }: Props) => {
             custom_name: r.custom_name, custom_description: r.custom_description,
             sets: r.sets, reps: r.reps, rest_interval: r.rest_interval,
             load_suggestion: r.load_suggestion, video_url: r.video_url, sort_order: i,
+            group_id: r.group_id || null,
+            group_name: r.group_name || "",
+            group_color: r.group_color || "",
           }));
           const { error: exErr } = await supabase.from("workout_template_exercises").insert(rows);
           if (exErr) throw exErr;
@@ -284,6 +300,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
     setEditingWorkout(null);
     setForm(emptyWorkout);
     setExerciseRows([]);
+    setSelectedRowUids(new Set());
   };
 
   const openEditWorkout = (w: any) => {
@@ -298,8 +315,10 @@ const ProgramWorkouts = ({ programId }: Props) => {
       custom_description: e.custom_description || "", sets: e.sets || "", reps: e.reps || "",
       rest_interval: e.rest_interval || "", load_suggestion: e.load_suggestion || "",
       video_url: e.video_url || "", sort_order: e.sort_order, _uid: e.id || crypto.randomUUID(),
+      group_id: e.group_id || null, group_name: e.group_name || "", group_color: e.group_color || "",
     }));
     setExerciseRows(exs);
+    setSelectedRowUids(new Set());
     setWorkoutDialog(true);
   };
 
@@ -308,7 +327,62 @@ const ProgramWorkouts = ({ programId }: Props) => {
       exercise_id: null, custom_name: "", custom_description: "",
       sets: "", reps: "", rest_interval: "", load_suggestion: "", video_url: "",
       sort_order: prev.length, _uid: crypto.randomUUID(),
+      group_id: null, group_name: "", group_color: "",
     }]);
+  };
+
+  const addFromLibrary = (items: any[]) => {
+    setExerciseRows(prev => [
+      ...prev,
+      ...items.map((lib, i) => ({
+        exercise_id: lib.id,
+        custom_name: lib.name,
+        custom_description: lib.description || "",
+        sets: "", reps: "", rest_interval: "", load_suggestion: "",
+        video_url: lib.video_url || "",
+        sort_order: prev.length + i,
+        _uid: crypto.randomUUID(),
+        group_id: null, group_name: "", group_color: "",
+      })),
+    ]);
+    toast.success(`${items.length} exercício(s) adicionado(s)!`);
+  };
+
+  const toggleRowSelected = (idx: number) => {
+    const uid = exerciseRows[idx]?._uid;
+    if (!uid) return;
+    setSelectedRowUids(prev => {
+      const next = new Set(prev);
+      next.has(uid) ? next.delete(uid) : next.add(uid);
+      return next;
+    });
+  };
+
+  const applyGroup = () => {
+    if (selectedRowUids.size < 2) {
+      toast.error("Selecione pelo menos 2 exercícios para agrupar.");
+      return;
+    }
+    const groupId = crypto.randomUUID();
+    setExerciseRows(prev => prev.map(r =>
+      selectedRowUids.has(r._uid)
+        ? { ...r, group_id: groupId, group_name: groupForm.name, group_color: groupForm.color }
+        : r
+    ));
+    setSelectedRowUids(new Set());
+    setGroupDialogOpen(false);
+    toast.success(`Agrupados como ${groupForm.name}!`);
+  };
+
+  const ungroupSelected = () => {
+    if (!selectedRowUids.size) return;
+    setExerciseRows(prev => prev.map(r =>
+      selectedRowUids.has(r._uid)
+        ? { ...r, group_id: null, group_name: "", group_color: "" }
+        : r
+    ));
+    setSelectedRowUids(new Set());
+    toast.success("Desagrupado!");
   };
 
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
