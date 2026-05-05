@@ -8,17 +8,17 @@ import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Dumbbell, ChevronLeft, ChevronDown, History, Play, Calendar, ChevronsDown, Save, Eraser } from "lucide-react";
+import { Dumbbell, ChevronLeft, ChevronDown, History, Play, Calendar, ChevronsDown, Save, Eraser, VideoOff } from "lucide-react";
 import StCoachButton from "@/components/student/StCoachButton";
 import { toast } from "sonner";
 
-const getEmbedUrl = (url: string) => {
+const getVideoSource = (url: string): { kind: "embed" | "file"; url: string } | null => {
   if (!url) return null;
   const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-  if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
+  if (yt) return { kind: "embed", url: `https://www.youtube.com/embed/${yt[1]}` };
   const v = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-  if (v) return `https://player.vimeo.com/video/${v[1]}`;
-  return url;
+  if (v) return { kind: "embed", url: `https://player.vimeo.com/video/${v[1]}` };
+  return { kind: "file", url };
 };
 
 type View =
@@ -77,6 +77,28 @@ const StudentGuidedWorkout = () => {
       return data || [];
     },
     enabled: templateIds.length > 0,
+  });
+
+  const exerciseIds = useMemo(
+    () => Array.from(new Set((exercises || []).map((e: any) => e.exercise_id).filter(Boolean))),
+    [exercises]
+  );
+
+  const { data: exerciseLibraryMap = {} } = useQuery({
+    queryKey: ["sgw-exercise-library-map", exerciseIds],
+    queryFn: async () => {
+      if (!exerciseIds.length) return {};
+      const { data } = await supabase
+        .from("exercise_library")
+        .select("id, description, video_url")
+        .in("id", exerciseIds);
+
+      return (data || []).reduce((acc: Record<string, any>, item: any) => {
+        acc[item.id] = item;
+        return acc;
+      }, {});
+    },
+    enabled: exerciseIds.length > 0,
   });
 
   const { data: myLogs } = useQuery({
@@ -237,12 +259,23 @@ const StudentGuidedWorkout = () => {
             const t = a.workout_templates;
             const letter = String.fromCharCode(65 + idx);
             const logs = countLogs(a.id);
+            const previewExercises = (exercises || [])
+              .filter((ex: any) => ex.template_id === t.id)
+              .slice(0, 3)
+              .map((ex: any) => ex.custom_name)
+              .filter(Boolean);
             return (
               <div key={a.id} className="rounded-2xl border border-border bg-card p-4">
                 <p className="text-base font-semibold text-foreground tracking-tight">
                   {letter}. {t.title}
                 </p>
                 {t.subtitle && <p className="text-xs text-muted-foreground mt-0.5">{t.subtitle}</p>}
+                {t.description && <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap">{t.description}</p>}
+                {previewExercises.length > 0 && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {previewExercises.join(" • ")}
+                  </p>
+                )}
                 <div className="flex items-center justify-between gap-3 mt-3">
                   <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-2.5 py-1.5 rounded-full">
                     <History className="w-3.5 h-3.5" /> Histórico
@@ -294,6 +327,8 @@ const StudentGuidedWorkout = () => {
         <div className="rounded-2xl bg-primary text-primary-foreground p-5 text-center">
           <ChevronDown className="w-5 h-5 mx-auto opacity-70" />
           <h2 className="text-xl font-bold mt-1">{template.title}</h2>
+          {template.subtitle && <p className="mt-2 text-sm opacity-90">{template.subtitle}</p>}
+          {template.description && <p className="mt-3 text-sm opacity-80 whitespace-pre-wrap">{template.description}</p>}
           <Button
             variant="secondary"
             className="mt-4 w-full rounded-full bg-white text-black font-bold uppercase tracking-wide"
@@ -306,7 +341,9 @@ const StudentGuidedWorkout = () => {
         {/* Exercises list */}
         <div className="space-y-6">
           {exList.map((ex: any, idx: number) => {
-            const embedUrl = getEmbedUrl(ex.video_url || "");
+            const libraryMeta = ex.exercise_id ? exerciseLibraryMap[ex.exercise_id] : null;
+            const videoSource = getVideoSource(ex.video_url || libraryMeta?.video_url || "");
+            const exerciseDescription = ex.custom_description || libraryMeta?.description || "";
             const last = lastLog(ex.id);
             const key = `${assignment.id}-${ex.id}`;
             return (
@@ -334,19 +371,31 @@ const StudentGuidedWorkout = () => {
                   )}
                 </div>
 
-                {embedUrl && (
+                {videoSource?.kind === "embed" && (
                   <div className="aspect-video rounded-2xl overflow-hidden border border-border/40 relative">
-                    <iframe src={embedUrl} className="w-full h-full" allowFullScreen title={ex.custom_name} />
+                    <iframe src={videoSource.url} className="w-full h-full" allowFullScreen title={ex.custom_name} />
                   </div>
                 )}
 
-                {ex.custom_description && (
+                {videoSource?.kind === "file" && (
+                  <div className="aspect-video rounded-2xl overflow-hidden border border-border/40 bg-black/30">
+                    <video src={videoSource.url} className="w-full h-full" controls playsInline preload="metadata" />
+                  </div>
+                )}
+
+                {exerciseDescription && (
                   <details className="text-sm">
                     <summary className="cursor-pointer font-semibold text-foreground inline-flex items-center gap-1">
                       Detalhes <ChevronDown className="w-4 h-4" />
                     </summary>
-                    <p className="text-muted-foreground whitespace-pre-wrap mt-2 leading-relaxed">{ex.custom_description}</p>
+                    <p className="text-muted-foreground whitespace-pre-wrap mt-2 leading-relaxed">{exerciseDescription}</p>
                   </details>
+                )}
+
+                {!videoSource && (
+                  <div className="inline-flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 px-3 py-2 rounded-full">
+                    <VideoOff className="w-3.5 h-3.5" /> Vídeo não cadastrado para este exercício.
+                  </div>
                 )}
 
                 {/* Load input */}
