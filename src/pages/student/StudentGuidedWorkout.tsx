@@ -79,6 +79,28 @@ const StudentGuidedWorkout = () => {
     enabled: templateIds.length > 0,
   });
 
+  const exerciseIds = useMemo(
+    () => Array.from(new Set((exercises || []).map((e: any) => e.exercise_id).filter(Boolean))),
+    [exercises]
+  );
+
+  const { data: exerciseLibraryMap = {} } = useQuery({
+    queryKey: ["sgw-exercise-library-map", exerciseIds],
+    queryFn: async () => {
+      if (!exerciseIds.length) return {};
+      const { data } = await supabase
+        .from("exercise_library")
+        .select("id, description, video_url")
+        .in("id", exerciseIds);
+
+      return (data || []).reduce((acc: Record<string, any>, item: any) => {
+        acc[item.id] = item;
+        return acc;
+      }, {});
+    },
+    enabled: exerciseIds.length > 0,
+  });
+
   const { data: myLogs } = useQuery({
     queryKey: ["sgw-logs", user?.id],
     queryFn: async () => {
@@ -237,6 +259,11 @@ const StudentGuidedWorkout = () => {
             const t = a.workout_templates;
             const letter = String.fromCharCode(65 + idx);
             const logs = countLogs(a.id);
+            const previewExercises = (exercises || [])
+              .filter((ex: any) => ex.template_id === t.id)
+              .slice(0, 3)
+              .map((ex: any) => ex.custom_name)
+              .filter(Boolean);
             return (
               <div key={a.id} className="rounded-2xl border border-border bg-card p-4">
                 <p className="text-base font-semibold text-foreground tracking-tight">
@@ -244,6 +271,11 @@ const StudentGuidedWorkout = () => {
                 </p>
                 {t.subtitle && <p className="text-xs text-muted-foreground mt-0.5">{t.subtitle}</p>}
                 {t.description && <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap">{t.description}</p>}
+                {previewExercises.length > 0 && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {previewExercises.join(" • ")}
+                  </p>
+                )}
                 <div className="flex items-center justify-between gap-3 mt-3">
                   <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-2.5 py-1.5 rounded-full">
                     <History className="w-3.5 h-3.5" /> Histórico
@@ -309,7 +341,9 @@ const StudentGuidedWorkout = () => {
         {/* Exercises list */}
         <div className="space-y-6">
           {exList.map((ex: any, idx: number) => {
-            const videoSource = getVideoSource(ex.video_url || "");
+            const libraryMeta = ex.exercise_id ? exerciseLibraryMap[ex.exercise_id] : null;
+            const videoSource = getVideoSource(ex.video_url || libraryMeta?.video_url || "");
+            const exerciseDescription = ex.custom_description || libraryMeta?.description || "";
             const last = lastLog(ex.id);
             const key = `${assignment.id}-${ex.id}`;
             return (
@@ -349,12 +383,12 @@ const StudentGuidedWorkout = () => {
                   </div>
                 )}
 
-                {ex.custom_description && (
+                {exerciseDescription && (
                   <details className="text-sm">
                     <summary className="cursor-pointer font-semibold text-foreground inline-flex items-center gap-1">
                       Detalhes <ChevronDown className="w-4 h-4" />
                     </summary>
-                    <p className="text-muted-foreground whitespace-pre-wrap mt-2 leading-relaxed">{ex.custom_description}</p>
+                    <p className="text-muted-foreground whitespace-pre-wrap mt-2 leading-relaxed">{exerciseDescription}</p>
                   </details>
                 )}
 
