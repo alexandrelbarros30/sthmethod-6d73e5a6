@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -58,7 +59,7 @@ const AdminTrainingPrograms = () => {
   const [editingProgram, setEditingProgram] = useState<string | null>(null);
   const [form, setForm] = useState<ProgramForm>(emptyForm);
   const [assignDialog, setAssignDialog] = useState<string | null>(null);
-  const [selectedStudent, setSelectedStudent] = useState("");
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [studentSearch, setStudentSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -189,20 +190,22 @@ const AdminTrainingPrograms = () => {
   });
 
   const assignMutation = useMutation({
-    mutationFn: async ({ programId, userId }: { programId: string; userId: string }) => {
+    mutationFn: async ({ programId, userIds }: { programId: string; userIds: string[] }) => {
       const templateIds = programTemplateIds || [];
       if (!templateIds.length) throw new Error("Programa sem treinos para atribuir");
-      for (const templateId of templateIds) {
-        const { error } = await supabase.from("student_workout_assignments").upsert({
-          user_id: userId, template_id: templateId, assigned_by: user!.id, active: true, seen_by_student: false,
-        } as any, { onConflict: "user_id,template_id" });
-        if (error) throw error;
-      }
+      if (!userIds.length) throw new Error("Selecione ao menos um aluno");
+      const rows = userIds.flatMap((uid) =>
+        templateIds.map((templateId) => ({
+          user_id: uid, template_id: templateId, assigned_by: user!.id, active: true, seen_by_student: false,
+        }))
+      );
+      const { error } = await supabase.from("student_workout_assignments").upsert(rows as any, { onConflict: "user_id,template_id" });
+      if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Programa atribuído ao aluno!");
+      toast.success("Programa compartilhado com os alunos selecionados!");
       setAssignDialog(null);
-      setSelectedStudent("");
+      setSelectedStudents([]);
       setStudentSearch("");
     },
     onError: (e: any) => toast.error(e.message || "Erro ao atribuir."),
@@ -419,34 +422,50 @@ const AdminTrainingPrograms = () => {
         </Dialog>
 
         {/* Assign Dialog */}
-        <Dialog open={!!assignDialog} onOpenChange={v => { if (!v) { setAssignDialog(null); setSelectedStudent(""); setStudentSearch(""); } }}>
+        <Dialog open={!!assignDialog} onOpenChange={v => { if (!v) { setAssignDialog(null); setSelectedStudents([]); setStudentSearch(""); } }}>
           <DialogContent>
-            <DialogHeader><DialogTitle>Atribuir Programa ao Aluno</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>Compartilhar Programa com Alunos</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div>
                 <Label>Buscar Aluno</Label>
                 <Input placeholder="Filtrar por nome ou email..." value={studentSearch} onChange={e => setStudentSearch(e.target.value)} className="mb-2" />
-                <Label>Selecionar Aluno</Label>
-                <Select value={selectedStudent} onValueChange={setSelectedStudent}>
-                  <SelectTrigger><SelectValue placeholder="Escolha um aluno..." /></SelectTrigger>
-                  <SelectContent>
-                    {(students || [])
-                      .filter((s: any) => {
-                        if (!studentSearch) return true;
-                        const q = studentSearch.toLowerCase();
-                        return (s.full_name || "").toLowerCase().includes(q) || (s.email || "").toLowerCase().includes(q);
-                      })
-                      .map((s: any) => (
-                        <SelectItem key={s.user_id} value={s.user_id}>{s.full_name || s.email}</SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center justify-between mt-2 mb-1">
+                  <Label>Selecione um ou mais alunos</Label>
+                  <span className="text-xs text-muted-foreground">{selectedStudents.length} selecionado(s)</span>
+                </div>
+                <div className="max-h-64 overflow-y-auto border rounded-lg divide-y">
+                  {(students || [])
+                    .filter((s: any) => {
+                      if (!studentSearch) return true;
+                      const q = studentSearch.toLowerCase();
+                      return (s.full_name || "").toLowerCase().includes(q) || (s.email || "").toLowerCase().includes(q);
+                    })
+                    .map((s: any) => {
+                      const checked = selectedStudents.includes(s.user_id);
+                      return (
+                        <label key={s.user_id} className="flex items-center gap-2 px-3 py-2 hover:bg-muted/40 cursor-pointer">
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={(v) =>
+                              setSelectedStudents((prev) =>
+                                v ? [...prev, s.user_id] : prev.filter((id) => id !== s.user_id)
+                              )
+                            }
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{s.full_name || "Sem nome"}</p>
+                            <p className="text-xs text-muted-foreground truncate">{s.email}</p>
+                          </div>
+                        </label>
+                      );
+                    })}
+                </div>
               </div>
               <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={() => { setAssignDialog(null); setSelectedStudent(""); }}>Cancelar</Button>
-                <Button disabled={!selectedStudent || assignMutation.isPending}
-                  onClick={() => assignDialog && assignMutation.mutate({ programId: assignDialog, userId: selectedStudent })}>
-                  {assignMutation.isPending ? "Atribuindo..." : "Atribuir"}
+                <Button variant="outline" onClick={() => { setAssignDialog(null); setSelectedStudents([]); }}>Cancelar</Button>
+                <Button disabled={!selectedStudents.length || assignMutation.isPending}
+                  onClick={() => assignDialog && assignMutation.mutate({ programId: assignDialog, userIds: selectedStudents })}>
+                  {assignMutation.isPending ? "Compartilhando..." : `Compartilhar (${selectedStudents.length})`}
                 </Button>
               </div>
             </div>
