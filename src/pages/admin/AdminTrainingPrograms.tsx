@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Users, ChevronRight, Layers, ArrowLeft, Copy, Target, Zap, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Users, ChevronRight, Layers, ArrowLeft, Copy, Target, Zap, Search, Dumbbell } from "lucide-react";
 import { toast } from "sonner";
 import ProgramWorkouts from "@/components/admin/ProgramWorkouts";
 
@@ -312,6 +312,9 @@ const AdminTrainingPrograms = () => {
                       <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                     <div className="flex gap-1 mt-3 pt-3 border-t justify-end" onClick={e => e.stopPropagation()}>
+                      <Button size="sm" variant="default" className="text-xs h-7" onClick={() => setSelectedProgramId(p.id)}>
+                        <Dumbbell className="w-3 h-3 mr-1" /> Treinos ({wCount})
+                      </Button>
                       <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => setAssignDialog(p.id)}>
                         <Users className="w-3 h-3 mr-1" /> Atribuir
                       </Button>
