@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import StCoachButton from "@/components/student/StCoachButton";
 import StudentInfoHeader from "@/components/student/StudentInfoHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import StudentGuidedWorkout from "@/pages/student/StudentGuidedWorkout";
 
 const getEmbedUrl = (url: string) => {
   if (!url) return null;
@@ -26,6 +27,23 @@ const StudentTraining = () => {
   const { user } = useAuth();
   const { isActive, isLoading: subLoading } = useSubscriptionGuard();
   const [expandedExercises, setExpandedExercises] = useState<Set<string>>(new Set());
+
+  const { data: guidedAssignmentsCount = 0, isLoading: guidedAssignmentsLoading } = useQuery({
+    queryKey: ["student-guided-assignment-count", user?.id],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("student_workout_assignments")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user!.id)
+        .eq("active", true);
+
+      if (error) throw error;
+      return count ?? 0;
+    },
+    enabled: !!user?.id && isActive,
+  });
+
+  const hasGuidedAssignments = guidedAssignmentsCount > 0;
 
   // Prevent screenshots
   useEffect(() => {
@@ -61,7 +79,7 @@ const StudentTraining = () => {
         .order("sort_order");
       return data || [];
     },
-    enabled: !!user?.id && isActive,
+    enabled: !!user?.id && isActive && !hasGuidedAssignments,
   });
 
   const { data: exercises, isLoading: exLoading } = useQuery({
@@ -76,7 +94,7 @@ const StudentTraining = () => {
         .order("sort_order");
       return data || [];
     },
-    enabled: !!weeks?.length,
+    enabled: !!weeks?.length && !hasGuidedAssignments,
   });
 
   const { data: profile } = useQuery({
@@ -92,7 +110,11 @@ const StudentTraining = () => {
     enabled: !!user?.id,
   });
 
-  const isLoading = subLoading || weeksLoading || exLoading;
+  const isLoading = subLoading || guidedAssignmentsLoading || weeksLoading || exLoading;
+
+  if (hasGuidedAssignments) {
+    return <StudentGuidedWorkout />;
+  }
 
   const toggleExercise = (id: string) => {
     setExpandedExercises(prev => {
