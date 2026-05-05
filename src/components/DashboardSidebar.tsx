@@ -61,11 +61,10 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/consultor/diet", icon: Salad, label: "Dietas" },
     { to: "/consultor/diet-library", icon: BookOpen, label: "Bib. Dietas" },
     { to: "/consultor/nutrition", icon: Apple, label: "Cardápio" },
-    { to: "/consultor/training", icon: Dumbbell, label: "Treinos" },
     { to: "/consultor/protocol", icon: FlaskConical, label: "Protocolos" },
     { to: "/consultor/protocol-library", icon: BookOpen, label: "Bib. Protocolos" },
     { to: "/consultor/exercise-library", icon: BookOpen, label: "Biblioteca" },
-    { to: "/consultor/workout-templates", icon: Layers, label: "Programas de Treino" },
+    { to: "/consultor/workout-templates", icon: Dumbbell, label: "Programas de Treino" },
   ],
   assistente: [
     { to: "/assistente", icon: LayoutDashboard, label: "Dashboard" },
