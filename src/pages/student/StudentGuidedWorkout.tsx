@@ -33,6 +33,7 @@ const StudentGuidedWorkout = () => {
   const [view, setView] = useState<View>({ kind: "programs" });
   const [loadInputs, setLoadInputs] = useState<Record<string, string>>({});
   const [feedback, setFeedback] = useState("");
+  const [expandedAssignment, setExpandedAssignment] = useState<string | null>(null);
 
   // Assignments + template (with program_id)
   const { data: assignments, isLoading: aLoading } = useQuery({
@@ -259,24 +260,48 @@ const StudentGuidedWorkout = () => {
             const t = a.workout_templates;
             const letter = String.fromCharCode(65 + idx);
             const logs = countLogs(a.id);
-            const previewExercises = (exercises || [])
-              .filter((ex: any) => ex.template_id === t.id)
+            const allExercises = (exercises || []).filter((ex: any) => ex.template_id === t.id);
+            const previewExercises = allExercises
               .slice(0, 3)
               .map((ex: any) => ex.custom_name)
               .filter(Boolean);
+            const isExpanded = expandedAssignment === a.id;
             return (
-              <div key={a.id} className="rounded-2xl border border-border bg-card p-4">
-                <p className="text-base font-semibold text-foreground tracking-tight">
-                  {letter}. {t.title}
-                </p>
+              <div
+                key={a.id}
+                className="rounded-2xl border border-border bg-card p-4 cursor-pointer transition-colors hover:bg-card/80"
+                onClick={() => setExpandedAssignment(isExpanded ? null : a.id)}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-base font-semibold text-foreground tracking-tight">
+                    {letter}. {t.title}
+                  </p>
+                  <ChevronDown className={`w-4 h-4 text-muted-foreground shrink-0 mt-1 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                </div>
                 {t.subtitle && <p className="text-xs text-muted-foreground mt-0.5">{t.subtitle}</p>}
                 {t.description && <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap">{t.description}</p>}
-                {previewExercises.length > 0 && (
+                {!isExpanded && previewExercises.length > 0 && (
                   <p className="text-sm text-muted-foreground mt-2">
                     {previewExercises.join(" • ")}
                   </p>
                 )}
-                <div className="flex items-center justify-between gap-3 mt-3">
+                {isExpanded && allExercises.length > 0 && (
+                  <ul className="mt-3 space-y-1.5 border-t border-border/50 pt-3">
+                    {allExercises.map((ex: any, i: number) => {
+                      const series = ex.sets && ex.reps ? `${ex.sets}x${ex.reps}` : (ex.sets || ex.reps || "");
+                      return (
+                        <li key={ex.id} className="flex items-baseline justify-between gap-3 text-sm">
+                          <span className="text-foreground">
+                            <span className="text-muted-foreground mr-1.5">{i + 1}.</span>
+                            {ex.custom_name || "Exercício"}
+                          </span>
+                          {series && <span className="text-primary font-semibold text-xs whitespace-nowrap">{series}</span>}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+                <div className="flex items-center justify-between gap-3 mt-3" onClick={(e) => e.stopPropagation()}>
                   <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-2.5 py-1.5 rounded-full">
                     <History className="w-3.5 h-3.5" /> Histórico
                     <span className="ml-1 inline-flex items-center justify-center min-w-[20px] px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-foreground/10">{logs}</span>
