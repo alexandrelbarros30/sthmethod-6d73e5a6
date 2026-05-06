@@ -187,6 +187,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
         const { error } = await supabase.from("workout_templates").update({
           title: form.title, subtitle: form.subtitle, description: form.description,
           released: form.released, weeks, days_per_week, minutes_per_day,
+          image_url: form.image_url,
           updated_at: new Date().toISOString(),
         }).eq("id", editingWorkout);
         if (error) throw error;
@@ -200,6 +201,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
         const { data, error } = await supabase.from("workout_templates").insert({
           title: form.title, subtitle: form.subtitle, description: form.description,
           released: form.released, weeks, days_per_week, minutes_per_day,
+          image_url: form.image_url,
           program_id: programId, created_by: user!.id, sort_order: sortOrder,
         }).select("id").single();
         if (error) throw error;
@@ -313,6 +315,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
       title: w.title, subtitle: w.subtitle || "", description: w.description || "",
       released: w.released ?? true, weeks: w.weeks?.toString() || "",
       days_per_week: w.days_per_week?.toString() || "", minutes_per_day: w.minutes_per_day?.toString() || "",
+      image_url: w.image_url || "",
     });
     const exs = (templateExercisesMap?.[w.id] || []).map((e: any) => ({
       id: e.id, exercise_id: e.exercise_id, custom_name: e.custom_name || "",
