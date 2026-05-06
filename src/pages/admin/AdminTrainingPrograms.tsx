@@ -409,11 +409,47 @@ const AdminTrainingPrograms = () => {
                 <Textarea value={form.details} onChange={e => setForm(p => ({ ...p, details: e.target.value }))} rows={3} placeholder="Descrição do programa..." />
               </div>
               <div>
-                <Label>Poster do Programa (URL da imagem)</Label>
-                <Input value={form.poster_url} onChange={e => setForm(p => ({ ...p, poster_url: e.target.value }))} placeholder="https://..." />
-                {form.poster_url && (
-                  <img src={form.poster_url} alt="Poster" className="mt-2 max-h-32 rounded-lg border" onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} />
-                )}
+                <Label>Imagem do Programa (card do aluno)</Label>
+                <div className="flex items-center gap-3 mt-1">
+                  {form.poster_url ? (
+                    <div className="relative w-28 h-28 rounded-lg overflow-hidden border">
+                      <img src={form.poster_url} alt="Poster" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setForm(p => ({ ...p, poster_url: "" }))}
+                        className="absolute top-1 right-1 bg-black/70 text-white rounded-full p-0.5"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="w-28 h-28 rounded-lg border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:bg-muted/50">
+                      <ImagePlus className="w-6 h-6 text-muted-foreground" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const err = validateImageFile(file);
+                          if (err) { toast.error(err); return; }
+                          try {
+                            const path = `${user!.id}/programs/${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
+                            const url = await processAndUpload(file, "workout-images", path);
+                            setForm(p => ({ ...p, poster_url: url }));
+                            toast.success("Imagem carregada!");
+                          } catch {
+                            toast.error("Falha no upload da imagem.");
+                          }
+                        }}
+                      />
+                    </label>
+                  )}
+                  <p className="text-xs text-muted-foreground flex-1">
+                    Esta imagem aparece no card do programa na tela de treino do aluno. Recomendado: 3:4 (vertical).
+                  </p>
+                </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
