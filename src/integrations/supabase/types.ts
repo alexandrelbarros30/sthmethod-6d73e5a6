@@ -160,11 +160,15 @@ export type Database = {
       }
       bioimpedance_logs: {
         Row: {
+          arm_cm: number | null
           bmr_kcal: number | null
           body_fat_pct: number | null
+          calf_cm: number | null
+          chest_cm: number | null
           created_at: string
           extracellular_water_l: number | null
           fat_mass_kg: number | null
+          hip_cm: number | null
           id: string
           intracellular_water_l: number | null
           lean_mass_kg: number | null
@@ -178,18 +182,24 @@ export type Database = {
           seg_right_leg: number | null
           seg_trunk: number | null
           skeletal_muscle_kg: number | null
+          thigh_cm: number | null
           total_water_l: number | null
           total_water_pct: number | null
           total_weight: number | null
           user_id: string
           visceral_fat: number | null
+          waist_cm: number | null
         }
         Insert: {
+          arm_cm?: number | null
           bmr_kcal?: number | null
           body_fat_pct?: number | null
+          calf_cm?: number | null
+          chest_cm?: number | null
           created_at?: string
           extracellular_water_l?: number | null
           fat_mass_kg?: number | null
+          hip_cm?: number | null
           id?: string
           intracellular_water_l?: number | null
           lean_mass_kg?: number | null
@@ -203,18 +213,24 @@ export type Database = {
           seg_right_leg?: number | null
           seg_trunk?: number | null
           skeletal_muscle_kg?: number | null
+          thigh_cm?: number | null
           total_water_l?: number | null
           total_water_pct?: number | null
           total_weight?: number | null
           user_id: string
           visceral_fat?: number | null
+          waist_cm?: number | null
         }
         Update: {
+          arm_cm?: number | null
           bmr_kcal?: number | null
           body_fat_pct?: number | null
+          calf_cm?: number | null
+          chest_cm?: number | null
           created_at?: string
           extracellular_water_l?: number | null
           fat_mass_kg?: number | null
+          hip_cm?: number | null
           id?: string
           intracellular_water_l?: number | null
           lean_mass_kg?: number | null
@@ -228,11 +244,13 @@ export type Database = {
           seg_right_leg?: number | null
           seg_trunk?: number | null
           skeletal_muscle_kg?: number | null
+          thigh_cm?: number | null
           total_water_l?: number | null
           total_water_pct?: number | null
           total_weight?: number | null
           user_id?: string
           visceral_fat?: number | null
+          waist_cm?: number | null
         }
         Relationships: []
       }
