@@ -16,6 +16,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Users, ChevronRight, Layers, ArrowLeft, Copy, Target, Zap, Search, Dumbbell } from "lucide-react";
 import { toast } from "sonner";
 import ProgramWorkouts from "@/components/admin/ProgramWorkouts";
+import { processAndUpload, validateImageFile } from "@/lib/image-upload";
+import { ImagePlus, X } from "lucide-react";
 
 const OBJECTIVES = [
   { value: "hypertrophy", label: "Hipertrofia" },
