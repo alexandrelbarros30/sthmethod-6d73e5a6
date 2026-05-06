@@ -8,6 +8,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import CircumferenceTracker from "@/components/student/CircumferenceTracker";
 import {
   ChartContainer, ChartTooltip, ChartTooltipContent,
 } from "@/components/ui/chart";
@@ -99,17 +100,20 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
 
   if (!logs || logs.length === 0) {
     return (
-      <Card className="border-dashed border-2 border-border/50">
-        <CardContent className="py-8 text-center">
-          <Activity className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">
-            Nenhuma avaliação de bioimpedância registrada ainda.
-          </p>
-          <p className="text-xs text-muted-foreground/70 mt-1">
-            Seu profissional registrará os dados da sua próxima avaliação aqui.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <Card className="border-dashed border-2 border-border/50">
+          <CardContent className="py-8 text-center">
+            <Activity className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">
+              Nenhuma avaliação de bioimpedância registrada ainda.
+            </p>
+            <p className="text-xs text-muted-foreground/70 mt-1">
+              Seu profissional registrará os dados da sua próxima avaliação aqui.
+            </p>
+          </CardContent>
+        </Card>
+        {!propUserId && <CircumferenceTracker />}
+      </div>
     );
   }
 
@@ -403,6 +407,8 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
           </CardContent>
         </Card>
       )}
+
+      {!propUserId && <CircumferenceTracker />}
     </div>
   );
 };
