@@ -18,8 +18,6 @@ import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } 
 import { CSS } from "@dnd-kit/utilities";
 import SortableExerciseRow, { ExerciseRow } from "@/components/admin/SortableExerciseRow";
 import LibraryMultiSelectDialog from "@/components/admin/LibraryMultiSelectDialog";
-import { processAndUpload, validateImageFile } from "@/lib/image-upload";
-import { ImagePlus, X } from "lucide-react";
 
 const GROUP_COLOR_PRESETS = [
   { name: "Biset", color: "#f59e0b" },
@@ -504,50 +502,6 @@ const ProgramWorkouts = ({ programId }: Props) => {
               <div>
                 <Label>Min/dia</Label>
                 <Input type="number" min={1} value={form.minutes_per_day} onChange={e => setForm(p => ({ ...p, minutes_per_day: e.target.value }))} placeholder="60" />
-              </div>
-            </div>
-
-            <div>
-              <Label>Imagem do Treino (card)</Label>
-              <div className="flex items-center gap-3 mt-1">
-                {form.image_url ? (
-                  <div className="relative w-24 h-24 rounded-lg overflow-hidden border">
-                    <img src={form.image_url} alt="Preview" className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => setForm(p => ({ ...p, image_url: "" }))}
-                      className="absolute top-1 right-1 bg-black/70 text-white rounded-full p-0.5"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="w-24 h-24 rounded-lg border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:bg-muted/50">
-                    <ImagePlus className="w-6 h-6 text-muted-foreground" />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        const err = validateImageFile(file);
-                        if (err) { toast.error(err); return; }
-                        try {
-                          const path = `${user!.id}/${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
-                          const url = await processAndUpload(file, "workout-images", path);
-                          setForm(p => ({ ...p, image_url: url }));
-                          toast.success("Imagem carregada!");
-                        } catch {
-                          toast.error("Falha no upload da imagem.");
-                        }
-                      }}
-                    />
-                  </label>
-                )}
-                <p className="text-xs text-muted-foreground flex-1">
-                  Aparece no card do treino para o aluno. Recomendado: 1:1 ou 4:3.
-                </p>
               </div>
             </div>
 
