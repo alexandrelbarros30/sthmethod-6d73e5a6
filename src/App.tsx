@@ -28,6 +28,7 @@ import PlatoMetabolico from "./pages/PlatoMetabolico";
 import Trembolona from "./pages/Trembolona";
 import Ginecomastia from "./pages/Ginecomastia";
 import HormoniosBfAlto from "./pages/HormoniosBfAlto";
+import TirzepatidaHipertrofia from "./pages/TirzepatidaHipertrofia";
 import Promo from "./pages/Promo";
 import EvolucaoPublica from "./pages/EvolucaoPublica";
 import FilaPublica from "./pages/FilaPublica";
@@ -123,6 +124,7 @@ const App = () => (
             <Route path="/tendencias/trembolona" element={<Trembolona />} />
             <Route path="/tendencias/ginecomastia" element={<Ginecomastia />} />
             <Route path="/tendencias/hormonios-bf-alto" element={<HormoniosBfAlto />} />
+            <Route path="/tendencias/tirzepatida-hipertrofia" element={<TirzepatidaHipertrofia />} />
             <Route path="/promo" element={<Promo />} />
             <Route path="/promo/:slug" element={<Promo />} />
             <Route path="/evolucao" element={<EvolucaoPublica />} />
