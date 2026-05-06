@@ -13,9 +13,15 @@ const DietDateNav = ({ selectedDate, onDateChange }: DietDateNavProps) => {
   const date = parseISO(selectedDate);
   const today = isToday(date);
 
-  const goPrev = () => onDateChange(subDays(date, 1).toISOString().split("T")[0]);
-  const goNext = () => onDateChange(addDays(date, 1).toISOString().split("T")[0]);
-  const goToday = () => onDateChange(new Date().toISOString().split("T")[0]);
+  const fmt = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+  const goPrev = () => onDateChange(fmt(subDays(date, 1)));
+  const goNext = () => onDateChange(fmt(addDays(date, 1)));
+  const goToday = () => onDateChange(fmt(new Date()));
 
   const label = today
     ? "Hoje"
