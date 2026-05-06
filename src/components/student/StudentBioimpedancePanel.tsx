@@ -407,6 +407,8 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
           </CardContent>
         </Card>
       )}
+
+      {!propUserId && <CircumferenceTracker />}
     </div>
   );
 };
