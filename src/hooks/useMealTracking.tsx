@@ -38,7 +38,12 @@ export interface AdminMacros {
   fat_g: number;
 }
 
-const formatDate = (d: Date) => d.toISOString().split("T")[0];
+const formatDate = (d: Date) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
 const todayStr = () => formatDate(new Date());
 
 const STORAGE_KEY = (uid: string) => `selected_diet_${uid}`;
