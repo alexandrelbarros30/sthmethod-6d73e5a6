@@ -2504,6 +2504,7 @@ export type Database = {
           days_per_week: number | null
           description: string | null
           id: string
+          image_url: string | null
           minutes_per_day: number | null
           program_id: string | null
           released: boolean
@@ -2519,6 +2520,7 @@ export type Database = {
           days_per_week?: number | null
           description?: string | null
           id?: string
+          image_url?: string | null
           minutes_per_day?: number | null
           program_id?: string | null
           released?: boolean
@@ -2534,6 +2536,7 @@ export type Database = {
           days_per_week?: number | null
           description?: string | null
           id?: string
+          image_url?: string | null
           minutes_per_day?: number | null
           program_id?: string | null
           released?: boolean

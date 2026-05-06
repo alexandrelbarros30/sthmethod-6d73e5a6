@@ -18,6 +18,8 @@ import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } 
 import { CSS } from "@dnd-kit/utilities";
 import SortableExerciseRow, { ExerciseRow } from "@/components/admin/SortableExerciseRow";
 import LibraryMultiSelectDialog from "@/components/admin/LibraryMultiSelectDialog";
+import { processAndUpload, validateImageFile } from "@/lib/image-upload";
+import { ImagePlus, X } from "lucide-react";
 
 const GROUP_COLOR_PRESETS = [
   { name: "Biset", color: "#f59e0b" },
@@ -39,11 +41,12 @@ interface WorkoutForm {
   weeks: string;
   days_per_week: string;
   minutes_per_day: string;
+  image_url: string;
 }
 
 const emptyWorkout: WorkoutForm = {
   title: "", subtitle: "", description: "", released: true,
-  weeks: "", days_per_week: "", minutes_per_day: "",
+  weeks: "", days_per_week: "", minutes_per_day: "", image_url: "",
 };
 
 /* ---------- sortable workout card ---------- */
@@ -184,6 +187,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
         const { error } = await supabase.from("workout_templates").update({
           title: form.title, subtitle: form.subtitle, description: form.description,
           released: form.released, weeks, days_per_week, minutes_per_day,
+          image_url: form.image_url,
           updated_at: new Date().toISOString(),
         }).eq("id", editingWorkout);
         if (error) throw error;
@@ -197,6 +201,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
         const { data, error } = await supabase.from("workout_templates").insert({
           title: form.title, subtitle: form.subtitle, description: form.description,
           released: form.released, weeks, days_per_week, minutes_per_day,
+          image_url: form.image_url,
           program_id: programId, created_by: user!.id, sort_order: sortOrder,
         }).select("id").single();
         if (error) throw error;
@@ -250,6 +255,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
       const { data: newW, error } = await supabase.from("workout_templates").insert({
         title: `${original.title} (Cópia)`, subtitle: original.subtitle, description: original.description,
         weeks: original.weeks, days_per_week: original.days_per_week, minutes_per_day: original.minutes_per_day,
+        image_url: original.image_url || "",
         program_id: programId, created_by: user!.id, sort_order: (workouts || []).length, released: original.released,
       }).select("id").single();
       if (error) throw error;
@@ -310,6 +316,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
       title: w.title, subtitle: w.subtitle || "", description: w.description || "",
       released: w.released ?? true, weeks: w.weeks?.toString() || "",
       days_per_week: w.days_per_week?.toString() || "", minutes_per_day: w.minutes_per_day?.toString() || "",
+      image_url: w.image_url || "",
     });
     const exs = (templateExercisesMap?.[w.id] || []).map((e: any) => ({
       id: e.id, exercise_id: e.exercise_id, custom_name: e.custom_name || "",
@@ -497,6 +504,50 @@ const ProgramWorkouts = ({ programId }: Props) => {
               <div>
                 <Label>Min/dia</Label>
                 <Input type="number" min={1} value={form.minutes_per_day} onChange={e => setForm(p => ({ ...p, minutes_per_day: e.target.value }))} placeholder="60" />
+              </div>
+            </div>
+
+            <div>
+              <Label>Imagem do Treino (card)</Label>
+              <div className="flex items-center gap-3 mt-1">
+                {form.image_url ? (
+                  <div className="relative w-24 h-24 rounded-lg overflow-hidden border">
+                    <img src={form.image_url} alt="Preview" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setForm(p => ({ ...p, image_url: "" }))}
+                      className="absolute top-1 right-1 bg-black/70 text-white rounded-full p-0.5"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="w-24 h-24 rounded-lg border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:bg-muted/50">
+                    <ImagePlus className="w-6 h-6 text-muted-foreground" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const err = validateImageFile(file);
+                        if (err) { toast.error(err); return; }
+                        try {
+                          const path = `${user!.id}/${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
+                          const url = await processAndUpload(file, "workout-images", path);
+                          setForm(p => ({ ...p, image_url: url }));
+                          toast.success("Imagem carregada!");
+                        } catch {
+                          toast.error("Falha no upload da imagem.");
+                        }
+                      }}
+                    />
+                  </label>
+                )}
+                <p className="text-xs text-muted-foreground flex-1">
+                  Aparece no card do treino para o aluno. Recomendado: 1:1 ou 4:3.
+                </p>
               </div>
             </div>
 
