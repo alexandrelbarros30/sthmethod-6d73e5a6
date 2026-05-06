@@ -272,6 +272,11 @@ const StudentGuidedWorkout = () => {
                 className="rounded-2xl border border-border bg-card p-4 cursor-pointer transition-colors hover:bg-card/80"
                 onClick={() => setExpandedAssignment(isExpanded ? null : a.id)}
               >
+                {t.image_url && (
+                  <div className="w-full aspect-[16/9] rounded-xl overflow-hidden mb-3 bg-muted">
+                    <img src={t.image_url} alt={t.title} className="w-full h-full object-cover" />
+                  </div>
+                )}
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-base font-semibold text-foreground tracking-tight">
                     {letter}. {t.title}
