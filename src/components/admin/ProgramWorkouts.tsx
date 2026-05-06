@@ -255,6 +255,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
       const { data: newW, error } = await supabase.from("workout_templates").insert({
         title: `${original.title} (Cópia)`, subtitle: original.subtitle, description: original.description,
         weeks: original.weeks, days_per_week: original.days_per_week, minutes_per_day: original.minutes_per_day,
+        image_url: original.image_url || "",
         program_id: programId, created_by: user!.id, sort_order: (workouts || []).length, released: original.released,
       }).select("id").single();
       if (error) throw error;
