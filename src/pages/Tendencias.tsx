@@ -12,6 +12,7 @@ import masteronImg from "@/assets/sthnews-masteron-glass-1.jpg";
 import triadeImg from "@/assets/sthnews-triade-thumb.jpg";
 import cinturaImg from "@/assets/sthnews-subq-glass-2.jpg";
 import subqImg from "@/assets/sthnews-subq-glass-1.jpg";
+import tirzeImg from "@/assets/sthnews-tirzepatida-hero.jpg";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -19,6 +20,7 @@ const fadeUp = {
 };
 
 const articles = [
+  { to: "/tendencias/tirzepatida-hipertrofia", kicker: "Tirzepatida & hipertrofia", title: "💉 Tirzepatida e hipertrofia: o protocolo que preserva massa magra.", desc: "GLP-1 + GIP, andrógenos como proteção tecidual e o déficit feito do jeito certo.", img: tirzeImg },
   { to: "/tendencias/hormonios-bf-alto", kicker: "Hormonal & metabólico", title: "🧬 Hormônio com BF alto: o fim do mito.", desc: "Não é proibido — é cirúrgico. Exames acima do medo.", img: bfAltoImg },
   { to: "/tendencias/ginecomastia", kicker: "Hormonal masculino", title: "🧬 Ginecomastia: o caroço silencioso que trava sua definição.", desc: "O termômetro do equilíbrio hormonal — e o freio invisível dos seus resultados.", img: ginecoImg },
   { to: "/tendencias/trembolona", kicker: "Anabolizantes", title: "🧬 Trembolona: arquitetura corporal no patamar de elite.", desc: "O segredo nunca foi a dose. É o manejo.", img: trembolonaImg },

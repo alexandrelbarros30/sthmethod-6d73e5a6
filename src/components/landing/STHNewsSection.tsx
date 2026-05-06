@@ -11,8 +11,18 @@ import platoImg from "@/assets/sthnews-plato-hero.jpg";
 import trembolonaImg from "@/assets/sthnews-trembolona-hero.jpg";
 import ginecoImg from "@/assets/sthnews-gineco-hero.jpg";
 import bfAltoImg from "@/assets/sthnews-bfalto-hero.jpg";
+import tirzeImg from "@/assets/sthnews-tirzepatida-hero.jpg";
 
 const articles = [
+  {
+    to: "/tendencias/tirzepatida-hipertrofia",
+    tag: "CAPA",
+    tagClass: "bg-primary text-primary-foreground",
+    date: "Nova matéria",
+    title: "💉 Tirzepatida e hipertrofia: o protocolo que preserva massa magra",
+    desc: "GLP-1 + GIP, andrógenos como proteção tecidual e o déficit feito do jeito certo.",
+    img: tirzeImg,
+  },
   {
     to: "/tendencias/hormonios-bf-alto",
     tag: "CAPA",
