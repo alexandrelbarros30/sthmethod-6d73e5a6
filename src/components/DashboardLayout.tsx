@@ -375,11 +375,11 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-foreground tracking-[-0.02em]">
               <Dumbbell className="w-5 h-5" strokeWidth={1.8} />
-              Novo Treino liberado
+              Novo Programa de Treino
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Seu novo treino <span className="font-semibold text-foreground">"{pendingTrainingTitle}"</span> foi atribuído e está pronto para você começar. Bora treinar!
+            Seu novo programa <span className="font-semibold text-foreground">"{pendingTrainingTitle}"</span> foi liberado e está pronto para você começar. Bora treinar!
           </p>
           <Button onClick={handleGoToTraining} className="w-full mt-2 rounded-full bg-foreground text-background hover:bg-foreground/90">
             Ver Meu Treino
