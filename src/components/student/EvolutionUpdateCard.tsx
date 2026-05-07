@@ -249,7 +249,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
               required={false}
               onComplete={() => {
                 setImagesSaved(true);
-                toast.success("Fotos salvas! Agora registre seu peso.");
+                toast.success("Fotos salvas! Toque em 'Registrar Evolução' para enviar suas observações ao seu consultor.");
               }}
             />
           </div>
