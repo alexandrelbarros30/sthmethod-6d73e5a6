@@ -4,6 +4,30 @@ const MAX_SIZE_MB = 1;
 const MAX_DIMENSION = 1000;
 
 /**
+ * Detect HEIC/HEIF file by extension or MIME type (iPhone native format).
+ */
+function isHeic(file: File): boolean {
+  const t = (file.type || "").toLowerCase();
+  const n = (file.name || "").toLowerCase();
+  return t.includes("heic") || t.includes("heif") || /\.(heic|heif)$/i.test(n);
+}
+
+/**
+ * Convert HEIC/HEIF (iPhone native format) to JPEG using heic2any (WASM).
+ * Browsers other than Safari cannot decode HEIC natively.
+ */
+async function convertHeicToJpeg(file: File): Promise<File> {
+  console.log("[image-upload] Converting HEIC → JPEG…");
+  const { default: heic2any } = await import("heic2any");
+  const result = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 });
+  const blob = Array.isArray(result) ? result[0] : result;
+  return new File([blob], file.name.replace(/\.(heic|heif)$/i, ".jpg"), {
+    type: "image/jpeg",
+    lastModified: Date.now(),
+  });
+}
+
+/**
  * Detect content type from blob/file
  */
 function getContentType(blob: Blob): string {
@@ -54,6 +78,19 @@ export async function compressImage(
   maxSizeMB = MAX_SIZE_MB,
   maxDim = MAX_DIMENSION,
 ): Promise<Blob> {
+  // iPhone HEIC/HEIF: convert to JPEG first (browsers cannot decode HEIC natively)
+  if (isHeic(file)) {
+    try {
+      file = await convertHeicToJpeg(file);
+    } catch (err) {
+      console.error("[image-upload] HEIC conversion failed:", err);
+      throw new Error(
+        "Não foi possível converter a foto HEIC do iPhone. " +
+        "Tire um print da imagem ou mude Ajustes → Câmera → Formatos → 'Mais Compatível'."
+      );
+    }
+  }
+
   let width: number, height: number;
   let drawSource: ImageBitmap | HTMLImageElement;
 
@@ -70,12 +107,8 @@ export async function compressImage(
       drawSource = img;
     } catch {
       console.warn("[image-upload] Could not decode image (likely HEIC/HEIF)");
-      // SEMPRE rejeita arquivos que não podem ser decodificados (HEIC/HEIF do iPhone),
-      // independente do tamanho. Se subir o original, o navegador não consegue exibir depois.
       throw new Error(
-        "Formato não suportado pelo navegador (provavelmente HEIC do iPhone). " +
-        "No iPhone vá em Ajustes → Câmera → Formatos → 'Mais Compatível' (JPG), " +
-        "ou tire um print da foto e envie novamente."
+        "Formato de imagem não suportado. Use JPG, PNG ou WEBP."
       );
     }
   }
