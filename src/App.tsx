@@ -22,6 +22,7 @@ import SubcutaneaEstrategia from "./pages/SubcutaneaEstrategia";
 import CinturaEstetica from "./pages/CinturaEstetica";
 import TriadeIntestino from "./pages/TriadeIntestino";
 import MasteronAndrogenico from "./pages/MasteronAndrogenico";
+import DrostanolonaTecnica from "./pages/DrostanolonaTecnica";
 import GlowBlend from "./pages/GlowBlend";
 import Gestrinona from "./pages/Gestrinona";
 import PlatoMetabolico from "./pages/PlatoMetabolico";
@@ -118,6 +119,7 @@ const App = () => (
             <Route path="/tendencias/cintura-estetica" element={<CinturaEstetica />} />
             <Route path="/tendencias/triade-intestino-hormonio" element={<TriadeIntestino />} />
             <Route path="/tendencias/drostanolona-masteron" element={<MasteronAndrogenico />} />
+            <Route path="/tendencias/drostanolona-tecnica" element={<DrostanolonaTecnica />} />
             <Route path="/tendencias/glow-blend" element={<GlowBlend />} />
             <Route path="/tendencias/gestrinona" element={<Gestrinona />} />
             <Route path="/tendencias/plato-metabolico" element={<PlatoMetabolico />} />
