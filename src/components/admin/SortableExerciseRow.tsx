@@ -89,7 +89,10 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
               type="checkbox"
               checked={!!selected}
               onChange={() => onToggleSelected(idx)}
-              className="w-4 h-4 cursor-pointer accent-primary"
+              className={cn(
+                "w-4 h-4 cursor-pointer accent-primary rounded border-2 transition-colors",
+                selected ? "border-primary bg-primary" : "border-muted-foreground/40"
+              )}
               aria-label="Selecionar exercício"
             />
           )}
@@ -112,8 +115,10 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
         </Button>
       </div>
       <div className="space-y-2">
-        <Label className="text-xs">Da Biblioteca</Label>
-        <div className="flex flex-col sm:flex-row gap-2">
+        {!selectedExercise && (
+          <>
+            <Label className="text-xs">Da Biblioteca</Label>
+            <div className="flex flex-col sm:flex-row gap-2">
           <Select value={libGroup} onValueChange={setLibGroup}>
             <SelectTrigger className="w-full sm:w-32 h-9 text-xs">
               <SelectValue placeholder="Grupo" />
@@ -151,7 +156,10 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
                           onSelectFromLibrary(idx, e.id);
                           setPickerOpen(false);
                         }}
-                        className="text-xs"
+                        className={cn(
+                          "text-xs",
+                          row.exercise_id === e.id && "bg-primary/15 text-primary data-[selected=true]:bg-primary/20"
+                        )}
                       >
                         <Check className={cn("mr-2 h-3.5 w-3.5", row.exercise_id === e.id ? "opacity-100" : "opacity-0")} />
                         <span className="flex-1 truncate">{e.name}</span>
@@ -166,7 +174,9 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
               </Command>
             </PopoverContent>
           </Popover>
-        </div>
+            </div>
+          </>
+        )}
 
         {/* Video preview */}
         {videoSource && (
