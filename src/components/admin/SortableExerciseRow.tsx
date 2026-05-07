@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Trash2, GripVertical, ChevronsUpDown, Check, Video } from "lucide-react";
+import { Trash2, GripVertical, ChevronsUpDown, Check, Video, ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface ExerciseRow {
@@ -59,6 +59,7 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row._uid });
   const [libGroup, setLibGroup] = useState("all");
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -79,6 +80,8 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
 
   const previewVideoUrl = row.video_url || selectedExercise?.video_url || "";
   const videoSource = getEmbedUrl(previewVideoUrl);
+
+  const displayName = row.custom_name || selectedExercise?.name || "Sem nome";
 
   return (
     <div ref={setNodeRef} style={style} className="border rounded-lg p-3 space-y-3 bg-muted/20">
@@ -114,6 +117,28 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
           <Trash2 className="w-3.5 h-3.5 text-destructive" />
         </Button>
       </div>
+      {/* Collapsed summary */}
+      <button
+        type="button"
+        onClick={() => setExpanded(v => !v)}
+        className="w-full flex items-start gap-2 text-left hover:bg-muted/30 rounded-md p-2 -m-1 transition-colors"
+      >
+        {expanded ? <ChevronDown className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />}
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-semibold text-foreground truncate">{displayName}</div>
+          {(row.sets || row.reps) && (
+            <div className="text-xs text-muted-foreground/90 mt-0.5">
+              {row.sets && `${row.sets} séries`}{row.sets && row.reps ? " × " : ""}{row.reps}
+            </div>
+          )}
+          {row.rest_interval && (
+            <div className="text-[11px] text-muted-foreground/60 mt-0.5">Intervalo: {row.rest_interval}</div>
+          )}
+        </div>
+      </button>
+
+      {expanded && (
+      <>
       <div className="space-y-2">
         {!selectedExercise && (
           <>
@@ -226,6 +251,8 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
         <Label className="text-xs">URL Vídeo</Label>
         <Input value={row.video_url} onChange={e => onUpdate(idx, "video_url", e.target.value)} placeholder="https://..." />
       </div>
+      </>
+      )}
     </div>
   );
 };
