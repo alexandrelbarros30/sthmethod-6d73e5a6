@@ -87,6 +87,15 @@ const articles = [
     img: masteronImg,
   },
   {
+    to: "/tendencias/drostanolona-tecnica",
+    tag: "EXCLUSIVO",
+    tagClass: "bg-destructive text-destructive-foreground",
+    date: "Nova matéria",
+    title: "🧪 Drostanolona: análise farmacológica completa",
+    desc: "Mecanismo, farmacocinética, toxicidade e o veredito ST&H METHOD.",
+    img: masteronImg,
+  },
+  {
     to: "/tendencias/triade-intestino-hormonio",
     tag: "EXCLUSIVO",
     tagClass: "bg-destructive text-destructive-foreground",
