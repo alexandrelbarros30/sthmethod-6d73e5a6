@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, GripVertical, Search } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Trash2, GripVertical, ChevronsUpDown, Check, Video } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export interface ExerciseRow {
   id?: string;
@@ -42,10 +45,20 @@ const MUSCLE_GROUPS = [
   "Posterior", "Glúteos", "Panturrilha", "Abdômen", "Cardio", "Outro"
 ];
 
+const getEmbedUrl = (url: string) => {
+  if (!url) return null;
+  const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+  if (yt) return { kind: "embed" as const, url: `https://www.youtube.com/embed/${yt[1]}` };
+  const v = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (v) return { kind: "embed" as const, url: `https://player.vimeo.com/video/${v[1]}` };
+  if (/\.(mp4|webm|ogg|mov)(\?|$)/i.test(url)) return { kind: "file" as const, url };
+  return { kind: "embed" as const, url };
+};
+
 const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, onSelectFromLibrary, selected, onToggleSelected }: Props) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row._uid });
-  const [libSearch, setLibSearch] = useState("");
   const [libGroup, setLibGroup] = useState("all");
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -54,11 +67,18 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
     borderLeft: row.group_color ? `4px solid ${row.group_color}` : undefined,
   };
 
-  const filteredLibrary = (libraryExercises || []).filter((e: any) => {
-    const matchSearch = !libSearch || e.name.toLowerCase().includes(libSearch.toLowerCase());
-    const matchGroup = libGroup === "all" || e.muscle_group === libGroup;
-    return matchSearch && matchGroup;
-  });
+  const filteredLibrary = useMemo(
+    () => (libraryExercises || []).filter((e: any) => libGroup === "all" || e.muscle_group === libGroup),
+    [libraryExercises, libGroup]
+  );
+
+  const selectedExercise = useMemo(
+    () => (libraryExercises || []).find((e: any) => e.id === row.exercise_id),
+    [libraryExercises, row.exercise_id]
+  );
+
+  const previewVideoUrl = row.video_url || selectedExercise?.video_url || "";
+  const videoSource = getEmbedUrl(previewVideoUrl);
 
   return (
     <div ref={setNodeRef} style={style} className="border rounded-lg p-3 space-y-3 bg-muted/20">
@@ -93,32 +113,78 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
       </div>
       <div className="space-y-2">
         <Label className="text-xs">Da Biblioteca</Label>
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <Input
-              placeholder="Filtrar exercício..."
-              value={libSearch}
-              onChange={e => setLibSearch(e.target.value)}
-              className="pl-7 h-8 text-xs"
-            />
-          </div>
+        <div className="flex flex-col sm:flex-row gap-2">
           <Select value={libGroup} onValueChange={setLibGroup}>
-            <SelectTrigger className="w-28 h-8 text-xs"><SelectValue placeholder="Grupo" /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-32 h-9 text-xs">
+              <SelectValue placeholder="Grupo" />
+            </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="all">Todos os grupos</SelectItem>
               {MUSCLE_GROUPS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                role="combobox"
+                className="flex-1 justify-between h-9 text-xs font-normal min-w-0"
+              >
+                <span className="truncate text-left">
+                  {selectedExercise ? selectedExercise.name : "Selecionar exercício..."}
+                </span>
+                <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="p-0 w-[--radix-popover-trigger-width] min-w-[260px]" align="start">
+              <Command>
+                <CommandInput placeholder="Filtrar exercício..." className="h-9" />
+                <CommandList>
+                  <CommandEmpty>Nenhum exercício encontrado.</CommandEmpty>
+                  <CommandGroup>
+                    {filteredLibrary.map((e: any) => (
+                      <CommandItem
+                        key={e.id}
+                        value={`${e.name} ${e.muscle_group || ""}`}
+                        onSelect={() => {
+                          onSelectFromLibrary(idx, e.id);
+                          setPickerOpen(false);
+                        }}
+                        className="text-xs"
+                      >
+                        <Check className={cn("mr-2 h-3.5 w-3.5", row.exercise_id === e.id ? "opacity-100" : "opacity-0")} />
+                        <span className="flex-1 truncate">{e.name}</span>
+                        {e.muscle_group && (
+                          <span className="ml-2 text-[10px] text-muted-foreground shrink-0">{e.muscle_group}</span>
+                        )}
+                        {e.video_url && <Video className="ml-1.5 h-3 w-3 text-primary shrink-0" />}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
-        <Select value={row.exercise_id || ""} onValueChange={v => onSelectFromLibrary(idx, v)}>
-          <SelectTrigger><SelectValue placeholder="Selecionar exercício..." /></SelectTrigger>
-          <SelectContent>
-            {filteredLibrary.map((e: any) => (
-              <SelectItem key={e.id} value={e.id}>{e.name} {e.muscle_group ? `(${e.muscle_group})` : ""}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+
+        {/* Video preview */}
+        {videoSource && (
+          <div className="rounded-lg overflow-hidden border border-border/60 bg-black">
+            {videoSource.kind === "embed" ? (
+              <div className="aspect-video w-full">
+                <iframe
+                  src={videoSource.url}
+                  className="w-full h-full"
+                  allowFullScreen
+                  title={`Vídeo - ${selectedExercise?.name || row.custom_name || "Exercício"}`}
+                />
+              </div>
+            ) : (
+              <video src={videoSource.url} controls className="w-full aspect-video" />
+            )}
+          </div>
+        )}
       </div>
       <div>
         <Label className="text-xs">Nome</Label>
