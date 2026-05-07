@@ -517,7 +517,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
               <div className="flex justify-between items-center mb-3">
                 <Label className="text-base font-semibold">Exercícios ({exerciseRows.length})</Label>
                 <div className="flex gap-1.5 flex-wrap justify-end">
-                  <Button size="sm" variant="outline" onClick={addExerciseRow}>
+                  <Button size="sm" onClick={addExerciseRow} className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/30">
                     <Plus className="w-3 h-3 mr-1" /> Adicionar
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => setLibraryDialogOpen(true)}>
