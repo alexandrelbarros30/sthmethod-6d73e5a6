@@ -28,6 +28,7 @@ const articles = [
   { to: "/tendencias/gestrinona", kicker: "Hormonal feminino", title: "💊 Gestrinona: a molécula de tripla ação.", desc: "Densidade, secura e equilíbrio hormonal.", img: gestrinonaImg },
   { to: "/tendencias/glow-blend", kicker: "Regeneração", title: "✨ Glow Blend: o trio de peptídeos que faz o corpo brilhar.", desc: "BPC-157 + TB-500 + GHK-Cu.", img: glowImg },
   { to: "/tendencias/drostanolona-masteron", kicker: "DHT", title: "🧬 Drostanolona (Masteron): densidade e performance.", desc: "Os limites do uso feminino.", img: masteronImg },
+  { to: "/tendencias/drostanolona-tecnica", kicker: "Análise técnica", title: "🧪 Drostanolona: análise farmacológica completa.", desc: "Mecanismo, farmacocinética, toxicidade e o veredito ST&H METHOD.", img: masteronImg },
   { to: "/tendencias/triade-intestino-hormonio", kicker: "Eixo intestinal", title: "🧬 Tríade SII, SOP e DRGE: o eixo intestino-hormônio.", desc: "Mesma raiz, três expressões.", img: triadeImg },
   { to: "/tendencias/cintura-estetica", kicker: "Estética", title: "⚡ A estética da cintura não é só genética.", desc: "Estrutura, estímulo e estratégia.", img: cinturaImg },
   { to: "/tendencias/subcutanea-estrategia", kicker: "Farmacocinética", title: "💉 IM → SubQ: a estratégia que mudou o jogo.", desc: "Estabilidade sérica e técnica de precisão.", img: subqImg },
