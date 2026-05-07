@@ -322,16 +322,34 @@ const AdminTrainingPrograms = () => {
                       </div>
                       <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
-                    <div className="flex gap-1 mt-3 pt-3 border-t justify-end" onClick={e => e.stopPropagation()}>
+                    <div className="flex flex-wrap gap-1 mt-3 pt-3 border-t justify-end" onClick={e => e.stopPropagation()}>
                       <Button size="sm" variant="default" className="text-xs h-7" onClick={() => setSelectedProgramId(p.id)}>
                         <Dumbbell className="w-3 h-3 mr-1" /> Treinos ({wCount})
                       </Button>
                       <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => setAssignDialog(p.id)}>
                         <Users className="w-3 h-3 mr-1" /> Atribuir
                       </Button>
-                      <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => duplicateProgramMutation.mutate(p.id)} disabled={duplicateProgramMutation.isPending}>
-                        <Copy className="w-3 h-3 mr-1" /> Duplicar
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="ghost" className="text-xs h-7" disabled={duplicateProgramMutation.isPending}>
+                            <Copy className="w-3 h-3 mr-1" /> Duplicar
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Duplicar programa?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Será criada uma cópia de "{p.title}" com todos os treinos e exercícios.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => duplicateProgramMutation.mutate(p.id)}>
+                              Duplicar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                       <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => openEditProgram(p)}>
                         <Pencil className="w-3 h-3 mr-1" /> Editar
                       </Button>
