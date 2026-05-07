@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ImagePlus, Download, Loader2, ZoomIn, RotateCcw, Move, Link2, Crop } from "lucide-react";
+import { ImagePlus, Download, Loader2, ZoomIn, RotateCcw, Move, Link2, Crop, EyeOff, X } from "lucide-react";
 import evolutionFrame from "@/assets/evolution-frame.png";
 import { getSecureFileUrl, extractStoragePath } from "@/lib/secure-file-url";
 import InteractiveCropper from "@/components/shared/InteractiveCropper";
@@ -141,6 +141,15 @@ interface PhotoTransform {
 
 const DEFAULT_TRANSFORM: PhotoTransform = { zoom: 1, offsetX: 0, offsetY: 0, aspectRatio: null };
 
+// Região circular de blur, em coordenadas relativas (0..1) ao canvas (CANVAS_WIDTH x CANVAS_HEIGHT)
+interface BlurRegion {
+  id: string;
+  cx: number; // 0..1
+  cy: number; // 0..1
+  r: number;  // 0..0.5 (raio relativo à largura do canvas)
+  intensity: number; // 8..60 (px de blur no canvas)
+}
+
 type TransformKey = `${"old" | "new"}_${ImageType}`;
 type TransformMap = Record<TransformKey, PhotoTransform>;
 
@@ -170,6 +179,11 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
   // Manual override: para cada posição (front/back/profile), permite escolher
   // qual imagem específica (id) usar de cada lado. Default = procurar pelo type.
   const [overrides, setOverrides] = useState<Partial<Record<TransformKey, string>>>({});
+  // Áreas de blur por tipo (frente/costas/perfil). Coords em fração do canvas (0..1).
+  const [blurRegions, setBlurRegions] = useState<Record<ImageType, BlurRegion[]>>({
+    front: [], back: [], profile: [],
+  });
+  const [blurMode, setBlurMode] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Load frame once
@@ -255,6 +269,36 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
     drawImageWithTransform(ctx, oldEl, { x: 0, y: photoAreaY, w: halfWidth - gap, h: photoAreaH }, tOld);
     drawImageWithTransform(ctx, newEl, { x: halfWidth + gap, y: photoAreaY, w: halfWidth - gap, h: photoAreaH }, tNew);
 
+    // Aplicar áreas de blur (ex: rostos) ANTES do header/footer/badge
+    const regions = blurRegions[type] || [];
+    if (regions.length > 0) {
+      for (const reg of regions) {
+        const cx = reg.cx * CANVAS_WIDTH;
+        const cy = reg.cy * CANVAS_HEIGHT;
+        const r = Math.max(8, reg.r * CANVAS_WIDTH);
+        const blurPx = Math.max(4, reg.intensity);
+        const sx = Math.max(0, cx - r);
+        const sy = Math.max(0, cy - r);
+        const sw = Math.min(CANVAS_WIDTH - sx, r * 2);
+        const sh = Math.min(CANVAS_HEIGHT - sy, r * 2);
+        if (sw <= 0 || sh <= 0) continue;
+        // Copia região para canvas temporário, aplica filtro blur e redesenha em clip circular.
+        const tmp = document.createElement("canvas");
+        tmp.width = Math.ceil(sw);
+        tmp.height = Math.ceil(sh);
+        const tctx = tmp.getContext("2d")!;
+        tctx.drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.clip();
+        (ctx as any).filter = `blur(${blurPx}px)`;
+        ctx.drawImage(tmp, sx, sy, sw, sh);
+        (ctx as any).filter = "none";
+        ctx.restore();
+      }
+    }
+
     // Re-draw header and footer
     const headerSrcH = Math.round(frameImage.height * 0.19);
     ctx.drawImage(frameImage, 0, 0, frameImage.width, headerSrcH, 0, 0, CANVAS_WIDTH, headerHeight);
@@ -298,7 +342,7 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
     }
     setLivePreviews(updates);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [frameImage, loadedImages, transforms]);
+  }, [frameImage, loadedImages, transforms, blurRegions]);
 
   const updateTransform = (side: "old" | "new", type: ImageType, patch: Partial<PhotoTransform>) => {
     setTransforms((prev) => {
@@ -553,11 +597,149 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
             </div>
 
             {livePreviews[activeType] && (
-              <img
-                src={livePreviews[activeType]}
-                alt="Preview ao vivo"
-                className="w-full rounded border border-border"
-              />
+              <div className="space-y-2">
+                <img
+                  src={livePreviews[activeType]}
+                  alt="Preview ao vivo"
+                  className={`w-full rounded border border-border ${blurMode ? "cursor-crosshair ring-2 ring-primary" : ""}`}
+                  onClick={(e) => {
+                    if (!blurMode) return;
+                    const target = e.currentTarget as HTMLImageElement;
+                    const rect = target.getBoundingClientRect();
+                    const cx = (e.clientX - rect.left) / rect.width;
+                    const cy = (e.clientY - rect.top) / rect.height;
+                    const id = Math.random().toString(36).slice(2, 9);
+                    setBlurRegions((prev) => ({
+                      ...prev,
+                      [activeType]: [
+                        ...prev[activeType],
+                        { id, cx, cy, r: 0.07, intensity: 24 },
+                      ],
+                    }));
+                  }}
+                />
+                <div className="flex items-center justify-between gap-2">
+                  <Button
+                    type="button"
+                    variant={blurMode ? "default" : "outline"}
+                    size="sm"
+                    className="text-[10px] h-8"
+                    onClick={() => setBlurMode((v) => !v)}
+                  >
+                    <EyeOff className="w-3 h-3 mr-1" />
+                    {blurMode ? "Modo borrar ativo — clique no preview" : "Borrar rosto / área"}
+                  </Button>
+                  {blurRegions[activeType].length > 0 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-[10px] h-8"
+                      onClick={() =>
+                        setBlurRegions((prev) => ({ ...prev, [activeType]: [] }))
+                      }
+                    >
+                      Limpar todos
+                    </Button>
+                  )}
+                </div>
+                {blurRegions[activeType].length > 0 && (
+                  <div className="space-y-2 rounded border border-border/60 bg-background/50 p-2">
+                    <p className="text-[10px] font-semibold text-muted-foreground">
+                      Áreas borradas ({blurRegions[activeType].length})
+                    </p>
+                    {blurRegions[activeType].map((reg, idx) => (
+                      <div key={reg.id} className="space-y-1 border-t border-border/40 pt-2 first:border-t-0 first:pt-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-muted-foreground">
+                            Área {idx + 1} {reg.cx < 0.5 ? "(Antes)" : "(Depois)"}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={() =>
+                              setBlurRegions((prev) => ({
+                                ...prev,
+                                [activeType]: prev[activeType].filter((r) => r.id !== reg.id),
+                              }))
+                            }
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                        <div className="flex justify-between text-[10px] text-muted-foreground">
+                          <span>Tamanho</span><span>{Math.round(reg.r * 100)}%</span>
+                        </div>
+                        <Slider
+                          min={2} max={30} step={1}
+                          value={[Math.round(reg.r * 100)]}
+                          onValueChange={([v]) =>
+                            setBlurRegions((prev) => ({
+                              ...prev,
+                              [activeType]: prev[activeType].map((r) =>
+                                r.id === reg.id ? { ...r, r: v / 100 } : r
+                              ),
+                            }))
+                          }
+                        />
+                        <div className="flex justify-between text-[10px] text-muted-foreground">
+                          <span>Intensidade</span><span>{reg.intensity}px</span>
+                        </div>
+                        <Slider
+                          min={8} max={60} step={2}
+                          value={[reg.intensity]}
+                          onValueChange={([v]) =>
+                            setBlurRegions((prev) => ({
+                              ...prev,
+                              [activeType]: prev[activeType].map((r) =>
+                                r.id === reg.id ? { ...r, intensity: v } : r
+                              ),
+                            }))
+                          }
+                        />
+                        <div className="grid grid-cols-2 gap-1">
+                          <div>
+                            <div className="flex justify-between text-[10px] text-muted-foreground">
+                              <span>Horizontal</span><span>{Math.round(reg.cx * 100)}%</span>
+                            </div>
+                            <Slider
+                              min={0} max={100} step={1}
+                              value={[Math.round(reg.cx * 100)]}
+                              onValueChange={([v]) =>
+                                setBlurRegions((prev) => ({
+                                  ...prev,
+                                  [activeType]: prev[activeType].map((r) =>
+                                    r.id === reg.id ? { ...r, cx: v / 100 } : r
+                                  ),
+                                }))
+                              }
+                            />
+                          </div>
+                          <div>
+                            <div className="flex justify-between text-[10px] text-muted-foreground">
+                              <span>Vertical</span><span>{Math.round(reg.cy * 100)}%</span>
+                            </div>
+                            <Slider
+                              min={0} max={100} step={1}
+                              value={[Math.round(reg.cy * 100)]}
+                              onValueChange={([v]) =>
+                                setBlurRegions((prev) => ({
+                                  ...prev,
+                                  [activeType]: prev[activeType].map((r) =>
+                                    r.id === reg.id ? { ...r, cy: v / 100 } : r
+                                  ),
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
 
             <div className="space-y-1.5">
