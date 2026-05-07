@@ -108,12 +108,20 @@ const SortableWorkoutCard = ({ w, wIdx, exs, isExpanded, onToggle, onEdit, onDel
           {isExpanded && exs.length > 0 && (
             <div className="mt-3 border-t pt-3 space-y-2">
               {exs.map((ex: any, i: number) => (
-                <div key={ex.id} className="flex items-center gap-2 text-sm">
-                  <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold">{i + 1}</span>
-                  <span className="font-medium truncate">{ex.custom_name || "Sem nome"}</span>
-                  {ex.sets && ex.reps && <span className="text-muted-foreground shrink-0">{ex.sets}x{ex.reps}</span>}
-                  {ex.rest_interval && <span className="text-xs text-muted-foreground shrink-0">Int: {ex.rest_interval}</span>}
-                  {ex.video_url && <Video className="w-3.5 h-3.5 text-primary shrink-0" />}
+                <div key={ex.id} className="flex items-start gap-2 text-sm">
+                  <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold shrink-0 mt-0.5">{i + 1}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-semibold text-foreground truncate">{ex.custom_name || "Sem nome"}</span>
+                      {ex.video_url && <Video className="w-3.5 h-3.5 text-primary shrink-0" />}
+                    </div>
+                    {ex.sets && ex.reps && (
+                      <div className="text-xs text-muted-foreground/90 mt-0.5">{ex.sets}×{ex.reps}</div>
+                    )}
+                    {ex.rest_interval && (
+                      <div className="text-[11px] text-muted-foreground/60 mt-0.5">Int: {ex.rest_interval}</div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
