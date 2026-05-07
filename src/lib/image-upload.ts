@@ -69,7 +69,15 @@ export async function compressImage(
       height = img.height;
       drawSource = img;
     } catch {
-      console.warn("[image-upload] Could not decode image, uploading original");
+      console.warn("[image-upload] Could not decode image (likely HEIC/HEIF)");
+      // Se o arquivo é grande e não consegue ser decodificado (HEIC do iPhone),
+      // rejeita explicitamente em vez de tentar upload de 5MB+ que vai falhar.
+      if (file.size > 1.5 * 1024 * 1024) {
+        throw new Error(
+          "Formato não suportado pelo navegador (provavelmente HEIC do iPhone). " +
+          "Salve a foto como JPG/PNG nas configurações da câmera ou tire um print e tente novamente."
+        );
+      }
       return file;
     }
   }
@@ -133,18 +141,12 @@ export async function uploadWithRetry(
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       console.log(`[image-upload] Upload attempt ${attempt}/${retries}, size: ${(blob.size / 1024).toFixed(0)}KB`);
-      
-      // Use AbortController for timeout on mobile
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000 * attempt);
-      
+
       const { error } = await supabase.storage.from(bucket).upload(path, blob, {
         contentType,
         upsert: true,
       });
-      
-      clearTimeout(timeoutId);
-      
+
       if (!error) {
         const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
         return urlData.publicUrl;
@@ -152,8 +154,17 @@ export async function uploadWithRetry(
       console.warn(`[image-upload] Attempt ${attempt} failed:`, error.message);
       if (attempt === retries) throw error;
     } catch (err: any) {
-      console.warn(`[image-upload] Attempt ${attempt} exception:`, err?.message || err);
-      if (attempt === retries) throw err;
+      const msg = err?.message || String(err);
+      console.warn(`[image-upload] Attempt ${attempt} exception:`, msg);
+      if (attempt === retries) {
+        if (msg === "Failed to fetch" || msg.includes("NetworkError")) {
+          throw new Error(
+            "Falha de rede ao enviar. Verifique sua conexão (Wi-Fi/4G) e tente novamente. " +
+            "Se o problema persistir, a imagem pode estar muito grande — use JPG/PNG."
+          );
+        }
+        throw err;
+      }
     }
     await new Promise((r) => setTimeout(r, 2000 * attempt));
   }
