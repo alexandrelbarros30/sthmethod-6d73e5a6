@@ -56,29 +56,29 @@ const SortableWorkoutCard = ({ w, wIdx, exs, isExpanded, onToggle, onEdit, onDel
     <div ref={setNodeRef} style={style}>
       <Card className="hover:shadow-sm transition-shadow">
         <CardContent className="py-4">
-          <div className="flex items-start gap-2">
-            <button type="button" className="cursor-grab touch-none text-muted-foreground hover:text-foreground shrink-0 mt-1" {...attributes} {...listeners}>
+          <div className="flex items-center gap-2">
+            <button type="button" className="cursor-grab touch-none text-muted-foreground hover:text-foreground shrink-0" {...attributes} {...listeners}>
               <GripVertical className="w-4 h-4" />
             </button>
-            <button className="flex-1 text-left min-w-0" onClick={onToggle}>
-              <div className="flex items-start gap-2 min-w-0">
+            <button className="flex-1 text-left" onClick={onToggle}>
+              <div className="flex items-center gap-2">
                 <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary text-sm font-bold shrink-0">
                   {wIdx + 1}
                 </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 min-w-0">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
                     <p className="font-medium text-sm truncate">{w.title}</p>
-                    {!w.released && <Badge variant="secondary" className="text-[10px] shrink-0">Bloqueado</Badge>}
+                    {!w.released && <Badge variant="secondary" className="text-[10px]">Bloqueado</Badge>}
                   </div>
                   {w.subtitle && <p className="text-xs text-muted-foreground truncate">{w.subtitle}</p>}
-                  <div className="flex flex-wrap gap-1.5 mt-0.5">
+                  <div className="flex gap-1.5 mt-0.5">
                     <Badge variant="outline" className="text-[10px]">{exs.length} exercício(s)</Badge>
                     {w.weeks && <Badge variant="outline" className="text-[10px]">{w.weeks}sem</Badge>}
                   </div>
                 </div>
               </div>
             </button>
-            <div className="flex gap-0.5 items-center shrink-0">
+            <div className="flex gap-1 items-center shrink-0">
               <div className="flex items-center gap-1 mr-1">
                 <Switch
                   checked={w.released ?? true}
@@ -116,9 +116,7 @@ const SortableWorkoutCard = ({ w, wIdx, exs, isExpanded, onToggle, onEdit, onDel
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-              <button type="button" onClick={onToggle} className="p-1">
-                {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-              </button>
+              {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
             </div>
           </div>
           {isExpanded && exs.length > 0 && (
