@@ -85,7 +85,21 @@ const SortableWorkoutCard = ({ w, wIdx, exs, isExpanded, onToggle, onEdit, onDel
                   onCheckedChange={(checked) => onToggleReleased(checked)}
                 />
               </div>
-              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={onDuplicate}><Copy className="w-3.5 h-3.5" /></Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="icon" variant="ghost" className="h-7 w-7"><Copy className="w-3.5 h-3.5" /></Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Duplicar treino?</AlertDialogTitle>
+                    <AlertDialogDescription>Será criada uma cópia de "{w.title}" com todos os exercícios.</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={onDuplicate}>Duplicar</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
               <Button size="icon" variant="ghost" className="h-7 w-7" onClick={onEdit}><Pencil className="w-3.5 h-3.5" /></Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
