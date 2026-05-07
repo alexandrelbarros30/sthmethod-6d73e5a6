@@ -11,6 +11,17 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Trash2, GripVertical, ChevronsUpDown, Check, Video, ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export interface ExerciseRow {
   id?: string;
@@ -60,6 +71,7 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
   const [libGroup, setLibGroup] = useState("all");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -88,16 +100,20 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
       <div className="flex items-center gap-2 justify-between">
         <div className="flex items-center gap-2">
           {onToggleSelected && (
-            <input
-              type="checkbox"
-              checked={!!selected}
-              onChange={() => onToggleSelected(idx)}
-              className={cn(
-                "w-4 h-4 cursor-pointer accent-primary rounded border-2 transition-colors",
-                selected ? "border-primary bg-primary" : "border-muted-foreground/40"
-              )}
+            <button
+              type="button"
+              onClick={() => onToggleSelected(idx)}
               aria-label="Selecionar exercício"
-            />
+              aria-pressed={!!selected}
+              className={cn(
+                "w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0",
+                selected
+                  ? "border-primary bg-primary shadow-sm shadow-primary/40"
+                  : "border-muted-foreground/40 hover:border-primary/60 bg-background"
+              )}
+            >
+              {selected && <Check className="w-3.5 h-3.5 text-black" strokeWidth={3} />}
+            </button>
           )}
           <button type="button" className="cursor-grab touch-none text-muted-foreground hover:text-foreground" {...attributes} {...listeners}>
             <GripVertical className="w-4 h-4" />
@@ -113,9 +129,30 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
             </Badge>
           )}
         </div>
-        <Button size="icon" variant="ghost" onClick={() => onRemove(idx)}>
-          <Trash2 className="w-3.5 h-3.5 text-destructive" />
-        </Button>
+        <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+          <AlertDialogTrigger asChild>
+            <Button size="icon" variant="ghost">
+              <Trash2 className="w-3.5 h-3.5 text-destructive" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir exercício?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir <span className="font-semibold text-foreground">{displayName}</span>? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => { onRemove(idx); setConfirmDelete(false); }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
       {/* Collapsed summary */}
       <button
