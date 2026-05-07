@@ -55,7 +55,7 @@ const DrostanolonaTecnica = () => {
           Refinamento estético<br /><span className="text-muted-foreground">e modulação androgênica.</span>
         </motion.h1>
         <motion.p initial="hidden" animate="visible" variants={fadeUp} className="max-w-xl mx-auto mt-8 text-lg md:text-xl text-muted-foreground font-light leading-relaxed">
-          Farmacologia, mecanismo de ação, toxicidade e o veredito ST&H METHOD sobre o Masteron.
+          Farmacologia, mecanismo de ação, toxicidade e o veredito STH METHOD sobre o Masteron.
         </motion.p>
       </section>
 
@@ -99,13 +99,13 @@ const DrostanolonaTecnica = () => {
         <Row t="Alerta" d="O abuso pode gerar excitotoxicidade neuronal, aumentando a chance de episódios convulsivos — sobretudo combinado a estimulantes (cafeína, efedrina) ou privação de sono." />
       </Section>
 
-      <Section number="07" kicker="Resumo técnico — modo ST&H METHOD" title="Finalizador, não construtor." image={heroImg} alt="Veredito ST&H METHOD">
+      <Section number="07" kicker="Resumo técnico — modo STH METHOD" title="Finalizador, não construtor." image={heroImg} alt="Veredito STH METHOD">
         <p>A Drostanolona é, tecnicamente, um dos melhores <span className="text-foreground font-medium">finalizadores</span> do arsenal de performance quando o percentual de gordura já está baixo (abaixo de 10–12% para homens).</p>
         <Row t="Dureza muscular" d='Proporciona aspecto "granítico" e denso por reduzir a água subcutânea.' />
         <Row t="Preservação de massa" d="Excelente para manter força e volume celular durante fases de pré-contest ou déficits calóricos agressivos." />
         <Row t="Sinergia" d="Potencializa o efeito de outros esteróides ao reduzir a SHBG (Globulina Ligadora de Hormônios Sexuais), deixando mais testosterona livre no sistema." />
         <Row t="Bem-estar" d="Muitos usuários relatam aumento de libido e vigor físico devido à sua natureza puramente androgênica." />
-        <p className="text-foreground font-medium pt-4">Veredito ST&H METHOD: o Masteron não é uma droga para "ganhar peso", mas para "esculpir o músculo". Sua eficiência brilha quando dieta e cardio já estão impecáveis.</p>
+        <p className="text-foreground font-medium pt-4">Veredito STH METHOD: o Masteron não é uma droga para "ganhar peso", mas para "esculpir o músculo". Sua eficiência brilha quando dieta e cardio já estão impecáveis.</p>
       </Section>
 
       <section className="py-32 md:py-40 px-6 text-center border-t border-border/40">

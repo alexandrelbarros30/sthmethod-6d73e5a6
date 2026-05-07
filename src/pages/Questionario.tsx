@@ -104,7 +104,7 @@ export default function Questionario() {
       {/* Navbar */}
       <nav className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="text-[11px] font-medium tracking-[0.2em] uppercase text-foreground">ST&H</Link>
+          <Link to="/" className="text-[11px] font-medium tracking-[0.2em] uppercase text-foreground">STH</Link>
           <Link to="/login">
             <Button variant="outline" size="sm">Acessar Plataforma</Button>
           </Link>

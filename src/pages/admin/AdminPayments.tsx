@@ -195,7 +195,7 @@ const AdminPayments = () => {
     const profile = getProfile(payment.user_id);
     const planName = (payment as any).plans?.name || "N/A";
     const msg = encodeURIComponent(
-      `✅ *Pagamento Aprovado - ST&H*\n\n` +
+      `✅ *Pagamento Aprovado - STH*\n\n` +
       `👤 Aluno: ${profile?.full_name || "N/A"}\n` +
       `📧 Email: ${profile?.email || "N/A"}\n` +
       `📞 Tel: ${profile?.phone || "N/A"}\n` +

@@ -488,7 +488,7 @@ const Cadastro = () => {
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-sm">ST</span>
             </div>
-            <span className="text-xl font-bold text-foreground">ST&H</span>
+            <span className="text-xl font-bold text-foreground">STH</span>
           </Link>
           <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors font-body">
             Já tem conta? Entrar
@@ -526,7 +526,7 @@ const Cadastro = () => {
             <CardHeader>
               <CardTitle className="text-xl">Crie sua conta</CardTitle>
               <p className="text-sm text-muted-foreground font-body">
-                Preencha seus dados para começar sua jornada na ST&H.
+                Preencha seus dados para começar sua jornada na STH.
               </p>
             </CardHeader>
             <CardContent>

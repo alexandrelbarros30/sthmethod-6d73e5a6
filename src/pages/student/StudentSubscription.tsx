@@ -113,7 +113,7 @@ const StudentSubscription = () => {
   // ONBOARDING FLOW for new students
   if (needsOnboarding) {
     return (
-      <DashboardLayout role="student" title="Bem-vindo à ST&H!" subtitle="Complete seu cadastro para começar.">
+      <DashboardLayout role="student" title="Bem-vindo à STH!" subtitle="Complete seu cadastro para começar.">
         <div className="flex items-center justify-center gap-2 mb-8">
           {[
             { n: 1, label: "Cadastro" },
