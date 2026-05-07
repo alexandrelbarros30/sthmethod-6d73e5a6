@@ -70,15 +70,13 @@ export async function compressImage(
       drawSource = img;
     } catch {
       console.warn("[image-upload] Could not decode image (likely HEIC/HEIF)");
-      // Se o arquivo é grande e não consegue ser decodificado (HEIC do iPhone),
-      // rejeita explicitamente em vez de tentar upload de 5MB+ que vai falhar.
-      if (file.size > 1.5 * 1024 * 1024) {
-        throw new Error(
-          "Formato não suportado pelo navegador (provavelmente HEIC do iPhone). " +
-          "Salve a foto como JPG/PNG nas configurações da câmera ou tire um print e tente novamente."
-        );
-      }
-      return file;
+      // SEMPRE rejeita arquivos que não podem ser decodificados (HEIC/HEIF do iPhone),
+      // independente do tamanho. Se subir o original, o navegador não consegue exibir depois.
+      throw new Error(
+        "Formato não suportado pelo navegador (provavelmente HEIC do iPhone). " +
+        "No iPhone vá em Ajustes → Câmera → Formatos → 'Mais Compatível' (JPG), " +
+        "ou tire um print da foto e envie novamente."
+      );
     }
   }
 
