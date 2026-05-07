@@ -57,6 +57,7 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
   // Training popup state
   const [trainingPopup, setTrainingPopup] = useState(false);
   const [pendingTrainingId, setPendingTrainingId] = useState<string | null>(null);
+  const [pendingProgramId, setPendingProgramId] = useState<string | null>(null);
   const [pendingTrainingTitle, setPendingTrainingTitle] = useState("");
 
   // Protocol popup state
@@ -127,17 +128,28 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
         hasNotification = true;
       }
 
-      // 3) Check new training (workout assignments)
+      // 3) Check new training program (group by program, single popup per program)
       const { data: trainingData } = await supabase
         .from("student_workout_assignments")
-        .select("id, workout_templates(title)")
+        .select("id, workout_templates(title, program_id)")
         .eq("user_id", user.id)
         .eq("seen_by_student", false)
-        .order("assigned_at", { ascending: false })
-        .limit(1);
+        .order("assigned_at", { ascending: false });
       if (trainingData && trainingData.length > 0) {
-        setPendingTrainingId(trainingData[0].id);
-        setPendingTrainingTitle((trainingData[0] as any).workout_templates?.title || "Novo Treino");
+        const first: any = trainingData[0];
+        const programId: string | null = first.workout_templates?.program_id || null;
+        let programTitle = first.workout_templates?.title || "Novo Treino";
+        if (programId) {
+          const { data: prog } = await supabase
+            .from("training_programs")
+            .select("title")
+            .eq("id", programId)
+            .maybeSingle();
+          if (prog?.title) programTitle = prog.title;
+        }
+        setPendingTrainingId(first.id);
+        setPendingProgramId(programId);
+        setPendingTrainingTitle(programTitle);
         setTrainingPopup(true);
         hasNotification = true;
       }
@@ -237,10 +249,25 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
 
   // ---- Training handlers ----
   const markTrainingSeen = async () => {
-    if (pendingTrainingId) {
+    if (pendingProgramId && user?.id) {
+      // Mark ALL assignments of this program as seen (single popup per program)
+      const { data: tpls } = await supabase
+        .from("workout_templates")
+        .select("id")
+        .eq("program_id", pendingProgramId);
+      const tplIds = (tpls || []).map((t: any) => t.id);
+      if (tplIds.length > 0) {
+        await supabase
+          .from("student_workout_assignments")
+          .update({ seen_by_student: true } as any)
+          .eq("user_id", user.id)
+          .in("template_id", tplIds);
+      }
+    } else if (pendingTrainingId) {
       await supabase.from("student_workout_assignments").update({ seen_by_student: true } as any).eq("id", pendingTrainingId);
-      setPendingTrainingId(null);
     }
+    setPendingTrainingId(null);
+    setPendingProgramId(null);
   };
   const handleCloseTraining = async () => { setTrainingPopup(false); await markTrainingSeen(); };
   const handleGoToTraining = async () => { setTrainingPopup(false); await markTrainingSeen(); navigate("/dashboard/training"); };
