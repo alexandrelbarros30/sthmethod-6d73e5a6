@@ -137,7 +137,7 @@ const Trembolona = () => {
 
       <Section number="04" kicker="Suporte clínico" title="A potência exige responsabilidade."
         image={suporteImg} alt="Suporte clínico">
-        <p>No ST&H Method, os colaterais não são ignorados — são gerenciados com precisão clínica.</p>
+        <p>No STH Method, os colaterais não são ignorados — são gerenciados com precisão clínica.</p>
         <div className="grid gap-4 pt-4">
           {[
             ["Proteção hepática", "NAC e TUDCA para garantir metabolização sem sobrecarga."],
