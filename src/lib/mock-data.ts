@@ -1,4 +1,4 @@
-// Mock data for the ST&H platform demo
+// Mock data for the STH platform demo
 
 export interface Student {
   id: string;

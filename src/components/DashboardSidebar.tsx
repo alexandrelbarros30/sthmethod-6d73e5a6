@@ -106,7 +106,7 @@ const SidebarNav = ({ role, links, onNavClick }: { role: string; links: { to: st
           <div className="w-8 h-8 rounded-xl bg-foreground flex items-center justify-center">
             <span className="text-background font-bold text-xs tracking-tight">ST</span>
           </div>
-          <span className="font-display text-lg font-semibold text-sidebar-foreground tracking-tight">ST&H</span>
+          <span className="font-display text-lg font-semibold text-sidebar-foreground tracking-tight">STH</span>
         </Link>
         <p className="text-[11px] text-muted-foreground mt-1.5 font-body tracking-wide uppercase">
           {roleLabelMap[role as AppRole] || "Painel"}
@@ -181,7 +181,7 @@ const DashboardSidebar = ({ role }: SidebarProps) => {
             <div className="w-7 h-7 rounded-lg bg-foreground flex items-center justify-center">
               <span className="text-background font-bold text-[10px]">ST</span>
             </div>
-            <span className="font-display text-base font-semibold text-foreground tracking-tight">ST&H</span>
+            <span className="font-display text-base font-semibold text-foreground tracking-tight">STH</span>
           </Link>
         </div>
       </>

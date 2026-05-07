@@ -92,7 +92,7 @@ const articles = [
     tagClass: "bg-destructive text-destructive-foreground",
     date: "Nova matéria",
     title: "🧪 Drostanolona: análise farmacológica completa",
-    desc: "Mecanismo, farmacocinética, toxicidade e o veredito ST&H METHOD.",
+    desc: "Mecanismo, farmacocinética, toxicidade e o veredito STH METHOD.",
     img: masteronImg,
   },
   {
