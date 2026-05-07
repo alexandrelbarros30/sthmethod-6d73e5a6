@@ -26,11 +26,11 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
   const [saving, setSaving] = useState(false);
   const [imagesSaved, setImagesSaved] = useState(false);
   const [activityChange, setActivityChange] = useState<ActivityData | null>(null);
-  const canSubmitUpdate = Boolean(weight || activityChange);
+  const canSubmitUpdate = Boolean(weight || activityChange || notes.trim() || imagesSaved);
 
   const handleSaveWeight = async () => {
-    if (!weight && !activityChange) {
-      toast.error("Informe seu peso atual ou registre a mudança na rotina.");
+    if (!weight && !activityChange && !notes.trim() && !imagesSaved) {
+      toast.error("Informe peso, observações, mudança de rotina ou envie fotos.");
       return;
     }
 
