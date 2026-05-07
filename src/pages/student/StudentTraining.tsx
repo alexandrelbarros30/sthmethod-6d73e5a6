@@ -236,16 +236,16 @@ const StudentTraining = () => {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-[14px] font-semibold text-foreground tracking-[-0.015em]">{ex.name}</p>
-                            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-[11px] text-muted-foreground font-light tracking-tight">
-                              {ex.reps && (
-                                <span className="font-medium text-foreground">{ex.reps}</span>
-                              )}
-                              {ex.rest_interval && (
-                                <span className="flex items-center gap-0.5">
-                                  <Timer className="w-3 h-3" /> {ex.rest_interval}
-                                </span>
-                              )}
-                            </div>
+                            {ex.reps && (
+                              <p className="mt-1 text-[12px] font-medium text-foreground/70 tabular-nums tracking-tight">
+                                {ex.reps}
+                              </p>
+                            )}
+                            {ex.rest_interval && (
+                              <p className="mt-0.5 text-[11px] text-muted-foreground/60 font-light tracking-tight flex items-center gap-1">
+                                <Timer className="w-3 h-3" /> Int: {ex.rest_interval}
+                              </p>
+                            )}
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             {ex.video_url && (
