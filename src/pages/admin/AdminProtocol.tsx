@@ -863,6 +863,37 @@ Sistema Pré e Pós-Treino: Protocolo de fluxo sanguíneo (Pré) e sinalização
                      <div>
                       <Label className="font-body">Conteúdo</Label>
                       <RichTextEditor value={newContent} onChange={setNewContent} placeholder="Escreva o conteúdo do protocolo aqui..." />
+                      <details className="mt-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-2">
+                        <summary className="cursor-pointer text-[11px] font-medium tracking-wide uppercase text-muted-foreground">
+                          ✨ Como ativar a Estratégia Premium gamificada
+                        </summary>
+                        <div className="mt-2 text-[12px] text-foreground/80 leading-relaxed space-y-2">
+                          <p>O painel premium do aluno é gerado automaticamente quando o conteúdo possui blocos iniciados por emojis-âncora. Modelo sugerido:</p>
+                          <pre className="bg-background/60 rounded-md p-2.5 text-[11px] whitespace-pre-wrap font-mono leading-snug">{`☀️ MANHÃ ✅
+"NAC 600mg + Testo Gel 5% + Hematínico Stack"
+Ação: Aplicar 1 pump do Gel + Suplementação oral.
+Stack: B6 50mg, B9 400mcg, B12 1000mcg, Ferro 30mg.
+⏱ Em jejum / Pós-banho
+📌 Foco: Ativação hormonal e oxigenação.
+
+🍽 ALMOÇO ⏳
+"Ômega-3 2g + Vit. D3 5.000 UI + Vit. K2"
+Ação: Após a maior refeição do dia.
+⏱ Junto à refeição
+📌 Foco: Blindagem cardiovascular.
+
+🏋️ PRÉ-TREINO 🔓
+"Citrulina 6g + Beta-Alanina 3g"
+⏱ 30-45min antes do treino
+📌 Foco: Volemia muscular.
+
+🌙 NOITE 🔒
+"Magnésio 400mg + Inositol 200mg"
+⏱ 30-60min antes de dormir
+📌 Foco: Recuperação tecidual.`}</pre>
+                          <p className="text-muted-foreground">Status (✅ feito · ⏳ em curso · 🔓 liberado · 🔒 bloqueado) é opcional. O aluno marca a conclusão do dia tocando no card.</p>
+                        </div>
+                      </details>
                     </div>
                     <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
                       <Button variant="ghost" size="sm" onClick={() => { setShowNewForm(false); resetNewForm(); }} className="w-full sm:w-auto">
