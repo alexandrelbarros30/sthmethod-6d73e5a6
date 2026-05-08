@@ -22,9 +22,29 @@ export interface ProtocolPhase {
 const PHASE_MAP: Array<{ rx: RegExp; key: string; flow: string }> = [
   { rx: /[\u2600\u{1F305}\u{1F31E}\u{1F31F}]/u, key: "manha",     flow: "Hormonal Flow Active" },
   { rx: /[\u{1F37D}\u{1F957}\u{1F374}\u{1F35C}]/u, key: "almoco", flow: "Cardio Shield On" },
+  { rx: /[\u{1F375}\u2615\u{1F307}\u{1F306}]/u,   key: "tarde",  flow: "Stability Mode" },
   { rx: /[\u{1F3CB}\u{1F4AA}\u{1F525}]/u,         key: "pre-treino", flow: "Oxygen Carry +" },
+  { rx: /[\u{1F9CB}\u{1F6BF}\u{1F4A7}\u{1F95B}]/u, key: "pos-treino", flow: "Recovery Window" },
   { rx: /[\u{1F319}\u{1F31B}\u{1F30C}]/u,         key: "noite",   flow: "Recovery Mode On" },
 ];
+
+const TITLE_PHASE_MAP: Array<{ rx: RegExp; key: string; flow: string; title: string }> = [
+  { rx: /^manh[ãa]\b/i, key: "manha", flow: "Hormonal Flow Active", title: "MANHÃ" },
+  { rx: /^almo[çc]o\b/i, key: "almoco", flow: "Cardio Shield On", title: "ALMOÇO" },
+  { rx: /^tarde\b/i, key: "tarde", flow: "Stability Mode", title: "TARDE" },
+  { rx: /^pr[eé]\s*-?\s*treino\b/i, key: "pre-treino", flow: "Oxygen Carry +", title: "PRÉ-TREINO" },
+  { rx: /^p[oó]s\s*-?\s*treino\b/i, key: "pos-treino", flow: "Recovery Window", title: "PÓS-TREINO" },
+  { rx: /^noite\b/i, key: "noite", flow: "Recovery Mode On", title: "NOITE" },
+];
+
+const FALLBACK_EMOJI_BY_KEY: Record<string, string> = {
+  manha: "☀️",
+  almoco: "🍽️",
+  tarde: "☕",
+  "pre-treino": "🏋️",
+  "pos-treino": "🧊",
+  noite: "🌙",
+};
 
 const STATUS_MAP: Array<{ rx: RegExp; status: PhaseStatus }> = [
   { rx: /\u2705/u, status: "done" },
@@ -50,8 +70,23 @@ function htmlToText(input: string): string {
   return div.textContent || div.innerText || "";
 }
 
+function sanitizeLine(input: string): string {
+  return input
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/\u00A0/g, " ")
+    .trim();
+}
+
+function normalizeComparableText(input: string): string {
+  return sanitizeLine(input)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
 function detectPhase(line: string): { key: string; emoji: string; flow: string; rest: string } | null {
-  const m = line.trim().match(ANCHOR_RX);
+  const normalizedLine = sanitizeLine(line);
+  const m = normalizedLine.match(ANCHOR_RX);
   if (!m) return null;
   const emoji = m[1];
   const rest = m[2].replace(/^[\s\-–—*•·:|]+/, "").trim();
@@ -59,6 +94,23 @@ function detectPhase(line: string): { key: string; emoji: string; flow: string; 
     if (p.rx.test(emoji)) return { key: p.key, emoji, flow: p.flow, rest };
   }
   return { key: `extra-${emoji}`, emoji, flow: "Phase Unlocked", rest };
+}
+
+function detectPhaseByTitle(line: string): { key: string; emoji: string; flow: string; rest: string } | null {
+  const rawLine = sanitizeLine(line).replace(/^[\-–—*•·:|\s]+/, "");
+  const normalizedLine = normalizeComparableText(rawLine);
+  for (const phase of TITLE_PHASE_MAP) {
+    const match = normalizedLine.match(phase.rx);
+    if (match) {
+      return {
+        key: phase.key,
+        emoji: "",
+        flow: phase.flow,
+        rest: rawLine,
+      };
+    }
+  }
+  return null;
 }
 
 function detectStatus(line: string): PhaseStatus | undefined {
@@ -78,7 +130,7 @@ function extractQuoted(line: string): string | undefined {
 export function parseProtocolPhases(content: string): ProtocolPhase[] {
   const text = htmlToText(content || "").replace(/\r/g, "");
   if (!text.trim()) return [];
-  const lines = text.split("\n").map((l) => l.replace(/\u00A0/g, " ").trim()).filter(Boolean);
+  const lines = text.split("\n").map((l) => sanitizeLine(l)).filter(Boolean);
 
   const phases: ProtocolPhase[] = [];
   let current: ProtocolPhase | null = null;
@@ -97,14 +149,14 @@ export function parseProtocolPhases(content: string): ProtocolPhase[] {
   };
 
   for (const line of lines) {
-    const phase = detectPhase(line);
+    const phase = detectPhase(line) || detectPhaseByTitle(line);
     if (phase) {
       pushCurrent();
       const status = detectStatus(line);
       const titleRaw = stripStatus(phase.rest);
       current = {
         key: phase.key,
-        emoji: phase.emoji,
+        emoji: phase.emoji || FALLBACK_EMOJI_BY_KEY[phase.key] || "✨",
         title: titleRaw.replace(/[:\-—]+\s*$/, "").trim(),
         rawStatus: status,
         flowLabel: phase.flow,
