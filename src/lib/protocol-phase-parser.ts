@@ -20,6 +20,7 @@ export interface ProtocolPhase {
 
 // Mapeamento emoji -> chave canônica
 const PHASE_MAP: Array<{ rx: RegExp; key: string; flow: string }> = [
+  { rx: /[\u{1F48A}\u{1F489}\u{1F9EC}\u{1F9EA}\u{2697}]/u, key: "medicamentos", flow: "Bio Stack Active" },
   { rx: /[\u2600\u{1F305}\u{1F31E}\u{1F31F}]/u, key: "manha",     flow: "Hormonal Flow Active" },
   { rx: /[\u{1F37D}\u{1F957}\u{1F374}\u{1F35C}]/u, key: "almoco", flow: "Cardio Shield On" },
   { rx: /[\u{1F375}\u2615\u{1F307}\u{1F306}]/u,   key: "tarde",  flow: "Stability Mode" },
@@ -29,6 +30,7 @@ const PHASE_MAP: Array<{ rx: RegExp; key: string; flow: string }> = [
 ];
 
 const TITLE_PHASE_MAP: Array<{ rx: RegExp; key: string; flow: string; title: string }> = [
+  { rx: /^(medicamentos|horm[oô]nios|pept[ií]deos)\b/i, key: "medicamentos", flow: "Bio Stack Active", title: "MEDICAMENTOS, HORMÔNIOS E PEPTÍDEOS" },
   { rx: /^manh[ãa]\b/i, key: "manha", flow: "Hormonal Flow Active", title: "MANHÃ" },
   { rx: /^almo[çc]o\b/i, key: "almoco", flow: "Cardio Shield On", title: "ALMOÇO" },
   { rx: /^tarde\b/i, key: "tarde", flow: "Stability Mode", title: "TARDE" },
@@ -38,6 +40,7 @@ const TITLE_PHASE_MAP: Array<{ rx: RegExp; key: string; flow: string; title: str
 ];
 
 const FALLBACK_EMOJI_BY_KEY: Record<string, string> = {
+  medicamentos: "💊",
   manha: "☀️",
   almoco: "🍽️",
   tarde: "☕",
@@ -55,7 +58,7 @@ const STATUS_MAP: Array<{ rx: RegExp; status: PhaseStatus }> = [
 
 // Regex que captura QUALQUER emoji "âncora" suportado no início de uma linha (após trim),
 // incluindo variação unicode do emoji e resíduos comuns do editor rico.
-const ANCHOR_RX = /^[\s\-–—*•·([\]]*([\u2600\u{1F305}\u{1F31E}\u{1F31F}\u{1F37D}\u{1F957}\u{1F374}\u{1F35C}\u{1F3CB}\u{1F4AA}\u{1F525}\u{1F319}\u{1F31B}\u{1F30C}])(?:\uFE0F)?\s*(.+)$/u;
+const ANCHOR_RX = /^[\s\-–—*•·([\]]*([\u2600\u{1F305}\u{1F31E}\u{1F31F}\u{1F37D}\u{1F957}\u{1F374}\u{1F35C}\u{1F3CB}\u{1F4AA}\u{1F525}\u{1F319}\u{1F31B}\u{1F30C}\u{1F48A}\u{1F489}\u{1F9EC}\u{1F9EA}\u2697])(?:\uFE0F)?\s*(.+)$/u;
 
 function htmlToText(input: string): string {
   if (!input) return "";
@@ -179,6 +182,18 @@ export function parseProtocolPhases(content: string): ProtocolPhase[] {
     else if (!current.action) current.action = line;
   }
   pushCurrent();
+  // Garantir que "MEDICAMENTOS, HORMÔNIOS E PEPTÍDEOS" sempre apareça no topo
+  phases.sort((a, b) => {
+    const am = a.key.startsWith("medicamentos") ? 0 : 1;
+    const bm = b.key.startsWith("medicamentos") ? 0 : 1;
+    return am - bm;
+  });
+  // Normaliza título do card de medicamentos para o padrão exigido
+  for (const p of phases) {
+    if (p.key.startsWith("medicamentos")) {
+      p.title = "MEDICAMENTOS, HORMÔNIOS E PEPTÍDEOS";
+    }
+  }
   return phases;
 }
 
