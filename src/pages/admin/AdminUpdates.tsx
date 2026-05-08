@@ -139,7 +139,7 @@ const AdminUpdates = () => {
   });
 
   return (
-    <DashboardLayout>
+    <DashboardLayout role="admin" title="Atualizações" subtitle="Registre novas versões e mantenha o histórico da plataforma.">
       <div className="space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
