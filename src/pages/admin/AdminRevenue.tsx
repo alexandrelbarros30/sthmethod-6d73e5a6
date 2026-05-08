@@ -430,6 +430,8 @@ const AdminRevenue = () => {
                   <TableRow>
                     <TableHead>Aluno</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Último pagamento</TableHead>
+                    <TableHead>Primeiro pagamento</TableHead>
                     <TableHead className="text-right">Pagamentos</TableHead>
                     <TableHead className="text-right">Total Pago</TableHead>
                   </TableRow>
@@ -439,12 +441,18 @@ const AdminRevenue = () => {
                     <TableRow key={id}>
                       <TableCell className="font-medium">{v.name}</TableCell>
                       <TableCell className="text-muted-foreground text-sm">{v.email}</TableCell>
+                      <TableCell className="text-sm">
+                        {v.lastDate ? new Date(v.lastDate).toLocaleDateString("pt-BR") : "—"}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {v.firstDate ? new Date(v.firstDate).toLocaleDateString("pt-BR") : "—"}
+                      </TableCell>
                       <TableCell className="text-right">{v.count}</TableCell>
                       <TableCell className="text-right font-semibold">{fmtBRL(v.total)}</TableCell>
                     </TableRow>
                   ))}
                   {studentsSorted.length === 0 && (
-                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Sem dados</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Sem dados</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
