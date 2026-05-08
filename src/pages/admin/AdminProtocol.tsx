@@ -1052,7 +1052,15 @@ Ação: Após a maior refeição do dia.
                               </div>
                             )}
                             {protocol.content && (
-                              <RichContentRenderer content={protocol.content} />
+                              (hasSmartProtocolStructure(protocol.content) || isSmartProtocolEra(protocol.created_at) ? (
+                                <GamifiedProtocolPanel
+                                  content={protocol.content}
+                                  userId={selected.user_id}
+                                  readOnly
+                                />
+                              ) : (
+                                <RichContentRenderer content={protocol.content} />
+                              ))
                             )}
                           </div>
                         </AccordionContent>
