@@ -139,21 +139,19 @@ export function parseProtocolPhases(content: string): ProtocolPhase[] {
   // preservando quebras como \n internas.
   const merged: string[] = [];
   let buffer: string | null = null;
-  const openQuoteRx = /[“"]/;
-  const closeQuoteRx = /[”"]/;
+  const anyQuoteRx = /[“”"]/g;
+  const countQuotes = (s: string) => (s.match(anyQuoteRx) || []).length;
   for (const line of lines) {
     if (buffer !== null) {
       buffer += "\n" + line;
-      if (closeQuoteRx.test(line)) {
+      if (countQuotes(line) >= 1) {
         merged.push(buffer);
         buffer = null;
       }
       continue;
     }
-    const opens = (line.match(/[“"]/g) || []).length;
-    const closes = (line.match(/[”"]/g) || []).length;
-    // Se abriu aspas mas não fechou na mesma linha, inicia buffer
-    if (openQuoteRx.test(line) && opens + closes === 1) {
+    // Se a linha tem número ímpar de aspas, abriu e não fechou — inicia buffer
+    if (countQuotes(line) % 2 === 1) {
       buffer = line;
       continue;
     }
