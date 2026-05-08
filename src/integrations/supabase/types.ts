@@ -1691,6 +1691,33 @@ export type Database = {
         }
         Relationships: []
       }
+      protocol_phase_checkins: {
+        Row: {
+          checkin_date: string
+          completed_at: string
+          created_at: string
+          id: string
+          phase_key: string
+          user_id: string
+        }
+        Insert: {
+          checkin_date?: string
+          completed_at?: string
+          created_at?: string
+          id?: string
+          phase_key: string
+          user_id: string
+        }
+        Update: {
+          checkin_date?: string
+          completed_at?: string
+          created_at?: string
+          id?: string
+          phase_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       protocols: {
         Row: {
           category: string
