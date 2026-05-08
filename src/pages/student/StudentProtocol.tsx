@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,8 +21,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import SignedPdfFrame from "@/components/shared/SignedPdfFrame";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import GamifiedProtocolPanel from "@/components/student/GamifiedProtocolPanel";
+import { parseProtocolPhases } from "@/lib/protocol-phase-parser";
 import { Sparkles, ChevronDown } from "lucide-react";
-import { useState } from "react";
 
 // Cutoff: 2026-05-08 13:53 BRT (UTC-3) === 16:53 UTC
 const SMART_PROTOCOL_CUTOFF_MS = Date.UTC(2026, 4, 8, 16, 53, 0);
@@ -118,6 +118,18 @@ const StudentProtocol = () => {
     enabled: !!targetId && isActive,
   });
 
+  const { data: protocolCategoryContents = [] } = useQuery({
+    queryKey: ["student-protocol-category-contents", targetId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("protocol_category_content")
+        .select("category, content, updated_at")
+        .eq("user_id", targetId!);
+      return data || [];
+    },
+    enabled: !!targetId && isActive,
+  });
+
   const { data: profile } = useQuery({
     queryKey: ["profile", targetId],
     queryFn: async () => {
@@ -186,14 +198,22 @@ const StudentProtocol = () => {
   const canDownload = canDownloadPDF(subscription?.plans?.name);
   const latestProtocol = protocols && protocols[0];
   const latestProtocolContent = latestProtocol?.content || "";
-  const latestCreatedAtMs = latestProtocol?.created_at ? new Date(latestProtocol.created_at).getTime() : 0;
   const pastCutoff = Date.now() >= SMART_PROTOCOL_CUTOFF_MS;
   const hasOldProtocolItems = (protocolItems?.length ?? 0) > 0;
-  // Smart panel shows when: latest protocol was created after cutoff,
-  // OR (past cutoff AND student has no legacy protocol items).
-  const showSmartProtocol =
-    (latestCreatedAtMs >= SMART_PROTOCOL_CUTOFF_MS) ||
-    (pastCutoff && !hasOldProtocolItems);
+  const latestProtocolHasSmartStructure = useMemo(
+    () => parseProtocolPhases(latestProtocolContent).length > 0,
+    [latestProtocolContent]
+  );
+  const smartContentFromLegacyCards = useMemo(() => {
+    const match = protocolCategoryContents.find((entry: any) => parseProtocolPhases(entry.content || "").length > 0);
+    return match?.content || "";
+  }, [protocolCategoryContents]);
+  const smartProtocolContent = latestProtocolHasSmartStructure
+    ? latestProtocolContent
+    : smartContentFromLegacyCards;
+  const hasSmartProtocolConfigured = smartProtocolContent.trim().length > 0;
+  const showSmartProtocol = hasSmartProtocolConfigured || (pastCutoff && !hasOldProtocolItems);
+  const showLegacyPanels = hasOldProtocolItems && !hasSmartProtocolConfigured;
   const [smartOpen, setSmartOpen] = useState(true);
 
   if (subLoading || isLoading) {
@@ -243,12 +263,12 @@ const StudentProtocol = () => {
         {buildStudentInfo()}
 
         {/* Legacy panels remain active whenever the student has old protocol items */}
-        {hasOldProtocolItems && (
+        {showLegacyPanels && (
           <ProtocolInfoPanel protocols={protocolItems} userId={targetId} />
         )}
 
         {/* New "Protocolo Inteligente" card — independent from legacy panels */}
-        {showSmartProtocol && latestProtocolContent && (
+        {showSmartProtocol && (
           <Collapsible open={smartOpen} onOpenChange={setSmartOpen}>
             <CollapsibleTrigger className="w-full flex items-center justify-between rounded-2xl border border-[#14b780]/30 bg-gradient-to-br from-[#14b780]/10 to-transparent px-4 py-3 hover:bg-[#14b780]/5 transition">
               <span className="flex items-center gap-2 text-sm font-semibold tracking-tight">
@@ -258,7 +278,7 @@ const StudentProtocol = () => {
               <ChevronDown className={`w-4 h-4 transition-transform ${smartOpen ? "rotate-180" : ""}`} strokeWidth={2} />
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-3">
-              <GamifiedProtocolPanel content={latestProtocolContent} userId={targetId!} readOnly={isPreviewing} />
+              <GamifiedProtocolPanel content={smartProtocolContent} userId={targetId!} readOnly={isPreviewing} />
             </CollapsibleContent>
           </Collapsible>
         )}

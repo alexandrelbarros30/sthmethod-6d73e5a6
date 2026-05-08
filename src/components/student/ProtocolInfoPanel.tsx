@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
 import RichTextEditor from "@/components/shared/RichTextEditor";
+import { parseProtocolPhases } from "@/lib/protocol-phase-parser";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -156,7 +157,8 @@ const ProtocolInfoPanel = ({ protocols = [], userId, editable = false }: Protoco
 
   const getCategoryContent = (catKey: string) => {
     const found = categoryContents.find((c: any) => c.category === catKey);
-    return found?.content || "";
+    const content = found?.content || "";
+    return parseProtocolPhases(content).length > 0 ? "" : content;
   };
 
   const startEditing = (catKey: string) => {
