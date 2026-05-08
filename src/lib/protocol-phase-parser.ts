@@ -17,11 +17,19 @@ export interface ProtocolPhase {
 }
 
 // Mapeamento emoji -> chave canônica
-const PHASE_MAP: Array<{ rx: RegExp; key: string; flow: string }> = [
-  { rx: /[\u2600\u{1F305}\u{1F31E}\u{1F31F}]/u, key: "manha",     flow: "Hormonal Flow Active" },
-  { rx: /[\u{1F37D}\u{1F957}\u{1F374}\u{1F35C}]/u, key: "almoco", flow: "Cardio Shield On" },
-  { rx: /[\u{1F3CB}\u{1F4AA}\u{1F525}]/u,         key: "pre-treino", flow: "Oxygen Carry +" },
-  { rx: /[\u{1F319}\u{1F31B}\u{1F30C}]/u,         key: "noite",   flow: "Recovery Mode On" },
+const PHASE_MAP: Array<{ rx: RegExp; key: string; flow: string; emoji: string }> = [
+  { rx: /[\u2600\u{1F305}\u{1F31E}\u{1F31F}]/u, key: "manha",     flow: "Hormonal Flow Active", emoji: "☀️" },
+  { rx: /[\u{1F37D}\u{1F957}\u{1F374}\u{1F35C}]/u, key: "almoco", flow: "Cardio Shield On",     emoji: "🍽" },
+  { rx: /[\u{1F3CB}\u{1F4AA}\u{1F525}]/u,         key: "pre-treino", flow: "Oxygen Carry +",    emoji: "🏋️" },
+  { rx: /[\u{1F319}\u{1F31B}\u{1F30C}]/u,         key: "noite",   flow: "Recovery Mode On",     emoji: "🌙" },
+];
+
+// Fallback por palavra-chave quando o admin esquece o emoji-âncora.
+const KEYWORD_MAP: Array<{ rx: RegExp; key: string; flow: string; emoji: string; title: string }> = [
+  { rx: /^(manh[ãa]|manha)\b/i,                    key: "manha",      flow: "Hormonal Flow Active", emoji: "☀️", title: "MANHÃ" },
+  { rx: /^(almo[çc]o)\b/i,                         key: "almoco",     flow: "Cardio Shield On",     emoji: "🍽",  title: "ALMOÇO" },
+  { rx: /^(pr[ée]\s*[-\s]?\s*treino|pre\s*treino)\b/i, key: "pre-treino", flow: "Oxygen Carry +",   emoji: "🏋️", title: "PRÉ-TREINO" },
+  { rx: /^(noite|notte)\b/i,                       key: "noite",      flow: "Recovery Mode On",     emoji: "🌙", title: "NOITE" },
 ];
 
 const STATUS_MAP: Array<{ rx: RegExp; status: PhaseStatus }> = [
@@ -49,13 +57,22 @@ function htmlToText(input: string): string {
 
 function detectPhase(line: string): { key: string; emoji: string; flow: string; rest: string } | null {
   const m = line.trim().match(ANCHOR_RX);
-  if (!m) return null;
-  const emoji = m[1];
-  const rest = m[2];
-  for (const p of PHASE_MAP) {
-    if (p.rx.test(emoji)) return { key: p.key, emoji, flow: p.flow, rest };
+  if (m) {
+    const emoji = m[1];
+    const rest = m[2];
+    for (const p of PHASE_MAP) {
+      if (p.rx.test(emoji)) return { key: p.key, emoji, flow: p.flow, rest };
+    }
+    return { key: `extra-${emoji}`, emoji, flow: "Phase Unlocked", rest };
   }
-  return { key: `extra-${emoji}`, emoji, flow: "Phase Unlocked", rest };
+  // Fallback por palavra-chave (linha começa com MANHÃ/ALMOÇO/PRÉ-TREINO/NOITE)
+  const trimmed = line.trim();
+  for (const k of KEYWORD_MAP) {
+    if (k.rx.test(trimmed)) {
+      return { key: k.key, emoji: k.emoji, flow: k.flow, rest: trimmed };
+    }
+  }
+  return null;
 }
 
 function detectStatus(line: string): PhaseStatus | undefined {
