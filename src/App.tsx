@@ -51,6 +51,7 @@ import StudentMetabolic from "./pages/student/StudentMetabolic";
 import StudentAds from "./pages/student/StudentAds";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminFixCurty from "./pages/admin/AdminFixCurty";
+import AdminHeicFix from "./pages/admin/AdminHeicFix";
 import AdminStudents from "./pages/admin/AdminStudents";
 import AdminPlans from "./pages/admin/AdminPlans";
 import AdminPayments from "./pages/admin/AdminPayments";
