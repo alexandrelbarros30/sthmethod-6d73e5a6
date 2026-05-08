@@ -207,12 +207,10 @@ const StudentProtocol = () => {
   }, [protocolCategoryContents]);
   const smartProtocolContent = latestProtocolHasSmartStructure
     ? latestProtocolContent
-    : latestProtocolIsSmartEra
-      ? ""
-      : smartContentFromLegacyCards;
+    : smartContentFromLegacyCards;
   const hasSmartProtocolConfigured = smartProtocolContent.trim().length > 0;
-  const showSmartProtocol = latestProtocolIsSmartEra || hasSmartProtocolConfigured || !hasOldProtocolItems;
-  const showLegacyPanels = hasOldProtocolItems && !latestProtocolIsSmartEra && !hasSmartProtocolConfigured;
+  const showSmartProtocol = hasSmartProtocolConfigured || (!hasOldProtocolItems && latestProtocolIsSmartEra);
+  const showLegacyPanels = hasOldProtocolItems && !hasSmartProtocolConfigured;
   const [smartOpen, setSmartOpen] = useState(true);
 
   if (subLoading || isLoading) {
@@ -332,8 +330,8 @@ const StudentProtocol = () => {
                               />
                             </div>
                           )}
-                          {protocol.content && (
-                            (hasSmartProtocolStructure(protocol.content) || isSmartProtocolEra(protocol.created_at) ? (
+                           {protocol.content && (
+                            (hasSmartProtocolStructure(protocol.content) ? (
                               <GamifiedProtocolPanel
                                 content={protocol.content}
                                 userId={targetId!}
