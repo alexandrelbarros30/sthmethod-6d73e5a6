@@ -831,12 +831,28 @@ Sistema Pré e Pós-Treino: Protocolo de fluxo sanguíneo (Pré) e sinalização
                 </div>
               )}
 
-              {/* Protocol Info Panel - editable cards */}
-              {selected?.user_id && (
+              {/* Legacy cards only stay available for legacy protocols */}
+              {showLegacyProtocolEditor && (
                 <>
                   <ProtocolInfoPanel protocols={protocolItems} userId={selected.user_id} editable />
                   <ProtocolExtraCategoriesManager userId={selected.user_id} />
                 </>
+              )}
+
+              {/* New protocols preview only in the smart card */}
+              {showSmartProtocolPreview && smartProtocolPreviewContent && (
+                <Card className="border-border/40 bg-muted/20">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-display">Protocolo Inteligente</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <GamifiedProtocolPanel
+                      content={smartProtocolPreviewContent}
+                      userId={selected.user_id}
+                      readOnly
+                    />
+                  </CardContent>
+                </Card>
               )}
 
               <hr className="border-border" />
