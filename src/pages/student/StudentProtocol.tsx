@@ -24,8 +24,8 @@ import GamifiedProtocolPanel from "@/components/student/GamifiedProtocolPanel";
 import { Sparkles, ChevronDown } from "lucide-react";
 import { useState } from "react";
 
-// Cutoff: 2026-05-08 13:40 BRT (UTC-3) === 16:40 UTC
-const SMART_PROTOCOL_CUTOFF_MS = Date.UTC(2026, 4, 8, 16, 40, 0);
+// Cutoff: 2026-05-08 13:53 BRT (UTC-3) === 16:53 UTC
+const SMART_PROTOCOL_CUTOFF_MS = Date.UTC(2026, 4, 8, 16, 53, 0);
 
 const useContentProtection = () => {
   useEffect(() => {
@@ -184,8 +184,16 @@ const StudentProtocol = () => {
   };
 
   const canDownload = canDownloadPDF(subscription?.plans?.name);
-  const latestProtocolContent = (protocols && protocols[0]?.content) || "";
-  const useSmartProtocol = Date.now() >= SMART_PROTOCOL_CUTOFF_MS;
+  const latestProtocol = protocols && protocols[0];
+  const latestProtocolContent = latestProtocol?.content || "";
+  const latestCreatedAtMs = latestProtocol?.created_at ? new Date(latestProtocol.created_at).getTime() : 0;
+  const pastCutoff = Date.now() >= SMART_PROTOCOL_CUTOFF_MS;
+  const hasOldProtocolItems = (protocolItems?.length ?? 0) > 0;
+  // Smart panel shows when: latest protocol was created after cutoff,
+  // OR (past cutoff AND student has no legacy protocol items).
+  const showSmartProtocol =
+    (latestCreatedAtMs >= SMART_PROTOCOL_CUTOFF_MS) ||
+    (pastCutoff && !hasOldProtocolItems);
   const [smartOpen, setSmartOpen] = useState(true);
 
   if (subLoading || isLoading) {
@@ -234,7 +242,13 @@ const StudentProtocol = () => {
         {/* Student info */}
         {buildStudentInfo()}
 
-        {useSmartProtocol ? (
+        {/* Legacy panels remain active whenever the student has old protocol items */}
+        {hasOldProtocolItems && (
+          <ProtocolInfoPanel protocols={protocolItems} userId={targetId} />
+        )}
+
+        {/* New "Protocolo Inteligente" card — independent from legacy panels */}
+        {showSmartProtocol && latestProtocolContent && (
           <Collapsible open={smartOpen} onOpenChange={setSmartOpen}>
             <CollapsibleTrigger className="w-full flex items-center justify-between rounded-2xl border border-[#14b780]/30 bg-gradient-to-br from-[#14b780]/10 to-transparent px-4 py-3 hover:bg-[#14b780]/5 transition">
               <span className="flex items-center gap-2 text-sm font-semibold tracking-tight">
@@ -247,8 +261,6 @@ const StudentProtocol = () => {
               <GamifiedProtocolPanel content={latestProtocolContent} userId={targetId!} readOnly={isPreviewing} />
             </CollapsibleContent>
           </Collapsible>
-        ) : (
-          <ProtocolInfoPanel protocols={protocolItems} userId={targetId} />
         )}
 
         {/* History */}
