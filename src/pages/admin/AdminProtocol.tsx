@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
 import SignedPdfFrame from "@/components/shared/SignedPdfFrame";
-import { parseProtocolPhases } from "@/lib/protocol-phase-parser";
+import { hasSmartProtocolStructure, isSmartProtocolEra } from "@/lib/protocol-phase-parser";
 
 const AdminProtocol = () => {
   const qc = useQueryClient();
@@ -438,7 +438,7 @@ const AdminProtocol = () => {
   };
 
   const parseAndSaveCategoryContent = async (htmlContent: string, userId: string) => {
-    if (parseProtocolPhases(htmlContent).length > 0) {
+    if (hasSmartProtocolStructure(htmlContent)) {
       return;
     }
 
@@ -537,8 +537,8 @@ const AdminProtocol = () => {
       if (newEndDate) payload.end_date = newEndDate;
       await supabase.from("student_protocols").insert(payload);
 
-      // Auto-parse content into category cards
-      if (newContent) {
+      // Auto-parse content into legacy category cards only for legacy protocols
+      if (newContent && !hasSmartProtocolStructure(newContent)) {
         await parseAndSaveCategoryContent(newContent, selected.user_id);
       }
     },
@@ -566,8 +566,8 @@ const AdminProtocol = () => {
         } as any)
         .eq("id", editingId!);
 
-      // Re-parse content into category cards on edit
-      if (editContent && selected?.user_id) {
+      // Re-parse content into legacy category cards only for legacy protocols
+      if (editContent && selected?.user_id && !hasSmartProtocolStructure(editContent)) {
         await parseAndSaveCategoryContent(editContent, selected.user_id);
       }
     },
