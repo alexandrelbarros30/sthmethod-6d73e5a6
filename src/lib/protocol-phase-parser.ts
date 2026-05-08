@@ -3,6 +3,8 @@
 
 export type PhaseStatus = "done" | "pending" | "unlocked" | "locked";
 
+export const SMART_PROTOCOL_CUTOFF_MS = Date.UTC(2026, 4, 8, 16, 53, 0);
+
 export interface ProtocolPhase {
   key: string;            // slug estável: "manha" | "almoco" | "pre-treino" | "noite" | "extra-N"
   emoji: string;          // emoji original
@@ -125,4 +127,14 @@ export function parseProtocolPhases(content: string): ProtocolPhase[] {
   }
   pushCurrent();
   return phases;
+}
+
+export function hasSmartProtocolStructure(content: string): boolean {
+  return parseProtocolPhases(content).length > 0;
+}
+
+export function isSmartProtocolEra(createdAt?: string | null): boolean {
+  if (!createdAt) return false;
+  const timestamp = new Date(createdAt).getTime();
+  return Number.isFinite(timestamp) && timestamp >= SMART_PROTOCOL_CUTOFF_MS;
 }
