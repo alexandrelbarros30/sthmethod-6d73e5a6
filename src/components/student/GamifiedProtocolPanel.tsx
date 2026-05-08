@@ -61,11 +61,11 @@ const PhaseCard = ({
       )}
 
       <div className="flex items-start gap-3 relative">
-        <div className="text-2xl leading-none mt-0.5 select-none" aria-hidden>{phase.emoji}</div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="text-[11px] font-semibold tracking-[0.28em] uppercase text-foreground/90">
-              {phase.title}
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-lg sm:text-xl font-bold uppercase tracking-tight text-foreground inline-flex items-center gap-2">
+              <span className="text-[1em] leading-none select-none" aria-hidden>{phase.emoji}</span>
+              <span>{phase.title}</span>
             </h3>
             {phase.rawStatus && !done && (
               <span className="text-[9px] tracking-[0.2em] uppercase text-muted-foreground inline-flex items-center gap-1">
@@ -86,10 +86,10 @@ const PhaseCard = ({
 
           <div className="mt-2.5 space-y-1.5 text-[12.5px] leading-relaxed text-foreground/75">
             {phase.action && (
-              <p><span className="text-foreground/50">Ação · </span>{phase.action}</p>
+              <p className="font-mono text-[13px] tracking-tight text-[color:var(--sth-green)]/90"><span className="text-foreground/40 font-sans not-italic">Ação · </span>{phase.action}</p>
             )}
             {phase.stack && (
-              <p><span className="text-foreground/50">Stack · </span>{phase.stack}</p>
+              <p className="font-mono text-[13px] tracking-tight text-[color:var(--sth-green)]/90"><span className="text-foreground/40 font-sans">Stack · </span>{phase.stack}</p>
             )}
             {phase.timing && (
               <p className="inline-flex items-center gap-1.5"><Clock className="w-3 h-3 opacity-60" strokeWidth={2}/> {phase.timing}</p>
