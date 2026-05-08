@@ -19,9 +19,13 @@ import { generateStudentPDF, canDownloadPDF } from "@/lib/pdfGenerator";
 import { toast } from "sonner";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import SignedPdfFrame from "@/components/shared/SignedPdfFrame";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import GamifiedProtocolPanel from "@/components/student/GamifiedProtocolPanel";
-import { Sparkles, FolderOpen } from "lucide-react";
+import { Sparkles, ChevronDown } from "lucide-react";
+import { useState } from "react";
+
+// Cutoff: 2026-05-08 13:40 BRT (UTC-3) === 16:40 UTC
+const SMART_PROTOCOL_CUTOFF_MS = Date.UTC(2026, 4, 8, 16, 40, 0);
 
 const useContentProtection = () => {
   useEffect(() => {
@@ -181,6 +185,8 @@ const StudentProtocol = () => {
 
   const canDownload = canDownloadPDF(subscription?.plans?.name);
   const latestProtocolContent = (protocols && protocols[0]?.content) || "";
+  const useSmartProtocol = Date.now() >= SMART_PROTOCOL_CUTOFF_MS;
+  const [smartOpen, setSmartOpen] = useState(true);
 
   if (subLoading || isLoading) {
     return (
@@ -228,25 +234,25 @@ const StudentProtocol = () => {
         {/* Student info */}
         {buildStudentInfo()}
 
-        <Tabs defaultValue="premium" className="w-full">
-          <TabsList className="grid grid-cols-2 w-full bg-muted/40">
-            <TabsTrigger value="premium" className="gap-1.5 text-xs">
-              <Sparkles className="w-3.5 h-3.5" strokeWidth={1.8} /> Estratégia Premium
-            </TabsTrigger>
-            <TabsTrigger value="docs" className="gap-1.5 text-xs">
-              <FolderOpen className="w-3.5 h-3.5" strokeWidth={1.8} /> Documentos
-            </TabsTrigger>
-          </TabsList>
+        {useSmartProtocol ? (
+          <Collapsible open={smartOpen} onOpenChange={setSmartOpen}>
+            <CollapsibleTrigger className="w-full flex items-center justify-between rounded-2xl border border-[#14b780]/30 bg-gradient-to-br from-[#14b780]/10 to-transparent px-4 py-3 hover:bg-[#14b780]/5 transition">
+              <span className="flex items-center gap-2 text-sm font-semibold tracking-tight">
+                <Sparkles className="w-4 h-4 text-[#14b780]" strokeWidth={2} />
+                Protocolo Inteligente
+              </span>
+              <ChevronDown className={`w-4 h-4 transition-transform ${smartOpen ? "rotate-180" : ""}`} strokeWidth={2} />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <GamifiedProtocolPanel content={latestProtocolContent} userId={targetId!} readOnly={isPreviewing} />
+            </CollapsibleContent>
+          </Collapsible>
+        ) : (
+          <ProtocolInfoPanel protocols={protocolItems} userId={targetId} />
+        )}
 
-          <TabsContent value="premium" className="mt-4 space-y-4">
-            <GamifiedProtocolPanel content={latestProtocolContent} userId={targetId!} readOnly={isPreviewing} />
-          </TabsContent>
-
-          <TabsContent value="docs" className="mt-4 space-y-4">
-            {/* Protocol Info Panel */}
-            <ProtocolInfoPanel protocols={protocolItems} userId={targetId} />
-
-            {!protocols || protocols.length === 0 ? (
+        {/* History */}
+        {!protocols || protocols.length === 0 ? (
               <Card><CardContent className="py-8 text-center">
                 <p className="text-muted-foreground font-body">Nenhum protocolo configurado ainda. Aguarde seu consultor.</p>
               </CardContent></Card>
@@ -305,8 +311,6 @@ const StudentProtocol = () => {
                 </Accordion>
               </>
             )}
-          </TabsContent>
-        </Tabs>
       </div>
     </DashboardLayout>
   );
