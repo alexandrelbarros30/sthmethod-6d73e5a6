@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Layers, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered } from "lucide-react";
+import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Layers, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered, RefreshCw } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -53,6 +53,7 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/admin/notifications", icon: Bell, label: "Notificações" },
     { to: "/admin/budgets", icon: Receipt, label: "Orçamentos" },
     { to: "/admin/ads", icon: Megaphone, label: "Propagandas" },
+    { to: "/admin/updates", icon: RefreshCw, label: "Atualizações" },
   ],
   consultor: [
     { to: "/consultor", icon: LayoutDashboard, label: "Dashboard" },

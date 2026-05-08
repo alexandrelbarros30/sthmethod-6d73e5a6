@@ -1,68 +1,88 @@
-## Visão geral
+# Sistema de Atualização da Plataforma
 
-Adicionar uma **nova aba "Estratégia Premium"** dentro do `/dashboard/protocol` (sem remover nada). O conteúdo continua sendo escrito pelo admin/consultor no editor rich-text já existente em `AdminProtocol.tsx`. O sistema **parseia automaticamente** o texto procurando blocos de fase iniciados por emojis (☀️ 🍽 🏋️ 🌙 ➕ qualquer outro definido) e renderiza um painel premium gamificado. O aluno toca em cada card para marcar como concluído, com persistência diária no banco.
+## Objetivo
+Padronizar e automatizar o processo de atualização da plataforma (hoje em **Beta 3.5.0**), com três níveis de impacto, registro histórico no banco e banner de atualização que respeita o que o usuário já viu.
 
-## Fluxo
+## Modelo de Versionamento (SemVer adaptado)
 
-```text
-Admin escreve no editor →  ☀️ MANHÃ ✅
-                          "NAC 600mg + Testo Gel..."
-                          Ação: ...
-                          Stack: ...
-                          ⏱ Em jejum
-                          📌 Foco: ...
-                          
-Aluno vê 4 cards premium → toca → ✅ marcado hoje → barra ⚡ 25%→50%→75%→100%
-À meia-noite → reseta automaticamente (linha por dia)
+Formato: `Beta MAJOR.MINOR.PATCH`
+
+| Tipo | O que é | Como muda a versão | Exemplo |
+|---|---|---|---|
+| **Pequena** (patch) | Correções de bug, ajustes visuais, textos | `3.5.0 → 3.5.1` | Corrigir card sumindo |
+| **Média** (minor) | Nova funcionalidade compatível, melhorias notáveis | `3.5.1 → 3.6.0` | Novo card de Medicamentos |
+| **Grande** (major) | Mudança estrutural, refatoração visível, quebra de fluxo | `3.6.0 → 4.0.0` | Novo dashboard segmentado |
+
+## Componentes
+
+### 1. Tabela `platform_updates` (banco)
+Guarda histórico completo de cada atualização:
+- `version` (ex: "3.5.1")
+- `impact` ("patch" | "minor" | "major")
+- `title` (curto, ex: "Card de Medicamentos")
+- `description` (changelog para o usuário, multilinha)
+- `released_at` (timestamp)
+- `published` (boolean — se aparece para alunos)
+
+RLS: admins gerenciam; usuários autenticados leem só `published = true`.
+
+### 2. Tela admin `/admin/updates`
+- Listagem das versões anteriores
+- Botão **"Nova atualização"** com 3 cards (Pequena / Média / Grande) que **calculam automaticamente** a próxima versão a partir da última registrada
+- Campos: título + changelog
+- Ao salvar: insere registro na tabela **e** atualiza `public/version.json` + `package.json` via script utilitário (descrito abaixo)
+
+### 3. Fonte única da versão
+- `public/version.json` continua sendo o ponto consultado pelo `UpdateBanner` em runtime
+- `src/lib/app-version.ts` exporta a versão "build-time" para exibição em rodapés
+- Migration inicial popula `platform_updates` com a versão atual (Beta 3.5.0)
+
+### 4. Banner de atualização inteligente
+Atualizar `UpdateBanner.tsx` para:
+- Buscar a **última versão publicada** da tabela `platform_updates`
+- Mostrar título + changelog dessa versão (não mais texto genérico)
+- Marcar como visto por versão em `localStorage` (`sth_last_seen_version`) — não reaparece após o usuário fechar a mesma versão
+- Reaparece apenas quando uma versão **maior** for publicada
+
+### 5. Fluxo de uso (admin)
+1. Admin entra em `/admin/updates`
+2. Clica "Pequena / Média / Grande"
+3. Sistema sugere automaticamente `3.5.1`, `3.6.0` ou `4.0.0`
+4. Preenche título + changelog → Publicar
+5. Registro salvo no banco; `version.json` atualizado; alunos veem o banner na próxima visita
+
+## Detalhes Técnicos
+
+**Migration:**
+```sql
+CREATE TABLE public.platform_updates (
+  id uuid PK default gen_random_uuid(),
+  version text NOT NULL UNIQUE,
+  impact text NOT NULL CHECK (impact IN ('patch','minor','major')),
+  title text NOT NULL,
+  description text NOT NULL DEFAULT '',
+  published boolean NOT NULL DEFAULT true,
+  released_at timestamptz NOT NULL DEFAULT now(),
+  created_by uuid
+);
+-- RLS: admins ALL; authenticated SELECT WHERE published
+-- Seed inicial: ('3.5.0','minor','Lançamento Beta 3.5.0', '...')
 ```
 
-## O que será criado
+**Helper `src/lib/version-bump.ts`:**
+- `bumpVersion(current, impact)` retorna a próxima versão
+- Usado na tela admin para sugerir o próximo número
 
-### 1. Tabela `protocol_phase_checkins`
-- Campos de domínio: `phase_key` (texto, ex: "manha"/"almoco"/"pre-treino"/"noite"), `checkin_date` (date), `completed_at` (timestamp)
-- Único por (user_id, phase_key, checkin_date)
-- **Acesso**: aluno vê/edita apenas os próprios; admins/consultores vinculados podem visualizar
+**Atualização de `public/version.json`:**
+- Edge function ou ação client-side via storage não fazem sentido aqui (arquivo estático). A abordagem realista: ao publicar uma update, gravamos a versão no banco **e** o `UpdateBanner` passa a consultar o banco como fonte da verdade (não mais o `version.json`). O `version.json` permanece para cache busting do service worker.
 
-### 2. Parser `src/lib/protocol-phase-parser.ts`
-- Recebe HTML/texto do `student_protocols.content` mais recente
-- Detecta seções por emoji-âncora (☀️🌅 / 🍽🥗 / 🏋️💪 / 🌙🌛 / ⚡🔥 etc) — mapeia para `phase_key` slug
-- Extrai: título, frase principal entre aspas, linhas `Ação:`, `Stack:`, `⏱`, `📌 Foco:`, status emoji (✅⏳🔓🔒) como fallback
-- Retorna `Phase[]`. Se não encontrar nada → painel não renderiza (degradação silenciosa)
+**Banner — chave de "visto":**
+- `localStorage["sth_last_seen_version"] = "3.5.1"`
+- Banner só renderiza se `lastDbVersion > lastSeenVersion` (comparação semver)
 
-### 3. Componente `GamifiedProtocolPanel`
-- Cards translúcidos `bg-white/5 backdrop-blur-xl` com borda neon `#14b780` no hover/ativo
-- Header de cada card: emoji grande + nome da fase + checkbox circular animado
-- Conteúdo: frase em destaque (font-display, kerning amplo), linhas Ação/Stack/⏱/📌
-- Dashboard de Performance (rodapé): lista compacta das fases + barra `⚡ Progresso` (já existente: `Progress` shadcn) + texto motivacional
-- Microinterações: `animate-scale-in` + ring-glow verde ao marcar; toast sutil "Hormonal Flow Active" / "Recovery Mode On" conforme `phase_key`
-- Tudo Tailwind tokens (sem cor hardcoded fora do glow `#14b780` permitido pela memória core)
+## Fora de escopo
+- Push notification de atualização
+- Rollback automático
+- Versionamento por módulo (continua versão única da plataforma)
 
-### 4. Integração na tela do aluno
-- `StudentProtocol.tsx`: envolve o conteúdo em `<Tabs>` com 2 abas:
-  - **Estratégia Premium** (default) → `GamifiedProtocolPanel`
-  - **Documentos & Histórico** → o conteúdo atual (PDFs, accordion, ProtocolInfoPanel)
-- Se o parser não achar fases, o tab Premium mostra estado vazio com instrução pro consultor
-
-### 5. Admin: ajuda contextual
-- No editor de `AdminProtocol.tsx` adicionar um pequeno hint colapsável "Como criar Estratégia Premium" mostrando o template padrão (☀️ MANHÃ / 🍽 ALMOÇO / 🏋️ PRÉ-TREINO / 🌙 NOITE) que pode ser inserido como bloco
-
-## Arquivos tocados
-
-```text
-NOVO  supabase/migrations/<ts>_protocol_phase_checkins.sql
-NOVO  src/lib/protocol-phase-parser.ts
-NOVO  src/components/student/GamifiedProtocolPanel.tsx
-EDIT  src/pages/student/StudentProtocol.tsx        (Tabs + nova aba)
-EDIT  src/pages/admin/AdminProtocol.tsx            (hint do template)
-```
-
-## Detalhes técnicos
-
-- **Parser robusto**: opera sobre texto extraído via `DOMParser`, fallback por linhas. Quebra em blocos quando detecta emoji-âncora no início de linha (após `<h1-h4>`, `<p>` ou texto puro).
-- **Check-in**: `useQuery` carrega checkins do dia `today` (ISO date), `useMutation` faz upsert `{user_id, phase_key, checkin_date: today, completed_at: now}` ou delete para desmarcar. Invalida cache após mutation.
-- **RLS**: `SELECT/INSERT/UPDATE/DELETE` para `auth.uid() = user_id`; admins/consultores via `has_role` + `is_consultant_of` apenas SELECT.
-- **Performance**: parser memoizado por `protocol.id`; card lista no máx ~6 fases.
-- **Acessibilidade**: cada card é `<button>` com `aria-pressed`.
-
-## Pronto para implementar?
-Se aprovar, começo pela migration (aprovação separada do banco) e na sequência crio parser + componente + integração.
+Posso seguir com a implementação completa?

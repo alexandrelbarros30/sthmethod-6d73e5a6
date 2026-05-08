@@ -1443,6 +1443,42 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_updates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          impact: string
+          published: boolean
+          released_at: string
+          title: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          impact: string
+          published?: boolean
+          released_at?: string
+          title: string
+          version: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          impact?: string
+          published?: boolean
+          released_at?: string
+          title?: string
+          version?: string
+        }
+        Relationships: []
+      }
       popup_dismissals: {
         Row: {
           dismissed_at: string

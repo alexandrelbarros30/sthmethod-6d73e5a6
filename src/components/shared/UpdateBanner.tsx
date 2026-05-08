@@ -2,9 +2,12 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RefreshCw, X } from "lucide-react";
 import { APP_RELEASE_VERSION, APP_VERSION, VERSION_KEY, VERSION_URL } from "@/lib/app-version";
+import { supabase } from "@/integrations/supabase/client";
+import { compareVersions } from "@/lib/version-bump";
 
 const POLL_INTERVAL_MS = 15_000;
 const MAX_AUTO_RELOADS = 2;
+const SEEN_VERSION_KEY = "sth-last-seen-version";
 const getReloadAttemptKey = (version: string) => `sth-update-attempts:${version}`;
 const isPreviewHost = () =>
   typeof window !== "undefined" &&
@@ -52,9 +55,32 @@ const fetchRemoteVersion = async (): Promise<string | null> => {
   }
 };
 
+interface LatestUpdate {
+  version: string;
+  title: string;
+  description: string;
+}
+
+const fetchLatestUpdateFromDb = async (): Promise<LatestUpdate | null> => {
+  try {
+    const { data, error } = await supabase
+      .from("platform_updates")
+      .select("version,title,description")
+      .eq("published", true)
+      .order("released_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error || !data) return null;
+    return data as LatestUpdate;
+  } catch {
+    return null;
+  }
+};
+
 const UpdateBanner = () => {
   const [show, setShow] = useState(false);
   const [remoteVersion, setRemoteVersion] = useState<string>(APP_VERSION);
+  const [updateMeta, setUpdateMeta] = useState<LatestUpdate | null>(null);
 
   useEffect(() => {
     if (isPreviewHost()) {
@@ -68,10 +94,41 @@ const UpdateBanner = () => {
 
     let cancelled = false;
     const check = async () => {
+      // 1) Banco é a fonte da verdade do "que foi publicado" para os alunos
+      const dbLatest = await fetchLatestUpdateFromDb();
+      const lastSeen = localStorage.getItem(SEEN_VERSION_KEY) || "0.0.0";
+
+      if (dbLatest) {
+        const newerThanSeen = compareVersions(dbLatest.version, lastSeen) > 0;
+        const newerThanBuild = compareVersions(dbLatest.version, APP_RELEASE_VERSION) > 0;
+        if (newerThanSeen || newerThanBuild) {
+          if (cancelled) return;
+          setUpdateMeta(dbLatest);
+          setRemoteVersion(dbLatest.version);
+          setShow(true);
+          // Auto-reload apenas quando o build local está atrás
+          if (newerThanBuild) {
+            const reloadKey = getReloadAttemptKey(dbLatest.version);
+            const attempts = Number(sessionStorage.getItem(reloadKey) || "0");
+            if (attempts < MAX_AUTO_RELOADS) {
+              sessionStorage.setItem(reloadKey, String(attempts + 1));
+              setTimeout(() => {
+                void forceRefreshToVersion(dbLatest.version);
+              }, 800);
+            }
+          }
+          return;
+        }
+      }
+
+      // 2) Fallback: comparação com version.json (build deployado)
       const remote = await fetchRemoteVersion();
       if (cancelled || !remote) return;
       const remoteRelease = getReleaseVersion(remote);
-      if (remoteRelease !== APP_RELEASE_VERSION) {
+      if (
+        remoteRelease !== APP_RELEASE_VERSION &&
+        compareVersions(remoteRelease, lastSeen) > 0
+      ) {
         setRemoteVersion(remote);
         setShow(true);
         const reloadKey = getReloadAttemptKey(remote);
@@ -83,7 +140,6 @@ const UpdateBanner = () => {
           }, 500);
         }
       } else {
-        // Versão remota igual à atual — garante que banner não apareça
         setShow(false);
         localStorage.setItem(VERSION_KEY, APP_VERSION);
       }
@@ -102,7 +158,13 @@ const UpdateBanner = () => {
   }, []);
 
   const handleUpdate = () => {
+    localStorage.setItem(SEEN_VERSION_KEY, getReleaseVersion(remoteVersion));
     void forceRefreshToVersion(remoteVersion);
+  };
+
+  const handleDismiss = () => {
+    localStorage.setItem(SEEN_VERSION_KEY, getReleaseVersion(remoteVersion));
+    setShow(false);
   };
 
   return (
@@ -131,10 +193,10 @@ const UpdateBanner = () => {
               <RefreshCw className="w-4 h-4" style={{ color: "hsl(145 60% 42%)" }} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-semibold" style={{ color: "hsl(0 0% 96%)" }}>
-                Nova atualização disponível
+              <p className="text-[13px] font-semibold truncate" style={{ color: "hsl(0 0% 96%)" }}>
+                {updateMeta?.title || "Nova atualização disponível"}
               </p>
-              <p className="text-[11px]" style={{ color: "hsl(0 0% 55%)" }}>
+              <p className="text-[11px] truncate" style={{ color: "hsl(0 0% 55%)" }}>
                 Beta {getReleaseVersion(remoteVersion)} — Toque em Atualizar para aplicar
               </p>
             </div>
@@ -149,7 +211,7 @@ const UpdateBanner = () => {
               Atualizar
             </button>
             <button
-              onClick={() => setShow(false)}
+              onClick={handleDismiss}
               className="p-1 flex-shrink-0"
               style={{ color: "hsl(0 0% 40%)" }}
             >
