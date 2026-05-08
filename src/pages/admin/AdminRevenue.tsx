@@ -139,7 +139,7 @@ const AdminRevenue = () => {
     const byMethod: Record<string, { count: number; total: number }> = {};
     const byPlan: Record<string, { name: string; count: number; total: number }> = {};
     const byMonth: Record<string, { count: number; total: number }> = {};
-    const byStudent: Record<string, { name: string; email: string; count: number; total: number }> = {};
+    const byStudent: Record<string, { name: string; email: string; count: number; total: number; lastDate: string | null; firstDate: string | null }> = {};
 
     for (const r of filtered) {
       const m = normalizeMethod(r.method);
@@ -165,9 +165,18 @@ const AdminRevenue = () => {
         email: r.profiles?.email || "",
         count: 0,
         total: 0,
+        lastDate: null,
+        firstDate: null,
       };
       byStudent[skey].count++;
       byStudent[skey].total += Number(r.amount || 0);
+      const d2 = r.created_at;
+      if (!byStudent[skey].lastDate || new Date(d2) > new Date(byStudent[skey].lastDate!)) {
+        byStudent[skey].lastDate = d2;
+      }
+      if (!byStudent[skey].firstDate || new Date(d2) < new Date(byStudent[skey].firstDate!)) {
+        byStudent[skey].firstDate = d2;
+      }
     }
 
     return { total, count, byMethod, byPlan, byMonth, byStudent };
