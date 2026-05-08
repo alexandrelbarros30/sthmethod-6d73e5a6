@@ -113,7 +113,7 @@ function extractQuoted(line: string): string | undefined {
 export function parseProtocolPhases(content: string): ProtocolPhase[] {
   const text = htmlToText(content || "").replace(/\r/g, "");
   if (!text.trim()) return [];
-  const lines = text.split("\n").map((l) => l.replace(/\u00A0/g, " ").trim()).filter(Boolean);
+  const lines = text.split("\n").map((l) => sanitizeLine(l)).filter(Boolean);
 
   const phases: ProtocolPhase[] = [];
   let current: ProtocolPhase | null = null;
@@ -132,7 +132,7 @@ export function parseProtocolPhases(content: string): ProtocolPhase[] {
   };
 
   for (const line of lines) {
-    const phase = detectPhase(line);
+    const phase = detectPhase(line) || detectPhaseByTitle(line);
     if (phase) {
       pushCurrent();
       const status = detectStatus(line);
