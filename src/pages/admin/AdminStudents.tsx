@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2, RotateCcw, AlertTriangle, UserX, UserCheck, Dumbbell, Pill, UtensilsCrossed, MessageCircle, MoreVertical, Activity, Microscope, Copy } from "lucide-react";
+import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2, RotateCcw, AlertTriangle, UserX, UserCheck, Dumbbell, Pill, UtensilsCrossed, MessageCircle, MoreVertical, Activity, Microscope, Copy, Layers } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
@@ -35,6 +35,7 @@ import AdminBioimpedance from "@/components/admin/AdminBioimpedance";
 import WhatsAppPopoverButton from "@/components/shared/WhatsAppPopoverButton";
 import AdminMetabolicPanel from "@/components/admin/AdminMetabolicPanel";
 import PreviewUnlockToggle from "@/components/admin/PreviewUnlockToggle";
+import StudentProgramAssignDialog from "@/components/admin/StudentProgramAssignDialog";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
 import {
   objectiveLabels, activityLabels,
@@ -109,6 +110,7 @@ const AdminStudents = () => {
   const [bioOpen, setBioOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
   const [metabolicOpen, setMetabolicOpen] = useState(false);
+  const [programsOpen, setProgramsOpen] = useState(false);
 
   const { data: students, isLoading } = useQuery({
     queryKey: ["admin-students-list"],
@@ -1997,6 +1999,7 @@ const AdminStudents = () => {
               { icon: UtensilsCrossed, label: "Dieta", action: () => { setManageOpen(false); navigate(`/admin/diet?uid=${selected?.user_id}&return=manage`); } },
               { icon: Pill, label: "Protocolo", action: () => { setManageOpen(false); navigate(`/admin/protocol?uid=${selected?.user_id}&return=manage`); } },
               { icon: Dumbbell, label: "Treino", action: () => { setManageOpen(false); navigate(`/admin/training?uid=${selected?.user_id}&return=manage`); } },
+              { icon: Layers, label: "Programas", action: () => { setManageOpen(false); setProgramsOpen(true); } },
               { icon: Camera, label: "Fotos", action: () => { setManageOpen(false); setImagesOpen(true); } },
               { icon: Activity, label: "Bioimpedância", action: () => { setManageOpen(false); setBioOpen(true); } },
               { icon: ClipboardList, label: "Anamnese", action: () => { setManageOpen(false); setAnamneseOpen(true); } },
@@ -2033,6 +2036,13 @@ const AdminStudents = () => {
           studentPhone={selected.phone}
         />
       )}
+
+      <StudentProgramAssignDialog
+        open={programsOpen}
+        onOpenChange={(o) => { setProgramsOpen(o); if (!o) setManageOpen(true); }}
+        userId={selected?.user_id || null}
+        userName={selected?.full_name || selected?.email}
+      />
 
     </DashboardLayout>
   );
