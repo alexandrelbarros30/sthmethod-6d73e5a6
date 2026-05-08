@@ -21,11 +21,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import SignedPdfFrame from "@/components/shared/SignedPdfFrame";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import GamifiedProtocolPanel from "@/components/student/GamifiedProtocolPanel";
-import { parseProtocolPhases } from "@/lib/protocol-phase-parser";
+import { hasSmartProtocolStructure, isSmartProtocolEra } from "@/lib/protocol-phase-parser";
 import { Sparkles, ChevronDown } from "lucide-react";
-
-// Cutoff: 2026-05-08 13:53 BRT (UTC-3) === 16:53 UTC
-const SMART_PROTOCOL_CUTOFF_MS = Date.UTC(2026, 4, 8, 16, 53, 0);
 
 const useContentProtection = () => {
   useEffect(() => {
@@ -198,22 +195,24 @@ const StudentProtocol = () => {
   const canDownload = canDownloadPDF(subscription?.plans?.name);
   const latestProtocol = protocols && protocols[0];
   const latestProtocolContent = latestProtocol?.content || "";
-  const pastCutoff = Date.now() >= SMART_PROTOCOL_CUTOFF_MS;
   const hasOldProtocolItems = (protocolItems?.length ?? 0) > 0;
+  const latestProtocolIsSmartEra = isSmartProtocolEra(latestProtocol?.created_at);
   const latestProtocolHasSmartStructure = useMemo(
-    () => parseProtocolPhases(latestProtocolContent).length > 0,
-    [latestProtocolContent]
+    () => hasSmartProtocolStructure(latestProtocolContent),
+    [latestProtocolContent],
   );
   const smartContentFromLegacyCards = useMemo(() => {
-    const match = protocolCategoryContents.find((entry: any) => parseProtocolPhases(entry.content || "").length > 0);
+    const match = protocolCategoryContents.find((entry: any) => hasSmartProtocolStructure(entry.content || ""));
     return match?.content || "";
   }, [protocolCategoryContents]);
   const smartProtocolContent = latestProtocolHasSmartStructure
     ? latestProtocolContent
-    : smartContentFromLegacyCards;
+    : latestProtocolIsSmartEra
+      ? ""
+      : smartContentFromLegacyCards;
   const hasSmartProtocolConfigured = smartProtocolContent.trim().length > 0;
-  const showSmartProtocol = hasSmartProtocolConfigured || (pastCutoff && !hasOldProtocolItems);
-  const showLegacyPanels = hasOldProtocolItems && !hasSmartProtocolConfigured;
+  const showSmartProtocol = latestProtocolIsSmartEra || hasSmartProtocolConfigured || !hasOldProtocolItems;
+  const showLegacyPanels = hasOldProtocolItems && !latestProtocolIsSmartEra && !hasSmartProtocolConfigured;
   const [smartOpen, setSmartOpen] = useState(true);
 
   if (subLoading || isLoading) {
