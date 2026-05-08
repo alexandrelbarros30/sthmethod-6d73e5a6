@@ -139,7 +139,7 @@ const AdminRevenue = () => {
     const byMethod: Record<string, { count: number; total: number }> = {};
     const byPlan: Record<string, { name: string; count: number; total: number }> = {};
     const byMonth: Record<string, { count: number; total: number }> = {};
-    const byStudent: Record<string, { name: string; email: string; count: number; total: number }> = {};
+    const byStudent: Record<string, { name: string; email: string; count: number; total: number; lastDate: string | null; firstDate: string | null }> = {};
 
     for (const r of filtered) {
       const m = normalizeMethod(r.method);
@@ -165,9 +165,18 @@ const AdminRevenue = () => {
         email: r.profiles?.email || "",
         count: 0,
         total: 0,
+        lastDate: null,
+        firstDate: null,
       };
       byStudent[skey].count++;
       byStudent[skey].total += Number(r.amount || 0);
+      const d2 = r.created_at;
+      if (!byStudent[skey].lastDate || new Date(d2) > new Date(byStudent[skey].lastDate!)) {
+        byStudent[skey].lastDate = d2;
+      }
+      if (!byStudent[skey].firstDate || new Date(d2) < new Date(byStudent[skey].firstDate!)) {
+        byStudent[skey].firstDate = d2;
+      }
     }
 
     return { total, count, byMethod, byPlan, byMonth, byStudent };
@@ -421,6 +430,8 @@ const AdminRevenue = () => {
                   <TableRow>
                     <TableHead>Aluno</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Último pagamento</TableHead>
+                    <TableHead>Primeiro pagamento</TableHead>
                     <TableHead className="text-right">Pagamentos</TableHead>
                     <TableHead className="text-right">Total Pago</TableHead>
                   </TableRow>
@@ -430,12 +441,18 @@ const AdminRevenue = () => {
                     <TableRow key={id}>
                       <TableCell className="font-medium">{v.name}</TableCell>
                       <TableCell className="text-muted-foreground text-sm">{v.email}</TableCell>
+                      <TableCell className="text-sm">
+                        {v.lastDate ? new Date(v.lastDate).toLocaleDateString("pt-BR") : "—"}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {v.firstDate ? new Date(v.firstDate).toLocaleDateString("pt-BR") : "—"}
+                      </TableCell>
                       <TableCell className="text-right">{v.count}</TableCell>
                       <TableCell className="text-right font-semibold">{fmtBRL(v.total)}</TableCell>
                     </TableRow>
                   ))}
                   {studentsSorted.length === 0 && (
-                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Sem dados</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Sem dados</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
