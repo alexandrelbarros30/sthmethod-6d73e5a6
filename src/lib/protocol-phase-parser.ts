@@ -126,7 +126,7 @@ function stripStatus(s: string): string {
 }
 
 function extractQuoted(line: string): string | undefined {
-  const m = line.match(/[“"](.+?)[”"]/);
+  const m = line.match(/[“"]([\s\S]+?)[”"]/);
   return m?.[1]?.trim();
 }
 
