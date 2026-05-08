@@ -37,6 +37,15 @@ const TITLE_PHASE_MAP: Array<{ rx: RegExp; key: string; flow: string; title: str
   { rx: /^noite\b/i, key: "noite", flow: "Recovery Mode On", title: "NOITE" },
 ];
 
+const FALLBACK_EMOJI_BY_KEY: Record<string, string> = {
+  manha: "☀️",
+  almoco: "🍽️",
+  tarde: "☕",
+  "pre-treino": "🏋️",
+  "pos-treino": "🧊",
+  noite: "🌙",
+};
+
 const STATUS_MAP: Array<{ rx: RegExp; status: PhaseStatus }> = [
   { rx: /\u2705/u, status: "done" },
   { rx: /\u23F3/u, status: "pending" },
@@ -139,7 +148,7 @@ export function parseProtocolPhases(content: string): ProtocolPhase[] {
       const titleRaw = stripStatus(phase.rest);
       current = {
         key: phase.key,
-        emoji: phase.emoji,
+        emoji: phase.emoji || FALLBACK_EMOJI_BY_KEY[phase.key] || "✨",
         title: titleRaw.replace(/[:\-—]+\s*$/, "").trim(),
         rawStatus: status,
         flowLabel: phase.flow,
