@@ -77,6 +77,13 @@ function sanitizeLine(input: string): string {
     .trim();
 }
 
+function normalizeComparableText(input: string): string {
+  return sanitizeLine(input)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
 function detectPhase(line: string): { key: string; emoji: string; flow: string; rest: string } | null {
   const normalizedLine = sanitizeLine(line);
   const m = normalizedLine.match(ANCHOR_RX);
@@ -90,7 +97,8 @@ function detectPhase(line: string): { key: string; emoji: string; flow: string; 
 }
 
 function detectPhaseByTitle(line: string): { key: string; emoji: string; flow: string; rest: string } | null {
-  const normalizedLine = sanitizeLine(line).replace(/^[\-–—*•·:|\s]+/, "");
+  const rawLine = sanitizeLine(line).replace(/^[\-–—*•·:|\s]+/, "");
+  const normalizedLine = normalizeComparableText(rawLine);
   for (const phase of TITLE_PHASE_MAP) {
     const match = normalizedLine.match(phase.rx);
     if (match) {
@@ -98,7 +106,7 @@ function detectPhaseByTitle(line: string): { key: string; emoji: string; flow: s
         key: phase.key,
         emoji: "",
         flow: phase.flow,
-        rest: normalizedLine,
+        rest: rawLine,
       };
     }
   }
