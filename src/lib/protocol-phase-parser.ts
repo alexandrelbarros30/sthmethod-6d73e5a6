@@ -143,12 +143,20 @@ export function parseProtocolPhases(content: string): ProtocolPhase[] {
   const countQuotes = (s: string) => (s.match(anyQuoteRx) || []).length;
   for (const line of lines) {
     if (buffer !== null) {
+      // Se a próxima linha já é um novo card (emoji-âncora ou título conhecido),
+      // flush do buffer ANTES — não engole o card seguinte.
+      if (detectPhase(line) || detectPhaseByTitle(line)) {
+        merged.push(buffer);
+        buffer = null;
+        // re-processa esta linha no fluxo normal abaixo
+      } else {
       buffer += "\n" + line;
       if (countQuotes(line) >= 1) {
         merged.push(buffer);
         buffer = null;
       }
       continue;
+      }
     }
     // Se a linha tem número ímpar de aspas, abriu e não fechou — inicia buffer
     if (countQuotes(line) % 2 === 1) {
