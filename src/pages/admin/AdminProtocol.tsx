@@ -12,6 +12,7 @@ import RichTextEditor from "@/components/shared/RichTextEditor";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
 import StudentInfoHeader from "@/components/student/StudentInfoHeader";
 import ProtocolInfoPanel from "@/components/student/ProtocolInfoPanel";
+import GamifiedProtocolPanel from "@/components/student/GamifiedProtocolPanel";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -306,6 +307,17 @@ const AdminProtocol = () => {
       else toast.error("Erro ao colar protocolo");
     },
   });
+
+  const latestStudentProtocol = studentProtocols?.[0];
+  const draftSmartProtocol = (showNewForm && hasSmartProtocolStructure(newContent)) || (!!editingId && hasSmartProtocolStructure(editContent));
+  const latestSmartProtocol = hasSmartProtocolStructure(latestStudentProtocol?.content || "") || isSmartProtocolEra(latestStudentProtocol?.created_at);
+  const smartProtocolPreviewContent = editingId && hasSmartProtocolStructure(editContent)
+    ? editContent
+    : showNewForm && hasSmartProtocolStructure(newContent)
+      ? newContent
+      : latestStudentProtocol?.content || "";
+  const showLegacyProtocolEditor = !!selected?.user_id && !latestSmartProtocol && !draftSmartProtocol;
+  const showSmartProtocolPreview = !!selected?.user_id && (latestSmartProtocol || draftSmartProtocol);
 
   // Copy protocol as plain text to system clipboard
   const copyAsTextMutation = useMutation({
