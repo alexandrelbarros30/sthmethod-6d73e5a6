@@ -135,6 +135,32 @@ export function parseProtocolPhases(content: string): ProtocolPhase[] {
   if (!text.trim()) return [];
   const lines = text.split("\n").map((l) => sanitizeLine(l)).filter(Boolean);
 
+  // Pré-processa: junta linhas que fazem parte de um headline com aspas multi-linha
+  // preservando quebras como \n internas.
+  const merged: string[] = [];
+  let buffer: string | null = null;
+  const openQuoteRx = /[“"]/;
+  const closeQuoteRx = /[”"]/;
+  for (const line of lines) {
+    if (buffer !== null) {
+      buffer += "\n" + line;
+      if (closeQuoteRx.test(line)) {
+        merged.push(buffer);
+        buffer = null;
+      }
+      continue;
+    }
+    const opens = (line.match(/[“"]/g) || []).length;
+    const closes = (line.match(/[”"]/g) || []).length;
+    // Se abriu aspas mas não fechou na mesma linha, inicia buffer
+    if (openQuoteRx.test(line) && opens + closes === 1) {
+      buffer = line;
+      continue;
+    }
+    merged.push(line);
+  }
+  if (buffer !== null) merged.push(buffer);
+
   const phases: ProtocolPhase[] = [];
   let current: ProtocolPhase | null = null;
   let usedKeys = new Set<string>();
@@ -151,7 +177,7 @@ export function parseProtocolPhases(content: string): ProtocolPhase[] {
     current = null;
   };
 
-  for (const line of lines) {
+  for (const line of merged) {
     const phase = detectPhase(line) || detectPhaseByTitle(line);
     if (phase) {
       pushCurrent();
