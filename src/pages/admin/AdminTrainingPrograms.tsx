@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Users, ChevronRight, Layers, ArrowLeft, Copy, Target, Zap, Search, Dumbbell, ImagePlus, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Users, ChevronRight, Layers, ArrowLeft, Copy, Target, Zap, Search, Dumbbell, ImagePlus, X, UserMinus } from "lucide-react";
 import { toast } from "sonner";
 import ProgramWorkouts from "@/components/admin/ProgramWorkouts";
 import { processAndUpload, validateImageFile } from "@/lib/image-upload";
@@ -60,6 +60,7 @@ const AdminTrainingPrograms = () => {
   const [editingProgram, setEditingProgram] = useState<string | null>(null);
   const [form, setForm] = useState<ProgramForm>(emptyForm);
   const [assignDialog, setAssignDialog] = useState<string | null>(null);
+  const [assignedDialog, setAssignedDialog] = useState<string | null>(null);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [studentSearch, setStudentSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -104,6 +105,52 @@ const AdminTrainingPrograms = () => {
       return (data || []).map((d: any) => d.id);
     },
     enabled: !!assignDialog,
+  });
+
+  const { data: assignedStudents, refetch: refetchAssigned } = useQuery({
+    queryKey: ["program-assigned-students", assignedDialog],
+    queryFn: async () => {
+      if (!assignedDialog) return [];
+      const { data: tpls } = await supabase.from("workout_templates").select("id").eq("program_id", assignedDialog);
+      const tIds = (tpls || []).map((t: any) => t.id);
+      if (!tIds.length) return [];
+      const { data: assigns } = await supabase
+        .from("student_workout_assignments")
+        .select("user_id, template_id, active")
+        .in("template_id", tIds);
+      const userIds = Array.from(new Set((assigns || []).map((a: any) => a.user_id)));
+      if (!userIds.length) return [];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, email")
+        .in("user_id", userIds);
+      return (profiles || []).map((p: any) => {
+        const userAssigns = (assigns || []).filter((a: any) => a.user_id === p.user_id);
+        const totalActive = userAssigns.filter((a: any) => a.active).length;
+        return { ...p, total: userAssigns.length, active: totalActive, templateIds: tIds };
+      });
+    },
+    enabled: !!assignedDialog,
+  });
+
+  const unassignMutation = useMutation({
+    mutationFn: async ({ programId, userId }: { programId: string; userId: string }) => {
+      const { data: tpls } = await supabase.from("workout_templates").select("id").eq("program_id", programId);
+      const tIds = (tpls || []).map((t: any) => t.id);
+      if (!tIds.length) return;
+      const { error } = await supabase
+        .from("student_workout_assignments")
+        .delete()
+        .eq("user_id", userId)
+        .in("template_id", tIds);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Programa desatribuído.");
+      refetchAssigned();
+      queryClient.invalidateQueries({ queryKey: ["sgw-assignments"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Erro ao desatribuir."),
   });
 
   const saveProgramMutation = useMutation({
@@ -329,6 +376,9 @@ const AdminTrainingPrograms = () => {
                       <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => setAssignDialog(p.id)}>
                         <Users className="w-3 h-3 mr-1" /> Atribuir
                       </Button>
+                      <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => setAssignedDialog(p.id)}>
+                        <UserMinus className="w-3 h-3 mr-1" /> Atribuídos
+                      </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button size="sm" variant="ghost" className="text-xs h-7" disabled={duplicateProgramMutation.isPending}>
@@ -536,6 +586,52 @@ const AdminTrainingPrograms = () => {
                   {assignMutation.isPending ? "Compartilhando..." : `Compartilhar (${selectedStudents.length})`}
                 </Button>
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Assigned students Dialog (unassign) */}
+        <Dialog open={!!assignedDialog} onOpenChange={v => { if (!v) setAssignedDialog(null); }}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Alunos com este programa</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              {(!assignedStudents || assignedStudents.length === 0) ? (
+                <p className="text-sm text-muted-foreground text-center py-6">Nenhum aluno tem este programa atribuído.</p>
+              ) : (
+                <div className="max-h-80 overflow-y-auto border rounded-lg divide-y">
+                  {assignedStudents.map((s: any) => (
+                    <div key={s.user_id} className="flex items-center gap-2 px-3 py-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{s.full_name || "Sem nome"}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">{s.email} · {s.active}/{s.total} ativos</p>
+                      </div>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive h-7 text-xs">
+                            <X className="w-3 h-3 mr-1" /> Remover
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Desatribuir programa?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Todos os treinos deste programa serão removidos do aluno {s.full_name || s.email}.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => assignedDialog && unassignMutation.mutate({ programId: assignedDialog, userId: s.user_id })}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                              Desatribuir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </DialogContent>
         </Dialog>
