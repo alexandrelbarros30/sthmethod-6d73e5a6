@@ -211,6 +211,11 @@ const StudentProtocol = () => {
   const hasSmartProtocolConfigured = smartProtocolContent.trim().length > 0;
   const showSmartProtocol = hasSmartProtocolConfigured || (!hasOldProtocolItems && latestProtocolIsSmartEra);
   const showLegacyPanels = hasOldProtocolItems && !hasSmartProtocolConfigured;
+  const historyProtocols = useMemo(() => {
+    if (!protocols?.length) return [];
+    if (!showSmartProtocol) return protocols;
+    return protocols.filter((protocol: any) => protocol.id !== latestProtocol?.id);
+  }, [protocols, showSmartProtocol, latestProtocol?.id]);
   const [smartOpen, setSmartOpen] = useState(true);
 
   if (subLoading || isLoading) {
@@ -281,18 +286,18 @@ const StudentProtocol = () => {
         )}
 
         {/* History */}
-        {!protocols || protocols.length === 0 ? (
+        {!historyProtocols || historyProtocols.length === 0 ? (
               <Card><CardContent className="py-8 text-center">
                 <p className="text-muted-foreground font-body">Nenhum protocolo configurado ainda. Aguarde seu consultor.</p>
               </CardContent></Card>
             ) : (
               <>
                 <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground flex items-center gap-1.5 pt-2">
-                  <Clock className="w-3 h-3" strokeWidth={2} /> Histórico · {protocols.length}
+                  <Clock className="w-3 h-3" strokeWidth={2} /> Histórico · {historyProtocols.length}
                 </p>
 
                 <Accordion type="single" collapsible className="space-y-2">
-                  {protocols.map((protocol: any) => (
+                  {historyProtocols.map((protocol: any) => (
                     <AccordionItem key={protocol.id} value={protocol.id} className="border rounded-xl overflow-hidden bg-card">
                       <AccordionTrigger className="px-4 py-3 hover:no-underline">
                         <div className="flex items-center gap-2 flex-wrap text-left">
