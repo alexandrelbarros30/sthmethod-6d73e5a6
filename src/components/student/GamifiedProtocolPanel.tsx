@@ -80,11 +80,11 @@ const PhaseCard = ({
 
           {phase.headline && (
             (/\d+\s*(mg|mcg|g|ml|ui|iu)\b/i.test(phase.headline) ? (
-              <p className="mt-2 font-mono text-[13.5px] tracking-tight text-[color:var(--sth-green)]/90 leading-relaxed">
+              <p className="mt-2 font-mono text-[13.5px] tracking-tight text-[color:var(--sth-green)]/90 leading-relaxed whitespace-pre-line">
                 {phase.headline}
               </p>
             ) : (
-              <p className="mt-2 text-[15px] sm:text-base font-display font-medium tracking-tight text-foreground leading-snug">
+              <p className="mt-2 text-[15px] sm:text-base font-display font-medium tracking-tight text-foreground leading-snug whitespace-pre-line">
                 “{phase.headline}”
               </p>
             ))
