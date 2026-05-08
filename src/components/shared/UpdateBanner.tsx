@@ -135,7 +135,7 @@ const UpdateBanner = () => {
                 Nova atualização disponível
               </p>
               <p className="text-[11px]" style={{ color: "hsl(0 0% 55%)" }}>
-                v{getReleaseVersion(remoteVersion)} — Toque em Atualizar para aplicar
+                Beta {getReleaseVersion(remoteVersion)} — Toque em Atualizar para aplicar
               </p>
             </div>
             <button
