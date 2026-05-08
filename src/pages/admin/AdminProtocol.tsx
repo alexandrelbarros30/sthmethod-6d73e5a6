@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
 import SignedPdfFrame from "@/components/shared/SignedPdfFrame";
+import { parseProtocolPhases } from "@/lib/protocol-phase-parser";
 
 const AdminProtocol = () => {
   const qc = useQueryClient();
@@ -437,6 +438,10 @@ const AdminProtocol = () => {
   };
 
   const parseAndSaveCategoryContent = async (htmlContent: string, userId: string) => {
+    if (parseProtocolPhases(htmlContent).length > 0) {
+      return;
+    }
+
     // Keywords ordered by specificity (longer/more specific first)
     const sectionKeywords: { keywords: string[]; catKey: string }[] = [
       { keywords: ["suporte endocrino", "endocrino hormonal", "suporte endócrino", "endócrino hormonal"], catKey: "endocrino" },
