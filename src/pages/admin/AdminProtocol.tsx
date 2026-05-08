@@ -12,6 +12,7 @@ import RichTextEditor from "@/components/shared/RichTextEditor";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
 import StudentInfoHeader from "@/components/student/StudentInfoHeader";
 import ProtocolInfoPanel from "@/components/student/ProtocolInfoPanel";
+import GamifiedProtocolPanel from "@/components/student/GamifiedProtocolPanel";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -23,7 +24,7 @@ import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
 import SignedPdfFrame from "@/components/shared/SignedPdfFrame";
-import { parseProtocolPhases } from "@/lib/protocol-phase-parser";
+import { hasSmartProtocolStructure, isSmartProtocolEra } from "@/lib/protocol-phase-parser";
 
 const AdminProtocol = () => {
   const qc = useQueryClient();
@@ -307,6 +308,17 @@ const AdminProtocol = () => {
     },
   });
 
+  const latestStudentProtocol = studentProtocols?.[0];
+  const draftSmartProtocol = (showNewForm && hasSmartProtocolStructure(newContent)) || (!!editingId && hasSmartProtocolStructure(editContent));
+  const latestSmartProtocol = hasSmartProtocolStructure(latestStudentProtocol?.content || "") || isSmartProtocolEra(latestStudentProtocol?.created_at);
+  const smartProtocolPreviewContent = editingId && hasSmartProtocolStructure(editContent)
+    ? editContent
+    : showNewForm && hasSmartProtocolStructure(newContent)
+      ? newContent
+      : latestStudentProtocol?.content || "";
+  const showLegacyProtocolEditor = !!selected?.user_id && !latestSmartProtocol && !draftSmartProtocol;
+  const showSmartProtocolPreview = !!selected?.user_id && (latestSmartProtocol || draftSmartProtocol);
+
   // Copy protocol as plain text to system clipboard
   const copyAsTextMutation = useMutation({
     mutationFn: async () => {
@@ -438,7 +450,7 @@ const AdminProtocol = () => {
   };
 
   const parseAndSaveCategoryContent = async (htmlContent: string, userId: string) => {
-    if (parseProtocolPhases(htmlContent).length > 0) {
+    if (hasSmartProtocolStructure(htmlContent)) {
       return;
     }
 
@@ -537,8 +549,8 @@ const AdminProtocol = () => {
       if (newEndDate) payload.end_date = newEndDate;
       await supabase.from("student_protocols").insert(payload);
 
-      // Auto-parse content into category cards
-      if (newContent) {
+      // Auto-parse content into legacy category cards only for legacy protocols
+      if (newContent && !hasSmartProtocolStructure(newContent)) {
         await parseAndSaveCategoryContent(newContent, selected.user_id);
       }
     },
@@ -566,8 +578,8 @@ const AdminProtocol = () => {
         } as any)
         .eq("id", editingId!);
 
-      // Re-parse content into category cards on edit
-      if (editContent && selected?.user_id) {
+      // Re-parse content into legacy category cards only for legacy protocols
+      if (editContent && selected?.user_id && !hasSmartProtocolStructure(editContent)) {
         await parseAndSaveCategoryContent(editContent, selected.user_id);
       }
     },
@@ -819,12 +831,28 @@ Sistema Pré e Pós-Treino: Protocolo de fluxo sanguíneo (Pré) e sinalização
                 </div>
               )}
 
-              {/* Protocol Info Panel - editable cards */}
-              {selected?.user_id && (
+              {/* Legacy cards only stay available for legacy protocols */}
+              {showLegacyProtocolEditor && (
                 <>
                   <ProtocolInfoPanel protocols={protocolItems} userId={selected.user_id} editable />
                   <ProtocolExtraCategoriesManager userId={selected.user_id} />
                 </>
+              )}
+
+              {/* New protocols preview only in the smart card */}
+              {showSmartProtocolPreview && smartProtocolPreviewContent && (
+                <Card className="border-border/40 bg-muted/20">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-display">Protocolo Inteligente</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <GamifiedProtocolPanel
+                      content={smartProtocolPreviewContent}
+                      userId={selected.user_id}
+                      readOnly
+                    />
+                  </CardContent>
+                </Card>
               )}
 
               <hr className="border-border" />
