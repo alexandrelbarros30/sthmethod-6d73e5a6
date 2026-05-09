@@ -228,9 +228,72 @@ export function parseProtocolPhases(content: string): ProtocolPhase[] {
   for (const p of phases) {
     if (p.key.startsWith("medicamentos")) {
       p.title = "MEDICAMENTOS, HORMÔNIOS E PEPTÍDEOS";
+      const sub = splitMedicamentosByWeek(p);
+      if (sub.length > 0) p.subWeeks = sub;
     }
+    delete p._rawLines;
   }
   return phases;
+}
+
+// Divide o conteúdo bruto do card de medicamentos em sub-cards por semana,
+// detectando marcadores como "Sem 1-4", "Sem 5-8", "Semana 9 a 12" etc.
+const WEEK_MARKER_RX = /^[\s\-–—*•·]*(sem(?:ana)?s?\s*\d+\s*(?:[-–—a/]|at[eé])\s*\d+|sem(?:ana)?\s*\d+)\s*[:\-–—]?\s*(.*)$/i;
+
+function splitMedicamentosByWeek(phase: ProtocolPhase): ProtocolPhase[] {
+  const lines = phase._rawLines || [];
+  if (lines.length === 0) return [];
+  // Verifica se existe ao menos um marcador de semana
+  const hasMarker = lines.some((l) => WEEK_MARKER_RX.test(sanitizeLine(l)));
+  if (!hasMarker) return [];
+
+  type Bucket = { title: string; lines: string[] };
+  const buckets: Bucket[] = [];
+  let cur: Bucket | null = null;
+  for (const raw of lines) {
+    const line = sanitizeLine(raw);
+    if (!line) continue;
+    const m = line.match(WEEK_MARKER_RX);
+    if (m) {
+      const title = m[1]
+        .replace(/^sem(ana)?s?\s*/i, "SEM ")
+        .replace(/\s*at[eé]\s*/i, "-")
+        .replace(/\s*\/\s*/g, "-")
+        .replace(/\s+/g, " ")
+        .toUpperCase()
+        .trim();
+      cur = { title, lines: [] };
+      buckets.push(cur);
+      const rest = (m[2] || "").trim();
+      if (rest) cur.lines.push(rest);
+      continue;
+    }
+    if (cur) cur.lines.push(line);
+  }
+
+  return buckets.map((b, i) => {
+    const sp: ProtocolPhase = {
+      key: `medicamentos-w${i + 1}`,
+      emoji: phase.emoji,
+      title: b.title,
+      flowLabel: phase.flowLabel,
+    };
+    for (const line of b.lines) {
+      const quoted = extractQuoted(line);
+      if (quoted && !sp.headline) { sp.headline = quoted; continue; }
+      if (/^a[çc][aã]o\s*[:\-]/i.test(line)) { sp.action = line.replace(/^a[çc][aã]o\s*[:\-]\s*/i, "").trim(); continue; }
+      if (/^stack\s*[:\-]/i.test(line))       { sp.stack  = line.replace(/^stack\s*[:\-]\s*/i, "").trim(); continue; }
+      if (/^[\u23F1\u231A\u23F0]/u.test(line) || /^⏱/.test(line)) { sp.timing = line.replace(/^[\u23F1\u231A\u23F0⏱]\s*/u, "").trim(); continue; }
+      if (/^[\u{1F4CC}\u{1F4CD}\u{1F4DD}\u{1F3AF}]/u.test(line)) {
+        sp.focus = line.replace(/^[\u{1F4CC}\u{1F4CD}\u{1F4DD}\u{1F3AF}]\s*/u, "").replace(/^foco\s*[:\-]\s*/i, "").trim();
+        continue;
+      }
+      // linha solta vira append do headline (preserva quebras)
+      if (!sp.headline) sp.headline = line;
+      else sp.headline += "\n" + line;
+    }
+    return sp;
+  });
 }
 
 export function hasSmartProtocolStructure(content: string): boolean {
