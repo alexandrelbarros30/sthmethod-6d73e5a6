@@ -123,6 +123,92 @@ const PhaseCard = ({
   );
 };
 
+const MedicamentosWeekCarousel = ({
+  parent,
+  weeks,
+  doneSet,
+  readOnly,
+  disabled,
+  onToggle,
+}: {
+  parent: ProtocolPhase;
+  weeks: ProtocolPhase[];
+  doneSet: Set<string>;
+  readOnly?: boolean;
+  disabled?: boolean;
+  onToggle: (sub: ProtocolPhase) => void;
+}) => {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const w = el.clientWidth;
+      if (w === 0) return;
+      const idx = Math.round(el.scrollLeft / w);
+      setActive(idx);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const goTo = (i: number) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-2 text-foreground">
+          <span className="text-base leading-none" aria-hidden>{parent.emoji}</span>
+          <h3 className="text-[11px] font-semibold tracking-[0.25em] uppercase text-muted-foreground">
+            {parent.title}
+          </h3>
+        </div>
+        <span className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground tabular-nums">
+          {active + 1}/{weeks.length}
+        </span>
+      </div>
+
+      <div
+        ref={scrollerRef}
+        className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth -mx-1 px-1 gap-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {weeks.map((w) => (
+          <div key={w.key} className="snap-center shrink-0 w-full">
+            <PhaseCard
+              phase={w}
+              done={doneSet.has(w.key)}
+              onToggle={() => !readOnly && onToggle(w)}
+              disabled={disabled}
+            />
+          </div>
+        ))}
+      </div>
+
+      <div className="flex items-center justify-center gap-1.5 pt-1">
+        {weeks.map((w, i) => (
+          <button
+            key={w.key}
+            type="button"
+            aria-label={`Ir para ${w.title}`}
+            onClick={() => goTo(i)}
+            className={cn(
+              "h-1.5 rounded-full transition-all duration-300",
+              i === active ? "w-6 bg-[color:var(--sth-green)]" : "w-1.5 bg-white/20"
+            )}
+            style={{ ["--sth-green" as any]: STH_GREEN }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const GamifiedProtocolPanel = ({ content, userId, readOnly }: Props) => {
   const qc = useQueryClient();
   const phases = useMemo(() => parseProtocolPhases(content), [content]);
