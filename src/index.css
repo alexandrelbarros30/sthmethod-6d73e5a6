@@ -633,6 +633,192 @@ html, body {
   .hover-lift:active {
     transform: translateY(0);
   }
+
+  /* =====================================================================
+     STH NEON FULL PREMIUM — Auto-promotion global p/ a Área do Aluno
+     Aplicado quando .theme-sth-green está em <html> (DashboardLayout).
+     Cobre cards, dialogs, popovers, sidebar, dock, headers e CTAs sem
+     precisar editar cada página individualmente.
+     ===================================================================== */
+
+  /* Fundo geral neon-radial sutil em todo o app do aluno */
+  html.theme-sth-green body {
+    background:
+      radial-gradient(120% 80% at 50% 0%, hsl(155 60% 8% / 0.9) 0%, hsl(0 0% 0%) 60%),
+      hsl(0 0% 0%);
+  }
+
+  /* shadcn Card → vidro cristalino com halo neon */
+  html.theme-sth-green .rounded-2xl.border.bg-card,
+  html.theme-sth-green .rounded-xl.border.bg-card,
+  html.theme-sth-green .rounded-lg.border.bg-card {
+    background: rgb(255 255 255 / 0.035) !important;
+    border-color: rgb(255 255 255 / 0.10) !important;
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    box-shadow:
+      0 14px 40px -14px rgb(0 0 0 / 0.7),
+      0 0 30px -8px hsl(var(--primary) / 0.32),
+      inset 0 1px 0 rgb(255 255 255 / 0.10),
+      inset 0 -1px 0 rgb(0 0 0 / 0.30) !important;
+  }
+
+  /* Dialog / Sheet / Popover / Dropdown content (Radix portala p/ body,
+     mas .theme-sth-green vive em <html>) */
+  html.theme-sth-green [role="dialog"],
+  html.theme-sth-green [data-radix-popper-content-wrapper] > * {
+    background: hsl(155 25% 5% / 0.94) !important;
+    border: 1px solid hsl(var(--primary) / 0.18) !important;
+    backdrop-filter: blur(28px) saturate(160%);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    box-shadow:
+      0 24px 60px -16px rgb(0 0 0 / 0.85),
+      0 0 50px -10px hsl(var(--primary) / 0.45) !important;
+    color: hsl(var(--foreground));
+  }
+  html.theme-sth-green [role="dialog"] h2,
+  html.theme-sth-green [role="dialog"] h3,
+  html.theme-sth-green [data-radix-popper-content-wrapper] h2 {
+    background-image: linear-gradient(135deg, hsl(var(--gradient-start)), hsl(var(--gradient-end)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* CTAs primários ganham halo neon (bg-primary / bg-foreground em fluxo do aluno) */
+  html.theme-sth-green button.bg-primary,
+  html.theme-sth-green a.bg-primary,
+  html.theme-sth-green button.bg-foreground,
+  html.theme-sth-green a.bg-foreground {
+    box-shadow:
+      0 0 0 1px hsl(var(--primary) / 0.35),
+      0 4px 18px -4px hsl(var(--primary) / 0.55),
+      inset 0 1px 0 rgb(255 255 255 / 0.18) !important;
+    transition: box-shadow .2s ease, transform .2s ease;
+  }
+  html.theme-sth-green button.bg-primary:hover,
+  html.theme-sth-green a.bg-primary:hover,
+  html.theme-sth-green button.bg-foreground:hover,
+  html.theme-sth-green a.bg-foreground:hover {
+    box-shadow:
+      0 0 0 1px hsl(var(--primary) / 0.55),
+      0 6px 26px -4px hsl(var(--primary) / 0.75),
+      inset 0 1px 0 rgb(255 255 255 / 0.25) !important;
+    transform: translateY(-0.5px);
+  }
+
+  /* Inputs / Textarea / Select trigger ganham acabamento glass */
+  html.theme-sth-green input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  html.theme-sth-green textarea,
+  html.theme-sth-green [role="combobox"] {
+    background: hsl(155 22% 6% / 0.7) !important;
+    border-color: hsl(var(--primary) / 0.18) !important;
+  }
+  html.theme-sth-green input:focus-visible,
+  html.theme-sth-green textarea:focus-visible,
+  html.theme-sth-green [role="combobox"]:focus-visible {
+    border-color: hsl(var(--primary) / 0.55) !important;
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.18), 0 0 18px -4px hsl(var(--primary) / 0.45) !important;
+  }
+
+  /* Sidebar desktop — glass com borda neon */
+  html.theme-sth-green aside.fixed.left-0 {
+    background: hsl(155 30% 3% / 0.72) !important;
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border-right: 1px solid hsl(var(--primary) / 0.16) !important;
+    box-shadow: 0 0 60px -12px hsl(var(--primary) / 0.32);
+  }
+
+  /* Header mobile — glass */
+  html.theme-sth-green .fixed.top-0.left-0.right-0.h-12 {
+    background: hsl(155 30% 3% / 0.78) !important;
+    border-bottom: 1px solid hsl(var(--primary) / 0.18) !important;
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+  }
+
+  /* Logo "ST" da sidebar/dock — passa a usar gradiente neon */
+  html.theme-sth-green .bg-foreground.rounded-xl.flex.items-center.justify-center,
+  html.theme-sth-green .bg-foreground.rounded-lg.flex.items-center.justify-center {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(152 70% 30%)) !important;
+    box-shadow:
+      0 0 0 1px hsl(var(--primary) / 0.5),
+      0 4px 18px -4px hsl(var(--primary) / 0.6),
+      inset 0 1px 0 rgb(255 255 255 / 0.25) !important;
+  }
+  html.theme-sth-green .bg-foreground.rounded-xl span.text-background,
+  html.theme-sth-green .bg-foreground.rounded-lg span.text-background {
+    color: hsl(155 60% 6%) !important;
+  }
+
+  /* FloatingDock — fundo glass com borda neon */
+  html.theme-sth-green .rounded-full.border.bg-background\/90 {
+    background: hsl(155 25% 5% / 0.85) !important;
+    border-color: hsl(var(--primary) / 0.22) !important;
+    box-shadow:
+      0 20px 50px -12px rgb(0 0 0 / 0.7),
+      0 0 36px -8px hsl(var(--primary) / 0.42) !important;
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+  }
+
+  /* Botão central do dock — círculo neon pulsante leve */
+  html.theme-sth-green .w-\[54px\].h-\[54px\].rounded-full.bg-foreground {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(152 70% 28%)) !important;
+    box-shadow:
+      0 0 0 1px hsl(var(--primary) / 0.55),
+      0 8px 28px -6px hsl(var(--primary) / 0.7),
+      inset 0 1px 0 rgb(255 255 255 / 0.25) !important;
+  }
+  html.theme-sth-green .w-\[54px\].h-\[54px\].rounded-full.bg-foreground svg {
+    color: hsl(155 60% 6%) !important;
+  }
+
+  /* Active item highlight em sidebar/dock — fundo verde neon translúcido */
+  html.theme-sth-green .bg-foreground\/10 {
+    background: hsl(var(--primary) / 0.15) !important;
+    color: hsl(var(--primary)) !important;
+    box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.25);
+  }
+
+  /* Radix Progress fill em verde neon com glow */
+  html.theme-sth-green [data-state] > div.bg-primary,
+  html.theme-sth-green [data-state].bg-primary {
+    background: linear-gradient(90deg, hsl(var(--primary) / 0.85), hsl(var(--primary))) !important;
+    box-shadow:
+      0 0 8px hsl(var(--primary) / 0.8),
+      0 0 16px hsl(var(--primary) / 0.5),
+      inset 0 0 6px rgb(255 255 255 / 0.35) !important;
+  }
+
+  /* Badges variant default ganham preenchimento neon */
+  html.theme-sth-green .bg-primary.text-primary-foreground {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(152 70% 30%)) !important;
+    color: hsl(155 60% 6%) !important;
+  }
+
+  /* Toaster (sonner) — herda glass */
+  html.theme-sth-green [data-sonner-toast] {
+    background: hsl(155 25% 5% / 0.94) !important;
+    border: 1px solid hsl(var(--primary) / 0.22) !important;
+    color: hsl(var(--foreground)) !important;
+    backdrop-filter: blur(20px) saturate(160%);
+    box-shadow: 0 12px 32px -10px rgb(0 0 0 / 0.7), 0 0 24px -8px hsl(var(--primary) / 0.4) !important;
+  }
+
+  /* Tabs list ativa */
+  html.theme-sth-green [data-state="active"][role="tab"] {
+    background: hsl(var(--primary) / 0.15) !important;
+    color: hsl(var(--primary)) !important;
+    box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.3);
+  }
+
+  /* Ícones lucide dentro de cards ganham micro-halo neon */
+  html.theme-sth-green .rounded-2xl.border.bg-card svg.lucide,
+  html.theme-sth-green .rounded-xl.border.bg-card svg.lucide {
+    filter: drop-shadow(0 0 3px hsl(var(--primary) / 0.35));
+  }
 }
 
 /* =====================================================================
