@@ -23,9 +23,9 @@ interface Props {
 
 const COLORS = {
   fat: "#ff3355",
-  lean: "#00ffcc",
-  muscle: "#00aaff",
-  water: "#00ddff",
+  lean: "#14b780",
+  muscle: "#0e9468",
+  water: "#1ed094",
   visceral: "#ff5566",
   bmr: "#ffaa33",
 };
@@ -68,7 +68,7 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
     if (!latest) return [];
     const items = [];
     if (latest.fat_mass_kg) items.push({ name: "Gordura", value: Number(latest.fat_mass_kg), color: "#ff3355" });
-    if (latest.skeletal_muscle_kg) items.push({ name: "Músculo Esquelético", value: Number(latest.skeletal_muscle_kg), color: "#00aaff" });
+    if (latest.skeletal_muscle_kg) items.push({ name: "Músculo Esquelético", value: Number(latest.skeletal_muscle_kg), color: "#0e9468" });
     const otherLean = latest.lean_mass_kg && latest.skeletal_muscle_kg
       ? Number(latest.lean_mass_kg) - Number(latest.skeletal_muscle_kg)
       : latest.lean_mass_kg ? Number(latest.lean_mass_kg) : 0;
@@ -135,23 +135,23 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
   };
 
   const chartConfig = {
-    peso: { label: "Peso (kg)", color: "#00ffcc" },
+    peso: { label: "Peso (kg)", color: "#14b780" },
     gordura: { label: "Gordura (%)", color: COLORS.fat },
     musculo: { label: "Músculo (kg)", color: COLORS.muscle },
     agua: { label: "Água (%)", color: COLORS.water },
   };
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="text-center pb-2">
-        <h2 className="text-base font-bold tracking-[0.15em] uppercase text-foreground font-display">
-          Análise de Bioimpedância
+    <div className="space-y-4" style={{ ["--sth-green" as any]: "#14b780" }}>
+      {/* Header — gamified premium */}
+      <div className="flex items-baseline justify-between px-1">
+        <h2 className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground">
+          Bioimpedância
         </h2>
-        <p className="text-xs text-muted-foreground mt-1">
-          Última avaliação: {new Date(latest.logged_at).toLocaleDateString("pt-BR")}
-          {logs.length > 1 && ` • ${logs.length} avaliações registradas`}
-        </p>
+        <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground tabular-nums">
+          {new Date(latest.logged_at).toLocaleDateString("pt-BR")}
+          {logs.length > 1 && ` · ${logs.length}`}
+        </span>
       </div>
 
       {/* Key Metrics Cards */}
@@ -233,10 +233,10 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
 
       {/* Composition Pie Chart */}
       {compositionData.length > 0 && (
-        <Card>
+        <Card className="rounded-2xl border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-none">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-display flex items-center gap-2">
-              <Scale className="w-4 h-4 text-foreground" />
+            <CardTitle className="text-[11px] font-semibold tracking-[0.25em] uppercase text-muted-foreground flex items-center gap-2">
+              <Scale className="w-3.5 h-3.5 text-[color:var(--sth-green)]" />
               Composição Corporal
             </CardTitle>
           </CardHeader>
@@ -277,21 +277,21 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
 
       {/* Evolution Line Chart */}
       {evolutionData.length > 1 && (
-        <Card>
+        <Card className="rounded-2xl border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-none">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-display flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-foreground" />
-              Evolução ao Longo do Tempo
+            <CardTitle className="text-[11px] font-semibold tracking-[0.25em] uppercase text-muted-foreground flex items-center gap-2">
+              <TrendingUp className="w-3.5 h-3.5 text-[color:var(--sth-green)]" />
+              Evolução
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[250px] w-full">
               <LineChart data={evolutionData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,220,255,0.08)" />
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} stroke="rgba(0,220,255,0.15)" />
-                <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} stroke="rgba(0,220,255,0.15)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(20,183,128,0.08)" />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} stroke="rgba(20,183,128,0.15)" />
+                <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} stroke="rgba(20,183,128,0.15)" />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Line type="monotone" dataKey="peso" stroke="#00ffcc" strokeWidth={2} dot={{ r: 3, fill: '#00ffcc', stroke: '#00ffcc' }} connectNulls style={{ filter: 'drop-shadow(0 0 4px #00ffcc80)' }} />
+                <Line type="monotone" dataKey="peso" stroke="#14b780" strokeWidth={2} dot={{ r: 3, fill: '#14b780', stroke: '#14b780' }} connectNulls style={{ filter: 'drop-shadow(0 0 4px #14b78080)' }} />
                 <Line type="monotone" dataKey="gordura" stroke={COLORS.fat} strokeWidth={2} dot={{ r: 3, fill: COLORS.fat, stroke: COLORS.fat }} connectNulls style={{ filter: `drop-shadow(0 0 4px ${COLORS.fat}80)` }} />
                 <Line type="monotone" dataKey="musculo" stroke={COLORS.muscle} strokeWidth={2} dot={{ r: 3, fill: COLORS.muscle, stroke: COLORS.muscle }} connectNulls style={{ filter: `drop-shadow(0 0 4px ${COLORS.muscle}80)` }} />
               </LineChart>
@@ -302,11 +302,11 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
 
       {/* Body Silhouette + or Segmental Bar Chart */}
       {(segmentalData.length > 0 || latest) && (
-        <Card>
+        <Card className="rounded-2xl border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-none">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-display flex items-center gap-2">
-              <Activity className="w-4 h-4 text-foreground" />
-              Mapa Corporal & Distribuição Segmentar
+            <CardTitle className="text-[11px] font-semibold tracking-[0.25em] uppercase text-muted-foreground flex items-center gap-2">
+              <Activity className="w-3.5 h-3.5 text-[color:var(--sth-green)]" />
+              Mapa Corporal
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -335,15 +335,15 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
               {segmentalData.length > 0 && (
                 <div className="flex-1 w-full min-w-0">
                   <ChartContainer
-                    config={{ segmento: { label: "Valor", color: "#00ffcc" } }}
+                    config={{ segmento: { label: "Valor", color: "#14b780" } }}
                     className="h-[200px] w-full"
                   >
                     <BarChart data={segmentalData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,220,255,0.08)" />
-                      <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} stroke="rgba(0,220,255,0.15)" />
-                      <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} stroke="rgba(0,220,255,0.15)" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(20,183,128,0.08)" />
+                      <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} stroke="rgba(20,183,128,0.15)" />
+                      <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} stroke="rgba(20,183,128,0.15)" />
                       <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar dataKey="value" fill="#00ffcc" radius={[4, 4, 0, 0]} style={{ filter: 'drop-shadow(0 0 6px #00ffcc60)' }} />
+                      <Bar dataKey="value" fill="#14b780" radius={[4, 4, 0, 0]} style={{ filter: 'drop-shadow(0 0 6px #14b78060)' }} />
                     </BarChart>
                   </ChartContainer>
                 </div>
@@ -355,11 +355,11 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
 
       {/* Integration with profile health data */}
       {profile && (profile.bmr || profile.tdee || profile.daily_calories) && (
-        <Card className="bg-muted/30">
+        <Card className="rounded-2xl border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-none">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-display flex items-center gap-2">
-              <Flame className="w-4 h-4 text-orange-500" />
-              Dados Integrados de Saúde
+            <CardTitle className="text-[11px] font-semibold tracking-[0.25em] uppercase text-muted-foreground flex items-center gap-2">
+              <Flame className="w-3.5 h-3.5 text-[color:var(--sth-green)]" />
+              Dados Integrados
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -399,10 +399,10 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
 
       {/* Notes from latest */}
       {latest.notes && (
-        <Card className="bg-muted/20">
+        <Card className="rounded-2xl border-white/10 bg-white/[0.02] backdrop-blur-xl shadow-none">
           <CardContent className="py-3">
-            <p className="text-xs text-muted-foreground">
-              <span className="font-semibold">Observações:</span> {latest.notes}
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              <span className="font-semibold tracking-[0.2em] uppercase text-[10px] text-[color:var(--sth-green)]">Notas · </span>{latest.notes}
             </p>
           </CardContent>
         </Card>
@@ -422,20 +422,20 @@ const MetricCard = ({
   delta?: React.ReactNode;
   color: string;
 }) => (
-  <div className="bg-muted/50 rounded-xl p-2 sm:p-3 text-center border border-border/30">
-    <div className={`flex items-center justify-center gap-1 mb-1 ${color}`}>
+  <div className="bg-white/[0.03] hover:bg-white/[0.05] transition-colors rounded-2xl p-3 text-center border border-white/10 backdrop-blur-xl">
+    <div className={`flex items-center justify-center gap-1 mb-1.5 ${color}`}>
       {icon}
-      <span className="text-[9px] sm:text-[10px] font-medium uppercase tracking-wide">{label}</span>
+      <span className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-[0.2em]">{label}</span>
     </div>
-    <p className="text-sm font-bold text-foreground">{value}</p>
-    {delta && <div className="mt-0.5">{delta}</div>}
+    <p className="text-base font-bold text-foreground tabular-nums">{value}</p>
+    {delta && <div className="mt-1">{delta}</div>}
   </div>
 );
 
 const MiniStat = ({ label, value }: { label: string; value: string }) => (
-  <div className="text-center">
-    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{label}</p>
-    <p className="text-sm font-bold text-foreground">{value}</p>
+  <div className="text-center rounded-xl border border-white/10 bg-white/[0.02] py-2 px-2">
+    <p className="text-[9px] uppercase tracking-[0.25em] text-muted-foreground font-semibold">{label}</p>
+    <p className="text-sm font-bold text-foreground tabular-nums mt-0.5">{value}</p>
   </div>
 );
 
