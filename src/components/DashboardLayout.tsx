@@ -89,6 +89,17 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
     if (user?.id) localStorage.removeItem(`plan_theme_${user.id}`);
   }, [user?.id]);
 
+  // Apply STH neon theme globally (so portaled dialogs/popovers also receive it)
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isStudent) {
+      root.classList.add("theme-sth-green");
+    } else {
+      root.classList.remove("theme-sth-green");
+    }
+    return () => { root.classList.remove("theme-sth-green"); };
+  }, [isStudent]);
+
   useEffect(() => {
     if (!isStudent || !user?.id) return;
 
@@ -324,7 +335,12 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
         <div className="max-w-5xl mx-auto">
           {(title || subtitle) && (
             <div className="mb-8 md:mb-10">
-              {title && <h1 className="text-2xl md:text-4xl font-semibold text-foreground tracking-[-0.035em] leading-tight">{title}</h1>}
+              {title && (
+                <h1 className={cn(
+                  "text-2xl md:text-4xl font-semibold tracking-[-0.035em] leading-tight",
+                  isStudent ? "gradient-text" : "text-foreground"
+                )}>{title}</h1>
+              )}
               {subtitle && <p className="text-[13px] md:text-[14px] text-muted-foreground mt-2 font-light tracking-tight">{subtitle}</p>}
             </div>
           )}
