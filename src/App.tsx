@@ -50,6 +50,7 @@ import StudentBioimpedance from "./pages/student/StudentBioimpedance";
 import StudentProfile from "./pages/student/StudentProfile";
 import StudentMetabolic from "./pages/student/StudentMetabolic";
 import StudentAds from "./pages/student/StudentAds";
+import DiarioAlimentar from "./pages/DiarioAlimentar";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminFixCurty from "./pages/admin/AdminFixCurty";
 import AdminStudents from "./pages/admin/AdminStudents";
@@ -135,6 +136,7 @@ const App = () => (
             <Route path="/fila/:token" element={<FilaPublica />} />
             <Route path="/fila" element={<FilaAberta />} />
             <Route path="/preview-tema-verde" element={<PreviewTemaVerde />} />
+            <Route path="/diario-alimentar" element={<DiarioAlimentar />} />
             {/* Student routes */}
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["student"]}><StudentOverview /></ProtectedRoute>} />
             <Route path="/dashboard/hub" element={<ProtectedRoute allowedRoles={["student"]}><StudentHub /></ProtectedRoute>} />
