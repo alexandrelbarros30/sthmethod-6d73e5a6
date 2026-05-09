@@ -2,6 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 const MAX_SIZE_MB = 1;
 const MAX_DIMENSION = 1000;
+const MIN_DIMENSION = 480;
+const UPLOAD_TIMEOUT_MS = 30000;
 
 /**
  * Detect HEIC/HEIF file by extension or MIME type (iPhone native format).
@@ -41,6 +43,12 @@ function canUploadOriginalImage(file: File): boolean {
 
   return ["image/jpeg", "image/jpg", "image/png", "image/webp", ""].includes(type)
     || /\.(jpg|jpeg|png|webp)$/i.test(name);
+}
+
+function canvasToJpegBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => resolve(blob), "image/jpeg", quality);
+  });
 }
 
 /**
@@ -133,41 +141,61 @@ export async function compressImage(
   }
 
   const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
   const ctx = canvas.getContext("2d");
   if (!ctx) {
     console.warn("[image-upload] Canvas context unavailable, uploading original");
     return file;
   }
 
-  ctx.drawImage(drawSource, 0, 0, width, height);
-  if ("close" in drawSource) (drawSource as ImageBitmap).close();
+  let currentWidth = width;
+  let currentHeight = height;
+  let quality = 0.78;
+  let passes = 0;
+  const maxBytes = maxSizeMB * 1024 * 1024;
+  let lastBlob: Blob | null = null;
 
-  return new Promise((resolve) => {
-    let quality = 0.75;
-    const tryCompress = () => {
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) {
-            console.warn("[image-upload] canvas.toBlob returned null, uploading original");
-            resolve(file);
-            return;
-          }
-          console.log(`[image-upload] Compressed at quality ${quality.toFixed(2)}: ${(blob.size / 1024).toFixed(0)}KB`);
-          if (blob.size > maxSizeMB * 1024 * 1024 && quality > 0.2) {
-            quality -= 0.15;
-            tryCompress();
-          } else {
-            resolve(blob);
-          }
-        },
-        "image/jpeg",
-        quality,
-      );
-    };
-    tryCompress();
-  });
+  while (passes < 8) {
+    canvas.width = currentWidth;
+    canvas.height = currentHeight;
+    ctx.clearRect(0, 0, currentWidth, currentHeight);
+    ctx.drawImage(drawSource, 0, 0, currentWidth, currentHeight);
+
+    const blob = await canvasToJpegBlob(canvas, quality);
+    if (!blob) {
+      console.warn("[image-upload] canvas.toBlob returned null, uploading original");
+      if ("close" in drawSource) (drawSource as ImageBitmap).close();
+      return file;
+    }
+
+    lastBlob = blob;
+    console.log(`[image-upload] Compression pass ${passes + 1}: ${currentWidth}x${currentHeight} @ ${quality.toFixed(2)} = ${(blob.size / 1024).toFixed(0)}KB`);
+
+    if (blob.size <= maxBytes) {
+      if ("close" in drawSource) (drawSource as ImageBitmap).close();
+      return blob;
+    }
+
+    if (quality > 0.42) {
+      quality = Math.max(0.42, quality - 0.12);
+    } else {
+      const nextWidth = Math.max(MIN_DIMENSION, Math.round(currentWidth * 0.82));
+      const nextHeight = Math.max(MIN_DIMENSION, Math.round(currentHeight * 0.82));
+
+      if (nextWidth === currentWidth && nextHeight === currentHeight) {
+        break;
+      }
+
+      currentWidth = nextWidth;
+      currentHeight = nextHeight;
+      quality = 0.72;
+    }
+
+    passes += 1;
+  }
+
+  if ("close" in drawSource) (drawSource as ImageBitmap).close();
+  console.warn("[image-upload] Max compression passes reached, uploading last compressed version");
+  return lastBlob || file;
 }
 
 /**
@@ -186,10 +214,16 @@ export async function uploadWithRetry(
     try {
       console.log(`[image-upload] Upload attempt ${attempt}/${retries}, size: ${(blob.size / 1024).toFixed(0)}KB`);
 
-      const { error } = await supabase.storage.from(bucket).upload(path, blob, {
+      const uploadPromise = supabase.storage.from(bucket).upload(path, blob, {
         contentType,
         upsert: true,
       });
+
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        window.setTimeout(() => reject(new Error("Upload timeout")), UPLOAD_TIMEOUT_MS);
+      });
+
+      const { error } = await Promise.race([uploadPromise, timeoutPromise]);
 
       if (!error) {
         const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
@@ -201,7 +235,7 @@ export async function uploadWithRetry(
       const msg = err?.message || String(err);
       console.warn(`[image-upload] Attempt ${attempt} exception:`, msg);
       if (attempt === retries) {
-        if (msg === "Failed to fetch" || msg.includes("NetworkError")) {
+        if (msg === "Failed to fetch" || msg.includes("NetworkError") || msg.toLowerCase().includes("timeout")) {
           throw new Error(
             "Falha de rede ao enviar. Verifique sua conexão (Wi-Fi/4G) e tente novamente. " +
             "Se o problema persistir, a imagem pode estar muito grande — use JPG/PNG."
