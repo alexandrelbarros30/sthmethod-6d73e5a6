@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Flame, Beef, Wheat, Droplets, Activity, Target, TrendingDown, TrendingUp, Minus, Apple, AlertCircle } from "lucide-react";
@@ -51,117 +50,113 @@ const NutritionSummaryPanel = ({ studentId, weight, tdee, objective, totals }: P
   const calorieDiff = totals && tdee ? totals.energy_kcal - tdee : null;
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-display flex items-center gap-2">
-            <Apple className="w-4 h-4 text-primary" /> Totais do Dia
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+    <div className="space-y-4" style={{ ["--sth-green" as any]: "#14b780" }}>
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-5">
+        <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full blur-2xl opacity-[0.10]" style={{ background: "linear-gradient(135deg,#14b780,#0ea5e9)" }} />
+        <div className="relative">
+          <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground mb-3 flex items-center gap-2">
+            <Apple className="w-3 h-3" /> Totais do Dia
+          </p>
+          <div className="space-y-3">
           <div className="grid grid-cols-2 gap-2">
-            <div className="bg-muted/50 rounded-lg p-3 text-center">
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3 text-center">
               <Flame className="w-4 h-4 mx-auto mb-1 text-orange-500" />
-              <p className="text-xl font-bold">{totals?.energy_kcal.toFixed(0) || "0"}</p>
-              <p className="text-[10px] text-muted-foreground">Kcal</p>
+              <p className="text-xl font-mono font-bold tabular-nums" style={{ color: "#14b780" }}>{totals?.energy_kcal.toFixed(0) || "0"}</p>
+              <p className="text-[9px] tracking-[0.2em] uppercase text-muted-foreground mt-0.5">Kcal</p>
             </div>
-            <div className="bg-muted/50 rounded-lg p-3 text-center">
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3 text-center">
               <Beef className="w-4 h-4 mx-auto mb-1 text-red-500" />
-              <p className="text-xl font-bold">{totals?.protein_g.toFixed(1) || "0"}</p>
-              <p className="text-[10px] text-muted-foreground">Proteína (g)</p>
+              <p className="text-xl font-mono font-bold tabular-nums text-info">{totals?.protein_g.toFixed(1) || "0"}</p>
+              <p className="text-[9px] tracking-[0.2em] uppercase text-muted-foreground mt-0.5">Proteína · g</p>
             </div>
-            <div className="bg-muted/50 rounded-lg p-3 text-center">
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3 text-center">
               <Wheat className="w-4 h-4 mx-auto mb-1 text-amber-500" />
-              <p className="text-xl font-bold">{totals?.carbs_g.toFixed(1) || "0"}</p>
-              <p className="text-[10px] text-muted-foreground">Carboidratos (g)</p>
+              <p className="text-xl font-mono font-bold tabular-nums text-warning">{totals?.carbs_g.toFixed(1) || "0"}</p>
+              <p className="text-[9px] tracking-[0.2em] uppercase text-muted-foreground mt-0.5">Carbo · g</p>
             </div>
-            <div className="bg-muted/50 rounded-lg p-3 text-center">
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3 text-center">
               <Droplets className="w-4 h-4 mx-auto mb-1 text-yellow-600" />
-              <p className="text-xl font-bold">{totals?.fat_g.toFixed(1) || "0"}</p>
-              <p className="text-[10px] text-muted-foreground">Gordura (g)</p>
+              <p className="text-xl font-mono font-bold tabular-nums" style={{ color: "hsl(25,85%,55%)" }}>{totals?.fat_g.toFixed(1) || "0"}</p>
+              <p className="text-[9px] tracking-[0.2em] uppercase text-muted-foreground mt-0.5">Gordura · g</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="flex justify-between bg-muted/30 rounded px-3 py-2">
+          <div className="grid grid-cols-2 gap-2 text-xs font-mono tabular-nums">
+            <div className="flex justify-between rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2">
               <span className="text-muted-foreground">Fibras</span>
-              <span className="font-medium">{totals?.fiber_g.toFixed(1) || "0"}g</span>
+              <span className="font-bold text-foreground">{totals?.fiber_g.toFixed(1) || "0"}g</span>
             </div>
-            <div className="flex justify-between bg-muted/30 rounded px-3 py-2">
+            <div className="flex justify-between rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2">
               <span className="text-muted-foreground">Açúcar</span>
-              <span className="font-medium">{totals?.sugar_g.toFixed(1) || "0"}g</span>
+              <span className="font-bold text-foreground">{totals?.sugar_g.toFixed(1) || "0"}g</span>
             </div>
-            <div className="flex justify-between bg-muted/30 rounded px-3 py-2">
+            <div className="flex justify-between rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2">
               <span className="text-muted-foreground">Sódio</span>
-              <span className="font-medium">{totals?.sodium_mg.toFixed(0) || "0"}mg</span>
+              <span className="font-bold text-foreground">{totals?.sodium_mg.toFixed(0) || "0"}mg</span>
             </div>
-            <div className="flex justify-between bg-muted/30 rounded px-3 py-2">
+            <div className="flex justify-between rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2">
               <span className="text-muted-foreground">Colesterol</span>
-              <span className="font-medium">{totals?.cholesterol_mg.toFixed(0) || "0"}mg</span>
+              <span className="font-bold text-foreground">{totals?.cholesterol_mg.toFixed(0) || "0"}mg</span>
             </div>
           </div>
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-display flex items-center gap-2">
-            <Activity className="w-4 h-4 text-primary" /> Análise Metabólica
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-5">
+        <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground mb-3 flex items-center gap-2">
+          <Activity className="w-3 h-3" /> Análise Metabólica
+        </p>
+        <div className="space-y-3">
           {!weight && (
-            <div className="flex items-center gap-2 text-xs text-amber-500 bg-amber-500/10 rounded-lg p-2">
+            <div className="flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg p-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>Peso não cadastrado na ficha do aluno</span>
             </div>
           )}
           <div className="space-y-2">
-            <div className="flex justify-between items-center bg-muted/50 rounded-lg px-3 py-2.5">
-              <span className="text-xs text-muted-foreground">Proteína / kg</span>
-              <span className="font-bold text-sm">{proteinPerKg} g/kg</span>
+            <div className="flex justify-between items-center rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2.5">
+              <span className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground">Proteína / kg</span>
+              <span className="font-mono font-bold text-sm text-info tabular-nums">{proteinPerKg} g/kg</span>
             </div>
-            <div className="flex justify-between items-center bg-muted/50 rounded-lg px-3 py-2.5">
-              <span className="text-xs text-muted-foreground">Carboidrato / kg</span>
-              <span className="font-bold text-sm">{carbsPerKg} g/kg</span>
+            <div className="flex justify-between items-center rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2.5">
+              <span className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground">Carbo / kg</span>
+              <span className="font-mono font-bold text-sm text-warning tabular-nums">{carbsPerKg} g/kg</span>
             </div>
-            <div className="flex justify-between items-center bg-muted/50 rounded-lg px-3 py-2.5">
-              <span className="text-xs text-muted-foreground">Gordura / kg</span>
-              <span className="font-bold text-sm">{fatPerKg} g/kg</span>
+            <div className="flex justify-between items-center rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2.5">
+              <span className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground">Gordura / kg</span>
+              <span className="font-mono font-bold text-sm tabular-nums" style={{ color: "hsl(25,85%,55%)" }}>{fatPerKg} g/kg</span>
             </div>
           </div>
           {tdee && (
-            <div className="border-t pt-3 space-y-2">
+            <div className="border-t border-white/10 pt-3 space-y-2 font-mono tabular-nums">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-muted-foreground">TDEE (Gasto)</span>
-                <span className="font-medium">{tdee.toFixed(0)} kcal</span>
+                <span className="font-bold text-foreground">{tdee.toFixed(0)} kcal</span>
               </div>
               <div className="flex justify-between items-center text-xs">
                 <span className="text-muted-foreground">Cardápio</span>
-                <span className="font-medium">{totals?.energy_kcal.toFixed(0) || "0"} kcal</span>
+                <span className="font-bold" style={{ color: "#14b780" }}>{totals?.energy_kcal.toFixed(0) || "0"} kcal</span>
               </div>
               {calorieDiff !== null && (
-                <div className={`flex justify-between items-center text-xs font-bold rounded-lg px-3 py-2 ${calorieDiff > 0 ? "bg-green-500/10 text-green-600" : calorieDiff < -200 ? "bg-blue-500/10 text-blue-600" : "bg-yellow-500/10 text-yellow-600"}`}>
+                <div className={`flex justify-between items-center text-xs font-bold rounded-lg border px-3 py-2 ${calorieDiff > 0 ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400" : calorieDiff < -200 ? "border-blue-500/30 bg-blue-500/10 text-blue-400" : "border-yellow-500/30 bg-yellow-500/10 text-yellow-400"}`}>
                   <span>Balanço</span>
                   <span>{calorieDiff > 0 ? "+" : ""}{calorieDiff.toFixed(0)} kcal</span>
                 </div>
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-display flex items-center gap-2">
-            <Target className="w-4 h-4 text-primary" /> Estratégia Nutricional
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-5">
+        <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground mb-3 flex items-center gap-2">
+          <Target className="w-3 h-3" /> Estratégia Nutricional
+        </p>
           {currentStrategy && (
-            <div className="flex items-center gap-3 mb-3 p-3 rounded-lg bg-muted/50">
+            <div className="flex items-center gap-3 mb-3 p-3 rounded-xl border border-white/10 bg-white/[0.04]">
               <StrategyIcon className={`w-6 h-6 ${currentStrategy.color}`} />
               <div>
-                <p className="font-bold text-sm">{currentStrategy.label}</p>
+                <p className="font-display font-bold text-sm uppercase tracking-tight">{currentStrategy.label}</p>
                 <p className="text-xs text-muted-foreground">{currentStrategy.description}</p>
               </div>
               {!manualStrategy && <Badge variant="outline" className="text-[10px] ml-auto">Auto</Badge>}
@@ -182,8 +177,7 @@ const NutritionSummaryPanel = ({ studentId, weight, tdee, objective, totals }: P
               Objetivo do aluno: <span className="font-medium text-foreground">{objective}</span>
             </p>
           )}
-        </CardContent>
-      </Card>
+      </div>
     </div>
   );
 };
