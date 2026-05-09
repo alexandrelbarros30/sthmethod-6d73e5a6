@@ -197,10 +197,12 @@ export function parseProtocolPhases(content: string): ProtocolPhase[] {
         title: titleRaw.replace(/[:\-—]+\s*$/, "").trim(),
         rawStatus: status,
         flowLabel: phase.flow,
+        _rawLines: [],
       };
       continue;
     }
     if (!current) continue;
+    current._rawLines!.push(line);
     const quoted = extractQuoted(line);
     if (quoted && !current.headline) { current.headline = quoted; continue; }
     if (/^a[çc][aã]o\s*[:\-]/i.test(line))     { current.action = line.replace(/^a[çc][aã]o\s*[:\-]\s*/i, "").trim(); continue; }
