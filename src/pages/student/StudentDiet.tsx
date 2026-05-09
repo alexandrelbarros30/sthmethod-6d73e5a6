@@ -17,7 +17,7 @@ import MealDetailPanel from "@/components/student/MealDetailPanel";
 import DietDateNav from "@/components/student/DietDateNav";
 import HydrationTracker from "@/components/student/HydrationTracker";
 import DietSelector from "@/components/student/DietSelector";
-import { Utensils, Flame, Zap, FileDown } from "lucide-react";
+import { Utensils, Flame, Zap, FileDown, Apple } from "lucide-react";
 import { toast } from "sonner";
 import { generateStudentPDF } from "@/lib/pdfGenerator";
 
@@ -247,6 +247,17 @@ const StudentDiet = () => {
     <DashboardLayout role="student" title="Seu plano hoje" subtitle="Acompanhe suas refeições do dia.">
       <PreviewAsBanner />
       <div className="space-y-5 max-w-lg mx-auto">
+        {/* Identity Header — alinhado ao Protocolo */}
+        <div className="text-center space-y-3 pt-1">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-foreground/10 border border-foreground/15 text-foreground text-xs font-semibold tracking-wider uppercase">
+            <Apple className="w-3.5 h-3.5" />
+            Cardápio Personalizado
+          </div>
+          <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground">
+            Estratégia STH Premium · Nutrição
+          </p>
+        </div>
+
         {/* Date navigation */}
         <DietDateNav selectedDate={selectedDate} onDateChange={setSelectedDate} />
 
@@ -258,11 +269,11 @@ const StudentDiet = () => {
         </div>
 
         {/* Daily Progress Header */}
-        <div className="rounded-3xl border border-border/40 bg-background overflow-hidden animate-fade-in">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden animate-fade-in">
           <div className="py-6 px-6">
             <div className="mb-4">
-              <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground">Hoje</p>
-              <h3 className="text-[20px] font-semibold text-foreground tracking-[-0.025em] mt-2">Consistência</h3>
+              <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground">Hoje</p>
+              <h3 className="text-xl font-display font-bold uppercase text-foreground tracking-tight mt-2">Consistência</h3>
             </div>
               <div className="flex items-center gap-5">
               <DailyProgressRing
@@ -273,27 +284,27 @@ const StudentDiet = () => {
               />
               <div className="flex-1 space-y-3">
                 <div>
-                  <p className="text-[28px] font-semibold text-foreground tracking-[-0.035em] tabular-nums leading-none">
+                  <p className="text-[28px] font-display font-bold text-foreground tracking-tight tabular-nums leading-none">
                     {completedCount}<span className="text-muted-foreground/60 font-light text-base">/{totalMeals}</span>
                   </p>
-                  <p className="text-[11px] text-muted-foreground font-light mt-1.5 tracking-tight">
+                  <p className="text-[11px] text-muted-foreground mt-1.5 tracking-tight">
                     {progressPercent === 100 ? "Dia completo! 🎉" : `${totalMeals - completedCount} refeições restantes`}
                   </p>
                 </div>
 
                 {isToday && nextMeal && !isMealCompleted(nextMeal.id) && (
-                  <div className="p-3 rounded-2xl border border-border/40">
-                    <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-[0.2em] flex items-center gap-1">
+                  <div className="p-3 rounded-2xl border border-white/10 bg-white/[0.02]">
+                    <p className="text-[9px] text-muted-foreground font-semibold uppercase tracking-[0.3em] flex items-center gap-1">
                       <Zap className="w-3 h-3" /> Próxima Refeição
                     </p>
-                    <p className="text-sm font-medium text-foreground mt-1 tracking-tight">
-                      {nextMeal.name} <span className="text-muted-foreground text-xs font-normal">{nextMeal.time}</span>
+                    <p className="text-sm font-display font-semibold text-foreground mt-1 tracking-tight">
+                      {nextMeal.name} <span className="text-muted-foreground text-xs font-mono ml-1">{nextMeal.time}</span>
                     </p>
                   </div>
                 )}
 
                 {!isToday && (
-                  <p className="text-[10px] text-muted-foreground font-light tracking-tight">Visualizando histórico</p>
+                  <p className="text-[10px] text-muted-foreground tracking-[0.2em] uppercase">Visualizando histórico</p>
                 )}
               </div>
             </div>
@@ -301,8 +312,8 @@ const StudentDiet = () => {
         </div>
 
         {/* Macro Progress */}
-        <div className="rounded-3xl border border-border/40 bg-background p-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-          <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-4">Macros</p>
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+          <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground mb-4">Macros</p>
           <div className="space-y-3">
             <MacroProgressBar label="Calorias" consumed={consumedMacros.kcal} total={totalMacros.kcal} unit="kcal" color="bg-foreground" />
             <MacroProgressBar label="Proteína" consumed={consumedMacros.protein} total={totalMacros.protein} color="bg-info" />
@@ -338,10 +349,14 @@ const StudentDiet = () => {
 
         {/* Meal List */}
         <div className="space-y-3" style={{ animationDelay: "0.2s" }}>
-          <h3 className="text-sm font-bold text-muted-foreground flex items-center gap-2 tracking-tight">
-            <Utensils className="w-4 h-4" /> Refeições
-            <span className="text-foreground tabular-nums">{completedCount}/{totalMeals}</span>
-          </h3>
+          <div className="flex items-baseline justify-between">
+            <h3 className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground flex items-center gap-2">
+              <Utensils className="w-3 h-3" /> Refeições do dia
+            </h3>
+            <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground tabular-nums font-mono">
+              {completedCount}/{totalMeals} hoje
+            </span>
+          </div>
 
           {meals.map((meal, idx) => (
             <div key={meal.id} className="animate-slide-up" style={{ animationDelay: `${0.05 * idx}s` }}>
