@@ -53,6 +53,7 @@ const KEY_SAVED = "fd_saved_v1";
 const KEY_WATER = "fd_water_v1";
 const KEY_GOALS = "fd_goals_v1";
 const KEY_LEAD = "fd_lead_v1";
+const KEY_CUSTOM_MEALS = "fd_custom_meals_v1";
 
 export const DEFAULT_GOALS: Goals = {
   daily_kcal: 2000,
@@ -111,11 +112,23 @@ export const localDiary = {
   setLead: (lead: { id: string; full_name: string; email: string; phone: string }) => {
     write(KEY_LEAD, lead);
   },
+  getCustomMeals: () => read<Array<{ key: string; label: string; icon: string }>>(KEY_CUSTOM_MEALS, []),
+  addCustomMeal: (m: { key: string; label: string; icon: string }) => {
+    const all = read<Array<{ key: string; label: string; icon: string }>>(KEY_CUSTOM_MEALS, []);
+    if (all.some((x) => x.key === m.key)) return;
+    all.push(m);
+    write(KEY_CUSTOM_MEALS, all);
+  },
+  removeCustomMeal: (key: string) => {
+    write(KEY_CUSTOM_MEALS, read<Array<{ key: string; label: string; icon: string }>>(KEY_CUSTOM_MEALS, []).filter((m) => m.key !== key));
+  },
 };
 
 export const MEAL_TYPES = [
   { key: "cafe", label: "Café da Manhã", icon: "☀️" },
   { key: "almoco", label: "Almoço", icon: "🍽️" },
+  { key: "lanche_tarde", label: "Lanche da Tarde", icon: "🥪" },
+  { key: "lanche_jantar", label: "Lanche antes do Jantar", icon: "🥗" },
   { key: "jantar", label: "Jantar", icon: "🌇" },
-  { key: "lanche", label: "Lanches/Outros", icon: "🌙" },
+  { key: "ceia", label: "Ceia", icon: "🌙" },
 ] as const;
