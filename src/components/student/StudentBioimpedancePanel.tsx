@@ -233,10 +233,10 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
 
       {/* Composition Pie Chart */}
       {compositionData.length > 0 && (
-        <Card>
+        <Card className="rounded-2xl border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-none">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-display flex items-center gap-2">
-              <Scale className="w-4 h-4 text-foreground" />
+            <CardTitle className="text-[11px] font-semibold tracking-[0.25em] uppercase text-muted-foreground flex items-center gap-2">
+              <Scale className="w-3.5 h-3.5 text-[color:var(--sth-green)]" />
               Composição Corporal
             </CardTitle>
           </CardHeader>
@@ -277,11 +277,11 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
 
       {/* Evolution Line Chart */}
       {evolutionData.length > 1 && (
-        <Card>
+        <Card className="rounded-2xl border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-none">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-display flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-foreground" />
-              Evolução ao Longo do Tempo
+            <CardTitle className="text-[11px] font-semibold tracking-[0.25em] uppercase text-muted-foreground flex items-center gap-2">
+              <TrendingUp className="w-3.5 h-3.5 text-[color:var(--sth-green)]" />
+              Evolução
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -302,11 +302,11 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
 
       {/* Body Silhouette + or Segmental Bar Chart */}
       {(segmentalData.length > 0 || latest) && (
-        <Card>
+        <Card className="rounded-2xl border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-none">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-display flex items-center gap-2">
-              <Activity className="w-4 h-4 text-foreground" />
-              Mapa Corporal & Distribuição Segmentar
+            <CardTitle className="text-[11px] font-semibold tracking-[0.25em] uppercase text-muted-foreground flex items-center gap-2">
+              <Activity className="w-3.5 h-3.5 text-[color:var(--sth-green)]" />
+              Mapa Corporal
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -355,11 +355,11 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
 
       {/* Integration with profile health data */}
       {profile && (profile.bmr || profile.tdee || profile.daily_calories) && (
-        <Card className="bg-muted/30">
+        <Card className="rounded-2xl border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-none">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-display flex items-center gap-2">
-              <Flame className="w-4 h-4 text-orange-500" />
-              Dados Integrados de Saúde
+            <CardTitle className="text-[11px] font-semibold tracking-[0.25em] uppercase text-muted-foreground flex items-center gap-2">
+              <Flame className="w-3.5 h-3.5 text-[color:var(--sth-green)]" />
+              Dados Integrados
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -399,10 +399,10 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
 
       {/* Notes from latest */}
       {latest.notes && (
-        <Card className="bg-muted/20">
+        <Card className="rounded-2xl border-white/10 bg-white/[0.02] backdrop-blur-xl shadow-none">
           <CardContent className="py-3">
-            <p className="text-xs text-muted-foreground">
-              <span className="font-semibold">Observações:</span> {latest.notes}
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              <span className="font-semibold tracking-[0.2em] uppercase text-[10px] text-[color:var(--sth-green)]">Notas · </span>{latest.notes}
             </p>
           </CardContent>
         </Card>
