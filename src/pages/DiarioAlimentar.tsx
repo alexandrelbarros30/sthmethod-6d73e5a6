@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Trash2, Droplet, BookmarkPlus, ChevronLeft, ChevronRight, Settings, Loader2 } from "lucide-react";
+import { Plus, Search, Trash2, Droplet, BookmarkPlus, ChevronLeft, ChevronRight, Settings, Loader2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -334,6 +334,40 @@ export default function DiarioAlimentar() {
   const [addOpen, setAddOpen] = useState(false);
   const [addMeal, setAddMeal] = useState<string>("cafe");
   const [goalsOpen, setGoalsOpen] = useState(false);
+  const [customMeals, setCustomMeals] = useState<Array<{ key: string; label: string; icon: string }>>(() => localDiary.getCustomMeals());
+
+  const allMeals = useMemo(() => {
+    // Merge defaults + custom + any meal_type present in entries that isn't covered
+    const base: Array<{ key: string; label: string; icon: string }> = [...MEAL_TYPES, ...customMeals];
+    const known = new Set(base.map((m) => m.key));
+    entries.forEach((e) => {
+      if (!known.has(e.meal_type)) {
+        base.push({ key: e.meal_type, label: e.meal_label || e.meal_type, icon: "🍴" });
+        known.add(e.meal_type);
+      }
+    });
+    return base;
+  }, [customMeals, entries]);
+
+  const addCustomMeal = () => {
+    const name = window.prompt("Nome da nova refeição (ex: Pré-treino, Pós-treino):");
+    if (!name || !name.trim()) return;
+    const label = name.trim();
+    const key = "custom_" + label.toLowerCase().replace(/[^a-z0-9]+/g, "_") + "_" + Math.random().toString(36).slice(2, 6);
+    const meal = { key, label, icon: "🍴" };
+    localDiary.addCustomMeal(meal);
+    setCustomMeals(localDiary.getCustomMeals());
+    toast.success("Refeição adicionada");
+  };
+
+  const removeCustomMeal = (key: string) => {
+    if (entries.some((e) => e.meal_type === key)) {
+      toast.error("Remova os alimentos antes de excluir esta refeição");
+      return;
+    }
+    localDiary.removeCustomMeal(key);
+    setCustomMeals(localDiary.getCustomMeals());
+  };
 
   // Load data
   const refresh = async () => {
@@ -410,6 +444,8 @@ export default function DiarioAlimentar() {
   }), { kcal: 0, p: 0, c: 0, f: 0 }), [entries]);
 
   const groupByMeal = (mt: string) => entries.filter((e) => e.meal_type === mt);
+
+  const findMealLabel = (key: string) => allMeals.find((m) => m.key === key)?.label || key;
 
   const saveAsCombo = (mt: string) => {
     const items = groupByMeal(mt);
@@ -529,9 +565,10 @@ export default function DiarioAlimentar() {
         </div>
 
         {/* Meals */}
-        {MEAL_TYPES.map((m) => {
+        {allMeals.map((m) => {
           const items = groupByMeal(m.key);
           const mealKcal = items.reduce((a, i) => a + Number(i.energy_kcal), 0);
+          const isCustom = !MEAL_TYPES.some((dm) => dm.key === m.key);
           return (
             <div key={m.key} className="sth-glass overflow-hidden">
               <div className="flex items-center justify-between p-3 border-b border-[hsl(150,18%,14%)]">
@@ -543,6 +580,11 @@ export default function DiarioAlimentar() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
+                  {isCustom && customMeals.some((c) => c.key === m.key) && (
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-[hsl(0,65%,52%)] hover:text-[hsl(0,65%,60%)] hover:bg-[hsl(150,25%,10%)]" onClick={() => removeCustomMeal(m.key)} title="Remover refeição">
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
                   {items.length > 0 && (
                     <Button size="icon" variant="ghost" className="h-8 w-8 text-[hsl(150,95%,45%)] hover:text-[hsl(150,95%,60%)] hover:bg-[hsl(150,25%,10%)]" onClick={() => saveAsCombo(m.key)} title="Salvar como combo">
                       <BookmarkPlus className="w-4 h-4" />
@@ -574,6 +616,15 @@ export default function DiarioAlimentar() {
             </div>
           );
         })}
+
+        {/* Add custom meal */}
+        <Button
+          variant="outline"
+          onClick={addCustomMeal}
+          className="w-full border-dashed border-[hsl(150,18%,20%)] bg-[hsl(155,22%,6%)]/40 text-[hsl(150,95%,45%)] hover:bg-[hsl(150,25%,10%)] hover:text-[hsl(150,95%,60%)] hover:border-[hsl(150,95%,45%/0.5)]"
+        >
+          <Plus className="w-4 h-4 mr-1" /> Adicionar refeição
+        </Button>
 
         {/* Water */}
         <div className="sth-glass p-4">
