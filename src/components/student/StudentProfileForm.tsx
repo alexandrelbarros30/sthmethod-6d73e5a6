@@ -215,11 +215,11 @@ export default function StudentProfileForm({ form, onChange, userId, isOnboarded
         current_protocol: form.current_protocol,
         comorbidities: form.comorbidities,
         additional_info: form.additional_info,
-        training_days_per_week: form.training_days_per_week ? Number(form.training_days_per_week) : null,
-        training_duration_minutes: form.training_duration_minutes ? Number(form.training_duration_minutes) : null,
+        training_days_per_week: form.training_days_per_week ? Math.round(Number(form.training_days_per_week)) : null,
+        training_duration_minutes: form.training_duration_minutes ? Math.round(Number(form.training_duration_minutes)) : null,
         training_intensity: form.training_intensity || null,
-        cardio_days_per_week: form.cardio_days_per_week ? Number(form.cardio_days_per_week) : null,
-        cardio_duration_minutes: form.cardio_duration_minutes ? Number(form.cardio_duration_minutes) : null,
+        cardio_days_per_week: form.cardio_days_per_week ? Math.round(Number(form.cardio_days_per_week)) : null,
+        cardio_duration_minutes: form.cardio_duration_minutes ? Math.round(Number(form.cardio_duration_minutes)) : null,
         cardio_intensity: form.cardio_intensity || null,
       };
 
