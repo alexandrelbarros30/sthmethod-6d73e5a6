@@ -16,6 +16,8 @@ export interface ProtocolPhase {
   focus?: string;         // texto após "📌"
   rawStatus?: PhaseStatus;// status sugerido pelo emoji (✅⏳🔓🔒)
   flowLabel: string;      // microintera\u00e7\u00e3o textual
+  subWeeks?: ProtocolPhase[]; // sub-cards por semana (ex.: medicamentos)
+  _rawLines?: string[];   // linhas brutas usadas para sub-parsing
 }
 
 // Mapeamento emoji -> chave canônica
