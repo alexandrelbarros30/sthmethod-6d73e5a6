@@ -100,23 +100,14 @@ const UpdateBanner = () => {
 
       if (dbLatest) {
         const newerThanSeen = compareVersions(dbLatest.version, lastSeen) > 0;
-        const newerThanBuild = compareVersions(dbLatest.version, APP_RELEASE_VERSION) > 0;
-        if (newerThanSeen || newerThanBuild) {
+        if (newerThanSeen) {
           if (cancelled) return;
           setUpdateMeta(dbLatest);
           setRemoteVersion(dbLatest.version);
           setShow(true);
-          // Auto-reload apenas quando o build local está atrás
-          if (newerThanBuild) {
-            const reloadKey = getReloadAttemptKey(dbLatest.version);
-            const attempts = Number(sessionStorage.getItem(reloadKey) || "0");
-            if (attempts < MAX_AUTO_RELOADS) {
-              sessionStorage.setItem(reloadKey, String(attempts + 1));
-              setTimeout(() => {
-                void forceRefreshToVersion(dbLatest.version);
-              }, 800);
-            }
-          }
+          return;
+        } else {
+          setShow(false);
           return;
         }
       }
