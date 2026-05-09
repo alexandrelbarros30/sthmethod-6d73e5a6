@@ -454,7 +454,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <p className="text-sm text-muted-foreground">{(workouts || []).length} treino(s)</p>
-        <Button onClick={() => { setForm(emptyWorkout); setEditingWorkout(null); setExerciseRows([]); setWorkoutDialog(true); }}>
+        <Button size="sm" onClick={() => { setForm(emptyWorkout); setEditingWorkout(null); setExerciseRows([]); setWorkoutDialog(true); }}>
           <Plus className="w-4 h-4 mr-1" /> Novo Treino
         </Button>
       </div>
