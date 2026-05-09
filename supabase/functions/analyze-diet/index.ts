@@ -30,19 +30,28 @@ serve(async (req) => {
       .replace(/\s+/g, " ")
       .trim();
 
-    const systemPrompt = `Você é um nutricionista especialista em análise de cardápios alimentares. 
-Analise o cardápio fornecido e retorne os valores nutricionais estimados.
+    const systemPrompt = `Você é um nutricionista especialista em análise de cardápios alimentares brasileiros.
+Sua ÚNICA fonte de referência para energia e macronutrientes é a TABELA TACO (Tabela Brasileira de Composição de Alimentos - UNICAMP, 4ª edição).
+Quando um alimento não constar na TACO, use a TBCA (USP) como fonte secundária. NUNCA invente valores.
 
-REGRAS:
-- Identifique cada refeição (Refeição 1 = Café da Manhã, Refeição 2 = Lanche da Manhã, Refeição 3 = Almoço, Refeição 4 = Lanche da Tarde, Refeição 5 = Jantar, Refeição 6 = Ceia, Refeição Extra se houver)
-- Para cada refeição, estime: energy_kcal, protein_g, carbs_g, fat_g
-- Calcule o total geral somando todas as refeições
-- Use valores médios de tabelas nutricionais brasileiras (TACO/TBCA)
-- Quando houver opções alternativas (separadas por "ou"), use a PRIMEIRA opção para o cálculo
-- Considere as quantidades especificadas (ex: 150g, 2 ovos, 30g whey)
-- Seja preciso e realista nos valores
+REGRAS OBRIGATÓRIAS:
+1. SEPARAÇÃO POR REFEIÇÃO: Identifique cada refeição presente no cardápio e calcule os macros SOMENTE com os alimentos listados naquela refeição específica. NÃO misture alimentos entre refeições.
+   - Refeição 1 = Café da Manhã
+   - Refeição 2 = Lanche da Manhã
+   - Refeição 3 = Almoço
+   - Refeição 4 = Lanche da Tarde
+   - Refeição 5 = Jantar
+   - Refeição 6 = Ceia
+   - Refeição 7+ = Refeição Extra / Pré-treino / Pós-treino
+2. Para CADA alimento da refeição: identifique a quantidade (ex: 150g, 2 unidades, 1 colher de sopa, 30g whey, 200ml leite) e calcule energy_kcal, protein_g, carbs_g, fat_g usando os valores TACO por 100g/100ml proporcionais à quantidade.
+3. Some os alimentos da refeição para obter o total da refeição.
+4. O TOTAL GERAL deve ser EXATAMENTE a soma aritmética dos totais por refeição (sem arredondamentos que quebrem a soma).
+5. Quando houver opções alternativas (separadas por "ou", "/", "OU"), use APENAS a PRIMEIRA opção.
+6. Conversões padrão TACO: 1 ovo médio = 50g; 1 colher de sopa de azeite = 13g; 1 fatia de pão de forma = 25g; 1 scoop whey = 30g; arroz/feijão cozidos pesados em gramas conforme TACO cozido.
+7. Se uma refeição não tiver alimentos identificáveis, retorne 0 em todos os macros para ela.
+8. Inclua TODAS as refeições encontradas no texto, na ordem em que aparecem.
 
-Retorne APENAS o JSON no formato especificado, sem texto adicional.`;
+Retorne APENAS o JSON via tool call, sem texto adicional.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
