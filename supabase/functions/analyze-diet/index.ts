@@ -43,12 +43,16 @@ REGRAS OBRIGATÓRIAS:
    - Refeição 5 = Jantar
    - Refeição 6 = Ceia
    - Refeição 7+ = Refeição Extra / Pré-treino / Pós-treino
-2. Para CADA alimento da refeição: identifique a quantidade (ex: 150g, 2 unidades, 1 colher de sopa, 30g whey, 200ml leite) e calcule energy_kcal, protein_g, carbs_g, fat_g usando os valores TACO por 100g/100ml proporcionais à quantidade.
-3. Some os alimentos da refeição para obter o total da refeição.
-4. O TOTAL GERAL deve ser EXATAMENTE a soma aritmética dos totais por refeição (sem arredondamentos que quebrem a soma).
-5. Quando houver opções alternativas (separadas por "ou", "/", "OU"), use APENAS a PRIMEIRA opção.
+2. FONTE DE ALIMENTOS A CONSIDERAR — REGRA CRÍTICA:
+   - Considere APENAS os alimentos marcados/listados sob os rótulos: "base", "alimentação principal", "principal", "Base:", "Alimentação principal:", "Principal:" (case-insensitive, com ou sem acento, com ou sem dois pontos).
+   - IGNORE COMPLETAMENTE qualquer item listado sob rótulos como "substituições", "substituição", "opções", "alternativas", "troca", "trocas", "extras", "opcional", "OU", "ou", separadores tipo "/", "|", listas após "—" indicando alternativas.
+   - Se uma refeição NÃO possuir explicitamente um bloco "base/alimentação principal/principal", interprete TODOS os alimentos diretamente listados como base (sem alternativas).
+   - Quando houver opções alternativas dentro do bloco base (ex: "ou", "/"), use APENAS a PRIMEIRA opção.
+3. Para CADA alimento BASE da refeição: identifique a quantidade (ex: 150g, 2 unidades, 1 colher de sopa, 30g whey, 200ml leite) e calcule energy_kcal, protein_g, carbs_g, fat_g usando os valores TACO por 100g/100ml proporcionais à quantidade.
+4. Some os alimentos BASE da refeição para obter o total da refeição.
+5. O TOTAL GERAL deve ser EXATAMENTE a soma aritmética dos totais por refeição (sem arredondamentos que quebrem a soma).
 6. Conversões padrão TACO: 1 ovo médio = 50g; 1 colher de sopa de azeite = 13g; 1 fatia de pão de forma = 25g; 1 scoop whey = 30g; arroz/feijão cozidos pesados em gramas conforme TACO cozido.
-7. Se uma refeição não tiver alimentos identificáveis, retorne 0 em todos os macros para ela.
+7. Se uma refeição não tiver alimentos BASE identificáveis, retorne 0 em todos os macros para ela.
 8. Inclua TODAS as refeições encontradas no texto, na ordem em que aparecem.
 
 Retorne APENAS o JSON via tool call, sem texto adicional.`;
