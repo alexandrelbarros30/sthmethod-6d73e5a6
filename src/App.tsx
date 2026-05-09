@@ -136,6 +136,7 @@ const App = () => (
             <Route path="/fila/:token" element={<FilaPublica />} />
             <Route path="/fila" element={<FilaAberta />} />
             <Route path="/preview-tema-verde" element={<PreviewTemaVerde />} />
+            <Route path="/diario-alimentar" element={<DiarioAlimentar />} />
             {/* Student routes */}
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["student"]}><StudentOverview /></ProtectedRoute>} />
             <Route path="/dashboard/hub" element={<ProtectedRoute allowedRoles={["student"]}><StudentHub /></ProtectedRoute>} />
