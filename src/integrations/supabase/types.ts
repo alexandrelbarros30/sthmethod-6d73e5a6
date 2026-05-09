@@ -2642,10 +2642,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      apply_usda_translations: {
-        Args: { _ids: string[]; _names: string[] }
-        Returns: number
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

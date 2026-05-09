@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.apply_usda_translations(uuid[], text[]);
