@@ -308,6 +308,7 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
   return (
     <div className={cn(
       "min-h-screen w-full max-w-full bg-background overflow-x-hidden",
+      isStudent && "theme-sth-green",
       is90dPlan && "theme-90d",
       is180dPlan && "theme-180d"
     )}>
