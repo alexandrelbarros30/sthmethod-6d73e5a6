@@ -178,6 +178,7 @@ const AdminTrainingPrograms = () => {
       toast.success("Programa desatribuído.");
       refetchAssigned();
       queryClient.invalidateQueries({ queryKey: ["sgw-assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["program-assigned-counts"] });
     },
     onError: (e: any) => toast.error(e.message || "Erro ao desatribuir."),
   });
@@ -394,6 +395,13 @@ const AdminTrainingPrograms = () => {
                           <Badge variant="outline" className="text-[10px]">{getObjectiveLabel(p.objective || "general")}</Badge>
                           <Badge variant="outline" className={`text-[10px] ${diffInfo.color}`}>{diffInfo.label}</Badge>
                           <Badge variant="outline" className="text-[10px]">{wCount} treino(s)</Badge>
+                          {(assignedCounts?.[p.id] || 0) > 0 ? (
+                            <Badge className="text-[10px] bg-primary/15 text-primary border-primary/30 hover:bg-primary/20">
+                              <Users className="w-2.5 h-2.5 mr-0.5" /> {assignedCounts![p.id]} aluno(s)
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[10px] text-muted-foreground/60">Sem atribuições</Badge>
+                          )}
                         </div>
                         {p.details && <p className="text-xs text-muted-foreground line-clamp-2">{p.details}</p>}
                       </div>
