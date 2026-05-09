@@ -141,41 +141,61 @@ export async function compressImage(
   }
 
   const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
   const ctx = canvas.getContext("2d");
   if (!ctx) {
     console.warn("[image-upload] Canvas context unavailable, uploading original");
     return file;
   }
 
-  ctx.drawImage(drawSource, 0, 0, width, height);
-  if ("close" in drawSource) (drawSource as ImageBitmap).close();
+  let currentWidth = width;
+  let currentHeight = height;
+  let quality = 0.78;
+  let passes = 0;
+  const maxBytes = maxSizeMB * 1024 * 1024;
+  let lastBlob: Blob | null = null;
 
-  return new Promise((resolve) => {
-    let quality = 0.75;
-    const tryCompress = () => {
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) {
-            console.warn("[image-upload] canvas.toBlob returned null, uploading original");
-            resolve(file);
-            return;
-          }
-          console.log(`[image-upload] Compressed at quality ${quality.toFixed(2)}: ${(blob.size / 1024).toFixed(0)}KB`);
-          if (blob.size > maxSizeMB * 1024 * 1024 && quality > 0.2) {
-            quality -= 0.15;
-            tryCompress();
-          } else {
-            resolve(blob);
-          }
-        },
-        "image/jpeg",
-        quality,
-      );
-    };
-    tryCompress();
-  });
+  while (passes < 8) {
+    canvas.width = currentWidth;
+    canvas.height = currentHeight;
+    ctx.clearRect(0, 0, currentWidth, currentHeight);
+    ctx.drawImage(drawSource, 0, 0, currentWidth, currentHeight);
+
+    const blob = await canvasToJpegBlob(canvas, quality);
+    if (!blob) {
+      console.warn("[image-upload] canvas.toBlob returned null, uploading original");
+      if ("close" in drawSource) (drawSource as ImageBitmap).close();
+      return file;
+    }
+
+    lastBlob = blob;
+    console.log(`[image-upload] Compression pass ${passes + 1}: ${currentWidth}x${currentHeight} @ ${quality.toFixed(2)} = ${(blob.size / 1024).toFixed(0)}KB`);
+
+    if (blob.size <= maxBytes) {
+      if ("close" in drawSource) (drawSource as ImageBitmap).close();
+      return blob;
+    }
+
+    if (quality > 0.42) {
+      quality = Math.max(0.42, quality - 0.12);
+    } else {
+      const nextWidth = Math.max(MIN_DIMENSION, Math.round(currentWidth * 0.82));
+      const nextHeight = Math.max(MIN_DIMENSION, Math.round(currentHeight * 0.82));
+
+      if (nextWidth === currentWidth && nextHeight === currentHeight) {
+        break;
+      }
+
+      currentWidth = nextWidth;
+      currentHeight = nextHeight;
+      quality = 0.72;
+    }
+
+    passes += 1;
+  }
+
+  if ("close" in drawSource) (drawSource as ImageBitmap).close();
+  console.warn("[image-upload] Max compression passes reached, uploading last compressed version");
+  return lastBlob || file;
 }
 
 /**
