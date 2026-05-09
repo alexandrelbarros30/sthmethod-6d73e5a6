@@ -34,6 +34,7 @@ import Promo from "./pages/Promo";
 import EvolucaoPublica from "./pages/EvolucaoPublica";
 import FilaPublica from "./pages/FilaPublica";
 import FilaAberta from "./pages/FilaAberta";
+import PreviewTemaVerde from "./pages/PreviewTemaVerde";
 import StudentOverview from "./pages/student/StudentOverview";
 import StudentHub from "./pages/student/StudentHub";
 import StudentRecipes from "./pages/student/StudentRecipes";
@@ -133,6 +134,7 @@ const App = () => (
             <Route path="/evolucao" element={<EvolucaoPublica />} />
             <Route path="/fila/:token" element={<FilaPublica />} />
             <Route path="/fila" element={<FilaAberta />} />
+            <Route path="/preview-tema-verde" element={<PreviewTemaVerde />} />
             {/* Student routes */}
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["student"]}><StudentOverview /></ProtectedRoute>} />
             <Route path="/dashboard/hub" element={<ProtectedRoute allowedRoles={["student"]}><StudentHub /></ProtectedRoute>} />
