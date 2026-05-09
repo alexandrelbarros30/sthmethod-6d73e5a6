@@ -214,10 +214,16 @@ export async function uploadWithRetry(
     try {
       console.log(`[image-upload] Upload attempt ${attempt}/${retries}, size: ${(blob.size / 1024).toFixed(0)}KB`);
 
-      const { error } = await supabase.storage.from(bucket).upload(path, blob, {
+      const uploadPromise = supabase.storage.from(bucket).upload(path, blob, {
         contentType,
         upsert: true,
       });
+
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        window.setTimeout(() => reject(new Error("Upload timeout")), UPLOAD_TIMEOUT_MS);
+      });
+
+      const { error } = await Promise.race([uploadPromise, timeoutPromise]);
 
       if (!error) {
         const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
@@ -229,7 +235,7 @@ export async function uploadWithRetry(
       const msg = err?.message || String(err);
       console.warn(`[image-upload] Attempt ${attempt} exception:`, msg);
       if (attempt === retries) {
-        if (msg === "Failed to fetch" || msg.includes("NetworkError")) {
+        if (msg === "Failed to fetch" || msg.includes("NetworkError") || msg.toLowerCase().includes("timeout")) {
           throw new Error(
             "Falha de rede ao enviar. Verifique sua conexão (Wi-Fi/4G) e tente novamente. " +
             "Se o problema persistir, a imagem pode estar muito grande — use JPG/PNG."
