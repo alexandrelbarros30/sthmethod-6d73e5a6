@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Check, Lock, Hourglass, Unlock, Clock, Target, Sparkles } from "lucide-react";
@@ -197,15 +197,30 @@ const GamifiedProtocolPanel = ({ content, userId, readOnly }: Props) => {
 
       {/* Cards */}
       <div className="space-y-3">
-        {phases.map((p) => (
-          <PhaseCard
-            key={p.key}
-            phase={p}
-            done={doneSet.has(p.key)}
-            onToggle={() => !readOnly && toggle.mutate(p)}
-            disabled={readOnly || toggle.isPending}
-          />
-        ))}
+        {phases.map((p) => {
+          if (p.key.startsWith("medicamentos") && p.subWeeks && p.subWeeks.length > 0) {
+            return (
+              <MedicamentosWeekCarousel
+                key={p.key}
+                parent={p}
+                weeks={p.subWeeks}
+                doneSet={doneSet}
+                readOnly={readOnly}
+                disabled={readOnly || toggle.isPending}
+                onToggle={(sub) => toggle.mutate(sub)}
+              />
+            );
+          }
+          return (
+            <PhaseCard
+              key={p.key}
+              phase={p}
+              done={doneSet.has(p.key)}
+              onToggle={() => !readOnly && toggle.mutate(p)}
+              disabled={readOnly || toggle.isPending}
+            />
+          );
+        })}
       </div>
 
       {/* Dashboard de Performance */}
