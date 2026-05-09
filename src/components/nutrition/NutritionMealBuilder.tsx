@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Save, Search, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Trash2, Save, Search, Clock, ChevronDown, ChevronUp, Utensils } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import FoodSearchDialog from "./FoodSearchDialog";
 import type { NutritionTotals } from "./NutritionSummaryPanel";
+import { cn } from "@/lib/utils";
 
 export interface MealData {
   id?: string;
@@ -353,8 +354,19 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
 
   return (
     <>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold font-display">Refeições</h2>
+      {/* Identity Header — alinhado ao Protocolo */}
+      <div className="text-center space-y-3 mb-5">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-foreground/10 border border-foreground/15 text-foreground text-xs font-semibold tracking-wider uppercase">
+          <Utensils className="w-3.5 h-3.5" />
+          Cardápio Personalizado
+        </div>
+        <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground">
+          Estratégia STH Premium · Nutrição
+        </p>
+      </div>
+
+      <div className="flex items-baseline justify-between mb-4">
+        <h2 className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground">Refeições</h2>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={addMeal}>
             <Plus className="w-4 h-4 mr-1" /> Refeição Extra
@@ -365,18 +377,34 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3" style={{ ["--sth-green" as any]: "#14b780" }}>
         {meals.map((meal, mealIndex) => {
           const totals = getMealTotals(meal.foods);
+          const hasFoods = meal.foods.length > 0;
           return (
-            <Card key={mealIndex} className="overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 bg-muted/30 cursor-pointer" onClick={() => toggleCollapse(mealIndex)}>
+            <div
+              key={mealIndex}
+              className={cn(
+                "relative overflow-hidden rounded-2xl border backdrop-blur-xl transition-all duration-300",
+                "bg-white/[0.03] border-white/10 hover:border-white/20",
+                hasFoods && "border-[color:var(--sth-green)]/30"
+              )}
+            >
+              {hasFoods && (
+                <div
+                  className="pointer-events-none absolute inset-0 rounded-2xl"
+                  style={{ boxShadow: `inset 0 0 0 1px #14b78033` }}
+                />
+              )}
+              <div className="relative flex items-center justify-between px-4 py-3 cursor-pointer" onClick={() => toggleCollapse(mealIndex)}>
                 <div className="flex items-center gap-3">
-                  <Badge variant="secondary" className="text-xs font-mono">{mealIndex + 1}</Badge>
+                  <span className="text-[10px] font-mono tracking-[0.2em] uppercase text-muted-foreground tabular-nums px-2 py-1 rounded-md border border-white/10 bg-white/5">
+                    {String(mealIndex + 1).padStart(2, "0")}
+                  </span>
                   <Input value={meal.name} onChange={(e) => updateMeal(mealIndex, "name", e.target.value)}
-                    className="h-7 w-40 text-sm font-medium border-none bg-transparent p-0 focus-visible:ring-0"
+                    className="h-7 w-40 text-sm font-display font-bold uppercase tracking-tight border-none bg-transparent p-0 focus-visible:ring-0"
                     onClick={(e) => e.stopPropagation()} />
-                  <div className="flex items-center gap-1 text-muted-foreground">
+                  <div className="flex items-center gap-1 text-muted-foreground font-mono">
                     <Clock className="w-3 h-3" />
                     <Input type="time" value={meal.time} onChange={(e) => updateMeal(mealIndex, "time", e.target.value)}
                       className="h-7 w-24 text-xs border-none bg-transparent p-0 focus-visible:ring-0"
@@ -384,11 +412,11 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="hidden md:flex items-center gap-3 text-xs text-muted-foreground">
-                    <span>{totals.energy_kcal.toFixed(0)} kcal</span>
-                    <span>P:{totals.protein_g.toFixed(1)}g</span>
-                    <span>C:{totals.carbs_g.toFixed(1)}g</span>
-                    <span>G:{totals.fat_g.toFixed(1)}g</span>
+                  <div className="hidden md:flex items-center gap-3 text-xs font-mono text-muted-foreground tabular-nums">
+                    <span style={{ color: hasFoods ? "#14b780" : undefined }} className="font-bold">{totals.energy_kcal.toFixed(0)} kcal</span>
+                    <span className="text-info">P:{totals.protein_g.toFixed(1)}g</span>
+                    <span className="text-warning">C:{totals.carbs_g.toFixed(1)}g</span>
+                    <span style={{ color: "hsl(25, 85%, 55%)" }}>G:{totals.fat_g.toFixed(1)}g</span>
                   </div>
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); removeMeal(mealIndex); }}>
                     <Trash2 className="w-3.5 h-3.5 text-destructive" />
@@ -397,10 +425,10 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
                 </div>
               </div>
               {!meal.collapsed && (
-                <CardContent className="p-4 space-y-2">
+                <div className="relative p-4 pt-2 space-y-2 border-t border-white/5">
                   {meal.foods.length > 0 && (
                     <div className="space-y-1">
-                      <div className="grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground px-1">
+                      <div className="grid grid-cols-12 gap-2 text-[10px] font-semibold tracking-[0.15em] uppercase text-muted-foreground px-1">
                         <div className="col-span-3">Alimento</div>
                         <div className="col-span-1">Qtd</div>
                         <div className="col-span-1">Un.</div>
@@ -412,12 +440,12 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
                         <div className="col-span-1"></div>
                       </div>
                       {meal.foods.map((food, foodIndex) => (
-                        <div key={foodIndex} className="grid grid-cols-12 gap-2 items-center text-sm bg-muted/20 rounded px-1 py-1.5">
-                          <div className="col-span-3 truncate font-body">{food.item}</div>
+                        <div key={foodIndex} className="grid grid-cols-12 gap-2 items-center text-sm bg-white/[0.02] border border-white/5 rounded-lg px-1.5 py-1.5">
+                          <div className="col-span-3 truncate font-body text-foreground">{food.item}</div>
                           <div className="col-span-1">
                             <Input type="number" value={food.quantity_grams}
                               onChange={(e) => updateFoodQuantity(mealIndex, foodIndex, Number(e.target.value) || 0)}
-                              className="h-7 text-xs w-full" min={0} />
+                              className="h-7 text-xs w-full font-mono tabular-nums" min={0} />
                           </div>
                           <div className="col-span-1">
                             <Select value={food.unit} onValueChange={(v) => updateFoodUnit(mealIndex, foodIndex, v as "g" | "ml")}>
@@ -430,11 +458,11 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
                               </SelectContent>
                             </Select>
                           </div>
-                          <div className="col-span-1 text-right text-xs">{food.energy_kcal.toFixed(0)}</div>
-                          <div className="col-span-1 text-right text-xs">{food.protein_g.toFixed(1)}</div>
-                          <div className="col-span-1 text-right text-xs">{food.carbs_g.toFixed(1)}</div>
-                          <div className="col-span-1 text-right text-xs">{food.fat_g.toFixed(1)}</div>
-                          <div className="col-span-1 text-right text-xs">{food.fiber_g.toFixed(1)}</div>
+                          <div className="col-span-1 text-right text-xs font-mono tabular-nums" style={{ color: "#14b780" }}>{food.energy_kcal.toFixed(0)}</div>
+                          <div className="col-span-1 text-right text-xs font-mono tabular-nums text-info">{food.protein_g.toFixed(1)}</div>
+                          <div className="col-span-1 text-right text-xs font-mono tabular-nums text-warning">{food.carbs_g.toFixed(1)}</div>
+                          <div className="col-span-1 text-right text-xs font-mono tabular-nums" style={{ color: "hsl(25, 85%, 55%)" }}>{food.fat_g.toFixed(1)}</div>
+                          <div className="col-span-1 text-right text-xs font-mono tabular-nums text-muted-foreground">{food.fiber_g.toFixed(1)}</div>
                           <div className="col-span-1 text-right">
                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeFood(mealIndex, foodIndex)}>
                               <Trash2 className="w-3 h-3 text-destructive" />
@@ -442,25 +470,28 @@ const NutritionMealBuilder = ({ studentId, studentName, onMealsChange }: Props) 
                           </div>
                         </div>
                       ))}
-                      <div className="grid grid-cols-12 gap-2 items-center text-xs font-semibold bg-primary/5 rounded px-1 py-2 mt-1">
-                        <div className="col-span-3">Subtotal</div>
+                      <div
+                        className="grid grid-cols-12 gap-2 items-center text-xs font-mono tabular-nums rounded-lg px-1.5 py-2 mt-1 border"
+                        style={{ borderColor: "#14b78033", background: "#14b78010" }}
+                      >
+                        <div className="col-span-3 font-display font-bold uppercase tracking-[0.15em] text-[10px] text-foreground">Subtotal</div>
                         <div className="col-span-1"></div>
                         <div className="col-span-1"></div>
-                        <div className="col-span-1 text-right">{totals.energy_kcal.toFixed(0)}</div>
-                        <div className="col-span-1 text-right">{totals.protein_g.toFixed(1)}</div>
-                        <div className="col-span-1 text-right">{totals.carbs_g.toFixed(1)}</div>
-                        <div className="col-span-1 text-right">{totals.fat_g.toFixed(1)}</div>
-                        <div className="col-span-1 text-right">{totals.fiber_g.toFixed(1)}</div>
+                        <div className="col-span-1 text-right font-bold" style={{ color: "#14b780" }}>{totals.energy_kcal.toFixed(0)}</div>
+                        <div className="col-span-1 text-right font-bold text-info">{totals.protein_g.toFixed(1)}</div>
+                        <div className="col-span-1 text-right font-bold text-warning">{totals.carbs_g.toFixed(1)}</div>
+                        <div className="col-span-1 text-right font-bold" style={{ color: "hsl(25, 85%, 55%)" }}>{totals.fat_g.toFixed(1)}</div>
+                        <div className="col-span-1 text-right font-bold text-muted-foreground">{totals.fiber_g.toFixed(1)}</div>
                         <div className="col-span-1"></div>
                       </div>
                     </div>
                   )}
-                  <Button variant="outline" size="sm" className="w-full mt-2" onClick={() => openFoodSearch(mealIndex)}>
+                  <Button variant="outline" size="sm" className="w-full mt-2 border-white/10 bg-white/[0.02] hover:bg-white/[0.06]" onClick={() => openFoodSearch(mealIndex)}>
                     <Search className="w-4 h-4 mr-1" /> Buscar Alimento (TACO/TBCA)
                   </Button>
-                </CardContent>
+                </div>
               )}
-            </Card>
+            </div>
           );
         })}
       </div>
