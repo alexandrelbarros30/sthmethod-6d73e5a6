@@ -142,16 +142,16 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="text-center pb-2">
-        <h2 className="text-base font-bold tracking-[0.15em] uppercase text-foreground font-display">
-          Análise de Bioimpedância
+    <div className="space-y-4" style={{ ["--sth-green" as any]: "#14b780" }}>
+      {/* Header — gamified premium */}
+      <div className="flex items-baseline justify-between px-1">
+        <h2 className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground">
+          Bioimpedância
         </h2>
-        <p className="text-xs text-muted-foreground mt-1">
-          Última avaliação: {new Date(latest.logged_at).toLocaleDateString("pt-BR")}
-          {logs.length > 1 && ` • ${logs.length} avaliações registradas`}
-        </p>
+        <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground tabular-nums">
+          {new Date(latest.logged_at).toLocaleDateString("pt-BR")}
+          {logs.length > 1 && ` · ${logs.length}`}
+        </span>
       </div>
 
       {/* Key Metrics Cards */}
@@ -422,20 +422,20 @@ const MetricCard = ({
   delta?: React.ReactNode;
   color: string;
 }) => (
-  <div className="bg-muted/50 rounded-xl p-2 sm:p-3 text-center border border-border/30">
-    <div className={`flex items-center justify-center gap-1 mb-1 ${color}`}>
+  <div className="bg-white/[0.03] hover:bg-white/[0.05] transition-colors rounded-2xl p-3 text-center border border-white/10 backdrop-blur-xl">
+    <div className={`flex items-center justify-center gap-1 mb-1.5 ${color}`}>
       {icon}
-      <span className="text-[9px] sm:text-[10px] font-medium uppercase tracking-wide">{label}</span>
+      <span className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-[0.2em]">{label}</span>
     </div>
-    <p className="text-sm font-bold text-foreground">{value}</p>
-    {delta && <div className="mt-0.5">{delta}</div>}
+    <p className="text-base font-bold text-foreground tabular-nums">{value}</p>
+    {delta && <div className="mt-1">{delta}</div>}
   </div>
 );
 
 const MiniStat = ({ label, value }: { label: string; value: string }) => (
-  <div className="text-center">
-    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{label}</p>
-    <p className="text-sm font-bold text-foreground">{value}</p>
+  <div className="text-center rounded-xl border border-white/10 bg-white/[0.02] py-2 px-2">
+    <p className="text-[9px] uppercase tracking-[0.25em] text-muted-foreground font-semibold">{label}</p>
+    <p className="text-sm font-bold text-foreground tabular-nums mt-0.5">{value}</p>
   </div>
 );
 
