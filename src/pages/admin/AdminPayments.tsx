@@ -7,7 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Settings, History, CreditCard, QrCode, Landmark, Link2, Eye, ShieldCheck, ShieldAlert, Loader2, CheckCircle, XCircle, Image } from "lucide-react";
+import { Settings, History, CreditCard, QrCode, Landmark, Link2, Eye, ShieldCheck, ShieldAlert, Loader2, CheckCircle, XCircle, Image, Plus, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -16,6 +19,17 @@ import PaymentLinksTab from "@/components/admin/PaymentLinksTab";
 const AdminPayments = () => {
   const qc = useQueryClient();
   const [receiptDialog, setReceiptDialog] = useState<any>(null);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualForm, setManualForm] = useState({
+    user_id: "",
+    user_search: "",
+    plan_id: "",
+    method: "pix",
+    action_type: "new",
+    amount: "",
+    paid_at: new Date().toISOString().split("T")[0],
+    notes: "",
+  });
 
   const { data: paymentSettings } = useQuery({
     queryKey: ["payment-settings"],
@@ -63,6 +77,90 @@ const AdminPayments = () => {
       const { data } = await supabase.from("profiles").select("user_id, full_name, email, phone");
       return data || [];
     },
+  });
+
+  const { data: plansList } = useQuery({
+    queryKey: ["admin-plans-for-manual-payment"],
+    queryFn: async () => {
+      const { data } = await supabase.from("plans").select("id, name, price, card_price, duration_days").eq("active", true).order("name");
+      return data || [];
+    },
+  });
+
+  const registerManualPayment = useMutation({
+    mutationFn: async () => {
+      if (!manualForm.user_id) throw new Error("Selecione o aluno");
+      if (!manualForm.plan_id) throw new Error("Selecione o plano");
+      const amt = parseFloat(String(manualForm.amount).replace(",", "."));
+      if (!amt || amt <= 0) throw new Error("Informe um valor válido");
+
+      const plan = plansList?.find((p: any) => p.id === manualForm.plan_id);
+      const durationDays = plan?.duration_days || 30;
+      const paidAt = new Date(manualForm.paid_at + "T12:00:00");
+
+      const { data: payment, error: payErr } = await supabase
+        .from("payments")
+        .insert({
+          user_id: manualForm.user_id,
+          plan_id: manualForm.plan_id,
+          amount: amt,
+          original_amount: amt,
+          method: manualForm.method,
+          action_type: manualForm.action_type,
+          status: "approved",
+          installments: 1,
+          created_at: paidAt.toISOString(),
+          updated_at: paidAt.toISOString(),
+        })
+        .select()
+        .single();
+      if (payErr) throw payErr;
+
+      await supabase.from("payment_gateway_details").upsert({
+        payment_id: payment.id,
+        ai_verification_status: "approved",
+        ai_verification_notes: `Pagamento manual registrado fora do checkout. ${manualForm.notes || ""}`.trim(),
+      }, { onConflict: "payment_id" });
+
+      const startDate = paidAt;
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + durationDays);
+
+      const { data: existingSub } = await supabase
+        .from("subscriptions")
+        .select("id")
+        .eq("user_id", manualForm.user_id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (existingSub) {
+        await supabase.from("subscriptions").update({
+          plan_id: manualForm.plan_id,
+          status: "active",
+          start_date: startDate.toISOString().split("T")[0],
+          end_date: endDate.toISOString().split("T")[0],
+        }).eq("id", existingSub.id);
+      } else {
+        await supabase.from("subscriptions").insert({
+          user_id: manualForm.user_id,
+          plan_id: manualForm.plan_id,
+          status: "active",
+          start_date: startDate.toISOString().split("T")[0],
+          end_date: endDate.toISOString().split("T")[0],
+        });
+      }
+    },
+    onSuccess: () => {
+      toast.success("Pagamento manual registrado e assinatura ativada!");
+      qc.invalidateQueries({ queryKey: ["admin-payments-history"] });
+      setManualOpen(false);
+      setManualForm({
+        user_id: "", user_search: "", plan_id: "", method: "pix",
+        action_type: "new", amount: "", paid_at: new Date().toISOString().split("T")[0], notes: "",
+      });
+    },
+    onError: (e: any) => toast.error(e?.message || "Erro ao registrar pagamento"),
   });
 
   const updateSetting = useMutation({
@@ -189,6 +287,9 @@ const AdminPayments = () => {
     pix: "PIX",
     credit: "Crédito",
     debit: "Débito",
+    cash: "Dinheiro",
+    transfer: "Transferência",
+    other: "Outro",
   };
 
   const generateWhatsAppLink = (payment: any) => {
@@ -297,7 +398,12 @@ const AdminPayments = () => {
         {/* ─── HISTÓRICO ─── */}
         <TabsContent value="history" className="mt-4">
           <Card className="bg-card border-border">
-            <CardHeader><CardTitle className="text-sm">Histórico de Pagamentos</CardTitle></CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-sm">Histórico de Pagamentos</CardTitle>
+              <Button size="sm" onClick={() => setManualOpen(true)}>
+                <Plus className="w-4 h-4 mr-1" /> Registrar pagamento manual
+              </Button>
+            </CardHeader>
             <CardContent>
               {payments && payments.length > 0 ? (
                 <div className="overflow-x-auto">
