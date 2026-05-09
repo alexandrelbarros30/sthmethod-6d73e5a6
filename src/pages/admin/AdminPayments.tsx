@@ -560,6 +560,149 @@ const AdminPayments = () => {
           })()}
         </DialogContent>
       </Dialog>
+
+      {/* Manual Payment Registration Dialog */}
+      <Dialog open={manualOpen} onOpenChange={setManualOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display">Registrar pagamento manual</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p className="text-xs text-muted-foreground">
+              Use para alunos que pagaram fora do checkout (PIX direto, dinheiro, transferência etc). O valor entrará no faturamento e a assinatura será ativada.
+            </p>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">Aluno</Label>
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  className="pl-8"
+                  placeholder="Buscar por nome ou e-mail..."
+                  value={manualForm.user_search}
+                  onChange={(e) => setManualForm((f) => ({ ...f, user_search: e.target.value, user_id: "" }))}
+                />
+              </div>
+              {manualForm.user_id ? (
+                <div className="text-xs p-2 rounded border border-primary/30 bg-primary/5 flex items-center justify-between">
+                  <span>{getProfile(manualForm.user_id)?.full_name} — {getProfile(manualForm.user_id)?.email}</span>
+                  <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => setManualForm((f) => ({ ...f, user_id: "", user_search: "" }))}>Trocar</Button>
+                </div>
+              ) : manualForm.user_search.length >= 2 ? (
+                <div className="max-h-40 overflow-y-auto border border-border rounded-md divide-y divide-border">
+                  {(profiles || [])
+                    .filter((p: any) => {
+                      const q = manualForm.user_search.toLowerCase();
+                      return (p.full_name || "").toLowerCase().includes(q) || (p.email || "").toLowerCase().includes(q);
+                    })
+                    .slice(0, 10)
+                    .map((p: any) => (
+                      <button
+                        key={p.user_id}
+                        type="button"
+                        className="w-full text-left px-2.5 py-1.5 text-xs hover:bg-muted/50"
+                        onClick={() => setManualForm((f) => ({ ...f, user_id: p.user_id, user_search: p.full_name || p.email || "" }))}
+                      >
+                        <div className="font-medium">{p.full_name || "—"}</div>
+                        <div className="text-muted-foreground">{p.email}</div>
+                      </button>
+                    ))}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Plano</Label>
+                <Select
+                  value={manualForm.plan_id}
+                  onValueChange={(v) => {
+                    const plan = plansList?.find((p: any) => p.id === v);
+                    const priceStr = (plan?.price || "").toString().replace(/[^\d,\.]/g, "").replace(",", ".");
+                    const auto = parseFloat(priceStr);
+                    setManualForm((f) => ({ ...f, plan_id: v, amount: auto ? auto.toFixed(2) : f.amount }));
+                  }}
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                  <SelectContent>
+                    {(plansList || []).map((p: any) => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Valor (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="0,00"
+                  value={manualForm.amount}
+                  onChange={(e) => setManualForm((f) => ({ ...f, amount: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Método</Label>
+                <Select value={manualForm.method} onValueChange={(v) => setManualForm((f) => ({ ...f, method: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pix">PIX</SelectItem>
+                    <SelectItem value="credit">Cartão de Crédito</SelectItem>
+                    <SelectItem value="debit">Cartão de Débito</SelectItem>
+                    <SelectItem value="transfer">Transferência</SelectItem>
+                    <SelectItem value="cash">Dinheiro</SelectItem>
+                    <SelectItem value="other">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Tipo</Label>
+                <Select value={manualForm.action_type} onValueChange={(v) => setManualForm((f) => ({ ...f, action_type: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">Novo Aluno</SelectItem>
+                    <SelectItem value="unlock">Renovação/Desbloqueio</SelectItem>
+                    <SelectItem value="upgrade">Atualização</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">Data do pagamento</Label>
+              <Input
+                type="date"
+                value={manualForm.paid_at}
+                onChange={(e) => setManualForm((f) => ({ ...f, paid_at: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">Observações (opcional)</Label>
+              <Input
+                placeholder="Ex: pago via PIX direto pelo telefone"
+                value={manualForm.notes}
+                onChange={(e) => setManualForm((f) => ({ ...f, notes: e.target.value }))}
+              />
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setManualOpen(false)}>Cancelar</Button>
+              <Button
+                className="flex-1"
+                onClick={() => registerManualPayment.mutate()}
+                disabled={registerManualPayment.isPending}
+              >
+                {registerManualPayment.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-1" />}
+                Registrar e Ativar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
