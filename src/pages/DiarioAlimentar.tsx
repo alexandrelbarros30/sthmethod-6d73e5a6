@@ -573,51 +573,66 @@ export default function DiarioAlimentar() {
           const items = groupByMeal(m.key);
           const mealKcal = items.reduce((a, i) => a + Number(i.energy_kcal), 0);
           const isCustom = !MEAL_TYPES.some((dm) => dm.key === m.key);
+          const isOpen = expandedMeals.has(m.key);
           return (
-            <div key={m.key} className="sth-glass overflow-hidden">
-              <div className="flex items-center justify-between p-3 border-b border-[hsl(150,18%,14%)]">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-xl">{m.icon}</span>
-                  <div className="min-w-0">
-                    <p className="font-bold leading-tight text-[hsl(150,12%,88%)]">{m.label}</p>
-                    <p className="text-[11px] text-[hsl(150,8%,55%)]">{Math.round(mealKcal)} kcal · {items.length} itens</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  {isCustom && customMeals.some((c) => c.key === m.key) && (
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-[hsl(0,65%,52%)] hover:text-[hsl(0,65%,60%)] hover:bg-[hsl(150,25%,10%)]" onClick={() => removeCustomMeal(m.key)} title="Remover refeição">
-                      <X className="w-4 h-4" />
-                    </Button>
-                  )}
-                  {items.length > 0 && (
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-[hsl(150,95%,45%)] hover:text-[hsl(150,95%,60%)] hover:bg-[hsl(150,25%,10%)]" onClick={() => saveAsCombo(m.key)} title="Salvar como combo">
-                      <BookmarkPlus className="w-4 h-4" />
-                    </Button>
-                  )}
-                  <Button size="icon" variant="ghost" className="h-8 w-8 text-[hsl(150,95%,45%)] hover:text-[hsl(150,95%,60%)] hover:bg-[hsl(150,25%,10%)]"
-                    onClick={() => { setAddMeal(m.key); setAddOpen(true); }}>
-                    <Plus className="w-5 h-5" />
-                  </Button>
-                </div>
-              </div>
-              {items.length > 0 && (
-                <div className="divide-y divide-[hsl(150,18%,14%)]">
-                  {items.map((it) => (
-                    <div key={it.id} className="flex items-center justify-between gap-2 px-3 py-2.5 hover:bg-[hsl(150,25%,10%)]/50 transition-colors">
+            <Collapsible key={m.key} open={isOpen} onOpenChange={(open) => {
+              setExpandedMeals((prev) => {
+                const next = new Set(prev);
+                if (open) next.add(m.key);
+                else next.delete(m.key);
+                return next;
+              });
+            }}>
+              <div className="sth-glass overflow-hidden">
+                <CollapsibleTrigger asChild>
+                  <div className="flex items-center justify-between p-3 border-b border-[hsl(150,18%,14%)] cursor-pointer select-none hover:bg-[hsl(150,25%,10%)]/30 transition-colors">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <ChevronDown className={cn("w-4 h-4 text-[hsl(150,8%,55%)] shrink-0 transition-transform duration-200", isOpen && "rotate-180")} />
+                      <span className="text-xl">{m.icon}</span>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium truncate text-[hsl(150,12%,88%)]">{it.item_name}</p>
-                        <p className="text-[11px] text-[hsl(150,8%,55%)]">
-                          {it.quantity}{it.unit} · {Math.round(Number(it.energy_kcal))} kcal · P:{Number(it.protein_g).toFixed(1)} C:{Number(it.carbs_g).toFixed(1)} G:{Number(it.fat_g).toFixed(1)}
-                        </p>
+                        <p className="font-bold leading-tight text-[hsl(150,12%,88%)]">{m.label}</p>
+                        <p className="text-[11px] text-[hsl(150,8%,55%)]">{Math.round(mealKcal)} kcal · {items.length} itens</p>
                       </div>
-                      <Button size="icon" variant="ghost" className="h-7 w-7 text-[hsl(0,65%,52%)] hover:text-[hsl(0,65%,60%)] hover:bg-[hsl(0,65%,52%)]/10" onClick={() => removeEntry(it.id)}>
-                        <Trash2 className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                      {isCustom && customMeals.some((c) => c.key === m.key) && (
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-[hsl(0,65%,52%)] hover:text-[hsl(0,65%,60%)] hover:bg-[hsl(150,25%,10%)]" onClick={() => removeCustomMeal(m.key)} title="Remover refeição">
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {items.length > 0 && (
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-[hsl(150,95%,45%)] hover:text-[hsl(150,95%,60%)] hover:bg-[hsl(150,25%,10%)]" onClick={() => saveAsCombo(m.key)} title="Salvar como combo">
+                          <BookmarkPlus className="w-4 h-4" />
+                        </Button>
+                      )}
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-[hsl(150,95%,45%)] hover:text-[hsl(150,95%,60%)] hover:bg-[hsl(150,25%,10%)]"
+                        onClick={() => { setAddMeal(m.key); setAddOpen(true); }}>
+                        <Plus className="w-5 h-5" />
                       </Button>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  {items.length > 0 && (
+                    <div className="divide-y divide-[hsl(150,18%,14%)]">
+                      {items.map((it) => (
+                        <div key={it.id} className="flex items-center justify-between gap-2 px-3 py-2.5 hover:bg-[hsl(150,25%,10%)]/50 transition-colors">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate text-[hsl(150,12%,88%)]">{it.item_name}</p>
+                            <p className="text-[11px] text-[hsl(150,8%,55%)]">
+                              {it.quantity}{it.unit} · {Math.round(Number(it.energy_kcal))} kcal · P:{Number(it.protein_g).toFixed(1)} C:{Number(it.carbs_g).toFixed(1)} G:{Number(it.fat_g).toFixed(1)}
+                            </p>
+                          </div>
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-[hsl(0,65%,52%)] hover:text-[hsl(0,65%,60%)] hover:bg-[hsl(0,65%,52%)]/10" onClick={() => removeEntry(it.id)}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CollapsibleContent>
+              </div>
+            </Collapsible>
           );
         })}
 
