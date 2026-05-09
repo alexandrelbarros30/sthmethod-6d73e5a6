@@ -91,11 +91,12 @@ function LeadGate({ onDone }: { onDone: () => void }) {
 
 /* ---------------- Add Food Dialog ---------------- */
 function AddFoodDialog({
-  open, onOpenChange, mealType, onAdd,
+  open, onOpenChange, mealType, mealLabel, onAdd,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   mealType: string;
+  mealLabel: string;
   onAdd: (entries: Omit<DiaryEntry, "id" | "user_id" | "log_date" | "created_at">[]) => void;
 }) {
   const [tab, setTab] = useState<"alimento" | "salvas">("alimento");
@@ -132,7 +133,7 @@ function AddFoodDialog({
 
   const confirmFood = () => {
     if (!selectedFood) return;
-    const label = MEAL_TYPES.find((m) => m.key === mealType)?.label || "";
+    const label = mealLabel;
     onAdd([{
       meal_type: mealType,
       meal_label: label,
@@ -153,7 +154,7 @@ function AddFoodDialog({
   };
 
   const addSavedMeal = (sm: SavedMeal) => {
-    const label = MEAL_TYPES.find((m) => m.key === mealType)?.label || "";
+    const label = mealLabel;
     onAdd(sm.items.map((it) => ({
       meal_type: mealType,
       meal_label: label,
@@ -176,7 +177,7 @@ function AddFoodDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl max-h-[90vh] flex flex-col bg-[hsl(155,25%,5%)] border-[hsl(150,18%,14%)] text-foreground">
         <DialogHeader>
-          <DialogTitle className="gradient-text">{MEAL_TYPES.find((m) => m.key === mealType)?.label}</DialogTitle>
+          <DialogTitle className="gradient-text">{mealLabel}</DialogTitle>
         </DialogHeader>
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="flex-1 flex flex-col min-h-0">
           <TabsList className="grid grid-cols-2 bg-[hsl(155,18%,8%)] border border-[hsl(150,18%,14%)]">
@@ -654,7 +655,7 @@ export default function DiarioAlimentar() {
         </div>
       </div>
 
-      <AddFoodDialog open={addOpen} onOpenChange={setAddOpen} mealType={addMeal} onAdd={addEntries} />
+      <AddFoodDialog open={addOpen} onOpenChange={setAddOpen} mealType={addMeal} mealLabel={findMealLabel(addMeal)} onAdd={addEntries} />
       <GoalsDialog open={goalsOpen} onOpenChange={setGoalsOpen} goals={goals} onSave={saveGoals} />
     </div>
   );
