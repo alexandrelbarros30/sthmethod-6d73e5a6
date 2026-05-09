@@ -2,6 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 const MAX_SIZE_MB = 1;
 const MAX_DIMENSION = 1000;
+const MIN_DIMENSION = 480;
+const UPLOAD_TIMEOUT_MS = 30000;
 
 /**
  * Detect HEIC/HEIF file by extension or MIME type (iPhone native format).
@@ -41,6 +43,12 @@ function canUploadOriginalImage(file: File): boolean {
 
   return ["image/jpeg", "image/jpg", "image/png", "image/webp", ""].includes(type)
     || /\.(jpg|jpeg|png|webp)$/i.test(name);
+}
+
+function canvasToJpegBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => resolve(blob), "image/jpeg", quality);
+  });
 }
 
 /**
