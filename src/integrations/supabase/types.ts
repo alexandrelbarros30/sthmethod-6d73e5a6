@@ -715,6 +715,120 @@ export type Database = {
         }
         Relationships: []
       }
+      food_diary_entries: {
+        Row: {
+          carbs_g: number
+          created_at: string
+          energy_kcal: number
+          fat_g: number
+          fiber_g: number
+          food_id: string | null
+          id: string
+          item_name: string
+          log_date: string
+          meal_label: string
+          meal_type: string
+          protein_g: number
+          quantity: number
+          sodium_mg: number
+          sort_order: number
+          unit: string
+          user_id: string
+        }
+        Insert: {
+          carbs_g?: number
+          created_at?: string
+          energy_kcal?: number
+          fat_g?: number
+          fiber_g?: number
+          food_id?: string | null
+          id?: string
+          item_name: string
+          log_date?: string
+          meal_label?: string
+          meal_type?: string
+          protein_g?: number
+          quantity?: number
+          sodium_mg?: number
+          sort_order?: number
+          unit?: string
+          user_id: string
+        }
+        Update: {
+          carbs_g?: number
+          created_at?: string
+          energy_kcal?: number
+          fat_g?: number
+          fiber_g?: number
+          food_id?: string | null
+          id?: string
+          item_name?: string
+          log_date?: string
+          meal_label?: string
+          meal_type?: string
+          protein_g?: number
+          quantity?: number
+          sodium_mg?: number
+          sort_order?: number
+          unit?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      food_diary_goals: {
+        Row: {
+          carbs_g: number
+          daily_kcal: number
+          fat_g: number
+          protein_g: number
+          updated_at: string
+          user_id: string
+          water_ml: number
+        }
+        Insert: {
+          carbs_g?: number
+          daily_kcal?: number
+          fat_g?: number
+          protein_g?: number
+          updated_at?: string
+          user_id: string
+          water_ml?: number
+        }
+        Update: {
+          carbs_g?: number
+          daily_kcal?: number
+          fat_g?: number
+          protein_g?: number
+          updated_at?: string
+          user_id?: string
+          water_ml?: number
+        }
+        Relationships: []
+      }
+      food_diary_water: {
+        Row: {
+          id: string
+          log_date: string
+          ml: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          log_date?: string
+          ml?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          log_date?: string
+          ml?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       foods: {
         Row: {
           carbs_g: number
@@ -1853,6 +1967,89 @@ export type Database = {
           id?: string
           student_user_id?: string
           token?: string
+        }
+        Relationships: []
+      }
+      saved_meal_items: {
+        Row: {
+          carbs_g: number
+          energy_kcal: number
+          fat_g: number
+          food_id: string | null
+          id: string
+          item_name: string
+          protein_g: number
+          quantity: number
+          saved_meal_id: string
+          sort_order: number
+          unit: string
+        }
+        Insert: {
+          carbs_g?: number
+          energy_kcal?: number
+          fat_g?: number
+          food_id?: string | null
+          id?: string
+          item_name: string
+          protein_g?: number
+          quantity?: number
+          saved_meal_id: string
+          sort_order?: number
+          unit?: string
+        }
+        Update: {
+          carbs_g?: number
+          energy_kcal?: number
+          fat_g?: number
+          food_id?: string | null
+          id?: string
+          item_name?: string
+          protein_g?: number
+          quantity?: number
+          saved_meal_id?: string
+          sort_order?: number
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_meal_items_saved_meal_id_fkey"
+            columns: ["saved_meal_id"]
+            isOneToOne: false
+            referencedRelation: "saved_meals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_meals: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          total_carbs: number
+          total_fat: number
+          total_kcal: number
+          total_protein: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          total_carbs?: number
+          total_fat?: number
+          total_kcal?: number
+          total_protein?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          total_carbs?: number
+          total_fat?: number
+          total_kcal?: number
+          total_protein?: number
+          user_id?: string
         }
         Relationships: []
       }
