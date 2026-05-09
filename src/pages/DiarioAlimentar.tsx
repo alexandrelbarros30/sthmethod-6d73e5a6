@@ -360,6 +360,7 @@ export default function DiarioAlimentar() {
     const meal = { key, label, icon: "🍴" };
     localDiary.addCustomMeal(meal);
     setCustomMeals(localDiary.getCustomMeals());
+    setExpandedMeals((prev) => new Set(prev).add(key));
     toast.success("Refeição adicionada");
   };
 
