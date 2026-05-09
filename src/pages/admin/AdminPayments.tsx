@@ -7,7 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Settings, History, CreditCard, QrCode, Landmark, Link2, Eye, ShieldCheck, ShieldAlert, Loader2, CheckCircle, XCircle, Image } from "lucide-react";
+import { Settings, History, CreditCard, QrCode, Landmark, Link2, Eye, ShieldCheck, ShieldAlert, Loader2, CheckCircle, XCircle, Image, Plus, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -16,6 +19,17 @@ import PaymentLinksTab from "@/components/admin/PaymentLinksTab";
 const AdminPayments = () => {
   const qc = useQueryClient();
   const [receiptDialog, setReceiptDialog] = useState<any>(null);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualForm, setManualForm] = useState({
+    user_id: "",
+    user_search: "",
+    plan_id: "",
+    method: "pix",
+    action_type: "new",
+    amount: "",
+    paid_at: new Date().toISOString().split("T")[0],
+    notes: "",
+  });
 
   const { data: paymentSettings } = useQuery({
     queryKey: ["payment-settings"],
@@ -63,6 +77,90 @@ const AdminPayments = () => {
       const { data } = await supabase.from("profiles").select("user_id, full_name, email, phone");
       return data || [];
     },
+  });
+
+  const { data: plansList } = useQuery({
+    queryKey: ["admin-plans-for-manual-payment"],
+    queryFn: async () => {
+      const { data } = await supabase.from("plans").select("id, name, price, card_price, duration_days").eq("active", true).order("name");
+      return data || [];
+    },
+  });
+
+  const registerManualPayment = useMutation({
+    mutationFn: async () => {
+      if (!manualForm.user_id) throw new Error("Selecione o aluno");
+      if (!manualForm.plan_id) throw new Error("Selecione o plano");
+      const amt = parseFloat(String(manualForm.amount).replace(",", "."));
+      if (!amt || amt <= 0) throw new Error("Informe um valor válido");
+
+      const plan = plansList?.find((p: any) => p.id === manualForm.plan_id);
+      const durationDays = plan?.duration_days || 30;
+      const paidAt = new Date(manualForm.paid_at + "T12:00:00");
+
+      const { data: payment, error: payErr } = await supabase
+        .from("payments")
+        .insert({
+          user_id: manualForm.user_id,
+          plan_id: manualForm.plan_id,
+          amount: amt,
+          original_amount: amt,
+          method: manualForm.method,
+          action_type: manualForm.action_type,
+          status: "approved",
+          installments: 1,
+          created_at: paidAt.toISOString(),
+          updated_at: paidAt.toISOString(),
+        })
+        .select()
+        .single();
+      if (payErr) throw payErr;
+
+      await supabase.from("payment_gateway_details").upsert({
+        payment_id: payment.id,
+        ai_verification_status: "approved",
+        ai_verification_notes: `Pagamento manual registrado fora do checkout. ${manualForm.notes || ""}`.trim(),
+      }, { onConflict: "payment_id" });
+
+      const startDate = paidAt;
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + durationDays);
+
+      const { data: existingSub } = await supabase
+        .from("subscriptions")
+        .select("id")
+        .eq("user_id", manualForm.user_id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (existingSub) {
+        await supabase.from("subscriptions").update({
+          plan_id: manualForm.plan_id,
+          status: "active",
+          start_date: startDate.toISOString().split("T")[0],
+          end_date: endDate.toISOString().split("T")[0],
+        }).eq("id", existingSub.id);
+      } else {
+        await supabase.from("subscriptions").insert({
+          user_id: manualForm.user_id,
+          plan_id: manualForm.plan_id,
+          status: "active",
+          start_date: startDate.toISOString().split("T")[0],
+          end_date: endDate.toISOString().split("T")[0],
+        });
+      }
+    },
+    onSuccess: () => {
+      toast.success("Pagamento manual registrado e assinatura ativada!");
+      qc.invalidateQueries({ queryKey: ["admin-payments-history"] });
+      setManualOpen(false);
+      setManualForm({
+        user_id: "", user_search: "", plan_id: "", method: "pix",
+        action_type: "new", amount: "", paid_at: new Date().toISOString().split("T")[0], notes: "",
+      });
+    },
+    onError: (e: any) => toast.error(e?.message || "Erro ao registrar pagamento"),
   });
 
   const updateSetting = useMutation({
@@ -189,6 +287,9 @@ const AdminPayments = () => {
     pix: "PIX",
     credit: "Crédito",
     debit: "Débito",
+    cash: "Dinheiro",
+    transfer: "Transferência",
+    other: "Outro",
   };
 
   const generateWhatsAppLink = (payment: any) => {
@@ -297,7 +398,12 @@ const AdminPayments = () => {
         {/* ─── HISTÓRICO ─── */}
         <TabsContent value="history" className="mt-4">
           <Card className="bg-card border-border">
-            <CardHeader><CardTitle className="text-sm">Histórico de Pagamentos</CardTitle></CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-sm">Histórico de Pagamentos</CardTitle>
+              <Button size="sm" onClick={() => setManualOpen(true)}>
+                <Plus className="w-4 h-4 mr-1" /> Registrar pagamento manual
+              </Button>
+            </CardHeader>
             <CardContent>
               {payments && payments.length > 0 ? (
                 <div className="overflow-x-auto">
@@ -452,6 +558,149 @@ const AdminPayments = () => {
               </div>
             );
           })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Manual Payment Registration Dialog */}
+      <Dialog open={manualOpen} onOpenChange={setManualOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display">Registrar pagamento manual</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p className="text-xs text-muted-foreground">
+              Use para alunos que pagaram fora do checkout (PIX direto, dinheiro, transferência etc). O valor entrará no faturamento e a assinatura será ativada.
+            </p>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">Aluno</Label>
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  className="pl-8"
+                  placeholder="Buscar por nome ou e-mail..."
+                  value={manualForm.user_search}
+                  onChange={(e) => setManualForm((f) => ({ ...f, user_search: e.target.value, user_id: "" }))}
+                />
+              </div>
+              {manualForm.user_id ? (
+                <div className="text-xs p-2 rounded border border-primary/30 bg-primary/5 flex items-center justify-between">
+                  <span>{getProfile(manualForm.user_id)?.full_name} — {getProfile(manualForm.user_id)?.email}</span>
+                  <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => setManualForm((f) => ({ ...f, user_id: "", user_search: "" }))}>Trocar</Button>
+                </div>
+              ) : manualForm.user_search.length >= 2 ? (
+                <div className="max-h-40 overflow-y-auto border border-border rounded-md divide-y divide-border">
+                  {(profiles || [])
+                    .filter((p: any) => {
+                      const q = manualForm.user_search.toLowerCase();
+                      return (p.full_name || "").toLowerCase().includes(q) || (p.email || "").toLowerCase().includes(q);
+                    })
+                    .slice(0, 10)
+                    .map((p: any) => (
+                      <button
+                        key={p.user_id}
+                        type="button"
+                        className="w-full text-left px-2.5 py-1.5 text-xs hover:bg-muted/50"
+                        onClick={() => setManualForm((f) => ({ ...f, user_id: p.user_id, user_search: p.full_name || p.email || "" }))}
+                      >
+                        <div className="font-medium">{p.full_name || "—"}</div>
+                        <div className="text-muted-foreground">{p.email}</div>
+                      </button>
+                    ))}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Plano</Label>
+                <Select
+                  value={manualForm.plan_id}
+                  onValueChange={(v) => {
+                    const plan = plansList?.find((p: any) => p.id === v);
+                    const priceStr = (plan?.price || "").toString().replace(/[^\d,\.]/g, "").replace(",", ".");
+                    const auto = parseFloat(priceStr);
+                    setManualForm((f) => ({ ...f, plan_id: v, amount: auto ? auto.toFixed(2) : f.amount }));
+                  }}
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                  <SelectContent>
+                    {(plansList || []).map((p: any) => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Valor (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="0,00"
+                  value={manualForm.amount}
+                  onChange={(e) => setManualForm((f) => ({ ...f, amount: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Método</Label>
+                <Select value={manualForm.method} onValueChange={(v) => setManualForm((f) => ({ ...f, method: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pix">PIX</SelectItem>
+                    <SelectItem value="credit">Cartão de Crédito</SelectItem>
+                    <SelectItem value="debit">Cartão de Débito</SelectItem>
+                    <SelectItem value="transfer">Transferência</SelectItem>
+                    <SelectItem value="cash">Dinheiro</SelectItem>
+                    <SelectItem value="other">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Tipo</Label>
+                <Select value={manualForm.action_type} onValueChange={(v) => setManualForm((f) => ({ ...f, action_type: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">Novo Aluno</SelectItem>
+                    <SelectItem value="unlock">Renovação/Desbloqueio</SelectItem>
+                    <SelectItem value="upgrade">Atualização</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">Data do pagamento</Label>
+              <Input
+                type="date"
+                value={manualForm.paid_at}
+                onChange={(e) => setManualForm((f) => ({ ...f, paid_at: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">Observações (opcional)</Label>
+              <Input
+                placeholder="Ex: pago via PIX direto pelo telefone"
+                value={manualForm.notes}
+                onChange={(e) => setManualForm((f) => ({ ...f, notes: e.target.value }))}
+              />
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setManualOpen(false)}>Cancelar</Button>
+              <Button
+                className="flex-1"
+                onClick={() => registerManualPayment.mutate()}
+                disabled={registerManualPayment.isPending}
+              >
+                {registerManualPayment.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-1" />}
+                Registrar e Ativar
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </DashboardLayout>
