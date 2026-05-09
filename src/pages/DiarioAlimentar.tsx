@@ -337,6 +337,7 @@ export default function DiarioAlimentar() {
   const [addMeal, setAddMeal] = useState<string>("cafe");
   const [goalsOpen, setGoalsOpen] = useState(false);
   const [customMeals, setCustomMeals] = useState<Array<{ key: string; label: string; icon: string }>>(() => localDiary.getCustomMeals());
+  const [expandedMeals, setExpandedMeals] = useState<Set<string>>(new Set([...MEAL_TYPES.map(m => m.key), ...localDiary.getCustomMeals().map(m => m.key)]));
 
   const allMeals = useMemo(() => {
     // Merge defaults + custom + any meal_type present in entries that isn't covered
