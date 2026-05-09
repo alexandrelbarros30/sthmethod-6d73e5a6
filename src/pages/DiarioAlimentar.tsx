@@ -7,11 +7,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
-import { Plus, Search, Trash2, Droplet, BookmarkPlus, ChevronLeft, ChevronRight, Settings, Loader2, X, ChevronDown } from "lucide-react";
+import { Plus, Search, Trash2, Droplet, BookmarkPlus, ChevronLeft, ChevronRight, Settings, Loader2, X, ChevronDown, Calculator } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { localDiary, MEAL_TYPES, DEFAULT_GOALS, type DiaryEntry, type SavedMeal, type Goals } from "@/lib/food-diary-storage";
+import { calculateMacros, type MacroInput } from "@/lib/macro-calculator";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -324,6 +325,223 @@ function GoalsDialog({ open, onOpenChange, goals, onSave }: {
   );
 }
 
+/* ---------------- Macro Calculator Dialog ---------------- */
+function MacroCalcDialog({ open, onOpenChange, currentWater, onApply }: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  currentWater: number;
+  onApply: (g: Goals) => void;
+}) {
+  const [gender, setGender] = useState<"masculino" | "feminino">("masculino");
+  const [age, setAge] = useState(30);
+  const [weight, setWeight] = useState(75);
+  const [height, setHeight] = useState(175);
+  const [neat, setNeat] = useState("levemente_ativo");
+  const [activityType, setActivityType] = useState("musculacao");
+  const [trainDays, setTrainDays] = useState(4);
+  const [trainMin, setTrainMin] = useState(60);
+  const [trainIntensity, setTrainIntensity] = useState("moderado");
+  const [doesCardio, setDoesCardio] = useState(false);
+  const [cardioDays, setCardioDays] = useState(3);
+  const [cardioMin, setCardioMin] = useState(30);
+  const [cardioIntensity, setCardioIntensity] = useState("moderado");
+  const [objective, setObjective] = useState("manter_peso");
+
+  const result = useMemo(() => {
+    const input: MacroInput = {
+      gender, age, weight, height,
+      activityType, doesCardio, objective,
+      physicalActivityLevel: neat,
+      trainingDaysPerWeek: trainDays,
+      trainingDurationMinutes: trainMin,
+      trainingIntensity: trainIntensity,
+      cardioDaysPerWeek: cardioDays,
+      cardioDurationMinutes: cardioMin,
+      cardioIntensity: cardioIntensity,
+    };
+    return calculateMacros(input);
+  }, [gender, age, weight, height, neat, activityType, trainDays, trainMin, trainIntensity, doesCardio, cardioDays, cardioMin, cardioIntensity, objective]);
+
+  const apply = () => {
+    const waterMl = Math.max(currentWater, Math.round(weight * 35 / 50) * 50); // ~35ml/kg, rounded
+    onApply({
+      daily_kcal: result.dailyCalories,
+      protein_g: result.proteinG,
+      carbs_g: result.carbsG,
+      fat_g: result.fatG,
+      water_ml: waterMl,
+    });
+    onOpenChange(false);
+  };
+
+  const inputCls = "h-9 bg-[hsl(155,18%,8%)] border-[hsl(150,18%,14%)] text-foreground";
+  const triggerCls = "h-9 bg-[hsl(155,18%,8%)] border-[hsl(150,18%,14%)] text-foreground";
+  const contentCls = "bg-[hsl(155,25%,6%)] border-[hsl(150,18%,14%)]";
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-[hsl(155,25%,5%)] border-[hsl(150,18%,14%)] text-foreground">
+        <DialogHeader>
+          <DialogTitle className="gradient-text flex items-center gap-2">
+            <Calculator className="w-4 h-4" /> Calcular Macros
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-xs text-[hsl(150,8%,55%)]">Sexo</label>
+              <Select value={gender} onValueChange={(v) => setGender(v as any)}>
+                <SelectTrigger className={triggerCls}><SelectValue /></SelectTrigger>
+                <SelectContent className={contentCls}>
+                  <SelectItem value="masculino">Masculino</SelectItem>
+                  <SelectItem value="feminino">Feminino</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs text-[hsl(150,8%,55%)]">Idade</label>
+              <Input type="number" className={inputCls} value={age} onChange={(e) => setAge(Number(e.target.value) || 0)} />
+            </div>
+            <div>
+              <label className="text-xs text-[hsl(150,8%,55%)]">Peso (kg)</label>
+              <Input type="number" className={inputCls} value={weight} onChange={(e) => setWeight(Number(e.target.value) || 0)} />
+            </div>
+            <div>
+              <label className="text-xs text-[hsl(150,8%,55%)]">Altura (cm)</label>
+              <Input type="number" className={inputCls} value={height} onChange={(e) => setHeight(Number(e.target.value) || 0)} />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs text-[hsl(150,8%,55%)]">Nível de atividade no dia (NEAT)</label>
+            <Select value={neat} onValueChange={setNeat}>
+              <SelectTrigger className={triggerCls}><SelectValue /></SelectTrigger>
+              <SelectContent className={contentCls}>
+                <SelectItem value="sedentario">Sedentário (escritório)</SelectItem>
+                <SelectItem value="levemente_ativo">Levemente ativo</SelectItem>
+                <SelectItem value="moderadamente_ativo">Moderadamente ativo</SelectItem>
+                <SelectItem value="bastante_ativo">Bastante ativo</SelectItem>
+                <SelectItem value="extremamente_ativo">Extremamente ativo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="text-xs text-[hsl(150,8%,55%)]">Treino</label>
+            <Select value={activityType} onValueChange={setActivityType}>
+              <SelectTrigger className={triggerCls}><SelectValue /></SelectTrigger>
+              <SelectContent className={contentCls}>
+                <SelectItem value="nenhuma">Não treino</SelectItem>
+                <SelectItem value="musculacao">Musculação</SelectItem>
+                <SelectItem value="crossfit">CrossFit</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {activityType !== "nenhuma" && (
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <label className="text-xs text-[hsl(150,8%,55%)]">Dias/sem</label>
+                <Input type="number" className={inputCls} value={trainDays} onChange={(e) => setTrainDays(Number(e.target.value) || 0)} />
+              </div>
+              <div>
+                <label className="text-xs text-[hsl(150,8%,55%)]">Min/sessão</label>
+                <Input type="number" className={inputCls} value={trainMin} onChange={(e) => setTrainMin(Number(e.target.value) || 0)} />
+              </div>
+              <div>
+                <label className="text-xs text-[hsl(150,8%,55%)]">Intensidade</label>
+                <Select value={trainIntensity} onValueChange={setTrainIntensity}>
+                  <SelectTrigger className={triggerCls}><SelectValue /></SelectTrigger>
+                  <SelectContent className={contentCls}>
+                    <SelectItem value="muito_leve">Muito leve</SelectItem>
+                    <SelectItem value="leve">Leve</SelectItem>
+                    <SelectItem value="moderado">Moderado</SelectItem>
+                    <SelectItem value="pesado">Pesado</SelectItem>
+                    <SelectItem value="muito_pesado">Muito pesado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <input id="cardio-toggle" type="checkbox" checked={doesCardio} onChange={(e) => setDoesCardio(e.target.checked)} className="accent-[hsl(150,95%,45%)]" />
+            <label htmlFor="cardio-toggle" className="text-sm text-[hsl(150,12%,88%)]">Faço cardio</label>
+          </div>
+
+          {doesCardio && (
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <label className="text-xs text-[hsl(150,8%,55%)]">Dias/sem</label>
+                <Input type="number" className={inputCls} value={cardioDays} onChange={(e) => setCardioDays(Number(e.target.value) || 0)} />
+              </div>
+              <div>
+                <label className="text-xs text-[hsl(150,8%,55%)]">Min/sessão</label>
+                <Input type="number" className={inputCls} value={cardioMin} onChange={(e) => setCardioMin(Number(e.target.value) || 0)} />
+              </div>
+              <div>
+                <label className="text-xs text-[hsl(150,8%,55%)]">Intensidade</label>
+                <Select value={cardioIntensity} onValueChange={setCardioIntensity}>
+                  <SelectTrigger className={triggerCls}><SelectValue /></SelectTrigger>
+                  <SelectContent className={contentCls}>
+                    <SelectItem value="muito_leve">Muito leve</SelectItem>
+                    <SelectItem value="leve">Leve</SelectItem>
+                    <SelectItem value="moderado">Moderado</SelectItem>
+                    <SelectItem value="intenso">Intenso</SelectItem>
+                    <SelectItem value="muito_intenso">Muito intenso</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className="text-xs text-[hsl(150,8%,55%)]">Objetivo</label>
+            <Select value={objective} onValueChange={setObjective}>
+              <SelectTrigger className={triggerCls}><SelectValue /></SelectTrigger>
+              <SelectContent className={contentCls}>
+                <SelectItem value="perder_gordura">Perder gordura (-500 kcal)</SelectItem>
+                <SelectItem value="manter_peso">Manter peso</SelectItem>
+                <SelectItem value="hipertrofia">Hipertrofia (+350 kcal)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="sth-glass p-3 mt-2">
+            <p className="text-xs text-[hsl(150,8%,55%)] mb-2">Resultado</p>
+            <div className="grid grid-cols-4 gap-2 text-center text-xs">
+              <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(150,95%,45%/0.25)] p-2">
+                <div className="font-bold text-[hsl(150,95%,45%)] text-sm tabular-nums">{result.dailyCalories}</div>
+                <div className="text-[hsl(150,8%,55%)] mt-0.5">kcal</div>
+              </div>
+              <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(190,100%,50%/0.25)] p-2">
+                <div className="font-bold text-[hsl(190,100%,50%)] text-sm tabular-nums">{result.proteinG}g</div>
+                <div className="text-[hsl(150,8%,55%)] mt-0.5">Proteína</div>
+              </div>
+              <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(35,92%,52%/0.25)] p-2">
+                <div className="font-bold text-[hsl(35,92%,52%)] text-sm tabular-nums">{result.carbsG}g</div>
+                <div className="text-[hsl(150,8%,55%)] mt-0.5">Carbo</div>
+              </div>
+              <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(25,85%,55%/0.25)] p-2">
+                <div className="font-bold text-[hsl(25,85%,55%)] text-sm tabular-nums">{result.fatG}g</div>
+                <div className="text-[hsl(150,8%,55%)] mt-0.5">Gord</div>
+              </div>
+            </div>
+            <p className="text-[10px] text-[hsl(150,8%,45%)] mt-2">TDEE: {result.tdee} kcal · TMB: {result.bmr} kcal · Água sugerida: {Math.round(weight * 35)} ml</p>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button onClick={apply} className="w-full premium-btn bg-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)] hover:bg-[hsl(150,95%,50%)]">
+            Aplicar como minhas metas
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /* ---------------- Main Page ---------------- */
 export default function DiarioAlimentar() {
   const { user } = useAuth();
@@ -336,6 +554,7 @@ export default function DiarioAlimentar() {
   const [addOpen, setAddOpen] = useState(false);
   const [addMeal, setAddMeal] = useState<string>("cafe");
   const [goalsOpen, setGoalsOpen] = useState(false);
+  const [calcOpen, setCalcOpen] = useState(false);
   const [customMeals, setCustomMeals] = useState<Array<{ key: string; label: string; icon: string }>>(() => localDiary.getCustomMeals());
   const [expandedMeals, setExpandedMeals] = useState<Set<string>>(new Set([...MEAL_TYPES.map(m => m.key), ...localDiary.getCustomMeals().map(m => m.key)]));
 
@@ -497,10 +716,16 @@ export default function DiarioAlimentar() {
               {dateObj.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setGoalsOpen(true)}
-            className="border-[hsl(150,18%,14%)] bg-[hsl(155,22%,6%)] text-[hsl(150,12%,88%)] hover:bg-[hsl(150,25%,10%)] hover:text-[hsl(150,95%,45%)]">
-            <Settings className="w-4 h-4 mr-1" /> Metas
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setCalcOpen(true)}
+              className="border-[hsl(150,18%,14%)] bg-[hsl(155,22%,6%)] text-[hsl(150,95%,45%)] hover:bg-[hsl(150,25%,10%)] hover:text-[hsl(150,95%,60%)]">
+              <Calculator className="w-4 h-4 mr-1" /> Calcular
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setGoalsOpen(true)}
+              className="border-[hsl(150,18%,14%)] bg-[hsl(155,22%,6%)] text-[hsl(150,12%,88%)] hover:bg-[hsl(150,25%,10%)] hover:text-[hsl(150,95%,45%)]">
+              <Settings className="w-4 h-4 mr-1" /> Metas
+            </Button>
+          </div>
         </div>
 
         {/* Week strip */}
@@ -675,6 +900,7 @@ export default function DiarioAlimentar() {
 
       <AddFoodDialog open={addOpen} onOpenChange={setAddOpen} mealType={addMeal} mealLabel={findMealLabel(addMeal)} onAdd={addEntries} />
       <GoalsDialog open={goalsOpen} onOpenChange={setGoalsOpen} goals={goals} onSave={saveGoals} />
+      <MacroCalcDialog open={calcOpen} onOpenChange={setCalcOpen} currentWater={goals.water_ml} onApply={saveGoals} />
     </div>
   );
 }
