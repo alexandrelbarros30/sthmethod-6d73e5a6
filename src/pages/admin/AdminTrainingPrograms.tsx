@@ -97,6 +97,35 @@ const AdminTrainingPrograms = () => {
     },
   });
 
+  // Count of distinct students with at least one ACTIVE assignment per program
+  const { data: assignedCounts } = useQuery({
+    queryKey: ["program-assigned-counts"],
+    queryFn: async () => {
+      const { data: tpls } = await supabase
+        .from("workout_templates")
+        .select("id, program_id")
+        .not("program_id", "is", null);
+      const tplToProgram: Record<string, string> = {};
+      (tpls || []).forEach((t: any) => { tplToProgram[t.id] = t.program_id; });
+      const tIds = Object.keys(tplToProgram);
+      if (!tIds.length) return {} as Record<string, number>;
+      const { data: assigns } = await supabase
+        .from("student_workout_assignments")
+        .select("user_id, template_id, active")
+        .in("template_id", tIds)
+        .eq("active", true);
+      const map: Record<string, Set<string>> = {};
+      (assigns || []).forEach((a: any) => {
+        const pid = tplToProgram[a.template_id];
+        if (!pid) return;
+        (map[pid] ||= new Set()).add(a.user_id);
+      });
+      const counts: Record<string, number> = {};
+      Object.keys(map).forEach((pid) => { counts[pid] = map[pid].size; });
+      return counts;
+    },
+  });
+
   const { data: programTemplateIds } = useQuery({
     queryKey: ["program-template-ids", assignDialog],
     queryFn: async () => {
@@ -265,6 +294,7 @@ const AdminTrainingPrograms = () => {
       setSelectedStudents([]);
       setStudentSearch("");
       queryClient.invalidateQueries({ queryKey: ["sgw-assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["program-assigned-counts"] });
     },
     onError: (e: any) => toast.error(e.message || "Erro ao atribuir."),
   });
