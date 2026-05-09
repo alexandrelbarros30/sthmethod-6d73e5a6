@@ -23,9 +23,9 @@ interface Props {
 
 const COLORS = {
   fat: "#ff3355",
-  lean: "#00ffcc",
-  muscle: "#00aaff",
-  water: "#00ddff",
+  lean: "#14b780",
+  muscle: "#0e9468",
+  water: "#1ed094",
   visceral: "#ff5566",
   bmr: "#ffaa33",
 };
@@ -68,7 +68,7 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
     if (!latest) return [];
     const items = [];
     if (latest.fat_mass_kg) items.push({ name: "Gordura", value: Number(latest.fat_mass_kg), color: "#ff3355" });
-    if (latest.skeletal_muscle_kg) items.push({ name: "Músculo Esquelético", value: Number(latest.skeletal_muscle_kg), color: "#00aaff" });
+    if (latest.skeletal_muscle_kg) items.push({ name: "Músculo Esquelético", value: Number(latest.skeletal_muscle_kg), color: "#0e9468" });
     const otherLean = latest.lean_mass_kg && latest.skeletal_muscle_kg
       ? Number(latest.lean_mass_kg) - Number(latest.skeletal_muscle_kg)
       : latest.lean_mass_kg ? Number(latest.lean_mass_kg) : 0;
@@ -135,7 +135,7 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
   };
 
   const chartConfig = {
-    peso: { label: "Peso (kg)", color: "#00ffcc" },
+    peso: { label: "Peso (kg)", color: "#14b780" },
     gordura: { label: "Gordura (%)", color: COLORS.fat },
     musculo: { label: "Músculo (kg)", color: COLORS.muscle },
     agua: { label: "Água (%)", color: COLORS.water },
@@ -287,11 +287,11 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[250px] w-full">
               <LineChart data={evolutionData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,220,255,0.08)" />
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} stroke="rgba(0,220,255,0.15)" />
-                <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} stroke="rgba(0,220,255,0.15)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(20,183,128,0.08)" />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} stroke="rgba(20,183,128,0.15)" />
+                <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} stroke="rgba(20,183,128,0.15)" />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Line type="monotone" dataKey="peso" stroke="#00ffcc" strokeWidth={2} dot={{ r: 3, fill: '#00ffcc', stroke: '#00ffcc' }} connectNulls style={{ filter: 'drop-shadow(0 0 4px #00ffcc80)' }} />
+                <Line type="monotone" dataKey="peso" stroke="#14b780" strokeWidth={2} dot={{ r: 3, fill: '#14b780', stroke: '#14b780' }} connectNulls style={{ filter: 'drop-shadow(0 0 4px #14b78080)' }} />
                 <Line type="monotone" dataKey="gordura" stroke={COLORS.fat} strokeWidth={2} dot={{ r: 3, fill: COLORS.fat, stroke: COLORS.fat }} connectNulls style={{ filter: `drop-shadow(0 0 4px ${COLORS.fat}80)` }} />
                 <Line type="monotone" dataKey="musculo" stroke={COLORS.muscle} strokeWidth={2} dot={{ r: 3, fill: COLORS.muscle, stroke: COLORS.muscle }} connectNulls style={{ filter: `drop-shadow(0 0 4px ${COLORS.muscle}80)` }} />
               </LineChart>
@@ -335,15 +335,15 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
               {segmentalData.length > 0 && (
                 <div className="flex-1 w-full min-w-0">
                   <ChartContainer
-                    config={{ segmento: { label: "Valor", color: "#00ffcc" } }}
+                    config={{ segmento: { label: "Valor", color: "#14b780" } }}
                     className="h-[200px] w-full"
                   >
                     <BarChart data={segmentalData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,220,255,0.08)" />
-                      <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} stroke="rgba(0,220,255,0.15)" />
-                      <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} stroke="rgba(0,220,255,0.15)" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(20,183,128,0.08)" />
+                      <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} stroke="rgba(20,183,128,0.15)" />
+                      <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} stroke="rgba(20,183,128,0.15)" />
                       <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar dataKey="value" fill="#00ffcc" radius={[4, 4, 0, 0]} style={{ filter: 'drop-shadow(0 0 6px #00ffcc60)' }} />
+                      <Bar dataKey="value" fill="#14b780" radius={[4, 4, 0, 0]} style={{ filter: 'drop-shadow(0 0 6px #14b78060)' }} />
                     </BarChart>
                   </ChartContainer>
                 </div>
