@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import FoodSearchDialog from "./FoodSearchDialog";
 import type { NutritionTotals } from "./NutritionSummaryPanel";
+import { cn } from "@/lib/utils";
 
 export interface MealData {
   id?: string;
