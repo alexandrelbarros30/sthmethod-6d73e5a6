@@ -307,11 +307,11 @@ const Cadastro = () => {
             updateData.objective = profileForm.objective || null;
             updateData.physical_activity_level = profileForm.physical_activity_level || null;
             updateData.physical_activity = `${activityLabels[profileForm.activity_type] || profileForm.activity_type}${profileForm.does_cardio === "sim" ? " + Cardio" : ""}`;
-            updateData.training_days_per_week = profileForm.training_days_per_week ? Number(profileForm.training_days_per_week) : null;
-            updateData.training_duration_minutes = profileForm.training_duration_minutes ? Number(profileForm.training_duration_minutes) : null;
+            updateData.training_days_per_week = profileForm.training_days_per_week ? Math.round(Number(profileForm.training_days_per_week)) : null;
+            updateData.training_duration_minutes = profileForm.training_duration_minutes ? Math.round(Number(profileForm.training_duration_minutes)) : null;
             updateData.training_intensity = profileForm.training_intensity || null;
-            updateData.cardio_days_per_week = profileForm.cardio_days_per_week ? Number(profileForm.cardio_days_per_week) : null;
-            updateData.cardio_duration_minutes = profileForm.cardio_duration_minutes ? Number(profileForm.cardio_duration_minutes) : null;
+            updateData.cardio_days_per_week = profileForm.cardio_days_per_week ? Math.round(Number(profileForm.cardio_days_per_week)) : null;
+            updateData.cardio_duration_minutes = profileForm.cardio_duration_minutes ? Math.round(Number(profileForm.cardio_duration_minutes)) : null;
             updateData.cardio_intensity = profileForm.cardio_intensity || null;
 
             // Calculate and save macros
@@ -418,11 +418,11 @@ const Cadastro = () => {
         comorbidities,
         additional_info: profileForm.additional_info,
         physical_activity_level: profileForm.physical_activity_level || null,
-        training_days_per_week: profileForm.training_days_per_week ? Number(profileForm.training_days_per_week) : null,
-        training_duration_minutes: profileForm.training_duration_minutes ? Number(profileForm.training_duration_minutes) : null,
+        training_days_per_week: profileForm.training_days_per_week ? Math.round(Number(profileForm.training_days_per_week)) : null,
+        training_duration_minutes: profileForm.training_duration_minutes ? Math.round(Number(profileForm.training_duration_minutes)) : null,
         training_intensity: profileForm.training_intensity || null,
-        cardio_days_per_week: profileForm.cardio_days_per_week ? Number(profileForm.cardio_days_per_week) : null,
-        cardio_duration_minutes: profileForm.cardio_duration_minutes ? Number(profileForm.cardio_duration_minutes) : null,
+        cardio_days_per_week: profileForm.cardio_days_per_week ? Math.round(Number(profileForm.cardio_days_per_week)) : null,
+        cardio_duration_minutes: profileForm.cardio_duration_minutes ? Math.round(Number(profileForm.cardio_duration_minutes)) : null,
         cardio_intensity: profileForm.cardio_intensity || null,
       };
 
@@ -678,8 +678,9 @@ const Cadastro = () => {
                           type="number"
                           min="10"
                           max="180"
+                          step="1"
                           value={profileForm.training_duration_minutes}
-                          onChange={(e) => setProfileForm({ ...profileForm, training_duration_minutes: e.target.value })}
+                          onChange={(e) => setProfileForm({ ...profileForm, training_duration_minutes: e.target.value.replace(/[^\d]/g, "") })}
                           placeholder="Ex: 60"
                         />
                       </div>
@@ -741,8 +742,9 @@ const Cadastro = () => {
                           type="number"
                           min="10"
                           max="180"
+                          step="1"
                           value={profileForm.cardio_duration_minutes}
-                          onChange={(e) => setProfileForm({ ...profileForm, cardio_duration_minutes: e.target.value })}
+                          onChange={(e) => setProfileForm({ ...profileForm, cardio_duration_minutes: e.target.value.replace(/[^\d]/g, "") })}
                           placeholder="Ex: 30"
                         />
                       </div>
