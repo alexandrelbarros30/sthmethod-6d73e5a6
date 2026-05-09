@@ -26,20 +26,20 @@ interface BodySilhouetteProps {
 }
 
 function segmentColor(value: number | null | undefined): string {
-  if (value == null) return "rgba(0,200,255,0.3)";
+  if (value == null) return "rgba(20,183,128,0.3)";
   const c = Math.max(0, Math.min(200, value));
   if (c < 80) return "#ff3355";
   if (c < 95) return "#ff8833";
-  if (c < 105) return "#00ddff";
+  if (c < 105) return "#1ed094";
   if (c < 120) return "#33ff88";
-  return "#00ffcc";
+  return "#14b780";
 }
 
 function trunkColor(bodyFatPct: number | null | undefined): string {
-  if (bodyFatPct == null) return "rgba(0,200,255,0.3)";
-  if (bodyFatPct < 10) return "#00ffcc";
+  if (bodyFatPct == null) return "rgba(20,183,128,0.3)";
+  if (bodyFatPct < 10) return "#14b780";
   if (bodyFatPct < 15) return "#33ff88";
-  if (bodyFatPct < 22) return "#00ddff";
+  if (bodyFatPct < 22) return "#1ed094";
   if (bodyFatPct < 30) return "#ff8833";
   return "#ff3355";
 }
@@ -70,7 +70,7 @@ const BodySilhouette: React.FC<BodySilhouetteProps> = ({ segments, metrics, clas
             {/* Main holographic glow */}
             <filter id="holoGlow" x="-80%" y="-80%" width="260%" height="260%">
               <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
-              <feFlood floodColor="#00ddff" floodOpacity="0.6" result="color" />
+              <feFlood floodColor="#1ed094" floodOpacity="0.6" result="color" />
               <feComposite in="color" in2="blur" operator="in" result="shadow" />
               <feMerge>
                 <feMergeNode in="shadow" />
@@ -80,7 +80,7 @@ const BodySilhouette: React.FC<BodySilhouetteProps> = ({ segments, metrics, clas
             </filter>
             <filter id="segGlow" x="-60%" y="-60%" width="220%" height="220%">
               <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="b" />
-              <feFlood floodColor="#00ffcc" floodOpacity="0.4" result="c" />
+              <feFlood floodColor="#14b780" floodOpacity="0.4" result="c" />
               <feComposite in="c" in2="b" operator="in" result="s" />
               <feMerge><feMergeNode in="s" /><feMergeNode in="SourceGraphic" /></feMerge>
             </filter>
@@ -88,31 +88,31 @@ const BodySilhouette: React.FC<BodySilhouetteProps> = ({ segments, metrics, clas
               <feGaussianBlur stdDeviation="6" />
             </filter>
             <filter id="labelGlow" x="-50%" y="-50%" width="200%" height="200%">
-              <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#00ddff" floodOpacity="0.8" />
+              <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#1ed094" floodOpacity="0.8" />
             </filter>
 
             {/* Radial gradient for holographic base */}
             <radialGradient id="basePlatform" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#00ffcc" stopOpacity="0.3" />
-              <stop offset="40%" stopColor="#00ddff" stopOpacity="0.15" />
-              <stop offset="80%" stopColor="#00aaff" stopOpacity="0.05" />
+              <stop offset="0%" stopColor="#14b780" stopOpacity="0.3" />
+              <stop offset="40%" stopColor="#1ed094" stopOpacity="0.15" />
+              <stop offset="80%" stopColor="#0e9468" stopOpacity="0.05" />
               <stop offset="100%" stopColor="transparent" />
             </radialGradient>
 
             {/* Body wireframe gradient */}
             <linearGradient id="bodyGrad" x1="150" y1="20" x2="150" y2="380" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#00ffcc" stopOpacity="0.9" />
-              <stop offset="30%" stopColor="#00ddff" stopOpacity="0.7" />
-              <stop offset="60%" stopColor="#00aaff" stopOpacity="0.5" />
-              <stop offset="100%" stopColor="#0088cc" stopOpacity="0.3" />
+              <stop offset="0%" stopColor="#14b780" stopOpacity="0.9" />
+              <stop offset="30%" stopColor="#1ed094" stopOpacity="0.7" />
+              <stop offset="60%" stopColor="#0e9468" stopOpacity="0.5" />
+              <stop offset="100%" stopColor="#0a6f4d" stopOpacity="0.3" />
             </linearGradient>
 
             {/* Scan line */}
             <linearGradient id="scanLine" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="transparent" />
-              <stop offset="40%" stopColor="rgba(0,255,200,0.05)" />
-              <stop offset="50%" stopColor="rgba(0,255,200,0.3)" />
-              <stop offset="60%" stopColor="rgba(0,255,200,0.05)" />
+              <stop offset="40%" stopColor="rgba(20,183,128,0.05)" />
+              <stop offset="50%" stopColor="rgba(20,183,128,0.3)" />
+              <stop offset="60%" stopColor="rgba(20,183,128,0.05)" />
               <stop offset="100%" stopColor="transparent" />
             </linearGradient>
           </defs>
@@ -121,7 +121,7 @@ const BodySilhouette: React.FC<BodySilhouetteProps> = ({ segments, metrics, clas
           {/* Concentric rings */}
           {[90, 70, 50, 35].map((rx, i) => (
             <ellipse key={i} cx="150" cy="420" rx={rx} ry={rx * 0.28}
-              fill="none" stroke="#00ffcc" strokeWidth={i === 0 ? 1.5 : 0.8}
+              fill="none" stroke="#14b780" strokeWidth={i === 0 ? 1.5 : 0.8}
               opacity={0.2 + i * 0.1}
               filter="url(#baseGlow)"
             >
@@ -137,23 +137,23 @@ const BodySilhouette: React.FC<BodySilhouetteProps> = ({ segments, metrics, clas
             const y1 = 420 + Math.sin(angle) * 7;
             const x2 = 150 + Math.cos(angle) * 95;
             const y2 = 420 + Math.sin(angle) * 28;
-            return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#00ffcc" strokeWidth="0.4" opacity="0.15" />;
+            return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#14b780" strokeWidth="0.4" opacity="0.15" />;
           })}
 
           {/* === VERTICAL BEAM from base === */}
-          <line x1="150" y1="395" x2="150" y2="420" stroke="#00ddff" strokeWidth="0.5" opacity="0.2" />
+          <line x1="150" y1="395" x2="150" y2="420" stroke="#1ed094" strokeWidth="0.5" opacity="0.2" />
 
           {/* === HOLOGRAPHIC BODY — Wireframe Athletic Figure === */}
           <g filter="url(#holoGlow)">
             {/* HEAD */}
-            <ellipse cx="150" cy="48" rx="16" ry="19" fill="rgba(0,200,255,0.06)" stroke="url(#bodyGrad)" strokeWidth="1.2" />
+            <ellipse cx="150" cy="48" rx="16" ry="19" fill="rgba(20,183,128,0.06)" stroke="url(#bodyGrad)" strokeWidth="1.2" />
             {/* Wireframe face lines */}
-            <path d="M 142 42 Q 150 38, 158 42" fill="none" stroke="#00ddff" strokeWidth="0.4" opacity="0.4" />
-            <path d="M 140 52 Q 150 56, 160 52" fill="none" stroke="#00ddff" strokeWidth="0.3" opacity="0.3" />
-            <ellipse cx="150" cy="48" rx="8" ry="10" fill="none" stroke="#00ddff" strokeWidth="0.3" opacity="0.2" strokeDasharray="2 2" />
+            <path d="M 142 42 Q 150 38, 158 42" fill="none" stroke="#1ed094" strokeWidth="0.4" opacity="0.4" />
+            <path d="M 140 52 Q 150 56, 160 52" fill="none" stroke="#1ed094" strokeWidth="0.3" opacity="0.3" />
+            <ellipse cx="150" cy="48" rx="8" ry="10" fill="none" stroke="#1ed094" strokeWidth="0.3" opacity="0.2" strokeDasharray="2 2" />
 
             {/* NECK */}
-            <path d="M 143 66 L 141 76 Q 146 78, 150 78 Q 154 78, 159 76 L 157 66" fill="rgba(0,200,255,0.03)" stroke="url(#bodyGrad)" strokeWidth="0.6" />
+            <path d="M 143 66 L 141 76 Q 146 78, 150 78 Q 154 78, 159 76 L 157 66" fill="rgba(20,183,128,0.03)" stroke="url(#bodyGrad)" strokeWidth="0.6" />
 
             {/* TRUNK */}
             <path
@@ -244,7 +244,7 @@ const BodySilhouette: React.FC<BodySilhouetteProps> = ({ segments, metrics, clas
               const bodyWidth = y < 86 ? 12 : y < 186 ? 44 - Math.abs(y - 130) * 0.15 : y < 400 ? 28 - Math.abs(y - 280) * 0.04 : 10;
               return (
                 <ellipse key={i} cx="150" cy={y} rx={Math.max(8, bodyWidth)} ry={2}
-                  fill="none" stroke="#00ddff" strokeWidth="0.3" opacity={0.08 + (i % 2) * 0.04}
+                  fill="none" stroke="#1ed094" strokeWidth="0.3" opacity={0.08 + (i % 2) * 0.04}
                   strokeDasharray="4 4" />
               );
             })}
@@ -257,7 +257,7 @@ const BodySilhouette: React.FC<BodySilhouetteProps> = ({ segments, metrics, clas
             const cx = 150 + Math.cos(angle) * radius;
             const cy = 180 + Math.sin(angle) * radius * 1.5;
             return (
-              <circle key={i} cx={cx} cy={cy} r="1" fill="#00ffcc" opacity="0.3">
+              <circle key={i} cx={cx} cy={cy} r="1" fill="#14b780" opacity="0.3">
                 <animate attributeName="opacity" values="0.1;0.5;0.1" dur={`${2 + i * 0.3}s`} repeatCount="indefinite" />
               </circle>
             );
@@ -269,19 +269,19 @@ const BodySilhouette: React.FC<BodySilhouetteProps> = ({ segments, metrics, clas
           </rect>
 
           {/* HOLOGRAM label */}
-          <text x="150" y="458" textAnchor="middle" fill="#00ddff" fontSize="7" opacity="0.5" fontFamily="monospace" letterSpacing="3" filter="url(#labelGlow)">
+          <text x="150" y="458" textAnchor="middle" fill="#1ed094" fontSize="7" opacity="0.5" fontFamily="monospace" letterSpacing="3" filter="url(#labelGlow)">
             BODY HOLOGRAM
           </text>
 
           {/* Corner brackets */}
-          <path d="M 55 20 L 55 35" stroke="#00ddff" strokeWidth="0.5" opacity="0.25" />
-          <path d="M 55 20 L 70 20" stroke="#00ddff" strokeWidth="0.5" opacity="0.25" />
-          <path d="M 245 20 L 245 35" stroke="#00ddff" strokeWidth="0.5" opacity="0.25" />
-          <path d="M 245 20 L 230 20" stroke="#00ddff" strokeWidth="0.5" opacity="0.25" />
-          <path d="M 55 470 L 55 455" stroke="#00ddff" strokeWidth="0.5" opacity="0.25" />
-          <path d="M 55 470 L 70 470" stroke="#00ddff" strokeWidth="0.5" opacity="0.25" />
-          <path d="M 245 470 L 245 455" stroke="#00ddff" strokeWidth="0.5" opacity="0.25" />
-          <path d="M 245 470 L 230 470" stroke="#00ddff" strokeWidth="0.5" opacity="0.25" />
+          <path d="M 55 20 L 55 35" stroke="#1ed094" strokeWidth="0.5" opacity="0.25" />
+          <path d="M 55 20 L 70 20" stroke="#1ed094" strokeWidth="0.5" opacity="0.25" />
+          <path d="M 245 20 L 245 35" stroke="#1ed094" strokeWidth="0.5" opacity="0.25" />
+          <path d="M 245 20 L 230 20" stroke="#1ed094" strokeWidth="0.5" opacity="0.25" />
+          <path d="M 55 470 L 55 455" stroke="#1ed094" strokeWidth="0.5" opacity="0.25" />
+          <path d="M 55 470 L 70 470" stroke="#1ed094" strokeWidth="0.5" opacity="0.25" />
+          <path d="M 245 470 L 245 455" stroke="#1ed094" strokeWidth="0.5" opacity="0.25" />
+          <path d="M 245 470 L 230 470" stroke="#1ed094" strokeWidth="0.5" opacity="0.25" />
         </svg>
 
         {/* Segment value labels */}
@@ -325,9 +325,9 @@ const BodySilhouette: React.FC<BodySilhouetteProps> = ({ segments, metrics, clas
       <div className="flex items-center gap-2 flex-wrap justify-center">
         <LegendDot color="#ff3355" label="Baixo" />
         <LegendDot color="#ff8833" label="Abaixo" />
-        <LegendDot color="#00ddff" label="Normal" />
+        <LegendDot color="#1ed094" label="Normal" />
         <LegendDot color="#33ff88" label="Bom" />
-        <LegendDot color="#00ffcc" label="Excelente" />
+        <LegendDot color="#14b780" label="Excelente" />
       </div>
 
       {/* Key metrics */}
@@ -352,7 +352,7 @@ const LegendDot = ({ color, label }: { color: string; label: string }) => (
 
 const MetricLabel = ({ label, value }: { label: string; value: string }) => (
   <div className="text-muted-foreground">
-    <span className="font-semibold" style={{ color: '#00ffcc' }}>{value}</span>{" "}
+    <span className="font-semibold" style={{ color: '#14b780' }}>{value}</span>{" "}
     <span>{label}</span>
   </div>
 );
