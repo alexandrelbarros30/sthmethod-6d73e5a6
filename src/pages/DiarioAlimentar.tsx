@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { localDiary, MEAL_TYPES, DEFAULT_GOALS, type DiaryEntry, type SavedMeal, type Goals } from "@/lib/food-diary-storage";
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const newId = () => (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
@@ -57,27 +58,33 @@ function LeadGate({ onDone }: { onDone: () => void }) {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6">
-      <Card className="w-full max-w-md p-6 space-y-4">
-        <div className="text-center space-y-1">
-          <h1 className="text-2xl font-bold">Diário Alimentar STH METHOD</h1>
-          <p className="text-sm text-muted-foreground">
+    <div className="min-h-screen bg-black flex items-center justify-center p-6">
+      <div className="sth-glass w-full max-w-md p-8 space-y-5">
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl glass-icon mb-2">
+            <Droplet className="w-7 h-7 text-[hsl(150,95%,45%)]" />
+          </div>
+          <h1 className="text-2xl font-bold gradient-text">Diário Alimentar STH METHOD</h1>
+          <p className="text-sm text-[hsl(150,8%,55%)]">
             Acesso liberado em segundos. Preencha para começar a registrar suas refeições.
           </p>
         </div>
         <form onSubmit={submit} className="space-y-3">
-          <Input placeholder="Nome completo" value={name} onChange={(e) => setName(e.target.value)} maxLength={100} />
-          <Input type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={150} />
-          <Input placeholder="WhatsApp (somente números)" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={20} />
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Input placeholder="Nome completo" value={name} onChange={(e) => setName(e.target.value)} maxLength={100}
+            className="bg-[hsl(155,18%,8%)] border-[hsl(150,18%,14%)] text-foreground placeholder:text-[hsl(150,8%,45%)]" />
+          <Input type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={150}
+            className="bg-[hsl(155,18%,8%)] border-[hsl(150,18%,14%)] text-foreground placeholder:text-[hsl(150,8%,45%)]" />
+          <Input placeholder="WhatsApp (somente números)" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={20}
+            className="bg-[hsl(155,18%,8%)] border-[hsl(150,18%,14%)] text-foreground placeholder:text-[hsl(150,8%,45%)]" />
+          <Button type="submit" className="w-full premium-btn bg-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)] hover:bg-[hsl(150,95%,50%)]" disabled={loading}>
             {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Acessar Diário
           </Button>
         </form>
-        <p className="text-[11px] text-center text-muted-foreground">
-          Já é aluno? <Link to="/login" className="underline">Entrar</Link>
+        <p className="text-[11px] text-center text-[hsl(150,8%,45%)]">
+          Já é aluno? <Link to="/login" className="underline text-[hsl(150,95%,45%)]">Entrar</Link>
         </p>
-      </Card>
+      </div>
     </div>
   );
 }
@@ -167,31 +174,31 @@ function AddFoodDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-xl max-h-[90vh] flex flex-col bg-[hsl(155,25%,5%)] border-[hsl(150,18%,14%)] text-foreground">
         <DialogHeader>
-          <DialogTitle>{MEAL_TYPES.find((m) => m.key === mealType)?.label}</DialogTitle>
+          <DialogTitle className="gradient-text">{MEAL_TYPES.find((m) => m.key === mealType)?.label}</DialogTitle>
         </DialogHeader>
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="flex-1 flex flex-col min-h-0">
-          <TabsList className="grid grid-cols-2">
-            <TabsTrigger value="alimento">Alimento</TabsTrigger>
-            <TabsTrigger value="salvas">Refeições Salvas</TabsTrigger>
+          <TabsList className="grid grid-cols-2 bg-[hsl(155,18%,8%)] border border-[hsl(150,18%,14%)]">
+            <TabsTrigger value="alimento" className="data-[state=active]:bg-[hsl(150,60%,18%)] data-[state=active]:text-[hsl(150,95%,80%)]">Alimento</TabsTrigger>
+            <TabsTrigger value="salvas" className="data-[state=active]:bg-[hsl(150,60%,18%)] data-[state=active]:text-[hsl(150,95%,80%)]">Refeições Salvas</TabsTrigger>
           </TabsList>
 
           <TabsContent value="alimento" className="flex-1 flex flex-col min-h-0 mt-3 space-y-3">
             {selectedFood ? (
-              <div className="border rounded-lg p-4 space-y-3">
+              <div className="sth-glass p-4 space-y-3">
                 <div className="flex items-start justify-between">
                   <div className="min-w-0">
-                    <p className="font-medium truncate">{selectedFood.name}</p>
-                    <Badge variant="outline" className="text-[10px] mt-1">{selectedFood.source} · {selectedFood.category}</Badge>
+                    <p className="font-medium truncate text-foreground">{selectedFood.name}</p>
+                    <Badge variant="outline" className="text-[10px] mt-1 border-[hsl(150,18%,14%)] text-[hsl(150,8%,55%)]">{selectedFood.source} · {selectedFood.category}</Badge>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => setSelectedFood(null)}>Trocar</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedFood(null)} className="text-[hsl(150,95%,45%)] hover:text-[hsl(150,95%,60%)]">Trocar</Button>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Input type="number" value={quantity} onChange={(e) => setQuantity(Number(e.target.value) || 0)} className="w-24 h-8" min={1} />
+                  <Input type="number" value={quantity} onChange={(e) => setQuantity(Number(e.target.value) || 0)} className="w-24 h-8 bg-[hsl(155,18%,8%)] border-[hsl(150,18%,14%)]" min={1} />
                   <Select value={unit} onValueChange={setUnit}>
-                    <SelectTrigger className="w-24 h-8"><SelectValue /></SelectTrigger>
-                    <SelectContent>
+                    <SelectTrigger className="w-24 h-8 bg-[hsl(155,18%,8%)] border-[hsl(150,18%,14%)]"><SelectValue /></SelectTrigger>
+                    <SelectContent className="bg-[hsl(155,25%,6%)] border-[hsl(150,18%,14%)]">
                       <SelectItem value="g">g</SelectItem>
                       <SelectItem value="ml">ml</SelectItem>
                       <SelectItem value="unidade">unidade</SelectItem>
@@ -200,25 +207,25 @@ function AddFoodDialog({
                   </Select>
                 </div>
                 <div className="grid grid-cols-4 gap-2 text-xs">
-                  <div className="bg-muted/40 rounded p-2 text-center">
-                    <p className="text-muted-foreground">kcal</p>
-                    <p className="font-bold text-sm">{(selectedFood.energy_kcal * ratio).toFixed(0)}</p>
+                  <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(150,18%,14%)] p-2 text-center">
+                    <p className="text-[hsl(150,8%,55%)]">kcal</p>
+                    <p className="font-bold text-sm text-[hsl(150,95%,45%)]">{(selectedFood.energy_kcal * ratio).toFixed(0)}</p>
                   </div>
-                  <div className="bg-muted/40 rounded p-2 text-center">
-                    <p className="text-muted-foreground">P</p>
-                    <p className="font-bold text-sm">{(selectedFood.protein_g * ratio).toFixed(1)}g</p>
+                  <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(150,18%,14%)] p-2 text-center">
+                    <p className="text-[hsl(150,8%,55%)]">P</p>
+                    <p className="font-bold text-sm text-[hsl(190,100%,50%)]">{(selectedFood.protein_g * ratio).toFixed(1)}g</p>
                   </div>
-                  <div className="bg-muted/40 rounded p-2 text-center">
-                    <p className="text-muted-foreground">C</p>
-                    <p className="font-bold text-sm">{(selectedFood.carbs_g * ratio).toFixed(1)}g</p>
+                  <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(150,18%,14%)] p-2 text-center">
+                    <p className="text-[hsl(150,8%,55%)]">C</p>
+                    <p className="font-bold text-sm text-[hsl(35,92%,52%)]">{(selectedFood.carbs_g * ratio).toFixed(1)}g</p>
                   </div>
-                  <div className="bg-muted/40 rounded p-2 text-center">
-                    <p className="text-muted-foreground">G</p>
-                    <p className="font-bold text-sm">{(selectedFood.fat_g * ratio).toFixed(1)}g</p>
+                  <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(150,18%,14%)] p-2 text-center">
+                    <p className="text-[hsl(150,8%,55%)]">G</p>
+                    <p className="font-bold text-sm text-[hsl(25,85%,55%)]">{(selectedFood.fat_g * ratio).toFixed(1)}g</p>
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button onClick={confirmFood} className="w-full">
+                  <Button onClick={confirmFood} className="w-full premium-btn bg-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)] hover:bg-[hsl(150,95%,50%)]">
                     <Plus className="w-4 h-4 mr-1" /> Adicionar à refeição
                   </Button>
                 </DialogFooter>
@@ -226,29 +233,29 @@ function AddFoodDialog({
             ) : (
               <>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(150,8%,45%)]" />
                   <Input
                     placeholder="Buscar alimento (ex: laranja, frango...)"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9"
+                    className="pl-9 bg-[hsl(155,18%,8%)] border-[hsl(150,18%,14%)] text-foreground placeholder:text-[hsl(150,8%,45%)]"
                     autoFocus
                   />
                 </div>
-                <div className="flex-1 overflow-y-auto border rounded-lg divide-y min-h-[200px]">
-                  {loading && <div className="p-6 text-center text-sm text-muted-foreground"><Loader2 className="w-4 h-4 inline animate-spin mr-2" />Buscando...</div>}
-                  {!loading && !search.trim() && <p className="p-6 text-center text-sm text-muted-foreground">Digite para buscar entre 30.000+ alimentos</p>}
-                  {!loading && search.trim() && foods.length === 0 && <p className="p-6 text-center text-sm text-muted-foreground">Nada encontrado.</p>}
+                <div className="flex-1 overflow-y-auto border border-[hsl(150,18%,14%)] rounded-xl divide-y divide-[hsl(150,18%,14%)] min-h-[200px] bg-[hsl(155,22%,6%)]">
+                  {loading && <div className="p-6 text-center text-sm text-[hsl(150,8%,55%)]"><Loader2 className="w-4 h-4 inline animate-spin mr-2 text-[hsl(150,95%,45%)]" />Buscando...</div>}
+                  {!loading && !search.trim() && <p className="p-6 text-center text-sm text-[hsl(150,8%,45%)]">Digite para buscar entre 30.000+ alimentos</p>}
+                  {!loading && search.trim() && foods.length === 0 && <p className="p-6 text-center text-sm text-[hsl(150,8%,45%)]">Nada encontrado.</p>}
                   {foods.map((f) => (
-                    <button key={f.id} onClick={() => setSelectedFood(f)} className="w-full text-left px-3 py-2.5 hover:bg-accent/50">
+                    <button key={f.id} onClick={() => setSelectedFood(f)} className="w-full text-left px-3 py-2.5 hover:bg-[hsl(150,25%,10%)] transition-colors">
                       <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{f.name}</p>
-                          <p className="text-[11px] text-muted-foreground">
+                          <p className="text-sm font-medium truncate text-foreground">{f.name}</p>
+                          <p className="text-[11px] text-[hsl(150,8%,55%)]">
                             100{f.serving_unit} · {Math.round(f.energy_kcal)} kcal · P:{f.protein_g}g C:{f.carbs_g}g G:{f.fat_g}g
                           </p>
                         </div>
-                        <Badge variant="outline" className="text-[10px] shrink-0">{f.source}</Badge>
+                        <Badge variant="outline" className="text-[10px] shrink-0 border-[hsl(150,18%,14%)] text-[hsl(150,95%,45%)]">{f.source}</Badge>
                       </div>
                     </button>
                   ))}
@@ -257,22 +264,22 @@ function AddFoodDialog({
             )}
           </TabsContent>
 
-          <TabsContent value="salvas" className="flex-1 overflow-y-auto mt-3 border rounded-lg divide-y min-h-[200px]">
+          <TabsContent value="salvas" className="flex-1 overflow-y-auto mt-3 border border-[hsl(150,18%,14%)] rounded-xl divide-y divide-[hsl(150,18%,14%)] min-h-[200px] bg-[hsl(155,22%,6%)]">
             {savedMeals.length === 0 ? (
-              <p className="p-6 text-center text-sm text-muted-foreground">Nenhuma refeição salva ainda.<br/>Monte uma refeição e clique em "Salvar como combo".</p>
+              <p className="p-6 text-center text-sm text-[hsl(150,8%,55%)]">Nenhuma refeição salva ainda.<br/>Monte uma refeição e clique em "Salvar como combo".</p>
             ) : savedMeals.map((sm) => (
-              <div key={sm.id} className="flex items-center justify-between px-3 py-2.5">
+              <div key={sm.id} className="flex items-center justify-between px-3 py-2.5 hover:bg-[hsl(150,25%,10%)] transition-colors">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{sm.name}</p>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-sm font-medium truncate text-foreground">{sm.name}</p>
+                  <p className="text-[11px] text-[hsl(150,8%,55%)]">
                     {Math.round(sm.total_kcal)} kcal · {sm.items.length} itens
                   </p>
                 </div>
                 <div className="flex gap-1">
-                  <Button size="sm" variant="ghost" onClick={() => { localDiary.removeSavedMeal(sm.id); setSavedMeals(localDiary.getSavedMeals()); }}>
+                  <Button size="sm" variant="ghost" onClick={() => { localDiary.removeSavedMeal(sm.id); setSavedMeals(localDiary.getSavedMeals()); }} className="text-[hsl(0,65%,52%)] hover:text-[hsl(0,65%,60%)]">
                     <Trash2 className="w-3.5 h-3.5" />
                   </Button>
-                  <Button size="sm" onClick={() => addSavedMeal(sm)}>Adicionar</Button>
+                  <Button size="sm" onClick={() => addSavedMeal(sm)} className="bg-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)] hover:bg-[hsl(150,95%,50%)]">Adicionar</Button>
                 </div>
               </div>
             ))}
@@ -291,8 +298,8 @@ function GoalsDialog({ open, onOpenChange, goals, onSave }: {
   useEffect(() => { setG(goals); }, [goals, open]);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader><DialogTitle>Minhas Metas Diárias</DialogTitle></DialogHeader>
+      <DialogContent className="max-w-sm bg-[hsl(155,25%,5%)] border-[hsl(150,18%,14%)] text-foreground">
+        <DialogHeader><DialogTitle className="gradient-text">Minhas Metas Diárias</DialogTitle></DialogHeader>
         <div className="space-y-3">
           {([
             ["daily_kcal", "Calorias (kcal)"],
@@ -302,13 +309,13 @@ function GoalsDialog({ open, onOpenChange, goals, onSave }: {
             ["water_ml", "Água (ml)"],
           ] as const).map(([k, label]) => (
             <div key={k} className="flex items-center justify-between gap-3">
-              <label className="text-sm">{label}</label>
-              <Input type="number" className="w-28 h-8" value={(g as any)[k]} onChange={(e) => setG({ ...g, [k]: Number(e.target.value) || 0 })} />
+              <label className="text-sm text-[hsl(150,12%,88%)]">{label}</label>
+              <Input type="number" className="w-28 h-8 bg-[hsl(155,18%,8%)] border-[hsl(150,18%,14%)] text-foreground" value={(g as any)[k]} onChange={(e) => setG({ ...g, [k]: Number(e.target.value) || 0 })} />
             </div>
           ))}
         </div>
         <DialogFooter>
-          <Button onClick={() => { onSave(g); onOpenChange(false); }}>Salvar</Button>
+          <Button onClick={() => { onSave(g); onOpenChange(false); }} className="premium-btn bg-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)] hover:bg-[hsl(150,95%,50%)]">Salvar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -440,25 +447,26 @@ export default function DiarioAlimentar() {
   const dateObj = new Date(date + "T00:00:00");
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-black theme-sth-green">
       <div className="max-w-3xl mx-auto p-4 space-y-4 pb-24">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Diário Alimentar</h1>
-            <p className="text-xs text-muted-foreground">
+            <h1 className="text-2xl font-bold tracking-tight gradient-text">Diário Alimentar</h1>
+            <p className="text-xs text-[hsl(150,8%,55%)]">
               {dateObj.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setGoalsOpen(true)}>
+          <Button variant="outline" size="sm" onClick={() => setGoalsOpen(true)}
+            className="border-[hsl(150,18%,14%)] bg-[hsl(155,22%,6%)] text-[hsl(150,12%,88%)] hover:bg-[hsl(150,25%,10%)] hover:text-[hsl(150,95%,45%)]">
             <Settings className="w-4 h-4 mr-1" /> Metas
           </Button>
         </div>
 
         {/* Week strip */}
-        <Card className="p-3">
+        <div className="sth-glass p-3">
           <div className="flex items-center gap-1">
-            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => {
+            <Button size="icon" variant="ghost" className="h-8 w-8 text-[hsl(150,12%,88%)] hover:text-[hsl(150,95%,45%)] hover:bg-[hsl(150,25%,10%)]" onClick={() => {
               const d = new Date(date + "T00:00:00"); d.setDate(d.getDate() - 7); setDate(d.toISOString().slice(0, 10));
             }}><ChevronLeft className="w-4 h-4" /></Button>
             <div className="grid grid-cols-7 flex-1 gap-1">
@@ -468,116 +476,131 @@ export default function DiarioAlimentar() {
                 const isToday = iso === todayISO();
                 return (
                   <button key={iso} onClick={() => setDate(iso)}
-                    className={`flex flex-col items-center py-1.5 rounded-lg text-xs ${
-                      isSel ? "bg-primary text-primary-foreground" : isToday ? "bg-accent" : "hover:bg-accent/50"
-                    }`}>
-                    <span className="opacity-70">{DOW[d.getDay()]}</span>
+                    className={cn(
+                      "flex flex-col items-center py-1.5 rounded-xl text-xs transition-all",
+                      isSel
+                        ? "bg-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)] font-bold shadow-[0_0_12px_hsl(150,95%,45%/0.5)]"
+                        : isToday
+                          ? "bg-[hsl(150,60%,18%)] text-[hsl(150,95%,80%)]"
+                          : "hover:bg-[hsl(150,25%,10%)] text-[hsl(150,12%,88%)]"
+                    )}>
+                    <span className={isSel ? "opacity-80" : "opacity-60"}>{DOW[d.getDay()]}</span>
                     <span className="font-bold">{d.getDate()}</span>
                   </button>
                 );
               })}
             </div>
-            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => {
+            <Button size="icon" variant="ghost" className="h-8 w-8 text-[hsl(150,12%,88%)] hover:text-[hsl(150,95%,45%)] hover:bg-[hsl(150,25%,10%)]" onClick={() => {
               const d = new Date(date + "T00:00:00"); d.setDate(d.getDate() + 7); setDate(d.toISOString().slice(0, 10));
             }}><ChevronRight className="w-4 h-4" /></Button>
           </div>
-        </Card>
+        </div>
 
         {/* Calorie summary */}
-        <Card className="p-4">
+        <div className="sth-glass p-4">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Calorias Restantes</span>
-            <span className="font-bold tabular-nums">{Math.round(remaining)} / {goals.daily_kcal}</span>
+            <span className="text-[hsl(150,8%,55%)]">Calorias Restantes</span>
+            <span className="font-bold tabular-nums text-[hsl(150,12%,88%)]">{Math.round(remaining)} / {goals.daily_kcal}</span>
           </div>
           <div className="flex items-center justify-between text-sm mt-1">
-            <span className="text-muted-foreground">Calorias Consumidas</span>
-            <span className="font-bold tabular-nums text-primary">{Math.round(totals.kcal)}</span>
+            <span className="text-[hsl(150,8%,55%)]">Calorias Consumidas</span>
+            <span className="font-bold tabular-nums text-[hsl(150,95%,45%)]">{Math.round(totals.kcal)}</span>
           </div>
-          <div className="mt-3 h-2 rounded-full bg-muted overflow-hidden">
-            <div className="h-full bg-primary transition-all" style={{ width: `${consumedPct}%` }} />
+          <div className="mt-3 h-2.5 rounded-full bg-[hsl(155,22%,6%)] border border-[hsl(150,18%,14%)] overflow-hidden">
+            <div
+              className="h-full neon-progress-fill transition-all"
+              style={{ width: `${consumedPct}%` }}
+            />
           </div>
           <div className="grid grid-cols-3 gap-2 mt-3 text-center text-xs">
-            <div className="rounded-lg bg-info/10 p-2">
-              <div className="text-info font-bold tabular-nums">{Math.round(totals.p)}g</div>
-              <div className="text-muted-foreground">Proteína / {goals.protein_g}g</div>
+            <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(190,100%,50%/0.25)] p-2.5">
+              <div className="font-bold tabular-nums text-[hsl(190,100%,50%)] text-sm">{Math.round(totals.p)}g</div>
+              <div className="text-[hsl(150,8%,55%)] mt-0.5">Proteína / {goals.protein_g}g</div>
             </div>
-            <div className="rounded-lg bg-warning/10 p-2">
-              <div className="text-warning font-bold tabular-nums">{Math.round(totals.c)}g</div>
-              <div className="text-muted-foreground">Carbo / {goals.carbs_g}g</div>
+            <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(35,92%,52%/0.25)] p-2.5">
+              <div className="font-bold tabular-nums text-[hsl(35,92%,52%)] text-sm">{Math.round(totals.c)}g</div>
+              <div className="text-[hsl(150,8%,55%)] mt-0.5">Carbo / {goals.carbs_g}g</div>
             </div>
-            <div className="rounded-lg p-2" style={{ background: "hsl(25 85% 55% / 0.1)" }}>
-              <div className="font-bold tabular-nums" style={{ color: "hsl(25 85% 55%)" }}>{Math.round(totals.f)}g</div>
-              <div className="text-muted-foreground">Gord / {goals.fat_g}g</div>
+            <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(25,85%,55%/0.25)] p-2.5">
+              <div className="font-bold tabular-nums text-[hsl(25,85%,55%)] text-sm">{Math.round(totals.f)}g</div>
+              <div className="text-[hsl(150,8%,55%)] mt-0.5">Gord / {goals.fat_g}g</div>
             </div>
           </div>
-        </Card>
+        </div>
 
         {/* Meals */}
         {MEAL_TYPES.map((m) => {
           const items = groupByMeal(m.key);
           const mealKcal = items.reduce((a, i) => a + Number(i.energy_kcal), 0);
           return (
-            <Card key={m.key} className="overflow-hidden">
-              <div className="flex items-center justify-between p-3 border-b">
+            <div key={m.key} className="sth-glass overflow-hidden">
+              <div className="flex items-center justify-between p-3 border-b border-[hsl(150,18%,14%)]">
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-lg">{m.icon}</span>
+                  <span className="text-xl">{m.icon}</span>
                   <div className="min-w-0">
-                    <p className="font-bold leading-tight">{m.label}</p>
-                    <p className="text-[11px] text-muted-foreground">{Math.round(mealKcal)} kcal · {items.length} itens</p>
+                    <p className="font-bold leading-tight text-[hsl(150,12%,88%)]">{m.label}</p>
+                    <p className="text-[11px] text-[hsl(150,8%,55%)]">{Math.round(mealKcal)} kcal · {items.length} itens</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
                   {items.length > 0 && (
-                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => saveAsCombo(m.key)} title="Salvar como combo">
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-[hsl(150,95%,45%)] hover:text-[hsl(150,95%,60%)] hover:bg-[hsl(150,25%,10%)]" onClick={() => saveAsCombo(m.key)} title="Salvar como combo">
                       <BookmarkPlus className="w-4 h-4" />
                     </Button>
                   )}
-                  <Button size="icon" variant="ghost" className="h-8 w-8 text-primary"
+                  <Button size="icon" variant="ghost" className="h-8 w-8 text-[hsl(150,95%,45%)] hover:text-[hsl(150,95%,60%)] hover:bg-[hsl(150,25%,10%)]"
                     onClick={() => { setAddMeal(m.key); setAddOpen(true); }}>
                     <Plus className="w-5 h-5" />
                   </Button>
                 </div>
               </div>
               {items.length > 0 && (
-                <div className="divide-y">
+                <div className="divide-y divide-[hsl(150,18%,14%)]">
                   {items.map((it) => (
-                    <div key={it.id} className="flex items-center justify-between gap-2 px-3 py-2">
+                    <div key={it.id} className="flex items-center justify-between gap-2 px-3 py-2.5 hover:bg-[hsl(150,25%,10%)]/50 transition-colors">
                       <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{it.item_name}</p>
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-sm font-medium truncate text-[hsl(150,12%,88%)]">{it.item_name}</p>
+                        <p className="text-[11px] text-[hsl(150,8%,55%)]">
                           {it.quantity}{it.unit} · {Math.round(Number(it.energy_kcal))} kcal · P:{Number(it.protein_g).toFixed(1)} C:{Number(it.carbs_g).toFixed(1)} G:{Number(it.fat_g).toFixed(1)}
                         </p>
                       </div>
-                      <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => removeEntry(it.id)}>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-[hsl(0,65%,52%)] hover:text-[hsl(0,65%,60%)] hover:bg-[hsl(0,65%,52%)]/10" onClick={() => removeEntry(it.id)}>
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
                   ))}
                 </div>
               )}
-            </Card>
+            </div>
           );
         })}
 
         {/* Water */}
-        <Card className="p-4">
+        <div className="sth-glass p-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Droplet className="w-5 h-5 text-info" />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl glass-icon flex items-center justify-center">
+                <Droplet className="w-5 h-5 text-[hsl(190,100%,50%)]" />
+              </div>
               <div>
-                <p className="font-bold leading-tight">Contador de Água</p>
-                <p className="text-[11px] text-muted-foreground">{water} / {goals.water_ml} ml</p>
+                <p className="font-bold leading-tight text-[hsl(150,12%,88%)]">Contador de Água</p>
+                <p className="text-[11px] text-[hsl(150,8%,55%)]">{water} / {goals.water_ml} ml</p>
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <Button size="sm" variant="outline" onClick={() => updateWater(water - 250)}>-250</Button>
-              <Button size="sm" onClick={() => updateWater(water + 250)}>+250</Button>
+              <Button size="sm" variant="outline" onClick={() => updateWater(water - 250)}
+                className="border-[hsl(150,18%,14%)] bg-[hsl(155,22%,6%)] text-[hsl(150,12%,88%)] hover:bg-[hsl(150,25%,10%)] hover:text-[hsl(150,95%,45%)]">-250</Button>
+              <Button size="sm" onClick={() => updateWater(water + 250)}
+                className="bg-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)] hover:bg-[hsl(150,95%,50%)]">+250</Button>
             </div>
           </div>
-          <div className="mt-3 h-2 rounded-full bg-muted overflow-hidden">
-            <div className="h-full bg-info transition-all" style={{ width: `${Math.min(100, (water / goals.water_ml) * 100)}%` }} />
+          <div className="mt-3 h-2.5 rounded-full bg-[hsl(155,22%,6%)] border border-[hsl(150,18%,14%)] overflow-hidden">
+            <div
+              className="h-full neon-progress-fill transition-all"
+              style={{ width: `${Math.min(100, (water / goals.water_ml) * 100)}%`, background: "linear-gradient(90deg, hsl(190 100% 50% / 0.85), hsl(190 100% 50%))", boxShadow: "0 0 8px hsl(190 100% 50% / 0.8), 0 0 16px hsl(190 100% 50% / 0.5), inset 0 0 6px rgb(255 255 255 / 0.4)" }}
+            />
           </div>
-        </Card>
+        </div>
       </div>
 
       <AddFoodDialog open={addOpen} onOpenChange={setAddOpen} mealType={addMeal} onAdd={addEntries} />
