@@ -35,6 +35,14 @@ function getContentType(blob: Blob): string {
   return "image/jpeg";
 }
 
+function canUploadOriginalImage(file: File): boolean {
+  const type = (file.type || "").toLowerCase();
+  const name = (file.name || "").toLowerCase();
+
+  return ["image/jpeg", "image/jpg", "image/png", "image/webp", ""].includes(type)
+    || /\.(jpg|jpeg|png|webp)$/i.test(name);
+}
+
 /**
  * Load image with multiple fallback strategies for maximum mobile compatibility.
  */
@@ -106,6 +114,11 @@ export async function compressImage(
       height = img.height;
       drawSource = img;
     } catch {
+      if (canUploadOriginalImage(file)) {
+        console.warn("[image-upload] Could not decode image for compression, uploading original file");
+        return file;
+      }
+
       console.warn("[image-upload] Could not decode image (likely HEIC/HEIF)");
       throw new Error(
         "Formato de imagem não suportado. Use JPG, PNG ou WEBP."
@@ -228,8 +241,10 @@ export async function processAndUpload(
 export function validateImageFile(file: File, maxSizeMB = 15): string | null {
   const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "image/jpg", ""];
   const allowedExt = /\.(jpg|jpeg|png|webp|heic|heif)$/i;
+  const normalizedType = (file.type || "").toLowerCase();
+  const isGenericRasterImage = normalizedType.startsWith("image/") && normalizedType !== "image/svg+xml";
 
-  if (!allowedTypes.includes(file.type) && !allowedExt.test(file.name)) {
+  if (!allowedTypes.includes(normalizedType) && !isGenericRasterImage && !allowedExt.test(file.name)) {
     return "Apenas arquivos de imagem são aceitos (JPG, PNG, WEBP).";
   }
   if (file.size > maxSizeMB * 1024 * 1024) {
