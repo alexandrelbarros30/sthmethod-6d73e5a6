@@ -749,6 +749,31 @@ export default function DiarioAlimentar() {
     refresh();
   };
 
+  const [editingEntry, setEditingEntry] = useState<DiaryEntry | null>(null);
+
+  const updateEntry = async (id: string, newQty: number, newUnit: "g" | "ml") => {
+    const orig = entries.find((e) => e.id === id);
+    if (!orig || newQty <= 0) return;
+    const r = newQty / Math.max(orig.quantity, 0.0001);
+    const patch = {
+      quantity: newQty,
+      unit: newUnit,
+      energy_kcal: +(Number(orig.energy_kcal) * r).toFixed(1),
+      protein_g: +(Number(orig.protein_g) * r).toFixed(2),
+      carbs_g: +(Number(orig.carbs_g) * r).toFixed(2),
+      fat_g: +(Number(orig.fat_g) * r).toFixed(2),
+      fiber_g: +(Number(orig.fiber_g || 0) * r).toFixed(2),
+      sodium_mg: +(Number(orig.sodium_mg || 0) * r).toFixed(1),
+    };
+    if (isAuth && user) {
+      await supabase.from("food_diary_entries").update(patch).eq("id", id);
+    } else {
+      localDiary.updateEntry(id, patch);
+    }
+    setEditingEntry(null);
+    refresh();
+  };
+
   const updateWater = async (ml: number) => {
     const v = Math.max(0, ml);
     setWater(v);
