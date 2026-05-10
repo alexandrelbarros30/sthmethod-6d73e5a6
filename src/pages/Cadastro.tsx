@@ -672,8 +672,7 @@ const Cadastro = () => {
               {/* Physical Activity Level (NEAT) */}
               <div>
                 <Label className="font-body inline-flex items-center">
-                  Nível de atividade física (sem exercícios)
-                  <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">opcional</span>
+                  Nível de atividade física (sem exercícios) *
                 </Label>
                 <Select value={profileForm.physical_activity_level} onValueChange={(v) => setProfileForm({ ...profileForm, physical_activity_level: v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
@@ -688,8 +687,7 @@ const Cadastro = () => {
               {/* Activity Type */}
               <div>
                 <Label className="font-body inline-flex items-center">
-                  Atividade física praticada
-                  <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">opcional</span>
+                  Atividade física praticada *
                 </Label>
                 <Select value={profileForm.activity_type} onValueChange={(v) => setProfileForm({ ...profileForm, activity_type: v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
@@ -749,8 +747,7 @@ const Cadastro = () => {
               {/* Cardio */}
               <div>
                 <Label className="font-body inline-flex items-center">
-                  Faz cardio (aeróbico)?
-                  <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">opcional</span>
+                  Faz cardio (aeróbico)? *
                 </Label>
                 <RadioGroup
                   value={profileForm.does_cardio}

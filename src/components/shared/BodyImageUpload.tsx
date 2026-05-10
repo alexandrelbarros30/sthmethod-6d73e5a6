@@ -19,7 +19,7 @@ interface BodyImageUploadProps {
 const IMAGE_TYPES = [
   { key: "front", label: "Frente", icon: "🧍" },
   { key: "back", label: "Costas", icon: "🔙" },
-  { key: "profile", label: "Perfil", icon: "👤" },
+  { key: "profile", label: "Lado", icon: "👤" },
 ] as const;
 
 const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = false, canDeleteExisting = true }: BodyImageUploadProps) => {
