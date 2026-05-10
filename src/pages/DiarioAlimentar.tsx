@@ -45,17 +45,19 @@ function LeadGate({ onDone }: { onDone: () => void }) {
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase
+    const cleanPhone = phone.replace(/\D/g, "");
+    const cleanEmail = email.trim().toLowerCase();
+    const leadId = newId();
+    const { error } = await supabase
       .from("free_leads")
-      .insert({ full_name: name.trim(), email: email.trim(), phone: phone.replace(/\D/g, "") })
-      .select("id")
-      .single();
+      .insert({ full_name: name.trim(), email: cleanEmail, phone: cleanPhone });
     setLoading(false);
-    if (error || !data) {
+    // Ignore duplicate-key errors (lead already exists) — let the user proceed.
+    if (error && !/duplicate key|unique/i.test(error.message)) {
       toast.error("Erro ao registrar. Tente novamente.");
       return;
     }
-    localDiary.setLead({ id: data.id, full_name: name.trim(), email: email.trim(), phone });
+    localDiary.setLead({ id: leadId, full_name: name.trim(), email: cleanEmail, phone: cleanPhone });
     onDone();
   };
 
