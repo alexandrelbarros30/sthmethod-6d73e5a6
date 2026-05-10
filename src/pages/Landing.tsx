@@ -182,6 +182,7 @@ const Landing = () => {
             <Link to="/tendencias" className="hover:text-foreground transition-colors">STH News</Link>
             <a href="#resultados" className="hover:text-foreground transition-colors">Resultados</a>
             <Link to="/questionario" className="hover:text-foreground transition-colors">Macros</Link>
+            <Link to="/diario-alimentar" className="hover:text-foreground transition-colors">Diário Alimentar</Link>
           </div>
 
           {/* Right side: CTA + hamburger */}
