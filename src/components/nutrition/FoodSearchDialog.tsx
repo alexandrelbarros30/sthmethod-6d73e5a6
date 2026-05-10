@@ -79,7 +79,11 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
       }
       return { f, score, name };
     })
-    .sort((a, b) => a.score - b.score || a.name.length - b.name.length === 0 ? a.name.localeCompare(b.name) : a.name.length - b.name.length)
+    .sort((a, b) => {
+      if (a.score !== b.score) return a.score - b.score;
+      if (a.name.length !== b.name.length) return a.name.length - b.name.length;
+      return a.name.localeCompare(b.name);
+    })
     .map((x) => x.f);
 
   const handleSelectFood = (food: any) => {
