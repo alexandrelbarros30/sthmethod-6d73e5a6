@@ -29,6 +29,98 @@ const CATEGORIES = [
   "Outros",
 ];
 
+type Measure = { label: string; grams: number; unit?: "g" | "ml" };
+const GENERIC_MEASURES: Measure[] = [
+  { label: "1 colher de chá (5g)", grams: 5 },
+  { label: "1 colher de sobremesa (10g)", grams: 10 },
+  { label: "1 colher de sopa (15g)", grams: 15 },
+  { label: "1 xícara (240g)", grams: 240 },
+  { label: "1 copo (200ml)", grams: 200, unit: "ml" },
+  { label: "1 unidade pequena (50g)", grams: 50 },
+  { label: "1 unidade média (100g)", grams: 100 },
+  { label: "1 unidade grande (150g)", grams: 150 },
+];
+
+function getMeasuresForFood(food: any): Measure[] {
+  const n = (food?.name || "").toLowerCase();
+  const cat = (food?.category || "").toLowerCase();
+  const list: Measure[] = [];
+  if (/whey|prote[ií]na|albumina|caseina|caseína|hipercal[oó]rico|bcaa|cre?atina|colla?gen|colá?geno/i.test(n)) {
+    list.push({ label: "1 scoop (30g)", grams: 30 });
+    list.push({ label: "1 scoop (40g)", grams: 40 });
+    list.push({ label: "1 scoop (50g)", grams: 50 });
+  }
+  if (/p[aã]o de forma|sliced bread|toast/i.test(n)) {
+    list.push({ label: "1 fatia (25g)", grams: 25 });
+    list.push({ label: "2 fatias (50g)", grams: 50 });
+  }
+  if (/p[aã]o franc[eê]s|baguete|pão de sal/i.test(n)) {
+    list.push({ label: "1 unidade (50g)", grams: 50 });
+  }
+  if (/p[aã]o|bolo|cake|bread/i.test(n) && !/forma|franc[eê]s|baguete/i.test(n)) {
+    list.push({ label: "1 fatia (40g)", grams: 40 });
+  }
+  if (/banana/i.test(n)) list.push({ label: "1 unidade média (100g)", grams: 100 });
+  if (/ma[cç][aã]|apple/i.test(n)) list.push({ label: "1 unidade (130g)", grams: 130 });
+  if (/laranja|orange/i.test(n)) list.push({ label: "1 unidade (180g)", grams: 180 });
+  if (/mam[aã]o|papaya/i.test(n)) list.push({ label: "1 fatia (170g)", grams: 170 });
+  if (/abacaxi|pineapple/i.test(n)) list.push({ label: "1 fatia (75g)", grams: 75 });
+  if (/morango|strawberry/i.test(n)) list.push({ label: "1 unidade (12g)", grams: 12 });
+  if (/\bovo\b|\begg\b/i.test(n)) {
+    list.push({ label: "1 unidade (50g)", grams: 50 });
+    list.push({ label: "1 clara (33g)", grams: 33 });
+    list.push({ label: "1 gema (17g)", grams: 17 });
+  }
+  if (/arroz|rice/i.test(n)) {
+    list.push({ label: "1 colher de servir (45g)", grams: 45 });
+    list.push({ label: "1 escumadeira (100g)", grams: 100 });
+  }
+  if (/feij[aã]o|bean/i.test(n)) {
+    list.push({ label: "1 concha (140g)", grams: 140 });
+  }
+  if (/macarr[aã]o|massa|pasta|spaghetti|penne/i.test(n)) {
+    list.push({ label: "1 escumadeira (100g)", grams: 100 });
+  }
+  if (/file?[ée]|peito|fil[eé]t|steak|frango|chicken|carne|beef|patinho|alcatra|coxa|sobrecoxa/i.test(n)) {
+    list.push({ label: "1 filé pequeno (100g)", grams: 100 });
+    list.push({ label: "1 filé médio (150g)", grams: 150 });
+    list.push({ label: "1 bife (120g)", grams: 120 });
+  }
+  if (/leite|milk|iogurte|yogurt|bebida l[aá]ctea/i.test(n)) {
+    list.push({ label: "1 copo (200ml)", grams: 200, unit: "ml" });
+    list.push({ label: "1 xícara (240ml)", grams: 240, unit: "ml" });
+    list.push({ label: "1 pote (170g)", grams: 170 });
+  }
+  if (/queijo|cheese|mussarela|prato|minas|ricota/i.test(n)) {
+    list.push({ label: "1 fatia (20g)", grams: 20 });
+  }
+  if (/[oó]leo|azeite|oil/i.test(n) || cat.includes("óleos") || cat.includes("oils")) {
+    list.push({ label: "1 colher de chá (5ml)", grams: 5, unit: "ml" });
+    list.push({ label: "1 colher de sopa (15ml)", grams: 15, unit: "ml" });
+    list.push({ label: "1 fio (3ml)", grams: 3, unit: "ml" });
+  }
+  if (/castanha|am[eê]ndoa|nozes|nuts|amendoim|peanut|pistache/i.test(n) || cat.includes("oleaginosas") || cat.includes("nut")) {
+    list.push({ label: "1 punhado (30g)", grams: 30 });
+    list.push({ label: "1 colher de sopa (10g)", grams: 10 });
+  }
+  if (/pasta de amendoim|peanut butter|mel\b|honey|geleia|jam/i.test(n)) {
+    list.push({ label: "1 colher de sopa (15g)", grams: 15 });
+    list.push({ label: "1 colher de sobremesa (10g)", grams: 10 });
+  }
+  if (/tapioca/i.test(n)) {
+    list.push({ label: "1 unidade pequena (50g)", grams: 50 });
+    list.push({ label: "1 unidade média (80g)", grams: 80 });
+  }
+  if (/suco|juice|refrigerante|soda|[aá]gua|water|ch[aá]\b|coffee|caf[eé]/i.test(n)) {
+    list.push({ label: "1 copo (200ml)", grams: 200, unit: "ml" });
+    list.push({ label: "1 xícara (240ml)", grams: 240, unit: "ml" });
+  }
+  for (const m of GENERIC_MEASURES) {
+    if (!list.find((x) => x.label === m.label)) list.push(m);
+  }
+  return list;
+}
+
 const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("Todos");
@@ -196,6 +288,34 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
                   <SelectItem value="ml">ml</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <label className="text-sm font-medium shrink-0">Medida caseira:</label>
+              <Select
+                value=""
+                onValueChange={(v) => {
+                  const measures = getMeasuresForFood(selectedFood);
+                  const m = measures.find((x) => x.label === v);
+                  if (m) {
+                    setQuantity(m.grams);
+                    if (m.unit) setUnit(m.unit);
+                  }
+                }}
+              >
+                <SelectTrigger className="h-8 flex-1 min-w-[180px]">
+                  <SelectValue placeholder="Escolher medida (colher, scoop, fatia...)" />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {getMeasuresForFood(selectedFood).map((m) => (
+                    <SelectItem key={m.label} value={m.label}>
+                      {m.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground basis-full">
+                Dica: ajuste a gramagem após escolher (ex.: scoop de whey pode ter 30g, 40g ou 50g dependendo da marca).
+              </p>
             </div>
             <div className="grid grid-cols-4 gap-2 text-xs">
               <div className="bg-muted/50 rounded p-2 text-center">
