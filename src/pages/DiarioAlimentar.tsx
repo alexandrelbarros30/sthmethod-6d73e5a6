@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { localDiary, MEAL_TYPES, DEFAULT_GOALS, type DiaryEntry, type SavedMeal, type Goals } from "@/lib/food-diary-storage";
 import { calculateMacros, type MacroInput } from "@/lib/macro-calculator";
+import { searchFoodBank } from "@/data/food-bank";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
