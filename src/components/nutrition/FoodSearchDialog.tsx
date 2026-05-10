@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Search, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 
 interface Props {
   open: boolean;
@@ -34,6 +35,12 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
   const [quantity, setQuantity] = useState(100);
   const [unit, setUnit] = useState<"g" | "ml">("g");
   const [selectedFood, setSelectedFood] = useState<any>(null);
+  const [addedCount, setAddedCount] = useState(0);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) setAddedCount(0);
+  }, [open]);
 
   const { data: foods = [] } = useQuery({
     queryKey: ["foods-db"],
@@ -112,6 +119,7 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
+              ref={searchRef}
               placeholder="Pesquisar alimento..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
