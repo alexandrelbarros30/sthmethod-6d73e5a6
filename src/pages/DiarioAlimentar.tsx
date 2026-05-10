@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
-import { Plus, Search, Trash2, Droplet, BookmarkPlus, ChevronLeft, ChevronRight, Settings, Loader2, X, ChevronDown, Calculator } from "lucide-react";
+import { Plus, Search, Trash2, Droplet, BookmarkPlus, ChevronLeft, ChevronRight, Loader2, X, ChevronDown, Calculator } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -720,10 +720,6 @@ export default function DiarioAlimentar() {
             <Button variant="outline" size="sm" onClick={() => setCalcOpen(true)}
               className="border-[hsl(150,18%,14%)] bg-[hsl(155,22%,6%)] text-[hsl(150,95%,45%)] hover:bg-[hsl(150,25%,10%)] hover:text-[hsl(150,95%,60%)]">
               <Calculator className="w-4 h-4 mr-1" /> Calcular
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setGoalsOpen(true)}
-              className="border-[hsl(150,18%,14%)] bg-[hsl(155,22%,6%)] text-[hsl(150,12%,88%)] hover:bg-[hsl(150,25%,10%)] hover:text-[hsl(150,95%,45%)]">
-              <Settings className="w-4 h-4 mr-1" /> Metas
             </Button>
           </div>
         </div>
