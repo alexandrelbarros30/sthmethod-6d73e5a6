@@ -151,21 +151,14 @@ function AddFoodDialog({
 
   useEffect(() => {
     if (!search.trim() || tab !== "alimento") { setFoods([]); return; }
-    const t = setTimeout(async () => {
+    const t = setTimeout(() => {
       setLoading(true);
       try {
-        const { data, error } = await supabase.functions.invoke("fatsecret-search", {
-          body: { query: search.trim(), maxResults: 40 },
-        });
-        if (error) throw error;
-        setFoods(data?.foods || []);
-      } catch (e) {
-        console.error("fatsecret-search invoke error", e);
-        setFoods([]);
+        setFoods(searchFoodBank(search.trim(), 40));
       } finally {
         setLoading(false);
       }
-    }, 250);
+    }, 150);
     return () => clearTimeout(t);
   }, [search, tab]);
 
