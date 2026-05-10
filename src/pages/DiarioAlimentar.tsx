@@ -208,7 +208,7 @@ function AddFoodDialog({
       return {
         meal_type: mealType,
         meal_label: mealLabel,
-        food_id: food.id,
+        food_id: typeof food.id === "string" && food.id.startsWith("fs_") ? null : food.id,
         item_name: food.name,
         quantity,
         unit,
