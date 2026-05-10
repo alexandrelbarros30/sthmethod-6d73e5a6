@@ -92,31 +92,31 @@ function LeadGate({ onDone }: { onDone: () => void }) {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-6">
-      <div className="sth-glass w-full max-w-md p-8 space-y-5">
+    <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center p-6">
+      <div className="bg-white rounded-2xl shadow-apple w-full max-w-md p-8 space-y-5 border border-[#E5E5EA]">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl glass-icon mb-2">
-            <Droplet className="w-7 h-7 text-[hsl(150,95%,45%)]" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#E8F5E9] mb-2">
+            <Droplet className="w-7 h-7 text-[#34C759]" />
           </div>
-          <h1 className="text-2xl font-bold gradient-text">Diário Alimentar STH METHOD</h1>
-          <p className="text-sm text-[hsl(150,8%,55%)]">
+          <h1 className="text-2xl font-bold text-[#1C1C1E]">Diário Alimentar STH METHOD</h1>
+          <p className="text-sm text-[#6E6E73]">
             Acesso liberado em segundos. Preencha para começar a registrar suas refeições.
           </p>
         </div>
         <form onSubmit={submit} className="space-y-3">
           <Input placeholder="Nome completo" value={name} onChange={(e) => setName(e.target.value)} maxLength={100}
-            className="bg-[hsl(155,18%,8%)] border-[hsl(150,18%,14%)] text-foreground placeholder:text-[hsl(150,8%,45%)]" />
+            className="bg-[#F2F2F7] border-[#E5E5EA] text-[#1C1C1E] placeholder:text-[#8E8E93]" />
           <Input type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={150}
-            className="bg-[hsl(155,18%,8%)] border-[hsl(150,18%,14%)] text-foreground placeholder:text-[hsl(150,8%,45%)]" />
+            className="bg-[#F2F2F7] border-[#E5E5EA] text-[#1C1C1E] placeholder:text-[#8E8E93]" />
           <Input placeholder="WhatsApp (somente números)" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={20}
-            className="bg-[hsl(155,18%,8%)] border-[hsl(150,18%,14%)] text-foreground placeholder:text-[hsl(150,8%,45%)]" />
-          <Button type="submit" className="w-full premium-btn bg-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)] hover:bg-[hsl(150,95%,50%)]" disabled={loading}>
+            className="bg-[#F2F2F7] border-[#E5E5EA] text-[#1C1C1E] placeholder:text-[#8E8E93]" />
+          <Button type="submit" className="w-full font-semibold bg-[#34C759] text-white hover:bg-[#30B350]" disabled={loading}>
             {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Acessar Diário
           </Button>
         </form>
-        <p className="text-[11px] text-center text-[hsl(150,8%,45%)]">
-          Já é aluno? <Link to="/login" className="underline text-[hsl(150,95%,45%)]">Entrar</Link>
+        <p className="text-[11px] text-center text-[#6E6E73]">
+          Já é aluno? <Link to="/login" className="underline text-[#34C759]">Entrar</Link>
         </p>
       </div>
     </div>
@@ -254,70 +254,70 @@ function AddFoodDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl max-h-[90vh] flex flex-col bg-[hsl(155,25%,5%)] border-[hsl(150,18%,14%)] text-foreground">
+      <DialogContent className="max-w-xl max-h-[90vh] flex flex-col bg-white border-[#E5E5EA] text-[#1C1C1E]">
         <DialogHeader>
           <div className="flex items-start justify-between gap-3 pr-6">
             <div className="min-w-0">
-              <DialogTitle className="gradient-text">{mealLabel}</DialogTitle>
-              <p className="text-[11px] text-[hsl(150,8%,55%)] mt-0.5 capitalize">{headerDate}</p>
+              <DialogTitle className="text-[#1C1C1E]">{mealLabel}</DialogTitle>
+              <p className="text-[11px] text-[#6E6E73] mt-0.5 capitalize">{headerDate}</p>
             </div>
             <Button
               size="sm"
               onClick={confirmAll}
               disabled={selectedCount === 0}
-              className="shrink-0 premium-btn bg-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)] hover:bg-[hsl(150,95%,50%)] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="shrink-0 font-semibold bg-[#34C759] text-white hover:bg-[#30B350] disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Check className="w-4 h-4 mr-1" /> {selectedCount > 0 ? selectedCount : ""} Confirmar
             </Button>
           </div>
         </DialogHeader>
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="flex-1 flex flex-col min-h-0">
-          <TabsList className="grid grid-cols-2 bg-[hsl(155,18%,8%)] border border-[hsl(150,18%,14%)]">
-            <TabsTrigger value="alimento" className="data-[state=active]:bg-[hsl(150,60%,18%)] data-[state=active]:text-[hsl(150,95%,80%)]">Alimento</TabsTrigger>
-            <TabsTrigger value="salvas" className="data-[state=active]:bg-[hsl(150,60%,18%)] data-[state=active]:text-[hsl(150,95%,80%)]">Refeições Salvas</TabsTrigger>
+          <TabsList className="grid grid-cols-2 bg-[#F2F2F7] border border-[#E5E5EA]">
+            <TabsTrigger value="alimento" className="data-[state=active]:bg-white data-[state=active]:text-[#34C759] data-[state=active]:shadow-sm">Alimento</TabsTrigger>
+            <TabsTrigger value="salvas" className="data-[state=active]:bg-white data-[state=active]:text-[#34C759] data-[state=active]:shadow-sm">Refeições Salvas</TabsTrigger>
           </TabsList>
 
           <TabsContent value="alimento" className="flex-1 flex flex-col min-h-0 mt-3 space-y-3">
             {editingFood ? (
-              <div className="sth-glass p-4 space-y-3">
+              <div className="bg-[#F2F2F7] rounded-xl p-4 space-y-3 border border-[#E5E5EA]">
                 <div className="flex items-start justify-between">
                   <div className="min-w-0">
-                    <p className="font-medium truncate text-foreground">{editingFood.name}</p>
-                    <Badge variant="outline" className="text-[10px] mt-1 border-[hsl(150,18%,14%)] text-[hsl(150,8%,55%)]">{editingFood.source} · {editingFood.category}</Badge>
+                    <p className="font-medium truncate text-[#1C1C1E]">{editingFood.name}</p>
+                    <Badge variant="outline" className="text-[10px] mt-1 border-[#E5E5EA] text-[#6E6E73]">{editingFood.source} · {editingFood.category}</Badge>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => setEditingFood(null)} className="text-[hsl(150,95%,45%)] hover:text-[hsl(150,95%,60%)]">Voltar</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setEditingFood(null)} className="text-[#34C759] hover:text-[#30B350]">Voltar</Button>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Input type="number" value={editQty} onChange={(e) => setEditQty(Number(e.target.value) || 0)} className="w-24 h-8 bg-[hsl(155,18%,8%)] border-[hsl(150,18%,14%)]" min={1} />
+                  <Input type="number" value={editQty} onChange={(e) => setEditQty(Number(e.target.value) || 0)} className="w-24 h-8 bg-white border-[#E5E5EA]" min={1} />
                   <Select value={editUnit} onValueChange={(v) => setEditUnit(v as "g" | "ml")}>
-                    <SelectTrigger className="w-24 h-8 bg-[hsl(155,18%,8%)] border-[hsl(150,18%,14%)]"><SelectValue /></SelectTrigger>
-                    <SelectContent className="bg-[hsl(155,25%,6%)] border-[hsl(150,18%,14%)]">
+                    <SelectTrigger className="w-24 h-8 bg-white border-[#E5E5EA]"><SelectValue /></SelectTrigger>
+                    <SelectContent className="bg-white border-[#E5E5EA]">
                       <SelectItem value="g">g</SelectItem>
                       <SelectItem value="ml">ml</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid grid-cols-4 gap-2 text-xs">
-                  <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(150,18%,14%)] p-2 text-center">
-                    <p className="text-[hsl(150,8%,55%)]">kcal</p>
-                    <p className="font-bold text-sm text-[hsl(150,95%,45%)]">{(editingFood.energy_kcal * editRatio).toFixed(0)}</p>
+                  <div className="rounded-xl bg-white border border-[#E5E5EA] p-2 text-center">
+                    <p className="text-[#6E6E73]">kcal</p>
+                    <p className="font-bold text-sm text-[#34C759]">{(editingFood.energy_kcal * editRatio).toFixed(0)}</p>
                   </div>
-                  <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(150,18%,14%)] p-2 text-center">
-                    <p className="text-[hsl(150,8%,55%)]">P</p>
-                    <p className="font-bold text-sm text-[hsl(190,100%,50%)]">{(editingFood.protein_g * editRatio).toFixed(1)}g</p>
+                  <div className="rounded-xl bg-white border border-[#E5E5EA] p-2 text-center">
+                    <p className="text-[#6E6E73]">P</p>
+                    <p className="font-bold text-sm text-[#007AFF]">{(editingFood.protein_g * editRatio).toFixed(1)}g</p>
                   </div>
-                  <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(150,18%,14%)] p-2 text-center">
-                    <p className="text-[hsl(150,8%,55%)]">C</p>
-                    <p className="font-bold text-sm text-[hsl(35,92%,52%)]">{(editingFood.carbs_g * editRatio).toFixed(1)}g</p>
+                  <div className="rounded-xl bg-white border border-[#E5E5EA] p-2 text-center">
+                    <p className="text-[#6E6E73]">C</p>
+                    <p className="font-bold text-sm text-[#FF9500]">{(editingFood.carbs_g * editRatio).toFixed(1)}g</p>
                   </div>
-                  <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(150,18%,14%)] p-2 text-center">
-                    <p className="text-[hsl(150,8%,55%)]">G</p>
-                    <p className="font-bold text-sm text-[hsl(25,85%,55%)]">{(editingFood.fat_g * editRatio).toFixed(1)}g</p>
+                  <div className="rounded-xl bg-white border border-[#E5E5EA] p-2 text-center">
+                    <p className="text-[#6E6E73]">G</p>
+                    <p className="font-bold text-sm text-[#FF9F0A]">{(editingFood.fat_g * editRatio).toFixed(1)}g</p>
                   </div>
                 </div>
                 <DialogFooter>
                   <div className="w-full flex flex-col sm:flex-row gap-2">
-                    <Button onClick={saveEditor} className="w-full premium-btn bg-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)] hover:bg-[hsl(150,95%,50%)]">
+                    <Button onClick={saveEditor} className="w-full font-semibold bg-[#34C759] text-white hover:bg-[#30B350]">
                       <Check className="w-4 h-4 mr-1" /> Salvar e voltar à lista
                     </Button>
                   </div>
@@ -326,19 +326,19 @@ function AddFoodDialog({
             ) : (
               <>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(150,8%,45%)]" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8E8E93]" />
                   <Input
                     placeholder="Buscar alimento (ex: laranja, frango...)"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9 bg-[hsl(155,18%,8%)] border-[hsl(150,18%,14%)] text-foreground placeholder:text-[hsl(150,8%,45%)]"
+                    className="pl-9 bg-[#F2F2F7] border-[#E5E5EA] text-[#1C1C1E] placeholder:text-[#8E8E93]"
                     autoFocus
                   />
                 </div>
-                <div className="flex-1 overflow-y-auto border border-[hsl(150,18%,14%)] rounded-xl divide-y divide-[hsl(150,18%,14%)] min-h-[200px] bg-[hsl(155,22%,6%)] pb-16">
-                  {loading && <div className="p-6 text-center text-sm text-[hsl(150,8%,55%)]"><Loader2 className="w-4 h-4 inline animate-spin mr-2 text-[hsl(150,95%,45%)]" />Buscando...</div>}
-                  {!loading && !search.trim() && <p className="p-6 text-center text-sm text-[hsl(150,8%,45%)]">Digite para buscar entre 30.000+ alimentos</p>}
-                  {!loading && search.trim() && foods.length === 0 && <p className="p-6 text-center text-sm text-[hsl(150,8%,45%)]">Nada encontrado.</p>}
+                <div className="flex-1 overflow-y-auto border border-[#E5E5EA] rounded-xl divide-y divide-[#E5E5EA] min-h-[200px] bg-white pb-16">
+                  {loading && <div className="p-6 text-center text-sm text-[#6E6E73]"><Loader2 className="w-4 h-4 inline animate-spin mr-2 text-[#34C759]" />Buscando...</div>}
+                  {!loading && !search.trim() && <p className="p-6 text-center text-sm text-[#6E6E73]">Digite para buscar entre 30.000+ alimentos</p>}
+                  {!loading && search.trim() && foods.length === 0 && <p className="p-6 text-center text-sm text-[#6E6E73]">Nada encontrado.</p>}
                   {foods.map((f) => {
                     const sel = selections.get(f.id);
                     const checked = !!sel;
@@ -346,15 +346,15 @@ function AddFoodDialog({
                       <div
                         key={f.id}
                         className={cn(
-                          "w-full flex items-center gap-2 px-3 py-2.5 hover:bg-[hsl(150,25%,10%)] transition-colors",
-                          checked && "bg-[hsl(150,40%,10%)]"
+                          "w-full flex items-center gap-2 px-3 py-2.5 hover:bg-[#F2F2F7] transition-colors",
+                          checked && "bg-[#E8F5E9]"
                         )}
                       >
                         <button onClick={() => openEditor(f)} className="flex-1 min-w-0 text-left">
-                          <p className="text-sm font-medium truncate text-foreground">{f.name}</p>
-                          <p className="text-[11px] text-[hsl(150,95%,45%)]">
+                          <p className="text-sm font-medium truncate text-[#1C1C1E]">{f.name}</p>
+                          <p className="text-[11px] text-[#34C759]">
                             {sel ? `${sel.quantity}${sel.unit}` : `100${f.serving_unit || "g"}`}
-                            <span className="text-[hsl(150,8%,55%)]"> · {Math.round(f.energy_kcal * ((sel?.quantity ?? 100) / 100))} kcal · P:{(f.protein_g * ((sel?.quantity ?? 100) / 100)).toFixed(1)}g C:{(f.carbs_g * ((sel?.quantity ?? 100) / 100)).toFixed(1)}g G:{(f.fat_g * ((sel?.quantity ?? 100) / 100)).toFixed(1)}g</span>
+                            <span className="text-[#6E6E73]"> · {Math.round(f.energy_kcal * ((sel?.quantity ?? 100) / 100))} kcal · P:{(f.protein_g * ((sel?.quantity ?? 100) / 100)).toFixed(1)}g C:{(f.carbs_g * ((sel?.quantity ?? 100) / 100)).toFixed(1)}g G:{(f.fat_g * ((sel?.quantity ?? 100) / 100)).toFixed(1)}g</span>
                           </p>
                         </button>
                         <button
@@ -363,8 +363,8 @@ function AddFoodDialog({
                           className={cn(
                             "shrink-0 w-7 h-7 rounded-md border flex items-center justify-center transition-colors",
                             checked
-                              ? "bg-[hsl(150,95%,45%)] border-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)]"
-                              : "border-[hsl(150,18%,22%)] hover:border-[hsl(150,95%,45%)] text-transparent"
+                              ? "bg-[#34C759] border-[#34C759] text-white"
+                              : "border-[#D1D1D6] hover:border-[#34C759] text-transparent"
                           )}
                         >
                           <Check className="w-4 h-4" />
@@ -374,31 +374,31 @@ function AddFoodDialog({
                   })}
                 </div>
                 {selectedCount > 0 && (
-                  <div className="absolute left-1/2 -translate-x-1/2 bottom-4 z-10 rounded-full bg-[hsl(155,22%,8%)] border border-[hsl(150,40%,20%)] shadow-lg px-5 py-2 flex items-center gap-3">
-                    <span className="text-sm text-foreground">{selectedCount} {selectedCount > 1 ? "itens selecionados" : "item selecionado"}</span>
-                    <button onClick={() => setSelections(new Map())} className="text-sm font-medium text-[hsl(150,95%,45%)] hover:text-[hsl(150,95%,60%)]">Desmarcar</button>
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-4 z-10 rounded-full bg-white border border-[#34C759]/30 shadow-lg px-5 py-2 flex items-center gap-3">
+                    <span className="text-sm text-[#1C1C1E]">{selectedCount} {selectedCount > 1 ? "itens selecionados" : "item selecionado"}</span>
+                    <button onClick={() => setSelections(new Map())} className="text-sm font-medium text-[#34C759] hover:text-[#30B350]">Desmarcar</button>
                   </div>
                 )}
               </>
             )}
           </TabsContent>
 
-          <TabsContent value="salvas" className="flex-1 overflow-y-auto mt-3 border border-[hsl(150,18%,14%)] rounded-xl divide-y divide-[hsl(150,18%,14%)] min-h-[200px] bg-[hsl(155,22%,6%)]">
+          <TabsContent value="salvas" className="flex-1 overflow-y-auto mt-3 border border-[#E5E5EA] rounded-xl divide-y divide-[#E5E5EA] min-h-[200px] bg-white">
             {savedMeals.length === 0 ? (
-              <p className="p-6 text-center text-sm text-[hsl(150,8%,55%)]">Nenhuma refeição salva ainda.<br/>Monte uma refeição e clique em "Salvar como combo".</p>
+              <p className="p-6 text-center text-sm text-[#6E6E73]">Nenhuma refeição salva ainda.<br/>Monte uma refeição e clique em "Salvar como combo".</p>
             ) : savedMeals.map((sm) => (
-              <div key={sm.id} className="flex items-center justify-between px-3 py-2.5 hover:bg-[hsl(150,25%,10%)] transition-colors">
+              <div key={sm.id} className="flex items-center justify-between px-3 py-2.5 hover:bg-[#F2F2F7] transition-colors">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium truncate text-foreground">{sm.name}</p>
-                  <p className="text-[11px] text-[hsl(150,8%,55%)]">
+                  <p className="text-sm font-medium truncate text-[#1C1C1E]">{sm.name}</p>
+                  <p className="text-[11px] text-[#6E6E73]">
                     {Math.round(sm.total_kcal)} kcal · {sm.items.length} itens
                   </p>
                 </div>
                 <div className="flex gap-1">
-                  <Button size="sm" variant="ghost" onClick={() => { localDiary.removeSavedMeal(sm.id); setSavedMeals(localDiary.getSavedMeals()); }} className="text-[hsl(0,65%,52%)] hover:text-[hsl(0,65%,60%)]">
+                  <Button size="sm" variant="ghost" onClick={() => { localDiary.removeSavedMeal(sm.id); setSavedMeals(localDiary.getSavedMeals()); }} className="text-[#FF3B30] hover:text-[#FF453A]">
                     <Trash2 className="w-3.5 h-3.5" />
                   </Button>
-                  <Button size="sm" onClick={() => addSavedMeal(sm)} className="bg-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)] hover:bg-[hsl(150,95%,50%)]">Adicionar</Button>
+                  <Button size="sm" onClick={() => addSavedMeal(sm)} className="bg-[#34C759] text-white hover:bg-[#30B350]">Adicionar</Button>
                 </div>
               </div>
             ))}
@@ -417,8 +417,8 @@ function GoalsDialog({ open, onOpenChange, goals, onSave }: {
   useEffect(() => { setG(goals); }, [goals, open]);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm bg-[hsl(155,25%,5%)] border-[hsl(150,18%,14%)] text-foreground">
-        <DialogHeader><DialogTitle className="gradient-text">Minhas Metas Diárias</DialogTitle></DialogHeader>
+      <DialogContent className="max-w-sm bg-white border-[#E5E5EA] text-[#1C1C1E]">
+        <DialogHeader><DialogTitle className="text-[#1C1C1E]">Minhas Metas Diárias</DialogTitle></DialogHeader>
         <div className="space-y-3">
           {([
             ["daily_kcal", "Calorias (kcal)"],
@@ -428,13 +428,13 @@ function GoalsDialog({ open, onOpenChange, goals, onSave }: {
             ["water_ml", "Água (ml)"],
           ] as const).map(([k, label]) => (
             <div key={k} className="flex items-center justify-between gap-3">
-              <label className="text-sm text-[hsl(150,12%,88%)]">{label}</label>
-              <Input type="number" className="w-28 h-8 bg-[hsl(155,18%,8%)] border-[hsl(150,18%,14%)] text-foreground" value={(g as any)[k]} onChange={(e) => setG({ ...g, [k]: Number(e.target.value) || 0 })} />
+              <label className="text-sm text-[#1C1C1E]">{label}</label>
+              <Input type="number" className="w-28 h-8 bg-[#F2F2F7] border-[#E5E5EA] text-[#1C1C1E]" value={(g as any)[k]} onChange={(e) => setG({ ...g, [k]: Number(e.target.value) || 0 })} />
             </div>
           ))}
         </div>
         <DialogFooter>
-          <Button onClick={() => { onSave(g); onOpenChange(false); }} className="premium-btn bg-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)] hover:bg-[hsl(150,95%,50%)]">Salvar</Button>
+          <Button onClick={() => { onSave(g); onOpenChange(false); }} className="font-semibold bg-[#34C759] text-white hover:bg-[#30B350]">Salvar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -490,15 +490,15 @@ function MacroCalcDialog({ open, onOpenChange, currentWater, onApply }: {
     onOpenChange(false);
   };
 
-  const inputCls = "h-9 bg-[hsl(155,18%,8%)] border-[hsl(150,18%,14%)] text-foreground";
-  const triggerCls = "h-9 bg-[hsl(155,18%,8%)] border-[hsl(150,18%,14%)] text-foreground";
-  const contentCls = "bg-[hsl(155,25%,6%)] border-[hsl(150,18%,14%)]";
+  const inputCls = "h-9 bg-[#F2F2F7] border-[#E5E5EA] text-[#1C1C1E]";
+  const triggerCls = "h-9 bg-[#F2F2F7] border-[#E5E5EA] text-[#1C1C1E]";
+  const contentCls = "bg-white border-[#E5E5EA]";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-[hsl(155,25%,5%)] border-[hsl(150,18%,14%)] text-foreground">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-white border-[#E5E5EA] text-[#1C1C1E]">
         <DialogHeader>
-          <DialogTitle className="gradient-text flex items-center gap-2">
+          <DialogTitle className="text-[#1C1C1E] flex items-center gap-2">
             <Calculator className="w-4 h-4" /> Calcular Macros
           </DialogTitle>
         </DialogHeader>
@@ -506,7 +506,7 @@ function MacroCalcDialog({ open, onOpenChange, currentWater, onApply }: {
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-xs text-[hsl(150,8%,55%)]">Sexo</label>
+              <label className="text-xs text-[#6E6E73]">Sexo</label>
               <Select value={gender} onValueChange={(v) => setGender(v as any)}>
                 <SelectTrigger className={triggerCls}><SelectValue /></SelectTrigger>
                 <SelectContent className={contentCls}>
@@ -516,21 +516,21 @@ function MacroCalcDialog({ open, onOpenChange, currentWater, onApply }: {
               </Select>
             </div>
             <div>
-              <label className="text-xs text-[hsl(150,8%,55%)]">Idade</label>
+              <label className="text-xs text-[#6E6E73]">Idade</label>
               <Input type="number" className={inputCls} value={age} onChange={(e) => setAge(Number(e.target.value) || 0)} />
             </div>
             <div>
-              <label className="text-xs text-[hsl(150,8%,55%)]">Peso (kg)</label>
+              <label className="text-xs text-[#6E6E73]">Peso (kg)</label>
               <Input type="number" className={inputCls} value={weight} onChange={(e) => setWeight(Number(e.target.value) || 0)} />
             </div>
             <div>
-              <label className="text-xs text-[hsl(150,8%,55%)]">Altura (cm)</label>
+              <label className="text-xs text-[#6E6E73]">Altura (cm)</label>
               <Input type="number" className={inputCls} value={height} onChange={(e) => setHeight(Number(e.target.value) || 0)} />
             </div>
           </div>
 
           <div>
-            <label className="text-xs text-[hsl(150,8%,55%)]">Nível de atividade no dia (NEAT)</label>
+            <label className="text-xs text-[#6E6E73]">Nível de atividade no dia (NEAT)</label>
             <Select value={neat} onValueChange={setNeat}>
               <SelectTrigger className={triggerCls}><SelectValue /></SelectTrigger>
               <SelectContent className={contentCls}>
@@ -544,7 +544,7 @@ function MacroCalcDialog({ open, onOpenChange, currentWater, onApply }: {
           </div>
 
           <div>
-            <label className="text-xs text-[hsl(150,8%,55%)]">Treino</label>
+            <label className="text-xs text-[#6E6E73]">Treino</label>
             <Select value={activityType} onValueChange={setActivityType}>
               <SelectTrigger className={triggerCls}><SelectValue /></SelectTrigger>
               <SelectContent className={contentCls}>
@@ -558,15 +558,15 @@ function MacroCalcDialog({ open, onOpenChange, currentWater, onApply }: {
           {activityType !== "nenhuma" && (
             <div className="grid grid-cols-3 gap-2">
               <div>
-                <label className="text-xs text-[hsl(150,8%,55%)]">Dias/sem</label>
+                <label className="text-xs text-[#6E6E73]">Dias/sem</label>
                 <Input type="number" className={inputCls} value={trainDays} onChange={(e) => setTrainDays(Number(e.target.value) || 0)} />
               </div>
               <div>
-                <label className="text-xs text-[hsl(150,8%,55%)]">Min/sessão</label>
+                <label className="text-xs text-[#6E6E73]">Min/sessão</label>
                 <Input type="number" className={inputCls} value={trainMin} onChange={(e) => setTrainMin(Number(e.target.value) || 0)} />
               </div>
               <div>
-                <label className="text-xs text-[hsl(150,8%,55%)]">Intensidade</label>
+                <label className="text-xs text-[#6E6E73]">Intensidade</label>
                 <Select value={trainIntensity} onValueChange={setTrainIntensity}>
                   <SelectTrigger className={triggerCls}><SelectValue /></SelectTrigger>
                   <SelectContent className={contentCls}>
@@ -582,22 +582,22 @@ function MacroCalcDialog({ open, onOpenChange, currentWater, onApply }: {
           )}
 
           <div className="flex items-center gap-2">
-            <input id="cardio-toggle" type="checkbox" checked={doesCardio} onChange={(e) => setDoesCardio(e.target.checked)} className="accent-[hsl(150,95%,45%)]" />
-            <label htmlFor="cardio-toggle" className="text-sm text-[hsl(150,12%,88%)]">Faço cardio</label>
+            <input id="cardio-toggle" type="checkbox" checked={doesCardio} onChange={(e) => setDoesCardio(e.target.checked)} className="accent-[#34C759]" />
+            <label htmlFor="cardio-toggle" className="text-sm text-[#1C1C1E]">Faço cardio</label>
           </div>
 
           {doesCardio && (
             <div className="grid grid-cols-3 gap-2">
               <div>
-                <label className="text-xs text-[hsl(150,8%,55%)]">Dias/sem</label>
+                <label className="text-xs text-[#6E6E73]">Dias/sem</label>
                 <Input type="number" className={inputCls} value={cardioDays} onChange={(e) => setCardioDays(Number(e.target.value) || 0)} />
               </div>
               <div>
-                <label className="text-xs text-[hsl(150,8%,55%)]">Min/sessão</label>
+                <label className="text-xs text-[#6E6E73]">Min/sessão</label>
                 <Input type="number" className={inputCls} value={cardioMin} onChange={(e) => setCardioMin(Number(e.target.value) || 0)} />
               </div>
               <div>
-                <label className="text-xs text-[hsl(150,8%,55%)]">Intensidade</label>
+                <label className="text-xs text-[#6E6E73]">Intensidade</label>
                 <Select value={cardioIntensity} onValueChange={setCardioIntensity}>
                   <SelectTrigger className={triggerCls}><SelectValue /></SelectTrigger>
                   <SelectContent className={contentCls}>
@@ -613,7 +613,7 @@ function MacroCalcDialog({ open, onOpenChange, currentWater, onApply }: {
           )}
 
           <div>
-            <label className="text-xs text-[hsl(150,8%,55%)]">Objetivo</label>
+            <label className="text-xs text-[#6E6E73]">Objetivo</label>
             <Select value={objective} onValueChange={setObjective}>
               <SelectTrigger className={triggerCls}><SelectValue /></SelectTrigger>
               <SelectContent className={contentCls}>
@@ -624,32 +624,32 @@ function MacroCalcDialog({ open, onOpenChange, currentWater, onApply }: {
             </Select>
           </div>
 
-          <div className="sth-glass p-3 mt-2">
-            <p className="text-xs text-[hsl(150,8%,55%)] mb-2">Resultado</p>
+          <div className="bg-[#F2F2F7] rounded-xl p-3 mt-2 border border-[#E5E5EA]">
+            <p className="text-xs text-[#6E6E73] mb-2">Resultado</p>
             <div className="grid grid-cols-4 gap-2 text-center text-xs">
-              <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(150,95%,45%/0.25)] p-2">
-                <div className="font-bold text-[hsl(150,95%,45%)] text-sm tabular-nums">{result.dailyCalories}</div>
-                <div className="text-[hsl(150,8%,55%)] mt-0.5">kcal</div>
+              <div className="rounded-xl bg-white border border-[#34C759]/25 p-2">
+                <div className="font-bold text-[#34C759] text-sm tabular-nums">{result.dailyCalories}</div>
+                <div className="text-[#6E6E73] mt-0.5">kcal</div>
               </div>
-              <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(190,100%,50%/0.25)] p-2">
-                <div className="font-bold text-[hsl(190,100%,50%)] text-sm tabular-nums">{result.proteinG}g</div>
-                <div className="text-[hsl(150,8%,55%)] mt-0.5">Proteína</div>
+              <div className="rounded-xl bg-white border border-[#007AFF]/25 p-2">
+                <div className="font-bold text-[#007AFF] text-sm tabular-nums">{result.proteinG}g</div>
+                <div className="text-[#6E6E73] mt-0.5">Proteína</div>
               </div>
-              <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(35,92%,52%/0.25)] p-2">
-                <div className="font-bold text-[hsl(35,92%,52%)] text-sm tabular-nums">{result.carbsG}g</div>
-                <div className="text-[hsl(150,8%,55%)] mt-0.5">Carbo</div>
+              <div className="rounded-xl bg-white border border-[#FF9500]/25 p-2">
+                <div className="font-bold text-[#FF9500] text-sm tabular-nums">{result.carbsG}g</div>
+                <div className="text-[#6E6E73] mt-0.5">Carbo</div>
               </div>
-              <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(25,85%,55%/0.25)] p-2">
-                <div className="font-bold text-[hsl(25,85%,55%)] text-sm tabular-nums">{result.fatG}g</div>
-                <div className="text-[hsl(150,8%,55%)] mt-0.5">Gord</div>
+              <div className="rounded-xl bg-white border border-[#FF9F0A]/25 p-2">
+                <div className="font-bold text-[#FF9F0A] text-sm tabular-nums">{result.fatG}g</div>
+                <div className="text-[#6E6E73] mt-0.5">Gord</div>
               </div>
             </div>
-            <p className="text-[10px] text-[hsl(150,8%,45%)] mt-2">TDEE: {result.tdee} kcal · TMB: {result.bmr} kcal · Água sugerida: {Math.round(weight * 35)} ml</p>
+            <p className="text-[10px] text-[#8E8E93] mt-2">TDEE: {result.tdee} kcal · TMB: {result.bmr} kcal · Água sugerida: {Math.round(weight * 35)} ml</p>
           </div>
         </div>
 
         <DialogFooter>
-          <Button onClick={apply} className="w-full premium-btn bg-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)] hover:bg-[hsl(150,95%,50%)]">
+          <Button onClick={apply} className="w-full font-semibold bg-[#34C759] text-white hover:bg-[#30B350]">
             Aplicar como minhas metas
           </Button>
         </DialogFooter>
@@ -822,28 +822,28 @@ export default function DiarioAlimentar() {
   const dateObj = new Date(date + "T00:00:00");
 
   return (
-    <div className="min-h-screen bg-black theme-sth-green">
+    <div className="min-h-screen bg-[#FAFAFA] theme-sth-green">
       <div className="max-w-3xl mx-auto p-4 space-y-4 pb-24">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight gradient-text">Diário Alimentar</h1>
-            <p className="text-xs text-[hsl(150,8%,55%)]">
+            <h1 className="text-2xl font-bold tracking-tight text-[#1C1C1E]">Diário Alimentar</h1>
+            <p className="text-xs text-[#6E6E73]">
               {dateObj.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => setCalcOpen(true)}
-              className="border-[hsl(150,18%,14%)] bg-[hsl(155,22%,6%)] text-[hsl(150,95%,45%)] hover:bg-[hsl(150,25%,10%)] hover:text-[hsl(150,95%,60%)]">
+              className="border-[#E5E5EA] bg-white text-[#34C759] hover:bg-[#F2F2F7] hover:text-[#30B350]">
               <Calculator className="w-4 h-4 mr-1" /> Calcular
             </Button>
           </div>
         </div>
 
         {/* Week strip */}
-        <div className="sth-glass p-3">
+        <div className="bg-white rounded-2xl shadow-apple-sm p-3 border border-[#E5E5EA]">
           <div className="flex items-center gap-1">
-            <Button size="icon" variant="ghost" className="h-8 w-8 text-[hsl(150,12%,88%)] hover:text-[hsl(150,95%,45%)] hover:bg-[hsl(150,25%,10%)]" onClick={() => {
+            <Button size="icon" variant="ghost" className="h-8 w-8 text-[#1C1C1E] hover:text-[#34C759] hover:bg-[#F2F2F7]" onClick={() => {
               const d = new Date(date + "T00:00:00"); d.setDate(d.getDate() - 7); setDate(d.toISOString().slice(0, 10));
             }}><ChevronLeft className="w-4 h-4" /></Button>
             <div className="grid grid-cols-7 flex-1 gap-1">
@@ -856,10 +856,10 @@ export default function DiarioAlimentar() {
                     className={cn(
                       "flex flex-col items-center py-1.5 rounded-xl text-xs transition-all",
                       isSel
-                        ? "bg-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)] font-bold shadow-[0_0_12px_hsl(150,95%,45%/0.5)]"
+                        ? "bg-[#34C759] text-white font-bold shadow-sm"
                         : isToday
-                          ? "bg-[hsl(150,60%,18%)] text-[hsl(150,95%,80%)]"
-                          : "hover:bg-[hsl(150,25%,10%)] text-[hsl(150,12%,88%)]"
+                          ? "bg-[#E8F5E9] text-[#34C759]"
+                          : "hover:bg-[#F2F2F7] text-[#1C1C1E]"
                     )}>
                     <span className={isSel ? "opacity-80" : "opacity-60"}>{DOW[d.getDay()]}</span>
                     <span className="font-bold">{d.getDate()}</span>
@@ -867,40 +867,40 @@ export default function DiarioAlimentar() {
                 );
               })}
             </div>
-            <Button size="icon" variant="ghost" className="h-8 w-8 text-[hsl(150,12%,88%)] hover:text-[hsl(150,95%,45%)] hover:bg-[hsl(150,25%,10%)]" onClick={() => {
+            <Button size="icon" variant="ghost" className="h-8 w-8 text-[#1C1C1E] hover:text-[#34C759] hover:bg-[#F2F2F7]" onClick={() => {
               const d = new Date(date + "T00:00:00"); d.setDate(d.getDate() + 7); setDate(d.toISOString().slice(0, 10));
             }}><ChevronRight className="w-4 h-4" /></Button>
           </div>
         </div>
 
         {/* Calorie summary */}
-        <div className="sth-glass p-4">
+        <div className="bg-white rounded-2xl shadow-apple-sm p-4 border border-[#E5E5EA]">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-[hsl(150,8%,55%)]">Calorias Restantes</span>
-            <span className="font-bold tabular-nums text-[hsl(150,12%,88%)]">{Math.round(remaining)} / {goals.daily_kcal}</span>
+            <span className="text-[#6E6E73]">Calorias Restantes</span>
+            <span className="font-bold tabular-nums text-[#1C1C1E]">{Math.round(remaining)} / {goals.daily_kcal}</span>
           </div>
           <div className="flex items-center justify-between text-sm mt-1">
-            <span className="text-[hsl(150,8%,55%)]">Calorias Consumidas</span>
-            <span className="font-bold tabular-nums text-[hsl(150,95%,45%)]">{Math.round(totals.kcal)}</span>
+            <span className="text-[#6E6E73]">Calorias Consumidas</span>
+            <span className="font-bold tabular-nums text-[#34C759]">{Math.round(totals.kcal)}</span>
           </div>
-          <div className="mt-3 h-2.5 rounded-full bg-[hsl(155,22%,6%)] border border-[hsl(150,18%,14%)] overflow-hidden">
+          <div className="mt-3 h-2.5 rounded-full bg-[#F2F2F7] border border-[#E5E5EA] overflow-hidden">
             <div
-              className="h-full neon-progress-fill transition-all"
-              style={{ width: `${consumedPct}%` }}
+              className="h-full transition-all rounded-full"
+              style={{ width: `${consumedPct}%`, background: "linear-gradient(90deg, #34C759, #30D158)" }}
             />
           </div>
           <div className="grid grid-cols-3 gap-2 mt-3 text-center text-xs">
-            <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(190,100%,50%/0.25)] p-2.5">
-              <div className="font-bold tabular-nums text-[hsl(190,100%,50%)] text-sm">{Math.round(totals.p)}g</div>
-              <div className="text-[hsl(150,8%,55%)] mt-0.5">Proteína / {goals.protein_g}g</div>
+            <div className="rounded-xl bg-[#F2F2F7] border border-[#007AFF]/20 p-2.5">
+              <div className="font-bold tabular-nums text-[#007AFF] text-sm">{Math.round(totals.p)}g</div>
+              <div className="text-[#6E6E73] mt-0.5">Proteína / {goals.protein_g}g</div>
             </div>
-            <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(35,92%,52%/0.25)] p-2.5">
-              <div className="font-bold tabular-nums text-[hsl(35,92%,52%)] text-sm">{Math.round(totals.c)}g</div>
-              <div className="text-[hsl(150,8%,55%)] mt-0.5">Carbo / {goals.carbs_g}g</div>
+            <div className="rounded-xl bg-[#F2F2F7] border border-[#FF9500]/20 p-2.5">
+              <div className="font-bold tabular-nums text-[#FF9500] text-sm">{Math.round(totals.c)}g</div>
+              <div className="text-[#6E6E73] mt-0.5">Carbo / {goals.carbs_g}g</div>
             </div>
-            <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(25,85%,55%/0.25)] p-2.5">
-              <div className="font-bold tabular-nums text-[hsl(25,85%,55%)] text-sm">{Math.round(totals.f)}g</div>
-              <div className="text-[hsl(150,8%,55%)] mt-0.5">Gord / {goals.fat_g}g</div>
+            <div className="rounded-xl bg-[#F2F2F7] border border-[#FF9F0A]/20 p-2.5">
+              <div className="font-bold tabular-nums text-[#FF9F0A] text-sm">{Math.round(totals.f)}g</div>
+              <div className="text-[#6E6E73] mt-0.5">Gord / {goals.fat_g}g</div>
             </div>
           </div>
         </div>
@@ -920,29 +920,29 @@ export default function DiarioAlimentar() {
                 return next;
               });
             }}>
-              <div className="sth-glass overflow-hidden">
+              <div className="bg-white rounded-2xl shadow-apple-sm overflow-hidden border border-[#E5E5EA]">
                 <CollapsibleTrigger asChild>
-                  <div className="flex items-center justify-between p-3 border-b border-[hsl(150,18%,14%)] cursor-pointer select-none hover:bg-[hsl(150,25%,10%)]/30 transition-colors">
+                  <div className="flex items-center justify-between p-3 border-b border-[#E5E5EA] cursor-pointer select-none hover:bg-[#F2F2F7]/50 transition-colors">
                     <div className="flex items-center gap-2 min-w-0">
-                      <ChevronDown className={cn("w-4 h-4 text-[hsl(150,8%,55%)] shrink-0 transition-transform duration-200", isOpen && "rotate-180")} />
+                      <ChevronDown className={cn("w-4 h-4 text-[#6E6E73] shrink-0 transition-transform duration-200", isOpen && "rotate-180")} />
                       <span className="text-xl">{m.icon}</span>
                       <div className="min-w-0">
-                        <p className="font-bold leading-tight text-[hsl(150,12%,88%)]">{m.label}</p>
-                        <p className="text-[11px] text-[hsl(150,8%,55%)]">{Math.round(mealKcal)} kcal · {items.length} itens</p>
+                        <p className="font-bold leading-tight text-[#1C1C1E]">{m.label}</p>
+                        <p className="text-[11px] text-[#6E6E73]">{Math.round(mealKcal)} kcal · {items.length} itens</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                       {isCustom && customMeals.some((c) => c.key === m.key) && (
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-[hsl(0,65%,52%)] hover:text-[hsl(0,65%,60%)] hover:bg-[hsl(150,25%,10%)]" onClick={() => removeCustomMeal(m.key)} title="Remover refeição">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-[#FF3B30] hover:text-[#FF453A] hover:bg-[#FF3B30]/10" onClick={() => removeCustomMeal(m.key)} title="Remover refeição">
                           <X className="w-4 h-4" />
                         </Button>
                       )}
                       {items.length > 0 && (
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-[hsl(150,95%,45%)] hover:text-[hsl(150,95%,60%)] hover:bg-[hsl(150,25%,10%)]" onClick={() => saveAsCombo(m.key)} title="Salvar como combo">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-[#34C759] hover:text-[#30B350] hover:bg-[#F2F2F7]" onClick={() => saveAsCombo(m.key)} title="Salvar como combo">
                           <BookmarkPlus className="w-4 h-4" />
                         </Button>
                       )}
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-[hsl(150,95%,45%)] hover:text-[hsl(150,95%,60%)] hover:bg-[hsl(150,25%,10%)]"
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-[#34C759] hover:text-[#30B350] hover:bg-[#F2F2F7]"
                         onClick={() => { setAddMeal(m.key); setAddOpen(true); }}>
                         <Plus className="w-5 h-5" />
                       </Button>
@@ -951,16 +951,16 @@ export default function DiarioAlimentar() {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   {items.length > 0 && (
-                    <div className="divide-y divide-[hsl(150,18%,14%)]">
+                    <div className="divide-y divide-[#E5E5EA]">
                       {items.map((it) => (
-                        <div key={it.id} className="flex items-center justify-between gap-2 px-3 py-2.5 hover:bg-[hsl(150,25%,10%)]/50 transition-colors">
+                        <div key={it.id} className="flex items-center justify-between gap-2 px-3 py-2.5 hover:bg-[#F2F2F7]/50 transition-colors">
                           <div className="min-w-0">
-                            <p className="text-sm font-medium truncate text-[hsl(150,12%,88%)]">{it.item_name}</p>
-                            <p className="text-[11px] text-[hsl(150,8%,55%)]">
+                            <p className="text-sm font-medium truncate text-[#1C1C1E]">{it.item_name}</p>
+                            <p className="text-[11px] text-[#6E6E73]">
                               {it.quantity}{it.unit} · {Math.round(Number(it.energy_kcal))} kcal · P:{Number(it.protein_g).toFixed(1)} C:{Number(it.carbs_g).toFixed(1)} G:{Number(it.fat_g).toFixed(1)}
                             </p>
                           </div>
-                          <Button size="icon" variant="ghost" className="h-7 w-7 text-[hsl(0,65%,52%)] hover:text-[hsl(0,65%,60%)] hover:bg-[hsl(0,65%,52%)]/10" onClick={() => removeEntry(it.id)}>
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-[#FF3B30] hover:text-[#FF453A] hover:bg-[#FF3B30]/10" onClick={() => removeEntry(it.id)}>
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
                         </div>
@@ -977,34 +977,34 @@ export default function DiarioAlimentar() {
         <Button
           variant="outline"
           onClick={addCustomMeal}
-          className="w-full border-dashed border-[hsl(150,18%,20%)] bg-[hsl(155,22%,6%)]/40 text-[hsl(150,95%,45%)] hover:bg-[hsl(150,25%,10%)] hover:text-[hsl(150,95%,60%)] hover:border-[hsl(150,95%,45%/0.5)]"
+          className="w-full border-dashed border-[#D1D1D6] bg-white/40 text-[#34C759] hover:bg-[#F2F2F7] hover:text-[#30B350] hover:border-[#34C759]/50"
         >
           <Plus className="w-4 h-4 mr-1" /> Adicionar refeição
         </Button>
 
         {/* Water */}
-        <div className="sth-glass p-4">
+        <div className="bg-white rounded-2xl shadow-apple-sm p-4 border border-[#E5E5EA]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl glass-icon flex items-center justify-center">
-                <Droplet className="w-5 h-5 text-[hsl(190,100%,50%)]" />
+              <div className="w-10 h-10 rounded-xl bg-[#E0F2FE] flex items-center justify-center">
+                <Droplet className="w-5 h-5 text-[#007AFF]" />
               </div>
               <div>
-                <p className="font-bold leading-tight text-[hsl(150,12%,88%)]">Contador de Água</p>
-                <p className="text-[11px] text-[hsl(150,8%,55%)]">{water} / {goals.water_ml} ml</p>
+                <p className="font-bold leading-tight text-[#1C1C1E]">Contador de Água</p>
+                <p className="text-[11px] text-[#6E6E73]">{water} / {goals.water_ml} ml</p>
               </div>
             </div>
             <div className="flex items-center gap-1">
               <Button size="sm" variant="outline" onClick={() => updateWater(water - 250)}
-                className="border-[hsl(150,18%,14%)] bg-[hsl(155,22%,6%)] text-[hsl(150,12%,88%)] hover:bg-[hsl(150,25%,10%)] hover:text-[hsl(150,95%,45%)]">-250</Button>
+                className="border-[#E5E5EA] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7] hover:text-[#34C759]">-250</Button>
               <Button size="sm" onClick={() => updateWater(water + 250)}
-                className="bg-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)] hover:bg-[hsl(150,95%,50%)]">+250</Button>
+                className="bg-[#34C759] text-white hover:bg-[#30B350]">+250</Button>
             </div>
           </div>
-          <div className="mt-3 h-2.5 rounded-full bg-[hsl(155,22%,6%)] border border-[hsl(150,18%,14%)] overflow-hidden">
+          <div className="mt-3 h-2.5 rounded-full bg-[#F2F2F7] border border-[#E5E5EA] overflow-hidden">
             <div
-              className="h-full neon-progress-fill transition-all"
-              style={{ width: `${Math.min(100, (water / goals.water_ml) * 100)}%`, background: "linear-gradient(90deg, hsl(190 100% 50% / 0.85), hsl(190 100% 50%))", boxShadow: "0 0 8px hsl(190 100% 50% / 0.8), 0 0 16px hsl(190 100% 50% / 0.5), inset 0 0 6px rgb(255 255 255 / 0.4)" }}
+              className="h-full transition-all rounded-full"
+              style={{ width: `${Math.min(100, (water / goals.water_ml) * 100)}%`, background: "linear-gradient(90deg, #007AFF, #5AC8FA)" }}
             />
           </div>
         </div>
