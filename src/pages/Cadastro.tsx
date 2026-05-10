@@ -13,8 +13,9 @@ import { Slider } from "@/components/ui/slider";
 import {
   ArrowLeft, ArrowRight, Check, Mail, Lock, User, Phone, Loader2,
   CheckCircle, Calculator,
-  Eye, EyeOff,
+  Eye, EyeOff, HelpCircle, MessageCircle, ShieldCheck, Sparkles,
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -28,6 +29,25 @@ import {
   trainingIntensityOptions, cardioIntensityOptions,
   physicalActivityLevelOptions,
 } from "@/lib/form-constants";
+
+// Small helper: didactic "Why are we asking this?" tooltip
+const WhyTip = ({ children }: { children: React.ReactNode }) => (
+  <Popover>
+    <PopoverTrigger asChild>
+      <button
+        type="button"
+        aria-label="Por que pedimos isso?"
+        className="inline-flex items-center gap-1 text-[11px] text-primary/80 hover:text-primary transition-colors ml-1"
+      >
+        <HelpCircle className="w-3.5 h-3.5" />
+        <span className="hidden sm:inline">Por quê?</span>
+      </button>
+    </PopoverTrigger>
+    <PopoverContent className="w-72 text-xs font-body leading-relaxed">
+      {children}
+    </PopoverContent>
+  </Popover>
+);
 
 const phoneMask = (v: string) => {
   const d = v.replace(/\D/g, "").slice(0, 11);
@@ -382,24 +402,9 @@ const Cadastro = () => {
     if (!birth_date) { toast.error("Data de nascimento é obrigatória"); return; }
     if (!height || Number(height) <= 0) { toast.error("Altura é obrigatória"); return; }
     if (!weight || Number(weight) <= 0) { toast.error("Peso é obrigatório"); return; }
-    if (!activity_type) { toast.error("Selecione o tipo de atividade física"); return; }
-    if (!profileForm.physical_activity_level) { toast.error("Selecione o nível de atividade física"); return; }
-    // Validate training details if applicable
-    if (activity_type !== "nenhuma") {
-      if (!profileForm.training_days_per_week) { toast.error("Informe os dias de treino por semana"); return; }
-      if (!profileForm.training_duration_minutes) { toast.error("Informe a duração do treino"); return; }
-      if (!profileForm.training_intensity) { toast.error("Selecione a intensidade do treino"); return; }
-    }
-    if (does_cardio === "") { toast.error("Informe se faz cardio"); return; }
-    // Validate cardio details if applicable
-    if (does_cardio === "sim") {
-      if (!profileForm.cardio_days_per_week) { toast.error("Informe os dias de cardio por semana"); return; }
-      if (!profileForm.cardio_duration_minutes) { toast.error("Informe a duração do cardio"); return; }
-      if (!profileForm.cardio_intensity) { toast.error("Selecione a intensidade do cardio"); return; }
-    }
     if (!objective) { toast.error("Selecione o objetivo"); return; }
-    if (!current_protocol.trim()) { toast.error("Protocolo atual é obrigatório"); return; }
-    if (!comorbidities.trim()) { toast.error("Comorbidades é obrigatório"); return; }
+    // Demais campos (treino, cardio, protocolo, comorbidades, documentos) ficam opcionais —
+    // o aluno completa depois no dashboard, reduzindo atrito até o pagamento.
 
     setLoading(true);
     try {
@@ -410,12 +415,14 @@ const Cadastro = () => {
         height: Number(height),
         weight: Number(weight),
         gender,
-        activity_type,
-        does_cardio: does_cardio === "sim",
+        activity_type: activity_type || null,
+        does_cardio: does_cardio === "sim" ? true : does_cardio === "nao" ? false : null,
         objective,
-        physical_activity: `${activityLabels[activity_type] || activity_type}${does_cardio === "sim" ? " + Cardio" : ""}`,
-        current_protocol,
-        comorbidities,
+        physical_activity: activity_type
+          ? `${activityLabels[activity_type] || activity_type}${does_cardio === "sim" ? " + Cardio" : ""}`
+          : null,
+        current_protocol: current_protocol || null,
+        comorbidities: comorbidities || null,
         additional_info: profileForm.additional_info,
         physical_activity_level: profileForm.physical_activity_level || null,
         training_days_per_week: profileForm.training_days_per_week ? Math.round(Number(profileForm.training_days_per_week)) : null,
@@ -479,6 +486,11 @@ const Cadastro = () => {
   const showTrainingDetails = profileForm.activity_type === "musculacao" || profileForm.activity_type === "crossfit";
   const showCardioDetails = profileForm.does_cardio === "sim";
 
+  // Friendly labels for the pre-checkout summary
+  const objectiveLabel = profileForm.objective
+    ? (objectiveLabels[profileForm.objective] || profileForm.objective)
+    : "—";
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -526,7 +538,7 @@ const Cadastro = () => {
             <CardHeader>
               <CardTitle className="text-xl">Crie sua conta</CardTitle>
               <p className="text-sm text-muted-foreground font-body">
-                Preencha seus dados para começar sua jornada na STH.
+                Leva menos de 1 minuto. Vamos pedir só o essencial agora — você completa o resto depois, com calma.
               </p>
             </CardHeader>
             <CardContent>
@@ -576,13 +588,18 @@ const Cadastro = () => {
             <CardHeader>
               <CardTitle className="text-xl">Complete seu perfil</CardTitle>
               <p className="text-sm text-muted-foreground font-body">
-                Essas informações são essenciais para montar seu plano personalizado.
+                Só o essencial para liberar seu acesso. Os campos marcados como <span className="text-foreground font-semibold">opcionais</span> podem ser preenchidos depois pelo seu painel.
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* CPF */}
               <div>
-                <Label className="font-body">CPF *</Label>
+                <Label className="font-body inline-flex items-center">
+                  CPF *
+                  <WhyTip>
+                    Usamos seu CPF apenas para emitir o comprovante do pagamento e identificar sua assinatura. Não é compartilhado.
+                  </WhyTip>
+                </Label>
                 <Input
                   value={profileForm.cpf}
                   onChange={(e) => setProfileForm({ ...profileForm, cpf: cpfMask(e.target.value) })}
@@ -622,18 +639,31 @@ const Cadastro = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="font-body">Altura (cm) *</Label>
+                  <Label className="font-body inline-flex items-center">
+                    Altura (cm) *
+                    <WhyTip>
+                      Altura e peso são usados para calcular suas calorias diárias e seus macros (proteína, carbo, gordura).
+                    </WhyTip>
+                  </Label>
                   <Input type="number" value={profileForm.height} onChange={(e) => setProfileForm({ ...profileForm, height: e.target.value })} placeholder="175" />
                 </div>
                 <div>
-                  <Label className="font-body">Peso (kg) *</Label>
+                  <Label className="font-body inline-flex items-center">
+                    Peso (kg) *
+                    <WhyTip>
+                      Base do cálculo metabólico. Pode atualizar a qualquer momento depois, no seu painel.
+                    </WhyTip>
+                  </Label>
                   <Input type="number" value={profileForm.weight} onChange={(e) => setProfileForm({ ...profileForm, weight: e.target.value })} placeholder="80" />
                 </div>
               </div>
 
               {/* Physical Activity Level (NEAT) */}
               <div>
-                <Label className="font-body">Nível de atividade física (sem exercícios) *</Label>
+                <Label className="font-body inline-flex items-center">
+                  Nível de atividade física (sem exercícios)
+                  <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">opcional</span>
+                </Label>
                 <Select value={profileForm.physical_activity_level} onValueChange={(v) => setProfileForm({ ...profileForm, physical_activity_level: v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
@@ -646,7 +676,10 @@ const Cadastro = () => {
 
               {/* Activity Type */}
               <div>
-                <Label className="font-body">Atividade física praticada *</Label>
+                <Label className="font-body inline-flex items-center">
+                  Atividade física praticada
+                  <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">opcional</span>
+                </Label>
                 <Select value={profileForm.activity_type} onValueChange={(v) => setProfileForm({ ...profileForm, activity_type: v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
@@ -704,7 +737,10 @@ const Cadastro = () => {
 
               {/* Cardio */}
               <div>
-                <Label className="font-body">Faz cardio (aeróbico)? *</Label>
+                <Label className="font-body inline-flex items-center">
+                  Faz cardio (aeróbico)?
+                  <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">opcional</span>
+                </Label>
                 <RadioGroup
                   value={profileForm.does_cardio}
                   onValueChange={(v) => setProfileForm({ ...profileForm, does_cardio: v })}
@@ -782,11 +818,20 @@ const Cadastro = () => {
               {/* Macros são calculados automaticamente mas não exibidos ao aluno */}
 
               <div>
-                <Label className="font-body">Protocolo atual (medicamentos/suplementos) *</Label>
+                <Label className="font-body inline-flex items-center">
+                  Protocolo atual (medicamentos/suplementos)
+                  <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">opcional</span>
+                  <WhyTip>
+                    Ajuda seu consultor a desenhar uma estratégia segura. Pode preencher depois, com calma, no painel.
+                  </WhyTip>
+                </Label>
                 <Textarea value={profileForm.current_protocol} onChange={(e) => setProfileForm({ ...profileForm, current_protocol: e.target.value })} rows={2} placeholder="Descreva medicamentos ou suplementos que usa" />
               </div>
               <div>
-                <Label className="font-body">Comorbidades *</Label>
+                <Label className="font-body inline-flex items-center">
+                  Comorbidades
+                  <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">opcional</span>
+                </Label>
                 <Textarea value={profileForm.comorbidities} onChange={(e) => setProfileForm({ ...profileForm, comorbidities: e.target.value })} rows={2} placeholder="Possui alguma condição de saúde? Se não, escreva 'Nenhuma'" />
               </div>
               <div>
@@ -794,11 +839,16 @@ const Cadastro = () => {
                 <Textarea value={profileForm.additional_info} onChange={(e) => setProfileForm({ ...profileForm, additional_info: e.target.value })} rows={2} placeholder="Informações adicionais que queira compartilhar (opcional)" />
               </div>
 
-              {/* Document uploads */}
-              <DocumentUpload
-                userId={userId!}
-                onUploaded={() => {}}
-              />
+              {/* Document uploads — opcional */}
+              <div className="rounded-lg border border-dashed border-border/60 p-3 bg-muted/20">
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">
+                  Exames e documentos · opcional
+                </p>
+                <DocumentUpload userId={userId!} onUploaded={() => {}} />
+                <p className="text-xs text-muted-foreground font-body mt-2">
+                  Pode enviar agora ou depois pelo seu painel. Não bloqueia o pagamento.
+                </p>
+              </div>
 
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setStep(1)} className="flex-1"><ArrowLeft className="w-4 h-4 mr-2" /> Voltar</Button>
@@ -817,7 +867,7 @@ const Cadastro = () => {
               <CardHeader>
                 <CardTitle className="text-xl">Fotos corporais (opcional)</CardTitle>
                 <p className="text-sm text-muted-foreground font-body">
-                  Envie 3 fotos: frente, costas e perfil. Você pode pular e enviar depois com seu consultor.
+                  Servem como ponto de partida para acompanhar sua evolução. Sem pressa — você pode pular agora e enviar depois pelo painel.
                 </p>
               </CardHeader>
               <CardContent>
@@ -843,8 +893,43 @@ const Cadastro = () => {
               <CardContent className="py-4 flex items-center gap-3">
                 <CheckCircle className="w-5 h-5 text-primary" />
                 <p className="text-sm font-body text-foreground">
-                  Cadastro completo! Escolha seu plano para ativar o acesso.
+                  Quase lá! Confira seus dados e escolha o plano para liberar o acesso.
                 </p>
+              </CardContent>
+            </Card>
+
+            {/* Resumo dos dados antes do pagamento */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-display flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" /> Confira seus dados
+                </CardTitle>
+                <p className="text-xs text-muted-foreground font-body">
+                  Tudo certo? Se algo precisar mudar, é só voltar — leva 2 segundos.
+                </p>
+              </CardHeader>
+              <CardContent className="text-sm font-body">
+                <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
+                  <dt className="text-muted-foreground">Nome</dt>
+                  <dd className="text-foreground truncate">{fullName || "—"}</dd>
+                  <dt className="text-muted-foreground">Email</dt>
+                  <dd className="text-foreground truncate">{email || "—"}</dd>
+                  <dt className="text-muted-foreground">Telefone</dt>
+                  <dd className="text-foreground">{phoneVal || "—"}</dd>
+                  <dt className="text-muted-foreground">Idade</dt>
+                  <dd className="text-foreground">{age && age > 0 ? `${age} anos` : "—"}</dd>
+                  <dt className="text-muted-foreground">Peso / Altura</dt>
+                  <dd className="text-foreground">
+                    {profileForm.weight ? `${profileForm.weight} kg` : "—"} · {profileForm.height ? `${profileForm.height} cm` : "—"}
+                  </dd>
+                  <dt className="text-muted-foreground">Objetivo</dt>
+                  <dd className="text-foreground capitalize">{objectiveLabel}</dd>
+                </dl>
+                <div className="flex gap-2 mt-4">
+                  <Button variant="outline" size="sm" onClick={() => setStep(2)} className="flex-1">
+                    <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Editar dados
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
@@ -877,9 +962,27 @@ const Cadastro = () => {
                 );
               })}
             </div>
+
+            {/* Reassurance strip */}
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground font-body pt-2">
+              <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+              Pagamento 100% seguro · Pix ou cartão · Acesso liberado após confirmação
+            </div>
           </div>
         )}
       </div>
+
+      {/* Floating WhatsApp help button — sempre disponível durante o cadastro */}
+      <a
+        href="https://wa.me/5521998496289?text=Ol%C3%A1!%20Estou%20fazendo%20meu%20cadastro%20no%20STH%20METHOD%20e%20preciso%20de%20ajuda."
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-5 right-5 z-50 inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-4 py-3 shadow-lg shadow-primary/30 hover:scale-105 transition-transform font-body text-sm"
+        style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+      >
+        <MessageCircle className="w-4 h-4" />
+        <span className="hidden sm:inline">Preciso de ajuda</span>
+      </a>
 
       {/* Checkout Dialog */}
       <DynamicCheckoutDialog
