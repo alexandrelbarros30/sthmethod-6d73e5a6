@@ -44,11 +44,33 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
     enabled: open,
   });
 
-  const filtered = foods.filter((f: any) => {
-    const matchSearch = !search.trim() || f.name.toLowerCase().includes(search.toLowerCase());
-    const matchCat = category === "Todos" || f.category === category;
-    return matchSearch && matchCat;
-  });
+  const normalize = (s: string) =>
+    (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+  const q = normalize(search);
+  const filtered = foods
+    .filter((f: any) => {
+      const matchCat = category === "Todos" || f.category === category;
+      if (!matchCat) return false;
+      if (!q) return true;
+      return normalize(f.name).includes(q);
+    })
+    .map((f: any) => {
+      const name = normalize(f.name);
+      let score = 999;
+      if (q) {
+        if (name === q) score = 0;
+        else if (name.startsWith(q + " ") || name.startsWith(q + ",")) score = 1;
+        else if (name.startsWith(q)) score = 2;
+        else {
+          const wordStart = new RegExp(`(^|[\\s,\\-/])${q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`).test(name);
+          score = wordStart ? 3 : 4;
+        }
+      }
+      return { f, score, name };
+    })
+    .sort((a, b) => a.score - b.score || a.name.length - b.name.length || a.name.localeCompare(b.name))
+    .map((x) => x.f);
 
   const handleSelectFood = (food: any) => {
     setSelectedFood(food);
