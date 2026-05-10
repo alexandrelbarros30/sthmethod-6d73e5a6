@@ -396,15 +396,26 @@ const Cadastro = () => {
 
   // Step 2: Save profile
   const handleSaveProfile = async () => {
-    const { height, weight, gender, activity_type, does_cardio, objective, current_protocol, comorbidities, birth_date } = profileForm;
+    const { height, weight, gender, activity_type, does_cardio, objective, current_protocol, comorbidities, birth_date, physical_activity_level } = profileForm;
     if (!profileForm.cpf || !isValidCpf(profileForm.cpf)) { toast.error("CPF inválido"); return; }
     if (!gender) { toast.error("Selecione o gênero"); return; }
     if (!birth_date) { toast.error("Data de nascimento é obrigatória"); return; }
     if (!height || Number(height) <= 0) { toast.error("Altura é obrigatória"); return; }
     if (!weight || Number(weight) <= 0) { toast.error("Peso é obrigatório"); return; }
+    if (!physical_activity_level) { toast.error("Selecione o nível de atividade física"); return; }
+    if (!activity_type) { toast.error("Selecione o tipo de atividade física"); return; }
+    if (!does_cardio) { toast.error("Informe se pratica cardio"); return; }
+    if (does_cardio === "sim") {
+      if (!profileForm.cardio_days_per_week) { toast.error("Informe os dias de cardio por semana"); return; }
+      if (!profileForm.cardio_duration_minutes) { toast.error("Informe a duração do cardio"); return; }
+      if (!profileForm.cardio_intensity) { toast.error("Selecione a intensidade do cardio"); return; }
+    }
+    if (showTrainingDetails) {
+      if (!profileForm.training_days_per_week) { toast.error("Informe os dias de treino por semana"); return; }
+      if (!profileForm.training_duration_minutes) { toast.error("Informe a duração dos treinos"); return; }
+      if (!profileForm.training_intensity) { toast.error("Selecione a intensidade dos treinos"); return; }
+    }
     if (!objective) { toast.error("Selecione o objetivo"); return; }
-    // Demais campos (treino, cardio, protocolo, comorbidades, documentos) ficam opcionais —
-    // o aluno completa depois no dashboard, reduzindo atrito até o pagamento.
 
     setLoading(true);
     try {
@@ -661,8 +672,7 @@ const Cadastro = () => {
               {/* Physical Activity Level (NEAT) */}
               <div>
                 <Label className="font-body inline-flex items-center">
-                  Nível de atividade física (sem exercícios)
-                  <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">opcional</span>
+                  Nível de atividade física (sem exercícios) *
                 </Label>
                 <Select value={profileForm.physical_activity_level} onValueChange={(v) => setProfileForm({ ...profileForm, physical_activity_level: v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
@@ -677,8 +687,7 @@ const Cadastro = () => {
               {/* Activity Type */}
               <div>
                 <Label className="font-body inline-flex items-center">
-                  Atividade física praticada
-                  <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">opcional</span>
+                  Atividade física praticada *
                 </Label>
                 <Select value={profileForm.activity_type} onValueChange={(v) => setProfileForm({ ...profileForm, activity_type: v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
@@ -738,8 +747,7 @@ const Cadastro = () => {
               {/* Cardio */}
               <div>
                 <Label className="font-body inline-flex items-center">
-                  Faz cardio (aeróbico)?
-                  <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">opcional</span>
+                  Faz cardio (aeróbico)? *
                 </Label>
                 <RadioGroup
                   value={profileForm.does_cardio}
