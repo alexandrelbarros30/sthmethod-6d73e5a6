@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
-import { Plus, Search, Trash2, Droplet, BookmarkPlus, ChevronLeft, ChevronRight, Loader2, X, ChevronDown, Calculator } from "lucide-react";
+import { Plus, Search, Trash2, Droplet, BookmarkPlus, ChevronLeft, ChevronRight, Loader2, X, ChevronDown, Calculator, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -125,27 +125,28 @@ function LeadGate({ onDone }: { onDone: () => void }) {
 
 /* ---------------- Add Food Dialog ---------------- */
 function AddFoodDialog({
-  open, onOpenChange, mealType, mealLabel, onAdd,
+  open, onOpenChange, mealType, mealLabel, dateISO, onAdd,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   mealType: string;
   mealLabel: string;
+  dateISO: string;
   onAdd: (entries: Omit<DiaryEntry, "id" | "user_id" | "log_date" | "created_at">[]) => void;
 }) {
   const [tab, setTab] = useState<"alimento" | "salvas">("alimento");
   const [search, setSearch] = useState("");
   const [foods, setFoods] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedFood, setSelectedFood] = useState<any>(null);
-  const [quantity, setQuantity] = useState(100);
-  const [unit, setUnit] = useState("g");
+  const [editingFood, setEditingFood] = useState<any>(null);
+  const [editQty, setEditQty] = useState(100);
+  const [editUnit, setEditUnit] = useState<"g" | "ml">("g");
+  const [selections, setSelections] = useState<Map<string, { food: any; quantity: number; unit: "g" | "ml" }>>(new Map());
   const [savedMeals, setSavedMeals] = useState<SavedMeal[]>([]);
-  const [addedCount, setAddedCount] = useState(0);
 
   useEffect(() => {
-    if (!open) { setSearch(""); setSelectedFood(null); setQuantity(100); setUnit("g"); }
-    else { setSavedMeals(localDiary.getSavedMeals()); setAddedCount(0); }
+    if (!open) { setSearch(""); setEditingFood(null); setEditQty(100); setEditUnit("g"); setSelections(new Map()); }
+    else { setSavedMeals(localDiary.getSavedMeals()); setSelections(new Map()); }
   }, [open]);
 
   useEffect(() => {
@@ -178,31 +179,68 @@ function AddFoodDialog({
     return () => clearTimeout(t);
   }, [search, tab]);
 
-  const ratio = selectedFood ? quantity / 100 : 1;
+  const editRatio = editingFood ? editQty / 100 : 1;
+  const selectedCount = selections.size;
 
-  const confirmFood = () => {
-    if (!selectedFood) return;
-    const label = mealLabel;
-    onAdd([{
-      meal_type: mealType,
-      meal_label: label,
-      food_id: selectedFood.id,
-      item_name: selectedFood.name,
-      quantity,
-      unit,
-      energy_kcal: +(selectedFood.energy_kcal * ratio).toFixed(1),
-      protein_g: +(selectedFood.protein_g * ratio).toFixed(2),
-      carbs_g: +(selectedFood.carbs_g * ratio).toFixed(2),
-      fat_g: +(selectedFood.fat_g * ratio).toFixed(2),
-      fiber_g: +((selectedFood.fiber_g || 0) * ratio).toFixed(2),
-      sodium_mg: +((selectedFood.sodium_mg || 0) * ratio).toFixed(1),
-      sort_order: 0,
-    }]);
-    setAddedCount((c) => c + 1);
-    setSelectedFood(null);
-    setQuantity(100);
-    setSearch("");
+  const defaultUnitFor = (food: any): "g" | "ml" =>
+    food?.serving_unit?.toLowerCase().includes("ml") ? "ml" : "g";
+
+  const toggleSelect = (food: any) => {
+    setSelections((prev) => {
+      const next = new Map(prev);
+      if (next.has(food.id)) next.delete(food.id);
+      else next.set(food.id, { food, quantity: 100, unit: defaultUnitFor(food) });
+      return next;
+    });
   };
+
+  const openEditor = (food: any) => {
+    const existing = selections.get(food.id);
+    setEditingFood(food);
+    setEditQty(existing?.quantity ?? 100);
+    setEditUnit(existing?.unit ?? defaultUnitFor(food));
+  };
+
+  const saveEditor = () => {
+    if (!editingFood) return;
+    setSelections((prev) => {
+      const next = new Map(prev);
+      next.set(editingFood.id, { food: editingFood, quantity: editQty, unit: editUnit });
+      return next;
+    });
+    setEditingFood(null);
+  };
+
+  const confirmAll = () => {
+    if (selections.size === 0) return;
+    const entries = Array.from(selections.values()).map(({ food, quantity, unit }) => {
+      const r = quantity / 100;
+      return {
+        meal_type: mealType,
+        meal_label: mealLabel,
+        food_id: food.id,
+        item_name: food.name,
+        quantity,
+        unit,
+        energy_kcal: +(food.energy_kcal * r).toFixed(1),
+        protein_g: +(food.protein_g * r).toFixed(2),
+        carbs_g: +(food.carbs_g * r).toFixed(2),
+        fat_g: +(food.fat_g * r).toFixed(2),
+        fiber_g: +((food.fiber_g || 0) * r).toFixed(2),
+        sodium_mg: +((food.sodium_mg || 0) * r).toFixed(1),
+        sort_order: 0,
+      };
+    });
+    onAdd(entries);
+    onOpenChange(false);
+  };
+
+  const headerDate = (() => {
+    try {
+      const d = new Date(`${dateISO}T00:00:00`);
+      return d.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "short" });
+    } catch { return dateISO; }
+  })();
 
   const addSavedMeal = (sm: SavedMeal) => {
     const label = mealLabel;
@@ -228,7 +266,20 @@ function AddFoodDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl max-h-[90vh] flex flex-col bg-[hsl(155,25%,5%)] border-[hsl(150,18%,14%)] text-foreground">
         <DialogHeader>
-          <DialogTitle className="gradient-text">{mealLabel}</DialogTitle>
+          <div className="flex items-start justify-between gap-3 pr-6">
+            <div className="min-w-0">
+              <DialogTitle className="gradient-text">{mealLabel}</DialogTitle>
+              <p className="text-[11px] text-[hsl(150,8%,55%)] mt-0.5 capitalize">{headerDate}</p>
+            </div>
+            <Button
+              size="sm"
+              onClick={confirmAll}
+              disabled={selectedCount === 0}
+              className="shrink-0 premium-btn bg-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)] hover:bg-[hsl(150,95%,50%)] disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Check className="w-4 h-4 mr-1" /> {selectedCount > 0 ? selectedCount : ""} Confirmar
+            </Button>
+          </div>
         </DialogHeader>
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="flex-1 flex flex-col min-h-0">
           <TabsList className="grid grid-cols-2 bg-[hsl(155,18%,8%)] border border-[hsl(150,18%,14%)]">
@@ -237,73 +288,47 @@ function AddFoodDialog({
           </TabsList>
 
           <TabsContent value="alimento" className="flex-1 flex flex-col min-h-0 mt-3 space-y-3">
-            {!selectedFood && addedCount > 0 && (
-              <div className="rounded-xl border border-[hsl(150,18%,14%)] bg-[hsl(155,22%,6%)] px-3 py-2 flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground">Refeição em montagem</p>
-                  <p className="text-[11px] text-[hsl(150,8%,55%)]">
-                    {addedCount} {addedCount > 1 ? "alimentos adicionados" : "alimento adicionado"} • continue buscando ou finalize agora.
-                  </p>
-                </div>
-                <Button onClick={() => onOpenChange(false)} className="shrink-0 premium-btn bg-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)] hover:bg-[hsl(150,95%,50%)]">
-                  Finalizar refeição
-                </Button>
-              </div>
-            )}
-
-            {selectedFood ? (
+            {editingFood ? (
               <div className="sth-glass p-4 space-y-3">
                 <div className="flex items-start justify-between">
                   <div className="min-w-0">
-                    <p className="font-medium truncate text-foreground">{selectedFood.name}</p>
-                    <Badge variant="outline" className="text-[10px] mt-1 border-[hsl(150,18%,14%)] text-[hsl(150,8%,55%)]">{selectedFood.source} · {selectedFood.category}</Badge>
+                    <p className="font-medium truncate text-foreground">{editingFood.name}</p>
+                    <Badge variant="outline" className="text-[10px] mt-1 border-[hsl(150,18%,14%)] text-[hsl(150,8%,55%)]">{editingFood.source} · {editingFood.category}</Badge>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => setSelectedFood(null)} className="text-[hsl(150,95%,45%)] hover:text-[hsl(150,95%,60%)]">Trocar</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setEditingFood(null)} className="text-[hsl(150,95%,45%)] hover:text-[hsl(150,95%,60%)]">Voltar</Button>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Input type="number" value={quantity} onChange={(e) => setQuantity(Number(e.target.value) || 0)} className="w-24 h-8 bg-[hsl(155,18%,8%)] border-[hsl(150,18%,14%)]" min={1} />
-                  <Select value={unit} onValueChange={setUnit}>
+                  <Input type="number" value={editQty} onChange={(e) => setEditQty(Number(e.target.value) || 0)} className="w-24 h-8 bg-[hsl(155,18%,8%)] border-[hsl(150,18%,14%)]" min={1} />
+                  <Select value={editUnit} onValueChange={(v) => setEditUnit(v as "g" | "ml")}>
                     <SelectTrigger className="w-24 h-8 bg-[hsl(155,18%,8%)] border-[hsl(150,18%,14%)]"><SelectValue /></SelectTrigger>
                     <SelectContent className="bg-[hsl(155,25%,6%)] border-[hsl(150,18%,14%)]">
                       <SelectItem value="g">g</SelectItem>
                       <SelectItem value="ml">ml</SelectItem>
-                      <SelectItem value="unidade">unidade</SelectItem>
-                      <SelectItem value="porção">porção</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid grid-cols-4 gap-2 text-xs">
                   <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(150,18%,14%)] p-2 text-center">
                     <p className="text-[hsl(150,8%,55%)]">kcal</p>
-                    <p className="font-bold text-sm text-[hsl(150,95%,45%)]">{(selectedFood.energy_kcal * ratio).toFixed(0)}</p>
+                    <p className="font-bold text-sm text-[hsl(150,95%,45%)]">{(editingFood.energy_kcal * editRatio).toFixed(0)}</p>
                   </div>
                   <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(150,18%,14%)] p-2 text-center">
                     <p className="text-[hsl(150,8%,55%)]">P</p>
-                    <p className="font-bold text-sm text-[hsl(190,100%,50%)]">{(selectedFood.protein_g * ratio).toFixed(1)}g</p>
+                    <p className="font-bold text-sm text-[hsl(190,100%,50%)]">{(editingFood.protein_g * editRatio).toFixed(1)}g</p>
                   </div>
                   <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(150,18%,14%)] p-2 text-center">
                     <p className="text-[hsl(150,8%,55%)]">C</p>
-                    <p className="font-bold text-sm text-[hsl(35,92%,52%)]">{(selectedFood.carbs_g * ratio).toFixed(1)}g</p>
+                    <p className="font-bold text-sm text-[hsl(35,92%,52%)]">{(editingFood.carbs_g * editRatio).toFixed(1)}g</p>
                   </div>
                   <div className="rounded-xl bg-[hsl(155,22%,6%)] border border-[hsl(150,18%,14%)] p-2 text-center">
                     <p className="text-[hsl(150,8%,55%)]">G</p>
-                    <p className="font-bold text-sm text-[hsl(25,85%,55%)]">{(selectedFood.fat_g * ratio).toFixed(1)}g</p>
+                    <p className="font-bold text-sm text-[hsl(25,85%,55%)]">{(editingFood.fat_g * editRatio).toFixed(1)}g</p>
                   </div>
                 </div>
                 <DialogFooter>
                   <div className="w-full flex flex-col sm:flex-row gap-2">
-                    <Button onClick={confirmFood} className="w-full premium-btn bg-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)] hover:bg-[hsl(150,95%,50%)]">
-                      <Plus className="w-4 h-4 mr-1" /> Adicionar e buscar próximo
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        confirmFood();
-                        onOpenChange(false);
-                      }}
-                      className="w-full border-[hsl(150,18%,14%)] bg-[hsl(155,18%,8%)] hover:bg-[hsl(150,25%,10%)]"
-                    >
-                      Adicionar e finalizar
+                    <Button onClick={saveEditor} className="w-full premium-btn bg-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)] hover:bg-[hsl(150,95%,50%)]">
+                      <Check className="w-4 h-4 mr-1" /> Salvar e voltar à lista
                     </Button>
                   </div>
                 </DialogFooter>
@@ -320,24 +345,50 @@ function AddFoodDialog({
                     autoFocus
                   />
                 </div>
-                <div className="flex-1 overflow-y-auto border border-[hsl(150,18%,14%)] rounded-xl divide-y divide-[hsl(150,18%,14%)] min-h-[200px] bg-[hsl(155,22%,6%)]">
+                <div className="flex-1 overflow-y-auto border border-[hsl(150,18%,14%)] rounded-xl divide-y divide-[hsl(150,18%,14%)] min-h-[200px] bg-[hsl(155,22%,6%)] pb-16">
                   {loading && <div className="p-6 text-center text-sm text-[hsl(150,8%,55%)]"><Loader2 className="w-4 h-4 inline animate-spin mr-2 text-[hsl(150,95%,45%)]" />Buscando...</div>}
                   {!loading && !search.trim() && <p className="p-6 text-center text-sm text-[hsl(150,8%,45%)]">Digite para buscar entre 30.000+ alimentos</p>}
                   {!loading && search.trim() && foods.length === 0 && <p className="p-6 text-center text-sm text-[hsl(150,8%,45%)]">Nada encontrado.</p>}
-                  {foods.map((f) => (
-                    <button key={f.id} onClick={() => setSelectedFood(f)} className="w-full text-left px-3 py-2.5 hover:bg-[hsl(150,25%,10%)] transition-colors">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="min-w-0">
+                  {foods.map((f) => {
+                    const sel = selections.get(f.id);
+                    const checked = !!sel;
+                    return (
+                      <div
+                        key={f.id}
+                        className={cn(
+                          "w-full flex items-center gap-2 px-3 py-2.5 hover:bg-[hsl(150,25%,10%)] transition-colors",
+                          checked && "bg-[hsl(150,40%,10%)]"
+                        )}
+                      >
+                        <button onClick={() => openEditor(f)} className="flex-1 min-w-0 text-left">
                           <p className="text-sm font-medium truncate text-foreground">{f.name}</p>
-                          <p className="text-[11px] text-[hsl(150,8%,55%)]">
-                            100{f.serving_unit} · {Math.round(f.energy_kcal)} kcal · P:{f.protein_g}g C:{f.carbs_g}g G:{f.fat_g}g
+                          <p className="text-[11px] text-[hsl(150,95%,45%)]">
+                            {sel ? `${sel.quantity}${sel.unit}` : `100${f.serving_unit || "g"}`}
+                            <span className="text-[hsl(150,8%,55%)]"> · {Math.round(f.energy_kcal * ((sel?.quantity ?? 100) / 100))} kcal · P:{(f.protein_g * ((sel?.quantity ?? 100) / 100)).toFixed(1)}g C:{(f.carbs_g * ((sel?.quantity ?? 100) / 100)).toFixed(1)}g G:{(f.fat_g * ((sel?.quantity ?? 100) / 100)).toFixed(1)}g</span>
                           </p>
-                        </div>
-                        <Badge variant="outline" className="text-[10px] shrink-0 border-[hsl(150,18%,14%)] text-[hsl(150,95%,45%)]">{f.source}</Badge>
+                        </button>
+                        <button
+                          onClick={() => toggleSelect(f)}
+                          aria-label={checked ? "Desmarcar" : "Selecionar"}
+                          className={cn(
+                            "shrink-0 w-7 h-7 rounded-md border flex items-center justify-center transition-colors",
+                            checked
+                              ? "bg-[hsl(150,95%,45%)] border-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)]"
+                              : "border-[hsl(150,18%,22%)] hover:border-[hsl(150,95%,45%)] text-transparent"
+                          )}
+                        >
+                          <Check className="w-4 h-4" />
+                        </button>
                       </div>
-                    </button>
-                  ))}
+                    );
+                  })}
                 </div>
+                {selectedCount > 0 && (
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-4 z-10 rounded-full bg-[hsl(155,22%,8%)] border border-[hsl(150,40%,20%)] shadow-lg px-5 py-2 flex items-center gap-3">
+                    <span className="text-sm text-foreground">{selectedCount} {selectedCount > 1 ? "itens selecionados" : "item selecionado"}</span>
+                    <button onClick={() => setSelections(new Map())} className="text-sm font-medium text-[hsl(150,95%,45%)] hover:text-[hsl(150,95%,60%)]">Desmarcar</button>
+                  </div>
+                )}
               </>
             )}
           </TabsContent>
@@ -969,7 +1020,7 @@ export default function DiarioAlimentar() {
         </div>
       </div>
 
-      <AddFoodDialog open={addOpen} onOpenChange={setAddOpen} mealType={addMeal} mealLabel={findMealLabel(addMeal)} onAdd={addEntries} />
+      <AddFoodDialog open={addOpen} onOpenChange={setAddOpen} mealType={addMeal} mealLabel={findMealLabel(addMeal)} dateISO={date} onAdd={addEntries} />
       <GoalsDialog open={goalsOpen} onOpenChange={setGoalsOpen} goals={goals} onSave={saveGoals} />
       <MacroCalcDialog open={calcOpen} onOpenChange={setCalcOpen} currentWater={goals.water_ml} onApply={saveGoals} />
     </div>
