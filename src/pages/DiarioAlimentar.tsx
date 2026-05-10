@@ -822,7 +822,7 @@ export default function DiarioAlimentar() {
   const dateObj = new Date(date + "T00:00:00");
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] theme-sth-green">
+    <div className="min-h-screen bg-[#FAFAFA]">
       <div className="max-w-3xl mx-auto p-4 space-y-4 pb-24">
         {/* Header */}
         <div className="flex items-center justify-between">
