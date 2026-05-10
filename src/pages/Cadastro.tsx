@@ -13,8 +13,9 @@ import { Slider } from "@/components/ui/slider";
 import {
   ArrowLeft, ArrowRight, Check, Mail, Lock, User, Phone, Loader2,
   CheckCircle, Calculator,
-  Eye, EyeOff,
+  Eye, EyeOff, HelpCircle, MessageCircle, ShieldCheck, Sparkles,
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -28,6 +29,25 @@ import {
   trainingIntensityOptions, cardioIntensityOptions,
   physicalActivityLevelOptions,
 } from "@/lib/form-constants";
+
+// Small helper: didactic "Why are we asking this?" tooltip
+const WhyTip = ({ children }: { children: React.ReactNode }) => (
+  <Popover>
+    <PopoverTrigger asChild>
+      <button
+        type="button"
+        aria-label="Por que pedimos isso?"
+        className="inline-flex items-center gap-1 text-[11px] text-primary/80 hover:text-primary transition-colors ml-1"
+      >
+        <HelpCircle className="w-3.5 h-3.5" />
+        <span className="hidden sm:inline">Por quê?</span>
+      </button>
+    </PopoverTrigger>
+    <PopoverContent className="w-72 text-xs font-body leading-relaxed">
+      {children}
+    </PopoverContent>
+  </Popover>
+);
 
 const phoneMask = (v: string) => {
   const d = v.replace(/\D/g, "").slice(0, 11);
@@ -382,24 +402,9 @@ const Cadastro = () => {
     if (!birth_date) { toast.error("Data de nascimento é obrigatória"); return; }
     if (!height || Number(height) <= 0) { toast.error("Altura é obrigatória"); return; }
     if (!weight || Number(weight) <= 0) { toast.error("Peso é obrigatório"); return; }
-    if (!activity_type) { toast.error("Selecione o tipo de atividade física"); return; }
-    if (!profileForm.physical_activity_level) { toast.error("Selecione o nível de atividade física"); return; }
-    // Validate training details if applicable
-    if (activity_type !== "nenhuma") {
-      if (!profileForm.training_days_per_week) { toast.error("Informe os dias de treino por semana"); return; }
-      if (!profileForm.training_duration_minutes) { toast.error("Informe a duração do treino"); return; }
-      if (!profileForm.training_intensity) { toast.error("Selecione a intensidade do treino"); return; }
-    }
-    if (does_cardio === "") { toast.error("Informe se faz cardio"); return; }
-    // Validate cardio details if applicable
-    if (does_cardio === "sim") {
-      if (!profileForm.cardio_days_per_week) { toast.error("Informe os dias de cardio por semana"); return; }
-      if (!profileForm.cardio_duration_minutes) { toast.error("Informe a duração do cardio"); return; }
-      if (!profileForm.cardio_intensity) { toast.error("Selecione a intensidade do cardio"); return; }
-    }
     if (!objective) { toast.error("Selecione o objetivo"); return; }
-    if (!current_protocol.trim()) { toast.error("Protocolo atual é obrigatório"); return; }
-    if (!comorbidities.trim()) { toast.error("Comorbidades é obrigatório"); return; }
+    // Demais campos (treino, cardio, protocolo, comorbidades, documentos) ficam opcionais —
+    // o aluno completa depois no dashboard, reduzindo atrito até o pagamento.
 
     setLoading(true);
     try {
@@ -410,12 +415,14 @@ const Cadastro = () => {
         height: Number(height),
         weight: Number(weight),
         gender,
-        activity_type,
-        does_cardio: does_cardio === "sim",
+        activity_type: activity_type || null,
+        does_cardio: does_cardio === "sim" ? true : does_cardio === "nao" ? false : null,
         objective,
-        physical_activity: `${activityLabels[activity_type] || activity_type}${does_cardio === "sim" ? " + Cardio" : ""}`,
-        current_protocol,
-        comorbidities,
+        physical_activity: activity_type
+          ? `${activityLabels[activity_type] || activity_type}${does_cardio === "sim" ? " + Cardio" : ""}`
+          : null,
+        current_protocol: current_protocol || null,
+        comorbidities: comorbidities || null,
         additional_info: profileForm.additional_info,
         physical_activity_level: profileForm.physical_activity_level || null,
         training_days_per_week: profileForm.training_days_per_week ? Math.round(Number(profileForm.training_days_per_week)) : null,
@@ -478,6 +485,11 @@ const Cadastro = () => {
 
   const showTrainingDetails = profileForm.activity_type === "musculacao" || profileForm.activity_type === "crossfit";
   const showCardioDetails = profileForm.does_cardio === "sim";
+
+  // Friendly labels for the pre-checkout summary
+  const objectiveLabel = profileForm.objective
+    ? (objectiveLabels[profileForm.objective] || profileForm.objective)
+    : "—";
 
   return (
     <div className="min-h-screen bg-background">
