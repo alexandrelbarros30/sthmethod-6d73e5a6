@@ -117,7 +117,14 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="font-display">Buscar Alimento — TACO / TBCA</DialogTitle>
+          <DialogTitle className="font-display flex items-center gap-2">
+            Buscar Alimento — TACO / TBCA
+            {addedCount > 0 && (
+              <Badge variant="secondary" className="text-[11px]">
+                {addedCount} adicionado{addedCount > 1 ? "s" : ""}
+              </Badge>
+            )}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="flex gap-2 mt-2">
@@ -226,12 +233,20 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
         )}
 
         {selectedFood && (
-          <DialogFooter className="flex gap-2 mt-2">
-            <Button variant="outline" onClick={handleAdd}>
-              <Plus className="w-4 h-4 mr-1" /> Adicionar e continuar
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-2">
+            <Button onClick={handleAdd} className="w-full sm:w-auto">
+              <Plus className="w-4 h-4 mr-1" /> Adicionar e buscar próximo
             </Button>
-            <Button onClick={handleAddAndClose}>
-              <Plus className="w-4 h-4 mr-1" /> Adicionar e fechar
+            <Button variant="outline" onClick={handleAddAndClose} className="w-full sm:w-auto">
+              Adicionar e concluir refeição
+            </Button>
+          </DialogFooter>
+        )}
+
+        {!selectedFood && addedCount > 0 && (
+          <DialogFooter className="mt-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
+              Concluir refeição ({addedCount} {addedCount > 1 ? "itens" : "item"})
             </Button>
           </DialogFooter>
         )}
