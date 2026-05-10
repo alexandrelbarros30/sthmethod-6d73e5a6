@@ -66,13 +66,16 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
       const name = normalize(f.name);
       let score = 999;
       if (q) {
+        const esc = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const wholeWordStart = new RegExp(`^${esc}([\\s,\\-/]|$)`).test(name);
+        const wholeWordAny = new RegExp(`(^|[\\s,\\-/])${esc}([\\s,\\-/]|$)`).test(name);
+        const wordBoundaryStart = new RegExp(`(^|[\\s,\\-/])${esc}`).test(name);
         if (name === q) score = 0;
-        else if (name.startsWith(q + " ") || name.startsWith(q + ",")) score = 1;
-        else if (name.startsWith(q)) score = 2;
-        else {
-          const wordStart = new RegExp(`(^|[\\s,\\-/])${q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`).test(name);
-          score = wordStart ? 3 : 4;
-        }
+        else if (wholeWordStart) score = 1;
+        else if (wholeWordAny) score = 2;
+        else if (name.startsWith(q)) score = 3;
+        else if (wordBoundaryStart) score = 4;
+        else score = 5;
       }
       return { f, score, name };
     })
@@ -115,8 +118,8 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden p-4 sm:p-6">
+        <DialogHeader className="shrink-0">
           <DialogTitle className="font-display flex items-center gap-2">
             Buscar Alimento — TACO / TBCA
             {addedCount > 0 && (
@@ -127,7 +130,7 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex gap-2 mt-2">
+        <div className="flex gap-2 mt-2 shrink-0">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -151,8 +154,9 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
           </Select>
         </div>
 
+        <div className="flex-1 overflow-y-auto mt-2 min-h-0">
         {selectedFood ? (
-          <div className="border rounded-lg p-4 space-y-3 mt-2">
+          <div className="border rounded-lg p-3 space-y-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium font-body">{selectedFood.name}</p>
@@ -209,7 +213,7 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
             </div>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto mt-2 border rounded-lg divide-y max-h-[40vh]">
+          <div className="border rounded-lg divide-y">
             {filtered.length === 0 ? (
               <p className="text-muted-foreground text-sm text-center py-8">Nenhum alimento encontrado.</p>
             ) : (
@@ -231,9 +235,10 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
             )}
           </div>
         )}
+        </div>
 
         {selectedFood && (
-          <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-2">
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-2 shrink-0">
             <Button onClick={handleAdd} className="w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-1" /> Adicionar e buscar próximo
             </Button>
@@ -244,7 +249,7 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
         )}
 
         {!selectedFood && addedCount > 0 && (
-          <DialogFooter className="mt-2">
+          <DialogFooter className="mt-2 shrink-0">
             <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
               Concluir refeição ({addedCount} {addedCount > 1 ? "itens" : "item"})
             </Button>
