@@ -973,12 +973,17 @@ export default function DiarioAlimentar() {
                     <div className="divide-y divide-[#E5E5EA]">
                       {items.map((it) => (
                         <div key={it.id} className="flex items-center justify-between gap-2 px-3 py-2.5 hover:bg-[#F2F2F7]/50 transition-colors">
-                          <div className="min-w-0">
+                          <button
+                            type="button"
+                            onClick={() => setEditingEntry(it)}
+                            className="min-w-0 flex-1 text-left"
+                            title="Editar quantidade"
+                          >
                             <p className="text-sm font-medium truncate text-[#1C1C1E]">{it.item_name}</p>
                             <p className="text-[11px] text-[#6E6E73]">
                               {it.quantity}{it.unit} · {Math.round(Number(it.energy_kcal))} kcal · P:{Number(it.protein_g).toFixed(1)} C:{Number(it.carbs_g).toFixed(1)} G:{Number(it.fat_g).toFixed(1)}
                             </p>
-                          </div>
+                          </button>
                           <Button size="icon" variant="ghost" className="h-7 w-7 text-[#FF3B30] hover:text-[#FF453A] hover:bg-[#FF3B30]/10" onClick={() => removeEntry(it.id)}>
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
@@ -1032,6 +1037,11 @@ export default function DiarioAlimentar() {
       <AddFoodDialog open={addOpen} onOpenChange={setAddOpen} mealType={addMeal} mealLabel={findMealLabel(addMeal)} dateISO={date} onAdd={addEntries} />
       <GoalsDialog open={goalsOpen} onOpenChange={setGoalsOpen} goals={goals} onSave={saveGoals} />
       <MacroCalcDialog open={calcOpen} onOpenChange={setCalcOpen} currentWater={goals.water_ml} onApply={saveGoals} />
+      <EditEntryDialog
+        entry={editingEntry}
+        onClose={() => setEditingEntry(null)}
+        onSave={updateEntry}
+      />
     </div>
   );
 }
