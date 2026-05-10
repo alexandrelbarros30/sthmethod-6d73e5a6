@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Search, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 
 interface Props {
   open: boolean;
@@ -34,6 +35,12 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
   const [quantity, setQuantity] = useState(100);
   const [unit, setUnit] = useState<"g" | "ml">("g");
   const [selectedFood, setSelectedFood] = useState<any>(null);
+  const [addedCount, setAddedCount] = useState(0);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) setAddedCount(0);
+  }, [open]);
 
   const { data: foods = [] } = useQuery({
     queryKey: ["foods-db"],
@@ -84,9 +91,14 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
 
   const handleAdd = () => {
     if (selectedFood) {
+      const name = selectedFood.name;
       onSelect(selectedFood, quantity, unit);
       setSelectedFood(null);
       setQuantity(100);
+      setSearch("");
+      setAddedCount((c) => c + 1);
+      toast.success(`${name} adicionado`, { description: "Busque o próximo alimento da refeição." });
+      setTimeout(() => searchRef.current?.focus(), 50);
     }
   };
 
@@ -105,13 +117,21 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="font-display">Buscar Alimento — TACO / TBCA</DialogTitle>
+          <DialogTitle className="font-display flex items-center gap-2">
+            Buscar Alimento — TACO / TBCA
+            {addedCount > 0 && (
+              <Badge variant="secondary" className="text-[11px]">
+                {addedCount} adicionado{addedCount > 1 ? "s" : ""}
+              </Badge>
+            )}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="flex gap-2 mt-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
+              ref={searchRef}
               placeholder="Pesquisar alimento..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -213,12 +233,20 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
         )}
 
         {selectedFood && (
-          <DialogFooter className="flex gap-2 mt-2">
-            <Button variant="outline" onClick={handleAdd}>
-              <Plus className="w-4 h-4 mr-1" /> Adicionar e continuar
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-2">
+            <Button onClick={handleAdd} className="w-full sm:w-auto">
+              <Plus className="w-4 h-4 mr-1" /> Adicionar e buscar próximo
             </Button>
-            <Button onClick={handleAddAndClose}>
-              <Plus className="w-4 h-4 mr-1" /> Adicionar e fechar
+            <Button variant="outline" onClick={handleAddAndClose} className="w-full sm:w-auto">
+              Adicionar e concluir refeição
+            </Button>
+          </DialogFooter>
+        )}
+
+        {!selectedFood && addedCount > 0 && (
+          <DialogFooter className="mt-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
+              Concluir refeição ({addedCount} {addedCount > 1 ? "itens" : "item"})
             </Button>
           </DialogFooter>
         )}
