@@ -21,6 +21,36 @@ const newId = () => (crypto.randomUUID ? crypto.randomUUID() : Math.random().toS
 
 const DOW = ["D", "S", "T", "Q", "Q", "S", "S"];
 
+const normalizeFoodText = (s: string) =>
+  (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+const getPrimaryFoodName = (name: string) =>
+  normalizeFoodText(name)
+    .split(",")[0]
+    .split("(")[0]
+    .trim();
+
+function scoreFoodMatch(food: any, query: string) {
+  const name = normalizeFoodText(food.name);
+  const primaryName = getPrimaryFoodName(food.name);
+  const tokens = name.split(/[\s,\-\/()]+/).filter(Boolean);
+
+  if (!query) return { score: 999, name, primaryName };
+
+  let score = 99;
+  if (name === query) score = 0;
+  else if (primaryName === query) score = 1;
+  else if (tokens[0] === query) score = 2;
+  else if (tokens.includes(query)) score = 3;
+  else if (name.startsWith(`${query},`) || name.startsWith(`${query} `)) score = 4;
+  else if (primaryName.startsWith(query)) score = 5;
+  else if (name.startsWith(query)) score = 6;
+  else if (tokens.some((token) => token.startsWith(query))) score = 7;
+  else if (name.includes(query)) score = 8;
+
+  return { score, name, primaryName };
+}
+
 function getWeek(anchor: Date) {
   const start = new Date(anchor);
   start.setDate(anchor.getDate() - anchor.getDay());
@@ -111,23 +141,38 @@ function AddFoodDialog({
   const [quantity, setQuantity] = useState(100);
   const [unit, setUnit] = useState("g");
   const [savedMeals, setSavedMeals] = useState<SavedMeal[]>([]);
+  const [addedCount, setAddedCount] = useState(0);
 
   useEffect(() => {
     if (!open) { setSearch(""); setSelectedFood(null); setQuantity(100); setUnit("g"); }
-    else { setSavedMeals(localDiary.getSavedMeals()); }
+    else { setSavedMeals(localDiary.getSavedMeals()); setAddedCount(0); }
   }, [open]);
 
   useEffect(() => {
     if (!search.trim() || tab !== "alimento") { setFoods([]); return; }
     const t = setTimeout(async () => {
       setLoading(true);
+      const normalizedSearch = normalizeFoodText(search);
       const { data } = await supabase
         .from("foods")
         .select("*")
-        .ilike("name", `%${search.trim()}%`)
+        .or(`name.ilike.%${search.trim()}%,name.ilike.%${normalizedSearch}%`)
         .order("name")
-        .limit(50);
-      setFoods(data || []);
+        .limit(120);
+
+      const ranked = (data || [])
+        .map((food) => ({ food, ...scoreFoodMatch(food, normalizedSearch) }))
+        .filter((entry) => entry.score < 99)
+        .sort((a, b) => {
+          if (a.score !== b.score) return a.score - b.score;
+          if (a.primaryName.length !== b.primaryName.length) return a.primaryName.length - b.primaryName.length;
+          if (a.name.length !== b.name.length) return a.name.length - b.name.length;
+          return a.name.localeCompare(b.name);
+        })
+        .slice(0, 50)
+        .map((entry) => entry.food);
+
+      setFoods(ranked);
       setLoading(false);
     }, 250);
     return () => clearTimeout(t);
@@ -153,8 +198,10 @@ function AddFoodDialog({
       sodium_mg: +((selectedFood.sodium_mg || 0) * ratio).toFixed(1),
       sort_order: 0,
     }]);
+    setAddedCount((c) => c + 1);
     setSelectedFood(null);
     setQuantity(100);
+    setSearch("");
   };
 
   const addSavedMeal = (sm: SavedMeal) => {
@@ -190,6 +237,20 @@ function AddFoodDialog({
           </TabsList>
 
           <TabsContent value="alimento" className="flex-1 flex flex-col min-h-0 mt-3 space-y-3">
+            {!selectedFood && addedCount > 0 && (
+              <div className="rounded-xl border border-[hsl(150,18%,14%)] bg-[hsl(155,22%,6%)] px-3 py-2 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground">Refeição em montagem</p>
+                  <p className="text-[11px] text-[hsl(150,8%,55%)]">
+                    {addedCount} {addedCount > 1 ? "alimentos adicionados" : "alimento adicionado"} • continue buscando ou finalize agora.
+                  </p>
+                </div>
+                <Button onClick={() => onOpenChange(false)} className="shrink-0 premium-btn bg-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)] hover:bg-[hsl(150,95%,50%)]">
+                  Finalizar refeição
+                </Button>
+              </div>
+            )}
+
             {selectedFood ? (
               <div className="sth-glass p-4 space-y-3">
                 <div className="flex items-start justify-between">
@@ -230,9 +291,21 @@ function AddFoodDialog({
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button onClick={confirmFood} className="w-full premium-btn bg-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)] hover:bg-[hsl(150,95%,50%)]">
-                    <Plus className="w-4 h-4 mr-1" /> Adicionar à refeição
-                  </Button>
+                  <div className="w-full flex flex-col sm:flex-row gap-2">
+                    <Button onClick={confirmFood} className="w-full premium-btn bg-[hsl(150,95%,45%)] text-[hsl(155,60%,6%)] hover:bg-[hsl(150,95%,50%)]">
+                      <Plus className="w-4 h-4 mr-1" /> Adicionar e buscar próximo
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        confirmFood();
+                        onOpenChange(false);
+                      }}
+                      className="w-full border-[hsl(150,18%,14%)] bg-[hsl(155,18%,8%)] hover:bg-[hsl(150,25%,10%)]"
+                    >
+                      Adicionar e finalizar
+                    </Button>
+                  </div>
                 </DialogFooter>
               </div>
             ) : (
