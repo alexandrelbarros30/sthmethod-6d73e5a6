@@ -109,6 +109,16 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
     }
   };
 
+  const handleQuickAdd = (food: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const u = food.serving_unit?.toLowerCase().includes("ml") ? "ml" : "g";
+    onSelect(food, 100, u);
+    setAddedCount((c) => c + 1);
+    toast.success(`${food.name} adicionado`, { description: `100${u} • Continue buscando ou conclua a refeição.` });
+    setSearch("");
+    setTimeout(() => searchRef.current?.focus(), 50);
+  };
+
   const handleAddAndClose = () => {
     if (selectedFood) {
       onSelect(selectedFood, quantity, unit);
@@ -222,19 +232,30 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
               <p className="text-muted-foreground text-sm text-center py-8">Nenhum alimento encontrado.</p>
             ) : (
               filtered.map((food: any) => (
-                <button
+                <div
                   key={food.id}
-                  onClick={() => handleSelectFood(food)}
-                  className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-accent/50 transition-colors text-left"
+                  className="w-full flex items-center justify-between gap-2 px-3 py-2.5 hover:bg-accent/50 transition-colors"
                 >
-                  <div className="min-w-0">
+                  <button
+                    onClick={() => handleSelectFood(food)}
+                    className="flex-1 min-w-0 text-left"
+                  >
                     <p className="text-sm font-medium truncate font-body">{food.name}</p>
                     <p className="text-xs text-muted-foreground">
                       {food.energy_kcal} kcal • P:{food.protein_g}g • C:{food.carbs_g}g • G:{food.fat_g}g
                     </p>
-                  </div>
-                  <Badge variant="outline" className="text-[10px] shrink-0 ml-2">{food.source}</Badge>
-                </button>
+                    <Badge variant="outline" className="text-[10px] mt-1">{food.source}</Badge>
+                  </button>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-9 w-9 shrink-0 rounded-full"
+                    onClick={(e) => handleQuickAdd(food, e)}
+                    title="Adicionar 100g/ml"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
               ))
             )}
           </div>
