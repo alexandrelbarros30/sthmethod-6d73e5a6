@@ -91,9 +91,14 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
 
   const handleAdd = () => {
     if (selectedFood) {
+      const name = selectedFood.name;
       onSelect(selectedFood, quantity, unit);
       setSelectedFood(null);
       setQuantity(100);
+      setSearch("");
+      setAddedCount((c) => c + 1);
+      toast.success(`${name} adicionado`, { description: "Busque o próximo alimento da refeição." });
+      setTimeout(() => searchRef.current?.focus(), 50);
     }
   };
 
