@@ -224,6 +224,7 @@ const Landing = () => {
                   { href: "#plano-alimentar", label: "Plano Alimentar" },
                   { href: "#simulador", label: "Simulador Corporal" },
                   { href: "/tendencias", label: "STH News" },
+                  { href: "/diario-alimentar", label: "Diário Alimentar" },
                 ].map((item) => (
                   <LinkOrA
                     key={item.href}
