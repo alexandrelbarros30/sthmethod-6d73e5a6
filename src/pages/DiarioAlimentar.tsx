@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
-import { Plus, Search, Trash2, Droplet, BookmarkPlus, ChevronLeft, ChevronRight, Settings, Loader2, X, ChevronDown, Calculator } from "lucide-react";
+import { Plus, Search, Trash2, Droplet, BookmarkPlus, ChevronLeft, ChevronRight, Loader2, X, ChevronDown, Calculator } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
