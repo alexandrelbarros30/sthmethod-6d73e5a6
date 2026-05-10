@@ -153,28 +153,18 @@ function AddFoodDialog({
     if (!search.trim() || tab !== "alimento") { setFoods([]); return; }
     const t = setTimeout(async () => {
       setLoading(true);
-      const normalizedSearch = normalizeFoodText(search);
-      const { data } = await supabase
-        .from("foods")
-        .select("*")
-        .or(`name.ilike.%${search.trim()}%,name.ilike.%${normalizedSearch}%`)
-        .order("name")
-        .limit(120);
-
-      const ranked = (data || [])
-        .map((food) => ({ food, ...scoreFoodMatch(food, normalizedSearch) }))
-        .filter((entry) => entry.score < 99)
-        .sort((a, b) => {
-          if (a.score !== b.score) return a.score - b.score;
-          if (a.primaryName.length !== b.primaryName.length) return a.primaryName.length - b.primaryName.length;
-          if (a.name.length !== b.name.length) return a.name.length - b.name.length;
-          return a.name.localeCompare(b.name);
-        })
-        .slice(0, 50)
-        .map((entry) => entry.food);
-
-      setFoods(ranked);
-      setLoading(false);
+      try {
+        const { data, error } = await supabase.functions.invoke("fatsecret-search", {
+          body: { query: search.trim(), maxResults: 40 },
+        });
+        if (error) throw error;
+        setFoods(data?.foods || []);
+      } catch (e) {
+        console.error("fatsecret-search invoke error", e);
+        setFoods([]);
+      } finally {
+        setLoading(false);
+      }
     }, 250);
     return () => clearTimeout(t);
   }, [search, tab]);
