@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -121,6 +121,36 @@ function getMeasuresForFood(food: any): Measure[] {
   return list;
 }
 
+const normalizeText = (s: string) =>
+  (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+const getPrimarySearchName = (name: string) =>
+  normalizeText(name)
+    .split(",")[0]
+    .split("(")[0]
+    .trim();
+
+function getFoodSearchScore(food: any, query: string) {
+  const name = normalizeText(food.name);
+  const primaryName = getPrimarySearchName(food.name);
+  const tokens = name.split(/[\s,\-\/()]+/).filter(Boolean);
+
+  if (!query) return { score: 999, name, primaryName };
+
+  let score = 99;
+  if (name === query) score = 0;
+  else if (primaryName === query) score = 1;
+  else if (tokens[0] === query) score = 2;
+  else if (tokens.includes(query)) score = 3;
+  else if (name.startsWith(`${query},`) || name.startsWith(`${query} `)) score = 4;
+  else if (primaryName.startsWith(query)) score = 5;
+  else if (name.startsWith(query)) score = 6;
+  else if (tokens.some((token) => token.startsWith(query))) score = 7;
+  else if (name.includes(query)) score = 8;
+
+  return { score, name, primaryName };
+}
+
 const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("Todos");
@@ -143,40 +173,28 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
     enabled: open,
   });
 
-  const normalize = (s: string) =>
-    (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-
-  const q = normalize(search);
-  const filtered = foods
-    .filter((f: any) => {
-      const matchCat = category === "Todos" || f.category === category;
-      if (!matchCat) return false;
-      if (!q) return true;
-      return normalize(f.name).includes(q);
-    })
-    .map((f: any) => {
-      const name = normalize(f.name);
-      let score = 999;
-      if (q) {
-        const esc = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        const wholeWordStart = new RegExp(`^${esc}([\\s,\\-/]|$)`).test(name);
-        const wholeWordAny = new RegExp(`(^|[\\s,\\-/])${esc}([\\s,\\-/]|$)`).test(name);
-        const wordBoundaryStart = new RegExp(`(^|[\\s,\\-/])${esc}`).test(name);
-        if (name === q) score = 0;
-        else if (wholeWordStart) score = 1;
-        else if (wholeWordAny) score = 2;
-        else if (name.startsWith(q)) score = 3;
-        else if (wordBoundaryStart) score = 4;
-        else score = 5;
-      }
-      return { f, score, name };
-    })
-    .sort((a, b) => {
-      if (a.score !== b.score) return a.score - b.score;
-      if (a.name.length !== b.name.length) return a.name.length - b.name.length;
-      return a.name.localeCompare(b.name);
-    })
-    .map((x) => x.f);
+  const q = normalizeText(search);
+  const filtered = useMemo(() => {
+    return foods
+      .filter((f: any) => {
+        const matchCat = category === "Todos" || f.category === category;
+        if (!matchCat) return false;
+        if (!q) return true;
+        return normalizeText(f.name).includes(q);
+      })
+      .map((f: any) => {
+        const { score, name, primaryName } = getFoodSearchScore(f, q);
+        return { f, score, name, primaryName };
+      })
+      .sort((a, b) => {
+        if (a.score !== b.score) return a.score - b.score;
+        if (a.primaryName.length !== b.primaryName.length) return a.primaryName.length - b.primaryName.length;
+        if (a.name.length !== b.name.length) return a.name.length - b.name.length;
+        return a.name.localeCompare(b.name);
+      })
+      .slice(0, 80)
+      .map((x) => x.f);
+  }, [foods, category, q]);
 
   const handleSelectFood = (food: any) => {
     setSelectedFood(food);
@@ -259,6 +277,20 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
             </SelectContent>
           </Select>
         </div>
+
+        {!selectedFood && addedCount > 0 && (
+          <div className="mt-2 shrink-0 rounded-lg border bg-muted/40 px-3 py-2 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-medium">Refeição em montagem</p>
+              <p className="text-xs text-muted-foreground">
+                {addedCount} {addedCount > 1 ? "alimentos adicionados" : "alimento adicionado"} • continue buscando ou finalize agora.
+              </p>
+            </div>
+            <Button size="sm" onClick={() => onOpenChange(false)} className="shrink-0">
+              Concluir refeição
+            </Button>
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto mt-2 min-h-0">
         {selectedFood ? (
@@ -388,15 +420,7 @@ const FoodSearchDialog = ({ open, onOpenChange, onSelect }: Props) => {
               <Plus className="w-4 h-4 mr-1" /> Adicionar e buscar próximo
             </Button>
             <Button variant="outline" onClick={handleAddAndClose} className="w-full sm:w-auto">
-              Adicionar e concluir refeição
-            </Button>
-          </DialogFooter>
-        )}
-
-        {!selectedFood && addedCount > 0 && (
-          <DialogFooter className="mt-2 shrink-0">
-            <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
-              Concluir refeição ({addedCount} {addedCount > 1 ? "itens" : "item"})
+              Adicionar e finalizar refeição
             </Button>
           </DialogFooter>
         )}
