@@ -86,6 +86,11 @@ export const localDiary = {
   removeEntry: (id: string) => {
     write(KEY_ENTRIES, read<DiaryEntry[]>(KEY_ENTRIES, []).filter((e) => e.id !== id));
   },
+  updateEntry: (id: string, patch: Partial<DiaryEntry>) => {
+    const all = read<DiaryEntry[]>(KEY_ENTRIES, []);
+    const next = all.map((e) => (e.id === id ? { ...e, ...patch } : e));
+    write(KEY_ENTRIES, next);
+  },
   getWater: (date: string) => {
     const map = read<Record<string, number>>(KEY_WATER, {});
     return map[date] || 0;

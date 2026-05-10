@@ -749,6 +749,31 @@ export default function DiarioAlimentar() {
     refresh();
   };
 
+  const [editingEntry, setEditingEntry] = useState<DiaryEntry | null>(null);
+
+  const updateEntry = async (id: string, newQty: number, newUnit: "g" | "ml") => {
+    const orig = entries.find((e) => e.id === id);
+    if (!orig || newQty <= 0) return;
+    const r = newQty / Math.max(orig.quantity, 0.0001);
+    const patch = {
+      quantity: newQty,
+      unit: newUnit,
+      energy_kcal: +(Number(orig.energy_kcal) * r).toFixed(1),
+      protein_g: +(Number(orig.protein_g) * r).toFixed(2),
+      carbs_g: +(Number(orig.carbs_g) * r).toFixed(2),
+      fat_g: +(Number(orig.fat_g) * r).toFixed(2),
+      fiber_g: +(Number(orig.fiber_g || 0) * r).toFixed(2),
+      sodium_mg: +(Number(orig.sodium_mg || 0) * r).toFixed(1),
+    };
+    if (isAuth && user) {
+      await supabase.from("food_diary_entries").update(patch).eq("id", id);
+    } else {
+      localDiary.updateEntry(id, patch);
+    }
+    setEditingEntry(null);
+    refresh();
+  };
+
   const updateWater = async (ml: number) => {
     const v = Math.max(0, ml);
     setWater(v);
@@ -948,12 +973,17 @@ export default function DiarioAlimentar() {
                     <div className="divide-y divide-[#E5E5EA]">
                       {items.map((it) => (
                         <div key={it.id} className="flex items-center justify-between gap-2 px-3 py-2.5 hover:bg-[#F2F2F7]/50 transition-colors">
-                          <div className="min-w-0">
+                          <button
+                            type="button"
+                            onClick={() => setEditingEntry(it)}
+                            className="min-w-0 flex-1 text-left"
+                            title="Editar quantidade"
+                          >
                             <p className="text-sm font-medium truncate text-[#1C1C1E]">{it.item_name}</p>
                             <p className="text-[11px] text-[#6E6E73]">
                               {it.quantity}{it.unit} · {Math.round(Number(it.energy_kcal))} kcal · P:{Number(it.protein_g).toFixed(1)} C:{Number(it.carbs_g).toFixed(1)} G:{Number(it.fat_g).toFixed(1)}
                             </p>
-                          </div>
+                          </button>
                           <Button size="icon" variant="ghost" className="h-7 w-7 text-[#FF3B30] hover:text-[#FF453A] hover:bg-[#FF3B30]/10" onClick={() => removeEntry(it.id)}>
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
@@ -1007,6 +1037,111 @@ export default function DiarioAlimentar() {
       <AddFoodDialog open={addOpen} onOpenChange={setAddOpen} mealType={addMeal} mealLabel={findMealLabel(addMeal)} dateISO={date} onAdd={addEntries} />
       <GoalsDialog open={goalsOpen} onOpenChange={setGoalsOpen} goals={goals} onSave={saveGoals} />
       <MacroCalcDialog open={calcOpen} onOpenChange={setCalcOpen} currentWater={goals.water_ml} onApply={saveGoals} />
+      <EditEntryDialog
+        entry={editingEntry}
+        onClose={() => setEditingEntry(null)}
+        onSave={updateEntry}
+      />
     </div>
+  );
+}
+
+/* ---------------- Edit Entry Dialog ---------------- */
+function EditEntryDialog({
+  entry,
+  onClose,
+  onSave,
+}: {
+  entry: DiaryEntry | null;
+  onClose: () => void;
+  onSave: (id: string, qty: number, unit: "g" | "ml") => void;
+}) {
+  const [qty, setQty] = useState<number>(100);
+  const [unit, setUnit] = useState<"g" | "ml">("g");
+
+  useEffect(() => {
+    if (entry) {
+      setQty(Number(entry.quantity) || 100);
+      setUnit((entry.unit === "ml" ? "ml" : "g"));
+    }
+  }, [entry]);
+
+  const open = !!entry;
+  const ratio = entry ? qty / Math.max(Number(entry.quantity), 0.0001) : 1;
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-sm bg-white border-[#E5E5EA] text-[#1C1C1E]">
+        <DialogHeader>
+          <DialogTitle className="text-[#1C1C1E] truncate">{entry?.item_name}</DialogTitle>
+          <p className="text-[11px] text-[#6E6E73]">Ajuste a quantidade da porção</p>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              inputMode="decimal"
+              value={qty}
+              onChange={(e) => setQty(Number(e.target.value) || 0)}
+              className="w-28 h-9 bg-white border-[#E5E5EA]"
+              min={1}
+              autoFocus
+            />
+            <Select value={unit} onValueChange={(v) => setUnit(v as "g" | "ml")}>
+              <SelectTrigger className="w-24 h-9 bg-white border-[#E5E5EA]"><SelectValue /></SelectTrigger>
+              <SelectContent className="bg-white border-[#E5E5EA]">
+                <SelectItem value="g">g</SelectItem>
+                <SelectItem value="ml">ml</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="flex gap-1 ml-auto">
+              {[50, 100, 150, 200].map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setQty(v)}
+                  className="text-[11px] px-2 py-1 rounded-md border border-[#E5E5EA] bg-white hover:bg-[#F2F2F7] text-[#34C759]"
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+          </div>
+          {entry && (
+            <div className="grid grid-cols-4 gap-2 text-xs">
+              <div className="rounded-xl bg-[#F2F2F7] border border-[#E5E5EA] p-2 text-center">
+                <p className="text-[#6E6E73]">kcal</p>
+                <p className="font-bold text-sm text-[#34C759]">{(Number(entry.energy_kcal) * ratio).toFixed(0)}</p>
+              </div>
+              <div className="rounded-xl bg-[#F2F2F7] border border-[#E5E5EA] p-2 text-center">
+                <p className="text-[#6E6E73]">P</p>
+                <p className="font-bold text-sm text-[#007AFF]">{(Number(entry.protein_g) * ratio).toFixed(1)}g</p>
+              </div>
+              <div className="rounded-xl bg-[#F2F2F7] border border-[#E5E5EA] p-2 text-center">
+                <p className="text-[#6E6E73]">C</p>
+                <p className="font-bold text-sm text-[#FF9500]">{(Number(entry.carbs_g) * ratio).toFixed(1)}g</p>
+              </div>
+              <div className="rounded-xl bg-[#F2F2F7] border border-[#E5E5EA] p-2 text-center">
+                <p className="text-[#6E6E73]">G</p>
+                <p className="font-bold text-sm text-[#FF9F0A]">{(Number(entry.fat_g) * ratio).toFixed(1)}g</p>
+              </div>
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <div className="w-full flex gap-2">
+            <Button variant="outline" onClick={onClose} className="flex-1 border-[#E5E5EA] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]">
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => entry && onSave(entry.id, qty, unit)}
+              disabled={!entry || qty <= 0}
+              className="flex-1 font-semibold bg-[#34C759] text-white hover:bg-[#30B350] disabled:opacity-40"
+            >
+              <Check className="w-4 h-4 mr-1" /> Salvar
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
