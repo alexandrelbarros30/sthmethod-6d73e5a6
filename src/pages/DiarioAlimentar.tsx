@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { localDiary, MEAL_TYPES, DEFAULT_GOALS, type DiaryEntry, type SavedMeal, type Goals } from "@/lib/food-diary-storage";
 import { calculateMacros, type MacroInput } from "@/lib/macro-calculator";
 import { searchFoodBank } from "@/data/food-bank";
+import { getPortionPresets } from "@/lib/portion-units";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -290,6 +291,26 @@ function AddFoodDialog({
                       <SelectItem value="ml">ml</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {getPortionPresets(editingFood.name, defaultUnitFor(editingFood)).map((p) => {
+                    const active = editQty === p.grams && editUnit === (p.unit || "g");
+                    return (
+                      <button
+                        key={p.label}
+                        type="button"
+                        onClick={() => { setEditQty(p.grams); setEditUnit(p.unit || "g"); }}
+                        className={cn(
+                          "text-[11px] px-2.5 py-1 rounded-full border transition-colors",
+                          active
+                            ? "bg-[#34C759] border-[#34C759] text-white"
+                            : "bg-white border-[#E5E5EA] text-[#1C1C1E] hover:border-[#34C759] hover:text-[#34C759]"
+                        )}
+                      >
+                        {p.label}
+                      </button>
+                    );
+                  })}
                 </div>
                 <div className="grid grid-cols-4 gap-2 text-xs">
                   <div className="rounded-xl bg-white border border-[#E5E5EA] p-2 text-center">
