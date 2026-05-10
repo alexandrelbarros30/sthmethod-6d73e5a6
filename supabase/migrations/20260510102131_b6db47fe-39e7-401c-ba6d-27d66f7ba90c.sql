@@ -1,0 +1,1 @@
+CREATE POLICY "Public can view foods" ON public.foods FOR SELECT TO anon USING (true);
