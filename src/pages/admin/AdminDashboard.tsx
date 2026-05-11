@@ -36,21 +36,21 @@ const CollapsiblePanel = ({ title, icon, badge, badgeClassName, defaultOpen = fa
   const [open, setOpen] = useState(defaultOpen);
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <Card className={cardClassName}>
+      <Card className={`border-border/40 shadow-none bg-card/40 backdrop-blur-xl rounded-2xl ${cardClassName || ""}`}>
         <CollapsibleTrigger asChild>
-          <CardHeader className="pb-2 cursor-pointer hover:bg-muted/30 transition-colors rounded-t-lg">
-            <CardTitle className="text-base font-display flex items-center gap-2">
-              {icon}
+          <CardHeader className="pb-3 pt-5 px-5 cursor-pointer hover:bg-muted/20 transition-colors rounded-t-2xl">
+            <CardTitle className="text-[15px] font-display font-medium tracking-tight flex items-center gap-2.5 text-foreground/90">
+              <span className="text-foreground/50">{icon}</span>
               {title}
               {badge !== undefined && badge > 0 && (
-                <Badge variant="default" className={`ml-2 ${badgeClassName || ""}`}>{badge}</Badge>
+                <Badge variant="secondary" className={`ml-1.5 h-5 px-2 text-[10px] font-medium rounded-full bg-foreground/10 text-foreground/80 border-0 ${badgeClassName || ""}`}>{badge}</Badge>
               )}
-              <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${open ? "rotate-180" : ""}`} />
+              <ChevronDown className={`w-3.5 h-3.5 ml-auto text-muted-foreground/60 transition-transform ${open ? "rotate-180" : ""}`} />
             </CardTitle>
           </CardHeader>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <CardContent className="space-y-2 pt-0">
+          <CardContent className="space-y-1 pt-0 px-5 pb-5">
             {children}
           </CardContent>
         </CollapsibleContent>
