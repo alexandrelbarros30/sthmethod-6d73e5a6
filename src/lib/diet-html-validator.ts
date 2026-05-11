@@ -54,7 +54,7 @@ export function validateDietHtml(html: string): DietValidationResult {
   if (headingIdx.length === 0) {
     issues.push({
       message:
-        'Nenhuma refeição encontrada. Use o formato "REFEIÇÃO N - NOME" (ex: REFEIÇÃO 1 - CAFÉ DA MANHÃ).',
+        'Nenhuma refeição encontrada. Use o formato "REFEIÇÃO N: NOME" (ex: REFEIÇÃO 1: CAFÉ DA MANHÃ).',
     });
     return { ok: false, issues };
   }
