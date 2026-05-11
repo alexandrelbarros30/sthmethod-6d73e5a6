@@ -66,6 +66,44 @@ function isPaymentNotification(body: any): boolean {
 }
 
 async function activateSubscriptionForPayment(supabase: any, payment: any) {
+  // Self-heal: ensure profile + student role exist before activating.
+  // Some auth users were created without the handle_new_user trigger firing,
+  // which leaves them orphaned and breaks every downstream feature (admin
+  // panel, onboarding save, etc.). Repair on the fly here so a paying
+  // customer is never stuck.
+  try {
+    const { data: existingProfile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("user_id", payment.user_id)
+      .maybeSingle();
+    if (!existingProfile) {
+      const { data: authUser } = await supabase.auth.admin.getUserById(payment.user_id);
+      const fullName = authUser?.user?.user_metadata?.full_name
+        || authUser?.user?.raw_user_meta_data?.full_name
+        || "";
+      const email = authUser?.user?.email || "";
+      await supabase.from("profiles").insert({
+        user_id: payment.user_id,
+        full_name: fullName,
+        email,
+      });
+      console.log(`[orphan-repair] created profile for ${payment.user_id}`);
+    }
+    const { data: existingRole } = await supabase
+      .from("user_roles")
+      .select("id")
+      .eq("user_id", payment.user_id)
+      .maybeSingle();
+    if (!existingRole) {
+      await supabase.from("user_roles").insert({ user_id: payment.user_id, role: "student" });
+      console.log(`[orphan-repair] created student role for ${payment.user_id}`);
+    }
+  } catch (repairErr) {
+    console.error("[orphan-repair] failed:", repairErr);
+    // Do not block subscription activation
+  }
+
   const startDate = new Date();
   const durationDays = payment?.plans?.duration_days || 30;
 

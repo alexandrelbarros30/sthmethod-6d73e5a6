@@ -454,8 +454,14 @@ const Cadastro = () => {
         updateData.fat_g = macroResult.fatG;
       }
 
-      const { error } = await supabase.from("profiles").update(updateData).eq("user_id", userId!);
+      const { data: upserted, error } = await supabase
+        .from("profiles")
+        .upsert({ user_id: userId!, ...updateData }, { onConflict: "user_id" })
+        .select("id");
       if (error) throw error;
+      if (!upserted || upserted.length === 0) {
+        throw new Error("Não foi possível salvar seu cadastro. Recarregue a página e tente novamente.");
+      }
       toast.success("Dados salvos!");
       setStep(3);
     } catch (error: any) {
