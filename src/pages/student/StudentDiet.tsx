@@ -17,6 +17,7 @@ import MealDetailPanel from "@/components/student/MealDetailPanel";
 import DietDateNav from "@/components/student/DietDateNav";
 import HydrationTracker from "@/components/student/HydrationTracker";
 import DietSelector from "@/components/student/DietSelector";
+import DietContentRenderer from "@/components/student/DietContentRenderer";
 import { Utensils, Flame, Zap, FileDown, Apple } from "lucide-react";
 import { toast } from "sonner";
 import { generateStudentPDF } from "@/lib/pdfGenerator";
@@ -52,9 +53,15 @@ const StudentDiet = () => {
     addWater,
     removeLastWater,
     availableDiets,
+    currentDiet,
     selectedDietId,
     setSelectedDietId,
   } = useMealTracking();
+
+  const hasStructuredMeals = meals.length > 0;
+  const fallbackDietContent = !hasStructuredMeals && currentDiet && typeof (currentDiet as any).content === "string"
+    ? ((currentDiet as any).content as string).trim()
+    : "";
 
   if (subLoading || isLoading) {
     return (
@@ -102,7 +109,7 @@ const StudentDiet = () => {
     );
   }
 
-  if (meals.length === 0) {
+  if (!hasStructuredMeals && !fallbackDietContent) {
     return (
       <DashboardLayout role="student" title="Seu plano hoje" subtitle="Seu plano alimentar personalizado.">
         <PreviewAsBanner />
@@ -163,7 +170,7 @@ const StudentDiet = () => {
   const expandedMeal = expandedMealId ? meals.find((m) => m.id === expandedMealId) : null;
 
   const handleDownloadPdf = async () => {
-    if (meals.length === 0) {
+    if (!hasStructuredMeals && !fallbackDietContent) {
       toast.error("Nenhuma refeição disponível para gerar o PDF.");
       return;
     }
@@ -192,20 +199,20 @@ const StudentDiet = () => {
         }
       }
 
-      const content = meals
-        .map((meal) => {
-          const heading = meal.sort_order <= 5 ? `REFEIÇÃO ${meal.sort_order + 1} - ${meal.name}` : meal.name;
-          // Prefer the raw HTML stored in the first food's notes — it preserves
-          // the on-screen structure (Alimentação principal, Opções, Substituições).
-          const firstNotes = (meal.diet_foods[0] as any)?.notes || "";
-          if (typeof firstNotes === "string" && firstNotes.startsWith("__RAW_HTML__")) {
-            const html = firstNotes.slice("__RAW_HTML__".length);
-            return `${heading}\n__HTML_BLOCK_START__\n${html}\n__HTML_BLOCK_END__`;
-          }
-          const foods = meal.diet_foods.map((food) => `${food.quantity} - ${food.item}`).join("\n");
-          return `${heading}\n${foods}`;
-        })
-        .join("\n\n");
+      const content = hasStructuredMeals
+        ? meals
+            .map((meal) => {
+              const heading = meal.sort_order <= 5 ? `REFEIÇÃO ${meal.sort_order + 1} - ${meal.name}` : meal.name;
+              const firstNotes = (meal.diet_foods[0] as any)?.notes || "";
+              if (typeof firstNotes === "string" && firstNotes.startsWith("__RAW_HTML__")) {
+                const html = firstNotes.slice("__RAW_HTML__".length);
+                return `${heading}\n__HTML_BLOCK_START__\n${html}\n__HTML_BLOCK_END__`;
+              }
+              const foods = meal.diet_foods.map((food) => `${food.quantity} - ${food.item}`).join("\n");
+              return `${heading}\n${foods}`;
+            })
+            .join("\n\n")
+        : fallbackDietContent;
 
       const blob = await generateStudentPDF({
         type: "diet",
@@ -268,76 +275,84 @@ const StudentDiet = () => {
           </Button>
         </div>
 
-        {/* Daily Progress Header */}
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden animate-fade-in">
-          <div className="py-6 px-6">
-            <div className="mb-4">
-              <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground">Hoje</p>
-              <h3 className="text-xl font-display font-bold uppercase text-foreground tracking-tight mt-2">Consistência</h3>
-            </div>
-              <div className="flex items-center gap-5">
-              <DailyProgressRing
-                percent={progressPercent}
-                size={120}
-                strokeWidth={8}
-                sublabel={isToday ? (nextMeal?.name || "Concluído") : undefined}
-              />
-              <div className="flex-1 space-y-3">
-                <div>
-                  <p className="text-[28px] font-display font-bold text-foreground tracking-tight tabular-nums leading-none">
-                    {completedCount}<span className="text-muted-foreground/60 font-light text-base">/{totalMeals}</span>
-                  </p>
-                  <p className="text-[11px] text-muted-foreground mt-1.5 tracking-tight">
-                    {progressPercent === 100 ? "Dia completo! 🎉" : `${totalMeals - completedCount} refeições restantes`}
-                  </p>
+        {hasStructuredMeals ? (
+          <>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden animate-fade-in">
+              <div className="py-6 px-6">
+                <div className="mb-4">
+                  <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground">Hoje</p>
+                  <h3 className="text-xl font-display font-bold uppercase text-foreground tracking-tight mt-2">Consistência</h3>
                 </div>
+                <div className="flex items-center gap-5">
+                  <DailyProgressRing
+                    percent={progressPercent}
+                    size={120}
+                    strokeWidth={8}
+                    sublabel={isToday ? (nextMeal?.name || "Concluído") : undefined}
+                  />
+                  <div className="flex-1 space-y-3">
+                    <div>
+                      <p className="text-[28px] font-display font-bold text-foreground tracking-tight tabular-nums leading-none">
+                        {completedCount}<span className="text-muted-foreground/60 font-light text-base">/{totalMeals}</span>
+                      </p>
+                      <p className="text-[11px] text-muted-foreground mt-1.5 tracking-tight">
+                        {progressPercent === 100 ? "Dia completo! 🎉" : `${totalMeals - completedCount} refeições restantes`}
+                      </p>
+                    </div>
 
-                {isToday && nextMeal && !isMealCompleted(nextMeal.id) && (
-                  <div className="p-3 rounded-2xl border border-white/10 bg-white/[0.02]">
-                    <p className="text-[9px] text-muted-foreground font-semibold uppercase tracking-[0.3em] flex items-center gap-1">
-                      <Zap className="w-3 h-3" /> Próxima Refeição
-                    </p>
-                    <p className="text-sm font-display font-semibold text-foreground mt-1 tracking-tight">
-                      {nextMeal.name} <span className="text-muted-foreground text-xs font-mono ml-1">{nextMeal.time}</span>
-                    </p>
+                    {isToday && nextMeal && !isMealCompleted(nextMeal.id) && (
+                      <div className="p-3 rounded-2xl border border-white/10 bg-white/[0.02]">
+                        <p className="text-[9px] text-muted-foreground font-semibold uppercase tracking-[0.3em] flex items-center gap-1">
+                          <Zap className="w-3 h-3" /> Próxima Refeição
+                        </p>
+                        <p className="text-sm font-display font-semibold text-foreground mt-1 tracking-tight">
+                          {nextMeal.name} <span className="text-muted-foreground text-xs font-mono ml-1">{nextMeal.time}</span>
+                        </p>
+                      </div>
+                    )}
+
+                    {!isToday && (
+                      <p className="text-[10px] text-muted-foreground tracking-[0.2em] uppercase">Visualizando histórico</p>
+                    )}
                   </div>
-                )}
+                </div>
+              </div>
+            </div>
 
-                {!isToday && (
-                  <p className="text-[10px] text-muted-foreground tracking-[0.2em] uppercase">Visualizando histórico</p>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+              <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground mb-4">Macros</p>
+              <div className="space-y-3">
+                <MacroProgressBar label="Calorias" consumed={consumedMacros.kcal} total={totalMacros.kcal} unit="kcal" color="bg-foreground" />
+                <MacroProgressBar label="Proteína" consumed={consumedMacros.protein} total={totalMacros.protein} color="bg-info" />
+                <MacroProgressBar label="Carboidrato" consumed={consumedMacros.carbs} total={totalMacros.carbs} color="bg-warning" />
+                <MacroProgressBar label="Gordura" consumed={consumedMacros.fat} total={totalMacros.fat} color="bg-[hsl(25,85%,55%)]" />
+
+                {skippedMacros.kcal > 0 && remainingMeals > 0 && (
+                  <p className="text-[10px] text-warning mt-1 flex items-center gap-1">
+                    ⚠️ +{Math.round(redistributedPerMeal.kcal)} kcal redistribuídos por refeição
+                  </p>
                 )}
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Macro Progress */}
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-          <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground mb-4">Macros</p>
-          <div className="space-y-3">
-            <MacroProgressBar label="Calorias" consumed={consumedMacros.kcal} total={totalMacros.kcal} unit="kcal" color="bg-foreground" />
-            <MacroProgressBar label="Proteína" consumed={consumedMacros.protein} total={totalMacros.protein} color="bg-info" />
-            <MacroProgressBar label="Carboidrato" consumed={consumedMacros.carbs} total={totalMacros.carbs} color="bg-warning" />
-            <MacroProgressBar label="Gordura" consumed={consumedMacros.fat} total={totalMacros.fat} color="bg-[hsl(25,85%,55%)]" />
-
-            {skippedMacros.kcal > 0 && remainingMeals > 0 && (
-              <p className="text-[10px] text-warning mt-1 flex items-center gap-1">
-                ⚠️ +{Math.round(redistributedPerMeal.kcal)} kcal redistribuídos por refeição
-              </p>
+            {hydrationGoalL > 0 && (
+              <HydrationTracker
+                goalL={hydrationGoalL}
+                consumedMl={waterConsumedMl}
+                onAdd={(ml) => addWater.mutate(ml)}
+                onRemove={() => removeLastWater.mutate()}
+                isAdding={addWater.isPending}
+                disabled={!isToday}
+              />
             )}
+          </>
+        ) : (
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-5 animate-fade-in">
+            <div className="mb-4 text-center">
+              <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground">Plano alimentar</p>
+            </div>
+            <DietContentRenderer content={fallbackDietContent} showHeader={false} />
           </div>
-        </div>
-
-        {/* Hydration Tracker */}
-        {hydrationGoalL > 0 && (
-          <HydrationTracker
-            goalL={hydrationGoalL}
-            consumedMl={waterConsumedMl}
-            onAdd={(ml) => addWater.mutate(ml)}
-            onRemove={() => removeLastWater.mutate()}
-            isAdding={addWater.isPending}
-            disabled={!isToday}
-          />
         )}
 
         {/* Diet selector tabs (between hydration and meals) */}
@@ -347,42 +362,43 @@ const StudentDiet = () => {
           onSelect={setSelectedDietId}
         />
 
-        {/* Meal List */}
-        <div className="space-y-3" style={{ animationDelay: "0.2s" }}>
-          <div className="flex items-baseline justify-between">
-            <h3 className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground flex items-center gap-2">
-              <Utensils className="w-3 h-3" /> Refeições do dia
-            </h3>
-            <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground tabular-nums font-mono">
-              {completedCount}/{totalMeals} hoje
-            </span>
-          </div>
-
-          {meals.map((meal, idx) => (
-            <div key={meal.id} className="animate-slide-up" style={{ animationDelay: `${0.05 * idx}s` }}>
-              <MealCard
-                meal={meal}
-                mealLabel={`Refeição ${meal.sort_order + 1}`}
-                isCompleted={isMealCompleted(meal.id)}
-                isSkipped={isMealSkipped(meal.id)}
-                isActive={activeMeal?.id === meal.id}
-                isNext={nextMeal?.id === meal.id && activeMeal?.id !== meal.id}
-                distributedMacros={(() => { const m = perMealFoodMacros.find(pm => pm.mealId === meal.id); return m ? { kcal: m.kcal, protein: m.protein, carbs: m.carbs, fat: m.fat } : null; })()}
-                onToggle={() => handleToggle(meal.id)}
-                onSkip={() => handleSkip(meal.id)}
-                onExpand={() => setExpandedMealId(expandedMealId === meal.id ? null : meal.id)}
-                isExpanded={expandedMealId === meal.id}
-              />
-              {expandedMealId === meal.id && expandedMeal && (
-                <MealDetailPanel
-                  meal={expandedMeal}
-                  mealLabel={`Refeição ${expandedMeal.sort_order + 1}`}
-                  onClose={() => setExpandedMealId(null)}
-                />
-              )}
+        {hasStructuredMeals && (
+          <div className="space-y-3" style={{ animationDelay: "0.2s" }}>
+            <div className="flex items-baseline justify-between">
+              <h3 className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground flex items-center gap-2">
+                <Utensils className="w-3 h-3" /> Refeições do dia
+              </h3>
+              <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground tabular-nums font-mono">
+                {completedCount}/{totalMeals} hoje
+              </span>
             </div>
-          ))}
-        </div>
+
+            {meals.map((meal, idx) => (
+              <div key={meal.id} className="animate-slide-up" style={{ animationDelay: `${0.05 * idx}s` }}>
+                <MealCard
+                  meal={meal}
+                  mealLabel={`Refeição ${meal.sort_order + 1}`}
+                  isCompleted={isMealCompleted(meal.id)}
+                  isSkipped={isMealSkipped(meal.id)}
+                  isActive={activeMeal?.id === meal.id}
+                  isNext={nextMeal?.id === meal.id && activeMeal?.id !== meal.id}
+                  distributedMacros={(() => { const m = perMealFoodMacros.find(pm => pm.mealId === meal.id); return m ? { kcal: m.kcal, protein: m.protein, carbs: m.carbs, fat: m.fat } : null; })()}
+                  onToggle={() => handleToggle(meal.id)}
+                  onSkip={() => handleSkip(meal.id)}
+                  onExpand={() => setExpandedMealId(expandedMealId === meal.id ? null : meal.id)}
+                  isExpanded={expandedMealId === meal.id}
+                />
+                {expandedMealId === meal.id && expandedMeal && (
+                  <MealDetailPanel
+                    meal={expandedMeal}
+                    mealLabel={`Refeição ${expandedMeal.sort_order + 1}`}
+                    onClose={() => setExpandedMealId(null)}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

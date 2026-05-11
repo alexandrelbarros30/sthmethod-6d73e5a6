@@ -35,8 +35,13 @@ const DEFAULT_MEAL_TIMES: Record<number, string> = {
 
 const SECTION_TITLE_RE = /^(ROTINA\s*ALIMENTAR|PLANO\s*ALIMENTAR|DIETA)\b/i;
 
-const normalize = (value: string) =>
+const stripInvisibleChars = (value: string) =>
   value
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/\u00A0/g, " ");
+
+const normalize = (value: string) =>
+  stripInvisibleChars(value)
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
@@ -64,7 +69,7 @@ type DietToken =
   | { type: "SUB_ITEM"; text: string };
 
 const stripTags = (html: string) =>
-  decodeHtml(html.replace(/<[^>]+>/g, " "))
+  stripInvisibleChars(decodeHtml(html.replace(/<[^>]+>/g, " ")))
     .replace(/\s+/g, " ")
     .trim();
 
@@ -95,7 +100,7 @@ const htmlToTokens = (content: string): DietToken[] => {
   if (!hasHtml) {
     return content
       .split(/\r?\n/)
-      .map((l) => l.trim())
+      .map((l) => stripInvisibleChars(l).trim())
       .filter(Boolean)
       .map((text) => {
         if (/^(refei[cç][aã]o|caf[eé] da manh[ãa]|almo[cç]o|lanche|jantar|ceia|pr[eé][- ]?treino|p[oó]s[- ]?treino)/i.test(text)) {
@@ -213,16 +218,16 @@ const parseHeading = (
   const refeicao = line.match(/^refei[cç][aã]?o\s*(extra|\d+)\b[:\-\s]*(.*)$/i);
   if (refeicao) {
     const raw = refeicao[1]?.toLowerCase();
-    const remainder = (refeicao[2] || "").trim();
+    const remainder = stripInvisibleChars((refeicao[2] || "").trim());
     const inferredName = inferMealNameFromHeadingRemainder(remainder);
-    const remainderShouldBecomeFood = remainder && !inferredName && !isHeadingMetadataOnly(remainder);
+    const explicitName = remainder && !isHeadingMetadataOnly(remainder) ? remainder : "";
 
     if (raw === "extra") {
       const sortOrder = nextExtraOrder();
       return {
         sortOrder,
-        name: inferredName || "Refeição Extra",
-        remainder: remainderShouldBecomeFood ? remainder : "",
+        name: explicitName || inferredName || "Refeição Extra",
+        remainder: "",
       };
     }
 
@@ -231,8 +236,8 @@ const parseHeading = (
       const sortOrder = parsed > 6 ? nextExtraOrder() : Math.max(0, parsed - 1);
       return {
         sortOrder,
-        name: inferredName || DEFAULT_MEAL_NAMES[sortOrder] || `Refeição ${parsed}`,
-        remainder: remainderShouldBecomeFood ? remainder : "",
+        name: explicitName || inferredName || DEFAULT_MEAL_NAMES[sortOrder] || `Refeição ${parsed}`,
+        remainder: "",
       };
     }
   }
@@ -281,7 +286,7 @@ const sliceContentByMealHeading = (content: string): Array<{ headingText: string
       buffer = [];
     };
     for (const line of lines) {
-      const t = line.trim();
+      const t = stripInvisibleChars(line).trim();
       if (HEADING_KEYWORDS_RE.test(t)) {
         flush();
         currentHeading = t;
