@@ -72,6 +72,18 @@ const AdminDiet = () => {
   const [editHydrationL, setEditHydrationL] = useState("");
   const [editMealMacros, setEditMealMacros] = useState<MealMacros[] | null>(null);
   const [editCreatedAt, setEditCreatedAt] = useState<string | null>(null);
+
+  // Validates new diet rules (cutoff 11/05/26). Returns true if save can proceed.
+  const confirmDietValidation = (html: string, createdAt?: string | null): boolean => {
+    if (!shouldValidateDiet(createdAt)) return true;
+    const result = validateDietHtml(html);
+    if (result.ok) return true;
+    const proceed = window.confirm(formatValidationMessage(result));
+    if (!proceed) {
+      toast.warning("Salvamento cancelado. Ajuste o HTML conforme as novas regras.");
+    }
+    return proceed;
+  };
   // Preview
   const [previewDiet, setPreviewDiet] = useState<any>(null);
 
