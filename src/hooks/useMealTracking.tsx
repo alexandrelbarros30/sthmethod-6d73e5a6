@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePreviewAs } from "@/hooks/usePreviewAs";
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export interface MealWithFoods {
   id: string;
@@ -47,6 +47,7 @@ const formatDate = (d: Date) => {
 const todayStr = () => formatDate(new Date());
 
 const STORAGE_KEY = (uid: string) => `selected_diet_${uid}`;
+const LATEST_AVAILABLE_DIET_KEY = (uid: string) => `latest_available_diet_${uid}`;
 
 export function useMealTracking() {
   const { user } = useAuth();
@@ -78,19 +79,45 @@ export function useMealTracking() {
         .select("id, title, tab_label, content, energy_kcal, protein_g, carbs_g, fat_g, hydration_l, start_date, end_date, is_active, created_at")
         .eq("user_id", targetUserId!)
         .eq("is_active", true)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
     },
     enabled: !!targetUserId,
   });
 
-  // Determine effective diet: stored selection > active > first not-expired > first
+  useEffect(() => {
+    if (typeof window === "undefined" || !targetUserId) return;
+    setSelectedDietIdState(localStorage.getItem(STORAGE_KEY(targetUserId)));
+  }, [targetUserId]);
+
+  // Determine effective diet: stored selection > latest available > first
   const today = todayStr();
   const isExpired = (d: any) => d.end_date && d.end_date < today;
-  const validSelected = availableDiets.find((d: any) => d.id === selectedDietId && !isExpired(d));
-  const firstValid = availableDiets.find((d: any) => !isExpired(d));
-  const currentDiet: any = validSelected || firstValid || availableDiets[0] || null;
+  const isNotStarted = (d: any) => d.start_date && d.start_date > today;
+  const isAvailableToday = (d: any) => !isExpired(d) && !isNotStarted(d);
+  const latestAvailableDiet = availableDiets.find((d: any) => isAvailableToday(d)) || null;
+  const validSelected = availableDiets.find((d: any) => d.id === selectedDietId && isAvailableToday(d));
+  const currentDiet: any = validSelected || latestAvailableDiet || availableDiets[0] || null;
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !targetUserId || !latestAvailableDiet?.id) return;
+
+    const latestKnownDietId = localStorage.getItem(LATEST_AVAILABLE_DIET_KEY(targetUserId));
+    const hasNewDietRelease = latestKnownDietId !== latestAvailableDiet.id;
+
+    if (hasNewDietRelease) {
+      localStorage.setItem(LATEST_AVAILABLE_DIET_KEY(targetUserId), latestAvailableDiet.id);
+      localStorage.setItem(STORAGE_KEY(targetUserId), latestAvailableDiet.id);
+      setSelectedDietIdState(latestAvailableDiet.id);
+      return;
+    }
+
+    if (!validSelected && !selectedDietId) {
+      localStorage.setItem(STORAGE_KEY(targetUserId), latestAvailableDiet.id);
+      setSelectedDietIdState(latestAvailableDiet.id);
+    }
+  }, [targetUserId, latestAvailableDiet?.id, selectedDietId, validSelected]);
 
   const dietMeta = currentDiet
     ? {
