@@ -170,7 +170,7 @@ const StudentDiet = () => {
   const expandedMeal = expandedMealId ? meals.find((m) => m.id === expandedMealId) : null;
 
   const handleDownloadPdf = async () => {
-    if (meals.length === 0) {
+    if (!hasStructuredMeals && !fallbackDietContent) {
       toast.error("Nenhuma refeição disponível para gerar o PDF.");
       return;
     }
@@ -199,20 +199,20 @@ const StudentDiet = () => {
         }
       }
 
-      const content = meals
-        .map((meal) => {
-          const heading = meal.sort_order <= 5 ? `REFEIÇÃO ${meal.sort_order + 1} - ${meal.name}` : meal.name;
-          // Prefer the raw HTML stored in the first food's notes — it preserves
-          // the on-screen structure (Alimentação principal, Opções, Substituições).
-          const firstNotes = (meal.diet_foods[0] as any)?.notes || "";
-          if (typeof firstNotes === "string" && firstNotes.startsWith("__RAW_HTML__")) {
-            const html = firstNotes.slice("__RAW_HTML__".length);
-            return `${heading}\n__HTML_BLOCK_START__\n${html}\n__HTML_BLOCK_END__`;
-          }
-          const foods = meal.diet_foods.map((food) => `${food.quantity} - ${food.item}`).join("\n");
-          return `${heading}\n${foods}`;
-        })
-        .join("\n\n");
+      const content = hasStructuredMeals
+        ? meals
+            .map((meal) => {
+              const heading = meal.sort_order <= 5 ? `REFEIÇÃO ${meal.sort_order + 1} - ${meal.name}` : meal.name;
+              const firstNotes = (meal.diet_foods[0] as any)?.notes || "";
+              if (typeof firstNotes === "string" && firstNotes.startsWith("__RAW_HTML__")) {
+                const html = firstNotes.slice("__RAW_HTML__".length);
+                return `${heading}\n__HTML_BLOCK_START__\n${html}\n__HTML_BLOCK_END__`;
+              }
+              const foods = meal.diet_foods.map((food) => `${food.quantity} - ${food.item}`).join("\n");
+              return `${heading}\n${foods}`;
+            })
+            .join("\n\n")
+        : fallbackDietContent;
 
       const blob = await generateStudentPDF({
         type: "diet",
