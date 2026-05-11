@@ -113,7 +113,7 @@ export function useMealTracking() {
       return;
     }
 
-    if (!validSelected && !selectedDietId) {
+    if (!validSelected && selectedDietId !== latestAvailableDiet.id) {
       localStorage.setItem(STORAGE_KEY(targetUserId), latestAvailableDiet.id);
       setSelectedDietIdState(latestAvailableDiet.id);
     }
