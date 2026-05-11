@@ -10,9 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Microscope, UtensilsCrossed, PartyPopper, Megaphone, Dumbbell, FileText } from "lucide-react";
-import PaymentNotificationPopup from "./admin/PaymentNotificationPopup";
-import EvolutionReminderPopup from "./admin/EvolutionReminderPopup";
-import EvolutionUpdatePopup from "./admin/EvolutionUpdatePopup";
+import NotificationCenter from "./admin/NotificationCenter";
 import { useEvolutionReminders } from "@/hooks/useEvolutionReminders";
 import { usePaymentReconciliation } from "@/hooks/usePaymentReconciliation";
 
@@ -471,9 +469,7 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
         </DialogContent>
       </Dialog>
 
-      <PaymentNotificationPopup />
-      <EvolutionReminderPopup />
-      <EvolutionUpdatePopup />
+      <NotificationCenter />
     </div>
   );
 };
