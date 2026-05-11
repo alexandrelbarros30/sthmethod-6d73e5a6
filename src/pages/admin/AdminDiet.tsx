@@ -293,6 +293,7 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
   const startEdit = (diet: any) => {
     const d = new Date(diet.created_at);
     setEditingId(diet.id);
+    setEditCreatedAt(diet.created_at || null);
     setEditTitle(diet.title || "");
     setEditTabLabel(diet.tab_label || "");
     setEditContent(diet.content || "");
