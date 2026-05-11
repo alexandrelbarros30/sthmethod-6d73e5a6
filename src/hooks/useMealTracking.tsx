@@ -75,7 +75,7 @@ export function useMealTracking() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("student_diets")
-        .select("id, title, tab_label, energy_kcal, protein_g, carbs_g, fat_g, hydration_l, start_date, end_date, is_active, created_at")
+        .select("id, title, tab_label, content, energy_kcal, protein_g, carbs_g, fat_g, hydration_l, start_date, end_date, is_active, created_at")
         .eq("user_id", targetUserId!)
         .eq("is_active", true)
         .order("created_at", { ascending: true });
