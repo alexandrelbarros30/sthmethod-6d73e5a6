@@ -25,6 +25,11 @@ export type DietValidationResult = {
 const MEAL_HEADING_VALID_RE = /^\s*REFEI[ÇC][ÃA]O\s+\d+\s*:\s*.*$/i;
 const MEAL_HEADING_LOOSE_RE = /REFEI[ÇC][ÃA]O\s*\d+/i;
 
+const stripInvisibleChars = (value: string) =>
+  value
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/\u00A0/g, " ");
+
 function htmlToBlocks(html: string): string[] {
   if (!html) return [];
   // Insert markers for block-level boundaries so we can split into "lines".
@@ -34,7 +39,7 @@ function htmlToBlocks(html: string): string[] {
     .replace(/<[^>]+>/g, "");
   return withBreaks
     .split(/\n+/)
-    .map((s) => s.replace(/&nbsp;/gi, " ").replace(/\s+/g, " ").trim())
+    .map((s) => stripInvisibleChars(s.replace(/&nbsp;/gi, " ")).replace(/\s+/g, " ").trim())
     .filter(Boolean);
 }
 
