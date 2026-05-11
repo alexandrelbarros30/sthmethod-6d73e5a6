@@ -17,6 +17,7 @@ import MealDetailPanel from "@/components/student/MealDetailPanel";
 import DietDateNav from "@/components/student/DietDateNav";
 import HydrationTracker from "@/components/student/HydrationTracker";
 import DietSelector from "@/components/student/DietSelector";
+import DietContentRenderer from "@/components/student/DietContentRenderer";
 import { Utensils, Flame, Zap, FileDown, Apple } from "lucide-react";
 import { toast } from "sonner";
 import { generateStudentPDF } from "@/lib/pdfGenerator";
@@ -52,9 +53,15 @@ const StudentDiet = () => {
     addWater,
     removeLastWater,
     availableDiets,
+    currentDiet,
     selectedDietId,
     setSelectedDietId,
   } = useMealTracking();
+
+  const hasStructuredMeals = meals.length > 0;
+  const fallbackDietContent = !hasStructuredMeals && currentDiet && typeof (currentDiet as any).content === "string"
+    ? ((currentDiet as any).content as string).trim()
+    : "";
 
   if (subLoading || isLoading) {
     return (
@@ -102,7 +109,7 @@ const StudentDiet = () => {
     );
   }
 
-  if (meals.length === 0) {
+  if (!hasStructuredMeals && !fallbackDietContent) {
     return (
       <DashboardLayout role="student" title="Seu plano hoje" subtitle="Seu plano alimentar personalizado.">
         <PreviewAsBanner />
