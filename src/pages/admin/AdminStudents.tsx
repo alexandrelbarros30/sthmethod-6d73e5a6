@@ -649,6 +649,42 @@ const AdminStudents = () => {
         setManageOpen(true);
         searchParams.delete("manage");
         setSearchParams(searchParams, { replace: true });
+      } else {
+        // Aluno veio da fila mas não está na lista (perfil ausente / não sincronizado)
+        (async () => {
+          // Tenta carregar perfil diretamente
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("user_id, full_name, email, phone, birth_date, height, weight, physical_activity, objective, current_protocol, comorbidities, lab_exam_url, medical_prescription_url, avatar_url, onboarding_complete, created_at")
+            .eq("user_id", manageUserId)
+            .maybeSingle();
+          if (prof) {
+            const { data: sub } = await supabase
+              .from("subscriptions")
+              .select("*, plans(name, duration_days)")
+              .eq("user_id", manageUserId)
+              .maybeSingle();
+            const fallbackStudent: any = {
+              ...prof,
+              plan: (sub as any)?.plans?.name || "—",
+              planDurationDays: (sub as any)?.plans?.duration_days || null,
+              subscription: sub || null,
+              startDate: sub?.start_date || null,
+              endDate: sub?.end_date || null,
+              status: sub ? (sub.status === "active" && new Date(sub.end_date) > new Date() ? "active" : sub.status === "suspended" ? "suspended" : "expired") : "none",
+              initials: prof.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "?",
+            };
+            setSelected(fallbackStudent);
+            setManageOpen(true);
+            qc.invalidateQueries({ queryKey: ["admin-students-list"] });
+          } else {
+            toast.error("Aluno não encontrado", {
+              description: "O perfil deste aluno ainda não foi criado. Verifique o pagamento ou crie o cadastro manualmente.",
+            });
+          }
+          searchParams.delete("manage");
+          setSearchParams(searchParams, { replace: true });
+        })();
       }
     }
   }, [students, searchParams]);
