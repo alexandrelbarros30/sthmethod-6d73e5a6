@@ -35,8 +35,13 @@ const DEFAULT_MEAL_TIMES: Record<number, string> = {
 
 const SECTION_TITLE_RE = /^(ROTINA\s*ALIMENTAR|PLANO\s*ALIMENTAR|DIETA)\b/i;
 
-const normalize = (value: string) =>
+const stripInvisibleChars = (value: string) =>
   value
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/\u00A0/g, " ");
+
+const normalize = (value: string) =>
+  stripInvisibleChars(value)
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
@@ -64,7 +69,7 @@ type DietToken =
   | { type: "SUB_ITEM"; text: string };
 
 const stripTags = (html: string) =>
-  decodeHtml(html.replace(/<[^>]+>/g, " "))
+  stripInvisibleChars(decodeHtml(html.replace(/<[^>]+>/g, " ")))
     .replace(/\s+/g, " ")
     .trim();
 
@@ -95,7 +100,7 @@ const htmlToTokens = (content: string): DietToken[] => {
   if (!hasHtml) {
     return content
       .split(/\r?\n/)
-      .map((l) => l.trim())
+      .map((l) => stripInvisibleChars(l).trim())
       .filter(Boolean)
       .map((text) => {
         if (/^(refei[cç][aã]o|caf[eé] da manh[ãa]|almo[cç]o|lanche|jantar|ceia|pr[eé][- ]?treino|p[oó]s[- ]?treino)/i.test(text)) {
@@ -281,7 +286,7 @@ const sliceContentByMealHeading = (content: string): Array<{ headingText: string
       buffer = [];
     };
     for (const line of lines) {
-      const t = line.trim();
+      const t = stripInvisibleChars(line).trim();
       if (HEADING_KEYWORDS_RE.test(t)) {
         flush();
         currentHeading = t;
