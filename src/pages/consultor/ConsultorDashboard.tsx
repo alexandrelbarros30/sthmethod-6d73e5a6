@@ -121,34 +121,31 @@ const ConsultorDashboard = () => {
 
   return (
     <DashboardLayout role="consultor" title="Painel do Consultor" subtitle="Gerencie seus alunos vinculados">
-      {/* Quick action */}
-      <div className="flex justify-end mb-4">
-        <Button asChild className="gap-2">
+      {/* Search + quick action */}
+      <div className="flex items-center gap-2 mb-8">
+        <div className="relative flex-1">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
+          <Input
+            placeholder="Pesquisar aluno..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 h-11 rounded-2xl border-border/40 bg-muted/30 placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-foreground/20"
+          />
+        </div>
+        <Button asChild className="h-11 rounded-2xl gap-2 bg-foreground text-background hover:bg-foreground/90">
           <Link to="/admin/students?create=true">
-            <Users className="w-4 h-4" /> Criar Aluno
+            <Users className="w-4 h-4" /> Novo
           </Link>
         </Button>
       </div>
 
-      {/* Search */}
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Pesquisar aluno por nome ou email..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-9"
-        />
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium font-body">Alunos Vinculados</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{linkedStudents.length}</div>
+      {/* Metric */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-8">
+        <Card className="border-border/40 shadow-none bg-card/40 backdrop-blur-xl rounded-2xl">
+          <CardContent className="px-4 py-5">
+            <Users className="w-4 h-4 text-muted-foreground/50 mb-3" />
+            <p className="text-[28px] leading-none font-display font-semibold tracking-tight text-foreground">{linkedStudents.length}</p>
+            <p className="text-[11px] text-muted-foreground/70 mt-1.5 font-body truncate tracking-wide">Alunos vinculados</p>
           </CardContent>
         </Card>
       </div>
@@ -162,22 +159,22 @@ const ConsultorDashboard = () => {
         />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-display">Meus Alunos</CardTitle>
+      <Card className="border-border/40 shadow-none bg-card/40 backdrop-blur-xl rounded-2xl">
+        <CardHeader className="pb-3 pt-5 px-5">
+          <CardTitle className="text-[15px] font-display font-medium tracking-tight text-foreground/90">Meus Alunos</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-5 pb-5">
           {filteredStudents.length === 0 ? (
-            <p className="text-muted-foreground text-sm font-body">
+            <p className="text-muted-foreground/70 text-sm font-body py-2">
               {searchTerm ? `Nenhum aluno encontrado para "${searchTerm}"` : "Nenhum aluno vinculado ainda."}
             </p>
           ) : (
-            <div className="space-y-3">
+            <div className="divide-y divide-border/40">
               {filteredStudents.map((s: any) => (
-                <div key={s.user_id} className="flex items-center justify-between p-3 rounded-lg border">
-                  <div>
-                    <p className="font-medium font-body">{s.full_name?.trim() || s.email}</p>
-                    <p className="text-sm text-muted-foreground font-body">{s.email}</p>
+                <div key={s.user_id} className="flex items-center justify-between py-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[14px] font-medium tracking-tight truncate">{s.full_name?.trim() || s.email}</p>
+                    <p className="text-[12px] text-muted-foreground/70 truncate">{s.email}</p>
                   </div>
                   <div className="flex gap-1 items-center">
                     <Button variant="outline" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => { setSelected(s); setManageOpen(true); }}>
