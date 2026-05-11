@@ -1,7 +1,8 @@
 // Validator for new diet HTML rules — applies to diets created on/after 2026-05-11.
 // Rules:
-// 1) Each meal must be identified by a heading in the EXACT pattern:
-//    "REFEIÇÃO N - NOME" (case-insensitive; N = number; dash with surrounding spaces; followed by a name).
+// 1) Each meal must be identified by a heading in the pattern:
+//    "REFEIÇÃO N: NOME" (case-insensitive; N = number; colon after the number;
+//    an optional name may follow the colon).
 // 2) Right after each meal heading, the meal body must START with a quote (") and END with a quote (")
 //    (whitespace, line breaks and HTML tags around them are ignored).
 //
@@ -20,7 +21,7 @@ export type DietValidationResult = {
   issues: DietValidationIssue[];
 };
 
-const MEAL_HEADING_VALID_RE = /^\s*REFEI[ÇC][ÃA]O\s+\d+\s+-\s+\S.*$/i;
+const MEAL_HEADING_VALID_RE = /^\s*REFEI[ÇC][ÃA]O\s+\d+\s*:\s*\S*$/i;
 const MEAL_HEADING_LOOSE_RE = /REFEI[ÇC][ÃA]O\s*\d+/i;
 
 function htmlToBlocks(html: string): string[] {
