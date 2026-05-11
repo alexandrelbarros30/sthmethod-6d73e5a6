@@ -1,4 +1,5 @@
 import React from "react";
+import RichContentRenderer from "@/components/shared/RichContentRenderer";
 
 /**
  * Renders diet content matching the "Rotina Alimentar" document format:
@@ -97,6 +98,45 @@ const DietContentRenderer: React.FC<DietContentRendererProps> = ({
   studentInfo,
   showHeader = true,
 }) => {
+  const isHtmlContent = /<[a-z][\s\S]*>/i.test(content);
+
+  if (isHtmlContent) {
+    return (
+      <div className="space-y-0">
+        {showHeader && studentInfo && (
+          <div className="mb-6 pb-4 border-b border-border">
+            <div className="text-center mb-4">
+              <h2 className="text-base font-bold tracking-[0.2em] uppercase text-foreground font-display">
+                STH METHOD
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm font-body">
+              {studentInfo.name && <InfoRow label="Nome" value={studentInfo.name} />}
+              {studentInfo.age && <InfoRow label="Idade" value={`${studentInfo.age} anos`} />}
+              {studentInfo.weight && <InfoRow label="Peso" value={`${studentInfo.weight} kg`} />}
+              {studentInfo.height && <InfoRow label="Altura" value={`${studentInfo.height} cm`} />}
+              {studentInfo.objective && <InfoRow label="Objetivo" value={studentInfo.objective} />}
+              {studentInfo.startDate && <InfoRow label="Data de Início" value={studentInfo.startDate} />}
+              {studentInfo.hydration && <InfoRow label="Hidratação" value={studentInfo.hydration} />}
+            </div>
+
+            {(studentInfo.totalEnergy || studentInfo.protein || studentInfo.carbs || studentInfo.fat) && (
+              <div className="mt-4 flex flex-wrap gap-3">
+                {studentInfo.totalEnergy && <MacroBadge label="Energia" value={`${studentInfo.totalEnergy} kcal`} />}
+                {studentInfo.protein && <MacroBadge label="Proteína" value={`~${studentInfo.protein}g`} accent />}
+                {studentInfo.carbs && <MacroBadge label="Carboidratos" value={`~${studentInfo.carbs}g`} />}
+                {studentInfo.fat && <MacroBadge label="Lipídios" value={`~${studentInfo.fat}g`} />}
+              </div>
+            )}
+          </div>
+        )}
+
+        <RichContentRenderer content={content} />
+      </div>
+    );
+  }
+
   const lines = content.split("\n");
   const elements: React.ReactNode[] = [];
   let foodItemIndex = 0;
