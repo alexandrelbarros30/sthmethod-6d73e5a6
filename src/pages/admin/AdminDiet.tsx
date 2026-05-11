@@ -70,6 +70,7 @@ const AdminDiet = () => {
   const [editFatG, setEditFatG] = useState("");
   const [editHydrationL, setEditHydrationL] = useState("");
   const [editMealMacros, setEditMealMacros] = useState<MealMacros[] | null>(null);
+  const [editCreatedAt, setEditCreatedAt] = useState<string | null>(null);
   // Preview
   const [previewDiet, setPreviewDiet] = useState<any>(null);
 
