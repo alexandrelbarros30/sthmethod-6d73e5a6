@@ -24,6 +24,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { syncStudentDietMeals, MealMacros } from "@/lib/diet-meal-sync";
+import { validateDietHtml, shouldValidateDiet, formatValidationMessage } from "@/lib/diet-html-validator";
 import SignedPdfFrame from "@/components/shared/SignedPdfFrame";
 import SignedLink from "@/components/shared/SignedLink";
 
@@ -70,6 +71,19 @@ const AdminDiet = () => {
   const [editFatG, setEditFatG] = useState("");
   const [editHydrationL, setEditHydrationL] = useState("");
   const [editMealMacros, setEditMealMacros] = useState<MealMacros[] | null>(null);
+  const [editCreatedAt, setEditCreatedAt] = useState<string | null>(null);
+
+  // Validates new diet rules (cutoff 11/05/26). Returns true if save can proceed.
+  const confirmDietValidation = (html: string, createdAt?: string | null): boolean => {
+    if (!shouldValidateDiet(createdAt)) return true;
+    const result = validateDietHtml(html);
+    if (result.ok) return true;
+    const proceed = window.confirm(formatValidationMessage(result));
+    if (!proceed) {
+      toast.warning("Salvamento cancelado. Ajuste o HTML conforme as novas regras.");
+    }
+    return proceed;
+  };
   // Preview
   const [previewDiet, setPreviewDiet] = useState<any>(null);
 
@@ -292,6 +306,7 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
   const startEdit = (diet: any) => {
     const d = new Date(diet.created_at);
     setEditingId(diet.id);
+    setEditCreatedAt(diet.created_at || null);
     setEditTitle(diet.title || "");
     setEditTabLabel(diet.tab_label || "");
     setEditContent(diet.content || "");
@@ -703,7 +718,7 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
                       <Button variant="ghost" size="sm" onClick={() => { setShowNewForm(false); resetNewForm(); }} className="w-full sm:w-auto">
                         Cancelar
                       </Button>
-                      <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full sm:w-auto">
+                      <Button size="sm" onClick={() => { if (confirmDietValidation(newContent, null)) saveMutation.mutate(); }} disabled={saveMutation.isPending} className="w-full sm:w-auto">
                         {saveMutation.isPending ? "Salvando..." : "Salvar"}
                       </Button>
                     </div>
@@ -806,7 +821,7 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
                             />
                             <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
                               <Button variant="ghost" size="sm" onClick={cancelEdit} className="w-full sm:w-auto">Cancelar</Button>
-                              <Button size="sm" onClick={() => editMutation.mutate()} disabled={editMutation.isPending} className="w-full sm:w-auto">
+                              <Button size="sm" onClick={() => { if (confirmDietValidation(editContent, editCreatedAt)) editMutation.mutate(); }} disabled={editMutation.isPending} className="w-full sm:w-auto">
                                 {editMutation.isPending ? "Salvando..." : "Salvar Alterações"}
                               </Button>
                             </div>
