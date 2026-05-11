@@ -7,29 +7,55 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Brain, Check, Loader2, Pencil, RotateCcw } from "lucide-react";
+import AICreditsDialog from "./AICreditsDialog";
 
-const getAnalyzeDietErrorMessage = async (error: any) => {
+type AnalyzeErrorInfo = {
+  message: string;
+  status?: number;
+  reason?: "insufficient" | "rate_limit";
+};
+
+const getAnalyzeDietErrorInfo = async (error: any): Promise<AnalyzeErrorInfo> => {
   const status = error?.context?.status;
 
   if (typeof error?.context?.json === "function") {
     try {
       const payload = await error.context.json();
-      if (payload?.error) return payload.error;
-      if (payload?.message) return payload.message;
+      const message = payload?.error || payload?.message;
+      if (message) {
+        return {
+          message,
+          status,
+          reason:
+            status === 402
+              ? "insufficient"
+              : status === 429
+              ? "rate_limit"
+              : undefined,
+        };
+      }
     } catch {
       // ignore JSON parse issues and fall back below
     }
   }
 
   if (status === 402) {
-    return "Créditos insuficientes para analisar a dieta com IA.";
+    return {
+      message: "Créditos insuficientes para analisar a dieta com IA.",
+      status,
+      reason: "insufficient",
+    };
   }
 
   if (status === 429) {
-    return "Limite de uso temporariamente atingido. Tente novamente em alguns segundos.";
+    return {
+      message: "Limite de uso temporariamente atingido. Tente novamente em alguns segundos.",
+      status,
+      reason: "rate_limit",
+    };
   }
 
-  return error?.message || "Erro ao analisar dieta";
+  return { message: error?.message || "Erro ao analisar dieta", status };
 };
 
 interface MealAnalysis {
@@ -69,6 +95,10 @@ const DietAIAnalysis = ({ dietContent, onConfirm }: Props) => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DietAnalysisResult | null>(null);
   const [editingMeal, setEditingMeal] = useState<number | null>(null);
+  const [creditsDialog, setCreditsDialog] = useState<{
+    open: boolean;
+    reason: "insufficient" | "rate_limit";
+  }>({ open: false, reason: "insufficient" });
 
   const analyze = async () => {
     if (!dietContent.replace(/<[^>]+>/g, "").trim()) {
@@ -90,7 +120,12 @@ const DietAIAnalysis = ({ dietContent, onConfirm }: Props) => {
       setResult(data as DietAnalysisResult);
       toast.success("Análise concluída! Revise e confirme os valores.");
     } catch (e: any) {
-      toast.error(await getAnalyzeDietErrorMessage(e));
+      const info = await getAnalyzeDietErrorInfo(e);
+      if (info.reason) {
+        setCreditsDialog({ open: true, reason: info.reason });
+      } else {
+        toast.error(info.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -121,14 +156,15 @@ const DietAIAnalysis = ({ dietContent, onConfirm }: Props) => {
 
   if (!result) {
     return (
-      <Button
+      <>
+        <Button
         type="button"
         variant="outline"
         size="sm"
         onClick={analyze}
         disabled={loading}
         className="gap-2 border-primary/30 text-primary hover:bg-primary/10"
-      >
+        >
         {loading ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -140,11 +176,18 @@ const DietAIAnalysis = ({ dietContent, onConfirm }: Props) => {
             Analisar Dieta com IA
           </>
         )}
-      </Button>
+        </Button>
+        <AICreditsDialog
+          open={creditsDialog.open}
+          onOpenChange={(open) => setCreditsDialog((s) => ({ ...s, open }))}
+          reason={creditsDialog.reason}
+        />
+      </>
     );
   }
 
   return (
+    <>
     <Card className="border-primary/30 bg-primary/5">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
@@ -294,6 +337,12 @@ const DietAIAnalysis = ({ dietContent, onConfirm }: Props) => {
         </div>
       </CardContent>
     </Card>
+    <AICreditsDialog
+      open={creditsDialog.open}
+      onOpenChange={(open) => setCreditsDialog((s) => ({ ...s, open }))}
+      reason={creditsDialog.reason}
+    />
+    </>
   );
 };
 
