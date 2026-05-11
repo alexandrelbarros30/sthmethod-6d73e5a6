@@ -5,20 +5,29 @@
 //    an optional name may follow the colon).
 // 2) Right after each meal heading, the meal body must START with a quote (") and END with a quote (")
 //    (whitespace, line breaks and HTML tags around them are ignored).
+// 3) The HTML must produce at least one parseable meal via parseDietContentToMeals,
+//    otherwise the student's interactive view (per-meal cards, hydration, progress)
+//    will fall back to a flat HTML render and lose all interactivity.
 //
-// The validator is non-blocking by design: callers should warn the admin/consultant
-// and let them confirm to save anyway.
+// Issues are split into BLOCKING (rule 3 — guarantees the student sees the
+// interactive view) and WARNINGS (rules 1 & 2 — formatting recommendations).
+// Callers should refuse to save when blocking issues exist, and warn-with-confirm
+// for warnings only.
+
+import { parseDietContentToMeals } from "./diet-meal-sync";
 
 export const NEW_DIET_RULES_CUTOFF = new Date("2026-05-11T00:00:00");
 
 export type DietValidationIssue = {
   meal?: string;
   message: string;
+  blocking?: boolean;
 };
 
 export type DietValidationResult = {
   ok: boolean;
   issues: DietValidationIssue[];
+  hasBlocking: boolean;
 };
 
 // Allows: "REFEIÇÃO 1:", "REFEIÇÃO 1: NOME", "REFEIÇÃO 1: NOME COM ESPAÇOS / ACENTOS (PARÊNTESES)"
@@ -48,7 +57,11 @@ export function validateDietHtml(html: string): DietValidationResult {
   const blocks = htmlToBlocks(html);
 
   if (blocks.length === 0) {
-    return { ok: false, issues: [{ message: "Conteúdo da dieta vazio." }] };
+    return {
+      ok: false,
+      hasBlocking: true,
+      issues: [{ message: "Conteúdo da dieta vazio.", blocking: true }],
+    };
   }
 
   // Locate meal heading indices
@@ -61,8 +74,9 @@ export function validateDietHtml(html: string): DietValidationResult {
     issues.push({
       message:
         'Nenhuma refeição encontrada. Use o formato "REFEIÇÃO N: NOME" (ex: REFEIÇÃO 1: CAFÉ DA MANHÃ).',
+      blocking: true,
     });
-    return { ok: false, issues };
+    return { ok: false, hasBlocking: true, issues };
   }
 
   headingIdx.forEach((idx, k) => {
@@ -79,7 +93,11 @@ export function validateDietHtml(html: string): DietValidationResult {
     const body = blocks.slice(idx + 1, nextIdx).join(" ").trim();
 
     if (!body) {
-      issues.push({ meal: heading, message: `"${heading}" está sem conteúdo.` });
+      issues.push({
+        meal: heading,
+        message: `"${heading}" está sem conteúdo.`,
+        blocking: true,
+      });
       return;
     }
 
@@ -94,7 +112,26 @@ export function validateDietHtml(html: string): DietValidationResult {
     }
   });
 
-  return { ok: issues.length === 0, issues };
+  // Blocking check: the parser MUST produce at least one structured meal,
+  // otherwise the student loses the interactive view (cards, hydration, check-ins).
+  try {
+    const parsed = parseDietContentToMeals(html);
+    if (parsed.length === 0) {
+      issues.push({
+        message:
+          "O HTML não gerou nenhuma refeição estruturada. O aluno NÃO verá o acompanhamento interativo (refeições, hidratação, progresso). Verifique os cabeçalhos e o conteúdo de cada refeição.",
+        blocking: true,
+      });
+    }
+  } catch {
+    issues.push({
+      message: "Falha ao processar o HTML da dieta. Revise a formatação.",
+      blocking: true,
+    });
+  }
+
+  const hasBlocking = issues.some((i) => i.blocking);
+  return { ok: issues.length === 0, hasBlocking, issues };
 }
 
 export function shouldValidateDiet(createdAt?: string | Date | null): boolean {
@@ -107,6 +144,23 @@ export function shouldValidateDiet(createdAt?: string | Date | null): boolean {
 
 export function formatValidationMessage(result: DietValidationResult): string {
   if (result.ok) return "";
-  const lines = result.issues.map((i) => `• ${i.message}`).join("\n");
-  return `A dieta não segue as novas regras de formatação (a partir de 11/05/26):\n\n${lines}\n\nDeseja salvar mesmo assim?`;
+  const blocking = result.issues.filter((i) => i.blocking);
+  const warnings = result.issues.filter((i) => !i.blocking);
+
+  if (blocking.length > 0) {
+    const lines = blocking.map((i) => `• ${i.message}`).join("\n");
+    const extra =
+      warnings.length > 0
+        ? `\n\nAvisos adicionais:\n${warnings.map((i) => `• ${i.message}`).join("\n")}`
+        : "";
+    return (
+      "A dieta NÃO pode ser salva — há problemas que impedem o aluno de ver o " +
+      "acompanhamento interativo:\n\n" +
+      lines +
+      extra
+    );
+  }
+
+  const lines = warnings.map((i) => `• ${i.message}`).join("\n");
+  return `A dieta não segue todas as novas regras de formatação (a partir de 11/05/26):\n\n${lines}\n\nDeseja salvar mesmo assim?`;
 }
