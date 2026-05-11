@@ -718,7 +718,7 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
                       <Button variant="ghost" size="sm" onClick={() => { setShowNewForm(false); resetNewForm(); }} className="w-full sm:w-auto">
                         Cancelar
                       </Button>
-                      <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full sm:w-auto">
+                      <Button size="sm" onClick={() => { if (confirmDietValidation(newContent, null)) saveMutation.mutate(); }} disabled={saveMutation.isPending} className="w-full sm:w-auto">
                         {saveMutation.isPending ? "Salvando..." : "Salvar"}
                       </Button>
                     </div>
