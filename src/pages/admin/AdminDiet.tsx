@@ -821,7 +821,7 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
                             />
                             <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
                               <Button variant="ghost" size="sm" onClick={cancelEdit} className="w-full sm:w-auto">Cancelar</Button>
-                              <Button size="sm" onClick={() => editMutation.mutate()} disabled={editMutation.isPending} className="w-full sm:w-auto">
+                              <Button size="sm" onClick={() => { if (confirmDietValidation(editContent, editCreatedAt)) editMutation.mutate(); }} disabled={editMutation.isPending} className="w-full sm:w-auto">
                                 {editMutation.isPending ? "Salvando..." : "Salvar Alterações"}
                               </Button>
                             </div>
