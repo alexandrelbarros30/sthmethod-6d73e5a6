@@ -64,7 +64,7 @@ export function validateDietHtml(html: string): DietValidationResult {
     if (!MEAL_HEADING_VALID_RE.test(heading)) {
       issues.push({
         meal: heading,
-        message: `Cabeçalho fora do padrão: "${heading}". Use "REFEIÇÃO N - NOME" (com espaços ao redor do hífen).`,
+        message: `Cabeçalho fora do padrão: "${heading}". Use "REFEIÇÃO N: NOME" (dois pontos após o número; nome é opcional).`,
       });
     }
 
