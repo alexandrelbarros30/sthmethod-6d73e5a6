@@ -21,7 +21,8 @@ export type DietValidationResult = {
   issues: DietValidationIssue[];
 };
 
-const MEAL_HEADING_VALID_RE = /^\s*REFEI[ÇC][ÃA]O\s+\d+\s*:\s*\S*$/i;
+// Allows: "REFEIÇÃO 1:", "REFEIÇÃO 1: NOME", "REFEIÇÃO 1: NOME COM ESPAÇOS / ACENTOS (PARÊNTESES)"
+const MEAL_HEADING_VALID_RE = /^\s*REFEI[ÇC][ÃA]O\s+\d+\s*:\s*.*$/i;
 const MEAL_HEADING_LOOSE_RE = /REFEI[ÇC][ÃA]O\s*\d+/i;
 
 function htmlToBlocks(html: string): string[] {
