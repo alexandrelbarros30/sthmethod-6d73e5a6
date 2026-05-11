@@ -8,6 +8,30 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Brain, Check, Loader2, Pencil, RotateCcw } from "lucide-react";
 
+const getAnalyzeDietErrorMessage = async (error: any) => {
+  const status = error?.context?.status;
+
+  if (typeof error?.context?.json === "function") {
+    try {
+      const payload = await error.context.json();
+      if (payload?.error) return payload.error;
+      if (payload?.message) return payload.message;
+    } catch {
+      // ignore JSON parse issues and fall back below
+    }
+  }
+
+  if (status === 402) {
+    return "Créditos insuficientes para analisar a dieta com IA.";
+  }
+
+  if (status === 429) {
+    return "Limite de uso temporariamente atingido. Tente novamente em alguns segundos.";
+  }
+
+  return error?.message || "Erro ao analisar dieta";
+};
+
 interface MealAnalysis {
   meal_number: number;
   meal_name: string;
@@ -66,7 +90,7 @@ const DietAIAnalysis = ({ dietContent, onConfirm }: Props) => {
       setResult(data as DietAnalysisResult);
       toast.success("Análise concluída! Revise e confirme os valores.");
     } catch (e: any) {
-      toast.error(e?.message || "Erro ao analisar dieta");
+      toast.error(await getAnalyzeDietErrorMessage(e));
     } finally {
       setLoading(false);
     }
