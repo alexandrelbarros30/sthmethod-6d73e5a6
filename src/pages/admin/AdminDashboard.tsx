@@ -187,10 +187,10 @@ const AdminDashboard = () => {
   const inactiveCount = Math.max(0, totalStudents - activeCount);
 
   const metrics = [
-    { label: "Total de alunos", value: totalStudents, icon: Users, color: "text-primary" },
-    { label: "Alunos ativos", value: activeCount, icon: UserCheck, color: "text-success" },
-    { label: "Assinaturas vencidas", value: expiredCount, icon: AlertCircle, color: "text-destructive" },
-    { label: "Vencendo em 7 dias", value: expiringCount, icon: Clock, color: "text-warning" },
+    { label: "Total de alunos", value: totalStudents, icon: Users },
+    { label: "Alunos ativos", value: activeCount, icon: UserCheck },
+    { label: "Vencidas", value: expiredCount, icon: AlertCircle },
+    { label: "Vencendo em 7 dias", value: expiringCount, icon: Clock },
   ];
 
   // Filter incomplete onboardings to exclude users with active subscriptions
@@ -214,22 +214,20 @@ const AdminDashboard = () => {
 
   return (
     <DashboardLayout role="admin" title="Dashboard" subtitle="Visão geral da consultoria.">
-      {/* Quick action */}
-      <div className="flex justify-end mb-4">
-        <Button onClick={() => navigate("/admin/students?create=true")} className="gap-2">
-          <Users className="w-4 h-4" /> Criar Aluno
+      {/* Search + quick action */}
+      <div className="flex items-center gap-2 mb-8">
+        <div className="relative flex-1">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
+          <Input
+            placeholder="Pesquisar aluno..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 h-11 rounded-2xl border-border/40 bg-muted/30 placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-foreground/20"
+          />
+        </div>
+        <Button onClick={() => navigate("/admin/students?create=true")} className="h-11 rounded-2xl gap-2 bg-foreground text-background hover:bg-foreground/90">
+          <UserPlus className="w-4 h-4" /> Novo
         </Button>
-      </div>
-
-      {/* Search */}
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Pesquisar aluno por nome ou email..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-9"
-        />
       </div>
 
       {/* Search Results */}
@@ -273,74 +271,66 @@ const AdminDashboard = () => {
       )}
 
       {/* Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-8">
         {metrics.map((m, i) => (
-          <Card key={i} className="animate-fade-in" style={{ animationDelay: `${i * 80}ms` }}>
-            <CardContent className="flex items-center gap-3 py-4 md:py-5">
-              <div className="w-9 h-9 md:w-11 md:h-11 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-                <m.icon className={`w-4 h-4 md:w-5 md:h-5 ${m.color}`} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xl md:text-2xl font-bold text-foreground font-body">{m.value}</p>
-                <p className="text-xs md:text-sm text-muted-foreground font-body truncate">{m.label}</p>
-              </div>
+          <Card key={i} className="animate-fade-in border-border/40 shadow-none bg-card/40 backdrop-blur-xl rounded-2xl" style={{ animationDelay: `${i * 60}ms` }}>
+            <CardContent className="px-4 py-5">
+              <m.icon className="w-4 h-4 text-muted-foreground/50 mb-3" />
+              <p className="text-[28px] leading-none font-display font-semibold tracking-tight text-foreground">{m.value}</p>
+              <p className="text-[11px] text-muted-foreground/70 mt-1.5 font-body truncate tracking-wide">{m.label}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
       {/* Atividade ao vivo */}
-      <Card className="mb-6 border-success/20 bg-success/5">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base font-display flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-success"></span>
+      <Card className="mb-6 border-border/40 shadow-none bg-card/40 backdrop-blur-xl rounded-2xl">
+        <CardHeader className="pb-3 pt-5 px-5">
+          <CardTitle className="text-[15px] font-display font-medium tracking-tight flex items-center gap-2.5 text-foreground/90">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-60"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
             Atividade ao vivo
-            <Badge variant="outline" className="ml-auto text-[10px]">atualiza a cada 30s</Badge>
+            <span className="ml-auto text-[10px] text-muted-foreground/50 font-normal tracking-wide">atualiza a cada 30s</span>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-3 mb-3">
-            <div className="rounded-lg bg-background/60 p-3 text-center">
-              <Radio className="w-4 h-4 mx-auto mb-1 text-success" />
-              <p className="text-2xl font-bold text-foreground font-body">{onlineCount}</p>
-              <p className="text-[11px] text-muted-foreground font-body">Online agora</p>
+        <CardContent className="px-5 pb-5">
+          <div className="grid grid-cols-3 gap-px bg-border/40 rounded-xl overflow-hidden mb-4">
+            <div className="bg-card p-4 text-center">
+              <p className="text-[24px] leading-none font-display font-semibold tracking-tight">{onlineCount}</p>
+              <p className="text-[10px] text-muted-foreground/70 mt-1.5 tracking-wide uppercase">Online</p>
             </div>
-            <div className="rounded-lg bg-background/60 p-3 text-center">
-              <UserCheck className="w-4 h-4 mx-auto mb-1 text-primary" />
-              <p className="text-2xl font-bold text-foreground font-body">{activeCount}</p>
-              <p className="text-[11px] text-muted-foreground font-body">Ativos</p>
+            <div className="bg-card p-4 text-center">
+              <p className="text-[24px] leading-none font-display font-semibold tracking-tight">{activeCount}</p>
+              <p className="text-[10px] text-muted-foreground/70 mt-1.5 tracking-wide uppercase">Ativos</p>
             </div>
-            <div className="rounded-lg bg-background/60 p-3 text-center">
-              <UserX className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
-              <p className="text-2xl font-bold text-foreground font-body">{inactiveCount}</p>
-              <p className="text-[11px] text-muted-foreground font-body">Inativos</p>
+            <div className="bg-card p-4 text-center">
+              <p className="text-[24px] leading-none font-display font-semibold tracking-tight text-muted-foreground/80">{inactiveCount}</p>
+              <p className="text-[10px] text-muted-foreground/70 mt-1.5 tracking-wide uppercase">Inativos</p>
             </div>
           </div>
           {onlineCount > 0 && (
-            <div className="flex flex-wrap gap-1.5 pt-2 border-t border-border/50">
+            <div className="flex flex-wrap gap-1.5 pt-3 border-t border-border/40">
               {onlineData!.names.slice(0, 12).map((p: any) => (
-                <Badge
+                <button
                   key={p.user_id}
-                  variant="outline"
-                  className="text-[10px] cursor-pointer hover:bg-success/10"
                   onClick={() => navigate(`/admin/students?manage=${p.user_id}`)}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/40 hover:bg-muted/70 text-[11px] font-medium transition-colors"
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-success mr-1.5"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                   {p.full_name?.split(" ")[0] || "Aluno"}
-                </Badge>
+                </button>
               ))}
               {onlineCount > 12 && (
-                <Badge variant="outline" className="text-[10px]">+{onlineCount - 12}</Badge>
+                <span className="px-2.5 py-1 rounded-full bg-muted/40 text-[11px] text-muted-foreground/70">+{onlineCount - 12}</span>
               )}
             </div>
           )}
         </CardContent>
       </Card>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* 0. Fila de Atendimento (prioridade máxima) */}
         <ServiceQueue compact manageBasePath="/admin/students" />
 
