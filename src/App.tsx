@@ -93,7 +93,22 @@ const AdminProtocol = lazy(() => import("./pages/admin/AdminProtocol"));
 
 const LazyFallback = () => <div className="flex items-center justify-center min-h-screen"><p className="text-muted-foreground text-sm">Carregando...</p></div>;
 
-const queryClient = new QueryClient();
+// Defaults tuned for mobile/PWA: when the app returns from background the
+// previous data stays on screen (marcações de refeição, hidratação, séries,
+// check-ins do protocolo etc.) e o refetch acontece silenciosamente em
+// segundo plano, sem zerar a UI.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      gcTime: 30 * 60_000,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: "always",
+      placeholderData: (prev: unknown) => prev,
+      retry: 1,
+    },
+  },
+});
 
 const DynamicHead = () => { useDynamicFavicon(); useAdminTheme(); useAccessLog(); usePublicAppleTheme(); return null; };
 
