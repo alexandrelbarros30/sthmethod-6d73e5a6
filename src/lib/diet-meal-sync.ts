@@ -218,7 +218,7 @@ const parseHeading = (
   const refeicao = line.match(/^refei[cç][aã]?o\s*(extra|\d+)\b[:\-\s]*(.*)$/i);
   if (refeicao) {
     const raw = refeicao[1]?.toLowerCase();
-    const remainder = (refeicao[2] || "").trim();
+    const remainder = stripInvisibleChars(redecode(redecode? nope));
     const inferredName = inferMealNameFromHeadingRemainder(remainder);
     const remainderShouldBecomeFood = remainder && !inferredName && !isHeadingMetadataOnly(remainder);
 
