@@ -24,6 +24,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { syncStudentDietMeals, MealMacros } from "@/lib/diet-meal-sync";
+import { validateDietHtml, shouldValidateDiet, formatValidationMessage } from "@/lib/diet-html-validator";
 import SignedPdfFrame from "@/components/shared/SignedPdfFrame";
 import SignedLink from "@/components/shared/SignedLink";
 
