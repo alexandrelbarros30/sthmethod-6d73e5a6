@@ -123,16 +123,24 @@ const AdminPayments = () => {
       }, { onConflict: "payment_id" });
 
       const startDate = paidAt;
-      const endDate = new Date(startDate);
-      endDate.setDate(endDate.getDate() + durationDays);
-
       const { data: existingSub } = await supabase
         .from("subscriptions")
-        .select("id")
+        .select("id, end_date, status")
         .eq("user_id", manualForm.user_id)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
+
+      // Carry over remaining days if the student renews while still active
+      let baseDate = new Date(startDate);
+      if (existingSub?.end_date) {
+        const currentEnd = new Date(existingSub.end_date + "T23:59:59");
+        if (currentEnd > startDate && existingSub.status === "active") {
+          baseDate = currentEnd;
+        }
+      }
+      const endDate = new Date(baseDate);
+      endDate.setDate(endDate.getDate() + durationDays);
 
       if (existingSub) {
         await supabase.from("subscriptions").update({
@@ -190,17 +198,26 @@ const AdminPayments = () => {
 
       // Activate subscription
       const startDate = new Date();
-      const endDate = new Date();
       const durationDays = (payment as any).plans?.duration_days || 30;
-      endDate.setDate(endDate.getDate() + durationDays);
 
       const { data: existingSub } = await supabase
         .from("subscriptions")
-        .select("id")
+        .select("id, end_date, status")
         .eq("user_id", payment.user_id)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
+
+      // Carry over remaining days if the student renews while still active
+      let baseDate = new Date(startDate);
+      if (existingSub?.end_date) {
+        const currentEnd = new Date(existingSub.end_date + "T23:59:59");
+        if (currentEnd > startDate && existingSub.status === "active") {
+          baseDate = currentEnd;
+        }
+      }
+      const endDate = new Date(baseDate);
+      endDate.setDate(endDate.getDate() + durationDays);
 
       if (existingSub) {
         await supabase.from("subscriptions").update({
