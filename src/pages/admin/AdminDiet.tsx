@@ -78,6 +78,12 @@ const AdminDiet = () => {
     if (!shouldValidateDiet(createdAt)) return true;
     const result = validateDietHtml(html);
     if (result.ok) return true;
+    if (result.hasBlocking) {
+      // Hard block: cannot save — student would lose the interactive view.
+      window.alert(formatValidationMessage(result));
+      toast.error("Dieta não salva: corrija os erros do HTML antes de continuar.");
+      return false;
+    }
     const proceed = window.confirm(formatValidationMessage(result));
     if (!proceed) {
       toast.warning("Salvamento cancelado. Ajuste o HTML conforme as novas regras.");
