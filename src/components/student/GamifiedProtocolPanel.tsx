@@ -12,6 +12,7 @@ interface Props {
   userId: string;
   readOnly?: boolean;
   maxWeeks?: number;
+  continuationNotice?: string | null;
 }
 
 const STH_GREEN = "#14b780";
@@ -210,7 +211,7 @@ const MedicamentosWeekCarousel = ({
   );
 };
 
-const GamifiedProtocolPanel = ({ content, userId, readOnly, maxWeeks }: Props) => {
+const GamifiedProtocolPanel = ({ content, userId, readOnly, maxWeeks, continuationNotice }: Props) => {
   const qc = useQueryClient();
   const phases = useMemo(() => {
     const parsed = parseProtocolPhases(content);
