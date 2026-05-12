@@ -226,17 +226,20 @@ REGRAS DE VERIFICAÇÃO:
 
           const { data: existingSub } = await serviceSupabase
             .from("subscriptions")
-            .select("id, end_date, status")
+            .select("id, start_date, end_date, status")
             .eq("user_id", userId)
             .order("created_at", { ascending: false })
             .limit(1)
             .maybeSingle();
 
-          // Carry over remaining days if the student renews while still active
+          // Carry over remaining days if the student renews while still active.
+          // Skip when the existing sub started today (same activation flow).
           let baseDate = new Date(startDate);
           if (existingSub?.end_date) {
             const currentEnd = new Date(existingSub.end_date + "T23:59:59");
-            if (currentEnd > startDate && (existingSub as any).status === "active") {
+            const today = startDate.toISOString().split("T")[0];
+            const startedToday = (existingSub as any).start_date === today;
+            if (currentEnd > startDate && (existingSub as any).status === "active" && !startedToday) {
               baseDate = currentEnd;
             }
           }
