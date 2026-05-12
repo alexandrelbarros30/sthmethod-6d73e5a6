@@ -280,7 +280,20 @@ const StudentProtocol = () => {
               <ChevronDown className={`w-4 h-4 transition-transform ${smartOpen ? "rotate-180" : ""}`} strokeWidth={2} />
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-3">
-              <GamifiedProtocolPanel content={smartProtocolContent} userId={targetId!} readOnly={isPreviewing} />
+              <div className="space-y-3">
+                {canDownload && latestProtocol?.content && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDownloadPDF(latestProtocol)}
+                    className="h-7 text-xs"
+                  >
+                    <Download className="w-3 h-3 mr-1" />
+                    PDF
+                  </Button>
+                )}
+                <GamifiedProtocolPanel content={smartProtocolContent} userId={targetId!} readOnly={isPreviewing} />
+              </div>
             </CollapsibleContent>
           </Collapsible>
         )}
