@@ -65,10 +65,64 @@ const StudentProtocol = () => {
   const targetId = effectiveUserId || user?.id;
   const { isActive, isLoading: subLoading, subscription, previewUnlocked } = useSubscriptionGuard();
 
-  const planDurationDays = (subscription as any)?.plans?.duration_days as number | undefined;
-  const maxMedWeeks = planDurationDays && planDurationDays > 0
-    ? Math.max(1, Math.floor((planDurationDays * 4) / 30))
-    : undefined;
+  // Fetch all subscriptions + continuity decisions to compute cumulative medication weeks
+  const { data: continuityData } = useQuery({
+    queryKey: ["student-continuity", targetId],
+    queryFn: async () => {
+      const [{ data: subs }, { data: decisions }] = await Promise.all([
+        supabase
+          .from("subscriptions")
+          .select("id, start_date, end_date, created_at, plan_id, plans(duration_days)")
+          .eq("user_id", targetId!)
+          .order("created_at", { ascending: true }),
+        supabase
+          .from("protocol_continuity_decisions" as any)
+          .select("*")
+          .eq("user_id", targetId!),
+      ]);
+      return { subs: subs || [], decisions: (decisions as any[]) || [] };
+    },
+    enabled: !!targetId && isActive,
+  });
+
+  const { maxMedWeeks, continuationNotice } = useMemo(() => {
+    const currentPlanDays = (subscription as any)?.plans?.duration_days as number | undefined;
+    const baseWeeks = currentPlanDays && currentPlanDays > 0
+      ? Math.max(1, Math.floor((currentPlanDays * 4) / 30))
+      : undefined;
+
+    const subs = continuityData?.subs || [];
+    const decisions = continuityData?.decisions || [];
+    if (subs.length === 0) {
+      return { maxMedWeeks: baseWeeks, continuationNotice: null as string | null };
+    }
+
+    // Sum durations across the chain of continued subscriptions ending at the current one.
+    // Walk forward from earliest sub; reset chain when decision is 'restart' or 'pending' (not yet decided).
+    let chainDays = 0;
+    for (const s of subs) {
+      const d = decisions.find((x) => x.subscription_id === s.id);
+      const dec = d?.decision || "auto_continue"; // first ever sub has no decision row
+      if (dec === "restart" || dec === "pending") {
+        chainDays = (s as any)?.plans?.duration_days || 0;
+      } else {
+        chainDays += (s as any)?.plans?.duration_days || 0;
+      }
+    }
+    const cumulativeWeeks = chainDays > 0 ? Math.max(1, Math.floor((chainDays * 4) / 30)) : baseWeeks;
+
+    // Detect continuation notice: continued chain but the protocol HTML may not have enough week cards.
+    let notice: string | null = null;
+    const lastSub = subs[subs.length - 1];
+    const lastDecision = decisions.find((x) => x.subscription_id === lastSub?.id);
+    if (lastDecision?.decision === "pending" && (lastDecision?.gap_days ?? 0) > 15) {
+      notice = "Renovação detectada após 15 dias. Aguardando seu consultor decidir sobre a continuidade do protocolo.";
+    } else if ((lastDecision?.decision === "auto_continue" || lastDecision?.decision === "continue") && cumulativeWeeks && baseWeeks && cumulativeWeeks > baseWeeks) {
+      notice = "Protocolo continuado — seu consultor pode atualizar o conteúdo conforme sua evolução.";
+    }
+
+    return { maxMedWeeks: cumulativeWeeks, continuationNotice: notice };
+  }, [continuityData, subscription]);
 
   const { data: previewProtocol } = useQuery({
     queryKey: ["preview-protocol", targetId],
