@@ -432,6 +432,9 @@ const StudentProfile = () => {
           <ChangePasswordDialog />
         </CardContent>
       </Card>
+
+      {/* ===== ACESSIBILIDADE VISUAL ===== */}
+      <AccessibilityThemeCard />
     </DashboardLayout>
   );
 };
