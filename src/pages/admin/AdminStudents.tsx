@@ -85,6 +85,7 @@ const AdminStudents = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [subOpen, setSubOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
+  const [notesHistoryOpen, setNotesHistoryOpen] = useState(false);
   const [imagesOpen, setImagesOpen] = useState(false);
   const [selected, setSelected] = useState<any>(null);
   const [form, setForm] = useState({ ...emptyForm });
