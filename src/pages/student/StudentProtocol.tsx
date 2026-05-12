@@ -351,7 +351,7 @@ const StudentProtocol = () => {
                     PDF
                   </Button>
                 )}
-                <GamifiedProtocolPanel content={smartProtocolContent} userId={targetId!} readOnly={isPreviewing} maxWeeks={maxMedWeeks} />
+                <GamifiedProtocolPanel content={smartProtocolContent} userId={targetId!} readOnly={isPreviewing} maxWeeks={maxMedWeeks} continuationNotice={continuationNotice} />
               </div>
             </CollapsibleContent>
           </Collapsible>
@@ -414,6 +414,7 @@ const StudentProtocol = () => {
                                 userId={targetId!}
                                 readOnly={isPreviewing}
                                 maxWeeks={maxMedWeeks}
+                                continuationNotice={continuationNotice}
                               />
                             ) : (
                               <RichContentRenderer content={protocol.content} />
