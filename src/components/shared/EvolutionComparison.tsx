@@ -9,6 +9,7 @@ import { TrendingUp, TrendingDown, Minus, ImageOff } from "lucide-react";
 import type { EvolutionSnapshot } from "@/lib/evolution-snapshot";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import EvolutionCharts from "./EvolutionCharts";
 
 interface Props {
   userId: string;
@@ -114,6 +115,9 @@ const EvolutionComparison = ({ userId }: Props) => {
 
   return (
     <div className="space-y-4">
+      {/* Gráficos de evolução */}
+      <EvolutionCharts userId={userId} />
+
       {/* Selectors */}
       <div className="space-y-2">
         <div className="flex flex-wrap gap-2">
