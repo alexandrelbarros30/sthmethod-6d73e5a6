@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
 import { calculateAge, calculateMacros } from "@/lib/macro-calculator";
 import EvolutionActivityChange, { ActivityData } from "@/components/student/EvolutionActivityChange";
+import { createEvolutionSnapshot } from "@/lib/evolution-snapshot";
 
 interface EvolutionUpdateCardProps {
   userId: string;
@@ -161,6 +162,9 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
         user_id: userId,
         notes: anamnesisNote,
       });
+
+      // Snapshot completo para histórico/comparação
+      await createEvolutionSnapshot(userId, "student", anamnesisNote);
 
       toast.success("Evolução registrada! Macros atualizados.");
       setWeight("");

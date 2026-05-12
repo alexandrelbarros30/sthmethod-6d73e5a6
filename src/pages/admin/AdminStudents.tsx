@@ -29,6 +29,7 @@ import { getSecureFileUrl, extractStoragePath } from "@/lib/secure-file-url";
 import AdminBodyImageUpload from "@/components/admin/AdminBodyImageUpload";
 import AdminImageHistory from "@/components/admin/AdminImageHistory";
 import AnamnesisEntryItem from "@/components/shared/AnamnesisEntryItem";
+import EvolutionComparison from "@/components/shared/EvolutionComparison";
 import EvolutionGenerator from "@/components/admin/EvolutionGenerator";
 import AdminEvolutionUpdate from "@/components/admin/AdminEvolutionUpdate";
 import ExcelJS from "exceljs";
@@ -86,6 +87,7 @@ const AdminStudents = () => {
   const [subOpen, setSubOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [notesHistoryOpen, setNotesHistoryOpen] = useState(false);
+  const [snapshotsOpen, setSnapshotsOpen] = useState(false);
   const [imagesOpen, setImagesOpen] = useState(false);
   const [selected, setSelected] = useState<any>(null);
   const [form, setForm] = useState({ ...emptyForm });
@@ -1890,6 +1892,23 @@ const AdminStudents = () => {
                         {anamneseEntries.map((entry: any) => (
                           <AnamnesisEntryItem key={entry.id} entry={entry} onSaved={refetchAnamnese} />
                         ))}
+                      </CardContent>
+                    )}
+                  </Card>
+                )}
+
+                {/* Snapshots de Evolução / Comparação */}
+                {selected && (
+                  <Card>
+                    <CardHeader className="pb-2 cursor-pointer select-none" onClick={() => setSnapshotsOpen(v => !v)}>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-sm font-display">Comparação de Evolução</CardTitle>
+                        {snapshotsOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                      </div>
+                    </CardHeader>
+                    {snapshotsOpen && (
+                      <CardContent>
+                        <EvolutionComparison userId={selected.user_id} />
                       </CardContent>
                     )}
                   </Card>

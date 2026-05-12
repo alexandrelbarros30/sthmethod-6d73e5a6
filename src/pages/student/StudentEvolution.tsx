@@ -18,6 +18,10 @@ import EvolutionWeightHistory from "@/components/student/EvolutionWeightHistory"
 import EvolutionImageHistory from "@/components/student/EvolutionImageHistory";
 import EvolutionActivityChange, { type ActivityData } from "@/components/student/EvolutionActivityChange";
 import StudentBioimpedancePanel from "@/components/student/StudentBioimpedancePanel";
+import EvolutionComparison from "@/components/shared/EvolutionComparison";
+import { createEvolutionSnapshot } from "@/lib/evolution-snapshot";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { GitCompare } from "lucide-react";
 
 const StudentEvolution = () => {
   const { user } = useAuth();
@@ -206,6 +210,8 @@ const StudentEvolution = () => {
         notes: anamnesisNote,
       });
 
+      await createEvolutionSnapshot(user!.id, "student", anamnesisNote);
+
       // Update the evolution notification with photos flag if applicable
       if (imagesSaved) {
         // Get the most recent notification for this user (just created by trigger)
@@ -341,6 +347,27 @@ const StudentEvolution = () => {
       </div>
 
       <EvolutionWeightHistory weightLogs={weightLogs || []} />
+
+      {/* Comparação de evolução */}
+      <div className="mb-6">
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="w-full">
+              <GitCompare className="w-4 h-4 mr-2" />
+              Comparar evolução (inicial × atual)
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <GitCompare className="w-5 h-5" />
+                Histórico de Evolução
+              </DialogTitle>
+            </DialogHeader>
+            <EvolutionComparison userId={user!.id} />
+          </DialogContent>
+        </Dialog>
+      </div>
 
       {/* Bioimpedance Panel */}
       <div className="mb-6">

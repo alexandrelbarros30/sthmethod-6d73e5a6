@@ -685,6 +685,99 @@ export type Database = {
         }
         Relationships: []
       }
+      evolution_snapshots: {
+        Row: {
+          activity_type: string | null
+          bioimpedance_log_id: string | null
+          bmr: number | null
+          body_fat_pct: number | null
+          body_image_back_url: string | null
+          body_image_front_url: string | null
+          body_image_profile_url: string | null
+          carbs_g: number | null
+          cardio_days_per_week: number | null
+          cardio_duration_minutes: number | null
+          cardio_intensity: string | null
+          created_at: string
+          daily_calories: number | null
+          does_cardio: boolean | null
+          fat_g: number | null
+          fat_mass_kg: number | null
+          id: string
+          lean_mass_kg: number | null
+          notes: string
+          physical_activity_level: string | null
+          protein_g: number | null
+          source: string
+          tdee: number | null
+          training_days_per_week: number | null
+          training_duration_minutes: number | null
+          training_intensity: string | null
+          user_id: string
+          weight: number | null
+        }
+        Insert: {
+          activity_type?: string | null
+          bioimpedance_log_id?: string | null
+          bmr?: number | null
+          body_fat_pct?: number | null
+          body_image_back_url?: string | null
+          body_image_front_url?: string | null
+          body_image_profile_url?: string | null
+          carbs_g?: number | null
+          cardio_days_per_week?: number | null
+          cardio_duration_minutes?: number | null
+          cardio_intensity?: string | null
+          created_at?: string
+          daily_calories?: number | null
+          does_cardio?: boolean | null
+          fat_g?: number | null
+          fat_mass_kg?: number | null
+          id?: string
+          lean_mass_kg?: number | null
+          notes?: string
+          physical_activity_level?: string | null
+          protein_g?: number | null
+          source?: string
+          tdee?: number | null
+          training_days_per_week?: number | null
+          training_duration_minutes?: number | null
+          training_intensity?: string | null
+          user_id: string
+          weight?: number | null
+        }
+        Update: {
+          activity_type?: string | null
+          bioimpedance_log_id?: string | null
+          bmr?: number | null
+          body_fat_pct?: number | null
+          body_image_back_url?: string | null
+          body_image_front_url?: string | null
+          body_image_profile_url?: string | null
+          carbs_g?: number | null
+          cardio_days_per_week?: number | null
+          cardio_duration_minutes?: number | null
+          cardio_intensity?: string | null
+          created_at?: string
+          daily_calories?: number | null
+          does_cardio?: boolean | null
+          fat_g?: number | null
+          fat_mass_kg?: number | null
+          id?: string
+          lean_mass_kg?: number | null
+          notes?: string
+          physical_activity_level?: string | null
+          protein_g?: number | null
+          source?: string
+          tdee?: number | null
+          training_days_per_week?: number | null
+          training_duration_minutes?: number | null
+          training_intensity?: string | null
+          user_id?: string
+          weight?: number | null
+        }
+        Relationships: []
+      }
       exercise_library: {
         Row: {
           created_at: string

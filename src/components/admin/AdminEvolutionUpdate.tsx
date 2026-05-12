@@ -8,6 +8,8 @@ import { TrendingUp, Scale, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { calculateAge, calculateMacros } from "@/lib/macro-calculator";
+import EvolutionActivityChange, { ActivityData } from "@/components/student/EvolutionActivityChange";
+import { createEvolutionSnapshot } from "@/lib/evolution-snapshot";
 
 interface AdminEvolutionUpdateProps {
   userId: string;
@@ -22,43 +24,59 @@ const AdminEvolutionUpdate = ({ userId, studentName, currentWeight, profile, onC
   const [weight, setWeight] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [activityChange, setActivityChange] = useState<ActivityData | null>(null);
 
   const handleSave = async () => {
-    if (!weight) {
-      toast.error("Informe o peso atual do aluno.");
+    if (!weight && !activityChange && !notes.trim()) {
+      toast.error("Informe peso, alteração de rotina ou observações.");
       return;
     }
 
     setSaving(true);
     try {
-      const newWeight = Number(weight);
+      const hasNewWeight = Boolean(weight);
+      const currentStoredWeight = profile?.weight ? Number(profile.weight) : (currentWeight ? Number(currentWeight) : null);
+      const newWeight = hasNewWeight ? Number(weight) : currentStoredWeight;
 
-      const { error } = await supabase.from("weight_logs").insert({
-        user_id: userId,
-        weight: newWeight,
-        notes: notes || "",
-      });
-      if (error) throw error;
+      if (hasNewWeight) {
+        const { error } = await supabase.from("weight_logs").insert({
+          user_id: userId,
+          weight: newWeight,
+          notes: notes || "",
+        });
+        if (error) throw error;
+      }
 
-      let macroUpdate: Record<string, any> = { weight: newWeight };
+      let macroUpdate: Record<string, any> = hasNewWeight ? { weight: newWeight } : {};
 
-      if (profile?.birth_date && profile?.height && profile?.gender) {
+      if (profile?.birth_date && profile?.height && profile?.gender && typeof newWeight === "number" && Number.isFinite(newWeight)) {
         const age = calculateAge(profile.birth_date);
+        const eff = {
+          activityType: activityChange?.activityType ?? (profile.activity_type || "nenhuma"),
+          doesCardio: activityChange?.doesCardio ?? (profile.does_cardio || false),
+          physicalActivityLevel: activityChange?.physicalActivityLevel ?? (profile.physical_activity_level || "sedentario"),
+          trainingDaysPerWeek: activityChange?.trainingDaysPerWeek ?? profile.training_days_per_week ?? undefined,
+          trainingDurationMinutes: activityChange?.trainingDurationMinutes ?? profile.training_duration_minutes ?? undefined,
+          trainingIntensity: activityChange?.trainingIntensity ?? profile.training_intensity ?? undefined,
+          cardioDaysPerWeek: activityChange?.cardioDaysPerWeek ?? profile.cardio_days_per_week ?? undefined,
+          cardioDurationMinutes: activityChange?.cardioDurationMinutes ?? profile.cardio_duration_minutes ?? undefined,
+          cardioIntensity: activityChange?.cardioIntensity ?? profile.cardio_intensity ?? undefined,
+        };
         const macros = calculateMacros({
           gender: profile.gender as "masculino" | "feminino",
           age,
           weight: newWeight,
           height: Number(profile.height),
-          activityType: profile.activity_type || "nenhuma",
-          doesCardio: profile.does_cardio || false,
+          activityType: eff.activityType,
+          doesCardio: eff.doesCardio,
           objective: profile.objective || "manter_peso",
-          physicalActivityLevel: profile.physical_activity_level || "sedentario",
-          trainingDaysPerWeek: profile.training_days_per_week || undefined,
-          trainingDurationMinutes: profile.training_duration_minutes || undefined,
-          trainingIntensity: profile.training_intensity || undefined,
-          cardioDaysPerWeek: profile.cardio_days_per_week || undefined,
-          cardioDurationMinutes: profile.cardio_duration_minutes || undefined,
-          cardioIntensity: profile.cardio_intensity || undefined,
+          physicalActivityLevel: eff.physicalActivityLevel,
+          trainingDaysPerWeek: eff.trainingDaysPerWeek || undefined,
+          trainingDurationMinutes: eff.trainingDurationMinutes || undefined,
+          trainingIntensity: eff.trainingIntensity || undefined,
+          cardioDaysPerWeek: eff.cardioDaysPerWeek || undefined,
+          cardioDurationMinutes: eff.cardioDurationMinutes || undefined,
+          cardioIntensity: eff.cardioIntensity || undefined,
         });
 
         macroUpdate = {
@@ -70,19 +88,40 @@ const AdminEvolutionUpdate = ({ userId, studentName, currentWeight, profile, onC
           carbs_g: macros.carbsG,
           fat_g: macros.fatG,
         };
+
+        if (activityChange) {
+          macroUpdate = {
+            ...macroUpdate,
+            activity_type: eff.activityType,
+            does_cardio: eff.doesCardio,
+            physical_activity_level: eff.physicalActivityLevel,
+            training_days_per_week: eff.trainingDaysPerWeek ?? null,
+            training_duration_minutes: eff.trainingDurationMinutes ?? null,
+            training_intensity: eff.trainingIntensity ?? null,
+            cardio_days_per_week: eff.cardioDaysPerWeek ?? null,
+            cardio_duration_minutes: eff.cardioDurationMinutes ?? null,
+            cardio_intensity: eff.cardioIntensity ?? null,
+          };
+        }
       }
 
-      await supabase.from("profiles").update(macroUpdate).eq("user_id", userId);
+      if (Object.keys(macroUpdate).length > 0) {
+        await supabase.from("profiles").update(macroUpdate).eq("user_id", userId);
+      }
 
       const timestamp = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
       const prevWeight = currentWeight ? Number(currentWeight) : null;
-      const weightDiff = prevWeight ? (newWeight - prevWeight).toFixed(1) : null;
+      const weightDiff = hasNewWeight && prevWeight && typeof newWeight === "number" ? (newWeight - prevWeight).toFixed(1) : null;
       const weightDirection = weightDiff && Number(weightDiff) > 0 ? "+" : "";
 
       let anamnesisNote = `📊 ATUALIZAÇÃO DE EVOLUÇÃO (Admin) — ${timestamp}\n\n`;
       anamnesisNote += `👤 Aluno: ${studentName}\n`;
-      anamnesisNote += `⚖️ Peso: ${newWeight.toFixed(1)} kg`;
-      if (prevWeight) {
+      if (hasNewWeight && typeof newWeight === "number" && Number.isFinite(newWeight)) {
+        anamnesisNote += `⚖️ Peso: ${newWeight.toFixed(1)} kg`;
+      } else {
+        anamnesisNote += `⚖️ Peso: sem alteração informada`;
+      }
+      if (hasNewWeight && prevWeight) {
         anamnesisNote += ` (anterior: ${prevWeight.toFixed(1)} kg | variação: ${weightDirection}${weightDiff} kg)`;
       }
       anamnesisNote += "\n";
@@ -95,6 +134,20 @@ const AdminEvolutionUpdate = ({ userId, studentName, currentWeight, profile, onC
         anamnesisNote += `  • Proteína: ${macroUpdate.protein_g}g | Carbos: ${macroUpdate.carbs_g}g | Gordura: ${macroUpdate.fat_g}g\n`;
       }
 
+      if (activityChange) {
+        anamnesisNote += `\n🏋️ Alteração na rotina de atividades:\n`;
+        anamnesisNote += `  • NEAT: ${activityChange.physicalActivityLevel}\n`;
+        anamnesisNote += `  • Tipo: ${activityChange.activityType}`;
+        if (activityChange.activityType !== "nenhuma") {
+          anamnesisNote += ` (${activityChange.trainingDaysPerWeek ?? "?"}x/sem, ${activityChange.trainingDurationMinutes ?? "?"}min, ${activityChange.trainingIntensity ?? "?"})`;
+        }
+        anamnesisNote += `\n  • Cardio: ${activityChange.doesCardio ? "sim" : "não"}`;
+        if (activityChange.doesCardio) {
+          anamnesisNote += ` (${activityChange.cardioDaysPerWeek ?? "?"}x/sem, ${activityChange.cardioDurationMinutes ?? "?"}min, ${activityChange.cardioIntensity ?? "?"})`;
+        }
+        anamnesisNote += `\n`;
+      }
+
       if (notes) {
         anamnesisNote += `\n📝 Observações: ${notes}\n`;
       }
@@ -104,9 +157,12 @@ const AdminEvolutionUpdate = ({ userId, studentName, currentWeight, profile, onC
         notes: anamnesisNote,
       });
 
+      await createEvolutionSnapshot(userId, "admin", anamnesisNote);
+
       toast.success("Evolução registrada e macros atualizados!");
       setWeight("");
       setNotes("");
+      setActivityChange(null);
       setExpanded(false);
       onComplete();
     } catch (err: any) {
@@ -148,6 +204,8 @@ const AdminEvolutionUpdate = ({ userId, studentName, currentWeight, profile, onC
             />
           </div>
 
+          <EvolutionActivityChange profile={profile} onChange={setActivityChange} />
+
           <div className="space-y-2">
             <Label className="font-body text-sm">Observações (opcional)</Label>
             <Textarea
@@ -162,7 +220,7 @@ const AdminEvolutionUpdate = ({ userId, studentName, currentWeight, profile, onC
             className="w-full"
             size="sm"
             onClick={handleSave}
-            disabled={saving || !weight}
+            disabled={saving || (!weight && !activityChange && !notes.trim())}
           >
             {saving ? "Salvando..." : "Registrar Evolução e Atualizar Macros"}
           </Button>
