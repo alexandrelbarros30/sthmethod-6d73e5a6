@@ -88,15 +88,25 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
   }, [user?.id]);
 
   // Apply STH neon theme globally (so portaled dialogs/popovers also receive it)
+  const [a11yTheme, setA11yTheme] = useState<string>(() => localStorage.getItem("a11y-theme") || "default");
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as string | undefined;
+      setA11yTheme(detail || localStorage.getItem("a11y-theme") || "default");
+    };
+    window.addEventListener("a11y-theme-change", handler);
+    return () => window.removeEventListener("a11y-theme-change", handler);
+  }, []);
+  const a11yActive = a11yTheme && a11yTheme !== "default";
   useEffect(() => {
     const root = document.documentElement;
-    if (isStudent) {
+    if (isStudent && !a11yActive) {
       root.classList.add("theme-sth-green");
     } else {
       root.classList.remove("theme-sth-green");
     }
     return () => { root.classList.remove("theme-sth-green"); };
-  }, [isStudent]);
+  }, [isStudent, a11yActive]);
 
   useEffect(() => {
     if (!isStudent || !user?.id) return;
