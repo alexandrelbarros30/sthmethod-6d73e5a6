@@ -18,6 +18,10 @@ import EvolutionWeightHistory from "@/components/student/EvolutionWeightHistory"
 import EvolutionImageHistory from "@/components/student/EvolutionImageHistory";
 import EvolutionActivityChange, { type ActivityData } from "@/components/student/EvolutionActivityChange";
 import StudentBioimpedancePanel from "@/components/student/StudentBioimpedancePanel";
+import EvolutionComparison from "@/components/shared/EvolutionComparison";
+import { createEvolutionSnapshot } from "@/lib/evolution-snapshot";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { GitCompare } from "lucide-react";
 
 const StudentEvolution = () => {
   const { user } = useAuth();
@@ -205,6 +209,8 @@ const StudentEvolution = () => {
         user_id: user!.id,
         notes: anamnesisNote,
       });
+
+      await createEvolutionSnapshot(user!.id, "student", anamnesisNote);
 
       // Update the evolution notification with photos flag if applicable
       if (imagesSaved) {
