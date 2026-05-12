@@ -247,20 +247,51 @@ const AdminDashboard = () => {
 
   return (
     <DashboardLayout role="admin" title="Dashboard" subtitle="Visão geral da consultoria.">
-      {/* Search + quick action */}
-      <div className="flex items-center gap-2 mb-8">
-        <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
-          <Input
-            placeholder="Pesquisar aluno..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 h-11 rounded-2xl border-border/40 bg-muted/30 placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-foreground/20"
-          />
+      <section className="mb-8 rounded-[28px] border border-border/50 bg-card/40 px-4 py-4 backdrop-blur-3xl sm:px-5 sm:py-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-2">
+            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Operação</p>
+            <div className="space-y-1">
+              <h1 className="text-[30px] leading-none text-foreground">Dashboard administrativo</h1>
+              <p className="max-w-2xl text-sm text-muted-foreground">
+                Visão consolidada de alunos, ativações e sinais de acompanhamento em tempo real.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="relative min-w-0 flex-1 sm:min-w-[280px]">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
+              <Input
+                placeholder="Pesquisar aluno..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-11 rounded-2xl border-border/40 bg-background/70 pl-10 placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-foreground/20"
+              />
+            </div>
+            <Button onClick={() => navigate("/admin/students?create=true")} className="premium-btn h-11 rounded-2xl gap-2 bg-foreground text-background hover:bg-foreground/90">
+              <UserPlus className="w-4 h-4" /> Novo aluno
+            </Button>
+          </div>
         </div>
-        <Button onClick={() => navigate("/admin/students?create=true")} className="h-11 rounded-2xl gap-2 bg-foreground text-background hover:bg-foreground/90">
-          <UserPlus className="w-4 h-4" /> Novo
-        </Button>
+      </section>
+
+      {/* Search + quick action */}
+      <div className="grid grid-cols-2 gap-2.5 mb-8 lg:grid-cols-4">
+        {metrics.map((m, i) => (
+          <Card key={i} className="premium-card animate-fade-in border-border/40 bg-card/55 backdrop-blur-2xl" style={{ animationDelay: `${i * 60}ms` }}>
+            <CardContent className="px-4 py-5">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-muted/60">
+                  <m.icon className="w-4 h-4 text-foreground/75" />
+                </div>
+                <span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Live</span>
+              </div>
+              <p className="text-[30px] leading-none font-display font-semibold tracking-tight text-foreground">{m.value}</p>
+              <p className="mt-2 text-[11px] font-body tracking-wide text-muted-foreground">{m.label}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Search Results */}
@@ -303,21 +334,8 @@ const AdminDashboard = () => {
         </Card>
       )}
 
-      {/* Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-8">
-        {metrics.map((m, i) => (
-          <Card key={i} className="animate-fade-in border-border/40 shadow-none bg-card/40 backdrop-blur-xl rounded-2xl" style={{ animationDelay: `${i * 60}ms` }}>
-            <CardContent className="px-4 py-5">
-              <m.icon className="w-4 h-4 text-muted-foreground/50 mb-3" />
-              <p className="text-[28px] leading-none font-display font-semibold tracking-tight text-foreground">{m.value}</p>
-              <p className="text-[11px] text-muted-foreground/70 mt-1.5 font-body truncate tracking-wide">{m.label}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
       {/* Atividade ao vivo */}
-      <Card className="mb-6 border-border/40 shadow-none bg-card/40 backdrop-blur-xl rounded-2xl">
+      <Card className="premium-card mb-6 border-border/40 bg-card/55 backdrop-blur-2xl">
         <CardHeader className="pb-3 pt-5 px-5">
           <CardTitle className="text-[15px] font-display font-medium tracking-tight flex items-center gap-2.5 text-foreground/90">
             <span className="relative flex h-2 w-2">
@@ -329,16 +347,16 @@ const AdminDashboard = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="px-5 pb-5">
-          <div className="grid grid-cols-3 gap-px bg-border/40 rounded-xl overflow-hidden mb-4">
-            <div className="bg-card p-4 text-center">
+          <div className="grid grid-cols-3 gap-px overflow-hidden rounded-[20px] border border-border/40 bg-border/30 mb-4">
+            <div className="bg-background/70 p-4 text-center">
               <p className="text-[24px] leading-none font-display font-semibold tracking-tight">{onlineCount}</p>
               <p className="text-[10px] text-muted-foreground/70 mt-1.5 tracking-wide uppercase">Online</p>
             </div>
-            <div className="bg-card p-4 text-center">
+            <div className="bg-background/70 p-4 text-center">
               <p className="text-[24px] leading-none font-display font-semibold tracking-tight">{activeCount}</p>
               <p className="text-[10px] text-muted-foreground/70 mt-1.5 tracking-wide uppercase">Ativos</p>
             </div>
-            <div className="bg-card p-4 text-center">
+            <div className="bg-background/70 p-4 text-center">
               <p className="text-[24px] leading-none font-display font-semibold tracking-tight text-muted-foreground/80">{inactiveCount}</p>
               <p className="text-[10px] text-muted-foreground/70 mt-1.5 tracking-wide uppercase">Inativos</p>
             </div>
