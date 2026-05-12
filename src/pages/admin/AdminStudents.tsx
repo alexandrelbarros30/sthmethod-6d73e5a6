@@ -28,6 +28,7 @@ import SignedImage from "@/components/shared/SignedImage";
 import { getSecureFileUrl, extractStoragePath } from "@/lib/secure-file-url";
 import AdminBodyImageUpload from "@/components/admin/AdminBodyImageUpload";
 import AdminImageHistory from "@/components/admin/AdminImageHistory";
+import AnamnesisEntryItem from "@/components/shared/AnamnesisEntryItem";
 import EvolutionGenerator from "@/components/admin/EvolutionGenerator";
 import AdminEvolutionUpdate from "@/components/admin/AdminEvolutionUpdate";
 import ExcelJS from "exceljs";
