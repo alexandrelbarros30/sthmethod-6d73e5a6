@@ -13,6 +13,7 @@ import RichContentRenderer from "@/components/shared/RichContentRenderer";
 import StudentInfoHeader from "@/components/student/StudentInfoHeader";
 import ProtocolInfoPanel from "@/components/student/ProtocolInfoPanel";
 import GamifiedProtocolPanel from "@/components/student/GamifiedProtocolPanel";
+import ProtocolContinuityCard from "@/components/admin/ProtocolContinuityCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -745,6 +746,10 @@ const AdminProtocol = () => {
                     }} />
                   </CardContent>
                 </Card>
+              )}
+
+              {selected?.user_id && (
+                <ProtocolContinuityCard studentUserId={selected.user_id} />
               )}
 
               {/* Library Buttons */}
