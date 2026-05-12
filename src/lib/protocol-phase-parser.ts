@@ -39,6 +39,8 @@ const TITLE_PHASE_MAP: Array<{ rx: RegExp; key: string; flow: string; title: str
   { rx: /^pr[eé]\s*-?\s*treino\b/i, key: "pre-treino", flow: "Oxygen Carry +", title: "PRÉ-TREINO" },
   { rx: /^p[oó]s\s*-?\s*treino\b/i, key: "pos-treino", flow: "Recovery Window", title: "PÓS-TREINO" },
   { rx: /^noite\b/i, key: "noite", flow: "Recovery Mode On", title: "NOITE" },
+  { rx: /^ceia\b/i, key: "noite", flow: "Recovery Mode On", title: "CEIA" },
+  { rx: /^antes\s+de\s+dormir\b/i, key: "noite", flow: "Recovery Mode On", title: "ANTES DE DORMIR" },
 ];
 
 const FALLBACK_EMOJI_BY_KEY: Record<string, string> = {

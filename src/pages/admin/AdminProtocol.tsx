@@ -920,11 +920,11 @@ Ação: Após a maior refeição do dia.
 ⏱ 30-45min antes do treino
 📌 Foco: Volemia muscular.
 
-🌙 NOITE 🔒
+🌙 CEIA 🔒
 "Magnésio 400mg + Inositol 200mg"
 ⏱ 30-60min antes de dormir
 📌 Foco: Recuperação tecidual.`}</pre>
-                          <p className="text-muted-foreground">Status (✅ feito · ⏳ em curso · 🔓 liberado · 🔒 bloqueado) é opcional. O aluno marca a conclusão do dia tocando no card.</p>
+                          <p className="text-muted-foreground">Status (✅ feito · ⏳ em curso · 🔓 liberado · 🔒 bloqueado) é opcional. O aluno marca a conclusão do dia tocando no card. Aceita também <strong>NOITE</strong> ou <strong>ANTES DE DORMIR</strong> no lugar de <strong>CEIA</strong>.</p>
                         </div>
                       </details>
                     </div>
