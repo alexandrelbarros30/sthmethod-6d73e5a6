@@ -510,7 +510,7 @@ const RecentStudents = ({ profiles, subscriptions, navigate, queryClient, active
     return days <= 3 && !p.admin_confirmed && !activeSubUserIds.has(p.user_id);
   }) || [];
 
-  const subMap = new Map((subscriptions || []).map((s: any) => [s.user_id, s]));
+  const subMap = getEffectiveSubscriptionMap(subscriptions);
 
   const { data: recentPayments } = useQuery({
     queryKey: ["admin-recent-payments-for-students"],
