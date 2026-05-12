@@ -12,8 +12,18 @@ import trembolonaImg from "@/assets/sthnews-trembolona-hero.jpg";
 import ginecoImg from "@/assets/sthnews-gineco-hero.jpg";
 import bfAltoImg from "@/assets/sthnews-bfalto-hero.jpg";
 import tirzeImg from "@/assets/sthnews-tirzepatida-hero.jpg";
+import proteinaImg from "@/assets/sthnews-proteina-hero.jpg";
 
 const articles = [
+  {
+    to: "/tendencias/proteina-superavit",
+    tag: "CAPA",
+    tagClass: "bg-primary text-primary-foreground",
+    date: "Nova matéria",
+    title: "🥩 Proteína em excesso não engorda como você pensa",
+    desc: "Superávit calórico via proteína em treinados: TEF, NEAT e particionamento de nutrientes reescrevendo a equação.",
+    img: proteinaImg,
+  },
   {
     to: "/tendencias/tirzepatida-hipertrofia",
     tag: "CAPA",
