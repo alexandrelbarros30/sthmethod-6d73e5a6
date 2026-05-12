@@ -348,6 +348,27 @@ const StudentEvolution = () => {
 
       <EvolutionWeightHistory weightLogs={weightLogs || []} />
 
+      {/* Comparação de evolução */}
+      <div className="mb-6">
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="w-full">
+              <GitCompare className="w-4 h-4 mr-2" />
+              Comparar evolução (inicial × atual)
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <GitCompare className="w-5 h-5" />
+                Histórico de Evolução
+              </DialogTitle>
+            </DialogHeader>
+            <EvolutionComparison userId={user!.id} />
+          </DialogContent>
+        </Dialog>
+      </div>
+
       {/* Bioimpedance Panel */}
       <div className="mb-6">
         <StudentBioimpedancePanel />
