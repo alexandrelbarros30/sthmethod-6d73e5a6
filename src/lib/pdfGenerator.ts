@@ -548,5 +548,6 @@ export const generateStudentPDF = async (options: PDFContentOptions): Promise<Bl
 };
 
 export const canDownloadPDF = (planName?: string): boolean => {
-  return false;
+  // Permite download para qualquer plano ativo (todos os planos STH são pagos)
+  return !!planName && planName.trim().length > 0 && planName.toLowerCase() !== "free";
 };
