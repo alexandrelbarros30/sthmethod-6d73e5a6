@@ -1879,14 +1879,9 @@ const AdminStudents = () => {
                       <CardTitle className="text-sm font-display">Histórico de Anotações</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      {anamneseEntries.map((entry: any) => (
-                        <div key={entry.id} className="border-b border-border/50 pb-3 last:border-0 last:pb-0">
-                          <p className="text-xs text-muted-foreground mb-1">
-                            {new Date(entry.created_at).toLocaleDateString("pt-BR")} às {new Date(entry.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                          </p>
-                          <p className="text-sm whitespace-pre-wrap">{entry.notes}</p>
-                        </div>
-                      ))}
+                       {anamneseEntries.map((entry: any) => (
+                         <AnamnesisEntryItem key={entry.id} entry={entry} onSaved={refetchAnamnese} />
+                       ))}
                     </CardContent>
                   </Card>
                 )}
