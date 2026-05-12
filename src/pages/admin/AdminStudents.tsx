@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2, RotateCcw, AlertTriangle, UserX, UserCheck, Dumbbell, Pill, UtensilsCrossed, MessageCircle, MoreVertical, Activity, Microscope, Copy, Layers } from "lucide-react";
+import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2, RotateCcw, AlertTriangle, UserX, UserCheck, Dumbbell, Pill, UtensilsCrossed, MessageCircle, MoreVertical, Activity, Microscope, Copy, Layers, ChevronDown, ChevronUp } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
@@ -85,6 +85,7 @@ const AdminStudents = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [subOpen, setSubOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
+  const [notesHistoryOpen, setNotesHistoryOpen] = useState(false);
   const [imagesOpen, setImagesOpen] = useState(false);
   const [selected, setSelected] = useState<any>(null);
   const [form, setForm] = useState({ ...emptyForm });
@@ -1876,14 +1877,21 @@ const AdminStudents = () => {
                 {/* Notes History */}
                 {anamneseEntries && anamneseEntries.length > 0 && (
                   <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-display">Histórico de Anotações</CardTitle>
+                    <CardHeader className="pb-2 cursor-pointer select-none" onClick={() => setNotesHistoryOpen(v => !v)}>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-sm font-display">
+                          Histórico de Anotações ({anamneseEntries.length})
+                        </CardTitle>
+                        {notesHistoryOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                      </div>
                     </CardHeader>
-                    <CardContent className="space-y-3">
-                       {anamneseEntries.map((entry: any) => (
-                         <AnamnesisEntryItem key={entry.id} entry={entry} onSaved={refetchAnamnese} />
-                       ))}
-                    </CardContent>
+                    {notesHistoryOpen && (
+                      <CardContent className="space-y-3">
+                        {anamneseEntries.map((entry: any) => (
+                          <AnamnesisEntryItem key={entry.id} entry={entry} onSaved={refetchAnamnese} />
+                        ))}
+                      </CardContent>
+                    )}
                   </Card>
                 )}
 
