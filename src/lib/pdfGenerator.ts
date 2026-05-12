@@ -319,7 +319,7 @@ export const generateStudentPDF = async (options: PDFContentOptions): Promise<Bl
     pdf.setFont('times', 'bold');
     pdf.setFontSize(14);
     pdf.setTextColor(black);
-    pdf.text(title.toUpperCase(), pw / 2, y, { align: 'center' });
+    pdf.text('PROTOCOLO', pw / 2, y, { align: 'center' });
     y += 10;
   }
 
@@ -358,6 +358,91 @@ export const generateStudentPDF = async (options: PDFContentOptions): Promise<Bl
       y += lineH;
     }
   };
+
+  // ---------------- PROTOCOL: render as phases (same style as REFEIÇÃO) ----------------
+  if (type === 'protocol') {
+    const phases = parseProtocolPhases(content);
+
+    const renderPhaseHeading = (titleText: string) => {
+      y += lineH * 1.5;
+      ensurePage(lineH * 2);
+      pdf.setFont('times', 'bold');
+      pdf.setFontSize(fontSize);
+      pdf.setTextColor(black);
+      const upper = titleText.toUpperCase();
+      pdf.text(upper, ml, y);
+      const tw = pdf.getTextWidth(upper);
+      pdf.setDrawColor(0, 0, 0);
+      pdf.setLineWidth(0.4);
+      pdf.line(ml, y + 1, ml + tw, y + 1);
+      y += lineH + 3;
+    };
+
+    const renderPhase = (p: ProtocolPhase) => {
+      renderPhaseHeading(p.title || p.key);
+      if (p.headline) {
+        const hl = p.headline.replace(/[“”]/g, '"');
+        const text = hl.startsWith('"') ? hl : `"${hl}"`;
+        pdf.setFont('times', 'italic');
+        pdf.setFontSize(fontSize);
+        pdf.setTextColor(black);
+        const wrapped = pdf.splitTextToSize(text, cw);
+        for (const wl of wrapped) { ensurePage(); pdf.text(wl, ml, y); y += lineH; }
+        y += 1;
+      }
+      const fields: { label: string; value?: string }[] = [
+        { label: 'Ação', value: p.action },
+        { label: 'Stack', value: p.stack },
+        { label: 'Timing', value: p.timing },
+        { label: 'Foco', value: p.focus },
+      ];
+      for (const f of fields) {
+        if (!f.value) continue;
+        ensurePage();
+        pdf.setFont('times', 'bold');
+        pdf.setFontSize(fontSize);
+        pdf.setTextColor(black);
+        pdf.text(`${f.label}: `, ml, y);
+        const lw = pdf.getTextWidth(`${f.label}: `);
+        pdf.setFont('times', 'normal');
+        const wrapped = pdf.splitTextToSize(f.value, cw - lw);
+        wrapped.forEach((wl: string, idx: number) => {
+          if (idx > 0) { y += lineH; ensurePage(); }
+          pdf.text(wl, ml + (idx === 0 ? lw : 0), y);
+        });
+        y += lineH;
+      }
+    };
+
+    if (phases.length > 0) {
+      for (const p of phases) {
+        renderPhase(p);
+        if (p.subWeeks?.length) {
+          for (const sw of p.subWeeks) renderPhase(sw);
+        }
+      }
+    } else {
+      // Fallback: render plain text content
+      const plain = content.replace(/<br\s*\/?>(?!\n)/gi, '\n').replace(/<\/(p|div|h[1-6]|li)>/gi, '\n').replace(/<[^>]+>/g, '').split('\n');
+      for (const raw of plain) {
+        const t = raw.trim();
+        if (!t) { y += lineH * 0.5; continue; }
+        renderBodyLine(t);
+      }
+    }
+
+    // Footer + return early to skip diet loop
+    const totalPages = pdf.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      pdf.setPage(p);
+      pdf.setFont('times', 'normal');
+      pdf.setFontSize(8);
+      pdf.setTextColor('#6b7280');
+      const footer = `Gerado em ${new Date().toLocaleDateString('pt-BR')} — Página ${p} de ${totalPages}`;
+      pdf.text(footer, pw - mr, 287, { align: 'right' });
+    }
+    return pdf.output('blob');
+  }
 
   for (let i = 0; i < lines.length; i++) {
     const trimmed = lines[i].trim();
