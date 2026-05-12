@@ -30,17 +30,21 @@ async function activateSubscriptionForPayment(supabase: any, payment: any) {
 
   const { data: existingSub } = await supabase
     .from("subscriptions")
-    .select("id, end_date, status")
+    .select("id, start_date, end_date, status")
     .eq("user_id", payment.user_id)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  // If renewing before expiry, carry over remaining days from active plan
+  // If renewing before expiry, carry over remaining days from active plan.
+  // Skip when the existing sub started today (same activation flow) to avoid
+  // double-stacking when webhook + reconcile both run for the same payment.
   let baseDate = new Date(startDate);
   if (existingSub?.end_date) {
     const currentEnd = new Date(existingSub.end_date + "T23:59:59");
-    if (currentEnd > startDate && existingSub.status === "active") {
+    const today = startDate.toISOString().split("T")[0];
+    const startedToday = existingSub.start_date === today;
+    if (currentEnd > startDate && existingSub.status === "active" && !startedToday) {
       baseDate = currentEnd;
     }
   }

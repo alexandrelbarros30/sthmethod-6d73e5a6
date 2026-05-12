@@ -1,0 +1,1 @@
+UPDATE public.subscriptions SET end_date = '2026-06-10' WHERE id = '2a2f9e35-c851-4cf1-a120-824ca343f574';
