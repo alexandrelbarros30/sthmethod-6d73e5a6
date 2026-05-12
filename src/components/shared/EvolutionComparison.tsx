@@ -1,0 +1,274 @@
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { TrendingUp, TrendingDown, Minus, ImageOff } from "lucide-react";
+import type { EvolutionSnapshot } from "@/lib/evolution-snapshot";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+interface Props {
+  userId: string;
+}
+
+const fmt = (n: number | null | undefined, suffix = "", digits = 1) =>
+  n === null || n === undefined ? "—" : `${Number(n).toFixed(digits)}${suffix}`;
+
+function Delta({ before, after, suffix = "", invertColor = false }: { before: number | null; after: number | null; suffix?: string; invertColor?: boolean }) {
+  if (before === null || after === null || before === undefined || after === undefined) {
+    return <span className="text-xs text-muted-foreground">—</span>;
+  }
+  const diff = Number(after) - Number(before);
+  if (Math.abs(diff) < 0.05) {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+        <Minus className="w-3 h-3" /> sem variação
+      </span>
+    );
+  }
+  const positive = diff > 0;
+  // invertColor: para peso/gordura, perda (negativo) é "bom" => verde
+  const isGood = invertColor ? !positive : positive;
+  const color = isGood ? "text-emerald-500" : "text-rose-500";
+  const Icon = positive ? TrendingUp : TrendingDown;
+  return (
+    <span className={`inline-flex items-center gap-1 text-xs font-medium ${color}`}>
+      <Icon className="w-3 h-3" />
+      {positive ? "+" : ""}
+      {diff.toFixed(1)}
+      {suffix}
+    </span>
+  );
+}
+
+function PhotoCell({ url, label }: { url: string | null; label: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <div className="aspect-[3/4] w-full rounded-md overflow-hidden bg-muted/40 border border-border/50 flex items-center justify-center">
+        {url ? (
+          <img src={url} alt={label} className="w-full h-full object-cover" loading="lazy" />
+        ) : (
+          <ImageOff className="w-6 h-6 text-muted-foreground" />
+        )}
+      </div>
+      <span className="text-[10px] text-muted-foreground uppercase tracking-wide">{label}</span>
+    </div>
+  );
+}
+
+const EvolutionComparison = ({ userId }: Props) => {
+  const { data: snapshots = [], isLoading } = useQuery({
+    queryKey: ["evolution-snapshots", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("evolution_snapshots")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data || []) as EvolutionSnapshot[];
+    },
+    enabled: !!userId,
+  });
+
+  const [beforeId, setBeforeId] = useState<string | null>(null);
+  const [afterId, setAfterId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (snapshots.length >= 1 && !beforeId) setBeforeId(snapshots[0].id);
+    if (snapshots.length >= 2 && !afterId) setAfterId(snapshots[snapshots.length - 1].id);
+    if (snapshots.length === 1 && !afterId) setAfterId(snapshots[0].id);
+  }, [snapshots, beforeId, afterId]);
+
+  const before = useMemo(() => snapshots.find((s) => s.id === beforeId), [snapshots, beforeId]);
+  const after = useMemo(() => snapshots.find((s) => s.id === afterId), [snapshots, afterId]);
+
+  if (isLoading) {
+    return <p className="text-sm text-muted-foreground py-4 text-center">Carregando histórico…</p>;
+  }
+
+  if (snapshots.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground py-6 text-center">
+        Nenhum snapshot ainda. Eles serão criados automaticamente a cada atualização de evolução.
+      </p>
+    );
+  }
+
+  const formatLabel = (s: EvolutionSnapshot) =>
+    `${format(new Date(s.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })} · ${s.source}`;
+
+  const setQuickRange = (which: "first-last" | "last-two") => {
+    if (snapshots.length === 0) return;
+    if (which === "first-last") {
+      setBeforeId(snapshots[0].id);
+      setAfterId(snapshots[snapshots.length - 1].id);
+    } else if (which === "last-two" && snapshots.length >= 2) {
+      setBeforeId(snapshots[snapshots.length - 2].id);
+      setAfterId(snapshots[snapshots.length - 1].id);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Selectors */}
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setQuickRange("first-last")}>
+            Inicial × Atual
+          </Button>
+          {snapshots.length >= 2 && (
+            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setQuickRange("last-two")}>
+              Últimos 2
+            </Button>
+          )}
+          <Badge variant="secondary" className="text-[10px]">{snapshots.length} snapshots</Badge>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <p className="text-[10px] text-muted-foreground mb-1 uppercase">De</p>
+            <Select value={beforeId ?? undefined} onValueChange={setBeforeId}>
+              <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {snapshots.map((s) => (
+                  <SelectItem key={s.id} value={s.id} className="text-xs">{formatLabel(s)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <p className="text-[10px] text-muted-foreground mb-1 uppercase">Para</p>
+            <Select value={afterId ?? undefined} onValueChange={setAfterId}>
+              <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {snapshots.map((s) => (
+                  <SelectItem key={s.id} value={s.id} className="text-xs">{formatLabel(s)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      {before && after && (
+        <div className="space-y-3">
+          {/* Headers */}
+          <div className="grid grid-cols-2 gap-2 text-center">
+            <div className="rounded-md border border-border/50 bg-muted/20 p-2">
+              <p className="text-[10px] uppercase text-muted-foreground">Antes</p>
+              <p className="text-xs font-medium">{format(new Date(before.created_at), "dd/MM/yyyy", { locale: ptBR })}</p>
+            </div>
+            <div className="rounded-md border border-foreground/30 bg-foreground/5 p-2">
+              <p className="text-[10px] uppercase text-muted-foreground">Depois</p>
+              <p className="text-xs font-medium">{format(new Date(after.created_at), "dd/MM/yyyy", { locale: ptBR })}</p>
+            </div>
+          </div>
+
+          {/* Peso */}
+          <Card>
+            <CardContent className="p-3 space-y-2">
+              <p className="text-xs font-display uppercase tracking-wide text-muted-foreground">Peso</p>
+              <div className="grid grid-cols-2 gap-2 text-center">
+                <p className="text-lg font-bold">{fmt(before.weight, " kg")}</p>
+                <p className="text-lg font-bold">{fmt(after.weight, " kg")}</p>
+              </div>
+              <div className="text-center"><Delta before={before.weight} after={after.weight} suffix=" kg" invertColor /></div>
+            </CardContent>
+          </Card>
+
+          {/* Macros */}
+          <Card>
+            <CardContent className="p-3 space-y-2">
+              <p className="text-xs font-display uppercase tracking-wide text-muted-foreground">Macros</p>
+              {[
+                { label: "Calorias", a: before.daily_calories, b: after.daily_calories, suffix: " kcal", digits: 0 },
+                { label: "Proteína", a: before.protein_g, b: after.protein_g, suffix: " g", digits: 0 },
+                { label: "Carboidratos", a: before.carbs_g, b: after.carbs_g, suffix: " g", digits: 0 },
+                { label: "Gordura", a: before.fat_g, b: after.fat_g, suffix: " g", digits: 0 },
+                { label: "TMB", a: before.bmr, b: after.bmr, suffix: " kcal", digits: 0 },
+                { label: "TDEE", a: before.tdee, b: after.tdee, suffix: " kcal", digits: 0 },
+              ].map((row) => (
+                <div key={row.label} className="grid grid-cols-3 gap-2 text-xs items-center">
+                  <span className="text-muted-foreground">{row.label}</span>
+                  <span className="text-center">{fmt(row.a, row.suffix, row.digits)} → {fmt(row.b, row.suffix, row.digits)}</span>
+                  <span className="text-right"><Delta before={row.a} after={row.b} suffix={row.suffix} /></span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* NEAT / Atividade */}
+          <Card>
+            <CardContent className="p-3 space-y-2">
+              <p className="text-xs font-display uppercase tracking-wide text-muted-foreground">Rotina de Atividades</p>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="space-y-1">
+                  <p><span className="text-muted-foreground">NEAT:</span> {before.physical_activity_level ?? "—"}</p>
+                  <p><span className="text-muted-foreground">Tipo:</span> {before.activity_type ?? "—"}</p>
+                  <p><span className="text-muted-foreground">Treino:</span> {before.training_days_per_week ?? "—"}x/sem</p>
+                  <p><span className="text-muted-foreground">Cardio:</span> {before.does_cardio ? `${before.cardio_days_per_week ?? "—"}x/sem` : "não"}</p>
+                </div>
+                <div className="space-y-1">
+                  <p><span className="text-muted-foreground">NEAT:</span> {after.physical_activity_level ?? "—"}</p>
+                  <p><span className="text-muted-foreground">Tipo:</span> {after.activity_type ?? "—"}</p>
+                  <p><span className="text-muted-foreground">Treino:</span> {after.training_days_per_week ?? "—"}x/sem</p>
+                  <p><span className="text-muted-foreground">Cardio:</span> {after.does_cardio ? `${after.cardio_days_per_week ?? "—"}x/sem` : "não"}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Bioimpedância */}
+          {(before.body_fat_pct !== null || after.body_fat_pct !== null || before.lean_mass_kg !== null || after.lean_mass_kg !== null) && (
+            <Card>
+              <CardContent className="p-3 space-y-2">
+                <p className="text-xs font-display uppercase tracking-wide text-muted-foreground">Bioimpedância</p>
+                {[
+                  { label: "% Gordura", a: before.body_fat_pct, b: after.body_fat_pct, suffix: "%", invert: true },
+                  { label: "Massa Magra", a: before.lean_mass_kg, b: after.lean_mass_kg, suffix: " kg" },
+                  { label: "Massa Gorda", a: before.fat_mass_kg, b: after.fat_mass_kg, suffix: " kg", invert: true },
+                ].map((row) => (
+                  <div key={row.label} className="grid grid-cols-3 gap-2 text-xs items-center">
+                    <span className="text-muted-foreground">{row.label}</span>
+                    <span className="text-center">{fmt(row.a, row.suffix)} → {fmt(row.b, row.suffix)}</span>
+                    <span className="text-right"><Delta before={row.a} after={row.b} suffix={row.suffix} invertColor={row.invert} /></span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Fotos */}
+          <Card>
+            <CardContent className="p-3 space-y-2">
+              <p className="text-xs font-display uppercase tracking-wide text-muted-foreground">Fotos Corporais</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <p className="text-[10px] text-center text-muted-foreground">Antes</p>
+                  <div className="grid grid-cols-3 gap-1">
+                    <PhotoCell url={before.body_image_front_url} label="Frente" />
+                    <PhotoCell url={before.body_image_back_url} label="Costas" />
+                    <PhotoCell url={before.body_image_profile_url} label="Perfil" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-[10px] text-center text-muted-foreground">Depois</p>
+                  <div className="grid grid-cols-3 gap-1">
+                    <PhotoCell url={after.body_image_front_url} label="Frente" />
+                    <PhotoCell url={after.body_image_back_url} label="Costas" />
+                    <PhotoCell url={after.body_image_profile_url} label="Perfil" />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default EvolutionComparison;
