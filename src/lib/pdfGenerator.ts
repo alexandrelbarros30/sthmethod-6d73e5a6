@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import { parseProtocolPhases, type ProtocolPhase } from './protocol-phase-parser';
 
 interface StudentInfo {
   name: string;
