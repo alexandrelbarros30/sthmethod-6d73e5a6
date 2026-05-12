@@ -66,6 +66,26 @@ interface Props {
   linkedStudentIds?: string[];
 }
 
+const getPrimarySubscriptionByUser = (subscriptions: any[]) => {
+  const map = new Map<string, any>();
+
+  subscriptions.forEach((subscription: any) => {
+    const current = map.get(subscription.user_id);
+    if (!current) {
+      map.set(subscription.user_id, subscription);
+      return;
+    }
+
+    const currentEnd = new Date(current.end_date || 0).getTime();
+    const nextEnd = new Date(subscription.end_date || 0).getTime();
+    if (nextEnd > currentEnd) {
+      map.set(subscription.user_id, subscription);
+    }
+  });
+
+  return map;
+};
+
 export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -107,6 +127,11 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
     },
     enabled: open,
   });
+
+  const primaryActiveSubscriptionMap = useMemo(
+    () => getPrimarySubscriptionByUser(activeSubscriptions),
+    [activeSubscriptions]
+  );
 
   // DB templates query
   const { data: dbTemplates = [] } = useQuery({
@@ -159,7 +184,9 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
       const { data: subs } = await query;
       if (!subs?.length) return [];
 
-      const userIds = subs.map((s: any) => s.user_id);
+      const primarySubs = Array.from(getPrimarySubscriptionByUser(subs).values());
+
+      const userIds = primarySubs.map((s: any) => s.user_id);
       const { data: profiles } = await supabase
         .from("profiles")
         .select("user_id, full_name, phone")
@@ -168,7 +195,7 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
       const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
       const now2 = new Date();
 
-      return subs
+      return primarySubs
         .map((s: any) => {
           const profile = profileMap.get(s.user_id);
           if (!profile?.phone) return null;
@@ -216,8 +243,8 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
 
     // Filter by plan
     if (planFilter !== "all") {
-      const userIdsInPlan = new Set(
-        activeSubscriptions
+        const userIdsInPlan = new Set(
+          Array.from(primaryActiveSubscriptionMap.values())
           .filter((s: any) => s.plan_id === planFilter)
           .map((s: any) => s.user_id)
       );
@@ -451,8 +478,9 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
                     if (val !== "all") {
                       const idsInPlan = allStudents
                         .filter((s) => {
-                          const sub = activeSubscriptions.find((sub: any) => sub.user_id === s.user_id && sub.plan_id === val);
-                          return !!sub && s.phone && s.phone.trim() !== "";
+                          const sub = primaryActiveSubscriptionMap.get(s.user_id);
+                          const matchesPlan = sub?.plan_id === val;
+                          return matchesPlan && s.phone && s.phone.trim() !== "";
                         })
                         .slice(0, 10)
                         .map((s) => s.user_id);
@@ -513,7 +541,7 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
                             <p className="text-[10px] text-muted-foreground truncate">
                               {hasPhone ? student.phone : "Sem telefone cadastrado"}
                               {(() => {
-                                const sub = activeSubscriptions.find((s: any) => s.user_id === student.user_id);
+                                const sub = primaryActiveSubscriptionMap.get(student.user_id);
                                 const planName = (sub as any)?.plans?.name;
                                 return planName ? ` • ${planName}` : "";
                               })()}
