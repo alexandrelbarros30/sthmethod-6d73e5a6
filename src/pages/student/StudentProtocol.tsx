@@ -251,7 +251,8 @@ const StudentProtocol = () => {
     }
   };
 
-  const canDownload = canDownloadPDF(subscription?.plans?.name);
+  const planDurationDays = (subscription as any)?.plans?.duration_days as number | undefined;
+  const canDownload = canDownloadPDF(subscription?.plans?.name) && planDurationDays === 180;
   const latestProtocol = protocols && protocols[0];
   const latestProtocolContent = latestProtocol?.content || "";
   const hasOldProtocolItems = (protocolItems?.length ?? 0) > 0;
