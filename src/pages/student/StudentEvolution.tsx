@@ -270,6 +270,17 @@ const StudentEvolution = () => {
             <EvolutionActivityChange profile={fullProfile} onChange={setActivityChange} />
           )}
 
+          {/* Notes */}
+          <div className="space-y-2">
+            <Label className="font-body text-sm">Observações (opcional)</Label>
+            <Textarea
+              placeholder="Como você está se sentindo? Alguma mudança na rotina?"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+            />
+          </div>
+
           <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3">
             <p className="text-xs text-muted-foreground">
               Se preferir, você já pode salvar esta atualização por aqui.
@@ -282,17 +293,6 @@ const StudentEvolution = () => {
             >
               {saving ? "Salvando..." : "Salvar atualização agora"}
             </Button>
-          </div>
-
-          {/* Notes */}
-          <div className="space-y-2">
-            <Label className="font-body text-sm">Observações (opcional)</Label>
-            <Textarea
-              placeholder="Como você está se sentindo? Alguma mudança na rotina?"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-            />
           </div>
 
           {/* Body images */}
