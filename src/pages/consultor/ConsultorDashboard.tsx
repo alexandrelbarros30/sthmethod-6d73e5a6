@@ -118,36 +118,59 @@ const ConsultorDashboard = () => {
   });
 
   const labels: Record<string, string> = { front: "Frente", back: "Costas", profile: "Perfil" };
+  const quickStats = [
+    { label: "Alunos vinculados", value: linkedStudents.length, icon: Users },
+    { label: "Com busca ativa", value: filteredStudents.length, icon: Search },
+  ];
 
   return (
     <DashboardLayout role="consultor" title="Painel do Consultor" subtitle="Gerencie seus alunos vinculados">
-      {/* Search + quick action */}
-      <div className="flex items-center gap-2 mb-8">
-        <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
-          <Input
-            placeholder="Pesquisar aluno..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 h-11 rounded-2xl border-border/40 bg-muted/30 placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-foreground/20"
-          />
-        </div>
-        <Button asChild className="h-11 rounded-2xl gap-2 bg-foreground text-background hover:bg-foreground/90">
-          <Link to="/admin/students?create=true">
-            <Users className="w-4 h-4" /> Novo
-          </Link>
-        </Button>
-      </div>
+      <section className="mb-8 rounded-[28px] border border-border/50 bg-card/40 px-4 py-4 backdrop-blur-3xl sm:px-5 sm:py-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-2">
+            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Consultoria</p>
+            <div className="space-y-1">
+              <h1 className="text-[30px] leading-none text-foreground">Painel do consultor</h1>
+              <p className="max-w-2xl text-sm text-muted-foreground">
+                Acompanhamento enxuto dos alunos vinculados, com fila prioritária e atalhos clínicos.
+              </p>
+            </div>
+          </div>
 
-      {/* Metric */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-8">
-        <Card className="border-border/40 shadow-none bg-card/40 backdrop-blur-xl rounded-2xl">
-          <CardContent className="px-4 py-5">
-            <Users className="w-4 h-4 text-muted-foreground/50 mb-3" />
-            <p className="text-[28px] leading-none font-display font-semibold tracking-tight text-foreground">{linkedStudents.length}</p>
-            <p className="text-[11px] text-muted-foreground/70 mt-1.5 font-body truncate tracking-wide">Alunos vinculados</p>
-          </CardContent>
-        </Card>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="relative min-w-0 flex-1 sm:min-w-[280px]">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
+              <Input
+                placeholder="Pesquisar aluno..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-11 rounded-2xl border-border/40 bg-background/70 pl-10 placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-foreground/20"
+              />
+            </div>
+            <Button asChild className="premium-btn h-11 rounded-2xl gap-2 bg-foreground text-background hover:bg-foreground/90">
+              <Link to="/admin/students?create=true">
+                <Users className="w-4 h-4" /> Novo aluno
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <div className="grid grid-cols-2 gap-2.5 mb-8 lg:grid-cols-4">
+        {quickStats.map((stat) => (
+          <Card key={stat.label} className="premium-card border-border/40 bg-card/55 backdrop-blur-2xl">
+            <CardContent className="px-4 py-5">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-muted/60">
+                  <stat.icon className="w-4 h-4 text-foreground/75" />
+                </div>
+                <span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Focus</span>
+              </div>
+              <p className="text-[30px] leading-none font-display font-semibold tracking-tight text-foreground">{stat.value}</p>
+              <p className="mt-2 text-[11px] tracking-wide text-muted-foreground">{stat.label}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Fila de Atendimento — prioridade máxima */}
@@ -159,7 +182,7 @@ const ConsultorDashboard = () => {
         />
       </div>
 
-      <Card className="border-border/40 shadow-none bg-card/40 backdrop-blur-xl rounded-2xl">
+      <Card className="premium-card border-border/40 bg-card/55 backdrop-blur-2xl">
         <CardHeader className="pb-3 pt-5 px-5">
           <CardTitle className="text-[15px] font-display font-medium tracking-tight text-foreground/90">Meus Alunos</CardTitle>
         </CardHeader>
@@ -169,9 +192,9 @@ const ConsultorDashboard = () => {
               {searchTerm ? `Nenhum aluno encontrado para "${searchTerm}"` : "Nenhum aluno vinculado ainda."}
             </p>
           ) : (
-            <div className="divide-y divide-border/40">
+            <div className="space-y-2">
               {filteredStudents.map((s: any) => (
-                <div key={s.user_id} className="flex items-center justify-between py-3">
+                <div key={s.user_id} className="flex items-center justify-between rounded-[22px] border border-border/40 bg-background/40 px-3 py-3">
                   <div className="min-w-0 flex-1">
                     <p className="text-[14px] font-medium tracking-tight truncate">{s.full_name?.trim() || s.email}</p>
                     <p className="text-[12px] text-muted-foreground/70 truncate">{s.email}</p>
