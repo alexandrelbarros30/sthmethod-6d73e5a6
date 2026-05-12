@@ -65,6 +65,11 @@ const StudentProtocol = () => {
   const targetId = effectiveUserId || user?.id;
   const { isActive, isLoading: subLoading, subscription, previewUnlocked } = useSubscriptionGuard();
 
+  const planDurationDays = (subscription as any)?.plans?.duration_days as number | undefined;
+  const maxMedWeeks = planDurationDays && planDurationDays > 0
+    ? Math.max(1, Math.floor((planDurationDays * 4) / 30))
+    : undefined;
+
   const { data: previewProtocol } = useQuery({
     queryKey: ["preview-protocol", targetId],
     queryFn: async () => {
@@ -292,7 +297,7 @@ const StudentProtocol = () => {
                     PDF
                   </Button>
                 )}
-                <GamifiedProtocolPanel content={smartProtocolContent} userId={targetId!} readOnly={isPreviewing} />
+                <GamifiedProtocolPanel content={smartProtocolContent} userId={targetId!} readOnly={isPreviewing} maxWeeks={maxMedWeeks} />
               </div>
             </CollapsibleContent>
           </Collapsible>
@@ -354,6 +359,7 @@ const StudentProtocol = () => {
                                 content={protocol.content}
                                 userId={targetId!}
                                 readOnly={isPreviewing}
+                                maxWeeks={maxMedWeeks}
                               />
                             ) : (
                               <RichContentRenderer content={protocol.content} />
