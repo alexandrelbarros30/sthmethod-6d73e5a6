@@ -14,6 +14,7 @@ import cinturaImg from "@/assets/sthnews-subq-glass-2.jpg";
 import subqImg from "@/assets/sthnews-subq-glass-1.jpg";
 import tirzeImg from "@/assets/sthnews-tirzepatida-hero.jpg";
 import carbsImg from "@/assets/sthnews-carbs-hero.jpg";
+import proteinaImg from "@/assets/sthnews-proteina-hero.jpg";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -21,6 +22,7 @@ const fadeUp = {
 };
 
 const articles = [
+  { to: "/tendencias/proteina-superavit", kicker: "Proteína & superávit", title: "🥩 Proteína em excesso não engorda como você pensa.", desc: "Superávit calórico via proteína em treinados: TEF, NEAT e particionamento de nutrientes reescrevendo a equação.", img: proteinaImg },
   { to: "/tendencias/carboidratos-hipertrofia", kicker: "Nutrição & hipertrofia", title: "🍞 Carboidratos não constroem músculo: o que diz a meta-análise de 2026.", desc: "Proteína e calorias mandam. Carbo é performance, não gatilho direto.", img: carbsImg },
   { to: "/tendencias/tirzepatida-hipertrofia", kicker: "Tirzepatida & hipertrofia", title: "💉 Tirzepatida e hipertrofia: o protocolo que preserva massa magra.", desc: "GLP-1 + GIP, andrógenos como proteção tecidual e o déficit feito do jeito certo.", img: tirzeImg },
   { to: "/tendencias/hormonios-bf-alto", kicker: "Hormonal & metabólico", title: "🧬 Hormônio com BF alto: o fim do mito.", desc: "Não é proibido — é cirúrgico. Exames acima do medo.", img: bfAltoImg },
