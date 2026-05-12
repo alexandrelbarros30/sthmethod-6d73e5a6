@@ -1624,6 +1624,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          accessibility_theme: string | null
           activity_type: string | null
           additional_info: string | null
           admin_confirmed: boolean
@@ -1664,6 +1665,7 @@ export type Database = {
           weight: number | null
         }
         Insert: {
+          accessibility_theme?: string | null
           activity_type?: string | null
           additional_info?: string | null
           admin_confirmed?: boolean
@@ -1704,6 +1706,7 @@ export type Database = {
           weight?: number | null
         }
         Update: {
+          accessibility_theme?: string | null
           activity_type?: string | null
           additional_info?: string | null
           admin_confirmed?: boolean

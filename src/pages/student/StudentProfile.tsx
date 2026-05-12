@@ -16,6 +16,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import ChangePasswordDialog from "@/components/student/ChangePasswordDialog";
 import StudentProfileForm, { profileFromDb, getPendingFields, type ProfileFormData } from "@/components/student/StudentProfileForm";
+import AccessibilityThemeCard from "@/components/student/AccessibilityThemeCard";
 import DocumentUpload from "@/components/shared/DocumentUpload";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -432,6 +433,9 @@ const StudentProfile = () => {
           <ChangePasswordDialog />
         </CardContent>
       </Card>
+
+      {/* ===== ACESSIBILIDADE VISUAL ===== */}
+      <AccessibilityThemeCard />
     </DashboardLayout>
   );
 };

@@ -205,6 +205,182 @@ html, body {
 }
 
 @layer base {
+  /* ────────────────────────────────────────────────────────────
+     Acessibilidade — temas alternativos para neurodivergentes
+     Aplicados em <html> apenas dentro da área do aluno.
+     ──────────────────────────────────────────────────────────── */
+
+  /* 1) Bege / Cream — reduz cansaço visual */
+  .theme-a11y-cream {
+    --background: 40 35% 94%;
+    --foreground: 28 30% 15%;
+    --card: 40 40% 97%;
+    --card-foreground: 28 30% 15%;
+    --popover: 40 40% 97%;
+    --popover-foreground: 28 30% 15%;
+    --primary: 28 45% 25%;
+    --primary-foreground: 40 40% 97%;
+    --secondary: 38 30% 88%;
+    --secondary-foreground: 28 35% 22%;
+    --muted: 38 28% 90%;
+    --muted-foreground: 28 18% 38%;
+    --accent: 35 40% 82%;
+    --accent-foreground: 28 35% 20%;
+    --destructive: 0 55% 42%;
+    --destructive-foreground: 40 40% 97%;
+    --border: 35 25% 82%;
+    --input: 35 25% 82%;
+    --ring: 28 45% 25%;
+    --sidebar-background: 40 35% 92%;
+    --sidebar-foreground: 28 30% 22%;
+    --sidebar-primary: 28 45% 25%;
+    --sidebar-primary-foreground: 40 40% 97%;
+    --sidebar-accent: 38 30% 86%;
+    --sidebar-accent-foreground: 28 35% 20%;
+    --sidebar-border: 35 25% 80%;
+    --sidebar-ring: 28 45% 25%;
+    --glow: 28 45% 25%;
+    --surface: 40 40% 95%;
+    --surface-hover: 38 30% 88%;
+    --gradient-start: 28 45% 25%;
+    --gradient-end: 28 30% 38%;
+    --text-subtle: 28 15% 42%;
+    --brand: 142 45% 32%;
+    --brand-foreground: 0 0% 100%;
+  }
+
+  /* 2) Amarelo Suave (Síndrome de Irlen / Dislexia) */
+  .theme-a11y-irlen {
+    --background: 50 80% 90%;
+    --foreground: 30 40% 15%;
+    --card: 50 75% 94%;
+    --card-foreground: 30 40% 15%;
+    --popover: 50 75% 94%;
+    --popover-foreground: 30 40% 15%;
+    --primary: 30 50% 25%;
+    --primary-foreground: 50 80% 95%;
+    --secondary: 48 60% 84%;
+    --secondary-foreground: 30 40% 22%;
+    --muted: 48 55% 86%;
+    --muted-foreground: 30 25% 38%;
+    --accent: 45 70% 78%;
+    --accent-foreground: 30 40% 20%;
+    --destructive: 0 55% 42%;
+    --destructive-foreground: 50 80% 95%;
+    --border: 45 50% 78%;
+    --input: 45 50% 78%;
+    --ring: 30 50% 25%;
+    --sidebar-background: 50 75% 88%;
+    --sidebar-foreground: 30 40% 22%;
+    --sidebar-primary: 30 50% 25%;
+    --sidebar-primary-foreground: 50 80% 95%;
+    --sidebar-accent: 48 60% 82%;
+    --sidebar-accent-foreground: 30 40% 20%;
+    --sidebar-border: 45 50% 76%;
+    --sidebar-ring: 30 50% 25%;
+    --glow: 30 50% 25%;
+    --surface: 50 75% 92%;
+    --surface-hover: 48 60% 84%;
+    --gradient-start: 30 50% 25%;
+    --gradient-end: 30 40% 38%;
+    --text-subtle: 30 20% 42%;
+    --brand: 142 45% 30%;
+    --brand-foreground: 0 0% 100%;
+  }
+
+  /* 3) Pastel Lavanda/Rosa — sensibilidade sensorial */
+  .theme-a11y-pastel {
+    --background: 300 30% 96%;
+    --foreground: 280 30% 18%;
+    --card: 300 35% 98%;
+    --card-foreground: 280 30% 18%;
+    --popover: 300 35% 98%;
+    --popover-foreground: 280 30% 18%;
+    --primary: 280 40% 35%;
+    --primary-foreground: 300 35% 98%;
+    --secondary: 310 30% 90%;
+    --secondary-foreground: 280 30% 25%;
+    --muted: 310 28% 92%;
+    --muted-foreground: 280 18% 42%;
+    --accent: 320 45% 86%;
+    --accent-foreground: 280 35% 22%;
+    --destructive: 0 55% 48%;
+    --destructive-foreground: 300 35% 98%;
+    --border: 310 25% 86%;
+    --input: 310 25% 86%;
+    --ring: 280 40% 35%;
+    --sidebar-background: 300 30% 94%;
+    --sidebar-foreground: 280 30% 25%;
+    --sidebar-primary: 280 40% 35%;
+    --sidebar-primary-foreground: 300 35% 98%;
+    --sidebar-accent: 310 30% 88%;
+    --sidebar-accent-foreground: 280 35% 22%;
+    --sidebar-border: 310 25% 84%;
+    --sidebar-ring: 280 40% 35%;
+    --glow: 280 40% 35%;
+    --surface: 300 35% 96%;
+    --surface-hover: 310 30% 90%;
+    --gradient-start: 280 40% 35%;
+    --gradient-end: 320 35% 48%;
+    --text-subtle: 280 15% 45%;
+    --brand: 280 50% 38%;
+    --brand-foreground: 0 0% 100%;
+  }
+
+  /* 4) Branco Puro Alto Contraste — clean, sem brilho */
+  .theme-a11y-contrast {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 5%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 5%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 5%;
+    --primary: 0 0% 5%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 94%;
+    --secondary-foreground: 0 0% 10%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 30%;
+    --accent: 0 0% 90%;
+    --accent-foreground: 0 0% 5%;
+    --destructive: 0 70% 40%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 75%;
+    --input: 0 0% 75%;
+    --ring: 0 0% 5%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 0 0% 10%;
+    --sidebar-primary: 0 0% 5%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 92%;
+    --sidebar-accent-foreground: 0 0% 5%;
+    --sidebar-border: 0 0% 75%;
+    --sidebar-ring: 0 0% 5%;
+    --glow: 0 0% 5%;
+    --surface: 0 0% 98%;
+    --surface-hover: 0 0% 92%;
+    --gradient-start: 0 0% 5%;
+    --gradient-end: 0 0% 25%;
+    --text-subtle: 0 0% 35%;
+    --brand: 142 70% 30%;
+    --brand-foreground: 0 0% 100%;
+  }
+
+  /* Suaviza brilhos e gradientes agressivos nesses temas claros */
+  html.theme-a11y-cream .neon-bar,
+  html.theme-a11y-irlen .neon-bar,
+  html.theme-a11y-pastel .neon-bar,
+  html.theme-a11y-contrast .neon-bar { box-shadow: none !important; }
+
+  html.theme-a11y-cream body,
+  html.theme-a11y-irlen body,
+  html.theme-a11y-pastel body,
+  html.theme-a11y-contrast body {
+    background: hsl(var(--background)) !important;
+  }
+}
+
+@layer base {
   * {
     @apply border-border;
   }

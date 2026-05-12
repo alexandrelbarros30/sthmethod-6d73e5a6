@@ -87,6 +87,8 @@ import { useAccessLog } from "@/hooks/useAccessLog";
 import { usePublicAppleTheme } from "@/hooks/usePublicAppleTheme";
 import UpdateBanner from "@/components/shared/UpdateBanner";
 import { APP_RELEASE_VERSION } from "@/lib/app-version";
+import AccessibilityThemeButton from "@/components/student/AccessibilityThemeButton";
+import { useAccessibilityTheme } from "@/hooks/useAccessibilityTheme";
 
 // Lazy load pages that use Tiptap editor to avoid blocking the app
 const AdminDiet = lazy(() => import("./pages/admin/AdminDiet"));
@@ -111,7 +113,14 @@ const queryClient = new QueryClient({
   },
 });
 
-const DynamicHead = () => { useDynamicFavicon(); useAdminTheme(); useAccessLog(); usePublicAppleTheme(); return null; };
+const DynamicHead = () => {
+  useDynamicFavicon();
+  useAdminTheme();
+  useAccessLog();
+  usePublicAppleTheme();
+  useAccessibilityTheme();
+  return null;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -122,6 +131,7 @@ const App = () => (
         <AuthProvider>
           <DynamicHead />
           <UpdateBanner />
+          <AccessibilityThemeButton />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
