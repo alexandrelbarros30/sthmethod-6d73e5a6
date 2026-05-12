@@ -208,7 +208,6 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
             />
           </div>
 
-          <div className="space-y-2">
           <EvolutionActivityChange profile={profile} onChange={setActivityChange} />
 
           <div className="space-y-2">
