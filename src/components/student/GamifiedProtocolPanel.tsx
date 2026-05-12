@@ -11,6 +11,7 @@ interface Props {
   content: string;
   userId: string;
   readOnly?: boolean;
+  maxWeeks?: number;
 }
 
 const STH_GREEN = "#14b780";
@@ -209,9 +210,24 @@ const MedicamentosWeekCarousel = ({
   );
 };
 
-const GamifiedProtocolPanel = ({ content, userId, readOnly }: Props) => {
+const GamifiedProtocolPanel = ({ content, userId, readOnly, maxWeeks }: Props) => {
   const qc = useQueryClient();
-  const phases = useMemo(() => parseProtocolPhases(content), [content]);
+  const phases = useMemo(() => {
+    const parsed = parseProtocolPhases(content);
+    if (!maxWeeks || maxWeeks <= 0) return parsed;
+    const parseStartWeek = (title: string): number | null => {
+      const m = title.match(/(\d+)/);
+      return m ? parseInt(m[1], 10) : null;
+    };
+    return parsed.map((p) => {
+      if (!p.key.startsWith("medicamentos") || !p.subWeeks) return p;
+      const filtered = p.subWeeks.filter((w) => {
+        const start = parseStartWeek(w.title);
+        return start === null || start <= maxWeeks;
+      });
+      return { ...p, subWeeks: filtered };
+    });
+  }, [content, maxWeeks]);
 
   const date = todayISO();
   const { data: checkins = [] } = useQuery({
