@@ -1896,6 +1896,23 @@ const AdminStudents = () => {
                   </Card>
                 )}
 
+                {/* Snapshots de Evolução / Comparação */}
+                {selected && (
+                  <Card>
+                    <CardHeader className="pb-2 cursor-pointer select-none" onClick={() => setSnapshotsOpen(v => !v)}>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-sm font-display">Comparação de Evolução</CardTitle>
+                        {snapshotsOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                      </div>
+                    </CardHeader>
+                    {snapshotsOpen && (
+                      <CardContent>
+                        <EvolutionComparison userId={selected.user_id} />
+                      </CardContent>
+                    )}
+                  </Card>
+                )}
+
                 {(!anamneseEntries || anamneseEntries.length === 0) && (!anamneseBodyImages || anamneseBodyImages.length === 0) && (!weightLogs || weightLogs.length === 0) && (
                   <p className="text-sm text-muted-foreground text-center py-4">Nenhum registro de anamnese ainda.</p>
                 )}
