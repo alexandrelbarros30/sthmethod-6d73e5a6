@@ -1772,6 +1772,45 @@ export type Database = {
         }
         Relationships: []
       }
+      protocol_continuity_decisions: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision: string
+          gap_days: number
+          id: string
+          previous_subscription_id: string | null
+          subscription_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: string
+          gap_days?: number
+          id?: string
+          previous_subscription_id?: string | null
+          subscription_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: string
+          gap_days?: number
+          id?: string
+          previous_subscription_id?: string | null
+          subscription_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       protocol_extra_categories: {
         Row: {
           content: string
