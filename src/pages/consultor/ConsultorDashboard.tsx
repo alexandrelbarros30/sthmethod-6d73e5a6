@@ -16,6 +16,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
 import SignedImage from "@/components/shared/SignedImage";
+import AnamnesisEntryItem from "@/components/shared/AnamnesisEntryItem";
 import { Input } from "@/components/ui/input";
 import WhatsAppBulkSender from "@/components/shared/WhatsAppBulkSender";
 import AdminEvolutionUpdate from "@/components/admin/AdminEvolutionUpdate";
@@ -380,12 +381,7 @@ const ConsultorDashboard = () => {
                     </CardHeader>
                     <CardContent className="space-y-3">
                       {anamneseEntries.map((entry: any) => (
-                        <div key={entry.id} className="border-b border-border/50 pb-3 last:border-0 last:pb-0">
-                          <p className="text-xs text-muted-foreground mb-1">
-                            {new Date(entry.created_at).toLocaleDateString("pt-BR")} às {new Date(entry.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                          </p>
-                          <p className="text-sm whitespace-pre-wrap">{entry.notes}</p>
-                        </div>
+                        <AnamnesisEntryItem key={entry.id} entry={entry} onSaved={refetchAnamnese} />
                       ))}
                     </CardContent>
                   </Card>
