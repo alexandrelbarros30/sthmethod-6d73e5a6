@@ -208,6 +208,8 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
             />
           </div>
 
+          <EvolutionActivityChange profile={profile} onChange={setActivityChange} />
+
           <div className="space-y-2">
             <Label className="font-body text-sm">Observações (opcional)</Label>
             <Textarea
@@ -231,8 +233,6 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
               {saving ? "Salvando..." : "Salvar atualização agora"}
             </Button>
           </div>
-
-          <EvolutionActivityChange profile={profile} onChange={setActivityChange} />
 
           <div className="space-y-2">
             <div className="flex items-center gap-2 mb-1">
