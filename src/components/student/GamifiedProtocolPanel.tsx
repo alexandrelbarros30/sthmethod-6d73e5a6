@@ -12,6 +12,7 @@ interface Props {
   userId: string;
   readOnly?: boolean;
   maxWeeks?: number;
+  continuationNotice?: string | null;
 }
 
 const STH_GREEN = "#14b780";
@@ -210,7 +211,7 @@ const MedicamentosWeekCarousel = ({
   );
 };
 
-const GamifiedProtocolPanel = ({ content, userId, readOnly, maxWeeks }: Props) => {
+const GamifiedProtocolPanel = ({ content, userId, readOnly, maxWeeks, continuationNotice }: Props) => {
   const qc = useQueryClient();
   const phases = useMemo(() => {
     const parsed = parseProtocolPhases(content);
@@ -287,6 +288,13 @@ const GamifiedProtocolPanel = ({ content, userId, readOnly, maxWeeks }: Props) =
 
   return (
     <div className="space-y-4">
+      {continuationNotice && (
+        <div className="rounded-2xl border border-amber-400/30 bg-amber-400/[0.06] backdrop-blur-xl px-4 py-3">
+          <p className="text-[11px] tracking-tight leading-relaxed text-amber-200/90">
+            {continuationNotice}
+          </p>
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-baseline justify-between">
         <h2 className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground">
