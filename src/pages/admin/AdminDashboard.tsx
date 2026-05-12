@@ -16,6 +16,37 @@ import { toast } from "sonner";
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
 import WhatsAppBulkSender from "@/components/shared/WhatsAppBulkSender";
 
+const getEffectiveSubscriptionMap = (subscriptions: any[] | undefined) => {
+  const map = new Map<string, any>();
+
+  (subscriptions || []).forEach((subscription: any) => {
+    const current = map.get(subscription.user_id);
+    if (!current) {
+      map.set(subscription.user_id, subscription);
+      return;
+    }
+
+    const currentIsActive = current.status === "active" && new Date(current.end_date) > new Date();
+    const nextIsActive = subscription.status === "active" && new Date(subscription.end_date) > new Date();
+
+    if (nextIsActive && !currentIsActive) {
+      map.set(subscription.user_id, subscription);
+      return;
+    }
+
+    if (nextIsActive === currentIsActive) {
+      const currentEnd = new Date(current.end_date).getTime();
+      const nextEnd = new Date(subscription.end_date).getTime();
+
+      if (nextEnd > currentEnd) {
+        map.set(subscription.user_id, subscription);
+      }
+    }
+  });
+
+  return map;
+};
+
 const copyRenewLink = (userId: string) => {
   const url = `${window.location.origin}/dashboard/renew?uid=${userId}`;
   navigator.clipboard.writeText(url);
@@ -157,16 +188,17 @@ const AdminDashboard = () => {
     },
   });
 
+  const effectiveSubscriptionMap = useMemo(() => getEffectiveSubscriptionMap(subscriptions), [subscriptions]);
+
   // Set of user_ids with active subscriptions (status active + end_date in future)
   const activeSubUserIds = useMemo(() => {
-    if (!subscriptions) return new Set<string>();
     const now = new Date();
     return new Set(
-      subscriptions
+      Array.from(effectiveSubscriptionMap.values())
         .filter((s: any) => s.status === "active" && new Date(s.end_date) > now)
         .map((s: any) => s.user_id)
     );
-  }, [subscriptions]);
+  }, [effectiveSubscriptionMap]);
 
   // Users who completed onboarding but have no active subscription
   const pendingPaymentProfiles = useMemo(() => {
@@ -176,13 +208,14 @@ const AdminDashboard = () => {
 
   const totalStudents = profiles?.length || 0;
   const now = new Date();
-  const activeCount = subscriptions?.filter((s) => s.status === "active" && new Date(s.end_date) > now).length || 0;
-  const expiredCount = subscriptions?.filter((s) => s.status === "expired" || new Date(s.end_date) <= now).length || 0;
+  const effectiveSubscriptions = Array.from(effectiveSubscriptionMap.values());
+  const activeCount = effectiveSubscriptions.filter((s) => s.status === "active" && new Date(s.end_date) > now).length;
+  const expiredCount = effectiveSubscriptions.filter((s) => s.status === "expired" || new Date(s.end_date) <= now).length;
   const in7Days = new Date(now.getTime() + 7 * 86400000);
-  const expiringCount = subscriptions?.filter((s) => {
+  const expiringCount = effectiveSubscriptions.filter((s) => {
     const end = new Date(s.end_date);
     return s.status === "active" && end > now && end <= in7Days;
-  }).length || 0;
+  }).length;
   const onlineCount = onlineData?.ids.length || 0;
   const inactiveCount = Math.max(0, totalStudents - activeCount);
 
@@ -477,7 +510,7 @@ const RecentStudents = ({ profiles, subscriptions, navigate, queryClient, active
     return days <= 3 && !p.admin_confirmed && !activeSubUserIds.has(p.user_id);
   }) || [];
 
-  const subMap = new Map((subscriptions || []).map((s: any) => [s.user_id, s]));
+  const subMap = getEffectiveSubscriptionMap(subscriptions);
 
   const { data: recentPayments } = useQuery({
     queryKey: ["admin-recent-payments-for-students"],
