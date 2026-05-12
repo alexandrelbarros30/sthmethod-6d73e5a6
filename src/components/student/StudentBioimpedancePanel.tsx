@@ -424,12 +424,7 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
       {!propUserId && <CircumferenceTracker />}
 
       {/* Comparação de evolução + gráficos completos */}
-      {userId && (
-        <>
-          <EvolutionCharts userId={userId} />
-          <EvolutionComparison userId={userId} />
-        </>
-      )}
+      {userId && <EvolutionComparison userId={userId} />}
     </div>
   );
 };
