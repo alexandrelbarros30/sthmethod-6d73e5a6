@@ -24,11 +24,14 @@ export function applyA11yClass(theme: A11yTheme) {
   if (theme === "default") {
     root.classList.add("dark");
     root.classList.remove("light");
+    // Restore neon theme if we are in student area; DashboardLayout will reconcile.
     return;
   }
   // Light-based themes: remove dark
   root.classList.remove("dark");
   root.classList.add("light");
+  // Strip the neon green overlay so a11y palettes are visible
+  root.classList.remove("theme-sth-green");
   root.classList.add(`theme-a11y-${theme}`);
 }
 
@@ -72,6 +75,8 @@ export function useAccessibilityTheme() {
       setThemeState(next);
       localStorage.setItem(STORAGE_KEY, next);
       applyA11yClass(next);
+      // Notify other components (DashboardLayout, useAdminTheme) to reconcile
+      window.dispatchEvent(new CustomEvent("a11y-theme-change", { detail: next }));
       if (user) {
         await supabase
           .from("profiles")
