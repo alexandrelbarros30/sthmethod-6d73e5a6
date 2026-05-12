@@ -1,50 +1,56 @@
-## Objetivo
+## O que será feito
 
-Permitir que renovações de plano destravem cards de medicamentos das semanas seguintes (continuação do protocolo), respeitando a duração do novo plano e o tempo entre renovações.
+A atualização de evolução do aluno **já sincroniza** peso, NEAT/treino/cardio, macros e anamnese no perfil (tabela `profiles`) — vou confirmar isso e fazer o mesmo no card do admin (`AdminEvolutionUpdate`), que hoje só atualiza peso+macros mas ignora rotina.
 
-## Regras de negócio
+A novidade é criar uma **trilha histórica completa** (snapshot) a cada atualização e uma **tela de comparação** lado a lado, acessível tanto na edição do aluno quanto no prontuário.
 
-**Janela de renovação ≤ 15 dias** (entre `end_date` da assinatura anterior e `start_date` da nova):
-- Renovação automática de continuidade.
-- O `maxMedWeeks` passa a considerar a soma das durações: anterior + nova.
-  - Ex.: 30 dias + renovação 30 dias → libera semanas 1-8 (mantém 1-4 do ciclo anterior + 5-8 do novo).
-  - 90 + 90 → 1-24. 180 + 180 → 1-48. Etc.
-- Se o HTML do protocolo **não tiver** cards para as novas semanas, exibir aviso ao admin/consultor (badge no painel admin + mensagem no card do aluno) sinalizando: "Protocolo continuado — atualizar conteúdo conforme evolução do aluno". O admin decide manualmente liberar/atualizar.
+---
 
-**Janela de renovação > 15 dias**:
-- Não libera automaticamente. Mostra ao admin/consultor um prompt/decisão: "Dar continuidade ao protocolo anterior?" (Sim/Não).
-  - **Sim** → aplica a mesma regra acima (soma de durações).
-  - **Não** → reinicia ciclo (semanas 1 a N do novo plano apenas).
-- Enquanto o admin não decidir, o aluno vê apenas as semanas do novo plano (comportamento atual).
+## 1. Banco — nova tabela `evolution_snapshots`
 
-## Implementação
+Cada vez que o aluno (ou admin) salva uma atualização, gravamos um snapshot imutável com:
 
-### Banco de dados (nova migration)
-- Nova tabela `protocol_continuity_decisions`:
-  - `id uuid pk`, `user_id uuid`, `subscription_id uuid` (a nova assinatura), `previous_subscription_id uuid`, `decision text check ('auto_continue','continue','restart','pending')`, `gap_days int`, `decided_by uuid`, `decided_at timestamptz`, `created_at timestamptz default now()`.
-  - RLS: aluno SELECT próprio; admin/consultor SELECT/UPDATE dos seus alunos.
-- Trigger `on subscriptions insert`: ao criar nova assinatura, calcular `gap_days` vs assinatura anterior do mesmo `user_id`. Inserir registro com `decision = 'auto_continue'` se gap ≤ 15, senão `'pending'`.
+- `weight`, `bmr`, `tdee`, `daily_calories`, `protein_g`, `carbs_g`, `fat_g`
+- `activity_type`, `does_cardio`, `physical_activity_level`, `training_days_per_week`, `training_duration_minutes`, `training_intensity`, `cardio_*`
+- `notes` (texto da anamnese gerada)
+- `body_image_front_url`, `body_image_back_url`, `body_image_profile_url` (snapshot das URLs vigentes naquele momento)
+- `bioimpedance_log_id` (referência à bioimpedância mais recente, se existir)
+- `source` ("student" | "admin" | "consultor")
+- `created_at`, `user_id`
 
-### Frontend — aluno (`StudentProtocol.tsx`)
-- Buscar `subscriptions` do usuário (todas) + decisão de continuidade ativa.
-- Calcular `maxMedWeeks` somando `duration_days` das assinaturas em continuidade ativa (`auto_continue` ou `continue`), dividido por 30 × 4.
-- Quando o protocolo HTML não tiver cards suficientes para o novo intervalo: exibir banner discreto "Protocolo continuado — aguardando atualização do consultor".
+Snapshot **inicial** é criado automaticamente via trigger no `handle_new_user` complementar (ou seed na primeira atualização) para servir como linha-base.
 
-### Frontend — admin (novo card em `AdminProtocol.tsx` do aluno selecionado)
-- Quando existir decisão `pending`: card "Renovação detectada (>15 dias) — dar continuidade ao protocolo?" com botões Sim/Não.
-- Quando existir `auto_continue`/`continue` mas o HTML não cobre as semanas necessárias: aviso "Protocolo continuado — adicione semanas X-Y" com link para editar.
+RLS: aluno vê os próprios; admin vê todos; consultor vê dos vinculados (`is_consultant_of`).
 
-### Painel gamificado (`GamifiedProtocolPanel.tsx`)
-- Já aceita `maxWeeks`. Adicionar prop opcional `continuationNotice?: string` para renderizar o banner quando faltarem cards.
+## 2. Sincronização nos cards de evolução
+
+- `EvolutionUpdateCard` (aluno) — após o `update profiles` + `insert anamnesis_entries` atual, **gravar snapshot**.
+- `AdminEvolutionUpdate` (admin) — adicionar suporte a alteração de NEAT/atividade (mesmo componente `EvolutionActivityChange`) e gravar snapshot.
+- Confirmar que tudo continua atualizando o profile (a edição do aluno já lê de `profiles`, então peso/macros/NEAT aparecem refletidos automaticamente).
+
+## 3. Tela de comparação `EvolutionComparison`
+
+Componente único, reaproveitado em dois lugares:
+
+- **Edição do aluno** (`AdminStudents`) — nova aba "Histórico" no dialog de edição, com lista de snapshots e botão "Comparar inicial × atual" / seleção de 2 snapshots.
+- **Prontuário** — link "Ver comparação completa" abre o mesmo componente em modal.
+
+Layout (mobile-first, 360px):
+- Duas colunas (ou stack vertical no celular) com cards: Peso, Macros, NEAT, Fotos (front/back/profile lado a lado), Bioimpedância.
+- Variação calculada e exibida em verde/vermelho (Δ peso, Δ kcal, Δ % gordura, etc.).
+- Datas dos dois snapshots no topo.
+
+## 4. Onde aparece
+
+- `StudentEvolution` — botão "Ver comparações" abre modal.
+- `AdminStudents` (edição) — nova aba "Histórico de Evolução" com timeline + botão comparar.
+- `AdminStudents` (prontuário, dialog de visualização) — seção colapsável "Snapshots de Evolução" abaixo do "Histórico de Anotações".
+
+---
 
 ## Detalhes técnicos
 
-- `gap_days = new.start_date - prev.end_date` (em dias, mínimo 0).
-- Mapeamento semanas: `weeks = floor(duration_days * 4 / 30)`; soma das durações antes da divisão para evitar arredondamento.
-- A decisão é única por `(user_id, subscription_id)`.
-- Migration cria índice `(user_id, subscription_id)`.
-
-## Fora do escopo
-
-- Notificação push/WhatsApp ao admin (apenas badge na UI por enquanto).
-- Histórico de continuidades em relatório separado.
+- Migração SQL: tabela + RLS + índice `(user_id, created_at desc)`.
+- Helper `lib/evolution-snapshot.ts` com `createSnapshot(userId, source)` que coleta o profile atual, body_images, bioimpedance e insere um row.
+- Reuso do `EvolutionActivityChange` no card do admin.
+- Tipos do Supabase serão regenerados automaticamente após a migração.
