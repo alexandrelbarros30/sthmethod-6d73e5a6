@@ -9,6 +9,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import CircumferenceTracker from "@/components/student/CircumferenceTracker";
+import EvolutionComparison from "@/components/shared/EvolutionComparison";
+import EvolutionCharts from "@/components/shared/EvolutionCharts";
 import {
   ChartContainer, ChartTooltip, ChartTooltipContent,
 } from "@/components/ui/chart";
@@ -63,6 +65,11 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
 
   const latest = logs && logs.length > 0 ? logs[logs.length - 1] : null;
   const previous = logs && logs.length > 1 ? logs[logs.length - 2] : null;
+
+  // Peso "atual" do aluno = profile.weight (sempre o mais recente, atualizado nas evoluções).
+  // O peso da bioimpedância (latest.total_weight) é o registrado na avaliação.
+  const currentWeight = profile?.weight != null ? Number(profile.weight) : (latest?.total_weight ? Number(latest.total_weight) : null);
+  const bioWeight = latest?.total_weight ? Number(latest.total_weight) : null;
 
   const compositionData = useMemo(() => {
     if (!latest) return [];
@@ -159,8 +166,14 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
         <MetricCard
           icon={<Scale className="w-4 h-4" />}
           label="Peso"
-          value={latest.total_weight ? `${Number(latest.total_weight).toFixed(1)} kg` : "—"}
-          delta={<DeltaIndicator value={delta(latest.total_weight, previous?.total_weight)} />}
+          value={currentWeight != null ? `${currentWeight.toFixed(1)} kg` : "—"}
+          delta={
+            bioWeight != null && currentWeight != null && Math.abs(currentWeight - bioWeight) >= 0.1 ? (
+              <span className="text-[9px] text-muted-foreground">avaliação: {bioWeight.toFixed(1)} kg</span>
+            ) : (
+              <DeltaIndicator value={delta(latest.total_weight, previous?.total_weight)} />
+            )
+          }
           color="text-foreground"
         />
         <MetricCard
