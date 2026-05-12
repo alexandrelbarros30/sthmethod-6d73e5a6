@@ -569,12 +569,12 @@ const RecentStudents = ({ profiles, subscriptions, navigate, queryClient, active
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <Card>
+      <Card className="premium-card border-border/40 bg-card/55 backdrop-blur-2xl">
         <CollapsibleTrigger asChild>
-          <CardHeader className="cursor-pointer hover:bg-muted/30 transition-colors rounded-t-lg">
-            <CardTitle className="font-display flex items-center gap-2">
+          <CardHeader className="cursor-pointer rounded-t-2xl transition-colors hover:bg-muted/20">
+            <CardTitle className="font-display flex items-center gap-2 text-[15px] tracking-tight">
               Alunos Recentes
-              <Badge variant="default" className="ml-2">{recentProfiles.length}</Badge>
+              <Badge variant="secondary" className="ml-2 bg-foreground/10 text-foreground">{recentProfiles.length}</Badge>
               <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${open ? "rotate-180" : ""}`} />
             </CardTitle>
           </CardHeader>
@@ -593,10 +593,10 @@ const RecentStudents = ({ profiles, subscriptions, navigate, queryClient, active
                   const paymentStatus = !sub && payment ? payment.status : null;
 
                   return (
-                    <div key={p.id} className="py-3 border-b border-border/50 last:border-0">
+                    <div key={p.id} className="rounded-[22px] border border-border/40 bg-background/40 px-3 py-3 last:border-border/40">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${color.bg}`}>
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${color.bg}`}>
                             <span className={`text-xs font-bold ${color.text}`}>
                               {p.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "?"}
                             </span>
@@ -639,7 +639,7 @@ const RecentStudents = ({ profiles, subscriptions, navigate, queryClient, active
                       )}
                       <Button
                         size="sm"
-                        className="mt-2 ml-auto flex h-7 px-2 text-[11px] gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                        className="mt-3 ml-auto flex h-8 rounded-xl px-3 text-[11px] gap-1 bg-foreground text-background hover:bg-foreground/90"
                         onClick={() => confirmMutation.mutate(p.id)}
                         disabled={confirmMutation.isPending}
                       >
