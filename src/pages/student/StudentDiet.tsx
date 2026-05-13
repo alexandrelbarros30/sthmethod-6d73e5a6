@@ -21,6 +21,7 @@ import DietContentRenderer from "@/components/student/DietContentRenderer";
 import { Utensils, Flame, Zap, FileDown, Apple } from "lucide-react";
 import { toast } from "sonner";
 import { generateStudentPDF } from "@/lib/pdfGenerator";
+import GuidedTour from "@/components/student/GuidedTour";
 
 const StudentDiet = () => {
   const { user } = useAuth();
@@ -253,6 +254,17 @@ const StudentDiet = () => {
   return (
     <DashboardLayout role="student" title="Seu plano hoje" subtitle="Acompanhe suas refeições do dia.">
       <PreviewAsBanner />
+      <GuidedTour
+        tourId="student-diet"
+        steps={[
+          { selector: "[data-tour='diet-date']", title: "Navegue pelos dias", description: "Use as setas para revisar refeições passadas ou planejar o dia." },
+          { selector: "[data-tour='diet-progress']", title: "Sua consistência", description: "Acompanhe quantas refeições você já completou e qual é a próxima." },
+          { selector: "[data-tour='diet-macros']", title: "Macros do dia", description: "Calorias, proteína, carboidrato e gordura — atualizam ao marcar cada refeição." },
+          { selector: "[data-tour='diet-hydration']", title: "Hidratação", description: "Toque para registrar 25%, 50%, 75% ou 100% da meta diária de água." },
+          { selector: "[data-tour='diet-meals']", title: "Suas refeições", description: "Toque na refeição para abrir, marcar como concluída ou pular." },
+          { selector: "[data-tour='diet-pdf']", title: "Baixar PDF", description: "Gere uma versão imprimível da sua dieta a qualquer momento." },
+        ]}
+      />
       <div className="space-y-5 max-w-lg mx-auto">
         {/* Identity Header — alinhado ao Protocolo */}
         <div className="text-center space-y-3 pt-1">
@@ -266,9 +278,11 @@ const StudentDiet = () => {
         </div>
 
         {/* Date navigation */}
-        <DietDateNav selectedDate={selectedDate} onDateChange={setSelectedDate} />
+        <div data-tour="diet-date">
+          <DietDateNav selectedDate={selectedDate} onDateChange={setSelectedDate} />
+        </div>
 
-        <div className="flex justify-end">
+        <div className="flex justify-end" data-tour="diet-pdf">
           <Button variant="outline" size="sm" onClick={handleDownloadPdf} disabled={isDownloadingPdf}>
             <FileDown className="w-4 h-4 mr-1" />
             {isDownloadingPdf ? "Gerando PDF..." : "Baixar PDF"}
@@ -277,7 +291,7 @@ const StudentDiet = () => {
 
         {hasStructuredMeals ? (
           <>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden animate-fade-in">
+            <div data-tour="diet-progress" className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden animate-fade-in">
               <div className="py-6 px-6">
                 <div className="mb-4">
                   <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground">Hoje</p>
@@ -319,7 +333,7 @@ const StudentDiet = () => {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+            <div data-tour="diet-macros" className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
               <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground mb-4">Macros</p>
               <div className="space-y-3">
                 <MacroProgressBar label="Calorias" consumed={consumedMacros.kcal} total={totalMacros.kcal} unit="kcal" color="bg-foreground" />
@@ -336,14 +350,16 @@ const StudentDiet = () => {
             </div>
 
             {hydrationGoalL > 0 && (
-              <HydrationTracker
-                goalL={hydrationGoalL}
-                consumedMl={waterConsumedMl}
-                onAdd={(ml) => addWater.mutate(ml)}
-                onRemove={() => removeLastWater.mutate()}
-                isAdding={addWater.isPending}
-                disabled={!isToday}
-              />
+              <div data-tour="diet-hydration">
+                <HydrationTracker
+                  goalL={hydrationGoalL}
+                  consumedMl={waterConsumedMl}
+                  onAdd={(ml) => addWater.mutate(ml)}
+                  onRemove={() => removeLastWater.mutate()}
+                  isAdding={addWater.isPending}
+                  disabled={!isToday}
+                />
+              </div>
             )}
           </>
         ) : (
@@ -363,7 +379,7 @@ const StudentDiet = () => {
         />
 
         {hasStructuredMeals && (
-          <div className="space-y-3" style={{ animationDelay: "0.2s" }}>
+          <div data-tour="diet-meals" className="space-y-3" style={{ animationDelay: "0.2s" }}>
             <div className="flex items-baseline justify-between">
               <h3 className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground flex items-center gap-2">
                 <Utensils className="w-3 h-3" /> Refeições do dia

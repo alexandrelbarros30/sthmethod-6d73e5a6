@@ -21,6 +21,7 @@ import StudentBioimpedancePanel from "@/components/student/StudentBioimpedancePa
 import EvolutionComparison from "@/components/shared/EvolutionComparison";
 import { createEvolutionSnapshot } from "@/lib/evolution-snapshot";
 import { GitCompare } from "lucide-react";
+import GuidedTour from "@/components/student/GuidedTour";
 
 const StudentEvolution = () => {
   const { user } = useAuth();
@@ -245,7 +246,21 @@ const StudentEvolution = () => {
 
   return (
     <DashboardLayout role="student" title="Atualização" subtitle="Registre seu progresso para acompanhamento profissional.">
-      {fullProfile && <EvolutionMacroDisplay profile={fullProfile} />}
+      <GuidedTour
+        tourId="student-evolution"
+        steps={[
+          { selector: "[data-tour='evo-macros']", title: "Seus macros atuais", description: "Veja calorias e macros calculados a partir do seu peso e atividade mais recentes." },
+          { selector: "[data-tour='evo-weight']", title: "Atualize o peso", description: "Informe seu peso atual — é o gatilho principal para recalcular os macros." },
+          { selector: "[data-tour='evo-photos']", title: "Novas fotos", description: "Envie 3 fotos atualizadas. As anteriores ficam preservadas no histórico." },
+          { selector: "[data-tour='evo-submit']", title: "Salvar evolução", description: "Toque aqui para registrar a atualização e recalcular automaticamente." },
+          { selector: "[data-tour='evo-compare']", title: "Compare sua evolução", description: "Veja a diferença entre o registro inicial e o atual." },
+        ]}
+      />
+      {fullProfile && (
+        <div data-tour="evo-macros">
+          <EvolutionMacroDisplay profile={fullProfile} />
+        </div>
+      )}
 
       <div className="rounded-3xl border border-border/40 bg-background p-6 mb-6 space-y-5">
         <div>
@@ -256,7 +271,7 @@ const StudentEvolution = () => {
           </p>
         </div>
           {/* Weight */}
-          <div className="space-y-2">
+          <div data-tour="evo-weight" className="space-y-2">
             <div className="flex items-center gap-2">
               <Scale className="w-4 h-4 text-foreground" />
               <Label className="font-body font-medium">Peso Atual (kg) *</Label>
@@ -301,7 +316,7 @@ const StudentEvolution = () => {
           </div>
 
           {/* Body images */}
-          <div className="space-y-2">
+          <div data-tour="evo-photos" className="space-y-2">
             <div className="flex items-center gap-2 mb-1">
               <Camera className="w-4 h-4 text-foreground" />
               <Label className="font-body font-medium">Novas Fotos Corporais (3 obrigatórias)</Label>
@@ -337,6 +352,7 @@ const StudentEvolution = () => {
           </div>
 
           <Button
+            data-tour="evo-submit"
             className={`w-full transition-colors ${canSubmitUpdate && !saving ? "bg-foreground text-background hover:bg-foreground/90 shadow-[0_0_20px_hsl(var(--foreground)/0.2)]" : ""}`}
             onClick={handleSaveWeight}
             disabled={saving || !canSubmitUpdate}
@@ -348,7 +364,7 @@ const StudentEvolution = () => {
       <EvolutionWeightHistory weightLogs={weightLogs || []} />
 
       {/* Comparação de evolução (inline) */}
-      <Card className="mb-6">
+      <Card className="mb-6" data-tour="evo-compare">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
             <GitCompare className="w-4 h-4" />
