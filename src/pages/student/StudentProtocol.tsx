@@ -23,6 +23,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import GamifiedProtocolPanel from "@/components/student/GamifiedProtocolPanel";
 import { hasSmartProtocolStructure, isSmartProtocolEra } from "@/lib/protocol-phase-parser";
 import { Sparkles, ChevronDown } from "lucide-react";
+import GuidedTour from "@/components/student/GuidedTour";
 
 const useContentProtection = () => {
   useEffect(() => {
@@ -308,13 +309,21 @@ const StudentProtocol = () => {
   return (
     <DashboardLayout role="student" title="Protocolo" subtitle="Suplementação e medicamentos prescritos.">
       <PreviewAsBanner />
+      <GuidedTour
+        tourId="student-protocol"
+        steps={[
+          { selector: "[data-tour='proto-disclaimer']", title: "Aviso importante", description: "Estas informações são orientativas e não substituem acompanhamento médico." },
+          { selector: "[data-tour='proto-smart']", title: "Protocolo Inteligente", description: "Toque para abrir as fases do seu protocolo e fazer o check-in diário." },
+          { selector: "[data-tour='proto-history']", title: "Histórico", description: "Aqui ficam os protocolos anteriores. Toque para revisar conteúdo e PDFs." },
+        ]}
+      />
       <style>{`
         @media print { .content-protected { display: none !important; } body::after { content: "Impressão não permitida"; display: flex; align-items: center; justify-content: center; font-size: 2rem; height: 100vh; } }
         .content-protected { user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; -webkit-touch-callout: none; }
       `}</style>
       <div className="space-y-4 max-w-4xl content-protected">
         {/* Legal disclaimer */}
-        <div className="rounded-2xl border border-border/40 bg-muted/30 px-4 py-3 flex items-start gap-3">
+        <div data-tour="proto-disclaimer" className="rounded-2xl border border-border/40 bg-muted/30 px-4 py-3 flex items-start gap-3">
           <AlertTriangle className="w-4 h-4 text-foreground/70 shrink-0 mt-0.5" strokeWidth={1.8} />
           <p className="text-[12px] text-muted-foreground font-light tracking-tight leading-relaxed">
             As informações aqui apresentadas não substituem avaliação e acompanhamento médico.
@@ -331,7 +340,7 @@ const StudentProtocol = () => {
 
         {/* New "Protocolo Inteligente" card — independent from legacy panels */}
         {showSmartProtocol && (
-          <Collapsible open={smartOpen} onOpenChange={setSmartOpen}>
+          <Collapsible open={smartOpen} onOpenChange={setSmartOpen} data-tour="proto-smart">
             <CollapsibleTrigger className="w-full flex items-center justify-between rounded-2xl border border-[#14b780]/30 bg-gradient-to-br from-[#14b780]/10 to-transparent px-4 py-3 hover:bg-[#14b780]/5 transition">
               <span className="flex items-center gap-2 text-sm font-semibold tracking-tight">
                 <Sparkles className="w-4 h-4 text-[#14b780]" strokeWidth={2} />
@@ -365,7 +374,7 @@ const StudentProtocol = () => {
               </CardContent></Card>
             ) : (
               <>
-                <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground flex items-center gap-1.5 pt-2">
+                <p data-tour="proto-history" className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground flex items-center gap-1.5 pt-2">
                   <Clock className="w-3 h-3" strokeWidth={2} /> Histórico · {historyProtocols.length}
                 </p>
 
