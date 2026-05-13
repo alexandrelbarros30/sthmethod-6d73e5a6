@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Salad, FlaskConical, Activity, User, Dumbbell, TrendingUp, BookOpen, CreditCard, ListChecks, LogOut, FileText, Shield, Microscope, Megaphone, Newspaper } from "lucide-react";
+import { LayoutDashboard, Salad, FlaskConical, Activity, User, Dumbbell, TrendingUp, BookOpen, CreditCard, ListChecks, LogOut, FileText, Shield, Microscope, Megaphone, Newspaper, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -164,6 +164,17 @@ const FloatingDock = () => {
                   );
                 })}
                 <div className="h-px bg-border/40 my-1" />
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    if (location.pathname !== "/dashboard") navigate("/dashboard");
+                    setTimeout(() => window.dispatchEvent(new Event("sth:open-welcome-tour")), 250);
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-[13px] font-medium text-foreground/70 hover:bg-muted/60 hover:text-foreground transition-colors tracking-tight"
+                >
+                  <Sparkles className="w-4 h-4" strokeWidth={1.8} />
+                  Refazer guia
+                </button>
                 <button
                   onClick={() => { signOut(); navigate("/"); setMenuOpen(false); }}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-[13px] font-medium text-foreground/60 hover:bg-muted/60 hover:text-foreground transition-colors tracking-tight"
