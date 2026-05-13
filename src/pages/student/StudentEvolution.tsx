@@ -20,7 +20,6 @@ import EvolutionActivityChange, { type ActivityData } from "@/components/student
 import StudentBioimpedancePanel from "@/components/student/StudentBioimpedancePanel";
 import EvolutionComparison from "@/components/shared/EvolutionComparison";
 import { createEvolutionSnapshot } from "@/lib/evolution-snapshot";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { GitCompare } from "lucide-react";
 
 const StudentEvolution = () => {
@@ -348,26 +347,18 @@ const StudentEvolution = () => {
 
       <EvolutionWeightHistory weightLogs={weightLogs || []} />
 
-      {/* Comparação de evolução */}
-      <div className="mb-6">
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" className="w-full">
-              <GitCompare className="w-4 h-4 mr-2" />
-              Comparar evolução (inicial × atual)
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <GitCompare className="w-5 h-5" />
-                Histórico de Evolução
-              </DialogTitle>
-            </DialogHeader>
-            <EvolutionComparison userId={user!.id} />
-          </DialogContent>
-        </Dialog>
-      </div>
+      {/* Comparação de evolução (inline) */}
+      <Card className="mb-6">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <GitCompare className="w-4 h-4" />
+            Histórico de Evolução (inicial × atual)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <EvolutionComparison userId={user!.id} />
+        </CardContent>
+      </Card>
 
       {/* Bioimpedance Panel */}
       <div className="mb-6">
