@@ -256,8 +256,11 @@ const StudentEvolution = () => {
           { selector: "[data-tour='evo-compare']", title: "Compare sua evolução", description: "Veja a diferença entre o registro inicial e o atual." },
         ]}
       />
-      {fullProfile && <EvolutionMacroDisplay profile={fullProfile} />}
-      <div data-tour="evo-macros" />
+      {fullProfile && (
+        <div data-tour="evo-macros">
+          <EvolutionMacroDisplay profile={fullProfile} />
+        </div>
+      )}
 
       <div className="rounded-3xl border border-border/40 bg-background p-6 mb-6 space-y-5">
         <div>
