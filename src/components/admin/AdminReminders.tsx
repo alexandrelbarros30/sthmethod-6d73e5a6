@@ -11,10 +11,11 @@ import { Label } from "@/components/ui/label";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { CheckCircle, Clock, Salad, RefreshCw, XCircle, Bell, User, Mail, Phone, CreditCard, Ban, PauseCircle, ExternalLink, Trash2 } from "lucide-react";
+import { CheckCircle, Clock, Salad, RefreshCw, XCircle, Bell, User, Mail, Phone, CreditCard, Ban, PauseCircle, ExternalLink, Trash2, MessageCircle } from "lucide-react";
 import { format, addDays, differenceInDays, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
+import { sendSystemTemplate } from "@/lib/system-templates";
 
 interface Reminder {
   id: string;
@@ -223,6 +224,19 @@ const AdminReminders = () => {
     const cfg = statusConfig[r.status] || statusConfig.pending;
     const daysLeft = differenceInDays(new Date(r.subscription?.end_date || r.due_date), new Date());
 
+    const handleWhatsApp = async () => {
+      const key = r.type === "renewal" ? "renewal_reminder" : "diet_adjustment_reminder";
+      const res = await sendSystemTemplate(key, {
+        full_name: r.profile?.full_name,
+        phone: r.profile?.phone,
+        email: r.profile?.email,
+        user_id: r.user_id,
+        plan_name: r.subscription?.plans?.name,
+        end_date: r.subscription?.end_date,
+      }, { logHistory: true });
+      if (!res.ok) toast({ title: res.reason || "Erro ao abrir WhatsApp", variant: "destructive" });
+    };
+
     return (
       <div className={`rounded-lg border ${isOverdue ? "border-destructive/30 bg-destructive/5" : "border-border"} overflow-hidden max-w-full`}>
         {/* Student identification header */}
@@ -248,50 +262,53 @@ const AdminReminders = () => {
         </div>
 
         {/* Details & actions */}
-        <div className="px-3 sm:px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2 sm:gap-4 text-[10px] sm:text-xs text-muted-foreground flex-wrap">
+        <div className="px-3 sm:px-4 py-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+          <div className="flex items-center gap-x-3 gap-y-1 text-[10px] sm:text-xs text-muted-foreground flex-wrap">
             <span>📋 {r.subscription?.plans?.name || "Sem plano"}</span>
             <span>📅 Vence: {r.subscription?.end_date ? format(new Date(r.subscription.end_date), "dd/MM/yyyy") : "—"}</span>
             {r.subscription && daysLeft >= 0 && <span className={daysLeft <= 3 ? "text-destructive font-medium" : ""}>{daysLeft === 0 ? "Vence hoje!" : `${daysLeft} dias restantes`}</span>}
             {r.subscription && daysLeft < 0 && <span className="text-destructive font-medium">Vencido há {Math.abs(daysLeft)} dias</span>}
           </div>
 
-          <div className="flex items-center gap-1 flex-wrap">
+          <div className="grid grid-cols-2 sm:flex sm:items-center sm:flex-wrap gap-1.5 sm:gap-1">
+            <Button size="sm" variant="default" className="h-8 text-xs gap-1 col-span-2 sm:col-span-1 bg-[#25D366] hover:bg-[#1fb556] text-white" onClick={handleWhatsApp} title="Enviar WhatsApp com template">
+              <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+            </Button>
             {/* Quick action shortcuts */}
-            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => navigate(`/admin/students?manage=${r.user_id}`)} title="Ver cadastro do aluno">
+            <Button size="sm" variant="outline" className="h-8 text-xs justify-center" onClick={() => navigate(`/admin/students?manage=${r.user_id}`)} title="Ver cadastro do aluno">
               <User className="w-3 h-3 mr-1" /> Cadastro
             </Button>
 
             {r.subscription && (
               <>
-                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { openSubDialog({ ...r, } as Reminder); setSubForm(f => ({ ...f, status: "active" })); }} title="Renovar assinatura">
+                <Button size="sm" variant="outline" className="h-8 text-xs justify-center" onClick={() => { openSubDialog({ ...r, } as Reminder); setSubForm(f => ({ ...f, status: "active" })); }} title="Renovar assinatura">
                   <RefreshCw className="w-3 h-3 mr-1" /> Renovar
                 </Button>
-                <Button size="sm" variant="outline" className="h-7 text-xs text-secondary-foreground border-secondary hover:bg-secondary/80" onClick={() => { openSubDialog({ ...r } as Reminder); setSubForm(f => ({ ...f, status: "suspended" })); }} title="Suspender assinatura">
+                <Button size="sm" variant="outline" className="h-8 text-xs justify-center text-secondary-foreground border-secondary hover:bg-secondary/80" onClick={() => { openSubDialog({ ...r } as Reminder); setSubForm(f => ({ ...f, status: "suspended" })); }} title="Suspender assinatura">
                   <PauseCircle className="w-3 h-3 mr-1" /> Suspender
                 </Button>
-                <Button size="sm" variant="outline" className="h-7 text-xs text-destructive border-destructive/20 hover:bg-destructive/5" onClick={() => { openSubDialog({ ...r } as Reminder); setSubForm(f => ({ ...f, status: "expired" })); }} title="Bloquear/Encerrar assinatura">
+                <Button size="sm" variant="outline" className="h-8 text-xs justify-center text-destructive border-destructive/20 hover:bg-destructive/5" onClick={() => { openSubDialog({ ...r } as Reminder); setSubForm(f => ({ ...f, status: "expired" })); }} title="Bloquear/Encerrar assinatura">
                   <Ban className="w-3 h-3 mr-1" /> Bloquear
                 </Button>
               </>
             )}
 
-            <div className="w-px h-5 bg-border mx-1" />
+            <div className="hidden sm:block w-px h-5 bg-border mx-1" />
 
             {r.status === "pending" && (
               <>
-                <Button size="sm" variant="default" className="h-7 text-xs" onClick={() => setConfirmDoneId(r.id)}>
+                <Button size="sm" variant="default" className="h-8 text-xs justify-center" onClick={() => setConfirmDoneId(r.id)}>
                   <CheckCircle className="w-3 h-3 mr-1" /> Feito
                 </Button>
-                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => updateStatus.mutate({ id: r.id, status: "postponed" })}>
+                <Button size="sm" variant="ghost" className="h-8 text-xs justify-center" onClick={() => updateStatus.mutate({ id: r.id, status: "postponed" })}>
                   <Clock className="w-3 h-3 mr-1" /> Adiar
                 </Button>
-                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => updateStatus.mutate({ id: r.id, status: "disabled" })}>
-                  <XCircle className="w-3 h-3" />
+                <Button size="sm" variant="ghost" className="h-8 text-xs justify-center" onClick={() => updateStatus.mutate({ id: r.id, status: "disabled" })}>
+                  <XCircle className="w-3 h-3 mr-1" /> Desativar
                 </Button>
               </>
             )}
-            <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive hover:text-destructive" onClick={() => setConfirmDeleteId(r.id)}>
+            <Button size="sm" variant="ghost" className="h-8 text-xs justify-center text-destructive hover:text-destructive col-span-2 sm:col-span-1" onClick={() => setConfirmDeleteId(r.id)}>
               <Trash2 className="w-3 h-3 mr-1" /> Remover
             </Button>
           </div>
@@ -305,37 +322,37 @@ const AdminReminders = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h3 className="text-lg font-display font-semibold text-foreground">Lembretes Inteligentes</h3>
           <p className="text-sm text-muted-foreground">Gerencie ajustes de dieta e renovações.</p>
         </div>
-        <Button onClick={() => generateMutation.mutate()} disabled={generateMutation.isPending}>
+        <Button onClick={() => generateMutation.mutate()} disabled={generateMutation.isPending} className="w-full sm:w-auto">
           <RefreshCw className={`w-4 h-4 mr-2 ${generateMutation.isPending ? "animate-spin" : ""}`} />
           Gerar Lembretes
         </Button>
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
-          <TabsTrigger value="diet" className="gap-2">
-            <Salad className="w-4 h-4" /> Ajuste de Dieta
+        <TabsList className="w-full grid grid-cols-2 sm:inline-grid">
+          <TabsTrigger value="diet" className="gap-1.5 text-xs sm:text-sm">
+            <Salad className="w-4 h-4 shrink-0" /> <span className="truncate">Ajuste de Dieta</span>
             {pendingDiet > 0 && <Badge variant="destructive" className="ml-1 text-xs px-1.5 py-0">{pendingDiet}</Badge>}
           </TabsTrigger>
-          <TabsTrigger value="renewal" className="gap-2">
-            <Bell className="w-4 h-4" /> Renovação
+          <TabsTrigger value="renewal" className="gap-1.5 text-xs sm:text-sm">
+            <Bell className="w-4 h-4 shrink-0" /> Renovação
             {pendingRenewal > 0 && <Badge variant="destructive" className="ml-1 text-xs px-1.5 py-0">{pendingRenewal}</Badge>}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="diet">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base font-display flex items-center gap-2">
+            <CardHeader className="px-3 sm:px-6">
+              <CardTitle className="text-sm sm:text-base font-display flex items-center gap-2">
                 <Salad className="w-4 h-4" /> Lembretes de Ajuste de Dieta (Mensal)
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-3 px-2 sm:px-6">
               {dietReminders.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Nenhum lembrete. Clique em "Gerar Lembretes".</p>
               ) : (
@@ -347,12 +364,12 @@ const AdminReminders = () => {
 
         <TabsContent value="renewal">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base font-display flex items-center gap-2">
+            <CardHeader className="px-3 sm:px-6">
+              <CardTitle className="text-sm sm:text-base font-display flex items-center gap-2">
                 <Bell className="w-4 h-4" /> Lembretes de Renovação (3 dias antes)
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-3 px-2 sm:px-6">
               {renewalReminders.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Nenhum lembrete. Clique em "Gerar Lembretes".</p>
               ) : (
