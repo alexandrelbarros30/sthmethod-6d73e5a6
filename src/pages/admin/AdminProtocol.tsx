@@ -868,7 +868,10 @@ REGRAS DE MONTAGEM
 4. Cada bloco contém: o grupo entre aspas, "Ação:", "Horário:", "Foco:".
 5. O campo "Horário:" NÃO usa hora fixa (ex.: 07:00). Descreva o momento em relação à rotina: "ao acordar", "antes do café", "junto à refeição", "30 min antes do treino", "logo após o treino", "antes de dormir", etc.
 6. Bloco MEDICAMENTOS organizado por fases de semanas (Sem 1-4, Sem 5-8, …) respeitando o limite do plano (${semanasLimite} semanas), com sensibilidade para aumento/redução de dose. Inclui hormônios, peptídeos, inibidores de aromatase, estimulantes e diuréticos quando aplicável. Cada fase abre suas aspas no primeiro medicamento e fecha no último.
-7. Pilares técnicos a cobrir: Suporte Endócrino-Hormonal, Suporte Cardiovascular/Hepático/Renal, Suporte Metabólico/Performance, Sistema Pré e Pós-Treino.`;
+7. Pilares técnicos a cobrir: Suporte Endócrino-Hormonal, Suporte Cardiovascular/Hepático/Renal, Suporte Metabólico/Performance, Sistema Pré e Pós-Treino.
+8. Posologia individualizada: calcule doses, frequência e janela de uso de TODOS os medicamentos e suplementos (em Stack ou isolados) considerando peso (${peso}), altura (${altura}), idade (${idade}) e objetivo (${objetivo}). Ajuste sempre que houver hormônios, peptídeos, IA, estimulantes ou diuréticos para garantir suporte cardiovascular, hepático e renal, suporte metabólico e suporte pré e pós-treino — incluindo nos blocos as moléculas de proteção/recuperação necessárias (ex.: TUDCA, NAC, CoQ10, ômega-3, taurina, citrulina, eletrólitos) conforme o stack montado.
+9. Encerre o prompt EXATAMENTE com a frase a seguir, em uma linha separada:
+"você é o médico especialista, mestre e doutor renomado do esporte de alto rendimento como fisiculturimo, futebol, vôlei e corrida maratonista deixando o paciente com maior performance"`;
 
                         await navigator.clipboard.writeText(prompt);
                         toast.success("Prompt do protocolo copiado!");
