@@ -862,67 +862,13 @@ Plano vigente: ${semanasLinha}
 Protocolo Hormonal Atual (se houver): ${protocoloAtual}
 
 REGRAS DE MONTAGEM
-1. Ordem cronológica do dia: MEDICAMENTOS → manhã → almoço → lanche da tarde → jantar → ceia. PRÉ-TREINO e PÓS-TREINO sempre por último.
-2. Cada bloco começa com o emoji-âncora correspondente (💊 manhã ☀️ almoço 🍽️ tarde ☕ jantar 🌙 ceia 🌜 pré-treino 🏋️ pós-treino 🧊).
-3. Suplementos/medicamentos sempre listados entre aspas duplas, um por linha.
-4. Cada bloco contém: linha entre aspas com itens, "Ação:", "Horário:", "Foco:".
-5. Bloco MEDICAMENTOS organizado por fases de semanas (Sem 1-4, Sem 5-8, …) respeitando o limite do plano (${semanasLimite} semanas), com sensibilidade para aumento/redução de dose. Inclui hormônios, peptídeos, inibidores de aromatase, estimulantes, diuréticos quando aplicável.
-
-ESTRUTURA OBRIGATÓRIA (modelo)
-
-💊 MEDICAMENTOS, HORMÔNIOS E PEPTÍDEOS
-Sem 1-4
-"Testosterona 250mg
-Espironolactona 25mg"
-Ação:
-Horário:
-Foco:
-
-Sem 5-8
-"..."
-Ação:
-Horário:
-Foco:
-(continue até Sem ${semanasLimite})
-
-☀️ MANHÃ
-"L-Arginina 3g
-Tadalafila 5mg"
-Ação:
-Horário:
-Foco:
-
-🍽️ ALMOÇO
-"..."
-Ação:
-Horário:
-Foco:
-
-☕ LANCHE DA TARDE
-"..."
-Ação:
-Horário:
-Foco:
-
-🌙 JANTAR / CEIA
-"..."
-Ação:
-Horário:
-Foco:
-
-🏋️ PRÉ-TREINO
-"..."
-Ação:
-Horário:
-Foco:
-
-🧊 PÓS-TREINO
-"..."
-Ação:
-Horário:
-Foco:
-
-Pilares técnicos: Suporte Endócrino-Hormonal, Suporte Cardiovascular/Hepático/Renal, Suporte Metabólico/Performance, Sistema Pré e Pós-Treino.`;
+1. Ordem cronológica do dia: MEDICAMENTOS → manhã → almoço → lanche da tarde → jantar → ceia. PRÉ-TREINO e PÓS-TREINO sempre no final.
+2. Cada bloco começa com o emoji-âncora correspondente combinando com o título (💊 MEDICAMENTOS · ☀️ MANHÃ · 🍽️ ALMOÇO · ☕ LANCHE DA TARDE · 🌙 JANTAR/CEIA · 🏋️ PRÉ-TREINO · 🧊 PÓS-TREINO).
+3. Aspas duplas envolvem o GRUPO de itens de cada bloco: abrem ANTES do primeiro item e fecham DEPOIS do último item — nunca uma aspa por item. Cada item fica em sua própria linha dentro das aspas.
+4. Cada bloco contém: o grupo entre aspas, "Ação:", "Horário:", "Foco:".
+5. O campo "Horário:" NÃO usa hora fixa (ex.: 07:00). Descreva o momento em relação à rotina: "ao acordar", "antes do café", "junto à refeição", "30 min antes do treino", "logo após o treino", "antes de dormir", etc.
+6. Bloco MEDICAMENTOS organizado por fases de semanas (Sem 1-4, Sem 5-8, …) respeitando o limite do plano (${semanasLimite} semanas), com sensibilidade para aumento/redução de dose. Inclui hormônios, peptídeos, inibidores de aromatase, estimulantes e diuréticos quando aplicável. Cada fase abre suas aspas no primeiro medicamento e fecha no último.
+7. Pilares técnicos a cobrir: Suporte Endócrino-Hormonal, Suporte Cardiovascular/Hepático/Renal, Suporte Metabólico/Performance, Sistema Pré e Pós-Treino.`;
 
                         await navigator.clipboard.writeText(prompt);
                         toast.success("Prompt do protocolo copiado!");
