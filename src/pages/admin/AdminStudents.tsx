@@ -1583,6 +1583,12 @@ const AdminStudents = () => {
                     <p className="text-sm text-muted-foreground">Nenhuma imagem enviada.</p>
                   )}
                 </section>
+
+                {/* Comparação de Evolução (inicial × atual) */}
+                <section>
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Comparação de Evolução</h3>
+                  <EvolutionComparison userId={selected.user_id} />
+                </section>
               </div>
             </ScrollArea>
           )}
