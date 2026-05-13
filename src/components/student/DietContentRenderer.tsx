@@ -10,8 +10,10 @@ import RichContentRenderer from "@/components/shared/RichContentRenderer";
  * - Clean spacing between food items
  */
 
-const MEAL_HEADING_RE = /^(REFEIC[ÃA]O\s*\d+|REFEI[CÇ][ÃA]O\s*\d+|PRE[- ]?TREINO|P[OÓ]S[- ]?TREINO|CEIA|LANCHE\s*\d*|CAFÉ\s*DA\s*MANH[ÃA]|ALMO[CÇ]O|JANTAR)/i;
-const SECTION_TITLE_RE = /^(ROTINA\s*ALIMENTAR|PLANO\s*ALIMENTAR|DIETA)/i;
+// Allow leading emojis/symbols/whitespace before the heading keyword (e.g. "☕ Lanche da tarde", "🍽️ Almoço")
+const LEADING_DECOR = "[\\s\\p{Emoji_Presentation}\\p{Extended_Pictographic}\\p{S}\\p{P}]*";
+const MEAL_HEADING_RE = new RegExp(`^${LEADING_DECOR}(REFEIC[ÃA]O\\s*\\d*|REFEI[CÇ][ÃA]O\\s*\\d*|PRE[- ]?TREINO|P[OÓ]S[- ]?TREINO|CEIA|LANCHE(\\s+(DA\\s+TARDE|DA\\s+MANH[ÃA]|DA\\s+NOITE))?\\s*\\d*|CAFÉ\\s*DA\\s*MANH[ÃA]|CAFE\\s*DA\\s*MANHA|ALMO[CÇ]O|JANTAR|MANH[ÃA]|TARDE|NOITE|MEDICAMENTOS)`, "iu");
+const SECTION_TITLE_RE = new RegExp(`^${LEADING_DECOR}(ROTINA\\s*ALIMENTAR|PLANO\\s*ALIMENTAR|DIETA)`, "iu");
 
 const QTY_UNIT_RE_SOURCE = `(\\d+[.,\\/]?\\d*)\\s*(g|gr|grama|gramas|kg|mg|mcg|ml|l|litro|litros|un|und|unidade|unidades|colher|colheres|c\\.?s\\.?|c\\.?ch\\.?|xícara|xícaras|xic|fatia|fatias|cápsula|cápsulas|cap|caps|saches?|sachês?|sachê|porç[ãa]o|porções|porcao|scoop|scoops|dose|doses|gota|gotas|pedaço|pedaços|pote|potes|copo|copos|punhado|punhados|pitada|pitadas|lata|latas|tablete|tabletes|barra|barras|ovo|ovos|clara|claras|pç|pçs|tb|tbs|ud|kcal)\\b`;
 const STANDALONE_NUM_RE = /^(\d+[.,\/]?\d*)\s+/i;
