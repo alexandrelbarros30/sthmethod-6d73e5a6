@@ -100,7 +100,21 @@ const PhaseCard = ({
               <p className="font-mono text-[13px] tracking-tight text-[color:var(--sth-green)]/90"><span className="text-foreground/40 font-sans">Stack · </span>{phase.stack}</p>
             )}
             {phase.timing && (
-              <p className="inline-flex items-center gap-1.5"><Clock className="w-3 h-3 opacity-60" strokeWidth={2}/> {phase.timing}</p>
+              <div className="mt-1.5">
+                <span
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-[12px] font-semibold tracking-tight animate-pulse"
+                  style={{
+                    color: STH_GREEN,
+                    background: `${STH_GREEN}14`,
+                    border: `1px solid ${STH_GREEN}55`,
+                    boxShadow: `0 0 12px -2px ${STH_GREEN}99, inset 0 0 8px -4px ${STH_GREEN}66`,
+                    textShadow: `0 0 8px ${STH_GREEN}99`,
+                  }}
+                >
+                  <Clock className="w-3.5 h-3.5" strokeWidth={2.5} />
+                  {phase.timing}
+                </span>
+              </div>
             )}
             {phase.focus && (
               <p className="inline-flex items-start gap-1.5"><Target className="w-3 h-3 opacity-60 mt-0.5" strokeWidth={2}/> <span>{phase.focus}</span></p>
