@@ -795,36 +795,121 @@ const AdminProtocol = () => {
                         const protocoloAtual = p.current_protocol?.trim() || "Nenhum protocolo registrado";
                         const nome = p.full_name || selected?.full_name || "[não informado]";
 
-                        // 1) Macros: prioridade cardápio nutricional mais atualizado (diet_meals + diet_foods); fallback macros do perfil
+                        // 1) Macros: prioriza o cardápio atual/último salvo em dietas; fallback macros do perfil
                         let kcal = 0, prot = 0, carb = 0, fat = 0;
                         let macrosFonte = "macros do perfil";
+                        let dietaAtualInfo = "Nenhum cardápio encontrado";
+                        let dataReferenciaAtual = (p.updated_at as string | undefined) || new Date().toISOString();
+                        let dataUltimoProtocolo: string | null = null;
+                        let resumoUltimoProtocolo = "Nenhum protocolo salvo";
+
+                        const formatDateTime = (value?: string | null) => {
+                          if (!value) return "[não informado]";
+                          return new Date(value).toLocaleString("pt-BR", {
+                            timeZone: "America/Sao_Paulo",
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          });
+                        };
+
                         if (uid) {
-                          const { data: meals } = await supabase
-                            .from("diet_meals").select("id").eq("user_id", uid).order("updated_at", { ascending: false });
-                          const mealIds = (meals || []).map((m: any) => m.id);
-                          if (mealIds.length > 0) {
-                            const { data: foods } = await supabase
-                              .from("diet_foods")
-                              .select("energy_kcal, protein_g, carbs_g, fat_g")
-                              .in("meal_id", mealIds);
-                            (foods || []).forEach((f: any) => {
-                              kcal += Number(f.energy_kcal) || 0;
-                              prot += Number(f.protein_g) || 0;
-                              carb += Number(f.carbs_g) || 0;
-                              fat += Number(f.fat_g) || 0;
-                            });
-                            if (kcal > 0) macrosFonte = "cardápio nutricional atualizado";
+                          const [dietsRes, latestProtocolRes] = await Promise.all([
+                            supabase
+                              .from("student_diets")
+                              .select("id, title, created_at, release_date, start_date, end_date, energy_kcal, protein_g, carbs_g, fat_g, is_active")
+                              .eq("user_id", uid)
+                              .order("created_at", { ascending: false }),
+                            supabase
+                              .from("student_protocols")
+                              .select("title, created_at")
+                              .eq("user_id", uid)
+                              .order("created_at", { ascending: false })
+                              .limit(1)
+                              .maybeSingle(),
+                          ]);
+
+                          const nowTs = Date.now();
+                          const diets = dietsRes.data || [];
+                          const getDietRefTs = (diet: any) => {
+                            const ref = diet.release_date || diet.start_date || diet.created_at;
+                            return ref ? new Date(ref).getTime() : 0;
+                          };
+                          const isReleased = (diet: any) => !diet.release_date || new Date(diet.release_date).getTime() <= nowTs;
+                          const isCurrentWindow = (diet: any) => !diet.end_date || new Date(diet.end_date).getTime() >= nowTs;
+
+                          const dietsSorted = [...diets].sort((a: any, b: any) => getDietRefTs(b) - getDietRefTs(a));
+                          const currentDiet = dietsSorted.find((diet: any) => diet.is_active && isReleased(diet) && isCurrentWindow(diet))
+                            || dietsSorted.find((diet: any) => isReleased(diet) && isCurrentWindow(diet))
+                            || dietsSorted[0];
+
+                          if (currentDiet) {
+                            const dietRefDate = currentDiet.release_date || currentDiet.start_date || currentDiet.created_at;
+                            dataReferenciaAtual = dietRefDate || dataReferenciaAtual;
+                            dietaAtualInfo = `${currentDiet.title || "Cardápio"} — referência ${formatDateTime(dietRefDate)}`;
+
+                            const { data: meals } = await supabase
+                              .from("diet_meals")
+                              .select("id")
+                              .eq("diet_id", currentDiet.id)
+                              .order("sort_order", { ascending: true });
+
+                            const mealIds = (meals || []).map((m: any) => m.id);
+                            if (mealIds.length > 0) {
+                              const { data: foods } = await supabase
+                                .from("diet_foods")
+                                .select("energy_kcal, protein_g, carbs_g, fat_g")
+                                .in("meal_id", mealIds);
+
+                              (foods || []).forEach((f: any) => {
+                                kcal += Number(f.energy_kcal) || 0;
+                                prot += Number(f.protein_g) || 0;
+                                carb += Number(f.carbs_g) || 0;
+                                fat += Number(f.fat_g) || 0;
+                              });
+
+                              if (kcal > 0 || prot > 0 || carb > 0 || fat > 0) {
+                                macrosFonte = "cardápio atual em dietas (itens da rotina)";
+                              }
+                            }
+
+                            if (kcal === 0 && (currentDiet.energy_kcal || currentDiet.protein_g || currentDiet.carbs_g || currentDiet.fat_g)) {
+                              kcal = Number(currentDiet.energy_kcal) || 0;
+                              prot = Number(currentDiet.protein_g) || 0;
+                              carb = Number(currentDiet.carbs_g) || 0;
+                              fat = Number(currentDiet.fat_g) || 0;
+                              macrosFonte = "cardápio atual em dietas (totais salvos)";
+                            }
+                          }
+
+                          if (latestProtocolRes.data) {
+                            dataUltimoProtocolo = latestProtocolRes.data.created_at;
+                            resumoUltimoProtocolo = `${latestProtocolRes.data.title || "Protocolo"} — ${formatDateTime(latestProtocolRes.data.created_at)}`;
                           }
                         }
+
                         if (kcal === 0) {
                           kcal = Number(p.daily_calories) || 0;
                           prot = Number(p.protein_g) || 0;
                           carb = Number(p.carbs_g) || 0;
                           fat = Number(p.fat_g) || 0;
                         }
+
                         const macrosLinha = kcal > 0
                           ? `${Math.round(kcal)} kcal • P ${Math.round(prot)}g • C ${Math.round(carb)}g • G ${Math.round(fat)}g (fonte: ${macrosFonte})`
                           : "[não informado]";
+
+                        const distanciaTemporalDias = dataUltimoProtocolo
+                          ? Math.max(
+                              0,
+                              Math.round(
+                                (new Date(dataReferenciaAtual).getTime() - new Date(dataUltimoProtocolo).getTime()) /
+                                (1000 * 60 * 60 * 24)
+                              )
+                            )
+                          : null;
 
                         // 2) Plano ativo → semanas
                         let semanas = 0;
@@ -851,17 +936,27 @@ const AdminProtocol = () => {
 
                         const prompt = `Solicito a criação de um novo protocolo STH METHOD para o perfil abaixo.
 
-DADOS DO ALUNO (atualizados)
+DADOS ATUAIS DO ALUNO (usar como base principal)
 Nome: ${nome}
 Idade: ${idade}
 Peso: ${peso}
 Altura: ${altura}
 Objetivo: ${objetivo}
+Data de referência dos dados atuais: ${formatDateTime(dataReferenciaAtual)}
+Cardápio atual/último em dietas: ${dietaAtualInfo}
 Macros diários: ${macrosLinha}
 Plano vigente: ${semanasLinha}
-Protocolo Hormonal Atual (se houver): ${protocoloAtual}
+Registro hormonal atual no perfil (se houver): ${protocoloAtual}
+
+DADOS HISTÓRICOS DO PROTOCOLO (usar apenas como referência)
+Último protocolo salvo: ${resumoUltimoProtocolo}
+Distância temporal entre dados atuais e último protocolo: ${distanciaTemporalDias !== null ? `${distanciaTemporalDias} dias` : "[não foi possível calcular]"}
 
 REGRAS DE MONTAGEM
+Diretriz temporal obrigatória:
+- "Dados básicos do aluno" significam dados atuais e mais recentes.
+- "Dados do protocolo" significam dados passados/históricos.
+- Trabalhe com os dados atuais como base principal, usando o passado apenas como amparo estratégico para entender evolução, resposta anterior e distância temporal entre os contextos.
 1. Ordem cronológica do dia: MEDICAMENTOS → manhã → almoço → lanche da tarde → jantar → ceia. PRÉ-TREINO e PÓS-TREINO sempre no final.
 2. Cada bloco começa com o emoji-âncora correspondente combinando com o título (💊 MEDICAMENTOS · ☀️ MANHÃ · 🍽️ ALMOÇO · ☕ LANCHE DA TARDE · 🌙 JANTAR/CEIA · 🏋️ PRÉ-TREINO · 🧊 PÓS-TREINO).
 3. Aspas duplas envolvem o GRUPO de itens de cada bloco: abrem ANTES do primeiro item e fecham DEPOIS do último item — nunca uma aspa por item. Cada item fica em sua própria linha dentro das aspas.
