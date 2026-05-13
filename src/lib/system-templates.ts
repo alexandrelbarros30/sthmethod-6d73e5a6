@@ -148,7 +148,7 @@ export const SYSTEM_TEMPLATE_DEFINITIONS: Array<{
     label: "Lembrete de Renovação (3 dias antes)",
     description: "Sugerido pelos Lembretes Inteligentes quando faltam 3 dias para o vencimento.",
     defaultContent:
-      "Olá {nome}! Seu plano vence em {dias_restantes} dias. Vamos renovar? 🚀\n\n👉 {link}",
+      "{nome},\n\n👀 *Seu plano está encerrando…*\n\nPra não perder o ritmo e continuar evoluindo:\n\n👉 *Renove agora:*\n{link_renovacao}\n\n---\n\nSeu resultado depende da continuidade.\nParar agora é retroceder.\n\nBora manter o progresso ativo. 🚀",
   },
   {
     key: "diet_adjustment_reminder",
