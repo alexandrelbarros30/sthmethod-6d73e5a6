@@ -782,52 +782,154 @@ const AdminProtocol = () => {
                     variant="default"
                     size="sm"
                     className="text-xs"
-                    onClick={() => {
-                      const p: any = selectedProfile || {};
-                      const idade = p.birth_date
-                        ? Math.floor((Date.now() - new Date(p.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) + " anos"
-                        : "[não informado]";
-                      const peso = p.weight ? `${p.weight} kg` : "[não informado]";
-                      const altura = p.height ? `${p.height} cm` : "[não informado]";
-                      const objetivo = p.objective || "[não informado]";
-                      const protocoloAtual = p.current_protocol?.trim() || "Nenhum protocolo registrado";
-                      const meta = p.daily_calories ? `${Math.round(p.daily_calories)} kcal` : "[não informado]";
-                      const nome = p.full_name || selected?.full_name || "[não informado]";
+                    onClick={async () => {
+                      try {
+                        const p: any = selectedProfile || {};
+                        const uid = selected?.user_id;
+                        const idade = p.birth_date
+                          ? Math.floor((Date.now() - new Date(p.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) + " anos"
+                          : "[não informado]";
+                        const peso = p.weight ? `${p.weight} kg` : "[não informado]";
+                        const altura = p.height ? `${p.height} cm` : "[não informado]";
+                        const objetivo = p.objective || "[não informado]";
+                        const protocoloAtual = p.current_protocol?.trim() || "Nenhum protocolo registrado";
+                        const nome = p.full_name || selected?.full_name || "[não informado]";
 
-                      const prompt = `Solicito a criação de um novo protocolo STH Method para o seguinte perfil:
+                        // 1) Macros: prioridade rotina alimentar (diet_meals + diet_foods); fallback perfil
+                        let kcal = 0, prot = 0, carb = 0, fat = 0;
+                        let macrosFonte = "perfil do aluno";
+                        if (uid) {
+                          const { data: meals } = await supabase
+                            .from("diet_meals").select("id").eq("user_id", uid);
+                          const mealIds = (meals || []).map((m: any) => m.id);
+                          if (mealIds.length > 0) {
+                            const { data: foods } = await supabase
+                              .from("diet_foods")
+                              .select("energy_kcal, protein_g, carbs_g, fat_g")
+                              .in("meal_id", mealIds);
+                            (foods || []).forEach((f: any) => {
+                              kcal += Number(f.energy_kcal) || 0;
+                              prot += Number(f.protein_g) || 0;
+                              carb += Number(f.carbs_g) || 0;
+                              fat += Number(f.fat_g) || 0;
+                            });
+                            if (kcal > 0) macrosFonte = "rotina alimentar atual";
+                          }
+                        }
+                        if (kcal === 0) {
+                          kcal = Number(p.daily_calories) || 0;
+                          prot = Number(p.protein_g) || 0;
+                          carb = Number(p.carbs_g) || 0;
+                          fat = Number(p.fat_g) || 0;
+                        }
+                        const macrosLinha = kcal > 0
+                          ? `${Math.round(kcal)} kcal • P ${Math.round(prot)}g • C ${Math.round(carb)}g • G ${Math.round(fat)}g (fonte: ${macrosFonte})`
+                          : "[não informado]";
 
-DADOS DO ALUNO
+                        // 2) Plano ativo → semanas
+                        let semanas = 0;
+                        let planoNome = "[sem plano ativo]";
+                        if (uid) {
+                          const { data: sub } = await supabase
+                            .from("subscriptions")
+                            .select("end_date, start_date, status, plans(name, duration_days, duration)")
+                            .eq("user_id", uid)
+                            .order("end_date", { ascending: false })
+                            .limit(1)
+                            .maybeSingle();
+                          const plano: any = (sub as any)?.plans;
+                          if (plano) {
+                            planoNome = plano.name || planoNome;
+                            const days = Number(plano.duration_days) || 0;
+                            if (days > 0) semanas = Math.round(days / 7);
+                          }
+                        }
+                        const semanasLimite = Math.min(semanas || 24, 24);
+                        const semanasLinha = semanas > 0
+                          ? `${planoNome} — ${semanas} semanas (limite MEDICAMENTOS: ${semanasLimite})`
+                          : `${planoNome} — duração não definida (usar até 24 semanas)`;
 
+                        const prompt = `Solicito a criação de um novo protocolo STH METHOD para o perfil abaixo.
+
+DADOS DO ALUNO (atualizados)
 Nome: ${nome}
-
 Idade: ${idade}
-
 Peso: ${peso}
-
 Altura: ${altura}
-
 Objetivo: ${objetivo}
-
+Macros diários: ${macrosLinha}
+Plano vigente: ${semanasLinha}
 Protocolo Hormonal Atual (se houver): ${protocoloAtual}
 
-Meta Calórica: ${meta}
+REGRAS DE MONTAGEM
+1. Ordem cronológica do dia: MEDICAMENTOS → manhã → almoço → lanche da tarde → jantar → ceia. PRÉ-TREINO e PÓS-TREINO sempre por último.
+2. Cada bloco começa com o emoji-âncora correspondente (💊 manhã ☀️ almoço 🍽️ tarde ☕ jantar 🌙 ceia 🌜 pré-treino 🏋️ pós-treino 🧊).
+3. Suplementos/medicamentos sempre listados entre aspas duplas, um por linha.
+4. Cada bloco contém: linha entre aspas com itens, "Ação:", "Horário:", "Foco:".
+5. Bloco MEDICAMENTOS organizado por fases de semanas (Sem 1-4, Sem 5-8, …) respeitando o limite do plano (${semanasLimite} semanas), com sensibilidade para aumento/redução de dose. Inclui hormônios, peptídeos, inibidores de aromatase, estimulantes, diuréticos quando aplicável.
 
-ESTRUTURA DO PROTOCOLO:
+ESTRUTURA OBRIGATÓRIA (modelo)
 
-Por favor, desenvolva o plano contemplando os seguintes pilares de forma técnica e detalhada:
+💊 MEDICAMENTOS, HORMÔNIOS E PEPTÍDEOS
+Sem 1-4
+"Testosterona 250mg
+Espironolactona 25mg"
+Ação:
+Horário:
+Foco:
 
-Suporte Endócrino Hormonal: Otimização e estabilidade.
+Sem 5-8
+"..."
+Ação:
+Horário:
+Foco:
+(continue até Sem ${semanasLimite})
 
-Suporte Cardiovascular | Hepático | Renal: Estratégias de proteção, blindagem e controle de marcadores (com ênfase em hidratação e proteção endotelial).
+☀️ MANHÃ
+"L-Arginina 3g
+Tadalafila 5mg"
+Ação:
+Horário:
+Foco:
 
-Suporte Metabólico e Performance: Suplementação baseada em eficiência mitocondrial e preservação tecidual.
+🍽️ ALMOÇO
+"..."
+Ação:
+Horário:
+Foco:
 
-Sistema Pré e Pós-Treino: Protocolo de fluxo sanguíneo (Pré) e sinalização anabólica/recuperação (Pós).`;
+☕ LANCHE DA TARDE
+"..."
+Ação:
+Horário:
+Foco:
 
-                      navigator.clipboard.writeText(prompt).then(
-                        () => toast.success("Prompt do protocolo copiado!"),
-                        () => toast.error("Não foi possível copiar. Tente novamente."),
-                      );
+🌙 JANTAR / CEIA
+"..."
+Ação:
+Horário:
+Foco:
+
+🏋️ PRÉ-TREINO
+"..."
+Ação:
+Horário:
+Foco:
+
+🧊 PÓS-TREINO
+"..."
+Ação:
+Horário:
+Foco:
+
+Pilares técnicos: Suporte Endócrino-Hormonal, Suporte Cardiovascular/Hepático/Renal, Suporte Metabólico/Performance, Sistema Pré e Pós-Treino.`;
+
+                        await navigator.clipboard.writeText(prompt);
+                        toast.success("Prompt do protocolo copiado!");
+                      } catch (e) {
+                        console.error(e);
+                        toast.error("Não foi possível gerar/copiar o prompt.");
+                      }
                     }}
                     disabled={!selectedProfile}
                   >
