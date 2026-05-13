@@ -13,7 +13,6 @@ import StCoachButton from "@/components/student/StCoachButton";
 import StudentInfoHeader from "@/components/student/StudentInfoHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import StudentGuidedWorkout from "@/pages/student/StudentGuidedWorkout";
-import GuidedTour from "@/components/student/GuidedTour";
 
 const getEmbedUrl = (url: string) => {
   if (!url) return null;
@@ -160,15 +159,6 @@ const StudentTraining = () => {
 
   return (
     <DashboardLayout role="student" title="Treino" subtitle="Seu plano de treino personalizado.">
-      <GuidedTour
-        tourId="student-training"
-        steps={[
-          { selector: "[data-tour='train-header']", title: "Seu programa", description: "Resumo do plano de treino que está ativo nesta semana." },
-          { selector: "[data-tour='train-stcoach']", title: "Abrir no ST Coach", description: "Toque para iniciar seu treino guiado direto no app ST Coach." },
-          { selector: "[data-tour='train-tabs']", title: "Trocar entre treinos", description: "Cada aba é um treino diferente do seu programa (A, B, C...)." },
-          { selector: "[data-tour='train-list']", title: "Exercícios", description: "Toque em qualquer exercício para ver vídeo, séries, intervalo e execução." },
-        ]}
-      />
       <style>{`
         @media print { .training-protected { display: none !important; } body::after { content: "Impressão não permitida"; display: flex; align-items: center; justify-content: center; font-size: 2rem; height: 100vh; } }
         .training-protected { user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; -webkit-touch-callout: none; }
@@ -190,20 +180,18 @@ const StudentTraining = () => {
         )}
 
         {/* Program header card */}
-        <div data-tour="train-header" className="rounded-3xl border border-border/40 bg-background p-6">
+        <div className="rounded-3xl border border-border/40 bg-background p-6">
           <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground">Programa</p>
           <h2 className="text-[28px] font-semibold text-foreground tracking-[-0.035em] leading-tight mt-2">Treino</h2>
           <p className="text-[12px] text-muted-foreground font-light mt-2 tracking-tight">{weeks.length} treino(s) configurado(s)</p>
         </div>
 
         {/* ST Coach App Button */}
-        <div data-tour="train-stcoach">
-          <StCoachButton />
-        </div>
+        <StCoachButton />
 
         {/* Tabs for each workout */}
         <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList data-tour="train-tabs" className="w-full flex overflow-x-auto gap-1 bg-muted/50 p-1 h-auto flex-wrap">
+          <TabsList className="w-full flex overflow-x-auto gap-1 bg-muted/50 p-1 h-auto flex-wrap">
             {weeks.map((week: any, i: number) => (
               <TabsTrigger
                 key={week.id}
@@ -222,7 +210,7 @@ const StudentTraining = () => {
 
             return (
               <TabsContent key={week.id} value={week.id} className="mt-4">
-                <div data-tour="train-list" className="flex items-center gap-2 mb-4">
+                <div className="flex items-center gap-2 mb-4">
                   <Badge variant="secondary" className="text-xs">
                     {weekExercises.length} exercício(s)
                   </Badge>
