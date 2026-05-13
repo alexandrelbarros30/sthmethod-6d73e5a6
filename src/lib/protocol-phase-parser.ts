@@ -62,7 +62,7 @@ const STATUS_MAP: Array<{ rx: RegExp; status: PhaseStatus }> = [
 
 // Regex que captura QUALQUER emoji "âncora" suportado no início de uma linha (após trim),
 // incluindo variação unicode do emoji e resíduos comuns do editor rico.
-const ANCHOR_RX = /^[\s\-–—*•·([\]]*([\u2600\u{1F305}\u{1F31E}\u{1F31F}\u{1F37D}\u{1F957}\u{1F374}\u{1F35C}\u{1F3CB}\u{1F4AA}\u{1F525}\u{1F319}\u{1F31B}\u{1F30C}\u{1F48A}\u{1F489}\u{1F9EC}\u{1F9EA}\u2697])(?:\uFE0F)?\s*(.+)$/u;
+const ANCHOR_RX = /^[\s\-–—*•·([\]]*([\u2600\u2615\u2697\u{1F305}\u{1F306}\u{1F307}\u{1F319}\u{1F31B}\u{1F30C}\u{1F31E}\u{1F31F}\u{1F35C}\u{1F374}\u{1F375}\u{1F37D}\u{1F3CB}\u{1F489}\u{1F48A}\u{1F4A7}\u{1F4AA}\u{1F525}\u{1F6BF}\u{1F957}\u{1F95B}\u{1F9CB}\u{1F9EA}\u{1F9EC}])(?:\uFE0F)?\s*(.+)$/u;
 
 function htmlToText(input: string): string {
   if (!input) return "";
