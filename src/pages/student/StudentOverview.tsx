@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import SubscriptionAlerts from "@/components/student/SubscriptionAlerts";
 import AdAutoPopup from "@/components/student/AdAutoPopup";
 import PreviewUnlockPopup from "@/components/student/PreviewUnlockPopup";
+import WelcomeTour from "@/components/student/WelcomeTour";
 import recipeMousseWhey from "@/assets/recipe-mousse-whey.jpg";
 import recipePatinho from "@/assets/recipe-patinho-grelhado.jpg";
 import recipeMexidoOvos from "@/assets/recipe-mexido-ovos.jpg";
@@ -117,6 +118,7 @@ const StudentOverview = () => {
       <SubscriptionAlerts subscription={subscription ? { ...subscription, plans: (subscription as any)?.plans } : null} />
       <AdAutoPopup />
       <PreviewUnlockPopup />
+      <WelcomeTour />
 
       {/* HEADER */}
       <div className="flex items-start justify-between mb-10 relative">
