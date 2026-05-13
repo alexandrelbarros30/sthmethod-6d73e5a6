@@ -795,12 +795,12 @@ const AdminProtocol = () => {
                         const protocoloAtual = p.current_protocol?.trim() || "Nenhum protocolo registrado";
                         const nome = p.full_name || selected?.full_name || "[não informado]";
 
-                        // 1) Macros: prioridade rotina alimentar (diet_meals + diet_foods); fallback perfil
+                        // 1) Macros: prioridade cardápio nutricional mais atualizado (diet_meals + diet_foods); fallback macros do perfil
                         let kcal = 0, prot = 0, carb = 0, fat = 0;
-                        let macrosFonte = "perfil do aluno";
+                        let macrosFonte = "macros do perfil";
                         if (uid) {
                           const { data: meals } = await supabase
-                            .from("diet_meals").select("id").eq("user_id", uid);
+                            .from("diet_meals").select("id").eq("user_id", uid).order("updated_at", { ascending: false });
                           const mealIds = (meals || []).map((m: any) => m.id);
                           if (mealIds.length > 0) {
                             const { data: foods } = await supabase
@@ -813,7 +813,7 @@ const AdminProtocol = () => {
                               carb += Number(f.carbs_g) || 0;
                               fat += Number(f.fat_g) || 0;
                             });
-                            if (kcal > 0) macrosFonte = "rotina alimentar atual";
+                            if (kcal > 0) macrosFonte = "cardápio nutricional atualizado";
                           }
                         }
                         if (kcal === 0) {
