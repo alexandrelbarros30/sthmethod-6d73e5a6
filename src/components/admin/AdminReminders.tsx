@@ -45,6 +45,7 @@ const AdminReminders = () => {
   const [subForm, setSubForm] = useState({ plan_id: "", start_date: "", end_date: "", status: "active" });
   const [confirmDoneId, setConfirmDoneId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [profileDialogUserId, setProfileDialogUserId] = useState<string | null>(null);
 
   // Fetch plans for subscription dialog
   const { data: plans } = useQuery({
@@ -275,7 +276,7 @@ const AdminReminders = () => {
               <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
             </Button>
             {/* Quick action shortcuts */}
-            <Button size="sm" variant="outline" className="h-8 text-xs justify-center" onClick={() => navigate(`/admin/students?manage=${r.user_id}`)} title="Ver cadastro do aluno">
+            <Button size="sm" variant="outline" className="h-8 text-xs justify-center" onClick={() => setProfileDialogUserId(r.user_id)} title="Ver cadastro do aluno">
               <User className="w-3 h-3 mr-1" /> Cadastro
             </Button>
 
@@ -465,6 +466,23 @@ const AdminReminders = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!profileDialogUserId} onOpenChange={(open) => { if (!open) setProfileDialogUserId(null); }}>
+        <DialogContent className="max-w-5xl w-[calc(100vw-1rem)] h-[calc(100dvh-2rem)] p-0 overflow-hidden flex flex-col">
+          <DialogHeader className="px-4 py-3 border-b shrink-0">
+            <DialogTitle className="font-display flex items-center gap-2 text-base">
+              <User className="w-4 h-4" /> Cadastro do Aluno
+            </DialogTitle>
+          </DialogHeader>
+          {profileDialogUserId && (
+            <iframe
+              src={`/admin/students?manage=${profileDialogUserId}&embedded=1`}
+              className="flex-1 w-full border-0"
+              title="Cadastro do Aluno"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
