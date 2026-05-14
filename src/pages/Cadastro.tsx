@@ -522,8 +522,8 @@ const Cadastro = () => {
     await supabase.from("profiles").update({ phone: phoneVal, email }).eq("user_id", userId);
   };
 
-  const ContactBlock = () => (
-    <Card className="border-primary/20 bg-primary/5">
+  const contactBlock = (
+    <Card className="border-primary/20 bg-primary/5 animate-fade-in">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-display">Contato (obrigatório)</CardTitle>
         <p className="text-[11px] text-muted-foreground font-body">
@@ -539,6 +539,7 @@ const Cadastro = () => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onBlur={persistContact}
               className="pl-10"
               placeholder="seu@email.com"
               disabled={!!userId}
@@ -553,6 +554,7 @@ const Cadastro = () => {
             <Input
               value={phoneVal}
               onChange={(e) => setPhoneVal(phoneMask(e.target.value))}
+              onBlur={persistContact}
               className="pl-10"
               placeholder="(00) 00000-0000"
               required
