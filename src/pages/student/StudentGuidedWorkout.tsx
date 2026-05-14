@@ -91,7 +91,7 @@ const StudentGuidedWorkout = () => {
       if (!exerciseIds.length) return {};
       const { data } = await supabase
         .from("exercise_library")
-        .select("id, description, video_url")
+        .select("id, description, video_url, image_url")
         .in("id", exerciseIds);
 
       return (data || []).reduce((acc: Record<string, any>, item: any) => {
@@ -369,6 +369,7 @@ const StudentGuidedWorkout = () => {
             const libraryMeta = ex.exercise_id ? exerciseLibraryMap[ex.exercise_id] : null;
             const videoSource = getVideoSource(ex.video_url || libraryMeta?.video_url || "");
             const exerciseDescription = ex.custom_description || libraryMeta?.description || "";
+            const fallbackImage = !videoSource ? (ex.image_url || libraryMeta?.image_url || "") : "";
             const last = lastLog(ex.id);
             const key = `${assignment.id}-${ex.id}`;
             return (
@@ -408,6 +409,21 @@ const StudentGuidedWorkout = () => {
                   </div>
                 )}
 
+                {!videoSource && fallbackImage && (
+                  <div className="aspect-video rounded-2xl overflow-hidden border border-border/40 bg-black/30 relative">
+                    <img
+                      src={fallbackImage}
+                      alt={ex.custom_name || "Exercício"}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      draggable={false}
+                    />
+                    <div className="absolute bottom-2 left-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide bg-black/60 text-white px-2 py-0.5 rounded-full">
+                      Imagem ilustrativa
+                    </div>
+                  </div>
+                )}
+
                 {exerciseDescription && (
                   <details className="text-sm">
                     <summary className="cursor-pointer font-semibold text-foreground inline-flex items-center gap-1">
@@ -417,7 +433,7 @@ const StudentGuidedWorkout = () => {
                   </details>
                 )}
 
-                {!videoSource && (
+                {!videoSource && !fallbackImage && (
                   <div className="inline-flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 px-3 py-2 rounded-full">
                     <VideoOff className="w-3.5 h-3.5" /> Vídeo não cadastrado para este exercício.
                   </div>
