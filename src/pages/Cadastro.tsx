@@ -503,6 +503,66 @@ const Cadastro = () => {
   const showTrainingDetails = profileForm.activity_type === "musculacao" || profileForm.activity_type === "crossfit";
   const showCardioDetails = profileForm.does_cardio === "sim";
 
+  // Email + phone are mandatory at every step of the public signup
+  const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+  const validateContact = (): boolean => {
+    if (!email.trim() || !isValidEmail(email)) {
+      toast.error("E-mail é obrigatório e deve ser válido");
+      return false;
+    }
+    const phoneClean = (phoneVal || "").replace(/\D/g, "");
+    if (phoneClean.length < 10) {
+      toast.error("Telefone é obrigatório. Use (xx) xxxxx-xxxx");
+      return false;
+    }
+    return true;
+  };
+  const persistContact = async () => {
+    if (!userId) return;
+    await supabase.from("profiles").update({ phone: phoneVal, email }).eq("user_id", userId);
+  };
+
+  const ContactBlock = () => (
+    <Card className="border-primary/20 bg-primary/5">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-display">Contato (obrigatório)</CardTitle>
+        <p className="text-[11px] text-muted-foreground font-body">
+          E-mail e telefone são obrigatórios em todas as etapas — usamos para te enviar acessos, recibos e suporte.
+        </p>
+      </CardHeader>
+      <CardContent className="grid sm:grid-cols-2 gap-3 pt-0">
+        <div>
+          <Label className="font-body text-xs">E-mail *</Label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="pl-10"
+              placeholder="seu@email.com"
+              disabled={!!userId}
+              required
+            />
+          </div>
+        </div>
+        <div>
+          <Label className="font-body text-xs">Telefone *</Label>
+          <div className="relative">
+            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              value={phoneVal}
+              onChange={(e) => setPhoneVal(phoneMask(e.target.value))}
+              className="pl-10"
+              placeholder="(00) 00000-0000"
+              required
+            />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   // Friendly labels for the pre-checkout summary
   const objectiveLabel = profileForm.objective
     ? (objectiveLabels[profileForm.objective] || profileForm.objective)
