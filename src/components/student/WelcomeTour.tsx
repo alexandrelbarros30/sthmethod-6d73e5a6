@@ -168,7 +168,7 @@ const WelcomeTour = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] overflow-hidden"
+        className="fixed inset-0 z-[9999] overflow-hidden"
       >
         <Spotlight dockIndex={step.dockIndex} />
 
@@ -258,8 +258,16 @@ const WelcomeTour = () => {
 
               <motion.button
                 whileTap={{ scale: 0.96 }}
-                onClick={() => (isLast ? close() : setI((v) => Math.min(v + 1, STEPS.length - 1)))}
-                className="relative inline-flex items-center gap-2 rounded-full px-5 py-3 text-[13px] font-semibold tracking-tight text-black"
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (isLast) {
+                    close();
+                  } else {
+                    setI((v) => Math.min(v + 1, STEPS.length - 1));
+                  }
+                }}
+                className="relative inline-flex items-center gap-2 rounded-full px-5 py-3 text-[13px] font-semibold tracking-tight text-black overflow-hidden"
                 style={{
                   background: "#14b780",
                   boxShadow: "0 10px 28px -8px #14b780cc, inset 0 0 12px rgba(255,255,255,0.18)",
@@ -267,7 +275,7 @@ const WelcomeTour = () => {
               >
                 {/* halo pulsante */}
                 <span
-                  className="absolute inset-0 rounded-full animate-ping"
+                  className="absolute inset-0 rounded-full animate-ping pointer-events-none"
                   style={{ background: "#14b78055" }}
                   aria-hidden
                 />
