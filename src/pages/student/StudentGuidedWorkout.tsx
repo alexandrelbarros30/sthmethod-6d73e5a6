@@ -369,7 +369,7 @@ const StudentGuidedWorkout = () => {
             const libraryMeta = ex.exercise_id ? exerciseLibraryMap[ex.exercise_id] : null;
             const videoSource = getVideoSource(ex.video_url || libraryMeta?.video_url || "");
             const exerciseDescription = ex.custom_description || libraryMeta?.description || "";
-            const fallbackImage = !videoSource ? (ex.image_url || libraryMeta?.image_url || "") : "";
+            const fallbackImage = "";
             const last = lastLog(ex.id);
             const key = `${assignment.id}-${ex.id}`;
             return (
