@@ -397,6 +397,7 @@ const Cadastro = () => {
   // Step 2: Save profile
   const handleSaveProfile = async () => {
     const { height, weight, gender, activity_type, does_cardio, objective, current_protocol, comorbidities, birth_date, physical_activity_level } = profileForm;
+    if (!validateContact()) return;
     if (!profileForm.cpf || !isValidCpf(profileForm.cpf)) { toast.error("CPF inválido"); return; }
     if (!gender) { toast.error("Selecione o gênero"); return; }
     if (!birth_date) { toast.error("Data de nascimento é obrigatória"); return; }
@@ -476,6 +477,7 @@ const Cadastro = () => {
 
   // Step 3 → 4 transition
   const handleImagesComplete = () => {
+    if (!validateContact()) return;
     setImagesComplete(true);
     refetchImages();
     supabase.from("profiles").update({ onboarding_complete: true }).eq("user_id", userId!);
@@ -490,6 +492,7 @@ const Cadastro = () => {
 
   // Skip images and go directly to plans (or redirect)
   const handleSkipImages = () => {
+    if (!validateContact()) return;
     supabase.from("profiles").update({ onboarding_complete: true }).eq("user_id", userId!);
     if (redirectAfterSignup) {
       toast.info("Você pode enviar as fotos depois. Vamos finalizar sua promoção!");
@@ -663,7 +666,9 @@ const Cadastro = () => {
 
         {/* STEP 2: Profile Data */}
         {step === 2 && userId && (
-          <Card className="animate-fade-in">
+          <>
+          {contactBlock}
+          <Card className="animate-fade-in mt-4">
             <CardHeader>
               <CardTitle className="text-xl">Complete seu perfil</CardTitle>
               <p className="text-sm text-muted-foreground font-body">
@@ -934,11 +939,13 @@ const Cadastro = () => {
               </div>
             </CardContent>
           </Card>
+          </>
         )}
 
         {/* STEP 3: Body Images */}
         {step === 3 && userId && (
           <div className="animate-fade-in space-y-4">
+            {contactBlock}
             <Card>
               <CardHeader>
                 <CardTitle className="text-xl">Fotos corporais (opcional)</CardTitle>
@@ -965,6 +972,7 @@ const Cadastro = () => {
         {/* STEP 4: Choose Plan & Pay */}
         {step === 4 && userId && (
           <div className="animate-fade-in space-y-4">
+            {contactBlock}
             <Card className="border-primary/20 bg-primary/5">
               <CardContent className="py-4 flex items-center gap-3">
                 <CheckCircle className="w-5 h-5 text-primary" />
@@ -1031,6 +1039,12 @@ const Cadastro = () => {
                         ))}
                       </ul>
                       <Button className="w-full" onClick={() => { setSelectedPlan(plan); setCheckoutOpen(true); }}>
+                      <Button className="w-full" onClick={() => {
+                        if (!validateContact()) return;
+                        persistContact();
+                        setSelectedPlan(plan);
+                        setCheckoutOpen(true);
+                      }}>
                         Assinar agora
                       </Button>
                     </CardContent>
