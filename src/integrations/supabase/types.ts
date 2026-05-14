@@ -813,6 +813,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          image_url: string | null
           muscle_group: string | null
           name: string
           updated_at: string
@@ -822,6 +823,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          image_url?: string | null
           muscle_group?: string | null
           name: string
           updated_at?: string
@@ -831,6 +833,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          image_url?: string | null
           muscle_group?: string | null
           name?: string
           updated_at?: string
@@ -2678,6 +2681,7 @@ export type Database = {
         Row: {
           description: string | null
           id: string
+          image_url: string | null
           load_suggestion: string | null
           name: string
           notes: string | null
@@ -2691,6 +2695,7 @@ export type Database = {
         Insert: {
           description?: string | null
           id?: string
+          image_url?: string | null
           load_suggestion?: string | null
           name: string
           notes?: string | null
@@ -2704,6 +2709,7 @@ export type Database = {
         Update: {
           description?: string | null
           id?: string
+          image_url?: string | null
           load_suggestion?: string | null
           name?: string
           notes?: string | null
@@ -2883,6 +2889,7 @@ export type Database = {
           group_id: string | null
           group_name: string | null
           id: string
+          image_url: string | null
           load_suggestion: string | null
           reps: string | null
           rest_interval: string | null
@@ -2899,6 +2906,7 @@ export type Database = {
           group_id?: string | null
           group_name?: string | null
           id?: string
+          image_url?: string | null
           load_suggestion?: string | null
           reps?: string | null
           rest_interval?: string | null
@@ -2915,6 +2923,7 @@ export type Database = {
           group_id?: string | null
           group_name?: string | null
           id?: string
+          image_url?: string | null
           load_suggestion?: string | null
           reps?: string | null
           rest_interval?: string | null
