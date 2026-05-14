@@ -397,6 +397,7 @@ const Cadastro = () => {
   // Step 2: Save profile
   const handleSaveProfile = async () => {
     const { height, weight, gender, activity_type, does_cardio, objective, current_protocol, comorbidities, birth_date, physical_activity_level } = profileForm;
+    if (!validateContact()) return;
     if (!profileForm.cpf || !isValidCpf(profileForm.cpf)) { toast.error("CPF inválido"); return; }
     if (!gender) { toast.error("Selecione o gênero"); return; }
     if (!birth_date) { toast.error("Data de nascimento é obrigatória"); return; }
@@ -476,6 +477,7 @@ const Cadastro = () => {
 
   // Step 3 → 4 transition
   const handleImagesComplete = () => {
+    if (!validateContact()) return;
     setImagesComplete(true);
     refetchImages();
     supabase.from("profiles").update({ onboarding_complete: true }).eq("user_id", userId!);
@@ -490,6 +492,7 @@ const Cadastro = () => {
 
   // Skip images and go directly to plans (or redirect)
   const handleSkipImages = () => {
+    if (!validateContact()) return;
     supabase.from("profiles").update({ onboarding_complete: true }).eq("user_id", userId!);
     if (redirectAfterSignup) {
       toast.info("Você pode enviar as fotos depois. Vamos finalizar sua promoção!");
@@ -502,6 +505,68 @@ const Cadastro = () => {
 
   const showTrainingDetails = profileForm.activity_type === "musculacao" || profileForm.activity_type === "crossfit";
   const showCardioDetails = profileForm.does_cardio === "sim";
+
+  // Email + phone are mandatory at every step of the public signup
+  const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+  const validateContact = (): boolean => {
+    if (!email.trim() || !isValidEmail(email)) {
+      toast.error("E-mail é obrigatório e deve ser válido");
+      return false;
+    }
+    const phoneClean = (phoneVal || "").replace(/\D/g, "");
+    if (phoneClean.length < 10) {
+      toast.error("Telefone é obrigatório. Use (xx) xxxxx-xxxx");
+      return false;
+    }
+    return true;
+  };
+  const persistContact = async () => {
+    if (!userId) return;
+    await supabase.from("profiles").update({ phone: phoneVal, email }).eq("user_id", userId);
+  };
+
+  const contactBlock = (
+    <Card className="border-primary/20 bg-primary/5 animate-fade-in">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-display">Contato (obrigatório)</CardTitle>
+        <p className="text-[11px] text-muted-foreground font-body">
+          E-mail e telefone são obrigatórios em todas as etapas — usamos para te enviar acessos, recibos e suporte.
+        </p>
+      </CardHeader>
+      <CardContent className="grid sm:grid-cols-2 gap-3 pt-0">
+        <div>
+          <Label className="font-body text-xs">E-mail *</Label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onBlur={persistContact}
+              className="pl-10"
+              placeholder="seu@email.com"
+              disabled={!!userId}
+              required
+            />
+          </div>
+        </div>
+        <div>
+          <Label className="font-body text-xs">Telefone *</Label>
+          <div className="relative">
+            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              value={phoneVal}
+              onChange={(e) => setPhoneVal(phoneMask(e.target.value))}
+              onBlur={persistContact}
+              className="pl-10"
+              placeholder="(00) 00000-0000"
+              required
+            />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   // Friendly labels for the pre-checkout summary
   const objectiveLabel = profileForm.objective
@@ -601,7 +666,9 @@ const Cadastro = () => {
 
         {/* STEP 2: Profile Data */}
         {step === 2 && userId && (
-          <Card className="animate-fade-in">
+          <>
+          {contactBlock}
+          <Card className="animate-fade-in mt-4">
             <CardHeader>
               <CardTitle className="text-xl">Complete seu perfil</CardTitle>
               <p className="text-sm text-muted-foreground font-body">
@@ -872,11 +939,13 @@ const Cadastro = () => {
               </div>
             </CardContent>
           </Card>
+          </>
         )}
 
         {/* STEP 3: Body Images */}
         {step === 3 && userId && (
           <div className="animate-fade-in space-y-4">
+            {contactBlock}
             <Card>
               <CardHeader>
                 <CardTitle className="text-xl">Fotos corporais (opcional)</CardTitle>
@@ -903,6 +972,7 @@ const Cadastro = () => {
         {/* STEP 4: Choose Plan & Pay */}
         {step === 4 && userId && (
           <div className="animate-fade-in space-y-4">
+            {contactBlock}
             <Card className="border-primary/20 bg-primary/5">
               <CardContent className="py-4 flex items-center gap-3">
                 <CheckCircle className="w-5 h-5 text-primary" />
@@ -968,7 +1038,12 @@ const Cadastro = () => {
                           <li key={j} className="flex items-start gap-2 text-sm font-body"><Check className="w-4 h-4 text-primary shrink-0 mt-0.5" /><span className="text-muted-foreground">{b}</span></li>
                         ))}
                       </ul>
-                      <Button className="w-full" onClick={() => { setSelectedPlan(plan); setCheckoutOpen(true); }}>
+                      <Button className="w-full" onClick={() => {
+                        if (!validateContact()) return;
+                        persistContact();
+                        setSelectedPlan(plan);
+                        setCheckoutOpen(true);
+                      }}>
                         Assinar agora
                       </Button>
                     </CardContent>
