@@ -616,6 +616,36 @@ export type Database = {
         }
         Relationships: []
       }
+      diet_planning: {
+        Row: {
+          content_html: string
+          created_at: string
+          created_by: string | null
+          id: string
+          plan_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content_html?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          plan_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content_html?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          plan_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       evolution_notifications: {
         Row: {
           created_at: string
