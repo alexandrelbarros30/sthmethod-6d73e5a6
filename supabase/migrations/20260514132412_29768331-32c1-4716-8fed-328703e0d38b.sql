@@ -1,0 +1,4 @@
+UPDATE public.exercise_library SET image_url='https://tthahgwkkdyvxdbhsgyb.supabase.co/storage/v1/object/public/workout-images/library/exercise-supino-barra-reta.jpg' WHERE id='1379e1f6-10d9-4894-a7cd-6beb284e8377';
+UPDATE public.exercise_library SET image_url='https://tthahgwkkdyvxdbhsgyb.supabase.co/storage/v1/object/public/workout-images/library/exercise-supino-inclinado-barra.jpg' WHERE id='256dcdcb-cbe6-4dff-88a7-891270a7122a';
+UPDATE public.exercise_library SET image_url='https://tthahgwkkdyvxdbhsgyb.supabase.co/storage/v1/object/public/workout-images/library/exercise-crucifixo-halteres.jpg' WHERE id='ad1ad336-3ae3-4004-9242-bb5539dd1210';
+UPDATE public.exercise_library SET image_url='https://tthahgwkkdyvxdbhsgyb.supabase.co/storage/v1/object/public/workout-images/library/exercise-crucifixo-inclinado-halteres.jpg' WHERE id='3408a8c3-f401-4bce-95ad-cb658262e87e';
