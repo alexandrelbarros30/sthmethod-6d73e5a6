@@ -18,6 +18,7 @@ import DietDateNav from "@/components/student/DietDateNav";
 import HydrationTracker from "@/components/student/HydrationTracker";
 import DietSelector from "@/components/student/DietSelector";
 import DietContentRenderer from "@/components/student/DietContentRenderer";
+import DietPlanningPanel from "@/components/student/DietPlanningPanel";
 import { Utensils, Flame, Zap, FileDown, Apple } from "lucide-react";
 import { toast } from "sonner";
 import { generateStudentPDF } from "@/lib/pdfGenerator";
@@ -274,6 +275,8 @@ const StudentDiet = () => {
             {isDownloadingPdf ? "Gerando PDF..." : "Baixar PDF"}
           </Button>
         </div>
+
+        {targetId && <DietPlanningPanel targetUserId={targetId} />}
 
         {hasStructuredMeals ? (
           <>
