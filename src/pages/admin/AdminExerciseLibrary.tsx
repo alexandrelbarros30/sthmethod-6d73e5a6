@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Video, Search, Dumbbell } from "lucide-react";
+import { Plus, Pencil, Trash2, Video, Search, Dumbbell, ImageIcon, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
 const MUSCLE_GROUPS = [
@@ -24,9 +24,10 @@ interface ExerciseForm {
   description: string;
   muscle_group: string;
   video_url: string;
+  image_url: string;
 }
 
-const emptyForm: ExerciseForm = { name: "", description: "", muscle_group: "", video_url: "" };
+const emptyForm: ExerciseForm = { name: "", description: "", muscle_group: "", video_url: "", image_url: "" };
 
 const AdminExerciseLibrary = () => {
   const { role } = useAuth();
@@ -36,6 +37,8 @@ const AdminExerciseLibrary = () => {
   const [form, setForm] = useState<ExerciseForm>(emptyForm);
   const [search, setSearch] = useState("");
   const [filterGroup, setFilterGroup] = useState<string>("all");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: exercises, isLoading } = useQuery({
     queryKey: ["exercise-library"],
@@ -56,6 +59,7 @@ const AdminExerciseLibrary = () => {
         const { error } = await supabase.from("exercise_library").update({
           name: data.name, description: data.description,
           muscle_group: data.muscle_group, video_url: data.video_url,
+          image_url: data.image_url,
           updated_at: new Date().toISOString(),
         }).eq("id", data.id);
         if (error) throw error;
@@ -63,6 +67,7 @@ const AdminExerciseLibrary = () => {
         const { error } = await supabase.from("exercise_library").insert({
           name: data.name, description: data.description,
           muscle_group: data.muscle_group, video_url: data.video_url,
+          image_url: data.image_url,
         });
         if (error) throw error;
       }
@@ -95,13 +100,36 @@ const AdminExerciseLibrary = () => {
 
   const openEdit = (ex: any) => {
     setEditingId(ex.id);
-    setForm({ name: ex.name, description: ex.description || "", muscle_group: ex.muscle_group || "", video_url: ex.video_url || "" });
+    setForm({ name: ex.name, description: ex.description || "", muscle_group: ex.muscle_group || "", video_url: ex.video_url || "", image_url: ex.image_url || "" });
     setDialogOpen(true);
   };
 
   const handleSave = () => {
     if (!form.name.trim()) { toast.error("Nome é obrigatório."); return; }
     saveMutation.mutate({ ...form, id: editingId || undefined });
+  };
+
+  const handleImageUpload = async (file: File) => {
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Imagem muito grande (máx 2MB).");
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `library/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("workout-images").upload(path, file, { cacheControl: "3600", upsert: false });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from("workout-images").getPublicUrl(path);
+      setForm(p => ({ ...p, image_url: data.publicUrl }));
+      toast.success("Imagem enviada!");
+    } catch (e: any) {
+      toast.error("Erro no upload: " + (e.message || ""));
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   const filtered = (exercises || []).filter((ex: any) => {
@@ -163,6 +191,51 @@ const AdminExerciseLibrary = () => {
                   <Label>URL do Vídeo</Label>
                   <Input value={form.video_url} onChange={e => setForm(p => ({ ...p, video_url: e.target.value }))} placeholder="https://youtube.com/watch?v=..." />
                 </div>
+                <div>
+                  <Label>Imagem ilustrativa (fallback do vídeo)</Label>
+                  <div className="space-y-2 mt-1">
+                    {form.image_url && (
+                      <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-border bg-muted">
+                        <img src={form.image_url} alt="preview" className="w-full h-full object-cover" />
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="destructive"
+                          className="absolute top-2 right-2 h-7 w-7"
+                          onClick={() => setForm(p => ({ ...p, image_url: "" }))}
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <Input
+                        value={form.image_url}
+                        onChange={e => setForm(p => ({ ...p, image_url: e.target.value }))}
+                        placeholder="URL da imagem ou faça upload"
+                        className="flex-1"
+                      />
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0])}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={uploading}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Upload className="w-4 h-4 mr-1" /> {uploading ? "Enviando..." : "Upload"}
+                      </Button>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      Será exibida ao aluno quando o exercício não tiver vídeo cadastrado. Máx 2MB.
+                    </p>
+                  </div>
+                </div>
                 <div className="flex gap-2 justify-end">
                   <Button variant="outline" onClick={closeDialog}>Cancelar</Button>
                   <Button onClick={handleSave} disabled={saveMutation.isPending}>
@@ -187,14 +260,19 @@ const AdminExerciseLibrary = () => {
             {filtered.map((ex: any) => (
               <Card key={ex.id} className="hover:shadow-sm transition-shadow">
                 <CardContent className="flex items-center gap-4 py-4">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 shrink-0">
-                    <Dumbbell className="w-5 h-5 text-primary" />
-                  </div>
+                  {ex.image_url ? (
+                    <img src={ex.image_url} alt={ex.name} className="w-14 h-14 rounded-lg object-cover shrink-0 border border-border" loading="lazy" />
+                  ) : (
+                    <div className="flex items-center justify-center w-14 h-14 rounded-lg bg-primary/10 shrink-0">
+                      <Dumbbell className="w-5 h-5 text-primary" />
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm">{ex.name}</p>
                     <div className="flex gap-2 mt-1 items-center">
                       {ex.muscle_group && <Badge variant="secondary" className="text-xs">{ex.muscle_group}</Badge>}
                       {ex.video_url && <Video className="w-3.5 h-3.5 text-primary" />}
+                      {ex.image_url && <ImageIcon className="w-3.5 h-3.5 text-muted-foreground" />}
                     </div>
                     {ex.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{ex.description}</p>}
                   </div>
