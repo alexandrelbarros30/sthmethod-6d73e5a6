@@ -131,27 +131,28 @@ const DietPlanningPanel = ({ targetUserId, readOnly = false }: DietPlanningPanel
 
   // Tipografia premium do Protocolo Inteligente: corpo monoespaçado, leitura ampla,
   // headings em SF Pro/display bold com tracking justo, accents verdes neon.
+  // Tipografia minimalista Apple — fonte reduzida, leitura confortável em mobile
   const protocolProseClasses = cn(
-    "max-w-none !font-mono text-foreground/90 tracking-tight",
-    "[&_p]:!font-mono [&_p]:!text-[15px] [&_p]:!leading-[1.55] [&_p]:!text-foreground/90 [&_p]:my-2",
-    "[&_h1]:font-display [&_h1]:!text-xl [&_h1]:!font-bold [&_h1]:!uppercase [&_h1]:tracking-tight [&_h1]:!text-foreground [&_h1]:mt-4 [&_h1]:mb-2",
-    "[&_h2]:font-display [&_h2]:!text-lg [&_h2]:!font-bold [&_h2]:!uppercase [&_h2]:tracking-tight [&_h2]:!text-foreground [&_h2]:mt-4 [&_h2]:mb-2",
-    "[&_h3]:font-display [&_h3]:!text-[11px] [&_h3]:!font-semibold [&_h3]:tracking-[0.25em] [&_h3]:!uppercase [&_h3]:!text-muted-foreground [&_h3]:mt-3 [&_h3]:mb-1.5",
+    "max-w-none text-foreground/85 tracking-tight",
+    "[&_p]:!text-[12.5px] [&_p]:!leading-[1.5] [&_p]:!text-foreground/80 [&_p]:my-1.5",
+    "[&_h1]:font-display [&_h1]:!text-[14px] [&_h1]:!font-semibold [&_h1]:!uppercase [&_h1]:tracking-[0.08em] [&_h1]:!text-foreground [&_h1]:mt-3 [&_h1]:mb-1.5",
+    "[&_h2]:font-display [&_h2]:!text-[13px] [&_h2]:!font-semibold [&_h2]:!uppercase [&_h2]:tracking-[0.08em] [&_h2]:!text-foreground [&_h2]:mt-2.5 [&_h2]:mb-1.5",
+    "[&_h3]:font-display [&_h3]:!text-[10px] [&_h3]:!font-semibold [&_h3]:tracking-[0.25em] [&_h3]:!uppercase [&_h3]:!text-muted-foreground [&_h3]:mt-2 [&_h3]:mb-1",
     "[&_strong]:!text-foreground [&_strong]:font-semibold",
     "[&_em]:italic [&_em]:!text-muted-foreground",
     "[&_u]:underline [&_u]:decoration-emerald-400/50 [&_u]:underline-offset-2",
-    "[&_ul]:!list-none [&_ul]:!pl-0 [&_ul]:my-2 [&_ul]:space-y-1.5",
-    "[&_ol]:!list-none [&_ol]:!pl-0 [&_ol]:my-2 [&_ol]:space-y-1.5 [&_ol]:[counter-reset:item]",
-    "[&_li]:!font-mono [&_li]:!text-[15px] [&_li]:!leading-[1.55] [&_li]:!text-foreground/90",
-    "[&_ul>li]:relative [&_ul>li]:pl-5",
-    "[&_ul>li]:before:content-['◎'] [&_ul>li]:before:absolute [&_ul>li]:before:left-0 [&_ul>li]:before:top-0 [&_ul>li]:before:text-foreground/40",
-    "[&_ol>li]:relative [&_ol>li]:pl-7 [&_ol>li]:[counter-increment:item]",
-    "[&_ol>li]:before:content-[counter(item)'.'] [&_ol>li]:before:absolute [&_ol>li]:before:left-0 [&_ol>li]:before:top-0 [&_ol>li]:before:font-mono [&_ol>li]:before:text-foreground/90 [&_ol>li]:before:tabular-nums",
-    "[&_hr]:border-white/10 [&_hr]:my-4",
-    "[&_mark]:bg-emerald-400/15 [&_mark]:!text-emerald-300 [&_mark]:px-1.5 [&_mark]:py-0.5 [&_mark]:rounded-full [&_mark]:!font-mono",
-    "[&_blockquote]:border-l-2 [&_blockquote]:border-emerald-400/60 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:!text-foreground/70 [&_blockquote]:my-3",
+    "[&_ul]:!list-none [&_ul]:!pl-0 [&_ul]:my-1.5 [&_ul]:space-y-1",
+    "[&_ol]:!list-none [&_ol]:!pl-0 [&_ol]:my-1.5 [&_ol]:space-y-1 [&_ol]:[counter-reset:item]",
+    "[&_li]:!text-[12.5px] [&_li]:!leading-[1.5] [&_li]:!text-foreground/80",
+    "[&_ul>li]:relative [&_ul>li]:pl-4",
+    "[&_ul>li]:before:content-['·'] [&_ul>li]:before:absolute [&_ul>li]:before:left-1 [&_ul>li]:before:top-0 [&_ul>li]:before:text-emerald-400/70 [&_ul>li]:before:font-bold",
+    "[&_ol>li]:relative [&_ol>li]:pl-6 [&_ol>li]:[counter-increment:item]",
+    "[&_ol>li]:before:content-[counter(item)'.'] [&_ol>li]:before:absolute [&_ol>li]:before:left-0 [&_ol>li]:before:top-0 [&_ol>li]:before:text-foreground/50 [&_ol>li]:before:tabular-nums [&_ol>li]:before:text-[12px]",
+    "[&_hr]:border-white/10 [&_hr]:my-3",
+    "[&_mark]:bg-emerald-400/15 [&_mark]:!text-emerald-300 [&_mark]:px-1 [&_mark]:py-0 [&_mark]:rounded",
+    "[&_blockquote]:border-l-2 [&_blockquote]:border-emerald-400/60 [&_blockquote]:pl-2.5 [&_blockquote]:italic [&_blockquote]:!text-foreground/65 [&_blockquote]:my-2 [&_blockquote]:!text-[12.5px]",
     "[&_a]:!text-emerald-300 [&_a]:underline [&_a]:underline-offset-2 [&_a]:decoration-emerald-400/50",
-    "[&_code]:!font-mono [&_code]:!text-[14px] [&_code]:!text-emerald-300 [&_code]:bg-emerald-400/[0.08] [&_code]:px-2 [&_code]:py-0.5 [&_code]:rounded-full [&_code]:border [&_code]:border-emerald-400/40"
+    "[&_code]:!font-mono [&_code]:!text-[11.5px] [&_code]:!text-emerald-300 [&_code]:bg-emerald-400/[0.08] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded"
   );
 
   return (
@@ -245,7 +246,7 @@ const DietPlanningPanel = ({ targetUserId, readOnly = false }: DietPlanningPanel
             ) : (
               <>
                 {hasContent ? (
-                  <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] p-3.5 sm:p-4">
+                  <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] p-3 sm:p-3.5 max-h-[55vh] overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-emerald-400/30 [&::-webkit-scrollbar-thumb]:rounded-full">
                     <RichContentRenderer
                       content={planning!.content_html}
                       className={protocolProseClasses}
