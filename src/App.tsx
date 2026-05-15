@@ -33,6 +33,7 @@ import TirzepatidaHipertrofia from "./pages/TirzepatidaHipertrofia";
 import CarboidratosHipertrofia from "./pages/CarboidratosHipertrofia";
 import ProteinaSuperavit from "./pages/ProteinaSuperavit";
 import OleosSementes from "./pages/OleosSementes";
+import Ultraprocessados from "./pages/Ultraprocessados";
 import Promo from "./pages/Promo";
 import EvolucaoPublica from "./pages/EvolucaoPublica";
 import FilaPublica from "./pages/FilaPublica";
@@ -161,6 +162,7 @@ const App = () => (
             <Route path="/tendencias/carboidratos-hipertrofia" element={<CarboidratosHipertrofia />} />
             <Route path="/tendencias/proteina-superavit" element={<ProteinaSuperavit />} />
             <Route path="/tendencias/oleos-sementes" element={<OleosSementes />} />
+            <Route path="/tendencias/ultraprocessados-saude-mental" element={<Ultraprocessados />} />
             <Route path="/promo" element={<Promo />} />
             <Route path="/promo/:slug" element={<Promo />} />
             <Route path="/evolucao" element={<EvolucaoPublica />} />
