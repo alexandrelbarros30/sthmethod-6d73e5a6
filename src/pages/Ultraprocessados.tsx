@@ -4,7 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { ArrowLeft, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import heroImg from "@/assets/sthnews-oleos-sementes-hero.jpg";
+import heroImg from "@/assets/sthnews-ultraprocessados-hero.jpg";
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const } } };
 
@@ -18,20 +18,20 @@ const Section = ({ number, kicker, title, children }: { number: string; kicker: 
   </motion.section>
 );
 
-const OleosSementes = () => {
+const Ultraprocessados = () => {
   const { user, role } = useAuth();
   const isStudent = !!user && role === "student";
   const backTo = isStudent ? "/dashboard" : "/tendencias";
   const BackIcon = isStudent ? Home : ArrowLeft;
 
-  const pageUrl = "https://sthmethod.com.br/tendencias/oleos-sementes";
-  const pageTitle = "Óleos de sementes são inflamatórios? O que a ciência diz | STH News";
-  const pageDesc = "Óleos de sementes não são automaticamente inflamatórios. Veja o que estudos em humanos mostram sobre LDL oxidado, ômega-6 e o real impacto na saúde.";
-  const ogImage = "https://sthmethod.com.br/og-oleos-sementes.jpg";
+  const pageUrl = "https://sthmethod.com.br/tendencias/ultraprocessados-saude-mental";
+  const pageTitle = "Ultraprocessados destroem a saúde mental? O que a ciência diz | STH News";
+  const pageDesc = "Ultraprocessados estão associados a piores desfechos em saúde mental — mas associação não é causa. Veja o que pesa de verdade no eixo alimentação-cérebro.";
+  const ogImage = "https://sthmethod.com.br/og-ultraprocessados.jpg";
   const articleSchema = {
     "@context": "https://schema.org",
     "@type": "Article",
-    headline: "Você foi enganado sobre os óleos de sementes",
+    headline: "Ultraprocessados não estão destruindo magicamente sua saúde mental",
     description: pageDesc,
     image: ogImage,
     author: { "@type": "Organization", name: "STH METHOD" },
@@ -47,7 +47,7 @@ const OleosSementes = () => {
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "STH News", item: "https://sthmethod.com.br/tendencias" },
-      { "@type": "ListItem", position: 2, name: "Óleos de sementes", item: pageUrl },
+      { "@type": "ListItem", position: 2, name: "Ultraprocessados e saúde mental", item: pageUrl },
     ],
   };
 
@@ -86,70 +86,57 @@ const OleosSementes = () => {
 
       <section className="pt-32 md:pt-40 pb-16 md:pb-24 text-center px-6">
         <motion.p initial="hidden" animate="visible" variants={fadeUp} className="text-[12px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-6">
-          Óleos de sementes
+          Opinião impopular
         </motion.p>
         <motion.h1 initial="hidden" animate="visible" variants={fadeUp} className="max-w-4xl mx-auto text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-semibold tracking-[-0.04em] leading-[0.95] text-foreground">
-          Você foi enganado<br />
-          <span className="text-muted-foreground">sobre os óleos de sementes.</span>
+          Ultraprocessados não estão<br />
+          <span className="text-muted-foreground">destruindo magicamente sua saúde mental.</span>
         </motion.h1>
         <motion.p initial="hidden" animate="visible" variants={fadeUp} className="max-w-xl mx-auto mt-8 text-lg md:text-xl text-muted-foreground font-light leading-relaxed">
-          Eles não são automaticamente inflamatórios. O contexto da dieta importa muito mais do que o óleo isolado.
+          Existe associação. Não há ingrediente tóxico mágico. Quem manda no resultado é o ecossistema alimentar inteiro.
         </motion.p>
       </section>
 
       <motion.div initial={{ opacity: 0, scale: 1.02 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }} className="max-w-6xl mx-auto px-6 mb-16 md:mb-24">
         <div className="rounded-[2rem] overflow-hidden bg-muted aspect-[16/9]">
-          <img src={heroImg} alt="Óleo de semente sendo despejado em proveta de vidro" className="w-full h-full object-cover" />
+          <img src={heroImg} alt="Snacks ultraprocessados sobre superfície escura" className="w-full h-full object-cover" />
         </div>
       </motion.div>
 
       <section className="max-w-2xl mx-auto px-6 pb-12">
         <motion.p initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-2xl md:text-3xl font-light leading-[1.35] text-foreground tracking-tight">
-          Sozinhos, os óleos de sementes não parecem aumentar inflamação de forma relevante em humanos.{" "}
-          <span className="text-foreground font-medium">O problema é o ecossistema alimentar inteiro.</span>
+          Uma análise da Sapien Labs com mais de 300 mil adultos encontrou associação entre ultraprocessados e sintomas depressivos.{" "}
+          <span className="text-foreground font-medium">Mas associação não é causa.</span>
         </motion.p>
       </section>
 
-      <Section number="01" kicker="O cenário real" title="O óleo isolado não é o vilão.">
-        <p>Quando comparados caloria por caloria com gordura saturada, os óleos de sementes frequentemente mostram efeito <span className="text-foreground font-medium">neutro ou até levemente benéfico</span> em marcadores inflamatórios.</p>
-        <p>O problema começa quando coexistem:</p>
+      <Section number="01" kicker="Epidemiologia, não causalidade" title="O que esses dados realmente mostram.">
+        <p>São dados <span className="text-foreground font-medium">epidemiológicos</span>:</p>
         <ul className="space-y-2 list-none pl-0">
-          <li>⚠️ excesso calórico</li>
-          <li>⚠️ ganho excessivo de gordura corporal</li>
-          <li>⚠️ dieta baseada em ultraprocessados</li>
-          <li>⚠️ sedentarismo</li>
+          <li>📊 mostram associação</li>
+          <li>❌ não comprovam causa direta</li>
         </ul>
-        <p>Porque o excesso de gordura corporal é, por si só, pró-inflamatório.</p>
+        <p>Pessoas que consomem muitos ultraprocessados também tendem a praticar menos exercícios, ingerir mais calorias totais, apresentar maior obesidade e diabetes tipo 2, dormir pior, ter mais estresse, consumir menos proteína e fibras, menos frutas e vegetais, e possuir menor condição socioeconômica.</p>
+        <p>Separar “o alimento” do restante do estilo de vida é muito mais difícil do que parece.</p>
       </Section>
 
-      <Section number="02" kicker="O que a literatura mostra" title="Efeito neutro — e às vezes benéfico.">
-        <p>Alguns estudos com óleos de sementes em substituição à gordura saturada demonstram:</p>
+      <Section number="02" kicker="Existe causalidade?" title="Provavelmente — mas sem ingrediente mágico.">
+        <p>A qualidade da alimentação importa para a saúde geral, incluindo a mental. Mas não existe um <span className="text-foreground font-medium">“ingrediente tóxico mágico”</span> destruindo instantaneamente o cérebro das pessoas.</p>
+        <p>O cenário mais consistente é indireto:</p>
         <ul className="space-y-2 list-none pl-0">
-          <li>📉 redução de gordura no fígado</li>
-          <li>📉 redução do colesterol LDL</li>
-          <li>📉 melhora do risco cardiovascular</li>
+          <li>🍟 ultraprocessados facilitam excesso calórico</li>
+          <li>📈 aumentam ganho de gordura corporal</li>
+          <li>🧠 obesidade impacta negativamente cognição e saúde mental</li>
         </ul>
-        <p className="text-[14px] opacity-70">Referências: PMID 28752873 — Dietary linoleic acid intake and blood inflammatory markers. PMID 22492369 — Effects of n-6 PUFAs compared with SFAs on liver fat, lipoproteins and inflammation.</p>
       </Section>
 
-      <Section number="03" kicker="LDL oxidado" title="“Mas e o LDL oxidado?”">
-        <p>É um dos argumentos mais usados contra os óleos de sementes. Os dados em humanos, porém, não sustentam esse medo tão bem quanto se imagina.</p>
-        <p>Um estudo recente avaliou indivíduos consumindo cerca de <span className="text-foreground font-medium">30 g/dia de óleo de soja</span>. Resultado:</p>
-        <ul className="space-y-2 list-none pl-0">
-          <li>✔️ sem aumento de marcadores inflamatórios</li>
-          <li>✔️ sem aumento de LDL oxidado</li>
-          <li>✔️ tendência de queda na IL-6</li>
-          <li>✔️ redução do ácido araquidônico (AA)</li>
-        </ul>
-        <p className="text-[14px] opacity-70">Referência: PMID 41695083 — Foods Fortified with Soybean or Palm Oil Show No Effect on Inflammatory Markers.</p>
-      </Section>
-
-      <Section number="04" kicker="Mecanismo" title="O LDL não oxida flutuando no sangue.">
-        <p>A oxidação do LDL ocorre principalmente <span className="text-foreground font-medium">depois que ele entra na parede arterial</span>. O fator central, então, passa a ser a quantidade total de LDL circulante.</p>
+      <Section number="03" kicker="Como agir" title="Princípios práticos.">
         <div className="grid gap-4">
           {[
-            ["Mais gordura saturada", "→ mais LDL → maior entrada na parede arterial → maior potencial de oxidação."],
-            ["Mais gorduras poli-insaturadas", "→ menor LDL → menor entrada → menor formação de LDL oxidado."],
+            ["🥩 Proteína suficiente", "Base estrutural da composição corporal e da saciedade."],
+            ["🥗 Fibras, frutas e vegetais em prioridade", "Densidade nutricional alta com baixa densidade calórica."],
+            ["🍚 Alimentos minimamente processados como base", "A maior parte da rotina deve ser construída aqui."],
+            ["🍕 Ultraprocessados ocasionalmente", "Sem paranoia. Sem terrorismo alimentar."],
           ].map(([t, d]) => (
             <div key={t} className="py-5 border-t border-border/40">
               <p className="text-foreground font-medium text-base mb-1">{t}</p>
@@ -159,37 +146,27 @@ const OleosSementes = () => {
         </div>
       </Section>
 
-      <Section number="05" kicker="Sem licença para excesso" title="Isso não significa carta branca.">
-        <p>Não passa a ser verdade que:</p>
+      <Section number="04" kicker="O verdadeiro problema" title="Não é o processamento isolado.">
+        <p>O problema é que ultraprocessados:</p>
         <ul className="space-y-2 list-none pl-0">
-          <li>❌ qualquer óleo vegetal seja saudável em qualquer contexto</li>
-          <li>❌ ultraprocessados ricos nesses óleos sejam “fitness”</li>
-          <li>❌ estabilidade térmica seja irrelevante</li>
-          <li>❌ fritura infinita seja metabolicamente neutra</li>
+          <li>⚠️ são extremamente fáceis de hiperconsumir</li>
+          <li>⚠️ costumam substituir alimentos mais nutritivos</li>
+          <li>⚠️ favorecem excesso calórico passivamente</li>
         </ul>
-        <p>Existe uma diferença gigantesca entre azeite e óleos usados dentro de uma alimentação equilibrada e o cenário fast food + ultraprocessados + excesso calórico. Misturar essas duas coisas na mesma discussão gera ruído.</p>
-      </Section>
-
-      <Section number="06" kicker="O que pesa mais" title="O ecossistema alimentar inteiro.">
-        <p>O cenário mais consistente na literatura atual aponta que os fatores abaixo impactam <span className="text-foreground font-medium">muito mais</span> a inflamação sistêmica do que demonizar gorduras poli-insaturadas isoladamente:</p>
+        <p>Três variáveis raramente discutidas com o peso que merecem:</p>
         <ul className="space-y-2 list-disc pl-5">
-          <li>excesso calórico</li>
-          <li>obesidade</li>
-          <li>baixa ingestão de fibras</li>
-          <li>sedentarismo</li>
-          <li>ultraprocessados em excesso</li>
+          <li>contexto importa</li>
+          <li>quantidade importa</li>
+          <li>padrão alimentar importa</li>
         </ul>
+        <p>A internet adora transformar nutrição em terrorismo alimentar. Saúde metabólica raramente funciona em extremos.</p>
       </Section>
 
-      <Section number="07" kicker="Conceitos rápidos" title="Mapa das gorduras.">
+      <Section number="05" kicker="Exemplo prático" title="Mesmo alimento, contextos opostos.">
         <div className="grid gap-4">
           {[
-            ["🌻 Óleos de sementes", "Soja, milho, canola, girassol e cártamo."],
-            ["🌻 Gorduras poli-insaturadas", "Ômega-3 e ômega-6."],
-            ["🥑 Gorduras monoinsaturadas", "Azeite de oliva e abacate."],
-            ["🥩 Gorduras saturadas", "Manteiga, gordura animal e óleo de coco."],
-            ["🐟 Ômega-3", "Mais associado a efeitos anti-inflamatórios."],
-            ["🌽 Ômega-6", "Necessário ao corpo. O excesso relativo, dentro de dietas ruins, pode favorecer vias inflamatórias em alguns contextos."],
+            ["🥗 Pessoa ativa, com boa ingestão de proteína, fibras, frutas e vegetais", "Consumir ultraprocessados ocasionalmente provavelmente terá impacto pequeno."],
+            ["🍟 Dieta baseada em fast food, excesso calórico, sedentarismo e baixa qualidade nutricional", "Risco metabólico e mental tende a subir bastante. O problema raramente é UM alimento — é o ecossistema."],
           ].map(([t, d]) => (
             <div key={t} className="py-5 border-t border-border/40">
               <p className="text-foreground font-medium text-base mb-1">{t}</p>
@@ -199,25 +176,11 @@ const OleosSementes = () => {
         </div>
       </Section>
 
-      <Section number="08" kicker="Exemplo prático" title="Mesmo óleo, contextos opostos.">
-        <div className="grid gap-4">
-          {[
-            ["🥗 Pessoa ativa, magra, alimentação equilibrada", "Usa óleos de sementes moderadamente. Impacto provavelmente mínimo ou neutro."],
-            ["🍟 Dieta baseada em fritura, fast food e ultraprocessados", "Inflamação, resistência à insulina e piora metabólica podem subir muito. O problema raramente é o óleo isolado — é o ecossistema."],
-          ].map(([t, d]) => (
-            <div key={t} className="py-5 border-t border-border/40">
-              <p className="text-foreground font-medium text-base mb-1">{t}</p>
-              <p className="text-[15px]">{d}</p>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      <Section number="09" kicker="Referências" title="Evidência científica.">
+      <Section number="06" kicker="Referências" title="Evidência científica.">
         <ul className="space-y-3 list-disc pl-5">
-          <li><span className="text-foreground font-medium">PMID 28752873</span> — Dietary linoleic acid intake and blood inflammatory markers.</li>
-          <li><span className="text-foreground font-medium">PMID 22492369</span> — Effects of n-6 PUFAs compared with SFAs on liver fat, lipoproteins and inflammation.</li>
-          <li><span className="text-foreground font-medium">PMID 41695083</span> — Foods Fortified with Soybean or Palm Oil Show No Effect on Inflammatory Markers.</li>
+          <li><span className="text-foreground font-medium">PMID 31069930</span> — Ultra-processed food consumption and adverse mental health outcomes.</li>
+          <li><span className="text-foreground font-medium">PMID 35285920</span> — Ultra-processed foods and depressive symptoms.</li>
+          <li><span className="text-foreground font-medium">BMJ 2024</span> — Associação entre ultraprocessados e desfechos em saúde (bmj-2023-077310).</li>
         </ul>
       </Section>
 
@@ -248,4 +211,4 @@ const OleosSementes = () => {
   );
 };
 
-export default OleosSementes;
+export default Ultraprocessados;
