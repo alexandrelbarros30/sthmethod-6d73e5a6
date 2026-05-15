@@ -81,8 +81,15 @@ const PhaseCard = ({
           </div>
 
           {phase.headline && (
-            (/\d+\s*(mg|mcg|g|ml|ui|iu)\b/i.test(phase.headline) ? (
-              <p className="mt-2 font-mono text-[13.5px] tracking-tight text-[color:var(--sth-green)]/90 leading-relaxed whitespace-pre-line">
+            (/^\s*hor[aá]rio\s*[:\-]/i.test(phase.headline) ? (
+              <div className="mt-2.5 rounded-md border border-[color:var(--sth-green)]/25 bg-[color:var(--sth-green)]/[0.04] pl-2.5 pr-3 py-2">
+                <div className="text-[9px] tracking-[0.22em] uppercase text-[color:var(--sth-green)]/70 mb-1 font-sans">Horário</div>
+                <p className="font-mono text-[12.5px] tracking-tight text-foreground/85 leading-[1.55] whitespace-pre-line">
+                  {phase.headline.replace(/^\s*hor[aá]rio\s*[:\-]\s*/i, "")}
+                </p>
+              </div>
+            ) : /\d+\s*(mg|mcg|g|ml|ui|iu)\b/i.test(phase.headline) ? (
+              <p className="mt-2 font-mono text-[13px] tracking-tight text-foreground/85 leading-relaxed whitespace-pre-line">
                 {phase.headline}
               </p>
             ) : (
