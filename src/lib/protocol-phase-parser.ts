@@ -66,15 +66,41 @@ const ANCHOR_RX = /^[\s\-–—*•·([\]]*([\u2600\u2615\u2697\u{1F305}\u{1F306
 
 function htmlToText(input: string): string {
   if (!input) return "";
+  // Pré-converte listas ordenadas/desordenadas em texto com marcadores,
+  // para preservar a numeração (1., 2., 3.) e bullets que o usuário criou no editor rico.
+  const expanded = expandListsToText(input);
   if (typeof window === "undefined") {
     // SSR fallback: strip tags
-    return input.replace(/<br\s*\/?>(?!\n)/gi, "\n").replace(/<\/(p|div|h[1-6]|li)>/gi, "\n").replace(/<[^>]+>/g, "");
+    return expanded.replace(/<br\s*\/?>(?!\n)/gi, "\n").replace(/<\/(p|div|h[1-6]|li)>/gi, "\n").replace(/<[^>]+>/g, "");
   }
   const div = document.createElement("div");
-  div.innerHTML = input
+  div.innerHTML = expanded
     .replace(/<br\s*\/?>(?!\n)/gi, "\n")
     .replace(/<\/(p|div|h[1-6]|li)>/gi, "$&\n");
   return div.textContent || div.innerText || "";
+}
+
+// Converte <ol>/<ul> em parágrafos com prefixo "1. " ou "- " antes de extrair texto.
+// Suporta listas aninhadas simples (a iteração externa cuida das mais profundas após o replace).
+function expandListsToText(html: string): string {
+  let prev = "";
+  let cur = html;
+  let safety = 0;
+  while (cur !== prev && safety < 5) {
+    prev = cur;
+    cur = cur.replace(/<(ol|ul)\b[^>]*>([\s\S]*?)<\/\1>/gi, (_m, tag, inner) => {
+      const ordered = String(tag).toLowerCase() === "ol";
+      let i = 0;
+      const items = inner.replace(/<li\b[^>]*>([\s\S]*?)<\/li>/gi, (_mm: string, content: string) => {
+        i++;
+        const prefix = ordered ? `${i}. ` : "- ";
+        return `<p>${prefix}${content}</p>`;
+      });
+      return items;
+    });
+    safety++;
+  }
+  return cur;
 }
 
 function sanitizeLine(input: string): string {
