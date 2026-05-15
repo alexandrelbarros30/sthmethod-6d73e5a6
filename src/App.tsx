@@ -33,6 +33,7 @@ import TirzepatidaHipertrofia from "./pages/TirzepatidaHipertrofia";
 import CarboidratosHipertrofia from "./pages/CarboidratosHipertrofia";
 import ProteinaSuperavit from "./pages/ProteinaSuperavit";
 import OleosSementes from "./pages/OleosSementes";
+import Ultraprocessados from "./pages/Ultraprocessados";
 import Promo from "./pages/Promo";
 import EvolucaoPublica from "./pages/EvolucaoPublica";
 import FilaPublica from "./pages/FilaPublica";
