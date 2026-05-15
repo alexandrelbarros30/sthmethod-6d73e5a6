@@ -288,12 +288,13 @@ export function parseProtocolPhases(content: string): ProtocolPhase[] {
     if (quoted && !current.headline) { current.headline = quoted; continue; }
     if (/^a[çc][aã]o\s*[:\-]/i.test(line))     { current.action = line.replace(/^a[çc][aã]o\s*[:\-]\s*/i, "").trim(); continue; }
     if (/^stack\s*[:\-]/i.test(line))           { current.stack  = line.replace(/^stack\s*[:\-]\s*/i, "").trim(); continue; }
-    if (/^[\u23F1\u231A\u23F0]/u.test(line) || /^⏱/.test(line)) { current.timing = line.replace(/^[\u23F1\u231A\u23F0⏱]\s*/u, "").trim(); continue; }
-    if (/^hor[aá]rio\s*[:\-]/i.test(line)) {
-      const v = line.replace(/^hor[aá]rio\s*[:\-]\s*/i, "").trim();
+    const currentScheduleMatch = line.match(/^(?:[\u23F1\u231A\u23F0⏱]\s*)?hor[aá]rio\s*[:\-]\s*(.*)$/iu);
+    if (currentScheduleMatch) {
+      const v = currentScheduleMatch[1].trim();
       current.schedule = current.schedule ? current.schedule + "\n" + v : v;
       continue;
     }
+    if (/^[\u23F1\u231A\u23F0]/u.test(line) || /^⏱/.test(line)) { current.timing = line.replace(/^[\u23F1\u231A\u23F0⏱]\s*/u, "").trim(); continue; }
     if (/^[\u{1F4CC}\u{1F4CD}\u{1F4DD}\u{1F3AF}]/u.test(line)) {
       const f = line.replace(/^[\u{1F4CC}\u{1F4CD}\u{1F4DD}\u{1F3AF}]\s*/u, "").replace(/^foco\s*[:\-]\s*/i, "").trim();
       current.focus = f;
@@ -369,12 +370,13 @@ function splitMedicamentosByWeek(phase: ProtocolPhase): ProtocolPhase[] {
       if (quoted && !sp.headline) { sp.headline = quoted; continue; }
       if (/^a[çc][aã]o\s*[:\-]/i.test(line)) { sp.action = line.replace(/^a[çc][aã]o\s*[:\-]\s*/i, "").trim(); continue; }
       if (/^stack\s*[:\-]/i.test(line))       { sp.stack  = line.replace(/^stack\s*[:\-]\s*/i, "").trim(); continue; }
-      if (/^[\u23F1\u231A\u23F0]/u.test(line) || /^⏱/.test(line)) { sp.timing = line.replace(/^[\u23F1\u231A\u23F0⏱]\s*/u, "").trim(); continue; }
-      if (/^hor[aá]rio\s*[:\-]/i.test(line)) {
-        const v = line.replace(/^hor[aá]rio\s*[:\-]\s*/i, "").trim();
+      const subScheduleMatch = line.match(/^(?:[\u23F1\u231A\u23F0⏱]\s*)?hor[aá]rio\s*[:\-]\s*(.*)$/iu);
+      if (subScheduleMatch) {
+        const v = subScheduleMatch[1].trim();
         sp.schedule = sp.schedule ? sp.schedule + "\n" + v : v;
         continue;
       }
+      if (/^[\u23F1\u231A\u23F0]/u.test(line) || /^⏱/.test(line)) { sp.timing = line.replace(/^[\u23F1\u231A\u23F0⏱]\s*/u, "").trim(); continue; }
       if (/^[\u{1F4CC}\u{1F4CD}\u{1F4DD}\u{1F3AF}]/u.test(line)) {
         sp.focus = line.replace(/^[\u{1F4CC}\u{1F4CD}\u{1F4DD}\u{1F3AF}]\s*/u, "").replace(/^foco\s*[:\-]\s*/i, "").trim();
         continue;
