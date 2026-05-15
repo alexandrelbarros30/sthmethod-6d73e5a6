@@ -249,6 +249,7 @@ const DietPlanningPanel = ({ targetUserId, readOnly = false }: DietPlanningPanel
                       className={protocolProseClasses}
                       showParagraphBullets={false}
                       stripLeadingMarkers
+                      showZebra={false}
                     />
                   </div>
                 ) : (
