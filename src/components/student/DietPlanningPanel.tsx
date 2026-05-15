@@ -247,6 +247,8 @@ const DietPlanningPanel = ({ targetUserId, readOnly = false }: DietPlanningPanel
                     <RichContentRenderer
                       content={planning!.content_html}
                       className={protocolProseClasses}
+                      showParagraphBullets={false}
+                      stripLeadingMarkers
                     />
                   </div>
                 ) : (
