@@ -14,8 +14,18 @@ import bfAltoImg from "@/assets/sthnews-bfalto-hero.jpg";
 import tirzeImg from "@/assets/sthnews-tirzepatida-hero.jpg";
 import proteinaImg from "@/assets/sthnews-proteina-hero.jpg";
 import oleosImg from "@/assets/sthnews-oleos-sementes-hero.jpg";
+import ultraImg from "@/assets/sthnews-ultraprocessados-hero.jpg";
 
 const articles = [
+  {
+    to: "/tendencias/ultraprocessados-saude-mental",
+    tag: "CAPA",
+    tagClass: "bg-primary text-primary-foreground",
+    date: "Nova matéria",
+    title: "🧠 Ultraprocessados não destroem magicamente sua saúde mental",
+    desc: "Existe associação — mas não é causa direta. Quem manda no resultado é o ecossistema alimentar inteiro.",
+    img: ultraImg,
+  },
   {
     to: "/tendencias/oleos-sementes",
     tag: "CAPA",
