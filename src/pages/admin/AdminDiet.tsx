@@ -10,6 +10,7 @@ import RichTextEditor from "@/components/shared/RichTextEditor";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
 import DietContentRenderer from "@/components/student/DietContentRenderer";
 import StudentInfoHeader from "@/components/student/StudentInfoHeader";
+import DietPlanningPanel from "@/components/student/DietPlanningPanel";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -606,6 +607,9 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
 
           <div className="flex-1 min-h-0 overflow-y-auto pr-1 sm:pr-4">
             <div className="space-y-4">
+              {selected?.user_id && (
+                <DietPlanningPanel targetUserId={selected.user_id} />
+              )}
               {/* Add new diet button */}
               {!showNewForm && !editingId && (
                 <div className="flex flex-col sm:flex-row gap-2">

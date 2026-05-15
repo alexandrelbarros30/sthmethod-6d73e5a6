@@ -14,12 +14,13 @@ import { toast } from "sonner";
 
 interface DietPlanningPanelProps {
   targetUserId: string;
+  readOnly?: boolean;
 }
 
-const DietPlanningPanel = ({ targetUserId }: DietPlanningPanelProps) => {
+const DietPlanningPanel = ({ targetUserId, readOnly = false }: DietPlanningPanelProps) => {
   const { user, role } = useAuth();
   const qc = useQueryClient();
-  const canEdit = role === "admin" || role === "consultor";
+  const canEdit = !readOnly && (role === "admin" || role === "consultor");
 
   const [open, setOpen] = useState(true);
   const [editing, setEditing] = useState(false);

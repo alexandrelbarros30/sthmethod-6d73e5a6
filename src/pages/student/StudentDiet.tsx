@@ -276,7 +276,7 @@ const StudentDiet = () => {
           </Button>
         </div>
 
-        {targetId && <DietPlanningPanel targetUserId={targetId} />}
+        {targetId && <DietPlanningPanel targetUserId={targetId} readOnly />}
 
         {hasStructuredMeals ? (
           <>
