@@ -11,29 +11,32 @@ import {
   X,
   Plus,
   Calendar as CalendarIcon,
-  Eye,
+  ChevronDown,
   Sparkles,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import RichTextEditor from "@/components/shared/RichTextEditor";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface DietPlanningPanelProps {
   targetUserId: string;
   readOnly?: boolean;
 }
 
+const STH_GREEN = "#14b780";
+
 const DietPlanningPanel = ({ targetUserId, readOnly = false }: DietPlanningPanelProps) => {
   const { user, role } = useAuth();
   const qc = useQueryClient();
   const canEdit = !readOnly && (role === "admin" || role === "consultor");
 
-  const [viewing, setViewing] = useState(false);
+  const [open, setOpen] = useState(true);
   const [editing, setEditing] = useState(false);
   const [draftHtml, setDraftHtml] = useState("");
   const [draftDate, setDraftDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
@@ -66,7 +69,7 @@ const DietPlanningPanel = ({ targetUserId, readOnly = false }: DietPlanningPanel
     setDraftHtml(planning?.content_html || "");
     setDraftDate(planning?.plan_date || format(new Date(), "yyyy-MM-dd"));
     setEditing(true);
-    setViewing(true);
+    setOpen(true);
   };
 
   const handleSave = async () => {
@@ -110,7 +113,6 @@ const DietPlanningPanel = ({ targetUserId, readOnly = false }: DietPlanningPanel
       if (error) throw error;
       toast.success("Planejamento excluído.");
       setEditing(false);
-      setViewing(false);
       qc.invalidateQueries({ queryKey: ["diet-planning", targetUserId] });
     } catch (e: any) {
       toast.error(e.message || "Erro ao excluir.");
@@ -127,109 +129,74 @@ const DietPlanningPanel = ({ targetUserId, readOnly = false }: DietPlanningPanel
     ? format(new Date(planning.plan_date + "T00:00:00"), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
     : null;
 
+  // Tipografia minimalista premium (mesma linguagem do Protocolo Inteligente):
+  // foreground/75 base, tight tracking, headings em font-display, accents verdes em font-mono.
+  const protocolProseClasses = cn(
+    "max-w-none text-foreground/80 leading-relaxed tracking-tight",
+    "[&_p]:text-[13px] sm:[&_p]:text-[13.5px] [&_p]:leading-relaxed [&_p]:text-foreground/75 [&_p]:my-1.5",
+    "[&_h1]:font-display [&_h1]:text-[15px] sm:[&_h1]:text-base [&_h1]:font-semibold [&_h1]:tracking-tight [&_h1]:text-foreground [&_h1]:mt-3 [&_h1]:mb-1.5",
+    "[&_h2]:font-display [&_h2]:text-[14px] [&_h2]:font-semibold [&_h2]:tracking-tight [&_h2]:text-foreground [&_h2]:mt-3 [&_h2]:mb-1",
+    "[&_h3]:font-display [&_h3]:text-[12.5px] [&_h3]:font-semibold [&_h3]:tracking-[0.08em] [&_h3]:uppercase [&_h3]:text-foreground/85 [&_h3]:mt-2.5 [&_h3]:mb-1",
+    "[&_strong]:text-foreground [&_strong]:font-semibold",
+    "[&_em]:italic [&_em]:text-foreground/70",
+    "[&_u]:underline [&_u]:decoration-emerald-400/40 [&_u]:underline-offset-2",
+    "[&_ul]:list-none [&_ul]:pl-0 [&_ul]:my-1.5 [&_ul]:space-y-1",
+    "[&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-1.5 [&_ol]:space-y-1",
+    "[&_li]:text-[13px] [&_li]:text-foreground/75 [&_li]:leading-relaxed",
+    "[&_ul>li]:relative [&_ul>li]:pl-4",
+    "[&_ul>li]:before:content-[''] [&_ul>li]:before:absolute [&_ul>li]:before:left-0 [&_ul>li]:before:top-[0.55em] [&_ul>li]:before:w-1 [&_ul>li]:before:h-1 [&_ul>li]:before:rounded-full [&_ul>li]:before:bg-emerald-400/70",
+    "[&_hr]:border-white/5 [&_hr]:my-3",
+    "[&_mark]:bg-emerald-400/15 [&_mark]:text-emerald-200 [&_mark]:px-1 [&_mark]:rounded-sm",
+    "[&_blockquote]:border-l-2 [&_blockquote]:border-emerald-400/60 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-foreground/70 [&_blockquote]:my-2",
+    "[&_a]:text-emerald-300 [&_a]:underline [&_a]:underline-offset-2 [&_a]:decoration-emerald-400/40",
+    "[&_code]:font-mono [&_code]:text-[12.5px] [&_code]:text-emerald-300/90 [&_code]:bg-emerald-400/[0.06] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded"
+  );
+
   return (
-    <>
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-card/80 backdrop-blur-sm p-4 sm:p-5 group hover:shadow-lg shadow-emerald-500/10 transition-all duration-500"
-      >
-        {/* Ambient glows */}
-        <div className="absolute -top-12 -right-12 w-32 h-32 bg-gradient-to-br from-emerald-500 to-teal-500 opacity-[0.07] rounded-full blur-2xl group-hover:opacity-[0.12] transition-opacity duration-500" />
-        <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-gradient-to-br from-emerald-500 to-teal-500 opacity-[0.04] rounded-full blur-xl" />
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-card/80 backdrop-blur-sm group hover:shadow-lg shadow-emerald-500/10 transition-all duration-500"
+    >
+      {/* Ambient glows */}
+      <div className="absolute -top-12 -right-12 w-32 h-32 bg-gradient-to-br from-emerald-500 to-teal-500 opacity-[0.07] rounded-full blur-2xl group-hover:opacity-[0.12] transition-opacity duration-500 pointer-events-none" />
+      <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-gradient-to-br from-emerald-500 to-teal-500 opacity-[0.04] rounded-full blur-xl pointer-events-none" />
 
-        <div className="relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <ClipboardList className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-semibold tracking-[0.25em] uppercase text-emerald-400/90 inline-flex items-center gap-1">
-                <Sparkles className="w-3 h-3" /> Destaque
-              </p>
-              <h3 className="font-display font-semibold text-sm sm:text-base text-foreground leading-tight">
-                Planejamento
-              </h3>
-              {formattedDate && (
-                <p className="text-[10px] text-muted-foreground mt-0.5 inline-flex items-center gap-1 font-body">
-                  <CalendarIcon className="w-3 h-3" /> {formattedDate}
-                </p>
-              )}
-            </div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              {canEdit && (
-                <button
-                  type="button"
-                  onClick={startEdit}
-                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-foreground/70 hover:text-foreground hover:scale-105 transition-all duration-300"
-                  title={planning?.id ? "Editar planejamento" : "Criar planejamento"}
-                >
-                  {planning?.id ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                </button>
-              )}
-              {hasContent && (
-                <button
-                  type="button"
-                  onClick={() => { setEditing(false); setViewing(true); }}
-                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300"
-                  title="Ver planejamento"
-                >
-                  <Eye className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {!hasContent && (
-            <p className="text-xs text-muted-foreground ml-[52px] mt-2 italic font-body">
-              {canEdit
-                ? "Nenhum planejamento cadastrado ainda."
-                : "Aguarde seu consultor publicar o planejamento."}
-            </p>
-          )}
-          {hasContent && !canEdit && (
-            <p className="text-xs text-muted-foreground ml-[52px] mt-1 font-body">
-              Toque no <Eye className="w-3 h-3 inline-block mx-0.5" /> para visualizar
-            </p>
-          )}
-        </div>
-      </motion.div>
-
-      <Dialog
-        open={viewing}
-        onOpenChange={(o) => {
-          if (!o) {
-            setViewing(false);
-            setEditing(false);
-          }
-        }}
-      >
-        <DialogContent className="max-w-lg max-h-[85dvh] overflow-hidden !flex !flex-col">
-          <DialogHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+      <Collapsible open={open} onOpenChange={setOpen}>
+        <div className="relative z-10 flex items-center gap-3 p-4 sm:p-5">
+          <CollapsibleTrigger asChild>
+            <button type="button" className="flex items-center gap-3 flex-1 text-left">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0">
                 <ClipboardList className="w-5 h-5 text-white" />
               </div>
-              <div className="flex-1 min-w-0 text-left">
-                <p className="text-[10px] font-semibold tracking-[0.25em] uppercase text-emerald-400/90">
-                  Destaque
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-semibold tracking-[0.25em] uppercase text-emerald-400/90 inline-flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" /> Destaque
                 </p>
-                <DialogTitle className="text-base font-display font-semibold text-foreground">
+                <h3 className="font-display font-semibold text-sm sm:text-base text-foreground leading-tight tracking-tight">
                   Planejamento
-                </DialogTitle>
-                {formattedDate && !editing && (
-                  <p className="text-[11px] text-muted-foreground mt-0.5 inline-flex items-center gap-1 font-body">
+                </h3>
+                {formattedDate && (
+                  <p className="text-[10px] text-muted-foreground mt-0.5 inline-flex items-center gap-1 font-body">
                     <CalendarIcon className="w-3 h-3" /> {formattedDate}
                   </p>
                 )}
               </div>
-            </div>
-          </DialogHeader>
+              <ChevronDown
+                className={cn(
+                  "w-4 h-4 text-muted-foreground transition-transform shrink-0",
+                  open && "rotate-180"
+                )}
+              />
+            </button>
+          </CollapsibleTrigger>
+        </div>
 
-          <div className="flex-1 overflow-y-auto pt-2">
+        <CollapsibleContent>
+          <div className="relative z-10 px-4 sm:px-5 pb-4 sm:pb-5 space-y-3" style={{ ["--sth-green" as any]: STH_GREEN }}>
             {editing ? (
-              <div className="space-y-3">
+              <>
                 <div>
                   <label className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                     Data
@@ -253,20 +220,7 @@ const DietPlanningPanel = ({ targetUserId, readOnly = false }: DietPlanningPanel
                     />
                   </div>
                 </div>
-              </div>
-            ) : hasContent ? (
-              <div className="rounded-lg border border-emerald-500/15 bg-emerald-500/5 p-3">
-                <RichContentRenderer content={planning!.content_html} />
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground italic">Sem conteúdo.</p>
-            )}
-          </div>
-
-          {canEdit && (
-            <div className="flex flex-wrap gap-2 pt-3 border-t border-border/40">
-              {editing ? (
-                <>
+                <div className="flex flex-wrap gap-2 pt-1">
                   <Button size="sm" onClick={handleSave} disabled={saving}>
                     <Save className="w-4 h-4 mr-1" /> Salvar
                   </Button>
@@ -284,34 +238,52 @@ const DietPlanningPanel = ({ targetUserId, readOnly = false }: DietPlanningPanel
                       <Trash2 className="w-4 h-4 mr-1" /> Excluir
                     </Button>
                   )}
-                </>
-              ) : (
-                <>
-                  <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
-                    {planning?.id ? (
-                      <><Pencil className="w-4 h-4 mr-1" /> Editar</>
-                    ) : (
-                      <><Plus className="w-4 h-4 mr-1" /> Criar planejamento</>
-                    )}
-                  </Button>
-                  {planning?.id && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive hover:text-destructive ml-auto"
-                      onClick={handleDelete}
-                      disabled={saving}
-                    >
-                      <Trash2 className="w-4 h-4 mr-1" /> Excluir
+                </div>
+              </>
+            ) : (
+              <>
+                {hasContent ? (
+                  <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] p-3.5 sm:p-4">
+                    <RichContentRenderer
+                      content={planning!.content_html}
+                      className={protocolProseClasses}
+                    />
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic font-body">
+                    {canEdit
+                      ? "Nenhum planejamento cadastrado ainda."
+                      : "Aguarde seu consultor publicar o planejamento."}
+                  </p>
+                )}
+                {canEdit && (
+                  <div className="flex gap-2 pt-2 border-t border-white/5">
+                    <Button size="sm" variant="outline" onClick={startEdit}>
+                      {planning?.id ? (
+                        <><Pencil className="w-4 h-4 mr-1" /> Editar</>
+                      ) : (
+                        <><Plus className="w-4 h-4 mr-1" /> Criar planejamento</>
+                      )}
                     </Button>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
+                    {planning?.id && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive ml-auto"
+                        onClick={handleDelete}
+                        disabled={saving}
+                      >
+                        <Trash2 className="w-4 h-4 mr-1" /> Excluir
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </motion.div>
   );
 };
 
