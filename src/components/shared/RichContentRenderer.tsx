@@ -3,6 +3,8 @@ import { cn } from "@/lib/utils";
 interface RichContentRendererProps {
   content: string;
   className?: string;
+  showParagraphBullets?: boolean;
+  stripLeadingMarkers?: boolean;
 }
 
 // Allow leading emojis/symbols/whitespace before the heading keyword (e.g. "☕ Lanche da tarde", "🍽️ Almoço")
@@ -15,8 +17,18 @@ function cleanEmptyParagraphs(html: string): string {
   return html.replace(/<p[^>]*>\s*(<br\s*\/?>|\s|&nbsp;)*\s*<\/p>/gi, '');
 }
 
-function addBulletsAndZebraToHTML(html: string): string {
-  const cleaned = cleanEmptyParagraphs(html);
+function stripLeadingTextMarkers(html: string): string {
+  return html.replace(
+    /(<(?:p|li)[^>]*>\s*(?:<(?:strong|b|em|i|u|span|mark|code|s)[^>]*>\s*)*)(?:[•·▪◦●\-*]+\s*)+/gi,
+    "$1"
+  );
+}
+
+function addBulletsAndZebraToHTML(
+  html: string,
+  { showParagraphBullets = true, stripLeadingMarkers = false }: Pick<RichContentRendererProps, "showParagraphBullets" | "stripLeadingMarkers"> = {}
+): string {
+  const cleaned = stripLeadingMarkers ? stripLeadingTextMarkers(cleanEmptyParagraphs(html)) : cleanEmptyParagraphs(html);
   let itemIndex = 0;
   return cleaned.replace(/<p([^>]*)>([\s\S]*?)<\/p>/gi, (match, attrs, inner) => {
     const text = inner.replace(/<[^>]*>/g, '').trim();
@@ -28,15 +40,23 @@ function addBulletsAndZebraToHTML(html: string): string {
     if (text.startsWith("(") && text.endsWith(")")) return match;
     itemIndex++;
     const bg = itemIndex % 2 === 0 ? 'background:hsl(var(--muted)/0.5);border-radius:0.25rem;' : '';
-    return `<p${attrs} style="padding:0.375rem 0.5rem;${bg}"><span style="color:hsl(var(--foreground));font-weight:700;margin-right:0.375rem;">•</span>${inner}</p>`;
+    const bulletPrefix = showParagraphBullets
+      ? '<span style="color:hsl(var(--foreground));font-weight:700;margin-right:0.375rem;">•</span>'
+      : "";
+    return `<p${attrs} style="padding:0.375rem 0.5rem;${bg}">${bulletPrefix}${inner}</p>`;
   });
 }
 
-const RichContentRenderer = ({ content, className }: RichContentRendererProps) => {
+const RichContentRenderer = ({
+  content,
+  className,
+  showParagraphBullets = true,
+  stripLeadingMarkers = false,
+}: RichContentRendererProps) => {
   const isHTML = /<[a-z][\s\S]*>/i.test(content);
 
   if (isHTML) {
-    const processedContent = addBulletsAndZebraToHTML(content);
+    const processedContent = addBulletsAndZebraToHTML(content, { showParagraphBullets, stripLeadingMarkers });
     return (
       <div
         className={cn(
