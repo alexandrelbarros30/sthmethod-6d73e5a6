@@ -1,13 +1,24 @@
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronDown, ClipboardList, Pencil, Save, Trash2, X, Plus, Calendar as CalendarIcon } from "lucide-react";
+import {
+  ClipboardList,
+  Pencil,
+  Save,
+  Trash2,
+  X,
+  Plus,
+  Calendar as CalendarIcon,
+  Eye,
+  Sparkles,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import RichTextEditor from "@/components/shared/RichTextEditor";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
 import { toast } from "sonner";
@@ -22,7 +33,7 @@ const DietPlanningPanel = ({ targetUserId, readOnly = false }: DietPlanningPanel
   const qc = useQueryClient();
   const canEdit = !readOnly && (role === "admin" || role === "consultor");
 
-  const [open, setOpen] = useState(true);
+  const [viewing, setViewing] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draftHtml, setDraftHtml] = useState("");
   const [draftDate, setDraftDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
@@ -55,7 +66,7 @@ const DietPlanningPanel = ({ targetUserId, readOnly = false }: DietPlanningPanel
     setDraftHtml(planning?.content_html || "");
     setDraftDate(planning?.plan_date || format(new Date(), "yyyy-MM-dd"));
     setEditing(true);
-    setOpen(true);
+    setViewing(true);
   };
 
   const handleSave = async () => {
@@ -99,6 +110,7 @@ const DietPlanningPanel = ({ targetUserId, readOnly = false }: DietPlanningPanel
       if (error) throw error;
       toast.success("Planejamento excluído.");
       setEditing(false);
+      setViewing(false);
       qc.invalidateQueries({ queryKey: ["diet-planning", targetUserId] });
     } catch (e: any) {
       toast.error(e.message || "Erro ao excluir.");
@@ -108,8 +120,6 @@ const DietPlanningPanel = ({ targetUserId, readOnly = false }: DietPlanningPanel
   };
 
   if (isLoading) return null;
-
-  // Hide entirely for student when no planning exists
   if (!planning && !canEdit) return null;
 
   const hasContent = !!(planning?.content_html && planning.content_html.trim());
@@ -118,34 +128,112 @@ const DietPlanningPanel = ({ targetUserId, readOnly = false }: DietPlanningPanel
     : null;
 
   return (
-    <div className="rounded-2xl border border-emerald-400/30 bg-gradient-to-br from-emerald-500/[0.08] via-white/[0.03] to-white/[0.02] backdrop-blur-xl overflow-hidden animate-fade-in shadow-[0_0_40px_-12px_hsl(142_70%_45%/0.35)]">
-      <Collapsible open={open} onOpenChange={setOpen}>
-        <div className="flex items-center justify-between gap-2 px-5 py-4">
-          <CollapsibleTrigger asChild>
-            <button type="button" className="flex items-center gap-3 flex-1 text-left">
-              <div className="w-9 h-9 rounded-xl bg-emerald-400/15 border border-emerald-400/30 flex items-center justify-center">
-                <ClipboardList className="w-4 h-4 text-emerald-300" />
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-card/80 backdrop-blur-sm p-4 sm:p-5 group hover:shadow-lg shadow-emerald-500/10 transition-all duration-500"
+      >
+        {/* Ambient glows */}
+        <div className="absolute -top-12 -right-12 w-32 h-32 bg-gradient-to-br from-emerald-500 to-teal-500 opacity-[0.07] rounded-full blur-2xl group-hover:opacity-[0.12] transition-opacity duration-500" />
+        <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-gradient-to-br from-emerald-500 to-teal-500 opacity-[0.04] rounded-full blur-xl" />
+
+        <div className="relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+              <ClipboardList className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-semibold tracking-[0.25em] uppercase text-emerald-400/90 inline-flex items-center gap-1">
+                <Sparkles className="w-3 h-3" /> Destaque
+              </p>
+              <h3 className="font-display font-semibold text-sm sm:text-base text-foreground leading-tight">
+                Planejamento
+              </h3>
+              {formattedDate && (
+                <p className="text-[10px] text-muted-foreground mt-0.5 inline-flex items-center gap-1 font-body">
+                  <CalendarIcon className="w-3 h-3" /> {formattedDate}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={startEdit}
+                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-foreground/70 hover:text-foreground hover:scale-105 transition-all duration-300"
+                  title={planning?.id ? "Editar planejamento" : "Criar planejamento"}
+                >
+                  {planning?.id ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                </button>
+              )}
+              {hasContent && (
+                <button
+                  type="button"
+                  onClick={() => { setEditing(false); setViewing(true); }}
+                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300"
+                  title="Ver planejamento"
+                >
+                  <Eye className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {!hasContent && (
+            <p className="text-xs text-muted-foreground ml-[52px] mt-2 italic font-body">
+              {canEdit
+                ? "Nenhum planejamento cadastrado ainda."
+                : "Aguarde seu consultor publicar o planejamento."}
+            </p>
+          )}
+          {hasContent && !canEdit && (
+            <p className="text-xs text-muted-foreground ml-[52px] mt-1 font-body">
+              Toque no <Eye className="w-3 h-3 inline-block mx-0.5" /> para visualizar
+            </p>
+          )}
+        </div>
+      </motion.div>
+
+      <Dialog
+        open={viewing}
+        onOpenChange={(o) => {
+          if (!o) {
+            setViewing(false);
+            setEditing(false);
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg max-h-[85dvh] overflow-hidden !flex !flex-col">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                <ClipboardList className="w-5 h-5 text-white" />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-emerald-300/90">Destaque</p>
-                <h3 className="text-base font-display font-bold uppercase text-foreground tracking-tight">Planejamento</h3>
-                {formattedDate && (
-                  <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-[10px] font-semibold tracking-[0.25em] uppercase text-emerald-400/90">
+                  Destaque
+                </p>
+                <DialogTitle className="text-base font-display font-semibold text-foreground">
+                  Planejamento
+                </DialogTitle>
+                {formattedDate && !editing && (
+                  <p className="text-[11px] text-muted-foreground mt-0.5 inline-flex items-center gap-1 font-body">
                     <CalendarIcon className="w-3 h-3" /> {formattedDate}
                   </p>
                 )}
               </div>
-              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
-            </button>
-          </CollapsibleTrigger>
-        </div>
+            </div>
+          </DialogHeader>
 
-        <CollapsibleContent>
-          <div className="px-5 pb-5 space-y-3">
+          <div className="flex-1 overflow-y-auto pt-2">
             {editing ? (
-              <>
+              <div className="space-y-3">
                 <div>
-                  <label className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">Data</label>
+                  <label className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
+                    Data
+                  </label>
                   <Input
                     type="date"
                     value={draftDate}
@@ -154,16 +242,31 @@ const DietPlanningPanel = ({ targetUserId, readOnly = false }: DietPlanningPanel
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">Conteúdo</label>
+                  <label className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
+                    Conteúdo
+                  </label>
                   <div className="mt-1">
                     <RichTextEditor
                       value={draftHtml}
                       onChange={setDraftHtml}
-                      placeholder="Escreva o planejamento da dieta (HTML formatado)..."
+                      placeholder="Escreva o planejamento da dieta..."
                     />
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2 pt-1">
+              </div>
+            ) : hasContent ? (
+              <div className="rounded-lg border border-emerald-500/15 bg-emerald-500/5 p-3">
+                <RichContentRenderer content={planning!.content_html} />
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">Sem conteúdo.</p>
+            )}
+          </div>
+
+          {canEdit && (
+            <div className="flex flex-wrap gap-2 pt-3 border-t border-border/40">
+              {editing ? (
+                <>
                   <Button size="sm" onClick={handleSave} disabled={saving}>
                     <Save className="w-4 h-4 mr-1" /> Salvar
                   </Button>
@@ -171,39 +274,44 @@ const DietPlanningPanel = ({ targetUserId, readOnly = false }: DietPlanningPanel
                     <X className="w-4 h-4 mr-1" /> Cancelar
                   </Button>
                   {planning?.id && (
-                    <Button size="sm" variant="destructive" className="ml-auto" onClick={handleDelete} disabled={saving}>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="ml-auto"
+                      onClick={handleDelete}
+                      disabled={saving}
+                    >
                       <Trash2 className="w-4 h-4 mr-1" /> Excluir
                     </Button>
                   )}
-                </div>
-              </>
-            ) : (
-              <>
-                {hasContent ? (
-                  <RichContentRenderer content={planning!.content_html} />
-                ) : (
-                  <p className="text-xs text-muted-foreground italic">
-                    {canEdit ? "Nenhum planejamento cadastrado ainda." : "Aguarde seu consultor publicar o planejamento."}
-                  </p>
-                )}
-                {canEdit && (
-                  <div className="flex gap-2 pt-2 border-t border-white/5">
-                    <Button size="sm" variant="outline" onClick={startEdit}>
-                      {planning?.id ? <><Pencil className="w-4 h-4 mr-1" /> Editar</> : <><Plus className="w-4 h-4 mr-1" /> Criar planejamento</>}
-                    </Button>
-                    {planning?.id && (
-                      <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={handleDelete} disabled={saving}>
-                        <Trash2 className="w-4 h-4 mr-1" /> Excluir
-                      </Button>
+                </>
+              ) : (
+                <>
+                  <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
+                    {planning?.id ? (
+                      <><Pencil className="w-4 h-4 mr-1" /> Editar</>
+                    ) : (
+                      <><Plus className="w-4 h-4 mr-1" /> Criar planejamento</>
                     )}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
-    </div>
+                  </Button>
+                  {planning?.id && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive ml-auto"
+                      onClick={handleDelete}
+                      disabled={saving}
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" /> Excluir
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
