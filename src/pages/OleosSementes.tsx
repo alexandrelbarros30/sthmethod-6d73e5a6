@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { ArrowLeft, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,8 +24,51 @@ const OleosSementes = () => {
   const backTo = isStudent ? "/dashboard" : "/tendencias";
   const BackIcon = isStudent ? Home : ArrowLeft;
 
+  const pageUrl = "https://sthmethod.com.br/tendencias/oleos-sementes";
+  const pageTitle = "Óleos de sementes são inflamatórios? O que a ciência diz | STH News";
+  const pageDesc = "Óleos de sementes não são automaticamente inflamatórios. Veja o que estudos em humanos mostram sobre LDL oxidado, ômega-6 e o real impacto na saúde.";
+  const ogImage = "https://sthmethod.com.br/og-oleos-sementes.jpg";
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: "Você foi enganado sobre os óleos de sementes",
+    description: pageDesc,
+    image: ogImage,
+    author: { "@type": "Organization", name: "STH METHOD" },
+    publisher: {
+      "@type": "Organization",
+      name: "STH METHOD",
+      logo: { "@type": "ImageObject", url: "https://sthmethod.com.br/pwa-icon-192.png" },
+    },
+    mainEntityOfPage: { "@type": "WebPage", "@id": pageUrl },
+  };
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "STH News", item: "https://sthmethod.com.br/tendencias" },
+      { "@type": "ListItem", position: 2, name: "Óleos de sementes", item: pageUrl },
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDesc} />
+        <link rel="canonical" href={pageUrl} />
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDesc} />
+        <meta property="og:url" content={pageUrl} />
+        <meta property="og:image" content={ogImage} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDesc} />
+        <meta name="twitter:image" content={ogImage} />
+        <script type="application/ld+json">{JSON.stringify(articleSchema)}</script>
+        <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
+      </Helmet>
       <header className="fixed top-0 inset-x-0 z-50 bg-background/80 backdrop-blur-2xl border-b border-border/40">
         <div className="max-w-6xl mx-auto px-6 h-11 flex items-center justify-between">
           <Link to={backTo} className="flex items-center gap-1.5 text-[12px] text-muted-foreground hover:text-foreground transition-colors">
