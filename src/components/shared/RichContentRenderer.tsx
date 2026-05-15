@@ -5,6 +5,7 @@ interface RichContentRendererProps {
   className?: string;
   showParagraphBullets?: boolean;
   stripLeadingMarkers?: boolean;
+  showZebra?: boolean;
 }
 
 // Allow leading emojis/symbols/whitespace before the heading keyword (e.g. "☕ Lanche da tarde", "🍽️ Almoço")
@@ -26,7 +27,7 @@ function stripLeadingTextMarkers(html: string): string {
 
 function addBulletsAndZebraToHTML(
   html: string,
-  { showParagraphBullets = true, stripLeadingMarkers = false }: Pick<RichContentRendererProps, "showParagraphBullets" | "stripLeadingMarkers"> = {}
+  { showParagraphBullets = true, stripLeadingMarkers = false, showZebra = true }: Pick<RichContentRendererProps, "showParagraphBullets" | "stripLeadingMarkers" | "showZebra"> = {}
 ): string {
   const cleaned = stripLeadingMarkers ? stripLeadingTextMarkers(cleanEmptyParagraphs(html)) : cleanEmptyParagraphs(html);
   let itemIndex = 0;
@@ -39,7 +40,7 @@ function addBulletsAndZebraToHTML(
     }
     if (text.startsWith("(") && text.endsWith(")")) return match;
     itemIndex++;
-    const bg = itemIndex % 2 === 0 ? 'background:hsl(var(--muted)/0.5);border-radius:0.25rem;' : '';
+    const bg = showZebra && itemIndex % 2 === 0 ? 'background:hsl(var(--muted)/0.5);border-radius:0.25rem;' : '';
     const bulletPrefix = showParagraphBullets
       ? '<span style="color:hsl(var(--foreground));font-weight:700;margin-right:0.375rem;">•</span>'
       : "";
@@ -52,11 +53,12 @@ const RichContentRenderer = ({
   className,
   showParagraphBullets = true,
   stripLeadingMarkers = false,
+  showZebra = true,
 }: RichContentRendererProps) => {
   const isHTML = /<[a-z][\s\S]*>/i.test(content);
 
   if (isHTML) {
-    const processedContent = addBulletsAndZebraToHTML(content, { showParagraphBullets, stripLeadingMarkers });
+    const processedContent = addBulletsAndZebraToHTML(content, { showParagraphBullets, stripLeadingMarkers, showZebra });
     return (
       <div
         className={cn(
