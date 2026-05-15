@@ -81,9 +81,55 @@ function htmlToText(input: string): string {
   return div.textContent || div.innerText || "";
 }
 
+function escapeHtml(input: string): string {
+  return input
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 // Converte <ol>/<ul> em parágrafos com prefixo "1. " ou "- " antes de extrair texto.
 // Suporta listas aninhadas simples (a iteração externa cuida das mais profundas após o replace).
 function expandListsToText(html: string): string {
+  if (typeof window !== "undefined") {
+    const container = document.createElement("div");
+    container.innerHTML = html;
+
+    const serializeList = (listEl: Element): string => {
+      const ordered = listEl.tagName.toLowerCase() === "ol";
+      const items = Array.from(listEl.children).filter((child) => child.tagName.toLowerCase() === "li");
+
+      return items
+        .map((li, index) => {
+          const clone = li.cloneNode(true) as HTMLElement;
+          Array.from(clone.children)
+            .filter((child) => ["ol", "ul"].includes(child.tagName.toLowerCase()))
+            .forEach((nested) => nested.remove());
+
+          const lineText = (clone.textContent || "").replace(/\s+/g, " ").trim();
+          const prefix = ordered ? `${index + 1}. ` : "- ";
+          const nestedLists = Array.from(li.children)
+            .filter((child) => ["ol", "ul"].includes(child.tagName.toLowerCase()))
+            .map((nested) => serializeList(nested))
+            .join("");
+
+          return `${lineText ? `<p>${escapeHtml(prefix + lineText)}</p>` : ""}${nestedLists}`;
+        })
+        .join("");
+    };
+
+    Array.from(container.querySelectorAll("ol, ul"))
+      .reverse()
+      .forEach((listEl) => {
+        listEl.insertAdjacentHTML("beforebegin", serializeList(listEl));
+        listEl.remove();
+      });
+
+    return container.innerHTML;
+  }
+
   let prev = "";
   let cur = html;
   let safety = 0;
@@ -95,7 +141,13 @@ function expandListsToText(html: string): string {
       const items = inner.replace(/<li\b[^>]*>([\s\S]*?)<\/li>/gi, (_mm: string, content: string) => {
         i++;
         const prefix = ordered ? `${i}. ` : "- ";
-        return `<p>${prefix}${content}</p>`;
+        const text = content
+          .replace(/<\/(p|div|h[1-6])>/gi, " ")
+          .replace(/<br\s*\/?>/gi, " ")
+          .replace(/<[^>]+>/g, "")
+          .replace(/\s+/g, " ")
+          .trim();
+        return text ? `<p>${prefix}${text}</p>` : "";
       });
       return items;
     });
