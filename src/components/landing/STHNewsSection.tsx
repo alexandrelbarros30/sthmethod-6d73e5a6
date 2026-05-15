@@ -13,8 +13,18 @@ import ginecoImg from "@/assets/sthnews-gineco-hero.jpg";
 import bfAltoImg from "@/assets/sthnews-bfalto-hero.jpg";
 import tirzeImg from "@/assets/sthnews-tirzepatida-hero.jpg";
 import proteinaImg from "@/assets/sthnews-proteina-hero.jpg";
+import oleosImg from "@/assets/sthnews-oleos-sementes-hero.jpg";
 
 const articles = [
+  {
+    to: "/tendencias/oleos-sementes",
+    tag: "CAPA",
+    tagClass: "bg-primary text-primary-foreground",
+    date: "Nova matéria",
+    title: "🌻 Você foi enganado sobre os óleos de sementes",
+    desc: "Sozinhos não são inflamatórios. O problema é o ecossistema alimentar — excesso calórico, ultraprocessados e sedentarismo.",
+    img: oleosImg,
+  },
   {
     to: "/tendencias/proteina-superavit",
     tag: "CAPA",
