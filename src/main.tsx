@@ -1,4 +1,5 @@
 import { createRoot } from "react-dom/client";
+import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import "./index.css";
 import { APP_RELEASE_VERSION, APP_VERSION, VERSION_KEY, VERSION_URL } from "./lib/app-version";
@@ -81,4 +82,8 @@ if (import.meta.env.PROD && !isPreviewHost()) {
   void killServiceWorkers().then(syncLatestBuild);
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <HelmetProvider>
+    <App />
+  </HelmetProvider>
+);
