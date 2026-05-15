@@ -162,6 +162,7 @@ const App = () => (
             <Route path="/tendencias/carboidratos-hipertrofia" element={<CarboidratosHipertrofia />} />
             <Route path="/tendencias/proteina-superavit" element={<ProteinaSuperavit />} />
             <Route path="/tendencias/oleos-sementes" element={<OleosSementes />} />
+            <Route path="/tendencias/ultraprocessados-saude-mental" element={<Ultraprocessados />} />
             <Route path="/promo" element={<Promo />} />
             <Route path="/promo/:slug" element={<Promo />} />
             <Route path="/evolucao" element={<EvolucaoPublica />} />
