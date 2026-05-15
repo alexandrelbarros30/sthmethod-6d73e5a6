@@ -13,6 +13,7 @@ export interface ProtocolPhase {
   action?: string;        // texto após "Ação:"
   stack?: string;         // texto após "Stack:"
   timing?: string;        // texto após "⏱"
+  schedule?: string;      // texto após "Horário:" (multilinha)
   focus?: string;         // texto após "📌"
   rawStatus?: PhaseStatus;// status sugerido pelo emoji (✅⏳🔓🔒)
   flowLabel: string;      // microintera\u00e7\u00e3o textual
