@@ -237,6 +237,11 @@ export function parseProtocolPhases(content: string): ProtocolPhase[] {
     if (/^a[çc][aã]o\s*[:\-]/i.test(line))     { current.action = line.replace(/^a[çc][aã]o\s*[:\-]\s*/i, "").trim(); continue; }
     if (/^stack\s*[:\-]/i.test(line))           { current.stack  = line.replace(/^stack\s*[:\-]\s*/i, "").trim(); continue; }
     if (/^[\u23F1\u231A\u23F0]/u.test(line) || /^⏱/.test(line)) { current.timing = line.replace(/^[\u23F1\u231A\u23F0⏱]\s*/u, "").trim(); continue; }
+    if (/^hor[aá]rio\s*[:\-]/i.test(line)) {
+      const v = line.replace(/^hor[aá]rio\s*[:\-]\s*/i, "").trim();
+      current.schedule = current.schedule ? current.schedule + "\n" + v : v;
+      continue;
+    }
     if (/^[\u{1F4CC}\u{1F4CD}\u{1F4DD}\u{1F3AF}]/u.test(line)) {
       const f = line.replace(/^[\u{1F4CC}\u{1F4CD}\u{1F4DD}\u{1F3AF}]\s*/u, "").replace(/^foco\s*[:\-]\s*/i, "").trim();
       current.focus = f;
@@ -313,6 +318,11 @@ function splitMedicamentosByWeek(phase: ProtocolPhase): ProtocolPhase[] {
       if (/^a[çc][aã]o\s*[:\-]/i.test(line)) { sp.action = line.replace(/^a[çc][aã]o\s*[:\-]\s*/i, "").trim(); continue; }
       if (/^stack\s*[:\-]/i.test(line))       { sp.stack  = line.replace(/^stack\s*[:\-]\s*/i, "").trim(); continue; }
       if (/^[\u23F1\u231A\u23F0]/u.test(line) || /^⏱/.test(line)) { sp.timing = line.replace(/^[\u23F1\u231A\u23F0⏱]\s*/u, "").trim(); continue; }
+      if (/^hor[aá]rio\s*[:\-]/i.test(line)) {
+        const v = line.replace(/^hor[aá]rio\s*[:\-]\s*/i, "").trim();
+        sp.schedule = sp.schedule ? sp.schedule + "\n" + v : v;
+        continue;
+      }
       if (/^[\u{1F4CC}\u{1F4CD}\u{1F4DD}\u{1F3AF}]/u.test(line)) {
         sp.focus = line.replace(/^[\u{1F4CC}\u{1F4CD}\u{1F4DD}\u{1F3AF}]\s*/u, "").replace(/^foco\s*[:\-]\s*/i, "").trim();
         continue;
