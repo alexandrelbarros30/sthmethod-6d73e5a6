@@ -27,7 +27,7 @@ const StatusIcon = ({ status, done }: { status?: ProtocolPhase["rawStatus"]; don
   return null;
 };
 
-const PhaseCard = ({
+export const PhaseCard = ({
   phase,
   done,
   onToggle,

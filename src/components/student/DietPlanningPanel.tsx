@@ -21,6 +21,8 @@ import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import RichTextEditor from "@/components/shared/RichTextEditor";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
+import { PhaseCard } from "@/components/student/GamifiedProtocolPanel";
+import { parseProtocolPhases } from "@/lib/protocol-phase-parser";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -128,6 +130,9 @@ const DietPlanningPanel = ({ targetUserId, readOnly = false }: DietPlanningPanel
   const formattedDate = planning?.plan_date
     ? format(new Date(planning.plan_date + "T00:00:00"), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
     : null;
+
+  const planningPhases = hasContent ? parseProtocolPhases(planning!.content_html) : [];
+  const hasPhases = planningPhases.length > 0;
 
   const protocolProseClasses = cn(
     "max-w-none font-mono text-foreground/85 tracking-tight",
@@ -240,15 +245,29 @@ const DietPlanningPanel = ({ targetUserId, readOnly = false }: DietPlanningPanel
             ) : (
               <>
                 {hasContent ? (
-                  <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] px-3.5 py-3 sm:px-4 sm:py-3.5 max-h-[55vh] overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-emerald-400/30 [&::-webkit-scrollbar-thumb]:rounded-full">
-                    <RichContentRenderer
-                      content={planning!.content_html}
-                      className={protocolProseClasses}
-                      showParagraphBullets={false}
-                      stripLeadingMarkers
-                      showZebra={false}
-                    />
-                  </div>
+                  hasPhases ? (
+                    <div className="max-h-[65vh] overflow-y-auto pr-1 space-y-3 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-emerald-400/30 [&::-webkit-scrollbar-thumb]:rounded-full">
+                      {planningPhases.map((p) => (
+                        <PhaseCard
+                          key={p.key}
+                          phase={p}
+                          done={false}
+                          onToggle={() => {}}
+                          disabled
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] px-3.5 py-3 sm:px-4 sm:py-3.5 max-h-[55vh] overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-emerald-400/30 [&::-webkit-scrollbar-thumb]:rounded-full">
+                      <RichContentRenderer
+                        content={planning!.content_html}
+                        className={protocolProseClasses}
+                        showParagraphBullets={false}
+                        stripLeadingMarkers
+                        showZebra={false}
+                      />
+                    </div>
+                  )
                 ) : (
                   <p className="text-xs text-muted-foreground italic font-body">
                     {canEdit
