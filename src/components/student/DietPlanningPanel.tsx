@@ -129,27 +129,24 @@ const DietPlanningPanel = ({ targetUserId, readOnly = false }: DietPlanningPanel
     ? format(new Date(planning.plan_date + "T00:00:00"), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
     : null;
 
-  // Tipografia premium do Protocolo Inteligente: corpo monoespaçado, leitura ampla,
-  // headings em SF Pro/display bold com tracking justo, accents verdes neon.
-  // Tipografia minimalista Apple — fonte reduzida, leitura confortável em mobile
   const protocolProseClasses = cn(
-    "max-w-none text-foreground/85 tracking-tight",
-    "[&_p]:!text-[12.5px] [&_p]:!leading-[1.5] [&_p]:!text-foreground/80 [&_p]:my-1.5",
-    "[&_h1]:font-display [&_h1]:!text-[14px] [&_h1]:!font-semibold [&_h1]:!uppercase [&_h1]:tracking-[0.08em] [&_h1]:!text-foreground [&_h1]:mt-3 [&_h1]:mb-1.5",
-    "[&_h2]:font-display [&_h2]:!text-[13px] [&_h2]:!font-semibold [&_h2]:!uppercase [&_h2]:tracking-[0.08em] [&_h2]:!text-foreground [&_h2]:mt-2.5 [&_h2]:mb-1.5",
-    "[&_h3]:font-display [&_h3]:!text-[10px] [&_h3]:!font-semibold [&_h3]:tracking-[0.25em] [&_h3]:!uppercase [&_h3]:!text-muted-foreground [&_h3]:mt-2 [&_h3]:mb-1",
+    "max-w-none font-mono text-foreground/85 tracking-tight",
+    "[&_p]:!font-mono [&_p]:!text-[13px] [&_p]:!leading-[1.65] [&_p]:!text-foreground/85 [&_p]:my-2",
+    "[&_h1]:font-display [&_h1]:!text-[18px] [&_h1]:!leading-snug [&_h1]:!font-bold [&_h1]:!uppercase [&_h1]:tracking-tight [&_h1]:!text-foreground [&_h1]:mt-4 [&_h1]:mb-2",
+    "[&_h2]:font-display [&_h2]:!text-[15px] [&_h2]:!leading-snug [&_h2]:!font-medium [&_h2]:tracking-tight [&_h2]:!text-foreground [&_h2]:mt-3 [&_h2]:mb-2",
+    "[&_h3]:font-sans [&_h3]:!text-[9px] [&_h3]:!font-medium [&_h3]:tracking-[0.22em] [&_h3]:!uppercase [&_h3]:!text-[color:var(--sth-green)]/70 [&_h3]:mt-3 [&_h3]:mb-1",
     "[&_strong]:!text-foreground [&_strong]:font-semibold",
-    "[&_em]:italic [&_em]:!text-muted-foreground",
+    "[&_em]:italic [&_em]:!text-foreground/75",
     "[&_u]:underline [&_u]:decoration-emerald-400/50 [&_u]:underline-offset-2",
-    "[&_ul]:!list-none [&_ul]:!pl-0 [&_ul]:my-1.5 [&_ul]:space-y-1 [&_ul]:[list-style:none]",
-    "[&_ol]:!list-none [&_ol]:!pl-0 [&_ol]:my-1.5 [&_ol]:space-y-1 [&_ol]:[list-style:none]",
-    "[&_li]:!text-[12.5px] [&_li]:!leading-[1.5] [&_li]:!text-foreground/80",
+    "[&_ul]:!list-none [&_ul]:!pl-0 [&_ul]:my-2 [&_ul]:space-y-1.5 [&_ul]:[list-style:none]",
+    "[&_ol]:!list-none [&_ol]:!pl-0 [&_ol]:my-2 [&_ol]:space-y-1.5 [&_ol]:[list-style:none]",
+    "[&_li]:!font-mono [&_li]:!text-[13px] [&_li]:!leading-[1.65] [&_li]:!text-foreground/85",
     "[&_li]:!list-none [&_li]:[list-style:none] [&_li]:marker:!content-none [&_li]:pl-0",
     "[&_hr]:border-white/10 [&_hr]:my-3",
     "[&_mark]:bg-emerald-400/15 [&_mark]:!text-emerald-300 [&_mark]:px-1 [&_mark]:py-0 [&_mark]:rounded",
-    "[&_blockquote]:border-l-2 [&_blockquote]:border-emerald-400/60 [&_blockquote]:pl-2.5 [&_blockquote]:italic [&_blockquote]:!text-foreground/65 [&_blockquote]:my-2 [&_blockquote]:!text-[12.5px]",
+    "[&_blockquote]:border-l-2 [&_blockquote]:border-emerald-400/60 [&_blockquote]:pl-2.5 [&_blockquote]:italic [&_blockquote]:!text-foreground/70 [&_blockquote]:my-2.5 [&_blockquote]:!text-[13px] [&_blockquote]:!leading-[1.65]",
     "[&_a]:!text-emerald-300 [&_a]:underline [&_a]:underline-offset-2 [&_a]:decoration-emerald-400/50",
-    "[&_code]:!font-mono [&_code]:!text-[11.5px] [&_code]:!text-emerald-300 [&_code]:bg-emerald-400/[0.08] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded"
+    "[&_code]:!font-mono [&_code]:!text-[12px] [&_code]:!text-emerald-300 [&_code]:bg-emerald-400/[0.08] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded"
   );
 
   return (
@@ -243,7 +240,7 @@ const DietPlanningPanel = ({ targetUserId, readOnly = false }: DietPlanningPanel
             ) : (
               <>
                 {hasContent ? (
-                  <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] p-3 sm:p-3.5 max-h-[55vh] overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-emerald-400/30 [&::-webkit-scrollbar-thumb]:rounded-full">
+                  <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] px-3.5 py-3 sm:px-4 sm:py-3.5 max-h-[55vh] overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-emerald-400/30 [&::-webkit-scrollbar-thumb]:rounded-full">
                     <RichContentRenderer
                       content={planning!.content_html}
                       className={protocolProseClasses}
