@@ -15,6 +15,7 @@ import FoodGuideSection from "@/components/landing/FoodGuideSection";
 import NutritionQuizSection from "@/components/landing/NutritionQuizSection";
 import MealPlanSection from "@/components/landing/MealPlanSection";
 import BodySimulatorSection from "@/components/landing/BodySimulatorSection";
+import EvolutionGeneratorSection from "@/components/landing/EvolutionGeneratorSection";
 import WhatsAppButton from "@/components/landing/WhatsAppButton";
 import AppleHighlightsSection from "@/components/landing/AppleHighlightsSection";
 import { useLandingSettings, useLandingSections } from "@/hooks/useLandingData";
@@ -355,6 +356,7 @@ const Landing = () => {
       <NutritionQuizSection />
       <MealPlanSection />
       <BodySimulatorSection />
+      <EvolutionGeneratorSection />
 
       {/* Final CTA */}
       <section className="py-32 md:py-40 px-6 text-center bg-[hsl(0_0%_4%)] text-white">
