@@ -81,9 +81,55 @@ function htmlToText(input: string): string {
   return div.textContent || div.innerText || "";
 }
 
+function escapeHtml(input: string): string {
+  return input
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 // Converte <ol>/<ul> em parágrafos com prefixo "1. " ou "- " antes de extrair texto.
 // Suporta listas aninhadas simples (a iteração externa cuida das mais profundas após o replace).
 function expandListsToText(html: string): string {
+  if (typeof window !== "undefined") {
+    const container = document.createElement("div");
+    container.innerHTML = html;
+
+    const serializeList = (listEl: Element): string => {
+      const ordered = listEl.tagName.toLowerCase() === "ol";
+      const items = Array.from(listEl.children).filter((child) => child.tagName.toLowerCase() === "li");
+
+      return items
+        .map((li, index) => {
+          const clone = li.cloneNode(true) as HTMLElement;
+          Array.from(clone.children)
+            .filter((child) => ["ol", "ul"].includes(child.tagName.toLowerCase()))
+            .forEach((nested) => nested.remove());
+
+          const lineText = (clone.textContent || "").replace(/\s+/g, " ").trim();
+          const prefix = ordered ? `${index + 1}. ` : "- ";
+          const nestedLists = Array.from(li.children)
+            .filter((child) => ["ol", "ul"].includes(child.tagName.toLowerCase()))
+            .map((nested) => serializeList(nested))
+            .join("");
+
+          return `${lineText ? `<p>${escapeHtml(prefix + lineText)}</p>` : ""}${nestedLists}`;
+        })
+        .join("");
+    };
+
+    Array.from(container.querySelectorAll("ol, ul"))
+      .reverse()
+      .forEach((listEl) => {
+        listEl.insertAdjacentHTML("beforebegin", serializeList(listEl));
+        listEl.remove();
+      });
+
+    return container.innerHTML;
+  }
+
   let prev = "";
   let cur = html;
   let safety = 0;
@@ -95,7 +141,13 @@ function expandListsToText(html: string): string {
       const items = inner.replace(/<li\b[^>]*>([\s\S]*?)<\/li>/gi, (_mm: string, content: string) => {
         i++;
         const prefix = ordered ? `${i}. ` : "- ";
-        return `<p>${prefix}${content}</p>`;
+        const text = content
+          .replace(/<\/(p|div|h[1-6])>/gi, " ")
+          .replace(/<br\s*\/?>/gi, " ")
+          .replace(/<[^>]+>/g, "")
+          .replace(/\s+/g, " ")
+          .trim();
+        return text ? `<p>${prefix}${text}</p>` : "";
       });
       return items;
     });
@@ -236,12 +288,13 @@ export function parseProtocolPhases(content: string): ProtocolPhase[] {
     if (quoted && !current.headline) { current.headline = quoted; continue; }
     if (/^a[çc][aã]o\s*[:\-]/i.test(line))     { current.action = line.replace(/^a[çc][aã]o\s*[:\-]\s*/i, "").trim(); continue; }
     if (/^stack\s*[:\-]/i.test(line))           { current.stack  = line.replace(/^stack\s*[:\-]\s*/i, "").trim(); continue; }
-    if (/^[\u23F1\u231A\u23F0]/u.test(line) || /^⏱/.test(line)) { current.timing = line.replace(/^[\u23F1\u231A\u23F0⏱]\s*/u, "").trim(); continue; }
-    if (/^hor[aá]rio\s*[:\-]/i.test(line)) {
-      const v = line.replace(/^hor[aá]rio\s*[:\-]\s*/i, "").trim();
+    const currentScheduleMatch = line.match(/^(?:[\u23F1\u231A\u23F0⏱]\s*)?hor[aá]rio\s*[:\-]\s*(.*)$/iu);
+    if (currentScheduleMatch) {
+      const v = currentScheduleMatch[1].trim();
       current.schedule = current.schedule ? current.schedule + "\n" + v : v;
       continue;
     }
+    if (/^[\u23F1\u231A\u23F0]/u.test(line) || /^⏱/.test(line)) { current.timing = line.replace(/^[\u23F1\u231A\u23F0⏱]\s*/u, "").trim(); continue; }
     if (/^[\u{1F4CC}\u{1F4CD}\u{1F4DD}\u{1F3AF}]/u.test(line)) {
       const f = line.replace(/^[\u{1F4CC}\u{1F4CD}\u{1F4DD}\u{1F3AF}]\s*/u, "").replace(/^foco\s*[:\-]\s*/i, "").trim();
       current.focus = f;
@@ -317,12 +370,13 @@ function splitMedicamentosByWeek(phase: ProtocolPhase): ProtocolPhase[] {
       if (quoted && !sp.headline) { sp.headline = quoted; continue; }
       if (/^a[çc][aã]o\s*[:\-]/i.test(line)) { sp.action = line.replace(/^a[çc][aã]o\s*[:\-]\s*/i, "").trim(); continue; }
       if (/^stack\s*[:\-]/i.test(line))       { sp.stack  = line.replace(/^stack\s*[:\-]\s*/i, "").trim(); continue; }
-      if (/^[\u23F1\u231A\u23F0]/u.test(line) || /^⏱/.test(line)) { sp.timing = line.replace(/^[\u23F1\u231A\u23F0⏱]\s*/u, "").trim(); continue; }
-      if (/^hor[aá]rio\s*[:\-]/i.test(line)) {
-        const v = line.replace(/^hor[aá]rio\s*[:\-]\s*/i, "").trim();
+      const subScheduleMatch = line.match(/^(?:[\u23F1\u231A\u23F0⏱]\s*)?hor[aá]rio\s*[:\-]\s*(.*)$/iu);
+      if (subScheduleMatch) {
+        const v = subScheduleMatch[1].trim();
         sp.schedule = sp.schedule ? sp.schedule + "\n" + v : v;
         continue;
       }
+      if (/^[\u23F1\u231A\u23F0]/u.test(line) || /^⏱/.test(line)) { sp.timing = line.replace(/^[\u23F1\u231A\u23F0⏱]\s*/u, "").trim(); continue; }
       if (/^[\u{1F4CC}\u{1F4CD}\u{1F4DD}\u{1F3AF}]/u.test(line)) {
         sp.focus = line.replace(/^[\u{1F4CC}\u{1F4CD}\u{1F4DD}\u{1F3AF}]\s*/u, "").replace(/^foco\s*[:\-]\s*/i, "").trim();
         continue;
