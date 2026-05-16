@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Lock, Sparkles, Upload, X, RotateCcw, Wand2, FlipHorizontal2, FlipVertical2, ArrowRight, Crop } from "lucide-react";
+import { Lock, Sparkles, Upload, X, RotateCcw, Wand2, FlipHorizontal2, FlipVertical2, ArrowRight, Crop, Download } from "lucide-react";
 import InteractiveCropper from "@/components/shared/InteractiveCropper";
 import evolutionFrame from "@/assets/evolution-frame.png";
 
@@ -559,6 +559,23 @@ Não só uma evolução pontual, mas um processo contínuo, ajustado para o seu 
                 onClick={handleAnalyze}
               >
                 <Sparkles className="w-5 h-5" /> Ver minha evolução
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full text-base mt-2"
+                onClick={() => {
+                  if (!previewUrl) { toast.error("Gere a evolução primeiro."); return; }
+                  const a = document.createElement("a");
+                  a.href = previewUrl;
+                  a.download = `evolucao-sthmethod-${Date.now()}.jpg`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  toast.success("Imagem baixada com marca d'água.");
+                }}
+              >
+                <Download className="w-5 h-5" /> Baixar imagem (com marca d'água)
               </Button>
             </div>
           </section>
