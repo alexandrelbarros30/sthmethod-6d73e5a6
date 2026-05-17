@@ -539,9 +539,9 @@ const TriagemMarcadores = () => {
       toast.error("Selecione sexo e situação");
       return;
     }
-    setStep((s) => Math.min(6, (s + 1) as Step));
+    setStep((s) => Math.min(6, s + 1) as Step);
   };
-  const back = () => setStep((s) => Math.max(0, (s - 1) as Step));
+  const back = () => setStep((s) => Math.max(0, s - 1) as Step);
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -563,7 +563,7 @@ const TriagemMarcadores = () => {
         ].filter(Boolean),
       };
 
-      const { error } = await supabase.from("lab_screenings").insert({
+      const { error } = await supabase.from("lab_screenings").insert([{
         full_name: fullName.trim(),
         whatsapp: whatsapp.trim(),
         email: email.trim() || null,
@@ -588,7 +588,7 @@ const TriagemMarcadores = () => {
         notes: notes || null,
         markers: markers as unknown as Record<string, unknown>[],
         summary,
-      });
+      }]);
       if (error) throw error;
       setDone(true);
       setStep(6);
