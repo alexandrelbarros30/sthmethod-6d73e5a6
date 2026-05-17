@@ -386,6 +386,22 @@ const StepCompounds = ({
         ))}
       </div>
 
+      <details className="mb-8 rounded-2xl border border-border/60 bg-card/40 group">
+        <summary className="cursor-pointer list-none px-5 py-4 flex items-center justify-between">
+          <span className="text-[11px] font-medium tracking-[0.18em] text-muted-foreground uppercase">
+            Peptídeos ({PEPTIDES.filter((p) => compounds.includes(p)).length} selecionados)
+          </span>
+          <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="px-5 pb-5 pt-2 flex flex-wrap gap-2 border-t border-border/40">
+          {PEPTIDES.map((p) => (
+            <Chip key={p} selected={compounds.includes(p)} onClick={() => toggle(compounds, p, setCompounds)}>
+              {p}
+            </Chip>
+          ))}
+        </div>
+      </details>
+
       {!skip && (
         <>
           <div className="grid gap-5 mb-8">
