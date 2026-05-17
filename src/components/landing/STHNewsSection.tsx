@@ -15,8 +15,18 @@ import tirzeImg from "@/assets/sthnews-tirzepatida-hero.jpg";
 import proteinaImg from "@/assets/sthnews-proteina-hero.jpg";
 import oleosImg from "@/assets/sthnews-oleos-sementes-hero.jpg";
 import ultraImg from "@/assets/sthnews-ultraprocessados-hero.jpg";
+import marcadoresImg from "@/assets/sthnews-marcadores-hero.jpg";
 
 const articles = [
+  {
+    to: "/tendencias/marcadores-laboratoriais",
+    tag: "CAPA",
+    tagClass: "bg-primary text-primary-foreground",
+    date: "Nova matéria",
+    title: "🧪 Marcadores laboratoriais: monitoramento estratégico",
+    desc: "Eixo hormonal, cardiovascular, hepático, renal, glicêmico e hematológico — o guia completo para quem utiliza hormônios e anabolizantes.",
+    img: marcadoresImg,
+  },
   {
     to: "/tendencias/ultraprocessados-saude-mental",
     tag: "CAPA",
