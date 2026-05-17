@@ -378,8 +378,9 @@ export const generateStudentPDF = async (options: PDFContentOptions): Promise<Bl
       y += lineH + 3;
     };
 
-    const renderPhase = (p: ProtocolPhase) => {
+    const renderPhase = (p: ProtocolPhase, skipBody = false) => {
       renderPhaseHeading(p.title || p.key);
+      if (skipBody) return;
       if (p.headline) {
         const hl = p.headline.replace(/[“”]/g, '"');
         const text = hl.startsWith('"') ? hl : `"${hl}"`;
@@ -416,8 +417,9 @@ export const generateStudentPDF = async (options: PDFContentOptions): Promise<Bl
 
     if (phases.length > 0) {
       for (const p of phases) {
-        renderPhase(p);
-        if (p.subWeeks?.length) {
+        const hasSub = !!p.subWeeks?.length;
+        renderPhase(p, hasSub);
+        if (hasSub) {
           for (const sw of p.subWeeks) renderPhase(sw);
         }
       }
