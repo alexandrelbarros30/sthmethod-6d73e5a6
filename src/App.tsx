@@ -164,6 +164,7 @@ const App = () => (
             <Route path="/tendencias/proteina-superavit" element={<ProteinaSuperavit />} />
             <Route path="/tendencias/oleos-sementes" element={<OleosSementes />} />
             <Route path="/tendencias/ultraprocessados-saude-mental" element={<Ultraprocessados />} />
+            <Route path="/tendencias/marcadores-laboratoriais" element={<MarcadoresLaboratoriais />} />
             <Route path="/promo" element={<Promo />} />
             <Route path="/promo/:slug" element={<Promo />} />
             <Route path="/evolucao" element={<EvolucaoPublica />} />
