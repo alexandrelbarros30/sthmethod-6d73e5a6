@@ -586,8 +586,8 @@ const TriagemMarcadores = () => {
         risk_history: risk,
         symptoms,
         notes: notes || null,
-        markers: markers as unknown as Record<string, unknown>[],
-        summary,
+        markers: markers as unknown as import("@/integrations/supabase/types").Json,
+        summary: summary as unknown as import("@/integrations/supabase/types").Json,
       }]);
       if (error) throw error;
       setDone(true);
