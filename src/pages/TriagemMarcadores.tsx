@@ -515,6 +515,21 @@ const StepResult = ({ markers, fullName }: { markers: Marker[]; fullName: string
     return acc;
   }, {});
 
+  const [shareFilter, setShareFilter] = useState<"todos" | Priority>("todos");
+
+  const filteredMarkers = useMemo(
+    () => (shareFilter === "todos" ? markers : markers.filter((m) => m.priority === shareFilter)),
+    [markers, shareFilter],
+  );
+  const filteredGrouped = useMemo(
+    () =>
+      filteredMarkers.reduce<Record<string, Marker[]>>((acc, m) => {
+        (acc[m.category] ||= []).push(m);
+        return acc;
+      }, {}),
+    [filteredMarkers],
+  );
+
   const shareText = useMemo(() => {
     const firstName = fullName.split(" ")[0] || "";
     const lines: string[] = [];
@@ -524,12 +539,16 @@ const StepResult = ({ markers, fullName }: { markers: Marker[]; fullName: string
     lines.push("━━━━━━━━━━━━━━━━━━━━");
     lines.push("");
     lines.push(`${firstName ? firstName + ", s" : "S"}ua tabela personalizada de exames sugeridos`);
-    lines.push(`${markers.length} marcadores · foco em segurança e performance`);
+    const filterLabel =
+      shareFilter === "todos" ? "todos os níveis" : `apenas ${shareFilter.toLowerCase()}`;
+    lines.push(`${filteredMarkers.length} marcadores · ${filterLabel}`);
     lines.push("");
-    lines.push("Legenda:");
-    lines.push("🔴 Essencial  ·  🟡 Recomendado  ·  ⚪ Avançado");
-    lines.push("");
-    Object.entries(grouped).forEach(([cat, items]) => {
+    if (shareFilter === "todos") {
+      lines.push("Legenda:");
+      lines.push("🔴 Essencial  ·  🟡 Recomendado  ·  ⚪ Avançado");
+      lines.push("");
+    }
+    Object.entries(filteredGrouped).forEach(([cat, items]) => {
       lines.push(`▸ ${cat.toUpperCase()}`);
       items.forEach((m) => {
         const tag =
@@ -545,7 +564,7 @@ const StepResult = ({ markers, fullName }: { markers: Marker[]; fullName: string
     lines.push("Gerado em sthmethod.com.br/triagem-marcadores");
     lines.push("STH METHOD · Performance, saúde e estratégia.");
     return lines.join("\n");
-  }, [markers, fullName, grouped]);
+  }, [filteredMarkers, filteredGrouped, fullName, shareFilter]);
 
   const copyShare = async () => {
     try {
@@ -609,6 +628,42 @@ const StepResult = ({ markers, fullName }: { markers: Marker[]; fullName: string
         <p className="text-[15px] text-muted-foreground font-light mb-6 leading-[1.6]">
           Copie o texto formatado abaixo e cole no WhatsApp do seu médico, no Instagram ou em qualquer rede.
         </p>
+
+        <div className="mb-5">
+          <p className="text-[11px] font-medium tracking-[0.18em] uppercase text-muted-foreground mb-3">
+            Escolha o nível para compartilhar
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {([
+              { v: "todos", label: "Todos", emoji: "📋" },
+              { v: "Essencial", label: "Essencial", emoji: "🔴" },
+              { v: "Recomendado", label: "Recomendado", emoji: "🟡" },
+              { v: "Avançado", label: "Avançado", emoji: "⚪" },
+            ] as const).map((opt) => {
+              const selected = shareFilter === opt.v;
+              const count =
+                opt.v === "todos"
+                  ? markers.length
+                  : markers.filter((m) => m.priority === opt.v).length;
+              return (
+                <button
+                  key={opt.v}
+                  type="button"
+                  onClick={() => setShareFilter(opt.v)}
+                  className={`px-4 py-2 rounded-full text-sm border transition-all ${
+                    selected
+                      ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/15 text-foreground"
+                      : "border-border/60 bg-card/30 text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <span className="mr-1.5">{opt.emoji}</span>
+                  {opt.label}
+                  <span className="ml-1.5 text-muted-foreground/70">({count})</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         <div className="rounded-2xl border border-border/60 bg-card/40 overflow-hidden">
           <div className="flex items-center justify-between px-5 py-3 border-b border-border/40 bg-background/40">
