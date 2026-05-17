@@ -505,6 +505,15 @@ const StepResult = ({ markers, fullName }: { markers: Marker[]; fullName: string
         {markers.length} marcadores sugeridos. Leve essa lista ao seu médico para avaliação individualizada.
       </p>
 
+      <div className="rounded-2xl border border-border/60 bg-card/40 p-5 mb-10">
+        <p className="text-[11px] font-medium tracking-[0.2em] text-muted-foreground uppercase mb-3">Legenda</p>
+        <ul className="grid sm:grid-cols-3 gap-2 text-[14px] text-foreground/90 font-light">
+          <li className="flex items-center gap-2"><span className="text-base leading-none">🔴</span> Essencial</li>
+          <li className="flex items-center gap-2"><span className="text-base leading-none">🟡</span> Recomendado</li>
+          <li className="flex items-center gap-2"><span className="text-base leading-none">⚪</span> Avançado</li>
+        </ul>
+      </div>
+
       {Object.entries(grouped).map(([cat, items]) => (
         <section key={cat} className="mb-10">
           <h3 className="text-xs font-medium tracking-[0.2em] uppercase text-[hsl(var(--primary))] mb-4">{cat}</h3>
@@ -512,10 +521,12 @@ const StepResult = ({ markers, fullName }: { markers: Marker[]; fullName: string
             {items.map((m, i) => (
               <div key={m.name} className={`p-5 ${i > 0 ? "border-t border-border/40" : ""}`}>
                 <div className="flex items-start justify-between gap-3 mb-1">
-                  <p className="font-medium text-foreground">{m.name}</p>
-                  <span className={`text-[10px] tracking-wider uppercase px-2 py-1 rounded-full border ${PRIORITY_STYLE[m.priority]}`}>
-                    {m.priority}
-                  </span>
+                  <p className="font-medium text-foreground flex items-center gap-2">
+                    <span className="text-base leading-none" aria-label={m.priority}>
+                      {m.priority === "Essencial" ? "🔴" : m.priority === "Recomendado" ? "🟡" : "⚪"}
+                    </span>
+                    {m.name}
+                  </p>
                 </div>
                 <p className="text-[14px] text-muted-foreground font-light leading-[1.55]">{m.why}</p>
                 <p className="text-[11px] tracking-[0.15em] uppercase text-muted-foreground/70 mt-2">Momento: {m.timing}</p>
