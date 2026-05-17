@@ -17,6 +17,7 @@ import carbsImg from "@/assets/sthnews-carbs-hero.jpg";
 import proteinaImg from "@/assets/sthnews-proteina-hero.jpg";
 import oleosImg from "@/assets/sthnews-oleos-sementes-hero.jpg";
 import ultraImg from "@/assets/sthnews-ultraprocessados-hero.jpg";
+import marcadoresImg from "@/assets/sthnews-marcadores-hero.jpg";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -24,6 +25,7 @@ const fadeUp = {
 };
 
 const articles = [
+  { to: "/tendencias/marcadores-laboratoriais", kicker: "Guia técnico", title: "🧪 Marcadores laboratoriais: o guia técnico completo.", desc: "Painéis essenciais, recomendados e avançados — leitura clínica acima do achismo.", img: marcadoresImg },
   { to: "/tendencias/ultraprocessados-saude-mental", kicker: "Mitos nutricionais", title: "🧠 Ultraprocessados não estão destruindo magicamente sua saúde mental.", desc: "Existe associação. Mas associação não é causa — o ecossistema alimentar inteiro é o que pesa.", img: ultraImg },
   { to: "/tendencias/oleos-sementes", kicker: "Mitos nutricionais", title: "🌻 Você foi enganado sobre os óleos de sementes.", desc: "Sozinhos, não são automaticamente inflamatórios. O ecossistema alimentar é o que pesa.", img: oleosImg },
   { to: "/tendencias/proteina-superavit", kicker: "Proteína & superávit", title: "🥩 Proteína em excesso não engorda como você pensa.", desc: "Superávit calórico via proteína em treinados: TEF, NEAT e particionamento de nutrientes reescrevendo a equação.", img: proteinaImg },
