@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, Home, ShieldCheck, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Home, ShieldCheck, Loader2, Copy, MessageCircle, Instagram } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -454,6 +454,47 @@ const StepResult = ({ markers, fullName }: { markers: Marker[]; fullName: string
     (acc[m.category] ||= []).push(m);
     return acc;
   }, {});
+
+  const shareText = useMemo(() => {
+    const firstName = fullName.split(" ")[0] || "";
+    const lines: string[] = [];
+    lines.push("━━━━━━━━━━━━━━━━━━━━");
+    lines.push("🧬 STH METHOD");
+    lines.push("Triagem de Marcadores Laboratoriais");
+    lines.push("━━━━━━━━━━━━━━━━━━━━");
+    lines.push("");
+    lines.push(`${firstName ? firstName + ", s" : "S"}ua tabela personalizada de exames sugeridos`);
+    lines.push(`${markers.length} marcadores · foco em segurança e performance`);
+    lines.push("");
+    Object.entries(grouped).forEach(([cat, items]) => {
+      lines.push(`▸ ${cat.toUpperCase()}`);
+      items.forEach((m) => {
+        const tag =
+          m.priority === "Essencial" ? "🔴" : m.priority === "Recomendado" ? "🟡" : "⚪";
+        lines.push(`${tag} ${m.name} — ${m.priority} (${m.timing})`);
+      });
+      lines.push("");
+    });
+    lines.push("━━━━━━━━━━━━━━━━━━━━");
+    lines.push("⚠️ Esta triagem não substitui consulta médica.");
+    lines.push("Leve esta lista ao seu médico para avaliação individualizada.");
+    lines.push("");
+    lines.push("Gerado em sthmethod.com.br/triagem-marcadores");
+    lines.push("STH METHOD · Performance, saúde e estratégia.");
+    return lines.join("\n");
+  }, [markers, fullName, grouped]);
+
+  const copyShare = async () => {
+    try {
+      await navigator.clipboard.writeText(shareText);
+      toast.success("Texto copiado! Cole no WhatsApp, Instagram ou onde quiser.");
+    } catch {
+      toast.error("Não foi possível copiar. Selecione o texto manualmente.");
+    }
+  };
+
+  const waHref = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+
   return (
     <div>
       <p className="text-[11px] font-medium tracking-[0.2em] text-muted-foreground uppercase mb-4">Triagem concluída</p>
@@ -483,6 +524,48 @@ const StepResult = ({ markers, fullName }: { markers: Marker[]; fullName: string
           </div>
         </section>
       ))}
+
+      <section className="mt-12 print:hidden">
+        <p className="text-[11px] font-medium tracking-[0.2em] text-muted-foreground uppercase mb-4">
+          Compartilhar
+        </p>
+        <h3 className="text-2xl font-semibold tracking-tight mb-2">
+          Leve sua tabela para qualquer lugar
+        </h3>
+        <p className="text-[15px] text-muted-foreground font-light mb-6 leading-[1.6]">
+          Copie o texto formatado abaixo e cole no WhatsApp do seu médico, no Instagram ou em qualquer rede.
+        </p>
+
+        <div className="rounded-2xl border border-border/60 bg-card/40 overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-border/40 bg-background/40">
+            <span className="text-[11px] tracking-[0.18em] uppercase text-muted-foreground">
+              Texto pronto para colar
+            </span>
+            <Button size="sm" variant="ghost" onClick={copyShare} className="h-8 rounded-full text-xs">
+              <Copy className="w-3.5 h-3.5 mr-1.5" /> Copiar
+            </Button>
+          </div>
+          <pre className="px-5 py-4 text-[12px] leading-[1.55] text-foreground/90 font-mono whitespace-pre-wrap max-h-80 overflow-auto">
+{shareText}
+          </pre>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 mt-5">
+          <Button onClick={copyShare} className="rounded-full px-6">
+            <Copy className="w-4 h-4 mr-2" /> Copiar texto
+          </Button>
+          <Button asChild variant="outline" className="rounded-full px-6" style={{ borderColor: "#25D366", color: "#25D366" }}>
+            <a href={waHref} target="_blank" rel="noopener noreferrer">
+              <MessageCircle className="w-4 h-4 mr-2" /> Enviar no WhatsApp
+            </a>
+          </Button>
+          <Button asChild variant="outline" className="rounded-full px-6">
+            <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" onClick={copyShare}>
+              <Instagram className="w-4 h-4 mr-2" /> Abrir Instagram
+            </a>
+          </Button>
+        </div>
+      </section>
     </div>
   );
 };
