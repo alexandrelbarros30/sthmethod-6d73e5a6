@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import heroBgFallback from "@/assets/hero-clients.jpg";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Calculator, Sparkles } from "lucide-react";
+import { FlaskConical, ArrowUpRight } from "lucide-react";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import ResultsSection from "@/components/landing/ResultsSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
@@ -183,6 +184,7 @@ const Landing = () => {
             <Link to="/tendencias" className="hover:text-foreground transition-colors">STH News</Link>
             <a href="#resultados" className="hover:text-foreground transition-colors">Resultados</a>
             <Link to="/questionario" className="hover:text-foreground transition-colors">Macros</Link>
+            <Link to="/triagem-marcadores" className="hover:text-foreground transition-colors">Triagem</Link>
             <Link to="/diario-alimentar" className="hover:text-foreground transition-colors">Diário Alimentar</Link>
           </div>
 
@@ -242,6 +244,13 @@ const Landing = () => {
                   className="py-2.5 px-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                 >
                   Calcule seus Macros
+                </Link>
+                <Link
+                  to="/triagem-marcadores"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="py-2.5 px-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                >
+                  Triagem de Marcadores
                 </Link>
                 <Link
                   to="/free"
@@ -357,6 +366,46 @@ const Landing = () => {
       <MealPlanSection />
       <BodySimulatorSection />
       <EvolutionGeneratorSection />
+
+      {/* Triagem de Marcadores Laboratoriais — CTA público */}
+      <section id="triagem-marcadores" className="py-24 md:py-32 px-6 bg-[hsl(var(--surface))]">
+        <div className="max-w-4xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-medium tracking-[0.2em] uppercase mb-6">
+              <FlaskConical className="w-3.5 h-3.5" />
+              Ferramenta gratuita
+            </div>
+            <h2 className="text-4xl md:text-6xl font-semibold tracking-[-0.03em] leading-[1.05] text-foreground mb-6">
+              Triagem de marcadores<br />
+              <span className="text-muted-foreground">laboratoriais.</span>
+            </h2>
+            <p className="text-lg md:text-xl text-muted-foreground font-light max-w-xl mx-auto mb-10 leading-relaxed">
+              Responda um formulário rápido e receba uma tabela personalizada de exames sugeridos — com base em compostos, histórico e fatores de risco.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link to="/triagem-marcadores">
+                <Button size="lg" className="rounded-full bg-foreground text-background hover:bg-foreground/90 px-8 h-12 text-[15px] font-medium">
+                  Gerar minha tabela
+                  <ArrowUpRight className="w-4 h-4 ml-1.5" />
+                </Button>
+              </Link>
+              <Link to="/tendencias/marcadores-laboratoriais">
+                <Button size="lg" variant="ghost" className="rounded-full px-8 h-12 text-[15px] font-medium text-foreground hover:bg-muted/50">
+                  Ler o guia completo
+                </Button>
+              </Link>
+            </div>
+            <p className="text-xs text-muted-foreground mt-6 font-light">
+              Menos de 2 minutos · Não substitui consulta médica
+            </p>
+          </motion.div>
+        </div>
+      </section>
 
       {/* Final CTA */}
       <section className="py-32 md:py-40 px-6 text-center bg-[hsl(0_0%_4%)] text-white">
