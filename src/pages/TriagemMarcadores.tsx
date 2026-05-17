@@ -534,7 +534,7 @@ const StepResult = ({ markers, fullName }: { markers: Marker[]; fullName: string
       items.forEach((m) => {
         const tag =
           m.priority === "Essencial" ? "🔴" : m.priority === "Recomendado" ? "🟡" : "⚪";
-        lines.push(`${tag} ${m.name} (${m.timing})`);
+        lines.push(`${tag} ${m.name}`);
       });
       lines.push("");
     });
