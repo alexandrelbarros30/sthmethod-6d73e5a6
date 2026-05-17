@@ -466,12 +466,15 @@ const StepResult = ({ markers, fullName }: { markers: Marker[]; fullName: string
     lines.push(`${firstName ? firstName + ", s" : "S"}ua tabela personalizada de exames sugeridos`);
     lines.push(`${markers.length} marcadores · foco em segurança e performance`);
     lines.push("");
+    lines.push("Legenda:");
+    lines.push("🔴 Essencial  ·  🟡 Recomendado  ·  ⚪ Avançado");
+    lines.push("");
     Object.entries(grouped).forEach(([cat, items]) => {
       lines.push(`▸ ${cat.toUpperCase()}`);
       items.forEach((m) => {
         const tag =
           m.priority === "Essencial" ? "🔴" : m.priority === "Recomendado" ? "🟡" : "⚪";
-        lines.push(`${tag} ${m.name} — ${m.priority} (${m.timing})`);
+        lines.push(`${tag} ${m.name} (${m.timing})`);
       });
       lines.push("");
     });
