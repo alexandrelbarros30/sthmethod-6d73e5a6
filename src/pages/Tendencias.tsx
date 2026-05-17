@@ -82,41 +82,9 @@ const Tendencias = () => {
       </section>
 
       <section className="max-w-4xl mx-auto px-6 pb-24">
-        {/* Duas capas em destaque */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {articles.slice(0, 2).map((a, i) => (
-            <motion.div
-              key={a.to}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.7, delay: i * 0.08 }}
-            >
-              <Link
-                to={a.to}
-                className="group relative block rounded-3xl overflow-hidden bg-card border border-border/40 hover:border-border transition-all duration-500 h-full"
-              >
-                <div className="aspect-[16/10] sm:aspect-[16/9] overflow-hidden bg-muted relative">
-                  <img src={a.img} alt={a.title} className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700" loading="lazy" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
-                  <p className="text-[10px] font-semibold tracking-[0.25em] text-primary uppercase mb-3">Em destaque</p>
-                  <h3 className="text-lg sm:text-2xl font-semibold text-foreground tracking-tight leading-tight mb-2">{a.title}</h3>
-                  <p className="text-sm text-muted-foreground font-light mb-4 line-clamp-2">{a.desc}</p>
-                  <span className="inline-flex items-center gap-1.5 text-sm text-primary font-medium">
-                    Ler matéria
-                    <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                  </span>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Grid secundário */}
+        {/* Grid unificado */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {articles.slice(2).map((a, i) => (
+          {articles.map((a, i) => (
             <motion.div
               key={a.to}
               initial={{ opacity: 0, y: 16 }}
