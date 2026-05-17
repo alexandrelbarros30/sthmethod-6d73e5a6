@@ -1054,6 +1054,96 @@ export type Database = {
         }
         Relationships: []
       }
+      lab_screenings: {
+        Row: {
+          age: number | null
+          biological_sex: string
+          blood_pressure: string | null
+          body_fat_pct: number | null
+          compounds: string[] | null
+          contacted: boolean
+          created_at: string
+          email: string | null
+          full_name: string
+          has_medical_followup: boolean | null
+          height_cm: number | null
+          id: string
+          markers: Json
+          notes: string | null
+          risk_history: string[] | null
+          summary: Json
+          symptoms: string[] | null
+          usage_duration: string | null
+          usage_status: string
+          uses_aggressive: boolean | null
+          uses_ai_caber: boolean | null
+          uses_gh_insulin: boolean | null
+          uses_oral_17aa: boolean | null
+          uses_testosterone: boolean | null
+          weekly_dose: string | null
+          weight_kg: number | null
+          whatsapp: string
+        }
+        Insert: {
+          age?: number | null
+          biological_sex: string
+          blood_pressure?: string | null
+          body_fat_pct?: number | null
+          compounds?: string[] | null
+          contacted?: boolean
+          created_at?: string
+          email?: string | null
+          full_name: string
+          has_medical_followup?: boolean | null
+          height_cm?: number | null
+          id?: string
+          markers?: Json
+          notes?: string | null
+          risk_history?: string[] | null
+          summary?: Json
+          symptoms?: string[] | null
+          usage_duration?: string | null
+          usage_status: string
+          uses_aggressive?: boolean | null
+          uses_ai_caber?: boolean | null
+          uses_gh_insulin?: boolean | null
+          uses_oral_17aa?: boolean | null
+          uses_testosterone?: boolean | null
+          weekly_dose?: string | null
+          weight_kg?: number | null
+          whatsapp: string
+        }
+        Update: {
+          age?: number | null
+          biological_sex?: string
+          blood_pressure?: string | null
+          body_fat_pct?: number | null
+          compounds?: string[] | null
+          contacted?: boolean
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          has_medical_followup?: boolean | null
+          height_cm?: number | null
+          id?: string
+          markers?: Json
+          notes?: string | null
+          risk_history?: string[] | null
+          summary?: Json
+          symptoms?: string[] | null
+          usage_duration?: string | null
+          usage_status?: string
+          uses_aggressive?: boolean | null
+          uses_ai_caber?: boolean | null
+          uses_gh_insulin?: boolean | null
+          uses_oral_17aa?: boolean | null
+          uses_testosterone?: boolean | null
+          weekly_dose?: string | null
+          weight_kg?: number | null
+          whatsapp?: string
+        }
+        Relationships: []
+      }
       landing_evolutions: {
         Row: {
           active: boolean

@@ -172,6 +172,16 @@ const MarcadoresLaboratoriais = () => {
             O monitoramento correto envolve eixo hormonal, cardiovascular, hepático, renal, glicêmico, inflamatório, eletrolítico e viscosidade sanguínea.
           </span>
         </motion.p>
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="mt-10">
+          <Link to="/triagem-marcadores">
+            <Button size="lg" className="rounded-full px-8">
+              Gerar minha tabela personalizada
+            </Button>
+          </Link>
+          <p className="text-xs text-muted-foreground mt-3 font-light">
+            Ferramenta gratuita • Resposta em menos de 2 minutos
+          </p>
+        </motion.div>
       </section>
 
       <Section
