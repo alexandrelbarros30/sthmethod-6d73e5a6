@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, Home, ShieldCheck, Loader2, Copy, MessageCircle, Instagram } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Home, ShieldCheck, Loader2, Copy, MessageCircle, Instagram, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -26,15 +26,18 @@ type Marker = {
 
 const COMPOUNDS = [
   "Testosterona",
-  "Nandrolona (Deca/NPP)",
+  "Nandrolona",
   "Trembolona",
   "Boldenona",
   "Masteron",
   "Primobolan",
-  "Oxandrolona (oral)",
-  "Stanozolol (oral)",
-  "Dianabol (oral)",
-  "Hemogenin (oral)",
+  "Oxandrolona",
+  "Stanozolol",
+  "Dianabol",
+  "Hemogenin",
+  "Gestrinona",
+  "Proviron",
+  "Turinabol",
   "GH",
   "Insulina",
   "Clembuterol",
@@ -44,13 +47,54 @@ const COMPOUNDS = [
   "Cabergolina",
 ];
 
+const PEPTIDES = [
+  "Tirzepatide",
+  "Semaglutide",
+  "Retatrutide",
+  "CJC-1295",
+  "Ipamorelin",
+  "MK-677",
+  "BPC-157",
+  "TB-500",
+  "Epitalon",
+  "Selank",
+  "Semax",
+  "Tesamorelin",
+  "HCG",
+  "Kisspeptin",
+  "GHK-Cu",
+  "Glow",
+  "Glow Blend",
+  "KPV",
+  "AOD-9604",
+  "MOTS-c",
+  "SS-31",
+  "IGF-1 LR3",
+  "PEG-MGF",
+  "Hexarelin",
+  "GHRP-2",
+  "GHRP-6",
+  "DSIP",
+  "Thymosin Alpha-1",
+  "Melanotan II",
+  "PT-141 (Bremelanotide)",
+  "FOXO4-DRI",
+  "Pinealon",
+  "Vesugen",
+  "Cardiogen",
+  "Cortexin",
+  "LL-37",
+  "SLU-PP-332",
+];
+
 const ORAIS_17AA = new Set([
-  "Oxandrolona (oral)",
-  "Stanozolol (oral)",
-  "Dianabol (oral)",
-  "Hemogenin (oral)",
+  "Oxandrolona",
+  "Stanozolol",
+  "Dianabol",
+  "Hemogenin",
+  "Turinabol",
 ]);
-const AGRESSIVOS = new Set(["Trembolona", "Nandrolona (Deca/NPP)", "Boldenona"]);
+const AGRESSIVOS = new Set(["Trembolona", "Nandrolona", "Boldenona"]);
 const GH_INSULINA = new Set(["GH", "Insulina"]);
 const AI_CABER = new Set(["Inibidor de aromatase", "Cabergolina"]);
 
@@ -341,6 +385,22 @@ const StepCompounds = ({
           </Chip>
         ))}
       </div>
+
+      <details className="mb-8 rounded-2xl border border-border/60 bg-card/40 group">
+        <summary className="cursor-pointer list-none px-5 py-4 flex items-center justify-between">
+          <span className="text-[11px] font-medium tracking-[0.18em] text-muted-foreground uppercase">
+            Peptídeos ({PEPTIDES.filter((p) => compounds.includes(p)).length} selecionados)
+          </span>
+          <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="px-5 pb-5 pt-2 flex flex-wrap gap-2 border-t border-border/40">
+          {PEPTIDES.map((p) => (
+            <Chip key={p} selected={compounds.includes(p)} onClick={() => toggle(compounds, p, setCompounds)}>
+              {p}
+            </Chip>
+          ))}
+        </div>
+      </details>
 
       {!skip && (
         <>
