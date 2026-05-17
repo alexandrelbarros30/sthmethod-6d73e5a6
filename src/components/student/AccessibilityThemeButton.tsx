@@ -23,16 +23,16 @@ const AccessibilityThemeButton = () => {
       <PopoverTrigger asChild>
         <Button
           size="icon"
-          variant="outline"
-          className="fixed z-50 rounded-full h-11 w-11 shadow-apple-lg bg-card/90 backdrop-blur border-border"
+          className="fixed z-50 rounded-full h-11 w-11 shadow-apple-lg border-2 border-white/20 text-white hover:opacity-90"
           style={{
             bottom: "calc(env(safe-area-inset-bottom) + 88px)",
             right: "calc(env(safe-area-inset-right) + 12px)",
+            backgroundColor: "#0A84FF",
           }}
           aria-label="Acessibilidade visual"
           title="Acessibilidade visual"
         >
-          <Accessibility className="h-5 w-5" />
+          <Accessibility className="h-5 w-5 text-white" />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" side="top" className="w-72 p-2">
