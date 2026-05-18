@@ -749,7 +749,7 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-[10px] h-8 px-1"
+                  className="text-[10px] h-8 px-1 min-w-0 whitespace-normal leading-tight"
                   onClick={() => matchProportions(activeType, "average")}
                   title="Faz a média do zoom e altura entre as duas fotos"
                 >
@@ -758,7 +758,7 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-[10px] h-8 px-1"
+                  className="text-[10px] h-8 px-1 min-w-0 whitespace-normal leading-tight"
                   onClick={() => matchProportions(activeType, "new-to-old")}
                   title="Aplica o ajuste do Antes também no Depois"
                 >
@@ -767,7 +767,7 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-[10px] h-8 px-1"
+                  className="text-[10px] h-8 px-1 min-w-0 whitespace-normal leading-tight"
                   onClick={() => matchProportions(activeType, "old-to-new")}
                   title="Aplica o ajuste do Depois também no Antes"
                 >
@@ -793,8 +793,8 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
               if (side !== editSide) return null;
               return (
                 <div key={side} className="space-y-2 pt-2 border-t border-border/50">
-                  <div className="flex items-center justify-between">
-                    <div className="inline-flex rounded-md border border-border overflow-hidden">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="inline-flex rounded-md border border-border overflow-hidden shrink-0">
                       <button
                         type="button"
                         className={`px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${editSide === "old" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground"}`}
@@ -810,7 +810,7 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
                         Depois
                       </button>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 shrink-0">
                       <Button
                         variant="ghost"
                         size="sm"
