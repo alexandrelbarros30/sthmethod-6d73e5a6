@@ -470,13 +470,13 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
   };
 
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-display flex items-center gap-2">
           <ImagePlus className="w-4 h-4" /> Gerar Evolução
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 min-w-0 overflow-x-hidden">
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label className="text-xs">Foto Antiga (Antes)</Label>
