@@ -175,6 +175,7 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
   const [inlineCropperKey, setInlineCropperKey] = useState<TransformKey | null>(null);
   const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
   const [activeType, setActiveType] = useState<ImageType>("front");
+  const [editSide, setEditSide] = useState<"old" | "new">("old");
   const [livePreviews, setLivePreviews] = useState<Partial<Record<ImageType, string>>>({});
   // Manual override: para cada posição (front/back/profile), permite escolher
   // qual imagem específica (id) usar de cada lado. Default = procurar pelo type.
@@ -789,12 +790,26 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
               const t = transforms[key] || DEFAULT_TRANSFORM;
               const exists = !!loadedImages[key];
               if (!exists) return null;
+              if (side !== editSide) return null;
               return (
                 <div key={side} className="space-y-2 pt-2 border-t border-border/50">
                   <div className="flex items-center justify-between">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                      {side === "old" ? "Antes" : "Depois"}
-                    </p>
+                    <div className="inline-flex rounded-md border border-border overflow-hidden">
+                      <button
+                        type="button"
+                        className={`px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${editSide === "old" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground"}`}
+                        onClick={() => setEditSide("old")}
+                      >
+                        Antes
+                      </button>
+                      <button
+                        type="button"
+                        className={`px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${editSide === "new" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground"}`}
+                        onClick={() => setEditSide("new")}
+                      >
+                        Depois
+                      </button>
+                    </div>
                     <div className="flex items-center gap-1">
                       <Button
                         variant="ghost"
