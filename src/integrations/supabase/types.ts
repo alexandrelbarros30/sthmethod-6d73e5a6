@@ -2482,6 +2482,45 @@ export type Database = {
           },
         ]
       }
+      student_flow_status: {
+        Row: {
+          cadastro_recebido_at: string | null
+          created_at: string
+          dados_em_analise_at: string | null
+          estrategia_estruturando_at: string | null
+          id: string
+          notes: string | null
+          plano_avancado_pronto_at: string | null
+          plataforma_liberada_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cadastro_recebido_at?: string | null
+          created_at?: string
+          dados_em_analise_at?: string | null
+          estrategia_estruturando_at?: string | null
+          id?: string
+          notes?: string | null
+          plano_avancado_pronto_at?: string | null
+          plataforma_liberada_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cadastro_recebido_at?: string | null
+          created_at?: string
+          dados_em_analise_at?: string | null
+          estrategia_estruturando_at?: string | null
+          id?: string
+          notes?: string | null
+          plano_avancado_pronto_at?: string | null
+          plataforma_liberada_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       student_program_assignments: {
         Row: {
           active: boolean
