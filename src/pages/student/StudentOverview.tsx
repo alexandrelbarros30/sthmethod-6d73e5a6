@@ -19,6 +19,7 @@ import SubscriptionAlerts from "@/components/student/SubscriptionAlerts";
 import AdAutoPopup from "@/components/student/AdAutoPopup";
 import PreviewUnlockPopup from "@/components/student/PreviewUnlockPopup";
 import WelcomeTour from "@/components/student/WelcomeTour";
+import STHFlowCard from "@/components/student/STHFlowCard";
 import recipeMousseWhey from "@/assets/recipe-mousse-whey.jpg";
 import recipePatinho from "@/assets/recipe-patinho-grelhado.jpg";
 import recipeMexidoOvos from "@/assets/recipe-mexido-ovos.jpg";
@@ -140,6 +141,8 @@ const StudentOverview = () => {
           <span className="absolute top-2 right-2.5 w-1.5 h-1.5 rounded-full bg-foreground" />
         </button>
       </div>
+
+      <STHFlowCard />
 
       {/* PROGRESSO DESTAQUE */}
       <div className="mb-10 rounded-3xl border border-border/40 bg-background p-7">
