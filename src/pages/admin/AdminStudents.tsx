@@ -36,6 +36,7 @@ import ExcelJS from "exceljs";
 import AdminBioimpedance from "@/components/admin/AdminBioimpedance";
 import WhatsAppPopoverButton from "@/components/shared/WhatsAppPopoverButton";
 import AdminMetabolicPanel from "@/components/admin/AdminMetabolicPanel";
+import AdminFlowStatusDialog from "@/components/admin/AdminFlowStatusDialog";
 import PreviewUnlockToggle from "@/components/admin/PreviewUnlockToggle";
 import StudentProgramAssignDialog from "@/components/admin/StudentProgramAssignDialog";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
@@ -2070,6 +2071,7 @@ const AdminStudents = () => {
               { icon: Activity, label: "Bioimpedância", action: () => { setManageOpen(false); setBioOpen(true); } },
               { icon: ClipboardList, label: "Anamnese", action: () => { setManageOpen(false); setAnamneseOpen(true); } },
               { icon: Microscope, label: "Painel Metabólico", action: () => { setManageOpen(false); setMetabolicOpen(true); } },
+              { icon: Zap, label: "STH Flow", action: () => { setManageOpen(false); setFlowOpen(true); } },
               { icon: CreditCard, label: "Assinatura", action: () => { setManageOpen(false); openSub(selected); } },
               { icon: Lock, label: "Alterar Senha", action: () => { setManageOpen(false); setPasswordReset({ userId: selected?.user_id, name: selected?.full_name || selected?.email }); setNewPassword(""); } },
               { icon: Link2, label: "Link Renovação", action: () => { navigator.clipboard.writeText(`${window.location.origin}/dashboard/renew?uid=${selected?.user_id}`); toast.success("Link copiado!"); setManageOpen(false); } },
@@ -2100,6 +2102,15 @@ const AdminStudents = () => {
           userId={selected.user_id}
           userName={selected.full_name || selected.email}
           studentPhone={selected.phone}
+        />
+      )}
+
+      {selected && (
+        <AdminFlowStatusDialog
+          open={flowOpen}
+          onOpenChange={(o) => { setFlowOpen(o); if (!o) setManageOpen(true); }}
+          userId={selected.user_id}
+          userName={selected.full_name || selected.email}
         />
       )}
 
