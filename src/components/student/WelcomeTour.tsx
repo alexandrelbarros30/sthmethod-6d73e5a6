@@ -1,24 +1,24 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ChevronRight, X, PartyPopper, Hand } from "lucide-react";
+import { Sparkles, ChevronRight, X, PartyPopper } from "lucide-react";
 
-const STORAGE_KEY = "sth_welcome_tour_v1_done";
+const STORAGE_KEY = "sth_welcome_tour_v2_done";
 
 type Step = {
   emoji: string;
   title: string;
   body: string;
-  // dock target index 0..4 (Início, Atualização, Dieta, Protocolo, Treino) — null = welcome/finale
+  // dock target index 0..5 (Início, Atualização, Dieta, Protocolo, Treino, Perfil) — null = welcome/finale
   dockIndex: number | null;
   highlight?: string;
 };
 
 const STEPS: Step[] = [
   {
-    emoji: "👋",
-    title: "Bem-vindo ao STH METHOD",
-    body: "Em 5 toques rápidos você vai dominar sua jornada. Vamos lá?",
+    emoji: "✨",
+    title: "Sua estratégia já está em andamento",
+    body: "Recebemos seu cadastro e nosso time já está cuidando de você. Enquanto sua estratégia principal é estruturada, vamos te mostrar como navegar pela plataforma.",
     dockIndex: null,
   },
   {
@@ -57,6 +57,13 @@ const STEPS: Step[] = [
     highlight: "Bora pra ação.",
   },
   {
+    emoji: "🧬",
+    title: "Exames, conteúdo & mais",
+    body: "No avatar você acessa Bioimpedância, Painel Metabólico, Conteúdo, STH News e sua Assinatura.",
+    dockIndex: 5,
+    highlight: "Tudo o que é técnico mora aqui.",
+  },
+  {
     emoji: "🎉",
     title: "Tudo pronto!",
     body: "Você desbloqueou o STH METHOD. Bora transformar sua rotina.",
@@ -64,7 +71,7 @@ const STEPS: Step[] = [
   },
 ];
 
-const DOCK_COUNT = 5;
+const DOCK_COUNT = 6;
 
 const Spotlight = ({ dockIndex }: { dockIndex: number | null }) => {
   // The dock is centered, max-w-md, 5 itens equally distributed.
