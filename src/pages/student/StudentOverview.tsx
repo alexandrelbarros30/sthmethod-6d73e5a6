@@ -20,6 +20,7 @@ import AdAutoPopup from "@/components/student/AdAutoPopup";
 import PreviewUnlockPopup from "@/components/student/PreviewUnlockPopup";
 import WelcomeTour from "@/components/student/WelcomeTour";
 import STHFlowCard from "@/components/student/STHFlowCard";
+import PaymentTourPopup from "@/components/student/PaymentTourPopup";
 import recipeMousseWhey from "@/assets/recipe-mousse-whey.jpg";
 import recipePatinho from "@/assets/recipe-patinho-grelhado.jpg";
 import recipeMexidoOvos from "@/assets/recipe-mexido-ovos.jpg";
@@ -120,6 +121,7 @@ const StudentOverview = () => {
       <AdAutoPopup />
       <PreviewUnlockPopup />
       <WelcomeTour />
+      <PaymentTourPopup />
 
       {/* HEADER */}
       <div className="flex items-start justify-between mb-10 relative">
