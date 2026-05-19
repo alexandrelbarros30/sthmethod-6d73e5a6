@@ -19,6 +19,7 @@ import HydrationTracker from "@/components/student/HydrationTracker";
 import DietSelector from "@/components/student/DietSelector";
 import DietContentRenderer from "@/components/student/DietContentRenderer";
 import DietPlanningPanel from "@/components/student/DietPlanningPanel";
+import DietMealGuide from "@/components/student/DietMealGuide";
 import { Utensils, Flame, Zap, FileDown, Apple } from "lucide-react";
 import { toast } from "sonner";
 import { generateStudentPDF } from "@/lib/pdfGenerator";
@@ -269,7 +270,8 @@ const StudentDiet = () => {
         {/* Date navigation */}
         <DietDateNav selectedDate={selectedDate} onDateChange={setSelectedDate} />
 
-        <div className="flex justify-end">
+        <div className="flex justify-end items-center gap-2">
+          <DietMealGuide />
           <Button variant="outline" size="sm" onClick={handleDownloadPdf} disabled={isDownloadingPdf}>
             <FileDown className="w-4 h-4 mr-1" />
             {isDownloadingPdf ? "Gerando PDF..." : "Baixar PDF"}
