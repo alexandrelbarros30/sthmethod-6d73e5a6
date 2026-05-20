@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { TrendingUp, Scale, Camera, CheckCircle2, ChevronLeft, ChevronRight, ClipboardCheck, Activity, AlertCircle, Clock } from "lucide-react";
+import { Ruler, MessageSquare } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,11 +37,23 @@ const StudentEvolution = () => {
   const qc = useQueryClient();
   const [weight, setWeight] = useState("");
   const [notes, setNotes] = useState("");
+  const [studentMessage, setStudentMessage] = useState("");
+  const [measurements, setMeasurements] = useState<{
+    waist: string;
+    hip: string;
+    chest: string;
+    arm: string;
+    thigh: string;
+    calf: string;
+  }>({ waist: "", hip: "", chest: "", arm: "", thigh: "", calf: "" });
   const [saving, setSaving] = useState(false);
   const [imagesSaved, setImagesSaved] = useState(false);
   const [activityChange, setActivityChange] = useState<ActivityData | null>(null);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-  const canSubmitUpdate = Boolean(weight || activityChange || imagesSaved || notes.trim());
+  const hasMeasurements = Object.values(measurements).some((v) => v.trim() !== "");
+  const canSubmitUpdate = Boolean(
+    weight || activityChange || imagesSaved || notes.trim() || studentMessage.trim() || hasMeasurements
+  );
 
   const { data: status } = useEvolutionStatus();
 
@@ -147,6 +160,13 @@ const StudentEvolution = () => {
           user_id: user!.id,
           weight: newWeight,
           notes: notes || "",
+          student_message: studentMessage || "",
+          waist_cm: measurements.waist ? Number(measurements.waist) : null,
+          hip_cm: measurements.hip ? Number(measurements.hip) : null,
+          chest_cm: measurements.chest ? Number(measurements.chest) : null,
+          arm_cm: measurements.arm ? Number(measurements.arm) : null,
+          thigh_cm: measurements.thigh ? Number(measurements.thigh) : null,
+          calf_cm: measurements.calf ? Number(measurements.calf) : null,
         });
         if (error) throw error;
       }
@@ -247,6 +267,22 @@ const StudentEvolution = () => {
         anamnesisNote += `\n📝 Observações do aluno: ${notes}\n`;
       }
 
+      if (studentMessage) {
+        anamnesisNote += `\n💬 Mensagem direta: ${studentMessage}\n`;
+      }
+
+      if (hasMeasurements) {
+        anamnesisNote += `\n📏 Medidas (cm):`;
+        const m = measurements;
+        if (m.waist) anamnesisNote += ` cintura ${m.waist}`;
+        if (m.hip) anamnesisNote += ` | quadril ${m.hip}`;
+        if (m.chest) anamnesisNote += ` | busto ${m.chest}`;
+        if (m.arm) anamnesisNote += ` | braço ${m.arm}`;
+        if (m.thigh) anamnesisNote += ` | coxa ${m.thigh}`;
+        if (m.calf) anamnesisNote += ` | panturrilha ${m.calf}`;
+        anamnesisNote += `\n`;
+      }
+
       if (imagesSaved) {
         anamnesisNote += `\n📸 Novas fotos corporais enviadas.\n`;
       }
@@ -278,6 +314,8 @@ const StudentEvolution = () => {
       toast.success("Evolução registrada com sucesso! Macros atualizados.");
       setWeight("");
       setNotes("");
+      setStudentMessage("");
+      setMeasurements({ waist: "", hip: "", chest: "", arm: "", thigh: "", calf: "" });
       setImagesSaved(false);
       setActivityChange(null);
       qc.invalidateQueries({ queryKey: ["student-weight-logs"] });
