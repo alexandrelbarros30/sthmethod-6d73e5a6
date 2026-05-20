@@ -396,8 +396,6 @@ const StudentEvolution = () => {
 
   return (
     <DashboardLayout role="student" title="Atualização" subtitle="Registre seu progresso para acompanhamento profissional.">
-      {fullProfile && <EvolutionMacroDisplay profile={fullProfile} />}
-
       {statusBlock}
 
       <div className="rounded-3xl border border-border/40 bg-background p-6 mb-6 space-y-5">
