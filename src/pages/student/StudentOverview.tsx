@@ -3,7 +3,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
   Salad, ChevronRight, Flame, Clock, Utensils,
-  UtensilsCrossed, Beaker, Brain, Layers, Bell, Droplets, Activity, Target
+  UtensilsCrossed, Beaker, Brain, Layers, Bell, Droplets, Target, Plus, Minus, Beef
 } from "lucide-react";
 import cardHormoniosImg from "@/assets/sthnews-subq-glass-1.jpg";
 import cardDicasImg from "@/assets/sthnews-triade-thumb.jpg";
@@ -41,16 +41,15 @@ const recipeHighlights = [
 const greetings = ["Olá", "Oi", "Bom te ver", "Bem-vindo de volta", "Hey"];
 const getGreeting = () => greetings[Math.floor(Math.random() * greetings.length)];
 
-const DailyMealWidget = () => {
-  const {
-    meals, completedCount, totalMeals, progressPercent, nextMeal,
-    isLoading, isMealCompleted,
-  } = useMealTracking();
-
-  if (isLoading || meals.length === 0) return null;
-
+const DailyMealWidget = ({
+  completedCount, totalMeals, progressPercent, nextMeal, isLoading, isMealCompleted, mealsCount,
+}: {
+  completedCount: number; totalMeals: number; progressPercent: number;
+  nextMeal: any; isLoading: boolean; isMealCompleted: (id: string) => boolean; mealsCount: number;
+}) => {
+  if (isLoading || mealsCount === 0) return null;
   return (
-    <div className="mb-8 rounded-3xl border border-border/40 bg-background overflow-hidden">
+    <div className="mb-6 rounded-3xl border border-border/40 bg-background overflow-hidden">
       <div className="p-6">
         <div className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-4 flex items-center gap-1.5">
           <Utensils className="w-3 h-3" /> Progresso do dia
@@ -90,6 +89,52 @@ const DailyMealWidget = () => {
   );
 };
 
+const HydrationWidget = ({
+  consumedMl, goalL, onAdd, onRemove,
+}: { consumedMl: number; goalL: number; onAdd: (ml: number) => void; onRemove: () => void }) => {
+  if (goalL <= 0) return null;
+  const goalMl = goalL * 1000;
+  const pct = Math.min(100, Math.round((consumedMl / goalMl) * 100));
+  const consumedL = (consumedMl / 1000).toFixed(consumedMl >= 1000 ? 1 : 2);
+  return (
+    <div className="mb-6 rounded-3xl border border-border/40 bg-background p-6">
+      <div className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-4 flex items-center gap-1.5">
+        <Droplets className="w-3 h-3" /> Hidratação
+      </div>
+      <div className="flex items-end justify-between mb-4">
+        <div>
+          <div className="flex items-baseline gap-1">
+            <span className="text-[36px] leading-none font-semibold tracking-[-0.04em] text-foreground tabular-nums">{consumedL}</span>
+            <span className="text-lg text-muted-foreground/60 font-light tracking-[-0.02em]">/{goalL}L</span>
+          </div>
+          <p className="text-[12px] text-muted-foreground font-light mt-2 tracking-tight">{pct}% da meta diária</p>
+        </div>
+        <button
+          onClick={onRemove}
+          className="w-9 h-9 rounded-full border border-border/60 flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
+          aria-label="Remover último copo"
+        >
+          <Minus className="w-3.5 h-3.5" strokeWidth={2} />
+        </button>
+      </div>
+      <div className="h-px w-full bg-foreground/10 overflow-hidden rounded-full mb-4">
+        <div className="h-full bg-foreground rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+      </div>
+      <div className="grid grid-cols-4 gap-2">
+        {[200, 250, 500, 750].map((ml) => (
+          <button
+            key={ml}
+            onClick={() => onAdd(ml)}
+            className="h-10 rounded-full border border-border/60 text-[12px] font-medium text-foreground hover:bg-foreground hover:text-background transition-colors flex items-center justify-center gap-1"
+          >
+            <Plus className="w-3 h-3" strokeWidth={2.5} />{ml}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const StudentOverview = () => {
   const { profile, user } = useAuth();
   const navigate = useNavigate();
@@ -104,15 +149,37 @@ const StudentOverview = () => {
     enabled: !!user?.id,
   });
 
+  // Latest STH News from platform_updates
+  const { data: latestUpdate } = useQuery({
+    queryKey: ["latest-platform-update"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("platform_updates")
+        .select("id, title, description, released_at, version")
+        .eq("published", true)
+        .order("released_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+
   const firstName = profile?.full_name?.split(" ")[0] || "Aluno";
 
   const {
+    meals,
+    completedCount,
+    totalMeals,
+    progressPercent,
+    nextMeal,
+    isMealCompleted,
     totalMacros: dayTargetMacros,
     consumedMacros: dayMacros,
-    progressPercent: dayProgress,
     waterConsumedMl: dayWaterMl,
     hydrationGoalL: dayHydrationGoalL,
     isLoading: mealsLoading,
+    addWater,
+    removeLastWater,
   } = useMealTracking();
 
   return (
@@ -146,27 +213,70 @@ const StudentOverview = () => {
 
       <STHFlowCard />
 
-      {/* PROGRESSO DESTAQUE */}
-      <div className="mb-10 rounded-3xl border border-border/40 bg-background p-7">
-        <div className="flex items-end justify-between mb-6">
-          <div>
-            <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground">Hoje</p>
-            <div className="flex items-baseline gap-1.5 mt-3">
-              <span className="text-[64px] sm:text-[80px] leading-[0.85] font-semibold text-foreground tracking-[-0.05em] tabular-nums">
-                {mealsLoading ? "—" : dayProgress}
-              </span>
-              <span className="text-2xl text-muted-foreground/60 font-light tracking-[-0.02em]">%</span>
-            </div>
-          </div>
-          <div className="inline-flex items-center gap-1.5 text-[11px] text-foreground/80 rounded-full px-3 py-1.5 bg-muted/50 font-medium tracking-tight">
-            <Target className="w-3 h-3" strokeWidth={2} /> 8 dias
+      {/* AÇÃO PRIMÁRIA: próxima refeição + progresso */}
+      <DailyMealWidget
+        completedCount={completedCount}
+        totalMeals={totalMeals}
+        progressPercent={progressPercent}
+        nextMeal={nextMeal}
+        isLoading={mealsLoading}
+        isMealCompleted={isMealCompleted}
+        mealsCount={meals.length}
+      />
+
+      {/* HIDRATAÇÃO ACIONÁVEL */}
+      <HydrationWidget
+        consumedMl={dayWaterMl}
+        goalL={dayHydrationGoalL}
+        onAdd={(ml) => addWater.mutate(ml)}
+        onRemove={() => removeLastWater.mutate()}
+      />
+
+      {/* RESUMO MACROS DO DIA */}
+      <div className="mb-10 rounded-3xl border border-border/40 bg-background overflow-hidden">
+        <div className="p-6">
+          <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5 flex items-center gap-1.5">
+            <Target className="w-3 h-3" /> Resumo do dia
+          </p>
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              {
+                icon: Flame,
+                value: mealsLoading ? "—" : (dayMacros?.kcal ? Math.round(dayMacros.kcal).toLocaleString("pt-BR") : (dayTargetMacros?.kcal ? Math.round(dayTargetMacros.kcal).toLocaleString("pt-BR") : "—")),
+                unit: "kcal",
+                label: "calorias",
+              },
+              {
+                icon: Beef,
+                value: mealsLoading ? "—" : (dayMacros?.protein ? Math.round(dayMacros.protein).toString() : (dayTargetMacros?.protein ? Math.round(dayTargetMacros.protein).toString() : "—")),
+                unit: "g",
+                label: "proteína",
+              },
+              {
+                icon: Droplets,
+                value: mealsLoading ? "—" : (dayWaterMl / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+                unit: "L",
+                label: dayHydrationGoalL > 0 ? `de ${dayHydrationGoalL}L` : "água",
+              },
+            ].map((s, i) => {
+              const Icon = s.icon;
+              return (
+                <div key={i} className="text-center">
+                  <Icon className="w-4 h-4 text-foreground mx-auto mb-3" strokeWidth={1.8} />
+                  <div className="flex items-baseline justify-center gap-0.5">
+                    <span className="text-[22px] font-semibold text-foreground tabular-nums tracking-[-0.03em] leading-none">{s.value}</span>
+                    <span className="text-[10px] text-muted-foreground font-light">{s.unit}</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground font-light mt-2 tracking-tight">{s.label}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
-        <p className="text-[12px] text-muted-foreground font-light tracking-tight">refeições concluídas hoje</p>
       </div>
 
-      {/* STH NEWS */}
-      <Link to="/tendencias/cintura-estetica" className="block mb-10 group">
+      {/* STH NEWS — última atualização real da plataforma */}
+      <Link to="/dashboard/content" className="block mb-10 group">
         <div className="rounded-3xl border border-border/40 hover:border-border transition-colors p-5 flex items-center gap-4">
           <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0">
             <img src={sthNewsLatestImg} alt="STH News" className="w-full h-full object-cover" />
@@ -174,9 +284,13 @@ const StudentOverview = () => {
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-1.5">STH News</p>
             <p className="text-[14px] font-semibold text-foreground tracking-[-0.015em] truncate">
-              A estética da cintura não é só genética
+              {latestUpdate?.title || "A estética da cintura não é só genética"}
             </p>
-            <p className="text-[11px] text-muted-foreground font-light mt-0.5 tracking-tight">22 Abr 2026</p>
+            <p className="text-[11px] text-muted-foreground font-light mt-0.5 tracking-tight">
+              {latestUpdate?.released_at
+                ? new Date(latestUpdate.released_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
+                : "22 Abr 2026"}
+            </p>
           </div>
           <ChevronRight className="w-4 h-4 text-foreground/40 shrink-0 group-hover:translate-x-0.5 transition-transform" strokeWidth={2} />
         </div>
@@ -288,33 +402,6 @@ const StudentOverview = () => {
         </div>
       </div>
 
-      {/* RESUMO DO DIA */}
-      <div className="mb-6 rounded-3xl border border-border/40 bg-background overflow-hidden">
-        <div className="p-6">
-          <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5">Resumo do dia</p>
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              { icon: Flame, value: mealsLoading ? "—" : (dayMacros?.kcal ? Math.round(dayMacros.kcal).toLocaleString("pt-BR") : (dayTargetMacros?.kcal ? Math.round(dayTargetMacros.kcal).toLocaleString("pt-BR") : "—")), unit: "kcal", label: "calorias" },
-              { icon: Activity, value: "82", unit: "min", label: "treino" },
-              { icon: Droplets, value: mealsLoading ? "—" : (dayWaterMl / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }), unit: "L", label: dayHydrationGoalL > 0 ? `de ${dayHydrationGoalL}L` : "água" },
-            ].map((s, i) => {
-              const Icon = s.icon;
-              return (
-                <div key={i} className="text-center">
-                  <Icon className="w-4 h-4 text-foreground mx-auto mb-3" strokeWidth={1.8} />
-                  <div className="flex items-baseline justify-center gap-0.5">
-                    <span className="text-[22px] font-semibold text-foreground tabular-nums tracking-[-0.03em] leading-none">{s.value}</span>
-                    <span className="text-[10px] text-muted-foreground font-light">{s.unit}</span>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground font-light mt-2 tracking-tight">{s.label}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      <DailyMealWidget />
     </DashboardLayout>
   );
 };
