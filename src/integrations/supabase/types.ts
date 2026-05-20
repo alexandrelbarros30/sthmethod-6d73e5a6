@@ -648,37 +648,58 @@ export type Database = {
       }
       evolution_notifications: {
         Row: {
+          arm_cm: number | null
+          calf_cm: number | null
+          chest_cm: number | null
           created_at: string
           has_photos: boolean
+          hip_cm: number | null
           id: string
           new_weight: number | null
           notes: string | null
           previous_weight: number | null
           seen: boolean
+          student_message: string | null
           student_name: string
           student_user_id: string
+          thigh_cm: number | null
+          waist_cm: number | null
         }
         Insert: {
+          arm_cm?: number | null
+          calf_cm?: number | null
+          chest_cm?: number | null
           created_at?: string
           has_photos?: boolean
+          hip_cm?: number | null
           id?: string
           new_weight?: number | null
           notes?: string | null
           previous_weight?: number | null
           seen?: boolean
+          student_message?: string | null
           student_name?: string
           student_user_id: string
+          thigh_cm?: number | null
+          waist_cm?: number | null
         }
         Update: {
+          arm_cm?: number | null
+          calf_cm?: number | null
+          chest_cm?: number | null
           created_at?: string
           has_photos?: boolean
+          hip_cm?: number | null
           id?: string
           new_weight?: number | null
           notes?: string | null
           previous_weight?: number | null
           seen?: boolean
+          student_message?: string | null
           student_name?: string
           student_user_id?: string
+          thigh_cm?: number | null
+          waist_cm?: number | null
         }
         Relationships: []
       }
@@ -2984,27 +3005,48 @@ export type Database = {
       }
       weight_logs: {
         Row: {
+          arm_cm: number | null
+          calf_cm: number | null
+          chest_cm: number | null
           created_at: string
+          hip_cm: number | null
           id: string
           logged_at: string
           notes: string | null
+          student_message: string | null
+          thigh_cm: number | null
           user_id: string
+          waist_cm: number | null
           weight: number
         }
         Insert: {
+          arm_cm?: number | null
+          calf_cm?: number | null
+          chest_cm?: number | null
           created_at?: string
+          hip_cm?: number | null
           id?: string
           logged_at?: string
           notes?: string | null
+          student_message?: string | null
+          thigh_cm?: number | null
           user_id: string
+          waist_cm?: number | null
           weight: number
         }
         Update: {
+          arm_cm?: number | null
+          calf_cm?: number | null
+          chest_cm?: number | null
           created_at?: string
+          hip_cm?: number | null
           id?: string
           logged_at?: string
           notes?: string | null
+          student_message?: string | null
+          thigh_cm?: number | null
           user_id?: string
+          waist_cm?: number | null
           weight?: number
         }
         Relationships: []

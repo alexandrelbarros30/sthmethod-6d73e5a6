@@ -12,6 +12,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminReminders from "@/components/admin/AdminReminders";
 import ServiceQueue from "@/components/admin/ServiceQueue";
+import EvolutionUpdatesPanel from "@/components/admin/EvolutionUpdatesPanel";
 import { toast } from "sonner";
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
 import WhatsAppBulkSender from "@/components/shared/WhatsAppBulkSender";
@@ -384,6 +385,15 @@ const AdminDashboard = () => {
       <div className="space-y-3">
         {/* 0. Fila de Atendimento (prioridade máxima) */}
         <ServiceQueue compact manageBasePath="/admin/students" />
+
+        {/* 0.5 Atualizações de Evolução pendentes */}
+        <CollapsiblePanel
+          title="Atualizações de Evolução"
+          icon={<Bell className="w-4 h-4 text-primary" />}
+          defaultOpen={true}
+        >
+          <EvolutionUpdatesPanel />
+        </CollapsiblePanel>
 
         {/* 1. Lembretes Inteligentes (prioridade no topo) */}
         <CollapsiblePanel
