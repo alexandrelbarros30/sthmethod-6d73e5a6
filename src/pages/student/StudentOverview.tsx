@@ -9,7 +9,6 @@ import cardHormoniosImg from "@/assets/sthnews-subq-glass-1.jpg";
 import cardDicasImg from "@/assets/sthnews-triade-thumb.jpg";
 import cardReceitasImg from "@/assets/recipe-salmao-aspargos.jpg";
 import cardCombinacoesImg from "@/assets/sthnews-masteron-glass-1.jpg";
-import sthNewsLatestImg from "@/assets/sthnews-cintura-hero.jpg";
 import { useMealTracking } from "@/hooks/useMealTracking";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,6 +20,8 @@ import PreviewUnlockPopup from "@/components/student/PreviewUnlockPopup";
 import WelcomeTour from "@/components/student/WelcomeTour";
 import STHFlowCard from "@/components/student/STHFlowCard";
 import PaymentTourPopup from "@/components/student/PaymentTourPopup";
+import NewTrendNotification from "@/components/student/NewTrendNotification";
+import { getLatestTrend } from "@/data/latest-trends";
 import recipeMousseWhey from "@/assets/recipe-mousse-whey.jpg";
 import recipePatinho from "@/assets/recipe-patinho-grelhado.jpg";
 import recipeMexidoOvos from "@/assets/recipe-mexido-ovos.jpg";
@@ -149,20 +150,8 @@ const StudentOverview = () => {
     enabled: !!user?.id,
   });
 
-  // Latest STH News from platform_updates
-  const { data: latestUpdate } = useQuery({
-    queryKey: ["latest-platform-update"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("platform_updates")
-        .select("id, title, description, released_at, version")
-        .eq("published", true)
-        .order("released_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-  });
+  // Latest STH News = última tendência publicada
+  const latestTrend = getLatestTrend();
 
   const firstName = profile?.full_name?.split(" ")[0] || "Aluno";
 
@@ -189,6 +178,8 @@ const StudentOverview = () => {
       <PreviewUnlockPopup />
       <WelcomeTour />
       <PaymentTourPopup />
+
+      <NewTrendNotification />
 
       {/* HEADER */}
       <div className="flex items-start justify-between mb-10 relative">
@@ -275,21 +266,19 @@ const StudentOverview = () => {
         </div>
       </div>
 
-      {/* STH NEWS — última atualização real da plataforma */}
-      <Link to="/dashboard/content" className="block mb-10 group">
+      {/* STH NEWS — última tendência publicada */}
+      <Link to={latestTrend.path} className="block mb-10 group">
         <div className="rounded-3xl border border-border/40 hover:border-border transition-colors p-5 flex items-center gap-4">
           <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0">
-            <img src={sthNewsLatestImg} alt="STH News" className="w-full h-full object-cover" />
+            <img src={latestTrend.img} alt="STH News" className="w-full h-full object-cover" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-1.5">STH News</p>
             <p className="text-[14px] font-semibold text-foreground tracking-[-0.015em] truncate">
-              {latestUpdate?.title || "A estética da cintura não é só genética"}
+              {latestTrend.title}
             </p>
             <p className="text-[11px] text-muted-foreground font-light mt-0.5 tracking-tight">
-              {latestUpdate?.released_at
-                ? new Date(latestUpdate.released_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
-                : "22 Abr 2026"}
+              {new Date(latestTrend.publishedAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
             </p>
           </div>
           <ChevronRight className="w-4 h-4 text-foreground/40 shrink-0 group-hover:translate-x-0.5 transition-transform" strokeWidth={2} />
