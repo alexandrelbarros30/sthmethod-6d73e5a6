@@ -20,7 +20,9 @@ import DietSelector from "@/components/student/DietSelector";
 import DietContentRenderer from "@/components/student/DietContentRenderer";
 import DietPlanningPanel from "@/components/student/DietPlanningPanel";
 import DietMealGuide from "@/components/student/DietMealGuide";
-import { Utensils, Flame, Zap, FileDown, Apple } from "lucide-react";
+import DietUpdatedBanner from "@/components/student/DietUpdatedBanner";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Utensils, Flame, Zap, FileDown, Apple, Droplets } from "lucide-react";
 import { toast } from "sonner";
 import { generateStudentPDF } from "@/lib/pdfGenerator";
 
@@ -280,9 +282,27 @@ const StudentDiet = () => {
 
         {targetId && <DietPlanningPanel targetUserId={targetId} readOnly />}
 
+        <DietUpdatedBanner dietId={currentDiet?.id} userId={targetId} />
+
         {hasStructuredMeals ? (
-          <>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden animate-fade-in">
+          <Tabs defaultValue="refeicoes" className="w-full">
+            <TabsList className="grid grid-cols-2 w-full bg-white/[0.04] border border-white/10 rounded-2xl p-1 h-auto">
+              <TabsTrigger
+                value="refeicoes"
+                className="rounded-xl text-xs font-semibold uppercase tracking-[0.2em] data-[state=active]:bg-foreground data-[state=active]:text-background py-2"
+              >
+                <Utensils className="w-3.5 h-3.5 mr-1.5" /> Refeições
+              </TabsTrigger>
+              <TabsTrigger
+                value="hidratacao"
+                className="rounded-xl text-xs font-semibold uppercase tracking-[0.2em] data-[state=active]:bg-foreground data-[state=active]:text-background py-2"
+              >
+                <Droplets className="w-3.5 h-3.5 mr-1.5" /> Hidratação
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="refeicoes" className="space-y-5 mt-4">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden animate-fade-in">
               <div className="py-6 px-6">
                 <div className="mb-4">
                   <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground">Hoje</p>
@@ -340,17 +360,70 @@ const StudentDiet = () => {
               </div>
             </div>
 
-            {hydrationGoalL > 0 && (
-              <HydrationTracker
-                goalL={hydrationGoalL}
-                consumedMl={waterConsumedMl}
-                onAdd={(ml) => addWater.mutate(ml)}
-                onRemove={() => removeLastWater.mutate()}
-                isAdding={addWater.isPending}
-                disabled={!isToday}
+              <DietSelector
+                diets={availableDiets as any}
+                selectedId={selectedDietId}
+                onSelect={setSelectedDietId}
               />
-            )}
-          </>
+
+              {hasStructuredMeals && (
+                <div className="space-y-3" style={{ animationDelay: "0.2s" }}>
+                  <div className="flex items-baseline justify-between">
+                    <h3 className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground flex items-center gap-2">
+                      <Utensils className="w-3 h-3" /> Refeições do dia
+                    </h3>
+                    <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground tabular-nums font-mono">
+                      {completedCount}/{totalMeals} hoje
+                    </span>
+                  </div>
+
+                  {meals.map((meal, idx) => (
+                    <div key={meal.id} className="animate-slide-up" style={{ animationDelay: `${0.05 * idx}s` }}>
+                      <MealCard
+                        meal={meal}
+                        mealLabel={`Refeição ${meal.sort_order + 1}`}
+                        isCompleted={isMealCompleted(meal.id)}
+                        isSkipped={isMealSkipped(meal.id)}
+                        isActive={activeMeal?.id === meal.id}
+                        isNext={nextMeal?.id === meal.id && activeMeal?.id !== meal.id}
+                        distributedMacros={(() => { const m = perMealFoodMacros.find(pm => pm.mealId === meal.id); return m ? { kcal: m.kcal, protein: m.protein, carbs: m.carbs, fat: m.fat } : null; })()}
+                        onToggle={() => handleToggle(meal.id)}
+                        onSkip={() => handleSkip(meal.id)}
+                        onExpand={() => setExpandedMealId(expandedMealId === meal.id ? null : meal.id)}
+                        isExpanded={expandedMealId === meal.id}
+                      />
+                      {expandedMealId === meal.id && expandedMeal && (
+                        <MealDetailPanel
+                          meal={expandedMeal}
+                          mealLabel={`Refeição ${expandedMeal.sort_order + 1}`}
+                          onClose={() => setExpandedMealId(null)}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="hidratacao" className="mt-4">
+              {hydrationGoalL > 0 ? (
+                <HydrationTracker
+                  goalL={hydrationGoalL}
+                  consumedMl={waterConsumedMl}
+                  onAdd={(ml) => addWater.mutate(ml)}
+                  onRemove={() => removeLastWater.mutate()}
+                  isAdding={addWater.isPending}
+                  disabled={!isToday}
+                />
+              ) : (
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-8 text-center">
+                  <Droplets className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-sm font-semibold text-foreground">Meta de hidratação não definida</p>
+                  <p className="text-xs text-muted-foreground mt-1">Aguarde seu consultor configurar.</p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         ) : (
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-5 animate-fade-in">
             <div className="mb-4 text-center">
@@ -360,50 +433,6 @@ const StudentDiet = () => {
           </div>
         )}
 
-        {/* Diet selector tabs (between hydration and meals) */}
-        <DietSelector
-          diets={availableDiets as any}
-          selectedId={selectedDietId}
-          onSelect={setSelectedDietId}
-        />
-
-        {hasStructuredMeals && (
-          <div className="space-y-3" style={{ animationDelay: "0.2s" }}>
-            <div className="flex items-baseline justify-between">
-              <h3 className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground flex items-center gap-2">
-                <Utensils className="w-3 h-3" /> Refeições do dia
-              </h3>
-              <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground tabular-nums font-mono">
-                {completedCount}/{totalMeals} hoje
-              </span>
-            </div>
-
-            {meals.map((meal, idx) => (
-              <div key={meal.id} className="animate-slide-up" style={{ animationDelay: `${0.05 * idx}s` }}>
-                <MealCard
-                  meal={meal}
-                  mealLabel={`Refeição ${meal.sort_order + 1}`}
-                  isCompleted={isMealCompleted(meal.id)}
-                  isSkipped={isMealSkipped(meal.id)}
-                  isActive={activeMeal?.id === meal.id}
-                  isNext={nextMeal?.id === meal.id && activeMeal?.id !== meal.id}
-                  distributedMacros={(() => { const m = perMealFoodMacros.find(pm => pm.mealId === meal.id); return m ? { kcal: m.kcal, protein: m.protein, carbs: m.carbs, fat: m.fat } : null; })()}
-                  onToggle={() => handleToggle(meal.id)}
-                  onSkip={() => handleSkip(meal.id)}
-                  onExpand={() => setExpandedMealId(expandedMealId === meal.id ? null : meal.id)}
-                  isExpanded={expandedMealId === meal.id}
-                />
-                {expandedMealId === meal.id && expandedMeal && (
-                  <MealDetailPanel
-                    meal={expandedMeal}
-                    mealLabel={`Refeição ${expandedMeal.sort_order + 1}`}
-                    onClose={() => setExpandedMealId(null)}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </DashboardLayout>
   );

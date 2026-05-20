@@ -151,15 +151,47 @@ const MealCard = ({ meal, mealLabel, isCompleted, isSkipped, isActive, isNext, i
         </div>
       </div>
 
-      {/* Macro mini bars */}
-      <div className="mt-3 flex items-center gap-2.5 text-[10px] text-muted-foreground relative font-mono">
-        <span className="font-semibold text-info tabular-nums">{Math.round(mealMacros.protein)}g P</span>
-        <span className="font-semibold text-warning tabular-nums">{Math.round(mealMacros.carbs)}g C</span>
-        <span className="font-semibold tabular-nums" style={{ color: "hsl(25, 85%, 55%)" }}>{Math.round(mealMacros.fat)}g G</span>
-        <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-muted/40 flex">
-          <div className="h-full bg-info transition-all duration-500" style={{ width: `${proteinPct}%` }} />
-          <div className="h-full bg-warning transition-all duration-500" style={{ width: `${carbsPct}%` }} />
-          <div className="h-full transition-all duration-500" style={{ width: `${fatPct}%`, background: "hsl(25, 85%, 55%)" }} />
+      {/* Macro chips + gradient bar */}
+      <div className="mt-3 space-y-2 relative">
+        <div className="grid grid-cols-3 gap-1.5">
+          <div className="rounded-lg px-2 py-1 text-center border border-info/20 bg-info/10">
+            <p className="text-[8px] uppercase tracking-[0.18em] text-info/80 font-bold">Prot</p>
+            <p className="text-[11px] font-extrabold tabular-nums text-info leading-tight">{Math.round(mealMacros.protein)}<span className="text-[8px] font-semibold opacity-70">g</span></p>
+          </div>
+          <div className="rounded-lg px-2 py-1 text-center border border-warning/20 bg-warning/10">
+            <p className="text-[8px] uppercase tracking-[0.18em] text-warning/80 font-bold">Carb</p>
+            <p className="text-[11px] font-extrabold tabular-nums text-warning leading-tight">{Math.round(mealMacros.carbs)}<span className="text-[8px] font-semibold opacity-70">g</span></p>
+          </div>
+          <div className="rounded-lg px-2 py-1 text-center border" style={{ background: "hsl(25 85% 55% / 0.1)", borderColor: "hsl(25 85% 55% / 0.22)" }}>
+            <p className="text-[8px] uppercase tracking-[0.18em] font-bold" style={{ color: "hsl(25 85% 65%)" }}>Gord</p>
+            <p className="text-[11px] font-extrabold tabular-nums leading-tight" style={{ color: "hsl(25 85% 60%)" }}>{Math.round(mealMacros.fat)}<span className="text-[8px] font-semibold opacity-70">g</span></p>
+          </div>
+        </div>
+        <div className="flex h-1.5 rounded-full overflow-hidden bg-muted/30 ring-1 ring-white/5">
+          <div
+            className="h-full transition-all duration-700"
+            style={{
+              width: `${proteinPct}%`,
+              background: "linear-gradient(90deg, hsl(var(--info)), hsl(var(--info) / 0.65))",
+              boxShadow: "0 0 6px hsl(var(--info) / 0.55)",
+            }}
+          />
+          <div
+            className="h-full transition-all duration-700"
+            style={{
+              width: `${carbsPct}%`,
+              background: "linear-gradient(90deg, hsl(var(--warning)), hsl(var(--warning) / 0.65))",
+              boxShadow: "0 0 6px hsl(var(--warning) / 0.55)",
+            }}
+          />
+          <div
+            className="h-full transition-all duration-700"
+            style={{
+              width: `${fatPct}%`,
+              background: "linear-gradient(90deg, hsl(25 85% 55%), hsl(25 85% 45%))",
+              boxShadow: "0 0 6px hsl(25 85% 55% / 0.55)",
+            }}
+          />
         </div>
       </div>
     </div>
