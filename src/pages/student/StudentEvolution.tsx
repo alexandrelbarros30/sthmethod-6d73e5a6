@@ -444,6 +444,58 @@ const StudentEvolution = () => {
                 rows={3}
               />
             </div>
+
+            {/* Medidas corporais */}
+            <div className="space-y-3 pt-2 border-t border-border/40">
+              <div className="flex items-center gap-2">
+                <Ruler className="w-4 h-4 text-muted-foreground" />
+                <Label className="font-body font-medium text-sm">Medidas corporais (cm) — opcional</Label>
+              </div>
+              <p className="text-[11px] text-muted-foreground -mt-1">
+                Use uma fita métrica. Preencha apenas o que conseguir medir.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {([
+                  { key: "waist", label: "Cintura" },
+                  { key: "hip", label: "Quadril" },
+                  { key: "chest", label: "Busto/Tórax" },
+                  { key: "arm", label: "Braço" },
+                  { key: "thigh", label: "Coxa" },
+                  { key: "calf", label: "Panturrilha" },
+                ] as const).map((f) => (
+                  <div key={f.key} className="space-y-1">
+                    <Label className="text-[11px] text-muted-foreground">{f.label}</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      inputMode="decimal"
+                      placeholder="cm"
+                      value={measurements[f.key]}
+                      onChange={(e) =>
+                        setMeasurements((prev) => ({ ...prev, [f.key]: e.target.value }))
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Mensagem direta */}
+            <div className="space-y-2 pt-2 border-t border-border/40">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-muted-foreground" />
+                <Label className="font-body font-medium text-sm">Mensagem direta para a equipe (opcional)</Label>
+              </div>
+              <Textarea
+                placeholder="Algo específico que precisa nos contar? Dúvida, dificuldade, pedido..."
+                value={studentMessage}
+                onChange={(e) => setStudentMessage(e.target.value)}
+                rows={3}
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Sua mensagem chega direto no painel do admin junto com a atualização.
+              </p>
+            </div>
           </div>
         )}
 
@@ -510,6 +562,18 @@ const StudentEvolution = () => {
                 <span className="text-[12px] text-muted-foreground uppercase tracking-[0.15em]">Observações</span>
                 <span className="text-[14px] font-medium text-foreground truncate max-w-[60%] text-right">
                   {notes.trim() ? notes.trim() : "—"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-3.5">
+                <span className="text-[12px] text-muted-foreground uppercase tracking-[0.15em]">Medidas</span>
+                <span className="text-[14px] font-medium text-foreground">
+                  {hasMeasurements ? "✓ Enviadas" : "—"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-3.5">
+                <span className="text-[12px] text-muted-foreground uppercase tracking-[0.15em]">Mensagem</span>
+                <span className="text-[14px] font-medium text-foreground truncate max-w-[60%] text-right">
+                  {studentMessage.trim() ? studentMessage.trim() : "—"}
                 </span>
               </div>
             </div>
