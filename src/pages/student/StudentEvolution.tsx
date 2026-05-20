@@ -15,13 +15,9 @@ import BodyImageUpload from "@/components/shared/BodyImageUpload";
 import DocumentUpload from "@/components/shared/DocumentUpload";
 import { calculateAge, calculateMacros } from "@/lib/macro-calculator";
 import EvolutionMacroDisplay from "@/components/student/EvolutionMacroDisplay";
-import EvolutionWeightHistory from "@/components/student/EvolutionWeightHistory";
 import EvolutionImageHistory from "@/components/student/EvolutionImageHistory";
 import EvolutionActivityChange, { type ActivityData } from "@/components/student/EvolutionActivityChange";
-import StudentBioimpedancePanel from "@/components/student/StudentBioimpedancePanel";
-import EvolutionComparison from "@/components/shared/EvolutionComparison";
 import { createEvolutionSnapshot } from "@/lib/evolution-snapshot";
-import { GitCompare } from "lucide-react";
 import { useEvolutionStatus } from "@/hooks/useEvolutionStatus";
 import { cn } from "@/lib/utils";
 
@@ -632,26 +628,6 @@ const StudentEvolution = () => {
             </Button>
           )}
         </div>
-      </div>
-
-      <EvolutionWeightHistory weightLogs={weightLogs || []} />
-
-      {/* Comparação de evolução (inline) */}
-      <Card className="mb-6">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <GitCompare className="w-4 h-4" />
-            Histórico de Evolução (inicial × atual)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <EvolutionComparison userId={user!.id} />
-        </CardContent>
-      </Card>
-
-      {/* Bioimpedance Panel */}
-      <div className="mb-6">
-        <StudentBioimpedancePanel />
       </div>
 
       <EvolutionImageHistory allImages={allImages || []} />
