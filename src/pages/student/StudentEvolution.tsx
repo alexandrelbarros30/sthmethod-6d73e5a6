@@ -630,26 +630,6 @@ const StudentEvolution = () => {
         </div>
       </div>
 
-      <EvolutionWeightHistory weightLogs={weightLogs || []} />
-
-      {/* Comparação de evolução (inline) */}
-      <Card className="mb-6">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <GitCompare className="w-4 h-4" />
-            Histórico de Evolução (inicial × atual)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <EvolutionComparison userId={user!.id} />
-        </CardContent>
-      </Card>
-
-      {/* Bioimpedance Panel */}
-      <div className="mb-6">
-        <StudentBioimpedancePanel />
-      </div>
-
       <EvolutionImageHistory allImages={allImages || []} />
     </DashboardLayout>
   );
