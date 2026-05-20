@@ -21,6 +21,7 @@ import WelcomeTour from "@/components/student/WelcomeTour";
 import STHFlowCard from "@/components/student/STHFlowCard";
 import PaymentTourPopup from "@/components/student/PaymentTourPopup";
 import NewTrendNotification from "@/components/student/NewTrendNotification";
+import EvolutionUpdateStatusCard from "@/components/student/EvolutionUpdateStatusCard";
 import { getLatestTrend } from "@/data/latest-trends";
 import recipeMousseWhey from "@/assets/recipe-mousse-whey.jpg";
 import recipePatinho from "@/assets/recipe-patinho-grelhado.jpg";
@@ -203,6 +204,9 @@ const StudentOverview = () => {
       </div>
 
       <STHFlowCard />
+
+      {/* CICLO DE ATUALIZAÇÃO — só aparece quando há ação pendente */}
+      <EvolutionUpdateStatusCard />
 
       {/* AÇÃO PRIMÁRIA: próxima refeição + progresso */}
       <DailyMealWidget
