@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
+import { useEvolutionStatus } from "@/hooks/useEvolutionStatus";
 
 type AppRole = "student" | "admin" | "consultor" | "assistente" | "financeiro";
 
@@ -94,6 +95,8 @@ const SidebarNav = ({ role, links, onNavClick }: { role: string; links: { to: st
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile } = useAuth();
+  const { data: evolutionStatus } = useEvolutionStatus();
+  const evolutionDue = role === "student" && evolutionStatus && (evolutionStatus.status === "due" || evolutionStatus.status === "late" || evolutionStatus.status === "never");
 
   const handleLogout = async () => {
     await signOut();
@@ -124,20 +127,26 @@ const SidebarNav = ({ role, links, onNavClick }: { role: string; links: { to: st
       <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
         {links.map((link) => {
           const isActive = location.pathname === link.to;
+          const showBadge = evolutionDue && link.to === "/dashboard/evolution";
           return (
             <Link
               key={link.to}
               to={link.to}
               onClick={onNavClick}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-200 font-body",
+                "flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-200 font-body relative",
                 isActive
                   ? "bg-foreground/10 text-foreground"
                   : "text-sidebar-foreground/65 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
               )}
             >
               <link.icon className="w-[18px] h-[18px] shrink-0" />
-              {link.label}
+              <span className="flex-1">{link.label}</span>
+              {showBadge && (
+                <span className="ml-auto text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-foreground text-background">
+                  •
+                </span>
+              )}
             </Link>
           );
         })}

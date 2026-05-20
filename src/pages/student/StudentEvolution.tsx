@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { TrendingUp, Scale, Camera, CheckCircle2 } from "lucide-react";
+import { TrendingUp, Scale, Camera, CheckCircle2, ChevronLeft, ChevronRight, ClipboardCheck, Activity, AlertCircle, Clock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +21,15 @@ import StudentBioimpedancePanel from "@/components/student/StudentBioimpedancePa
 import EvolutionComparison from "@/components/shared/EvolutionComparison";
 import { createEvolutionSnapshot } from "@/lib/evolution-snapshot";
 import { GitCompare } from "lucide-react";
+import { useEvolutionStatus } from "@/hooks/useEvolutionStatus";
+import { cn } from "@/lib/utils";
+
+const STEPS = [
+  { id: 1, label: "Peso", icon: Scale },
+  { id: 2, label: "Fotos", icon: Camera },
+  { id: 3, label: "Rotina", icon: Activity },
+  { id: 4, label: "Confirmar", icon: ClipboardCheck },
+] as const;
 
 const StudentEvolution = () => {
   const { user } = useAuth();
@@ -30,7 +39,10 @@ const StudentEvolution = () => {
   const [saving, setSaving] = useState(false);
   const [imagesSaved, setImagesSaved] = useState(false);
   const [activityChange, setActivityChange] = useState<ActivityData | null>(null);
-  const canSubmitUpdate = Boolean(weight || activityChange);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const canSubmitUpdate = Boolean(weight || activityChange || imagesSaved || notes.trim());
+
+  const { data: status } = useEvolutionStatus();
 
   const { data: fullProfile } = useQuery({
     queryKey: ["student-profile-evo", user?.id],
@@ -82,6 +94,41 @@ const StudentEvolution = () => {
   });
 
   const currentWeight = fullProfile?.weight;
+
+  // Preview dos novos macros antes de salvar (etapa de confirmação)
+  const previewMacros = useMemo(() => {
+    if (!fullProfile?.birth_date || !fullProfile?.height || !fullProfile?.gender) return null;
+    const newWeight = weight ? Number(weight) : (fullProfile.weight ? Number(fullProfile.weight) : null);
+    if (!newWeight || !Number.isFinite(newWeight)) return null;
+    const act = activityChange || {
+      physicalActivityLevel: fullProfile.physical_activity_level || "sedentario",
+      activityType: fullProfile.activity_type || "nenhuma",
+      trainingDaysPerWeek: fullProfile.training_days_per_week ?? undefined,
+      trainingDurationMinutes: fullProfile.training_duration_minutes ?? undefined,
+      trainingIntensity: fullProfile.training_intensity ?? undefined,
+      doesCardio: fullProfile.does_cardio || false,
+      cardioDaysPerWeek: fullProfile.cardio_days_per_week ?? undefined,
+      cardioDurationMinutes: fullProfile.cardio_duration_minutes ?? undefined,
+      cardioIntensity: fullProfile.cardio_intensity ?? undefined,
+    };
+    const age = calculateAge(fullProfile.birth_date);
+    return calculateMacros({
+      gender: fullProfile.gender as "masculino" | "feminino",
+      age,
+      weight: newWeight,
+      height: Number(fullProfile.height),
+      activityType: act.activityType,
+      doesCardio: act.doesCardio,
+      objective: fullProfile.objective || "manter_peso",
+      physicalActivityLevel: act.physicalActivityLevel,
+      trainingDaysPerWeek: act.trainingDaysPerWeek || undefined,
+      trainingDurationMinutes: act.trainingDurationMinutes || undefined,
+      trainingIntensity: act.trainingIntensity || undefined,
+      cardioDaysPerWeek: act.cardioDaysPerWeek || undefined,
+      cardioDurationMinutes: act.cardioDurationMinutes || undefined,
+      cardioIntensity: act.cardioIntensity || undefined,
+    });
+  }, [weight, activityChange, fullProfile]);
 
   const handleSaveWeight = async () => {
     if (!weight && !activityChange) {
@@ -236,6 +283,8 @@ const StudentEvolution = () => {
       qc.invalidateQueries({ queryKey: ["student-weight-logs"] });
       qc.invalidateQueries({ queryKey: ["student-profile-evo"] });
       qc.invalidateQueries({ queryKey: ["student-full-profile"] });
+      qc.invalidateQueries({ queryKey: ["evolution-status"] });
+      setStep(1);
     } catch (err: any) {
       console.error(err);
       toast.error("Erro ao salvar: " + (err.message || "Tente novamente."));
@@ -243,71 +292,128 @@ const StudentEvolution = () => {
     setSaving(false);
   };
 
+  // ---------- HEADER STATUS ----------
+  const statusBlock = (() => {
+    if (!status) return null;
+    const cfg = {
+      never: { Icon: TrendingUp, label: "Sem registros", desc: "Faça sua primeira atualização" },
+      ok: { Icon: CheckCircle2, label: "Em dia", desc: `Próxima em ${status.daysUntilNext} dias` },
+      approaching: { Icon: Clock, label: `Faltam ${status.daysUntilNext}d`, desc: "Atualização chegando" },
+      due: { Icon: CheckCircle2, label: "Disponível", desc: "Ciclo de 29 dias completo" },
+      late: { Icon: AlertCircle, label: `${Math.abs(status.daysUntilNext)}d atrasado`, desc: "Atualize para reajustar macros" },
+    }[status.status];
+    const Icon = cfg.Icon;
+    const lastTxt = status.lastUpdateAt
+      ? new Date(status.lastUpdateAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
+      : "Nunca";
+    return (
+      <div className="rounded-3xl border border-border/40 bg-background p-5 mb-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-2xl bg-foreground/10 flex items-center justify-center shrink-0">
+            <Icon className="w-4 h-4 text-foreground" strokeWidth={1.8} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground">{cfg.label}</p>
+            <p className="text-[13px] font-medium text-foreground tracking-tight mt-0.5">{cfg.desc}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Última</p>
+            <p className="text-[12px] font-medium text-foreground mt-0.5">{lastTxt}</p>
+          </div>
+        </div>
+        {status.recentLogs.length > 0 && (
+          <div className="flex gap-2 pt-3 border-t border-border/40">
+            {status.recentLogs.slice(0, 3).map((l, i) => (
+              <div key={i} className="flex-1 rounded-xl bg-foreground/[0.03] p-2.5 text-center">
+                <p className="text-[14px] font-semibold tabular-nums text-foreground tracking-tight">{l.weight.toFixed(1)}<span className="text-[10px] text-muted-foreground font-light ml-0.5">kg</span></p>
+                <p className="text-[9px] uppercase tracking-[0.15em] text-muted-foreground mt-1">
+                  {new Date(l.logged_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  })();
+
+  // ---------- WIZARD STEPPER ----------
+  const stepper = (
+    <div className="flex items-center gap-1.5 mb-5">
+      {STEPS.map((s) => {
+        const isActive = step === s.id;
+        const isDone = step > s.id;
+        return (
+          <button
+            key={s.id}
+            onClick={() => setStep(s.id as any)}
+            className={cn(
+              "flex-1 h-1.5 rounded-full transition-colors",
+              isDone || isActive ? "bg-foreground" : "bg-foreground/15"
+            )}
+            aria-label={`Etapa ${s.id} - ${s.label}`}
+          />
+        );
+      })}
+    </div>
+  );
+
+  const currentStep = STEPS.find((s) => s.id === step)!;
+
   return (
     <DashboardLayout role="student" title="Atualização" subtitle="Registre seu progresso para acompanhamento profissional.">
       {fullProfile && <EvolutionMacroDisplay profile={fullProfile} />}
 
+      {statusBlock}
+
       <div className="rounded-3xl border border-border/40 bg-background p-6 mb-6 space-y-5">
+        {stepper}
         <div>
-          <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground">Atualização</p>
-          <h2 className="text-[24px] font-semibold text-foreground tracking-[-0.03em] leading-tight mt-2">Nova evolução</h2>
-          <p className="text-[12px] text-muted-foreground font-light mt-2 tracking-tight">
-            Envie novas fotos corporais e registre seu peso atual. Os macros serão recalculados automaticamente.
+          <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground">
+            Etapa {step} de {STEPS.length}
           </p>
+          <h2 className="text-[22px] font-semibold text-foreground tracking-[-0.03em] leading-tight mt-1.5 flex items-center gap-2">
+            <currentStep.icon className="w-5 h-5" strokeWidth={1.8} />
+            {currentStep.label}
+          </h2>
         </div>
-          {/* Weight */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Scale className="w-4 h-4 text-foreground" />
-              <Label className="font-body font-medium">Peso Atual (kg) *</Label>
+
+        {/* STEP 1 — PESO */}
+        {step === 1 && (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="font-body font-medium">Peso Atual (kg)</Label>
+              <Input
+                type="number"
+                step="0.1"
+                placeholder={currentWeight ? `Último registro: ${currentWeight} kg` : "Ex: 75.5"}
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
+                className="text-lg h-12"
+              />
+              {weight && currentWeight && (
+                <p className="text-[12px] text-muted-foreground">
+                  Variação: {(Number(weight) - Number(currentWeight)).toFixed(1)} kg em relação ao último registro.
+                </p>
+              )}
             </div>
-            <Input
-              type="number"
-              step="0.1"
-              placeholder={currentWeight ? `Último registro: ${currentWeight} kg` : "Ex: 75.5"}
-              value={weight}
-              onChange={(e) => setWeight(e.target.value)}
-            />
-          </div>
-
-          {/* Activity Change */}
-          {fullProfile && (
-            <EvolutionActivityChange profile={fullProfile} onChange={setActivityChange} />
-          )}
-
-          {/* Notes */}
-          <div className="space-y-2">
-            <Label className="font-body text-sm">Observações (opcional)</Label>
-            <Textarea
-              placeholder="Como você está se sentindo? Alguma mudança na rotina?"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-            />
-          </div>
-
-          <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3">
-            <p className="text-xs text-muted-foreground">
-              Se preferir, você já pode salvar esta atualização por aqui.
-            </p>
-            <Button
-              variant="outline"
-              className={`w-full transition-colors ${canSubmitUpdate && !saving ? "bg-foreground text-background border-foreground hover:bg-foreground/90 shadow-[0_0_20px_hsl(var(--foreground)/0.2)]" : ""}`}
-              onClick={handleSaveWeight}
-              disabled={saving || !canSubmitUpdate}
-            >
-              {saving ? "Salvando..." : "Salvar atualização agora"}
-            </Button>
-          </div>
-
-          {/* Body images */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 mb-1">
-              <Camera className="w-4 h-4 text-foreground" />
-              <Label className="font-body font-medium">Novas Fotos Corporais (3 obrigatórias)</Label>
+            <div className="space-y-2">
+              <Label className="font-body text-sm">Como você está se sentindo? (opcional)</Label>
+              <Textarea
+                placeholder="Energia, sono, treinos, fome..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={3}
+              />
             </div>
-            <p className="text-xs text-muted-foreground mb-2">
-              ⚠️ As fotos anteriores são <strong>preservadas automaticamente</strong> no seu histórico. Envie 3 novas fotos atualizadas.
+          </div>
+        )}
+
+        {/* STEP 2 — FOTOS */}
+        {step === 2 && (
+          <div className="space-y-3">
+            <p className="text-[12px] text-muted-foreground">
+              ⚠️ Suas fotos anteriores são <strong>preservadas</strong> no histórico. Envie 3 fotos atualizadas (frente, costas, lateral).
             </p>
             <BodyImageUpload
               userId={user!.id}
@@ -319,30 +425,111 @@ const StudentEvolution = () => {
                 refetchImages();
                 qc.invalidateQueries({ queryKey: ["body-images-all"] });
                 qc.invalidateQueries({ queryKey: ["body-images"] });
-                toast.success("Fotos salvas! Agora registre seu peso.");
+                toast.success("Fotos salvas!");
               }}
             />
-          </div>
-
-          {imagesSaved && (
-            <div className="flex items-center gap-2 text-sm text-foreground">
-              <CheckCircle2 className="w-4 h-4" />
-              Fotos salvas com sucesso
+            {imagesSaved && (
+              <div className="flex items-center gap-2 text-sm text-foreground">
+                <CheckCircle2 className="w-4 h-4" /> Fotos salvas com sucesso
+              </div>
+            )}
+            <div className="pt-3 border-t border-border/40">
+              <DocumentUpload userId={user!.id} />
             </div>
-          )}
-
-          {/* Exames laboratoriais e receita médica (PDF) */}
-          <div className="pt-2 border-t">
-            <DocumentUpload userId={user!.id} />
           </div>
+        )}
 
+        {/* STEP 3 — ROTINA */}
+        {step === 3 && fullProfile && (
+          <EvolutionActivityChange profile={fullProfile} onChange={setActivityChange} />
+        )}
+
+        {/* STEP 4 — CONFIRMAÇÃO */}
+        {step === 4 && (
+          <div className="space-y-4">
+            <p className="text-[12px] text-muted-foreground">Revise sua atualização antes de salvar:</p>
+
+            <div className="rounded-2xl border border-border/40 divide-y divide-border/40">
+              <div className="flex items-center justify-between p-3.5">
+                <span className="text-[12px] text-muted-foreground uppercase tracking-[0.15em]">Peso</span>
+                <span className="text-[14px] font-medium text-foreground tabular-nums">
+                  {weight ? `${weight} kg` : currentWeight ? `${currentWeight} kg (sem alteração)` : "—"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-3.5">
+                <span className="text-[12px] text-muted-foreground uppercase tracking-[0.15em]">Fotos</span>
+                <span className="text-[14px] font-medium text-foreground">
+                  {imagesSaved ? "✓ Novas enviadas" : "Sem novas fotos"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-3.5">
+                <span className="text-[12px] text-muted-foreground uppercase tracking-[0.15em]">Rotina</span>
+                <span className="text-[14px] font-medium text-foreground">
+                  {activityChange ? "✓ Atualizada" : "Sem alteração"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-3.5">
+                <span className="text-[12px] text-muted-foreground uppercase tracking-[0.15em]">Observações</span>
+                <span className="text-[14px] font-medium text-foreground truncate max-w-[60%] text-right">
+                  {notes.trim() ? notes.trim() : "—"}
+                </span>
+              </div>
+            </div>
+
+            {previewMacros && (
+              <div className="rounded-2xl border border-foreground/20 bg-foreground/[0.04] p-4">
+                <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-3">
+                  Novos macros calculados
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: "TDEE", value: `${previewMacros.tdee} kcal` },
+                    { label: "Meta calórica", value: `${previewMacros.dailyCalories} kcal` },
+                    { label: "Proteína", value: `${previewMacros.proteinG} g` },
+                    { label: "Carbos", value: `${previewMacros.carbsG} g` },
+                    { label: "Gordura", value: `${previewMacros.fatG} g` },
+                    { label: "TMB", value: `${previewMacros.bmr} kcal` },
+                  ].map((m, i) => (
+                    <div key={i} className="flex items-baseline justify-between">
+                      <span className="text-[11px] text-muted-foreground tracking-tight">{m.label}</span>
+                      <span className="text-[13px] font-semibold text-foreground tabular-nums">{m.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <Button
+              className={`w-full h-12 transition-colors ${canSubmitUpdate && !saving ? "bg-foreground text-background hover:bg-foreground/90 shadow-[0_0_20px_hsl(var(--foreground)/0.2)]" : ""}`}
+              onClick={handleSaveWeight}
+              disabled={saving || !canSubmitUpdate}
+            >
+              {saving ? "Salvando..." : "Registrar evolução e atualizar macros"}
+            </Button>
+          </div>
+        )}
+
+        {/* NAVEGAÇÃO */}
+        <div className="flex items-center justify-between pt-3 border-t border-border/40">
           <Button
-            className={`w-full transition-colors ${canSubmitUpdate && !saving ? "bg-foreground text-background hover:bg-foreground/90 shadow-[0_0_20px_hsl(var(--foreground)/0.2)]" : ""}`}
-            onClick={handleSaveWeight}
-            disabled={saving || !canSubmitUpdate}
+            variant="ghost"
+            size="sm"
+            onClick={() => setStep((s) => (s > 1 ? ((s - 1) as any) : s))}
+            disabled={step === 1}
+            className="gap-1.5"
           >
-            {saving ? "Salvando..." : "Registrar Evolução e Atualizar Macros"}
+            <ChevronLeft className="w-4 h-4" /> Voltar
           </Button>
+          {step < 4 && (
+            <Button
+              size="sm"
+              onClick={() => setStep((s) => ((s + 1) as any))}
+              className="gap-1.5 bg-foreground text-background hover:bg-foreground/90"
+            >
+              Próximo <ChevronRight className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       <EvolutionWeightHistory weightLogs={weightLogs || []} />
