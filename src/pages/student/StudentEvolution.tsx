@@ -15,13 +15,9 @@ import BodyImageUpload from "@/components/shared/BodyImageUpload";
 import DocumentUpload from "@/components/shared/DocumentUpload";
 import { calculateAge, calculateMacros } from "@/lib/macro-calculator";
 import EvolutionMacroDisplay from "@/components/student/EvolutionMacroDisplay";
-import EvolutionWeightHistory from "@/components/student/EvolutionWeightHistory";
 import EvolutionImageHistory from "@/components/student/EvolutionImageHistory";
 import EvolutionActivityChange, { type ActivityData } from "@/components/student/EvolutionActivityChange";
-import StudentBioimpedancePanel from "@/components/student/StudentBioimpedancePanel";
-import EvolutionComparison from "@/components/shared/EvolutionComparison";
 import { createEvolutionSnapshot } from "@/lib/evolution-snapshot";
-import { GitCompare } from "lucide-react";
 import { useEvolutionStatus } from "@/hooks/useEvolutionStatus";
 import { cn } from "@/lib/utils";
 
