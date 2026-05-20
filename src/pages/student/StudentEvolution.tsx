@@ -14,7 +14,6 @@ import { toast } from "sonner";
 import BodyImageUpload from "@/components/shared/BodyImageUpload";
 import DocumentUpload from "@/components/shared/DocumentUpload";
 import { calculateAge, calculateMacros } from "@/lib/macro-calculator";
-import EvolutionMacroDisplay from "@/components/student/EvolutionMacroDisplay";
 import EvolutionImageHistory from "@/components/student/EvolutionImageHistory";
 import EvolutionActivityChange, { type ActivityData } from "@/components/student/EvolutionActivityChange";
 import { createEvolutionSnapshot } from "@/lib/evolution-snapshot";
