@@ -1056,29 +1056,6 @@ const Cadastro = () => {
               <ShieldCheck className="w-3.5 h-3.5 text-primary" />
               Pagamento 100% seguro · Pix ou cartão · Acesso liberado após confirmação
             </div>
-
-            {/* Skip payment — finalize signup, no active access until paid */}
-            <Card className="border-dashed border-border/60 bg-muted/10">
-              <CardContent className="py-4 space-y-2 text-center">
-                <p className="text-xs text-muted-foreground font-body">
-                  Quer concluir o cadastro e pagar depois? Sem problemas — seu cadastro fica salvo, mas o acesso completo (treinos, dieta, protocolo) só é liberado após o pagamento.
-                </p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground hover:text-foreground"
-                  onClick={async () => {
-                    if (userId) {
-                      await supabase.from("profiles").update({ onboarding_complete: true }).eq("user_id", userId);
-                    }
-                    toast.success("Cadastro concluído! Você pode pagar quando quiser na sua área.");
-                    setTimeout(() => navigate("/dashboard/subscription"), 600);
-                  }}
-                >
-                  Concluir sem pagar agora
-                </Button>
-              </CardContent>
-            </Card>
           </div>
         )}
       </div>
