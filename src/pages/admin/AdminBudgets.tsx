@@ -331,16 +331,19 @@ const AdminBudgets = () => {
       groups.get(key)!.push(item);
     });
     let formulaCounter = 1;
+    let subtotalSum = 0;
     groups.forEach((groupItems, origin) => {
-      text += `▸ ${origin}\n`;
+      const groupSubtotal = groupItems.reduce((s, i) => s + (i.subtotal || 0), 0);
+      subtotalSum += groupSubtotal;
+      text += `Fórmula ${formulaCounter} (${origin})\n`;
       groupItems.forEach((item) => {
-        text += `Fórmula ${formulaCounter} (${origin}): ${item.name}`;
+        text += `  • ${item.name}`;
         if (item.dosage) text += ` — ${item.dosage}`;
-        if (item.unit_price > 0) text += ` — R$ ${item.unit_price.toFixed(2)}`;
         text += "\n";
-        formulaCounter++;
       });
+      if (groupSubtotal > 0) text += `  Subtotal: R$ ${groupSubtotal.toFixed(2)}\n`;
       text += "\n";
+      formulaCounter++;
     });
     text += `\n💰 Total: R$ ${Number(budget.total).toFixed(2)}`;
     if (budget.notes) text += `\n\n📝 ${budget.notes}`;
