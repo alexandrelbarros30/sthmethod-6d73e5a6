@@ -8,7 +8,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { useEvolutionStatus } from "@/hooks/useEvolutionStatus";
 
-type AppRole = "student" | "admin" | "consultor" | "assistente" | "financeiro";
+type AppRole = "student" | "admin" | "admin_viewer" | "consultor" | "assistente" | "financeiro";
 
 interface SidebarProps {
   role: AppRole;
