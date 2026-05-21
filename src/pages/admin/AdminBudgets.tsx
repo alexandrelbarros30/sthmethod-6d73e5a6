@@ -25,6 +25,7 @@ interface BudgetItem {
 }
 
 const categoryLabels: Record<string, string> = {
+  endocrino: "Endócrino Hormonal / Peptídeos",
   cardiovascular: "Cardiovascular / Hepático / Renal",
   metabolico: "Metabólico e Performance",
   pre_pos_treino: "Pré / Pós Treino",
@@ -32,6 +33,7 @@ const categoryLabels: Record<string, string> = {
 };
 
 const categoryColors: Record<string, string> = {
+  endocrino: "bg-violet-500/10 text-violet-700 dark:text-violet-400",
   cardiovascular: "bg-rose-500/10 text-rose-700 dark:text-rose-400",
   metabolico: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
   pre_pos_treino: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
@@ -138,7 +140,7 @@ const AdminBudgets = () => {
   const importFromProtocol = () => {
     if (!protocolData) return;
     const items: BudgetItem[] = [];
-    const targetCategories = ["cardiovascular", "metabolico", "pre_pos_treino"];
+    const targetCategories = ["endocrino", "cardiovascular", "metabolico", "pre_pos_treino"];
 
     // From protocols table (individual items)
     (protocolData.protocols || []).forEach((p: any) => {
@@ -184,7 +186,7 @@ const AdminBudgets = () => {
         if (name.length > 1 && dosage.length > 0) return { name, dosage };
       }
       // Fallback: detect dosage pattern at end (e.g. "5 mg", "200 UI", "4g")
-      const m = line.match(/^(.+?)\s+(\d[\d.,]*\s?(?:mg|g|mcg|ui|ml|µg|kcal)\b.*)$/i);
+      const m = line.match(/^(.+?)\s+(\d[\d.,]*\s?(?:mg|mcg|µg|g|ui|iu|ml|l|%|kcal|cps|caps|comp|gotas|puffs?)\b.*)$/i);
       if (m) return { name: m[1].trim().replace(/[:\-–—]\s*$/, ""), dosage: m[2].trim() };
       return { name: line, dosage: "" };
     };
