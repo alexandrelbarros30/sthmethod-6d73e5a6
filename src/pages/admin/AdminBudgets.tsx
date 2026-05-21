@@ -331,16 +331,19 @@ const AdminBudgets = () => {
       groups.get(key)!.push(item);
     });
     let formulaCounter = 1;
+    let subtotalSum = 0;
     groups.forEach((groupItems, origin) => {
-      text += `▸ ${origin}\n`;
+      const groupSubtotal = groupItems.reduce((s, i) => s + (i.subtotal || 0), 0);
+      subtotalSum += groupSubtotal;
+      text += `Fórmula ${formulaCounter} (${origin})\n`;
       groupItems.forEach((item) => {
-        text += `Fórmula ${formulaCounter} (${origin}): ${item.name}`;
+        text += `  • ${item.name}`;
         if (item.dosage) text += ` — ${item.dosage}`;
-        if (item.unit_price > 0) text += ` — R$ ${item.unit_price.toFixed(2)}`;
         text += "\n";
-        formulaCounter++;
       });
+      if (groupSubtotal > 0) text += `  Subtotal: R$ ${groupSubtotal.toFixed(2)}\n`;
       text += "\n";
+      formulaCounter++;
     });
     text += `\n💰 Total: R$ ${Number(budget.total).toFixed(2)}`;
     if (budget.notes) text += `\n\n📝 ${budget.notes}`;
@@ -614,24 +617,29 @@ const AdminBudgets = () => {
                     let counter = 1;
                     const blocks: JSX.Element[] = [];
                     groups.forEach((groupItems, origin) => {
+                      const n = counter++;
+                      const groupSubtotal = groupItems.reduce((s, i) => s + (i.subtotal || 0), 0);
                       blocks.push(
-                        <div key={`g-${origin}`} className="space-y-1.5">
-                          <h4 className="text-xs font-semibold uppercase tracking-wide text-primary">▸ {origin}</h4>
-                          {groupItems.map((item, i) => {
-                            const n = counter++;
-                            return (
-                              <div key={`${origin}-${i}`} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
-                                <div>
-                                  <p className="text-sm font-medium text-foreground">
-                                    Fórmula {n} <span className="text-xs text-muted-foreground">({origin})</span>
-                                  </p>
-                                  <p className="text-sm text-foreground/90">{item.name}</p>
-                                  {item.dosage && <p className="text-xs text-muted-foreground">{item.dosage}</p>}
-                                </div>
-                                <span className="text-sm font-medium text-foreground">R$ {(item.subtotal || 0).toFixed(2)}</span>
-                              </div>
-                            );
-                          })}
+                        <div key={`g-${origin}`} className="rounded-lg border border-border/60 p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-semibold text-primary">
+                              Fórmula {n} <span className="text-xs font-normal text-muted-foreground">({origin})</span>
+                            </h4>
+                            {groupSubtotal > 0 && (
+                              <span className="text-sm font-medium text-foreground">R$ {groupSubtotal.toFixed(2)}</span>
+                            )}
+                          </div>
+                          <ul className="space-y-1 pl-1">
+                            {groupItems.map((item, i) => (
+                              <li key={`${origin}-${i}`} className="text-sm text-foreground/90 flex items-start gap-2">
+                                <span className="text-muted-foreground">•</span>
+                                <span>
+                                  <span className="font-medium">{item.name}</span>
+                                  {item.dosage && <span className="text-muted-foreground"> — {item.dosage}</span>}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
                       );
                     });
