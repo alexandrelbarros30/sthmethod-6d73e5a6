@@ -62,7 +62,6 @@ const Login = () => {
           };
           await savePhone();
         }
-        toast.success("Conta criada! Vamos completar seu cadastro.");
         setLoading(false);
         navigate("/cadastro", { replace: true });
         return;
