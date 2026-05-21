@@ -62,10 +62,10 @@ const Login = () => {
           };
           await savePhone();
         }
-        toast.success("Conta criada com sucesso! Complete seu cadastro para liberar o acesso.", {
-          action: { label: "Completar cadastro", onClick: () => window.location.href = "/cadastro" },
-          duration: 8000,
-        });
+        toast.success("Conta criada! Vamos completar seu cadastro.");
+        setLoading(false);
+        navigate("/cadastro", { replace: true });
+        return;
       } else {
         let signInData: any = null;
         let error: any = null;
