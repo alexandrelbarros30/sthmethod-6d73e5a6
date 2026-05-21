@@ -202,10 +202,12 @@ const Cadastro = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUserId(session.user.id);
+        if (session.user.email) setEmail(session.user.email);
         supabase.from("profiles").select("*").eq("user_id", session.user.id).single().then(({ data: p }) => {
           if (p) {
             setFullName(p.full_name || "");
             setPhoneVal(p.phone || "");
+            if (p.email) setEmail(p.email);
             setProfileForm({
               cpf: p.cpf ? cpfMask(p.cpf) : "",
               birth_date: p.birth_date || "",
