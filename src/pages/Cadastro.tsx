@@ -957,7 +957,6 @@ const Cadastro = () => {
                 <BodyImageUpload
                   userId={userId}
                   existingImages={bodyImages || []}
-                  required
                   onComplete={handleImagesComplete}
                 />
               </CardContent>
