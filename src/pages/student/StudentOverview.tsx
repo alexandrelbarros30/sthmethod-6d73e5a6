@@ -270,22 +270,40 @@ const StudentOverview = () => {
         </div>
       </div>
 
-      {/* STH NEWS — última tendência publicada */}
+      {/* STH NEWS — última tendência publicada (destaque grande) */}
       <Link to={latestTrend.path} className="block mb-10 group">
-        <div className="rounded-3xl border border-border/40 hover:border-border transition-colors p-5 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0">
-            <img src={latestTrend.img} alt="STH News" className="w-full h-full object-cover" />
+        <div className="rounded-3xl border border-border/40 hover:border-border transition-colors overflow-hidden relative">
+          <div className="relative aspect-[16/10] overflow-hidden">
+            <img
+              src={latestTrend.img}
+              alt="STH News"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+            <div className="absolute top-4 left-4">
+              <span
+                className="inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.25em] font-medium px-2.5 py-1 rounded-full backdrop-blur-md text-white"
+                style={{
+                  background: "hsl(0 0% 100% / 0.16)",
+                  border: "0.5px solid hsl(0 0% 100% / 0.22)",
+                }}
+              >
+                STH News
+              </span>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 p-5">
+              <h3 className="text-[20px] font-semibold tracking-[-0.02em] leading-tight text-white" style={{ textShadow: "0 2px 14px rgb(0 0 0 / 0.5)" }}>
+                {latestTrend.title}
+              </h3>
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-[11px] text-white/70 font-light tracking-tight">
+                  {new Date(latestTrend.publishedAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
+                </p>
+                <ChevronRight className="w-4 h-4 text-white/80 group-hover:translate-x-0.5 transition-transform" strokeWidth={2} />
+              </div>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-1.5">STH News</p>
-            <p className="text-[14px] font-semibold text-foreground tracking-[-0.015em] truncate">
-              {latestTrend.title}
-            </p>
-            <p className="text-[11px] text-muted-foreground font-light mt-0.5 tracking-tight">
-              {new Date(latestTrend.publishedAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
-            </p>
-          </div>
-          <ChevronRight className="w-4 h-4 text-foreground/40 shrink-0 group-hover:translate-x-0.5 transition-transform" strokeWidth={2} />
         </div>
       </Link>
 
@@ -307,9 +325,9 @@ const StudentOverview = () => {
               <button
                 key={s.id}
                 onClick={() => navigate(s.id === "receitas" ? "/dashboard/recipes" : `/dashboard/content?section=${s.id}`)}
-                className="snap-start shrink-0 w-[78vw] max-w-[300px] text-left rounded-3xl overflow-hidden relative group border border-border/40 bg-background active:scale-[0.98] transition-all duration-300"
+                className="snap-start shrink-0 w-[55vw] max-w-[220px] text-left rounded-2xl overflow-hidden relative group border border-border/40 bg-background active:scale-[0.98] transition-all duration-300"
               >
-                <div className="relative h-48 overflow-hidden">
+                <div className="relative h-32 overflow-hidden">
                   <img
                     src={s.img}
                     alt={s.title}
@@ -339,9 +357,9 @@ const StudentOverview = () => {
                         "linear-gradient(115deg, transparent 40%, rgb(255 255 255 / 0.06) 50%, transparent 60%)",
                     }}
                   />
-                  <div className="absolute top-4 left-4">
+                  <div className="absolute top-3 left-3">
                     <span
-                      className="inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.25em] font-medium px-2.5 py-1 rounded-full backdrop-blur-md text-white"
+                      className="inline-flex items-center gap-1 text-[8px] uppercase tracking-[0.22em] font-medium px-2 py-0.5 rounded-full backdrop-blur-md text-white"
                       style={{
                         background: "hsl(0 0% 100% / 0.16)",
                         border: "0.5px solid hsl(0 0% 100% / 0.22)",
@@ -351,9 +369,9 @@ const StudentOverview = () => {
                       {s.tag}
                     </span>
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <h3 className="text-[17px] font-semibold tracking-[-0.02em] leading-tight text-white" style={{ textShadow: "0 2px 14px rgb(0 0 0 / 0.5)" }}>{s.title}</h3>
-                    <p className="text-[11px] text-white/80 mt-1 tracking-tight font-light" style={{ textShadow: "0 2px 10px rgb(0 0 0 / 0.4)" }}>{s.subtitle}</p>
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <h3 className="text-[13px] font-semibold tracking-[-0.02em] leading-tight text-white" style={{ textShadow: "0 2px 14px rgb(0 0 0 / 0.5)" }}>{s.title}</h3>
+                    <p className="text-[10px] text-white/80 mt-0.5 tracking-tight font-light line-clamp-1" style={{ textShadow: "0 2px 10px rgb(0 0 0 / 0.4)" }}>{s.subtitle}</p>
                   </div>
                 </div>
               </button>
