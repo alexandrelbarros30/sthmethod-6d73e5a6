@@ -81,6 +81,8 @@ import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminBudgets from "./pages/admin/AdminBudgets";
 import AdminQueue from "./pages/admin/AdminQueue";
 import AdminUpdates from "./pages/admin/AdminUpdates";
+import AdminTeleatendimento from "./pages/admin/AdminTeleatendimento";
+import StudentConsultas from "./pages/student/StudentConsultas";
 import ConsultorDashboard from "./pages/consultor/ConsultorDashboard";
 import AssistenteDashboard from "./pages/assistente/AssistenteDashboard";
 import FinanceiroDashboard from "./pages/financeiro/FinanceiroDashboard";
@@ -190,6 +192,7 @@ const App = () => (
             <Route path="/dashboard/profile" element={<ProtectedRoute allowedRoles={["student"]}><StudentProfile /></ProtectedRoute>} />
             <Route path="/dashboard/metabolic" element={<ProtectedRoute allowedRoles={["student"]}><StudentMetabolic /></ProtectedRoute>} />
             <Route path="/dashboard/ads" element={<ProtectedRoute allowedRoles={["student"]}><StudentAds /></ProtectedRoute>} />
+            <Route path="/dashboard/consultas" element={<ProtectedRoute allowedRoles={["student"]}><StudentConsultas /></ProtectedRoute>} />
             {/* Admin routes */}
             <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/fix-curty" element={<ProtectedRoute allowedRoles={["admin"]}><AdminFixCurty /></ProtectedRoute>} />
@@ -217,6 +220,7 @@ const App = () => (
             <Route path="/admin/ads" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAds /></ProtectedRoute>} />
             <Route path="/admin/queue" element={<ProtectedRoute allowedRoles={["admin"]}><AdminQueue /></ProtectedRoute>} />
             <Route path="/admin/updates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminUpdates /></ProtectedRoute>} />
+            <Route path="/admin/teleatendimento" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTeleatendimento /></ProtectedRoute>} />
             {/* Consultor routes */}
             <Route path="/consultor" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
             <Route path="/consultor/students" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
