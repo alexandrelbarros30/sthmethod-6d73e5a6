@@ -99,30 +99,13 @@ export const PhaseCard = ({
             {phase.stack && (
               <p className="font-mono text-[13px] tracking-tight text-[color:var(--sth-green)]/90"><span className="text-foreground/40 font-sans">Stack · </span>{phase.stack}</p>
             )}
-            {phase.timing && (
-              <div className="mt-1.5">
-                <span
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-[12px] font-semibold tracking-tight animate-pulse"
-                  style={{
-                    color: STH_GREEN,
-                    background: `${STH_GREEN}14`,
-                    border: `1px solid ${STH_GREEN}55`,
-                    boxShadow: `0 0 12px -2px ${STH_GREEN}99, inset 0 0 8px -4px ${STH_GREEN}66`,
-                    textShadow: `0 0 8px ${STH_GREEN}99`,
-                  }}
-                >
-                  <Clock className="w-3.5 h-3.5" strokeWidth={2.5} />
-                  {phase.timing}
-                </span>
-              </div>
-            )}
-            {phase.schedule && (
+            {(phase.schedule || phase.timing) && (
               <div className="mt-2 rounded-md border border-[color:var(--sth-green)]/25 bg-[color:var(--sth-green)]/[0.04] pl-2.5 pr-3 py-2">
                 <div className="text-[9px] tracking-[0.22em] uppercase text-[color:var(--sth-green)]/70 mb-1 font-sans inline-flex items-center gap-1">
                   <Clock className="w-3 h-3" strokeWidth={2.5} /> Horário
                 </div>
                 <p className="font-mono text-[12.5px] tracking-tight text-foreground/85 leading-[1.55] whitespace-pre-line">
-                  {phase.schedule}
+                  {phase.schedule || phase.timing}
                 </p>
               </div>
             )}
@@ -225,7 +208,7 @@ const MedicamentosWeekCarousel = ({
             onClick={() => goTo(i)}
             className={cn(
               "h-1.5 rounded-full transition-all duration-300",
-              i === active ? "w-6 bg-[color:var(--sth-green)]" : "w-1.5 bg-white/20"
+              i === active ? "w-6 bg-[color:var(--sth-green)]" : "w-1.5 bg-foreground/30"
             )}
             style={{ ["--sth-green" as any]: STH_GREEN }}
           />
