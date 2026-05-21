@@ -126,7 +126,14 @@ Deno.serve(async (req) => {
       const { error } = await adminClient.auth.admin.deleteUser(user_id);
       if (error) {
         console.error("Error deleting user:", error.message);
-        return new Response(JSON.stringify({ error: "Erro ao excluir usuário. Tente novamente." }), {
+        const msg = (error.message || "").toLowerCase();
+        // If user already gone from Auth, treat as success — related rows were cleaned above
+        if (msg.includes("not found") || msg.includes("user_not_found")) {
+          return new Response(JSON.stringify({ success: true, already_deleted: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        return new Response(JSON.stringify({ error: `Erro ao excluir usuário: ${error.message}` }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
