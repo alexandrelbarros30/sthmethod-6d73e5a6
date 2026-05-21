@@ -22,6 +22,7 @@ interface BudgetItem {
   unit_price: number;
   subtotal: number;
   category: string;
+  origin?: string;
 }
 
 const categoryLabels: Record<string, string> = {
@@ -153,6 +154,7 @@ const AdminBudgets = () => {
           unit_price: 0,
           subtotal: 0,
           category: p.category,
+          origin: categoryLabels[p.category] || "Protocolo",
         });
       }
     });
@@ -209,6 +211,7 @@ const AdminBudgets = () => {
               unit_price: 0,
               subtotal: 0,
               category: cc.category,
+              origin: categoryLabels[cc.category] || "Protocolo",
             });
           }
         });
@@ -228,6 +231,7 @@ const AdminBudgets = () => {
             unit_price: 0,
             subtotal: 0,
             category: "extra",
+            origin: ec.title || ec.name || "Outros",
           });
         });
       }
@@ -245,6 +249,7 @@ const AdminBudgets = () => {
       if (!sp.content) return;
       const lines = htmlToLines(sp.content);
       let currentCategory = "metabolico";
+      let currentOrigin = "Protocolo";
       lines.forEach((raw: string) => {
         // Detect section header (line starts with emoji or is short uppercase title)
         const isHeader =
@@ -252,6 +257,12 @@ const AdminBudgets = () => {
           /^(MANHÃ|ALMOÇO|LANCHE|JANTAR|CEIA|PRÉ[- ]?TREINO|PÓS[- ]?TREINO|MEDICAMENTOS|SUPLEMENTOS|PEPTÍDEOS)/i.test(raw);
         if (isHeader) {
           currentCategory = sectionToCategory(raw);
+          // Clean header: remove emojis & extra punctuation, keep readable title
+          currentOrigin = raw
+            .replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}\u2600-\u27BF]/gu, "")
+            .replace(/[:•\-–—]+/g, " ")
+            .replace(/\s+/g, " ")
+            .trim() || "Protocolo";
           return;
         }
         // Skip Ação/Horário/Foco descriptive lines
@@ -271,6 +282,7 @@ const AdminBudgets = () => {
           unit_price: 0,
           subtotal: 0,
           category: currentCategory,
+          origin: currentOrigin,
         });
       });
     });
@@ -311,10 +323,23 @@ const AdminBudgets = () => {
   const copyBudgetText = (budget: any) => {
     const items = (budget.items as BudgetItem[]) || [];
     let text = `📋 ${budget.title}\n\n`;
-    items.forEach((item, i) => {
-      text += `${i + 1}. ${item.name}`;
-      if (item.dosage) text += ` — ${item.dosage}`;
-      if (item.unit_price > 0) text += ` — R$ ${item.unit_price.toFixed(2)}`;
+    // Group by origin (section): MANHÃ, ALMOÇO, PRÉ-TREINO, etc.
+    const groups = new Map<string, BudgetItem[]>();
+    items.forEach((item) => {
+      const key = item.origin || categoryLabels[item.category] || "Outros";
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(item);
+    });
+    let formulaCounter = 1;
+    groups.forEach((groupItems, origin) => {
+      text += `▸ ${origin}\n`;
+      groupItems.forEach((item) => {
+        text += `Fórmula ${formulaCounter} (${origin}): ${item.name}`;
+        if (item.dosage) text += ` — ${item.dosage}`;
+        if (item.unit_price > 0) text += ` — R$ ${item.unit_price.toFixed(2)}`;
+        text += "\n";
+        formulaCounter++;
+      });
       text += "\n";
     });
     text += `\n💰 Total: R$ ${Number(budget.total).toFixed(2)}`;
@@ -578,20 +603,40 @@ const AdminBudgets = () => {
                   Aluno: <span className="font-medium text-foreground">{getStudentName(previewBudget.user_id)}</span>
                 </p>
                 <div className="space-y-2">
-                  {((previewBudget.items as BudgetItem[]) || []).map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{item.name}</p>
-                        <div className="flex gap-2 text-xs text-muted-foreground">
-                          {item.dosage && <span>{item.dosage}</span>}
-                          <span className={`px-1.5 py-0.5 rounded ${categoryColors[item.category] || categoryColors.extra}`}>
-                            {categoryLabels[item.category] || "Outros"}
-                          </span>
+                  {(() => {
+                    const items = (previewBudget.items as BudgetItem[]) || [];
+                    const groups = new Map<string, BudgetItem[]>();
+                    items.forEach((item) => {
+                      const key = item.origin || categoryLabels[item.category] || "Outros";
+                      if (!groups.has(key)) groups.set(key, []);
+                      groups.get(key)!.push(item);
+                    });
+                    let counter = 1;
+                    const blocks: JSX.Element[] = [];
+                    groups.forEach((groupItems, origin) => {
+                      blocks.push(
+                        <div key={`g-${origin}`} className="space-y-1.5">
+                          <h4 className="text-xs font-semibold uppercase tracking-wide text-primary">▸ {origin}</h4>
+                          {groupItems.map((item, i) => {
+                            const n = counter++;
+                            return (
+                              <div key={`${origin}-${i}`} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
+                                <div>
+                                  <p className="text-sm font-medium text-foreground">
+                                    Fórmula {n} <span className="text-xs text-muted-foreground">({origin})</span>
+                                  </p>
+                                  <p className="text-sm text-foreground/90">{item.name}</p>
+                                  {item.dosage && <p className="text-xs text-muted-foreground">{item.dosage}</p>}
+                                </div>
+                                <span className="text-sm font-medium text-foreground">R$ {(item.subtotal || 0).toFixed(2)}</span>
+                              </div>
+                            );
+                          })}
                         </div>
-                      </div>
-                      <span className="text-sm font-medium text-foreground">R$ {(item.subtotal || 0).toFixed(2)}</span>
-                    </div>
-                  ))}
+                      );
+                    });
+                    return blocks;
+                  })()}
                 </div>
                 <div className="flex justify-between pt-2 border-t border-border">
                   <span className="font-semibold">Total</span>
