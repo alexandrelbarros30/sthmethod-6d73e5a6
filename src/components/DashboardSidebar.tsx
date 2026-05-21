@@ -8,7 +8,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { useEvolutionStatus } from "@/hooks/useEvolutionStatus";
 
-type AppRole = "student" | "admin" | "consultor" | "assistente" | "financeiro";
+type AppRole = "student" | "admin" | "admin_viewer" | "consultor" | "assistente" | "financeiro";
 
 interface SidebarProps {
   role: AppRole;
@@ -57,6 +57,19 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/admin/ads", icon: Megaphone, label: "Propagandas" },
     { to: "/admin/updates", icon: RefreshCw, label: "Atualizações" },
   ],
+  admin_viewer: [
+    { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
+    { to: "/admin/queue", icon: ListOrdered, label: "Fila Atendimento" },
+    { to: "/admin/students", icon: User, label: "Alunos" },
+    { to: "/admin/plans", icon: CreditCard, label: "Planos" },
+    { to: "/admin/payments", icon: Wallet, label: "Pagamentos" },
+    { to: "/admin/revenue", icon: TrendingUp, label: "Faturamento" },
+    { to: "/admin/diet", icon: Salad, label: "Dietas" },
+    { to: "/admin/nutrition", icon: Apple, label: "Cardápio" },
+    { to: "/admin/protocol", icon: FlaskConical, label: "Protocolos" },
+    { to: "/admin/messages", icon: MessageSquare, label: "Mensagens" },
+    { to: "/admin/content", icon: Palette, label: "Personalização" },
+  ],
   consultor: [
     { to: "/consultor", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/consultor/queue", icon: ListOrdered, label: "Fila Atendimento" },
@@ -85,6 +98,7 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
 
 const roleLabelMap: Record<AppRole, string> = {
   admin: "Painel Administrativo",
+  admin_viewer: "Painel Admin (Visualização)",
   consultor: "Painel do Consultor",
   assistente: "Painel do Assistente",
   financeiro: "Painel Financeiro",

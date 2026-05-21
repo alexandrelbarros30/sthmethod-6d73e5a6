@@ -27,7 +27,7 @@ const BIRTHDAY_MESSAGES = [
 
 interface DashboardLayoutProps {
   children: ReactNode;
-  role: "student" | "admin" | "consultor" | "assistente" | "financeiro";
+  role: "student" | "admin" | "admin_viewer" | "consultor" | "assistente" | "financeiro";
   title: string;
   subtitle?: string;
 }

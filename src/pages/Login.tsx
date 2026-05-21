@@ -137,7 +137,7 @@ const Login = () => {
         } catch (e) { console.warn("[Login] role fetch failed:", e); }
 
         const roleHomeMap: Record<string, string> = {
-          admin: "/admin", consultor: "/consultor", assistente: "/assistente",
+          admin: "/admin", admin_viewer: "/admin", consultor: "/consultor", assistente: "/assistente",
           financeiro: "/financeiro", student: "/dashboard",
         };
         setLoading(false);
