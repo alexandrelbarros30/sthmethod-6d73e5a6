@@ -77,12 +77,13 @@ const AdminBudgets = () => {
     enabled: !!selectedStudent?.user_id,
     queryFn: async () => {
       const userId = selectedStudent.user_id;
-      const [{ data: categoryContent }, { data: protocols }, { data: extraCats }] = await Promise.all([
+      const [{ data: categoryContent }, { data: protocols }, { data: extraCats }, { data: studentProtocols }] = await Promise.all([
         supabase.from("protocol_category_content").select("*").eq("user_id", userId),
         supabase.from("protocols").select("*").eq("user_id", userId).order("sort_order"),
         supabase.from("protocol_extra_categories").select("*").eq("user_id", userId).order("sort_order"),
+        supabase.from("student_protocols").select("*").eq("user_id", userId).order("updated_at", { ascending: false }),
       ]);
-      return { categoryContent, protocols, extraCats };
+      return { categoryContent, protocols, extraCats, studentProtocols };
     },
   });
 
@@ -230,6 +231,48 @@ const AdminBudgets = () => {
           });
         });
       }
+    });
+
+    // From student_protocols rich-text content (numbered lists per section)
+    const sectionToCategory = (header: string): string => {
+      const h = header.toLowerCase();
+      if (/medicament|horm|pept[ií]de|endócrin|endocrin/.test(h)) return "endocrino";
+      if (/cardio|hep[áa]tic|renal/.test(h)) return "cardiovascular";
+      if (/pr[ée]\s*-?\s*treino|p[óo]s\s*-?\s*treino|treino/.test(h)) return "pre_pos_treino";
+      return "metabolico";
+    };
+    (protocolData.studentProtocols || []).forEach((sp: any) => {
+      if (!sp.content) return;
+      const lines = htmlToLines(sp.content);
+      let currentCategory = "metabolico";
+      lines.forEach((raw: string) => {
+        // Detect section header (line starts with emoji or is short uppercase title)
+        const isHeader =
+          /^[\p{Emoji_Presentation}\p{Extended_Pictographic}]/u.test(raw) ||
+          /^(MANHÃ|ALMOÇO|LANCHE|JANTAR|CEIA|PRÉ[- ]?TREINO|PÓS[- ]?TREINO|MEDICAMENTOS|SUPLEMENTOS|PEPTÍDEOS)/i.test(raw);
+        if (isHeader) {
+          currentCategory = sectionToCategory(raw);
+          return;
+        }
+        // Skip Ação/Horário/Foco descriptive lines
+        if (/^(ação|acao|horário|horario|foco|📌)/i.test(raw)) return;
+        // Match numbered list "1. Item ..." or "1) Item ..."
+        const m = raw.match(/^"?\s*\d+[\.\)]\s+(.+?)"?\s*$/);
+        if (!m) return;
+        const cleaned = m[1].replace(/^"+|"+$/g, "").trim();
+        const { name, dosage } = splitNameDosage(cleaned);
+        if (!name || name.length < 2) return;
+        const existing = items.find((i) => i.name.toLowerCase() === name.toLowerCase());
+        if (existing) return;
+        items.push({
+          name,
+          dosage: dosage || (cleaned !== name ? cleaned.replace(name, "").replace(/^[\s:–—-]+/, "").trim() : ""),
+          quantity: "1",
+          unit_price: 0,
+          subtotal: 0,
+          category: currentCategory,
+        });
+      });
     });
 
     setBudgetItems(items);
