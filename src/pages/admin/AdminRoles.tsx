@@ -156,8 +156,8 @@ const RolesTab = () => {
                 </TableHeader>
                 <TableBody>
                   {filtered?.map((user) => {
-                    const config = roleConfig[user.role];
-                    const statusCfg = subStatusConfig[user.subStatus];
+                    const config = roleConfig[user.role] ?? roleConfig.student;
+                    const statusCfg = subStatusConfig[user.subStatus] ?? subStatusConfig.none;
                     return (
                       <TableRow key={user.user_id}>
                         <TableCell>
