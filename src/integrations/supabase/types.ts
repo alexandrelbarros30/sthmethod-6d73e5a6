@@ -158,6 +158,63 @@ export type Database = {
         }
         Relationships: []
       }
+      appointments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          duration_min: number
+          ended_at: string | null
+          id: string
+          modality: Database["public"]["Enums"]["appointment_modality"]
+          notes: string | null
+          patient_notes: string | null
+          patient_user_id: string
+          professional_user_id: string
+          reason: string | null
+          scheduled_at: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["appointment_status"]
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          duration_min?: number
+          ended_at?: string | null
+          id?: string
+          modality?: Database["public"]["Enums"]["appointment_modality"]
+          notes?: string | null
+          patient_notes?: string | null
+          patient_user_id: string
+          professional_user_id: string
+          reason?: string | null
+          scheduled_at: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["appointment_status"]
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          duration_min?: number
+          ended_at?: string | null
+          id?: string
+          modality?: Database["public"]["Enums"]["appointment_modality"]
+          notes?: string | null
+          patient_notes?: string | null
+          patient_user_id?: string
+          professional_user_id?: string
+          reason?: string | null
+          scheduled_at?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["appointment_status"]
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       bioimpedance_logs: {
         Row: {
           arm_cm: number | null
@@ -1337,6 +1394,59 @@ export type Database = {
             columns: ["meal_id"]
             isOneToOne: false
             referencedRelation: "diet_meals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medical_records: {
+        Row: {
+          ai_summary: string | null
+          appointment_id: string | null
+          content: string | null
+          created_at: string
+          id: string
+          metadata: Json
+          patient_user_id: string
+          pinned: boolean
+          professional_user_id: string
+          section: Database["public"]["Enums"]["medical_record_section"]
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          ai_summary?: string | null
+          appointment_id?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          patient_user_id: string
+          pinned?: boolean
+          professional_user_id: string
+          section: Database["public"]["Enums"]["medical_record_section"]
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ai_summary?: string | null
+          appointment_id?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          patient_user_id?: string
+          pinned?: boolean
+          professional_user_id?: string
+          section?: Database["public"]["Enums"]["medical_record_section"]
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medical_records_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
             referencedColumns: ["id"]
           },
         ]
@@ -2827,6 +2937,45 @@ export type Database = {
         }
         Relationships: []
       }
+      tele_professionals: {
+        Row: {
+          active: boolean
+          bio: string | null
+          council_id: string | null
+          council_uf: string | null
+          created_at: string
+          id: string
+          specialty: Database["public"]["Enums"]["tele_specialty"]
+          updated_at: string
+          user_id: string
+          video_room_url: string | null
+        }
+        Insert: {
+          active?: boolean
+          bio?: string | null
+          council_id?: string | null
+          council_uf?: string | null
+          created_at?: string
+          id?: string
+          specialty?: Database["public"]["Enums"]["tele_specialty"]
+          updated_at?: string
+          user_id: string
+          video_room_url?: string | null
+        }
+        Update: {
+          active?: boolean
+          bio?: string | null
+          council_id?: string | null
+          council_uf?: string | null
+          created_at?: string
+          id?: string
+          specialty?: Database["public"]["Enums"]["tele_specialty"]
+          updated_at?: string
+          user_id?: string
+          video_room_url?: string | null
+        }
+        Relationships: []
+      }
       training_exercises: {
         Row: {
           description: string | null
@@ -3205,6 +3354,36 @@ export type Database = {
         | "assistente"
         | "financeiro"
         | "admin_viewer"
+      appointment_modality: "video" | "in_person" | "chat"
+      appointment_status:
+        | "scheduled"
+        | "confirmed"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
+        | "no_show"
+      medical_record_section:
+        | "anamnese"
+        | "evolucao_clinica"
+        | "exames"
+        | "estrategia_nutricional"
+        | "protocolo"
+        | "prescricao"
+        | "emocoes_humor"
+        | "sono"
+        | "performance"
+        | "sintomas"
+        | "historico"
+        | "outros"
+      tele_specialty:
+        | "medico"
+        | "nutricionista"
+        | "psicologo"
+        | "psiquiatra"
+        | "terapeuta"
+        | "educador_fisico"
+        | "consultor"
+        | "outro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3339,6 +3518,39 @@ export const Constants = {
         "assistente",
         "financeiro",
         "admin_viewer",
+      ],
+      appointment_modality: ["video", "in_person", "chat"],
+      appointment_status: [
+        "scheduled",
+        "confirmed",
+        "in_progress",
+        "completed",
+        "cancelled",
+        "no_show",
+      ],
+      medical_record_section: [
+        "anamnese",
+        "evolucao_clinica",
+        "exames",
+        "estrategia_nutricional",
+        "protocolo",
+        "prescricao",
+        "emocoes_humor",
+        "sono",
+        "performance",
+        "sintomas",
+        "historico",
+        "outros",
+      ],
+      tele_specialty: [
+        "medico",
+        "nutricionista",
+        "psicologo",
+        "psiquiatra",
+        "terapeuta",
+        "educador_fisico",
+        "consultor",
+        "outro",
       ],
     },
   },
