@@ -16,10 +16,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-type AppRole = "admin" | "consultor" | "assistente" | "financeiro" | "student";
+type AppRole = "admin" | "admin_viewer" | "consultor" | "assistente" | "financeiro" | "student";
 
 const roleConfig: Record<AppRole, { label: string; color: string; icon: typeof Shield }> = {
   admin: { label: "Admin", color: "bg-red-500/10 text-red-500 border-red-500/20", icon: ShieldAlert },
+  admin_viewer: { label: "Admin (Visualização)", color: "bg-orange-500/10 text-orange-500 border-orange-500/20", icon: Shield },
   consultor: { label: "Consultor", color: "bg-blue-500/10 text-blue-500 border-blue-500/20", icon: ShieldCheck },
   assistente: { label: "Assistente", color: "bg-amber-500/10 text-amber-500 border-amber-500/20", icon: UserCog },
   financeiro: { label: "Financeiro", color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20", icon: Shield },
@@ -155,8 +156,8 @@ const RolesTab = () => {
                 </TableHeader>
                 <TableBody>
                   {filtered?.map((user) => {
-                    const config = roleConfig[user.role];
-                    const statusCfg = subStatusConfig[user.subStatus];
+                    const config = roleConfig[user.role] ?? roleConfig.student;
+                    const statusCfg = subStatusConfig[user.subStatus] ?? subStatusConfig.none;
                     return (
                       <TableRow key={user.user_id}>
                         <TableCell>
