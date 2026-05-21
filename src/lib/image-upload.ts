@@ -272,7 +272,7 @@ export async function processAndUpload(
  * Validates a file for image upload.
  * Returns error message or null if valid.
  */
-export function validateImageFile(file: File, maxSizeMB = 15): string | null {
+export function validateImageFile(file: File, maxSizeMB = 50): string | null {
   const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "image/jpg", ""];
   const allowedExt = /\.(jpg|jpeg|png|webp|heic|heif)$/i;
   const normalizedType = (file.type || "").toLowerCase();
