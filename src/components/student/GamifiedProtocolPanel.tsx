@@ -117,27 +117,13 @@ export const PhaseCard = ({
               </div>
             )}
             {phase.schedule && (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {phase.schedule.split("\n").map((line, i) => {
-                  const v = line.trim();
-                  if (!v) return null;
-                  return (
-                    <span
-                      key={i}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-[12px] font-semibold tracking-tight animate-pulse"
-                      style={{
-                        color: STH_GREEN,
-                        background: `${STH_GREEN}14`,
-                        border: `1px solid ${STH_GREEN}55`,
-                        boxShadow: `0 0 12px -2px ${STH_GREEN}99, inset 0 0 8px -4px ${STH_GREEN}66`,
-                        textShadow: `0 0 8px ${STH_GREEN}99`,
-                      }}
-                    >
-                      <Clock className="w-3.5 h-3.5" strokeWidth={2.5} />
-                      {v}
-                    </span>
-                  );
-                })}
+              <div className="mt-2 rounded-md border border-[color:var(--sth-green)]/25 bg-[color:var(--sth-green)]/[0.04] pl-2.5 pr-3 py-2">
+                <div className="text-[9px] tracking-[0.22em] uppercase text-[color:var(--sth-green)]/70 mb-1 font-sans inline-flex items-center gap-1">
+                  <Clock className="w-3 h-3" strokeWidth={2.5} /> Horário
+                </div>
+                <p className="font-mono text-[12.5px] tracking-tight text-foreground/85 leading-[1.55] whitespace-pre-line">
+                  {phase.schedule}
+                </p>
               </div>
             )}
             {phase.focus && (

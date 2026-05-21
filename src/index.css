@@ -366,37 +366,17 @@ html, body {
     --brand-foreground: 0 0% 100%;
   }
 
-  /* A11y themes: keep the page palette tinted for visual comfort,
-     but preserve dark + neon glass surfaces so details (chips, borders,
-     icons) remain visible — matching the main STH aesthetic. */
+  /* Suaviza brilhos e gradientes agressivos nesses temas claros */
+  html.theme-a11y-cream .neon-bar,
+  html.theme-a11y-irlen .neon-bar,
+  html.theme-a11y-pastel .neon-bar,
+  html.theme-a11y-contrast .neon-bar { box-shadow: none !important; }
+
   html.theme-a11y-cream body,
   html.theme-a11y-irlen body,
   html.theme-a11y-pastel body,
   html.theme-a11y-contrast body {
     background: hsl(var(--background)) !important;
-  }
-
-  /* Glass cards and translucent white surfaces: force a dark substrate so
-     neon details (sth-green chips, white/10 borders, info/warning text)
-     don't disappear on light palettes. */
-  html[class*="theme-a11y-"] [class*="bg-white/["],
-  html[class*="theme-a11y-"] [class*="bg-white/5"],
-  html[class*="theme-a11y-"] [class*="bg-white/10"] {
-    background-color: hsl(0 0% 7% / 0.92) !important;
-    color: hsl(0 0% 98%);
-  }
-  html[class*="theme-a11y-"] [class*="bg-white/["] *,
-  html[class*="theme-a11y-"] [class*="bg-white/5"] *,
-  html[class*="theme-a11y-"] [class*="bg-white/10"] * {
-    /* Re-enable foreground-on-dark for descendant text/icons */
-    --foreground: 0 0% 98%;
-    --muted-foreground: 0 0% 65%;
-    --card: 0 0% 7%;
-    --card-foreground: 0 0% 98%;
-  }
-  /* Make white-opacity borders visible on dark glass substrate */
-  html[class*="theme-a11y-"] [class*="border-white/"] {
-    border-color: hsl(0 0% 100% / 0.18) !important;
   }
 }
 
