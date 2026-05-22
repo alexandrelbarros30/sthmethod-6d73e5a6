@@ -77,18 +77,37 @@ export const buildWhatsAppUrl = (phone: string, message: string): string | null 
 export const sendSystemTemplate = async (
   key: SystemTemplateKey,
   ctx: TemplateContext,
-  options?: { logHistory?: boolean }
+  options?: { logHistory?: boolean; mode?: "auto" | "manual" }
 ): Promise<{ ok: boolean; reason?: string; templateId?: string; message?: string }> => {
   const tpl = await getSystemTemplate(key);
   if (!tpl) return { ok: false, reason: "Template do sistema não encontrado. Cadastre em Mensagens → Automáticos." };
   if (!ctx.phone) return { ok: false, reason: "Aluno sem telefone cadastrado." };
 
   const message = renderTemplate(tpl.content, ctx);
-  const finalMessage = tpl.image_url ? `${message}\n\n${tpl.image_url}` : message;
-  const url = buildWhatsAppUrl(ctx.phone, finalMessage);
-  if (!url) return { ok: false, reason: "Telefone inválido." };
+  const finalMessage = message;
+  let deliveryStatus: "sent" | "failed" = "sent";
+  let deliveryError: string | null = null;
 
-  window.open(url, "_blank");
+  // Try automatic send via Z-API edge function
+  let autoOk = false;
+  try {
+    const { data, error } = await supabase.functions.invoke("send-whatsapp", {
+      body: { phone: ctx.phone, message: finalMessage, image_url: tpl.image_url || null },
+    });
+    if (error) throw error;
+    if (data?.ok) autoOk = true;
+    else deliveryError = data?.error || "Falha no envio automático";
+  } catch (err: any) {
+    deliveryError = err?.message || String(err);
+  }
+
+  // Fallback to wa.me if automatic failed or explicit manual mode
+  if (!autoOk || options?.mode === "manual") {
+    const fallbackMsg = tpl.image_url ? `${finalMessage}\n\n${tpl.image_url}` : finalMessage;
+    const url = buildWhatsAppUrl(ctx.phone, fallbackMsg);
+    if (url) window.open(url, "_blank");
+    if (!autoOk) deliveryStatus = "failed";
+  }
 
   if (options?.logHistory && ctx.user_id) {
     try {
@@ -99,7 +118,7 @@ export const sendSystemTemplate = async (
         recipient_name: ctx.full_name || null,
         template_id: tpl.id,
         image_url: tpl.image_url || null,
-        status: "sent",
+        status: deliveryStatus,
         sent_at: new Date().toISOString(),
       });
     } catch (err) {
@@ -107,7 +126,7 @@ export const sendSystemTemplate = async (
     }
   }
 
-  return { ok: true, templateId: tpl.id, message: finalMessage };
+  return { ok: true, templateId: tpl.id, message: finalMessage, reason: deliveryError || undefined };
 };
 
 export const SYSTEM_TEMPLATE_DEFINITIONS: Array<{
