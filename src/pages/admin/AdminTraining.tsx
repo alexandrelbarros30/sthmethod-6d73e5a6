@@ -173,6 +173,9 @@ const AdminTraining = () => {
     onSuccess: () => {
       toast.success("Treino definido como ativo!");
       qc.invalidateQueries({ queryKey: ["admin-training-weeks"] });
+      if (selectedStudent?.user_id) {
+        notifyStudentContentUpdate(selectedStudent.user_id, "training");
+      }
     },
   });
 
