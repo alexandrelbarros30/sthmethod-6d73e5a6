@@ -91,7 +91,7 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName, studentPhon
       if (content.trim()) {
         const now = new Date();
         const dateStr = now.toLocaleDateString("pt-BR");
-        const note = `📊 **Painel Metabólico atualizado em ${dateStr}**\n\n${content}`;
+        const note = `📊 **Central de Análise atualizado em ${dateStr}**\n\n${content}`;
         await supabase.from("anamnesis_entries").insert({ user_id: userId, notes: note });
       }
     },
@@ -135,7 +135,7 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName, studentPhon
       return;
     }
     const header = panel.title ? `*${panel.title}*\n\n` : "";
-    const message = `Olá ${firstName}! 👋\n\nSegue seu *Painel Metabólico* — STH METHOD:\n\n${header}${body}`;
+    const message = `Olá ${firstName}! 👋\n\nSegue seu *Central de Análise* — STH METHOD:\n\n${header}${body}`;
     const url = buildWhatsAppUrl(studentPhone, message);
     if (!url) {
       toast.error("Telefone inválido.");
@@ -150,7 +150,7 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName, studentPhon
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Microscope className="w-5 h-5 text-primary" />
-            Painel Metabólico — {userName}
+            Central de Análise — {userName}
           </DialogTitle>
         </DialogHeader>
 

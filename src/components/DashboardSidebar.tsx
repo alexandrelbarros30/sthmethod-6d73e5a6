@@ -25,7 +25,7 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/dashboard/training", icon: Dumbbell, label: "Treino" },
     { to: "/dashboard/guided-workout", icon: ListChecks, label: "Treino Guiado" },
     { to: "/dashboard/protocol", icon: FlaskConical, label: "Protocolo" },
-    { to: "/dashboard/metabolic", icon: Microscope, label: "Painel Metabólico" },
+    { to: "/dashboard/metabolic", icon: Microscope, label: "Central de Análise" },
     { to: "/dashboard/content", icon: BookOpen, label: "Conteúdo" },
     { to: "/tendencias", icon: Newspaper, label: "STH News" },
     { to: "/dashboard/ads", icon: Megaphone, label: "Propagandas" },

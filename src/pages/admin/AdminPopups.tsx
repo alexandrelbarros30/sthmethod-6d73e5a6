@@ -28,7 +28,7 @@ const ROUTE_OPTIONS = [
   { value: "/dashboard/diet", label: "Dieta" },
   { value: "/dashboard/training", label: "Treino" },
   { value: "/dashboard/protocol", label: "Protocolo" },
-  { value: "/dashboard/metabolic", label: "Painel Metabólico" },
+  { value: "/dashboard/metabolic", label: "Central de Análise" },
   { value: "/dashboard/evolution", label: "Atualização" },
   { value: "/dashboard/bioimpedance", label: "Bioimpedância" },
   { value: "/dashboard/content", label: "Conteúdo" },

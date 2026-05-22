@@ -60,12 +60,12 @@ const PreviewUnlockToggle = ({ userId, studentName, studentPhone, onChanged }: P
     const firstName = (studentName || "").trim().split(" ")[0] || "tudo bem";
     const msg =
       `Olá ${firstName}! 👋\n\n` +
-      `Seu *Painel Metabólico* personalizado já está pronto na plataforma *STH METHOD*. ` +
+      `Seu *Central de Análise* personalizado já está pronto na plataforma *STH METHOD*. ` +
       `Liberei uma *prévia exclusiva* para você entender o que foi identificado na sua análise gratuita 🎯\n\n` +
-      `*Como acessar o seu Painel Metabólico:*\n` +
+      `*Como acessar o seu Central de Análise:*\n` +
       `1️⃣ Acesse: ${link}\n` +
       `2️⃣ Faça login com seu e-mail cadastrado\n` +
-      `3️⃣ No menu lateral, toque em *Painel Metabólico*\n` +
+      `3️⃣ No menu lateral, toque em *Central de Análise*\n` +
       `4️⃣ Confira seu perfil bioenergético e o direcionamento estratégico\n\n` +
       `Esse painel é a base da sua *dieta* e *protocolo personalizados*, que ficam liberados na íntegra após a confirmação do pagamento. 🚀`;
     // Always fetch the latest phone from DB so edits to the student profile reflect here
