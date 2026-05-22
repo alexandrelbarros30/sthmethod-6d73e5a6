@@ -1,3 +1,4 @@
+import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
@@ -5,7 +6,8 @@ import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Microscope, AlertCircle } from "lucide-react";
+import { Microscope, AlertCircle, X, ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import DietContentRenderer from "@/components/student/DietContentRenderer";
 import { usePreviewAs } from "@/hooks/usePreviewAs";
 
@@ -14,6 +16,7 @@ const StudentMetabolic = () => {
   const { isActive, isLoading: guardLoading, previewUnlocked } = useSubscriptionGuard();
   const { isPreviewing } = usePreviewAs();
   const qc = useQueryClient();
+  const [closedIds, setClosedIds] = useState<Set<string>>(new Set());
   const { data: panels = [], isLoading } = useQuery({
     queryKey: ["metabolic-panel-student", user?.id],
     queryFn: async () => {
@@ -50,20 +53,40 @@ const StudentMetabolic = () => {
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Carregando...</p>
         ) : panels.length > 0 ? (
-          panels.map((p: any) => (
-            <div key={p.id} className="rounded-3xl border border-border/40 bg-background p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground">Central de Análise</p>
-                  <h3 className="text-[20px] font-semibold text-foreground tracking-[-0.025em] mt-2">Análise</h3>
+          panels.map((p: any) => {
+            const isClosed = closedIds.has(p.id);
+            const toggle = () => {
+              setClosedIds((prev) => {
+                const next = new Set(prev);
+                if (next.has(p.id)) next.delete(p.id);
+                else next.add(p.id);
+                return next;
+              });
+            };
+            return (
+              <div key={p.id} className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-5 animate-fade-in">
+                <div className="flex items-start justify-between mb-4 gap-3">
+                  <div className="text-center flex-1">
+                    <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground">Central de Análise</p>
+                    <p className="text-[11px] text-muted-foreground font-light tracking-tight mt-1">
+                      {new Date(p.created_at).toLocaleDateString("pt-BR")}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground shrink-0"
+                    onClick={toggle}
+                    aria-label={isClosed ? "Abrir" : "Fechar"}
+                  >
+                    {isClosed ? <ChevronDown className="w-4 h-4" /> : <X className="w-4 h-4" />}
+                  </Button>
                 </div>
-                <span className="text-[11px] text-muted-foreground font-light tracking-tight">
-                  {new Date(p.created_at).toLocaleDateString("pt-BR")}
-                </span>
+                {!isClosed && <DietContentRenderer content={p.content} showHeader={false} />}
               </div>
-              <DietContentRenderer content={p.content} showHeader={false} />
-            </div>
-          ))
+            );
+          })
         ) : (
           <div className="rounded-3xl border border-border/40 bg-background py-14 px-6 text-center">
             <AlertCircle className="w-8 h-8 mx-auto text-muted-foreground/40 mb-4" strokeWidth={1.5} />
