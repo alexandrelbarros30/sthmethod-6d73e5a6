@@ -15,6 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { notifyStudentContentUpdate } from "@/lib/notify-student-update";
+import NotifyStudentToggle from "@/components/admin/NotifyStudentToggle";
 
 interface Exercise {
   id?: string;
@@ -173,6 +175,9 @@ const AdminTraining = () => {
     onSuccess: () => {
       toast.success("Treino definido como ativo!");
       qc.invalidateQueries({ queryKey: ["admin-training-weeks"] });
+      if (selectedStudent?.user_id) {
+        notifyStudentContentUpdate(selectedStudent.user_id, "training");
+      }
     },
   });
 
@@ -420,6 +425,9 @@ const AdminTraining = () => {
                 ← {returnToEdit ? "Voltar ao Aluno" : "Voltar"}
               </Button>
               <h2 className="font-display text-lg font-semibold mt-1">{selectedStudent?.full_name}</h2>
+              {selectedStudent?.user_id && (
+                <div className="mt-2"><NotifyStudentToggle userId={selectedStudent.user_id} /></div>
+              )}
             </div>
             <div className="flex gap-2">
               {weeks && weeks.length > 0 && (

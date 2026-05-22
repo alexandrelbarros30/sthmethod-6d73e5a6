@@ -7,7 +7,11 @@ export type SystemTemplateKey =
   | "renewal_reminder"
   | "awaiting_payment"
   | "service_queue_first_contact"
-  | "diet_adjustment_reminder";
+  | "diet_adjustment_reminder"
+  | "diet_updated"
+  | "training_updated"
+  | "protocol_updated"
+  | "plan_updated";
 
 export interface ResolvedTemplate {
   id: string;
@@ -182,5 +186,33 @@ export const SYSTEM_TEMPLATE_DEFINITIONS: Array<{
     description: "Para alunos com cadastro completo mas sem pagamento confirmado.",
     defaultContent:
       "Olá {nome}! Recebi seu cadastro 👍 Estamos aguardando a confirmação do pagamento para liberar seu acesso à plataforma.",
+  },
+  {
+    key: "diet_updated",
+    label: "Dieta atualizada (automático)",
+    description: "Disparado automaticamente quando o admin salva/edita uma dieta para o aluno (se notificações estiverem ativas no perfil).",
+    defaultContent:
+      "Olá {nome}! 🍽️\n\nSua *nova dieta* já está disponível na plataforma STH METHOD.\n\n👉 Acesse o menu DIETA para conferir refeições, macros e hidratação.\n\nBora seguir firme! 💪",
+  },
+  {
+    key: "training_updated",
+    label: "Treino atualizado (automático)",
+    description: "Disparado automaticamente quando o admin define/atualiza o treino ativo do aluno.",
+    defaultContent:
+      "Olá {nome}! 🏋️\n\nSeu *novo treino* já está disponível na plataforma STH METHOD.\n\n👉 Acesse o menu TREINO para ver os exercícios, séries e repetições.\n\nVamos com tudo! 🚀",
+  },
+  {
+    key: "protocol_updated",
+    label: "Protocolo atualizado (automático)",
+    description: "Disparado automaticamente quando o admin salva/edita um protocolo para o aluno.",
+    defaultContent:
+      "Olá {nome}! 📋\n\nSeu *novo protocolo* já está disponível na plataforma STH METHOD.\n\n👉 Acesse o menu PROTOCOLO para conferir todas as orientações.\n\nQualquer dúvida, estamos por aqui! 🤝",
+  },
+  {
+    key: "plan_updated",
+    label: "Plano atualizado (automático)",
+    description: "Disparado quando o plano/assinatura do aluno é atualizado.",
+    defaultContent:
+      "Olá {nome}! ✨\n\nSeu *plano foi atualizado* na plataforma STH METHOD.\n\n👉 Acesse a plataforma para ver as novidades disponíveis no seu acesso.\n\nBons treinos! 💚",
   },
 ];

@@ -1996,6 +1996,7 @@ export type Database = {
           id: string
           lab_exam_url: string | null
           medical_prescription_url: string | null
+          notify_on_updates: boolean
           objective: string | null
           onboarding_complete: boolean
           phone: string | null
@@ -2037,6 +2038,7 @@ export type Database = {
           id?: string
           lab_exam_url?: string | null
           medical_prescription_url?: string | null
+          notify_on_updates?: boolean
           objective?: string | null
           onboarding_complete?: boolean
           phone?: string | null
@@ -2078,6 +2080,7 @@ export type Database = {
           id?: string
           lab_exam_url?: string | null
           medical_prescription_url?: string | null
+          notify_on_updates?: boolean
           objective?: string | null
           onboarding_complete?: boolean
           phone?: string | null

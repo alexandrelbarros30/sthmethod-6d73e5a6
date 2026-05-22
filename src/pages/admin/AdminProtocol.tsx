@@ -23,6 +23,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { notifyStudentContentUpdate } from "@/lib/notify-student-update";
+import NotifyStudentToggle from "@/components/admin/NotifyStudentToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import SignedPdfFrame from "@/components/shared/SignedPdfFrame";
 import { hasSmartProtocolStructure, isSmartProtocolEra } from "@/lib/protocol-phase-parser";
@@ -562,6 +564,7 @@ const AdminProtocol = () => {
       refetchProtocols();
       setShowNewForm(false);
       resetNewForm();
+      if (selected?.user_id) notifyStudentContentUpdate(selected.user_id, "protocol");
     },
     onError: () => toast.error("Erro ao salvar protocolo"),
   });
@@ -590,6 +593,7 @@ const AdminProtocol = () => {
       qc.invalidateQueries({ queryKey: ["protocol-category-content", selected?.user_id] });
       refetchProtocols();
       cancelEdit();
+      if (selected?.user_id) notifyStudentContentUpdate(selected.user_id, "protocol");
     },
     onError: () => toast.error("Erro ao atualizar protocolo"),
   });
@@ -717,6 +721,9 @@ const AdminProtocol = () => {
           <DialogHeader className="pr-8">
             <DialogTitle className="font-display text-base sm:text-lg">Protocolos — {selected?.full_name}</DialogTitle>
             <DialogDescription className="text-xs sm:text-sm">Edite com clareza no mobile e desktop.</DialogDescription>
+            {selected?.user_id && (
+              <div className="pt-2"><NotifyStudentToggle userId={selected.user_id} /></div>
+            )}
             {selected?.user_id && (
               <Button
                 variant="secondary"
