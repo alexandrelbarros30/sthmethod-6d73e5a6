@@ -59,7 +59,7 @@ const STEPS: Step[] = [
   {
     emoji: "🧬",
     title: "Exames, conteúdo & mais",
-    body: "No avatar você acessa Bioimpedância, Painel Metabólico, Conteúdo, STH News e sua Assinatura.",
+    body: "No avatar você acessa Bioimpedância, Central de Análise, Conteúdo, STH News e sua Assinatura.",
     dockIndex: 5,
     highlight: "Tudo o que é técnico mora aqui.",
   },

@@ -6,7 +6,7 @@ import SubscriptionBlock from "@/components/SubscriptionBlock";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Microscope, AlertCircle } from "lucide-react";
-import RichContentRenderer from "@/components/shared/RichContentRenderer";
+import DietContentRenderer from "@/components/student/DietContentRenderer";
 import { usePreviewAs } from "@/hooks/usePreviewAs";
 
 const StudentMetabolic = () => {
@@ -41,11 +41,11 @@ const StudentMetabolic = () => {
   });
 
   if (!guardLoading && !isActive && !previewUnlocked && !isPreviewing) {
-    return <DashboardLayout role="student" title="Painel Metabólico"><SubscriptionBlock /></DashboardLayout>;
+    return <DashboardLayout role="student" title="Central de Análise"><SubscriptionBlock /></DashboardLayout>;
   }
 
   return (
-    <DashboardLayout role="student" title="Painel Metabólico">
+    <DashboardLayout role="student" title="Central de Análise">
       <div className="space-y-4 sm:space-y-6 animate-fade-in">
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Carregando...</p>
@@ -54,16 +54,14 @@ const StudentMetabolic = () => {
             <div key={p.id} className="rounded-3xl border border-border/40 bg-background p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground">Painel Metabólico</p>
+                  <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground">Central de Análise</p>
                   <h3 className="text-[20px] font-semibold text-foreground tracking-[-0.025em] mt-2">Análise</h3>
                 </div>
                 <span className="text-[11px] text-muted-foreground font-light tracking-tight">
                   {new Date(p.created_at).toLocaleDateString("pt-BR")}
                 </span>
               </div>
-              <div className="prose prose-sm dark:prose-invert max-w-none">
-                <RichContentRenderer content={p.content} />
-              </div>
+              <DietContentRenderer content={p.content} showHeader={false} />
             </div>
           ))
         ) : (
