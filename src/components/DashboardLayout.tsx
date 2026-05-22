@@ -363,14 +363,14 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-foreground tracking-[-0.02em]">
               <Microscope className="w-5 h-5" strokeWidth={1.8} />
-              Nova Análise Metabólica
+              Nova Central de Análise
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Seu painel metabólico foi atualizado com novas informações. Confira agora!
+            Sua Central de Análise foi atualizada com novas informações. Confira agora!
           </p>
           <div className="flex gap-2 mt-2">
-            <Button onClick={handleGoToMetabolic} className="flex-1 rounded-full bg-foreground text-background hover:bg-foreground/90">Ver Painel</Button>
+            <Button onClick={handleGoToMetabolic} className="flex-1 rounded-full bg-foreground text-background hover:bg-foreground/90">Ver Central</Button>
             <Button variant="outline" onClick={handleCloseMetabolic} className="flex-1 rounded-full">Fechar</Button>
           </div>
         </DialogContent>
