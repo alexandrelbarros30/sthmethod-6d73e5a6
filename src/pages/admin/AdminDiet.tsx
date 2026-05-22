@@ -20,6 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { notifyStudentContentUpdate } from "@/lib/notify-student-update";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -399,6 +400,7 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
       refetchDiets();
       setShowNewForm(false);
       resetNewForm();
+      if (selected?.user_id) notifyStudentContentUpdate(selected.user_id, "diet");
     },
     onError: (error: any) => toast.error(error?.message || "Erro ao salvar dieta"),
   });
@@ -434,6 +436,7 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
       qc.invalidateQueries({ queryKey: ["admin-students-diets"] });
       refetchDiets();
       cancelEdit();
+      if (selected?.user_id) notifyStudentContentUpdate(selected.user_id, "diet");
     },
     onError: (error: any) => toast.error(error?.message || "Erro ao atualizar dieta"),
   });
