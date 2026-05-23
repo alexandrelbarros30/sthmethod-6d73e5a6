@@ -40,7 +40,17 @@ export const getSystemTemplate = async (key: SystemTemplateKey): Promise<Resolve
     .select("id, title, content, image_url, system_key")
     .eq("system_key", key)
     .maybeSingle();
-  if (error || !data) return null;
+  if (error || !data) {
+    const def = SYSTEM_TEMPLATE_DEFINITIONS.find((d) => d.key === key);
+    if (!def) return null;
+    return {
+      id: `default:${key}`,
+      title: def.label,
+      content: def.defaultContent,
+      system_key: key,
+      image_url: null,
+    };
+  }
   return data as ResolvedTemplate;
 };
 
