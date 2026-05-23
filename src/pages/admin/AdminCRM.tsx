@@ -205,7 +205,7 @@ export default function AdminCRM({ area = "admin" }: Props) {
   }, [tab]);
 
   return (
-    <DashboardLayout>
+    <DashboardLayout role={area} title="Campanhas & Ofertas" subtitle="Central premium de relacionamento STH METHOD">
       <div className="space-y-6">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
