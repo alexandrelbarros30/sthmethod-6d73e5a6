@@ -25,6 +25,8 @@ import CRMContacts from "@/components/admin/crm/CRMContacts";
 import CRMSegments from "@/components/admin/crm/CRMSegments";
 import CRMTemplates from "@/components/admin/crm/CRMTemplates";
 import CRMMedia from "@/components/admin/crm/CRMMedia";
+import CRMCampaigns from "@/components/admin/crm/CRMCampaigns";
+import CRMHistory from "@/components/admin/crm/CRMHistory";
 
 type RoleArea = "admin" | "consultor";
 interface Props { area?: RoleArea }
@@ -190,7 +192,7 @@ export default function AdminCRM({ area = "admin" }: Props) {
       case "dashboard":
         return <CRMDashboard />;
       case "campanhas":
-        return <ComingSoon title="Campanhas" description="Builder de campanhas: público → template → mídia → agendamento ou envio imediato. Liberado na Fase 3." />;
+        return <CRMCampaigns />;
       case "templates":
         return <CRMTemplates />;
       case "contatos":
@@ -200,7 +202,7 @@ export default function AdminCRM({ area = "admin" }: Props) {
       case "midias":
         return <CRMMedia />;
       case "historico":
-        return <ComingSoon title="Histórico de envios" description="Quem enviou, quando, para quantos, taxa de entrega e cliques. Liberado na Fase 3." />;
+        return <CRMHistory />;
       case "automacao":
         return <ComingSoon title="Automação" description="Recorrência (ex: renovação toda segunda 10h), gatilhos inteligentes e jornadas. Liberado na Fase 4." />;
       default:
