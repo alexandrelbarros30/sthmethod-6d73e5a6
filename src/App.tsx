@@ -82,6 +82,7 @@ import AdminBudgets from "./pages/admin/AdminBudgets";
 import AdminQueue from "./pages/admin/AdminQueue";
 import AdminUpdates from "./pages/admin/AdminUpdates";
 import AdminTeleatendimento from "./pages/admin/AdminTeleatendimento";
+import AdminBilling from "./pages/admin/AdminBilling";
 import StudentConsultas from "./pages/student/StudentConsultas";
 import ConsultorDashboard from "./pages/consultor/ConsultorDashboard";
 import AssistenteDashboard from "./pages/assistente/AssistenteDashboard";
@@ -221,6 +222,7 @@ const App = () => (
             <Route path="/admin/queue" element={<ProtectedRoute allowedRoles={["admin"]}><AdminQueue /></ProtectedRoute>} />
             <Route path="/admin/updates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminUpdates /></ProtectedRoute>} />
             <Route path="/admin/teleatendimento" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTeleatendimento /></ProtectedRoute>} />
+            <Route path="/admin/billing" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBilling area="admin" /></ProtectedRoute>} />
             {/* Consultor routes */}
             <Route path="/consultor" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
             <Route path="/consultor/students" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
@@ -233,6 +235,7 @@ const App = () => (
             <Route path="/consultor/workout-templates" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminTrainingPrograms /></ProtectedRoute>} />
             <Route path="/consultor/protocol-library" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminProtocolLibrary /></ProtectedRoute>} />
             <Route path="/consultor/queue" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminQueue /></ProtectedRoute>} />
+            <Route path="/consultor/billing" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminBilling area="consultor" /></ProtectedRoute>} />
             {/* Assistente routes */}
             <Route path="/assistente" element={<ProtectedRoute allowedRoles={["assistente"]}><AssistenteDashboard /></ProtectedRoute>} />
             <Route path="/assistente/students" element={<ProtectedRoute allowedRoles={["assistente"]}><AdminStudents /></ProtectedRoute>} />
@@ -243,6 +246,7 @@ const App = () => (
             <Route path="/financeiro/plans" element={<ProtectedRoute allowedRoles={["financeiro"]}><AdminPlans /></ProtectedRoute>} />
             <Route path="/financeiro/revenue" element={<ProtectedRoute allowedRoles={["financeiro"]}><FinanceiroDashboard /></ProtectedRoute>} />
             <Route path="/financeiro/billing" element={<ProtectedRoute allowedRoles={["financeiro"]}><AdminRevenue /></ProtectedRoute>} />
+            <Route path="/financeiro/cobrancas" element={<ProtectedRoute allowedRoles={["financeiro"]}><AdminBilling area="financeiro" /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <div className="fixed bottom-1 right-1 text-[9px] text-muted-foreground/40 pointer-events-none z-50 font-mono">
