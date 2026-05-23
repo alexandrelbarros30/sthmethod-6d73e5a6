@@ -800,18 +800,33 @@ export default AdminBilling;
 
 const BucketsView = ({ rows, openComposer, setHistoryOf, onBulkSend, bulkSending }: { rows: any[]; openComposer: (r: any, s?: number) => void; setHistoryOf: (r: any) => void; onBulkSend: (bucketKey: string, items: any[], stage: number) => void; bulkSending: string | null }) => {
   const [bulkStage, setBulkStage] = useState<Record<string, string>>({});
-  const groups = DAY_BUCKETS.map((b) => ({
+  const [periodFilter, setPeriodFilter] = useState<string>("all");
+  const allGroups = DAY_BUCKETS.map((b) => ({
     ...b,
     items: rows.filter((r) => r.days >= b.min && r.days <= b.max).sort((a, b) => b.days - a.days),
-  })).filter((g) => g.items.length > 0);
-
-  if (groups.length === 0) {
-    return <Card><CardContent className="p-10 text-center text-muted-foreground">Nenhum aluno vencido nas faixas de tempo.</CardContent></Card>;
-  }
+  }));
+  const visibleGroups = (periodFilter === "all" ? allGroups : allGroups.filter((g) => g.key === periodFilter))
+    .filter((g) => g.items.length > 0);
 
   return (
     <div className="space-y-4">
-      {groups.map((g) => (
+      <Card><CardContent className="p-3 flex items-center gap-2 flex-wrap">
+        <span className="text-xs text-muted-foreground">Filtrar por período:</span>
+        <Select value={periodFilter} onValueChange={setPeriodFilter}>
+          <SelectTrigger className="h-8 w-[220px] text-xs"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as faixas</SelectItem>
+            {DAY_BUCKETS.map((b) => {
+              const count = allGroups.find((g) => g.key === b.key)?.items.length || 0;
+              return <SelectItem key={b.key} value={b.key}>{b.label} ({count})</SelectItem>;
+            })}
+          </SelectContent>
+        </Select>
+      </CardContent></Card>
+
+      {visibleGroups.length === 0 ? (
+        <Card><CardContent className="p-10 text-center text-muted-foreground">Nenhum aluno vencido nesta faixa.</CardContent></Card>
+      ) : visibleGroups.map((g) => (
         <Card key={g.key}>
           <CardContent className="p-0">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border gap-3 flex-wrap">
