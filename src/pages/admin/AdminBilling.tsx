@@ -10,56 +10,40 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { sendSystemTemplate, SystemTemplateKey, getSystemTemplate, renderTemplate, buildWhatsAppUrl } from "@/lib/system-templates";
-import { Send, CheckCircle2, Clock, MessageSquare, AlertTriangle, RefreshCcw, Zap, Pencil, Paperclip, X, FileText, Image as ImageIcon, Loader2 } from "lucide-react";
+import { SystemTemplateKey, getSystemTemplate, renderTemplate, buildWhatsAppUrl } from "@/lib/system-templates";
+import { Send, CheckCircle2, Clock, AlertTriangle, RefreshCcw, Pencil, Paperclip, X, FileText, Image as ImageIcon, Loader2, History, TrendingUp, DollarSign, Bell } from "lucide-react";
 
 type RoleArea = "admin" | "consultor" | "financeiro";
 interface Props { area: RoleArea }
 
-type StatusKey =
-  | "overdue" | "awaiting_payment" | "contacted" | "negotiating"
-  | "renewed" | "declined" | "inactive" | "ignored";
+type CampaignStatus = "active" | "paused" | "renewed" | "ignored" | "reactivated";
 
-const STATUS_LABELS: Record<StatusKey, string> = {
-  overdue: "Vencido",
-  awaiting_payment: "Aguardando pagamento",
-  contacted: "Cobrança enviada",
-  negotiating: "Em negociação",
-  renewed: "Renovado",
-  declined: "Não deseja renovar",
-  inactive: "Inativo",
-  ignored: "Ignorar temporariamente",
+const STAGE_TEMPLATES: Record<number, { key: SystemTemplateKey; label: string }> = {
+  1: { key: "renewal_soft" as SystemTemplateKey, label: "1ª — Amigável" },
+  2: { key: "renewal_objective" as SystemTemplateKey, label: "2ª — Retorno leve" },
+  3: { key: "renewal_recovery" as SystemTemplateKey, label: "3ª — Cupom oportunidade" },
+  4: { key: "renewal_last_contact" as SystemTemplateKey, label: "4ª — Último contato" },
+  5: { key: "renewal_reactivation" as SystemTemplateKey, label: "5ª — Reativação" },
 };
 
-const STATUS_COLORS: Record<StatusKey, string> = {
-  overdue: "bg-red-500/15 text-red-500 border-red-500/30",
-  awaiting_payment: "bg-amber-500/15 text-amber-500 border-amber-500/30",
-  contacted: "bg-blue-500/15 text-blue-500 border-blue-500/30",
-  negotiating: "bg-violet-500/15 text-violet-500 border-violet-500/30",
-  renewed: "bg-emerald-500/15 text-emerald-500 border-emerald-500/30",
-  declined: "bg-zinc-500/15 text-zinc-500 border-zinc-500/30",
-  inactive: "bg-zinc-500/15 text-zinc-500 border-zinc-500/30",
-  ignored: "bg-zinc-500/15 text-zinc-500 border-zinc-500/30",
+const STAGE_COLORS: Record<number, string> = {
+  1: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
+  2: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+  3: "bg-amber-500/15 text-amber-400 border-amber-500/30",
+  4: "bg-violet-500/15 text-violet-400 border-violet-500/30",
+  5: "bg-pink-500/15 text-pink-400 border-pink-500/30",
 };
 
-const TEMPLATES: Array<{ key: SystemTemplateKey; label: string }> = [
-  { key: "renewal_soft" as SystemTemplateKey, label: "Renovação leve" },
-  { key: "renewal_objective" as SystemTemplateKey, label: "Renovação objetiva" },
-  { key: "renewal_recovery" as SystemTemplateKey, label: "Recuperação" },
-  { key: "renewal_last_contact" as SystemTemplateKey, label: "Último contato" },
-];
-
-const FILTERS = [
-  { key: "all", label: "Todos vencidos", min: 1, max: 99999 },
-  { key: "1-7", label: "1 a 7 dias", min: 1, max: 7 },
-  { key: "8-15", label: "8 a 15 dias", min: 8, max: 15 },
-  { key: "16-30", label: "16 a 30 dias", min: 16, max: 30 },
-  { key: "31-60", label: "31 a 60 dias", min: 31, max: 60 },
-  { key: "60+", label: "Mais de 60 dias", min: 61, max: 99999 },
-];
+const STATUS_BADGE: Record<CampaignStatus, { label: string; cls: string }> = {
+  active: { label: "Ativa", cls: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" },
+  paused: { label: "Pausada", cls: "bg-zinc-500/15 text-zinc-400 border-zinc-500/30" },
+  renewed: { label: "Renovado", cls: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" },
+  ignored: { label: "Ignorado", cls: "bg-zinc-500/15 text-zinc-400 border-zinc-500/30" },
+  reactivated: { label: "Reativação enviada", cls: "bg-pink-500/15 text-pink-300 border-pink-500/30" },
+};
 
 const parsePrice = (p?: string | null): number => {
   if (!p) return 0;
@@ -72,45 +56,40 @@ const daysSince = (date: string): number => {
   return Math.floor((Date.now() - d.getTime()) / 86400000);
 };
 
-const priorityOf = (days: number): "alta" | "media" | "baixa" => {
-  if (days <= 15) return "alta";
-  if (days <= 30) return "media";
-  return "baixa";
-};
-
-/** Detect obviously invalid/test phones (e.g. 22222-2222, 99999-9999). */
 const isValidPhone = (phone?: string | null): boolean => {
   if (!phone) return false;
   const digits = phone.replace(/\D/g, "");
   if (digits.length < 10 || digits.length > 13) return false;
-  // reject if all digits are the same (e.g. 2122222222)
   const local = digits.startsWith("55") ? digits.slice(2) : digits;
-  if (/^(\d)\1+$/.test(local.slice(2))) return false; // body repeated
+  if (/^(\d)\1+$/.test(local.slice(2))) return false;
   if (/^(\d)\1{7,}$/.test(local)) return false;
   return true;
 };
 
+const planPriority = (planName: string): number => {
+  const n = planName.toLowerCase();
+  if (n.includes("180")) return 3;
+  if (n.includes("90")) return 2;
+  return 1;
+};
+
+type TabKey = "queue" | "waiting" | "renewed" | "ignored" | "all";
+
 const AdminBilling = ({ area }: Props) => {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const [filter, setFilter] = useState("all");
-  const [customDays, setCustomDays] = useState<string>("");
+  const [tab, setTab] = useState<TabKey>("queue");
   const [search, setSearch] = useState("");
-  const [selectedTemplate, setSelectedTemplate] = useState<SystemTemplateKey>("renewal_soft" as SystemTemplateKey);
-  const [editing, setEditing] = useState<any | null>(null);
-  const [autoSend, setAutoSend] = useState(false);
-  const [bulkSending, setBulkSending] = useState(false);
-  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
-  const [composer, setComposer] = useState<{ row: any; message: string; templateId: string; imageUrl: string | null; documentUrl: string | null; documentName: string | null } | null>(null);
+  const [composer, setComposer] = useState<{ row: any; message: string; templateKey: SystemTemplateKey; templateId: string; imageUrl: string | null; documentUrl: string | null; documentName: string | null } | null>(null);
   const [composerSending, setComposerSending] = useState(false);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [profileEdit, setProfileEdit] = useState<{ user_id: string; full_name: string; phone: string; email: string } | null>(null);
   const [profileSaving, setProfileSaving] = useState(false);
+  const [historyOf, setHistoryOf] = useState<any | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["billing-overdue", area, user?.id],
+    queryKey: ["billing-campaigns", area, user?.id],
     queryFn: async () => {
-      // Get linked students for consultor
       let allowedIds: string[] | null = null;
       if (area === "consultor" && user?.id) {
         const { data: links } = await supabase
@@ -118,30 +97,24 @@ const AdminBilling = ({ area }: Props) => {
           .select("student_id")
           .eq("consultant_id", user.id);
         allowedIds = (links || []).map((l) => l.student_id);
-        if (allowedIds.length === 0) return { rows: [], recovered: 0 };
+        if (allowedIds.length === 0) return { rows: [], recoveredCount: 0 };
       }
 
-      // Latest subscription per user (we'll grab a generous batch and reduce client-side)
       let subQ = supabase
         .from("subscriptions")
-        .select("user_id, plan_id, start_date, end_date, status")
+        .select("id, user_id, plan_id, start_date, end_date, status")
         .order("end_date", { ascending: false })
-        .limit(1000);
+        .limit(2000);
       if (allowedIds) subQ = subQ.in("user_id", allowedIds);
       const { data: subs } = await subQ;
 
-      const latestByUser = new Map<string, any>();
-      for (const s of subs || []) {
-        if (!latestByUser.has(s.user_id)) latestByUser.set(s.user_id, s);
-      }
-
       const today = new Date(); today.setHours(0, 0, 0, 0);
-      // Users with ANY active (non-expired) subscription should NOT appear in billing,
-      // even if the LATEST row happens to be expired (paranoid fallback after a payment).
       const hasActiveByUser = new Set<string>();
+      const latestByUser = new Map<string, any>();
       for (const s of subs || []) {
         const end = new Date(s.end_date + "T00:00:00");
         if (end.getTime() >= today.getTime()) hasActiveByUser.add(s.user_id);
+        if (!latestByUser.has(s.user_id)) latestByUser.set(s.user_id, s);
       }
       const overdue = Array.from(latestByUser.values()).filter((s) => {
         if (hasActiveByUser.has(s.user_id)) return false;
@@ -149,151 +122,161 @@ const AdminBilling = ({ area }: Props) => {
         return end.getTime() < today.getTime();
       });
 
-      const userIds = overdue.map((s) => s.user_id);
-      const planIds = Array.from(new Set(overdue.map((s) => s.plan_id)));
+      const overdueIds = overdue.map((s) => s.user_id);
+      if (overdueIds.length === 0) return { rows: [], recoveredCount: 0 };
 
-      const [profilesRes, plansRes, actionsRes, paymentsRes] = await Promise.all([
-        userIds.length
-          ? supabase.from("profiles").select("user_id, full_name, phone, email").in("user_id", userIds)
-          : Promise.resolve({ data: [] as any[] }),
-        planIds.length
-          ? supabase.from("plans").select("id, name, price").in("id", planIds)
-          : Promise.resolve({ data: [] as any[] }),
-        userIds.length
-          ? supabase.from("billing_actions").select("*").in("user_id", userIds)
-          : Promise.resolve({ data: [] as any[] }),
-        userIds.length
-          ? supabase.from("payments")
-              .select("user_id, status, created_at")
-              .in("user_id", userIds)
-              .eq("status", "approved")
-              .gte("created_at", new Date(Date.now() - 7 * 86400000).toISOString())
-          : Promise.resolve({ data: [] as any[] }),
+      const [profilesRes, plansRes, campaignsRes, paymentsRes] = await Promise.all([
+        supabase.from("profiles").select("user_id, full_name, phone, email").in("user_id", overdueIds),
+        supabase.from("plans").select("id, name, price").in("id", Array.from(new Set(overdue.map((s) => s.plan_id).filter(Boolean)))),
+        supabase.from("billing_campaigns").select("*").in("user_id", overdueIds),
+        supabase.from("payments")
+          .select("user_id, status, created_at")
+          .in("user_id", overdueIds)
+          .eq("status", "approved")
+          .gte("created_at", new Date(Date.now() - 7 * 86400000).toISOString()),
       ]);
 
       const pMap = new Map((profilesRes.data || []).map((p: any) => [p.user_id, p]));
       const planMap = new Map((plansRes.data || []).map((p: any) => [p.id, p]));
-      const aMap = new Map((actionsRes.data || []).map((a: any) => [a.user_id, a]));
-      // Exclude users with an approved payment in the last 7 days (just renewed).
+      const campMap = new Map((campaignsRes.data || []).map((c: any) => [c.user_id, c]));
       const recentlyPaid = new Set((paymentsRes.data || []).map((p: any) => p.user_id));
 
+      // Auto-mark campaigns as renewed for recently paid users
+      const toMarkRenewed = (campaignsRes.data || []).filter((c: any) => recentlyPaid.has(c.user_id) && c.status === "active");
+      if (toMarkRenewed.length > 0) {
+        await supabase.from("billing_campaigns").update({ status: "renewed", updated_at: new Date().toISOString() })
+          .in("id", toMarkRenewed.map((c: any) => c.id));
+      }
+
+      // Backfill campaigns for overdue users without one
+      const missing = overdue.filter((s) => !campMap.has(s.user_id) && !recentlyPaid.has(s.user_id));
+      if (missing.length > 0) {
+        const inserts = missing.map((s) => ({
+          user_id: s.user_id,
+          subscription_id: s.id,
+          plan_id: s.plan_id,
+          end_date: s.end_date,
+          stage: 1,
+          status: "active" as const,
+          next_due_at: new Date(s.end_date + "T00:00:00").toISOString(),
+        }));
+        const { data: inserted } = await supabase.from("billing_campaigns").insert(inserts).select();
+        for (const c of inserted || []) campMap.set(c.user_id, c);
+      }
+
       const rows = overdue.filter((s) => !recentlyPaid.has(s.user_id)).map((s) => {
-        const days = daysSince(s.end_date);
         const profile = pMap.get(s.user_id) || {};
         const plan = planMap.get(s.plan_id) || {};
-        const action = aMap.get(s.user_id) || null;
-        const stored = action?.status as StatusKey | undefined;
-        const status: StatusKey = stored || "overdue";
+        const camp = campMap.get(s.user_id);
         return {
           user_id: s.user_id,
+          subscription_id: s.id,
           full_name: profile.full_name || "Sem nome",
           phone: profile.phone || "",
           email: profile.email || "",
           plan_name: plan.name || "—",
           plan_price: parsePrice(plan.price),
-          start_date: s.start_date,
           end_date: s.end_date,
-          days,
-          status,
-          action,
-          priority: priorityOf(days),
+          days: daysSince(s.end_date),
           phone_valid: isValidPhone(profile.phone),
+          campaign: camp,
         };
       });
 
-      // Renewals recovered this month: count billing_actions w/ status renewed updated this month
-      const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
-      let recoveredQ = supabase
-        .from("billing_actions")
-        .select("user_id", { count: "exact", head: true })
+      // Recovered in last 30 days
+      const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString();
+      const { count: recoveredCount } = await supabase
+        .from("billing_campaigns")
+        .select("id", { count: "exact", head: true })
         .eq("status", "renewed")
-        .gte("updated_at", monthStart.toISOString());
-      if (allowedIds) recoveredQ = recoveredQ.in("user_id", allowedIds);
-      const { count: recovered } = await recoveredQ;
+        .gte("updated_at", monthAgo);
 
-      return { rows, recovered: recovered || 0 };
+      return { rows, recoveredCount: recoveredCount || 0 };
     },
     enabled: !!user,
   });
 
   const rows = data?.rows || [];
 
+  const now = Date.now();
+  const inQueue = (r: any) => r.campaign && r.campaign.status === "active" && new Date(r.campaign.next_due_at).getTime() <= now;
+  const inWaiting = (r: any) => r.campaign && r.campaign.status === "active" && new Date(r.campaign.next_due_at).getTime() > now;
+
   const filtered = useMemo(() => {
-    const f = FILTERS.find((x) => x.key === filter)!;
-    let min = f.min, max = f.max;
-    const cd = parseInt(customDays);
-    if (!isNaN(cd) && cd > 0) { min = cd; max = 99999; }
-    return rows.filter((r) => {
-      if (r.days < min || r.days > max) return false;
-      if (search && !r.full_name.toLowerCase().includes(search.toLowerCase())) return false;
-      // Hide ignored entries with active ignore_until in future
-      if (r.action?.ignore_until && new Date(r.action.ignore_until) >= new Date()) {
-        return filter !== "all" ? false : true;
-      }
-      return true;
+    let list = rows;
+    if (tab === "queue") list = list.filter(inQueue);
+    else if (tab === "waiting") list = list.filter(inWaiting);
+    else if (tab === "renewed") list = list.filter((r) => r.campaign?.status === "renewed");
+    else if (tab === "ignored") list = list.filter((r) => r.campaign?.status === "ignored");
+    if (search) list = list.filter((r) => r.full_name.toLowerCase().includes(search.toLowerCase()));
+    // Prioritization: 7-20 days first, then plan priority, then by days desc
+    return [...list].sort((a, b) => {
+      const aHot = a.days >= 7 && a.days <= 20 ? 1 : 0;
+      const bHot = b.days >= 7 && b.days <= 20 ? 1 : 0;
+      if (aHot !== bHot) return bHot - aHot;
+      const pp = planPriority(b.plan_name) - planPriority(a.plan_name);
+      if (pp !== 0) return pp;
+      return b.days - a.days;
     });
-  }, [rows, filter, customDays, search]);
+  }, [rows, tab, search]);
 
   const summary = useMemo(() => {
-    const total = rows.length;
-    const d7 = rows.filter(r => r.days >= 1 && r.days <= 7).length;
-    const d15 = rows.filter(r => r.days >= 8 && r.days <= 15).length;
-    const d30 = rows.filter(r => r.days >= 16 && r.days <= 30).length;
-    const d60 = rows.filter(r => r.days > 60).length;
-    const openValue = rows.filter(r => r.status !== "renewed" && r.status !== "declined" && r.status !== "inactive")
+    const overdue = rows.length;
+    const queue = rows.filter(inQueue).length;
+    const waiting = rows.filter(inWaiting).length;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const todayCharges = rows.filter((r) => r.campaign?.last_charged_at && new Date(r.campaign.last_charged_at).getTime() >= today.getTime()).length;
+    const reactivations = rows.filter((r) => r.campaign?.status === "reactivated").length;
+    const recoverable = rows
+      .filter((r) => r.campaign?.status === "active")
       .reduce((sum, r) => sum + r.plan_price, 0);
-    return { total, d7, d15, d30, d60, openValue };
+    return { overdue, queue, waiting, todayCharges, reactivations, recoverable };
   }, [rows]);
 
-  const upsertAction = useMutation({
-    mutationFn: async (payload: any) => {
-      const { error } = await supabase
-        .from("billing_actions")
-        .upsert({ ...payload, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
-      if (error) throw error;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["billing-overdue"] }),
-  });
-
-  const handleSendBilling = async (row: any) => {
+  const openComposer = async (row: any, stageOverride?: number) => {
     if (!row.phone) { toast.error("Aluno sem telefone cadastrado"); return; }
-    if (!isValidPhone(row.phone)) {
-      toast.error(`Telefone inválido (${row.phone}). Atualize o cadastro antes de enviar.`);
-      return;
-    }
-    const tpl = await getSystemTemplate(selectedTemplate);
+    if (!isValidPhone(row.phone)) { toast.error(`Telefone inválido (${row.phone}). Atualize o cadastro.`); return; }
+    const stage = stageOverride ?? row.campaign?.stage ?? 1;
+    const tplDef = STAGE_TEMPLATES[stage] || STAGE_TEMPLATES[1];
+    const tpl = await getSystemTemplate(tplDef.key);
     if (!tpl) { toast.error("Template não encontrado"); return; }
     const rendered = renderTemplate(tpl.content, {
       full_name: row.full_name, phone: row.phone, email: row.email,
       user_id: row.user_id, end_date: row.end_date,
     });
-    setComposer({ row, message: rendered, templateId: tpl.id, imageUrl: tpl.image_url || null, documentUrl: null, documentName: null });
+    setComposer({ row, message: rendered, templateKey: tplDef.key, templateId: tpl.id, imageUrl: tpl.image_url || null, documentUrl: null, documentName: null });
+  };
+
+  const onTemplateChange = async (key: SystemTemplateKey) => {
+    if (!composer) return;
+    const tpl = await getSystemTemplate(key);
+    if (!tpl) return;
+    const rendered = renderTemplate(tpl.content, {
+      full_name: composer.row.full_name, phone: composer.row.phone, email: composer.row.email,
+      user_id: composer.row.user_id, end_date: composer.row.end_date,
+    });
+    setComposer({ ...composer, templateKey: key, templateId: tpl.id, message: rendered, imageUrl: tpl.image_url || null });
   };
 
   const handleComposerSend = async () => {
     if (!composer) return;
-    const { row, message, templateId, imageUrl, documentUrl, documentName } = composer;
+    const { row, message, templateKey, imageUrl, documentUrl, documentName } = composer;
     if (!message.trim()) { toast.error("Mensagem vazia"); return; }
     setComposerSending(true);
     const AUTO_FOOTER = "\n\n———\n🔔 Comunicação automática STH METHOD\nMensagem enviada automaticamente pelo sistema.\nNão é necessário responder.";
     const finalMessage = message.includes("Comunicação automática STH METHOD") ? message : `${message}${AUTO_FOOTER}`;
 
     let deliveryStatus: "sent" | "failed" = "sent";
+    let deliveryError: string | null = null;
     let autoOk = false;
     try {
-      const { data, error } = await supabase.functions.invoke("send-whatsapp", {
-        body: {
-          phone: row.phone,
-          message: finalMessage,
-          image_url: imageUrl,
-          document_url: documentUrl,
-          document_name: documentName,
-        },
+      const { data: res, error } = await supabase.functions.invoke("send-whatsapp", {
+        body: { phone: row.phone, message: finalMessage, image_url: imageUrl, document_url: documentUrl, document_name: documentName },
       });
       if (error) throw error;
-      if (data?.ok) autoOk = true;
-    } catch (err) {
-      console.error("send-whatsapp error", err);
+      if (res?.ok) autoOk = true; else deliveryError = res?.error || "Falha no envio";
+    } catch (err: any) {
+      deliveryError = err?.message || String(err);
     }
     if (!autoOk) {
       deliveryStatus = "failed";
@@ -301,96 +284,90 @@ const AdminBilling = ({ area }: Props) => {
       const url = buildWhatsAppUrl(row.phone, attachmentUrl ? `${finalMessage}\n\n${attachmentUrl}` : finalMessage);
       if (url) window.open(url, "_blank");
     }
+
+    // Log message_history (legacy compatibility)
     try {
       await supabase.from("message_history").insert({
         user_id: row.user_id, content: finalMessage, recipient_phone: row.phone,
-        recipient_name: row.full_name, template_id: templateId, image_url: imageUrl,
+        recipient_name: row.full_name, template_id: composer.templateId, image_url: imageUrl,
         status: deliveryStatus, sent_at: new Date().toISOString(),
       });
     } catch (e) { console.error(e); }
-    await upsertAction.mutateAsync({
-      user_id: row.user_id, status: "contacted", assigned_to: user?.id,
-      attempts: (row.action?.attempts || 0) + 1,
-      last_template: selectedTemplate,
-      last_contact_at: new Date().toISOString(),
-    });
+
+    // Log billing_charges + advance campaign
+    const campaign = row.campaign;
+    if (campaign) {
+      await supabase.from("billing_charges").insert({
+        campaign_id: campaign.id,
+        user_id: row.user_id,
+        stage: campaign.stage,
+        template_key: templateKey,
+        responsible_user_id: user?.id || null,
+        phone: row.phone,
+        message: finalMessage,
+        image_url: imageUrl,
+        document_url: documentUrl,
+        document_name: documentName,
+        delivery_status: autoOk ? "sent" : "manual",
+        delivery_error: deliveryError,
+      });
+      await supabase.rpc("advance_billing_campaign", { _campaign_id: campaign.id });
+    }
+
     setComposerSending(false);
     setComposer(null);
     toast.success(autoOk
-      ? `Cobrança enviada para ${row.full_name.split(" ")[0]}`
-      : `Aberto WhatsApp manual para ${row.full_name.split(" ")[0]}`);
+      ? `Cobrança ${campaign?.stage || 1}ª enviada para ${row.full_name.split(" ")[0]} — sai da fila até a próxima data.`
+      : `WhatsApp aberto manualmente — cobrança registrada.`);
+    qc.invalidateQueries({ queryKey: ["billing-campaigns"] });
   };
 
   const handleMarkRenewed = async (row: any) => {
-    await upsertAction.mutateAsync({ user_id: row.user_id, status: "renewed", assigned_to: user?.id });
+    if (!row.campaign) return;
+    await supabase.from("billing_campaigns").update({ status: "renewed", updated_at: new Date().toISOString() }).eq("id", row.campaign.id);
     toast.success("Marcado como renovado");
+    qc.invalidateQueries({ queryKey: ["billing-campaigns"] });
   };
 
   const handleIgnore = async (row: any) => {
-    const until = new Date(); until.setDate(until.getDate() + 7);
-    await upsertAction.mutateAsync({
-      user_id: row.user_id, status: "ignored",
-      ignore_until: until.toISOString().slice(0, 10),
-      assigned_to: user?.id,
-    });
-    toast.success("Ignorado por 7 dias");
+    if (!row.campaign) return;
+    await supabase.from("billing_campaigns").update({ status: "ignored", updated_at: new Date().toISOString() }).eq("id", row.campaign.id);
+    toast.success("Removido da fila ativa");
+    qc.invalidateQueries({ queryKey: ["billing-campaigns"] });
   };
 
-  const handleBulkSend = async () => {
-    const targets = filtered.filter((r) => r.phone && isValidPhone(r.phone) && r.status !== "renewed" && r.status !== "declined" && r.status !== "inactive");
-    if (targets.length === 0) { toast.error("Nenhum aluno elegível no filtro atual."); return; }
-    if (!autoSend) {
-      toast.error("Ative a chave de envio automático para disparar em massa.");
-      return;
-    }
-    const periodo = FILTERS.find((f) => f.key === filter)?.label || "filtro atual";
-    if (!window.confirm(`Enviar cobrança "${TEMPLATES.find(t=>t.key===selectedTemplate)?.label}" para ${targets.length} aluno(s) (${periodo})?`)) return;
-
-    setBulkSending(true);
-    setBulkProgress({ done: 0, total: targets.length });
-    let ok = 0, fail = 0;
-    for (let i = 0; i < targets.length; i++) {
-      const row = targets[i];
-      try {
-        const res = await sendSystemTemplate(selectedTemplate, {
-          full_name: row.full_name, phone: row.phone, email: row.email,
-          user_id: row.user_id, end_date: row.end_date,
-        }, { logHistory: true, mode: "auto" });
-        if (res.ok) {
-          ok++;
-          await upsertAction.mutateAsync({
-            user_id: row.user_id, status: "contacted", assigned_to: user?.id,
-            attempts: (row.action?.attempts || 0) + 1,
-            last_template: selectedTemplate,
-            last_contact_at: new Date().toISOString(),
-          });
-        } else { fail++; }
-      } catch { fail++; }
-      setBulkProgress({ done: i + 1, total: targets.length });
-      // Throttle to avoid Z-API rate limits
-      await new Promise((r) => setTimeout(r, 1200));
-    }
-    setBulkSending(false);
-    setBulkProgress(null);
-    toast.success(`Envio em massa concluído: ${ok} enviadas, ${fail} falhas.`);
-    qc.invalidateQueries({ queryKey: ["billing-overdue"] });
+  const handleReactivate = async (row: any) => {
+    if (!row.campaign) return;
+    await supabase.from("billing_campaigns").update({ status: "active", next_due_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", row.campaign.id);
+    toast.success("Reativado na fila");
+    qc.invalidateQueries({ queryKey: ["billing-campaigns"] });
   };
 
   const role = area === "consultor" ? "consultor" : area === "financeiro" ? "financeiro" : "admin";
 
+  const tabCounts = {
+    queue: rows.filter(inQueue).length,
+    waiting: rows.filter(inWaiting).length,
+    renewed: rows.filter((r) => r.campaign?.status === "renewed").length,
+    ignored: rows.filter((r) => r.campaign?.status === "ignored").length,
+    all: rows.length,
+  };
+
+  const cards = [
+    { label: "Total vencidos", value: summary.overdue, icon: AlertTriangle, color: "text-red-400" },
+    { label: "Na fila hoje", value: summary.queue, icon: Bell, color: "text-emerald-400" },
+    { label: "Aguardando próx.", value: summary.waiting, icon: Clock, color: "text-amber-400" },
+    { label: "Cobranças do dia", value: summary.todayCharges, icon: Send, color: "text-blue-400" },
+    { label: "Reativações enviadas", value: summary.reactivations, icon: TrendingUp, color: "text-pink-400" },
+    { label: "Renovados (30d)", value: data?.recoveredCount || 0, icon: CheckCircle2, color: "text-emerald-400" },
+  ];
+
   return (
-    <DashboardLayout role={role as any} title="Cobranças e Renovações" subtitle="Recupere alunos vencidos com filtros inteligentes e mensagens automáticas">
+    <DashboardLayout role={role as any} title="Cobranças & Renovações" subtitle="CRM inteligente de renovação — sequência automática, histórico e zero spam">
       <div className="space-y-6">
         {/* Summary cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {[
-            { label: "Total vencidos", value: summary.total, icon: AlertTriangle, color: "text-red-500" },
-            { label: "Até 7 dias", value: summary.d7, icon: Clock, color: "text-amber-500" },
-            { label: "8 a 15 dias", value: summary.d15, icon: Clock, color: "text-amber-500" },
-            { label: "16 a 30 dias", value: summary.d30, icon: Clock, color: "text-orange-500" },
-            { label: "60+ dias", value: summary.d60, icon: AlertTriangle, color: "text-zinc-500" },
-            { label: "Recuperados/mês", value: data?.recovered || 0, icon: CheckCircle2, color: "text-emerald-500" },
-          ].map((c) => (
+          {cards.map((c) => (
             <Card key={c.label}><CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{c.label}</p>
@@ -401,64 +378,39 @@ const AdminBilling = ({ area }: Props) => {
           ))}
         </div>
 
-        <Card><CardContent className="p-4">
-          <p className="text-xs text-muted-foreground">Valor estimado em aberto</p>
-          <p className="text-3xl font-semibold text-emerald-500">
-            R$ {summary.openValue.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </p>
-        </CardContent></Card>
-
-        {/* Filters */}
-        <Card><CardContent className="p-4 space-y-3">
-          <div className="flex flex-wrap gap-2">
-            {FILTERS.map((f) => (
-              <Button key={f.key} size="sm" variant={filter === f.key ? "default" : "outline"}
-                onClick={() => { setFilter(f.key); setCustomDays(""); }}>
-                {f.label}
-              </Button>
-            ))}
-          </div>
-          <div className="flex flex-wrap gap-2 items-center">
-            <Input className="max-w-xs" placeholder="Buscar por nome..." value={search} onChange={(e) => setSearch(e.target.value)} />
-            <Input className="max-w-[180px]" type="number" placeholder="Dias mín. (personalizado)"
-              value={customDays} onChange={(e) => setCustomDays(e.target.value)} />
-            <Select value={selectedTemplate} onValueChange={(v) => setSelectedTemplate(v as SystemTemplateKey)}>
-              <SelectTrigger className="max-w-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {TEMPLATES.map((t) => (
-                  <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button size="sm" variant="ghost" onClick={() => qc.invalidateQueries({ queryKey: ["billing-overdue"] })}>
-              <RefreshCcw className="w-4 h-4 mr-1" /> Atualizar
-            </Button>
-          </div>
-
-          {/* Bulk send */}
-          <div className="flex flex-wrap items-center gap-3 pt-3 border-t">
-            <div className="flex items-center gap-2">
-              <Switch id="auto-send" checked={autoSend} onCheckedChange={setAutoSend} />
-              <label htmlFor="auto-send" className="text-sm font-medium cursor-pointer flex items-center gap-1.5">
-                <Zap className={`w-4 h-4 ${autoSend ? "text-emerald-500" : "text-muted-foreground"}`} />
-                Chave de envio automático
-              </label>
-            </div>
-            <Button
-              size="sm"
-              variant={autoSend ? "default" : "outline"}
-              onClick={handleBulkSend}
-              disabled={bulkSending || !autoSend || filtered.length === 0}
-            >
-              <Send className="w-4 h-4 mr-1" />
-              {bulkSending && bulkProgress
-                ? `Enviando ${bulkProgress.done}/${bulkProgress.total}...`
-                : `Envio em massa (${filtered.filter(r => r.phone).length})`}
-            </Button>
-            <p className="text-xs text-muted-foreground">
-              Dispara o template selecionado para todos os alunos do período filtrado.
+        <Card><CardContent className="p-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5"><DollarSign className="w-3.5 h-3.5" /> Valor estimado recuperável</p>
+            <p className="text-3xl font-semibold text-emerald-400 mt-1">
+              R$ {summary.recoverable.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>
+          <Button variant="ghost" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["billing-campaigns"] })}>
+            <RefreshCcw className="w-4 h-4 mr-1" /> Atualizar
+          </Button>
+        </CardContent></Card>
+
+        {/* Tabs + search */}
+        <Card><CardContent className="p-4 space-y-3">
+          <div className="flex flex-wrap gap-3 items-center justify-between">
+            <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
+              <TabsList>
+                <TabsTrigger value="queue">Fila ativa ({tabCounts.queue})</TabsTrigger>
+                <TabsTrigger value="waiting">Aguardando ({tabCounts.waiting})</TabsTrigger>
+                <TabsTrigger value="renewed">Renovados ({tabCounts.renewed})</TabsTrigger>
+                <TabsTrigger value="ignored">Ignorados ({tabCounts.ignored})</TabsTrigger>
+                <TabsTrigger value="all">Todos ({tabCounts.all})</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <Input className="max-w-xs" placeholder="Buscar por nome..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {tab === "queue" && "Alunos prontos para cobrança hoje — sequência: 1ª (amigável) → 7d → 2ª → 8d → 3ª (cupom) → 15d → 4ª → 30d → 5ª (reativação)."}
+            {tab === "waiting" && "Já foram cobrados recentemente — voltam à fila automaticamente na próxima data."}
+            {tab === "renewed" && "Alunos que renovaram após cobrança."}
+            {tab === "ignored" && "Removidos manualmente da fila."}
+            {tab === "all" && "Todos os alunos vencidos, independente do estado da campanha."}
+          </p>
         </CardContent></Card>
 
         {/* Table */}
@@ -466,7 +418,7 @@ const AdminBilling = ({ area }: Props) => {
           {isLoading ? (
             <div className="p-10 text-center text-muted-foreground">Carregando...</div>
           ) : filtered.length === 0 ? (
-            <div className="p-10 text-center text-muted-foreground">Nenhum aluno encontrado nesse filtro.</div>
+            <div className="p-10 text-center text-muted-foreground">Nenhum aluno nesta visualização.</div>
           ) : (
             <Table>
               <TableHeader>
@@ -475,118 +427,88 @@ const AdminBilling = ({ area }: Props) => {
                   <TableHead>Plano</TableHead>
                   <TableHead>Vencimento</TableHead>
                   <TableHead>Dias</TableHead>
-                  <TableHead>Prioridade</TableHead>
+                  <TableHead>Etapa</TableHead>
+                  <TableHead>Última cobrança</TableHead>
+                  <TableHead>Próxima</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Último contato</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((r) => (
-                  <TableRow key={r.user_id}>
-                    <TableCell>
-                      <button
-                        type="button"
-                        className="font-medium text-left hover:underline hover:text-primary transition-colors"
-                        onClick={() => setProfileEdit({ user_id: r.user_id, full_name: r.full_name, phone: r.phone || "", email: r.email || "" })}
-                        title="Editar cadastro"
-                      >
-                        {r.full_name}
-                      </button>
-                      <div className={`text-xs ${r.phone && !r.phone_valid ? "text-red-500 font-medium" : "text-muted-foreground"}`}>
-                        {r.phone ? (r.phone_valid ? r.phone : `⚠ ${r.phone} (inválido)`) : "sem telefone"}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>{r.plan_name}</div>
-                      <div className="text-xs text-muted-foreground">R$ {r.plan_price.toFixed(2)}</div>
-                    </TableCell>
-                    <TableCell className="text-sm">{new Date(r.end_date + "T00:00:00").toLocaleDateString("pt-BR")}</TableCell>
-                    <TableCell className="text-sm font-medium">{r.days}d</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={
-                        r.priority === "alta" ? "border-red-500/40 text-red-500"
-                        : r.priority === "media" ? "border-amber-500/40 text-amber-500"
-                        : "border-zinc-500/40 text-zinc-500"
-                      }>{r.priority}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={STATUS_COLORS[r.status]}>{STATUS_LABELS[r.status]}</Badge>
-                      {r.action?.attempts ? <span className="ml-2 text-xs text-muted-foreground">{r.action.attempts}x</span> : null}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {r.action?.last_contact_at ? new Date(r.action.last_contact_at).toLocaleDateString("pt-BR") : "—"}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button size="sm" variant="default" onClick={() => handleSendBilling(r)} disabled={!r.phone || !r.phone_valid}>
-                          <Send className="w-3.5 h-3.5 mr-1" /> Cobrar
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => handleMarkRenewed(r)}>
-                          <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Renovou
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => handleIgnore(r)}>Ignorar</Button>
-                        <Button size="sm" variant="ghost" onClick={() => setEditing(r)}>
-                          <MessageSquare className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {filtered.map((r) => {
+                  const camp = r.campaign;
+                  const stage = camp?.stage || 1;
+                  const status: CampaignStatus = camp?.status || "active";
+                  return (
+                    <TableRow key={r.user_id}>
+                      <TableCell>
+                        <button
+                          type="button"
+                          className="font-medium text-left hover:underline hover:text-primary transition-colors"
+                          onClick={() => setProfileEdit({ user_id: r.user_id, full_name: r.full_name, phone: r.phone || "", email: r.email || "" })}
+                          title="Editar cadastro"
+                        >
+                          {r.full_name}
+                        </button>
+                        <div className={`text-xs ${r.phone && !r.phone_valid ? "text-red-500 font-medium" : "text-muted-foreground"}`}>
+                          {r.phone ? (r.phone_valid ? r.phone : `⚠ ${r.phone} (inválido)`) : "sem telefone"}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div>{r.plan_name}</div>
+                        <div className="text-xs text-muted-foreground">R$ {r.plan_price.toFixed(2)}</div>
+                      </TableCell>
+                      <TableCell className="text-sm">{new Date(r.end_date + "T00:00:00").toLocaleDateString("pt-BR")}</TableCell>
+                      <TableCell className="text-sm font-medium">{r.days}d</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={STAGE_COLORS[stage]}>
+                          {stage}ª {stage === 5 ? "Reativ." : "cobrança"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {camp?.last_charged_at ? new Date(camp.last_charged_at).toLocaleDateString("pt-BR") : "—"}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {camp?.next_due_at ? new Date(camp.next_due_at).toLocaleDateString("pt-BR") : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={STATUS_BADGE[status].cls}>{STATUS_BADGE[status].label}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1 flex-wrap">
+                          {status === "active" && (
+                            <Button size="sm" variant="default" onClick={() => openComposer(r)} disabled={!r.phone || !r.phone_valid}>
+                              <Send className="w-3.5 h-3.5 mr-1" /> Enviar
+                            </Button>
+                          )}
+                          {(status === "ignored" || status === "reactivated") && (
+                            <Button size="sm" variant="outline" onClick={() => handleReactivate(r)}>
+                              <RefreshCcw className="w-3.5 h-3.5 mr-1" /> Reativar
+                            </Button>
+                          )}
+                          {status !== "renewed" && (
+                            <Button size="sm" variant="outline" onClick={() => handleMarkRenewed(r)}>
+                              <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Renovou
+                            </Button>
+                          )}
+                          {status === "active" && (
+                            <Button size="sm" variant="ghost" onClick={() => handleIgnore(r)}>Ignorar</Button>
+                          )}
+                          <Button size="sm" variant="ghost" onClick={() => setHistoryOf(r)} title="Histórico">
+                            <History className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
         </CardContent></Card>
       </div>
 
-      {/* Edit dialog */}
-      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>{editing?.full_name}</DialogTitle></DialogHeader>
-          {editing && (
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs text-muted-foreground">Status</label>
-                <Select
-                  value={editing.status}
-                  onValueChange={(v) => setEditing({ ...editing, status: v })}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {(Object.keys(STATUS_LABELS) as StatusKey[]).map((k) => (
-                      <SelectItem key={k} value={k}>{STATUS_LABELS[k]}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">Observações</label>
-                <Textarea
-                  rows={4}
-                  value={editing.action?.observations || ""}
-                  onChange={(e) => setEditing({ ...editing, action: { ...(editing.action || {}), observations: e.target.value } })}
-                />
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
-            <Button onClick={async () => {
-              if (!editing) return;
-              await upsertAction.mutateAsync({
-                user_id: editing.user_id,
-                status: editing.status,
-                observations: editing.action?.observations || "",
-                assigned_to: user?.id,
-              });
-              toast.success("Salvo");
-              setEditing(null);
-            }}>Salvar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Composer dialog – edit before send */}
+      {/* Composer dialog */}
       <Dialog open={!!composer} onOpenChange={(o) => !o && !composerSending && setComposer(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -598,54 +520,31 @@ const AdminBilling = ({ area }: Props) => {
             <div className="space-y-3">
               <div className="text-xs text-muted-foreground">
                 Para: <span className="font-medium text-foreground">{composer.row.phone}</span>
+                {composer.row.campaign && (
+                  <Badge variant="outline" className={`ml-2 ${STAGE_COLORS[composer.row.campaign.stage]}`}>
+                    {composer.row.campaign.stage}ª cobrança
+                  </Badge>
+                )}
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">Template</label>
-                <Select
-                  value={selectedTemplate}
-                  onValueChange={async (v) => {
-                    const key = v as SystemTemplateKey;
-                    setSelectedTemplate(key);
-                    const tpl = await getSystemTemplate(key);
-                    if (!tpl || !composer) return;
-                    const rendered = renderTemplate(tpl.content, {
-                      full_name: composer.row.full_name, phone: composer.row.phone,
-                      email: composer.row.email, user_id: composer.row.user_id,
-                      end_date: composer.row.end_date,
-                    });
-                    setComposer({ ...composer, message: rendered, templateId: tpl.id, imageUrl: tpl.image_url || null });
-                  }}
-                >
+                <label className="text-xs text-muted-foreground">Template (etapa)</label>
+                <Select value={composer.templateKey} onValueChange={(v) => onTemplateChange(v as SystemTemplateKey)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {TEMPLATES.map((t) => (
+                    {Object.entries(STAGE_TEMPLATES).map(([s, t]) => (
                       <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              <Textarea
-                rows={14}
-                value={composer.message}
-                onChange={(e) => setComposer({ ...composer, message: e.target.value })}
-                className="font-mono text-sm"
-              />
-              {/* Attachment (image JPG/PNG or PDF) */}
+              <Textarea rows={12} value={composer.message} onChange={(e) => setComposer({ ...composer, message: e.target.value })} className="font-mono text-sm" />
               <div className="space-y-2">
                 <label className="text-xs text-muted-foreground">Anexo (opcional — JPG, PNG ou PDF)</label>
                 {(composer.imageUrl || composer.documentUrl) ? (
                   <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
                     {composer.imageUrl ? <ImageIcon className="w-4 h-4 shrink-0" /> : <FileText className="w-4 h-4 shrink-0" />}
-                    <span className="truncate flex-1">
-                      {composer.documentName || (composer.imageUrl ? "Imagem anexada" : "Documento anexado")}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setComposer({ ...composer, imageUrl: null, documentUrl: null, documentName: null })}
-                      disabled={composerSending || uploadingAttachment}
-                    >
+                    <span className="truncate flex-1">{composer.documentName || (composer.imageUrl ? "Imagem anexada" : "Documento anexado")}</span>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setComposer({ ...composer, imageUrl: null, documentUrl: null, documentName: null })} disabled={composerSending || uploadingAttachment}>
                       <X className="w-4 h-4" />
                     </Button>
                   </div>
@@ -663,29 +562,17 @@ const AdminBilling = ({ area }: Props) => {
                         const lower = file.name.toLowerCase();
                         const isPdf = file.type === "application/pdf" || lower.endsWith(".pdf");
                         const isImg = ["image/jpeg", "image/jpg", "image/png"].includes(file.type) || /\.(jpe?g|png)$/i.test(lower);
-                        if (!isPdf && !isImg) {
-                          toast.error("Envie apenas JPG, PNG ou PDF");
-                          return;
-                        }
-                        if (file.size > 16 * 1024 * 1024) {
-                          toast.error("Arquivo muito grande (máx. 16MB)");
-                          return;
-                        }
+                        if (!isPdf && !isImg) { toast.error("Envie apenas JPG, PNG ou PDF"); return; }
+                        if (file.size > 16 * 1024 * 1024) { toast.error("Arquivo muito grande (máx. 16MB)"); return; }
                         setUploadingAttachment(true);
                         try {
                           const ext = isPdf ? "pdf" : (lower.match(/\.(jpe?g|png)$/i)?.[0].replace(".", "") || "jpg");
                           const path = `${composer.row.user_id}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
-                          const { error: upErr } = await supabase.storage
-                            .from("billing-attachments")
+                          const { error: upErr } = await supabase.storage.from("billing-attachments")
                             .upload(path, file, { contentType: file.type || (isPdf ? "application/pdf" : "image/jpeg"), upsert: false });
                           if (upErr) throw upErr;
                           const { data: urlData } = supabase.storage.from("billing-attachments").getPublicUrl(path);
-                          setComposer({
-                            ...composer,
-                            imageUrl: isImg ? urlData.publicUrl : null,
-                            documentUrl: isPdf ? urlData.publicUrl : null,
-                            documentName: isPdf ? file.name : null,
-                          });
+                          setComposer({ ...composer, imageUrl: isImg ? urlData.publicUrl : null, documentUrl: isPdf ? urlData.publicUrl : null, documentName: isPdf ? file.name : null });
                           toast.success("Anexo carregado");
                         } catch (err: any) {
                           toast.error(err?.message || "Falha ao enviar anexo");
@@ -694,24 +581,14 @@ const AdminBilling = ({ area }: Props) => {
                         }
                       }}
                     />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={uploadingAttachment || composerSending}
-                      onClick={() => document.getElementById("billing-attachment-input")?.click()}
-                    >
-                      {uploadingAttachment ? (
-                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enviando...</>
-                      ) : (
-                        <><Paperclip className="w-4 h-4 mr-2" /> Anexar arquivo</>
-                      )}
+                    <Button type="button" variant="outline" size="sm" disabled={uploadingAttachment || composerSending} onClick={() => document.getElementById("billing-attachment-input")?.click()}>
+                      {uploadingAttachment ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enviando...</>) : (<><Paperclip className="w-4 h-4 mr-2" /> Anexar arquivo</>)}
                     </Button>
                   </div>
                 )}
               </div>
               <p className="text-[11px] text-muted-foreground">
-                O rodapé "🔔 Comunicação automática STH METHOD" será adicionado automaticamente se ainda não estiver no texto.
+                Após o envio, o aluno sai da fila automaticamente até a próxima data programada.
               </p>
             </div>
           )}
@@ -725,12 +602,10 @@ const AdminBilling = ({ area }: Props) => {
         </DialogContent>
       </Dialog>
 
-      {/* Quick profile edit dialog */}
+      {/* Profile quick edit */}
       <Dialog open={!!profileEdit} onOpenChange={(o) => !o && !profileSaving && setProfileEdit(null)}>
         <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Atualizar cadastro</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Atualizar cadastro</DialogTitle></DialogHeader>
           {profileEdit && (
             <div className="space-y-3">
               <div>
@@ -739,11 +614,7 @@ const AdminBilling = ({ area }: Props) => {
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">Telefone (WhatsApp)</label>
-                <Input
-                  value={profileEdit.phone}
-                  onChange={(e) => setProfileEdit({ ...profileEdit, phone: e.target.value })}
-                  placeholder="(xx) xxxxx-xxxx"
-                />
+                <Input value={profileEdit.phone} onChange={(e) => setProfileEdit({ ...profileEdit, phone: e.target.value })} placeholder="(xx) xxxxx-xxxx" />
                 {profileEdit.phone && !isValidPhone(profileEdit.phone) && (
                   <p className="text-xs text-red-500 mt-1">⚠ Telefone parece inválido</p>
                 )}
@@ -761,15 +632,13 @@ const AdminBilling = ({ area }: Props) => {
                 if (!profileEdit) return;
                 setProfileSaving(true);
                 const { error } = await supabase.from("profiles").update({
-                  full_name: profileEdit.full_name,
-                  phone: profileEdit.phone,
-                  email: profileEdit.email,
+                  full_name: profileEdit.full_name, phone: profileEdit.phone, email: profileEdit.email,
                 }).eq("user_id", profileEdit.user_id);
                 setProfileSaving(false);
-                if (error) { toast.error("Erro ao salvar: " + error.message); return; }
+                if (error) { toast.error("Erro: " + error.message); return; }
                 toast.success("Cadastro atualizado");
                 setProfileEdit(null);
-                qc.invalidateQueries({ queryKey: ["billing-overdue"] });
+                qc.invalidateQueries({ queryKey: ["billing-campaigns"] });
               }}
               disabled={profileSaving}
             >
@@ -778,7 +647,66 @@ const AdminBilling = ({ area }: Props) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* History dialog */}
+      <HistoryDialog row={historyOf} onClose={() => setHistoryOf(null)} />
     </DashboardLayout>
+  );
+};
+
+const HistoryDialog = ({ row, onClose }: { row: any | null; onClose: () => void }) => {
+  const { data, isLoading } = useQuery({
+    queryKey: ["billing-charges", row?.user_id],
+    queryFn: async () => {
+      if (!row) return [];
+      const { data } = await supabase
+        .from("billing_charges")
+        .select("*")
+        .eq("user_id", row.user_id)
+        .order("sent_at", { ascending: false });
+      return data || [];
+    },
+    enabled: !!row,
+  });
+
+  return (
+    <Dialog open={!!row} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <History className="w-4 h-4" /> Histórico — {row?.full_name}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground text-center py-6">Carregando...</p>
+          ) : !data || data.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">Nenhuma cobrança registrada ainda.</p>
+          ) : (
+            data.map((c: any) => (
+              <Card key={c.id}><CardContent className="p-3 space-y-2">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className={STAGE_COLORS[c.stage] || ""}>{c.stage}ª cobrança</Badge>
+                    <Badge variant="outline" className={c.delivery_status === "sent" ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-amber-500/15 text-amber-400 border-amber-500/30"}>
+                      {c.delivery_status === "sent" ? "Entregue" : c.delivery_status === "manual" ? "Envio manual" : "Falhou"}
+                    </Badge>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(c.sent_at).toLocaleString("pt-BR")}
+                  </span>
+                </div>
+                <pre className="text-xs whitespace-pre-wrap bg-muted/30 p-2 rounded">{c.message}</pre>
+                {c.delivery_error && <p className="text-xs text-red-400">Erro: {c.delivery_error}</p>}
+              </CardContent></Card>
+            ))
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Fechar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
