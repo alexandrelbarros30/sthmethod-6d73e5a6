@@ -223,6 +223,7 @@ const AdminBilling = ({ area }: Props) => {
       phone: row.phone,
       email: row.email,
       user_id: row.user_id,
+      end_date: row.end_date,
     }, { logHistory: true, mode: "auto" });
     if (!res.ok) { toast.error(res.reason || "Falha ao enviar"); return; }
     await upsertAction.mutateAsync({
