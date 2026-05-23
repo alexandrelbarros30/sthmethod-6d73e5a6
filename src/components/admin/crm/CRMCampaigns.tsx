@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Plus, Send, Calendar, Pause, Play, Trash2, Megaphone, Repeat, Clock, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -56,6 +57,16 @@ export default function CRMCampaigns() {
     scheduled_at: "", recurrence_enabled: false, recurrence_days: 7,
   });
   const [dispatching, setDispatching] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{
+    open: boolean;
+    loading: boolean;
+    title: string;
+    content: string;
+    mediaUrl?: string;
+    mediaType?: string;
+    recipients: number;
+    segmentName?: string;
+  }>({ open: false, loading: false, title: "", content: "", recipients: 0 });
 
   const { data: campaigns = [], isLoading } = useQuery({
     queryKey: ["crm-campaigns"],
@@ -79,6 +90,101 @@ export default function CRMCampaigns() {
     queryKey: ["crm-media-list"],
     queryFn: async () => (await supabase.from("crm_media").select("id, title").order("created_at", { ascending: false })).data || [],
   });
+
+  const renderVars = (content: string) => {
+    const sample: Record<string, string> = {
+      nome: "Maria",
+      plano: "Premium",
+      dias_vencido: "3",
+      cupom: "STH10",
+      link: "https://sthmethod.com.br",
+      objetivo: "Hipertrofia",
+    };
+    return content.replace(/\{(\w+)\}/g, (_, k) => sample[k] ?? `{${k}}`);
+  };
+
+  const classify = (sub: any) => {
+    if (!sub) return "lead";
+    const days = Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86400000);
+    if (days < 0) return "expired";
+    if (days <= 7) return "expiring";
+    return "active";
+  };
+
+  const estimateRecipients = async (segmentId: string | null, snapshot: any) => {
+    let filters: any = {};
+    if (segmentId) {
+      const { data: seg } = await supabase.from("crm_segments").select("filters").eq("id", segmentId).single();
+      filters = (seg?.filters as any) || {};
+    } else if (snapshot) {
+      filters = snapshot.filters || {};
+    }
+    const { data: profiles } = await supabase.from("profiles").select("user_id, phone, gender, objective").limit(5000);
+    const userIds = (profiles || []).map((p: any) => p.user_id);
+    const { data: subs } = await supabase.from("subscriptions").select("user_id, end_date, status").in("user_id", userIds);
+    const latest = new Map<string, any>();
+    (subs || []).forEach((s: any) => {
+      const ex = latest.get(s.user_id);
+      if (!ex || new Date(s.end_date) > new Date(ex.end_date)) latest.set(s.user_id, s);
+    });
+    return (profiles || []).filter((p: any) => {
+      const phone = (p.phone || "").replace(/\D/g, "");
+      if (!phone) return false;
+      const status = classify(latest.get(p.user_id));
+      if (filters.status && filters.status !== "all") {
+        if (filters.status === "inactive") {
+          if (!["expired", "inactive"].includes(status)) return false;
+        } else if (status !== filters.status) return false;
+      }
+      const gender = (p.gender || "").toLowerCase();
+      if (filters.gender && filters.gender !== "all" && gender !== filters.gender) return false;
+      if (filters.objective && !(p.objective || "").toLowerCase().includes(String(filters.objective).toLowerCase())) return false;
+      return true;
+    }).length;
+  };
+
+  const openPreviewFromForm = async () => {
+    if (!form.template_id || !form.segment_id) {
+      toast.error("Selecione segmento e template para pré-visualizar");
+      return;
+    }
+    setPreview((p) => ({ ...p, open: true, loading: true, title: form.name || "Pré-visualização", content: "", recipients: 0 }));
+    const [{ data: tpl }, { data: seg }, mediaRow] = await Promise.all([
+      supabase.from("crm_templates").select("title, content").eq("id", form.template_id).single(),
+      supabase.from("crm_segments").select("name").eq("id", form.segment_id).single(),
+      form.media_id ? supabase.from("crm_media").select("url, media_type").eq("id", form.media_id).single() : Promise.resolve({ data: null } as any),
+    ]);
+    const count = await estimateRecipients(form.segment_id, null);
+    setPreview({
+      open: true, loading: false,
+      title: form.name || tpl?.title || "Pré-visualização",
+      content: renderVars(tpl?.content || ""),
+      mediaUrl: mediaRow?.data?.url, mediaType: mediaRow?.data?.media_type,
+      recipients: count, segmentName: seg?.name,
+    });
+  };
+
+  const openPreviewFromCampaign = async (c: Campaign) => {
+    setPreview((p) => ({ ...p, open: true, loading: true, title: c.name, content: "", recipients: 0 }));
+    const [{ data: tpl }, segRow, mediaRow] = await Promise.all([
+      c.template_id
+        ? supabase.from("crm_templates").select("title, content").eq("id", c.template_id).single()
+        : Promise.resolve({ data: null } as any),
+      c.segment_id
+        ? supabase.from("crm_segments").select("name").eq("id", c.segment_id).single()
+        : Promise.resolve({ data: null } as any),
+      c.media_ids?.[0]
+        ? supabase.from("crm_media").select("url, media_type").eq("id", c.media_ids[0]).single()
+        : Promise.resolve({ data: null } as any),
+    ]);
+    const count = await estimateRecipients(c.segment_id, null);
+    setPreview({
+      open: true, loading: false,
+      title: c.name, content: renderVars(tpl?.content || ""),
+      mediaUrl: mediaRow?.data?.url, mediaType: mediaRow?.data?.media_type,
+      recipients: count, segmentName: segRow?.data?.name,
+    });
+  };
 
   const reset = () => setForm({
     name: "", description: "", segment_id: "", template_id: "", media_id: "",
@@ -223,6 +329,9 @@ export default function CRMCampaigns() {
             </div>
             <DialogFooter className="gap-2">
               <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+              <Button variant="outline" onClick={openPreviewFromForm} className="gap-2">
+                <Eye className="h-4 w-4" /> Pré-visualizar
+              </Button>
               <Button variant="outline" onClick={() => save(false)} className="gap-2">
                 <Calendar className="h-4 w-4" /> Salvar {form.scheduled_at ? "agendada" : "rascunho"}
               </Button>
@@ -233,6 +342,54 @@ export default function CRMCampaigns() {
           </DialogContent>
         </Dialog>
       </div>
+
+      <Dialog open={preview.open} onOpenChange={(v) => setPreview((p) => ({ ...p, open: v }))}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-4 w-4 text-emerald-400" /> Pré-visualização
+            </DialogTitle>
+          </DialogHeader>
+          {preview.loading ? (
+            <div className="flex items-center justify-center py-10">
+              <Loader2 className="h-5 w-5 animate-spin text-emerald-400" />
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <Badge variant="outline" className="border-emerald-500/30 text-emerald-400">
+                  {preview.recipients} destinatários
+                </Badge>
+                {preview.segmentName && (
+                  <Badge variant="outline" className="border-border/60 text-muted-foreground">
+                    {preview.segmentName}
+                  </Badge>
+                )}
+              </div>
+              <div className="rounded-2xl bg-[#0b141a] p-3">
+                <div className="ml-auto max-w-[90%] rounded-2xl rounded-tr-sm bg-[#005c4b] p-3 text-sm text-white shadow">
+                  {preview.mediaUrl && (preview.mediaType || "").startsWith("image/") && (
+                    <img src={preview.mediaUrl} alt="" className="mb-2 max-h-60 w-full rounded-lg object-cover" />
+                  )}
+                  {preview.mediaUrl && (preview.mediaType || "").includes("pdf") && (
+                    <a href={preview.mediaUrl} target="_blank" rel="noreferrer"
+                       className="mb-2 flex items-center gap-2 rounded-lg bg-black/30 p-2 text-xs underline">
+                      📎 Anexo PDF
+                    </a>
+                  )}
+                  <p className="whitespace-pre-wrap break-words">{preview.content || "—"}</p>
+                </div>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Variáveis renderizadas com dados de exemplo (nome=Maria, plano=Premium...).
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreview((p) => ({ ...p, open: false }))}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {isLoading ? (
         <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">Carregando...</CardContent></Card>
@@ -270,6 +427,9 @@ export default function CRMCampaigns() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Button size="sm" variant="ghost" onClick={() => openPreviewFromCampaign(c)} className="gap-1">
+                    <Eye className="h-3.5 w-3.5" /> Prévia
+                  </Button>
                   <Button size="sm" variant="outline" disabled={dispatching === c.id || c.status === "sending"}
                     onClick={() => dispatch(c.id)} className="gap-1">
                     {dispatching === c.id || c.status === "sending"
