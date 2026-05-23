@@ -4,7 +4,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const { phone, message, image_url } = await req.json();
+    const { phone, message, image_url, document_url, document_name } = await req.json();
     if (!phone || !message) {
       return new Response(JSON.stringify({ ok: false, error: 'phone and message required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -36,6 +36,16 @@ Deno.serve(async (req) => {
     if (image_url) {
       endpoint = `${base}/send-image`;
       body = { phone: fullPhone, image: image_url, caption: message };
+    } else if (document_url) {
+      // Z-API: /send-document/{extension}
+      const ext = (document_url.split('?')[0].split('.').pop() || 'pdf').toLowerCase();
+      endpoint = `${base}/send-document/${ext}`;
+      body = {
+        phone: fullPhone,
+        document: document_url,
+        fileName: document_name || `documento.${ext}`,
+        caption: message,
+      };
     }
 
     const resp = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) });
