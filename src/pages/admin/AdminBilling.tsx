@@ -352,6 +352,66 @@ const AdminBilling = ({ area }: Props) => {
     qc.invalidateQueries({ queryKey: ["billing-campaigns"] });
   };
 
+  const [bulkSending, setBulkSending] = useState<string | null>(null);
+
+  const sendOne = async (row: any, stage: number): Promise<{ ok: boolean; error?: string }> => {
+    if (!row.phone || !isValidPhone(row.phone)) return { ok: false, error: "telefone inválido" };
+    const tplDef = STAGE_TEMPLATES[stage] || STAGE_TEMPLATES[1];
+    const tpl = await getSystemTemplate(tplDef.key);
+    if (!tpl) return { ok: false, error: "template não encontrado" };
+    const rendered = renderTemplate(tpl.content, {
+      full_name: row.full_name, phone: row.phone, email: row.email,
+      user_id: row.user_id, end_date: row.end_date,
+    });
+    const AUTO_FOOTER = "\n\n———\n🔔 Comunicação automática STH METHOD\nMensagem enviada automaticamente pelo sistema.\nNão é necessário responder.";
+    const finalMessage = rendered.includes("Comunicação automática STH METHOD") ? rendered : `${rendered}${AUTO_FOOTER}`;
+    let autoOk = false;
+    let deliveryError: string | null = null;
+    try {
+      const { data: res, error } = await supabase.functions.invoke("send-whatsapp", {
+        body: { phone: row.phone, message: finalMessage, image_url: tpl.image_url || null },
+      });
+      if (error) throw error;
+      if (res?.ok) autoOk = true; else deliveryError = res?.error || "Falha no envio";
+    } catch (err: any) {
+      deliveryError = err?.message || String(err);
+    }
+    if (row.campaign) {
+      await supabase.from("billing_charges").insert({
+        campaign_id: row.campaign.id,
+        user_id: row.user_id,
+        stage: row.campaign.stage,
+        template_key: tplDef.key,
+        responsible_user_id: user?.id || null,
+        phone: row.phone,
+        message: finalMessage,
+        image_url: tpl.image_url || null,
+        document_url: null,
+        document_name: null,
+        delivery_status: autoOk ? "sent" : "failed",
+        delivery_error: deliveryError,
+      });
+      await supabase.rpc("advance_billing_campaign", { _campaign_id: row.campaign.id });
+    }
+    return { ok: autoOk, error: deliveryError || undefined };
+  };
+
+  const handleBulkSend = async (bucketKey: string, items: any[], stage: number) => {
+    if (items.length === 0) return;
+    const valid = items.filter((r) => r.phone && isValidPhone(r.phone));
+    if (valid.length === 0) { toast.error("Nenhum aluno com telefone válido nesta faixa."); return; }
+    if (!confirm(`Enviar "${STAGE_TEMPLATES[stage].label}" para ${valid.length} aluno(s) desta faixa?`)) return;
+    setBulkSending(bucketKey);
+    let ok = 0, fail = 0;
+    for (const row of valid) {
+      const r = await sendOne(row, stage);
+      if (r.ok) ok++; else fail++;
+    }
+    setBulkSending(null);
+    toast.success(`Envio em lote — ${ok} enviada(s), ${fail} falha(s).`);
+    qc.invalidateQueries({ queryKey: ["billing-campaigns"] });
+  };
+
   const role = area === "consultor" ? "consultor" : area === "financeiro" ? "financeiro" : "admin";
 
   const tabCounts = {
