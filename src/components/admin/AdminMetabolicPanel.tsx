@@ -13,7 +13,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { buildWhatsAppUrl } from "@/lib/system-templates";
+import { buildWhatsAppUrl, sendSystemTemplate } from "@/lib/system-templates";
 
 const RichTextEditor = lazy(() => import("@/components/shared/RichTextEditor"));
 
@@ -75,6 +75,8 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName, studentPhon
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      const prev = editingId ? (panels as any[]).find((p) => p.id === editingId) : null;
+      const wasVisible = !!prev?.visible;
       if (editingId) {
         const { error } = await supabase
           .from("metabolic_panels")
@@ -94,14 +96,45 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName, studentPhon
         const note = `📊 **Central de Análise atualizado em ${dateStr}**\n\n${content}`;
         await supabase.from("anamnesis_entries").insert({ user_id: userId, notes: note });
       }
+
+      // Dispara WhatsApp automático quando a análise passa a ficar liberada
+      if (visible && !wasVisible) {
+        try {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("full_name, email, phone, notify_on_updates")
+            .eq("user_id", userId)
+            .maybeSingle();
+          const allowed = (profile as any)?.notify_on_updates !== false;
+          const phone = (profile as any)?.phone || studentPhone;
+          if (allowed && phone) {
+            await sendSystemTemplate(
+              "lab_analysis_ready",
+              {
+                full_name: (profile as any)?.full_name || userName,
+                email: (profile as any)?.email || null,
+                phone,
+                user_id: userId,
+              },
+              { logHistory: true, mode: "auto" },
+            );
+          }
+        } catch (err) {
+          console.warn("[lab_analysis_ready] envio falhou", err);
+        }
+      }
     },
     onSuccess: () => {
-      toast.success("Painel metabólico salvo!");
+      toast.success(
+        visible
+          ? "Análise salva e liberada! WhatsApp enviado ao aluno."
+          : "Análise salva!",
+      );
       qc.invalidateQueries({ queryKey: ["metabolic-panels-admin", userId] });
       qc.invalidateQueries({ queryKey: ["metabolic-panel-student", userId] });
       setViewMode("list");
     },
-    onError: () => toast.error("Erro ao salvar painel metabólico"),
+    onError: () => toast.error("Erro ao salvar a análise"),
   });
 
   const deleteMutation = useMutation({
