@@ -27,6 +27,7 @@ import CRMTemplates from "@/components/admin/crm/CRMTemplates";
 import CRMMedia from "@/components/admin/crm/CRMMedia";
 import CRMCampaigns from "@/components/admin/crm/CRMCampaigns";
 import CRMHistory from "@/components/admin/crm/CRMHistory";
+import CRMAutomations from "@/components/admin/crm/CRMAutomations";
 
 type RoleArea = "admin" | "consultor";
 interface Props { area?: RoleArea }
@@ -204,7 +205,7 @@ export default function AdminCRM({ area = "admin" }: Props) {
       case "historico":
         return <CRMHistory />;
       case "automacao":
-        return <ComingSoon title="Automação" description="Recorrência (ex: renovação toda segunda 10h), gatilhos inteligentes e jornadas. Liberado na Fase 4." />;
+        return <CRMAutomations />;
       default:
         return null;
     }
