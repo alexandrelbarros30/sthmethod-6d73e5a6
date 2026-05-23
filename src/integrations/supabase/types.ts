@@ -215,6 +215,48 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_actions: {
+        Row: {
+          assigned_to: string | null
+          attempts: number
+          created_at: string
+          id: string
+          ignore_until: string | null
+          last_contact_at: string | null
+          last_template: string | null
+          observations: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          attempts?: number
+          created_at?: string
+          id?: string
+          ignore_until?: string | null
+          last_contact_at?: string | null
+          last_template?: string | null
+          observations?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          attempts?: number
+          created_at?: string
+          id?: string
+          ignore_until?: string | null
+          last_contact_at?: string | null
+          last_template?: string | null
+          observations?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bioimpedance_logs: {
         Row: {
           arm_cm: number | null

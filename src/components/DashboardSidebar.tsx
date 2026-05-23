@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Layers, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered, RefreshCw, NotebookPen } from "lucide-react";
+import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Layers, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered, RefreshCw, NotebookPen, AlertCircle } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -38,6 +38,7 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/admin/plans", icon: CreditCard, label: "Planos" },
     { to: "/admin/payments", icon: Wallet, label: "Pagamentos" },
     { to: "/admin/revenue", icon: TrendingUp, label: "Faturamento" },
+    { to: "/admin/billing", icon: AlertCircle, label: "Cobranças e Renovações" },
     { to: "/admin/diet", icon: Salad, label: "Dietas" },
     { to: "/admin/diet-library", icon: BookOpen, label: "Bib. Dietas" },
     { to: "/admin/nutrition", icon: Apple, label: "Cardápio" },
@@ -74,6 +75,7 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/consultor", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/consultor/queue", icon: ListOrdered, label: "Fila Atendimento" },
     { to: "/consultor/students", icon: Users, label: "Meus Alunos" },
+    { to: "/consultor/billing", icon: AlertCircle, label: "Cobranças e Renovações" },
     { to: "/consultor/diet", icon: Salad, label: "Dietas" },
     { to: "/consultor/diet-library", icon: BookOpen, label: "Bib. Dietas" },
     { to: "/consultor/nutrition", icon: Apple, label: "Cardápio" },
@@ -91,6 +93,7 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/financeiro", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/financeiro/payments", icon: Wallet, label: "Pagamentos" },
     { to: "/financeiro/billing", icon: Receipt, label: "Faturamento" },
+    { to: "/financeiro/cobrancas", icon: AlertCircle, label: "Cobranças e Renovações" },
     { to: "/financeiro/plans", icon: CreditCard, label: "Planos" },
     { to: "/financeiro/revenue", icon: TrendingUp, label: "Receita" },
   ],
