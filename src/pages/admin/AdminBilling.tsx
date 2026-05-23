@@ -78,6 +78,18 @@ const priorityOf = (days: number): "alta" | "media" | "baixa" => {
   return "baixa";
 };
 
+/** Detect obviously invalid/test phones (e.g. 22222-2222, 99999-9999). */
+const isValidPhone = (phone?: string | null): boolean => {
+  if (!phone) return false;
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 10 || digits.length > 13) return false;
+  // reject if all digits are the same (e.g. 2122222222)
+  const local = digits.startsWith("55") ? digits.slice(2) : digits;
+  if (/^(\d)\1+$/.test(local.slice(2))) return false; // body repeated
+  if (/^(\d)\1{7,}$/.test(local)) return false;
+  return true;
+};
+
 const AdminBilling = ({ area }: Props) => {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -119,7 +131,15 @@ const AdminBilling = ({ area }: Props) => {
       }
 
       const today = new Date(); today.setHours(0, 0, 0, 0);
+      // Users with ANY active (non-expired) subscription should NOT appear in billing,
+      // even if the LATEST row happens to be expired (paranoid fallback after a payment).
+      const hasActiveByUser = new Set<string>();
+      for (const s of subs || []) {
+        const end = new Date(s.end_date + "T00:00:00");
+        if (end.getTime() >= today.getTime()) hasActiveByUser.add(s.user_id);
+      }
       const overdue = Array.from(latestByUser.values()).filter((s) => {
+        if (hasActiveByUser.has(s.user_id)) return false;
         const end = new Date(s.end_date + "T00:00:00");
         return end.getTime() < today.getTime();
       });
@@ -127,7 +147,7 @@ const AdminBilling = ({ area }: Props) => {
       const userIds = overdue.map((s) => s.user_id);
       const planIds = Array.from(new Set(overdue.map((s) => s.plan_id)));
 
-      const [profilesRes, plansRes, actionsRes] = await Promise.all([
+      const [profilesRes, plansRes, actionsRes, paymentsRes] = await Promise.all([
         userIds.length
           ? supabase.from("profiles").select("user_id, full_name, phone, email").in("user_id", userIds)
           : Promise.resolve({ data: [] as any[] }),
@@ -137,13 +157,22 @@ const AdminBilling = ({ area }: Props) => {
         userIds.length
           ? supabase.from("billing_actions").select("*").in("user_id", userIds)
           : Promise.resolve({ data: [] as any[] }),
+        userIds.length
+          ? supabase.from("payments")
+              .select("user_id, status, created_at")
+              .in("user_id", userIds)
+              .eq("status", "approved")
+              .gte("created_at", new Date(Date.now() - 7 * 86400000).toISOString())
+          : Promise.resolve({ data: [] as any[] }),
       ]);
 
       const pMap = new Map((profilesRes.data || []).map((p: any) => [p.user_id, p]));
       const planMap = new Map((plansRes.data || []).map((p: any) => [p.id, p]));
       const aMap = new Map((actionsRes.data || []).map((a: any) => [a.user_id, a]));
+      // Exclude users with an approved payment in the last 7 days (just renewed).
+      const recentlyPaid = new Set((paymentsRes.data || []).map((p: any) => p.user_id));
 
-      const rows = overdue.map((s) => {
+      const rows = overdue.filter((s) => !recentlyPaid.has(s.user_id)).map((s) => {
         const days = daysSince(s.end_date);
         const profile = pMap.get(s.user_id) || {};
         const plan = planMap.get(s.plan_id) || {};
@@ -163,6 +192,7 @@ const AdminBilling = ({ area }: Props) => {
           status,
           action,
           priority: priorityOf(days),
+          phone_valid: isValidPhone(profile.phone),
         };
       });
 
@@ -222,6 +252,10 @@ const AdminBilling = ({ area }: Props) => {
 
   const handleSendBilling = async (row: any) => {
     if (!row.phone) { toast.error("Aluno sem telefone cadastrado"); return; }
+    if (!isValidPhone(row.phone)) {
+      toast.error(`Telefone inválido (${row.phone}). Atualize o cadastro antes de enviar.`);
+      return;
+    }
     const res = await sendSystemTemplate(selectedTemplate, {
       full_name: row.full_name,
       phone: row.phone,
@@ -257,7 +291,7 @@ const AdminBilling = ({ area }: Props) => {
   };
 
   const handleBulkSend = async () => {
-    const targets = filtered.filter((r) => r.phone && r.status !== "renewed" && r.status !== "declined" && r.status !== "inactive");
+    const targets = filtered.filter((r) => r.phone && isValidPhone(r.phone) && r.status !== "renewed" && r.status !== "declined" && r.status !== "inactive");
     if (targets.length === 0) { toast.error("Nenhum aluno elegível no filtro atual."); return; }
     if (!autoSend) {
       toast.error("Ative a chave de envio automático para disparar em massa.");
@@ -406,7 +440,9 @@ const AdminBilling = ({ area }: Props) => {
                   <TableRow key={r.user_id}>
                     <TableCell>
                       <div className="font-medium">{r.full_name}</div>
-                      <div className="text-xs text-muted-foreground">{r.phone || "sem telefone"}</div>
+                      <div className={`text-xs ${r.phone && !r.phone_valid ? "text-red-500 font-medium" : "text-muted-foreground"}`}>
+                        {r.phone ? (r.phone_valid ? r.phone : `⚠ ${r.phone} (inválido)`) : "sem telefone"}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div>{r.plan_name}</div>
@@ -430,7 +466,7 @@ const AdminBilling = ({ area }: Props) => {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button size="sm" variant="default" onClick={() => handleSendBilling(r)} disabled={!r.phone}>
+                        <Button size="sm" variant="default" onClick={() => handleSendBilling(r)} disabled={!r.phone || !r.phone_valid}>
                           <Send className="w-3.5 h-3.5 mr-1" /> Cobrar
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => handleMarkRenewed(r)}>
