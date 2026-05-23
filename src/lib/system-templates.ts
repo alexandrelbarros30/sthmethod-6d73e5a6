@@ -12,7 +12,11 @@ export type SystemTemplateKey =
   | "training_updated"
   | "protocol_updated"
   | "plan_updated"
-  | "lab_analysis_ready";
+  | "lab_analysis_ready"
+  | "renewal_soft"
+  | "renewal_objective"
+  | "renewal_recovery"
+  | "renewal_last_contact";
 
 export interface ResolvedTemplate {
   id: string;
