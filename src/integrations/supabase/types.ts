@@ -654,6 +654,332 @@ export type Database = {
           },
         ]
       }
+      crm_campaign_messages: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          error: string | null
+          id: string
+          media_url: string | null
+          recipient_name: string | null
+          recipient_phone: string
+          recipient_user_id: string | null
+          rendered_content: string | null
+          responded_at: string | null
+          run_id: string | null
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          media_url?: string | null
+          recipient_name?: string | null
+          recipient_phone: string
+          recipient_user_id?: string | null
+          rendered_content?: string | null
+          responded_at?: string | null
+          run_id?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          media_url?: string | null
+          recipient_name?: string | null
+          recipient_phone?: string
+          recipient_user_id?: string | null
+          rendered_content?: string | null
+          responded_at?: string | null
+          run_id?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_campaign_messages_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "crm_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_campaign_messages_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "crm_campaign_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_campaign_runs: {
+        Row: {
+          campaign_id: string
+          error: string | null
+          failed_count: number
+          finished_at: string | null
+          id: string
+          sent_count: number
+          started_at: string
+          total_recipients: number
+          trigger_type: string
+          triggered_by: string | null
+        }
+        Insert: {
+          campaign_id: string
+          error?: string | null
+          failed_count?: number
+          finished_at?: string | null
+          id?: string
+          sent_count?: number
+          started_at?: string
+          total_recipients?: number
+          trigger_type?: string
+          triggered_by?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          error?: string | null
+          failed_count?: number
+          finished_at?: string | null
+          id?: string
+          sent_count?: number
+          started_at?: string
+          total_recipients?: number
+          trigger_type?: string
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_campaign_runs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "crm_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_campaigns: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          failed_count: number
+          id: string
+          last_run_at: string | null
+          media_ids: string[] | null
+          name: string
+          next_run_at: string | null
+          recurrence: Json | null
+          response_count: number
+          scheduled_at: string | null
+          scope: string
+          segment_id: string | null
+          segment_snapshot: Json | null
+          sent_count: number
+          status: string
+          template_id: string | null
+          template_snapshot: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          failed_count?: number
+          id?: string
+          last_run_at?: string | null
+          media_ids?: string[] | null
+          name: string
+          next_run_at?: string | null
+          recurrence?: Json | null
+          response_count?: number
+          scheduled_at?: string | null
+          scope?: string
+          segment_id?: string | null
+          segment_snapshot?: Json | null
+          sent_count?: number
+          status?: string
+          template_id?: string | null
+          template_snapshot?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          failed_count?: number
+          id?: string
+          last_run_at?: string | null
+          media_ids?: string[] | null
+          name?: string
+          next_run_at?: string | null
+          recurrence?: Json | null
+          response_count?: number
+          scheduled_at?: string | null
+          scope?: string
+          segment_id?: string | null
+          segment_snapshot?: Json | null
+          sent_count?: number
+          status?: string
+          template_id?: string | null
+          template_snapshot?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_campaigns_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "crm_segments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_campaigns_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "crm_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_media: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          favorite: boolean
+          file_path: string | null
+          id: string
+          mime_type: string | null
+          size_bytes: number | null
+          tags: string[] | null
+          title: string | null
+          type: string
+          updated_at: string
+          uploaded_by: string
+          url: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          favorite?: boolean
+          file_path?: string | null
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          tags?: string[] | null
+          title?: string | null
+          type: string
+          updated_at?: string
+          uploaded_by: string
+          url: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          favorite?: boolean
+          file_path?: string | null
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          tags?: string[] | null
+          title?: string | null
+          type?: string
+          updated_at?: string
+          uploaded_by?: string
+          url?: string
+        }
+        Relationships: []
+      }
+      crm_segments: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          filters: Json
+          id: string
+          name: string
+          scope: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          filters?: Json
+          id?: string
+          name: string
+          scope?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          filters?: Json
+          id?: string
+          name?: string
+          scope?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      crm_templates: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          created_by: string
+          id: string
+          is_active: boolean
+          media_ids: string[] | null
+          preview_text: string | null
+          scope: string
+          subcategory: string | null
+          title: string
+          updated_at: string
+          variables: string[] | null
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string
+          created_by: string
+          id?: string
+          is_active?: boolean
+          media_ids?: string[] | null
+          preview_text?: string | null
+          scope?: string
+          subcategory?: string | null
+          title: string
+          updated_at?: string
+          variables?: string[] | null
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_active?: boolean
+          media_ids?: string[] | null
+          preview_text?: string | null
+          scope?: string
+          subcategory?: string | null
+          title?: string
+          updated_at?: string
+          variables?: string[] | null
+        }
+        Relationships: []
+      }
       custom_popups: {
         Row: {
           active: boolean
