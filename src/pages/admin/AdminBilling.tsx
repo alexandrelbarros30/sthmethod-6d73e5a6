@@ -469,6 +469,33 @@ const AdminBilling = ({ area }: Props) => {
 
   const role = area === "consultor" ? "consultor" : area === "financeiro" ? "financeiro" : "admin";
 
+  const { data: automation } = useQuery({
+    queryKey: ["billing-automation"],
+    queryFn: async () => {
+      const { data } = await supabase.from("billing_automation").select("enabled").eq("id", 1).maybeSingle();
+      return data;
+    },
+  });
+
+  const toggleAutomation = async (enabled: boolean) => {
+    const { error } = await supabase.from("billing_automation").update({ enabled, updated_at: new Date().toISOString(), updated_by: user?.id }).eq("id", 1);
+    if (error) { toast.error("Falha ao atualizar automação: " + error.message); return; }
+    toast.success(enabled ? "Automação ATIVADA — cobranças vencidas serão disparadas a cada 30 min" : "Automação PAUSADA");
+    qc.invalidateQueries({ queryKey: ["billing-automation"] });
+  };
+
+  const triggerNow = async () => {
+    toast.loading("Disparando ciclo agora...", { id: "auto-run" });
+    try {
+      const { data: res, error } = await supabase.functions.invoke("billing-auto-dispatch");
+      if (error) throw error;
+      toast.success(`Ciclo executado — ${res?.sent || 0} enviada(s), ${res?.failed || 0} falha(s), ${res?.skipped || 0} ignorada(s)`, { id: "auto-run" });
+      qc.invalidateQueries({ queryKey: ["billing-campaigns"] });
+    } catch (err: any) {
+      toast.error("Erro: " + (err?.message || err), { id: "auto-run" });
+    }
+  };
+
   const tabCounts = {
     queue: rows.filter(inQueue).length,
     waiting: rows.filter(inWaiting).length,
