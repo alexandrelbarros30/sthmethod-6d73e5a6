@@ -226,6 +226,7 @@ const App = () => (
             <Route path="/admin/updates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminUpdates /></ProtectedRoute>} />
             <Route path="/admin/teleatendimento" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTeleatendimento /></ProtectedRoute>} />
             <Route path="/admin/billing" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBilling area="admin" /></ProtectedRoute>} />
+            <Route path="/admin/crm" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCRM area="admin" /></ProtectedRoute>} />
             {/* Consultor routes */}
             <Route path="/consultor" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
             <Route path="/consultor/students" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
@@ -239,6 +240,7 @@ const App = () => (
             <Route path="/consultor/protocol-library" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminProtocolLibrary /></ProtectedRoute>} />
             <Route path="/consultor/queue" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminQueue /></ProtectedRoute>} />
             <Route path="/consultor/billing" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminBilling area="consultor" /></ProtectedRoute>} />
+            <Route path="/consultor/crm" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminCRM area="consultor" /></ProtectedRoute>} />
             {/* Assistente routes */}
             <Route path="/assistente" element={<ProtectedRoute allowedRoles={["assistente"]}><AssistenteDashboard /></ProtectedRoute>} />
             <Route path="/assistente/students" element={<ProtectedRoute allowedRoles={["assistente"]}><AdminStudents /></ProtectedRoute>} />
