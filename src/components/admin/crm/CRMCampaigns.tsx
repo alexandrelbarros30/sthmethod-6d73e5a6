@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Send, Calendar, Pause, Play, Trash2, Megaphone, Repeat, Clock, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Plus, Send, Calendar, Pause, Play, Trash2, Megaphone, Repeat, Clock, CheckCircle2, XCircle, Loader2, Pencil } from "lucide-react";
 import { Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -52,6 +52,7 @@ export default function CRMCampaigns() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "", description: "", segment_id: "", template_id: "", media_id: "",
     scheduled_at: "", recurrence_enabled: false, recurrence_days: 7,
@@ -191,6 +192,26 @@ export default function CRMCampaigns() {
     scheduled_at: "", recurrence_enabled: false, recurrence_days: 7,
   });
 
+  const openEdit = (c: Campaign) => {
+    setEditingId(c.id);
+    const local = c.scheduled_at
+      ? new Date(new Date(c.scheduled_at).getTime() - new Date().getTimezoneOffset() * 60000)
+          .toISOString()
+          .slice(0, 16)
+      : "";
+    setForm({
+      name: c.name || "",
+      description: c.description || "",
+      segment_id: c.segment_id || "",
+      template_id: c.template_id || "",
+      media_id: c.media_ids?.[0] || "",
+      scheduled_at: local,
+      recurrence_enabled: !!c.recurrence?.enabled,
+      recurrence_days: c.recurrence?.interval_days || 7,
+    });
+    setOpen(true);
+  };
+
   const save = async (sendNow: boolean) => {
     if (!form.name.trim() || !form.template_id || !form.segment_id) {
       toast.error("Nome, segmento e template são obrigatórios");
@@ -208,16 +229,26 @@ export default function CRMCampaigns() {
       scheduled_at: form.scheduled_at ? new Date(form.scheduled_at).toISOString() : null,
       next_run_at: form.scheduled_at ? new Date(form.scheduled_at).toISOString() : null,
       recurrence: form.recurrence_enabled ? { enabled: true, interval_days: form.recurrence_days } : null,
-      scope: "admin",
-      created_by: user.id,
     };
-    const { data, error } = await supabase.from("crm_campaigns").insert(payload).select("id").single();
-    if (error) { toast.error(error.message); return; }
-    toast.success(sendNow ? "Disparando campanha..." : "Campanha criada");
+    let savedId = editingId;
+    if (editingId) {
+      const { error } = await supabase.from("crm_campaigns").update(payload).eq("id", editingId);
+      if (error) { toast.error(error.message); return; }
+      toast.success(sendNow ? "Disparando campanha..." : "Campanha atualizada");
+    } else {
+      const { data, error } = await supabase
+        .from("crm_campaigns")
+        .insert({ ...payload, scope: "admin", created_by: user.id })
+        .select("id").single();
+      if (error) { toast.error(error.message); return; }
+      savedId = data?.id ?? null;
+      toast.success(sendNow ? "Disparando campanha..." : "Campanha criada");
+    }
     setOpen(false);
+    setEditingId(null);
     reset();
     qc.invalidateQueries({ queryKey: ["crm-campaigns"] });
-    if (sendNow && data?.id) dispatch(data.id);
+    if (sendNow && savedId) dispatch(savedId);
   };
 
   const dispatch = async (id: string) => {
@@ -257,14 +288,16 @@ export default function CRMCampaigns() {
           <h2 className="text-lg font-semibold tracking-tight">Campanhas</h2>
           <p className="text-xs text-muted-foreground">Crie, agende e dispare ondas de mensagens.</p>
         </div>
-        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { reset(); setEditingId(null); } }}>
           <DialogTrigger asChild>
             <Button className="gap-2 bg-emerald-500 text-black hover:bg-emerald-400">
               <Plus className="h-4 w-4" /> Nova campanha
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>Nova campanha</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>{editingId ? "Editar campanha" : "Nova campanha"}</DialogTitle>
+            </DialogHeader>
             <div className="space-y-3">
               <Input placeholder="Nome da campanha" value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })} />
@@ -430,6 +463,11 @@ export default function CRMCampaigns() {
                   <Button size="sm" variant="ghost" onClick={() => openPreviewFromCampaign(c)} className="gap-1">
                     <Eye className="h-3.5 w-3.5" /> Prévia
                   </Button>
+                  {["draft", "scheduled", "paused", "failed"].includes(c.status) && (
+                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(c)} title="Editar">
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
                   <Button size="sm" variant="outline" disabled={dispatching === c.id || c.status === "sending"}
                     onClick={() => dispatch(c.id)} className="gap-1">
                     {dispatching === c.id || c.status === "sending"
