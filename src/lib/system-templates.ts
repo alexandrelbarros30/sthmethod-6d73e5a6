@@ -16,7 +16,8 @@ export type SystemTemplateKey =
   | "renewal_soft"
   | "renewal_objective"
   | "renewal_recovery"
-  | "renewal_last_contact";
+  | "renewal_last_contact"
+  | "renewal_reactivation";
 
 export interface ResolvedTemplate {
   id: string;
@@ -86,6 +87,7 @@ export const renderTemplate = (content: string, ctx: TemplateContext): string =>
   const link = ctx.user_id ? `${window.location.origin}/dashboard/renew?uid=${ctx.user_id}` : "";
   msg = msg.replace(/\{link\}/g, link);
   msg = msg.replace(/\{link_renovacao\}/g, link);
+  msg = msg.replace(/\{cupom\}/g, (ctx as any).cupom || "VOLTASTH");
   return msg;
 };
 
