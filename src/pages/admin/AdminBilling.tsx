@@ -541,6 +541,36 @@ const AdminBilling = ({ area }: Props) => {
           </Button>
         </CardContent></Card>
 
+        {/* Automation control banner */}
+        {area === "admin" && (
+          <Card className={automation?.enabled ? "border-emerald-500/40 bg-emerald-500/5" : "border-amber-500/40 bg-amber-500/5"}>
+            <CardContent className="p-4 flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className={`w-2.5 h-2.5 rounded-full ${automation?.enabled ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`} />
+                <div>
+                  <p className="text-sm font-semibold">
+                    {automation?.enabled ? "CRM Automático ATIVO" : "CRM Automático PAUSADO"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {automation?.enabled
+                      ? "Cobranças vencidas são disparadas a cada 30 min até ordem contrária."
+                      : "Nenhuma cobrança será enviada automaticamente. Ative para iniciar o disparo contínuo."}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button variant="outline" size="sm" onClick={triggerNow}>
+                  <Send className="w-4 h-4 mr-1" /> Disparar ciclo agora
+                </Button>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Automação</span>
+                  <Switch checked={!!automation?.enabled} onCheckedChange={toggleAutomation} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Tabs + search */}
         <Card><CardContent className="p-4 space-y-3">
           <div className="flex flex-wrap gap-3 items-center justify-between">
