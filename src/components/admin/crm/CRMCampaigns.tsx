@@ -104,12 +104,14 @@ export default function CRMCampaigns() {
     return content.replace(/\{(\w+)\}/g, (_, k) => sample[k] ?? `{${k}}`);
   };
 
-  const classify = (sub: any) => {
-    if (!sub) return "lead";
-    const days = Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86400000);
-    if (days < 0) return "expired";
-    if (days <= 7) return "expiring";
-    return "active";
+  const classify = (profile: any, sub: any): "active" | "expiring" | "expired" | "lead" | "tool_user" => {
+    if (sub) {
+      const days = Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86400000);
+      if (days < 0) return "expired";
+      if (days <= 7) return "expiring";
+      return "active";
+    }
+    return profile?.onboarding_complete ? "lead" : "tool_user";
   };
 
   const estimateRecipients = async (segmentId: string | null, snapshot: any) => {
@@ -120,7 +122,7 @@ export default function CRMCampaigns() {
     } else if (snapshot) {
       filters = snapshot.filters || {};
     }
-    const { data: profiles } = await supabase.from("profiles").select("user_id, phone, gender, objective").limit(5000);
+    const { data: profiles } = await supabase.from("profiles").select("user_id, phone, gender, objective, onboarding_complete").limit(5000);
     const userIds = (profiles || []).map((p: any) => p.user_id);
     const { data: subs } = await supabase.from("subscriptions").select("user_id, end_date, status").in("user_id", userIds);
     const latest = new Map<string, any>();
@@ -131,10 +133,14 @@ export default function CRMCampaigns() {
     return (profiles || []).filter((p: any) => {
       const phone = (p.phone || "").replace(/\D/g, "");
       if (!phone) return false;
-      const status = classify(latest.get(p.user_id));
+      const sub = latest.get(p.user_id);
+      const status = classify(p, sub);
       if (filters.status && filters.status !== "all") {
         if (filters.status === "inactive") {
-          if (!["expired", "inactive"].includes(status)) return false;
+          // inativo = vencido há mais de 30 dias
+          if (status !== "expired") return false;
+          const days = sub ? Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86400000) : 0;
+          if (days > -30) return false;
         } else if (status !== filters.status) return false;
       }
       const gender = (p.gender || "").toLowerCase();

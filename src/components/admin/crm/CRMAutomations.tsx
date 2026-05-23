@@ -238,7 +238,9 @@ export default function CRMAutomations() {
                         <SelectItem value="active">Ativos</SelectItem>
                         <SelectItem value="expiring">Vencendo</SelectItem>
                         <SelectItem value="expired">Vencidos</SelectItem>
-                        <SelectItem value="inactive">Inativos / leads</SelectItem>
+                        <SelectItem value="inactive">Inativos (vencidos +30d)</SelectItem>
+                        <SelectItem value="lead">Leads qualificados</SelectItem>
+                        <SelectItem value="tool_user">Visitantes de ferramentas</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

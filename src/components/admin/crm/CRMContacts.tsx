@@ -10,16 +10,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Search, Users, MessageCircle, Download } from "lucide-react";
 import { differenceInDays, parseISO } from "date-fns";
+import { classifyCrm, CRM_STATUS_COLOR, CRM_STATUS_LABEL, type CrmStatus } from "@/lib/crm-classify";
 
-type StatusFilter = "all" | "active" | "inactive" | "lead" | "expiring" | "expired";
+type StatusFilter = "all" | CrmStatus | "inactive";
 
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: "all", label: "Todos" },
   { value: "active", label: "Ativos" },
-  { value: "inactive", label: "Inativos" },
-  { value: "lead", label: "Leads (sem plano)" },
   { value: "expiring", label: "Vencendo (7d)" },
   { value: "expired", label: "Vencidos" },
+  { value: "inactive", label: "Inativos (vencidos +30d)" },
+  { value: "lead", label: "Leads qualificados" },
+  { value: "tool_user", label: "Visitantes de ferramentas" },
 ];
 
 interface Contact {
@@ -30,27 +32,14 @@ interface Contact {
   gender: string | null;
   objective: string | null;
   created_at: string;
-  status: "active" | "inactive" | "lead" | "expiring" | "expired";
+  status: CrmStatus;
   plan_name?: string;
   end_date?: string;
   days_to_expire?: number;
 }
 
-const statusColor: Record<Contact["status"], string> = {
-  active: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
-  inactive: "bg-zinc-500/15 text-zinc-400 border-zinc-500/30",
-  lead: "bg-sky-500/15 text-sky-400 border-sky-500/30",
-  expiring: "bg-amber-500/15 text-amber-400 border-amber-500/30",
-  expired: "bg-rose-500/15 text-rose-400 border-rose-500/30",
-};
-
-const statusLabel: Record<Contact["status"], string> = {
-  active: "Ativo",
-  inactive: "Inativo",
-  lead: "Lead",
-  expiring: "Vencendo",
-  expired: "Vencido",
-};
+const statusColor = CRM_STATUS_COLOR;
+const statusLabel = CRM_STATUS_LABEL;
 
 export default function CRMContacts() {
   const [search, setSearch] = useState("");
@@ -63,7 +52,7 @@ export default function CRMContacts() {
     queryFn: async (): Promise<Contact[]> => {
       const { data: profiles, error } = await supabase
         .from("profiles")
-        .select("user_id, full_name, email, phone, gender, objective, created_at")
+        .select("user_id, full_name, email, phone, gender, objective, onboarding_complete, created_at")
         .order("created_at", { ascending: false })
         .limit(1000);
       if (error) throw error;
@@ -86,35 +75,46 @@ export default function CRMContacts() {
       });
 
       const now = new Date();
-      return (profiles || []).map((p): Contact => {
+      return (profiles || []).map((p: any): Contact => {
         const sub = latestSub.get(p.user_id);
-        if (!sub) {
-          return { ...p, status: "lead" } as Contact;
-        }
-        const end = parseISO(sub.end_date);
-        const days = differenceInDays(end, now);
-        let status: Contact["status"];
-        if (days < 0) status = "expired";
-        else if (days <= 7) status = "expiring";
-        else if (sub.status === "active" || days > 0) status = "active";
-        else status = "inactive";
+        const status = classifyCrm(
+          { onboarding_complete: p.onboarding_complete, objective: p.objective },
+          sub ? { end_date: sub.end_date, status: sub.status } : undefined,
+        );
+        const end = sub ? parseISO(sub.end_date) : null;
+        const days = end ? differenceInDays(end, now) : undefined;
         return {
           ...p,
           status,
-          plan_name: plansMap.get(sub.plan_id),
-          end_date: sub.end_date,
+          plan_name: sub ? plansMap.get(sub.plan_id) : undefined,
+          end_date: sub?.end_date,
           days_to_expire: days,
         } as Contact;
       });
     },
   });
 
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { active: 0, expiring: 0, expired: 0, inactive: 0, lead: 0, tool_user: 0 };
+    contacts.forEach((x) => {
+      c[x.status] = (c[x.status] || 0) + 1;
+      if (x.status === "expired" && typeof x.days_to_expire === "number" && x.days_to_expire <= -30) {
+        c.inactive += 1;
+      }
+    });
+    return c;
+  }, [contacts]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return contacts.filter((c) => {
-      if (statusFilter !== "all" && c.status !== statusFilter) {
-        // "inactive" should include expired too for marketing convenience
-        if (!(statusFilter === "inactive" && c.status === "expired")) return false;
+      if (statusFilter !== "all") {
+        if (statusFilter === "inactive") {
+          // inativo = vencido há mais de 30 dias
+          if (!(c.status === "expired" && typeof c.days_to_expire === "number" && c.days_to_expire <= -30)) return false;
+        } else if (c.status !== statusFilter) {
+          return false;
+        }
       }
       if (genderFilter !== "all" && (c.gender || "").toLowerCase() !== genderFilter) return false;
       if (!q) return true;
@@ -161,6 +161,29 @@ export default function CRMContacts() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
+        {[
+          { key: "active", label: "Ativos", color: "text-emerald-400" },
+          { key: "expiring", label: "Vencendo", color: "text-amber-400" },
+          { key: "expired", label: "Vencidos", color: "text-rose-400" },
+          { key: "inactive", label: "Inativos +30d", color: "text-zinc-400" },
+          { key: "lead", label: "Leads", color: "text-sky-400" },
+          { key: "tool_user", label: "Ferramentas", color: "text-zinc-500" },
+        ].map((s) => (
+          <button
+            key={s.key}
+            type="button"
+            onClick={() => setStatusFilter(s.key as StatusFilter)}
+            className={`rounded-lg border p-2 text-left transition hover:border-emerald-500/40 ${
+              statusFilter === s.key ? "border-emerald-500/50 bg-emerald-500/5" : "border-border/40"
+            }`}
+          >
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{s.label}</p>
+            <p className={`text-lg font-semibold ${s.color}`}>{counts[s.key] || 0}</p>
+          </button>
+        ))}
+      </div>
+
       <Card className="border-border/40">
         <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center">
           <div className="relative flex-1">

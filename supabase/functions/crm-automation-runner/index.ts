@@ -15,12 +15,14 @@ type Automation = {
   last_run_at: string | null;
 };
 
-function classifyStatus(sub: any) {
-  if (!sub) return 'lead';
-  const days = Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86400000);
-  if (days < 0) return 'expired';
-  if (days <= 7) return 'expiring';
-  return 'active';
+function classifyStatus(profile: any, sub: any) {
+  if (sub) {
+    const days = Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86400000);
+    if (days < 0) return 'expired';
+    if (days <= 7) return 'expiring';
+    return 'active';
+  }
+  return profile?.onboarding_complete ? 'lead' : 'tool_user';
 }
 
 function renderVars(content: string, ctx: Record<string, string>) {
@@ -84,7 +86,7 @@ Deno.serve(async (req) => {
 
         // Build recipient pool: profiles + latest subscription
         const { data: profiles } = await supabase
-          .from('profiles').select('user_id, full_name, phone, gender, objective').limit(5000);
+          .from('profiles').select('user_id, full_name, phone, gender, objective, onboarding_complete').limit(5000);
         const userIds = (profiles || []).map((p: any) => p.user_id);
         const { data: subs } = await supabase
           .from('subscriptions').select('user_id, end_date, status, plan_id').in('user_id', userIds);
@@ -107,11 +109,18 @@ Deno.serve(async (req) => {
           const phone = (p.phone || '').replace(/\D/g, '');
           if (!phone) return false;
           const sub = latest.get(p.user_id);
-          const status = classifyStatus(sub);
+          const status = classifyStatus(p, sub);
 
           // Segment filters
           if (segFilters.gender && segFilters.gender !== 'all' && (p.gender || '').toLowerCase() !== segFilters.gender) return false;
           if (segFilters.objective && !(p.objective || '').toLowerCase().includes(String(segFilters.objective).toLowerCase())) return false;
+          if (segFilters.status && segFilters.status !== 'all') {
+            if (segFilters.status === 'inactive') {
+              if (status !== 'expired') return false;
+              const d = sub ? Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86400000) : 0;
+              if (d > -30) return false;
+            } else if (status !== segFilters.status) return false;
+          }
 
           // Trigger logic
           if (auto.trigger_type === 'subscription_expiring') {
@@ -127,18 +136,23 @@ Deno.serve(async (req) => {
             return days === targetDays;
           }
           if (auto.trigger_type === 'new_lead') {
-            // Profiles without any subscription
-            return !sub;
+            // Apenas leads qualificados (onboarding completo), sem assinatura.
+            // Visitantes de ferramentas são ignorados por padrão.
+            if (cfg.include_tool_users) return !sub;
+            return !sub && status === 'lead';
           }
           if (auto.trigger_type === 'recurring') {
             // Apply optional status filter from config
             if (cfg.audience_status && cfg.audience_status !== 'all') {
               if (cfg.audience_status === 'inactive') {
-                return ['expired', 'lead'].includes(status);
+                if (status !== 'expired') return false;
+                const d = sub ? Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86400000) : 0;
+                return d <= -30;
               }
               return status === cfg.audience_status;
             }
-            return true;
+            // Por padrão, recurring NÃO atinge visitantes de ferramentas
+            return status !== 'tool_user';
           }
           return false;
         });

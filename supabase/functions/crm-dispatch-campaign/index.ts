@@ -11,13 +11,14 @@ interface Filters {
   objective?: string;
 }
 
-function classify(sub: any): string {
-  if (!sub) return 'lead';
-  const end = new Date(sub.end_date);
-  const days = Math.floor((end.getTime() - Date.now()) / 86400000);
-  if (days < 0) return 'expired';
-  if (days <= 7) return 'expiring';
-  return 'active';
+function classify(profile: any, sub: any): string {
+  if (sub) {
+    const days = Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86400000);
+    if (days < 0) return 'expired';
+    if (days <= 7) return 'expiring';
+    return 'active';
+  }
+  return profile?.onboarding_complete ? 'lead' : 'tool_user';
 }
 
 function render(content: string, vars: Record<string, string>) {
@@ -93,7 +94,7 @@ Deno.serve(async (req) => {
 
     // Load contacts (profiles + latest subscription)
     const { data: profiles } = await supabase
-      .from('profiles').select('user_id, full_name, email, phone, gender, objective').limit(5000);
+      .from('profiles').select('user_id, full_name, email, phone, gender, objective, onboarding_complete').limit(5000);
     const userIds = (profiles || []).map((p: any) => p.user_id);
     const { data: subs } = await supabase
       .from('subscriptions').select('user_id, plan_id, end_date, status').in('user_id', userIds);
@@ -108,7 +109,7 @@ Deno.serve(async (req) => {
     const recipients = (profiles || [])
       .map((p: any) => {
         const sub = latestSub.get(p.user_id);
-        const status = classify(sub);
+        const status = classify(p, sub);
         const end = sub?.end_date ? new Date(sub.end_date) : null;
         const days = end ? Math.floor((end.getTime() - Date.now()) / 86400000) : null;
         return {
@@ -126,7 +127,9 @@ Deno.serve(async (req) => {
         if (!c.phone) return false;
         if (filters.status && filters.status !== 'all') {
           if (filters.status === 'inactive') {
-            if (!['expired', 'inactive'].includes(c.status)) return false;
+            // inativo = vencido há mais de 30 dias
+            if (c.status !== 'expired') return false;
+            if (c.days == null || c.days > -30) return false;
           } else if (c.status !== filters.status) return false;
         }
         if (filters.gender && filters.gender !== 'all' && c.gender !== filters.gender) return false;
