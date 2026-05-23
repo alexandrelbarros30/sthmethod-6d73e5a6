@@ -24,6 +24,7 @@ import TriadeIntestino from "./pages/TriadeIntestino";
 import MasteronAndrogenico from "./pages/MasteronAndrogenico";
 import DrostanolonaTecnica from "./pages/DrostanolonaTecnica";
 import GlowBlend from "./pages/GlowBlend";
+import GhkCu from "./pages/GhkCu";
 import Gestrinona from "./pages/Gestrinona";
 import PlatoMetabolico from "./pages/PlatoMetabolico";
 import Trembolona from "./pages/Trembolona";
@@ -158,6 +159,7 @@ const App = () => (
             <Route path="/tendencias/drostanolona-masteron" element={<MasteronAndrogenico />} />
             <Route path="/tendencias/drostanolona-tecnica" element={<DrostanolonaTecnica />} />
             <Route path="/tendencias/glow-blend" element={<GlowBlend />} />
+            <Route path="/tendencias/ghk-cu" element={<GhkCu />} />
             <Route path="/tendencias/gestrinona" element={<Gestrinona />} />
             <Route path="/tendencias/plato-metabolico" element={<PlatoMetabolico />} />
             <Route path="/tendencias/trembolona" element={<Trembolona />} />
