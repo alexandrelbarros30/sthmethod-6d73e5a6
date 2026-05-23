@@ -103,6 +103,8 @@ const AdminBilling = ({ area }: Props) => {
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
   const [composer, setComposer] = useState<{ row: any; message: string; templateId: string; imageUrl: string | null } | null>(null);
   const [composerSending, setComposerSending] = useState(false);
+  const [profileEdit, setProfileEdit] = useState<{ user_id: string; full_name: string; phone: string; email: string } | null>(null);
+  const [profileSaving, setProfileSaving] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["billing-overdue", area, user?.id],
@@ -475,7 +477,14 @@ const AdminBilling = ({ area }: Props) => {
                 {filtered.map((r) => (
                   <TableRow key={r.user_id}>
                     <TableCell>
-                      <div className="font-medium">{r.full_name}</div>
+                      <button
+                        type="button"
+                        className="font-medium text-left hover:underline hover:text-primary transition-colors"
+                        onClick={() => setProfileEdit({ user_id: r.user_id, full_name: r.full_name, phone: r.phone || "", email: r.email || "" })}
+                        title="Editar cadastro"
+                      >
+                        {r.full_name}
+                      </button>
                       <div className={`text-xs ${r.phone && !r.phone_valid ? "text-red-500 font-medium" : "text-muted-foreground"}`}>
                         {r.phone ? (r.phone_valid ? r.phone : `⚠ ${r.phone} (inválido)`) : "sem telefone"}
                       </div>
