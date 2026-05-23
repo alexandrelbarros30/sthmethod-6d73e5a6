@@ -26,3 +26,9 @@ verify_jwt = false
 
 [functions.send-whatsapp]
 verify_jwt = false
+
+[functions.crm-dispatch-campaign]
+verify_jwt = false
+
+[functions.crm-scheduler]
+verify_jwt = false
