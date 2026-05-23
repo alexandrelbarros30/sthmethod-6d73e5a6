@@ -21,6 +21,10 @@ import {
   Activity,
   ArrowUpRight,
 } from "lucide-react";
+import CRMContacts from "@/components/admin/crm/CRMContacts";
+import CRMSegments from "@/components/admin/crm/CRMSegments";
+import CRMTemplates from "@/components/admin/crm/CRMTemplates";
+import CRMMedia from "@/components/admin/crm/CRMMedia";
 
 type RoleArea = "admin" | "consultor";
 interface Props { area?: RoleArea }
@@ -188,13 +192,13 @@ export default function AdminCRM({ area = "admin" }: Props) {
       case "campanhas":
         return <ComingSoon title="Campanhas" description="Builder de campanhas: público → template → mídia → agendamento ou envio imediato. Liberado na Fase 3." />;
       case "templates":
-        return <ComingSoon title="Templates editoriais" description="Biblioteca com categorias Comercial, Relacionamento, Estratégico e Conteúdo. Editor com variáveis e preview WhatsApp. Liberado na Fase 2." />;
+        return <CRMTemplates />;
       case "contatos":
-        return <ComingSoon title="Lista inteligente de contatos" description="Alunos ativos, inativos, pacientes, leads, renovações pendentes com filtros avançados. Liberado na Fase 2." />;
+        return <CRMContacts />;
       case "segmentos":
-        return <ComingSoon title="Segmentações" description="Salve públicos como Alunos 90D, Inativos +30 dias, Vencimento próximo, Grupo emagrecimento. Liberado na Fase 2." />;
+        return <CRMSegments />;
       case "midias":
-        return <ComingSoon title="Mídias STH" description="Biblioteca de artes, vídeos e PDFs com upload, categorias, favoritos e reuso rápido. Liberado na Fase 2." />;
+        return <CRMMedia />;
       case "historico":
         return <ComingSoon title="Histórico de envios" description="Quem enviou, quando, para quantos, taxa de entrega e cliques. Liberado na Fase 3." />;
       case "automacao":
