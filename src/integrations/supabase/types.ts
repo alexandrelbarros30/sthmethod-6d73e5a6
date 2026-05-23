@@ -257,8 +257,30 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_automation: {
+        Row: {
+          enabled: boolean
+          id: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          enabled?: boolean
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          enabled?: boolean
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       billing_campaigns: {
         Row: {
+          auto_send: boolean
           created_at: string
           end_date: string
           id: string
@@ -274,6 +296,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          auto_send?: boolean
           created_at?: string
           end_date: string
           id?: string
@@ -289,6 +312,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          auto_send?: boolean
           created_at?: string
           end_date?: string
           id?: string
@@ -3488,6 +3512,7 @@ export type Database = {
       advance_billing_campaign: {
         Args: { _campaign_id: string }
         Returns: {
+          auto_send: boolean
           created_at: string
           end_date: string
           id: string
