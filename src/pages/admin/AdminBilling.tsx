@@ -581,7 +581,6 @@ const AdminBilling = ({ area }: Props) => {
       {/* Composer dialog – edit before send */}
       <Dialog open={!!composer} onOpenChange={(o) => !o && !composerSending && setComposer(null)}>
         <DialogContent className="max-w-lg">
-          {/* placeholder anchor */}
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Pencil className="w-4 h-4" /> Revisar cobrança — {composer?.row?.full_name}
