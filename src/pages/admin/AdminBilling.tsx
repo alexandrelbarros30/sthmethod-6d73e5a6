@@ -353,6 +353,8 @@ const AdminBilling = ({ area }: Props) => {
   };
 
   const [bulkSending, setBulkSending] = useState<string | null>(null);
+  const [bulkComposer, setBulkComposer] = useState<{ bucketKey: string; bucketLabel: string; items: any[]; stage: number; templateKey: SystemTemplateKey; templateId: string; message: string; imageUrl: string | null; documentUrl: string | null; documentName: string | null } | null>(null);
+  const [bulkUploading, setBulkUploading] = useState(false);
 
   const sendOne = async (row: any, stage: number): Promise<{ ok: boolean; error?: string }> => {
     if (!row.phone || !isValidPhone(row.phone)) return { ok: false, error: "telefone inválido" };
@@ -400,14 +402,66 @@ const AdminBilling = ({ area }: Props) => {
     if (items.length === 0) return;
     const valid = items.filter((r) => r.phone && isValidPhone(r.phone));
     if (valid.length === 0) { toast.error("Nenhum aluno com telefone válido nesta faixa."); return; }
-    if (!confirm(`Enviar "${STAGE_TEMPLATES[stage].label}" para ${valid.length} aluno(s) desta faixa?`)) return;
+    const tplDef = STAGE_TEMPLATES[stage] || STAGE_TEMPLATES[1];
+    const tpl = await getSystemTemplate(tplDef.key);
+    if (!tpl) { toast.error("Template não encontrado"); return; }
+    const bucket = DAY_BUCKETS.find((b) => b.key === bucketKey);
+    setBulkComposer({
+      bucketKey, bucketLabel: bucket?.label || "", items: valid, stage,
+      templateKey: tplDef.key, templateId: tpl.id, message: tpl.content,
+      imageUrl: tpl.image_url || null, documentUrl: null, documentName: null,
+    });
+  };
+
+  const onBulkTemplateChange = async (key: SystemTemplateKey) => {
+    if (!bulkComposer) return;
+    const tpl = await getSystemTemplate(key);
+    if (!tpl) return;
+    const stage = parseInt(Object.entries(STAGE_TEMPLATES).find(([, v]) => v.key === key)?.[0] || "1");
+    setBulkComposer({ ...bulkComposer, templateKey: key, templateId: tpl.id, message: tpl.content, imageUrl: tpl.image_url || null, stage });
+  };
+
+  const handleBulkComposerSend = async () => {
+    if (!bulkComposer) return;
+    const { bucketKey, items, stage, templateKey, templateId, message, imageUrl, documentUrl, documentName } = bulkComposer;
+    if (!message.trim()) { toast.error("Mensagem vazia"); return; }
     setBulkSending(bucketKey);
+    const AUTO_FOOTER = "\n\n———\n🔔 Comunicação automática STH METHOD\nMensagem enviada automaticamente pelo sistema.\nNão é necessário responder.";
     let ok = 0, fail = 0;
-    for (const row of valid) {
-      const r = await sendOne(row, stage);
-      if (r.ok) ok++; else fail++;
+    for (const row of items) {
+      const rendered = renderTemplate(message, {
+        full_name: row.full_name, phone: row.phone, email: row.email,
+        user_id: row.user_id, end_date: row.end_date,
+      });
+      const finalMessage = rendered.includes("Comunicação automática STH METHOD") ? rendered : `${rendered}${AUTO_FOOTER}`;
+      let autoOk = false; let deliveryError: string | null = null;
+      try {
+        const { data: res, error } = await supabase.functions.invoke("send-whatsapp", {
+          body: { phone: row.phone, message: finalMessage, image_url: imageUrl, document_url: documentUrl, document_name: documentName },
+        });
+        if (error) throw error;
+        if (res?.ok) autoOk = true; else deliveryError = res?.error || "Falha no envio";
+      } catch (err: any) { deliveryError = err?.message || String(err); }
+      try {
+        await supabase.from("message_history").insert({
+          user_id: row.user_id, content: finalMessage, recipient_phone: row.phone,
+          recipient_name: row.full_name, template_id: templateId, image_url: imageUrl,
+          status: autoOk ? "sent" : "failed", sent_at: new Date().toISOString(),
+        });
+      } catch (e) { console.error(e); }
+      if (row.campaign) {
+        await supabase.from("billing_charges").insert({
+          campaign_id: row.campaign.id, user_id: row.user_id, stage: row.campaign.stage,
+          template_key: templateKey, responsible_user_id: user?.id || null, phone: row.phone,
+          message: finalMessage, image_url: imageUrl, document_url: documentUrl, document_name: documentName,
+          delivery_status: autoOk ? "sent" : "failed", delivery_error: deliveryError,
+        });
+        await supabase.rpc("advance_billing_campaign", { _campaign_id: row.campaign.id });
+      }
+      if (autoOk) ok++; else fail++;
     }
     setBulkSending(null);
+    setBulkComposer(null);
     toast.success(`Envio em lote — ${ok} enviada(s), ${fail} falha(s).`);
     qc.invalidateQueries({ queryKey: ["billing-campaigns"] });
   };
@@ -689,6 +743,98 @@ const AdminBilling = ({ area }: Props) => {
       </Dialog>
 
       {/* Profile quick edit */}
+      {/* Bulk composer dialog */}
+      <Dialog open={!!bulkComposer} onOpenChange={(o) => !o && !bulkSending && setBulkComposer(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="w-4 h-4" /> Envio em lote — {bulkComposer?.bucketLabel}
+            </DialogTitle>
+          </DialogHeader>
+          {bulkComposer && (
+            <div className="space-y-3">
+              <div className="text-xs text-muted-foreground">
+                <Badge variant="outline" className="mr-2">{bulkComposer.items.length} destinatário(s)</Badge>
+                <Badge variant="outline" className={STAGE_COLORS[bulkComposer.stage]}>{STAGE_TEMPLATES[bulkComposer.stage]?.label}</Badge>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Template</label>
+                <Select value={bulkComposer.templateKey} onValueChange={(v) => onBulkTemplateChange(v as SystemTemplateKey)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(STAGE_TEMPLATES).map(([s, t]) => (
+                      <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Mensagem (variáveis como {`{full_name}`} são substituídas por destinatário)</label>
+                <Textarea rows={12} value={bulkComposer.message} onChange={(e) => setBulkComposer({ ...bulkComposer, message: e.target.value })} className="font-mono text-sm" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs text-muted-foreground">Anexo (opcional — JPG, PNG ou PDF)</label>
+                {(bulkComposer.imageUrl || bulkComposer.documentUrl) ? (
+                  <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
+                    {bulkComposer.imageUrl ? <ImageIcon className="w-4 h-4 shrink-0" /> : <FileText className="w-4 h-4 shrink-0" />}
+                    <span className="truncate flex-1">{bulkComposer.documentName || (bulkComposer.imageUrl ? "Imagem anexada" : "Documento anexado")}</span>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setBulkComposer({ ...bulkComposer, imageUrl: null, documentUrl: null, documentName: null })} disabled={!!bulkSending || bulkUploading}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      id="bulk-attachment-input"
+                      type="file"
+                      accept="image/jpeg,image/png,image/jpg,application/pdf,.jpg,.jpeg,.png,.pdf"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        e.target.value = "";
+                        if (!file || !bulkComposer) return;
+                        const lower = file.name.toLowerCase();
+                        const isPdf = file.type === "application/pdf" || lower.endsWith(".pdf");
+                        const isImg = ["image/jpeg", "image/jpg", "image/png"].includes(file.type) || /\.(jpe?g|png)$/i.test(lower);
+                        if (!isPdf && !isImg) { toast.error("Envie apenas JPG, PNG ou PDF"); return; }
+                        if (file.size > 16 * 1024 * 1024) { toast.error("Arquivo muito grande (máx. 16MB)"); return; }
+                        setBulkUploading(true);
+                        try {
+                          const ext = isPdf ? "pdf" : (lower.match(/\.(jpe?g|png)$/i)?.[0].replace(".", "") || "jpg");
+                          const path = `bulk/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+                          const { error: upErr } = await supabase.storage.from("billing-attachments")
+                            .upload(path, file, { contentType: file.type || (isPdf ? "application/pdf" : "image/jpeg"), upsert: false });
+                          if (upErr) throw upErr;
+                          const { data: urlData } = supabase.storage.from("billing-attachments").getPublicUrl(path);
+                          setBulkComposer({ ...bulkComposer, imageUrl: isImg ? urlData.publicUrl : null, documentUrl: isPdf ? urlData.publicUrl : null, documentName: isPdf ? file.name : null });
+                          toast.success("Anexo carregado");
+                        } catch (err: any) {
+                          toast.error(err?.message || "Falha ao enviar anexo");
+                        } finally {
+                          setBulkUploading(false);
+                        }
+                      }}
+                    />
+                    <Button type="button" variant="outline" size="sm" disabled={bulkUploading || !!bulkSending} onClick={() => document.getElementById("bulk-attachment-input")?.click()}>
+                      {bulkUploading ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enviando...</>) : (<><Paperclip className="w-4 h-4 mr-2" /> Anexar arquivo</>)}
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                A mesma mensagem e anexo serão enviados para todos os destinatários desta faixa, com variáveis personalizadas por aluno.
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkComposer(null)} disabled={!!bulkSending}>Cancelar</Button>
+            <Button onClick={handleBulkComposerSend} disabled={!!bulkSending || bulkUploading}>
+              {bulkSending ? (<><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Enviando...</>) : (<><Send className="w-4 h-4 mr-1" /> Enviar para {bulkComposer?.items.length}</>)}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!profileEdit} onOpenChange={(o) => !o && !profileSaving && setProfileEdit(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>Atualizar cadastro</DialogTitle></DialogHeader>
