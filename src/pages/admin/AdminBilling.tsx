@@ -73,7 +73,16 @@ const planPriority = (planName: string): number => {
   return 1;
 };
 
-type TabKey = "queue" | "waiting" | "renewed" | "ignored" | "all";
+type TabKey = "queue" | "waiting" | "buckets" | "history" | "renewed" | "ignored" | "all";
+
+const DAY_BUCKETS: Array<{ key: string; label: string; min: number; max: number; color: string }> = [
+  { key: "b1", label: "1 a 7 dias", min: 1, max: 7, color: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30" },
+  { key: "b2", label: "8 a 15 dias", min: 8, max: 15, color: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
+  { key: "b3", label: "16 a 30 dias", min: 16, max: 30, color: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
+  { key: "b4", label: "31 a 60 dias", min: 31, max: 60, color: "bg-violet-500/15 text-violet-400 border-violet-500/30" },
+  { key: "b5", label: "61 a 90 dias", min: 61, max: 90, color: "bg-pink-500/15 text-pink-400 border-pink-500/30" },
+  { key: "b6", label: "90+ dias", min: 91, max: 99999, color: "bg-red-500/15 text-red-400 border-red-500/30" },
+];
 
 const AdminBilling = ({ area }: Props) => {
   const { user } = useAuth();
