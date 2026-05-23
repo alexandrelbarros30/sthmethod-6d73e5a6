@@ -11,7 +11,8 @@ export type SystemTemplateKey =
   | "diet_updated"
   | "training_updated"
   | "protocol_updated"
-  | "plan_updated";
+  | "plan_updated"
+  | "lab_analysis_ready";
 
 export interface ResolvedTemplate {
   id: string;
@@ -214,5 +215,13 @@ export const SYSTEM_TEMPLATE_DEFINITIONS: Array<{
     description: "Disparado quando o plano/assinatura do aluno é atualizado.",
     defaultContent:
       "Olá {nome}! ✨\n\nSeu *plano foi atualizado* na plataforma STH METHOD.\n\n👉 Acesse a plataforma para ver as novidades disponíveis no seu acesso.\n\nBons treinos! 💚",
+  },
+  {
+    key: "lab_analysis_ready",
+    label: "Análise laboratorial liberada (automático)",
+    description:
+      "Disparado automaticamente quando o admin libera (Visível = sim) uma análise na Central de Análise.",
+    defaultContent:
+      "{nome},\n\nSua análise laboratorial já pode ser acessada pela plataforma STH METHOD. 🧪\n\n📲 Acesse:\n🌐 sthmethod.com.br\n\n👉 Vá até a área:\n*Central de Análise*\n\n⚠️ Importante:\nDependendo das informações identificadas nos exames, seu protocolo poderá ser atualizado de forma estratégica.\n\nCaso isso aconteça, você será notificado pela plataforma. 👊",
   },
 ];
