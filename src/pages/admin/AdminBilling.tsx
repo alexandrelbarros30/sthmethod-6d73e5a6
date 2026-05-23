@@ -73,7 +73,16 @@ const planPriority = (planName: string): number => {
   return 1;
 };
 
-type TabKey = "queue" | "waiting" | "renewed" | "ignored" | "all";
+type TabKey = "queue" | "waiting" | "buckets" | "history" | "renewed" | "ignored" | "all";
+
+const DAY_BUCKETS: Array<{ key: string; label: string; min: number; max: number; color: string }> = [
+  { key: "b1", label: "1 a 7 dias", min: 1, max: 7, color: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30" },
+  { key: "b2", label: "8 a 15 dias", min: 8, max: 15, color: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
+  { key: "b3", label: "16 a 30 dias", min: 16, max: 30, color: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
+  { key: "b4", label: "31 a 60 dias", min: 31, max: 60, color: "bg-violet-500/15 text-violet-400 border-violet-500/30" },
+  { key: "b5", label: "61 a 90 dias", min: 61, max: 90, color: "bg-pink-500/15 text-pink-400 border-pink-500/30" },
+  { key: "b6", label: "90+ dias", min: 91, max: 99999, color: "bg-red-500/15 text-red-400 border-red-500/30" },
+];
 
 const AdminBilling = ({ area }: Props) => {
   const { user } = useAuth();
@@ -397,23 +406,33 @@ const AdminBilling = ({ area }: Props) => {
               <TabsList>
                 <TabsTrigger value="queue">Fila ativa ({tabCounts.queue})</TabsTrigger>
                 <TabsTrigger value="waiting">Aguardando ({tabCounts.waiting})</TabsTrigger>
+                <TabsTrigger value="buckets">Por tempo vencido</TabsTrigger>
+                <TabsTrigger value="history">Histórico geral</TabsTrigger>
                 <TabsTrigger value="renewed">Renovados ({tabCounts.renewed})</TabsTrigger>
                 <TabsTrigger value="ignored">Ignorados ({tabCounts.ignored})</TabsTrigger>
                 <TabsTrigger value="all">Todos ({tabCounts.all})</TabsTrigger>
               </TabsList>
             </Tabs>
-            <Input className="max-w-xs" placeholder="Buscar por nome..." value={search} onChange={(e) => setSearch(e.target.value)} />
+            {tab !== "history" && (
+              <Input className="max-w-xs" placeholder="Buscar por nome..." value={search} onChange={(e) => setSearch(e.target.value)} />
+            )}
           </div>
           <p className="text-xs text-muted-foreground">
             {tab === "queue" && "Alunos prontos para cobrança hoje — sequência: 1ª (amigável) → 7d → 2ª → 8d → 3ª (cupom) → 15d → 4ª → 30d → 5ª (reativação)."}
             {tab === "waiting" && "Já foram cobrados recentemente — voltam à fila automaticamente na próxima data."}
+            {tab === "buckets" && "Grade de alunos agrupados por tempo de vencimento — envio manual de qualquer etapa, a qualquer momento."}
+            {tab === "history" && "Painel coletivo de todas as cobranças realizadas por todos os responsáveis."}
             {tab === "renewed" && "Alunos que renovaram após cobrança."}
             {tab === "ignored" && "Removidos manualmente da fila."}
             {tab === "all" && "Todos os alunos vencidos, independente do estado da campanha."}
           </p>
         </CardContent></Card>
 
-        {/* Table */}
+        {tab === "buckets" ? (
+          <BucketsView rows={rows.filter((r) => !search || r.full_name.toLowerCase().includes(search.toLowerCase()))} openComposer={openComposer} setHistoryOf={setHistoryOf} />
+        ) : tab === "history" ? (
+          <GlobalHistoryPanel area={area} userId={user?.id} />
+        ) : (
         <Card><CardContent className="p-0">
           {isLoading ? (
             <div className="p-10 text-center text-muted-foreground">Carregando...</div>
@@ -506,6 +525,7 @@ const AdminBilling = ({ area }: Props) => {
             </Table>
           )}
         </CardContent></Card>
+        )}
       </div>
 
       {/* Composer dialog */}
@@ -711,3 +731,151 @@ const HistoryDialog = ({ row, onClose }: { row: any | null; onClose: () => void 
 };
 
 export default AdminBilling;
+
+const BucketsView = ({ rows, openComposer, setHistoryOf }: { rows: any[]; openComposer: (r: any, s?: number) => void; setHistoryOf: (r: any) => void }) => {
+  const groups = DAY_BUCKETS.map((b) => ({
+    ...b,
+    items: rows.filter((r) => r.days >= b.min && r.days <= b.max).sort((a, b) => b.days - a.days),
+  })).filter((g) => g.items.length > 0);
+
+  if (groups.length === 0) {
+    return <Card><CardContent className="p-10 text-center text-muted-foreground">Nenhum aluno vencido nas faixas de tempo.</CardContent></Card>;
+  }
+
+  return (
+    <div className="space-y-4">
+      {groups.map((g) => (
+        <Card key={g.key}>
+          <CardContent className="p-0">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className={g.color}>{g.label}</Badge>
+                <span className="text-sm text-muted-foreground">{g.items.length} aluno{g.items.length > 1 ? "s" : ""}</span>
+              </div>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Aluno</TableHead>
+                  <TableHead>Plano</TableHead>
+                  <TableHead>Venc.</TableHead>
+                  <TableHead>Dias</TableHead>
+                  <TableHead>Etapa atual</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {g.items.map((r) => {
+                  const stage = r.campaign?.stage || 1;
+                  return (
+                    <TableRow key={r.user_id}>
+                      <TableCell>
+                        <div className="font-medium">{r.full_name}</div>
+                        <div className={`text-xs ${r.phone && !r.phone_valid ? "text-red-500" : "text-muted-foreground"}`}>
+                          {r.phone || "sem telefone"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        <div>{r.plan_name}</div>
+                        <div className="text-xs text-muted-foreground">R$ {r.plan_price.toFixed(2)}</div>
+                      </TableCell>
+                      <TableCell className="text-sm">{new Date(r.end_date + "T00:00:00").toLocaleDateString("pt-BR")}</TableCell>
+                      <TableCell className="text-sm font-medium">{r.days}d</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={STAGE_COLORS[stage]}>{stage}ª</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1 flex-wrap">
+                          <Select onValueChange={(v) => openComposer(r, parseInt(v))}>
+                            <SelectTrigger className="h-8 w-[140px] text-xs"><SelectValue placeholder="Enviar etapa..." /></SelectTrigger>
+                            <SelectContent>
+                              {Object.entries(STAGE_TEMPLATES).map(([s, t]) => (
+                                <SelectItem key={s} value={s}>{t.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button size="sm" variant="ghost" onClick={() => setHistoryOf(r)} title="Histórico">
+                            <History className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+};
+
+const GlobalHistoryPanel = ({ area, userId }: { area: RoleArea; userId?: string }) => {
+  const { data, isLoading } = useQuery({
+    queryKey: ["billing-charges-global", area, userId],
+    queryFn: async () => {
+      let allowedIds: string[] | null = null;
+      if (area === "consultor" && userId) {
+        const { data: links } = await supabase.from("consultant_students").select("student_id").eq("consultant_id", userId);
+        allowedIds = (links || []).map((l) => l.student_id);
+        if (allowedIds.length === 0) return { charges: [], names: new Map(), responsibles: new Map() };
+      }
+      let q = supabase.from("billing_charges").select("*").order("sent_at", { ascending: false }).limit(200);
+      if (allowedIds) q = q.in("user_id", allowedIds);
+      const { data: charges } = await q;
+      const userIds = Array.from(new Set((charges || []).map((c: any) => c.user_id)));
+      const respIds = Array.from(new Set((charges || []).map((c: any) => c.responsible_user_id).filter(Boolean)));
+      const [profilesRes, respRes] = await Promise.all([
+        userIds.length ? supabase.from("profiles").select("user_id, full_name").in("user_id", userIds) : Promise.resolve({ data: [] as any[] }),
+        respIds.length ? supabase.from("profiles").select("user_id, full_name").in("user_id", respIds) : Promise.resolve({ data: [] as any[] }),
+      ]);
+      const names = new Map((profilesRes.data || []).map((p: any) => [p.user_id, p.full_name]));
+      const responsibles = new Map((respRes.data || []).map((p: any) => [p.user_id, p.full_name]));
+      return { charges: charges || [], names, responsibles };
+    },
+    enabled: !!userId || area === "admin",
+  });
+
+  if (isLoading) return <Card><CardContent className="p-10 text-center text-muted-foreground">Carregando histórico...</CardContent></Card>;
+  if (!data || data.charges.length === 0) {
+    return <Card><CardContent className="p-10 text-center text-muted-foreground">Nenhuma cobrança registrada ainda.</CardContent></Card>;
+  }
+
+  return (
+    <Card><CardContent className="p-0">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Data/Hora</TableHead>
+            <TableHead>Aluno</TableHead>
+            <TableHead>Etapa</TableHead>
+            <TableHead>Template</TableHead>
+            <TableHead>Telefone</TableHead>
+            <TableHead>Responsável</TableHead>
+            <TableHead>Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {data.charges.map((c: any) => (
+            <TableRow key={c.id}>
+              <TableCell className="text-xs">{new Date(c.sent_at).toLocaleString("pt-BR")}</TableCell>
+              <TableCell className="text-sm font-medium">{data.names.get(c.user_id) || "—"}</TableCell>
+              <TableCell>
+                <Badge variant="outline" className={STAGE_COLORS[c.stage] || ""}>{c.stage}ª</Badge>
+              </TableCell>
+              <TableCell className="text-xs text-muted-foreground">{c.template_key}</TableCell>
+              <TableCell className="text-xs">{c.phone}</TableCell>
+              <TableCell className="text-xs">{data.responsibles.get(c.responsible_user_id) || "—"}</TableCell>
+              <TableCell>
+                <Badge variant="outline" className={c.delivery_status === "sent" ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : c.delivery_status === "manual" ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : "bg-red-500/15 text-red-400 border-red-500/30"}>
+                  {c.delivery_status === "sent" ? "Entregue" : c.delivery_status === "manual" ? "Manual" : "Falhou"}
+                </Badge>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </CardContent></Card>
+  );
+};
