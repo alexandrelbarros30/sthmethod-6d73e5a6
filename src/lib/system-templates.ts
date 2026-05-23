@@ -251,37 +251,37 @@ export const SYSTEM_TEMPLATE_DEFINITIONS: Array<{
   },
   {
     key: "renewal_soft",
-    label: "1ª cobrança — Template amigável",
-    description: "Primeiro contato de renovação, tom leve e acolhedor.",
+    label: "1ª cobrança — Amigável (D+0)",
+    description: "Primeiro contato de renovação. Tom leve, acolhedor. Sempre com link de renovação.",
     defaultContent:
-      "Oi {nome}! 👋\n\nNotei que seu plano STH METHOD venceu há {dias_vencido} dias. Bora dar continuidade na sua evolução? 💪\n\nRenove pelo link: {link_renovacao}",
+      "Oi {nome}! 👋\n\nSeu plano STH METHOD venceu há {dias_vencido} dias e quero te ajudar a não perder o ritmo da sua evolução. 💪\n\n👉 Renove agora pelo link seguro:\n{link_renovacao}\n\nQualquer dúvida, estou por aqui.",
   },
   {
     key: "renewal_objective",
-    label: "2ª cobrança — Retorno leve",
-    description: "7 dias após a 1ª cobrança. Relembrar continuidade.",
+    label: "2ª cobrança — Retorno leve (D+7)",
+    description: "7 dias após a 1ª cobrança. Reforço de continuidade com link.",
     defaultContent:
-      "Oi {nome}, tudo bem?\n\nSeu plano segue pausado ({dias_vencido} dias vencido). Cada semana parada é evolução perdida. Vamos retomar?\n\n👉 {link_renovacao}",
+      "Oi {nome}, tudo bem?\n\nSeu plano segue pausado há {dias_vencido} dias. Cada semana parada é evolução perdida — bora retomar?\n\n👉 Renove em 1 clique:\n{link_renovacao}",
   },
   {
     key: "renewal_recovery",
-    label: "3ª cobrança — Cupom oportunidade",
-    description: "8 dias após a 2ª. Oferta com cupom.",
+    label: "3ª cobrança — Cupom oportunidade (D+15)",
+    description: "15 dias após o vencimento. Oferta com cupom + link.",
     defaultContent:
-      "{nome}, separei algo especial pra você. 🎁\n\nUse o cupom *{cupom}* na sua renovação e volte com tudo pra STH METHOD.\n\n👉 {link_renovacao}",
+      "{nome}, separei algo especial pra você. 🎁\n\nUse o cupom *{cupom}* na sua renovação e volte com tudo pra STH METHOD.\n\n👉 Link de renovação com cupom já aplicado:\n{link_renovacao}",
   },
   {
     key: "renewal_last_contact",
-    label: "4ª cobrança — Último contato ativo",
-    description: "15 dias após a 3ª. Última abordagem direta.",
+    label: "4ª cobrança — Último contato (D+30)",
+    description: "30 dias após o vencimento. Última abordagem direta.",
     defaultContent:
-      "{nome}, este é nosso último contato ativo sobre sua renovação. 🙏\n\nSe quiser retomar sua evolução, estamos aqui: {link_renovacao}\n\nCaso prefira parar por aqui, sem problemas — sucesso na sua jornada. 💚",
+      "{nome}, este é nosso último contato ativo sobre sua renovação. 🙏\n\nSe quiser retomar sua evolução, é só clicar:\n👉 {link_renovacao}\n\nCaso prefira parar por aqui, sem problemas — sucesso na sua jornada. 💚",
   },
   {
     key: "renewal_reactivation",
-    label: "5ª cobrança — Reativação inteligente",
-    description: "30 dias após a 4ª. Reaquecer aluno antigo sem pressão.",
+    label: "5ª cobrança — Reativação (D+60)",
+    description: "60 dias após o vencimento. Reaquece aluno antigo sem pressão.",
     defaultContent:
-      "{nome}, muita novidade mudou aqui na STH METHOD nos últimos meses. ✨\n\nNovas estratégias, novas ferramentas, evolução constante. Quer dar uma olhada no que está disponível agora?\n\n👉 {link_renovacao}",
+      "{nome}, muita coisa evoluiu aqui na STH METHOD nos últimos meses. ✨\n\nNovas estratégias, novas ferramentas, novos protocolos. Quer dar uma olhada no que está disponível agora?\n\n👉 Acesse e veja:\n{link_renovacao}",
   },
 ];
