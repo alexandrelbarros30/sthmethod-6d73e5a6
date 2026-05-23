@@ -84,6 +84,7 @@ import AdminQueue from "./pages/admin/AdminQueue";
 import AdminUpdates from "./pages/admin/AdminUpdates";
 import AdminTeleatendimento from "./pages/admin/AdminTeleatendimento";
 import AdminBilling from "./pages/admin/AdminBilling";
+import AdminCRM from "./pages/admin/AdminCRM";
 import StudentConsultas from "./pages/student/StudentConsultas";
 import ConsultorDashboard from "./pages/consultor/ConsultorDashboard";
 import AssistenteDashboard from "./pages/assistente/AssistenteDashboard";
