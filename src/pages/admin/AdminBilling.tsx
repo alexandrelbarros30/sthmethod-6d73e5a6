@@ -13,8 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { sendSystemTemplate, SystemTemplateKey } from "@/lib/system-templates";
-import { Send, CheckCircle2, Clock, MessageSquare, AlertTriangle, RefreshCcw, Zap } from "lucide-react";
+import { sendSystemTemplate, SystemTemplateKey, getSystemTemplate, renderTemplate, buildWhatsAppUrl } from "@/lib/system-templates";
+import { Send, CheckCircle2, Clock, MessageSquare, AlertTriangle, RefreshCcw, Zap, Pencil } from "lucide-react";
 
 type RoleArea = "admin" | "consultor" | "financeiro";
 interface Props { area: RoleArea }
@@ -101,6 +101,8 @@ const AdminBilling = ({ area }: Props) => {
   const [autoSend, setAutoSend] = useState(false);
   const [bulkSending, setBulkSending] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
+  const [composer, setComposer] = useState<{ row: any; message: string; templateId: string; imageUrl: string | null } | null>(null);
+  const [composerSending, setComposerSending] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["billing-overdue", area, user?.id],
@@ -256,23 +258,57 @@ const AdminBilling = ({ area }: Props) => {
       toast.error(`Telefone inválido (${row.phone}). Atualize o cadastro antes de enviar.`);
       return;
     }
-    const res = await sendSystemTemplate(selectedTemplate, {
-      full_name: row.full_name,
-      phone: row.phone,
-      email: row.email,
-      user_id: row.user_id,
-      end_date: row.end_date,
-    }, { logHistory: true, mode: "auto" });
-    if (!res.ok) { toast.error(res.reason || "Falha ao enviar"); return; }
+    const tpl = await getSystemTemplate(selectedTemplate);
+    if (!tpl) { toast.error("Template não encontrado"); return; }
+    const rendered = renderTemplate(tpl.content, {
+      full_name: row.full_name, phone: row.phone, email: row.email,
+      user_id: row.user_id, end_date: row.end_date,
+    });
+    setComposer({ row, message: rendered, templateId: tpl.id, imageUrl: tpl.image_url || null });
+  };
+
+  const handleComposerSend = async () => {
+    if (!composer) return;
+    const { row, message, templateId, imageUrl } = composer;
+    if (!message.trim()) { toast.error("Mensagem vazia"); return; }
+    setComposerSending(true);
+    const AUTO_FOOTER = "\n\n———\n🔔 Comunicação automática STH METHOD\nMensagem enviada automaticamente pelo sistema.\nNão é necessário responder.";
+    const finalMessage = message.includes("Comunicação automática STH METHOD") ? message : `${message}${AUTO_FOOTER}`;
+
+    let deliveryStatus: "sent" | "failed" = "sent";
+    let autoOk = false;
+    try {
+      const { data, error } = await supabase.functions.invoke("send-whatsapp", {
+        body: { phone: row.phone, message: finalMessage, image_url: imageUrl },
+      });
+      if (error) throw error;
+      if (data?.ok) autoOk = true;
+    } catch (err) {
+      console.error("send-whatsapp error", err);
+    }
+    if (!autoOk) {
+      deliveryStatus = "failed";
+      const url = buildWhatsAppUrl(row.phone, imageUrl ? `${finalMessage}\n\n${imageUrl}` : finalMessage);
+      if (url) window.open(url, "_blank");
+    }
+    try {
+      await supabase.from("message_history").insert({
+        user_id: row.user_id, content: finalMessage, recipient_phone: row.phone,
+        recipient_name: row.full_name, template_id: templateId, image_url: imageUrl,
+        status: deliveryStatus, sent_at: new Date().toISOString(),
+      });
+    } catch (e) { console.error(e); }
     await upsertAction.mutateAsync({
-      user_id: row.user_id,
-      status: "contacted",
-      assigned_to: user?.id,
+      user_id: row.user_id, status: "contacted", assigned_to: user?.id,
       attempts: (row.action?.attempts || 0) + 1,
       last_template: selectedTemplate,
       last_contact_at: new Date().toISOString(),
     });
-    toast.success(`Cobrança enviada para ${row.full_name.split(" ")[0]}`);
+    setComposerSending(false);
+    setComposer(null);
+    toast.success(autoOk
+      ? `Cobrança enviada para ${row.full_name.split(" ")[0]}`
+      : `Aberto WhatsApp manual para ${row.full_name.split(" ")[0]}`);
   };
 
   const handleMarkRenewed = async (row: any) => {
