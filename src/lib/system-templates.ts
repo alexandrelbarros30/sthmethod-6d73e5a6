@@ -72,11 +72,16 @@ export const renderTemplate = (content: string, ctx: TemplateContext): string =>
   if (ctx.end_date) {
     const d = new Date(ctx.end_date);
     msg = msg.replace(/\{vencimento\}/g, d.toLocaleDateString("pt-BR"));
+    msg = msg.replace(/\{data_vencimento\}/g, d.toLocaleDateString("pt-BR"));
     const diff = Math.max(0, Math.ceil((d.getTime() - Date.now()) / 86400000));
     msg = msg.replace(/\{dias_restantes\}/g, String(diff));
+    const overdueDays = Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
+    msg = msg.replace(/\{dias_vencido\}/g, String(overdueDays));
   } else {
     msg = msg.replace(/\{vencimento\}/g, "—");
+    msg = msg.replace(/\{data_vencimento\}/g, "—");
     msg = msg.replace(/\{dias_restantes\}/g, "—");
+    msg = msg.replace(/\{dias_vencido\}/g, "—");
   }
   const link = ctx.user_id ? `${window.location.origin}/dashboard/renew?uid=${ctx.user_id}` : "";
   msg = msg.replace(/\{link\}/g, link);
