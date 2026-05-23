@@ -151,7 +151,7 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName, studentPhon
     onSuccess: () => {
       toast.success(
         visible
-          ? "Análise salva e liberada! WhatsApp enviado ao aluno."
+          ? "Análise salva e liberada!"
           : "Análise salva!",
       );
       qc.invalidateQueries({ queryKey: ["metabolic-panels-admin", userId] });
