@@ -1,94 +1,73 @@
-# Sistema Inteligente de Cobrança & Renovação
+## CRM Campaigns — Central de Campanhas STH METHOD
 
-Plano para transformar a tela atual `AdminBilling` em um CRM completo de renovação com sequência automática de 5 etapas, histórico, bloqueio de duplicidade e notificações.
-
-## 1. Banco de dados (migration)
-
-**Nova tabela `billing_campaigns`** (uma linha por aluno em ciclo de cobrança):
-- `user_id`, `subscription_id`, `plan_id_anterior`, `end_date`
-- `stage` (1 a 5)
-- `last_charged_at`, `next_due_at`
-- `status` ('active' | 'paused' | 'renewed' | 'ignored' | 'reactivated')
-- `responsible_user_id`, `notes`
-- timestamps
-
-**Nova tabela `billing_charges`** (log/histórico — uma linha por envio):
-- `campaign_id`, `user_id`, `stage`, `template_key`, `responsible_user_id`
-- `phone`, `message`, `image_url`, `document_url`
-- `delivery_status` ('sent' | 'failed'), `delivery_error`
-- `sent_at`
-
-RLS: admin/staff/consultor podem ler/escrever (seguir padrão das tabelas admin existentes).
-
-**Função `advance_billing_campaign(campaign_id)`**: incrementa `stage`, calcula `next_due_at` conforme regra (7, 8, 15, 30 dias) e seta status final em stage 5.
-
-## 2. Templates do sistema
-
-Adicionar 4 novas `SystemTemplateKey` em `src/lib/system-templates.ts`:
-- `renewal_soft` — Template amigável (1ª)
-- `renewal_objective` — Retorno leve (2ª)
-- `renewal_recovery` — Cupom oportunidade (3ª)
-- `renewal_last_contact` — Último contato ativo (4ª)
-- já existe espaço para 5ª como "Reativação inteligente" (criar `renewal_reactivation`)
-
-Mapa stage→template_key usado na composição automática.
-
-## 3. UI — `src/pages/admin/AdminBilling.tsx`
-
-Refatorar a tela atual mantendo o composer/anexos já implementados:
-
-**Cards superiores** (6):
-- Total vencidos, Aguardando próxima cobrança, Cobranças do dia, Reativações pendentes, Renovações recuperadas (últimos 30d), Valor estimado recuperável.
-
-**Tabs**: `Fila ativa` (default — só quem está com `next_due_at <= hoje`) · `Aguardando` · `Histórico` · `Renovados` · `Ignorados`.
-
-**Tabela** com colunas pedidas + badges por etapa (cores: 1ª cyan, 2ª azul, 3ª âmbar, 4ª violeta, 5ª rosa, Renovado verde STH, Ignorado cinza).
-
-**Ações por linha**: Enviar (abre composer com template da stage atual pré-selecionado) · Renovou (marca `renewed`) · Ignorar (marca `ignored`) · Histórico (popup com `billing_charges`).
-
-**Após envio bem-sucedido**:
-- insere em `billing_charges`
-- chama `advance_billing_campaign` (avança stage, agenda próximo)
-- remove da fila ativa até `next_due_at`
-- toast de confirmação
-
-**Bloqueio de duplicidade**: fila ativa filtra `next_due_at <= now()` AND `status='active'`.
-
-**Priorização**: ordenar por (dias_vencido entre 7 e 20 primeiro, depois plano 90/180D, depois último acesso recente).
-
-## 4. Notificações internas
-
-Sino no header admin (componente `NotificationCenter` já existe) — adicionar contador de "cobranças disponíveis hoje" lendo `billing_campaigns` com `next_due_at <= now()` e `status='active'`.
-
-## 5. Integração WhatsApp
-
-Manter `send-whatsapp` edge function. Composer já suporta template, imagem e PDF. Variáveis `{cupom}` e `{link_renovacao}` adicionadas ao `renderTemplate`.
-
-## 6. Inicialização do ciclo
-
-Quando uma subscription vence (ou já está vencida sem campanha ativa), criar automaticamente uma `billing_campaigns` com `stage=0`, `next_due_at=end_date`, `status='active'`. Feito via:
-- trigger no insert da subscription expirada, OU
-- backfill on-demand quando a tela carrega (mais simples — ver alunos vencidos sem campanha e criar).
-
-Optarei pelo **backfill on-demand** para simplicidade — sem trigger novo.
-
-## 7. Quando aluno paga
-
-Já existe lógica que remove alunos pagos da lista (implementação anterior). Estender: ao detectar pagamento aprovado para um `user_id` com campanha ativa, marcar `status='renewed'`.
+Esse módulo é grande (≈ 7 submenus, banco novo, integrações Z-API, agendador, biblioteca de mídias, dashboard). Para entregar com qualidade, proponho construir em **4 fases incrementais**, validando cada uma antes de seguir.
 
 ---
 
-## Detalhes técnicos (resumo)
+### FASE 1 — Fundação (backend + navegação)
 
-- Migration: 2 tabelas + 1 função SQL + RLS
-- `src/lib/system-templates.ts`: 5 novas keys + defaults
-- `src/pages/admin/AdminBilling.tsx`: refatoração grande (tabs, cards, histórico, ações)
-- Sem novas edge functions
+**Banco de dados (migration)**
+- `crm_contacts_view` (view materializada unindo profiles + subscriptions + leads + última atividade)
+- `crm_segments` (id, name, filters jsonb, created_by, scope: admin|consultor)
+- `crm_templates` (id, category, title, content, variables, media_ids[], preview_text, created_by)
+- `crm_media` (id, url, type, category, tags[], favorite, size, uploaded_by)
+- `crm_campaigns` (id, name, segment_id, template_id, media_ids[], status, scheduled_at, recurrence, sent_count, response_count, created_by)
+- `crm_campaign_runs` (histórico de execução por campanha)
+- `crm_campaign_messages` (1 linha por destinatário: status, error, sent_at, clicked_at)
+- Storage bucket `crm-media` (público)
+- RLS: admin total; consultor vê só seus alunos/segmentos
 
-## Fora de escopo (não vou fazer)
+**Navegação**
+- Novo grupo no sidebar admin: **📣 Campanhas & Ofertas**
+- Rotas placeholder: `/admin/crm/campanhas`, `/templates`, `/contatos`, `/segmentos`, `/historico`, `/automacao`, `/midias`, `/dashboard`
 
-- Agendamento real via cron (sem `pg_cron` novo) — sequência é dirigida pela coluna `next_due_at` consultada pela UI
-- Mudanças no fluxo de pagamento Mercado Pago
-- App do aluno
+---
 
-Confirma para eu implementar?
+### FASE 2 — Contatos, Segmentação e Templates
+
+- **Lista de contatos** com filtros (ativos, inativos, leads, plano, vencimento, último acesso, cidade, sexo, idade, objetivo)
+- **Segmentações salvas** (CRUD + preview de contagem)
+- **Templates** com categorias (Comercial, Relacionamento, Estratégico, Conteúdo)
+- **Editor de template** rich text + variáveis `{nome} {plano} {dias_vencido} {cupom} {link} {objetivo}` + preview no estilo WhatsApp bubble
+- **Biblioteca de Mídias STH** (upload, preview, categorias, favoritos)
+
+---
+
+### FASE 3 — Envio, Agendamento e WhatsApp
+
+- Builder de campanha (público → template → mídia → agendamento/envio)
+- Edge function `crm-dispatch-campaign` (envia em lote via `send-whatsapp` com pausa anti-spam 3–6s)
+- Edge function `crm-scheduler` (pg_cron a cada 5min, dispara campanhas agendadas e recorrentes)
+- Histórico detalhado por destinatário (sent/failed/clicked)
+- Tracking de cliques via short link (`/r/:campaignId/:contactId`)
+
+---
+
+### FASE 4 — Dashboard, Automação e Alertas
+
+- Dashboard premium (ativas, agendadas, total enviado, resposta, reativações, melhores campanhas)
+- Recorrência (ex: "renovação toda segunda 10h")
+- Notificações em tempo real (campanha enviada / erro / leads novos / reativados)
+- Tema visual Apple dark + verde STH, animações Framer Motion, cards translúcidos
+
+---
+
+### Detalhes técnicos
+
+- **Stack**: React + Tailwind (semantic tokens existentes), shadcn, Framer Motion, TanStack Query
+- **Backend**: Supabase (Lovable Cloud) + edge functions Deno
+- **WhatsApp**: reaproveita `send-whatsapp` (Z-API). Se o canal "Nutri" for adicionado depois, basta passar `channel:"comercial"`
+- **Permissões**: admin (total) e consultor (apenas seus alunos vinculados via `is_consultant_of`)
+- **Reuso**: aproveita `message_templates`, `message_history`, `billing_campaigns` existentes — o CRM é a camada estratégica acima
+
+---
+
+### Confirmação antes de começar
+
+Antes de criar migration e código, preciso confirmar 3 pontos:
+
+1. **Aprovação por fases**? Começo pela **Fase 1** (banco + navegação) e te mostro antes de avançar para contatos/templates. OK?
+2. **Migrar `message_templates` existentes** para `crm_templates` (com categorias) ou manter os dois lados (sistema vs CRM)? Recomendo **manter os dois**: `message_templates` segue sendo dos disparos automáticos do sistema, `crm_templates` é a biblioteca editorial de campanhas.
+3. **Tracking de cliques**: criar short link próprio (`sthmethod.com.br/r/:id`) ou apenas registrar envio sem tracking de clique nesta primeira versão? Recomendo **sem tracking de clique na v1** para acelerar entrega (adiciona depois).
+
+Me responde esses 3 pontos e já começo pela Fase 1.
