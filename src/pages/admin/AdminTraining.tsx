@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { notifyStudentContentUpdate } from "@/lib/notify-student-update";
 import NotifyStudentToggle from "@/components/admin/NotifyStudentToggle";
+import ReleaseNotifyButton from "@/components/admin/ReleaseNotifyButton";
 
 interface Exercise {
   id?: string;
@@ -426,7 +427,10 @@ const AdminTraining = () => {
               </Button>
               <h2 className="font-display text-lg font-semibold mt-1">{selectedStudent?.full_name}</h2>
               {selectedStudent?.user_id && (
-                <div className="mt-2"><NotifyStudentToggle userId={selectedStudent.user_id} /></div>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <NotifyStudentToggle userId={selectedStudent.user_id} />
+                  <ReleaseNotifyButton userId={selectedStudent.user_id} type="training" />
+                </div>
               )}
             </div>
             <div className="flex gap-2">
