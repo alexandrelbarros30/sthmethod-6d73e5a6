@@ -568,6 +568,41 @@ const AdminBilling = ({ area }: Props) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Composer dialog – edit before send */}
+      <Dialog open={!!composer} onOpenChange={(o) => !o && !composerSending && setComposer(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="w-4 h-4" /> Revisar cobrança — {composer?.row?.full_name}
+            </DialogTitle>
+          </DialogHeader>
+          {composer && (
+            <div className="space-y-3">
+              <div className="text-xs text-muted-foreground">
+                Para: <span className="font-medium text-foreground">{composer.row.phone}</span>
+                {" · "}Template: <span className="font-medium text-foreground">{TEMPLATES.find(t => t.key === selectedTemplate)?.label}</span>
+              </div>
+              <Textarea
+                rows={14}
+                value={composer.message}
+                onChange={(e) => setComposer({ ...composer, message: e.target.value })}
+                className="font-mono text-sm"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                O rodapé "🔔 Comunicação automática STH METHOD" será adicionado automaticamente se ainda não estiver no texto.
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setComposer(null)} disabled={composerSending}>Cancelar</Button>
+            <Button onClick={handleComposerSend} disabled={composerSending}>
+              <Send className="w-4 h-4 mr-1" />
+              {composerSending ? "Enviando..." : "Enviar agora"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
