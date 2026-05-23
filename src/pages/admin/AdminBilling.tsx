@@ -352,6 +352,66 @@ const AdminBilling = ({ area }: Props) => {
     qc.invalidateQueries({ queryKey: ["billing-campaigns"] });
   };
 
+  const [bulkSending, setBulkSending] = useState<string | null>(null);
+
+  const sendOne = async (row: any, stage: number): Promise<{ ok: boolean; error?: string }> => {
+    if (!row.phone || !isValidPhone(row.phone)) return { ok: false, error: "telefone inválido" };
+    const tplDef = STAGE_TEMPLATES[stage] || STAGE_TEMPLATES[1];
+    const tpl = await getSystemTemplate(tplDef.key);
+    if (!tpl) return { ok: false, error: "template não encontrado" };
+    const rendered = renderTemplate(tpl.content, {
+      full_name: row.full_name, phone: row.phone, email: row.email,
+      user_id: row.user_id, end_date: row.end_date,
+    });
+    const AUTO_FOOTER = "\n\n———\n🔔 Comunicação automática STH METHOD\nMensagem enviada automaticamente pelo sistema.\nNão é necessário responder.";
+    const finalMessage = rendered.includes("Comunicação automática STH METHOD") ? rendered : `${rendered}${AUTO_FOOTER}`;
+    let autoOk = false;
+    let deliveryError: string | null = null;
+    try {
+      const { data: res, error } = await supabase.functions.invoke("send-whatsapp", {
+        body: { phone: row.phone, message: finalMessage, image_url: tpl.image_url || null },
+      });
+      if (error) throw error;
+      if (res?.ok) autoOk = true; else deliveryError = res?.error || "Falha no envio";
+    } catch (err: any) {
+      deliveryError = err?.message || String(err);
+    }
+    if (row.campaign) {
+      await supabase.from("billing_charges").insert({
+        campaign_id: row.campaign.id,
+        user_id: row.user_id,
+        stage: row.campaign.stage,
+        template_key: tplDef.key,
+        responsible_user_id: user?.id || null,
+        phone: row.phone,
+        message: finalMessage,
+        image_url: tpl.image_url || null,
+        document_url: null,
+        document_name: null,
+        delivery_status: autoOk ? "sent" : "failed",
+        delivery_error: deliveryError,
+      });
+      await supabase.rpc("advance_billing_campaign", { _campaign_id: row.campaign.id });
+    }
+    return { ok: autoOk, error: deliveryError || undefined };
+  };
+
+  const handleBulkSend = async (bucketKey: string, items: any[], stage: number) => {
+    if (items.length === 0) return;
+    const valid = items.filter((r) => r.phone && isValidPhone(r.phone));
+    if (valid.length === 0) { toast.error("Nenhum aluno com telefone válido nesta faixa."); return; }
+    if (!confirm(`Enviar "${STAGE_TEMPLATES[stage].label}" para ${valid.length} aluno(s) desta faixa?`)) return;
+    setBulkSending(bucketKey);
+    let ok = 0, fail = 0;
+    for (const row of valid) {
+      const r = await sendOne(row, stage);
+      if (r.ok) ok++; else fail++;
+    }
+    setBulkSending(null);
+    toast.success(`Envio em lote — ${ok} enviada(s), ${fail} falha(s).`);
+    qc.invalidateQueries({ queryKey: ["billing-campaigns"] });
+  };
+
   const role = area === "consultor" ? "consultor" : area === "financeiro" ? "financeiro" : "admin";
 
   const tabCounts = {
@@ -429,7 +489,13 @@ const AdminBilling = ({ area }: Props) => {
         </CardContent></Card>
 
         {tab === "buckets" ? (
-          <BucketsView rows={rows.filter((r) => !search || r.full_name.toLowerCase().includes(search.toLowerCase()))} openComposer={openComposer} setHistoryOf={setHistoryOf} />
+          <BucketsView
+            rows={rows.filter((r) => !search || r.full_name.toLowerCase().includes(search.toLowerCase()))}
+            openComposer={openComposer}
+            setHistoryOf={setHistoryOf}
+            onBulkSend={handleBulkSend}
+            bulkSending={bulkSending}
+          />
         ) : tab === "history" ? (
           <GlobalHistoryPanel area={area} userId={user?.id} />
         ) : (
@@ -732,7 +798,8 @@ const HistoryDialog = ({ row, onClose }: { row: any | null; onClose: () => void 
 
 export default AdminBilling;
 
-const BucketsView = ({ rows, openComposer, setHistoryOf }: { rows: any[]; openComposer: (r: any, s?: number) => void; setHistoryOf: (r: any) => void }) => {
+const BucketsView = ({ rows, openComposer, setHistoryOf, onBulkSend, bulkSending }: { rows: any[]; openComposer: (r: any, s?: number) => void; setHistoryOf: (r: any) => void; onBulkSend: (bucketKey: string, items: any[], stage: number) => void; bulkSending: string | null }) => {
+  const [bulkStage, setBulkStage] = useState<Record<string, string>>({});
   const groups = DAY_BUCKETS.map((b) => ({
     ...b,
     items: rows.filter((r) => r.days >= b.min && r.days <= b.max).sort((a, b) => b.days - a.days),
@@ -747,10 +814,27 @@ const BucketsView = ({ rows, openComposer, setHistoryOf }: { rows: any[]; openCo
       {groups.map((g) => (
         <Card key={g.key}>
           <CardContent className="p-0">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border gap-3 flex-wrap">
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className={g.color}>{g.label}</Badge>
                 <span className="text-sm text-muted-foreground">{g.items.length} aluno{g.items.length > 1 ? "s" : ""}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Select value={bulkStage[g.key] || ""} onValueChange={(v) => setBulkStage((s) => ({ ...s, [g.key]: v }))}>
+                  <SelectTrigger className="h-8 w-[200px] text-xs"><SelectValue placeholder="Escolher template..." /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(STAGE_TEMPLATES).map(([s, t]) => (
+                      <SelectItem key={s} value={s}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  size="sm"
+                  disabled={!bulkStage[g.key] || bulkSending === g.key}
+                  onClick={() => onBulkSend(g.key, g.items, parseInt(bulkStage[g.key]))}
+                >
+                  {bulkSending === g.key ? (<><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> Enviando...</>) : (<><Send className="w-3.5 h-3.5 mr-1" /> Enviar para todos</>)}
+                </Button>
               </div>
             </div>
             <Table>
