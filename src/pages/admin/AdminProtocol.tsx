@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { notifyStudentContentUpdate } from "@/lib/notify-student-update";
 import NotifyStudentToggle from "@/components/admin/NotifyStudentToggle";
+import ReleaseNotifyButton from "@/components/admin/ReleaseNotifyButton";
 import { useAuth } from "@/contexts/AuthContext";
 import SignedPdfFrame from "@/components/shared/SignedPdfFrame";
 import { hasSmartProtocolStructure, isSmartProtocolEra } from "@/lib/protocol-phase-parser";
@@ -722,7 +723,10 @@ const AdminProtocol = () => {
             <DialogTitle className="font-display text-base sm:text-lg">Protocolos — {selected?.full_name}</DialogTitle>
             <DialogDescription className="text-xs sm:text-sm">Edite com clareza no mobile e desktop.</DialogDescription>
             {selected?.user_id && (
-              <div className="pt-2"><NotifyStudentToggle userId={selected.user_id} /></div>
+              <div className="pt-2 flex flex-wrap items-center gap-2">
+                <NotifyStudentToggle userId={selected.user_id} />
+                <ReleaseNotifyButton userId={selected.user_id} type="protocol" />
+              </div>
             )}
             {selected?.user_id && (
               <Button
