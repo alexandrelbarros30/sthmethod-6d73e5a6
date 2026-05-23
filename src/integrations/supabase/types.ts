@@ -657,6 +657,125 @@ export type Database = {
           },
         ]
       }
+      crm_automation_runs: {
+        Row: {
+          automation_id: string
+          context: Json | null
+          error: string | null
+          failed_count: number
+          id: string
+          matched_count: number
+          sent_count: number
+          status: string
+          triggered_at: string
+        }
+        Insert: {
+          automation_id: string
+          context?: Json | null
+          error?: string | null
+          failed_count?: number
+          id?: string
+          matched_count?: number
+          sent_count?: number
+          status?: string
+          triggered_at?: string
+        }
+        Update: {
+          automation_id?: string
+          context?: Json | null
+          error?: string | null
+          failed_count?: number
+          id?: string
+          matched_count?: number
+          sent_count?: number
+          status?: string
+          triggered_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_automation_runs_automation_id_fkey"
+            columns: ["automation_id"]
+            isOneToOne: false
+            referencedRelation: "crm_automations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_automations: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          last_run_at: string | null
+          media_ids: string[]
+          name: string
+          next_check_at: string | null
+          run_count: number
+          scope: string
+          segment_id: string | null
+          sent_count: number
+          template_id: string | null
+          trigger_config: Json
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          last_run_at?: string | null
+          media_ids?: string[]
+          name: string
+          next_check_at?: string | null
+          run_count?: number
+          scope?: string
+          segment_id?: string | null
+          sent_count?: number
+          template_id?: string | null
+          trigger_config?: Json
+          trigger_type: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          last_run_at?: string | null
+          media_ids?: string[]
+          name?: string
+          next_check_at?: string | null
+          run_count?: number
+          scope?: string
+          segment_id?: string | null
+          sent_count?: number
+          template_id?: string | null
+          trigger_config?: Json
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_automations_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "crm_segments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_automations_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "crm_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crm_campaign_messages: {
         Row: {
           campaign_id: string
