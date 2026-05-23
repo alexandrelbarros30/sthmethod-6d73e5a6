@@ -57,9 +57,13 @@ Deno.serve(async (req) => {
     }
 
     if (campaign.status === 'sending') {
-      return new Response(JSON.stringify({ ok: false, error: 'already sending' }), {
-        status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      // Allow re-running if the previous dispatch is stale (>4 minutes without progress)
+      const last = campaign.last_run_at ? new Date(campaign.last_run_at).getTime() : 0;
+      if (Date.now() - last < 4 * 60 * 1000) {
+        return new Response(JSON.stringify({ ok: false, error: 'already sending' }), {
+          status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
     }
 
     // Resolve segment
@@ -145,10 +149,12 @@ Deno.serve(async (req) => {
       .select('id').single();
     const run_id = run?.id;
 
-    let sent = 0;
-    let failed = 0;
-
-    for (const r of recipients) {
+    // Run the actual sending in background so the HTTP request can return
+    // immediately and we don't hit the edge function 150s wall-clock limit.
+    const sendAll = async () => {
+      let sent = 0;
+      let failed = 0;
+      for (const r of recipients) {
       const vars = {
         nome: r.name.split(' ')[0] || r.name || 'amigo',
         plano: r.plan_name || '',
@@ -176,9 +182,14 @@ Deno.serve(async (req) => {
         failed++;
         await supabase.from('crm_campaign_messages').update({ status: 'failed', error: String(e).slice(0, 500) }).eq('id', msg!.id);
       }
+      // Incremental heartbeat so the UI reflects progress and stale detection works
+      if ((sent + failed) % 5 === 0) {
+        await supabase.from('crm_campaign_runs').update({ sent_count: sent, failed_count: failed }).eq('id', run_id!);
+        await supabase.from('crm_campaigns').update({ last_run_at: new Date().toISOString() }).eq('id', campaign_id);
+      }
       // anti-spam pause 1.2-2.2s
       await new Promise((r) => setTimeout(r, 1200 + Math.random() * 1000));
-    }
+      }
 
     await supabase.from('crm_campaign_runs').update({
       finished_at: new Date().toISOString(), sent_count: sent, failed_count: failed,
@@ -200,8 +211,19 @@ Deno.serve(async (req) => {
       next_run_at: nextRun,
       scheduled_at: nextStatus === 'scheduled' ? nextRun : null,
     }).eq('id', campaign_id);
+      return { sent, failed };
+    };
 
-    return new Response(JSON.stringify({ ok: true, run_id, total: recipients.length, sent, failed }), {
+    // @ts-ignore EdgeRuntime is provided by Supabase Edge Runtime
+    if (typeof EdgeRuntime !== 'undefined' && (EdgeRuntime as any).waitUntil) {
+      // @ts-ignore
+      EdgeRuntime.waitUntil(sendAll().catch((e) => console.error('sendAll failed', e)));
+    } else {
+      // Fallback: run synchronously (may hit wall-clock for big lists)
+      await sendAll();
+    }
+
+    return new Response(JSON.stringify({ ok: true, run_id, total: recipients.length, queued: true }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {
