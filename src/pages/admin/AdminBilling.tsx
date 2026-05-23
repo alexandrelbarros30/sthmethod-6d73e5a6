@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { sendSystemTemplate, SystemTemplateKey, getSystemTemplate, renderTemplate, buildWhatsAppUrl } from "@/lib/system-templates";
-import { Send, CheckCircle2, Clock, MessageSquare, AlertTriangle, RefreshCcw, Zap, Pencil } from "lucide-react";
+import { Send, CheckCircle2, Clock, MessageSquare, AlertTriangle, RefreshCcw, Zap, Pencil, Paperclip, X, FileText, Image as ImageIcon, Loader2 } from "lucide-react";
 
 type RoleArea = "admin" | "consultor" | "financeiro";
 interface Props { area: RoleArea }
@@ -101,8 +101,9 @@ const AdminBilling = ({ area }: Props) => {
   const [autoSend, setAutoSend] = useState(false);
   const [bulkSending, setBulkSending] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
-  const [composer, setComposer] = useState<{ row: any; message: string; templateId: string; imageUrl: string | null } | null>(null);
+  const [composer, setComposer] = useState<{ row: any; message: string; templateId: string; imageUrl: string | null; documentUrl: string | null; documentName: string | null } | null>(null);
   const [composerSending, setComposerSending] = useState(false);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [profileEdit, setProfileEdit] = useState<{ user_id: string; full_name: string; phone: string; email: string } | null>(null);
   const [profileSaving, setProfileSaving] = useState(false);
 
@@ -266,12 +267,12 @@ const AdminBilling = ({ area }: Props) => {
       full_name: row.full_name, phone: row.phone, email: row.email,
       user_id: row.user_id, end_date: row.end_date,
     });
-    setComposer({ row, message: rendered, templateId: tpl.id, imageUrl: tpl.image_url || null });
+    setComposer({ row, message: rendered, templateId: tpl.id, imageUrl: tpl.image_url || null, documentUrl: null, documentName: null });
   };
 
   const handleComposerSend = async () => {
     if (!composer) return;
-    const { row, message, templateId, imageUrl } = composer;
+    const { row, message, templateId, imageUrl, documentUrl, documentName } = composer;
     if (!message.trim()) { toast.error("Mensagem vazia"); return; }
     setComposerSending(true);
     const AUTO_FOOTER = "\n\n———\n🔔 Comunicação automática STH METHOD\nMensagem enviada automaticamente pelo sistema.\nNão é necessário responder.";
@@ -281,7 +282,13 @@ const AdminBilling = ({ area }: Props) => {
     let autoOk = false;
     try {
       const { data, error } = await supabase.functions.invoke("send-whatsapp", {
-        body: { phone: row.phone, message: finalMessage, image_url: imageUrl },
+        body: {
+          phone: row.phone,
+          message: finalMessage,
+          image_url: imageUrl,
+          document_url: documentUrl,
+          document_name: documentName,
+        },
       });
       if (error) throw error;
       if (data?.ok) autoOk = true;
@@ -290,7 +297,8 @@ const AdminBilling = ({ area }: Props) => {
     }
     if (!autoOk) {
       deliveryStatus = "failed";
-      const url = buildWhatsAppUrl(row.phone, imageUrl ? `${finalMessage}\n\n${imageUrl}` : finalMessage);
+      const attachmentUrl = imageUrl || documentUrl;
+      const url = buildWhatsAppUrl(row.phone, attachmentUrl ? `${finalMessage}\n\n${attachmentUrl}` : finalMessage);
       if (url) window.open(url, "_blank");
     }
     try {
@@ -622,6 +630,86 @@ const AdminBilling = ({ area }: Props) => {
                 onChange={(e) => setComposer({ ...composer, message: e.target.value })}
                 className="font-mono text-sm"
               />
+              {/* Attachment (image JPG/PNG or PDF) */}
+              <div className="space-y-2">
+                <label className="text-xs text-muted-foreground">Anexo (opcional — JPG, PNG ou PDF)</label>
+                {(composer.imageUrl || composer.documentUrl) ? (
+                  <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
+                    {composer.imageUrl ? <ImageIcon className="w-4 h-4 shrink-0" /> : <FileText className="w-4 h-4 shrink-0" />}
+                    <span className="truncate flex-1">
+                      {composer.documentName || (composer.imageUrl ? "Imagem anexada" : "Documento anexado")}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setComposer({ ...composer, imageUrl: null, documentUrl: null, documentName: null })}
+                      disabled={composerSending || uploadingAttachment}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      id="billing-attachment-input"
+                      type="file"
+                      accept="image/jpeg,image/png,image/jpg,application/pdf,.jpg,.jpeg,.png,.pdf"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        e.target.value = "";
+                        if (!file || !composer) return;
+                        const lower = file.name.toLowerCase();
+                        const isPdf = file.type === "application/pdf" || lower.endsWith(".pdf");
+                        const isImg = ["image/jpeg", "image/jpg", "image/png"].includes(file.type) || /\.(jpe?g|png)$/i.test(lower);
+                        if (!isPdf && !isImg) {
+                          toast.error("Envie apenas JPG, PNG ou PDF");
+                          return;
+                        }
+                        if (file.size > 16 * 1024 * 1024) {
+                          toast.error("Arquivo muito grande (máx. 16MB)");
+                          return;
+                        }
+                        setUploadingAttachment(true);
+                        try {
+                          const ext = isPdf ? "pdf" : (lower.match(/\.(jpe?g|png)$/i)?.[0].replace(".", "") || "jpg");
+                          const path = `${composer.row.user_id}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+                          const { error: upErr } = await supabase.storage
+                            .from("billing-attachments")
+                            .upload(path, file, { contentType: file.type || (isPdf ? "application/pdf" : "image/jpeg"), upsert: false });
+                          if (upErr) throw upErr;
+                          const { data: urlData } = supabase.storage.from("billing-attachments").getPublicUrl(path);
+                          setComposer({
+                            ...composer,
+                            imageUrl: isImg ? urlData.publicUrl : null,
+                            documentUrl: isPdf ? urlData.publicUrl : null,
+                            documentName: isPdf ? file.name : null,
+                          });
+                          toast.success("Anexo carregado");
+                        } catch (err: any) {
+                          toast.error(err?.message || "Falha ao enviar anexo");
+                        } finally {
+                          setUploadingAttachment(false);
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={uploadingAttachment || composerSending}
+                      onClick={() => document.getElementById("billing-attachment-input")?.click()}
+                    >
+                      {uploadingAttachment ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enviando...</>
+                      ) : (
+                        <><Paperclip className="w-4 h-4 mr-2" /> Anexar arquivo</>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </div>
               <p className="text-[11px] text-muted-foreground">
                 O rodapé "🔔 Comunicação automática STH METHOD" será adicionado automaticamente se ainda não estiver no texto.
               </p>
