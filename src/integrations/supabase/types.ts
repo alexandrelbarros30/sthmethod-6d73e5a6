@@ -257,6 +257,113 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_campaigns: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          last_charged_at: string | null
+          next_due_at: string
+          notes: string | null
+          plan_id: string | null
+          responsible_user_id: string | null
+          stage: number
+          status: string
+          subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          last_charged_at?: string | null
+          next_due_at?: string
+          notes?: string | null
+          plan_id?: string | null
+          responsible_user_id?: string | null
+          stage?: number
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          last_charged_at?: string | null
+          next_due_at?: string
+          notes?: string | null
+          plan_id?: string | null
+          responsible_user_id?: string | null
+          stage?: number
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      billing_charges: {
+        Row: {
+          campaign_id: string | null
+          delivery_error: string | null
+          delivery_status: string
+          document_name: string | null
+          document_url: string | null
+          id: string
+          image_url: string | null
+          message: string | null
+          phone: string | null
+          responsible_user_id: string | null
+          sent_at: string
+          stage: number
+          template_key: string | null
+          user_id: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          delivery_error?: string | null
+          delivery_status?: string
+          document_name?: string | null
+          document_url?: string | null
+          id?: string
+          image_url?: string | null
+          message?: string | null
+          phone?: string | null
+          responsible_user_id?: string | null
+          sent_at?: string
+          stage: number
+          template_key?: string | null
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string | null
+          delivery_error?: string | null
+          delivery_status?: string
+          document_name?: string | null
+          document_url?: string | null
+          id?: string
+          image_url?: string | null
+          message?: string | null
+          phone?: string | null
+          responsible_user_id?: string | null
+          sent_at?: string
+          stage?: number
+          template_key?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_charges_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "billing_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bioimpedance_logs: {
         Row: {
           arm_cm: number | null
@@ -3378,6 +3485,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      advance_billing_campaign: {
+        Args: { _campaign_id: string }
+        Returns: {
+          created_at: string
+          end_date: string
+          id: string
+          last_charged_at: string | null
+          next_due_at: string
+          notes: string | null
+          plan_id: string | null
+          responsible_user_id: string | null
+          stage: number
+          status: string
+          subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "billing_campaigns"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       has_admin_view: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
