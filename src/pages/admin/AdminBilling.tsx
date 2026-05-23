@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { SystemTemplateKey, getSystemTemplate, renderTemplate, buildWhatsAppUrl } from "@/lib/system-templates";
 import { Send, CheckCircle2, Clock, AlertTriangle, RefreshCcw, Pencil, Paperclip, X, FileText, Image as ImageIcon, Loader2, History, TrendingUp, DollarSign, Bell } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 type RoleArea = "admin" | "consultor" | "financeiro";
 interface Props { area: RoleArea }
@@ -468,6 +469,33 @@ const AdminBilling = ({ area }: Props) => {
 
   const role = area === "consultor" ? "consultor" : area === "financeiro" ? "financeiro" : "admin";
 
+  const { data: automation } = useQuery({
+    queryKey: ["billing-automation"],
+    queryFn: async () => {
+      const { data } = await supabase.from("billing_automation").select("enabled").eq("id", 1).maybeSingle();
+      return data;
+    },
+  });
+
+  const toggleAutomation = async (enabled: boolean) => {
+    const { error } = await supabase.from("billing_automation").update({ enabled, updated_at: new Date().toISOString(), updated_by: user?.id }).eq("id", 1);
+    if (error) { toast.error("Falha ao atualizar automação: " + error.message); return; }
+    toast.success(enabled ? "Automação ATIVADA — cobranças vencidas serão disparadas a cada 30 min" : "Automação PAUSADA");
+    qc.invalidateQueries({ queryKey: ["billing-automation"] });
+  };
+
+  const triggerNow = async () => {
+    toast.loading("Disparando ciclo agora...", { id: "auto-run" });
+    try {
+      const { data: res, error } = await supabase.functions.invoke("billing-auto-dispatch");
+      if (error) throw error;
+      toast.success(`Ciclo executado — ${res?.sent || 0} enviada(s), ${res?.failed || 0} falha(s), ${res?.skipped || 0} ignorada(s)`, { id: "auto-run" });
+      qc.invalidateQueries({ queryKey: ["billing-campaigns"] });
+    } catch (err: any) {
+      toast.error("Erro: " + (err?.message || err), { id: "auto-run" });
+    }
+  };
+
   const tabCounts = {
     queue: rows.filter(inQueue).length,
     waiting: rows.filter(inWaiting).length,
@@ -512,6 +540,36 @@ const AdminBilling = ({ area }: Props) => {
             <RefreshCcw className="w-4 h-4 mr-1" /> Atualizar
           </Button>
         </CardContent></Card>
+
+        {/* Automation control banner */}
+        {area === "admin" && (
+          <Card className={automation?.enabled ? "border-emerald-500/40 bg-emerald-500/5" : "border-amber-500/40 bg-amber-500/5"}>
+            <CardContent className="p-4 flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className={`w-2.5 h-2.5 rounded-full ${automation?.enabled ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`} />
+                <div>
+                  <p className="text-sm font-semibold">
+                    {automation?.enabled ? "CRM Automático ATIVO" : "CRM Automático PAUSADO"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {automation?.enabled
+                      ? "Cobranças vencidas são disparadas a cada 30 min até ordem contrária."
+                      : "Nenhuma cobrança será enviada automaticamente. Ative para iniciar o disparo contínuo."}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button variant="outline" size="sm" onClick={triggerNow}>
+                  <Send className="w-4 h-4 mr-1" /> Disparar ciclo agora
+                </Button>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Automação</span>
+                  <Switch checked={!!automation?.enabled} onCheckedChange={toggleAutomation} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Tabs + search */}
         <Card><CardContent className="p-4 space-y-3">
