@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { sendSystemTemplate, SystemTemplateKey, getSystemTemplate, renderTemplate, buildWhatsAppUrl } from "@/lib/system-templates";
-import { Send, CheckCircle2, Clock, MessageSquare, AlertTriangle, RefreshCcw, Zap, Pencil } from "lucide-react";
+import { Send, CheckCircle2, Clock, MessageSquare, AlertTriangle, RefreshCcw, Zap, Pencil, Paperclip, X, FileText, Image as ImageIcon, Loader2 } from "lucide-react";
 
 type RoleArea = "admin" | "consultor" | "financeiro";
 interface Props { area: RoleArea }
@@ -101,8 +101,9 @@ const AdminBilling = ({ area }: Props) => {
   const [autoSend, setAutoSend] = useState(false);
   const [bulkSending, setBulkSending] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
-  const [composer, setComposer] = useState<{ row: any; message: string; templateId: string; imageUrl: string | null } | null>(null);
+  const [composer, setComposer] = useState<{ row: any; message: string; templateId: string; imageUrl: string | null; documentUrl: string | null; documentName: string | null } | null>(null);
   const [composerSending, setComposerSending] = useState(false);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [profileEdit, setProfileEdit] = useState<{ user_id: string; full_name: string; phone: string; email: string } | null>(null);
   const [profileSaving, setProfileSaving] = useState(false);
 
