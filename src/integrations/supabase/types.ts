@@ -616,6 +616,7 @@ export type Database = {
           id: string
           max_uses: number
           plan_id: string | null
+          plan_ids: string[]
           updated_at: string
         }
         Insert: {
@@ -629,6 +630,7 @@ export type Database = {
           id?: string
           max_uses?: number
           plan_id?: string | null
+          plan_ids?: string[]
           updated_at?: string
         }
         Update: {
@@ -642,6 +644,7 @@ export type Database = {
           id?: string
           max_uses?: number
           plan_id?: string | null
+          plan_ids?: string[]
           updated_at?: string
         }
         Relationships: [

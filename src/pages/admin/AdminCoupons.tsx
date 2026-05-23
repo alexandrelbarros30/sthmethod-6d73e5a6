@@ -9,7 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Ticket, Copy } from "lucide-react";
+import { Plus, Pencil, Trash2, Ticket, Copy, Check } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -20,7 +21,7 @@ const emptyForm = {
   discount_value: 0,
   max_uses: 10,
   expires_at: "",
-  plan_id: "all",
+  plan_ids: [] as string[],
   active: true,
 };
 
@@ -58,7 +59,8 @@ const AdminCoupons = () => {
         discount_value: Number(form.discount_value),
         max_uses: Number(form.max_uses),
         expires_at: form.expires_at ? new Date(form.expires_at).toISOString() : null,
-        plan_id: form.plan_id === "all" ? null : form.plan_id,
+        plan_ids: form.plan_ids,
+        plan_id: form.plan_ids.length === 1 ? form.plan_ids[0] : null,
         active: form.active,
       };
       if (editing) {
@@ -105,7 +107,9 @@ const AdminCoupons = () => {
       discount_value: coupon.discount_value,
       max_uses: coupon.max_uses,
       expires_at: coupon.expires_at ? new Date(coupon.expires_at).toISOString().slice(0, 16) : "",
-      plan_id: coupon.plan_id || "all",
+      plan_ids: (coupon.plan_ids && coupon.plan_ids.length > 0)
+        ? coupon.plan_ids
+        : (coupon.plan_id ? [coupon.plan_id] : []),
       active: coupon.active,
     });
     setDialogOpen(true);
@@ -157,7 +161,16 @@ const AdminCoupons = () => {
                   {coupon.expires_at && (
                     <p>Expira: {new Date(coupon.expires_at).toLocaleDateString("pt-BR")} {new Date(coupon.expires_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
                   )}
-                  <p>Plano: {coupon.plans?.name || "Todos"}</p>
+                  <p>
+                    Planos: {(() => {
+                      const ids: string[] = coupon.plan_ids && coupon.plan_ids.length > 0
+                        ? coupon.plan_ids
+                        : (coupon.plan_id ? [coupon.plan_id] : []);
+                      if (ids.length === 0) return "Todos";
+                      const names = ids.map((id) => plans?.find((p: any) => p.id === id)?.name).filter(Boolean);
+                      return names.length > 0 ? names.join(", ") : "Todos";
+                    })()}
+                  </p>
                 </div>
                 <div className="flex gap-1 pt-2">
                   <Button variant="ghost" size="sm" onClick={() => openEdit(coupon)}>
@@ -225,16 +238,41 @@ const AdminCoupons = () => {
               <Input type="datetime-local" value={form.expires_at} onChange={(e) => setForm({ ...form, expires_at: e.target.value })} />
             </div>
             <div>
-              <Label className="font-body">Plano específico</Label>
-              <Select value={form.plan_id} onValueChange={(v) => setForm({ ...form, plan_id: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os planos</SelectItem>
-                  {plans?.map((p: any) => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label className="font-body">Planos válidos</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Selecione um ou mais planos. Deixe vazio para aplicar a todos.
+              </p>
+              <div className="space-y-1 max-h-48 overflow-y-auto rounded-md border p-2">
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, plan_ids: [] })}
+                  className={`w-full text-left px-2 py-1.5 rounded text-sm flex items-center gap-2 hover:bg-accent ${form.plan_ids.length === 0 ? "bg-accent" : ""}`}
+                >
+                  {form.plan_ids.length === 0 && <Check className="w-3.5 h-3.5 text-primary" />}
+                  <span className={form.plan_ids.length === 0 ? "font-medium" : "text-muted-foreground"}>
+                    Todos os planos
+                  </span>
+                </button>
+                {plans?.map((p: any) => {
+                  const checked = form.plan_ids.includes(p.id);
+                  return (
+                    <label key={p.id} className="flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-accent cursor-pointer">
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(v) => {
+                          setForm({
+                            ...form,
+                            plan_ids: v
+                              ? [...form.plan_ids, p.id]
+                              : form.plan_ids.filter((id) => id !== p.id),
+                          });
+                        }}
+                      />
+                      <span>{p.name}</span>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <Switch checked={form.active} onCheckedChange={(v) => setForm({ ...form, active: v })} />

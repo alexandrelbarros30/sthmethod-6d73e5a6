@@ -48,8 +48,11 @@ const CouponInput = ({ planId, originalPrice, onCouponApplied }: CouponInputProp
         return;
       }
 
-      // Check plan restriction
-      if (coupon.plan_id && coupon.plan_id !== planId) {
+      // Check plan restriction (supports multi-plan via plan_ids; falls back to legacy plan_id)
+      const allowedIds: string[] = (coupon.plan_ids && coupon.plan_ids.length > 0)
+        ? coupon.plan_ids
+        : (coupon.plan_id ? [coupon.plan_id] : []);
+      if (allowedIds.length > 0 && !allowedIds.includes(planId)) {
         toast.error("Este cupom não é válido para o plano selecionado.");
         onCouponApplied(null);
         return;
