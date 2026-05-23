@@ -956,25 +956,6 @@ const BucketsView = ({ rows, openComposer, setHistoryOf, onBulkSend, bulkSending
 
   return (
     <div className="space-y-4">
-      <Card className="border-emerald-500/30 bg-emerald-500/5">
-        <CardContent className="p-4 flex items-center gap-3 flex-wrap">
-          <div className="flex flex-col">
-            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Período de vencimento</span>
-            <span className="text-xs text-muted-foreground">Escolha a faixa de dias para visualizar</span>
-          </div>
-          <Select value={periodFilter} onValueChange={setPeriodFilter}>
-            <SelectTrigger className="h-10 w-[280px] text-sm font-medium ml-auto"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as faixas ({allGroups.reduce((s, g) => s + g.items.length, 0)})</SelectItem>
-              {DAY_BUCKETS.map((b) => {
-                const count = allGroups.find((g) => g.key === b.key)?.items.length || 0;
-                return <SelectItem key={b.key} value={b.key}>{b.label} ({count})</SelectItem>;
-              })}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
-
       <div className="flex flex-wrap gap-2">
         <Button size="sm" variant={periodFilter === "all" ? "default" : "outline"} onClick={() => setPeriodFilter("all")}>
           Todas
