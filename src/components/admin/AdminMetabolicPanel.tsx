@@ -97,9 +97,23 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName, studentPhon
         await supabase.from("anamnesis_entries").insert({ user_id: userId, notes: note });
       }
 
-      // Dispara WhatsApp automático quando a análise passa a ficar liberada
-      if (visible && !wasVisible) {
+      // Dispara WhatsApp automático quando a análise é liberada pela primeira vez
+      // ou quando já está liberada mas ainda não houve registro dessa automação.
+      if (visible) {
         try {
+          const { data: existingAutoHistory } = await supabase
+            .from("message_history")
+            .select("id")
+            .eq("user_id", userId)
+            .like("content", "%Sua análise laboratorial já pode ser acessada pela plataforma STH METHOD%")
+            .limit(1);
+
+          const shouldSendAutoMessage = !wasVisible || !existingAutoHistory?.length;
+
+          if (!shouldSendAutoMessage) {
+            return;
+          }
+
           const { data: profile } = await supabase
             .from("profiles")
             .select("full_name, email, phone, notify_on_updates")
@@ -137,7 +151,7 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName, studentPhon
     onSuccess: () => {
       toast.success(
         visible
-          ? "Análise salva e liberada! WhatsApp enviado ao aluno."
+          ? "Análise salva e liberada!"
           : "Análise salva!",
       );
       qc.invalidateQueries({ queryKey: ["metabolic-panels-admin", userId] });
