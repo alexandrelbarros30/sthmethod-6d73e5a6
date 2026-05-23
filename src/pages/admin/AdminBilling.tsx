@@ -11,9 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { sendSystemTemplate, SystemTemplateKey } from "@/lib/system-templates";
-import { Send, CheckCircle2, Clock, MessageSquare, AlertTriangle, RefreshCcw } from "lucide-react";
+import { Send, CheckCircle2, Clock, MessageSquare, AlertTriangle, RefreshCcw, Zap } from "lucide-react";
 
 type RoleArea = "admin" | "consultor" | "financeiro";
 interface Props { area: RoleArea }
@@ -85,6 +86,9 @@ const AdminBilling = ({ area }: Props) => {
   const [search, setSearch] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState<SystemTemplateKey>("renewal_soft" as SystemTemplateKey);
   const [editing, setEditing] = useState<any | null>(null);
+  const [autoSend, setAutoSend] = useState(false);
+  const [bulkSending, setBulkSending] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["billing-overdue", area, user?.id],
@@ -252,6 +256,46 @@ const AdminBilling = ({ area }: Props) => {
     toast.success("Ignorado por 7 dias");
   };
 
+  const handleBulkSend = async () => {
+    const targets = filtered.filter((r) => r.phone && r.status !== "renewed" && r.status !== "declined" && r.status !== "inactive");
+    if (targets.length === 0) { toast.error("Nenhum aluno elegível no filtro atual."); return; }
+    if (!autoSend) {
+      toast.error("Ative a chave de envio automático para disparar em massa.");
+      return;
+    }
+    const periodo = FILTERS.find((f) => f.key === filter)?.label || "filtro atual";
+    if (!window.confirm(`Enviar cobrança "${TEMPLATES.find(t=>t.key===selectedTemplate)?.label}" para ${targets.length} aluno(s) (${periodo})?`)) return;
+
+    setBulkSending(true);
+    setBulkProgress({ done: 0, total: targets.length });
+    let ok = 0, fail = 0;
+    for (let i = 0; i < targets.length; i++) {
+      const row = targets[i];
+      try {
+        const res = await sendSystemTemplate(selectedTemplate, {
+          full_name: row.full_name, phone: row.phone, email: row.email,
+          user_id: row.user_id, end_date: row.end_date,
+        }, { logHistory: true, mode: "auto" });
+        if (res.ok) {
+          ok++;
+          await upsertAction.mutateAsync({
+            user_id: row.user_id, status: "contacted", assigned_to: user?.id,
+            attempts: (row.action?.attempts || 0) + 1,
+            last_template: selectedTemplate,
+            last_contact_at: new Date().toISOString(),
+          });
+        } else { fail++; }
+      } catch { fail++; }
+      setBulkProgress({ done: i + 1, total: targets.length });
+      // Throttle to avoid Z-API rate limits
+      await new Promise((r) => setTimeout(r, 1200));
+    }
+    setBulkSending(false);
+    setBulkProgress(null);
+    toast.success(`Envio em massa concluído: ${ok} enviadas, ${fail} falhas.`);
+    qc.invalidateQueries({ queryKey: ["billing-overdue"] });
+  };
+
   const role = area === "consultor" ? "consultor" : area === "financeiro" ? "financeiro" : "admin";
 
   return (
@@ -309,6 +353,31 @@ const AdminBilling = ({ area }: Props) => {
             <Button size="sm" variant="ghost" onClick={() => qc.invalidateQueries({ queryKey: ["billing-overdue"] })}>
               <RefreshCcw className="w-4 h-4 mr-1" /> Atualizar
             </Button>
+          </div>
+
+          {/* Bulk send */}
+          <div className="flex flex-wrap items-center gap-3 pt-3 border-t">
+            <div className="flex items-center gap-2">
+              <Switch id="auto-send" checked={autoSend} onCheckedChange={setAutoSend} />
+              <label htmlFor="auto-send" className="text-sm font-medium cursor-pointer flex items-center gap-1.5">
+                <Zap className={`w-4 h-4 ${autoSend ? "text-emerald-500" : "text-muted-foreground"}`} />
+                Chave de envio automático
+              </label>
+            </div>
+            <Button
+              size="sm"
+              variant={autoSend ? "default" : "outline"}
+              onClick={handleBulkSend}
+              disabled={bulkSending || !autoSend || filtered.length === 0}
+            >
+              <Send className="w-4 h-4 mr-1" />
+              {bulkSending && bulkProgress
+                ? `Enviando ${bulkProgress.done}/${bulkProgress.total}...`
+                : `Envio em massa (${filtered.filter(r => r.phone).length})`}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Dispara o template selecionado para todos os alunos do período filtrado.
+            </p>
           </div>
         </CardContent></Card>
 
