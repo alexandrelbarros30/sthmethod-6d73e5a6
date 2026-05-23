@@ -590,7 +590,31 @@ const AdminBilling = ({ area }: Props) => {
             <div className="space-y-3">
               <div className="text-xs text-muted-foreground">
                 Para: <span className="font-medium text-foreground">{composer.row.phone}</span>
-                {" · "}Template: <span className="font-medium text-foreground">{TEMPLATES.find(t => t.key === selectedTemplate)?.label}</span>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Template</label>
+                <Select
+                  value={selectedTemplate}
+                  onValueChange={async (v) => {
+                    const key = v as SystemTemplateKey;
+                    setSelectedTemplate(key);
+                    const tpl = await getSystemTemplate(key);
+                    if (!tpl || !composer) return;
+                    const rendered = renderTemplate(tpl.content, {
+                      full_name: composer.row.full_name, phone: composer.row.phone,
+                      email: composer.row.email, user_id: composer.row.user_id,
+                      end_date: composer.row.end_date,
+                    });
+                    setComposer({ ...composer, message: rendered, templateId: tpl.id, imageUrl: tpl.image_url || null });
+                  }}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {TEMPLATES.map((t) => (
+                      <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <Textarea
                 rows={14}
