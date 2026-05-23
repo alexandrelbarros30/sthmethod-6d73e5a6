@@ -89,7 +89,11 @@ export const sendSystemTemplate = async (
   if (!ctx.phone) return { ok: false, reason: "Aluno sem telefone cadastrado." };
 
   const message = renderTemplate(tpl.content, ctx);
-  const finalMessage = message;
+  const AUTO_FOOTER =
+    "\n\n———\n🔔 Comunicação automática STH METHOD\nMensagem enviada automaticamente pelo sistema.\nNão é necessário responder.";
+  const finalMessage = message.includes("Comunicação automática STH METHOD")
+    ? message
+    : `${message}${AUTO_FOOTER}`;
   let deliveryStatus: "sent" | "failed" = "sent";
   let deliveryError: string | null = null;
 
