@@ -406,23 +406,33 @@ const AdminBilling = ({ area }: Props) => {
               <TabsList>
                 <TabsTrigger value="queue">Fila ativa ({tabCounts.queue})</TabsTrigger>
                 <TabsTrigger value="waiting">Aguardando ({tabCounts.waiting})</TabsTrigger>
+                <TabsTrigger value="buckets">Por tempo vencido</TabsTrigger>
+                <TabsTrigger value="history">Histórico geral</TabsTrigger>
                 <TabsTrigger value="renewed">Renovados ({tabCounts.renewed})</TabsTrigger>
                 <TabsTrigger value="ignored">Ignorados ({tabCounts.ignored})</TabsTrigger>
                 <TabsTrigger value="all">Todos ({tabCounts.all})</TabsTrigger>
               </TabsList>
             </Tabs>
-            <Input className="max-w-xs" placeholder="Buscar por nome..." value={search} onChange={(e) => setSearch(e.target.value)} />
+            {tab !== "history" && (
+              <Input className="max-w-xs" placeholder="Buscar por nome..." value={search} onChange={(e) => setSearch(e.target.value)} />
+            )}
           </div>
           <p className="text-xs text-muted-foreground">
             {tab === "queue" && "Alunos prontos para cobrança hoje — sequência: 1ª (amigável) → 7d → 2ª → 8d → 3ª (cupom) → 15d → 4ª → 30d → 5ª (reativação)."}
             {tab === "waiting" && "Já foram cobrados recentemente — voltam à fila automaticamente na próxima data."}
+            {tab === "buckets" && "Grade de alunos agrupados por tempo de vencimento — envio manual de qualquer etapa, a qualquer momento."}
+            {tab === "history" && "Painel coletivo de todas as cobranças realizadas por todos os responsáveis."}
             {tab === "renewed" && "Alunos que renovaram após cobrança."}
             {tab === "ignored" && "Removidos manualmente da fila."}
             {tab === "all" && "Todos os alunos vencidos, independente do estado da campanha."}
           </p>
         </CardContent></Card>
 
-        {/* Table */}
+        {tab === "buckets" ? (
+          <BucketsView rows={rows.filter((r) => !search || r.full_name.toLowerCase().includes(search.toLowerCase()))} openComposer={openComposer} setHistoryOf={setHistoryOf} />
+        ) : tab === "history" ? (
+          <GlobalHistoryPanel area={area} userId={user?.id} />
+        ) : (
         <Card><CardContent className="p-0">
           {isLoading ? (
             <div className="p-10 text-center text-muted-foreground">Carregando...</div>
@@ -515,6 +525,7 @@ const AdminBilling = ({ area }: Props) => {
             </Table>
           )}
         </CardContent></Card>
+        )}
       </div>
 
       {/* Composer dialog */}
