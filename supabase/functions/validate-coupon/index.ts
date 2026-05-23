@@ -43,8 +43,11 @@ serve(async (req) => {
       return new Response(JSON.stringify({ valid: false, reason: "Cupom esgotado" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Check plan
-    if (coupon.plan_id && plan_id && coupon.plan_id !== plan_id) {
+    // Check plan (supports multi-plan via plan_ids; falls back to legacy plan_id)
+    const allowedIds: string[] = Array.isArray(coupon.plan_ids) && coupon.plan_ids.length > 0
+      ? coupon.plan_ids
+      : (coupon.plan_id ? [coupon.plan_id] : []);
+    if (allowedIds.length > 0 && plan_id && !allowedIds.includes(plan_id)) {
       return new Response(JSON.stringify({ valid: false, reason: "Cupom não válido para este plano" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
