@@ -107,8 +107,12 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName, studentPhon
             .maybeSingle();
           const allowed = (profile as any)?.notify_on_updates !== false;
           const phone = (profile as any)?.phone || studentPhone;
-          if (allowed && phone) {
-            await sendSystemTemplate(
+          if (!allowed) {
+            toast.message("Aluno com notificações desativadas — WhatsApp não enviado.");
+          } else if (!phone) {
+            toast.error("Aluno sem telefone cadastrado — WhatsApp não enviado.");
+          } else {
+            const res = await sendSystemTemplate(
               "lab_analysis_ready",
               {
                 full_name: (profile as any)?.full_name || userName,
@@ -118,9 +122,15 @@ const AdminMetabolicPanel = ({ open, onOpenChange, userId, userName, studentPhon
               },
               { logHistory: true, mode: "auto" },
             );
+            if (!res.ok) {
+              toast.error(`Falha no WhatsApp automático: ${res.reason || "erro desconhecido"}`);
+            } else if (res.reason) {
+              toast.message(`WhatsApp via fallback wa.me (${res.reason})`);
+            }
           }
         } catch (err) {
           console.warn("[lab_analysis_ready] envio falhou", err);
+          toast.error("Erro ao enviar WhatsApp automático.");
         }
       }
     },
