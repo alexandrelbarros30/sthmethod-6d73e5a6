@@ -489,7 +489,13 @@ const AdminBilling = ({ area }: Props) => {
         </CardContent></Card>
 
         {tab === "buckets" ? (
-          <BucketsView rows={rows.filter((r) => !search || r.full_name.toLowerCase().includes(search.toLowerCase()))} openComposer={openComposer} setHistoryOf={setHistoryOf} />
+          <BucketsView
+            rows={rows.filter((r) => !search || r.full_name.toLowerCase().includes(search.toLowerCase()))}
+            openComposer={openComposer}
+            setHistoryOf={setHistoryOf}
+            onBulkSend={handleBulkSend}
+            bulkSending={bulkSending}
+          />
         ) : tab === "history" ? (
           <GlobalHistoryPanel area={area} userId={user?.id} />
         ) : (
