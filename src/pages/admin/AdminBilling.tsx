@@ -798,7 +798,8 @@ const HistoryDialog = ({ row, onClose }: { row: any | null; onClose: () => void 
 
 export default AdminBilling;
 
-const BucketsView = ({ rows, openComposer, setHistoryOf }: { rows: any[]; openComposer: (r: any, s?: number) => void; setHistoryOf: (r: any) => void }) => {
+const BucketsView = ({ rows, openComposer, setHistoryOf, onBulkSend, bulkSending }: { rows: any[]; openComposer: (r: any, s?: number) => void; setHistoryOf: (r: any) => void; onBulkSend: (bucketKey: string, items: any[], stage: number) => void; bulkSending: string | null }) => {
+  const [bulkStage, setBulkStage] = useState<Record<string, string>>({});
   const groups = DAY_BUCKETS.map((b) => ({
     ...b,
     items: rows.filter((r) => r.days >= b.min && r.days <= b.max).sort((a, b) => b.days - a.days),
@@ -813,10 +814,27 @@ const BucketsView = ({ rows, openComposer, setHistoryOf }: { rows: any[]; openCo
       {groups.map((g) => (
         <Card key={g.key}>
           <CardContent className="p-0">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border gap-3 flex-wrap">
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className={g.color}>{g.label}</Badge>
                 <span className="text-sm text-muted-foreground">{g.items.length} aluno{g.items.length > 1 ? "s" : ""}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Select value={bulkStage[g.key] || ""} onValueChange={(v) => setBulkStage((s) => ({ ...s, [g.key]: v }))}>
+                  <SelectTrigger className="h-8 w-[200px] text-xs"><SelectValue placeholder="Escolher template..." /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(STAGE_TEMPLATES).map(([s, t]) => (
+                      <SelectItem key={s} value={s}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  size="sm"
+                  disabled={!bulkStage[g.key] || bulkSending === g.key}
+                  onClick={() => onBulkSend(g.key, g.items, parseInt(bulkStage[g.key]))}
+                >
+                  {bulkSending === g.key ? (<><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> Enviando...</>) : (<><Send className="w-3.5 h-3.5 mr-1" /> Enviar para todos</>)}
+                </Button>
               </div>
             </div>
             <Table>
