@@ -249,4 +249,39 @@ export const SYSTEM_TEMPLATE_DEFINITIONS: Array<{
     defaultContent:
       "{nome},\n\nSua análise laboratorial já pode ser acessada pela plataforma STH METHOD. 🧪\n\n📲 Acesse:\n🌐 sthmethod.com.br\n\n👉 Vá até a área:\n*Central de Análise*\n\n⚠️ Importante:\nDependendo das informações identificadas nos exames, seu protocolo poderá ser atualizado de forma estratégica.\n\nCaso isso aconteça, você será notificado pela plataforma. 👊",
   },
+  {
+    key: "renewal_soft",
+    label: "1ª cobrança — Template amigável",
+    description: "Primeiro contato de renovação, tom leve e acolhedor.",
+    defaultContent:
+      "Oi {nome}! 👋\n\nNotei que seu plano STH METHOD venceu há {dias_vencido} dias. Bora dar continuidade na sua evolução? 💪\n\nRenove pelo link: {link_renovacao}",
+  },
+  {
+    key: "renewal_objective",
+    label: "2ª cobrança — Retorno leve",
+    description: "7 dias após a 1ª cobrança. Relembrar continuidade.",
+    defaultContent:
+      "Oi {nome}, tudo bem?\n\nSeu plano segue pausado ({dias_vencido} dias vencido). Cada semana parada é evolução perdida. Vamos retomar?\n\n👉 {link_renovacao}",
+  },
+  {
+    key: "renewal_recovery",
+    label: "3ª cobrança — Cupom oportunidade",
+    description: "8 dias após a 2ª. Oferta com cupom.",
+    defaultContent:
+      "{nome}, separei algo especial pra você. 🎁\n\nUse o cupom *{cupom}* na sua renovação e volte com tudo pra STH METHOD.\n\n👉 {link_renovacao}",
+  },
+  {
+    key: "renewal_last_contact",
+    label: "4ª cobrança — Último contato ativo",
+    description: "15 dias após a 3ª. Última abordagem direta.",
+    defaultContent:
+      "{nome}, este é nosso último contato ativo sobre sua renovação. 🙏\n\nSe quiser retomar sua evolução, estamos aqui: {link_renovacao}\n\nCaso prefira parar por aqui, sem problemas — sucesso na sua jornada. 💚",
+  },
+  {
+    key: "renewal_reactivation",
+    label: "5ª cobrança — Reativação inteligente",
+    description: "30 dias após a 4ª. Reaquecer aluno antigo sem pressão.",
+    defaultContent:
+      "{nome}, muita novidade mudou aqui na STH METHOD nos últimos meses. ✨\n\nNovas estratégias, novas ferramentas, evolução constante. Quer dar uma olhada no que está disponível agora?\n\n👉 {link_renovacao}",
+  },
 ];
