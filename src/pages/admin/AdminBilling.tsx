@@ -353,6 +353,8 @@ const AdminBilling = ({ area }: Props) => {
   };
 
   const [bulkSending, setBulkSending] = useState<string | null>(null);
+  const [bulkComposer, setBulkComposer] = useState<{ bucketKey: string; bucketLabel: string; items: any[]; stage: number; templateKey: SystemTemplateKey; templateId: string; message: string; imageUrl: string | null; documentUrl: string | null; documentName: string | null } | null>(null);
+  const [bulkUploading, setBulkUploading] = useState(false);
 
   const sendOne = async (row: any, stage: number): Promise<{ ok: boolean; error?: string }> => {
     if (!row.phone || !isValidPhone(row.phone)) return { ok: false, error: "telefone inválido" };
@@ -400,14 +402,66 @@ const AdminBilling = ({ area }: Props) => {
     if (items.length === 0) return;
     const valid = items.filter((r) => r.phone && isValidPhone(r.phone));
     if (valid.length === 0) { toast.error("Nenhum aluno com telefone válido nesta faixa."); return; }
-    if (!confirm(`Enviar "${STAGE_TEMPLATES[stage].label}" para ${valid.length} aluno(s) desta faixa?`)) return;
+    const tplDef = STAGE_TEMPLATES[stage] || STAGE_TEMPLATES[1];
+    const tpl = await getSystemTemplate(tplDef.key);
+    if (!tpl) { toast.error("Template não encontrado"); return; }
+    const bucket = DAY_BUCKETS.find((b) => b.key === bucketKey);
+    setBulkComposer({
+      bucketKey, bucketLabel: bucket?.label || "", items: valid, stage,
+      templateKey: tplDef.key, templateId: tpl.id, message: tpl.content,
+      imageUrl: tpl.image_url || null, documentUrl: null, documentName: null,
+    });
+  };
+
+  const onBulkTemplateChange = async (key: SystemTemplateKey) => {
+    if (!bulkComposer) return;
+    const tpl = await getSystemTemplate(key);
+    if (!tpl) return;
+    const stage = parseInt(Object.entries(STAGE_TEMPLATES).find(([, v]) => v.key === key)?.[0] || "1");
+    setBulkComposer({ ...bulkComposer, templateKey: key, templateId: tpl.id, message: tpl.content, imageUrl: tpl.image_url || null, stage });
+  };
+
+  const handleBulkComposerSend = async () => {
+    if (!bulkComposer) return;
+    const { bucketKey, items, stage, templateKey, templateId, message, imageUrl, documentUrl, documentName } = bulkComposer;
+    if (!message.trim()) { toast.error("Mensagem vazia"); return; }
     setBulkSending(bucketKey);
+    const AUTO_FOOTER = "\n\n———\n🔔 Comunicação automática STH METHOD\nMensagem enviada automaticamente pelo sistema.\nNão é necessário responder.";
     let ok = 0, fail = 0;
-    for (const row of valid) {
-      const r = await sendOne(row, stage);
-      if (r.ok) ok++; else fail++;
+    for (const row of items) {
+      const rendered = renderTemplate(message, {
+        full_name: row.full_name, phone: row.phone, email: row.email,
+        user_id: row.user_id, end_date: row.end_date,
+      });
+      const finalMessage = rendered.includes("Comunicação automática STH METHOD") ? rendered : `${rendered}${AUTO_FOOTER}`;
+      let autoOk = false; let deliveryError: string | null = null;
+      try {
+        const { data: res, error } = await supabase.functions.invoke("send-whatsapp", {
+          body: { phone: row.phone, message: finalMessage, image_url: imageUrl, document_url: documentUrl, document_name: documentName },
+        });
+        if (error) throw error;
+        if (res?.ok) autoOk = true; else deliveryError = res?.error || "Falha no envio";
+      } catch (err: any) { deliveryError = err?.message || String(err); }
+      try {
+        await supabase.from("message_history").insert({
+          user_id: row.user_id, content: finalMessage, recipient_phone: row.phone,
+          recipient_name: row.full_name, template_id: templateId, image_url: imageUrl,
+          status: autoOk ? "sent" : "failed", sent_at: new Date().toISOString(),
+        });
+      } catch (e) { console.error(e); }
+      if (row.campaign) {
+        await supabase.from("billing_charges").insert({
+          campaign_id: row.campaign.id, user_id: row.user_id, stage: row.campaign.stage,
+          template_key: templateKey, responsible_user_id: user?.id || null, phone: row.phone,
+          message: finalMessage, image_url: imageUrl, document_url: documentUrl, document_name: documentName,
+          delivery_status: autoOk ? "sent" : "failed", delivery_error: deliveryError,
+        });
+        await supabase.rpc("advance_billing_campaign", { _campaign_id: row.campaign.id });
+      }
+      if (autoOk) ok++; else fail++;
     }
     setBulkSending(null);
+    setBulkComposer(null);
     toast.success(`Envio em lote — ${ok} enviada(s), ${fail} falha(s).`);
     qc.invalidateQueries({ queryKey: ["billing-campaigns"] });
   };
