@@ -581,6 +581,7 @@ const AdminBilling = ({ area }: Props) => {
       {/* Composer dialog – edit before send */}
       <Dialog open={!!composer} onOpenChange={(o) => !o && !composerSending && setComposer(null)}>
         <DialogContent className="max-w-lg">
+          {/* placeholder anchor */}
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Pencil className="w-4 h-4" /> Revisar cobrança — {composer?.row?.full_name}
@@ -608,6 +609,60 @@ const AdminBilling = ({ area }: Props) => {
             <Button onClick={handleComposerSend} disabled={composerSending}>
               <Send className="w-4 h-4 mr-1" />
               {composerSending ? "Enviando..." : "Enviar agora"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Quick profile edit dialog */}
+      <Dialog open={!!profileEdit} onOpenChange={(o) => !o && !profileSaving && setProfileEdit(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Atualizar cadastro</DialogTitle>
+          </DialogHeader>
+          {profileEdit && (
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-muted-foreground">Nome completo</label>
+                <Input value={profileEdit.full_name} onChange={(e) => setProfileEdit({ ...profileEdit, full_name: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Telefone (WhatsApp)</label>
+                <Input
+                  value={profileEdit.phone}
+                  onChange={(e) => setProfileEdit({ ...profileEdit, phone: e.target.value })}
+                  placeholder="(xx) xxxxx-xxxx"
+                />
+                {profileEdit.phone && !isValidPhone(profileEdit.phone) && (
+                  <p className="text-xs text-red-500 mt-1">⚠ Telefone parece inválido</p>
+                )}
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Email</label>
+                <Input type="email" value={profileEdit.email} onChange={(e) => setProfileEdit({ ...profileEdit, email: e.target.value })} />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setProfileEdit(null)} disabled={profileSaving}>Cancelar</Button>
+            <Button
+              onClick={async () => {
+                if (!profileEdit) return;
+                setProfileSaving(true);
+                const { error } = await supabase.from("profiles").update({
+                  full_name: profileEdit.full_name,
+                  phone: profileEdit.phone,
+                  email: profileEdit.email,
+                }).eq("user_id", profileEdit.user_id);
+                setProfileSaving(false);
+                if (error) { toast.error("Erro ao salvar: " + error.message); return; }
+                toast.success("Cadastro atualizado");
+                setProfileEdit(null);
+                qc.invalidateQueries({ queryKey: ["billing-overdue"] });
+              }}
+              disabled={profileSaving}
+            >
+              {profileSaving ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
         </DialogContent>
