@@ -32,9 +32,11 @@ interface Segment {
 
 const PRESETS = [
   { name: "Alunos ativos", filters: { status: "active" } },
-  { name: "Inativos +30 dias", filters: { status: "expired", min_days_expire: -365, max_days_expire: -30 } },
   { name: "Vencimento próximo (7d)", filters: { status: "expiring" } },
-  { name: "Leads sem plano", filters: { status: "lead" } },
+  { name: "Vencidos", filters: { status: "expired" } },
+  { name: "Inativos +30 dias", filters: { status: "inactive" } },
+  { name: "Leads qualificados", filters: { status: "lead" } },
+  { name: "Visitantes de ferramentas", filters: { status: "tool_user" } },
   { name: "Foco emagrecimento", filters: { objective: "emagrecimento" } },
 ];
 
@@ -140,10 +142,11 @@ export default function CRMSegments() {
                     <SelectContent>
                       <SelectItem value="all">Qualquer</SelectItem>
                       <SelectItem value="active">Ativos</SelectItem>
-                      <SelectItem value="inactive">Inativos</SelectItem>
-                      <SelectItem value="lead">Leads</SelectItem>
                       <SelectItem value="expiring">Vencendo</SelectItem>
                       <SelectItem value="expired">Vencidos</SelectItem>
+                      <SelectItem value="inactive">Inativos (vencidos +30d)</SelectItem>
+                      <SelectItem value="lead">Leads qualificados</SelectItem>
+                      <SelectItem value="tool_user">Visitantes de ferramentas</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
