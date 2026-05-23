@@ -267,12 +267,12 @@ const AdminBilling = ({ area }: Props) => {
       full_name: row.full_name, phone: row.phone, email: row.email,
       user_id: row.user_id, end_date: row.end_date,
     });
-    setComposer({ row, message: rendered, templateId: tpl.id, imageUrl: tpl.image_url || null });
+    setComposer({ row, message: rendered, templateId: tpl.id, imageUrl: tpl.image_url || null, documentUrl: null, documentName: null });
   };
 
   const handleComposerSend = async () => {
     if (!composer) return;
-    const { row, message, templateId, imageUrl } = composer;
+    const { row, message, templateId, imageUrl, documentUrl, documentName } = composer;
     if (!message.trim()) { toast.error("Mensagem vazia"); return; }
     setComposerSending(true);
     const AUTO_FOOTER = "\n\n———\n🔔 Comunicação automática STH METHOD\nMensagem enviada automaticamente pelo sistema.\nNão é necessário responder.";
@@ -282,7 +282,13 @@ const AdminBilling = ({ area }: Props) => {
     let autoOk = false;
     try {
       const { data, error } = await supabase.functions.invoke("send-whatsapp", {
-        body: { phone: row.phone, message: finalMessage, image_url: imageUrl },
+        body: {
+          phone: row.phone,
+          message: finalMessage,
+          image_url: imageUrl,
+          document_url: documentUrl,
+          document_name: documentName,
+        },
       });
       if (error) throw error;
       if (data?.ok) autoOk = true;
@@ -291,7 +297,8 @@ const AdminBilling = ({ area }: Props) => {
     }
     if (!autoOk) {
       deliveryStatus = "failed";
-      const url = buildWhatsAppUrl(row.phone, imageUrl ? `${finalMessage}\n\n${imageUrl}` : finalMessage);
+      const attachmentUrl = imageUrl || documentUrl;
+      const url = buildWhatsAppUrl(row.phone, attachmentUrl ? `${finalMessage}\n\n${attachmentUrl}` : finalMessage);
       if (url) window.open(url, "_blank");
     }
     try {
