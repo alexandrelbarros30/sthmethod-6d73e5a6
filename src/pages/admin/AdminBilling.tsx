@@ -1017,7 +1017,8 @@ const HistoryDialog = ({ row, onClose }: { row: any | null; onClose: () => void 
 
 export default AdminBilling;
 
-const BucketsView = ({ rows, openComposer, setHistoryOf, onBulkSend, bulkSending }: { rows: any[]; openComposer: (r: any, s?: number) => void; setHistoryOf: (r: any) => void; onBulkSend: (bucketKey: string, items: any[], stage: number) => void; bulkSending: string | null }) => {
+const BucketsView = ({ rows, openComposer, setHistoryOf, onBulkSend, bulkSending, showValues }: { rows: any[]; openComposer: (r: any, s?: number) => void; setHistoryOf: (r: any) => void; onBulkSend: (bucketKey: string, items: any[], stage: number) => void; bulkSending: string | null; showValues: boolean }) => {
+  const maskValue = (formatted: string) => (showValues ? formatted : "••••••");
   const [bulkStage, setBulkStage] = useState<Record<string, string>>({});
   const [periodFilter, setPeriodFilter] = useState<string>("all");
   const allGroups = DAY_BUCKETS.map((b) => ({
