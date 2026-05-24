@@ -548,6 +548,16 @@ export default function CRMCampaigns() {
                   <Button size="icon" variant="ghost" className="h-8 w-8 text-rose-400" onClick={() => remove(c.id)}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
+                  {c.sent_count > 0 && (
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-amber-400"
+                      disabled={deletingWa === c.id}
+                      onClick={() => deleteWhatsAppMessages(c)}
+                      title="Apagar mensagens enviadas dentro do WhatsApp">
+                      {deletingWa === c.id
+                        ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        : <MessageSquareX className="h-3.5 w-3.5" />}
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
