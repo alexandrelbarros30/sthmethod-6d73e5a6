@@ -502,7 +502,7 @@ const AdminRevenue = () => {
                             {r.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right font-semibold">{fmtBRL(Number(r.amount))}</TableCell>
+                        <TableCell className="text-right font-semibold">{mask(fmtBRL(Number(r.amount)))}</TableCell>
                       </TableRow>
                     );
                   })}
