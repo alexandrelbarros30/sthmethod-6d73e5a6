@@ -340,7 +340,7 @@ const AdminRevenue = () => {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{fmtBRL(totals.total)}</div>
+            <div className="text-2xl font-bold">{mask(fmtBRL(totals.total))}</div>
             <p className="text-xs text-muted-foreground mt-1">{totals.count} pagamento(s)</p>
           </CardContent>
         </Card>
@@ -355,7 +355,7 @@ const AdminRevenue = () => {
                 <Icon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{fmtBRL(v.total)}</div>
+                <div className="text-2xl font-bold">{mask(fmtBRL(v.total))}</div>
                 <p className="text-xs text-muted-foreground mt-1">{v.count} pagamento(s)</p>
               </CardContent>
             </Card>
@@ -387,7 +387,7 @@ const AdminRevenue = () => {
                     <TableRow key={ym}>
                       <TableCell className="font-medium">{monthLabel(ym)}</TableCell>
                       <TableCell className="text-right">{v.count}</TableCell>
-                      <TableCell className="text-right font-semibold">{fmtBRL(v.total)}</TableCell>
+                      <TableCell className="text-right font-semibold">{mask(fmtBRL(v.total))}</TableCell>
                     </TableRow>
                   ))}
                   {monthsSorted.length === 0 && (
@@ -415,7 +415,7 @@ const AdminRevenue = () => {
                     <TableRow key={id}>
                       <TableCell className="font-medium">{v.name}</TableCell>
                       <TableCell className="text-right">{v.count}</TableCell>
-                      <TableCell className="text-right font-semibold">{fmtBRL(v.total)}</TableCell>
+                      <TableCell className="text-right font-semibold">{mask(fmtBRL(v.total))}</TableCell>
                     </TableRow>
                   ))}
                   {plansSorted.length === 0 && (
@@ -453,7 +453,7 @@ const AdminRevenue = () => {
                         {v.firstDate ? new Date(v.firstDate).toLocaleDateString("pt-BR") : "—"}
                       </TableCell>
                       <TableCell className="text-right">{v.count}</TableCell>
-                      <TableCell className="text-right font-semibold">{fmtBRL(v.total)}</TableCell>
+                      <TableCell className="text-right font-semibold">{mask(fmtBRL(v.total))}</TableCell>
                     </TableRow>
                   ))}
                   {studentsSorted.length === 0 && (
