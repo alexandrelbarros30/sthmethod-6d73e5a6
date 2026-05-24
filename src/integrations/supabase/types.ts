@@ -780,9 +780,11 @@ export type Database = {
         Row: {
           campaign_id: string
           created_at: string
+          deleted_at: string | null
           error: string | null
           id: string
           media_url: string | null
+          provider_message_id: string | null
           recipient_name: string | null
           recipient_phone: string
           recipient_user_id: string | null
@@ -795,9 +797,11 @@ export type Database = {
         Insert: {
           campaign_id: string
           created_at?: string
+          deleted_at?: string | null
           error?: string | null
           id?: string
           media_url?: string | null
+          provider_message_id?: string | null
           recipient_name?: string | null
           recipient_phone: string
           recipient_user_id?: string | null
@@ -810,9 +814,11 @@ export type Database = {
         Update: {
           campaign_id?: string
           created_at?: string
+          deleted_at?: string | null
           error?: string | null
           id?: string
           media_url?: string | null
+          provider_message_id?: string | null
           recipient_name?: string | null
           recipient_phone?: string
           recipient_user_id?: string | null
