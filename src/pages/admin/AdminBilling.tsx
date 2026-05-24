@@ -601,9 +601,15 @@ const AdminBilling = ({ area }: Props) => {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Button variant="outline" size="sm" onClick={triggerNow}>
+                <Button variant="outline" size="sm" onClick={openCyclePreview}>
                   <Send className="w-4 h-4 mr-1" /> Disparar ciclo agora
                 </Button>
+                {automation?.enabled && (
+                  <Button variant="outline" size="sm" onClick={interruptCycle}
+                    className="border-rose-500/40 text-rose-400 hover:bg-rose-500/10">
+                    <StopCircle className="w-4 h-4 mr-1" /> Interromper
+                  </Button>
+                )}
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">Automação</span>
                   <Switch checked={!!automation?.enabled} onCheckedChange={toggleAutomation} />
@@ -612,6 +618,50 @@ const AdminBilling = ({ area }: Props) => {
             </CardContent>
           </Card>
         )}
+
+        <Dialog open={cyclePreview.open} onOpenChange={(v) => setCyclePreview((p) => ({ ...p, open: v }))}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Eye className="w-4 h-4 text-emerald-400" /> Prévia do ciclo
+              </DialogTitle>
+            </DialogHeader>
+            {cyclePreview.loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-5 h-5 animate-spin text-emerald-400" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm">
+                  <span className="text-emerald-400 font-semibold">{cyclePreview.items.length}</span> aluno(s) serão notificados agora.
+                </p>
+                <div className="max-h-64 overflow-y-auto rounded-lg border border-border/40 divide-y divide-border/40">
+                  {cyclePreview.items.length === 0 ? (
+                    <p className="p-3 text-xs text-muted-foreground text-center">Nenhuma cobrança vencida no momento.</p>
+                  ) : cyclePreview.items.map((it, i) => (
+                    <div key={i} className="flex items-center justify-between p-2 text-xs">
+                      <span>{it.name}</span>
+                      <Badge variant="outline" className={`text-[10px] ${STAGE_COLORS[it.stage]}`}>Estágio {it.stage}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setCyclePreview((p) => ({ ...p, open: false }))}>Cancelar</Button>
+              <Button
+                disabled={cyclePreview.loading || cyclePreview.items.length === 0}
+                className="gap-2 bg-emerald-500 text-black hover:bg-emerald-400"
+                onClick={async () => {
+                  setCyclePreview((p) => ({ ...p, open: false }));
+                  await triggerNow();
+                }}
+              >
+                <Send className="w-4 h-4" /> Confirmar e disparar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Tabs + search */}
         <Card><CardContent className="p-4 space-y-3">
