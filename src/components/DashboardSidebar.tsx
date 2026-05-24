@@ -1,11 +1,11 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Layers, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered, RefreshCw, NotebookPen, AlertCircle } from "lucide-react";
+import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Layers, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered, RefreshCw, NotebookPen, AlertCircle, ChevronDown, DollarSign } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useEvolutionStatus } from "@/hooks/useEvolutionStatus";
 
 type AppRole = "student" | "admin" | "admin_viewer" | "consultor" | "assistente" | "financeiro";
@@ -14,7 +14,13 @@ interface SidebarProps {
   role: AppRole;
 }
 
-const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> = {
+type NavLeaf = { to: string; icon: any; label: string };
+type NavGroup = { group: string; icon: any; children: NavLeaf[] };
+type NavItem = NavLeaf | NavGroup;
+
+const isGroup = (item: NavItem): item is NavGroup => (item as NavGroup).group !== undefined;
+
+const linksByRole: Record<AppRole, NavItem[]> = {
   student: [
     { to: "/dashboard", icon: LayoutDashboard, label: "Visão Geral" },
     { to: "/dashboard/profile", icon: ClipboardList, label: "Minha Ficha" },
@@ -36,10 +42,23 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/admin/queue", icon: ListOrdered, label: "Fila Atendimento" },
     { to: "/admin/students", icon: User, label: "Alunos" },
     { to: "/admin/plans", icon: CreditCard, label: "Planos" },
-    { to: "/admin/payments", icon: Wallet, label: "Pagamentos" },
-    { to: "/admin/revenue", icon: TrendingUp, label: "Faturamento" },
-    { to: "/admin/billing", icon: AlertCircle, label: "Cobranças e Renovações" },
-    { to: "/admin/crm", icon: Megaphone, label: "Campanhas & Ofertas" },
+    {
+      group: "Financeiro",
+      icon: DollarSign,
+      children: [
+        { to: "/admin/payments", icon: Wallet, label: "Pagamentos" },
+        { to: "/admin/revenue", icon: TrendingUp, label: "Faturamento" },
+      ],
+    },
+    {
+      group: "WhatsApp",
+      icon: MessageSquare,
+      children: [
+        { to: "/admin/billing", icon: AlertCircle, label: "Cobranças e Renovações" },
+        { to: "/admin/crm", icon: Megaphone, label: "Campanhas & Ofertas" },
+        { to: "/admin/messages", icon: MessageSquare, label: "Mensagens" },
+      ],
+    },
     { to: "/admin/diet", icon: Salad, label: "Dietas" },
     { to: "/admin/diet-library", icon: BookOpen, label: "Bib. Dietas" },
     { to: "/admin/nutrition", icon: Apple, label: "Cardápio" },
@@ -47,7 +66,6 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/admin/workout-templates", icon: Dumbbell, label: "Programas de Treino" },
     { to: "/admin/protocol", icon: FlaskConical, label: "Protocolos" },
     { to: "/admin/protocol-library", icon: BookOpen, label: "Bib. Protocolos" },
-    { to: "/admin/messages", icon: MessageSquare, label: "Mensagens" },
     { to: "/admin/content", icon: Palette, label: "Personalização" },
     { to: "/admin/layout", icon: PanelTop, label: "Layout Externo" },
     { to: "/admin/roles", icon: Users, label: "Permissões" },
@@ -56,7 +74,6 @@ const linksByRole: Record<AppRole, { to: string; icon: any; label: string }[]> =
     { to: "/admin/popups", icon: Megaphone, label: "Popups" },
     { to: "/admin/notifications", icon: Bell, label: "Notificações" },
     { to: "/admin/budgets", icon: Receipt, label: "Orçamentos" },
-    { to: "/admin/ads", icon: Megaphone, label: "Propagandas" },
     { to: "/admin/updates", icon: RefreshCw, label: "Atualizações" },
   ],
   admin_viewer: [
@@ -110,7 +127,7 @@ const roleLabelMap: Record<AppRole, string> = {
   student: "Área do Aluno",
 };
 
-const SidebarNav = ({ role, links, onNavClick }: { role: string; links: { to: string; icon: any; label: string }[]; onNavClick?: () => void }) => {
+const SidebarNav = ({ role, links, onNavClick }: { role: string; links: NavItem[]; onNavClick?: () => void }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile } = useAuth();
@@ -144,7 +161,13 @@ const SidebarNav = ({ role, links, onNavClick }: { role: string; links: { to: st
 
       {/* Nav links */}
       <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
-        {links.map((link) => {
+        {(links as NavItem[]).map((item) => {
+          if (isGroup(item)) {
+            return (
+              <NavGroupItem key={item.group} group={item} onNavClick={onNavClick} />
+            );
+          }
+          const link = item;
           const isActive = location.pathname === link.to;
           const showBadge = evolutionDue && link.to === "/dashboard/evolution";
           return (
@@ -183,6 +206,57 @@ const SidebarNav = ({ role, links, onNavClick }: { role: string; links: { to: st
         <ThemeToggle />
       </div>
     </>
+  );
+};
+
+const NavGroupItem = ({ group, onNavClick }: { group: NavGroup; onNavClick?: () => void }) => {
+  const location = useLocation();
+  const hasActive = group.children.some((c) => location.pathname === c.to);
+  const [open, setOpen] = useState(hasActive);
+  useEffect(() => {
+    if (hasActive) setOpen(true);
+  }, [hasActive]);
+
+  return (
+    <div className="space-y-0.5">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-200 font-body",
+          hasActive
+            ? "text-foreground"
+            : "text-sidebar-foreground/65 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
+        )}
+      >
+        <group.icon className="w-[18px] h-[18px] shrink-0" />
+        <span className="flex-1 text-left">{group.group}</span>
+        <ChevronDown className={cn("w-4 h-4 transition-transform", open ? "rotate-180" : "")} />
+      </button>
+      {open && (
+        <div className="ml-3 pl-3 border-l border-sidebar-border/60 space-y-0.5">
+          {group.children.map((child) => {
+            const active = location.pathname === child.to;
+            return (
+              <Link
+                key={child.to}
+                to={child.to}
+                onClick={onNavClick}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-xl text-[12.5px] font-medium transition-all duration-200 font-body",
+                  active
+                    ? "bg-foreground/10 text-foreground"
+                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
+                )}
+              >
+                <child.icon className="w-[16px] h-[16px] shrink-0" />
+                <span className="flex-1">{child.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 };
 
