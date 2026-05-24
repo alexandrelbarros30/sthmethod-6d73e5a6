@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Send, Calendar, Pause, Play, Trash2, Megaphone, Repeat, Clock, CheckCircle2, XCircle, Loader2, Pencil } from "lucide-react";
+import { Plus, Send, Calendar, Pause, Play, Trash2, Megaphone, Repeat, Clock, CheckCircle2, XCircle, Loader2, Pencil, StopCircle } from "lucide-react";
 import { Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -67,6 +67,8 @@ export default function CRMCampaigns() {
     mediaType?: string;
     recipients: number;
     segmentName?: string;
+    confirmLabel?: string;
+    onConfirm?: () => void | Promise<void>;
   }>({ open: false, loading: false, title: "", content: "", recipients: 0 });
 
   const { data: campaigns = [], isLoading } = useQuery({
@@ -171,7 +173,7 @@ export default function CRMCampaigns() {
     });
   };
 
-  const openPreviewFromCampaign = async (c: Campaign) => {
+  const openPreviewFromCampaign = async (c: Campaign, withConfirm = false) => {
     setPreview((p) => ({ ...p, open: true, loading: true, title: c.name, content: "", recipients: 0 }));
     const [{ data: tpl }, segRow, mediaRow] = await Promise.all([
       c.template_id
@@ -190,6 +192,8 @@ export default function CRMCampaigns() {
       title: c.name, content: renderVars(tpl?.content || ""),
       mediaUrl: mediaRow?.data?.url, mediaType: mediaRow?.data?.media_type,
       recipients: count, segmentName: segRow?.data?.name,
+      confirmLabel: withConfirm ? "Confirmar e disparar" : undefined,
+      onConfirm: withConfirm ? () => dispatch(c.id) : undefined,
     });
   };
 
@@ -240,7 +244,7 @@ export default function CRMCampaigns() {
     if (editingId) {
       const { error } = await supabase.from("crm_campaigns").update(payload).eq("id", editingId);
       if (error) { toast.error(error.message); return; }
-      toast.success(sendNow ? "Disparando campanha..." : "Campanha atualizada");
+      toast.success(sendNow ? "Campanha salva — confirme na prévia" : "Campanha atualizada");
     } else {
       const { data, error } = await supabase
         .from("crm_campaigns")
@@ -248,13 +252,17 @@ export default function CRMCampaigns() {
         .select("id").single();
       if (error) { toast.error(error.message); return; }
       savedId = data?.id ?? null;
-      toast.success(sendNow ? "Disparando campanha..." : "Campanha criada");
+      toast.success(sendNow ? "Campanha salva — confirme na prévia" : "Campanha criada");
     }
     setOpen(false);
     setEditingId(null);
     reset();
     qc.invalidateQueries({ queryKey: ["crm-campaigns"] });
-    if (sendNow && savedId) dispatch(savedId);
+    if (sendNow && savedId) {
+      // Load fresh campaign and open preview with confirm
+      const { data: fresh } = await supabase.from("crm_campaigns").select("*").eq("id", savedId).single();
+      if (fresh) openPreviewFromCampaign(fresh as Campaign, true);
+    }
   };
 
   const dispatch = async (id: string) => {
@@ -278,6 +286,16 @@ export default function CRMCampaigns() {
   const togglePause = async (c: Campaign) => {
     const newStatus = c.status === "paused" ? "scheduled" : "paused";
     await supabase.from("crm_campaigns").update({ status: newStatus }).eq("id", c.id);
+    qc.invalidateQueries({ queryKey: ["crm-campaigns"] });
+  };
+
+  const interruptSending = async (c: Campaign) => {
+    if (!confirm(`Interromper o envio em andamento de "${c.name}"? Mensagens já enviadas não serão revertidas.`)) return;
+    const { error } = await supabase.from("crm_campaigns")
+      .update({ status: "paused", next_run_at: null, scheduled_at: null })
+      .eq("id", c.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Disparo interrompido. O envio para em até 5s.");
     qc.invalidateQueries({ queryKey: ["crm-campaigns"] });
   };
 
