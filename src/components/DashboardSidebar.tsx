@@ -127,7 +127,7 @@ const roleLabelMap: Record<AppRole, string> = {
   student: "Área do Aluno",
 };
 
-const SidebarNav = ({ role, links, onNavClick }: { role: string; links: { to: string; icon: any; label: string }[]; onNavClick?: () => void }) => {
+const SidebarNav = ({ role, links, onNavClick }: { role: string; links: NavItem[]; onNavClick?: () => void }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile } = useAuth();
