@@ -14,7 +14,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { SystemTemplateKey, getSystemTemplate, renderTemplate, buildWhatsAppUrl } from "@/lib/system-templates";
-import { Send, CheckCircle2, Clock, AlertTriangle, RefreshCcw, Pencil, Paperclip, X, FileText, Image as ImageIcon, Loader2, History, TrendingUp, DollarSign, Bell, Eye, EyeOff } from "lucide-react";
+import { Send, CheckCircle2, Clock, AlertTriangle, RefreshCcw, Pencil, Paperclip, X, FileText, Image as ImageIcon, Loader2, History, TrendingUp, DollarSign, Bell, Eye, EyeOff, StopCircle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
 type RoleArea = "admin" | "consultor" | "financeiro";
@@ -498,6 +498,33 @@ const AdminBilling = ({ area }: Props) => {
     }
   };
 
+  const [cyclePreview, setCyclePreview] = useState<{ open: boolean; loading: boolean; items: Array<{ name: string; stage: number }> }>({ open: false, loading: false, items: [] });
+
+  const openCyclePreview = async () => {
+    setCyclePreview({ open: true, loading: true, items: [] });
+    const nowIso = new Date().toISOString();
+    const { data: camps } = await supabase
+      .from("billing_campaigns")
+      .select("user_id, stage, next_due_at, status, auto_send")
+      .eq("status", "active")
+      .eq("auto_send", true)
+      .lte("next_due_at", nowIso)
+      .limit(500);
+    const ids = (camps || []).map((c: any) => c.user_id);
+    let names: Record<string, string> = {};
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles").select("user_id, full_name").in("user_id", ids);
+      (profs || []).forEach((p: any) => { names[p.user_id] = p.full_name || "—"; });
+    }
+    const items = (camps || []).map((c: any) => ({ name: names[c.user_id] || "(sem nome)", stage: c.stage || 1 }));
+    setCyclePreview({ open: true, loading: false, items });
+  };
+
+  const interruptCycle = async () => {
+    if (!confirm("Pausar automação e interromper futuros disparos do ciclo?")) return;
+    await toggleAutomation(false);
+  };
+
   const tabCounts = {
     queue: rows.filter(inQueue).length,
     waiting: rows.filter(inWaiting).length,
@@ -574,9 +601,15 @@ const AdminBilling = ({ area }: Props) => {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Button variant="outline" size="sm" onClick={triggerNow}>
+                <Button variant="outline" size="sm" onClick={openCyclePreview}>
                   <Send className="w-4 h-4 mr-1" /> Disparar ciclo agora
                 </Button>
+                {automation?.enabled && (
+                  <Button variant="outline" size="sm" onClick={interruptCycle}
+                    className="border-rose-500/40 text-rose-400 hover:bg-rose-500/10">
+                    <StopCircle className="w-4 h-4 mr-1" /> Interromper
+                  </Button>
+                )}
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">Automação</span>
                   <Switch checked={!!automation?.enabled} onCheckedChange={toggleAutomation} />
@@ -585,6 +618,50 @@ const AdminBilling = ({ area }: Props) => {
             </CardContent>
           </Card>
         )}
+
+        <Dialog open={cyclePreview.open} onOpenChange={(v) => setCyclePreview((p) => ({ ...p, open: v }))}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Eye className="w-4 h-4 text-emerald-400" /> Prévia do ciclo
+              </DialogTitle>
+            </DialogHeader>
+            {cyclePreview.loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-5 h-5 animate-spin text-emerald-400" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm">
+                  <span className="text-emerald-400 font-semibold">{cyclePreview.items.length}</span> aluno(s) serão notificados agora.
+                </p>
+                <div className="max-h-64 overflow-y-auto rounded-lg border border-border/40 divide-y divide-border/40">
+                  {cyclePreview.items.length === 0 ? (
+                    <p className="p-3 text-xs text-muted-foreground text-center">Nenhuma cobrança vencida no momento.</p>
+                  ) : cyclePreview.items.map((it, i) => (
+                    <div key={i} className="flex items-center justify-between p-2 text-xs">
+                      <span>{it.name}</span>
+                      <Badge variant="outline" className={`text-[10px] ${STAGE_COLORS[it.stage]}`}>Estágio {it.stage}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setCyclePreview((p) => ({ ...p, open: false }))}>Cancelar</Button>
+              <Button
+                disabled={cyclePreview.loading || cyclePreview.items.length === 0}
+                className="gap-2 bg-emerald-500 text-black hover:bg-emerald-400"
+                onClick={async () => {
+                  setCyclePreview((p) => ({ ...p, open: false }));
+                  await triggerNow();
+                }}
+              >
+                <Send className="w-4 h-4" /> Confirmar e disparar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Tabs + search */}
         <Card><CardContent className="p-4 space-y-3">

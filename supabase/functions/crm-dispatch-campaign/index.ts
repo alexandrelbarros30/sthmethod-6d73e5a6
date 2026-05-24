@@ -155,6 +155,15 @@ Deno.serve(async (req) => {
       let sent = 0;
       let failed = 0;
       for (const r of recipients) {
+      // Check for pause/cancel request between sends
+      if ((sent + failed) % 3 === 0) {
+        const { data: cur } = await supabase
+          .from('crm_campaigns').select('status').eq('id', campaign_id).maybeSingle();
+        if (cur?.status === 'paused' || cur?.status === 'cancelled') {
+          console.log('[dispatch] interrupted by user — status=', cur.status);
+          break;
+        }
+      }
       const vars = {
         nome: r.name.split(' ')[0] || r.name || 'amigo',
         plano: r.plan_name || '',
@@ -195,6 +204,11 @@ Deno.serve(async (req) => {
       finished_at: new Date().toISOString(), sent_count: sent, failed_count: failed,
     }).eq('id', run_id!);
 
+    // Re-read status: if user paused mid-send, keep it paused instead of overwriting
+    const { data: finalCamp } = await supabase
+      .from('crm_campaigns').select('status').eq('id', campaign_id).maybeSingle();
+    const wasInterrupted = finalCamp?.status === 'paused' || finalCamp?.status === 'cancelled';
+
     // Compute next_run for recurrence
     let nextRun: string | null = null;
     let nextStatus = 'sent';
@@ -205,11 +219,11 @@ Deno.serve(async (req) => {
     }
 
     await supabase.from('crm_campaigns').update({
-      status: nextStatus,
+      status: wasInterrupted ? finalCamp!.status : nextStatus,
       sent_count: (campaign.sent_count || 0) + sent,
       failed_count: (campaign.failed_count || 0) + failed,
-      next_run_at: nextRun,
-      scheduled_at: nextStatus === 'scheduled' ? nextRun : null,
+      next_run_at: wasInterrupted ? null : nextRun,
+      scheduled_at: !wasInterrupted && nextStatus === 'scheduled' ? nextRun : null,
     }).eq('id', campaign_id);
       return { sent, failed };
     };

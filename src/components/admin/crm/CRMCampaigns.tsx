@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Send, Calendar, Pause, Play, Trash2, Megaphone, Repeat, Clock, CheckCircle2, XCircle, Loader2, Pencil } from "lucide-react";
+import { Plus, Send, Calendar, Pause, Play, Trash2, Megaphone, Repeat, Clock, CheckCircle2, XCircle, Loader2, Pencil, StopCircle } from "lucide-react";
 import { Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -67,6 +67,8 @@ export default function CRMCampaigns() {
     mediaType?: string;
     recipients: number;
     segmentName?: string;
+    confirmLabel?: string;
+    onConfirm?: () => void | Promise<void>;
   }>({ open: false, loading: false, title: "", content: "", recipients: 0 });
 
   const { data: campaigns = [], isLoading } = useQuery({
@@ -171,7 +173,7 @@ export default function CRMCampaigns() {
     });
   };
 
-  const openPreviewFromCampaign = async (c: Campaign) => {
+  const openPreviewFromCampaign = async (c: Campaign, withConfirm = false) => {
     setPreview((p) => ({ ...p, open: true, loading: true, title: c.name, content: "", recipients: 0 }));
     const [{ data: tpl }, segRow, mediaRow] = await Promise.all([
       c.template_id
@@ -190,6 +192,8 @@ export default function CRMCampaigns() {
       title: c.name, content: renderVars(tpl?.content || ""),
       mediaUrl: mediaRow?.data?.url, mediaType: mediaRow?.data?.media_type,
       recipients: count, segmentName: segRow?.data?.name,
+      confirmLabel: withConfirm ? "Confirmar e disparar" : undefined,
+      onConfirm: withConfirm ? () => dispatch(c.id) : undefined,
     });
   };
 
@@ -240,7 +244,7 @@ export default function CRMCampaigns() {
     if (editingId) {
       const { error } = await supabase.from("crm_campaigns").update(payload).eq("id", editingId);
       if (error) { toast.error(error.message); return; }
-      toast.success(sendNow ? "Disparando campanha..." : "Campanha atualizada");
+      toast.success(sendNow ? "Campanha salva — confirme na prévia" : "Campanha atualizada");
     } else {
       const { data, error } = await supabase
         .from("crm_campaigns")
@@ -248,13 +252,17 @@ export default function CRMCampaigns() {
         .select("id").single();
       if (error) { toast.error(error.message); return; }
       savedId = data?.id ?? null;
-      toast.success(sendNow ? "Disparando campanha..." : "Campanha criada");
+      toast.success(sendNow ? "Campanha salva — confirme na prévia" : "Campanha criada");
     }
     setOpen(false);
     setEditingId(null);
     reset();
     qc.invalidateQueries({ queryKey: ["crm-campaigns"] });
-    if (sendNow && savedId) dispatch(savedId);
+    if (sendNow && savedId) {
+      // Load fresh campaign and open preview with confirm
+      const { data: fresh } = await supabase.from("crm_campaigns").select("*").eq("id", savedId).single();
+      if (fresh) openPreviewFromCampaign(fresh as Campaign, true);
+    }
   };
 
   const dispatch = async (id: string) => {
@@ -278,6 +286,16 @@ export default function CRMCampaigns() {
   const togglePause = async (c: Campaign) => {
     const newStatus = c.status === "paused" ? "scheduled" : "paused";
     await supabase.from("crm_campaigns").update({ status: newStatus }).eq("id", c.id);
+    qc.invalidateQueries({ queryKey: ["crm-campaigns"] });
+  };
+
+  const interruptSending = async (c: Campaign) => {
+    if (!confirm(`Interromper o envio em andamento de "${c.name}"? Mensagens já enviadas não serão revertidas.`)) return;
+    const { error } = await supabase.from("crm_campaigns")
+      .update({ status: "paused", next_run_at: null, scheduled_at: null })
+      .eq("id", c.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Disparo interrompido. O envio para em até 5s.");
     qc.invalidateQueries({ queryKey: ["crm-campaigns"] });
   };
 
@@ -424,8 +442,20 @@ export default function CRMCampaigns() {
               </p>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setPreview((p) => ({ ...p, open: false }))}>Fechar</Button>
+            {preview.onConfirm && (
+              <Button
+                className="gap-2 bg-emerald-500 text-black hover:bg-emerald-400"
+                onClick={async () => {
+                  const fn = preview.onConfirm!;
+                  setPreview((p) => ({ ...p, open: false, onConfirm: undefined, confirmLabel: undefined }));
+                  await fn();
+                }}
+              >
+                <Send className="h-4 w-4" /> {preview.confirmLabel || "Confirmar e disparar"}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -466,7 +496,7 @@ export default function CRMCampaigns() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button size="sm" variant="ghost" onClick={() => openPreviewFromCampaign(c)} className="gap-1">
+                  <Button size="sm" variant="ghost" onClick={() => openPreviewFromCampaign(c, false)} className="gap-1">
                     <Eye className="h-3.5 w-3.5" /> Prévia
                   </Button>
                   {["draft", "scheduled", "paused", "failed"].includes(c.status) && (
@@ -474,12 +504,20 @@ export default function CRMCampaigns() {
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
                   )}
-                  <Button size="sm" variant="outline" disabled={dispatching === c.id || c.status === "sending"}
-                    onClick={() => dispatch(c.id)} className="gap-1">
-                    {dispatching === c.id || c.status === "sending"
-                      ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      : <Send className="h-3.5 w-3.5" />} Disparar
-                  </Button>
+                  {c.status === "sending" ? (
+                    <Button size="sm" variant="outline"
+                      onClick={() => interruptSending(c)}
+                      className="gap-1 border-rose-500/40 text-rose-400 hover:bg-rose-500/10">
+                      <StopCircle className="h-3.5 w-3.5" /> Interromper
+                    </Button>
+                  ) : (
+                    <Button size="sm" variant="outline" disabled={dispatching === c.id}
+                      onClick={() => openPreviewFromCampaign(c, true)} className="gap-1">
+                      {dispatching === c.id
+                        ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        : <Send className="h-3.5 w-3.5" />} Disparar
+                    </Button>
+                  )}
                   {(c.status === "scheduled" || c.status === "paused") && (
                     <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => togglePause(c)}>
                       {c.status === "paused" ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
