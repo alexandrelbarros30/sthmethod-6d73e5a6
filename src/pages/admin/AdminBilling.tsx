@@ -668,7 +668,7 @@ const AdminBilling = ({ area }: Props) => {
                       </TableCell>
                       <TableCell>
                         <div>{r.plan_name}</div>
-                        <div className="text-xs text-muted-foreground">R$ {r.plan_price.toFixed(2)}</div>
+                        <div className="text-xs text-muted-foreground tabular-nums">{maskValue(`R$ ${r.plan_price.toFixed(2)}`)}</div>
                       </TableCell>
                       <TableCell className="text-sm">{new Date(r.end_date + "T00:00:00").toLocaleDateString("pt-BR")}</TableCell>
                       <TableCell className="text-sm font-medium">{r.days}d</TableCell>
@@ -1095,7 +1095,7 @@ const BucketsView = ({ rows, openComposer, setHistoryOf, onBulkSend, bulkSending
                       </TableCell>
                       <TableCell className="text-sm">
                         <div>{r.plan_name}</div>
-                        <div className="text-xs text-muted-foreground">R$ {r.plan_price.toFixed(2)}</div>
+                        <div className="text-xs text-muted-foreground tabular-nums">{maskValue(`R$ ${r.plan_price.toFixed(2)}`)}</div>
                       </TableCell>
                       <TableCell className="text-sm">{new Date(r.end_date + "T00:00:00").toLocaleDateString("pt-BR")}</TableCell>
                       <TableCell className="text-sm font-medium">{r.days}d</TableCell>
