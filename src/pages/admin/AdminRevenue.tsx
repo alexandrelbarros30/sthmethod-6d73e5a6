@@ -27,7 +27,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Wallet, TrendingUp, CreditCard, QrCode, Landmark, Download, Search, Calendar } from "lucide-react";
+import { Wallet, TrendingUp, CreditCard, QrCode, Landmark, Download, Search, Calendar, Eye, EyeOff } from "lucide-react";
 
 type PaymentRow = {
   id: string;
@@ -72,6 +72,8 @@ const normalizeMethod = (m: string) => {
 
 const AdminRevenue = () => {
   const [period, setPeriod] = useState<"all" | "month" | "year" | "custom">("all");
+  const [showValues, setShowValues] = useState(false);
+  const mask = (formatted: string) => (showValues ? formatted : "R$ ••••••");
   const [year, setYear] = useState<string>(new Date().getFullYear().toString());
   const [month, setMonth] = useState<string>(String(new Date().getMonth() + 1).padStart(2, "0"));
   const [from, setFrom] = useState<string>("");
@@ -319,7 +321,10 @@ const AdminRevenue = () => {
             </div>
           </div>
 
-          <div className="flex items-end">
+          <div className="flex items-end gap-2">
+            <Button onClick={() => setShowValues((v) => !v)} variant="outline" className="gap-2" title={showValues ? "Ocultar valores" : "Mostrar valores"}>
+              {showValues ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </Button>
             <Button onClick={exportCSV} variant="outline" className="w-full gap-2">
               <Download className="w-4 h-4" /> CSV
             </Button>
@@ -335,7 +340,7 @@ const AdminRevenue = () => {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{fmtBRL(totals.total)}</div>
+            <div className="text-2xl font-bold">{mask(fmtBRL(totals.total))}</div>
             <p className="text-xs text-muted-foreground mt-1">{totals.count} pagamento(s)</p>
           </CardContent>
         </Card>
@@ -350,7 +355,7 @@ const AdminRevenue = () => {
                 <Icon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{fmtBRL(v.total)}</div>
+                <div className="text-2xl font-bold">{mask(fmtBRL(v.total))}</div>
                 <p className="text-xs text-muted-foreground mt-1">{v.count} pagamento(s)</p>
               </CardContent>
             </Card>
@@ -382,7 +387,7 @@ const AdminRevenue = () => {
                     <TableRow key={ym}>
                       <TableCell className="font-medium">{monthLabel(ym)}</TableCell>
                       <TableCell className="text-right">{v.count}</TableCell>
-                      <TableCell className="text-right font-semibold">{fmtBRL(v.total)}</TableCell>
+                      <TableCell className="text-right font-semibold">{mask(fmtBRL(v.total))}</TableCell>
                     </TableRow>
                   ))}
                   {monthsSorted.length === 0 && (
@@ -410,7 +415,7 @@ const AdminRevenue = () => {
                     <TableRow key={id}>
                       <TableCell className="font-medium">{v.name}</TableCell>
                       <TableCell className="text-right">{v.count}</TableCell>
-                      <TableCell className="text-right font-semibold">{fmtBRL(v.total)}</TableCell>
+                      <TableCell className="text-right font-semibold">{mask(fmtBRL(v.total))}</TableCell>
                     </TableRow>
                   ))}
                   {plansSorted.length === 0 && (
@@ -448,7 +453,7 @@ const AdminRevenue = () => {
                         {v.firstDate ? new Date(v.firstDate).toLocaleDateString("pt-BR") : "—"}
                       </TableCell>
                       <TableCell className="text-right">{v.count}</TableCell>
-                      <TableCell className="text-right font-semibold">{fmtBRL(v.total)}</TableCell>
+                      <TableCell className="text-right font-semibold">{mask(fmtBRL(v.total))}</TableCell>
                     </TableRow>
                   ))}
                   {studentsSorted.length === 0 && (
@@ -497,7 +502,7 @@ const AdminRevenue = () => {
                             {r.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right font-semibold">{fmtBRL(Number(r.amount))}</TableCell>
+                        <TableCell className="text-right font-semibold">{mask(fmtBRL(Number(r.amount)))}</TableCell>
                       </TableRow>
                     );
                   })}

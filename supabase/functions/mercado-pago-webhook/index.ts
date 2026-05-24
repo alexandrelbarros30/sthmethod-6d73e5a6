@@ -65,6 +65,74 @@ function isPaymentNotification(body: any): boolean {
     || body?.topic === "payment";
 }
 
+function renderTemplate(content: string, ctx: Record<string, any>): string {
+  const firstName = (ctx.full_name as string | undefined)?.split(" ")[0] || "Aluno";
+  let msg = content;
+  msg = msg.replace(/\{nome\}/g, firstName);
+  msg = msg.replace(/\{nome_completo\}/g, ctx.full_name || "Aluno");
+  msg = msg.replace(/\{email\}/g, ctx.email || "");
+  msg = msg.replace(/\{telefone\}/g, ctx.phone || "");
+  return msg;
+}
+
+async function sendWelcomeWhatsapp(supabase: any, userId: string) {
+  const { data: profile } = await supabase
+    .from("profiles").select("full_name, phone, email").eq("user_id", userId).maybeSingle();
+  if (!profile?.phone) {
+    console.log("[welcome-whatsapp] no phone for", userId);
+    return;
+  }
+  const { data: tpl } = await supabase
+    .from("message_templates").select("id, content, image_url").eq("system_key", "payment_welcome").maybeSingle();
+  if (!tpl?.content) {
+    console.warn("[welcome-whatsapp] payment_welcome template missing");
+    return;
+  }
+  // Dedup: if welcome was already sent in last 24h, skip
+  const { data: recent } = await supabase
+    .from("message_history")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("template_id", tpl.id)
+    .gte("created_at", new Date(Date.now() - 86400000).toISOString())
+    .limit(1);
+  if (recent && recent.length > 0) {
+    console.log("[welcome-whatsapp] already sent recently for", userId);
+    return;
+  }
+  const message = renderTemplate(tpl.content, {
+    full_name: profile.full_name, email: profile.email, phone: profile.phone,
+  });
+  const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+  const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${SERVICE_ROLE}`,
+      "apikey": SERVICE_ROLE,
+    },
+    body: JSON.stringify({ phone: profile.phone, message, image_url: tpl.image_url || null }),
+  });
+  const j = await res.json().catch(() => ({}));
+  const ok = !!j?.ok;
+  try {
+    await supabase.from("message_history").insert({
+      user_id: userId,
+      template_id: tpl.id,
+      content: message,
+      recipient_phone: profile.phone,
+      recipient_name: profile.full_name,
+      image_url: tpl.image_url || null,
+      status: ok ? "sent" : "failed",
+      sent_at: new Date().toISOString(),
+    });
+  } catch (e) {
+    console.error("[welcome-whatsapp] history insert failed", e);
+  }
+  console.log("[welcome-whatsapp] result", { userId, ok });
+}
+
 async function activateSubscriptionForPayment(supabase: any, payment: any) {
   // Self-heal: ensure profile + student role exist before activating.
   // Some auth users were created without the handle_new_user trigger firing,
@@ -255,6 +323,12 @@ serve(async (req) => {
     // If approved for the first time, activate subscription once.
     if (newStatus === "approved" && payment && previousStatus !== "approved") {
       await activateSubscriptionForPayment(supabase, payment);
+      // Auto-send welcome WhatsApp (does not depend on admin being online)
+      try {
+        await sendWelcomeWhatsapp(supabase, payment.user_id);
+      } catch (e) {
+        console.error("[welcome-whatsapp] failed", e);
+      }
     }
 
     return new Response(JSON.stringify({ received: true, status: newStatus }), {
