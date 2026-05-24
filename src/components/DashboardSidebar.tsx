@@ -77,22 +77,52 @@ const linksByRole: Record<AppRole, NavItem[]> = {
         { to: "/admin/messages", icon: MessageSquare, label: "Mensagens" },
       ],
     },
-    { to: "/admin/diet", icon: Salad, label: "Dietas" },
-    { to: "/admin/diet-library", icon: BookOpen, label: "Bib. Dietas" },
-    { to: "/admin/nutrition", icon: Apple, label: "Cardápio" },
-    { to: "/admin/exercise-library", icon: BookOpen, label: "Biblioteca" },
-    { to: "/admin/workout-templates", icon: Dumbbell, label: "Programas de Treino" },
-    { to: "/admin/protocol", icon: FlaskConical, label: "Protocolos" },
-    { to: "/admin/protocol-library", icon: BookOpen, label: "Bib. Protocolos" },
-    { to: "/admin/content", icon: Palette, label: "Personalização" },
-    { to: "/admin/layout", icon: PanelTop, label: "Layout Externo" },
-    { to: "/admin/roles", icon: Users, label: "Permissões" },
-    { to: "/admin/staff", icon: ClipboardList, label: "Equipe" },
+    {
+      group: "Nutrição",
+      icon: Salad,
+      children: [
+        { to: "/admin/diet", icon: Salad, label: "Dietas" },
+        { to: "/admin/diet-library", icon: BookOpen, label: "Bib. Dietas" },
+        { to: "/admin/nutrition", icon: Apple, label: "Cardápio" },
+      ],
+    },
+    {
+      group: "Treino",
+      icon: Dumbbell,
+      children: [
+        { to: "/admin/exercise-library", icon: BookOpen, label: "Biblioteca" },
+        { to: "/admin/workout-templates", icon: Dumbbell, label: "Programas de Treino" },
+      ],
+    },
+    {
+      group: "Protocolos",
+      icon: FlaskConical,
+      children: [
+        { to: "/admin/protocol", icon: FlaskConical, label: "Protocolos" },
+        { to: "/admin/protocol-library", icon: BookOpen, label: "Bib. Protocolos" },
+      ],
+    },
+    {
+      group: "Conteúdo",
+      icon: Palette,
+      children: [
+        { to: "/admin/content", icon: Palette, label: "Personalização" },
+        { to: "/admin/layout", icon: PanelTop, label: "Layout Externo" },
+        { to: "/admin/popups", icon: Megaphone, label: "Popups" },
+        { to: "/admin/notifications", icon: Bell, label: "Notificações" },
+        { to: "/admin/updates", icon: RefreshCw, label: "Atualizações" },
+      ],
+    },
+    {
+      group: "Equipe",
+      icon: Users,
+      children: [
+        { to: "/admin/roles", icon: Users, label: "Permissões" },
+        { to: "/admin/staff", icon: ClipboardList, label: "Equipe" },
+      ],
+    },
     { to: "/admin/coupons", icon: Ticket, label: "Cupons" },
-    { to: "/admin/popups", icon: Megaphone, label: "Popups" },
-    { to: "/admin/notifications", icon: Bell, label: "Notificações" },
     { to: "/admin/budgets", icon: Receipt, label: "Orçamentos" },
-    { to: "/admin/updates", icon: RefreshCw, label: "Atualizações" },
   ],
   admin_viewer: [
     { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
@@ -114,10 +144,28 @@ const linksByRole: Record<AppRole, NavItem[]> = {
         { to: "/admin/messages", icon: MessageSquare, label: "Mensagens" },
       ],
     },
-    { to: "/admin/diet", icon: Salad, label: "Dietas" },
-    { to: "/admin/nutrition", icon: Apple, label: "Cardápio" },
-    { to: "/admin/protocol", icon: FlaskConical, label: "Protocolos" },
-    { to: "/admin/content", icon: Palette, label: "Personalização" },
+    {
+      group: "Nutrição",
+      icon: Salad,
+      children: [
+        { to: "/admin/diet", icon: Salad, label: "Dietas" },
+        { to: "/admin/nutrition", icon: Apple, label: "Cardápio" },
+      ],
+    },
+    {
+      group: "Protocolos",
+      icon: FlaskConical,
+      children: [
+        { to: "/admin/protocol", icon: FlaskConical, label: "Protocolos" },
+      ],
+    },
+    {
+      group: "Conteúdo",
+      icon: Palette,
+      children: [
+        { to: "/admin/content", icon: Palette, label: "Personalização" },
+      ],
+    },
   ],
   consultor: [
     { to: "/consultor", icon: LayoutDashboard, label: "Dashboard" },
