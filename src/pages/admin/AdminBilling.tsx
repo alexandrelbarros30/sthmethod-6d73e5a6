@@ -622,6 +622,7 @@ const AdminBilling = ({ area }: Props) => {
             setHistoryOf={setHistoryOf}
             onBulkSend={handleBulkSend}
             bulkSending={bulkSending}
+            showValues={showValues}
           />
         ) : tab === "history" ? (
           <GlobalHistoryPanel area={area} userId={user?.id} />
