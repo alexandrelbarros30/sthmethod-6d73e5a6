@@ -498,6 +498,33 @@ const AdminBilling = ({ area }: Props) => {
     }
   };
 
+  const [cyclePreview, setCyclePreview] = useState<{ open: boolean; loading: boolean; items: Array<{ name: string; stage: number }> }>({ open: false, loading: false, items: [] });
+
+  const openCyclePreview = async () => {
+    setCyclePreview({ open: true, loading: true, items: [] });
+    const nowIso = new Date().toISOString();
+    const { data: camps } = await supabase
+      .from("billing_campaigns")
+      .select("user_id, stage, next_due_at, status, auto_send")
+      .eq("status", "active")
+      .eq("auto_send", true)
+      .lte("next_due_at", nowIso)
+      .limit(500);
+    const ids = (camps || []).map((c: any) => c.user_id);
+    let names: Record<string, string> = {};
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles").select("user_id, full_name").in("user_id", ids);
+      (profs || []).forEach((p: any) => { names[p.user_id] = p.full_name || "—"; });
+    }
+    const items = (camps || []).map((c: any) => ({ name: names[c.user_id] || "(sem nome)", stage: c.stage || 1 }));
+    setCyclePreview({ open: true, loading: false, items });
+  };
+
+  const interruptCycle = async () => {
+    if (!confirm("Pausar automação e interromper futuros disparos do ciclo?")) return;
+    await toggleAutomation(false);
+  };
+
   const tabCounts = {
     queue: rows.filter(inQueue).length,
     waiting: rows.filter(inWaiting).length,
