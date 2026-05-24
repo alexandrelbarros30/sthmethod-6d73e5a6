@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Send, Calendar, Pause, Play, Trash2, Megaphone, Repeat, Clock, CheckCircle2, XCircle, Loader2, Pencil, StopCircle } from "lucide-react";
+import { Plus, Send, Calendar, Pause, Play, Trash2, Megaphone, Repeat, Clock, CheckCircle2, XCircle, Loader2, Pencil, StopCircle, MessageSquareX } from "lucide-react";
 import { Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -303,6 +303,28 @@ export default function CRMCampaigns() {
     if (!confirm("Excluir esta campanha? O histórico será removido.")) return;
     await supabase.from("crm_campaigns").delete().eq("id", id);
     qc.invalidateQueries({ queryKey: ["crm-campaigns"] });
+  };
+
+  const [deletingWa, setDeletingWa] = useState<string | null>(null);
+  const deleteWhatsAppMessages = async (c: Campaign) => {
+    if (!confirm(
+      `Apagar do WhatsApp as mensagens já enviadas em "${c.name}"?\n\n` +
+      `O WhatsApp só permite apagar mensagens enviadas nas últimas ~48h e que ainda não foram visualizadas no celular do destinatário.`
+    )) return;
+    setDeletingWa(c.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("whatsapp-delete-messages", {
+        body: { campaign_id: c.id },
+      });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || "Falha ao apagar");
+      toast.success(`${data.deleted} apagadas no WhatsApp • ${data.failed} falharam (${data.total} elegíveis)`);
+      qc.invalidateQueries({ queryKey: ["crm-campaigns"] });
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao apagar do WhatsApp");
+    } finally {
+      setDeletingWa(null);
+    }
   };
 
   return (
