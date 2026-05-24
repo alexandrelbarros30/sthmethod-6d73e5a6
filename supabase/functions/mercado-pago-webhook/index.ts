@@ -82,22 +82,22 @@ async function sendWelcomeWhatsapp(supabase: any, userId: string) {
     console.log("[welcome-whatsapp] no phone for", userId);
     return;
   }
-  // Dedup: if already sent in last 24h, skip
-  const { data: recent } = await supabase
-    .from("message_history")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("template_key", "payment_welcome")
-    .gte("created_at", new Date(Date.now() - 86400000).toISOString())
-    .limit(1);
-  if (recent && recent.length > 0) {
-    console.log("[welcome-whatsapp] already sent recently for", userId);
-    return;
-  }
   const { data: tpl } = await supabase
     .from("message_templates").select("id, content, image_url").eq("system_key", "payment_welcome").maybeSingle();
   if (!tpl?.content) {
     console.warn("[welcome-whatsapp] payment_welcome template missing");
+    return;
+  }
+  // Dedup: if welcome was already sent in last 24h, skip
+  const { data: recent } = await supabase
+    .from("message_history")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("template_id", tpl.id)
+    .gte("created_at", new Date(Date.now() - 86400000).toISOString())
+    .limit(1);
+  if (recent && recent.length > 0) {
+    console.log("[welcome-whatsapp] already sent recently for", userId);
     return;
   }
   const message = renderTemplate(tpl.content, {
@@ -120,7 +120,6 @@ async function sendWelcomeWhatsapp(supabase: any, userId: string) {
     await supabase.from("message_history").insert({
       user_id: userId,
       template_id: tpl.id,
-      template_key: "payment_welcome",
       content: message,
       recipient_phone: profile.phone,
       recipient_name: profile.full_name,
