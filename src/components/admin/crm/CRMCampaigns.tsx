@@ -442,8 +442,20 @@ export default function CRMCampaigns() {
               </p>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setPreview((p) => ({ ...p, open: false }))}>Fechar</Button>
+            {preview.onConfirm && (
+              <Button
+                className="gap-2 bg-emerald-500 text-black hover:bg-emerald-400"
+                onClick={async () => {
+                  const fn = preview.onConfirm!;
+                  setPreview((p) => ({ ...p, open: false, onConfirm: undefined, confirmLabel: undefined }));
+                  await fn();
+                }}
+              >
+                <Send className="h-4 w-4" /> {preview.confirmLabel || "Confirmar e disparar"}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -484,7 +496,7 @@ export default function CRMCampaigns() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button size="sm" variant="ghost" onClick={() => openPreviewFromCampaign(c)} className="gap-1">
+                  <Button size="sm" variant="ghost" onClick={() => openPreviewFromCampaign(c, false)} className="gap-1">
                     <Eye className="h-3.5 w-3.5" /> Prévia
                   </Button>
                   {["draft", "scheduled", "paused", "failed"].includes(c.status) && (
@@ -492,12 +504,20 @@ export default function CRMCampaigns() {
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
                   )}
-                  <Button size="sm" variant="outline" disabled={dispatching === c.id || c.status === "sending"}
-                    onClick={() => dispatch(c.id)} className="gap-1">
-                    {dispatching === c.id || c.status === "sending"
-                      ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      : <Send className="h-3.5 w-3.5" />} Disparar
-                  </Button>
+                  {c.status === "sending" ? (
+                    <Button size="sm" variant="outline"
+                      onClick={() => interruptSending(c)}
+                      className="gap-1 border-rose-500/40 text-rose-400 hover:bg-rose-500/10">
+                      <StopCircle className="h-3.5 w-3.5" /> Interromper
+                    </Button>
+                  ) : (
+                    <Button size="sm" variant="outline" disabled={dispatching === c.id}
+                      onClick={() => openPreviewFromCampaign(c, true)} className="gap-1">
+                      {dispatching === c.id
+                        ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        : <Send className="h-3.5 w-3.5" />} Disparar
+                    </Button>
+                  )}
                   {(c.status === "scheduled" || c.status === "paused") && (
                     <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => togglePause(c)}>
                       {c.status === "paused" ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
