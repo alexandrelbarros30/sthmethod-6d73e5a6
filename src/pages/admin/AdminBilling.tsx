@@ -14,7 +14,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { SystemTemplateKey, getSystemTemplate, renderTemplate, buildWhatsAppUrl } from "@/lib/system-templates";
-import { Send, CheckCircle2, Clock, AlertTriangle, RefreshCcw, Pencil, Paperclip, X, FileText, Image as ImageIcon, Loader2, History, TrendingUp, DollarSign, Bell } from "lucide-react";
+import { Send, CheckCircle2, Clock, AlertTriangle, RefreshCcw, Pencil, Paperclip, X, FileText, Image as ImageIcon, Loader2, History, TrendingUp, DollarSign, Bell, Eye, EyeOff } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
 type RoleArea = "admin" | "consultor" | "financeiro";
@@ -96,6 +96,8 @@ const AdminBilling = ({ area }: Props) => {
   const [profileEdit, setProfileEdit] = useState<{ user_id: string; full_name: string; phone: string; email: string } | null>(null);
   const [profileSaving, setProfileSaving] = useState(false);
   const [historyOf, setHistoryOf] = useState<any | null>(null);
+  const [showValues, setShowValues] = useState(false);
+  const maskValue = (formatted: string) => (showValues ? formatted : "••••••");
 
   const { data, isLoading } = useQuery({
     queryKey: ["billing-campaigns", area, user?.id],
@@ -532,13 +534,26 @@ const AdminBilling = ({ area }: Props) => {
         <Card><CardContent className="p-4 flex items-center justify-between">
           <div>
             <p className="text-xs text-muted-foreground flex items-center gap-1.5"><DollarSign className="w-3.5 h-3.5" /> Valor estimado recuperável</p>
-            <p className="text-3xl font-semibold text-emerald-400 mt-1">
-              R$ {summary.recoverable.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <p className="text-3xl font-semibold text-emerald-400 mt-1 tabular-nums">
+              {showValues
+                ? `R$ ${summary.recoverable.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                : "R$ ••••••"}
             </p>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["billing-campaigns"] })}>
-            <RefreshCcw className="w-4 h-4 mr-1" /> Atualizar
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowValues((v) => !v)}
+              title={showValues ? "Ocultar valores" : "Mostrar valores"}
+            >
+              {showValues ? <EyeOff className="w-4 h-4 mr-1" /> : <Eye className="w-4 h-4 mr-1" />}
+              {showValues ? "Ocultar" : "Mostrar"}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["billing-campaigns"] })}>
+              <RefreshCcw className="w-4 h-4 mr-1" /> Atualizar
+            </Button>
+          </div>
         </CardContent></Card>
 
         {/* Automation control banner */}
