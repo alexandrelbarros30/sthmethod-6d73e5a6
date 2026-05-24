@@ -26,15 +26,33 @@ const linksByRole: Record<AppRole, NavItem[]> = {
     { to: "/dashboard/profile", icon: ClipboardList, label: "Minha Ficha" },
     { to: "/dashboard/evolution", icon: TrendingUp, label: "Atualização" },
     { to: "/dashboard/bioimpedance", icon: Activity, label: "Bioimpedância" },
-    { to: "/dashboard/diet", icon: Salad, label: "Dieta" },
-    { to: "/diario-alimentar", icon: NotebookPen, label: "Diário Alimentar" },
-    { to: "/dashboard/training", icon: Dumbbell, label: "Treino" },
-    { to: "/dashboard/guided-workout", icon: ListChecks, label: "Treino Guiado" },
+    {
+      group: "Nutrição",
+      icon: Salad,
+      children: [
+        { to: "/dashboard/diet", icon: Salad, label: "Dieta" },
+        { to: "/diario-alimentar", icon: NotebookPen, label: "Diário Alimentar" },
+      ],
+    },
+    {
+      group: "Treino",
+      icon: Dumbbell,
+      children: [
+        { to: "/dashboard/training", icon: Dumbbell, label: "Treino" },
+        { to: "/dashboard/guided-workout", icon: ListChecks, label: "Treino Guiado" },
+      ],
+    },
     { to: "/dashboard/protocol", icon: FlaskConical, label: "Protocolo" },
     { to: "/dashboard/metabolic", icon: Microscope, label: "Central de Análise" },
-    { to: "/dashboard/content", icon: BookOpen, label: "Conteúdo" },
-    { to: "/tendencias", icon: Newspaper, label: "STH News" },
-    { to: "/dashboard/ads", icon: Megaphone, label: "Propagandas" },
+    {
+      group: "Conteúdo",
+      icon: BookOpen,
+      children: [
+        { to: "/dashboard/content", icon: BookOpen, label: "Conteúdo" },
+        { to: "/tendencias", icon: Newspaper, label: "STH News" },
+        { to: "/dashboard/ads", icon: Megaphone, label: "Propagandas" },
+      ],
+    },
     { to: "/dashboard/subscription", icon: CreditCard, label: "Assinatura" },
   ],
   admin: [
@@ -81,27 +99,63 @@ const linksByRole: Record<AppRole, NavItem[]> = {
     { to: "/admin/queue", icon: ListOrdered, label: "Fila Atendimento" },
     { to: "/admin/students", icon: User, label: "Alunos" },
     { to: "/admin/plans", icon: CreditCard, label: "Planos" },
-    { to: "/admin/payments", icon: Wallet, label: "Pagamentos" },
-    { to: "/admin/revenue", icon: TrendingUp, label: "Faturamento" },
+    {
+      group: "Financeiro",
+      icon: DollarSign,
+      children: [
+        { to: "/admin/payments", icon: Wallet, label: "Pagamentos" },
+        { to: "/admin/revenue", icon: TrendingUp, label: "Faturamento" },
+      ],
+    },
+    {
+      group: "WhatsApp",
+      icon: MessageSquare,
+      children: [
+        { to: "/admin/messages", icon: MessageSquare, label: "Mensagens" },
+      ],
+    },
     { to: "/admin/diet", icon: Salad, label: "Dietas" },
     { to: "/admin/nutrition", icon: Apple, label: "Cardápio" },
     { to: "/admin/protocol", icon: FlaskConical, label: "Protocolos" },
-    { to: "/admin/messages", icon: MessageSquare, label: "Mensagens" },
     { to: "/admin/content", icon: Palette, label: "Personalização" },
   ],
   consultor: [
     { to: "/consultor", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/consultor/queue", icon: ListOrdered, label: "Fila Atendimento" },
     { to: "/consultor/students", icon: Users, label: "Meus Alunos" },
-    { to: "/consultor/billing", icon: AlertCircle, label: "Cobranças e Renovações" },
-    { to: "/consultor/crm", icon: Megaphone, label: "Campanhas & Ofertas" },
-    { to: "/consultor/diet", icon: Salad, label: "Dietas" },
-    { to: "/consultor/diet-library", icon: BookOpen, label: "Bib. Dietas" },
-    { to: "/consultor/nutrition", icon: Apple, label: "Cardápio" },
-    { to: "/consultor/protocol", icon: FlaskConical, label: "Protocolos" },
-    { to: "/consultor/protocol-library", icon: BookOpen, label: "Bib. Protocolos" },
-    { to: "/consultor/exercise-library", icon: BookOpen, label: "Biblioteca" },
-    { to: "/consultor/workout-templates", icon: Dumbbell, label: "Programas de Treino" },
+    {
+      group: "WhatsApp",
+      icon: MessageSquare,
+      children: [
+        { to: "/consultor/billing", icon: AlertCircle, label: "Cobranças e Renovações" },
+        { to: "/consultor/crm", icon: Megaphone, label: "Campanhas & Ofertas" },
+      ],
+    },
+    {
+      group: "Nutrição",
+      icon: Salad,
+      children: [
+        { to: "/consultor/diet", icon: Salad, label: "Dietas" },
+        { to: "/consultor/diet-library", icon: BookOpen, label: "Bib. Dietas" },
+        { to: "/consultor/nutrition", icon: Apple, label: "Cardápio" },
+      ],
+    },
+    {
+      group: "Protocolos",
+      icon: FlaskConical,
+      children: [
+        { to: "/consultor/protocol", icon: FlaskConical, label: "Protocolos" },
+        { to: "/consultor/protocol-library", icon: BookOpen, label: "Bib. Protocolos" },
+      ],
+    },
+    {
+      group: "Treino",
+      icon: Dumbbell,
+      children: [
+        { to: "/consultor/exercise-library", icon: BookOpen, label: "Biblioteca" },
+        { to: "/consultor/workout-templates", icon: Dumbbell, label: "Programas de Treino" },
+      ],
+    },
   ],
   assistente: [
     { to: "/assistente", icon: LayoutDashboard, label: "Dashboard" },
@@ -110,11 +164,23 @@ const linksByRole: Record<AppRole, NavItem[]> = {
   ],
   financeiro: [
     { to: "/financeiro", icon: LayoutDashboard, label: "Dashboard" },
-    { to: "/financeiro/payments", icon: Wallet, label: "Pagamentos" },
-    { to: "/financeiro/billing", icon: Receipt, label: "Faturamento" },
-    { to: "/financeiro/cobrancas", icon: AlertCircle, label: "Cobranças e Renovações" },
+    {
+      group: "Financeiro",
+      icon: DollarSign,
+      children: [
+        { to: "/financeiro/payments", icon: Wallet, label: "Pagamentos" },
+        { to: "/financeiro/billing", icon: Receipt, label: "Faturamento" },
+        { to: "/financeiro/revenue", icon: TrendingUp, label: "Receita" },
+      ],
+    },
+    {
+      group: "WhatsApp",
+      icon: MessageSquare,
+      children: [
+        { to: "/financeiro/cobrancas", icon: AlertCircle, label: "Cobranças e Renovações" },
+      ],
+    },
     { to: "/financeiro/plans", icon: CreditCard, label: "Planos" },
-    { to: "/financeiro/revenue", icon: TrendingUp, label: "Receita" },
   ],
 };
 
