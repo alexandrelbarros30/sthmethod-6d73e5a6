@@ -58,7 +58,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ ok: true, data }), {
+    // Z-API returns: { zaapId, messageId, id } depending on endpoint
+    const messageId = (data as any)?.messageId || (data as any)?.id || (data as any)?.zaapId || null;
+    return new Response(JSON.stringify({ ok: true, data, messageId, phone: fullPhone }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {
