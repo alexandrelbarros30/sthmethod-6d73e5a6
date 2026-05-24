@@ -182,7 +182,11 @@ Deno.serve(async (req) => {
         const res = await sendWhatsApp(r.phone, rendered, image_url);
         if (res.ok) {
           sent++;
-          await supabase.from('crm_campaign_messages').update({ status: 'sent', sent_at: new Date().toISOString() }).eq('id', msg!.id);
+          await supabase.from('crm_campaign_messages').update({
+            status: 'sent',
+            sent_at: new Date().toISOString(),
+            provider_message_id: (res.data as any)?.messageId || null,
+          }).eq('id', msg!.id);
         } else {
           failed++;
           await supabase.from('crm_campaign_messages').update({ status: 'failed', error: JSON.stringify(res.data).slice(0, 500) }).eq('id', msg!.id);
