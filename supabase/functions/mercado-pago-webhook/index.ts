@@ -255,6 +255,12 @@ serve(async (req) => {
     // If approved for the first time, activate subscription once.
     if (newStatus === "approved" && payment && previousStatus !== "approved") {
       await activateSubscriptionForPayment(supabase, payment);
+      // Auto-send welcome WhatsApp (does not depend on admin being online)
+      try {
+        await sendWelcomeWhatsapp(supabase, payment.user_id);
+      } catch (e) {
+        console.error("[welcome-whatsapp] failed", e);
+      }
     }
 
     return new Response(JSON.stringify({ received: true, status: newStatus }), {
