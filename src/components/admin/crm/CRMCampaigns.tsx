@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Send, Calendar, Pause, Play, Trash2, Megaphone, Repeat, Clock, CheckCircle2, XCircle, Loader2, Pencil, StopCircle } from "lucide-react";
+import { Plus, Send, Calendar, Pause, Play, Trash2, Megaphone, Repeat, Clock, CheckCircle2, XCircle, Loader2, Pencil, StopCircle, MessageSquareX } from "lucide-react";
 import { Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -305,6 +305,28 @@ export default function CRMCampaigns() {
     qc.invalidateQueries({ queryKey: ["crm-campaigns"] });
   };
 
+  const [deletingWa, setDeletingWa] = useState<string | null>(null);
+  const deleteWhatsAppMessages = async (c: Campaign) => {
+    if (!confirm(
+      `Apagar do WhatsApp as mensagens já enviadas em "${c.name}"?\n\n` +
+      `O WhatsApp só permite apagar mensagens enviadas nas últimas ~48h e que ainda não foram visualizadas no celular do destinatário.`
+    )) return;
+    setDeletingWa(c.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("whatsapp-delete-messages", {
+        body: { campaign_id: c.id },
+      });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || "Falha ao apagar");
+      toast.success(`${data.deleted} apagadas no WhatsApp • ${data.failed} falharam (${data.total} elegíveis)`);
+      qc.invalidateQueries({ queryKey: ["crm-campaigns"] });
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao apagar do WhatsApp");
+    } finally {
+      setDeletingWa(null);
+    }
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       <div className="flex items-center justify-between">
@@ -526,6 +548,16 @@ export default function CRMCampaigns() {
                   <Button size="icon" variant="ghost" className="h-8 w-8 text-rose-400" onClick={() => remove(c.id)}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
+                  {c.sent_count > 0 && (
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-amber-400"
+                      disabled={deletingWa === c.id}
+                      onClick={() => deleteWhatsAppMessages(c)}
+                      title="Apagar mensagens enviadas dentro do WhatsApp">
+                      {deletingWa === c.id
+                        ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        : <MessageSquareX className="h-3.5 w-3.5" />}
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>

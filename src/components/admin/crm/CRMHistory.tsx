@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { History, CheckCircle2, XCircle, Eye, Clock } from "lucide-react";
+import { History, CheckCircle2, XCircle, Eye, Clock, MessageSquareX, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -17,6 +18,29 @@ const statusColor: Record<string, string> = {
 
 export default function CRMHistory() {
   const [openRun, setOpenRun] = useState<string | null>(null);
+  const qc = useQueryClient();
+  const [deletingRun, setDeletingRun] = useState<string | null>(null);
+
+  const deleteRunFromWhatsApp = async (run: any) => {
+    if (!confirm(
+      `Apagar do WhatsApp todas as mensagens desta execução de "${run.campaign_name}"?\n\n` +
+      `Só funciona em mensagens enviadas há menos de ~48h e ainda não visualizadas pelo destinatário.`
+    )) return;
+    setDeletingRun(run.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("whatsapp-delete-messages", {
+        body: { run_id: run.id },
+      });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || "Falha ao apagar");
+      toast.success(`${data.deleted} apagadas no WhatsApp • ${data.failed} falharam`);
+      qc.invalidateQueries({ queryKey: ["crm-run-messages", run.id] });
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao apagar do WhatsApp");
+    } finally {
+      setDeletingRun(null);
+    }
+  };
 
   const { data: runs = [], isLoading } = useQuery({
     queryKey: ["crm-runs"],
@@ -92,6 +116,18 @@ export default function CRMHistory() {
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                     <DialogHeader><DialogTitle>{r.campaign_name} — envios</DialogTitle></DialogHeader>
+                    {r.sent_count > 0 && (
+                      <div className="mb-2">
+                        <Button size="sm" variant="outline" disabled={deletingRun === r.id}
+                          onClick={() => deleteRunFromWhatsApp(r)}
+                          className="gap-1 border-amber-500/40 text-amber-400 hover:bg-amber-500/10">
+                          {deletingRun === r.id
+                            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            : <MessageSquareX className="h-3.5 w-3.5" />}
+                          Apagar mensagens do WhatsApp
+                        </Button>
+                      </div>
+                    )}
                     <div className="divide-y divide-border/40">
                       {messages.length === 0 ? (
                         <p className="p-4 text-sm text-muted-foreground text-center">Sem mensagens.</p>
