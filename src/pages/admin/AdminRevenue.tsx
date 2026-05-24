@@ -27,7 +27,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Wallet, TrendingUp, CreditCard, QrCode, Landmark, Download, Search, Calendar } from "lucide-react";
+import { Wallet, TrendingUp, CreditCard, QrCode, Landmark, Download, Search, Calendar, Eye, EyeOff } from "lucide-react";
 
 type PaymentRow = {
   id: string;
@@ -72,6 +72,8 @@ const normalizeMethod = (m: string) => {
 
 const AdminRevenue = () => {
   const [period, setPeriod] = useState<"all" | "month" | "year" | "custom">("all");
+  const [showValues, setShowValues] = useState(false);
+  const mask = (formatted: string) => (showValues ? formatted : "R$ ••••••");
   const [year, setYear] = useState<string>(new Date().getFullYear().toString());
   const [month, setMonth] = useState<string>(String(new Date().getMonth() + 1).padStart(2, "0"));
   const [from, setFrom] = useState<string>("");
@@ -319,7 +321,10 @@ const AdminRevenue = () => {
             </div>
           </div>
 
-          <div className="flex items-end">
+          <div className="flex items-end gap-2">
+            <Button onClick={() => setShowValues((v) => !v)} variant="outline" className="gap-2" title={showValues ? "Ocultar valores" : "Mostrar valores"}>
+              {showValues ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </Button>
             <Button onClick={exportCSV} variant="outline" className="w-full gap-2">
               <Download className="w-4 h-4" /> CSV
             </Button>
