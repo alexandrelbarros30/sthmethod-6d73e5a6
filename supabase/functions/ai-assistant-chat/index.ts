@@ -22,13 +22,14 @@ Deno.serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
     const { data: cfg } = await supabase
       .from('ai_assistant_config')
-      .select('system_prompt, model, engine')
+      .select('system_prompt, model, engine, assistant_name')
       .eq('id', 1)
       .maybeSingle();
 
     const systemPrompt = cfg?.system_prompt || 'Você é o assistente da STH METHOD.';
     const model = cfg?.model || 'google/gemini-2.5-flash';
     const engine = (cfg as any)?.engine || 'local';
+    const assistantName = (cfg as any)?.assistant_name || 'STH One';
 
     // Optional memory: enrich with student context by phone
     let memoryBlock = '';
@@ -55,12 +56,14 @@ Deno.serve(async (req) => {
           planName: (sub as any)?.plans?.name || null,
           endDate: sub?.end_date || null,
           phone,
+          assistantName,
         };
       }
     }
 
     // MOTOR LOCAL (gratuito, sem créditos)
     if (engine === 'local') {
+      if (!localCtx.assistantName) localCtx.assistantName = assistantName;
       const { data: rules } = await supabase
         .from('ai_assistant_training')
         .select('id, label, keywords, reply, priority, attachments')

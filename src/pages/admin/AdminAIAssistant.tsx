@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Bot, Save, Send, Trash2, Sparkles, Webhook, Copy, Loader2, GraduationCap, Plus, Pencil, X, Paperclip, FileText, ImageIcon } from "lucide-react";
+import { Bot, Save, Send, Trash2, Sparkles, Webhook, Copy, Loader2, GraduationCap, Plus, Pencil, X, Paperclip, FileText, ImageIcon, Brain, BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -468,7 +468,18 @@ function TrainingCenter({ userId }: { userId?: string }) {
   };
 
   return (
-    <div className="grid lg:grid-cols-5 gap-4">
+    <Tabs defaultValue="rules" className="w-full">
+      <TabsList className="mb-4">
+        <TabsTrigger value="rules" className="whitespace-nowrap"><BookOpen className="w-4 h-4 mr-1" />Regras</TabsTrigger>
+        <TabsTrigger value="brain" className="whitespace-nowrap"><Brain className="w-4 h-4 mr-1" />Prompt Local (Cérebro)</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="brain">
+        <LocalBrainEditor />
+      </TabsContent>
+
+      <TabsContent value="rules">
+        <div className="grid lg:grid-cols-5 gap-4">
       <Card className="lg:col-span-2">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
@@ -683,6 +694,145 @@ function TrainingCenter({ userId }: { userId?: string }) {
           )}
         </CardContent>
       </Card>
-    </div>
+        </div>
+      </TabsContent>
+    </Tabs>
+  );
+}
+
+const DEFAULT_STH_ONE_PROMPT = `# IDENTIDADE OFICIAL DA IA
+
+Nome oficial: STH One
+
+Apresentação:
+"Olá 👋 Eu sou o STH One. Seu assistente inteligente oficial da STH METHOD."
+
+O STH One atua como concierge premium, central de relacionamento, suporte estratégico, assistente operacional, SDR inteligente e IA de acompanhamento contínuo.
+
+# PERSONALIDADE
+- Humano, calmo, acolhedor, estratégico, elegante, premium.
+- Nunca robótico.
+
+# REGRA ABSOLUTA Nº1
+Nunca tratar mal, ironizar, provocar, discutir ou responder com agressividade. Mesmo diante de clientes irritados, mensagens ofensivas ou críticas, permanecer respeitoso, educado, amigável, empático.
+Resposta ideal: "Entendo sua situação. Vamos resolver isso da melhor forma possível."
+
+# ORGANISMO VIVO
+Aprender com conversas, interpretar padrões, melhorar respostas, adaptar linguagem, reconhecer intenções e otimizar a experiência continuamente.
+
+# BASE DE CONHECIMENTO
+Site oficial: https://sthmethod.com.br — fonte oficial de planos, fluxos, estratégia, serviços e diferenciais.
+
+# MEMÓRIA EVOLUTIVA
+Lembrar contexto recente, manter continuidade, evitar repetição, adaptar respostas ao perfil.
+Ex.: "Você estava analisando o plano 90D anteriormente."
+
+# EXPERIÊNCIA PREMIUM
+Sensação Apple.com — "Existe alguém realmente acompanhando minha evolução."
+
+# TOM DE VOZ
+Natural, humano, premium, elegante, objetivo, estratégico. Evitar excesso de emojis e respostas frias.
+
+# OBJETIVO FINAL
+EXPERIÊNCIA HUMANA + CONTEXTO + CONTINUIDADE + RESPEITO.`;
+
+function LocalBrainEditor() {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [name, setName] = useState("STH One");
+  const [text, setText] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("ai_assistant_config")
+        .select("local_prompt, assistant_name")
+        .eq("id", 1)
+        .maybeSingle();
+      const cfg = data as any;
+      setName(cfg?.assistant_name || "STH One");
+      setText(cfg?.local_prompt || "");
+      setLoading(false);
+    })();
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await supabase
+      .from("ai_assistant_config")
+      .update({ local_prompt: text, assistant_name: name.trim() || "STH One" } as any)
+      .eq("id", 1);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("Cérebro do STH One atualizado");
+  };
+
+  const loadDefault = () => {
+    setText(DEFAULT_STH_ONE_PROMPT);
+    toast.message("Prompt padrão STH One carregado — revise e salve.");
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Brain className="w-4 h-4" /> Cérebro do Chat Robô Local
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">
+          Este é o organismo vivo do motor local. Editável a qualquer momento — fica salvo no banco e é carregado sempre que o STH One responde.
+          Não consome créditos de IA. Use para reforçar identidade, tom de voz, regras absolutas e contexto da marca.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {loading ? (
+          <div className="py-6 text-center text-sm text-muted-foreground">
+            <Loader2 className="w-4 h-4 animate-spin inline mr-1" /> Carregando...
+          </div>
+        ) : (
+          <>
+            <div className="grid md:grid-cols-3 gap-3">
+              <div className="md:col-span-1">
+                <Label>Nome do assistente</Label>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="STH One"
+                  className="mt-1"
+                />
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Usado nas saudações e apresentação oficial.
+                </p>
+              </div>
+              <div className="md:col-span-2 flex md:items-end justify-end gap-2">
+                <Button variant="outline" size="sm" onClick={loadDefault}>
+                  <Sparkles className="w-4 h-4 mr-1" /> Carregar prompt STH One
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <Label>Prompt do cérebro local</Label>
+              <Textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                rows={22}
+                placeholder="Cole aqui o super prompt do STH One..."
+                className="mt-1 font-mono text-xs leading-relaxed"
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                {text.length.toLocaleString("pt-BR")} caracteres. Atualize sempre que quiser deixar o assistente mais inteligente.
+              </p>
+            </div>
+
+            <div className="flex justify-end">
+              <Button onClick={save} disabled={saving}>
+                {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
+                Salvar cérebro
+              </Button>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
