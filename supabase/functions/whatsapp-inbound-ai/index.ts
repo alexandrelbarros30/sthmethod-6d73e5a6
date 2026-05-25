@@ -207,6 +207,8 @@ Deno.serve(async (req) => {
         .select('id, label, keywords, reply, priority, attachments')
         .eq('enabled', true)
         .order('priority', { ascending: true });
+      (localCtx as any).fallbackEnabled = (cfg as any)?.fallback_enabled !== false;
+      (localCtx as any).fallbackMessage = (cfg as any)?.fallback_message || null;
       const r = localRespond(text, localCtx, (rules as any) || []);
       reply = r.reply;
       replyIntent = r.intent;
