@@ -7,6 +7,8 @@ export type LocalContext = {
   planName?: string | null;
   endDate?: string | null;
   phone?: string | null;
+  recentHistory?: Array<{ role: 'user' | 'assistant'; content: string; intent?: string | null }>;
+  lastIntent?: string | null;
 };
 
 export type Attachment = { url: string; kind: 'image' | 'document'; name?: string };
@@ -21,6 +23,8 @@ export type CustomRule = {
 };
 
 const SITE = "https://sthmethod.com.br";
+const CADASTRO = `${SITE}/cadastro`;
+const RENEW = `${SITE}/student/renew`;
 
 function norm(s: string): string {
   return s
@@ -38,15 +42,36 @@ function hi(ctx: LocalContext): string {
   return "Olá!";
 }
 
+// Detecta sentimento negativo (frustração/impaciência) para reduzir venda e priorizar acolhimento
+function detectNegativeSentiment(t: string): boolean {
+  return /\b(nao funciona|nao consigo|absurdo|demor|cade|caralh|porra|merda|horrivel|pessim|raiva|irritad|cansad|impacien|reclam|insatisf|decepcion|furios|desisti|pelo amor)\b/.test(t);
+}
+
+// Detecta se o aluno já recebeu apresentação recente (evita repetir)
+function alreadyGreeted(ctx: LocalContext): boolean {
+  return (ctx.recentHistory || []).some(
+    (m) => m.role === 'assistant' && /STH METHOD funciona de forma estrat/.test(m.content),
+  );
+}
+
+function statusLine(ctx: LocalContext): string {
+  if (ctx.status === 'active') return `Seu plano *${ctx.planName || ''}* segue ativo${ctx.endDate ? ` até *${ctx.endDate}*` : ''}.`;
+  if (ctx.status === 'expired') return `Seu plano *${ctx.planName || ''}* está vencido — conseguimos retomar exatamente de onde parou.`;
+  if (ctx.status === 'pending') return `Identifiquei uma pendência no seu plano *${ctx.planName || ''}*. Posso te ajudar a regularizar agora.`;
+  return '';
+}
+
 function planosBlock(): string {
   return [
     "*Planos STH METHOD*",
     "",
-    "• *30D* — Destravar. Organizar. Acelerar.",
-    "• *90D* — Evolução estruturada e resultados sustentáveis.",
-    "• *6M* — Transformação completa por fases.",
+    "• *30D* — Plano ideal para destravar, organizar e acelerar.",
+    "• *90D* — Estrutura mais ampla para evolução contínua.",
+    "• *6M* — Transformação completa com estratégia por fases.",
     "",
-    `Veja valores e contrate em: ${SITE}`,
+    "Todos incluem: dieta, treino guiado, protocolo, suporte ativo e análise de exames.",
+    "",
+    `Acesse e contrate em: ${SITE}`,
   ].join("\n");
 }
 
@@ -60,27 +85,55 @@ const RULES: Rule[] = [
   {
     intent: "saudacao",
     match: (t) => /\b(oi|ola|bom dia|boa tarde|boa noite|hey|opa|e ai)\b/.test(t),
-    reply: (c) =>
-      `${hi(c)} Sou o assistente da *STH METHOD*. Posso te ajudar com:\n` +
-      `• Planos e valores\n• Cadastro e pagamento\n• Renovação\n• Envio de exames\n• Suporte da plataforma\n\nO que você precisa agora?`,
+    reply: (c) => {
+      if (alreadyGreeted(c)) {
+        return `${hi(c)} Sigo por aqui. O que você precisa agora?`;
+      }
+      if (c.status === 'active') {
+        return `${hi(c)} ${statusLine(c)}\n\nSe precisar de atualização, ajustes, exames ou suporte — é só me chamar.`;
+      }
+      if (c.status === 'expired') {
+        return `${hi(c)} ${statusLine(c)}\n\nQuer que eu te envie as condições de retorno?`;
+      }
+      if (c.name) {
+        return `${hi(c)} Sou o assistente da *STH METHOD*. Posso te ajudar com planos, cadastro, exames ou suporte — por onde começamos?`;
+      }
+      return [
+        `${hi(c)} 👋`,
+        ``,
+        `A *STH METHOD* funciona de forma estratégica e personalizada.`,
+        ``,
+        `Você recebe:`,
+        `• Dieta personalizada`,
+        `• Treino guiado`,
+        `• Protocolo estratégico`,
+        `• Suporte ativo`,
+        `• Análise de exames`,
+        ``,
+        `Tudo organizado pela própria plataforma: ${SITE}`,
+      ].join('\n');
+    },
   },
   {
     intent: "valores_planos",
     match: (t) =>
       /\b(valor|valores|preco|precos|quanto custa|plano|planos|investimento|mensalidade)\b/.test(t),
-    reply: () => planosBlock(),
+    reply: (c) => {
+      const continuity = c.lastIntent === 'valores_planos' ? `Você estava analisando os planos. ` : '';
+      return `${continuity}${planosBlock()}`;
+    },
   },
   {
     intent: "cupom",
     match: (t) => /\b(cupom|desconto|promocao|promo)\b/.test(t),
     reply: () =>
-      `Temos cupons ativos em campanhas específicas. Acesse ${SITE}, escolha o plano e aplique o cupom na finalização. Posso te ajudar a escolher o plano ideal?`,
+      `Cupons ativos no momento:\n\n• *STH15*\n• *DESFOCADOS30*\n• *DESFOCADOS90*\n\nVálidos para pagamento via *Pix*. Aplique na finalização em ${SITE}.`,
   },
   {
     intent: "cadastro",
     match: (t) => /\b(cadastro|cadastrar|criar conta|me inscrever|inscricao)\b/.test(t),
     reply: () =>
-      `Para começar: acesse ${SITE}, escolha seu plano e finalize o cadastro. Em seguida você receberá acesso à plataforma e ao onboarding.`,
+      `Você pode iniciar pelo cadastro oficial:\n\n${CADASTRO}\n\nEtapas:\n1. Dados básicos\n2. Rotina\n3. Objetivos\n4. Fotos\n5. Exames\n6. Pagamento`,
   },
   {
     intent: "pagamento",
@@ -89,35 +142,53 @@ const RULES: Rule[] = [
       `Aceitamos *Pix* (aprovação imediata) e *cartão* (até 12x em planos elegíveis). Se já efetuou o pagamento, envie o comprovante por aqui que validamos em instantes.`,
   },
   {
+    intent: "cobranca",
+    match: (t) => /\b(cobranca|pendencia|pendente|em aberto|inadimplen|fatura|boleto vencido)\b/.test(t),
+    reply: (c) =>
+      `Identificamos uma pendência no plano atual${c.planName ? ` (*${c.planName}*)` : ''}. Posso te ajudar a regularizar agora — prefere via Pix ou cartão?`,
+  },
+  {
     intent: "renovacao",
     match: (t) => /\b(renov|renovar|renovacao|continuar|continuidade)\b/.test(t),
     reply: (c) => {
       if (c.status === "expired") {
-        return `${hi(c)} Identifiquei que seu plano (${c.planName || "—"}) está *vencido*. Você pode renovar agora com cupom de retorno em ${SITE}/student/renew — quer que eu te envie o link direto?`;
+        return `${hi(c)} Seu acesso (${c.planName || "—"}) expirou — mas conseguimos continuar exatamente de onde parou.\n\nRenove em: ${RENEW}`;
       }
       if (c.endDate) {
-        return `${hi(c)} Seu plano *${c.planName || ""}* vence em *${c.endDate}*. A renovação pode ser feita a qualquer momento em ${SITE}/student/renew.`;
+        return `${hi(c)} Seu acompanhamento *${c.planName || ""}* está próximo do vencimento (*${c.endDate}*).\n\nSe desejar continuar sua evolução, posso te enviar as condições atuais: ${RENEW}`;
       }
-      return `A renovação é feita em ${SITE}/student/renew. Posso te enviar o link com cupom ativo, se quiser.`;
+      return `A renovação é feita em ${RENEW}. Posso te enviar o link com cupom ativo, se quiser.`;
     },
   },
   {
     intent: "exames",
     match: (t) => /\b(exame|exames|laboratorio|sangue|resultado|hormonio|hormonios)\b/.test(t),
     reply: () =>
-      `Para enviar exames:\n1. Acesse ${SITE}\n2. Menu *Atualização* → *Dados Clínicos*\n3. Faça upload do *PDF completo*\n\nSe o exame ainda estiver incompleto, aguarde a liberação total antes de enviar.`,
+      `Os exames podem ser enviados pela própria plataforma:\n\n${SITE} → *Atualização* → *Dados Clínicos* (PDF)\n\nAguarde o exame ficar completo antes do envio.`,
   },
   {
     intent: "treino",
     match: (t) => /\b(treino|treinos|musculacao|academia|ficha de treino|guiado)\b/.test(t),
     reply: () =>
-      `Seu treino guiado fica em *Plataforma → Treino*. Cada exercício tem vídeo, séries e repetições. Dúvidas específicas posso encaminhar ao time técnico.`,
+      `O treino fica disponível no *app com execução guiada e vídeos*. Acesse em *Plataforma → Treino*.`,
   },
   {
     intent: "dieta",
     match: (t) => /\b(dieta|cardapio|alimentacao|refeicao|refeicoes|nutricao|nutri)\b/.test(t),
     reply: () =>
       `Sua dieta personalizada fica em *Plataforma → Dieta*, com macros, refeições e substituições. Atualizações são feitas via *Atualização de Rotina*.`,
+  },
+  {
+    intent: "protocolo",
+    match: (t) => /\b(protocolo|estrategia|estrategico|fases|fase)\b/.test(t),
+    reply: () =>
+      `Seu protocolo estratégico fica em *Plataforma → Protocolo*, organizado por fases e pilares. Cada fase tem orientações específicas e check-in.`,
+  },
+  {
+    intent: "atualizacao",
+    match: (t) => /\b(atualizacao|atualizar rotina|update|mudar rotina|mudei|mudou)\b/.test(t),
+    reply: () =>
+      `Atualizações de rotina (peso, treino, alimentação) são feitas em *Plataforma → Atualização de Rotina*. Vou verificar isso rapidamente assim que você enviar.`,
   },
   {
     intent: "tirzepatida",
@@ -129,13 +200,13 @@ const RULES: Rule[] = [
     intent: "cancelar",
     match: (t) => /\b(cancelar|cancelamento|desistir|sair|encerrar)\b/.test(t),
     reply: () =>
-      `Sinto muito por essa intenção. Antes de cancelar, posso oferecer um *cupom de retenção* e revisar sua estratégia. Quer tentar?`,
+      `Entendo. Antes de encerrar, posso revisar sua estratégia e oferecer um *cupom de retenção*. Vamos conversar?`,
   },
   {
     intent: "humano",
-    match: (t) => /\b(humano|atendente|pessoa|falar com alguem|suporte humano)\b/.test(t),
+    match: (t) => /\b(humano|atendente|pessoa|falar com alguem|suporte humano|consultor|alexandre)\b/.test(t),
     reply: () =>
-      `Claro! Vou registrar seu pedido e a equipe humana retorna em instantes. Pode adiantar o assunto?`,
+      `Vou direcionar isso para o consultor responsável. Pode me adiantar o assunto enquanto te conecto?`,
   },
   {
     intent: "agradecimento",
@@ -161,6 +232,12 @@ export function localRespond(
 ): { reply: string; intent: string; ruleId?: string; attachments?: Attachment[] } {
   const t = norm(userText || "");
 
+  // 0) Sentimento negativo — acolhimento antes de qualquer venda
+  if (detectNegativeSentiment(t)) {
+    const empath = `${hi(ctx)} Entendo, vamos resolver isso primeiro. Me conta rapidamente o que aconteceu para eu te ajudar da melhor forma.`;
+    return { reply: empath, intent: 'sentimento_negativo' };
+  }
+
   // 1) Regras customizadas (Centro de Treinamento) — prioridade menor = mais alta
   const sorted = [...customRules].sort((a, b) => (a.priority ?? 100) - (b.priority ?? 100));
   for (const r of sorted) {
@@ -182,10 +259,16 @@ export function localRespond(
     }
   }
 
-  // Fallback inteligente
-  const fallback =
-    `${hi(ctx)} Recebi sua mensagem. Para te ajudar melhor, posso te orientar sobre:\n\n` +
-    `• *Planos e valores*\n• *Cadastro e pagamento*\n• *Renovação*\n• *Envio de exames*\n• *Treino e dieta*\n\n` +
-    `Me diz com qual desses tópicos posso começar — ou acesse ${SITE}.`;
+  // Fallback inteligente — contextualizado pelo status do contato
+  let fallback: string;
+  if (ctx.status === 'active') {
+    fallback = `${hi(ctx)} ${statusLine(ctx)}\n\nMe conta rapidamente o que precisa: *atualização*, *exames*, *treino*, *dieta* ou *suporte*?`;
+  } else if (ctx.status === 'expired') {
+    fallback = `${hi(ctx)} ${statusLine(ctx)}\n\nQuer que eu te envie o link de renovação?`;
+  } else if (ctx.name) {
+    fallback = `${hi(ctx)} Já localizei seu cadastro. Posso te orientar sobre *planos*, *pagamento*, *exames* ou *suporte* — por onde começamos?`;
+  } else {
+    fallback = `${hi(ctx)} Recebi sua mensagem. Posso te orientar sobre:\n\n• *Planos e valores*\n• *Cadastro e pagamento*\n• *Renovação*\n• *Envio de exames*\n• *Treino e dieta*\n\nMe diz por onde começar — ou acesse ${SITE}.`;
+  }
   return { reply: fallback, intent: "fallback" };
 }

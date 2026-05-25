@@ -67,6 +67,11 @@ Deno.serve(async (req) => {
         .eq('enabled', true)
         .order('priority', { ascending: true });
       const last = [...messages].reverse().find((m: Msg) => m.role === 'user');
+      // Constrói memória conversacional a partir das mensagens do chat de teste
+      localCtx.recentHistory = (messages as Msg[])
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .slice(-6)
+        .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
       const { reply, intent, attachments } = localRespond(last?.content || '', localCtx, (rules as any) || []);
       return new Response(JSON.stringify({ reply, engine: 'local', intent, attachments }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
