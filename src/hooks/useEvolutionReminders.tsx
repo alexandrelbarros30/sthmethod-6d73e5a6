@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { sendSystemTemplate } from "@/lib/system-templates";
 
 const CYCLE_DAYS = 29;
 
@@ -87,6 +88,49 @@ export const useEvolutionReminders = () => {
 
       if (toInsert.length > 0) {
         await supabase.from("evolution_reminders").insert(toInsert);
+      }
+
+      // Auto-dispatch WhatsApp for any reminder that hasn't been auto-sent yet (incl. legacy).
+      const { data: pending } = await supabase
+        .from("evolution_reminders")
+        .select("id, student_user_id, student_name")
+        .is("auto_sent_at", null)
+        .lte("due_date", today)
+        .limit(50);
+
+      if (pending && pending.length > 0) {
+        const ids = pending.map((p: any) => p.student_user_id);
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("user_id, full_name, phone, email")
+          .in("user_id", ids);
+        const pmap: Record<string, any> = {};
+        (profs || []).forEach((p: any) => { pmap[p.user_id] = p; });
+
+        for (const r of pending) {
+          const prof = pmap[r.student_user_id];
+          if (!prof?.phone) continue;
+          try {
+            const result = await sendSystemTemplate(
+              "evolution_update_reminder",
+              {
+                full_name: prof.full_name,
+                phone: prof.phone,
+                email: prof.email,
+                user_id: r.student_user_id,
+              },
+              { logHistory: true, mode: "auto" },
+            );
+            if (result.ok) {
+              await supabase
+                .from("evolution_reminders")
+                .update({ auto_sent_at: new Date().toISOString(), seen: true })
+                .eq("id", r.id);
+            }
+          } catch (err) {
+            console.warn("[evolution-auto-dispatch] failed", err);
+          }
+        }
       }
     };
 
