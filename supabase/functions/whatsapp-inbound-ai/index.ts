@@ -148,6 +148,21 @@ Deno.serve(async (req) => {
     // Loga mensagem do aluno
     await supabase.from('ai_assistant_conversation').insert({ phone: norm, role: 'user', content: text });
 
+    // HANDOFF — aluno ATIVO vai direto para o canal "Fale com o Nutri"
+    if (contactType === 'aluno_ativo') {
+      const first = (profile?.full_name || '').split(/\s+/)[0];
+      const handoff = `${first ? `Olá, ${first}!` : 'Olá!'} Vi aqui que seu plano *${(localCtx.planName || '')}* está ativo. Para suporte direto com o *Nutri Alexandre*, fale pelo canal *Fale com o Nutri*:\n\nhttps://wa.me/5521998984153?text=${encodeURIComponent('Olá! Sou aluno ativo da STH METHOD e gostaria de falar com o Nutri.')}`;
+      await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
+        body: JSON.stringify({ phone: norm, message: handoff }),
+      });
+      await supabase.from('ai_assistant_conversation').insert({ phone: norm, role: 'assistant', content: handoff, intent: 'handoff_nutri' });
+      return new Response(JSON.stringify({ ok: true, handoff: true }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // MOTOR LOCAL — gratuito, sem créditos.
     let reply = '';
     let replyIntent: string | null = null;
