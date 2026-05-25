@@ -645,6 +645,11 @@ function TrainingCenter({ userId }: { userId?: string }) {
                         {r.hits > 0 && (
                           <Badge variant="secondary" className="text-[10px]">{r.hits} usos</Badge>
                         )}
+                        {(r.attachments?.length || 0) > 0 && (
+                          <Badge variant="outline" className="text-[10px] flex items-center gap-1">
+                            <Paperclip className="w-3 h-3" />{r.attachments!.length}
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex gap-1 flex-wrap mt-1">
                         {r.keywords.slice(0, 8).map((k, i) => (
