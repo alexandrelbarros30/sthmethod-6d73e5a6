@@ -191,6 +191,45 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_assistant_training: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          enabled: boolean
+          hits: number
+          id: string
+          keywords: string[]
+          label: string
+          priority: number
+          reply: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          hits?: number
+          id?: string
+          keywords?: string[]
+          label: string
+          priority?: number
+          reply: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          hits?: number
+          id?: string
+          keywords?: string[]
+          label?: string
+          priority?: number
+          reply?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       anamnesis_entries: {
         Row: {
           created_at: string

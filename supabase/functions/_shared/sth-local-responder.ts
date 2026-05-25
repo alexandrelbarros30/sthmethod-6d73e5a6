@@ -9,6 +9,14 @@ export type LocalContext = {
   phone?: string | null;
 };
 
+export type CustomRule = {
+  id?: string;
+  label?: string;
+  keywords: string[];
+  reply: string;
+  priority?: number;
+};
+
 const SITE = "https://sthmethod.com.br";
 
 function norm(s: string): string {
@@ -133,8 +141,32 @@ const RULES: Rule[] = [
   },
 ];
 
-export function localRespond(userText: string, ctx: LocalContext): { reply: string; intent: string } {
+function renderTemplate(tpl: string, ctx: LocalContext): string {
+  const first = ctx.name ? ctx.name.split(/\s+/)[0] : "";
+  return tpl
+    .replace(/\{nome\}/gi, first || "")
+    .replace(/\{plano\}/gi, ctx.planName || "—")
+    .replace(/\{status\}/gi, ctx.status || "—")
+    .replace(/\{vencimento\}/gi, ctx.endDate || "—")
+    .replace(/\{site\}/gi, SITE);
+}
+
+export function localRespond(
+  userText: string,
+  ctx: LocalContext,
+  customRules: CustomRule[] = [],
+): { reply: string; intent: string; ruleId?: string } {
   const t = norm(userText || "");
+
+  // 1) Regras customizadas (Centro de Treinamento) — prioridade menor = mais alta
+  const sorted = [...customRules].sort((a, b) => (a.priority ?? 100) - (b.priority ?? 100));
+  for (const r of sorted) {
+    const kws = (r.keywords || []).map((k) => norm(k)).filter(Boolean);
+    if (kws.length === 0) continue;
+    if (kws.some((k) => t.includes(k))) {
+      return { reply: renderTemplate(r.reply, ctx), intent: r.label || "custom", ruleId: r.id };
+    }
+  }
 
   for (const r of RULES) {
     if (r.match(t)) {
