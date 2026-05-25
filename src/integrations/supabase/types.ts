@@ -193,6 +193,7 @@ export type Database = {
       }
       ai_assistant_training: {
         Row: {
+          attachments: Json
           created_at: string
           created_by: string | null
           enabled: boolean
@@ -205,6 +206,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          attachments?: Json
           created_at?: string
           created_by?: string | null
           enabled?: boolean
@@ -217,6 +219,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          attachments?: Json
           created_at?: string
           created_by?: string | null
           enabled?: boolean
