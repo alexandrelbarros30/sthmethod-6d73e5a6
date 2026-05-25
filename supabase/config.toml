@@ -35,3 +35,9 @@ verify_jwt = false
 
 [functions.crm-automation-runner]
 verify_jwt = false
+
+[functions.ai-assistant-chat]
+verify_jwt = false
+
+[functions.whatsapp-inbound-ai]
+verify_jwt = false

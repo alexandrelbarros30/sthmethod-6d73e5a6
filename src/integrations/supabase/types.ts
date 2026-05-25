@@ -134,6 +134,60 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_assistant_chats: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_assistant_config: {
+        Row: {
+          auto_reply_enabled: boolean
+          auto_reply_office_hours: boolean
+          id: number
+          model: string
+          system_prompt: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          auto_reply_enabled?: boolean
+          auto_reply_office_hours?: boolean
+          id?: number
+          model?: string
+          system_prompt?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          auto_reply_enabled?: boolean
+          auto_reply_office_hours?: boolean
+          id?: number
+          model?: string
+          system_prompt?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       anamnesis_entries: {
         Row: {
           created_at: string

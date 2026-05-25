@@ -71,6 +71,7 @@ import AdminTrainingPrograms from "./pages/admin/AdminTrainingPrograms";
 import AdminContent from "./pages/admin/AdminContent";
 import AdminLayoutExterno from "./pages/admin/AdminLayoutExterno";
 import AdminMessages from "./pages/admin/AdminMessages";
+import AdminAIAssistant from "./pages/admin/AdminAIAssistant";
 import AdminRoles from "./pages/admin/AdminRoles";
 import AdminStaff from "./pages/admin/AdminStaff";
 import AdminCoupons from "./pages/admin/AdminCoupons";
@@ -213,6 +214,7 @@ const App = () => (
             <Route path="/admin/workout-templates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTrainingPrograms /></ProtectedRoute>} />
             <Route path="/admin/content" element={<ProtectedRoute allowedRoles={["admin"]}><AdminContent /></ProtectedRoute>} />
             <Route path="/admin/messages" element={<ProtectedRoute allowedRoles={["admin"]}><AdminMessages /></ProtectedRoute>} />
+            <Route path="/admin/ai-assistant" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAIAssistant /></ProtectedRoute>} />
             <Route path="/admin/layout" element={<ProtectedRoute allowedRoles={["admin"]}><AdminLayoutExterno /></ProtectedRoute>} />
             <Route path="/admin/roles" element={<ProtectedRoute allowedRoles={["admin"]}><AdminRoles /></ProtectedRoute>} />
             <Route path="/admin/staff" element={<ProtectedRoute allowedRoles={["admin"]}><AdminStaff /></ProtectedRoute>} />

@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Layers, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered, RefreshCw, NotebookPen, AlertCircle, ChevronDown, DollarSign } from "lucide-react";
+import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Layers, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered, RefreshCw, NotebookPen, AlertCircle, ChevronDown, DollarSign, Bot } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -75,6 +75,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
         { to: "/admin/billing", icon: AlertCircle, label: "Cobranças e Renovações" },
         { to: "/admin/crm", icon: Megaphone, label: "Campanhas & Ofertas" },
         { to: "/admin/messages", icon: MessageSquare, label: "Mensagens" },
+        { to: "/admin/ai-assistant", icon: Bot, label: "Assistente IA" },
       ],
     },
     {
