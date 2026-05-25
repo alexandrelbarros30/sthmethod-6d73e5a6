@@ -77,8 +77,8 @@ export async function callGeminiWithFallback(opts: GeminiCallOptions): Promise<G
     return { ok: false, reply: OFFLINE_MSG, usedFallback: false, status: 'offline', error: 'no_keys' };
   }
 
-  const model = opts.model || 'gemini-1.5-flash';
-  const fbModel = opts.fallbackModel || 'gemini-1.5-flash-8b';
+  const model = opts.model || 'gemini-flash-latest';
+  const fbModel = opts.fallbackModel || 'gemini-flash-lite-latest';
   const timeoutMs = opts.timeoutMs ?? 20000;
 
   const contents = [
