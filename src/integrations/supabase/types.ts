@@ -4156,6 +4156,16 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      find_profile_by_phone: {
+        Args: { _phone: string }
+        Returns: {
+          email: string
+          full_name: string
+          objective: string
+          phone: string
+          user_id: string
+        }[]
+      }
       has_admin_view: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
