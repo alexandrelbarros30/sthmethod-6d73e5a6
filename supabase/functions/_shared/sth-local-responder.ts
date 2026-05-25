@@ -9,12 +9,15 @@ export type LocalContext = {
   phone?: string | null;
 };
 
+export type Attachment = { url: string; kind: 'image' | 'document'; name?: string };
+
 export type CustomRule = {
   id?: string;
   label?: string;
   keywords: string[];
   reply: string;
   priority?: number;
+  attachments?: Attachment[];
 };
 
 const SITE = "https://sthmethod.com.br";
@@ -155,7 +158,7 @@ export function localRespond(
   userText: string,
   ctx: LocalContext,
   customRules: CustomRule[] = [],
-): { reply: string; intent: string; ruleId?: string } {
+): { reply: string; intent: string; ruleId?: string; attachments?: Attachment[] } {
   const t = norm(userText || "");
 
   // 1) Regras customizadas (Centro de Treinamento) — prioridade menor = mais alta
@@ -164,7 +167,12 @@ export function localRespond(
     const kws = (r.keywords || []).map((k) => norm(k)).filter(Boolean);
     if (kws.length === 0) continue;
     if (kws.some((k) => t.includes(k))) {
-      return { reply: renderTemplate(r.reply, ctx), intent: r.label || "custom", ruleId: r.id };
+      return {
+        reply: renderTemplate(r.reply, ctx),
+        intent: r.label || "custom",
+        ruleId: r.id,
+        attachments: r.attachments || [],
+      };
     }
   }
 

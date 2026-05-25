@@ -118,12 +118,31 @@ Deno.serve(async (req) => {
     if (engine === 'local') {
       const { data: rules } = await supabase
         .from('ai_assistant_training')
-        .select('id, label, keywords, reply, priority')
+        .select('id, label, keywords, reply, priority, attachments')
         .eq('enabled', true)
         .order('priority', { ascending: true });
       const r = localRespond(text, localCtx, (rules as any) || []);
       reply = r.reply;
       console.log('[inbound] local intent', r.intent);
+      // Envia mídia anexada (se houver) ANTES do texto principal
+      const atts = (r as any).attachments as Array<{ url: string; kind: string; name?: string }> | undefined;
+      if (atts && atts.length) {
+        for (const a of atts) {
+          try {
+            const payload: any = { phone: norm, message: '' };
+            if (a.kind === 'image') payload.image_url = a.url;
+            else { payload.document_url = a.url; payload.document_name = a.name || 'documento.pdf'; }
+            const res = await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
+              body: JSON.stringify(payload),
+            });
+            console.log('[inbound] sent attachment', a.kind, res.status);
+          } catch (e) {
+            console.error('[inbound] attachment error', e);
+          }
+        }
+      }
     } else {
     const aiResp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

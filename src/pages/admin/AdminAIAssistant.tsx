@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Bot, Save, Send, Trash2, Sparkles, Webhook, Copy, Loader2, GraduationCap, Plus, Pencil, X } from "lucide-react";
+import { Bot, Save, Send, Trash2, Sparkles, Webhook, Copy, Loader2, GraduationCap, Plus, Pencil, X, Paperclip, FileText, ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -25,7 +25,10 @@ type TrainingRule = {
   priority: number;
   enabled: boolean;
   hits: number;
+  attachments?: Attachment[];
 };
+
+type Attachment = { url: string; kind: "image" | "document"; name?: string };
 
 const MODELS = [
   { id: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash (rápido, recomendado)" },
@@ -334,6 +337,8 @@ function TrainingCenter({ userId }: { userId?: string }) {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<TrainingRule | null>(null);
   const [form, setForm] = useState({ label: "", keywords: "", reply: "", priority: 100, enabled: true });
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [uploading, setUploading] = useState(false);
   const [testInput, setTestInput] = useState("");
   const [testOut, setTestOut] = useState<{ reply: string; intent: string } | null>(null);
   const [testing, setTesting] = useState(false);
@@ -353,6 +358,7 @@ function TrainingCenter({ userId }: { userId?: string }) {
   const resetForm = () => {
     setEditing(null);
     setForm({ label: "", keywords: "", reply: "", priority: 100, enabled: true });
+    setAttachments([]);
   };
 
   const startEdit = (r: TrainingRule) => {
@@ -364,6 +370,7 @@ function TrainingCenter({ userId }: { userId?: string }) {
       priority: r.priority,
       enabled: r.enabled,
     });
+    setAttachments(r.attachments || []);
   };
 
   const save = async () => {
@@ -374,7 +381,12 @@ function TrainingCenter({ userId }: { userId?: string }) {
       toast.error("Preencha rótulo, palavras-chave e resposta.");
       return;
     }
-    const payload = { label, reply, keywords, priority: Number(form.priority) || 100, enabled: form.enabled };
+    const payload = {
+      label, reply, keywords,
+      priority: Number(form.priority) || 100,
+      enabled: form.enabled,
+      attachments,
+    };
     const { error } = editing
       ? await supabase.from("ai_assistant_training" as any).update(payload).eq("id", editing.id)
       : await supabase.from("ai_assistant_training" as any).insert({ ...payload, created_by: userId });
@@ -385,6 +397,42 @@ function TrainingCenter({ userId }: { userId?: string }) {
     toast.success(editing ? "Regra atualizada" : "Regra criada");
     resetForm();
     qc.invalidateQueries({ queryKey: ["ai-training-rules"] });
+  };
+
+  const uploadFiles = async (files: FileList | null) => {
+    if (!files || !files.length) return;
+    setUploading(true);
+    const added: Attachment[] = [];
+    for (const file of Array.from(files)) {
+      const isImg = /image\/(jpeg|jpg|png)/i.test(file.type);
+      const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+      if (!isImg && !isPdf) {
+        toast.error(`${file.name}: apenas JPG, PNG ou PDF`);
+        continue;
+      }
+      if (file.size > 20 * 1024 * 1024) {
+        toast.error(`${file.name}: máx 20MB`);
+        continue;
+      }
+      const ext = file.name.split(".").pop()?.toLowerCase() || (isPdf ? "pdf" : "jpg");
+      const path = `training/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error } = await supabase.storage.from("ai-training-media").upload(path, file, {
+        contentType: file.type || (isPdf ? "application/pdf" : "image/jpeg"),
+        upsert: false,
+      });
+      if (error) {
+        toast.error(`${file.name}: ${error.message}`);
+        continue;
+      }
+      const { data: pub } = supabase.storage.from("ai-training-media").getPublicUrl(path);
+      added.push({ url: pub.publicUrl, kind: isImg ? "image" : "document", name: file.name });
+    }
+    setAttachments((a) => [...a, ...added]);
+    setUploading(false);
+  };
+
+  const removeAttachment = (idx: number) => {
+    setAttachments((a) => a.filter((_, i) => i !== idx));
   };
 
   const remove = async (id: string) => {
@@ -479,6 +527,55 @@ function TrainingCenter({ userId }: { userId?: string }) {
               </div>
             </div>
           </div>
+
+          <div className="border rounded-md p-3 bg-muted/20 space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1">
+                <Paperclip className="w-3.5 h-3.5" /> Anexos premium ({attachments.length})
+              </Label>
+              <label className="inline-flex">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,application/pdf,.jpg,.jpeg,.png,.pdf"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => { uploadFiles(e.target.files); e.currentTarget.value = ""; }}
+                />
+                <Button size="sm" variant="outline" disabled={uploading} asChild>
+                  <span className="cursor-pointer">
+                    {uploading ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Plus className="w-3.5 h-3.5 mr-1" />}
+                    Adicionar JPG/PNG/PDF
+                  </span>
+                </Button>
+              </label>
+            </div>
+            {attachments.length === 0 ? (
+              <p className="text-[11px] text-muted-foreground">
+                Imagens e PDFs serão enviados automaticamente junto da resposta no WhatsApp — ideal para tabelas, fichas e materiais visuais.
+              </p>
+            ) : (
+              <div className="space-y-1.5">
+                {attachments.map((a, i) => (
+                  <div key={i} className="flex items-center gap-2 p-2 rounded border bg-card text-xs">
+                    {a.kind === "image" ? (
+                      <img src={a.url} alt={a.name} className="w-10 h-10 object-cover rounded" />
+                    ) : (
+                      <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
+                        <FileText className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                    )}
+                    <a href={a.url} target="_blank" rel="noreferrer" className="flex-1 truncate hover:underline">
+                      {a.name || a.url}
+                    </a>
+                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removeAttachment(i)}>
+                      <X className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="flex gap-2 pt-2">
             <Button onClick={save} className="flex-1">
               <Save className="w-4 h-4 mr-1" />
@@ -547,6 +644,11 @@ function TrainingCenter({ userId }: { userId?: string }) {
                         <Badge variant="outline" className="text-[10px]">p{r.priority}</Badge>
                         {r.hits > 0 && (
                           <Badge variant="secondary" className="text-[10px]">{r.hits} usos</Badge>
+                        )}
+                        {(r.attachments?.length || 0) > 0 && (
+                          <Badge variant="outline" className="text-[10px] flex items-center gap-1">
+                            <Paperclip className="w-3 h-3" />{r.attachments!.length}
+                          </Badge>
                         )}
                       </div>
                       <div className="flex gap-1 flex-wrap mt-1">
