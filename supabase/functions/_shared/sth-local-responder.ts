@@ -237,6 +237,8 @@ export function localRespond(
 ): { reply: string; intent: string; ruleId?: string; attachments?: Attachment[] } {
   const t = norm(userText || "");
 
+  // [exposed below as matchCustomRule for híbrido Gemini]
+
   // 0) Sentimento negativo — acolhimento antes de qualquer venda
   if (detectNegativeSentiment(t)) {
     const empath = `${hi(ctx)} Entendo, vamos resolver isso primeiro. Me conta rapidamente o que aconteceu para eu te ajudar da melhor forma.`;
@@ -276,4 +278,28 @@ export function localRespond(
     fallback = `${hi(ctx)} Recebi sua mensagem. Posso te orientar sobre:\n\n• *Planos e valores*\n• *Cadastro e pagamento*\n• *Renovação*\n• *Envio de exames*\n• *Treino e dieta*\n\nMe diz por onde começar — ou acesse ${SITE}.`;
   }
   return { reply: fallback, intent: "fallback" };
+}
+
+// Tenta casar APENAS regras customizadas (sem fallback genérico).
+// Usado no motor Gemini para garantir respostas fixas com anexos quando há match.
+export function matchCustomRule(
+  userText: string,
+  ctx: LocalContext,
+  customRules: CustomRule[] = [],
+): { reply: string; intent: string; ruleId?: string; attachments?: Attachment[] } | null {
+  const t = norm(userText || "");
+  const sorted = [...customRules].sort((a, b) => (a.priority ?? 100) - (b.priority ?? 100));
+  for (const r of sorted) {
+    const kws = (r.keywords || []).map((k) => norm(k)).filter(Boolean);
+    if (kws.length === 0) continue;
+    if (kws.some((k) => t.includes(k))) {
+      return {
+        reply: renderTemplate(r.reply, ctx),
+        intent: r.label || "custom",
+        ruleId: r.id,
+        attachments: r.attachments || [],
+      };
+    }
+  }
+  return null;
 }
