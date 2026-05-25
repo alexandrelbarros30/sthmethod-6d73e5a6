@@ -132,6 +132,9 @@ Deno.serve(async (req) => {
     let localCtx: LocalContext = { phone, assistantName };
     let contactType: 'aluno_ativo' | 'aluno_inativo' | 'novo_cliente' = 'novo_cliente';
     let contactTypeLabel = 'Novo cliente / lead (sem cadastro)';
+    let daysSinceExpiry: number | null = null;
+    let isRecentInactive = false;
+    let renewUrl = `https://sthmethod.com.br/student/renew`;
     if (profile) {
       const { data: sub } = await supabase
         .from('subscriptions')
@@ -147,7 +150,12 @@ Deno.serve(async (req) => {
           contactTypeLabel = 'Aluno ATIVO (plano em dia)';
         } else {
           contactType = 'aluno_inativo';
-          contactTypeLabel = 'Aluno INATIVO (plano vencido — candidato a renovação)';
+          daysSinceExpiry = Math.floor((Date.now() - new Date(sub.end_date).getTime()) / 86400000);
+          isRecentInactive = daysSinceExpiry >= 0 && daysSinceExpiry <= 15;
+          contactTypeLabel = isRecentInactive
+            ? `Aluno INATIVO RECENTE (venceu há ${daysSinceExpiry} dia(s) — JANELA DE OURO para renovação)`
+            : 'Aluno INATIVO (plano vencido — candidato a renovação)';
+          renewUrl = `https://sthmethod.com.br/student/renew?uid=${profile.user_id}`;
         }
       } else {
         contactType = 'novo_cliente';
@@ -194,6 +202,36 @@ Deno.serve(async (req) => {
       });
       await supabase.from('ai_assistant_conversation').insert({ phone: norm, role: 'assistant', content: handoff, intent: 'handoff_nutri' });
       return new Response(JSON.stringify({ ok: true, handoff: true }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // ABORDAGEM AUTOMÁTICA — aluno INATIVO RECENTE (≤15 dias do vencimento)
+    // Envia pitch de renovação com link personalizado e registra a conversa.
+    if (contactType === 'aluno_inativo' && isRecentInactive) {
+      const first = (profile?.full_name || '').split(/\s+/)[0];
+      const dias = daysSinceExpiry ?? 0;
+      const tempo = dias <= 1 ? 'há pouquíssimo tempo' : `há ${dias} dias`;
+      const pitch = [
+        `${first ? `Olá, ${first}!` : 'Olá!'} 👋`,
+        ``,
+        `Notei que seu plano *${localCtx.planName || ''}* venceu ${tempo}.`,
+        `Você ainda está dentro da *janela de continuidade* — conseguimos retomar exatamente de onde parou, sem perder histórico, dieta e protocolo. 💪`,
+        ``,
+        `Renove agora pelo seu link seguro:`,
+        `${renewUrl}`,
+        ``,
+        `Se quiser, posso te enviar as condições atuais e cupons ativos.`,
+      ].join('\n');
+      await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
+        body: JSON.stringify({ phone: norm, message: pitch }),
+      });
+      await supabase.from('ai_assistant_conversation').insert({
+        phone: norm, role: 'assistant', content: pitch, intent: 'renewal_recent_inactive',
+      });
+      return new Response(JSON.stringify({ ok: true, renewal_pitch: true, days_since_expiry: dias }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
