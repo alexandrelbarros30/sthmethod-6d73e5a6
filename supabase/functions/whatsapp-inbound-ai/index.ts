@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
     const { data: cfg } = await supabase
       .from('ai_assistant_config')
-      .select('system_prompt, model, auto_reply_enabled, engine, assistant_name, local_prompt, gemini_model, gemini_fallback_model, gemini_temperature, gemini_max_tokens')
+      .select('system_prompt, model, auto_reply_enabled, engine, assistant_name, local_prompt, gemini_model, gemini_fallback_model, gemini_temperature, gemini_max_tokens, business_hours, out_of_hours_message, enforce_business_hours')
       .eq('id', 1)
       .maybeSingle();
 
@@ -82,6 +82,41 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    // BUSINESS HOURS — pausa fora do expediente e envia mensagem padrão
+    if ((cfg as any)?.enforce_business_hours && (cfg as any)?.business_hours) {
+      const bh = (cfg as any).business_hours as Record<string, any>;
+      const tz = bh.timezone || 'America/Sao_Paulo';
+      const now = new Date();
+      const fmt = new Intl.DateTimeFormat('en-US', {
+        timeZone: tz, weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false,
+      }).formatToParts(now);
+      const wd = fmt.find((p) => p.type === 'weekday')?.value.toLowerCase().slice(0, 3) || 'mon';
+      const hh = fmt.find((p) => p.type === 'hour')?.value || '00';
+      const mm = fmt.find((p) => p.type === 'minute')?.value || '00';
+      const cur = parseInt(hh, 10) * 60 + parseInt(mm, 10);
+      const day = bh[wd];
+      const toMin = (s: string) => {
+        const [h, m] = String(s || '00:00').split(':').map((x) => parseInt(x, 10) || 0);
+        return h * 60 + m;
+      };
+      const inHours = !!(day?.enabled && cur >= toMin(day.open) && cur < toMin(day.close));
+      if (!inHours) {
+        const msg = (cfg as any)?.out_of_hours_message ||
+          'Estamos fora do horário de atendimento. Retornamos no próximo expediente.';
+        const normPhone = phone.replace(/\D/g, '');
+        await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
+          body: JSON.stringify({ phone: normPhone, message: msg }),
+        });
+        await supabase.from('ai_assistant_conversation').insert({ phone: normPhone, role: 'assistant', content: msg, intent: 'off_hours' });
+        return new Response(JSON.stringify({ ok: true, off_hours: true }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     const engine = (cfg as any)?.engine || 'local';
     const assistantName = (cfg as any)?.assistant_name || 'STH One';
 

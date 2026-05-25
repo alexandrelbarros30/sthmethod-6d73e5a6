@@ -163,6 +163,8 @@ export type Database = {
           assistant_name: string
           auto_reply_enabled: boolean
           auto_reply_office_hours: boolean
+          business_hours: Json
+          enforce_business_hours: boolean
           engine: string
           gemini_fallback_model: string | null
           gemini_last_error: string | null
@@ -174,6 +176,7 @@ export type Database = {
           id: number
           local_prompt: string
           model: string
+          out_of_hours_message: string
           system_prompt: string
           updated_at: string
           updated_by: string | null
@@ -182,6 +185,8 @@ export type Database = {
           assistant_name?: string
           auto_reply_enabled?: boolean
           auto_reply_office_hours?: boolean
+          business_hours?: Json
+          enforce_business_hours?: boolean
           engine?: string
           gemini_fallback_model?: string | null
           gemini_last_error?: string | null
@@ -193,6 +198,7 @@ export type Database = {
           id?: number
           local_prompt?: string
           model?: string
+          out_of_hours_message?: string
           system_prompt?: string
           updated_at?: string
           updated_by?: string | null
@@ -201,6 +207,8 @@ export type Database = {
           assistant_name?: string
           auto_reply_enabled?: boolean
           auto_reply_office_hours?: boolean
+          business_hours?: Json
+          enforce_business_hours?: boolean
           engine?: string
           gemini_fallback_model?: string | null
           gemini_last_error?: string | null
@@ -212,6 +220,7 @@ export type Database = {
           id?: number
           local_prompt?: string
           model?: string
+          out_of_hours_message?: string
           system_prompt?: string
           updated_at?: string
           updated_by?: string | null

@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Bot, Save, Send, Trash2, Sparkles, Webhook, Copy, Loader2, GraduationCap, Plus, Pencil, X, Paperclip, FileText, ImageIcon, Brain, BookOpen, Cpu, Wand2, ChevronDown, ChevronUp } from "lucide-react";
+import { Bot, Save, Send, Trash2, Sparkles, Webhook, Copy, Loader2, GraduationCap, Plus, Pencil, X, Paperclip, FileText, ImageIcon, Brain, BookOpen, Cpu, Wand2, ChevronDown, ChevronUp, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -134,6 +134,7 @@ export default function AdminAIAssistant() {
             <TabsTrigger value="chat" className="whitespace-nowrap"><Sparkles className="w-4 h-4 mr-1" />Chat de Teste</TabsTrigger>
             <TabsTrigger value="prompt" className="whitespace-nowrap"><Bot className="w-4 h-4 mr-1" />Super Prompt</TabsTrigger>
             <TabsTrigger value="auto" className="whitespace-nowrap"><Webhook className="w-4 h-4 mr-1" />Auto-Resposta</TabsTrigger>
+            <TabsTrigger value="hours" className="whitespace-nowrap"><Clock className="w-4 h-4 mr-1" />Horário</TabsTrigger>
             <TabsTrigger value="training" className="whitespace-nowrap"><GraduationCap className="w-4 h-4 mr-1" />Centro de Treinamento</TabsTrigger>
           </TabsList>
         </div>
@@ -335,6 +336,11 @@ export default function AdminAIAssistant() {
         {/* TRAINING CENTER */}
         <TabsContent value="training">
           <TrainingCenter userId={user?.id} />
+        </TabsContent>
+
+        {/* BUSINESS HOURS */}
+        <TabsContent value="hours">
+          <BusinessHoursPanel />
         </TabsContent>
       </Tabs>
     </DashboardLayout>
@@ -982,6 +988,168 @@ function GeminiPanel() {
             </div>
           </>
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============== BUSINESS HOURS PANEL ==============
+const DAYS: { k: string; label: string }[] = [
+  { k: "mon", label: "Segunda" },
+  { k: "tue", label: "Terça" },
+  { k: "wed", label: "Quarta" },
+  { k: "thu", label: "Quinta" },
+  { k: "fri", label: "Sexta" },
+  { k: "sat", label: "Sábado" },
+  { k: "sun", label: "Domingo" },
+];
+
+type DayHours = { enabled: boolean; open: string; close: string };
+type BHours = { timezone: string } & Record<string, DayHours | string>;
+
+const DEFAULT_HOURS: BHours = {
+  timezone: "America/Sao_Paulo",
+  mon: { enabled: true, open: "08:00", close: "20:00" },
+  tue: { enabled: true, open: "08:00", close: "20:00" },
+  wed: { enabled: true, open: "08:00", close: "20:00" },
+  thu: { enabled: true, open: "08:00", close: "20:00" },
+  fri: { enabled: true, open: "08:00", close: "20:00" },
+  sat: { enabled: true, open: "09:00", close: "14:00" },
+  sun: { enabled: false, open: "00:00", close: "00:00" },
+};
+
+function BusinessHoursPanel() {
+  const qc = useQueryClient();
+  const [enforce, setEnforce] = useState(false);
+  const [hours, setHours] = useState<BHours>(DEFAULT_HOURS);
+  const [offMsg, setOffMsg] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("ai_assistant_config")
+        .select("business_hours, out_of_hours_message, enforce_business_hours")
+        .eq("id", 1)
+        .maybeSingle();
+      if (data) {
+        setEnforce(!!(data as any).enforce_business_hours);
+        setOffMsg((data as any).out_of_hours_message || "");
+        const bh = (data as any).business_hours;
+        if (bh && typeof bh === "object") setHours({ ...DEFAULT_HOURS, ...bh });
+      }
+      setLoading(false);
+    })();
+  }, []);
+
+  const setDay = (k: string, patch: Partial<DayHours>) => {
+    setHours((prev) => ({ ...prev, [k]: { ...(prev[k] as DayHours), ...patch } }));
+  };
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await supabase
+      .from("ai_assistant_config")
+      .update({
+        business_hours: hours as any,
+        out_of_hours_message: offMsg,
+        enforce_business_hours: enforce,
+        updated_at: new Date().toISOString(),
+      } as any)
+      .eq("id", 1);
+    setSaving(false);
+    if (error) {
+      toast.error("Erro: " + error.message);
+      return;
+    }
+    toast.success("Horário salvo!");
+    qc.invalidateQueries({ queryKey: ["ai-assistant-config"] });
+  };
+
+  if (loading) return <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">Carregando…</CardContent></Card>;
+
+  const tzNow = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: hours.timezone || "America/Sao_Paulo",
+    weekday: "short", hour: "2-digit", minute: "2-digit",
+  }).format(new Date());
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <Clock className="w-4 h-4" /> Horário de atendimento
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <div className="flex items-center justify-between gap-4 p-3 rounded-md border bg-muted/30">
+          <div>
+            <p className="text-sm font-medium">
+              {enforce ? "Horário ATIVO — fora do expediente responde mensagem padrão" : "Horário INATIVO — IA responde 24h"}
+            </p>
+            <p className="text-xs text-muted-foreground">Aplica-se ao WhatsApp e a todos os canais do CRM.</p>
+          </div>
+          <Switch checked={enforce} onCheckedChange={setEnforce} />
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-3">
+          <div>
+            <Label className="text-xs">Fuso horário</Label>
+            <Input
+              value={hours.timezone}
+              onChange={(e) => setHours((p) => ({ ...p, timezone: e.target.value }))}
+              className="mt-1.5 font-mono text-xs"
+              placeholder="America/Sao_Paulo"
+            />
+            <p className="text-[11px] text-muted-foreground mt-1">Agora no fuso configurado: <b>{tzNow}</b></p>
+          </div>
+        </div>
+
+        <div className="rounded-md border divide-y">
+          {DAYS.map((d) => {
+            const day = (hours[d.k] as DayHours) || { enabled: false, open: "08:00", close: "18:00" };
+            return (
+              <div key={d.k} className="flex items-center gap-3 p-3 flex-wrap">
+                <div className="w-24 text-sm font-medium">{d.label}</div>
+                <Switch checked={day.enabled} onCheckedChange={(v) => setDay(d.k, { enabled: v })} />
+                <div className="flex items-center gap-2 ml-auto">
+                  <Input
+                    type="time"
+                    value={day.open}
+                    onChange={(e) => setDay(d.k, { open: e.target.value })}
+                    disabled={!day.enabled}
+                    className="w-28"
+                  />
+                  <span className="text-xs text-muted-foreground">até</span>
+                  <Input
+                    type="time"
+                    value={day.close}
+                    onChange={(e) => setDay(d.k, { close: e.target.value })}
+                    disabled={!day.enabled}
+                    className="w-28"
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div>
+          <Label>Mensagem fora do horário</Label>
+          <Textarea
+            value={offMsg}
+            onChange={(e) => setOffMsg(e.target.value)}
+            rows={4}
+            className="mt-1.5 text-sm"
+            placeholder="Olá! Estamos fora do horário de atendimento…"
+          />
+          <p className="text-[11px] text-muted-foreground mt-1">Enviada automaticamente ao contato quando ele escrever fora do expediente.</p>
+        </div>
+
+        <Button onClick={save} disabled={saving}>
+          {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
+          Salvar horário
+        </Button>
       </CardContent>
     </Card>
   );
