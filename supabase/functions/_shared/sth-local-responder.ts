@@ -9,6 +9,7 @@ export type LocalContext = {
   phone?: string | null;
   recentHistory?: Array<{ role: 'user' | 'assistant'; content: string; intent?: string | null }>;
   lastIntent?: string | null;
+  assistantName?: string | null;
 };
 
 export type Attachment = { url: string; kind: 'image' | 'document'; name?: string };
@@ -40,6 +41,10 @@ function hi(ctx: LocalContext): string {
     return `Olá, ${first}!`;
   }
   return "Olá!";
+}
+
+function assistantName(ctx: LocalContext): string {
+  return (ctx.assistantName || 'STH One').trim() || 'STH One';
 }
 
 // Detecta sentimento negativo (frustração/impaciência) para reduzir venda e priorizar acolhimento
@@ -101,7 +106,7 @@ const RULES: Rule[] = [
       return [
         `${hi(c)} 👋`,
         ``,
-        `A *STH METHOD* funciona de forma estratégica e personalizada.`,
+        `Eu sou o *${assistantName(c)}*, assistente inteligente oficial da *STH METHOD*.`,
         ``,
         `Você recebe:`,
         `• Dieta personalizada`,
