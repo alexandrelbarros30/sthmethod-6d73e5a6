@@ -1,6 +1,6 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { localRespond, LocalContext } from '../_shared/sth-local-responder.ts';
+import { localRespond, matchCustomRule, LocalContext } from '../_shared/sth-local-responder.ts';
 import { callGeminiWithFallback, GeminiMsg } from '../_shared/gemini-client.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
@@ -164,6 +164,32 @@ Deno.serve(async (req) => {
         }
       }
     } else if (engine === 'gemini') {
+      // 1) HÍBRIDO: regras customizadas primeiro
+      const { data: rules } = await supabase
+        .from('ai_assistant_training')
+        .select('id, label, keywords, reply, priority, attachments')
+        .eq('enabled', true)
+        .order('priority', { ascending: true });
+      const ruleHit = matchCustomRule(text, localCtx, (rules as any) || []);
+      if (ruleHit) {
+        reply = ruleHit.reply;
+        replyIntent = `rule:${ruleHit.intent}`;
+        // envia anexos da regra antes do texto
+        const atts = ruleHit.attachments || [];
+        for (const a of atts) {
+          try {
+            const p: any = { phone: norm, message: '' };
+            if (a.kind === 'image') p.image_url = a.url;
+            else { p.document_url = a.url; p.document_name = a.name || 'documento.pdf'; }
+            await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
+              body: JSON.stringify(p),
+            });
+          } catch (e) { console.error('[inbound] gemini rule attachment error', e); }
+        }
+      } else {
+      // 2) Sem regra → Gemini livre com cérebro
       const history: GeminiMsg[] = (recent as any[])
         .map((m) => ({ role: m.role === 'assistant' ? 'model' as const : 'user' as const, text: m.content }));
       const brain = (cfg as any)?.local_prompt || '';
@@ -187,6 +213,7 @@ Deno.serve(async (req) => {
       // Se ambos falharem, encaminha para humano (não envia mensagem comercial)
       if (r.status === 'offline') {
         console.warn('[inbound] gemini offline — encaminhar humano');
+      }
       }
     } else {
     const aiResp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
