@@ -10,12 +10,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import AdminReminders from "@/components/admin/AdminReminders";
-import ServiceQueue from "@/components/admin/ServiceQueue";
-import EvolutionUpdatesPanel from "@/components/admin/EvolutionUpdatesPanel";
 import { toast } from "sonner";
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
-import WhatsAppBulkSender from "@/components/shared/WhatsAppBulkSender";
 
 const getEffectiveSubscriptionMap = (subscriptions: any[] | undefined) => {
   const map = new Map<string, any>();
@@ -273,6 +269,9 @@ const AdminDashboard = () => {
             <Button onClick={() => navigate("/admin/students?create=true")} className="premium-btn h-11 rounded-2xl gap-2 bg-foreground text-background hover:bg-foreground/90">
               <UserPlus className="w-4 h-4" /> Novo aluno
             </Button>
+            <Button variant="outline" onClick={() => navigate("/admin/students")} className="h-11 rounded-2xl gap-2 border-border/40">
+              <Search className="w-4 h-4" /> Pesquisar aluno
+            </Button>
           </div>
         </div>
       </section>
@@ -383,27 +382,6 @@ const AdminDashboard = () => {
       </Card>
 
       <div className="space-y-3">
-        {/* 0. Fila de Atendimento (prioridade máxima) */}
-        <ServiceQueue compact manageBasePath="/admin/students" />
-
-        {/* 0.5 Atualizações de Evolução pendentes */}
-        <CollapsiblePanel
-          title="Atualizações de Evolução"
-          icon={<Bell className="w-4 h-4 text-primary" />}
-          defaultOpen={true}
-        >
-          <EvolutionUpdatesPanel />
-        </CollapsiblePanel>
-
-        {/* 1. Lembretes Inteligentes (prioridade no topo) */}
-        <CollapsiblePanel
-          title="Lembretes Inteligentes"
-          icon={<Bell className="w-4 h-4 text-primary" />}
-          defaultOpen={true}
-        >
-          <AdminReminders />
-        </CollapsiblePanel>
-
         {/* 1. Alunos Recentes (moved up) */}
         <RecentStudents profiles={profiles} subscriptions={subscriptions} navigate={navigate} queryClient={queryClient} activeSubUserIds={activeSubUserIds} />
 
@@ -463,68 +441,6 @@ const AdminDashboard = () => {
           </CollapsiblePanel>
         )}
 
-        {/* 2.5 Aguardando Pagamento */}
-        {pendingPaymentProfiles.length > 0 && (
-          <CollapsiblePanel
-            title="Aguardando Pagamento"
-            icon={<CreditCard className="w-4 h-4 text-amber-500" />}
-            badge={pendingPaymentProfiles.length}
-            badgeClassName="bg-amber-500 text-white"
-            defaultOpen={true}
-            cardClassName="border-amber-500/20 bg-amber-500/5"
-          >
-            {pendingPaymentProfiles.map((p: any) => {
-              const days = Math.floor((Date.now() - new Date(p.created_at).getTime()) / 86400000);
-              const dayLabel = days === 0 ? "Hoje" : `${days}d atrás`;
-              return (
-                <div key={p.id} className="flex flex-col gap-1 py-2 border-b border-border/50 last:border-0">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <UserPlus className="w-4 h-4 text-amber-500 shrink-0" />
-                    <p className="text-sm font-medium truncate flex-1">{p.full_name?.trim() || p.email || "Sem nome"}</p>
-                    <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/30 shrink-0">Sem plano</Badge>
-                  </div>
-                  <div className="flex items-center justify-between pl-6">
-                    <p className="text-xs text-muted-foreground truncate">{p.email} • {dayLabel}</p>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2 text-xs gap-1 shrink-0"
-                        onClick={() => {
-                          const ph = (p.phone || "").replace(/\D/g, "");
-                          if (!ph) { toast.error("Sem telefone cadastrado"); return; }
-                          const msg = encodeURIComponent(`Olá ${p.full_name || ""}! Vi que você se cadastrou no STH Method. Posso te ajudar a ativar seu plano?`);
-                          window.open(`https://wa.me/55${ph}?text=${msg}`, "_blank");
-                        }}
-                      >
-                        <ExternalLink className="w-3 h-3" /> WhatsApp
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => navigate(`/admin/students?manage=${p.user_id}`)}>
-                        <Settings className="w-3.5 h-3.5" /> Gerenciar
-                      </Button>
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    className="mt-2 ml-auto h-7 px-2 text-[11px] gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                    onClick={async () => {
-                      const { error } = await supabase.from("profiles").update({ admin_confirmed: true }).eq("id", p.id);
-                      if (error) { toast.error("Erro ao marcar como atendido"); return; }
-                      toast.success("Aluno atendido");
-                      queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
-                    }}
-                  >
-                    <Check className="w-3.5 h-3.5" /> Atendido
-                  </Button>
-                </div>
-              );
-            })}
-          </CollapsiblePanel>
-        )}
-
-
-        {/* WhatsApp em Massa */}
-        <WhatsAppBulkSender />
       </div>
     </DashboardLayout>
   );
