@@ -45,19 +45,16 @@ Deno.serve(async (req) => {
     let renewUrl = `https://sthmethod.com.br/student/renew`;
     if (contextPhone) {
       const phone = String(contextPhone).replace(/\D/g, '');
-      // Busca robusta: telefones podem estar salvos com máscara "(21) 98509-9917".
-      // Filtramos por últimos 4 dígitos e comparamos somente dígitos no JS.
-      const last4 = phone.slice(-4);
-      const last8 = phone.slice(-8);
-      const { data: candidates } = await supabase
-        .from('profiles')
-        .select('user_id, full_name, email, objective, weight, height, phone')
-        .ilike('phone', `%${last4}%`)
-        .limit(20);
-      const profile = (candidates || []).find((p: any) => {
-        const d = String(p.phone || '').replace(/\D/g, '');
-        return d.endsWith(last8) || d.endsWith(phone) || phone.endsWith(d);
-      }) || null;
+      // Busca robusta via RPC server-side (normaliza dígitos no Postgres).
+      const { data: matches } = await supabase.rpc('find_profile_by_phone', { _phone: phone });
+      const match = (matches && matches[0]) || null;
+      const profile = match
+        ? (await supabase
+            .from('profiles')
+            .select('user_id, full_name, email, objective, weight, height, phone')
+            .eq('user_id', match.user_id)
+            .maybeSingle()).data
+        : null;
       if (profile) {
         const { data: sub } = await supabase
           .from('subscriptions')

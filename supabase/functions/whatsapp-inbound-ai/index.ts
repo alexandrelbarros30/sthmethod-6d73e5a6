@@ -122,20 +122,10 @@ Deno.serve(async (req) => {
 
     // CRM memory lookup
     const norm = phone.replace(/\D/g, '');
-    // Busca robusta: telefones podem estar salvos com máscara "(21) 98509-9917"
-    // ou com código do país. Filtramos por últimos 4 dígitos e normalizamos no JS.
-    const last4 = norm.slice(-4);
-    const last8 = norm.slice(-8);
-    const { data: candidates } = await supabase
-      .from('profiles')
-      .select('user_id, full_name, email, objective, phone')
-      .ilike('phone', `%${last4}%`)
-      .limit(20);
-    const profile = (candidates || []).find((p: any) => {
-      const d = String(p.phone || '').replace(/\D/g, '');
-      if (!d) return false;
-      return d.endsWith(last8) || d.endsWith(norm) || norm.endsWith(d);
-    }) || null;
+    // Busca robusta via RPC server-side: normaliza dígitos no Postgres
+    // (resolve máscaras tipo "(65) 81017-611" e códigos de país variados).
+    const { data: matches } = await supabase.rpc('find_profile_by_phone', { _phone: norm });
+    const profile = (matches && matches[0]) || null;
 
     let memory = '';
     let localCtx: LocalContext = { phone, assistantName };
