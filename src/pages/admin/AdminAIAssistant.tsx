@@ -32,6 +32,7 @@ export default function AdminAIAssistant() {
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState("google/gemini-2.5-flash");
   const [autoReply, setAutoReply] = useState(false);
+  const [engine, setEngine] = useState<"local" | "ai">("local");
   const [saving, setSaving] = useState(false);
 
   const [chat, setChat] = useState<Msg[]>([]);
@@ -53,6 +54,7 @@ export default function AdminAIAssistant() {
       setPrompt(config.system_prompt || "");
       setModel(config.model || "google/gemini-2.5-flash");
       setAutoReply(!!config.auto_reply_enabled);
+      setEngine(((config as any).engine as "local" | "ai") || "local");
     }
   }, [config]);
 
@@ -68,9 +70,10 @@ export default function AdminAIAssistant() {
         system_prompt: prompt,
         model,
         auto_reply_enabled: autoReply,
+        engine,
         updated_at: new Date().toISOString(),
         updated_by: user?.id,
-      })
+      } as any)
       .eq("id", 1);
     setSaving(false);
     if (error) {
@@ -118,6 +121,33 @@ export default function AdminAIAssistant() {
           <TabsTrigger value="prompt"><Bot className="w-4 h-4 mr-1" />Super Prompt</TabsTrigger>
           <TabsTrigger value="auto"><Webhook className="w-4 h-4 mr-1" />Auto-Resposta</TabsTrigger>
         </TabsList>
+
+        {/* Engine selector — always visible above tabs content */}
+        <Card className="mb-4 border-emerald-500/30 bg-emerald-500/5">
+          <CardContent className="pt-4 pb-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            <div className="flex-1">
+              <p className="text-sm font-medium">
+                Motor de respostas: {engine === "local" ? "🟢 Local (gratuito)" : "🔵 IA (consome créditos)"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {engine === "local"
+                  ? "Respostas baseadas em regras inteligentes da STH METHOD. Sem custo por mensagem."
+                  : "Usa o Lovable AI Gateway. Cada mensagem consome créditos."}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={`text-xs ${engine === "local" ? "font-semibold" : "text-muted-foreground"}`}>Local</span>
+              <Switch
+                checked={engine === "ai"}
+                onCheckedChange={(v) => setEngine(v ? "ai" : "local")}
+              />
+              <span className={`text-xs ${engine === "ai" ? "font-semibold" : "text-muted-foreground"}`}>IA</span>
+              <Button size="sm" variant="outline" onClick={save} disabled={saving} className="ml-2">
+                {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* CHAT */}
         <TabsContent value="chat">

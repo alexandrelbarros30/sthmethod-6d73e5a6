@@ -1,5 +1,6 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { localRespond, LocalContext } from '../_shared/sth-local-responder.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -21,15 +22,17 @@ Deno.serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
     const { data: cfg } = await supabase
       .from('ai_assistant_config')
-      .select('system_prompt, model')
+      .select('system_prompt, model, engine')
       .eq('id', 1)
       .maybeSingle();
 
     const systemPrompt = cfg?.system_prompt || 'Você é o assistente da STH METHOD.';
     const model = cfg?.model || 'google/gemini-2.5-flash';
+    const engine = (cfg as any)?.engine || 'local';
 
     // Optional memory: enrich with student context by phone
     let memoryBlock = '';
+    let localCtx: LocalContext = {};
     if (contextPhone) {
       const phone = String(contextPhone).replace(/\D/g, '');
       const { data: profile } = await supabase
@@ -46,7 +49,23 @@ Deno.serve(async (req) => {
           .limit(1)
           .maybeSingle();
         memoryBlock = `\n\n# MEMÓRIA DO CRM (contato atual)\nNome: ${profile.full_name || '—'}\nObjetivo: ${profile.objective || '—'}\nPlano: ${(sub as any)?.plans?.name || '—'}\nStatus: ${sub?.status || 'sem assinatura'}\nVencimento: ${sub?.end_date || '—'}`;
+        localCtx = {
+          name: profile.full_name,
+          status: sub?.status || 'lead',
+          planName: (sub as any)?.plans?.name || null,
+          endDate: sub?.end_date || null,
+          phone,
+        };
       }
+    }
+
+    // MOTOR LOCAL (gratuito, sem créditos)
+    if (engine === 'local') {
+      const last = [...messages].reverse().find((m: Msg) => m.role === 'user');
+      const { reply, intent } = localRespond(last?.content || '', localCtx);
+      return new Response(JSON.stringify({ reply, engine: 'local', intent }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const aiResp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
