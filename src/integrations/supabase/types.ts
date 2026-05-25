@@ -160,30 +160,36 @@ export type Database = {
       }
       ai_assistant_config: {
         Row: {
+          assistant_name: string
           auto_reply_enabled: boolean
           auto_reply_office_hours: boolean
           engine: string
           id: number
+          local_prompt: string
           model: string
           system_prompt: string
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          assistant_name?: string
           auto_reply_enabled?: boolean
           auto_reply_office_hours?: boolean
           engine?: string
           id?: number
+          local_prompt?: string
           model?: string
           system_prompt?: string
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          assistant_name?: string
           auto_reply_enabled?: boolean
           auto_reply_office_hours?: boolean
           engine?: string
           id?: number
+          local_prompt?: string
           model?: string
           system_prompt?: string
           updated_at?: string
