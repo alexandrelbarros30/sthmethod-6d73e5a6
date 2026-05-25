@@ -233,8 +233,15 @@ Deno.serve(async (req) => {
     // responder normalmente as perguntas seguintes (dúvidas de saúde, dieta,
     // treino, etc.) mantendo o contexto de "aluno em janela de renovação".
     if (contactType === 'aluno_inativo' && isRecentInactive) {
-      const lastA = [...recent].reverse().find((m: any) => m.role === 'assistant');
-      const pitchAlreadySent = lastA?.intent === 'renewal_recent_inactive';
+      // Dedup robusto: considera pitch já enviado se existir QUALQUER mensagem
+      // de assistant com intent 'renewal_recent_inactive' nas últimas 72h
+      // (cobre invocações concorrentes do webhook e respostas tardias).
+      const cutoff = Date.now() - 72 * 60 * 60 * 1000;
+      const pitchAlreadySent = (recent || []).some((m: any) =>
+        m.role === 'assistant' &&
+        m.intent === 'renewal_recent_inactive' &&
+        (m.created_at ? new Date(m.created_at).getTime() >= cutoff : true)
+      );
       if (!pitchAlreadySent) {
       const first = (profile?.full_name || '').split(/\s+/)[0];
       const dias = daysSinceExpiry ?? 0;
