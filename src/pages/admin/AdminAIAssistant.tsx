@@ -331,6 +331,33 @@ export default function AdminAIAssistant() {
                 </p>
               </div>
 
+              <div className="border-t pt-5 space-y-3">
+                <div className="flex items-center justify-between gap-4 p-3 rounded-md border bg-muted/30">
+                  <div>
+                    <p className="text-sm font-medium">
+                      {fallbackEnabled ? "Fallback automático ATIVO" : "Fallback automático DESLIGADO"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Quando o usuário envia algo que não bate com nenhuma regra treinada nem com o cérebro Gemini, o assistente envia uma mensagem padrão. Desligue para silenciar e deixar o atendimento humano assumir.
+                    </p>
+                  </div>
+                  <Switch checked={fallbackEnabled} onCheckedChange={setFallbackEnabled} />
+                </div>
+                <div>
+                  <Label className="text-xs">Mensagem de fallback personalizada (opcional)</Label>
+                  <Textarea
+                    value={fallbackMessage}
+                    onChange={(e) => setFallbackMessage(e.target.value)}
+                    placeholder="Ex: Recebi sua mensagem! Em instantes a equipe STH te responde. — você pode usar {nome} e {plano} como variáveis."
+                    className="mt-1.5 min-h-[90px] text-sm"
+                    disabled={!fallbackEnabled}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Se vazio, será usado o menu padrão. Se preenchido, substitui o menu antigo. Variáveis: {`{nome}`}, {`{plano}`}.
+                  </p>
+                </div>
+              </div>
+
               <Button onClick={save} disabled={saving}>
                 {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
                 Salvar
