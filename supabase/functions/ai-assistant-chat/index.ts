@@ -63,12 +63,12 @@ Deno.serve(async (req) => {
     if (engine === 'local') {
       const { data: rules } = await supabase
         .from('ai_assistant_training')
-        .select('id, label, keywords, reply, priority')
+        .select('id, label, keywords, reply, priority, attachments')
         .eq('enabled', true)
         .order('priority', { ascending: true });
       const last = [...messages].reverse().find((m: Msg) => m.role === 'user');
-      const { reply, intent, ruleId } = localRespond(last?.content || '', localCtx, (rules as any) || []);
-      return new Response(JSON.stringify({ reply, engine: 'local', intent }), {
+      const { reply, intent, attachments } = localRespond(last?.content || '', localCtx, (rules as any) || []);
+      return new Response(JSON.stringify({ reply, engine: 'local', intent, attachments }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
