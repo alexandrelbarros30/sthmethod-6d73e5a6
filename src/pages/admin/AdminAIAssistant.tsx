@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Bot, Save, Send, Trash2, Sparkles, Webhook, Copy, Loader2, GraduationCap, Plus, Pencil, X, Paperclip, FileText, ImageIcon, Brain, BookOpen } from "lucide-react";
+import { Bot, Save, Send, Trash2, Sparkles, Webhook, Copy, Loader2, GraduationCap, Plus, Pencil, X, Paperclip, FileText, ImageIcon, Brain, BookOpen, Cpu } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -45,7 +45,7 @@ export default function AdminAIAssistant() {
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState("google/gemini-2.5-flash");
   const [autoReply, setAutoReply] = useState(false);
-  const [engine, setEngine] = useState<"local" | "ai">("local");
+  const [engine, setEngine] = useState<"local" | "ai" | "gemini">("local");
   const [saving, setSaving] = useState(false);
 
   const [chat, setChat] = useState<Msg[]>([]);
@@ -67,7 +67,7 @@ export default function AdminAIAssistant() {
       setPrompt(config.system_prompt || "");
       setModel(config.model || "google/gemini-2.5-flash");
       setAutoReply(!!config.auto_reply_enabled);
-      setEngine(((config as any).engine as "local" | "ai") || "local");
+      setEngine(((config as any).engine as "local" | "ai" | "gemini") || "local");
     }
   }, [config]);
 
@@ -143,21 +143,27 @@ export default function AdminAIAssistant() {
           <CardContent className="pt-4 pb-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
             <div className="flex-1">
               <p className="text-sm font-medium">
-                Motor de respostas: {engine === "local" ? "🟢 Local (gratuito)" : "🔵 IA (consome créditos)"}
+                Motor de respostas: {engine === "local" ? "🟢 Local (gratuito)" : engine === "gemini" ? "🟣 Gemini (sua chave Google AI Studio)" : "🔵 IA Lovable (consome créditos)"}
               </p>
               <p className="text-xs text-muted-foreground">
                 {engine === "local"
                   ? "Respostas baseadas em regras inteligentes da STH METHOD. Sem custo por mensagem."
+                  : engine === "gemini"
+                  ? "Usa Google AI Studio com sua GEMINI_API_KEY (tier gratuito do Google). Fallback automático se a chave principal falhar."
                   : "Usa o Lovable AI Gateway. Cada mensagem consome créditos."}
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`text-xs ${engine === "local" ? "font-semibold" : "text-muted-foreground"}`}>Local</span>
-              <Switch
-                checked={engine === "ai"}
-                onCheckedChange={(v) => setEngine(v ? "ai" : "local")}
-              />
-              <span className={`text-xs ${engine === "ai" ? "font-semibold" : "text-muted-foreground"}`}>IA</span>
+              <Select value={engine} onValueChange={(v) => setEngine(v as any)}>
+                <SelectTrigger className="w-[170px] h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="local">🟢 Local (gratuito)</SelectItem>
+                  <SelectItem value="gemini">🟣 Gemini (sua chave)</SelectItem>
+                  <SelectItem value="ai">🔵 IA Lovable</SelectItem>
+                </SelectContent>
+              </Select>
               <Button size="sm" variant="outline" onClick={save} disabled={saving} className="ml-2">
                 {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
               </Button>
