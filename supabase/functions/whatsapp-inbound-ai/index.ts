@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
     const { data: cfg } = await supabase
       .from('ai_assistant_config')
-      .select('system_prompt, model, auto_reply_enabled, engine')
+      .select('system_prompt, model, auto_reply_enabled, engine, assistant_name')
       .eq('id', 1)
       .maybeSingle();
 
@@ -82,6 +82,7 @@ Deno.serve(async (req) => {
       });
     }
     const engine = (cfg as any)?.engine || 'local';
+    const assistantName = (cfg as any)?.assistant_name || 'STH One';
 
     // CRM memory lookup
     const norm = phone.replace(/\D/g, '');
@@ -92,7 +93,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     let memory = '';
-    let localCtx: LocalContext = { phone };
+    let localCtx: LocalContext = { phone, assistantName };
     if (profile) {
       const { data: sub } = await supabase
         .from('subscriptions')
@@ -108,6 +109,7 @@ Deno.serve(async (req) => {
         planName: (sub as any)?.plans?.name || null,
         endDate: sub?.end_date || null,
         phone,
+        assistantName,
       };
     } else {
       memory = `\n\n# CONTATO\nLead novo (sem cadastro). Telefone: ${phone}`;
