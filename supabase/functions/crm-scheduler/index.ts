@@ -10,6 +10,21 @@ Deno.serve(async (req) => {
 
   try {
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
+
+    // Respect the global CRM automation toggle (shared with billing automation).
+    // When paused, no scheduled/recurring CRM campaign should be auto-dispatched.
+    const { data: automation } = await supabase
+      .from('billing_automation')
+      .select('enabled')
+      .eq('id', 1)
+      .maybeSingle();
+    if (!automation?.enabled) {
+      return new Response(
+        JSON.stringify({ ok: true, paused: true, processed: 0, results: [] }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
     const nowIso = new Date().toISOString();
     const { data: due } = await supabase
       .from('crm_campaigns')
