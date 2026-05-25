@@ -116,9 +116,17 @@ Deno.serve(async (req) => {
     // MOTOR LOCAL — gratuito, sem créditos.
     let reply = '';
     if (engine === 'local') {
-      const r = localRespond(text, localCtx);
+      const { data: rules } = await supabase
+        .from('ai_assistant_training')
+        .select('id, label, keywords, reply, priority')
+        .eq('enabled', true)
+        .order('priority', { ascending: true });
+      const r = localRespond(text, localCtx, (rules as any) || []);
       reply = r.reply;
       console.log('[inbound] local intent', r.intent);
+      if (r.ruleId) {
+        await supabase.rpc('increment_training_hit' as any, { _id: r.ruleId }).then(() => {}, () => {});
+      }
     } else {
     const aiResp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
