@@ -9,13 +9,23 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Bot, Save, Send, Trash2, Sparkles, Webhook, Copy, Loader2 } from "lucide-react";
+import { Bot, Save, Send, Trash2, Sparkles, Webhook, Copy, Loader2, GraduationCap, Plus, Pencil, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 type Msg = { role: "user" | "assistant"; content: string };
+
+type TrainingRule = {
+  id: string;
+  label: string;
+  keywords: string[];
+  reply: string;
+  priority: number;
+  enabled: boolean;
+  hits: number;
+};
 
 const MODELS = [
   { id: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash (rápido, recomendado)" },
@@ -120,6 +130,7 @@ export default function AdminAIAssistant() {
           <TabsTrigger value="chat"><Sparkles className="w-4 h-4 mr-1" />Chat de Teste</TabsTrigger>
           <TabsTrigger value="prompt"><Bot className="w-4 h-4 mr-1" />Super Prompt</TabsTrigger>
           <TabsTrigger value="auto"><Webhook className="w-4 h-4 mr-1" />Auto-Resposta</TabsTrigger>
+          <TabsTrigger value="training"><GraduationCap className="w-4 h-4 mr-1" />Centro de Treinamento</TabsTrigger>
         </TabsList>
 
         {/* Engine selector — always visible above tabs content */}
@@ -309,7 +320,265 @@ export default function AdminAIAssistant() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* TRAINING CENTER */}
+        <TabsContent value="training">
+          <TrainingCenter userId={user?.id} />
+        </TabsContent>
       </Tabs>
     </DashboardLayout>
+  );
+}
+
+function TrainingCenter({ userId }: { userId?: string }) {
+  const qc = useQueryClient();
+  const [editing, setEditing] = useState<TrainingRule | null>(null);
+  const [form, setForm] = useState({ label: "", keywords: "", reply: "", priority: 100, enabled: true });
+  const [testInput, setTestInput] = useState("");
+  const [testOut, setTestOut] = useState<{ reply: string; intent: string } | null>(null);
+  const [testing, setTesting] = useState(false);
+
+  const { data: rules = [], isLoading } = useQuery({
+    queryKey: ["ai-training-rules"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ai_assistant_training" as any)
+        .select("*")
+        .order("priority", { ascending: true });
+      if (error) throw error;
+      return (data || []) as unknown as TrainingRule[];
+    },
+  });
+
+  const resetForm = () => {
+    setEditing(null);
+    setForm({ label: "", keywords: "", reply: "", priority: 100, enabled: true });
+  };
+
+  const startEdit = (r: TrainingRule) => {
+    setEditing(r);
+    setForm({
+      label: r.label,
+      keywords: r.keywords.join(", "),
+      reply: r.reply,
+      priority: r.priority,
+      enabled: r.enabled,
+    });
+  };
+
+  const save = async () => {
+    const label = form.label.trim();
+    const reply = form.reply.trim();
+    const keywords = form.keywords.split(",").map((s) => s.trim()).filter(Boolean);
+    if (!label || !reply || keywords.length === 0) {
+      toast.error("Preencha rótulo, palavras-chave e resposta.");
+      return;
+    }
+    const payload = { label, reply, keywords, priority: Number(form.priority) || 100, enabled: form.enabled };
+    const { error } = editing
+      ? await supabase.from("ai_assistant_training" as any).update(payload).eq("id", editing.id)
+      : await supabase.from("ai_assistant_training" as any).insert({ ...payload, created_by: userId });
+    if (error) {
+      toast.error("Erro: " + error.message);
+      return;
+    }
+    toast.success(editing ? "Regra atualizada" : "Regra criada");
+    resetForm();
+    qc.invalidateQueries({ queryKey: ["ai-training-rules"] });
+  };
+
+  const remove = async (id: string) => {
+    if (!confirm("Excluir esta regra?")) return;
+    const { error } = await supabase.from("ai_assistant_training" as any).delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Removida");
+    qc.invalidateQueries({ queryKey: ["ai-training-rules"] });
+  };
+
+  const toggle = async (r: TrainingRule) => {
+    const { error } = await supabase.from("ai_assistant_training" as any).update({ enabled: !r.enabled }).eq("id", r.id);
+    if (error) return toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["ai-training-rules"] });
+  };
+
+  const runTest = async () => {
+    if (!testInput.trim()) return;
+    setTesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-assistant-chat", {
+        body: { messages: [{ role: "user", content: testInput }] },
+      });
+      if (error) throw error;
+      setTestOut({ reply: (data as any)?.reply || "", intent: (data as any)?.intent || "—" });
+    } catch (e: any) {
+      toast.error(e?.message || "Erro");
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  return (
+    <div className="grid lg:grid-cols-5 gap-4">
+      <Card className="lg:col-span-2">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            {editing ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            {editing ? "Editar regra" : "Nova regra"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div>
+            <Label>Rótulo (intenção)</Label>
+            <Input
+              value={form.label}
+              onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
+              placeholder="ex: horario_atendimento"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label>Palavras-chave (separadas por vírgula)</Label>
+            <Input
+              value={form.keywords}
+              onChange={(e) => setForm((f) => ({ ...f, keywords: e.target.value }))}
+              placeholder="horario, funcionamento, atende, aberto"
+              className="mt-1"
+            />
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Se a mensagem do aluno contiver qualquer uma destas palavras, esta resposta será usada.
+            </p>
+          </div>
+          <div>
+            <Label>Resposta</Label>
+            <Textarea
+              value={form.reply}
+              onChange={(e) => setForm((f) => ({ ...f, reply: e.target.value }))}
+              rows={6}
+              placeholder={"Olá {nome}! Atendemos de seg a sex, 9h às 18h.\nPlano atual: {plano} (vence em {vencimento})."}
+              className="mt-1 text-sm"
+            />
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Variáveis disponíveis: <code>{"{nome}"}</code> <code>{"{plano}"}</code> <code>{"{status}"}</code> <code>{"{vencimento}"}</code> <code>{"{site}"}</code>
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Prioridade</Label>
+              <Input
+                type="number"
+                value={form.priority}
+                onChange={(e) => setForm((f) => ({ ...f, priority: Number(e.target.value) }))}
+                className="mt-1"
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">Menor = avaliada primeiro.</p>
+            </div>
+            <div className="flex items-end gap-2">
+              <div className="flex items-center gap-2">
+                <Switch checked={form.enabled} onCheckedChange={(v) => setForm((f) => ({ ...f, enabled: v }))} />
+                <span className="text-sm">Ativa</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2 pt-2">
+            <Button onClick={save} className="flex-1">
+              <Save className="w-4 h-4 mr-1" />
+              {editing ? "Atualizar" : "Adicionar"}
+            </Button>
+            {editing && (
+              <Button variant="outline" onClick={resetForm}>
+                <X className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+
+          <div className="border-t pt-3 mt-3">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Testar motor local</Label>
+            <div className="flex gap-2 mt-2">
+              <Input
+                value={testInput}
+                onChange={(e) => setTestInput(e.target.value)}
+                placeholder="Digite uma mensagem do aluno..."
+                onKeyDown={(e) => e.key === "Enter" && runTest()}
+              />
+              <Button onClick={runTest} disabled={testing} size="icon">
+                {testing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              </Button>
+            </div>
+            {testOut && (
+              <div className="mt-2 p-3 rounded-md border bg-muted/30 text-sm whitespace-pre-wrap">
+                <Badge variant="outline" className="mb-2">intent: {testOut.intent}</Badge>
+                <p>{testOut.reply}</p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="lg:col-span-3">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <GraduationCap className="w-4 h-4" /> Regras treinadas
+            <Badge variant="secondary" className="ml-1">{rules.length}</Badge>
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            O motor local consulta primeiro estas regras. Quanto mais regras você criar, mais rápido e preciso o chat robô responde — sem consumir créditos de IA.
+          </p>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin inline mr-1" /> Carregando...
+            </div>
+          ) : rules.length === 0 ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">
+              Nenhuma regra ainda. Crie a primeira ao lado.
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-[560px] overflow-y-auto pr-1">
+              {rules.map((r) => (
+                <div
+                  key={r.id}
+                  className={`p-3 rounded-md border ${r.enabled ? "bg-card" : "bg-muted/20 opacity-60"}`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-sm">{r.label}</span>
+                        <Badge variant="outline" className="text-[10px]">p{r.priority}</Badge>
+                        {r.hits > 0 && (
+                          <Badge variant="secondary" className="text-[10px]">{r.hits} usos</Badge>
+                        )}
+                      </div>
+                      <div className="flex gap-1 flex-wrap mt-1">
+                        {r.keywords.slice(0, 8).map((k, i) => (
+                          <Badge key={i} variant="outline" className="text-[10px] font-normal">{k}</Badge>
+                        ))}
+                        {r.keywords.length > 8 && (
+                          <Badge variant="outline" className="text-[10px]">+{r.keywords.length - 8}</Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2 whitespace-pre-wrap">
+                        {r.reply}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <Switch checked={r.enabled} onCheckedChange={() => toggle(r)} />
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => startEdit(r)}>
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => remove(r.id)}>
+                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
