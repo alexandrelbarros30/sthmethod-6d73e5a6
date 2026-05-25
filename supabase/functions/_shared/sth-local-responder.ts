@@ -10,6 +10,7 @@ export type LocalContext = {
   recentHistory?: Array<{ role: 'user' | 'assistant'; content: string; intent?: string | null }>;
   lastIntent?: string | null;
   assistantName?: string | null;
+  contactType?: 'aluno_ativo' | 'aluno_inativo' | 'novo_cliente';
 };
 
 export type Attachment = { url: string; kind: 'image' | 'document'; name?: string };
