@@ -122,11 +122,20 @@ Deno.serve(async (req) => {
 
     // CRM memory lookup
     const norm = phone.replace(/\D/g, '');
-    const { data: profile } = await supabase
+    // Busca robusta: telefones podem estar salvos com máscara "(21) 98509-9917"
+    // ou com código do país. Filtramos por últimos 4 dígitos e normalizamos no JS.
+    const last4 = norm.slice(-4);
+    const last8 = norm.slice(-8);
+    const { data: candidates } = await supabase
       .from('profiles')
-      .select('user_id, full_name, email, objective')
-      .ilike('phone', `%${norm.slice(-8)}%`)
-      .maybeSingle();
+      .select('user_id, full_name, email, objective, phone')
+      .ilike('phone', `%${last4}%`)
+      .limit(20);
+    const profile = (candidates || []).find((p: any) => {
+      const d = String(p.phone || '').replace(/\D/g, '');
+      if (!d) return false;
+      return d.endsWith(last8) || d.endsWith(norm) || norm.endsWith(d);
+    }) || null;
 
     let memory = '';
     let localCtx: LocalContext = { phone, assistantName };
