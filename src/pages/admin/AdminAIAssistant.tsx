@@ -337,6 +337,8 @@ function TrainingCenter({ userId }: { userId?: string }) {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<TrainingRule | null>(null);
   const [form, setForm] = useState({ label: "", keywords: "", reply: "", priority: 100, enabled: true });
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [uploading, setUploading] = useState(false);
   const [testInput, setTestInput] = useState("");
   const [testOut, setTestOut] = useState<{ reply: string; intent: string } | null>(null);
   const [testing, setTesting] = useState(false);
@@ -356,6 +358,7 @@ function TrainingCenter({ userId }: { userId?: string }) {
   const resetForm = () => {
     setEditing(null);
     setForm({ label: "", keywords: "", reply: "", priority: 100, enabled: true });
+    setAttachments([]);
   };
 
   const startEdit = (r: TrainingRule) => {
@@ -367,6 +370,7 @@ function TrainingCenter({ userId }: { userId?: string }) {
       priority: r.priority,
       enabled: r.enabled,
     });
+    setAttachments(r.attachments || []);
   };
 
   const save = async () => {
@@ -377,7 +381,12 @@ function TrainingCenter({ userId }: { userId?: string }) {
       toast.error("Preencha rótulo, palavras-chave e resposta.");
       return;
     }
-    const payload = { label, reply, keywords, priority: Number(form.priority) || 100, enabled: form.enabled };
+    const payload = {
+      label, reply, keywords,
+      priority: Number(form.priority) || 100,
+      enabled: form.enabled,
+      attachments,
+    };
     const { error } = editing
       ? await supabase.from("ai_assistant_training" as any).update(payload).eq("id", editing.id)
       : await supabase.from("ai_assistant_training" as any).insert({ ...payload, created_by: userId });
@@ -388,6 +397,42 @@ function TrainingCenter({ userId }: { userId?: string }) {
     toast.success(editing ? "Regra atualizada" : "Regra criada");
     resetForm();
     qc.invalidateQueries({ queryKey: ["ai-training-rules"] });
+  };
+
+  const uploadFiles = async (files: FileList | null) => {
+    if (!files || !files.length) return;
+    setUploading(true);
+    const added: Attachment[] = [];
+    for (const file of Array.from(files)) {
+      const isImg = /image\/(jpeg|jpg|png)/i.test(file.type);
+      const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+      if (!isImg && !isPdf) {
+        toast.error(`${file.name}: apenas JPG, PNG ou PDF`);
+        continue;
+      }
+      if (file.size > 20 * 1024 * 1024) {
+        toast.error(`${file.name}: máx 20MB`);
+        continue;
+      }
+      const ext = file.name.split(".").pop()?.toLowerCase() || (isPdf ? "pdf" : "jpg");
+      const path = `training/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error } = await supabase.storage.from("ai-training-media").upload(path, file, {
+        contentType: file.type || (isPdf ? "application/pdf" : "image/jpeg"),
+        upsert: false,
+      });
+      if (error) {
+        toast.error(`${file.name}: ${error.message}`);
+        continue;
+      }
+      const { data: pub } = supabase.storage.from("ai-training-media").getPublicUrl(path);
+      added.push({ url: pub.publicUrl, kind: isImg ? "image" : "document", name: file.name });
+    }
+    setAttachments((a) => [...a, ...added]);
+    setUploading(false);
+  };
+
+  const removeAttachment = (idx: number) => {
+    setAttachments((a) => a.filter((_, i) => i !== idx));
   };
 
   const remove = async (id: string) => {
