@@ -45,11 +45,19 @@ Deno.serve(async (req) => {
     let renewUrl = `https://sthmethod.com.br/student/renew`;
     if (contextPhone) {
       const phone = String(contextPhone).replace(/\D/g, '');
-      const { data: profile } = await supabase
+      // Busca robusta: telefones podem estar salvos com máscara "(21) 98509-9917".
+      // Filtramos por últimos 4 dígitos e comparamos somente dígitos no JS.
+      const last4 = phone.slice(-4);
+      const last8 = phone.slice(-8);
+      const { data: candidates } = await supabase
         .from('profiles')
-        .select('user_id, full_name, email, objective, weight, height')
-        .ilike('phone', `%${phone.slice(-8)}%`)
-        .maybeSingle();
+        .select('user_id, full_name, email, objective, weight, height, phone')
+        .ilike('phone', `%${last4}%`)
+        .limit(20);
+      const profile = (candidates || []).find((p: any) => {
+        const d = String(p.phone || '').replace(/\D/g, '');
+        return d.endsWith(last8) || d.endsWith(phone) || phone.endsWith(d);
+      }) || null;
       if (profile) {
         const { data: sub } = await supabase
           .from('subscriptions')
