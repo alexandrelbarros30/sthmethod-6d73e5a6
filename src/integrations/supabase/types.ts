@@ -191,6 +191,33 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_assistant_conversation: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          intent: string | null
+          phone: string
+          role: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          intent?: string | null
+          phone: string
+          role: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          intent?: string | null
+          phone?: string
+          role?: string
+        }
+        Relationships: []
+      }
       ai_assistant_training: {
         Row: {
           attachments: Json
