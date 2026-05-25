@@ -1557,6 +1557,7 @@ export type Database = {
       }
       evolution_reminders: {
         Row: {
+          auto_sent_at: string | null
           created_at: string
           cycle_number: number
           due_date: string
@@ -1567,6 +1568,7 @@ export type Database = {
           subscription_id: string
         }
         Insert: {
+          auto_sent_at?: string | null
           created_at?: string
           cycle_number?: number
           due_date: string
@@ -1577,6 +1579,7 @@ export type Database = {
           subscription_id: string
         }
         Update: {
+          auto_sent_at?: string | null
           created_at?: string
           cycle_number?: number
           due_date?: string
