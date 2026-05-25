@@ -105,6 +105,21 @@ Deno.serve(async (req) => {
         const msg = (cfg as any)?.out_of_hours_message ||
           'Estamos fora do horário de atendimento. Retornamos no próximo expediente.';
         const normPhone = phone.replace(/\D/g, '');
+        // dedup off_hours — não repete se a última resposta já foi off_hours
+        const { data: lastOff } = await supabase
+          .from('ai_assistant_conversation')
+          .select('intent')
+          .eq('phone', normPhone)
+          .eq('role', 'assistant')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if ((lastOff as any)?.intent === 'off_hours') {
+          await supabase.from('ai_assistant_conversation').insert({ phone: normPhone, role: 'user', content: text });
+          return new Response(JSON.stringify({ ok: true, deduped: 'off_hours' }), {
+            status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
         await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
