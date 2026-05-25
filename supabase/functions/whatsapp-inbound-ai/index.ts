@@ -113,8 +113,24 @@ Deno.serve(async (req) => {
       memory = `\n\n# CONTATO\nLead novo (sem cadastro). Telefone: ${phone}`;
     }
 
+    // Carrega histórico recente da conversa (memória conversacional)
+    const { data: history } = await supabase
+      .from('ai_assistant_conversation')
+      .select('role, content, intent')
+      .eq('phone', norm)
+      .order('created_at', { ascending: false })
+      .limit(6);
+    const recent = (history || []).reverse();
+    const lastIntent = [...recent].reverse().find((m: any) => m.role === 'assistant')?.intent || null;
+    localCtx.recentHistory = recent as any;
+    localCtx.lastIntent = lastIntent;
+
+    // Loga mensagem do aluno
+    await supabase.from('ai_assistant_conversation').insert({ phone: norm, role: 'user', content: text });
+
     // MOTOR LOCAL — gratuito, sem créditos.
     let reply = '';
+    let replyIntent: string | null = null;
     if (engine === 'local') {
       const { data: rules } = await supabase
         .from('ai_assistant_training')
@@ -123,6 +139,7 @@ Deno.serve(async (req) => {
         .order('priority', { ascending: true });
       const r = localRespond(text, localCtx, (rules as any) || []);
       reply = r.reply;
+      replyIntent = r.intent;
       console.log('[inbound] local intent', r.intent);
       // Envia mídia anexada (se houver) ANTES do texto principal
       const atts = (r as any).attachments as Array<{ url: string; kind: string; name?: string }> | undefined;
@@ -173,6 +190,9 @@ Deno.serve(async (req) => {
       });
     }
     console.log('[inbound] reply len', reply.length, 'to', phone);
+
+    // Loga resposta do assistente
+    await supabase.from('ai_assistant_conversation').insert({ phone: norm, role: 'assistant', content: reply, intent: replyIntent });
 
     // Send via existing send-whatsapp (uses Z-API + wa.me fallback)
     const sendResp = await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
