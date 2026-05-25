@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { SystemTemplateKey, getSystemTemplate, renderTemplate, buildWhatsAppUrl } from "@/lib/system-templates";
 import { Send, CheckCircle2, Clock, AlertTriangle, RefreshCcw, Pencil, Paperclip, X, FileText, Image as ImageIcon, Loader2, History, TrendingUp, DollarSign, Bell, Eye, EyeOff, StopCircle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import CRMAutomationControl from "@/components/admin/CRMAutomationControl";
 
 type RoleArea = "admin" | "consultor" | "financeiro";
 interface Props { area: RoleArea }
@@ -585,38 +586,20 @@ const AdminBilling = ({ area }: Props) => {
 
         {/* Automation control banner */}
         {area === "admin" && (
-          <Card className={automation?.enabled ? "border-emerald-500/40 bg-emerald-500/5" : "border-amber-500/40 bg-amber-500/5"}>
-            <CardContent className="p-4 flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-3">
-                <div className={`w-2.5 h-2.5 rounded-full ${automation?.enabled ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`} />
-                <div>
-                  <p className="text-sm font-semibold">
-                    {automation?.enabled ? "CRM Automático ATIVO" : "CRM Automático PAUSADO"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {automation?.enabled
-                      ? "Cobranças vencidas são disparadas a cada 30 min até ordem contrária."
-                      : "Nenhuma cobrança será enviada automaticamente. Ative para iniciar o disparo contínuo."}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button variant="outline" size="sm" onClick={openCyclePreview}>
-                  <Send className="w-4 h-4 mr-1" /> Disparar ciclo agora
+          <div className="space-y-3">
+            <CRMAutomationControl />
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" size="sm" onClick={openCyclePreview}>
+                <Send className="w-4 h-4 mr-1" /> Disparar ciclo de cobrança agora
+              </Button>
+              {automation?.enabled && (
+                <Button variant="outline" size="sm" onClick={interruptCycle}
+                  className="border-rose-500/40 text-rose-400 hover:bg-rose-500/10">
+                  <StopCircle className="w-4 h-4 mr-1" /> Interromper ciclo
                 </Button>
-                {automation?.enabled && (
-                  <Button variant="outline" size="sm" onClick={interruptCycle}
-                    className="border-rose-500/40 text-rose-400 hover:bg-rose-500/10">
-                    <StopCircle className="w-4 h-4 mr-1" /> Interromper
-                  </Button>
-                )}
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Automação</span>
-                  <Switch checked={!!automation?.enabled} onCheckedChange={toggleAutomation} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              )}
+            </div>
+          </div>
         )}
 
         <Dialog open={cyclePreview.open} onOpenChange={(v) => setCyclePreview((p) => ({ ...p, open: v }))}>
