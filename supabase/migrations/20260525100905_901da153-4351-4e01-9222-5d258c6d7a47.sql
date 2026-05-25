@@ -1,0 +1,1 @@
+UPDATE public.ai_assistant_config SET gemini_model = 'gemini-flash-latest', gemini_fallback_model = 'gemini-flash-lite-latest' WHERE id = 1;
