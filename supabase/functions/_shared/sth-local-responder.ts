@@ -11,6 +11,8 @@ export type LocalContext = {
   lastIntent?: string | null;
   assistantName?: string | null;
   contactType?: 'aluno_ativo' | 'aluno_inativo' | 'novo_cliente';
+  fallbackEnabled?: boolean;
+  fallbackMessage?: string | null;
 };
 
 export type Attachment = { url: string; kind: 'image' | 'document'; name?: string };
