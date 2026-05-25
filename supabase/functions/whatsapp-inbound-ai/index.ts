@@ -16,29 +16,55 @@ const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')!;
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
-  try {
-    const payload = await req.json().catch(() => ({} as any));
-
-    // Z-API formats vary; tolerate the common shapes.
-    const fromMe = payload.fromMe === true || payload.isFromMe === true;
-    if (fromMe) return new Response(JSON.stringify({ ok: true, skipped: 'fromMe' }), {
+  // Health check — abrir URL no navegador retorna ok (útil para validar webhook Z-API)
+  if (req.method === 'GET') {
+    return new Response(JSON.stringify({ ok: true, service: 'whatsapp-inbound-ai', ts: Date.now() }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
+  }
+
+  try {
+    const raw = await req.text();
+    let payload: any = {};
+    try { payload = JSON.parse(raw); } catch { payload = {}; }
+    console.log('[inbound] payload', raw.slice(0, 2000));
+
+    // Z-API formats vary; tolerate the common shapes.
+    const fromMe = payload.fromMe === true || payload.isFromMe === true || payload?.message?.fromMe === true;
+    if (fromMe) {
+      console.log('[inbound] skip fromMe');
+      return new Response(JSON.stringify({ ok: true, skipped: 'fromMe' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Ignora eventos que não são mensagens (status, presence, etc.)
+    const evtType = (payload.type || payload.event || '').toString().toLowerCase();
+    if (evtType && !evtType.includes('message') && !evtType.includes('received') && evtType !== 'receivedcallback') {
+      console.log('[inbound] skip event type', evtType);
+      return new Response(JSON.stringify({ ok: true, skipped: 'event ' + evtType }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const phone: string =
-      payload.phone || payload.from || payload?.sender?.phone || payload?.participantPhone || '';
+      payload.phone || payload.from || payload?.sender?.phone || payload?.participantPhone ||
+      payload?.message?.phone || '';
     const text: string =
-      payload?.text?.message ||
+      (typeof payload?.text === 'string' ? payload.text : payload?.text?.message) ||
       payload?.message?.text ||
-      payload?.text ||
+      (typeof payload?.message === 'string' ? payload.message : '') ||
       payload?.body ||
       payload?.messageText ||
+      payload?.image?.caption ||
+      payload?.audio?.caption ||
       '';
 
     if (!phone || !text) {
-      return new Response(JSON.stringify({ ok: true, skipped: 'no phone/text' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      console.log('[inbound] missing phone/text', { phone, hasText: !!text });
+      return new Response(JSON.stringify({ ok: true, skipped: 'no phone/text', phone, hasText: !!text }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
     }
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
@@ -49,6 +75,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!cfg?.auto_reply_enabled) {
+      console.log('[inbound] auto_reply disabled');
       return new Response(JSON.stringify({ ok: true, paused: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -97,12 +124,16 @@ Deno.serve(async (req) => {
     }
     const data = await aiResp.json();
     const reply: string = data.choices?.[0]?.message?.content || '';
-    if (!reply) return new Response(JSON.stringify({ ok: true, empty: true }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    if (!reply) {
+      console.log('[inbound] empty AI reply');
+      return new Response(JSON.stringify({ ok: true, empty: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    console.log('[inbound] reply len', reply.length, 'to', phone);
 
     // Send via existing send-whatsapp (uses Z-API + wa.me fallback)
-    await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
+    const sendResp = await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -111,6 +142,8 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({ phone: norm, message: reply }),
     });
+    const sendBody = await sendResp.text();
+    console.log('[inbound] send-whatsapp', sendResp.status, sendBody.slice(0, 500));
 
     return new Response(JSON.stringify({ ok: true, replied: true }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
