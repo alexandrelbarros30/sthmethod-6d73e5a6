@@ -1,6 +1,6 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { localRespond, LocalContext } from '../_shared/sth-local-responder.ts';
+import { localRespond, matchCustomRule, LocalContext } from '../_shared/sth-local-responder.ts';
 import { callGeminiWithFallback, GeminiMsg } from '../_shared/gemini-client.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
@@ -84,11 +84,30 @@ Deno.serve(async (req) => {
 
     // MOTOR GEMINI (chave própria do Google AI Studio com fallback)
     if (engine === 'gemini') {
+      const last = [...messages].reverse().find((m: Msg) => m.role === 'user');
+
+      // 1) HÍBRIDO: regras customizadas primeiro (respostas fixas + anexos)
+      const { data: rules } = await supabase
+        .from('ai_assistant_training')
+        .select('id, label, keywords, reply, priority, attachments')
+        .eq('enabled', true)
+        .order('priority', { ascending: true });
+      if (!localCtx.assistantName) localCtx.assistantName = assistantName;
+      const ruleHit = matchCustomRule(last?.content || '', localCtx, (rules as any) || []);
+      if (ruleHit) {
+        return new Response(JSON.stringify({
+          reply: ruleHit.reply,
+          engine: 'gemini',
+          matchedRule: ruleHit.intent,
+          attachments: ruleHit.attachments || [],
+        }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      // 2) Sem regra → Gemini livre com cérebro
       const history: GeminiMsg[] = (messages as Msg[])
         .filter((m) => m.role === 'user' || m.role === 'assistant')
         .slice(-10, -1)
         .map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', text: m.content }));
-      const last = [...messages].reverse().find((m: Msg) => m.role === 'user');
       const brain = (cfg as any)?.local_prompt || '';
       const sysFull = `${systemPrompt}\n\n${brain}${memoryBlock}`.trim();
       const result = await callGeminiWithFallback({
