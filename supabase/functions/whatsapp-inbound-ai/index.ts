@@ -172,8 +172,8 @@ Deno.serve(async (req) => {
         systemPrompt: sysFull,
         history,
         userText: text,
-        model: (cfg as any)?.gemini_model || 'gemini-2.0-flash',
-        fallbackModel: (cfg as any)?.gemini_fallback_model || 'gemini-2.0-flash-lite',
+        model: (cfg as any)?.gemini_model || 'gemini-flash-latest',
+        fallbackModel: (cfg as any)?.gemini_fallback_model || 'gemini-flash-lite-latest',
         temperature: Number((cfg as any)?.gemini_temperature ?? 0.4),
         maxTokens: Number((cfg as any)?.gemini_max_tokens ?? 600),
       });

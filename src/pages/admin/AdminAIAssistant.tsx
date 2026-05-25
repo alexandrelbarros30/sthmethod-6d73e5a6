@@ -751,8 +751,8 @@ function GeminiPanel() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [cfg, setCfg] = useState<any>(null);
-  const [model, setModel] = useState("gemini-2.0-flash");
-  const [fbModel, setFbModel] = useState("gemini-2.0-flash-lite");
+  const [model, setModel] = useState("gemini-flash-latest");
+  const [fbModel, setFbModel] = useState("gemini-flash-lite-latest");
   const [temp, setTemp] = useState("0.4");
   const [maxTok, setMaxTok] = useState("600");
 
@@ -765,8 +765,8 @@ function GeminiPanel() {
     const c = data as any;
     setCfg(c);
     if (c) {
-      setModel(c.gemini_model || "gemini-2.0-flash");
-      setFbModel(c.gemini_fallback_model || "gemini-2.0-flash-lite");
+      setModel(c.gemini_model || "gemini-flash-latest");
+      setFbModel(c.gemini_fallback_model || "gemini-flash-lite-latest");
       setTemp(String(c.gemini_temperature ?? 0.4));
       setMaxTok(String(c.gemini_max_tokens ?? 600));
     }
@@ -780,8 +780,8 @@ function GeminiPanel() {
     const { error } = await supabase
       .from("ai_assistant_config")
       .update({
-        gemini_model: model.trim() || "gemini-2.0-flash",
-        gemini_fallback_model: fbModel.trim() || "gemini-2.0-flash-lite",
+        gemini_model: model.trim() || "gemini-flash-latest",
+        gemini_fallback_model: fbModel.trim() || "gemini-flash-lite-latest",
         gemini_temperature: Number(temp) || 0.4,
         gemini_max_tokens: Number(maxTok) || 600,
       } as any)
@@ -838,13 +838,13 @@ function GeminiPanel() {
             <div className="grid md:grid-cols-2 gap-3">
               <div>
                 <Label>Modelo principal</Label>
-                <Input value={model} onChange={(e) => setModel(e.target.value)} placeholder="gemini-2.0-flash" className="mt-1 font-mono text-xs" />
-                <p className="text-[11px] text-muted-foreground mt-1">Sugestão: <code>gemini-2.0-flash</code> ou <code>gemini-2.0-flash</code>.</p>
+                <Input value={model} onChange={(e) => setModel(e.target.value)} placeholder="gemini-flash-latest" className="mt-1 font-mono text-xs" />
+                <p className="text-[11px] text-muted-foreground mt-1">Sugestão: <code>gemini-flash-latest</code> ou <code>gemini-flash-latest</code>.</p>
               </div>
               <div>
                 <Label>Modelo fallback</Label>
-                <Input value={fbModel} onChange={(e) => setFbModel(e.target.value)} placeholder="gemini-2.0-flash-lite" className="mt-1 font-mono text-xs" />
-                <p className="text-[11px] text-muted-foreground mt-1">Sugestão: <code>gemini-2.0-flash-lite</code> (mais leve).</p>
+                <Input value={fbModel} onChange={(e) => setFbModel(e.target.value)} placeholder="gemini-flash-lite-latest" className="mt-1 font-mono text-xs" />
+                <p className="text-[11px] text-muted-foreground mt-1">Sugestão: <code>gemini-flash-lite-latest</code> (mais leve).</p>
               </div>
               <div>
                 <Label>Temperatura</Label>
