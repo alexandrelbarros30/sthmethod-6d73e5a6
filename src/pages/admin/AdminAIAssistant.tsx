@@ -468,7 +468,18 @@ function TrainingCenter({ userId }: { userId?: string }) {
   };
 
   return (
-    <div className="grid lg:grid-cols-5 gap-4">
+    <Tabs defaultValue="rules" className="w-full">
+      <TabsList className="mb-4">
+        <TabsTrigger value="rules" className="whitespace-nowrap"><BookOpen className="w-4 h-4 mr-1" />Regras</TabsTrigger>
+        <TabsTrigger value="brain" className="whitespace-nowrap"><Brain className="w-4 h-4 mr-1" />Prompt Local (Cérebro)</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="brain">
+        <LocalBrainEditor />
+      </TabsContent>
+
+      <TabsContent value="rules">
+        <div className="grid lg:grid-cols-5 gap-4">
       <Card className="lg:col-span-2">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
@@ -683,6 +694,8 @@ function TrainingCenter({ userId }: { userId?: string }) {
           )}
         </CardContent>
       </Card>
-    </div>
+        </div>
+      </TabsContent>
+    </Tabs>
   );
 }
