@@ -1,6 +1,7 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { localRespond, LocalContext } from '../_shared/sth-local-responder.ts';
+import { callGeminiWithFallback, GeminiMsg } from '../_shared/gemini-client.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -71,7 +72,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
     const { data: cfg } = await supabase
       .from('ai_assistant_config')
-      .select('system_prompt, model, auto_reply_enabled, engine, assistant_name')
+      .select('system_prompt, model, auto_reply_enabled, engine, assistant_name, local_prompt, gemini_model, gemini_fallback_model, gemini_temperature, gemini_max_tokens')
       .eq('id', 1)
       .maybeSingle();
 
@@ -161,6 +162,31 @@ Deno.serve(async (req) => {
             console.error('[inbound] attachment error', e);
           }
         }
+      }
+    } else if (engine === 'gemini') {
+      const history: GeminiMsg[] = (recent as any[])
+        .map((m) => ({ role: m.role === 'assistant' ? 'model' as const : 'user' as const, text: m.content }));
+      const brain = (cfg as any)?.local_prompt || '';
+      const sysFull = `${cfg?.system_prompt || ''}\n\n${brain}${memory}`.trim();
+      const r = await callGeminiWithFallback({
+        systemPrompt: sysFull,
+        history,
+        userText: text,
+        model: (cfg as any)?.gemini_model || 'gemini-1.5-flash',
+        fallbackModel: (cfg as any)?.gemini_fallback_model || 'gemini-1.5-flash-8b',
+        temperature: Number((cfg as any)?.gemini_temperature ?? 0.4),
+        maxTokens: Number((cfg as any)?.gemini_max_tokens ?? 600),
+      });
+      reply = r.reply;
+      replyIntent = r.status === 'offline' ? 'gemini_offline' : (r.usedFallback ? 'gemini_fallback' : 'gemini');
+      await supabase.from('ai_assistant_config').update({
+        gemini_last_status: r.status,
+        gemini_last_error: r.error || null,
+        gemini_last_used_at: new Date().toISOString(),
+      } as any).eq('id', 1);
+      // Se ambos falharem, encaminha para humano (não envia mensagem comercial)
+      if (r.status === 'offline') {
+        console.warn('[inbound] gemini offline — encaminhar humano');
       }
     } else {
     const aiResp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {

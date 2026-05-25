@@ -1,6 +1,7 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { localRespond, LocalContext } from '../_shared/sth-local-responder.ts';
+import { callGeminiWithFallback, GeminiMsg } from '../_shared/gemini-client.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -22,7 +23,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
     const { data: cfg } = await supabase
       .from('ai_assistant_config')
-      .select('system_prompt, model, engine, assistant_name')
+      .select('system_prompt, model, engine, assistant_name, local_prompt, gemini_model, gemini_fallback_model, gemini_temperature, gemini_max_tokens')
       .eq('id', 1)
       .maybeSingle();
 
@@ -79,6 +80,38 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ reply, engine: 'local', intent, attachments }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // MOTOR GEMINI (chave própria do Google AI Studio com fallback)
+    if (engine === 'gemini') {
+      const history: GeminiMsg[] = (messages as Msg[])
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .slice(-10, -1)
+        .map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', text: m.content }));
+      const last = [...messages].reverse().find((m: Msg) => m.role === 'user');
+      const brain = (cfg as any)?.local_prompt || '';
+      const sysFull = `${systemPrompt}\n\n${brain}${memoryBlock}`.trim();
+      const result = await callGeminiWithFallback({
+        systemPrompt: sysFull,
+        history,
+        userText: last?.content || '',
+        model: (cfg as any)?.gemini_model || 'gemini-1.5-flash',
+        fallbackModel: (cfg as any)?.gemini_fallback_model || 'gemini-1.5-flash-8b',
+        temperature: Number((cfg as any)?.gemini_temperature ?? 0.4),
+        maxTokens: Number((cfg as any)?.gemini_max_tokens ?? 600),
+      });
+      // Atualiza status do Gemini (sem expor segredos)
+      await supabase.from('ai_assistant_config').update({
+        gemini_last_status: result.status,
+        gemini_last_error: result.error || null,
+        gemini_last_used_at: new Date().toISOString(),
+      } as any).eq('id', 1);
+      return new Response(JSON.stringify({
+        reply: result.reply,
+        engine: 'gemini',
+        status: result.status,
+        usedFallback: result.usedFallback,
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const aiResp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
