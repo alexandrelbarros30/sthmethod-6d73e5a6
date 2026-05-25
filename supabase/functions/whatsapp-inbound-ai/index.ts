@@ -124,9 +124,6 @@ Deno.serve(async (req) => {
       const r = localRespond(text, localCtx, (rules as any) || []);
       reply = r.reply;
       console.log('[inbound] local intent', r.intent);
-      if (r.ruleId) {
-        await supabase.rpc('increment_training_hit' as any, { _id: r.ruleId }).then(() => {}, () => {});
-      }
     } else {
     const aiResp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
