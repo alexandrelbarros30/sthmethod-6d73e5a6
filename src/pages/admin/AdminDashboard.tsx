@@ -10,12 +10,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import AdminReminders from "@/components/admin/AdminReminders";
-import ServiceQueue from "@/components/admin/ServiceQueue";
-import EvolutionUpdatesPanel from "@/components/admin/EvolutionUpdatesPanel";
 import { toast } from "sonner";
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
-import WhatsAppBulkSender from "@/components/shared/WhatsAppBulkSender";
 
 const getEffectiveSubscriptionMap = (subscriptions: any[] | undefined) => {
   const map = new Map<string, any>();
@@ -272,6 +268,9 @@ const AdminDashboard = () => {
             </div>
             <Button onClick={() => navigate("/admin/students?create=true")} className="premium-btn h-11 rounded-2xl gap-2 bg-foreground text-background hover:bg-foreground/90">
               <UserPlus className="w-4 h-4" /> Novo aluno
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/admin/students")} className="h-11 rounded-2xl gap-2 border-border/40">
+              <Search className="w-4 h-4" /> Pesquisar aluno
             </Button>
           </div>
         </div>
