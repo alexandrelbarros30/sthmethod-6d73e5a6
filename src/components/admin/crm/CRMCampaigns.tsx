@@ -398,7 +398,7 @@ export default function CRMCampaigns() {
                   onCheckedChange={(v) => setForm({ ...form, recurrence_enabled: v })} />
               </div>
               {form.recurrence_enabled && (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 md:justify-end">
                   <span className="text-xs text-muted-foreground">A cada</span>
                   <Input type="number" min={1} className="w-20" value={form.recurrence_days}
                     onChange={(e) => setForm({ ...form, recurrence_days: Number(e.target.value) })} />
