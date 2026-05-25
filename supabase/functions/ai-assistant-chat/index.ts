@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const { messages, contextPhone } = await req.json();
+    const { messages, contextPhone, forceEngine } = await req.json();
     if (!Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: 'messages array required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -29,7 +29,10 @@ Deno.serve(async (req) => {
 
     const systemPrompt = cfg?.system_prompt || 'Você é o assistente da STH METHOD.';
     const model = cfg?.model || 'google/gemini-2.5-flash';
-    const engine = (cfg as any)?.engine || 'local';
+    const engine: 'local' | 'ai' | 'gemini' =
+      (forceEngine === 'local' || forceEngine === 'ai' || forceEngine === 'gemini')
+        ? forceEngine
+        : ((cfg as any)?.engine || 'local');
     const assistantName = (cfg as any)?.assistant_name || 'STH One';
 
     // Optional memory: enrich with student context by phone
