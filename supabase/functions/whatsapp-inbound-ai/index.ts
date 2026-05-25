@@ -95,6 +95,8 @@ Deno.serve(async (req) => {
 
     let memory = '';
     let localCtx: LocalContext = { phone, assistantName };
+    let contactType: 'aluno_ativo' | 'aluno_inativo' | 'novo_cliente' = 'novo_cliente';
+    let contactTypeLabel = 'Novo cliente / lead (sem cadastro)';
     if (profile) {
       const { data: sub } = await supabase
         .from('subscriptions')
@@ -103,7 +105,20 @@ Deno.serve(async (req) => {
         .order('end_date', { ascending: false })
         .limit(1)
         .maybeSingle();
-      memory = `\n\n# CONTATO\nNome: ${profile.full_name || '—'}\nObjetivo: ${profile.objective || '—'}\nPlano: ${(sub as any)?.plans?.name || '—'}\nStatus: ${sub?.status || 'lead'}\nVencimento: ${sub?.end_date || '—'}`;
+      if (sub) {
+        const expired = new Date(sub.end_date) < new Date();
+        if (sub.status === 'active' && !expired) {
+          contactType = 'aluno_ativo';
+          contactTypeLabel = 'Aluno ATIVO (plano em dia)';
+        } else {
+          contactType = 'aluno_inativo';
+          contactTypeLabel = 'Aluno INATIVO (plano vencido — candidato a renovação)';
+        }
+      } else {
+        contactType = 'novo_cliente';
+        contactTypeLabel = 'Cadastrado SEM plano (lead qualificado — candidato a 1ª compra)';
+      }
+      memory = `\n\n# CONTATO\nTipo de contato: ${contactTypeLabel}\nNome: ${profile.full_name || '—'}\nObjetivo: ${profile.objective || '—'}\nPlano: ${(sub as any)?.plans?.name || '—'}\nStatus: ${sub?.status || 'lead'}\nVencimento: ${sub?.end_date || '—'}`;
       localCtx = {
         name: profile.full_name,
         status: sub?.status || 'lead',
@@ -111,9 +126,11 @@ Deno.serve(async (req) => {
         endDate: sub?.end_date || null,
         phone,
         assistantName,
+        contactType,
       };
     } else {
-      memory = `\n\n# CONTATO\nLead novo (sem cadastro). Telefone: ${phone}`;
+      memory = `\n\n# CONTATO\nTipo de contato: ${contactTypeLabel}\nTelefone: ${phone}`;
+      localCtx.contactType = contactType;
     }
 
     // Carrega histórico recente da conversa (memória conversacional)
@@ -193,7 +210,8 @@ Deno.serve(async (req) => {
       const history: GeminiMsg[] = (recent as any[])
         .map((m) => ({ role: m.role === 'assistant' ? 'model' as const : 'user' as const, text: m.content }));
       const brain = (cfg as any)?.local_prompt || '';
-      const sysFull = `${cfg?.system_prompt || ''}\n\n${brain}${memory}`.trim();
+      const toneRule = `\n\n# REGRA DE TOM POR TIPO DE CONTATO\n- Aluno ATIVO: tom de suporte/acompanhamento. NUNCA ofereça plano novo. Foque em dúvidas, dieta, treino, exames, protocolo.\n- Aluno INATIVO: acolhimento + convite à renovação (https://sthmethod.com.br/student/renew). Não trate como novato.\n- Novo cliente / lead: apresentação curta + valores + cadastro (https://sthmethod.com.br/cadastro).`;
+      const sysFull = `${cfg?.system_prompt || ''}\n\n${brain}${toneRule}${memory}`.trim();
       const r = await callGeminiWithFallback({
         systemPrompt: sysFull,
         history,
