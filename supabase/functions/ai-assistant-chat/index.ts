@@ -40,6 +40,9 @@ Deno.serve(async (req) => {
     let localCtx: LocalContext = {};
     let contactType: 'aluno_ativo' | 'aluno_inativo' | 'novo_cliente' = 'novo_cliente';
     let contactTypeLabel = 'Novo cliente / lead (ainda sem cadastro ou sem plano)';
+    let daysSinceExpiry: number | null = null;
+    let isRecentInactive = false;
+    let renewUrl = `https://sthmethod.com.br/student/renew`;
     if (contextPhone) {
       const phone = String(contextPhone).replace(/\D/g, '');
       const { data: profile } = await supabase
@@ -62,7 +65,12 @@ Deno.serve(async (req) => {
             contactTypeLabel = 'Aluno ATIVO (plano em dia)';
           } else {
             contactType = 'aluno_inativo';
-            contactTypeLabel = 'Aluno INATIVO (plano vencido ou cancelado — candidato a renovação)';
+            daysSinceExpiry = Math.floor((Date.now() - new Date(sub.end_date).getTime()) / 86400000);
+            isRecentInactive = daysSinceExpiry >= 0 && daysSinceExpiry <= 15;
+            contactTypeLabel = isRecentInactive
+              ? `Aluno INATIVO RECENTE (venceu há ${daysSinceExpiry} dia(s) — janela de ouro para renovação)`
+              : 'Aluno INATIVO (plano vencido ou cancelado — candidato a renovação)';
+            renewUrl = `https://sthmethod.com.br/student/renew?uid=${profile.user_id}`;
           }
         } else {
           contactType = 'novo_cliente';
@@ -90,6 +98,23 @@ Deno.serve(async (req) => {
         const first = (localCtx.name || '').split(/\s+/)[0];
         const reply = `${first ? `Olá, ${first}!` : 'Olá!'} Vi aqui que seu plano *${localCtx.planName || ''}* está ativo. Para suporte direto com o *Nutri Alexandre*, fale pelo canal *Fale com o Nutri*:\n\nhttps://wa.me/5521998984153?text=${encodeURIComponent('Olá! Sou aluno ativo da STH METHOD e gostaria de falar com o Nutri.')}`;
         return new Response(JSON.stringify({ reply, engine: 'local', intent: 'handoff_nutri', contactType }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      if (contactType === 'aluno_inativo' && isRecentInactive) {
+        const first = (localCtx.name || '').split(/\s+/)[0];
+        const dias = daysSinceExpiry ?? 0;
+        const tempo = dias <= 1 ? 'há pouquíssimo tempo' : `há ${dias} dias`;
+        const reply = [
+          `${first ? `Olá, ${first}!` : 'Olá!'} 👋`,
+          ``,
+          `Notei que seu plano *${localCtx.planName || ''}* venceu ${tempo}.`,
+          `Você ainda está dentro da *janela de continuidade* — retomamos exatamente de onde parou, sem perder histórico, dieta e protocolo. 💪`,
+          ``,
+          `Renove pelo seu link seguro:`,
+          `${renewUrl}`,
+        ].join('\n');
+        return new Response(JSON.stringify({ reply, engine: 'local', intent: 'renewal_recent_inactive', contactType, daysSinceExpiry }), {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
@@ -122,6 +147,23 @@ Deno.serve(async (req) => {
         const first = (localCtx.name || '').split(/\s+/)[0];
         const reply = `${first ? `Olá, ${first}!` : 'Olá!'} Vi aqui que seu plano *${localCtx.planName || ''}* está ativo. Para atendimento direto com o *Nutri Alexandre*, use o canal *Fale com o Nutri*:\n\nhttps://wa.me/5521998984153?text=${encodeURIComponent('Olá! Sou aluno ativo da STH METHOD e gostaria de falar com o Nutri.')}`;
         return new Response(JSON.stringify({ reply, engine: 'gemini', intent: 'handoff_nutri', contactType }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      if (contactType === 'aluno_inativo' && isRecentInactive) {
+        const first = (localCtx.name || '').split(/\s+/)[0];
+        const dias = daysSinceExpiry ?? 0;
+        const tempo = dias <= 1 ? 'há pouquíssimo tempo' : `há ${dias} dias`;
+        const reply = [
+          `${first ? `Olá, ${first}!` : 'Olá!'} 👋`,
+          ``,
+          `Notei que seu plano *${localCtx.planName || ''}* venceu ${tempo}.`,
+          `Você ainda está dentro da *janela de continuidade* — retomamos exatamente de onde parou, sem perder histórico, dieta e protocolo. 💪`,
+          ``,
+          `Renove pelo seu link seguro:`,
+          `${renewUrl}`,
+        ].join('\n');
+        return new Response(JSON.stringify({ reply, engine: 'gemini', intent: 'renewal_recent_inactive', contactType, daysSinceExpiry }), {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
