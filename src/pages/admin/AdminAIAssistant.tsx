@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Bot, Save, Send, Trash2, Sparkles, Webhook, Copy, Loader2, GraduationCap, Plus, Pencil, X, Paperclip, FileText, ImageIcon, Brain, BookOpen, Cpu, Wand2, ChevronDown, ChevronUp } from "lucide-react";
+import { Bot, Save, Send, Trash2, Sparkles, Webhook, Copy, Loader2, GraduationCap, Plus, Pencil, X, Paperclip, FileText, ImageIcon, Brain, BookOpen, Cpu, Wand2, ChevronDown, ChevronUp, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -134,6 +134,7 @@ export default function AdminAIAssistant() {
             <TabsTrigger value="chat" className="whitespace-nowrap"><Sparkles className="w-4 h-4 mr-1" />Chat de Teste</TabsTrigger>
             <TabsTrigger value="prompt" className="whitespace-nowrap"><Bot className="w-4 h-4 mr-1" />Super Prompt</TabsTrigger>
             <TabsTrigger value="auto" className="whitespace-nowrap"><Webhook className="w-4 h-4 mr-1" />Auto-Resposta</TabsTrigger>
+            <TabsTrigger value="hours" className="whitespace-nowrap"><Clock className="w-4 h-4 mr-1" />Horário</TabsTrigger>
             <TabsTrigger value="training" className="whitespace-nowrap"><GraduationCap className="w-4 h-4 mr-1" />Centro de Treinamento</TabsTrigger>
           </TabsList>
         </div>
@@ -335,6 +336,11 @@ export default function AdminAIAssistant() {
         {/* TRAINING CENTER */}
         <TabsContent value="training">
           <TrainingCenter userId={user?.id} />
+        </TabsContent>
+
+        {/* BUSINESS HOURS */}
+        <TabsContent value="hours">
+          <BusinessHoursPanel />
         </TabsContent>
       </Tabs>
     </DashboardLayout>
