@@ -162,6 +162,7 @@ export type Database = {
         Row: {
           auto_reply_enabled: boolean
           auto_reply_office_hours: boolean
+          engine: string
           id: number
           model: string
           system_prompt: string
@@ -171,6 +172,7 @@ export type Database = {
         Insert: {
           auto_reply_enabled?: boolean
           auto_reply_office_hours?: boolean
+          engine?: string
           id?: number
           model?: string
           system_prompt?: string
@@ -180,6 +182,7 @@ export type Database = {
         Update: {
           auto_reply_enabled?: boolean
           auto_reply_office_hours?: boolean
+          engine?: string
           id?: number
           model?: string
           system_prompt?: string
