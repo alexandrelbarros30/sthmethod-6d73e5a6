@@ -129,12 +129,14 @@ export default function AdminAIAssistant() {
   return (
     <DashboardLayout role="admin" title="Assistente IA" subtitle="Concierge inteligente da STH METHOD para WhatsApp.">
       <Tabs defaultValue="chat" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="chat"><Sparkles className="w-4 h-4 mr-1" />Chat de Teste</TabsTrigger>
-          <TabsTrigger value="prompt"><Bot className="w-4 h-4 mr-1" />Super Prompt</TabsTrigger>
-          <TabsTrigger value="auto"><Webhook className="w-4 h-4 mr-1" />Auto-Resposta</TabsTrigger>
-          <TabsTrigger value="training"><GraduationCap className="w-4 h-4 mr-1" />Centro de Treinamento</TabsTrigger>
-        </TabsList>
+        <div className="mb-4 -mx-4 px-4 overflow-x-auto scrollbar-none">
+          <TabsList className="inline-flex w-max">
+            <TabsTrigger value="chat" className="whitespace-nowrap"><Sparkles className="w-4 h-4 mr-1" />Chat de Teste</TabsTrigger>
+            <TabsTrigger value="prompt" className="whitespace-nowrap"><Bot className="w-4 h-4 mr-1" />Super Prompt</TabsTrigger>
+            <TabsTrigger value="auto" className="whitespace-nowrap"><Webhook className="w-4 h-4 mr-1" />Auto-Resposta</TabsTrigger>
+            <TabsTrigger value="training" className="whitespace-nowrap"><GraduationCap className="w-4 h-4 mr-1" />Centro de Treinamento</TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Engine selector — always visible above tabs content */}
         <Card className="mb-4 border-emerald-500/30 bg-emerald-500/5">
