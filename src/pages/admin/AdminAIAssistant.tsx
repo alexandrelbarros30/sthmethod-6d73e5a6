@@ -475,13 +475,18 @@ function TrainingCenter({ userId }: { userId?: string }) {
 
   return (
     <Tabs defaultValue="rules" className="w-full">
-      <TabsList className="mb-4">
-        <TabsTrigger value="rules" className="whitespace-nowrap"><BookOpen className="w-4 h-4 mr-1" />Regras</TabsTrigger>
-        <TabsTrigger value="brain" className="whitespace-nowrap"><Brain className="w-4 h-4 mr-1" />Prompt Local (Cérebro)</TabsTrigger>
-      </TabsList>
+      <div className="mb-4 -mx-4 px-4 overflow-x-auto scrollbar-none">
+        <TabsList className="inline-flex w-max">
+          <TabsTrigger value="rules" className="whitespace-nowrap"><BookOpen className="w-4 h-4 mr-1" />Regras</TabsTrigger>
+          <TabsTrigger value="brain" className="whitespace-nowrap"><Brain className="w-4 h-4 mr-1" />IA Organismo</TabsTrigger>
+        </TabsList>
+      </div>
 
       <TabsContent value="brain">
-        <LocalBrainEditor />
+        <div className="space-y-4">
+          <GeminiPanel />
+          <LocalBrainEditor />
+        </div>
       </TabsContent>
 
       <TabsContent value="rules">
