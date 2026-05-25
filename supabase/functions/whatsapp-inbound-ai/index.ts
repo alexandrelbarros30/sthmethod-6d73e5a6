@@ -1,5 +1,6 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { localRespond, LocalContext } from '../_shared/sth-local-responder.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -70,7 +71,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
     const { data: cfg } = await supabase
       .from('ai_assistant_config')
-      .select('system_prompt, model, auto_reply_enabled')
+      .select('system_prompt, model, auto_reply_enabled, engine')
       .eq('id', 1)
       .maybeSingle();
 
@@ -80,6 +81,7 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    const engine = (cfg as any)?.engine || 'local';
 
     // CRM memory lookup
     const norm = phone.replace(/\D/g, '');
@@ -90,6 +92,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     let memory = '';
+    let localCtx: LocalContext = { phone };
     if (profile) {
       const { data: sub } = await supabase
         .from('subscriptions')
@@ -99,10 +102,24 @@ Deno.serve(async (req) => {
         .limit(1)
         .maybeSingle();
       memory = `\n\n# CONTATO\nNome: ${profile.full_name || '—'}\nObjetivo: ${profile.objective || '—'}\nPlano: ${(sub as any)?.plans?.name || '—'}\nStatus: ${sub?.status || 'lead'}\nVencimento: ${sub?.end_date || '—'}`;
+      localCtx = {
+        name: profile.full_name,
+        status: sub?.status || 'lead',
+        planName: (sub as any)?.plans?.name || null,
+        endDate: sub?.end_date || null,
+        phone,
+      };
     } else {
       memory = `\n\n# CONTATO\nLead novo (sem cadastro). Telefone: ${phone}`;
     }
 
+    // MOTOR LOCAL — gratuito, sem créditos.
+    let reply = '';
+    if (engine === 'local') {
+      const r = localRespond(text, localCtx);
+      reply = r.reply;
+      console.log('[inbound] local intent', r.intent);
+    } else {
     const aiResp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
@@ -123,7 +140,8 @@ Deno.serve(async (req) => {
       });
     }
     const data = await aiResp.json();
-    const reply: string = data.choices?.[0]?.message?.content || '';
+    reply = data.choices?.[0]?.message?.content || '';
+    }
     if (!reply) {
       console.log('[inbound] empty AI reply');
       return new Response(JSON.stringify({ ok: true, empty: true }), {
