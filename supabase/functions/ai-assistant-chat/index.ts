@@ -86,6 +86,13 @@ Deno.serve(async (req) => {
 
     // MOTOR LOCAL (gratuito, sem créditos)
     if (engine === 'local') {
+      if (contactType === 'aluno_ativo') {
+        const first = (localCtx.name || '').split(/\s+/)[0];
+        const reply = `${first ? `Olá, ${first}!` : 'Olá!'} Vi aqui que seu plano *${localCtx.planName || ''}* está ativo. Para suporte direto com o *Nutri Alexandre*, fale pelo canal *Fale com o Nutri*:\n\nhttps://wa.me/5521998984153?text=${encodeURIComponent('Olá! Sou aluno ativo da STH METHOD e gostaria de falar com o Nutri.')}`;
+        return new Response(JSON.stringify({ reply, engine: 'local', intent: 'handoff_nutri', contactType }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
       if (!localCtx.assistantName) localCtx.assistantName = assistantName;
       const { data: rules } = await supabase
         .from('ai_assistant_training')
@@ -106,6 +113,13 @@ Deno.serve(async (req) => {
 
     // MOTOR GEMINI (chave própria do Google AI Studio com fallback)
     if (engine === 'gemini') {
+      if (contactType === 'aluno_ativo') {
+        const first = (localCtx.name || '').split(/\s+/)[0];
+        const reply = `${first ? `Olá, ${first}!` : 'Olá!'} Vi aqui que seu plano *${localCtx.planName || ''}* está ativo. Para atendimento direto com o *Nutri Alexandre*, use o canal *Fale com o Nutri*:\n\nhttps://wa.me/5521998984153?text=${encodeURIComponent('Olá! Sou aluno ativo da STH METHOD e gostaria de falar com o Nutri.')}`;
+        return new Response(JSON.stringify({ reply, engine: 'gemini', intent: 'handoff_nutri', contactType }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
       const last = [...messages].reverse().find((m: Msg) => m.role === 'user');
 
       // 1) HÍBRIDO: regras customizadas primeiro (respostas fixas + anexos)
