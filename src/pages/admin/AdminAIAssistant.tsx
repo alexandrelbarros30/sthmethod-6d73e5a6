@@ -46,6 +46,8 @@ export default function AdminAIAssistant() {
   const [model, setModel] = useState("google/gemini-2.5-flash");
   const [autoReply, setAutoReply] = useState(false);
   const [engine, setEngine] = useState<"local" | "ai" | "gemini">("local");
+  const [fallbackEnabled, setFallbackEnabled] = useState(true);
+  const [fallbackMessage, setFallbackMessage] = useState("");
   const [saving, setSaving] = useState(false);
 
   const [chat, setChat] = useState<Msg[]>([]);
@@ -68,6 +70,8 @@ export default function AdminAIAssistant() {
       setModel(config.model || "google/gemini-2.5-flash");
       setAutoReply(!!config.auto_reply_enabled);
       setEngine(((config as any).engine as "local" | "ai" | "gemini") || "local");
+      setFallbackEnabled((config as any).fallback_enabled !== false);
+      setFallbackMessage((config as any).fallback_message || "");
     }
   }, [config]);
 
@@ -84,6 +88,8 @@ export default function AdminAIAssistant() {
         model,
         auto_reply_enabled: autoReply,
         engine,
+        fallback_enabled: fallbackEnabled,
+        fallback_message: fallbackMessage || null,
         updated_at: new Date().toISOString(),
         updated_by: user?.id,
       } as any)
