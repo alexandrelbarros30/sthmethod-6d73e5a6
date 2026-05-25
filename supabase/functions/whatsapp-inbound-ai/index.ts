@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
     const { data: cfg } = await supabase
       .from('ai_assistant_config')
-      .select('system_prompt, model, auto_reply_enabled, engine, assistant_name, local_prompt, gemini_model, gemini_fallback_model, gemini_temperature, gemini_max_tokens, business_hours, out_of_hours_message, enforce_business_hours')
+      .select('system_prompt, model, auto_reply_enabled, engine, assistant_name, local_prompt, gemini_model, gemini_fallback_model, gemini_temperature, gemini_max_tokens, business_hours, out_of_hours_message, enforce_business_hours, fallback_enabled, fallback_message')
       .eq('id', 1)
       .maybeSingle();
 
