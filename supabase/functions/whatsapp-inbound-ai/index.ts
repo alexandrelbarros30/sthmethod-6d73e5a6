@@ -268,6 +268,94 @@ Deno.serve(async (req) => {
     // MOTOR LOCAL — gratuito, sem créditos.
     let reply = '';
     let replyIntent: string | null = null;
+
+    // ============================================================
+    // INTENT: "FIZ O CADASTRO" — verifica status real e responde
+    // ============================================================
+    // Detecta variações: "fiz cadastro", "cadastrei", "realizei cadastro",
+    // "acabei de me cadastrar", "cadastro feito", "ja fiz cadastro", etc.
+    const tnorm = (text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const saidRegistered =
+      /\b(fiz|realizei|acabei de fazer|ja fiz|acabo de fazer|completei|conclui|finalizei|terminei)\b[^.]{0,30}\bcadastr/.test(tnorm) ||
+      /\bcadastr(ei|o feito|o pronto|o concluido|o realizado|o ok)\b/.test(tnorm) ||
+      /\bme cadastrei\b/.test(tnorm) ||
+      /\bja sou cadastrad/.test(tnorm);
+
+    if (saidRegistered) {
+      const lastA = [...recent].reverse().find((m: any) => m.role === 'assistant');
+      if (lastA?.intent === 'cadastro_verificado') {
+        console.log('[inbound] skip duplicate cadastro_verificado');
+        return new Response(JSON.stringify({ ok: true, deduped: 'cadastro_verificado' }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const first = (profile?.full_name || '').split(/\s+/)[0];
+      let confirm = '';
+      let intentLabel = 'cadastro_verificado';
+
+      if (profile && contactType === 'aluno_ativo') {
+        // Já cadastrado E pago — ativo
+        confirm = [
+          `${first ? `Boa, ${first}!` : 'Boa!'} ✅`,
+          ``,
+          `Confirmado: seu cadastro está *ativo* no plano *${localCtx.planName || ''}*${localCtx.endDate ? ` (válido até ${localCtx.endDate})` : ''}.`,
+          ``,
+          `Você já pode acessar tudo em: https://sthmethod.com.br/student`,
+          ``,
+          `Para falar direto com o *Nutri Alexandre*: https://wa.me/5521998984153`,
+        ].join('\n');
+      } else if (profile && contactType === 'aluno_inativo') {
+        // Cadastro existe mas plano vencido
+        confirm = [
+          `${first ? `Olá, ${first}!` : 'Olá!'} 👀`,
+          ``,
+          `Localizei seu cadastro, mas o plano *${localCtx.planName || ''}* está *vencido*${daysSinceExpiry != null ? ` há ${daysSinceExpiry} dia(s)` : ''}.`,
+          ``,
+          `Para reativar seu acesso, basta renovar pelo link seguro:`,
+          `${renewUrl}`,
+        ].join('\n');
+      } else if (profile) {
+        // Cadastro existe mas SEM pagamento (lead qualificado)
+        confirm = [
+          `${first ? `Boa, ${first}!` : 'Boa!'} 👍`,
+          ``,
+          `Confirmei aqui: seu *cadastro foi recebido* com sucesso. ✅`,
+          ``,
+          `Para *ativar seu acesso*, falta apenas a confirmação do pagamento. Você pode finalizar agora:`,
+          ``,
+          `https://sthmethod.com.br/student/subscription`,
+          ``,
+          `Aceitamos *Pix* (aprovação imediata) e *cartão* (até 12x em planos elegíveis). Se já pagou, me envie o comprovante por aqui que validamos na hora.`,
+        ].join('\n');
+      } else {
+        // Não localizado por telefone — pode ter cadastrado com número diferente
+        confirm = [
+          `Obrigado por avisar! 🙏`,
+          ``,
+          `Não localizei nenhum cadastro vinculado a este número *${phone}*. Isso costuma acontecer quando o cadastro foi feito com *outro telefone* ou ainda está em processamento.`,
+          ``,
+          `Para eu confirmar, me envie por favor:`,
+          `• *Nome completo* usado no cadastro`,
+          `• *E-mail* informado`,
+          ``,
+          `Se ainda não finalizou todas as etapas (dados → rotina → objetivos → fotos → exames → pagamento), conclua em: https://sthmethod.com.br/cadastro`,
+        ].join('\n');
+        intentLabel = 'cadastro_nao_localizado';
+      }
+
+      await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
+        body: JSON.stringify({ phone: norm, message: confirm }),
+      });
+      await supabase.from('ai_assistant_conversation').insert({
+        phone: norm, role: 'assistant', content: confirm, intent: intentLabel,
+      });
+      return new Response(JSON.stringify({ ok: true, cadastro_check: true, intent: intentLabel }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     if (engine === 'local') {
       const { data: rules } = await supabase
         .from('ai_assistant_training')
