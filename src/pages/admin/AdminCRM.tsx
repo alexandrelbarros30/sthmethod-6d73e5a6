@@ -28,6 +28,7 @@ import CRMMedia from "@/components/admin/crm/CRMMedia";
 import CRMCampaigns from "@/components/admin/crm/CRMCampaigns";
 import CRMHistory from "@/components/admin/crm/CRMHistory";
 import CRMAutomations from "@/components/admin/crm/CRMAutomations";
+import CRMAutomationControl from "@/components/admin/CRMAutomationControl";
 
 type RoleArea = "admin" | "consultor";
 interface Props { area?: RoleArea }
@@ -214,6 +215,7 @@ export default function AdminCRM({ area = "admin" }: Props) {
   return (
     <DashboardLayout role={area} title="Campanhas & Ofertas" subtitle="Central premium de relacionamento STH METHOD">
       <div className="space-y-6">
+        {area === "admin" && <CRMAutomationControl />}
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <Megaphone className="h-5 w-5 text-emerald-400" />

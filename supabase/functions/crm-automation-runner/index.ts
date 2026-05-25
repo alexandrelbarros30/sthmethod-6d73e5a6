@@ -60,6 +60,22 @@ Deno.serve(async (req) => {
     try { body = await req.json(); } catch (_) {}
     const onlyId = body?.automation_id || forceId;
 
+    // Respeita o toggle global do CRM Automático (compartilhado com cobranças).
+    // Disparos manuais (com automation_id) continuam funcionando.
+    if (!onlyId) {
+      const { data: automation } = await supabase
+        .from('billing_automation')
+        .select('enabled')
+        .eq('id', 1)
+        .maybeSingle();
+      if (!automation?.enabled) {
+        return new Response(
+          JSON.stringify({ ok: true, paused: true, processed: 0, results: [] }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+    }
+
     let q = supabase.from('crm_automations').select('*').eq('active', true);
     if (onlyId) q = supabase.from('crm_automations').select('*').eq('id', onlyId);
     const { data: automations, error } = await q;
