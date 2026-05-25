@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Bot, Save, Send, Trash2, Sparkles, Webhook, Copy, Loader2, GraduationCap, Plus, Pencil, X, Paperclip, FileText, ImageIcon, Brain, BookOpen } from "lucide-react";
+import { Bot, Save, Send, Trash2, Sparkles, Webhook, Copy, Loader2, GraduationCap, Plus, Pencil, X, Paperclip, FileText, ImageIcon, Brain, BookOpen, Cpu } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -45,7 +45,7 @@ export default function AdminAIAssistant() {
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState("google/gemini-2.5-flash");
   const [autoReply, setAutoReply] = useState(false);
-  const [engine, setEngine] = useState<"local" | "ai">("local");
+  const [engine, setEngine] = useState<"local" | "ai" | "gemini">("local");
   const [saving, setSaving] = useState(false);
 
   const [chat, setChat] = useState<Msg[]>([]);
@@ -67,7 +67,7 @@ export default function AdminAIAssistant() {
       setPrompt(config.system_prompt || "");
       setModel(config.model || "google/gemini-2.5-flash");
       setAutoReply(!!config.auto_reply_enabled);
-      setEngine(((config as any).engine as "local" | "ai") || "local");
+      setEngine(((config as any).engine as "local" | "ai" | "gemini") || "local");
     }
   }, [config]);
 
@@ -143,21 +143,27 @@ export default function AdminAIAssistant() {
           <CardContent className="pt-4 pb-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
             <div className="flex-1">
               <p className="text-sm font-medium">
-                Motor de respostas: {engine === "local" ? "🟢 Local (gratuito)" : "🔵 IA (consome créditos)"}
+                Motor de respostas: {engine === "local" ? "🟢 Local (gratuito)" : engine === "gemini" ? "🟣 Gemini (sua chave Google AI Studio)" : "🔵 IA Lovable (consome créditos)"}
               </p>
               <p className="text-xs text-muted-foreground">
                 {engine === "local"
                   ? "Respostas baseadas em regras inteligentes da STH METHOD. Sem custo por mensagem."
+                  : engine === "gemini"
+                  ? "Usa Google AI Studio com sua GEMINI_API_KEY (tier gratuito do Google). Fallback automático se a chave principal falhar."
                   : "Usa o Lovable AI Gateway. Cada mensagem consome créditos."}
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`text-xs ${engine === "local" ? "font-semibold" : "text-muted-foreground"}`}>Local</span>
-              <Switch
-                checked={engine === "ai"}
-                onCheckedChange={(v) => setEngine(v ? "ai" : "local")}
-              />
-              <span className={`text-xs ${engine === "ai" ? "font-semibold" : "text-muted-foreground"}`}>IA</span>
+              <Select value={engine} onValueChange={(v) => setEngine(v as any)}>
+                <SelectTrigger className="w-[170px] h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="local">🟢 Local (gratuito)</SelectItem>
+                  <SelectItem value="gemini">🟣 Gemini (sua chave)</SelectItem>
+                  <SelectItem value="ai">🔵 IA Lovable</SelectItem>
+                </SelectContent>
+              </Select>
               <Button size="sm" variant="outline" onClick={save} disabled={saving} className="ml-2">
                 {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
               </Button>
@@ -469,13 +475,18 @@ function TrainingCenter({ userId }: { userId?: string }) {
 
   return (
     <Tabs defaultValue="rules" className="w-full">
-      <TabsList className="mb-4">
-        <TabsTrigger value="rules" className="whitespace-nowrap"><BookOpen className="w-4 h-4 mr-1" />Regras</TabsTrigger>
-        <TabsTrigger value="brain" className="whitespace-nowrap"><Brain className="w-4 h-4 mr-1" />Prompt Local (Cérebro)</TabsTrigger>
-      </TabsList>
+      <div className="mb-4 -mx-4 px-4 overflow-x-auto scrollbar-none">
+        <TabsList className="inline-flex w-max">
+          <TabsTrigger value="rules" className="whitespace-nowrap"><BookOpen className="w-4 h-4 mr-1" />Regras</TabsTrigger>
+          <TabsTrigger value="brain" className="whitespace-nowrap"><Brain className="w-4 h-4 mr-1" />IA Organismo</TabsTrigger>
+        </TabsList>
+      </div>
 
       <TabsContent value="brain">
-        <LocalBrainEditor />
+        <div className="space-y-4">
+          <GeminiPanel />
+          <LocalBrainEditor />
+        </div>
       </TabsContent>
 
       <TabsContent value="rules">
@@ -735,6 +746,135 @@ Natural, humano, premium, elegante, objetivo, estratégico. Evitar excesso de em
 
 # OBJETIVO FINAL
 EXPERIÊNCIA HUMANA + CONTEXTO + CONTINUIDADE + RESPEITO.`;
+
+function GeminiPanel() {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [cfg, setCfg] = useState<any>(null);
+  const [model, setModel] = useState("gemini-1.5-flash");
+  const [fbModel, setFbModel] = useState("gemini-1.5-flash-8b");
+  const [temp, setTemp] = useState("0.4");
+  const [maxTok, setMaxTok] = useState("600");
+
+  const reload = async () => {
+    const { data } = await supabase
+      .from("ai_assistant_config")
+      .select("engine, gemini_model, gemini_fallback_model, gemini_temperature, gemini_max_tokens, gemini_last_status, gemini_last_error, gemini_last_used_at")
+      .eq("id", 1)
+      .maybeSingle();
+    const c = data as any;
+    setCfg(c);
+    if (c) {
+      setModel(c.gemini_model || "gemini-1.5-flash");
+      setFbModel(c.gemini_fallback_model || "gemini-1.5-flash-8b");
+      setTemp(String(c.gemini_temperature ?? 0.4));
+      setMaxTok(String(c.gemini_max_tokens ?? 600));
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { reload(); }, []);
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await supabase
+      .from("ai_assistant_config")
+      .update({
+        gemini_model: model.trim() || "gemini-1.5-flash",
+        gemini_fallback_model: fbModel.trim() || "gemini-1.5-flash-8b",
+        gemini_temperature: Number(temp) || 0.4,
+        gemini_max_tokens: Number(maxTok) || 600,
+      } as any)
+      .eq("id", 1);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("Configuração Gemini salva");
+    reload();
+  };
+
+  const status = cfg?.gemini_last_status || "unknown";
+  const statusLabel =
+    status === "online" ? { txt: "🟢 Online (chave principal)", cls: "text-emerald-500" } :
+    status === "fallback" ? { txt: "🟡 Fallback ativo", cls: "text-amber-500" } :
+    status === "offline" ? { txt: "🔴 Offline (ambas chaves falharam)", cls: "text-red-500" } :
+    { txt: "⚪ Ainda não usado", cls: "text-muted-foreground" };
+
+  return (
+    <Card className="border-purple-500/30">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Cpu className="w-4 h-4 text-purple-500" /> Motor Gemini (Google AI Studio)
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">
+          Use sua própria chave do Google AI Studio (tier gratuito). As chaves <code>GEMINI_API_KEY</code> e <code>GEMINI_API_KEY_FALLBACK</code> ficam apenas em variável de ambiente segura — nunca no front-end.
+          Quando a principal falhar por 429, quota ou timeout, o sistema usa a chave fallback automaticamente.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {loading ? (
+          <div className="py-6 text-center text-sm text-muted-foreground">
+            <Loader2 className="w-4 h-4 animate-spin inline mr-1" /> Carregando...
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-center gap-3 p-3 rounded-md border bg-muted/30">
+              <div className="flex-1 min-w-[180px]">
+                <p className="text-xs text-muted-foreground">Status do motor</p>
+                <p className={`text-sm font-medium ${statusLabel.cls}`}>{statusLabel.txt}</p>
+                {cfg?.gemini_last_used_at && (
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Último uso: {new Date(cfg.gemini_last_used_at).toLocaleString("pt-BR")}
+                  </p>
+                )}
+                {cfg?.gemini_last_error && (
+                  <p className="text-[11px] text-red-500 mt-0.5 truncate">Erro: {cfg.gemini_last_error}</p>
+                )}
+              </div>
+              <Button size="sm" variant="outline" onClick={reload}>
+                <Loader2 className="w-3.5 h-3.5 mr-1" /> Atualizar
+              </Button>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-3">
+              <div>
+                <Label>Modelo principal</Label>
+                <Input value={model} onChange={(e) => setModel(e.target.value)} placeholder="gemini-1.5-flash" className="mt-1 font-mono text-xs" />
+                <p className="text-[11px] text-muted-foreground mt-1">Sugestão: <code>gemini-1.5-flash</code> ou <code>gemini-2.0-flash</code>.</p>
+              </div>
+              <div>
+                <Label>Modelo fallback</Label>
+                <Input value={fbModel} onChange={(e) => setFbModel(e.target.value)} placeholder="gemini-1.5-flash-8b" className="mt-1 font-mono text-xs" />
+                <p className="text-[11px] text-muted-foreground mt-1">Sugestão: <code>gemini-1.5-flash-8b</code> (mais leve).</p>
+              </div>
+              <div>
+                <Label>Temperatura</Label>
+                <Input type="number" min="0" max="1" step="0.05" value={temp} onChange={(e) => setTemp(e.target.value)} className="mt-1" />
+                <p className="text-[11px] text-muted-foreground mt-1">0.4 = humano e estável.</p>
+              </div>
+              <div>
+                <Label>Máximo de tokens</Label>
+                <Input type="number" min="100" max="4000" step="50" value={maxTok} onChange={(e) => setMaxTok(e.target.value)} className="mt-1" />
+                <p className="text-[11px] text-muted-foreground mt-1">600 = resposta curta/média estilo WhatsApp.</p>
+              </div>
+            </div>
+
+            <div className="text-[11px] text-muted-foreground border-t pt-3">
+              <p><strong>Segurança:</strong> chaves armazenadas como variável de ambiente no servidor. O front-end nunca chama a API do Gemini diretamente — sempre via endpoint interno.</p>
+              <p className="mt-1"><strong>Para ativar:</strong> selecione "🟣 Gemini (sua chave)" no seletor de motor acima e salve.</p>
+            </div>
+
+            <div className="flex justify-end">
+              <Button onClick={save} disabled={saving}>
+                {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
+                Salvar configuração Gemini
+              </Button>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 function LocalBrainEditor() {
   const [loading, setLoading] = useState(true);

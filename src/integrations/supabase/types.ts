@@ -164,6 +164,13 @@ export type Database = {
           auto_reply_enabled: boolean
           auto_reply_office_hours: boolean
           engine: string
+          gemini_fallback_model: string | null
+          gemini_last_error: string | null
+          gemini_last_status: string | null
+          gemini_last_used_at: string | null
+          gemini_max_tokens: number | null
+          gemini_model: string | null
+          gemini_temperature: number | null
           id: number
           local_prompt: string
           model: string
@@ -176,6 +183,13 @@ export type Database = {
           auto_reply_enabled?: boolean
           auto_reply_office_hours?: boolean
           engine?: string
+          gemini_fallback_model?: string | null
+          gemini_last_error?: string | null
+          gemini_last_status?: string | null
+          gemini_last_used_at?: string | null
+          gemini_max_tokens?: number | null
+          gemini_model?: string | null
+          gemini_temperature?: number | null
           id?: number
           local_prompt?: string
           model?: string
@@ -188,6 +202,13 @@ export type Database = {
           auto_reply_enabled?: boolean
           auto_reply_office_hours?: boolean
           engine?: string
+          gemini_fallback_model?: string | null
+          gemini_last_error?: string | null
+          gemini_last_status?: string | null
+          gemini_last_used_at?: string | null
+          gemini_max_tokens?: number | null
+          gemini_model?: string | null
+          gemini_temperature?: number | null
           id?: number
           local_prompt?: string
           model?: string
