@@ -229,15 +229,13 @@ Deno.serve(async (req) => {
     }
 
     // ABORDAGEM AUTOMÁTICA — aluno INATIVO RECENTE (≤15 dias do vencimento)
-    // Envia pitch de renovação com link personalizado e registra a conversa.
+    // Envia pitch de renovação UMA VEZ; depois disso, deixa o motor de IA
+    // responder normalmente as perguntas seguintes (dúvidas de saúde, dieta,
+    // treino, etc.) mantendo o contexto de "aluno em janela de renovação".
     if (contactType === 'aluno_inativo' && isRecentInactive) {
       const lastA = [...recent].reverse().find((m: any) => m.role === 'assistant');
-      if (lastA?.intent === 'renewal_recent_inactive') {
-        console.log('[inbound] skip duplicate renewal pitch');
-        return new Response(JSON.stringify({ ok: true, deduped: 'renewal' }), {
-          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+      const pitchAlreadySent = lastA?.intent === 'renewal_recent_inactive';
+      if (!pitchAlreadySent) {
       const first = (profile?.full_name || '').split(/\s+/)[0];
       const dias = daysSinceExpiry ?? 0;
       const tempo = dias <= 1 ? 'há pouquíssimo tempo' : `há ${dias} dias`;
@@ -263,6 +261,10 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: true, renewal_pitch: true, days_since_expiry: dias }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+      }
+      // Pitch já enviado → segue fluxo normal de IA para responder a pergunta
+      console.log('[inbound] renewal pitch already sent — proceeding to AI reply');
+      memory += `\n\n# AÇÃO\nO pitch de renovação JÁ FOI ENVIADO. Responda a pergunta atual do aluno com utilidade real (dúvida de saúde, dieta, treino, protocolo, espinhas, sono, etc.). Ao final, em 1 linha curta, lembre amigavelmente da renovação com o link ${renewUrl} — sem repetir o pitch inteiro.`;
     }
 
     // MOTOR LOCAL — gratuito, sem créditos.
