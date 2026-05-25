@@ -166,6 +166,8 @@ export type Database = {
           business_hours: Json
           enforce_business_hours: boolean
           engine: string
+          fallback_enabled: boolean
+          fallback_message: string | null
           gemini_fallback_model: string | null
           gemini_last_error: string | null
           gemini_last_status: string | null
@@ -188,6 +190,8 @@ export type Database = {
           business_hours?: Json
           enforce_business_hours?: boolean
           engine?: string
+          fallback_enabled?: boolean
+          fallback_message?: string | null
           gemini_fallback_model?: string | null
           gemini_last_error?: string | null
           gemini_last_status?: string | null
@@ -210,6 +214,8 @@ export type Database = {
           business_hours?: Json
           enforce_business_hours?: boolean
           engine?: string
+          fallback_enabled?: boolean
+          fallback_message?: string | null
           gemini_fallback_model?: string | null
           gemini_last_error?: string | null
           gemini_last_status?: string | null

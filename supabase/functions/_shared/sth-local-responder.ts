@@ -11,6 +11,8 @@ export type LocalContext = {
   lastIntent?: string | null;
   assistantName?: string | null;
   contactType?: 'aluno_ativo' | 'aluno_inativo' | 'novo_cliente';
+  fallbackEnabled?: boolean;
+  fallbackMessage?: string | null;
 };
 
 export type Attachment = { url: string; kind: 'image' | 'document'; name?: string };
@@ -268,6 +270,14 @@ export function localRespond(
   }
 
   // Fallback inteligente — contextualizado pelo status do contato
+  // Se admin desligou o fallback, devolvemos silêncio (caller decide o que fazer)
+  if (ctx.fallbackEnabled === false) {
+    return { reply: '', intent: 'silent' };
+  }
+  // Mensagem customizada do admin tem prioridade sobre o menu fixo
+  if (ctx.fallbackMessage && ctx.fallbackMessage.trim().length > 0) {
+    return { reply: renderTemplate(ctx.fallbackMessage, ctx), intent: 'fallback_custom' };
+  }
   let fallback: string;
   if (ctx.status === 'active') {
     fallback = `${hi(ctx)} ${statusLine(ctx)}\n\nMe conta rapidamente o que precisa: *atualização*, *exames*, *treino*, *dieta* ou *suporte*?`;

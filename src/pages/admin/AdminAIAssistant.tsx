@@ -46,6 +46,8 @@ export default function AdminAIAssistant() {
   const [model, setModel] = useState("google/gemini-2.5-flash");
   const [autoReply, setAutoReply] = useState(false);
   const [engine, setEngine] = useState<"local" | "ai" | "gemini">("local");
+  const [fallbackEnabled, setFallbackEnabled] = useState(true);
+  const [fallbackMessage, setFallbackMessage] = useState("");
   const [saving, setSaving] = useState(false);
 
   const [chat, setChat] = useState<Msg[]>([]);
@@ -68,6 +70,8 @@ export default function AdminAIAssistant() {
       setModel(config.model || "google/gemini-2.5-flash");
       setAutoReply(!!config.auto_reply_enabled);
       setEngine(((config as any).engine as "local" | "ai" | "gemini") || "local");
+      setFallbackEnabled((config as any).fallback_enabled !== false);
+      setFallbackMessage((config as any).fallback_message || "");
     }
   }, [config]);
 
@@ -84,6 +88,8 @@ export default function AdminAIAssistant() {
         model,
         auto_reply_enabled: autoReply,
         engine,
+        fallback_enabled: fallbackEnabled,
+        fallback_message: fallbackMessage || null,
         updated_at: new Date().toISOString(),
         updated_by: user?.id,
       } as any)
@@ -323,6 +329,33 @@ export default function AdminAIAssistant() {
                 <p className="text-xs text-muted-foreground mt-2">
                   Cole esta URL em <b>Z-API → Webhooks → Ao receber mensagem</b>. O assistente só responderá quando o toggle acima estiver ativo.
                 </p>
+              </div>
+
+              <div className="border-t pt-5 space-y-3">
+                <div className="flex items-center justify-between gap-4 p-3 rounded-md border bg-muted/30">
+                  <div>
+                    <p className="text-sm font-medium">
+                      {fallbackEnabled ? "Fallback automático ATIVO" : "Fallback automático DESLIGADO"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Quando o usuário envia algo que não bate com nenhuma regra treinada nem com o cérebro Gemini, o assistente envia uma mensagem padrão. Desligue para silenciar e deixar o atendimento humano assumir.
+                    </p>
+                  </div>
+                  <Switch checked={fallbackEnabled} onCheckedChange={setFallbackEnabled} />
+                </div>
+                <div>
+                  <Label className="text-xs">Mensagem de fallback personalizada (opcional)</Label>
+                  <Textarea
+                    value={fallbackMessage}
+                    onChange={(e) => setFallbackMessage(e.target.value)}
+                    placeholder="Ex: Recebi sua mensagem! Em instantes a equipe STH te responde. — você pode usar {nome} e {plano} como variáveis."
+                    className="mt-1.5 min-h-[90px] text-sm"
+                    disabled={!fallbackEnabled}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Se vazio, será usado o menu padrão. Se preenchido, substitui o menu antigo. Variáveis: {`{nome}`}, {`{plano}`}.
+                  </p>
+                </div>
               </div>
 
               <Button onClick={save} disabled={saving}>

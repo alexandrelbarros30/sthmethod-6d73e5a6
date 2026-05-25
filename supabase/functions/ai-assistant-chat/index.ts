@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
     const { data: cfg } = await supabase
       .from('ai_assistant_config')
-      .select('system_prompt, model, engine, assistant_name, local_prompt, gemini_model, gemini_fallback_model, gemini_temperature, gemini_max_tokens')
+      .select('system_prompt, model, engine, assistant_name, local_prompt, gemini_model, gemini_fallback_model, gemini_temperature, gemini_max_tokens, fallback_enabled, fallback_message')
       .eq('id', 1)
       .maybeSingle();
 
@@ -105,8 +105,13 @@ Deno.serve(async (req) => {
         .filter((m) => m.role === 'user' || m.role === 'assistant')
         .slice(-6)
         .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+      localCtx.fallbackEnabled = (cfg as any)?.fallback_enabled !== false;
+      localCtx.fallbackMessage = (cfg as any)?.fallback_message || null;
       const { reply, intent, attachments } = localRespond(last?.content || '', localCtx, (rules as any) || []);
-      return new Response(JSON.stringify({ reply, engine: 'local', intent, attachments }), {
+      const finalReply = intent === 'silent'
+        ? '⚠️ Nenhuma regra correspondeu e o fallback automático está desligado. (Em produção, o assistente ficaria em silêncio aguardando atendimento humano.)'
+        : reply;
+      return new Response(JSON.stringify({ reply: finalReply, engine: 'local', intent, attachments }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
