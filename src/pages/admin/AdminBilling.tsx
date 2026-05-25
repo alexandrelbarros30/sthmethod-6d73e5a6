@@ -666,8 +666,9 @@ const AdminBilling = ({ area }: Props) => {
         {/* Tabs + search */}
         <Card><CardContent className="p-4 space-y-3">
           <div className="flex flex-wrap gap-3 items-center justify-between">
-            <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
-              <TabsList>
+            <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)} className="w-full min-w-0">
+              <div className="-mx-2 overflow-x-auto px-2">
+                <TabsList className="inline-flex h-auto w-max flex-nowrap gap-1">
                 <TabsTrigger value="queue">Fila ativa ({tabCounts.queue})</TabsTrigger>
                 <TabsTrigger value="waiting">Aguardando ({tabCounts.waiting})</TabsTrigger>
                 <TabsTrigger value="buckets">Por tempo vencido</TabsTrigger>
@@ -675,7 +676,8 @@ const AdminBilling = ({ area }: Props) => {
                 <TabsTrigger value="renewed">Renovados ({tabCounts.renewed})</TabsTrigger>
                 <TabsTrigger value="ignored">Ignorados ({tabCounts.ignored})</TabsTrigger>
                 <TabsTrigger value="all">Todos ({tabCounts.all})</TabsTrigger>
-              </TabsList>
+                </TabsList>
+              </div>
             </Tabs>
             {tab !== "history" && (
               <Input className="max-w-xs" placeholder="Buscar por nome..." value={search} onChange={(e) => setSearch(e.target.value)} />
