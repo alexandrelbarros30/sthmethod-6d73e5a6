@@ -71,6 +71,7 @@ import AdminTrainingPrograms from "./pages/admin/AdminTrainingPrograms";
 import AdminContent from "./pages/admin/AdminContent";
 import AdminLayoutExterno from "./pages/admin/AdminLayoutExterno";
 import AdminMessages from "./pages/admin/AdminMessages";
+import AdminAIAssistant from "./pages/admin/AdminAIAssistant";
 import AdminRoles from "./pages/admin/AdminRoles";
 import AdminStaff from "./pages/admin/AdminStaff";
 import AdminCoupons from "./pages/admin/AdminCoupons";
