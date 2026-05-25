@@ -61,8 +61,17 @@ Deno.serve(async (req) => {
 
     // MOTOR LOCAL (gratuito, sem créditos)
     if (engine === 'local') {
+      const { data: rules } = await supabase
+        .from('ai_assistant_training')
+        .select('id, label, keywords, reply, priority')
+        .eq('enabled', true)
+        .order('priority', { ascending: true });
       const last = [...messages].reverse().find((m: Msg) => m.role === 'user');
-      const { reply, intent } = localRespond(last?.content || '', localCtx);
+      const { reply, intent, ruleId } = localRespond(last?.content || '', localCtx, (rules as any) || []);
+      if (ruleId) {
+        await supabase.rpc as any; // no-op type hint
+        await supabase.from('ai_assistant_training').update({ hits: (rules?.find((r:any)=>r.id===ruleId) as any)?.hits ? undefined : undefined }).eq('id', ruleId);
+      }
       return new Response(JSON.stringify({ reply, engine: 'local', intent }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
