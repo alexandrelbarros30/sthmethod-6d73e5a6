@@ -105,6 +105,21 @@ Deno.serve(async (req) => {
         const msg = (cfg as any)?.out_of_hours_message ||
           'Estamos fora do horário de atendimento. Retornamos no próximo expediente.';
         const normPhone = phone.replace(/\D/g, '');
+        // dedup off_hours — não repete se a última resposta já foi off_hours
+        const { data: lastOff } = await supabase
+          .from('ai_assistant_conversation')
+          .select('intent')
+          .eq('phone', normPhone)
+          .eq('role', 'assistant')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if ((lastOff as any)?.intent === 'off_hours') {
+          await supabase.from('ai_assistant_conversation').insert({ phone: normPhone, role: 'user', content: text });
+          return new Response(JSON.stringify({ ok: true, deduped: 'off_hours' }), {
+            status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
         await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
@@ -192,6 +207,14 @@ Deno.serve(async (req) => {
 
     // HANDOFF — aluno ATIVO vai direto para o canal "Fale com o Nutri"
     if (contactType === 'aluno_ativo') {
+      const lastA = [...recent].reverse().find((m: any) => m.role === 'assistant');
+      const lastAt = (lastA as any)?.created_at ? new Date((lastA as any).created_at).getTime() : 0;
+      if (lastA?.intent === 'handoff_nutri') {
+        console.log('[inbound] skip duplicate handoff');
+        return new Response(JSON.stringify({ ok: true, deduped: 'handoff' }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
       const first = (profile?.full_name || '').split(/\s+/)[0];
       const handoff = `${first ? `Olá, ${first}!` : 'Olá!'} Vi aqui que seu plano *${(localCtx.planName || '')}* está ativo. Para suporte direto com o *Nutri Alexandre*, fale pelo canal *Fale com o Nutri*:\n\nhttps://wa.me/5521998984153?text=${encodeURIComponent('Olá! Sou aluno ativo da STH METHOD e gostaria de falar com o Nutri.')}`;
       await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
@@ -208,6 +231,13 @@ Deno.serve(async (req) => {
     // ABORDAGEM AUTOMÁTICA — aluno INATIVO RECENTE (≤15 dias do vencimento)
     // Envia pitch de renovação com link personalizado e registra a conversa.
     if (contactType === 'aluno_inativo' && isRecentInactive) {
+      const lastA = [...recent].reverse().find((m: any) => m.role === 'assistant');
+      if (lastA?.intent === 'renewal_recent_inactive') {
+        console.log('[inbound] skip duplicate renewal pitch');
+        return new Response(JSON.stringify({ ok: true, deduped: 'renewal' }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
       const first = (profile?.full_name || '').split(/\s+/)[0];
       const dias = daysSinceExpiry ?? 0;
       const tempo = dias <= 1 ? 'há pouquíssimo tempo' : `há ${dias} dias`;
@@ -352,6 +382,20 @@ Deno.serve(async (req) => {
       });
     }
     console.log('[inbound] reply len', reply.length, 'to', phone);
+
+    // DEDUP — evita reenviar a mesma mensagem (ex.: fallback) repetidamente
+    {
+      const lastA = [...recent].reverse().find((m: any) => m.role === 'assistant');
+      const sameContent = lastA && String(lastA.content || '').trim() === reply.trim();
+      const repeatedFallback = lastA && replyIntent && lastA.intent === replyIntent &&
+        /^(fallback|gemini_offline|off_hours)/.test(String(replyIntent));
+      if (sameContent || repeatedFallback) {
+        console.log('[inbound] skip duplicate reply', { sameContent, repeatedFallback, replyIntent });
+        return new Response(JSON.stringify({ ok: true, deduped: true }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
 
     // Loga resposta do assistente
     await supabase.from('ai_assistant_conversation').insert({ phone: norm, role: 'assistant', content: reply, intent: replyIntent });
