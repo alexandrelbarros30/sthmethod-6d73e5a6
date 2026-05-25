@@ -527,6 +527,55 @@ function TrainingCenter({ userId }: { userId?: string }) {
               </div>
             </div>
           </div>
+
+          <div className="border rounded-md p-3 bg-muted/20 space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1">
+                <Paperclip className="w-3.5 h-3.5" /> Anexos premium ({attachments.length})
+              </Label>
+              <label className="inline-flex">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,application/pdf,.jpg,.jpeg,.png,.pdf"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => { uploadFiles(e.target.files); e.currentTarget.value = ""; }}
+                />
+                <Button size="sm" variant="outline" disabled={uploading} asChild>
+                  <span className="cursor-pointer">
+                    {uploading ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Plus className="w-3.5 h-3.5 mr-1" />}
+                    Adicionar JPG/PNG/PDF
+                  </span>
+                </Button>
+              </label>
+            </div>
+            {attachments.length === 0 ? (
+              <p className="text-[11px] text-muted-foreground">
+                Imagens e PDFs serão enviados automaticamente junto da resposta no WhatsApp — ideal para tabelas, fichas e materiais visuais.
+              </p>
+            ) : (
+              <div className="space-y-1.5">
+                {attachments.map((a, i) => (
+                  <div key={i} className="flex items-center gap-2 p-2 rounded border bg-card text-xs">
+                    {a.kind === "image" ? (
+                      <img src={a.url} alt={a.name} className="w-10 h-10 object-cover rounded" />
+                    ) : (
+                      <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
+                        <FileText className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                    )}
+                    <a href={a.url} target="_blank" rel="noreferrer" className="flex-1 truncate hover:underline">
+                      {a.name || a.url}
+                    </a>
+                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removeAttachment(i)}>
+                      <X className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="flex gap-2 pt-2">
             <Button onClick={save} className="flex-1">
               <Save className="w-4 h-4 mr-1" />
