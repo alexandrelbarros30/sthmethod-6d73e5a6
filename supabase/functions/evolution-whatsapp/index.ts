@@ -65,7 +65,19 @@ Deno.serve(async (req) => {
       }
       case "qr":
       case "connect": {
-        const r = await evo(`/instance/connect/${instance}`);
+        // Evolution às vezes retorna { count: 0 } na primeira chamada.
+        // Tentamos até 4x com pequena espera para forçar a geração do QR.
+        let r = await evo(`/instance/connect/${instance}`);
+        for (let i = 0; i < 4; i++) {
+          const b: any = r.body ?? {};
+          if (b?.base64 || b?.code || b?.pairingCode || b?.qrcode) break;
+          await new Promise((res) => setTimeout(res, 700));
+          r = await evo(`/instance/connect/${instance}`);
+        }
+        return json(r.body, r.status);
+      }
+      case "fetchInstances": {
+        const r = await evo(`/instance/fetchInstances?instanceName=${encodeURIComponent(instance)}`);
         return json(r.body, r.status);
       }
       case "logout":
