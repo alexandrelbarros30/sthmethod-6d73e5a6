@@ -58,12 +58,12 @@ async function recreateInstance(instance: string) {
 }
 
 async function requestQr(instance: string, attempts = 5, waitMs = 800) {
-  let response = await evo(`/instance/connect/${instance}`);
+  let response = await evo(`/instance/connect/${instance}`, { method: "GET" });
 
   for (let i = 1; i < attempts; i++) {
     if (hasQrPayload(response.body)) break;
     await delay(waitMs);
-    response = await evo(`/instance/connect/${instance}`);
+    response = await evo(`/instance/connect/${instance}`, { method: "GET" });
   }
 
   return response;
