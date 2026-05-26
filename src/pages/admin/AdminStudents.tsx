@@ -35,6 +35,7 @@ import AdminEvolutionUpdate from "@/components/admin/AdminEvolutionUpdate";
 import ExcelJS from "exceljs";
 import AdminBioimpedance from "@/components/admin/AdminBioimpedance";
 import WhatsAppPopoverButton from "@/components/shared/WhatsAppPopoverButton";
+import NotifyStudentToggle from "@/components/admin/NotifyStudentToggle";
 import AdminMetabolicPanel from "@/components/admin/AdminMetabolicPanel";
 import AdminFlowStatusDialog from "@/components/admin/AdminFlowStatusDialog";
 import PreviewUnlockToggle from "@/components/admin/PreviewUnlockToggle";
@@ -1428,6 +1429,9 @@ const AdminStudents = () => {
                       <span className="font-medium">{selectedMerged.phone || "—"}</span>
                       {selectedMerged.phone && selectedMerged.phone.replace(/\D/g, "").length >= 10 && (
                         <WhatsAppPopoverButton phone={selectedMerged.phone} name={selectedMerged.full_name} size="sm" userId={selectedMerged.user_id} studentProfile={{ full_name: selectedMerged.full_name, email: selectedMerged.email, phone: selectedMerged.phone, weight: selectedMerged.weight, height: selectedMerged.height, objective: selectedMerged.objective, birth_date: selectedMerged.birth_date }} />
+                      )}
+                      {selectedMerged.user_id && (
+                        <NotifyStudentToggle userId={selectedMerged.user_id} />
                       )}
                     </div>
                     <div><span className="text-muted-foreground">Gênero:</span> <span className="font-medium capitalize">{selectedMerged.gender || "—"}</span></div>
