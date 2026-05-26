@@ -108,8 +108,8 @@ async function ensureInstance(instance: string, number?: string) {
     }
   }
 
-  for (let i = 0; i < 8; i++) {
-    await delay(1000);
+  for (let i = 0; i < 4; i++) {
+    await delay(800);
     const next = await evo(`/instance/connectionState/${instance}`);
     if (next.status !== 404) return { ...next, created: true };
 
@@ -132,8 +132,8 @@ async function recreateInstance(instance: string, number?: string) {
   await evo(`/instance/delete/${instance}`, { method: "DELETE" }).catch(() => {});
   await delay(700);
   await createInstance(instance, number);
-  for (let i = 0; i < 10; i++) {
-    await delay(1000);
+  for (let i = 0; i < 5; i++) {
+    await delay(800);
     const next = await evo(`/instance/connectionState/${instance}`);
     if (next.status !== 404) return;
     const listed = await findInstance(instance);
@@ -141,7 +141,7 @@ async function recreateInstance(instance: string, number?: string) {
   }
 }
 
-async function requestQr(instance: string, attempts = 5, waitMs = 800, number?: string) {
+async function requestQr(instance: string, attempts = 3, waitMs = 700, number?: string) {
   const n = sanitizeNumber(number);
   const path = n
     ? `/instance/connect/${instance}?number=${encodeURIComponent(n)}`
@@ -276,10 +276,10 @@ Deno.serve(async (req) => {
         const check = await ensureInstance(instance, number);
         let recovery: "none" | "restart" | "recreate" = "none";
 
-        let r = await requestQr(instance, 5, 800, number);
+        let r = await requestQr(instance, 3, 700, number);
         if (!hasQrPayload(r.body) && (check as any).created) {
-          await delay(1500);
-          r = await requestQr(instance, 8, 1200, number);
+          await delay(1000);
+          r = await requestQr(instance, 4, 900, number);
         }
 
         if (!hasQrPayload(r.body) && isEmptyConnectResponse(r.body)) {
@@ -289,15 +289,15 @@ Deno.serve(async (req) => {
           if (state !== "open") {
             await evo(`/instance/restart/${instance}`, { method: "POST" }).catch(() => {});
             recovery = "restart";
-            await delay(1500);
-            r = await requestQr(instance, 8, 1200, number);
+            await delay(1000);
+            r = await requestQr(instance, 4, 900, number);
           }
         }
 
         if (!hasQrPayload(r.body) && (r.status === 404 || isEmptyConnectResponse(r.body))) {
           await recreateInstance(instance, number);
           recovery = "recreate";
-          r = await requestQr(instance, 8, 1200, number);
+          r = await requestQr(instance, 4, 900, number);
         }
 
         if (!hasQrPayload(r.body)) {
