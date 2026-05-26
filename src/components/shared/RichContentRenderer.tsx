@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import DOMPurify from "dompurify";
 
 interface RichContentRendererProps {
   content: string;
@@ -59,6 +60,19 @@ const RichContentRenderer = ({
 
   if (isHTML) {
     const processedContent = addBulletsAndZebraToHTML(content, { showParagraphBullets, stripLeadingMarkers, showZebra });
+    const safeContent = DOMPurify.sanitize(processedContent, {
+      ALLOWED_TAGS: [
+        "p", "br", "hr", "span", "div",
+        "h1", "h2", "h3", "h4", "h5", "h6",
+        "ul", "ol", "li",
+        "strong", "b", "em", "i", "u", "s", "mark", "code",
+        "blockquote", "a",
+      ],
+      ALLOWED_ATTR: ["style", "class", "href", "target", "rel"],
+      ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+      FORBID_TAGS: ["script", "iframe", "object", "embed", "form", "input", "style"],
+      FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover"],
+    });
     return (
       <div
         className={cn(
@@ -76,7 +90,7 @@ const RichContentRenderer = ({
           "[&_s]:line-through",
           className
         )}
-        dangerouslySetInnerHTML={{ __html: processedContent }}
+        dangerouslySetInnerHTML={{ __html: safeContent }}
       />
     );
   }
