@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 type State = "open" | "close" | "connecting" | "unknown";
 
-const INSTANCE = "nutri";
+const INSTANCE = "atendimento";
 const PHONE_KEY = "admin_whatsapp_pairing_number";
 
 export default function AdminWhatsApp() {
