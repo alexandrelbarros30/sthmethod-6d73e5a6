@@ -218,12 +218,35 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case "status": {
-        const r = await evo(`/instance/connectionState/${instance}`);
-        // Instância não existe → trata como desconectada para o frontend parar de polling
-        if (r.status === 404) {
-          return json({ instance: { instanceName: instance, state: "close" } }, 200);
+        const snapshot = await resolveInstanceSnapshot(instance);
+        return json(snapshot.body, 200);
+      }
+      case "qr-status": {
+        const snapshot = await resolveInstanceSnapshot(instance);
+        const r = await requestQr(instance, 2, 1000);
+
+        if (hasQrPayload(r.body)) {
+          return json({
+            ...(typeof r.body === "object" && r.body ? r.body : { data: r.body }),
+            instance: {
+              instanceName: instance,
+              state: snapshot.state,
+            },
+          }, 200);
         }
-        return json(r.body, r.status);
+
+        return json({
+          ...(typeof r.body === "object" && r.body ? r.body : {}),
+          pending: true,
+          emptyConnectResponse: isEmptyConnectResponse(r.body),
+          message: isEmptyConnectResponse(r.body)
+            ? "A instância ainda não entregou o QR. Aguarde alguns segundos antes de tentar refazer a sessão."
+            : "A instância ainda está preparando o pareamento.",
+          instance: {
+            instanceName: instance,
+            state: snapshot.state === "open" ? "open" : "connecting",
+          },
+        }, 200);
       }
       case "qr":
       case "connect": {
@@ -237,8 +260,8 @@ Deno.serve(async (req) => {
         }
 
         if (!hasQrPayload(r.body) && isEmptyConnectResponse(r.body)) {
-          const currentState = await evo(`/instance/connectionState/${instance}`);
-          const state = currentState.body?.instance?.state ?? currentState.body?.state ?? "unknown";
+          const currentState = await resolveInstanceSnapshot(instance);
+          const state = currentState.state;
 
           if (state !== "open") {
             await evo(`/instance/restart/${instance}`, { method: "POST" }).catch(() => {});
@@ -255,7 +278,7 @@ Deno.serve(async (req) => {
         }
 
         if (!hasQrPayload(r.body)) {
-          const finalState = await evo(`/instance/connectionState/${instance}`);
+          const finalState = await resolveInstanceSnapshot(instance);
           return json({
             ...(typeof r.body === "object" && r.body ? r.body : {}),
             pending: true,
@@ -267,7 +290,7 @@ Deno.serve(async (req) => {
               : "A instância ainda está preparando o pareamento.",
             instance: {
               instanceName: instance,
-              state: finalState.body?.instance?.state ?? finalState.body?.state ?? "connecting",
+              state: finalState.state === "open" ? "open" : "connecting",
             },
           }, 200);
         }
@@ -279,8 +302,12 @@ Deno.serve(async (req) => {
         }, 200);
       }
       case "fetchInstances": {
-        const r = await evo(`/instance/fetchInstances?instanceName=${encodeURIComponent(instance)}`);
-        return json(r.body, r.status);
+        const items = await fetchInstances();
+        const filtered = items.filter((item: any) => {
+          const name = item?.instance?.instanceName ?? item?.instanceName;
+          return !instance || name === instance;
+        });
+        return json(filtered, 200);
       }
       case "delete": {
         const r = await evo(`/instance/delete/${instance}`, { method: "DELETE" });
