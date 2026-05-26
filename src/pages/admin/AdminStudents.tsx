@@ -1430,6 +1430,9 @@ const AdminStudents = () => {
                       {selectedMerged.phone && selectedMerged.phone.replace(/\D/g, "").length >= 10 && (
                         <WhatsAppPopoverButton phone={selectedMerged.phone} name={selectedMerged.full_name} size="sm" userId={selectedMerged.user_id} studentProfile={{ full_name: selectedMerged.full_name, email: selectedMerged.email, phone: selectedMerged.phone, weight: selectedMerged.weight, height: selectedMerged.height, objective: selectedMerged.objective, birth_date: selectedMerged.birth_date }} />
                       )}
+                      {selectedMerged.user_id && (
+                        <NotifyStudentToggle userId={selectedMerged.user_id} />
+                      )}
                     </div>
                     <div><span className="text-muted-foreground">Gênero:</span> <span className="font-medium capitalize">{selectedMerged.gender || "—"}</span></div>
                     <div><span className="text-muted-foreground">Nascimento:</span> <span className="font-medium">{selectedMerged.birth_date ? new Date(selectedMerged.birth_date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</span></div>
