@@ -16,6 +16,7 @@ export default function AdminWhatsApp() {
   const [state, setState] = useState<State>("unknown");
   const [qr, setQr] = useState<string | null>(null);
   const [pairing, setPairing] = useState<string | null>(null);
+  const [hint, setHint] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [number, setNumber] = useState("");
   const [text, setText] = useState("");
@@ -37,6 +38,7 @@ export default function AdminWhatsApp() {
       if (s === "open") {
         setQr(null);
         setPairing(null);
+        setHint(null);
       }
     } catch (e: any) {
       toast.error("Erro ao consultar status: " + e.message);
@@ -47,6 +49,7 @@ export default function AdminWhatsApp() {
     setLoading(true);
     setQr(null);
     setPairing(null);
+    setHint(null);
     try {
       let data = await call("qr");
 
@@ -79,7 +82,17 @@ export default function AdminWhatsApp() {
       }
 
       if (!data?.base64 && !data?.qrcode?.base64 && !data?.code && !data?.qrcode?.code && !data?.pairingCode && !data?.qrcode?.pairingCode) {
-        toast.message("Aguardando QR… a instância está preparando o pareamento.");
+        const nextHint = data?.message ?? (
+          data?.emptyConnectResponse
+            ? "O servidor respondeu sem QR por enquanto. Se isso continuar, use “Forçar nova sessão”."
+            : "A instância está preparando o pareamento. Aguarde alguns segundos e tente novamente."
+        );
+        setHint(nextHint);
+        toast.message(nextHint);
+      }
+
+      if (data?.recovered) {
+        toast.success("Sessão recuperada e novo QR solicitado.");
       }
 
       await refreshStatus();
@@ -107,6 +120,7 @@ export default function AdminWhatsApp() {
         }
 
         if (pair) setPairing(pair);
+        if (!base64 && !code && !pair && data?.message) setHint(data.message);
       } catch {
         // mantém polling silencioso enquanto conecta
       }
@@ -123,12 +137,33 @@ export default function AdminWhatsApp() {
       toast.success("Desconectado");
       setQr(null);
       setPairing(null);
+      setHint(null);
       await refreshStatus();
     } catch (e: any) {
       toast.error("Erro: " + e.message);
     } finally {
       setLoading(false);
     }
+  }
+
+  async function forceRecreate() {
+    if (!confirm("Refazer a sessão e gerar um novo QR?")) return;
+    setLoading(true);
+    setQr(null);
+    setPairing(null);
+    setHint("Refazendo a sessão para solicitar um novo QR…");
+
+    try {
+      await call("recreate");
+      toast.success("Sessão refeita. Gerando novo QR…");
+    } catch (e: any) {
+      toast.error("Erro ao refazer a sessão: " + e.message);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(false);
+    await connect();
   }
 
   async function sendTest() {
@@ -178,6 +213,9 @@ export default function AdminWhatsApp() {
             <Button variant="outline" onClick={refreshStatus}>
               <RefreshCw className="h-4 w-4 mr-2" /> Atualizar status
             </Button>
+            <Button variant="outline" onClick={forceRecreate} disabled={loading || state === "open"}>
+              <RefreshCw className="h-4 w-4 mr-2" /> Forçar nova sessão
+            </Button>
             <Button variant="destructive" onClick={disconnect} disabled={loading || state !== "open"}>
               <Power className="h-4 w-4 mr-2" /> Desconectar
             </Button>
@@ -203,7 +241,7 @@ export default function AdminWhatsApp() {
           )}
 
           {!qr && !pairing && state === "connecting" && (
-            <p className="text-sm text-muted-foreground pt-2">Preparando QR de conexão… atualize em alguns segundos se ele não aparecer.</p>
+            <p className="text-sm text-muted-foreground pt-2">{hint ?? "Preparando QR de conexão… atualize em alguns segundos se ele não aparecer."}</p>
           )}
 
           {state === "open" && (
