@@ -35,6 +35,7 @@ import AdminEvolutionUpdate from "@/components/admin/AdminEvolutionUpdate";
 import ExcelJS from "exceljs";
 import AdminBioimpedance from "@/components/admin/AdminBioimpedance";
 import WhatsAppPopoverButton from "@/components/shared/WhatsAppPopoverButton";
+import NotifyStudentToggle from "@/components/admin/NotifyStudentToggle";
 import AdminMetabolicPanel from "@/components/admin/AdminMetabolicPanel";
 import AdminFlowStatusDialog from "@/components/admin/AdminFlowStatusDialog";
 import PreviewUnlockToggle from "@/components/admin/PreviewUnlockToggle";
