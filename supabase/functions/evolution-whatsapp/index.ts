@@ -61,18 +61,27 @@ function isEmptyConnectResponse(body: any): boolean {
   );
 }
 
-async function createInstance(instance: string) {
+function sanitizeNumber(n?: string | null): string | undefined {
+  if (!n) return undefined;
+  const digits = String(n).replace(/\D/g, "");
+  return digits.length >= 10 ? digits : undefined;
+}
+
+async function createInstance(instance: string, number?: string) {
+  const body: Record<string, unknown> = {
+    instanceName: instance,
+    integration: "WHATSAPP-BAILEYS",
+    qrcode: true,
+  };
+  const n = sanitizeNumber(number);
+  if (n) body.number = n;
   return await evo(`/instance/create`, {
     method: "POST",
-    body: JSON.stringify({
-      instanceName: instance,
-      integration: "WHATSAPP-BAILEYS",
-      qrcode: true,
-    }),
+    body: JSON.stringify(body),
   });
 }
 
-async function ensureInstance(instance: string) {
+async function ensureInstance(instance: string, number?: string) {
   const check = await evo(`/instance/connectionState/${instance}`);
   if (check.status !== 404) return { ...check, created: false };
 
@@ -86,7 +95,7 @@ async function ensureInstance(instance: string) {
     };
   }
 
-  const created = await createInstance(instance);
+  const created = await createInstance(instance, number);
   if (!created.ok && created.status === 403) {
     const afterConflict = await findInstance(instance);
     if (afterConflict) {
@@ -118,11 +127,11 @@ async function ensureInstance(instance: string) {
   return { ...created, created: true };
 }
 
-async function recreateInstance(instance: string) {
+async function recreateInstance(instance: string, number?: string) {
   await evo(`/instance/logout/${instance}`, { method: "DELETE" }).catch(() => {});
   await evo(`/instance/delete/${instance}`, { method: "DELETE" }).catch(() => {});
   await delay(700);
-  await createInstance(instance);
+  await createInstance(instance, number);
   for (let i = 0; i < 10; i++) {
     await delay(1000);
     const next = await evo(`/instance/connectionState/${instance}`);
@@ -132,13 +141,17 @@ async function recreateInstance(instance: string) {
   }
 }
 
-async function requestQr(instance: string, attempts = 5, waitMs = 800) {
-  let response = await evo(`/instance/connect/${instance}`, { method: "GET" });
+async function requestQr(instance: string, attempts = 5, waitMs = 800, number?: string) {
+  const n = sanitizeNumber(number);
+  const path = n
+    ? `/instance/connect/${instance}?number=${encodeURIComponent(n)}`
+    : `/instance/connect/${instance}`;
+  let response = await evo(path, { method: "GET" });
 
   for (let i = 1; i < attempts; i++) {
     if (hasQrPayload(response.body)) break;
     await delay(waitMs);
-    response = await evo(`/instance/connect/${instance}`, { method: "GET" });
+    response = await evo(path, { method: "GET" });
   }
 
   return response;
@@ -215,6 +228,7 @@ Deno.serve(async (req) => {
     const payload = await req.json().catch(() => ({}));
     const action: string = payload.action ?? "status";
     const instance: string = payload.instance ?? DEFAULT_INSTANCE;
+    const number: string | undefined = sanitizeNumber(payload.number);
 
     switch (action) {
       case "status": {
@@ -223,7 +237,7 @@ Deno.serve(async (req) => {
       }
       case "qr-status": {
         const snapshot = await resolveInstanceSnapshot(instance);
-        const r = await requestQr(instance, 2, 1000);
+        const r = await requestQr(instance, 2, 1000, number);
 
         if (hasQrPayload(r.body)) {
           return json({
@@ -250,13 +264,13 @@ Deno.serve(async (req) => {
       }
       case "qr":
       case "connect": {
-        const check = await ensureInstance(instance);
+        const check = await ensureInstance(instance, number);
         let recovery: "none" | "restart" | "recreate" = "none";
 
-        let r = await requestQr(instance);
+        let r = await requestQr(instance, 5, 800, number);
         if (!hasQrPayload(r.body) && (check as any).created) {
           await delay(1500);
-          r = await requestQr(instance, 8, 1200);
+          r = await requestQr(instance, 8, 1200, number);
         }
 
         if (!hasQrPayload(r.body) && isEmptyConnectResponse(r.body)) {
@@ -267,14 +281,14 @@ Deno.serve(async (req) => {
             await evo(`/instance/restart/${instance}`, { method: "POST" }).catch(() => {});
             recovery = "restart";
             await delay(1500);
-            r = await requestQr(instance, 8, 1200);
+            r = await requestQr(instance, 8, 1200, number);
           }
         }
 
         if (!hasQrPayload(r.body) && (r.status === 404 || isEmptyConnectResponse(r.body))) {
-          await recreateInstance(instance);
+          await recreateInstance(instance, number);
           recovery = "recreate";
-          r = await requestQr(instance, 8, 1200);
+          r = await requestQr(instance, 8, 1200, number);
         }
 
         if (!hasQrPayload(r.body)) {
@@ -318,14 +332,7 @@ Deno.serve(async (req) => {
         await evo(`/instance/logout/${instance}`, { method: "DELETE" }).catch(() => {});
         await evo(`/instance/delete/${instance}`, { method: "DELETE" }).catch(() => {});
         await new Promise((r) => setTimeout(r, 500));
-        const create = await evo(`/instance/create`, {
-          method: "POST",
-          body: JSON.stringify({
-            instanceName: instance,
-            integration: "WHATSAPP-BAILEYS",
-            qrcode: true,
-          }),
-        });
+        const create = await createInstance(instance, number);
         return json(create.body, create.status);
       }
       case "logout":
@@ -338,14 +345,7 @@ Deno.serve(async (req) => {
         return json(r.body, r.status);
       }
       case "create": {
-        const r = await evo(`/instance/create`, {
-          method: "POST",
-          body: JSON.stringify({
-            instanceName: instance,
-            integration: "WHATSAPP-BAILEYS",
-            qrcode: true,
-          }),
-        });
+        const r = await createInstance(instance, number);
         return json(r.body, r.status);
       }
       case "send": {
