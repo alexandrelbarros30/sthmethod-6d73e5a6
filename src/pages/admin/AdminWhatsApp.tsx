@@ -11,6 +11,7 @@ import { toast } from "sonner";
 type State = "open" | "close" | "connecting" | "unknown";
 
 const INSTANCE = "nutri";
+const PHONE_KEY = "admin_whatsapp_pairing_number";
 
 export default function AdminWhatsApp() {
   const [state, setState] = useState<State>("unknown");
@@ -21,10 +22,19 @@ export default function AdminWhatsApp() {
   const [number, setNumber] = useState("");
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [pairingNumber, setPairingNumber] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return window.localStorage.getItem(PHONE_KEY) ?? "";
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (pairingNumber) window.localStorage.setItem(PHONE_KEY, pairingNumber);
+  }, [pairingNumber]);
 
   async function call(action: string, extra: Record<string, unknown> = {}) {
     const { data, error } = await supabase.functions.invoke("evolution-whatsapp", {
-      body: { action, instance: INSTANCE, ...extra },
+      body: { action, instance: INSTANCE, number: pairingNumber || undefined, ...extra },
     });
     if (error) throw new Error(error.message);
     return data as any;
@@ -205,6 +215,19 @@ export default function AdminWhatsApp() {
         </header>
 
         <Card className="p-6 space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Número do WhatsApp da instância (com DDI)</label>
+            <Input
+              placeholder="Ex: 5521998496289"
+              value={pairingNumber}
+              onChange={(e) => setPairingNumber(e.target.value.replace(/\D/g, ""))}
+              inputMode="numeric"
+            />
+            <p className="text-xs text-muted-foreground">
+              Informe o número que será pareado. Se preenchido, a Evolution gera também um <strong>código de pareamento</strong> de 8 caracteres como alternativa ao QR. Salvo localmente.
+            </p>
+          </div>
+
           <div className="flex flex-wrap gap-2">
             <Button onClick={connect} disabled={loading || state === "open"}>
               {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <QrCode className="h-4 w-4 mr-2" />}
