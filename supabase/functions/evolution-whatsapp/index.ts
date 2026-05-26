@@ -10,7 +10,7 @@ const corsHeaders = {
 
 const EVOLUTION_URL = (Deno.env.get("EVOLUTION_API_URL") ?? "").replace(/\/+$/, "");
 const EVOLUTION_KEY = Deno.env.get("EVOLUTION_API_KEY") ?? "";
-const DEFAULT_INSTANCE = "sth-method";
+const DEFAULT_INSTANCE = "nutri";
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
