@@ -61,10 +61,27 @@ Deno.serve(async (req) => {
     switch (action) {
       case "status": {
         const r = await evo(`/instance/connectionState/${instance}`);
+        // Instância não existe → trata como desconectada para o frontend parar de polling
+        if (r.status === 404) {
+          return json({ instance: { instanceName: instance, state: "close" } }, 200);
+        }
         return json(r.body, r.status);
       }
       case "qr":
       case "connect": {
+        // Se a instância não existe, cria antes de pedir o QR
+        const check = await evo(`/instance/connectionState/${instance}`);
+        if (check.status === 404) {
+          await evo(`/instance/create`, {
+            method: "POST",
+            body: JSON.stringify({
+              instanceName: instance,
+              integration: "WHATSAPP-BAILEYS",
+              qrcode: true,
+            }),
+          });
+          await new Promise((res) => setTimeout(res, 800));
+        }
         // Evolution às vezes retorna { count: 0 } na primeira chamada.
         // Tentamos até 4x com pequena espera para forçar a geração do QR.
         let r = await evo(`/instance/connect/${instance}`);
