@@ -80,6 +80,25 @@ Deno.serve(async (req) => {
         const r = await evo(`/instance/fetchInstances?instanceName=${encodeURIComponent(instance)}`);
         return json(r.body, r.status);
       }
+      case "delete": {
+        const r = await evo(`/instance/delete/${instance}`, { method: "DELETE" });
+        return json(r.body, r.status);
+      }
+      case "recreate": {
+        // Apaga (se existir) e recria com qrcode habilitado.
+        await evo(`/instance/logout/${instance}`, { method: "DELETE" }).catch(() => {});
+        await evo(`/instance/delete/${instance}`, { method: "DELETE" }).catch(() => {});
+        await new Promise((r) => setTimeout(r, 500));
+        const create = await evo(`/instance/create`, {
+          method: "POST",
+          body: JSON.stringify({
+            instanceName: instance,
+            integration: "WHATSAPP-BAILEYS",
+            qrcode: true,
+          }),
+        });
+        return json(create.body, create.status);
+      }
       case "logout":
       case "disconnect": {
         const r = await evo(`/instance/logout/${instance}`, { method: "DELETE" });
