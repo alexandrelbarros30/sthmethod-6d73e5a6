@@ -184,18 +184,27 @@ async function resolveInstanceSnapshot(instance: string) {
 }
 
 async function evo(path: string, init: RequestInit = {}) {
-  const res = await fetch(`${EVOLUTION_URL}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      apikey: EVOLUTION_KEY,
-      ...(init.headers ?? {}),
-    },
-  });
-  const text = await res.text();
-  let body: any = text;
-  try { body = JSON.parse(text); } catch { /* keep text */ }
-  return { ok: res.ok, status: res.status, body };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(`${EVOLUTION_URL}${path}`, {
+      ...init,
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        apikey: EVOLUTION_KEY,
+        ...(init.headers ?? {}),
+      },
+    });
+    const text = await res.text();
+    let body: any = text;
+    try { body = JSON.parse(text); } catch { /* keep text */ }
+    return { ok: res.ok, status: res.status, body };
+  } catch (e) {
+    return { ok: false, status: 599, body: { error: (e as Error).message, timeout: true } };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 Deno.serve(async (req) => {
