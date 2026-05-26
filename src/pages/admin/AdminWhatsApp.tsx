@@ -77,7 +77,7 @@ export default function AdminWhatsApp() {
 
         if (i < 4) {
           await new Promise((resolve) => setTimeout(resolve, 1200));
-          data = await call("qr");
+          data = await call("qr-status");
         }
       }
 
@@ -108,7 +108,7 @@ export default function AdminWhatsApp() {
 
     const id = setInterval(async () => {
       try {
-        const data = await call("qr");
+        const data = await call("qr-status");
         const base64 = data?.base64 ?? data?.qrcode?.base64;
         const code = data?.code ?? data?.qrcode?.code;
         const pair = data?.pairingCode ?? data?.qrcode?.pairingCode;
