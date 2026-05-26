@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
 
     // Load contacts (profiles + latest subscription)
     const { data: profiles } = await supabase
-      .from('profiles').select('user_id, full_name, email, phone, gender, objective, onboarding_complete').limit(5000);
+      .from('profiles').select('user_id, full_name, email, phone, gender, objective, onboarding_complete, notify_on_updates').limit(5000);
     const userIds = (profiles || []).map((p: any) => p.user_id);
     const { data: subs } = await supabase
       .from('subscriptions').select('user_id, plan_id, end_date, status').in('user_id', userIds);
@@ -129,6 +129,7 @@ Deno.serve(async (req) => {
       })
       .filter((c) => {
         if (!c.phone) return false;
+        if ((c as any).notify_on_updates === false) return false;
         if (filters.status && filters.status !== 'all') {
           if (filters.status === 'inactive') {
             // inativo = vencido há mais de 30 dias
