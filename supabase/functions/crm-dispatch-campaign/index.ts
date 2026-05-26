@@ -125,6 +125,7 @@ Deno.serve(async (req) => {
           status,
           plan_name: sub ? plansMap.get(sub.plan_id) : '',
           days,
+          notify_on_updates: p.notify_on_updates,
         };
       })
       .filter((c) => {
