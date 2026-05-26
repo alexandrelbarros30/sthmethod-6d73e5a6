@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 type State = "open" | "close" | "connecting" | "unknown";
 
-const INSTANCE = "sth-method";
+const INSTANCE = "nutri";
 
 export default function AdminWhatsApp() {
   const [state, setState] = useState<State>("unknown");
