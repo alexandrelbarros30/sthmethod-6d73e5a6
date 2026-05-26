@@ -12,6 +12,63 @@ const EVOLUTION_URL = (Deno.env.get("EVOLUTION_API_URL") ?? "").replace(/\/+$/, 
 const EVOLUTION_KEY = Deno.env.get("EVOLUTION_API_KEY") ?? "";
 const DEFAULT_INSTANCE = "sth-method";
 
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function hasQrPayload(body: any): boolean {
+  if (!body) return false;
+  if (Array.isArray(body)) return body.some(hasQrPayload);
+
+  return Boolean(
+    body?.base64 ||
+    body?.code ||
+    body?.pairingCode ||
+    body?.qrcode ||
+    body?.qrcode?.base64 ||
+    body?.qrcode?.code ||
+    body?.qrcode?.pairingCode
+  );
+}
+
+async function createInstance(instance: string) {
+  return await evo(`/instance/create`, {
+    method: "POST",
+    body: JSON.stringify({
+      instanceName: instance,
+      integration: "WHATSAPP-BAILEYS",
+      qrcode: true,
+    }),
+  });
+}
+
+async function ensureInstance(instance: string) {
+  const check = await evo(`/instance/connectionState/${instance}`);
+  if (check.status !== 404) return check;
+
+  await createInstance(instance);
+  await delay(1000);
+  return await evo(`/instance/connectionState/${instance}`);
+}
+
+async function recreateInstance(instance: string) {
+  await evo(`/instance/logout/${instance}`, { method: "DELETE" }).catch(() => {});
+  await evo(`/instance/delete/${instance}`, { method: "DELETE" }).catch(() => {});
+  await delay(700);
+  await createInstance(instance);
+  await delay(1200);
+}
+
+async function requestQr(instance: string, attempts = 5, waitMs = 800) {
+  let response = await evo(`/instance/connect/${instance}`);
+
+  for (let i = 1; i < attempts; i++) {
+    if (hasQrPayload(response.body)) break;
+    await delay(waitMs);
+    response = await evo(`/instance/connect/${instance}`);
+  }
+
+  return response;
+}
+
 async function evo(path: string, init: RequestInit = {}) {
   const res = await fetch(`${EVOLUTION_URL}${path}`, {
     ...init,
@@ -69,29 +126,30 @@ Deno.serve(async (req) => {
       }
       case "qr":
       case "connect": {
-        // Se a instância não existe, cria antes de pedir o QR
-        const check = await evo(`/instance/connectionState/${instance}`);
-        if (check.status === 404) {
-          await evo(`/instance/create`, {
-            method: "POST",
-            body: JSON.stringify({
+        const check = await ensureInstance(instance);
+
+        let r = await requestQr(instance);
+        if (!hasQrPayload(r.body)) {
+          const state = check.body?.instance?.state ?? check.body?.state ?? "unknown";
+          if (r.status === 404 || r.body?.count === 0 || state === "connecting") {
+            await recreateInstance(instance);
+            r = await requestQr(instance, 6, 1000);
+          }
+        }
+
+        if (!hasQrPayload(r.body)) {
+          const finalState = await evo(`/instance/connectionState/${instance}`);
+          return json({
+            ...(typeof r.body === "object" && r.body ? r.body : {}),
+            pending: true,
+            instance: {
               instanceName: instance,
-              integration: "WHATSAPP-BAILEYS",
-              qrcode: true,
-            }),
-          });
-          await new Promise((res) => setTimeout(res, 800));
+              state: finalState.body?.instance?.state ?? finalState.body?.state ?? "connecting",
+            },
+          }, 200);
         }
-        // Evolution às vezes retorna { count: 0 } na primeira chamada.
-        // Tentamos até 4x com pequena espera para forçar a geração do QR.
-        let r = await evo(`/instance/connect/${instance}`);
-        for (let i = 0; i < 4; i++) {
-          const b: any = r.body ?? {};
-          if (b?.base64 || b?.code || b?.pairingCode || b?.qrcode) break;
-          await new Promise((res) => setTimeout(res, 700));
-          r = await evo(`/instance/connect/${instance}`);
-        }
-        return json(r.body, r.status);
+
+        return json(r.body, 200);
       }
       case "fetchInstances": {
         const r = await evo(`/instance/fetchInstances?instanceName=${encodeURIComponent(instance)}`);

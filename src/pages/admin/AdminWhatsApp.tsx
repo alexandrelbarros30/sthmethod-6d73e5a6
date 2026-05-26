@@ -46,20 +46,42 @@ export default function AdminWhatsApp() {
   async function connect() {
     setLoading(true);
     setQr(null);
+    setPairing(null);
     try {
-      const data = await call("qr");
-      const base64 = data?.base64 ?? data?.qrcode?.base64;
-      const code = data?.code ?? data?.qrcode?.code;
-      const pair = data?.pairingCode ?? data?.qrcode?.pairingCode;
-      if (base64) {
-        setQr(base64.startsWith("data:") ? base64 : `data:image/png;base64,${base64}`);
-      } else if (code) {
-        // fallback render via QR provider
-        setQr(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(code)}`);
-      } else {
-        toast.message("Resposta sem QR — talvez já conectado.");
+      let data = await call("qr");
+
+      for (let i = 0; i < 5; i++) {
+        const base64 = data?.base64 ?? data?.qrcode?.base64;
+        const code = data?.code ?? data?.qrcode?.code;
+        const pair = data?.pairingCode ?? data?.qrcode?.pairingCode;
+
+        if (base64) {
+          setQr(base64.startsWith("data:") ? base64 : `data:image/png;base64,${base64}`);
+          if (pair) setPairing(pair);
+          break;
+        }
+
+        if (code) {
+          setQr(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(code)}`);
+          if (pair) setPairing(pair);
+          break;
+        }
+
+        if (pair) {
+          setPairing(pair);
+          break;
+        }
+
+        if (i < 4) {
+          await new Promise((resolve) => setTimeout(resolve, 1200));
+          data = await call("qr");
+        }
       }
-      if (pair) setPairing(pair);
+
+      if (!data?.base64 && !data?.qrcode?.base64 && !data?.code && !data?.qrcode?.code && !data?.pairingCode && !data?.qrcode?.pairingCode) {
+        toast.message("Aguardando QR… a instância está preparando o pareamento.");
+      }
+
       await refreshStatus();
     } catch (e: any) {
       toast.error("Falha ao gerar QR: " + e.message);
@@ -146,6 +168,17 @@ export default function AdminWhatsApp() {
                 <p className="text-sm">Código de pareamento: <code className="font-mono">{pairing}</code></p>
               )}
             </div>
+          )}
+
+          {!qr && pairing && state !== "open" && (
+            <div className="pt-4 border-t border-border text-center space-y-2">
+              <p className="text-sm text-muted-foreground">Use o código de pareamento no WhatsApp para concluir a conexão.</p>
+              <p className="text-base">Código: <code className="font-mono">{pairing}</code></p>
+            </div>
+          )}
+
+          {!qr && !pairing && state === "connecting" && (
+            <p className="text-sm text-muted-foreground pt-2">Preparando QR de conexão… atualize em alguns segundos se ele não aparecer.</p>
           )}
 
           {state === "open" && (
