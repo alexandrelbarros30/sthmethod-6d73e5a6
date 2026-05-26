@@ -90,6 +90,31 @@ export default function AdminWhatsApp() {
     }
   }
 
+  useEffect(() => {
+    if (state !== "connecting" || qr) return;
+
+    const id = setInterval(async () => {
+      try {
+        const data = await call("qr");
+        const base64 = data?.base64 ?? data?.qrcode?.base64;
+        const code = data?.code ?? data?.qrcode?.code;
+        const pair = data?.pairingCode ?? data?.qrcode?.pairingCode;
+
+        if (base64) {
+          setQr(base64.startsWith("data:") ? base64 : `data:image/png;base64,${base64}`);
+        } else if (code) {
+          setQr(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(code)}`);
+        }
+
+        if (pair) setPairing(pair);
+      } catch {
+        // mantém polling silencioso enquanto conecta
+      }
+    }, 2500);
+
+    return () => clearInterval(id);
+  }, [state, qr]);
+
   async function disconnect() {
     if (!confirm("Desconectar a sessão do WhatsApp?")) return;
     setLoading(true);

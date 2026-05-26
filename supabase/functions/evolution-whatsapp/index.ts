@@ -42,11 +42,12 @@ async function createInstance(instance: string) {
 
 async function ensureInstance(instance: string) {
   const check = await evo(`/instance/connectionState/${instance}`);
-  if (check.status !== 404) return check;
+  if (check.status !== 404) return { ...check, created: false };
 
   await createInstance(instance);
   await delay(1000);
-  return await evo(`/instance/connectionState/${instance}`);
+  const next = await evo(`/instance/connectionState/${instance}`);
+  return { ...next, created: true };
 }
 
 async function recreateInstance(instance: string) {
@@ -58,12 +59,12 @@ async function recreateInstance(instance: string) {
 }
 
 async function requestQr(instance: string, attempts = 5, waitMs = 800) {
-  let response = await evo(`/instance/connect/${instance}`);
+  let response = await evo(`/instance/connect/${instance}`, { method: "GET" });
 
   for (let i = 1; i < attempts; i++) {
     if (hasQrPayload(response.body)) break;
     await delay(waitMs);
-    response = await evo(`/instance/connect/${instance}`);
+    response = await evo(`/instance/connect/${instance}`, { method: "GET" });
   }
 
   return response;
@@ -129,12 +130,14 @@ Deno.serve(async (req) => {
         const check = await ensureInstance(instance);
 
         let r = await requestQr(instance);
-        if (!hasQrPayload(r.body)) {
-          const state = check.body?.instance?.state ?? check.body?.state ?? "unknown";
-          if (r.status === 404 || r.body?.count === 0 || state === "connecting") {
-            await recreateInstance(instance);
-            r = await requestQr(instance, 6, 1000);
-          }
+        if (!hasQrPayload(r.body) && (check as any).created) {
+          await delay(1500);
+          r = await requestQr(instance, 8, 1200);
+        }
+
+        if (!hasQrPayload(r.body) && r.status === 404) {
+          await recreateInstance(instance);
+          r = await requestQr(instance, 8, 1200);
         }
 
         if (!hasQrPayload(r.body)) {
