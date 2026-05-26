@@ -29,6 +29,16 @@ function hasQrPayload(body: any): boolean {
   );
 }
 
+function isEmptyConnectResponse(body: any): boolean {
+  return Boolean(
+    body &&
+    typeof body === "object" &&
+    !Array.isArray(body) &&
+    Number(body?.count ?? -1) === 0 &&
+    !hasQrPayload(body)
+  );
+}
+
 async function createInstance(instance: string) {
   return await evo(`/instance/create`, {
     method: "POST",
@@ -128,6 +138,7 @@ Deno.serve(async (req) => {
       case "qr":
       case "connect": {
         const check = await ensureInstance(instance);
+        let recovery: "none" | "restart" | "recreate" = "none";
 
         let r = await requestQr(instance);
         if (!hasQrPayload(r.body) && (check as any).created) {
@@ -135,8 +146,21 @@ Deno.serve(async (req) => {
           r = await requestQr(instance, 8, 1200);
         }
 
-        if (!hasQrPayload(r.body) && r.status === 404) {
+        if (!hasQrPayload(r.body) && isEmptyConnectResponse(r.body)) {
+          const currentState = await evo(`/instance/connectionState/${instance}`);
+          const state = currentState.body?.instance?.state ?? currentState.body?.state ?? "unknown";
+
+          if (state !== "open") {
+            await evo(`/instance/restart/${instance}`, { method: "POST" }).catch(() => {});
+            recovery = "restart";
+            await delay(1500);
+            r = await requestQr(instance, 8, 1200);
+          }
+        }
+
+        if (!hasQrPayload(r.body) && (r.status === 404 || isEmptyConnectResponse(r.body))) {
           await recreateInstance(instance);
+          recovery = "recreate";
           r = await requestQr(instance, 8, 1200);
         }
 
@@ -145,6 +169,12 @@ Deno.serve(async (req) => {
           return json({
             ...(typeof r.body === "object" && r.body ? r.body : {}),
             pending: true,
+            emptyConnectResponse: isEmptyConnectResponse(r.body),
+            recovery,
+            recoveryAttempted: recovery !== "none",
+            message: isEmptyConnectResponse(r.body)
+              ? "A instância respondeu sem QR. A sessão foi reiniciada e pode levar alguns segundos para gerar um novo código."
+              : "A instância ainda está preparando o pareamento.",
             instance: {
               instanceName: instance,
               state: finalState.body?.instance?.state ?? finalState.body?.state ?? "connecting",
@@ -152,7 +182,11 @@ Deno.serve(async (req) => {
           }, 200);
         }
 
-        return json(r.body, 200);
+        return json({
+          ...(typeof r.body === "object" && r.body ? r.body : { data: r.body }),
+          recovery,
+          recovered: recovery !== "none",
+        }, 200);
       }
       case "fetchInstances": {
         const r = await evo(`/instance/fetchInstances?instanceName=${encodeURIComponent(instance)}`);
