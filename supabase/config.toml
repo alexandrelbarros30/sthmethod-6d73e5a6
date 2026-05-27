@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.whatsapp-inbound-ai]
 verify_jwt = false
+
+[functions.send-wapi]
+verify_jwt = false
