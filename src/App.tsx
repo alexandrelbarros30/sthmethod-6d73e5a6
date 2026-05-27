@@ -87,6 +87,7 @@ import AdminTeleatendimento from "./pages/admin/AdminTeleatendimento";
 import AdminBilling from "./pages/admin/AdminBilling";
 import AdminCRM from "./pages/admin/AdminCRM";
 import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
+import AdminFaleNutri from "./pages/admin/AdminFaleNutri";
 import StudentConsultas from "./pages/student/StudentConsultas";
 import ConsultorDashboard from "./pages/consultor/ConsultorDashboard";
 import AssistenteDashboard from "./pages/assistente/AssistenteDashboard";
@@ -231,6 +232,7 @@ const App = () => (
             <Route path="/admin/billing" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBilling area="admin" /></ProtectedRoute>} />
             <Route path="/admin/crm" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCRM area="admin" /></ProtectedRoute>} />
             <Route path="/admin/whatsapp" element={<ProtectedRoute allowedRoles={["admin"]}><AdminWhatsApp /></ProtectedRoute>} />
+            <Route path="/admin/fale-nutri" element={<ProtectedRoute allowedRoles={["admin"]}><AdminFaleNutri /></ProtectedRoute>} />
             {/* Consultor routes */}
             <Route path="/consultor" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
             <Route path="/consultor/students" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
