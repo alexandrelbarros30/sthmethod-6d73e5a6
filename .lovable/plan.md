@@ -1,124 +1,86 @@
 
-# CRM STH — Sistema Operacional de Atendimento (WhatsApp)
+# Configurações do Motor de Resposta e APIs (CRM)
 
-Substituir os dois CRMs atuais (`/admin/crm` campanhas e `/admin/fale-nutri`) por **um único sistema operacional de atendimento** com **dois canais isolados**: **STH One** (comercial) e **Fale com o Nutri** (alunos ativos). Tudo dentro do design system existente (preto, verde neon STH METHOD, cards arredondados, tipografia Apple).
-
-> A página atual `/admin/crm` (campanhas/mídias/templates de marketing) **permanece intacta** — ela cuida de campanhas em massa. O novo CRM é operacional, de 1:1, atendimento humano.
+Nova área **somente Admin** dentro do CRM (`/admin/atendimento`) para configurar, monitorar e auditar os dois canais (**STH One** e **Fale com o Nutri**) e suas APIs de WhatsApp (WAPI, Z-API, Evolution, Cloud API), com motor de resposta por canal e logs de auditoria.
 
 ---
 
 ## 1. Banco de dados (1 migration)
 
-Novas tabelas em `public`:
+Tabelas em `public` (todas com GRANT `authenticated`/`service_role`, RLS `admin`-only via `has_role`):
 
-- **`crm_contacts`** — toda pessoa que escreve no WhatsApp (lead ou aluno)
-  - `id`, `phone` (único, normalizado), `full_name`, `email`, `user_id` (FK opcional p/ aluno cadastrado), `kind` (`lead` | `student` | `unknown`), `plan_name`, `plan_start`, `plan_end`, `plan_status`, `last_weight_update`, `notes`, `tags` (text[]), `created_at`, `updated_at`
-- **`crm_tickets`** — um por atendimento
-  - `id`, `protocol` (texto único — `STH-000001` / `NUT-000001`), `protocol_seq` (bigint), `channel` (`sth_one` | `fale_nutri`), `contact_id` (FK), `type` (`lead`|`aluno`|`financeiro`|`suporte`|`nutri`), `status` (enum por canal), `priority` (`low`|`medium`|`high`|`sensitive`), `assigned_to` (uuid user), `tags` (text[]), `internal_notes`, `first_message_at`, `last_message_at`, `closed_at`, `created_at`, `updated_at`
-- **`crm_ticket_messages`** — histórico unificado
-  - `id`, `ticket_id`, `direction` (`in`|`out`), `body`, `media_url`, `message_id` (provider), `instance_id`, `phone`, `status` (`received`|`sent`|`delivered`|`read`|`failed`), `provider` (`wapi`|`zapi`|`cloud`), `created_at`
-- **`crm_templates`** — templates de resposta operacional (separado de `crm_templates` de campanhas — usar nome `crm_op_templates`)
-  - `id`, `channel`, `category` (boas_vindas, registrado, pagamento_pendente, atualizacao, encerramento, ausencia, etc.), `title`, `body`, `active`
-- **`crm_webhook_logs`** — auditoria bruta
-  - `id`, `provider`, `payload` (jsonb), `processed`, `error`, `created_at`
-- **Sequences**: `crm_protocol_seq_sth`, `crm_protocol_seq_nut` p/ gerar `STH-000001`/`NUT-000001`
+- **`api_channels`** — `id`, `name`, `channel_type` (`comercial`|`atendimento_personalizado`), `whatsapp_number`, `provider` (`wapi`|`zapi`|`evolution`|`cloud`), `instance_id`, `instance_name`, `base_url`, `webhook_url`, `status` (`ativo`|`inativo`|`manutencao`), `is_active`, `responsible_user_id` (uuid), `description`, `connection_status` (`connected`|`disconnected`|`pending`|`error`), `connected_number`, `qr_code`, `last_sync_at`, timestamps.
+- **`api_credentials`** — `id`, `channel_id` (FK unique), campos `*_encrypted` (texto cifrado via `pgsodium`/`pgp_sym_encrypt` usando segredo do projeto; se `pgsodium` indisponível, usar coluna `text` opaca + máscara no front e nunca expor sem permissão), `token_expires_at`, timestamps.
+  - Decisão: usar `pgp_sym_encrypt(value, current_setting('app.crm_secret'))` é frágil; manteremos colunas como `text` **sem GRANT a anon**, RLS apenas admin, e o front sempre mostra máscara `••••••••` exceto ao clicar "mostrar". Aceita o critério de "ocultos por padrão".
+- **`response_engine_settings`** — `id`, `channel_id` (FK unique), `ai_enabled`, `human_enabled`, `auto_reply_enabled`, `business_hours` (jsonb: dias × janelas), `after_hours_message`, `max_auto_replies`, `handoff_to_human_after_minutes`, `ai_model`, `main_prompt`, `safety_prompt`, `fallback_prompt`, `temperature` (numeric), timestamps.
+- **`api_logs`** — `id`, `channel_id`, `provider`, `event_type` (enum livre: `channel_enabled`, `channel_disabled`, `api_configured`, `token_updated`, `webhook_changed`, `connection_tested`, `send_error`, `receive_error`, `engine_failure`, `human_handoff`, `ticket_closed`, `credential_viewed`), `event_description`, `status` (`success`|`error`|`info`), `error_message`, `user_id`, `ip`, `created_at`.
 
-**Aproveitar o que já existe:**
-- `nutri_messages`, `nutri_conversations`, `nutri_opt_outs`, `nutri_templates`, `nutri_away_throttle`, `nutri_business_hours` → ficam como estão; novas mensagens W-API entram no novo fluxo, mas o histórico antigo continua acessível em backup.
-- `subscriptions`, `profiles` → fonte de verdade pra identificar aluno ativo.
+**Seed:** insere 2 canais: `STH One` (comercial, provider `zapi`) e `Fale com o Nutri` (atendimento_personalizado, provider `wapi`), com `response_engine_settings` padrão.
 
-**Funções/triggers:**
-- `crm_route_inbound(phone, body, provider, message_id, instance_id)` — função SECURITY DEFINER que: identifica contact, decide canal (aluno ativo → `fale_nutri`, senão → `sth_one`), cria/atualiza ticket aberto (ou reabre), insere mensagem, classifica prioridade (regex sensível: `dor|colateral|tontura|pressão|glicemia|reação|ansiedade|sintoma|sangra|mal[- ]estar`), aplica tags automáticas.
-- Trigger BEFORE INSERT em `crm_tickets` que gera `protocol` via sequence + canal.
-
-**RLS:** todas as tabelas → apenas roles `admin`, `consultor`, `assistente`, `financeiro` (via `has_role`). `service_role` total para edge functions.
-
-**GRANTS:** `authenticated` (SELECT/INSERT/UPDATE/DELETE) + `service_role` (ALL). Sem `anon`.
+**RLS:** `SELECT/INSERT/UPDATE/DELETE` apenas para `has_role(auth.uid(),'admin')`. `service_role` ALL (edge functions). `api_credentials` nunca acessível por `anon`.
 
 ---
 
-## 2. Edge functions
+## 2. Edge function
 
-- **`crm-inbound`** (nova) — webhook único multi-provider (W-API, Z-API, Cloud API). Loga em `crm_webhook_logs`, chama `crm_route_inbound`, dispara auto-reply (boas-vindas + ausência usando `nutri_business_hours` reaproveitado).
-- **`crm-send`** (nova) — envia mensagem outbound; escolhe `send-wapi` (canal Nutri) ou `send-whatsapp` Z-API (canal comercial) conforme `ticket.channel`. Grava `crm_ticket_messages` direction=out.
-- **Reaproveitar** `wapi-inbound-nutri` e `whatsapp-inbound-ai` apontando o roteamento para `crm-inbound` (mantêm compatibilidade dos webhooks já registrados).
+- **`crm-test-connection`** (nova) — recebe `channel_id`, lê credenciais, faz ping no provedor (W-API/Z-API/Evolution/Cloud), atualiza `connection_status`, `connected_number`, `last_sync_at` em `api_channels`, registra `api_logs`. Retorna `{ ok, status, number, error }`.
 
 ---
 
-## 3. Frontend — nova rota `/admin/atendimento` (CRM operacional)
+## 3. Frontend
 
-Arquivo principal: `src/pages/admin/AdminAtendimento.tsx`.
-Componentes em `src/components/admin/atendimento/`:
+Nova rota: `/admin/atendimento/configuracoes` (protegida por `has_role admin`).
 
-- `AtendimentoLayout.tsx` — header com seletor de canal (toggle pill STH One / Fale com o Nutri) + tabs.
-- `DashboardCards.tsx` — métricas do dia (atendimentos, leads novos, alunos em atendimento, sensíveis, pagamentos pendentes, tempo médio resposta, finalizados).
-- `TicketList.tsx` — lista filtrável (status, prioridade, tag, responsável, busca por nome/fone/protocolo).
-- `TicketKanban.tsx` — colunas por status do canal selecionado, drag & drop com `dnd-kit` (já no projeto).
-- `TicketDetail.tsx` — chat central + ficha lateral do contato (nome, fone, plano, início/fim, última atualização, notas, tags, histórico de tickets anteriores).
-- `TemplatesPanel.tsx` — CRUD de `crm_op_templates`.
-- `TagsManager.tsx` — gerenciar conjunto de tags.
-- `QueueColumns.tsx` — definição dos status por canal.
+Arquivos:
+- `src/pages/admin/AdminMotorRespostaApis.tsx` — página com 4 abas: **Canais**, **APIs & Credenciais**, **Motor de Resposta**, **Logs**.
+- `src/components/admin/motor-respostas/ChannelCard.tsx` — card por canal com toggle ativo, status badge (verde/cinza/âmbar), botões Testar/Reconectar/Desativar.
+- `src/components/admin/motor-respostas/ChannelConfigDialog.tsx` — edita `api_channels` (nome, tipo, número, responsável, descrição, status).
+- `src/components/admin/motor-respostas/ApiCredentialsForm.tsx` — formulário dinâmico por `provider` (campos relevantes), com botões **mostrar/ocultar**, **copiar**, **testar conexão**, **reconectar**.
+- `src/components/admin/motor-respostas/ResponseEngineForm.tsx` — IA on/off, humano on/off, auto-reply, horário, mensagens, modelo IA (select dos Lovable AI), prompts (principal/segurança/fallback), temperatura (slider), handoff, limite mensagens.
+- `src/components/admin/motor-respostas/ApiLogsTable.tsx` — tabela filtrável (canal, evento, status, período).
 
-**Status por canal:**
-- STH One: `novo_lead`, `em_atendimento`, `checkout_enviado`, `pagamento_pendente`, `pagamento_aprovado`, `convertido`, `perdido`.
-- Fale com o Nutri: `aguardando`, `prioridade_sensivel`, `em_acompanhamento`, `aguardando_atualizacao`, `ajuste_solicitado`, `finalizado`.
+Integrar entrada no `AdminAtendimento.tsx`: botão "⚙ Configurações" no header (visível só para admin) → navega para a nova rota. Também adicionar item na sidebar admin: "Motor de Resposta & APIs".
 
-**Tags padrão (seed):** Aluno ativo, Lead quente, Lead frio, Pagamento pendente, Precisa atualizar fotos, Prioridade sensível, Fale com o Nutri, Comercial, Renovação, Protocolo, Dieta, Treino, Exames.
-
-**Visual:**
-- Canal **STH One** → acento âmbar/branco, linguagem comercial nos placeholders.
-- Canal **Fale com o Nutri** → acento verde neon STH, tom humanizado.
-- Layout Apple: fundo `bg-background`, cards `rounded-2xl border border-border/40`, blur sutil no header, tipografia `tracking-tight`.
+**Visual:** dark, cards `rounded-2xl border border-border/40`, acentos `text-primary` (verde neon STH), badges de status (verde/cinza/âmbar/vermelho), tipografia `tracking-tight`, ocultação por padrão de campos sensíveis (`type="password"` + olhinho).
 
 ---
 
-## 4. Roteamento e migração das rotas antigas
+## 4. Segurança e auditoria
 
-- `/admin/atendimento` → novo CRM operacional.
-- `/admin/fale-nutri` → **redirect** para `/admin/atendimento?channel=fale_nutri`.
-- `/admin/crm` (campanhas em massa) → **mantido** como está (é outro produto).
-- Sidebar admin: substituir o item "Fale com o Nutri" por "Atendimento (CRM)" e remover duplicidade.
-
----
-
-## 5. Controle de acesso
-
-Roles existentes (`admin`, `consultor`, `assistente`, `financeiro`) liberadas via `has_role`. Sem novos roles.
+- Toda visualização de credencial chama uma função RPC `log_credential_view(channel_id)` que grava `event_type='credential_viewed'`.
+- Toda mudança em `api_credentials` / `api_channels.status` grava log via trigger AFTER UPDATE.
+- Botões "Testar conexão" e "Reconectar" sempre registram log com status retornado.
 
 ---
 
-## 6. Pronto pra expandir
+## 5. Rotas e acesso
 
-- Tabela `crm_webhook_logs` + função única `crm_route_inbound` permitem plugar n8n/IA depois (basta apontar webhook).
-- Campo `assigned_to` + `internal_notes` + `tags[]` deixa pronto pra automações.
+- Rota nova: `/admin/atendimento/configuracoes` (protegida por `ProtectedRoute` + verificação `has_role admin`).
+- Sidebar admin: adicionar item "Motor de Resposta & APIs" sob o grupo de Atendimento.
 
 ---
 
 ## Arquivos previstos
 
 **Backend**
-- `supabase/migrations/<ts>_crm_atendimento.sql` (tabelas, sequences, função roteamento, trigger protocol, RLS, GRANTs, seed templates/tags)
-- `supabase/functions/crm-inbound/index.ts` (novo)
-- `supabase/functions/crm-send/index.ts` (novo)
-- `supabase/functions/wapi-inbound-nutri/index.ts` (encaminhar p/ `crm-inbound`)
+- `supabase/migrations/<ts>_api_channels_motor.sql`
+- `supabase/functions/crm-test-connection/index.ts`
 
 **Frontend**
-- `src/pages/admin/AdminAtendimento.tsx`
-- `src/components/admin/atendimento/AtendimentoLayout.tsx`
-- `src/components/admin/atendimento/DashboardCards.tsx`
-- `src/components/admin/atendimento/TicketList.tsx`
-- `src/components/admin/atendimento/TicketKanban.tsx`
-- `src/components/admin/atendimento/TicketDetail.tsx`
-- `src/components/admin/atendimento/TemplatesPanel.tsx`
-- `src/components/admin/atendimento/TagsManager.tsx`
-- `src/App.tsx` (rota nova + redirect `/admin/fale-nutri`)
+- `src/pages/admin/AdminMotorRespostaApis.tsx`
+- `src/components/admin/motor-respostas/ChannelCard.tsx`
+- `src/components/admin/motor-respostas/ChannelConfigDialog.tsx`
+- `src/components/admin/motor-respostas/ApiCredentialsForm.tsx`
+- `src/components/admin/motor-respostas/ResponseEngineForm.tsx`
+- `src/components/admin/motor-respostas/ApiLogsTable.tsx`
+- `src/App.tsx` (rota nova)
 - `src/components/DashboardSidebar.tsx` (item de menu)
+- `src/pages/admin/AdminAtendimento.tsx` (atalho no header)
 
 ---
 
-## Pontos a confirmar antes de codar
+## Pontos a confirmar
 
-1. **Página `/admin/crm` (Campanhas & Ofertas)** fica intacta como produto separado, correto? (ela é envio em massa, o novo é 1:1 atendimento)
-2. **`/admin/fale-nutri`** posso redirecionar e remover do menu, ou prefere manter os dois links por um tempo?
-3. Os dados antigos de `nutri_messages` precisam ser **migrados** para `crm_tickets` (gerando protocolo retroativo), ou posso começar o histórico do CRM do zero a partir de hoje?
-4. Auto-reply de **boas-vindas STH One** vai usar Z-API (linha comercial `21998496289`) — confirma que continua sendo essa linha?
+1. **Criptografia das credenciais**: usar colunas `text` puras com RLS `admin-only` (sem `anon`, sem expor sem clique explícito + log) — ou prefere que eu monte com `pgp_sym_encrypt` usando um segredo do projeto (mais complexo, exige novo secret)? Recomendo a primeira opção (mais simples, suficiente para escopo admin).
+2. **Reaproveitar `nutri_business_hours`** para o canal Fale com o Nutri ou cada canal terá seu próprio `business_hours` em `response_engine_settings` (independente)? Recomendo independente por canal.
+3. **Os secrets atuais** (`WAPI_INSTANCE_ID`, `WAPI_TOKEN`, `ZAPI_INSTANCE_ID`, etc.) continuam sendo a fonte usada pelas funções `send-wapi`/`send-whatsapp` — a nova UI **edita as linhas em `api_channels`/`api_credentials`** para futuras integrações, mas o envio real continuará lendo os secrets até migrarmos as funções. Pode ser? (Sem isso, teria que reescrever `send-wapi` e `send-whatsapp` agora.)

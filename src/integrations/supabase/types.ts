@@ -326,6 +326,172 @@ export type Database = {
         }
         Relationships: []
       }
+      api_channels: {
+        Row: {
+          base_url: string | null
+          channel_type: string
+          connected_number: string | null
+          connection_status: string
+          created_at: string
+          description: string | null
+          id: string
+          instance_id: string | null
+          instance_name: string | null
+          is_active: boolean
+          last_sync_at: string | null
+          name: string
+          provider: string
+          qr_code: string | null
+          responsible_user_id: string | null
+          slug: string | null
+          status: string
+          updated_at: string
+          webhook_url: string | null
+          whatsapp_number: string | null
+        }
+        Insert: {
+          base_url?: string | null
+          channel_type: string
+          connected_number?: string | null
+          connection_status?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          instance_id?: string | null
+          instance_name?: string | null
+          is_active?: boolean
+          last_sync_at?: string | null
+          name: string
+          provider: string
+          qr_code?: string | null
+          responsible_user_id?: string | null
+          slug?: string | null
+          status?: string
+          updated_at?: string
+          webhook_url?: string | null
+          whatsapp_number?: string | null
+        }
+        Update: {
+          base_url?: string | null
+          channel_type?: string
+          connected_number?: string | null
+          connection_status?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          instance_id?: string | null
+          instance_name?: string | null
+          is_active?: boolean
+          last_sync_at?: string | null
+          name?: string
+          provider?: string
+          qr_code?: string | null
+          responsible_user_id?: string | null
+          slug?: string | null
+          status?: string
+          updated_at?: string
+          webhook_url?: string | null
+          whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
+      api_credentials: {
+        Row: {
+          access_token_encrypted: string | null
+          api_key_encrypted: string | null
+          channel_id: string
+          client_id_encrypted: string | null
+          client_secret_encrypted: string | null
+          created_at: string
+          id: string
+          refresh_token_encrypted: string | null
+          token_encrypted: string | null
+          token_expires_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          api_key_encrypted?: string | null
+          channel_id: string
+          client_id_encrypted?: string | null
+          client_secret_encrypted?: string | null
+          created_at?: string
+          id?: string
+          refresh_token_encrypted?: string | null
+          token_encrypted?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          api_key_encrypted?: string | null
+          channel_id?: string
+          client_id_encrypted?: string | null
+          client_secret_encrypted?: string | null
+          created_at?: string
+          id?: string
+          refresh_token_encrypted?: string | null
+          token_encrypted?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_credentials_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: true
+            referencedRelation: "api_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_logs: {
+        Row: {
+          channel_id: string | null
+          created_at: string
+          error_message: string | null
+          event_description: string | null
+          event_type: string
+          id: string
+          ip: string | null
+          provider: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          channel_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          event_description?: string | null
+          event_type: string
+          id?: string
+          ip?: string | null
+          provider?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          channel_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          event_description?: string | null
+          event_type?: string
+          id?: string
+          ip?: string | null
+          provider?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_logs_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "api_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           created_at: string
@@ -3577,6 +3743,71 @@ export type Database = {
           token?: string
         }
         Relationships: []
+      }
+      response_engine_settings: {
+        Row: {
+          after_hours_message: string | null
+          ai_enabled: boolean
+          ai_model: string
+          auto_reply_enabled: boolean
+          business_hours: Json
+          channel_id: string
+          created_at: string
+          fallback_prompt: string | null
+          handoff_to_human_after_minutes: number
+          human_enabled: boolean
+          id: string
+          main_prompt: string | null
+          max_auto_replies: number
+          safety_prompt: string | null
+          temperature: number
+          updated_at: string
+        }
+        Insert: {
+          after_hours_message?: string | null
+          ai_enabled?: boolean
+          ai_model?: string
+          auto_reply_enabled?: boolean
+          business_hours?: Json
+          channel_id: string
+          created_at?: string
+          fallback_prompt?: string | null
+          handoff_to_human_after_minutes?: number
+          human_enabled?: boolean
+          id?: string
+          main_prompt?: string | null
+          max_auto_replies?: number
+          safety_prompt?: string | null
+          temperature?: number
+          updated_at?: string
+        }
+        Update: {
+          after_hours_message?: string | null
+          ai_enabled?: boolean
+          ai_model?: string
+          auto_reply_enabled?: boolean
+          business_hours?: Json
+          channel_id?: string
+          created_at?: string
+          fallback_prompt?: string | null
+          handoff_to_human_after_minutes?: number
+          human_enabled?: boolean
+          id?: string
+          main_prompt?: string | null
+          max_auto_replies?: number
+          safety_prompt?: string | null
+          temperature?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "response_engine_settings_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: true
+            referencedRelation: "api_channels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       saved_meal_items: {
         Row: {
