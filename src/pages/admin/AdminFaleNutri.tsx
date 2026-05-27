@@ -761,6 +761,16 @@ function AttendancePanel({ globalEngine }: { globalEngine: "personal" | "templat
             <p className="text-[10px] text-muted-foreground">
               Alterações aqui atualizam o perfil sem sair do Fale com o Nutri.
             </p>
+            <Button
+              variant="outline"
+              className="w-full border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10"
+              onClick={() => {
+                if (!selected) return;
+                window.open(`/admin/students?edit=${selected.user_id}`, "_blank");
+              }}
+            >
+              <Pencil className="w-4 h-4 mr-2" /> Abrir cadastro completo do aluno
+            </Button>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCadastroOpen(false)}>Cancelar</Button>
