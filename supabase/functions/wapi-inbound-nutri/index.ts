@@ -48,6 +48,20 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
+    // ===== CRM: alimenta o sistema de tickets unificado (não-bloqueante) =====
+    try {
+      await supabase.rpc('crm_route_inbound', {
+        _phone: digits,
+        _body: text || '',
+        _provider: 'wapi',
+        _message_id: messageId,
+        _instance_id: null,
+        _media_url: null,
+      });
+    } catch (crmErr) {
+      console.error('crm_route_inbound (wapi) error', crmErr);
+    }
+
     // ===== Helper: enviar resposta de ausência (mesmo para não identificados) =====
     const sendAwayIfOutsideHours = async (firstName: string | null) => {
       try {

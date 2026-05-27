@@ -1,91 +1,124 @@
 
-# Fale com o Nutri — CRM Premium
+# CRM STH — Sistema Operacional de Atendimento (WhatsApp)
 
-Vamos transformar a página atual `/admin/fale-nutri` em um CRM completo focado em alunos **ativos**, mantendo a linha W-API (`5521998984153`) isolada da linha comercial Z-API.
+Substituir os dois CRMs atuais (`/admin/crm` campanhas e `/admin/fale-nutri`) por **um único sistema operacional de atendimento** com **dois canais isolados**: **STH One** (comercial) e **Fale com o Nutri** (alunos ativos). Tudo dentro do design system existente (preto, verde neon STH METHOD, cards arredondados, tipografia Apple).
 
-## 1. Banco de dados (migration)
+> A página atual `/admin/crm` (campanhas/mídias/templates de marketing) **permanece intacta** — ela cuida de campanhas em massa. O novo CRM é operacional, de 1:1, atendimento humano.
 
-Estender o que já existe (`nutri_messages`, `nutri_opt_outs`, `nutri_templates`) com:
+---
 
-- `nutri_conversations` — uma linha por aluno ativo
-  - `user_id`, `status` (open/pending/waiting_student/waiting_nutri/closed)
-  - `priority` (high/medium/low) calculada automaticamente
-  - `assigned_to` (admin responsável)
-  - `tags` (text[]: dieta, treino, protocolo, exames, urgente, renovação, financeiro, etc.)
-  - `last_message_at`, `last_inbound_at`, `unread_count`
-  - `internal_notes`
-- `nutri_message_tags` — categoria detectada (dieta, treino, protocolo, sintoma, etc.)
-- Atualizar `nutri_templates`:
-  - `category` (boas_vindas, dieta, treino, protocolo, exames, atualizacao, renovacao, financeiro, encerramento, direcionamento, humanizada, automatica)
-  - `tone` (curta, humanizada, tecnica, motivacional)
-  - `body` com variáveis `{nome} {plano} {data_inicio} {data_fim} {link_plataforma} {peso_atual} {ultima_atualizacao}`
-- Seed dos templates iniciais (12 categorias × 4 tons = base já pronta para começar)
-- Trigger: ao inserir em `nutri_messages`, atualizar `nutri_conversations` (último contato, unread, priority por palavras-chave)
+## 1. Banco de dados (1 migration)
+
+Novas tabelas em `public`:
+
+- **`crm_contacts`** — toda pessoa que escreve no WhatsApp (lead ou aluno)
+  - `id`, `phone` (único, normalizado), `full_name`, `email`, `user_id` (FK opcional p/ aluno cadastrado), `kind` (`lead` | `student` | `unknown`), `plan_name`, `plan_start`, `plan_end`, `plan_status`, `last_weight_update`, `notes`, `tags` (text[]), `created_at`, `updated_at`
+- **`crm_tickets`** — um por atendimento
+  - `id`, `protocol` (texto único — `STH-000001` / `NUT-000001`), `protocol_seq` (bigint), `channel` (`sth_one` | `fale_nutri`), `contact_id` (FK), `type` (`lead`|`aluno`|`financeiro`|`suporte`|`nutri`), `status` (enum por canal), `priority` (`low`|`medium`|`high`|`sensitive`), `assigned_to` (uuid user), `tags` (text[]), `internal_notes`, `first_message_at`, `last_message_at`, `closed_at`, `created_at`, `updated_at`
+- **`crm_ticket_messages`** — histórico unificado
+  - `id`, `ticket_id`, `direction` (`in`|`out`), `body`, `media_url`, `message_id` (provider), `instance_id`, `phone`, `status` (`received`|`sent`|`delivered`|`read`|`failed`), `provider` (`wapi`|`zapi`|`cloud`), `created_at`
+- **`crm_templates`** — templates de resposta operacional (separado de `crm_templates` de campanhas — usar nome `crm_op_templates`)
+  - `id`, `channel`, `category` (boas_vindas, registrado, pagamento_pendente, atualizacao, encerramento, ausencia, etc.), `title`, `body`, `active`
+- **`crm_webhook_logs`** — auditoria bruta
+  - `id`, `provider`, `payload` (jsonb), `processed`, `error`, `created_at`
+- **Sequences**: `crm_protocol_seq_sth`, `crm_protocol_seq_nut` p/ gerar `STH-000001`/`NUT-000001`
+
+**Aproveitar o que já existe:**
+- `nutri_messages`, `nutri_conversations`, `nutri_opt_outs`, `nutri_templates`, `nutri_away_throttle`, `nutri_business_hours` → ficam como estão; novas mensagens W-API entram no novo fluxo, mas o histórico antigo continua acessível em backup.
+- `subscriptions`, `profiles` → fonte de verdade pra identificar aluno ativo.
+
+**Funções/triggers:**
+- `crm_route_inbound(phone, body, provider, message_id, instance_id)` — função SECURITY DEFINER que: identifica contact, decide canal (aluno ativo → `fale_nutri`, senão → `sth_one`), cria/atualiza ticket aberto (ou reabre), insere mensagem, classifica prioridade (regex sensível: `dor|colateral|tontura|pressão|glicemia|reação|ansiedade|sintoma|sangra|mal[- ]estar`), aplica tags automáticas.
+- Trigger BEFORE INSERT em `crm_tickets` que gera `protocol` via sequence + canal.
+
+**RLS:** todas as tabelas → apenas roles `admin`, `consultor`, `assistente`, `financeiro` (via `has_role`). `service_role` total para edge functions.
+
+**GRANTS:** `authenticated` (SELECT/INSERT/UPDATE/DELETE) + `service_role` (ALL). Sem `anon`.
+
+---
 
 ## 2. Edge functions
 
-- `nutri-ai-reply` (nova) — recebe `conversation_id`, lê últimas 20 mensagens + dados do aluno (plano, datas, última atualização), chama Gemini com prompt fixo do canal e devolve sugestão. Bloqueia prescrição/dose/cura.
-- `wapi-inbound-nutri` (existente) — passa a:
-  - Atualizar `nutri_conversations` (upsert, unread+1, priority)
-  - Classificar a mensagem (heurística por palavras-chave: dor, colateral, sintoma → high)
-- `send-wapi` (existente) — usado pelo botão Enviar.
-- `nutri-alerts-scan` (nova, opcional cron) — gera alertas (sem atualização 7/15d, plano vencendo 7/3d, encerrado).
+- **`crm-inbound`** (nova) — webhook único multi-provider (W-API, Z-API, Cloud API). Loga em `crm_webhook_logs`, chama `crm_route_inbound`, dispara auto-reply (boas-vindas + ausência usando `nutri_business_hours` reaproveitado).
+- **`crm-send`** (nova) — envia mensagem outbound; escolhe `send-wapi` (canal Nutri) ou `send-whatsapp` Z-API (canal comercial) conforme `ticket.channel`. Grava `crm_ticket_messages` direction=out.
+- **Reaproveitar** `wapi-inbound-nutri` e `whatsapp-inbound-ai` apontando o roteamento para `crm-inbound` (mantêm compatibilidade dos webhooks já registrados).
 
-## 3. Frontend `/admin/fale-nutri`
+---
 
-Substituir a tela atual por um CRM em 4 abas:
+## 3. Frontend — nova rota `/admin/atendimento` (CRM operacional)
 
-### Aba 1 — Dashboard
-Cards: ativos, abertos, pendentes, prioridade alta, atualizações atrasadas, renovações próximas, últimas mensagens.
+Arquivo principal: `src/pages/admin/AdminAtendimento.tsx`.
+Componentes em `src/components/admin/atendimento/`:
 
-### Aba 2 — Atendimento (principal)
-Layout 3 colunas estilo Apple:
-- **Esquerda**: lista de conversas (filtros: status, prioridade, tag, responsável; busca por nome). Só aparecem alunos com assinatura ativa.
-- **Centro**: chat com histórico, badges de tag/prioridade, input com botões:
-  - "Templates" (drawer com biblioteca filtrável)
-  - "Gerar com IA" (Gemini)
-  - Seletor de motor: Template / Gemini / Personalizada / Híbrida
-  - Enviar (chama `send-wapi`)
-  - Marcar como respondido / Mudar status / Adicionar tag
-- **Direita**: ficha do aluno (nome, plano, dias restantes, última atualização de peso/fotos, entregáveis dieta/treino/protocolo/exames, observações internas editáveis, responsável).
+- `AtendimentoLayout.tsx` — header com seletor de canal (toggle pill STH One / Fale com o Nutri) + tabs.
+- `DashboardCards.tsx` — métricas do dia (atendimentos, leads novos, alunos em atendimento, sensíveis, pagamentos pendentes, tempo médio resposta, finalizados).
+- `TicketList.tsx` — lista filtrável (status, prioridade, tag, responsável, busca por nome/fone/protocolo).
+- `TicketKanban.tsx` — colunas por status do canal selecionado, drag & drop com `dnd-kit` (já no projeto).
+- `TicketDetail.tsx` — chat central + ficha lateral do contato (nome, fone, plano, início/fim, última atualização, notas, tags, histórico de tickets anteriores).
+- `TemplatesPanel.tsx` — CRUD de `crm_op_templates`.
+- `TagsManager.tsx` — gerenciar conjunto de tags.
+- `QueueColumns.tsx` — definição dos status por canal.
 
-### Aba 3 — Biblioteca de Respostas
-CRUD de templates com filtros (categoria, tom, plano, situação). Botões editar/duplicar/excluir. Preview com variáveis substituídas.
+**Status por canal:**
+- STH One: `novo_lead`, `em_atendimento`, `checkout_enviado`, `pagamento_pendente`, `pagamento_aprovado`, `convertido`, `perdido`.
+- Fale com o Nutri: `aguardando`, `prioridade_sensivel`, `em_acompanhamento`, `aguardando_atualizacao`, `ajuste_solicitado`, `finalizado`.
 
-### Aba 4 — Configuração
-URL do webhook W-API + status da conexão + lista de opt-outs (interromper/retomar).
+**Tags padrão (seed):** Aluno ativo, Lead quente, Lead frio, Pagamento pendente, Precisa atualizar fotos, Prioridade sensível, Fale com o Nutri, Comercial, Renovação, Protocolo, Dieta, Treino, Exames.
 
-## 4. Regras de segurança e elegibilidade
+**Visual:**
+- Canal **STH One** → acento âmbar/branco, linguagem comercial nos placeholders.
+- Canal **Fale com o Nutri** → acento verde neon STH, tom humanizado.
+- Layout Apple: fundo `bg-background`, cards `rounded-2xl border border-border/40`, blur sutil no header, tipografia `tracking-tight`.
 
-- Lista de conversas só carrega `user_id` com `subscriptions.status='active'` e `end_date >= now()`.
-- Inbound de aluno inativo: edge function responde automaticamente com a mensagem de renovação e não cria conversa.
-- RLS: somente `admin`/`assistente`/`consultor` acessam `nutri_conversations` e `nutri_messages`.
+---
 
-## 5. Priorização automática (heurística no inbound)
+## 4. Roteamento e migração das rotas antigas
 
-- **Alta**: regex `colateral|sintoma|dor|mal[- ]estar|tontura|enjoo|protocolo|sangra` ou plano expirando em ≤7d ou sem atualização >15d.
-- **Média**: `dieta|treino|exame|ajuste|rotina`.
-- **Baixa**: caso contrário.
+- `/admin/atendimento` → novo CRM operacional.
+- `/admin/fale-nutri` → **redirect** para `/admin/atendimento?channel=fale_nutri`.
+- `/admin/crm` (campanhas em massa) → **mantido** como está (é outro produto).
+- Sidebar admin: substituir o item "Fale com o Nutri" por "Atendimento (CRM)" e remover duplicidade.
 
-## 6. IA Gemini — prompt do sistema
+---
 
-Prompt fixo no edge function (não no cliente) com as 10 regras de comportamento listadas pelo usuário, mais contexto dinâmico (nome, plano, últimas mensagens, status de entregáveis).
+## 5. Controle de acesso
 
-## 7. Visual
+Roles existentes (`admin`, `consultor`, `assistente`, `financeiro`) liberadas via `has_role`. Sem novos roles.
 
-Mantém o design system existente (preto/verde STH METHOD, cards arredondados, tipografia Apple) — apenas reorganiza o layout.
+---
+
+## 6. Pronto pra expandir
+
+- Tabela `crm_webhook_logs` + função única `crm_route_inbound` permitem plugar n8n/IA depois (basta apontar webhook).
+- Campo `assigned_to` + `internal_notes` + `tags[]` deixa pronto pra automações.
+
+---
 
 ## Arquivos previstos
 
-- `supabase/migrations/<timestamp>_fale_nutri_crm.sql` (tabelas, trigger, RLS, GRANTs, seed)
-- `supabase/functions/nutri-ai-reply/index.ts` (nova)
-- `supabase/functions/wapi-inbound-nutri/index.ts` (atualiza conversation + priority)
-- `supabase/config.toml` (registrar `nutri-ai-reply` com `verify_jwt = false` para chamadas autenticadas pelo admin via JWT validado em código)
-- `src/pages/admin/AdminFaleNutri.tsx` (reescrito)
-- Componentes em `src/components/admin/fale-nutri/`: `ConversationList.tsx`, `ChatPanel.tsx`, `StudentSidePanel.tsx`, `TemplateLibrary.tsx`, `DashboardCards.tsx`, `ConfigPanel.tsx`
+**Backend**
+- `supabase/migrations/<ts>_crm_atendimento.sql` (tabelas, sequences, função roteamento, trigger protocol, RLS, GRANTs, seed templates/tags)
+- `supabase/functions/crm-inbound/index.ts` (novo)
+- `supabase/functions/crm-send/index.ts` (novo)
+- `supabase/functions/wapi-inbound-nutri/index.ts` (encaminhar p/ `crm-inbound`)
 
-## Pontos a confirmar
+**Frontend**
+- `src/pages/admin/AdminAtendimento.tsx`
+- `src/components/admin/atendimento/AtendimentoLayout.tsx`
+- `src/components/admin/atendimento/DashboardCards.tsx`
+- `src/components/admin/atendimento/TicketList.tsx`
+- `src/components/admin/atendimento/TicketKanban.tsx`
+- `src/components/admin/atendimento/TicketDetail.tsx`
+- `src/components/admin/atendimento/TemplatesPanel.tsx`
+- `src/components/admin/atendimento/TagsManager.tsx`
+- `src/App.tsx` (rota nova + redirect `/admin/fale-nutri`)
+- `src/components/DashboardSidebar.tsx` (item de menu)
 
-1. Manter as 3 tabelas já criadas (`nutri_messages`, `nutri_opt_outs`, `nutri_templates`) e só estender, certo?
-2. O **alerts cron** (item 9 — alertas automáticos diários) pode ficar como uma função on-demand chamada do Dashboard, ou prefere agendamento automático (pg_cron)?
-3. Os templates seed (~48 mensagens) eu já preencho com texto padrão profissional STH METHOD, ou você quer revisar antes?
+---
+
+## Pontos a confirmar antes de codar
+
+1. **Página `/admin/crm` (Campanhas & Ofertas)** fica intacta como produto separado, correto? (ela é envio em massa, o novo é 1:1 atendimento)
+2. **`/admin/fale-nutri`** posso redirecionar e remover do menu, ou prefere manter os dois links por um tempo?
+3. Os dados antigos de `nutri_messages` precisam ser **migrados** para `crm_tickets` (gerando protocolo retroativo), ou posso começar o histórico do CRM do zero a partir de hoje?
+4. Auto-reply de **boas-vindas STH One** vai usar Z-API (linha comercial `21998496289`) — confirma que continua sendo essa linha?
