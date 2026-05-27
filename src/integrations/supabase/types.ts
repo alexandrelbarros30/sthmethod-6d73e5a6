@@ -1144,6 +1144,60 @@ export type Database = {
           },
         ]
       }
+      crm_contacts: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          kind: string
+          last_weight_update: string | null
+          notes: string | null
+          phone: string
+          plan_end: string | null
+          plan_name: string | null
+          plan_start: string | null
+          plan_status: string | null
+          tags: string[]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          kind?: string
+          last_weight_update?: string | null
+          notes?: string | null
+          phone: string
+          plan_end?: string | null
+          plan_name?: string | null
+          plan_start?: string | null
+          plan_status?: string | null
+          tags?: string[]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          kind?: string
+          last_weight_update?: string | null
+          notes?: string | null
+          phone?: string
+          plan_end?: string | null
+          plan_name?: string | null
+          plan_start?: string | null
+          plan_status?: string | null
+          tags?: string[]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       crm_media: {
         Row: {
           category: string | null
@@ -1192,6 +1246,39 @@ export type Database = {
           updated_at?: string
           uploaded_by?: string
           url?: string
+        }
+        Relationships: []
+      }
+      crm_op_templates: {
+        Row: {
+          active: boolean
+          body: string
+          category: string
+          channel: string
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          body: string
+          category: string
+          channel: string
+          created_at?: string
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          body?: string
+          category?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1273,6 +1360,148 @@ export type Database = {
           title?: string
           updated_at?: string
           variables?: string[] | null
+        }
+        Relationships: []
+      }
+      crm_ticket_messages: {
+        Row: {
+          body: string | null
+          created_at: string
+          direction: string
+          id: string
+          instance_id: string | null
+          media_url: string | null
+          message_id: string | null
+          phone: string | null
+          provider: string | null
+          status: string | null
+          ticket_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          direction: string
+          id?: string
+          instance_id?: string | null
+          media_url?: string | null
+          message_id?: string | null
+          phone?: string | null
+          provider?: string | null
+          status?: string | null
+          ticket_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          direction?: string
+          id?: string
+          instance_id?: string | null
+          media_url?: string | null
+          message_id?: string | null
+          phone?: string | null
+          provider?: string | null
+          status?: string | null
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "crm_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_tickets: {
+        Row: {
+          assigned_to: string | null
+          channel: string
+          closed_at: string | null
+          contact_id: string
+          created_at: string
+          first_message_at: string
+          id: string
+          internal_notes: string | null
+          last_message_at: string
+          priority: string
+          protocol: string | null
+          protocol_seq: number | null
+          status: string
+          tags: string[]
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          channel: string
+          closed_at?: string | null
+          contact_id: string
+          created_at?: string
+          first_message_at?: string
+          id?: string
+          internal_notes?: string | null
+          last_message_at?: string
+          priority?: string
+          protocol?: string | null
+          protocol_seq?: number | null
+          status?: string
+          tags?: string[]
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          channel?: string
+          closed_at?: string | null
+          contact_id?: string
+          created_at?: string
+          first_message_at?: string
+          id?: string
+          internal_notes?: string | null
+          last_message_at?: string
+          priority?: string
+          protocol?: string | null
+          protocol_seq?: number | null
+          status?: string
+          tags?: string[]
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_tickets_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_webhook_logs: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          payload: Json | null
+          processed: boolean | null
+          provider: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          payload?: Json | null
+          processed?: boolean | null
+          provider: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          payload?: Json | null
+          processed?: boolean | null
+          provider?: string
         }
         Relationships: []
       }
@@ -4383,6 +4612,17 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      crm_route_inbound: {
+        Args: {
+          _body: string
+          _instance_id?: string
+          _media_url?: string
+          _message_id?: string
+          _phone: string
+          _provider: string
+        }
+        Returns: string
       }
       find_profile_by_phone: {
         Args: { _phone: string }
