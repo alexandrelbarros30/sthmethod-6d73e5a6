@@ -15,6 +15,7 @@ import {
   Activity, Copy, Eye, EyeOff, KeyRound, Plug, RefreshCw, ShieldAlert,
   Power, Save, History, Cpu, Settings2,
 } from "lucide-react";
+import MotoresGlobaisPanel from "@/components/admin/MotoresGlobaisPanel";
 
 type Channel = {
   id: string;
@@ -294,6 +295,8 @@ export default function AdminMotorRespostaApis() {
           <Card><CardContent className="py-12 text-center text-muted-foreground">Carregando…</CardContent></Card>
         ) : (
           <>
+            <MotoresGlobaisPanel />
+
             <div className="grid gap-4 sm:grid-cols-2">
               {channels.map((c) => (
                 <Card key={c.id} className="border-border/40">
