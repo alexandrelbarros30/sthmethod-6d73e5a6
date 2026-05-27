@@ -70,6 +70,24 @@ Deno.serve(async (req) => {
     }
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
+
+    // ===== CRM: alimenta tickets unificados (não-bloqueante) =====
+    try {
+      const digits = String(phone).replace(/\D/g, '');
+      if (digits.length >= 8) {
+        await supabase.rpc('crm_route_inbound', {
+          _phone: digits,
+          _body: text || '',
+          _provider: 'zapi',
+          _message_id: payload?.messageId || payload?.id || null,
+          _instance_id: payload?.instanceId || null,
+          _media_url: payload?.image?.url || payload?.document?.url || null,
+        });
+      }
+    } catch (crmErr) {
+      console.error('crm_route_inbound (zapi) error', crmErr);
+    }
+
     const { data: cfg } = await supabase
       .from('ai_assistant_config')
       .select('system_prompt, model, auto_reply_enabled, engine, assistant_name, local_prompt, gemini_model, gemini_fallback_model, gemini_temperature, gemini_max_tokens, business_hours, out_of_hours_message, enforce_business_hours, fallback_enabled, fallback_message')
