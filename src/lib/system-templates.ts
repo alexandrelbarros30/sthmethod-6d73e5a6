@@ -230,21 +230,21 @@ export const SYSTEM_TEMPLATE_DEFINITIONS: Array<{
     label: "Dieta atualizada (automático)",
     description: "Disparado automaticamente quando o admin salva/edita uma dieta para o aluno (se notificações estiverem ativas no perfil).",
     defaultContent:
-      "Olá {nome}! 🍽️\n\nSua *nova dieta* já está disponível na plataforma STH METHOD.\n\n👉 Acesse o menu DIETA para conferir refeições, macros e hidratação.\n\nBora seguir firme! 💪",
+      "🥗 Dieta pronta 👊\n\nAcesse a plataforma e siga conforme planejado em sthmethod.com.br",
   },
   {
     key: "training_updated",
     label: "Treino atualizado (automático)",
     description: "Disparado automaticamente quando o admin define/atualiza o treino ativo do aluno.",
     defaultContent:
-      "Olá {nome}! 🏋️\n\nSeu *novo treino* já está disponível na plataforma STH METHOD.\n\n👉 Acesse o menu TREINO para ver os exercícios, séries e repetições.\n\nVamos com tudo! 🚀",
+      "🏋️ Treino pronto 👊\n\nSeu treino já está disponível no app\n\nApp ST Coach\nAndroid: https://play.google.com/store/apps/details?id=com.appsupercoach.app\niPhone: https://apps.apple.com/us/app/st-coach/id1537125272#?platform=iphone\n\n🔐 Login: seu e-mail\nSenha: 123456 ou a cadastrada 👊",
   },
   {
     key: "protocol_updated",
     label: "Protocolo atualizado (automático)",
     description: "Disparado automaticamente quando o admin salva/edita um protocolo para o aluno.",
     defaultContent:
-      "Olá {nome}! 📋\n\nSeu *novo protocolo* já está disponível na plataforma STH METHOD.\n\n👉 Acesse o menu PROTOCOLO para conferir todas as orientações.\n\nQualquer dúvida, estamos por aqui! 🤝",
+      "🔥 Seu protocolo liberado 👊\n\n📲 Já pode acessar e iniciar sua execução em sthmethod.com.br",
   },
   {
     key: "plan_updated",
@@ -252,6 +252,13 @@ export const SYSTEM_TEMPLATE_DEFINITIONS: Array<{
     description: "Disparado quando o plano/assinatura do aluno é atualizado.",
     defaultContent:
       "Olá {nome}! ✨\n\nSeu *plano foi atualizado* na plataforma STH METHOD.\n\n👉 Acesse a plataforma para ver as novidades disponíveis no seu acesso.\n\nBons treinos! 💚",
+  },
+  {
+    key: "content_all_ready",
+    label: "Dieta + Treino + Protocolo prontos (automático)",
+    description: "Mensagem combinada quando dieta, treino e protocolo são liberados juntos.",
+    defaultContent:
+      "🔥 Dieta, treino e protocolo prontos 👊\n\n📲 Acesse a plataforma e o app para iniciar sua execução em sthmethod.com.br\n\nBaixe App ST Coach (Treino)\nAndroid: https://play.google.com/store/apps/details?id=com.appsupercoach.app\niPhone: https://apps.apple.com/us/app/st-coach/id1537125272#?platform=iphone\n\n🔐 Login: seu e-mail\nSenha: 123456 ou a cadastrada 👊",
   },
   {
     key: "lab_analysis_ready",
