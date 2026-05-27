@@ -197,7 +197,8 @@ const AdminCrmAuditoria = () => {
 
   const update = (id: string, patch: Partial<RowState>) => {
     setState((prev) => {
-      const next = { ...prev, [id]: { status: "pendente", obs: "", ...(prev[id] || {}), ...patch } };
+      const base: RowState = { status: "pendente", obs: "" };
+      const next: Record<string, RowState> = { ...prev, [id]: { ...base, ...(prev[id] || {}), ...patch } };
       saveState(next);
       return next;
     });
@@ -248,7 +249,7 @@ const AdminCrmAuditoria = () => {
   };
 
   return (
-    <DashboardLayout role="admin">
+    <DashboardLayout role="admin" title="Limpeza e Consolidação do CRM" subtitle="Auditoria de duplicidades">
       <div className="space-y-6 p-4 md:p-8 max-w-7xl mx-auto">
         <header className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
