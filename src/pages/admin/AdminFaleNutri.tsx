@@ -96,12 +96,14 @@ export default function AdminFaleNutri() {
         </header>
 
         <Tabs defaultValue="atendimento" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="dashboard"><LayoutDashboard className="w-4 h-4 mr-1" />Dashboard</TabsTrigger>
-            <TabsTrigger value="atendimento"><MessageCircle className="w-4 h-4 mr-1" />Atendimento</TabsTrigger>
-            <TabsTrigger value="biblioteca"><BookOpen className="w-4 h-4 mr-1" />Biblioteca</TabsTrigger>
-            <TabsTrigger value="config"><Settings2 className="w-4 h-4 mr-1" />Configuração</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto -mx-2 px-2 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+            <TabsList className="w-max flex">
+              <TabsTrigger value="dashboard" className="whitespace-nowrap"><LayoutDashboard className="w-4 h-4 mr-1" />Dashboard</TabsTrigger>
+              <TabsTrigger value="atendimento" className="whitespace-nowrap"><MessageCircle className="w-4 h-4 mr-1" />Atendimento</TabsTrigger>
+              <TabsTrigger value="biblioteca" className="whitespace-nowrap"><BookOpen className="w-4 h-4 mr-1" />Biblioteca</TabsTrigger>
+              <TabsTrigger value="config" className="whitespace-nowrap"><Settings2 className="w-4 h-4 mr-1" />Configuração</TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Painel global: Motor de resposta */}
           <Card className="p-3 flex items-center gap-3 flex-wrap border-emerald-500/20 bg-emerald-500/5">
@@ -558,11 +560,34 @@ function AttendancePanel({ globalEngine }: { globalEngine: "personal" | "templat
                             {Object.entries(STATUS_LABEL).map(([k, v]) => (<SelectItem key={k} value={k}>{v}</SelectItem>))}
                           </SelectContent>
                         </Select>
-                        <div className="flex items-center gap-1 ml-auto">
-                          <Switch
-                            checked={!optOutSet.has(selected.user_id)}
-                            onCheckedChange={(v) => toggleOptOut.mutate({ userId: selected.user_id, paused: !v })}
-                          />
+                        <div className="flex items-center gap-2 ml-auto">
+                          {(() => {
+                            const isPaused = optOutSet.has(selected.user_id);
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => toggleOptOut.mutate({ userId: selected.user_id, paused: !isPaused })}
+                                className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-semibold transition-all duration-300 ${
+                                  isPaused
+                                    ? "border-rose-500/60 bg-rose-500/10 text-rose-500 hover:bg-rose-500/20"
+                                    : "border-emerald-500/60 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20"
+                                }`}
+                                title={isPaused ? "IA pausada — clique para retomar" : "IA ativa — clique para interromper"}
+                              >
+                                <span className="relative flex h-2 w-2">
+                                  {isPaused ? (
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+                                  ) : (
+                                    <>
+                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                                    </>
+                                  )}
+                                </span>
+                                {isPaused ? "Retomar IA" : "Interromper"}
+                              </button>
+                            );
+                          })()}
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => refetchConv()} title="Atualizar"><RefreshCw className="w-3.5 h-3.5" /></Button>
                         </div>
                       </div>
