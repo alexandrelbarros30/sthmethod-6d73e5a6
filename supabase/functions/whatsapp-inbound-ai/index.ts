@@ -1,6 +1,6 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { localRespond, matchCustomRule, LocalContext } from '../_shared/sth-local-responder.ts';
+import { localRespond, matchCustomRule, renderTemplate, LocalContext } from '../_shared/sth-local-responder.ts';
 import { callGeminiWithFallback, GeminiMsg } from '../_shared/gemini-client.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
@@ -153,6 +153,25 @@ Deno.serve(async (req) => {
     const engine = (cfg as any)?.engine || 'local';
     const assistantName = (cfg as any)?.assistant_name || 'STH One';
 
+    // ===== Templates operacionais do CRM (crm_op_templates) =====
+    // Indexa por `${channel}:${category}` para uso pelo motor e overrides.
+    const opTemplates: Record<string, string> = {};
+    try {
+      const { data: opRows } = await supabase
+        .from('crm_op_templates')
+        .select('channel, category, body, active')
+        .eq('active', true);
+      for (const r of (opRows as any[] | null) || []) {
+        if (r?.channel && r?.category && r?.body) {
+          opTemplates[`${r.channel}:${r.category}`] = String(r.body);
+        }
+      }
+    } catch (e) {
+      console.error('[inbound] load crm_op_templates failed', e);
+    }
+    const pickOp = (category: string, prefer: 'sth_one' | 'fale_nutri' = 'sth_one'): string | null =>
+      opTemplates[`${prefer}:${category}`] || opTemplates[`both:${category}`] || null;
+
     // CRM memory lookup
     const norm = phone.replace(/\D/g, '');
     // Busca robusta via RPC server-side: normaliza dígitos no Postgres
@@ -207,6 +226,8 @@ Deno.serve(async (req) => {
       memory = `\n\n# CONTATO\nTipo de contato: ${contactTypeLabel}\nTelefone: ${phone}`;
       localCtx.contactType = contactType;
     }
+    // Injeta templates do CRM no contexto local (usado pelo motor `local`)
+    localCtx.opTemplates = opTemplates;
 
     // Carrega histórico recente da conversa (memória conversacional)
     const { data: history } = await supabase
@@ -236,7 +257,12 @@ Deno.serve(async (req) => {
         });
       }
       const first = (profile?.full_name || '').split(/\s+/)[0];
-      const handoff = `${first ? `Olá, ${first}!` : 'Olá!'} Vi aqui que seu plano *${(localCtx.planName || '')}* está ativo. Para suporte direto com o *Nutri Alexandre*, fale pelo canal *Fale com o Nutri*:\n\nhttps://wa.me/5521998984153?text=${encodeURIComponent('Olá! Sou aluno ativo da STH METHOD e gostaria de falar com o Nutri.')}`;
+      // Template CRM 'boas_vindas' do canal fale_nutri tem prioridade
+      const tplHandoff = pickOp('boas_vindas', 'fale_nutri');
+      const waLink = `https://wa.me/5521998984153?text=${encodeURIComponent('Olá! Sou aluno ativo da STH METHOD e gostaria de falar com o Nutri.')}`;
+      const handoff = tplHandoff
+        ? `${renderTemplate(tplHandoff, localCtx)}\n\n${waLink}`
+        : `${first ? `Olá, ${first}!` : 'Olá!'} Vi aqui que seu plano *${(localCtx.planName || '')}* está ativo. Para suporte direto com o *Nutri Alexandre*, fale pelo canal *Fale com o Nutri*:\n\n${waLink}`;
       await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },

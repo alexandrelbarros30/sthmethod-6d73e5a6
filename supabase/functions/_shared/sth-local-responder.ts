@@ -13,6 +13,10 @@ export type LocalContext = {
   contactType?: 'aluno_ativo' | 'aluno_inativo' | 'novo_cliente';
   fallbackEnabled?: boolean;
   fallbackMessage?: string | null;
+  /** Templates operacionais do CRM (tabela crm_op_templates) injetados pelo caller.
+   *  Chave: `${channel}:${category}` (ex: "sth_one:boas_vindas", "both:ausencia").
+   *  Quando presente, sobrepõe textos hardcoded de saudação/fallback. */
+  opTemplates?: Record<string, string>;
 };
 
 export type Attachment = { url: string; kind: 'image' | 'document'; name?: string };
@@ -44,6 +48,16 @@ function hi(ctx: LocalContext): string {
     return `Olá, ${first}!`;
   }
   return "Olá!";
+}
+
+/** Procura um template operacional na ordem: canal específico → 'both'. */
+export function pickOpTemplate(
+  ctx: LocalContext,
+  category: string,
+  preferChannel: 'sth_one' | 'fale_nutri' = 'sth_one',
+): string | null {
+  const m = ctx.opTemplates || {};
+  return m[`${preferChannel}:${category}`] || m[`both:${category}`] || null;
 }
 
 function assistantName(ctx: LocalContext): string {
@@ -97,6 +111,10 @@ const RULES: Rule[] = [
       if (alreadyGreeted(c)) {
         return `${hi(c)} Sigo por aqui. O que você precisa agora?`;
       }
+      // Template operacional do CRM (boas_vindas) — sobrepõe hardcoded
+      const preferChan = c.contactType === 'aluno_ativo' ? 'fale_nutri' : 'sth_one';
+      const tpl = pickOpTemplate(c, 'boas_vindas', preferChan);
+      if (tpl) return renderTemplate(tpl, c);
       if (c.status === 'active') {
         return `${hi(c)} ${statusLine(c)}\n\nSe precisar de atualização, ajustes, exames ou suporte — é só me chamar.`;
       }
@@ -232,6 +250,8 @@ function renderTemplate(tpl: string, ctx: LocalContext): string {
     .replace(/\{vencimento\}/gi, ctx.endDate || "—")
     .replace(/\{site\}/gi, SITE);
 }
+
+export { renderTemplate };
 
 export function localRespond(
   userText: string,
