@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -590,10 +590,27 @@ export default function AdminAtendimento() {
             <TabsTrigger value="tickets" className="gap-1.5"><ListIcon className="h-3.5 w-3.5" /> Tickets</TabsTrigger>
             <TabsTrigger value="kanban" className="gap-1.5"><LayoutGrid className="h-3.5 w-3.5" /> Kanban</TabsTrigger>
             <TabsTrigger value="templates" className="gap-1.5"><FileText className="h-3.5 w-3.5" /> Templates</TabsTrigger>
+            <TabsTrigger value="mensagens" className="gap-1.5"><FileText className="h-3.5 w-3.5" /> Mensagens</TabsTrigger>
           </TabsList>
           <TabsContent value="tickets" className="mt-4"><TicketsPanel channel={channel} /></TabsContent>
           <TabsContent value="kanban" className="mt-4"><KanbanPanel channel={channel} /></TabsContent>
           <TabsContent value="templates" className="mt-4"><TemplatesPanel channel={channel} /></TabsContent>
+          <TabsContent value="mensagens" className="mt-4">
+            <Card>
+              <CardContent className="py-10 text-center space-y-4">
+                <FileText className="h-10 w-10 mx-auto text-muted-foreground" />
+                <div>
+                  <h3 className="text-base font-semibold">Central de Mensagens</h3>
+                  <p className="text-xs text-muted-foreground max-w-md mx-auto mt-1">
+                    Biblioteca completa de templates, mensagens automáticas do sistema, variáveis dinâmicas e histórico de envios.
+                  </p>
+                </div>
+                <Button asChild>
+                  <Link to="/admin/messages">Abrir Central de Mensagens</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
     </DashboardLayout>
