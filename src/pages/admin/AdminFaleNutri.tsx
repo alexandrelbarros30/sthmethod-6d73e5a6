@@ -223,17 +223,21 @@ function DashboardPanel() {
 }
 
 /* ============================ ATENDIMENTO ============================ */
-function AttendancePanel() {
+function AttendancePanel({ globalEngine }: { globalEngine: "personal" | "template" | "gemini" | "hybrid" }) {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [filterPriority, setFilterPriority] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
-  const [engine, setEngine] = useState<"template" | "gemini" | "personal" | "hybrid">("personal");
   const [hint, setHint] = useState("");
   const [sending, setSending] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [cadastroOpen, setCadastroOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const engine = globalEngine;
 
   // Alunos ativos com plano
   const { data: activeStudents = [], isLoading: loadingStudents } = useQuery({
