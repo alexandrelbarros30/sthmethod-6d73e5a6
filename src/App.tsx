@@ -90,6 +90,7 @@ import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
 import AdminFaleNutri from "./pages/admin/AdminFaleNutri";
 import AdminAtendimento from "./pages/admin/AdminAtendimento";
 import AdminMotorRespostaApis from "./pages/admin/AdminMotorRespostaApis";
+import AdminCrmAuditoria from "./pages/admin/AdminCrmAuditoria";
 import StudentConsultas from "./pages/student/StudentConsultas";
 import ConsultorDashboard from "./pages/consultor/ConsultorDashboard";
 import AssistenteDashboard from "./pages/assistente/AssistenteDashboard";
@@ -237,6 +238,7 @@ const App = () => (
             <Route path="/admin/fale-nutri" element={<ProtectedRoute allowedRoles={["admin"]}><AdminFaleNutri /></ProtectedRoute>} />
             <Route path="/admin/atendimento" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAtendimento /></ProtectedRoute>} />
             <Route path="/admin/atendimento/configuracoes" element={<ProtectedRoute allowedRoles={["admin"]}><AdminMotorRespostaApis /></ProtectedRoute>} />
+            <Route path="/admin/atendimento/auditoria" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrmAuditoria /></ProtectedRoute>} />
             {/* Consultor routes */}
             <Route path="/consultor" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
             <Route path="/consultor/students" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
