@@ -2443,6 +2443,54 @@ export type Database = {
         }
         Relationships: []
       }
+      nutri_conversations: {
+        Row: {
+          assigned_to: string | null
+          category: string | null
+          created_at: string
+          internal_notes: string | null
+          last_inbound_at: string | null
+          last_message_at: string | null
+          last_message_preview: string | null
+          priority: string
+          status: string
+          tags: string[]
+          unread_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string
+          internal_notes?: string | null
+          last_inbound_at?: string | null
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          priority?: string
+          status?: string
+          tags?: string[]
+          unread_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string
+          internal_notes?: string | null
+          last_inbound_at?: string | null
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          priority?: string
+          status?: string
+          tags?: string[]
+          unread_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       nutri_messages: {
         Row: {
           body: string
@@ -2514,7 +2562,10 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          plan_scope: string | null
+          tags: string[] | null
           title: string
+          tone: string | null
           updated_at: string
         }
         Insert: {
@@ -2524,7 +2575,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          plan_scope?: string | null
+          tags?: string[] | null
           title: string
+          tone?: string | null
           updated_at?: string
         }
         Update: {
@@ -2534,7 +2588,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          plan_scope?: string | null
+          tags?: string[] | null
           title?: string
+          tone?: string | null
           updated_at?: string
         }
         Relationships: []

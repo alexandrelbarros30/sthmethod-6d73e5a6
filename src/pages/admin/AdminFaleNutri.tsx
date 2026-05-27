@@ -14,45 +14,220 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
-import { Search, Send, Ban, CheckCircle2, Loader2, Plus, Pencil, Trash2, Phone, HeartHandshake, Settings2, MessageCircle, RefreshCw } from "lucide-react";
+import {
+  Search, Send, Ban, CheckCircle2, Loader2, Plus, Pencil, Trash2, Phone,
+  HeartHandshake, Settings2, MessageCircle, RefreshCw, Sparkles, AlertTriangle,
+  Users, Clock, BellRing, Calendar, LayoutDashboard, BookOpen, Tag,
+} from "lucide-react";
 
 const NUTRI_PHONE = "5521998984153";
 
-function replaceVars(text: string, profile: { full_name?: string; email?: string; phone?: string }) {
-  const first = profile.full_name?.split(" ")[0] || "Aluno";
+const TAG_OPTIONS = [
+  "dieta", "treino", "protocolo", "exames",
+  "atualizacao-pendente", "urgente", "renovacao", "financeiro",
+  "duvida-geral", "alta-demanda", "aguardando-aluno", "aguardando-nutri",
+] as const;
+
+const STATUS_LABEL: Record<string, string> = {
+  open: "Aberto",
+  pending: "Pendente",
+  waiting_student: "Aguardando aluno",
+  waiting_nutri: "Aguardando Nutri",
+  closed: "Encerrado",
+};
+
+const PRIORITY_STYLE: Record<string, string> = {
+  high: "border-rose-500/50 text-rose-500 bg-rose-500/10",
+  medium: "border-amber-500/40 text-amber-500 bg-amber-500/10",
+  low: "border-zinc-500/40 text-zinc-400 bg-zinc-500/10",
+};
+
+type Profile = { user_id: string; full_name: string; email: string; phone: string };
+type ActiveStudent = Profile & {
+  plan_name: string;
+  end_date: string;
+  start_date: string;
+  days_left: number;
+};
+
+function replaceVars(text: string, ctx: { profile: Profile; plan?: string; start?: string; end?: string; weight?: string; lastUpdate?: string }) {
+  const first = ctx.profile.full_name?.split(" ")[0] || "Aluno";
   return text
     .replace(/{nome}/gi, first)
-    .replace(/{nome_completo}/gi, profile.full_name || "Aluno")
-    .replace(/{email}/gi, profile.email || "—")
-    .replace(/{telefone}/gi, profile.phone || "—");
+    .replace(/{nome_completo}/gi, ctx.profile.full_name || "Aluno")
+    .replace(/{email}/gi, ctx.profile.email || "—")
+    .replace(/{telefone}/gi, ctx.profile.phone || "—")
+    .replace(/{plano}/gi, ctx.plan || "—")
+    .replace(/{data_inicio}/gi, ctx.start || "—")
+    .replace(/{data_fim}/gi, ctx.end || "—")
+    .replace(/{peso_atual}/gi, ctx.weight || "—")
+    .replace(/{ultima_atualizacao}/gi, ctx.lastUpdate || "—")
+    .replace(/{link_plataforma}/gi, "https://sthmethod.com.br/login")
+    .replace(/{link_fale_com_nutri}/gi, `https://wa.me/${NUTRI_PHONE}`);
 }
 
 export default function AdminFaleNutri() {
+  return (
+    <DashboardLayout role="admin" title="Fale com o Nutri">
+      <div className="space-y-4">
+        <header className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <HeartHandshake className="w-6 h-6 text-emerald-500" /> Fale com o Nutri — CRM
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Canal exclusivo de atendimento dos alunos ativos da STH METHOD via W-API ({NUTRI_PHONE}).
+            </p>
+          </div>
+          <Badge variant="outline" className="gap-1 border-emerald-500/40 text-emerald-500">
+            <Phone className="w-3 h-3" /> {NUTRI_PHONE}
+          </Badge>
+        </header>
+
+        <Tabs defaultValue="atendimento" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="dashboard"><LayoutDashboard className="w-4 h-4 mr-1" />Dashboard</TabsTrigger>
+            <TabsTrigger value="atendimento"><MessageCircle className="w-4 h-4 mr-1" />Atendimento</TabsTrigger>
+            <TabsTrigger value="biblioteca"><BookOpen className="w-4 h-4 mr-1" />Biblioteca</TabsTrigger>
+            <TabsTrigger value="config"><Settings2 className="w-4 h-4 mr-1" />Configuração</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard"><DashboardPanel /></TabsContent>
+          <TabsContent value="atendimento"><AttendancePanel /></TabsContent>
+          <TabsContent value="biblioteca"><TemplatesPanel /></TabsContent>
+          <TabsContent value="config"><ConfigPanel /></TabsContent>
+        </Tabs>
+      </div>
+    </DashboardLayout>
+  );
+}
+
+/* ============================ DASHBOARD ============================ */
+function DashboardPanel() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["nutri-dashboard"],
+    queryFn: async () => {
+      const today = new Date().toISOString().slice(0, 10);
+      const in7 = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+      const [subs, convs, recent] = await Promise.all([
+        supabase.from("subscriptions").select("user_id, end_date").gte("end_date", today),
+        supabase.from("nutri_conversations").select("status, priority, last_inbound_at"),
+        supabase.from("nutri_messages").select("user_id, body, direction, created_at").order("created_at", { ascending: false }).limit(8),
+      ]);
+      const active = new Set((subs.data || []).map((s) => s.user_id)).size;
+      const open = (convs.data || []).filter((c) => c.status === "open").length;
+      const pending = (convs.data || []).filter((c) => c.status === "pending" || c.status === "waiting_nutri").length;
+      const high = (convs.data || []).filter((c) => c.priority === "high").length;
+      const fifteen = Date.now() - 15 * 86400000;
+      const stale = (convs.data || []).filter((c) => c.last_inbound_at && new Date(c.last_inbound_at).getTime() < fifteen).length;
+      const renewing = (subs.data || []).filter((s) => s.end_date <= in7).length;
+      return { active, open, pending, high, stale, renewing, recent: recent.data || [] };
+    },
+  });
+
+  if (isLoading || !data) {
+    return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+  }
+
+  const cards = [
+    { label: "Alunos ativos", value: data.active, icon: Users, color: "text-emerald-500" },
+    { label: "Atendimentos abertos", value: data.open, icon: MessageCircle, color: "text-sky-400" },
+    { label: "Pendentes", value: data.pending, icon: Clock, color: "text-amber-500" },
+    { label: "Prioridade alta", value: data.high, icon: AlertTriangle, color: "text-rose-500" },
+    { label: "Atualizações atrasadas", value: data.stale, icon: BellRing, color: "text-orange-400" },
+    { label: "Renovações em 7 dias", value: data.renewing, icon: Calendar, color: "text-violet-400" },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        {cards.map((c) => (
+          <Card key={c.label} className="p-4 space-y-1">
+            <c.icon className={`w-5 h-5 ${c.color}`} />
+            <p className="text-2xl font-bold">{c.value}</p>
+            <p className="text-xs text-muted-foreground">{c.label}</p>
+          </Card>
+        ))}
+      </div>
+
+      <Card className="p-4">
+        <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+          <MessageCircle className="w-4 h-4 text-emerald-500" /> Últimas mensagens
+        </h3>
+        {data.recent.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-6">Sem mensagens ainda.</p>
+        ) : (
+          <div className="divide-y divide-border/40">
+            {data.recent.map((m: any, i: number) => (
+              <div key={i} className="py-2 flex items-start justify-between gap-3 text-sm">
+                <div className="flex-1 min-w-0">
+                  <p className="truncate">
+                    <span className={`text-[10px] uppercase mr-2 ${m.direction === "in" ? "text-sky-400" : "text-emerald-500"}`}>
+                      {m.direction === "in" ? "recebida" : "enviada"}
+                    </span>
+                    {m.body || "—"}
+                  </p>
+                </div>
+                <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                  {new Date(m.created_at).toLocaleString("pt-BR")}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+/* ============================ ATENDIMENTO ============================ */
+function AttendancePanel() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [filterPriority, setFilterPriority] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  const [engine, setEngine] = useState<"template" | "gemini" | "personal" | "hybrid">("personal");
+  const [hint, setHint] = useState("");
   const [sending, setSending] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
 
-  // Active students = subscription end_date >= today, joined with profile
+  // Alunos ativos com plano
   const { data: activeStudents = [], isLoading: loadingStudents } = useQuery({
-    queryKey: ["fale-nutri-active-students"],
-    queryFn: async () => {
+    queryKey: ["fale-nutri-active-students-rich"],
+    queryFn: async (): Promise<ActiveStudent[]> => {
       const today = new Date().toISOString().slice(0, 10);
       const { data: subs } = await supabase
         .from("subscriptions")
-        .select("user_id, end_date, status")
-        .gte("end_date", today);
+        .select("user_id, end_date, start_date, plan_id")
+        .gte("end_date", today)
+        .order("end_date", { ascending: true });
       const ids = Array.from(new Set((subs || []).map((s) => s.user_id)));
       if (ids.length === 0) return [];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("user_id, full_name, email, phone")
-        .in("user_id", ids);
-      const byId = new Map((profiles || []).map((p) => [p.user_id, p]));
-      return ids
-        .map((id) => byId.get(id))
-        .filter((p): p is { user_id: string; full_name: string; email: string; phone: string } => !!p && !!p.phone);
+      const [{ data: profiles }, { data: plans }] = await Promise.all([
+        supabase.from("profiles").select("user_id, full_name, email, phone").in("user_id", ids),
+        supabase.from("plans").select("id, name"),
+      ]);
+      const planById = new Map((plans || []).map((p) => [p.id, p.name]));
+      const profileById = new Map((profiles || []).map((p) => [p.user_id, p]));
+      const seen = new Set<string>();
+      const out: ActiveStudent[] = [];
+      for (const s of subs || []) {
+        if (seen.has(s.user_id)) continue;
+        seen.add(s.user_id);
+        const p = profileById.get(s.user_id);
+        if (!p || !p.phone) continue;
+        const days = Math.max(0, Math.floor((new Date(s.end_date).getTime() - Date.now()) / 86400000));
+        out.push({
+          ...(p as Profile),
+          plan_name: planById.get(s.plan_id) || "—",
+          start_date: s.start_date,
+          end_date: s.end_date,
+          days_left: days,
+        });
+      }
+      return out;
     },
   });
 
@@ -65,18 +240,41 @@ export default function AdminFaleNutri() {
   });
   const optOutSet = useMemo(() => new Set(optOuts), [optOuts]);
 
+  const { data: conversations = [] } = useQuery({
+    queryKey: ["nutri-conversations"],
+    queryFn: async () => {
+      const { data } = await supabase.from("nutri_conversations").select("*").order("last_message_at", { ascending: false });
+      return data || [];
+    },
+  });
+  const convByUser = useMemo(() => new Map(conversations.map((c: any) => [c.user_id, c])), [conversations]);
+
+  useEffect(() => {
+    const ch = supabase
+      .channel("nutri-conv-list")
+      .on("postgres_changes", { event: "*", schema: "public", table: "nutri_conversations" }, () => {
+        qc.invalidateQueries({ queryKey: ["nutri-conversations"] });
+      })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "nutri_messages" }, () => {
+        qc.invalidateQueries({ queryKey: ["nutri-conversations"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [qc]);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    if (!q) return activeStudents;
-    return activeStudents.filter(
-      (s) =>
-        s.full_name?.toLowerCase().includes(q) ||
-        s.email?.toLowerCase().includes(q) ||
-        s.phone?.includes(q),
-    );
-  }, [activeStudents, search]);
+    return activeStudents.filter((s) => {
+      const c: any = convByUser.get(s.user_id);
+      if (filterPriority !== "all" && c?.priority !== filterPriority) return false;
+      if (filterStatus !== "all" && c?.status !== filterStatus) return false;
+      if (!q) return true;
+      return s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q) || s.phone?.includes(q);
+    });
+  }, [activeStudents, search, filterPriority, filterStatus, convByUser]);
 
   const selected = activeStudents.find((s) => s.user_id === selectedUserId);
+  const selectedConv: any = selected ? convByUser.get(selected.user_id) : null;
 
   const { data: conversation = [], refetch: refetchConv } = useQuery({
     queryKey: ["nutri-conv", selectedUserId],
@@ -87,46 +285,63 @@ export default function AdminFaleNutri() {
         .select("*")
         .eq("user_id", selectedUserId!)
         .order("created_at", { ascending: true })
-        .limit(200);
+        .limit(300);
       return data || [];
     },
   });
 
-  // Realtime updates for selected conversation
   useEffect(() => {
     if (!selectedUserId) return;
+    // marca como lido ao abrir
+    supabase.from("nutri_conversations").update({ unread_count: 0 }).eq("user_id", selectedUserId).then(() => {
+      qc.invalidateQueries({ queryKey: ["nutri-conversations"] });
+    });
     const ch = supabase
       .channel(`nutri-msgs-${selectedUserId}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "nutri_messages", filter: `user_id=eq.${selectedUserId}` },
-        () => refetchConv(),
-      )
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "nutri_messages", filter: `user_id=eq.${selectedUserId}` }, () => refetchConv())
       .subscribe();
-    return () => {
-      supabase.removeChannel(ch);
-    };
-  }, [selectedUserId, refetchConv]);
+    return () => { supabase.removeChannel(ch); };
+  }, [selectedUserId, refetchConv, qc]);
 
   const { data: templates = [] } = useQuery({
-    queryKey: ["nutri-templates"],
+    queryKey: ["nutri-templates-active"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("nutri_templates")
-        .select("*")
-        .eq("active", true)
-        .order("title");
+      const { data } = await supabase.from("nutri_templates").select("*").eq("active", true).order("category").order("tone");
       return data || [];
     },
+  });
+
+  // Última atualização (peso) e fotos do aluno
+  const { data: meta } = useQuery({
+    queryKey: ["nutri-student-meta", selectedUserId],
+    enabled: !!selectedUserId,
+    queryFn: async () => {
+      const [w, photos] = await Promise.all([
+        supabase.from("weight_logs").select("weight, logged_at").eq("user_id", selectedUserId!).order("logged_at", { ascending: false }).limit(1).maybeSingle(),
+        supabase.from("body_images").select("created_at").eq("user_id", selectedUserId!).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+      ]);
+      return {
+        weight: w.data?.weight ? `${w.data.weight} kg` : "—",
+        weightAt: w.data?.logged_at ? new Date(w.data.logged_at).toLocaleDateString("pt-BR") : "—",
+        photosAt: photos.data?.created_at ? new Date(photos.data.created_at).toLocaleDateString("pt-BR") : "—",
+      };
+    },
+  });
+
+  const buildCtx = (s: ActiveStudent) => ({
+    profile: s,
+    plan: s.plan_name,
+    start: s.start_date ? new Date(s.start_date).toLocaleDateString("pt-BR") : "—",
+    end: s.end_date ? new Date(s.end_date).toLocaleDateString("pt-BR") : "—",
+    weight: meta?.weight || "—",
+    lastUpdate: meta?.weightAt || "—",
   });
 
   const toggleOptOut = useMutation({
     mutationFn: async ({ userId, paused }: { userId: string; paused: boolean }) => {
       if (paused) {
         const { data: u } = await supabase.auth.getUser();
-        const { error } = await supabase
-          .from("nutri_opt_outs")
-          .upsert({ user_id: userId, reason: "Interrompido pelo admin", opted_out_by: u.user?.id });
+        const { error } = await supabase.from("nutri_opt_outs").upsert({ user_id: userId, reason: "Interrompido pelo admin", opted_out_by: u.user?.id });
         if (error) throw error;
       } else {
         const { error } = await supabase.from("nutri_opt_outs").delete().eq("user_id", userId);
@@ -137,8 +352,36 @@ export default function AdminFaleNutri() {
       qc.invalidateQueries({ queryKey: ["nutri-opt-outs"] });
       toast({ title: "Atualizado" });
     },
-    onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
+
+  const updateConv = async (patch: Record<string, any>) => {
+    if (!selectedUserId) return;
+    const { error } = await supabase.from("nutri_conversations").update(patch).eq("user_id", selectedUserId);
+    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    qc.invalidateQueries({ queryKey: ["nutri-conversations"] });
+  };
+
+  const generateAI = async () => {
+    if (!selected) return;
+    setAiLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("nutri-ai-reply", {
+        body: { user_id: selected.user_id, hint },
+      });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || "IA indisponível");
+      if (engine === "hybrid" && draft.trim()) {
+        setDraft(draft.trim() + "\n\n" + data.reply);
+      } else {
+        setDraft(data.reply);
+      }
+      toast({ title: "Sugestão pronta", description: `Origem: ${data.status}` });
+    } catch (e: any) {
+      toast({ title: "Falha na IA", description: String(e?.message || e), variant: "destructive" });
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const sendMessage = async () => {
     if (!selected || !draft.trim()) return;
@@ -147,7 +390,7 @@ export default function AdminFaleNutri() {
       return;
     }
     setSending(true);
-    const text = replaceVars(draft, selected);
+    const text = replaceVars(draft, buildCtx(selected));
     try {
       const { data: u } = await supabase.auth.getUser();
       const { data, error } = await supabase.functions.invoke("send-wapi", {
@@ -155,25 +398,16 @@ export default function AdminFaleNutri() {
       });
       if (error || !data?.ok) throw new Error(data?.error || error?.message || "Falha no envio");
       await supabase.from("nutri_messages").insert({
-        user_id: selected.user_id,
-        phone: selected.phone,
-        direction: "out",
-        body: text,
-        status: "sent",
-        wapi_message_id: data.messageId ?? null,
-        sent_by: u.user?.id ?? null,
+        user_id: selected.user_id, phone: selected.phone, direction: "out", body: text,
+        status: "sent", wapi_message_id: data.messageId ?? null, sent_by: u.user?.id ?? null,
       });
       setDraft("");
       refetchConv();
       toast({ title: "Mensagem enviada" });
     } catch (e: any) {
       await supabase.from("nutri_messages").insert({
-        user_id: selected.user_id,
-        phone: selected.phone,
-        direction: "out",
-        body: text,
-        status: "failed",
-        error: String(e?.message || e),
+        user_id: selected.user_id, phone: selected.phone, direction: "out", body: text,
+        status: "failed", error: String(e?.message || e),
       });
       refetchConv();
       toast({ title: "Falha no envio", description: String(e?.message || e), variant: "destructive" });
@@ -182,254 +416,278 @@ export default function AdminFaleNutri() {
     }
   };
 
+  const addTag = (tag: string) => {
+    if (!selectedConv) return;
+    const cur: string[] = selectedConv.tags || [];
+    if (cur.includes(tag)) return;
+    updateConv({ tags: [...cur, tag] });
+  };
+  const removeTag = (tag: string) => {
+    if (!selectedConv) return;
+    const cur: string[] = selectedConv.tags || [];
+    updateConv({ tags: cur.filter((t) => t !== tag) });
+  };
+
   return (
-    <DashboardLayout role="admin" title="Fale com o Nutri">
-      <div className="space-y-4">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <HeartHandshake className="w-6 h-6 text-emerald-500" /> Automação Fale com o Nutri
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Canal privado bidirecional via W-API — linha {NUTRI_PHONE} (somente alunos ativos).
-            </p>
-          </div>
-          <Badge variant="outline" className="gap-1 border-emerald-500/40 text-emerald-500">
-            <Phone className="w-3 h-3" /> {NUTRI_PHONE}
-          </Badge>
+    <div className="grid lg:grid-cols-[300px_1fr_300px] gap-3">
+      {/* LISTA */}
+      <Card className="p-3 space-y-2">
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-2 top-2.5 text-muted-foreground" />
+          <Input placeholder="Buscar aluno ativo..." className="pl-8 h-9" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-
-        <Tabs defaultValue="chat" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="chat"><MessageCircle className="w-4 h-4 mr-1" />Conversas</TabsTrigger>
-            <TabsTrigger value="templates"><Pencil className="w-4 h-4 mr-1" />Templates</TabsTrigger>
-            <TabsTrigger value="config"><Settings2 className="w-4 h-4 mr-1" />Configuração</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="chat">
-            <div className="grid md:grid-cols-[320px_1fr] gap-4">
-              <Card className="p-3 space-y-2">
-                <div className="relative">
-                  <Search className="w-4 h-4 absolute left-2 top-2.5 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar aluno ativo..."
-                    className="pl-8 h-9"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
-                </div>
-                <ScrollArea className="h-[60vh] pr-2">
-                  {loadingStudents ? (
-                    <div className="flex items-center justify-center py-6">
-                      <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+        <div className="grid grid-cols-2 gap-2">
+          <Select value={filterPriority} onValueChange={setFilterPriority}>
+            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Prioridade" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              <SelectItem value="high">Alta</SelectItem>
+              <SelectItem value="medium">Média</SelectItem>
+              <SelectItem value="low">Baixa</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              {Object.entries(STATUS_LABEL).map(([k, v]) => (<SelectItem key={k} value={k}>{v}</SelectItem>))}
+            </SelectContent>
+          </Select>
+        </div>
+        <ScrollArea className="h-[65vh] pr-2">
+          {loadingStudents ? (
+            <div className="flex items-center justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
+          ) : filtered.length === 0 ? (
+            <p className="text-xs text-muted-foreground p-4 text-center">Nenhum aluno encontrado.</p>
+          ) : (
+            filtered.map((s) => {
+              const c: any = convByUser.get(s.user_id);
+              const isPaused = optOutSet.has(s.user_id);
+              const isSel = selectedUserId === s.user_id;
+              return (
+                <button
+                  key={s.user_id}
+                  onClick={() => setSelectedUserId(s.user_id)}
+                  className={`w-full text-left p-2 rounded-md transition-colors mb-1 border ${isSel ? "bg-accent border-accent" : "border-transparent hover:bg-accent/50"}`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium truncate">{s.full_name || "Sem nome"}</p>
+                    <div className="flex items-center gap-1">
+                      {c?.unread_count > 0 && (
+                        <span className="text-[10px] bg-emerald-500 text-white rounded-full px-1.5 min-w-[18px] text-center">{c.unread_count}</span>
+                      )}
+                      {c?.priority && (
+                        <span className={`text-[9px] uppercase px-1.5 rounded border ${PRIORITY_STYLE[c.priority]}`}>{c.priority}</span>
+                      )}
                     </div>
-                  ) : filtered.length === 0 ? (
-                    <p className="text-xs text-muted-foreground p-4 text-center">Nenhum aluno ativo encontrado.</p>
-                  ) : (
-                    filtered.map((s) => {
-                      const isPaused = optOutSet.has(s.user_id);
-                      const isSel = selectedUserId === s.user_id;
-                      return (
-                        <button
-                          key={s.user_id}
-                          onClick={() => setSelectedUserId(s.user_id)}
-                          className={`w-full text-left p-2 rounded-md transition-colors mb-1 border ${
-                            isSel ? "bg-accent border-accent" : "border-transparent hover:bg-accent/50"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-sm font-medium truncate">{s.full_name || "Sem nome"}</p>
-                            {isPaused && (
-                              <Badge variant="outline" className="text-[10px] border-rose-500/40 text-rose-500">
-                                Pausado
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-[11px] text-muted-foreground truncate">{s.phone}</p>
-                        </button>
-                      );
-                    })
-                  )}
-                </ScrollArea>
-              </Card>
-
-              <Card className="p-4 flex flex-col h-[70vh]">
-                {!selected ? (
-                  <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
-                    Selecione um aluno ativo para iniciar.
                   </div>
-                ) : (
-                  <>
-                    <div className="flex items-center justify-between pb-3 border-b">
-                      <div>
-                        <p className="font-semibold">{selected.full_name}</p>
-                        <p className="text-xs text-muted-foreground">{selected.phone} · {selected.email}</p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">Ativo</span>
-                          <Switch
-                            checked={!optOutSet.has(selected.user_id)}
-                            onCheckedChange={(v) => toggleOptOut.mutate({ userId: selected.user_id, paused: !v })}
-                          />
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            toggleOptOut.mutate({ userId: selected.user_id, paused: !optOutSet.has(selected.user_id) })
-                          }
-                          className={
-                            optOutSet.has(selected.user_id)
-                              ? "border-emerald-500/40 text-emerald-500"
-                              : "border-rose-500/40 text-rose-500"
-                          }
-                        >
-                          {optOutSet.has(selected.user_id) ? (
-                            <><CheckCircle2 className="w-4 h-4 mr-1" /> Retomar</>
-                          ) : (
-                            <><Ban className="w-4 h-4 mr-1" /> Interromper</>
-                          )}
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => refetchConv()} title="Atualizar">
-                          <RefreshCw className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    {s.plan_name} · {s.days_left}d · {s.phone}
+                  </p>
+                  {c?.last_message_preview && (
+                    <p className="text-[11px] text-muted-foreground/80 truncate mt-0.5">{c.last_message_preview}</p>
+                  )}
+                  {isPaused && (<Badge variant="outline" className="text-[10px] mt-1 border-rose-500/40 text-rose-500">Pausado</Badge>)}
+                </button>
+              );
+            })
+          )}
+        </ScrollArea>
+      </Card>
 
-                    <ScrollArea className="flex-1 my-3 pr-2">
-                      {conversation.length === 0 ? (
-                        <p className="text-xs text-muted-foreground text-center py-6">
-                          Sem mensagens ainda. Envie a primeira abaixo.
-                        </p>
-                      ) : (
-                        <div className="space-y-2">
-                          {conversation.map((m: any) => (
-                            <div
-                              key={m.id}
-                              className={`flex ${m.direction === "out" ? "justify-end" : "justify-start"}`}
-                            >
-                              <div
-                                className={`max-w-[75%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${
-                                  m.direction === "out"
-                                    ? "bg-emerald-500/15 text-foreground border border-emerald-500/30"
-                                    : "bg-muted text-foreground"
-                                }`}
-                              >
-                                {m.body}
-                                <div className="text-[10px] opacity-60 mt-1 flex items-center gap-1">
-                                  {new Date(m.created_at).toLocaleString("pt-BR")}
-                                  {m.status === "failed" && (
-                                    <span className="text-rose-500">· falhou</span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </ScrollArea>
-
-                    <div className="space-y-2">
-                      {templates.length > 0 && (
-                        <Select
-                          onValueChange={(id) => {
-                            const tpl = templates.find((t: any) => t.id === id);
-                            if (tpl) setDraft(replaceVars(tpl.content, selected));
-                          }}
-                        >
-                          <SelectTrigger className="h-8 text-xs w-full">
-                            <SelectValue placeholder="Inserir template..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {templates.map((t: any) => (
-                              <SelectItem key={t.id} value={t.id} className="text-xs">
-                                {t.title}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                      <div className="flex gap-2">
-                        <Textarea
-                          rows={2}
-                          placeholder={
-                            optOutSet.has(selected.user_id)
-                              ? "Aluno pausou o canal. Reative para enviar."
-                              : "Digite uma mensagem... use {nome} para personalizar."
-                          }
-                          value={draft}
-                          onChange={(e) => setDraft(e.target.value)}
-                          disabled={optOutSet.has(selected.user_id) || sending}
-                          className="resize-none"
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) sendMessage();
-                          }}
-                        />
-                        <Button
-                          onClick={sendMessage}
-                          disabled={!draft.trim() || sending || optOutSet.has(selected.user_id)}
-                          className="bg-emerald-500 hover:bg-emerald-600 text-white self-end"
-                        >
-                          {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                        </Button>
-                      </div>
-                      <p className="text-[10px] text-muted-foreground">Ctrl/⌘+Enter para enviar</p>
-                    </div>
-                  </>
-                )}
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="templates">
-            <TemplatesPanel />
-          </TabsContent>
-
-          <TabsContent value="config">
-            <Card className="p-6 space-y-4 max-w-2xl">
-              <h3 className="font-semibold flex items-center gap-2">
-                <Settings2 className="w-4 h-4" /> Configuração da API W-API
-              </h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between border-b pb-2">
-                  <span className="text-muted-foreground">Provedor</span>
-                  <span className="font-medium">W-API</span>
-                </div>
-                <div className="flex justify-between border-b pb-2">
-                  <span className="text-muted-foreground">Linha</span>
-                  <span className="font-medium">{NUTRI_PHONE} (Nutri)</span>
-                </div>
-                <div className="flex justify-between border-b pb-2">
-                  <span className="text-muted-foreground">Endpoint</span>
-                  <span className="font-mono text-xs">api.w-api.app/v1/message</span>
-                </div>
-                <div className="flex justify-between border-b pb-2">
-                  <span className="text-muted-foreground">Edge function</span>
-                  <span className="font-mono text-xs">send-wapi</span>
-                </div>
-                <div className="flex justify-between border-b pb-2">
-                  <span className="text-muted-foreground">Webhook entrada</span>
-                  <span className="font-mono text-xs break-all">
-                    {`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-inbound-nutri`}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Credenciais</span>
-                  <span className="font-medium text-emerald-500">Configuradas</span>
-                </div>
+      {/* CHAT */}
+      <Card className="p-4 flex flex-col h-[78vh]">
+        {!selected ? (
+          <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+            Selecione um aluno ativo para iniciar.
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between pb-3 border-b gap-2 flex-wrap">
+              <div>
+                <p className="font-semibold">{selected.full_name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {selected.plan_name} · vence em {selected.days_left}d · {selected.phone}
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Cole a URL do webhook acima no painel W-API para receber mensagens dos alunos automaticamente.
-              </p>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </DashboardLayout>
+              <div className="flex items-center gap-2">
+                {selectedConv?.priority && (
+                  <span className={`text-[10px] uppercase px-2 py-0.5 rounded border ${PRIORITY_STYLE[selectedConv.priority]}`}>{selectedConv.priority}</span>
+                )}
+                <Select value={selectedConv?.status || "open"} onValueChange={(v) => updateConv({ status: v })}>
+                  <SelectTrigger className="h-8 text-xs w-[150px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(STATUS_LABEL).map(([k, v]) => (<SelectItem key={k} value={k}>{v}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+                <Switch
+                  checked={!optOutSet.has(selected.user_id)}
+                  onCheckedChange={(v) => toggleOptOut.mutate({ userId: selected.user_id, paused: !v })}
+                />
+                <Button variant="ghost" size="icon" onClick={() => refetchConv()} title="Atualizar"><RefreshCw className="w-4 h-4" /></Button>
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div className="flex items-center gap-1 flex-wrap py-2 border-b">
+              <Tag className="w-3 h-3 text-muted-foreground" />
+              {(selectedConv?.tags || []).map((t: string) => (
+                <button key={t} onClick={() => removeTag(t)} className="text-[10px] px-1.5 py-0.5 rounded border border-emerald-500/40 text-emerald-500 hover:bg-rose-500/10 hover:border-rose-500/40 hover:text-rose-500">
+                  {t} ×
+                </button>
+              ))}
+              <Select value="" onValueChange={(v) => v && addTag(v)}>
+                <SelectTrigger className="h-6 text-[10px] w-[120px] border-dashed"><SelectValue placeholder="+ tag" /></SelectTrigger>
+                <SelectContent>
+                  {TAG_OPTIONS.filter((t) => !(selectedConv?.tags || []).includes(t)).map((t) => (
+                    <SelectItem key={t} value={t} className="text-xs">{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <ScrollArea className="flex-1 my-3 pr-2">
+              {conversation.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-6">Sem mensagens ainda. Envie a primeira abaixo.</p>
+              ) : (
+                <div className="space-y-2">
+                  {conversation.map((m: any) => (
+                    <div key={m.id} className={`flex ${m.direction === "out" ? "justify-end" : "justify-start"}`}>
+                      <div className={`max-w-[75%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${m.direction === "out" ? "bg-emerald-500/15 text-foreground border border-emerald-500/30" : "bg-muted text-foreground"}`}>
+                        {m.body}
+                        <div className="text-[10px] opacity-60 mt-1 flex items-center gap-1">
+                          {new Date(m.created_at).toLocaleString("pt-BR")}
+                          {m.status === "failed" && (<span className="text-rose-500">· falhou</span>)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+
+            {/* Composer */}
+            <div className="space-y-2 border-t pt-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Select value={engine} onValueChange={(v: any) => setEngine(v)}>
+                  <SelectTrigger className="h-8 text-xs w-[180px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="template">Template manual</SelectItem>
+                    <SelectItem value="gemini">Gemini IA</SelectItem>
+                    <SelectItem value="personal">Resposta personalizada</SelectItem>
+                    <SelectItem value="hybrid">Híbrida (template + IA)</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select onValueChange={(id) => {
+                  const tpl: any = templates.find((t: any) => t.id === id);
+                  if (tpl && selected) {
+                    const filled = replaceVars(tpl.content, buildCtx(selected));
+                    setDraft(engine === "hybrid" && draft ? draft + "\n\n" + filled : filled);
+                  }
+                }}>
+                  <SelectTrigger className="h-8 text-xs flex-1 min-w-[180px]"><SelectValue placeholder="Inserir template..." /></SelectTrigger>
+                  <SelectContent>
+                    {templates.map((t: any) => (
+                      <SelectItem key={t.id} value={t.id} className="text-xs">
+                        {t.title} {t.category && <span className="text-muted-foreground">· {t.category}</span>}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Button size="sm" variant="outline" onClick={generateAI} disabled={aiLoading || !selected} className="border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10">
+                  {aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                  <span className="ml-1">Gerar com IA</span>
+                </Button>
+              </div>
+
+              {(engine === "gemini" || engine === "hybrid") && (
+                <Input value={hint} onChange={(e) => setHint(e.target.value)} placeholder="Direcionamento opcional para a IA (ex.: lembrar atualização)" className="h-8 text-xs" />
+              )}
+
+              <div className="flex gap-2">
+                <Textarea
+                  rows={3}
+                  placeholder={optOutSet.has(selected.user_id) ? "Aluno pausou o canal. Reative para enviar." : "Digite uma mensagem... use {nome} {plano} {data_fim} {peso_atual} para personalizar."}
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  disabled={optOutSet.has(selected.user_id) || sending}
+                  className="resize-none"
+                  onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) sendMessage(); }}
+                />
+                <Button onClick={sendMessage} disabled={!draft.trim() || sending || optOutSet.has(selected.user_id)} className="bg-emerald-500 hover:bg-emerald-600 text-white self-end">
+                  {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                </Button>
+              </div>
+              <p className="text-[10px] text-muted-foreground">Ctrl/⌘+Enter para enviar · IA nunca prescreve dose/medicação</p>
+            </div>
+          </>
+        )}
+      </Card>
+
+      {/* FICHA */}
+      <Card className="p-4 space-y-3 h-[78vh] overflow-y-auto">
+        {!selected ? (
+          <p className="text-xs text-muted-foreground text-center py-6">Ficha do aluno aparece aqui.</p>
+        ) : (
+          <>
+            <div>
+              <p className="text-xs text-muted-foreground">Aluno</p>
+              <p className="font-semibold">{selected.full_name}</p>
+              <p className="text-xs">{selected.email}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="p-2 rounded border border-border/50">
+                <p className="text-muted-foreground">Plano</p>
+                <p className="font-medium">{selected.plan_name}</p>
+              </div>
+              <div className="p-2 rounded border border-border/50">
+                <p className="text-muted-foreground">Dias restantes</p>
+                <p className="font-medium">{selected.days_left}d</p>
+              </div>
+              <div className="p-2 rounded border border-border/50">
+                <p className="text-muted-foreground">Início</p>
+                <p className="font-medium">{selected.start_date ? new Date(selected.start_date).toLocaleDateString("pt-BR") : "—"}</p>
+              </div>
+              <div className="p-2 rounded border border-border/50">
+                <p className="text-muted-foreground">Fim</p>
+                <p className="font-medium">{selected.end_date ? new Date(selected.end_date).toLocaleDateString("pt-BR") : "—"}</p>
+              </div>
+              <div className="p-2 rounded border border-border/50 col-span-2">
+                <p className="text-muted-foreground">Último peso</p>
+                <p className="font-medium">{meta?.weight} <span className="text-[10px] text-muted-foreground">({meta?.weightAt})</span></p>
+              </div>
+              <div className="p-2 rounded border border-border/50 col-span-2">
+                <p className="text-muted-foreground">Últimas fotos</p>
+                <p className="font-medium">{meta?.photosAt}</p>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs">Observações internas</Label>
+              <Textarea
+                rows={4}
+                value={selectedConv?.internal_notes || ""}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  qc.setQueryData(["nutri-conversations"], (old: any) =>
+                    (old || []).map((c: any) => c.user_id === selected.user_id ? { ...c, internal_notes: v } : c),
+                  );
+                }}
+                onBlur={(e) => updateConv({ internal_notes: e.target.value })}
+                placeholder="Notas privadas sobre o aluno..."
+                className="text-xs"
+              />
+            </div>
+          </>
+        )}
+      </Card>
+    </div>
   );
 }
 
+/* ============================ TEMPLATES ============================ */
 function TemplatesPanel() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -437,59 +695,54 @@ function TemplatesPanel() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [category, setCategory] = useState("");
+  const [tone, setTone] = useState("humanizada");
+  const [filterCat, setFilterCat] = useState("all");
+  const [filterTone, setFilterTone] = useState("all");
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ["nutri-templates-all"],
     queryFn: async () => {
-      const { data } = await supabase.from("nutri_templates").select("*").order("created_at", { ascending: false });
+      const { data } = await supabase.from("nutri_templates").select("*").order("category").order("tone");
       return data || [];
     },
   });
 
-  const reset = () => {
-    setEditing(null);
-    setTitle("");
-    setContent("");
-    setCategory("");
-  };
+  const cats = Array.from(new Set((templates as any[]).map((t) => t.category).filter(Boolean)));
+  const filtered = (templates as any[]).filter((t) =>
+    (filterCat === "all" || t.category === filterCat) &&
+    (filterTone === "all" || t.tone === filterTone),
+  );
+
+  const reset = () => { setEditing(null); setTitle(""); setContent(""); setCategory(""); setTone("humanizada"); };
 
   const save = useMutation({
     mutationFn: async () => {
       if (!title.trim() || !content.trim()) throw new Error("Título e conteúdo obrigatórios");
       const { data: u } = await supabase.auth.getUser();
       if (editing) {
-        const { error } = await supabase
-          .from("nutri_templates")
-          .update({ title, content, category: category || null })
-          .eq("id", editing.id);
+        const { error } = await supabase.from("nutri_templates").update({ title, content, category: category || null, tone }).eq("id", editing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
-          .from("nutri_templates")
-          .insert({ title, content, category: category || null, created_by: u.user?.id });
+        const { error } = await supabase.from("nutri_templates").insert({ title, content, category: category || null, tone, created_by: u.user?.id });
         if (error) throw error;
       }
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["nutri-templates-all"] });
-      qc.invalidateQueries({ queryKey: ["nutri-templates"] });
-      setOpen(false);
-      reset();
-      toast({ title: "Template salvo" });
-    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["nutri-templates-all"] }); qc.invalidateQueries({ queryKey: ["nutri-templates-active"] }); setOpen(false); reset(); toast({ title: "Template salvo" }); },
     onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
 
   const remove = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("nutri_templates").delete().eq("id", id);
+    mutationFn: async (id: string) => { const { error } = await supabase.from("nutri_templates").delete().eq("id", id); if (error) throw error; },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["nutri-templates-all"] }); qc.invalidateQueries({ queryKey: ["nutri-templates-active"] }); toast({ title: "Removido" }); },
+  });
+
+  const duplicate = useMutation({
+    mutationFn: async (t: any) => {
+      const { data: u } = await supabase.auth.getUser();
+      const { error } = await supabase.from("nutri_templates").insert({ title: t.title + " (cópia)", content: t.content, category: t.category, tone: t.tone, created_by: u.user?.id });
       if (error) throw error;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["nutri-templates-all"] });
-      qc.invalidateQueries({ queryKey: ["nutri-templates"] });
-      toast({ title: "Removido" });
-    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["nutri-templates-all"] }); toast({ title: "Duplicado" }); },
   });
 
   const toggleActive = useMutation({
@@ -497,116 +750,139 @@ function TemplatesPanel() {
       const { error } = await supabase.from("nutri_templates").update({ active }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["nutri-templates-all"] });
-      qc.invalidateQueries({ queryKey: ["nutri-templates"] });
-    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["nutri-templates-all"] }); qc.invalidateQueries({ queryKey: ["nutri-templates-active"] }); },
   });
 
   return (
     <Card className="p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold">Templates Fale com o Nutri</h3>
-        <Dialog
-          open={open}
-          onOpenChange={(v) => {
-            setOpen(v);
-            if (!v) reset();
-          }}
-        >
-          <DialogTrigger asChild>
-            <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 text-white">
-              <Plus className="w-4 h-4 mr-1" /> Novo template
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{editing ? "Editar template" : "Novo template"}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div>
-                <Label className="text-xs">Título</Label>
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex.: Dúvida de dieta" />
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h3 className="font-semibold">Biblioteca de Respostas</h3>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Select value={filterCat} onValueChange={setFilterCat}>
+            <SelectTrigger className="h-8 text-xs w-[160px]"><SelectValue placeholder="Categoria" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas categorias</SelectItem>
+              {cats.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterTone} onValueChange={setFilterTone}>
+            <SelectTrigger className="h-8 text-xs w-[140px]"><SelectValue placeholder="Tom" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos tons</SelectItem>
+              <SelectItem value="curta">Curta</SelectItem>
+              <SelectItem value="humanizada">Humanizada</SelectItem>
+              <SelectItem value="tecnica">Técnica</SelectItem>
+              <SelectItem value="motivacional">Motivacional</SelectItem>
+            </SelectContent>
+          </Select>
+          <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 text-white"><Plus className="w-4 h-4 mr-1" />Novo</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>{editing ? "Editar template" : "Novo template"}</DialogTitle></DialogHeader>
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-xs">Título</Label>
+                  <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Categoria</Label>
+                    <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="dieta, treino..." />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Tom</Label>
+                    <Select value={tone} onValueChange={setTone}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="curta">Curta</SelectItem>
+                        <SelectItem value="humanizada">Humanizada</SelectItem>
+                        <SelectItem value="tecnica">Técnica</SelectItem>
+                        <SelectItem value="motivacional">Motivacional</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs">Conteúdo</Label>
+                  <Textarea rows={8} value={content} onChange={(e) => setContent(e.target.value)} placeholder="Use {nome} {plano} {data_fim} {peso_atual} {link_plataforma}..." />
+                </div>
               </div>
-              <div>
-                <Label className="text-xs">Categoria</Label>
-                <Input
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  placeholder="Ex.: Dúvidas, Suporte..."
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Conteúdo (use {"{nome}"}, {"{email}"}...)</Label>
-                <Textarea
-                  rows={6}
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder={"Olá {nome}! Tudo bem? Aqui é o Nutri..."}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-              <Button onClick={() => save.mutate()} disabled={save.isPending}>
-                {save.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+                <Button onClick={() => save.mutate()} disabled={save.isPending}>
+                  {save.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-6">
-          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-        </div>
-      ) : templates.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-6">
-          Nenhum template cadastrado. Crie o primeiro para padronizar respostas.
-        </p>
+        <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
+      ) : filtered.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-6">Nenhum template encontrado.</p>
       ) : (
-        <div className="grid md:grid-cols-2 gap-3">
-          {templates.map((t: any) => (
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
+          {filtered.map((t: any) => (
             <Card key={t.id} className="p-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-sm">{t.title}</p>
-                  {t.category && <p className="text-[11px] text-muted-foreground">{t.category}</p>}
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-medium text-sm truncate">{t.title}</p>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    {t.category && <Badge variant="outline" className="text-[9px] uppercase">{t.category}</Badge>}
+                    {t.tone && <Badge variant="outline" className="text-[9px] uppercase border-emerald-500/40 text-emerald-500">{t.tone}</Badge>}
+                  </div>
                 </div>
-                <Switch
-                  checked={t.active}
-                  onCheckedChange={(v) => toggleActive.mutate({ id: t.id, active: v })}
-                />
+                <Switch checked={t.active} onCheckedChange={(v) => toggleActive.mutate({ id: t.id, active: v })} />
               </div>
-              <p className="text-xs text-muted-foreground line-clamp-3 whitespace-pre-wrap">{t.content}</p>
-              <div className="flex gap-2 justify-end">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setEditing(t);
-                    setTitle(t.title);
-                    setContent(t.content);
-                    setCategory(t.category || "");
-                    setOpen(true);
-                  }}
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    if (confirm("Remover template?")) remove.mutate(t.id);
-                  }}
-                >
-                  <Trash2 className="w-3.5 h-3.5 text-rose-500" />
-                </Button>
+              <p className="text-xs text-muted-foreground line-clamp-4 whitespace-pre-wrap">{t.content}</p>
+              <div className="flex gap-1 justify-end">
+                <Button variant="ghost" size="sm" onClick={() => duplicate.mutate(t)} title="Duplicar"><Plus className="w-3.5 h-3.5" /></Button>
+                <Button variant="ghost" size="sm" onClick={() => { setEditing(t); setTitle(t.title); setContent(t.content); setCategory(t.category || ""); setTone(t.tone || "humanizada"); setOpen(true); }} title="Editar"><Pencil className="w-3.5 h-3.5" /></Button>
+                <Button variant="ghost" size="sm" onClick={() => { if (confirm("Remover template?")) remove.mutate(t.id); }} title="Remover"><Trash2 className="w-3.5 h-3.5 text-rose-500" /></Button>
               </div>
             </Card>
           ))}
         </div>
       )}
     </Card>
+  );
+}
+
+/* ============================ CONFIG ============================ */
+function ConfigPanel() {
+  const webhook = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-inbound-nutri`;
+  return (
+    <Card className="p-6 space-y-4 max-w-2xl">
+      <h3 className="font-semibold flex items-center gap-2"><Settings2 className="w-4 h-4" /> Configuração da linha W-API</h3>
+      <div className="space-y-2 text-sm">
+        <Row k="Provedor" v="W-API" />
+        <Row k="Linha" v={`${NUTRI_PHONE} (Nutri)`} />
+        <Row k="Endpoint" v="api.w-api.app/v1/message" mono />
+        <Row k="Edge function envio" v="send-wapi" mono />
+        <Row k="Edge function IA" v="nutri-ai-reply" mono />
+        <Row k="Webhook entrada" v={webhook} mono break />
+        <Row k="Credenciais" v={<span className="text-emerald-500 font-medium">Configuradas</span>} />
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Cole o webhook acima no painel W-API para receber mensagens dos alunos automaticamente.
+        Mensagens vindas de alunos não-ativos são automaticamente ignoradas.
+      </p>
+      <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(webhook); toast({ title: "Webhook copiado" }); }}>
+        Copiar webhook
+      </Button>
+    </Card>
+  );
+}
+
+function Row({ k, v, mono, break: br }: { k: string; v: React.ReactNode; mono?: boolean; break?: boolean }) {
+  return (
+    <div className="flex justify-between border-b pb-2 gap-3">
+      <span className="text-muted-foreground">{k}</span>
+      <span className={`${mono ? "font-mono text-xs" : "font-medium"} ${br ? "break-all text-right" : ""}`}>{v}</span>
+    </div>
   );
 }
