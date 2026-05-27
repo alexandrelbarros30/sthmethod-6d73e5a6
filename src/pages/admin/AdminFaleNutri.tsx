@@ -1062,24 +1062,28 @@ function BusinessHoursPanel() {
         <Label className="text-xs uppercase tracking-wide text-muted-foreground">Agenda semanal</Label>
         <div className="space-y-2">
           {schedule.map((d, i) => (
-            <div key={d.day} className="grid grid-cols-[110px_60px_1fr_auto_1fr] items-center gap-2 p-2 rounded-md border border-border/40">
-              <span className="text-sm font-medium">{d.label}</span>
-              <Switch checked={!!d.enabled} onCheckedChange={(v) => updateDay(i, { enabled: v })} />
-              <Input
-                type="time"
-                value={d.start || "09:00"}
-                onChange={(e) => updateDay(i, { start: e.target.value })}
-                disabled={!d.enabled}
-                className="h-8 text-xs"
-              />
-              <span className="text-xs text-muted-foreground text-center">até</span>
-              <Input
-                type="time"
-                value={d.end || "18:00"}
-                onChange={(e) => updateDay(i, { end: e.target.value })}
-                disabled={!d.enabled}
-                className="h-8 text-xs"
-              />
+            <div key={d.day} className="p-2 rounded-md border border-border/40 space-y-2 sm:space-y-0 sm:grid sm:grid-cols-[110px_60px_1fr_auto_1fr] sm:items-center sm:gap-2">
+              <div className="flex items-center justify-between sm:contents">
+                <span className="text-sm font-medium">{d.label}</span>
+                <Switch checked={!!d.enabled} onCheckedChange={(v) => updateDay(i, { enabled: v })} />
+              </div>
+              <div className="flex items-center gap-2 sm:contents">
+                <Input
+                  type="time"
+                  value={d.start || "09:00"}
+                  onChange={(e) => updateDay(i, { start: e.target.value })}
+                  disabled={!d.enabled}
+                  className="h-8 text-xs flex-1 sm:flex-none"
+                />
+                <span className="text-xs text-muted-foreground text-center">até</span>
+                <Input
+                  type="time"
+                  value={d.end || "18:00"}
+                  onChange={(e) => updateDay(i, { end: e.target.value })}
+                  disabled={!d.enabled}
+                  className="h-8 text-xs flex-1 sm:flex-none"
+                />
+              </div>
             </div>
           ))}
         </div>
