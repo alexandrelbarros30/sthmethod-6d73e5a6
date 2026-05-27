@@ -274,7 +274,7 @@ export default function AdminMotorRespostaApis() {
   );
 
   return (
-    <DashboardLayout>
+    <DashboardLayout role="admin" title="Motor de Resposta & APIs" subtitle="Configurações dos canais de WhatsApp">
       <div className="space-y-6 pb-12">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
