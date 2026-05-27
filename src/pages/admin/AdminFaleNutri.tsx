@@ -475,9 +475,9 @@ function AttendancePanel({ globalEngine }: { globalEngine: "personal" | "templat
   };
 
   return (
-    <div className="grid lg:grid-cols-[300px_1fr_300px] gap-3">
+    <div className="grid lg:grid-cols-[1fr_300px] gap-3">
       {/* LISTA */}
-      <Card className="p-3 space-y-2">
+      <Card className="p-3 space-y-2 h-[78vh] flex flex-col">
         <div className="relative">
           <Search className="w-4 h-4 absolute left-2 top-2.5 text-muted-foreground" />
           <Input placeholder="Buscar aluno ativo..." className="pl-8 h-9" value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -500,7 +500,7 @@ function AttendancePanel({ globalEngine }: { globalEngine: "personal" | "templat
             </SelectContent>
           </Select>
         </div>
-        <ScrollArea className="h-[65vh] pr-2">
+        <ScrollArea className="flex-1 pr-2">
           {loadingStudents ? (
             <div className="flex items-center justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
           ) : filtered.length === 0 ? (
@@ -511,172 +511,153 @@ function AttendancePanel({ globalEngine }: { globalEngine: "personal" | "templat
               const isPaused = optOutSet.has(s.user_id);
               const isSel = selectedUserId === s.user_id;
               return (
-                <button
-                  key={s.user_id}
-                  onClick={() => setSelectedUserId(s.user_id)}
-                  className={`w-full text-left p-2 rounded-md transition-colors mb-1 border ${isSel ? "bg-accent border-accent" : "border-transparent hover:bg-accent/50"}`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium truncate">{s.full_name || "Sem nome"}</p>
-                    <div className="flex items-center gap-1">
-                      {c?.unread_count > 0 && (
-                        <span className="text-[10px] bg-emerald-500 text-white rounded-full px-1.5 min-w-[18px] text-center">{c.unread_count}</span>
-                      )}
-                      {c?.priority && (
-                        <span className={`text-[9px] uppercase px-1.5 rounded border ${PRIORITY_STYLE[c.priority]}`}>{c.priority}</span>
-                      )}
+                <div key={s.user_id} className={`mb-1 rounded-md border ${isSel ? "border-emerald-500/40 bg-accent/30" : "border-transparent"}`}>
+                  <button
+                    onClick={() => setSelectedUserId(isSel ? null : s.user_id)}
+                    className={`w-full text-left p-2 rounded-md transition-colors ${isSel ? "" : "hover:bg-accent/50"}`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium truncate">{s.full_name || "Sem nome"}</p>
+                      <div className="flex items-center gap-1">
+                        {c?.unread_count > 0 && (
+                          <span className="text-[10px] bg-emerald-500 text-white rounded-full px-1.5 min-w-[18px] text-center">{c.unread_count}</span>
+                        )}
+                        {c?.priority && (
+                          <span className={`text-[9px] uppercase px-1.5 rounded border ${PRIORITY_STYLE[c.priority]}`}>{c.priority}</span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground truncate">
-                    {s.plan_name} · {s.days_left}d · {s.phone}
-                  </p>
-                  {c?.last_message_preview && (
-                    <p className="text-[11px] text-muted-foreground/80 truncate mt-0.5">{c.last_message_preview}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">
+                      {s.plan_name} · {s.days_left}d · {s.phone}
+                    </p>
+                    {!isSel && c?.last_message_preview && (
+                      <p className="text-[11px] text-muted-foreground/80 truncate mt-0.5">{c.last_message_preview}</p>
+                    )}
+                    {isPaused && (<Badge variant="outline" className="text-[10px] mt-1 border-rose-500/40 text-rose-500">Pausado</Badge>)}
+                  </button>
+                  {isSel && selected && (
+                    <div className="border-t border-border/40 p-2 space-y-2 bg-background/40">
+                      {/* Barra de ações rápidas */}
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-[11px] border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10"
+                          onClick={() => {
+                            setEditName(selected.full_name || "");
+                            setEditEmail(selected.email || "");
+                            setEditPhone(selected.phone || "");
+                            setCadastroOpen(true);
+                          }}
+                        >
+                          <Pencil className="w-3 h-3 mr-1" /> Cadastro rápido
+                        </Button>
+                        <Select value={selectedConv?.status || "open"} onValueChange={(v) => updateConv({ status: v })}>
+                          <SelectTrigger className="h-7 text-[11px] w-[130px]"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(STATUS_LABEL).map(([k, v]) => (<SelectItem key={k} value={k}>{v}</SelectItem>))}
+                          </SelectContent>
+                        </Select>
+                        <div className="flex items-center gap-1 ml-auto">
+                          <Switch
+                            checked={!optOutSet.has(selected.user_id)}
+                            onCheckedChange={(v) => toggleOptOut.mutate({ userId: selected.user_id, paused: !v })}
+                          />
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => refetchConv()} title="Atualizar"><RefreshCw className="w-3.5 h-3.5" /></Button>
+                        </div>
+                      </div>
+
+                      {/* Tags */}
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <Tag className="w-3 h-3 text-muted-foreground" />
+                        {(selectedConv?.tags || []).map((t: string) => (
+                          <button key={t} onClick={() => removeTag(t)} className="text-[10px] px-1.5 py-0.5 rounded border border-emerald-500/40 text-emerald-500 hover:bg-rose-500/10 hover:border-rose-500/40 hover:text-rose-500">
+                            {t} ×
+                          </button>
+                        ))}
+                        <Select value="" onValueChange={(v) => v && addTag(v)}>
+                          <SelectTrigger className="h-6 text-[10px] w-[110px] border-dashed"><SelectValue placeholder="+ tag" /></SelectTrigger>
+                          <SelectContent>
+                            {TAG_OPTIONS.filter((t) => !(selectedConv?.tags || []).includes(t)).map((t) => (
+                              <SelectItem key={t} value={t} className="text-xs">{t}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Mensagens */}
+                      <ScrollArea className="h-[280px] pr-2 rounded border border-border/40 bg-background/60 p-2">
+                        {conversation.length === 0 ? (
+                          <p className="text-xs text-muted-foreground text-center py-6">Sem mensagens ainda.</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {conversation.map((m: any) => (
+                              <div key={m.id} className={`flex ${m.direction === "out" ? "justify-end" : "justify-start"}`}>
+                                <div className={`max-w-[80%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${m.direction === "out" ? "bg-emerald-500/15 text-foreground border border-emerald-500/30" : "bg-muted text-foreground"}`}>
+                                  {m.body}
+                                  <div className="text-[10px] opacity-60 mt-1 flex items-center gap-1">
+                                    {new Date(m.created_at).toLocaleString("pt-BR")}
+                                    {m.status === "failed" && (<span className="text-rose-500">· falhou</span>)}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </ScrollArea>
+
+                      {/* Composer */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Select onValueChange={(id) => {
+                            const tpl: any = templates.find((t: any) => t.id === id);
+                            if (tpl && selected) {
+                              const filled = replaceVars(tpl.content, buildCtx(selected));
+                              setDraft(engine === "hybrid" && draft ? draft + "\n\n" + filled : filled);
+                            }
+                          }}>
+                            <SelectTrigger className="h-7 text-[11px] flex-1 min-w-[160px]"><SelectValue placeholder="Template..." /></SelectTrigger>
+                            <SelectContent>
+                              {templates.map((t: any) => (
+                                <SelectItem key={t.id} value={t.id} className="text-xs">
+                                  {t.title} {t.category && <span className="text-muted-foreground">· {t.category}</span>}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button size="sm" variant="outline" onClick={generateAI} disabled={aiLoading || !selected} className="h-7 text-[11px] border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10">
+                            {aiLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                            <span className="ml-1">IA</span>
+                          </Button>
+                        </div>
+
+                        {(engine === "gemini" || engine === "hybrid") && (
+                          <Input value={hint} onChange={(e) => setHint(e.target.value)} placeholder="Direcionamento opcional para a IA" className="h-7 text-[11px]" />
+                        )}
+
+                        <div className="flex gap-2">
+                          <Textarea
+                            rows={2}
+                            placeholder={optOutSet.has(selected.user_id) ? "Aluno pausou o canal." : "Mensagem... {nome} {plano} {data_fim} {peso_atual}"}
+                            value={draft}
+                            onChange={(e) => setDraft(e.target.value)}
+                            disabled={optOutSet.has(selected.user_id) || sending}
+                            className="resize-none text-sm"
+                            onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) sendMessage(); }}
+                          />
+                          <Button onClick={sendMessage} disabled={!draft.trim() || sending || optOutSet.has(selected.user_id)} className="bg-emerald-500 hover:bg-emerald-600 text-white self-end">
+                            {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                          </Button>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">Motor: <span className="text-emerald-500 font-semibold uppercase">{engine}</span> · Ctrl/⌘+Enter envia</p>
+                      </div>
+                    </div>
                   )}
-                  {isPaused && (<Badge variant="outline" className="text-[10px] mt-1 border-rose-500/40 text-rose-500">Pausado</Badge>)}
-                </button>
+                </div>
               );
             })
           )}
         </ScrollArea>
-      </Card>
-
-      {/* CHAT */}
-      <Card className="p-4 flex flex-col h-[78vh]">
-        {!selected ? (
-          <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
-            Selecione um aluno ativo para iniciar.
-          </div>
-        ) : (
-          <>
-            <div className="flex items-center justify-between pb-3 border-b gap-2 flex-wrap">
-              <div>
-                <p className="font-semibold">{selected.full_name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {selected.plan_name} · vence em {selected.days_left}d · {selected.phone}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                {selectedConv?.priority && (
-                  <span className={`text-[10px] uppercase px-2 py-0.5 rounded border ${PRIORITY_STYLE[selectedConv.priority]}`}>{selectedConv.priority}</span>
-                )}
-                <Select value={selectedConv?.status || "open"} onValueChange={(v) => updateConv({ status: v })}>
-                  <SelectTrigger className="h-8 text-xs w-[150px]"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(STATUS_LABEL).map(([k, v]) => (<SelectItem key={k} value={k}>{v}</SelectItem>))}
-                  </SelectContent>
-                </Select>
-                <Switch
-                  checked={!optOutSet.has(selected.user_id)}
-                  onCheckedChange={(v) => toggleOptOut.mutate({ userId: selected.user_id, paused: !v })}
-                />
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 text-xs border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10"
-                  onClick={() => {
-                    setEditName(selected.full_name || "");
-                    setEditEmail(selected.email || "");
-                    setEditPhone(selected.phone || "");
-                    setCadastroOpen(true);
-                  }}
-                >
-                  <Pencil className="w-3.5 h-3.5 mr-1" /> Cadastro
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => refetchConv()} title="Atualizar"><RefreshCw className="w-4 h-4" /></Button>
-              </div>
-            </div>
-
-            {/* Tags */}
-            <div className="flex items-center gap-1 flex-wrap py-2 border-b">
-              <Tag className="w-3 h-3 text-muted-foreground" />
-              {(selectedConv?.tags || []).map((t: string) => (
-                <button key={t} onClick={() => removeTag(t)} className="text-[10px] px-1.5 py-0.5 rounded border border-emerald-500/40 text-emerald-500 hover:bg-rose-500/10 hover:border-rose-500/40 hover:text-rose-500">
-                  {t} ×
-                </button>
-              ))}
-              <Select value="" onValueChange={(v) => v && addTag(v)}>
-                <SelectTrigger className="h-6 text-[10px] w-[120px] border-dashed"><SelectValue placeholder="+ tag" /></SelectTrigger>
-                <SelectContent>
-                  {TAG_OPTIONS.filter((t) => !(selectedConv?.tags || []).includes(t)).map((t) => (
-                    <SelectItem key={t} value={t} className="text-xs">{t}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <ScrollArea className="flex-1 my-3 pr-2">
-              {conversation.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-6">Sem mensagens ainda. Envie a primeira abaixo.</p>
-              ) : (
-                <div className="space-y-2">
-                  {conversation.map((m: any) => (
-                    <div key={m.id} className={`flex ${m.direction === "out" ? "justify-end" : "justify-start"}`}>
-                      <div className={`max-w-[75%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${m.direction === "out" ? "bg-emerald-500/15 text-foreground border border-emerald-500/30" : "bg-muted text-foreground"}`}>
-                        {m.body}
-                        <div className="text-[10px] opacity-60 mt-1 flex items-center gap-1">
-                          {new Date(m.created_at).toLocaleString("pt-BR")}
-                          {m.status === "failed" && (<span className="text-rose-500">· falhou</span>)}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-
-            {/* Composer */}
-            <div className="space-y-2 border-t pt-2">
-              <div className="text-[10px] text-muted-foreground">
-                Motor ativo: <span className="text-emerald-500 font-semibold uppercase">{engine}</span> · ajuste no painel acima
-              </div>
-
-              <div className="flex items-center gap-2 flex-wrap">
-                <Select onValueChange={(id) => {
-                  const tpl: any = templates.find((t: any) => t.id === id);
-                  if (tpl && selected) {
-                    const filled = replaceVars(tpl.content, buildCtx(selected));
-                    setDraft(engine === "hybrid" && draft ? draft + "\n\n" + filled : filled);
-                  }
-                }}>
-                  <SelectTrigger className="h-8 text-xs flex-1 min-w-[180px]"><SelectValue placeholder="Inserir template..." /></SelectTrigger>
-                  <SelectContent>
-                    {templates.map((t: any) => (
-                      <SelectItem key={t.id} value={t.id} className="text-xs">
-                        {t.title} {t.category && <span className="text-muted-foreground">· {t.category}</span>}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Button size="sm" variant="outline" onClick={generateAI} disabled={aiLoading || !selected} className="border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10">
-                  {aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                  <span className="ml-1">Gerar com IA</span>
-                </Button>
-              </div>
-
-              {(engine === "gemini" || engine === "hybrid") && (
-                <Input value={hint} onChange={(e) => setHint(e.target.value)} placeholder="Direcionamento opcional para a IA (ex.: lembrar atualização)" className="h-8 text-xs" />
-              )}
-
-              <div className="flex gap-2">
-                <Textarea
-                  rows={3}
-                  placeholder={optOutSet.has(selected.user_id) ? "Aluno pausou o canal. Reative para enviar." : "Digite uma mensagem... use {nome} {plano} {data_fim} {peso_atual} para personalizar."}
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  disabled={optOutSet.has(selected.user_id) || sending}
-                  className="resize-none"
-                  onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) sendMessage(); }}
-                />
-                <Button onClick={sendMessage} disabled={!draft.trim() || sending || optOutSet.has(selected.user_id)} className="bg-emerald-500 hover:bg-emerald-600 text-white self-end">
-                  {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                </Button>
-              </div>
-              <p className="text-[10px] text-muted-foreground">Ctrl/⌘+Enter para enviar · IA nunca prescreve dose/medicação</p>
-            </div>
-          </>
-        )}
       </Card>
 
       {/* FICHA */}
