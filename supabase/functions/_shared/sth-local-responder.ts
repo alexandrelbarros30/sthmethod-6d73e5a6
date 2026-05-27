@@ -111,6 +111,10 @@ const RULES: Rule[] = [
       if (alreadyGreeted(c)) {
         return `${hi(c)} Sigo por aqui. O que você precisa agora?`;
       }
+      // Template operacional do CRM (boas_vindas) — sobrepõe hardcoded
+      const preferChan = c.contactType === 'aluno_ativo' ? 'fale_nutri' : 'sth_one';
+      const tpl = pickOpTemplate(c, 'boas_vindas', preferChan);
+      if (tpl) return renderTemplate(tpl, c);
       if (c.status === 'active') {
         return `${hi(c)} ${statusLine(c)}\n\nSe precisar de atualização, ajustes, exames ou suporte — é só me chamar.`;
       }
