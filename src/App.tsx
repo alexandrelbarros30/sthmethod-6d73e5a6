@@ -86,8 +86,9 @@ import AdminUpdates from "./pages/admin/AdminUpdates";
 import AdminTeleatendimento from "./pages/admin/AdminTeleatendimento";
 import AdminBilling from "./pages/admin/AdminBilling";
 import AdminCRM from "./pages/admin/AdminCRM";
-import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
-import AdminFaleNutri from "./pages/admin/AdminFaleNutri";
+// Legacy screens (AdminWhatsApp, AdminFaleNutri) consolidados em AdminAtendimento + AdminMotorRespostaApis.
+// Mantidos os imports removidos; redirecionamos as rotas antigas para o novo fluxo.
+import { Navigate } from "react-router-dom";
 import AdminAtendimento from "./pages/admin/AdminAtendimento";
 import AdminMotorRespostaApis from "./pages/admin/AdminMotorRespostaApis";
 import AdminCrmAuditoria from "./pages/admin/AdminCrmAuditoria";
@@ -234,8 +235,8 @@ const App = () => (
             <Route path="/admin/teleatendimento" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTeleatendimento /></ProtectedRoute>} />
             <Route path="/admin/billing" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBilling area="admin" /></ProtectedRoute>} />
             <Route path="/admin/crm" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCRM area="admin" /></ProtectedRoute>} />
-            <Route path="/admin/whatsapp" element={<ProtectedRoute allowedRoles={["admin"]}><AdminWhatsApp /></ProtectedRoute>} />
-            <Route path="/admin/fale-nutri" element={<ProtectedRoute allowedRoles={["admin"]}><AdminFaleNutri /></ProtectedRoute>} />
+            <Route path="/admin/whatsapp" element={<ProtectedRoute allowedRoles={["admin"]}><Navigate to="/admin/atendimento/configuracoes" replace /></ProtectedRoute>} />
+            <Route path="/admin/fale-nutri" element={<ProtectedRoute allowedRoles={["admin"]}><Navigate to="/admin/atendimento" replace /></ProtectedRoute>} />
             <Route path="/admin/atendimento" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAtendimento /></ProtectedRoute>} />
             <Route path="/admin/atendimento/configuracoes" element={<ProtectedRoute allowedRoles={["admin"]}><AdminMotorRespostaApis /></ProtectedRoute>} />
             <Route path="/admin/atendimento/auditoria" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrmAuditoria /></ProtectedRoute>} />
