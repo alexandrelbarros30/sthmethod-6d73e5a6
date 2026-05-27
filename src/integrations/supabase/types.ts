@@ -2443,12 +2443,46 @@ export type Database = {
         }
         Relationships: []
       }
+      nutri_business_hours: {
+        Row: {
+          away_message: string
+          enabled: boolean
+          id: string
+          schedule: Json
+          send_once_per_day: boolean
+          timezone: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          away_message?: string
+          enabled?: boolean
+          id?: string
+          schedule?: Json
+          send_once_per_day?: boolean
+          timezone?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          away_message?: string
+          enabled?: boolean
+          id?: string
+          schedule?: Json
+          send_once_per_day?: boolean
+          timezone?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       nutri_conversations: {
         Row: {
           assigned_to: string | null
           category: string | null
           created_at: string
           internal_notes: string | null
+          last_away_at: string | null
           last_inbound_at: string | null
           last_message_at: string | null
           last_message_preview: string | null
@@ -2464,6 +2498,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           internal_notes?: string | null
+          last_away_at?: string | null
           last_inbound_at?: string | null
           last_message_at?: string | null
           last_message_preview?: string | null
@@ -2479,6 +2514,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           internal_notes?: string | null
+          last_away_at?: string | null
           last_inbound_at?: string | null
           last_message_at?: string | null
           last_message_preview?: string | null

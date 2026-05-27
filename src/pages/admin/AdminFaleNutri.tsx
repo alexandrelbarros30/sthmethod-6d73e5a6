@@ -965,24 +965,151 @@ function TemplatesPanel() {
 function ConfigPanel() {
   const webhook = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wapi-inbound-nutri`;
   return (
-    <Card className="p-6 space-y-4 max-w-2xl">
-      <h3 className="font-semibold flex items-center gap-2"><Settings2 className="w-4 h-4" /> Configuração da linha W-API</h3>
-      <div className="space-y-2 text-sm">
-        <Row k="Provedor" v="W-API" />
-        <Row k="Linha" v={`${NUTRI_PHONE} (Nutri)`} />
-        <Row k="Endpoint" v="api.w-api.app/v1/message" mono />
-        <Row k="Edge function envio" v="send-wapi" mono />
-        <Row k="Edge function IA" v="nutri-ai-reply" mono />
-        <Row k="Webhook entrada" v={webhook} mono break />
-        <Row k="Credenciais" v={<span className="text-emerald-500 font-medium">Configuradas</span>} />
+    <div className="space-y-4 max-w-2xl">
+      <Card className="p-6 space-y-4">
+        <h3 className="font-semibold flex items-center gap-2"><Settings2 className="w-4 h-4" /> Configuração da linha W-API</h3>
+        <div className="space-y-2 text-sm">
+          <Row k="Provedor" v="W-API" />
+          <Row k="Linha" v={`${NUTRI_PHONE} (Nutri)`} />
+          <Row k="Endpoint" v="api.w-api.app/v1/message" mono />
+          <Row k="Edge function envio" v="send-wapi" mono />
+          <Row k="Edge function IA" v="nutri-ai-reply" mono />
+          <Row k="Webhook entrada" v={webhook} mono break />
+          <Row k="Credenciais" v={<span className="text-emerald-500 font-medium">Configuradas</span>} />
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Cole o webhook acima no painel W-API para receber mensagens dos alunos automaticamente.
+          Mensagens vindas de alunos não-ativos são automaticamente ignoradas.
+        </p>
+        <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(webhook); toast({ title: "Webhook copiado" }); }}>
+          Copiar webhook
+        </Button>
+      </Card>
+
+      <BusinessHoursPanel />
+    </div>
+  );
+}
+
+/* ============================ HORÁRIO DE ATENDIMENTO ============================ */
+function BusinessHoursPanel() {
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["nutri-business-hours"],
+    queryFn: async () => {
+      const { data } = await supabase.from("nutri_business_hours").select("*").eq("id", "main").maybeSingle();
+      return data;
+    },
+  });
+
+  const [enabled, setEnabled] = useState(false);
+  const [awayMessage, setAwayMessage] = useState("");
+  const [oncePerDay, setOncePerDay] = useState(true);
+  const [schedule, setSchedule] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!data) return;
+    setEnabled(!!data.enabled);
+    setAwayMessage(data.away_message || "");
+    setOncePerDay(data.send_once_per_day !== false);
+    setSchedule(Array.isArray(data.schedule) ? data.schedule : []);
+  }, [data]);
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const { data: u } = await supabase.auth.getUser();
+      const { error } = await supabase.from("nutri_business_hours").update({
+        enabled,
+        away_message: awayMessage,
+        send_once_per_day: oncePerDay,
+        schedule,
+        updated_at: new Date().toISOString(),
+        updated_by: u.user?.id,
+      }).eq("id", "main");
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["nutri-business-hours"] }); toast({ title: "Horários salvos", description: "Resposta automática atualizada." }); },
+    onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
+  const updateDay = (i: number, patch: Partial<{ enabled: boolean; start: string; end: string }>) => {
+    setSchedule((arr) => arr.map((d, idx) => idx === i ? { ...d, ...patch } : d));
+  };
+
+  if (isLoading) {
+    return <Card className="p-6 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></Card>;
+  }
+
+  return (
+    <Card className="p-6 space-y-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Clock className="w-4 h-4 text-emerald-500" />
+          <div>
+            <h3 className="font-semibold">Horário de atendimento</h3>
+            <p className="text-xs text-muted-foreground">
+              Quando ativo, mensagens recebidas fora do horário disparam uma resposta automática.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Label className="text-xs">Ativo</Label>
+          <Switch checked={enabled} onCheckedChange={setEnabled} />
+        </div>
       </div>
-      <p className="text-xs text-muted-foreground">
-        Cole o webhook acima no painel W-API para receber mensagens dos alunos automaticamente.
-        Mensagens vindas de alunos não-ativos são automaticamente ignoradas.
-      </p>
-      <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(webhook); toast({ title: "Webhook copiado" }); }}>
-        Copiar webhook
-      </Button>
+
+      <div className="space-y-2">
+        <Label className="text-xs uppercase tracking-wide text-muted-foreground">Agenda semanal</Label>
+        <div className="space-y-2">
+          {schedule.map((d, i) => (
+            <div key={d.day} className="grid grid-cols-[110px_60px_1fr_auto_1fr] items-center gap-2 p-2 rounded-md border border-border/40">
+              <span className="text-sm font-medium">{d.label}</span>
+              <Switch checked={!!d.enabled} onCheckedChange={(v) => updateDay(i, { enabled: v })} />
+              <Input
+                type="time"
+                value={d.start || "09:00"}
+                onChange={(e) => updateDay(i, { start: e.target.value })}
+                disabled={!d.enabled}
+                className="h-8 text-xs"
+              />
+              <span className="text-xs text-muted-foreground text-center">até</span>
+              <Input
+                type="time"
+                value={d.end || "18:00"}
+                onChange={(e) => updateDay(i, { end: e.target.value })}
+                disabled={!d.enabled}
+                className="h-8 text-xs"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-xs uppercase tracking-wide text-muted-foreground">Mensagem de ausência</Label>
+        <Textarea
+          rows={4}
+          value={awayMessage}
+          onChange={(e) => setAwayMessage(e.target.value)}
+          placeholder="Use {nome} para o primeiro nome do aluno."
+        />
+        <p className="text-[10px] text-muted-foreground">Variáveis: {"{nome}"}</p>
+      </div>
+
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <label className="flex items-center gap-2 text-xs">
+          <Switch checked={oncePerDay} onCheckedChange={setOncePerDay} />
+          Enviar no máximo 1x por dia para cada aluno
+        </label>
+        <Button
+          onClick={() => save.mutate()}
+          disabled={save.isPending}
+          className="bg-emerald-500 hover:bg-emerald-600 text-white"
+        >
+          {save.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
+          Salvar horários
+        </Button>
+      </div>
     </Card>
   );
 }
