@@ -2443,6 +2443,102 @@ export type Database = {
         }
         Relationships: []
       }
+      nutri_messages: {
+        Row: {
+          body: string
+          created_at: string
+          direction: string
+          error: string | null
+          id: string
+          media_url: string | null
+          phone: string
+          sent_by: string | null
+          status: string
+          user_id: string
+          wapi_message_id: string | null
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          direction: string
+          error?: string | null
+          id?: string
+          media_url?: string | null
+          phone: string
+          sent_by?: string | null
+          status?: string
+          user_id: string
+          wapi_message_id?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          direction?: string
+          error?: string | null
+          id?: string
+          media_url?: string | null
+          phone?: string
+          sent_by?: string | null
+          status?: string
+          user_id?: string
+          wapi_message_id?: string | null
+        }
+        Relationships: []
+      }
+      nutri_opt_outs: {
+        Row: {
+          created_at: string
+          opted_out_by: string | null
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          opted_out_by?: string | null
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          opted_out_by?: string | null
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      nutri_templates: {
+        Row: {
+          active: boolean
+          category: string | null
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string | null
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payment_gateway_details: {
         Row: {
           ai_verification_notes: string | null
