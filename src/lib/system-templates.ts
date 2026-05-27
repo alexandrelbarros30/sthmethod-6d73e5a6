@@ -127,6 +127,7 @@ export const sendSystemTemplate = async (
     "training_updated",
     "protocol_updated",
     "plan_updated",
+    "content_all_ready",
   ];
   const fnName = NUTRI_CHANNEL_KEYS.includes(key) ? "send-wapi" : "send-whatsapp";
 
