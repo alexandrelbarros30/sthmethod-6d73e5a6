@@ -352,7 +352,7 @@ const NavGroupItem = ({ group, onNavClick }: { group: NavGroup; onNavClick?: () 
         <ChevronDown className={cn("w-4 h-4 transition-transform", open ? "rotate-180" : "")} />
       </button>
       {open && (
-        <div className="ml-3 pl-3 border-l border-sidebar-border/60 space-y-0.5">
+        <div className="ml-3 pl-3 border-l border-sidebar-border/60 space-y-0.5 max-w-full overflow-x-auto">
           {group.children.map((child) => {
             const active = location.pathname === child.to;
             return (
@@ -361,14 +361,14 @@ const NavGroupItem = ({ group, onNavClick }: { group: NavGroup; onNavClick?: () 
                 to={child.to}
                 onClick={onNavClick}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-xl text-[12.5px] font-medium transition-all duration-200 font-body",
+                  "flex items-center gap-3 px-3 py-2 rounded-xl text-[12.5px] font-medium transition-all duration-200 font-body whitespace-nowrap",
                   active
                     ? "bg-foreground/10 text-foreground"
                     : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
                 )}
               >
                 <child.icon className="w-[16px] h-[16px] shrink-0" />
-                <span className="flex-1">{child.label}</span>
+                <span className="flex-1 pr-2">{child.label}</span>
               </Link>
             );
           })}
