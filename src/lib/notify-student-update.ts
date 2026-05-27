@@ -118,7 +118,7 @@ export const notifyStudentContentUpdate = async (
 
     await supabase
       .from("student_content_batches")
-      .upsert(updatePayload, { onConflict: "user_id" });
+      .upsert(updatePayload as any, { onConflict: "user_id" });
 
     const { data: fresh } = await supabase
       .from("student_content_batches")
