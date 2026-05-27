@@ -118,10 +118,21 @@ export const sendSystemTemplate = async (
   let deliveryStatus: "sent" | "failed" = "sent";
   let deliveryError: string | null = null;
 
-  // Try automatic send via Z-API edge function
+  // Algumas mensagens devem sair pela linha "Fale com o Nutri" (W-API),
+  // não pelo canal comercial Z-API. Mantém Z-API como padrão para o resto.
+  const NUTRI_CHANNEL_KEYS: SystemTemplateKey[] = [
+    "payment_welcome",
+    "diet_updated",
+    "training_updated",
+    "protocol_updated",
+    "plan_updated",
+  ];
+  const fnName = NUTRI_CHANNEL_KEYS.includes(key) ? "send-wapi" : "send-whatsapp";
+
+  // Try automatic send via the chosen channel edge function
   let autoOk = false;
   try {
-    const { data, error } = await supabase.functions.invoke("send-whatsapp", {
+    const { data, error } = await supabase.functions.invoke(fnName, {
       body: { phone: ctx.phone, message: finalMessage, image_url: tpl.image_url || null },
     });
     if (error) throw error;
