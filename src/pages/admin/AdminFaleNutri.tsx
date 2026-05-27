@@ -570,6 +570,19 @@ function AttendancePanel({ globalEngine }: { globalEngine: "personal" | "templat
                   checked={!optOutSet.has(selected.user_id)}
                   onCheckedChange={(v) => toggleOptOut.mutate({ userId: selected.user_id, paused: !v })}
                 />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 text-xs border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10"
+                  onClick={() => {
+                    setEditName(selected.full_name || "");
+                    setEditEmail(selected.email || "");
+                    setEditPhone(selected.phone || "");
+                    setCadastroOpen(true);
+                  }}
+                >
+                  <Pencil className="w-3.5 h-3.5 mr-1" /> Cadastro
+                </Button>
                 <Button variant="ghost" size="icon" onClick={() => refetchConv()} title="Atualizar"><RefreshCw className="w-4 h-4" /></Button>
               </div>
             </div>
