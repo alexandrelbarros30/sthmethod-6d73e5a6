@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.wapi-inbound-nutri]
 verify_jwt = false
+
+[functions.nutri-ai-reply]
+verify_jwt = false
