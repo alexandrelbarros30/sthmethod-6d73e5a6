@@ -218,56 +218,6 @@ function DashboardPanel() {
           </div>
         )}
       </Card>
-
-      {/* Dialog Cadastro do aluno */}
-      <Dialog open={cadastroOpen} onOpenChange={setCadastroOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Pencil className="w-4 h-4 text-emerald-500" /> Cadastro do aluno
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <Label className="text-xs">Nome completo</Label>
-              <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
-            </div>
-            <div>
-              <Label className="text-xs">Email</Label>
-              <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
-            </div>
-            <div>
-              <Label className="text-xs">Telefone (WhatsApp)</Label>
-              <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="5521999999999" />
-            </div>
-            <p className="text-[10px] text-muted-foreground">
-              Alterações aqui atualizam o perfil sem sair do Fale com o Nutri.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCadastroOpen(false)}>Cancelar</Button>
-            <Button
-              className="bg-emerald-500 hover:bg-emerald-600 text-white"
-              onClick={async () => {
-                if (!selected) return;
-                const { error } = await supabase
-                  .from("profiles")
-                  .update({ full_name: editName, email: editEmail, phone: editPhone })
-                  .eq("user_id", selected.user_id);
-                if (error) {
-                  toast({ title: "Erro", description: error.message, variant: "destructive" });
-                  return;
-                }
-                toast({ title: "Cadastro atualizado" });
-                setCadastroOpen(false);
-                qc.invalidateQueries({ queryKey: ["fale-nutri-active-students-rich"] });
-              }}
-            >
-              <CheckCircle2 className="w-4 h-4 mr-1" /> Salvar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
