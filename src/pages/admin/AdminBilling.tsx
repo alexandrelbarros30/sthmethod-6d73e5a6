@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { SystemTemplateKey, getSystemTemplate, renderTemplate, buildWhatsAppUrl } from "@/lib/system-templates";
 import { Send, CheckCircle2, Clock, AlertTriangle, RefreshCcw, Pencil, Paperclip, X, FileText, Image as ImageIcon, Loader2, History, TrendingUp, DollarSign, Bell, Eye, EyeOff, StopCircle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import CRMAutomationControl from "@/components/admin/CRMAutomationControl";
+import MotorRespostaLink from "@/components/admin/MotorRespostaLink";
 
 type RoleArea = "admin" | "consultor" | "financeiro";
 interface Props { area: RoleArea }
@@ -587,7 +587,7 @@ const AdminBilling = ({ area }: Props) => {
         {/* Automation control banner */}
         {area === "admin" && (
           <div className="space-y-3">
-            <CRMAutomationControl />
+            <MotorRespostaLink context="Motor de Disparo de cobranças e renovações" />
             <div className="flex flex-wrap items-center gap-2">
               <Button variant="outline" size="sm" onClick={openCyclePreview}>
                 <Send className="w-4 h-4 mr-1" /> Disparar ciclo de cobrança agora

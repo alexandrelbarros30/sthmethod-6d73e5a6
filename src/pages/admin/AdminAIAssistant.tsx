@@ -14,6 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -145,36 +147,22 @@ export default function AdminAIAssistant() {
           </TabsList>
         </div>
 
-        {/* Engine selector — always visible above tabs content */}
-        <Card className="mb-4 border-emerald-500/30 bg-emerald-500/5">
-          <CardContent className="pt-4 pb-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-            <div className="flex-1">
-              <p className="text-sm font-medium">
-                Motor de respostas: {engine === "local" ? "🟢 Local (gratuito)" : engine === "gemini" ? "🟣 Gemini (sua chave Google AI Studio)" : "🔵 IA Lovable (consome créditos)"}
+        {/* Engine selector moved to /admin/atendimento/configuracoes (Motores Globais) */}
+        <Card className="mb-4 border-primary/30 bg-primary/[0.03]">
+          <CardContent className="pt-4 pb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-medium flex items-center gap-2">
+                <Cpu className="h-4 w-4 text-primary" /> Motor de resposta e auto-resposta
               </p>
               <p className="text-xs text-muted-foreground">
-                {engine === "local"
-                  ? "Respostas baseadas em regras inteligentes da STH METHOD. Sem custo por mensagem."
-                  : engine === "gemini"
-                  ? "Usa Google AI Studio com sua GEMINI_API_KEY (tier gratuito do Google). Fallback automático se a chave principal falhar."
-                  : "Usa o Lovable AI Gateway. Cada mensagem consome créditos."}
+                Movidos para a tela única <b>Atendimento → Configurações do Motor & APIs</b>. Esta tela cuida apenas do treinamento e teste da IA.
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <Select value={engine} onValueChange={(v) => setEngine(v as any)}>
-                <SelectTrigger className="w-[170px] h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="local">🟢 Local (gratuito)</SelectItem>
-                  <SelectItem value="gemini">🟣 Gemini (sua chave)</SelectItem>
-                  <SelectItem value="ai">🔵 IA Lovable</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button size="sm" variant="outline" onClick={save} disabled={saving} className="ml-2">
-                {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-              </Button>
-            </div>
+            <Button asChild size="sm" variant="outline">
+              <Link to="/admin/atendimento/configuracoes">
+                Abrir configurações <ArrowRight className="h-3.5 w-3.5 ml-1" />
+              </Link>
+            </Button>
           </CardContent>
         </Card>
 
@@ -299,69 +287,24 @@ export default function AdminAIAssistant() {
 
         {/* AUTO REPLY */}
         <TabsContent value="auto">
-          <Card className={autoReply ? "border-emerald-500/40" : ""}>
+          <Card className="border-primary/30 bg-primary/[0.03]">
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
-                <Webhook className="w-4 h-4" /> Auto-resposta no WhatsApp (Z-API)
+                <Webhook className="w-4 h-4 text-primary" /> Auto-Resposta consolidada
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-5">
-              <div className="flex items-center justify-between gap-4 p-3 rounded-md border bg-muted/30">
-                <div>
-                  <p className="text-sm font-medium">
-                    {autoReply ? "Auto-resposta ATIVA" : "Auto-resposta PAUSADA"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Quando ativa, toda mensagem recebida no WhatsApp é respondida automaticamente pelo assistente.
-                  </p>
-                </div>
-                <Switch checked={autoReply} onCheckedChange={setAutoReply} />
-              </div>
-
-              <div>
-                <Label>URL do webhook (configurar na Z-API)</Label>
-                <div className="flex gap-2 mt-1.5">
-                  <Input value={webhookUrl} readOnly className="font-mono text-xs" />
-                  <Button variant="outline" size="icon" onClick={copyWebhook}>
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Cole esta URL em <b>Z-API → Webhooks → Ao receber mensagem</b>. O assistente só responderá quando o toggle acima estiver ativo.
-                </p>
-              </div>
-
-              <div className="border-t pt-5 space-y-3">
-                <div className="flex items-center justify-between gap-4 p-3 rounded-md border bg-muted/30">
-                  <div>
-                    <p className="text-sm font-medium">
-                      {fallbackEnabled ? "Fallback automático ATIVO" : "Fallback automático DESLIGADO"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Quando o usuário envia algo que não bate com nenhuma regra treinada nem com o cérebro Gemini, o assistente envia uma mensagem padrão. Desligue para silenciar e deixar o atendimento humano assumir.
-                    </p>
-                  </div>
-                  <Switch checked={fallbackEnabled} onCheckedChange={setFallbackEnabled} />
-                </div>
-                <div>
-                  <Label className="text-xs">Mensagem de fallback personalizada (opcional)</Label>
-                  <Textarea
-                    value={fallbackMessage}
-                    onChange={(e) => setFallbackMessage(e.target.value)}
-                    placeholder="Ex: Recebi sua mensagem! Em instantes a equipe STH te responde. — você pode usar {nome} e {plano} como variáveis."
-                    className="mt-1.5 min-h-[90px] text-sm"
-                    disabled={!fallbackEnabled}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Se vazio, será usado o menu padrão. Se preenchido, substitui o menu antigo. Variáveis: {`{nome}`}, {`{plano}`}.
-                  </p>
-                </div>
-              </div>
-
-              <Button onClick={save} disabled={saving}>
-                {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
-                Salvar
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                O toggle de auto-resposta, o seletor de motor (Local / Gemini / Lovable), o webhook e o fallback agora ficam em <b>Atendimento → Configurações do Motor & APIs</b> — junto com os canais STH One e Fale com o Nutri, sem duplicidade.
+              </p>
+              <Button asChild>
+                <Link to="/admin/atendimento/configuracoes">
+                  Abrir Motor & APIs <ArrowRight className="h-4 w-4 ml-1" />
+                </Link>
               </Button>
+              <p className="text-xs text-muted-foreground">
+                Webhook (Z-API): <code className="font-mono">{webhookUrl}</code>
+              </p>
             </CardContent>
           </Card>
         </TabsContent>
