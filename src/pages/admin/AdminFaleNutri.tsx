@@ -568,17 +568,31 @@ function AttendancePanel() {
 
             {/* Composer */}
             <div className="space-y-2 border-t pt-2">
-              <div className="flex items-center gap-2 flex-wrap">
-                <Select value={engine} onValueChange={(v: any) => setEngine(v)}>
-                  <SelectTrigger className="h-8 text-xs w-[180px]"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="template">Template manual</SelectItem>
-                    <SelectItem value="gemini">Gemini IA</SelectItem>
-                    <SelectItem value="personal">Resposta personalizada</SelectItem>
-                    <SelectItem value="hybrid">Híbrida (template + IA)</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] uppercase tracking-wide text-muted-foreground mr-1">Motor:</span>
+                {([
+                  { v: "personal", label: "Personalizada", icon: "✍️" },
+                  { v: "template", label: "Template", icon: "📋" },
+                  { v: "gemini", label: "Gemini IA", icon: "✨" },
+                  { v: "hybrid", label: "Híbrida", icon: "🔀" },
+                ] as const).map((opt) => {
+                  const active = engine === opt.v;
+                  return (
+                    <Button
+                      key={opt.v}
+                      type="button"
+                      size="sm"
+                      variant={active ? "default" : "outline"}
+                      onClick={() => setEngine(opt.v as any)}
+                      className={`h-8 text-xs px-2.5 ${active ? "bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-500" : "border-border/60"}`}
+                    >
+                      <span className="mr-1">{opt.icon}</span>{opt.label}
+                    </Button>
+                  );
+                })}
+              </div>
 
+              <div className="flex items-center gap-2 flex-wrap">
                 <Select onValueChange={(id) => {
                   const tpl: any = templates.find((t: any) => t.id === id);
                   if (tpl && selected) {
