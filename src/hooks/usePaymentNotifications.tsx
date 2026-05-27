@@ -2,8 +2,6 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import { sendSystemTemplate } from "@/lib/system-templates";
-
 const notifyAdminWhatsApp = async (
   studentName: string,
   planName: string,
@@ -49,29 +47,6 @@ const notifyAdminWhatsApp = async (
     window.open(waUrl, "_blank");
   } catch (err) {
     console.error("Error notifying admin via WhatsApp:", err);
-  }
-};
-
-const openWhatsAppWelcome = async (userId: string) => {
-  try {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("full_name, phone, email")
-      .eq("user_id", userId)
-      .single();
-    if (!profile?.phone) return;
-    await sendSystemTemplate(
-      "payment_welcome",
-      {
-        full_name: profile.full_name,
-        phone: profile.phone,
-        email: profile.email,
-        user_id: userId,
-      },
-      { logHistory: true }
-    );
-  } catch (err) {
-    console.error("Error opening WhatsApp welcome:", err);
   }
 };
 
@@ -137,8 +112,9 @@ export const usePaymentNotifications = () => {
 
           // Auto-open WhatsApp welcome when payment transitions to approved
           if (payment.status === "approved" && prevPayment?.status !== "approved") {
-            openWhatsAppWelcome(payment.user_id);
-            // Notify admin via WhatsApp
+            // Boas-vindas ao aluno é disparada pelo servidor (mercado-pago-webhook
+            // → send-wapi / linha Fala com o Nutri 21 99898-4153) com dedup de 24h,
+            // para evitar duplicidade. Aqui só notificamos o admin.
             notifyAdminWhatsApp(studentName, planName, amount, actionLabel, payment.method);
           }
         }
