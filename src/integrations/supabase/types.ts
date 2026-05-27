@@ -3453,6 +3453,42 @@ export type Database = {
         }
         Relationships: []
       }
+      student_content_batches: {
+        Row: {
+          batch_started_at: string | null
+          combined_sent_at: string | null
+          created_at: string
+          diet_ready_at: string | null
+          last_individual_sent: Json
+          protocol_ready_at: string | null
+          training_ready_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          batch_started_at?: string | null
+          combined_sent_at?: string | null
+          created_at?: string
+          diet_ready_at?: string | null
+          last_individual_sent?: Json
+          protocol_ready_at?: string | null
+          training_ready_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          batch_started_at?: string | null
+          combined_sent_at?: string | null
+          created_at?: string
+          diet_ready_at?: string | null
+          last_individual_sent?: Json
+          protocol_ready_at?: string | null
+          training_ready_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       student_diets: {
         Row: {
           carbs_g: number | null
