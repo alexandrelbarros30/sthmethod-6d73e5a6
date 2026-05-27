@@ -67,6 +67,17 @@ function replaceVars(text: string, ctx: { profile: Profile; plan?: string; start
 }
 
 export default function AdminFaleNutri() {
+  const [engine, setEngine] = useState<"personal" | "template" | "gemini" | "hybrid">(
+    () => (localStorage.getItem("nutri-engine") as any) || "personal",
+  );
+  const [savedEngine, setSavedEngine] = useState(engine);
+
+  const saveEngine = () => {
+    localStorage.setItem("nutri-engine", engine);
+    setSavedEngine(engine);
+    toast({ title: "Motor salvo", description: `Padrão: ${engine}` });
+  };
+
   return (
     <DashboardLayout role="admin" title="Fale com o Nutri">
       <div className="space-y-4">
@@ -92,8 +103,39 @@ export default function AdminFaleNutri() {
             <TabsTrigger value="config"><Settings2 className="w-4 h-4 mr-1" />Configuração</TabsTrigger>
           </TabsList>
 
+          {/* Painel global: Motor de resposta */}
+          <Card className="p-3 flex items-center gap-3 flex-wrap border-emerald-500/20 bg-emerald-500/5">
+            <div className="flex items-center gap-2 min-w-0">
+              <Sparkles className="w-4 h-4 text-emerald-500" />
+              <div>
+                <p className="text-xs font-semibold">Motor de resposta padrão</p>
+                <p className="text-[10px] text-muted-foreground">Aplicado a novas mensagens no Atendimento</p>
+              </div>
+            </div>
+            <Select value={engine} onValueChange={(v: any) => setEngine(v)}>
+              <SelectTrigger className="h-9 text-xs w-[220px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="personal">✍️ Personalizada</SelectItem>
+                <SelectItem value="template">📋 Template</SelectItem>
+                <SelectItem value="gemini">✨ Gemini IA</SelectItem>
+                <SelectItem value="hybrid">🔀 Híbrida</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              size="sm"
+              onClick={saveEngine}
+              disabled={engine === savedEngine}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white h-9"
+            >
+              <CheckCircle2 className="w-4 h-4 mr-1" /> Salvar
+            </Button>
+            <Badge variant="outline" className="text-[10px] ml-auto border-emerald-500/40 text-emerald-500">
+              Ativo: {savedEngine}
+            </Badge>
+          </Card>
+
           <TabsContent value="dashboard"><DashboardPanel /></TabsContent>
-          <TabsContent value="atendimento"><AttendancePanel /></TabsContent>
+          <TabsContent value="atendimento"><AttendancePanel globalEngine={savedEngine} /></TabsContent>
           <TabsContent value="biblioteca"><TemplatesPanel /></TabsContent>
           <TabsContent value="config"><ConfigPanel /></TabsContent>
         </Tabs>
