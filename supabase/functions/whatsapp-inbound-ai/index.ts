@@ -211,7 +211,7 @@ Deno.serve(async (req) => {
     // Carrega histórico recente da conversa (memória conversacional)
     const { data: history } = await supabase
       .from('ai_assistant_conversation')
-      .select('role, content, intent')
+      .select('role, content, intent, created_at')
       .eq('phone', norm)
       .order('created_at', { ascending: false })
       .limit(6);
@@ -227,7 +227,9 @@ Deno.serve(async (req) => {
     if (contactType === 'aluno_ativo') {
       const lastA = [...recent].reverse().find((m: any) => m.role === 'assistant');
       const lastAt = (lastA as any)?.created_at ? new Date((lastA as any).created_at).getTime() : 0;
-      if (lastA?.intent === 'handoff_nutri') {
+      // Re-saudação após 12h: se o último handoff foi há mais de 12h, envia de novo.
+      const HANDOFF_WINDOW_MS = 12 * 60 * 60 * 1000;
+      if (lastA?.intent === 'handoff_nutri' && (Date.now() - lastAt) < HANDOFF_WINDOW_MS) {
         console.log('[inbound] skip duplicate handoff');
         return new Response(JSON.stringify({ ok: true, deduped: 'handoff' }), {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -310,7 +312,9 @@ Deno.serve(async (req) => {
 
     if (saidRegistered) {
       const lastA = [...recent].reverse().find((m: any) => m.role === 'assistant');
-      if (lastA?.intent === 'cadastro_verificado') {
+      const lastAtCv = (lastA as any)?.created_at ? new Date((lastA as any).created_at).getTime() : 0;
+      const CADASTRO_WINDOW_MS = 12 * 60 * 60 * 1000;
+      if (lastA?.intent === 'cadastro_verificado' && (Date.now() - lastAtCv) < CADASTRO_WINDOW_MS) {
         console.log('[inbound] skip duplicate cadastro_verificado');
         return new Response(JSON.stringify({ ok: true, deduped: 'cadastro_verificado' }), {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
