@@ -67,6 +67,17 @@ function replaceVars(text: string, ctx: { profile: Profile; plan?: string; start
 }
 
 export default function AdminFaleNutri() {
+  const [engine, setEngine] = useState<"personal" | "template" | "gemini" | "hybrid">(
+    () => (localStorage.getItem("nutri-engine") as any) || "personal",
+  );
+  const [savedEngine, setSavedEngine] = useState(engine);
+
+  const saveEngine = () => {
+    localStorage.setItem("nutri-engine", engine);
+    setSavedEngine(engine);
+    toast({ title: "Motor salvo", description: `Padrão: ${engine}` });
+  };
+
   return (
     <DashboardLayout role="admin" title="Fale com o Nutri">
       <div className="space-y-4">
@@ -92,8 +103,39 @@ export default function AdminFaleNutri() {
             <TabsTrigger value="config"><Settings2 className="w-4 h-4 mr-1" />Configuração</TabsTrigger>
           </TabsList>
 
+          {/* Painel global: Motor de resposta */}
+          <Card className="p-3 flex items-center gap-3 flex-wrap border-emerald-500/20 bg-emerald-500/5">
+            <div className="flex items-center gap-2 min-w-0">
+              <Sparkles className="w-4 h-4 text-emerald-500" />
+              <div>
+                <p className="text-xs font-semibold">Motor de resposta padrão</p>
+                <p className="text-[10px] text-muted-foreground">Aplicado a novas mensagens no Atendimento</p>
+              </div>
+            </div>
+            <Select value={engine} onValueChange={(v: any) => setEngine(v)}>
+              <SelectTrigger className="h-9 text-xs w-[220px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="personal">✍️ Personalizada</SelectItem>
+                <SelectItem value="template">📋 Template</SelectItem>
+                <SelectItem value="gemini">✨ Gemini IA</SelectItem>
+                <SelectItem value="hybrid">🔀 Híbrida</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              size="sm"
+              onClick={saveEngine}
+              disabled={engine === savedEngine}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white h-9"
+            >
+              <CheckCircle2 className="w-4 h-4 mr-1" /> Salvar
+            </Button>
+            <Badge variant="outline" className="text-[10px] ml-auto border-emerald-500/40 text-emerald-500">
+              Ativo: {savedEngine}
+            </Badge>
+          </Card>
+
           <TabsContent value="dashboard"><DashboardPanel /></TabsContent>
-          <TabsContent value="atendimento"><AttendancePanel /></TabsContent>
+          <TabsContent value="atendimento"><AttendancePanel globalEngine={savedEngine} /></TabsContent>
           <TabsContent value="biblioteca"><TemplatesPanel /></TabsContent>
           <TabsContent value="config"><ConfigPanel /></TabsContent>
         </Tabs>
@@ -181,17 +223,21 @@ function DashboardPanel() {
 }
 
 /* ============================ ATENDIMENTO ============================ */
-function AttendancePanel() {
+function AttendancePanel({ globalEngine }: { globalEngine: "personal" | "template" | "gemini" | "hybrid" }) {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [filterPriority, setFilterPriority] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
-  const [engine, setEngine] = useState<"template" | "gemini" | "personal" | "hybrid">("personal");
   const [hint, setHint] = useState("");
   const [sending, setSending] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [cadastroOpen, setCadastroOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const engine = globalEngine;
 
   // Alunos ativos com plano
   const { data: activeStudents = [], isLoading: loadingStudents } = useQuery({
@@ -524,6 +570,19 @@ function AttendancePanel() {
                   checked={!optOutSet.has(selected.user_id)}
                   onCheckedChange={(v) => toggleOptOut.mutate({ userId: selected.user_id, paused: !v })}
                 />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 text-xs border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10"
+                  onClick={() => {
+                    setEditName(selected.full_name || "");
+                    setEditEmail(selected.email || "");
+                    setEditPhone(selected.phone || "");
+                    setCadastroOpen(true);
+                  }}
+                >
+                  <Pencil className="w-3.5 h-3.5 mr-1" /> Cadastro
+                </Button>
                 <Button variant="ghost" size="icon" onClick={() => refetchConv()} title="Atualizar"><RefreshCw className="w-4 h-4" /></Button>
               </div>
             </div>
@@ -568,28 +627,8 @@ function AttendancePanel() {
 
             {/* Composer */}
             <div className="space-y-2 border-t pt-2">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[10px] uppercase tracking-wide text-muted-foreground mr-1">Motor:</span>
-                {([
-                  { v: "personal", label: "Personalizada", icon: "✍️" },
-                  { v: "template", label: "Template", icon: "📋" },
-                  { v: "gemini", label: "Gemini IA", icon: "✨" },
-                  { v: "hybrid", label: "Híbrida", icon: "🔀" },
-                ] as const).map((opt) => {
-                  const active = engine === opt.v;
-                  return (
-                    <Button
-                      key={opt.v}
-                      type="button"
-                      size="sm"
-                      variant={active ? "default" : "outline"}
-                      onClick={() => setEngine(opt.v as any)}
-                      className={`h-8 text-xs px-2.5 ${active ? "bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-500" : "border-border/60"}`}
-                    >
-                      <span className="mr-1">{opt.icon}</span>{opt.label}
-                    </Button>
-                  );
-                })}
+              <div className="text-[10px] text-muted-foreground">
+                Motor ativo: <span className="text-emerald-500 font-semibold uppercase">{engine}</span> · ajuste no painel acima
               </div>
 
               <div className="flex items-center gap-2 flex-wrap">
@@ -697,6 +736,56 @@ function AttendancePanel() {
           </>
         )}
       </Card>
+
+      {/* Dialog Cadastro do aluno */}
+      <Dialog open={cadastroOpen} onOpenChange={setCadastroOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="w-4 h-4 text-emerald-500" /> Cadastro do aluno
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Nome completo</Label>
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs">Email</Label>
+              <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs">Telefone (WhatsApp)</Label>
+              <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="5521999999999" />
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              Alterações aqui atualizam o perfil sem sair do Fale com o Nutri.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCadastroOpen(false)}>Cancelar</Button>
+            <Button
+              className="bg-emerald-500 hover:bg-emerald-600 text-white"
+              onClick={async () => {
+                if (!selected) return;
+                const { error } = await supabase
+                  .from("profiles")
+                  .update({ full_name: editName, email: editEmail, phone: editPhone })
+                  .eq("user_id", selected.user_id);
+                if (error) {
+                  toast({ title: "Erro", description: error.message, variant: "destructive" });
+                  return;
+                }
+                toast({ title: "Cadastro atualizado" });
+                setCadastroOpen(false);
+                qc.invalidateQueries({ queryKey: ["fale-nutri-active-students-rich"] });
+              }}
+            >
+              <CheckCircle2 className="w-4 h-4 mr-1" /> Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
