@@ -76,7 +76,8 @@ const linksByRole: Record<AppRole, NavItem[]> = {
         { to: "/admin/crm", icon: Megaphone, label: "Campanhas & Ofertas" },
         { to: "/admin/messages", icon: MessageSquare, label: "Mensagens" },
         { to: "/admin/ai-assistant", icon: Bot, label: "Assistente IA" },
-        { to: "/admin/fale-nutri", icon: HeartHandshake, label: "Fale com o Nutri" },
+        { to: "/admin/atendimento", icon: Headphones, label: "Atendimento (CRM)" },
+        { to: "/admin/fale-nutri", icon: HeartHandshake, label: "Fale com o Nutri (antigo)" },
       ],
     },
     {
