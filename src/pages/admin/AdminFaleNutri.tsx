@@ -183,7 +183,7 @@ export default function AdminFaleNutri() {
   };
 
   return (
-    <DashboardLayout>
+    <DashboardLayout role="admin" title="Fale com o Nutri">
       <div className="space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
