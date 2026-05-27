@@ -12,6 +12,7 @@ export type SystemTemplateKey =
   | "training_updated"
   | "protocol_updated"
   | "plan_updated"
+  | "content_all_ready"
   | "lab_analysis_ready"
   | "renewal_soft"
   | "renewal_objective"
