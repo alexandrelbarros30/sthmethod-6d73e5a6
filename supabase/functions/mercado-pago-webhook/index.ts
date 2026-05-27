@@ -105,7 +105,10 @@ async function sendWelcomeWhatsapp(supabase: any, userId: string) {
   });
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
+  // Boas-vindas pós-pagamento DEVE sair da linha "Fale com o Nutri"
+  // (W-API / 5521998984153) — nunca do canal comercial Z-API,
+  // para evitar duplicidade na conversa do aluno.
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/send-wapi`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
