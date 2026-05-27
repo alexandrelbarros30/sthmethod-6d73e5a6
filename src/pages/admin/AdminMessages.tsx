@@ -1,6 +1,6 @@
 import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
-import CRMAutomationControl from "@/components/admin/CRMAutomationControl";
+import MotorRespostaLink from "@/components/admin/MotorRespostaLink";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -349,7 +349,7 @@ const AdminMessages = () => {
   return (
     <DashboardLayout role="admin" title="Mensagens" subtitle="Central de comunicação com alunos.">
       <div className="mb-4">
-        <CRMAutomationControl />
+        <MotorRespostaLink context="Motor de Disparo de campanhas e ofertas" />
       </div>
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4">
