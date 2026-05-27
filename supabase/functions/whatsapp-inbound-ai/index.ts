@@ -1,7 +1,6 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { localRespond, matchCustomRule, LocalContext } from '../_shared/sth-local-responder.ts';
-import { renderTemplate } from '../_shared/sth-local-responder.ts';
+import { localRespond, matchCustomRule, renderTemplate, LocalContext } from '../_shared/sth-local-responder.ts';
 import { callGeminiWithFallback, GeminiMsg } from '../_shared/gemini-client.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
