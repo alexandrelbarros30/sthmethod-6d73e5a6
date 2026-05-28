@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import CallBlockPanel from "@/components/admin/CallBlockPanel";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
@@ -585,10 +586,10 @@ export default function AdminAtendimento() {
 
         <DashboardCards channel={channel} />
 
-        <Tabs value={tab} onValueChange={setTab}>
         {/* Bloqueio de chamadas — atalho rápido */}
         <CallBlockPanel compact />
 
+        <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="bg-muted/40">
             <TabsTrigger value="tickets" className="gap-1.5"><ListIcon className="h-3.5 w-3.5" /> Tickets</TabsTrigger>
             <TabsTrigger value="kanban" className="gap-1.5"><LayoutGrid className="h-3.5 w-3.5" /> Kanban</TabsTrigger>
