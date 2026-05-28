@@ -473,6 +473,84 @@ const EvolutionGenerator = ({ allImages, studentName, userId, phone }: Evolution
     previews.forEach((p, i) => handleDownload(p, i));
   };
 
+  const dataUrlToBlob = (dataUrl: string): Blob => {
+    const [meta, b64] = dataUrl.split(",");
+    const mime = /data:([^;]+)/.exec(meta)?.[1] || "image/jpeg";
+    const bin = atob(b64);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  };
+
+  const handleSendWhatsApp = async () => {
+    if (previews.length === 0) {
+      toast.error("Gere a evolução primeiro.");
+      return;
+    }
+    // Resolve telefone
+    let targetPhone = (phone || "").replace(/\D/g, "");
+    if (!targetPhone && userId) {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("phone")
+        .eq("user_id", userId)
+        .maybeSingle();
+      targetPhone = String((prof as any)?.phone || "").replace(/\D/g, "");
+    }
+    if (!targetPhone) {
+      toast.error("Aluno sem telefone cadastrado.");
+      return;
+    }
+
+    setSending(true);
+    try {
+      const folder = userId || "anon";
+      const ts = Date.now();
+      let success = 0;
+      let failed = 0;
+
+      for (let i = 0; i < previews.length; i++) {
+        const dataUrl = previews[i];
+        const labelType = previewLabels[i] || IMAGE_TYPES[i] || `img_${i}`;
+        const path = `evolution/${folder}/${ts}_${labelType}.jpg`;
+        try {
+          const blob = dataUrlToBlob(dataUrl);
+          const { error: upErr } = await supabase.storage
+            .from("crm-media")
+            .upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+          if (upErr) throw upErr;
+          const { data: pub } = supabase.storage.from("crm-media").getPublicUrl(path);
+          const imageUrl = pub?.publicUrl;
+          if (!imageUrl) throw new Error("URL pública indisponível");
+
+          const caption =
+            i === 0
+              ? `Olá ${studentName.split(" ")[0] || ""}! 🌿\n\nSegue sua evolução visual gerada pela equipe STH METHOD. Continue firme! 👊`
+              : `Evolução — ${TYPE_LABELS[labelType] || labelType}`;
+
+          const { data, error } = await supabase.functions.invoke("send-wapi", {
+            body: { phone: targetPhone, image_url: imageUrl, message: caption },
+          });
+          if (error || !(data as any)?.ok) throw new Error((data as any)?.error || error?.message || "falha no envio");
+          success++;
+        } catch (err: any) {
+          console.warn("[EvolutionGenerator] send failed", err);
+          failed++;
+        }
+      }
+
+      if (success > 0 && failed === 0) {
+        toast.success(`${success} imagem(ns) enviadas pelo Fale com o Nutri!`);
+      } else if (success > 0) {
+        toast.message(`Enviadas: ${success} • Falharam: ${failed}`);
+      } else {
+        toast.error("Não foi possível enviar as imagens.");
+      }
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <Card className="overflow-hidden">
       <CardHeader className="pb-3">
