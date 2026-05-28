@@ -38,7 +38,8 @@ const loadProfile = async (userId: string) => {
 const sendIndividual = async (userId: string, type: StudentUpdateType) => {
   const profile = await loadProfile(userId);
   if (!profile) return;
-  if ((profile as any).notify_on_updates === false) return;
+  // Padrão: NÃO enviar. Só dispara se o admin tiver ativado explicitamente o toggle.
+  if ((profile as any).notify_on_updates !== true) return;
   if (!profile.phone) return;
 
   await sendSystemTemplate(
@@ -56,7 +57,7 @@ const sendIndividual = async (userId: string, type: StudentUpdateType) => {
 const sendCombined = async (userId: string) => {
   const profile = await loadProfile(userId);
   if (!profile) return false;
-  if ((profile as any).notify_on_updates === false) return false;
+  if ((profile as any).notify_on_updates !== true) return false;
   if (!profile.phone) return false;
 
   await sendSystemTemplate(

@@ -28,7 +28,8 @@ const NotifyStudentToggle = ({ userId }: NotifyStudentToggleProps) => {
         .eq("user_id", userId)
         .maybeSingle();
       if (!cancelled) {
-        setEnabled((data as any)?.notify_on_updates !== false);
+        // Padrão: DESLIGADO. Só fica ligado se o admin tiver ativado explicitamente.
+        setEnabled((data as any)?.notify_on_updates === true);
         setLoading(false);
       }
     })();
