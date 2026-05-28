@@ -5,9 +5,10 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ImagePlus, Download, Loader2, ZoomIn, RotateCcw, Move, Link2, Crop, EyeOff, X } from "lucide-react";
+import { ImagePlus, Download, Loader2, ZoomIn, RotateCcw, Move, Link2, Crop, EyeOff, X, Send } from "lucide-react";
 import evolutionFrame from "@/assets/evolution-frame.png";
 import { getSecureFileUrl, extractStoragePath } from "@/lib/secure-file-url";
+import { supabase } from "@/integrations/supabase/client";
 import InteractiveCropper from "@/components/shared/InteractiveCropper";
 
 interface BodyImage {
@@ -22,6 +23,8 @@ interface BodyImage {
 interface EvolutionGeneratorProps {
   allImages: BodyImage[];
   studentName: string;
+  userId?: string;
+  phone?: string | null;
 }
 
 const TYPE_LABELS: Record<string, string> = { front: "Frente", back: "Costas", profile: "Perfil" };
@@ -157,13 +160,14 @@ function makeKey(side: "old" | "new", type: ImageType): TransformKey {
   return `${side}_${type}` as TransformKey;
 }
 
-const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps) => {
+const EvolutionGenerator = ({ allImages, studentName, userId, phone }: EvolutionGeneratorProps) => {
   const groups = useMemo(() => groupByDate(allImages), [allImages]);
   const [oldDate, setOldDate] = useState("");
   const [newDate, setNewDate] = useState("");
   const [generating, setGenerating] = useState(false);
   const [previews, setPreviews] = useState<string[]>([]);
   const [previewLabels, setPreviewLabels] = useState<ImageType[]>([]);
+  const [sending, setSending] = useState(false);
   const [transforms, setTransforms] = useState<TransformMap>({} as TransformMap);
   const [loadedImages, setLoadedImages] = useState<Partial<Record<TransformKey, HTMLImageElement>>>({});
   // Mantemos referência da imagem ORIGINAL (URL inicial) por posição, para que
