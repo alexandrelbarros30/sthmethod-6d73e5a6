@@ -1030,9 +1030,24 @@ const EvolutionGenerator = ({ allImages, studentName, userId, phone }: Evolution
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-muted-foreground">Resultado</p>
-              <Button variant="outline" size="sm" onClick={handleDownloadAll}>
-                <Download className="w-3 h-3 mr-1" /> Baixar Todas
-              </Button>
+              <div className="flex items-center gap-1.5">
+                <Button variant="outline" size="sm" onClick={handleDownloadAll}>
+                  <Download className="w-3 h-3 mr-1" /> Baixar
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSendWhatsApp}
+                  disabled={sending}
+                  className="bg-emerald-600 hover:bg-emerald-600/90 text-white"
+                  title="Enviar pelo WhatsApp do Fale com o Nutri"
+                >
+                  {sending ? (
+                    <><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Enviando...</>
+                  ) : (
+                    <><Send className="w-3 h-3 mr-1" /> Enviar p/ Aluno</>
+                  )}
+                </Button>
+              </div>
             </div>
             <div className="grid grid-cols-1 gap-3">
               {previews.map((src, i) => (
