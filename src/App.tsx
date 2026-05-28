@@ -98,6 +98,7 @@ import ConsultorDashboard from "./pages/consultor/ConsultorDashboard";
 import AssistenteDashboard from "./pages/assistente/AssistenteDashboard";
 import FinanceiroDashboard from "./pages/financeiro/FinanceiroDashboard";
 import NotFound from "./pages/NotFound";
+import NutriRedirect from "./pages/NutriRedirect";
 import { useDynamicFavicon } from "@/hooks/useDynamicFavicon";
 import { useAdminTheme } from "@/hooks/useAdminTheme";
 import { useAccessLog } from "@/hooks/useAccessLog";
@@ -188,6 +189,7 @@ const App = () => (
             <Route path="/fila" element={<FilaAberta />} />
             <Route path="/preview-tema-verde" element={<PreviewTemaVerde />} />
             <Route path="/diario-alimentar" element={<DiarioAlimentar />} />
+            <Route path="/n" element={<NutriRedirect />} />
             {/* Student routes */}
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["student"]}><StudentOverview /></ProtectedRoute>} />
             <Route path="/dashboard/hub" element={<ProtectedRoute allowedRoles={["student"]}><StudentHub /></ProtectedRoute>} />
