@@ -1813,6 +1813,8 @@ const AdminStudents = () => {
                   <EvolutionGenerator
                     allImages={anamneseBodyImages}
                     studentName={selected.full_name}
+                    userId={selected.user_id}
+                    phone={(selected as any).phone}
                   />
                 )}
 
