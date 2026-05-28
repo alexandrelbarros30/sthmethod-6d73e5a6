@@ -5,9 +5,10 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ImagePlus, Download, Loader2, ZoomIn, RotateCcw, Move, Link2, Crop, EyeOff, X } from "lucide-react";
+import { ImagePlus, Download, Loader2, ZoomIn, RotateCcw, Move, Link2, Crop, EyeOff, X, Send } from "lucide-react";
 import evolutionFrame from "@/assets/evolution-frame.png";
 import { getSecureFileUrl, extractStoragePath } from "@/lib/secure-file-url";
+import { supabase } from "@/integrations/supabase/client";
 import InteractiveCropper from "@/components/shared/InteractiveCropper";
 
 interface BodyImage {
@@ -22,6 +23,8 @@ interface BodyImage {
 interface EvolutionGeneratorProps {
   allImages: BodyImage[];
   studentName: string;
+  userId?: string;
+  phone?: string | null;
 }
 
 const TYPE_LABELS: Record<string, string> = { front: "Frente", back: "Costas", profile: "Perfil" };
@@ -157,13 +160,14 @@ function makeKey(side: "old" | "new", type: ImageType): TransformKey {
   return `${side}_${type}` as TransformKey;
 }
 
-const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps) => {
+const EvolutionGenerator = ({ allImages, studentName, userId, phone }: EvolutionGeneratorProps) => {
   const groups = useMemo(() => groupByDate(allImages), [allImages]);
   const [oldDate, setOldDate] = useState("");
   const [newDate, setNewDate] = useState("");
   const [generating, setGenerating] = useState(false);
   const [previews, setPreviews] = useState<string[]>([]);
   const [previewLabels, setPreviewLabels] = useState<ImageType[]>([]);
+  const [sending, setSending] = useState(false);
   const [transforms, setTransforms] = useState<TransformMap>({} as TransformMap);
   const [loadedImages, setLoadedImages] = useState<Partial<Record<TransformKey, HTMLImageElement>>>({});
   // Mantemos referência da imagem ORIGINAL (URL inicial) por posição, para que
@@ -467,6 +471,84 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
 
   const handleDownloadAll = () => {
     previews.forEach((p, i) => handleDownload(p, i));
+  };
+
+  const dataUrlToBlob = (dataUrl: string): Blob => {
+    const [meta, b64] = dataUrl.split(",");
+    const mime = /data:([^;]+)/.exec(meta)?.[1] || "image/jpeg";
+    const bin = atob(b64);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  };
+
+  const handleSendWhatsApp = async () => {
+    if (previews.length === 0) {
+      toast.error("Gere a evolução primeiro.");
+      return;
+    }
+    // Resolve telefone
+    let targetPhone = (phone || "").replace(/\D/g, "");
+    if (!targetPhone && userId) {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("phone")
+        .eq("user_id", userId)
+        .maybeSingle();
+      targetPhone = String((prof as any)?.phone || "").replace(/\D/g, "");
+    }
+    if (!targetPhone) {
+      toast.error("Aluno sem telefone cadastrado.");
+      return;
+    }
+
+    setSending(true);
+    try {
+      const folder = userId || "anon";
+      const ts = Date.now();
+      let success = 0;
+      let failed = 0;
+
+      for (let i = 0; i < previews.length; i++) {
+        const dataUrl = previews[i];
+        const labelType = previewLabels[i] || IMAGE_TYPES[i] || `img_${i}`;
+        const path = `evolution/${folder}/${ts}_${labelType}.jpg`;
+        try {
+          const blob = dataUrlToBlob(dataUrl);
+          const { error: upErr } = await supabase.storage
+            .from("crm-media")
+            .upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+          if (upErr) throw upErr;
+          const { data: pub } = supabase.storage.from("crm-media").getPublicUrl(path);
+          const imageUrl = pub?.publicUrl;
+          if (!imageUrl) throw new Error("URL pública indisponível");
+
+          const caption =
+            i === 0
+              ? `Olá ${studentName.split(" ")[0] || ""}! 🌿\n\nSegue sua evolução visual gerada pela equipe STH METHOD. Continue firme! 👊`
+              : `Evolução — ${TYPE_LABELS[labelType] || labelType}`;
+
+          const { data, error } = await supabase.functions.invoke("send-wapi", {
+            body: { phone: targetPhone, image_url: imageUrl, message: caption },
+          });
+          if (error || !(data as any)?.ok) throw new Error((data as any)?.error || error?.message || "falha no envio");
+          success++;
+        } catch (err: any) {
+          console.warn("[EvolutionGenerator] send failed", err);
+          failed++;
+        }
+      }
+
+      if (success > 0 && failed === 0) {
+        toast.success(`${success} imagem(ns) enviadas pelo Fale com o Nutri!`);
+      } else if (success > 0) {
+        toast.message(`Enviadas: ${success} • Falharam: ${failed}`);
+      } else {
+        toast.error("Não foi possível enviar as imagens.");
+      }
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -948,9 +1030,24 @@ const EvolutionGenerator = ({ allImages, studentName }: EvolutionGeneratorProps)
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-muted-foreground">Resultado</p>
-              <Button variant="outline" size="sm" onClick={handleDownloadAll}>
-                <Download className="w-3 h-3 mr-1" /> Baixar Todas
-              </Button>
+              <div className="flex items-center gap-1.5">
+                <Button variant="outline" size="sm" onClick={handleDownloadAll}>
+                  <Download className="w-3 h-3 mr-1" /> Baixar
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSendWhatsApp}
+                  disabled={sending}
+                  className="bg-emerald-600 hover:bg-emerald-600/90 text-white"
+                  title="Enviar pelo WhatsApp do Fale com o Nutri"
+                >
+                  {sending ? (
+                    <><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Enviando...</>
+                  ) : (
+                    <><Send className="w-3 h-3 mr-1" /> Enviar p/ Aluno</>
+                  )}
+                </Button>
+              </div>
             </div>
             <div className="grid grid-cols-1 gap-3">
               {previews.map((src, i) => (
