@@ -329,6 +329,7 @@ export type Database = {
       api_channels: {
         Row: {
           base_url: string | null
+          calls_unlocked_until: string | null
           channel_type: string
           connected_number: string | null
           connection_status: string
@@ -342,6 +343,8 @@ export type Database = {
           name: string
           provider: string
           qr_code: string | null
+          reject_call_message: string
+          reject_calls: boolean
           responsible_user_id: string | null
           slug: string | null
           status: string
@@ -351,6 +354,7 @@ export type Database = {
         }
         Insert: {
           base_url?: string | null
+          calls_unlocked_until?: string | null
           channel_type: string
           connected_number?: string | null
           connection_status?: string
@@ -364,6 +368,8 @@ export type Database = {
           name: string
           provider: string
           qr_code?: string | null
+          reject_call_message?: string
+          reject_calls?: boolean
           responsible_user_id?: string | null
           slug?: string | null
           status?: string
@@ -373,6 +379,7 @@ export type Database = {
         }
         Update: {
           base_url?: string | null
+          calls_unlocked_until?: string | null
           channel_type?: string
           connected_number?: string | null
           connection_status?: string
@@ -386,6 +393,8 @@ export type Database = {
           name?: string
           provider?: string
           qr_code?: string | null
+          reject_call_message?: string
+          reject_calls?: boolean
           responsible_user_id?: string | null
           slug?: string | null
           status?: string
@@ -850,6 +859,32 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      call_reject_throttle: {
+        Row: {
+          channel_id: string
+          last_at: string
+          phone: string
+        }
+        Insert: {
+          channel_id: string
+          last_at?: string
+          phone: string
+        }
+        Update: {
+          channel_id?: string
+          last_at?: string
+          phone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_reject_throttle_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "api_channels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       clinical_documents: {
         Row: {

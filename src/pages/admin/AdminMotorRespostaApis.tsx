@@ -16,6 +16,7 @@ import {
   Power, Save, History, Cpu, Settings2,
 } from "lucide-react";
 import MotoresGlobaisPanel from "@/components/admin/MotoresGlobaisPanel";
+import CallBlockPanel from "@/components/admin/CallBlockPanel";
 
 type Channel = {
   id: string;
@@ -296,6 +297,8 @@ export default function AdminMotorRespostaApis() {
         ) : (
           <>
             <MotoresGlobaisPanel />
+
+            <CallBlockPanel />
 
             <div className="grid gap-4 sm:grid-cols-2">
               {channels.map((c) => (

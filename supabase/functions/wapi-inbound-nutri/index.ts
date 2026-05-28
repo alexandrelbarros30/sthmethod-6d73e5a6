@@ -11,6 +11,61 @@ Deno.serve(async (req) => {
     const payload = await req.json().catch(() => ({}));
     console.log('wapi-inbound-nutri payload:', JSON.stringify(payload).slice(0, 1000));
 
+    // ===== CALL EVENT: rejeita chamadas (áudio/vídeo) e responde com mensagem automática =====
+    const evtType = String(payload?.event || payload?.type || '').toLowerCase();
+    const isCallEvent =
+      evtType.includes('call') ||
+      payload?.callType || payload?.isVideoCall != null ||
+      payload?.event === 'CALL_RECEIVED' || payload?.event === 'incomingCall';
+    if (isCallEvent) {
+      try {
+        const callerPhone: string =
+          payload?.phone || payload?.from || payload?.caller?.phone || payload?.sender?.phone || '';
+        const digits = String(callerPhone).replace(/\D/g, '');
+        if (digits.length >= 8) {
+          const supa = createClient(
+            Deno.env.get('SUPABASE_URL')!,
+            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+          );
+          const { data: ch } = await supa
+            .from('api_channels')
+            .select('id, reject_calls, reject_call_message, calls_unlocked_until')
+            .eq('slug', 'fale_nutri')
+            .maybeSingle();
+          const unlocked = ch?.calls_unlocked_until
+            ? new Date(ch.calls_unlocked_until).getTime() > Date.now()
+            : false;
+          if (ch?.reject_calls && !unlocked) {
+            const { data: th } = await supa
+              .from('call_reject_throttle')
+              .select('last_at')
+              .eq('phone', digits).eq('channel_id', ch.id)
+              .maybeSingle();
+            const since = th?.last_at ? Date.now() - new Date(th.last_at).getTime() : Infinity;
+            if (since > 10 * 60 * 1000) {
+              await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-wapi`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+                },
+                body: JSON.stringify({ phone: digits, message: ch.reject_call_message }),
+              }).catch((e) => console.error('send-wapi call-reject error', e));
+              await supa.from('call_reject_throttle').upsert(
+                { phone: digits, channel_id: ch.id, last_at: new Date().toISOString() },
+                { onConflict: 'phone,channel_id' },
+              );
+            }
+          }
+        }
+      } catch (callErr) {
+        console.error('wapi-inbound-nutri call handler error', callErr);
+      }
+      return new Response(JSON.stringify({ ok: true, handled: 'call' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // W-API costuma enviar diferentes formatos; tentamos vários campos comuns.
     const fromRaw =
       payload?.phone ||

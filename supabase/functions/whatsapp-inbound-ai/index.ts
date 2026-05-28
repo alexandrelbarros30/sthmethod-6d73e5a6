@@ -42,6 +42,56 @@ Deno.serve(async (req) => {
 
     // Ignora eventos que não são mensagens (status, presence, etc.)
     const evtType = (payload.type || payload.event || '').toString().toLowerCase();
+
+    // ===== CALL EVENTS: rejeita chamadas e envia mensagem automática =====
+    const isCallEvent =
+      evtType.includes('call') ||
+      payload?.callType || payload?.isVideoCall != null ||
+      payload?.event === 'CALL_RECEIVED' || payload?.event === 'incomingCall';
+    if (isCallEvent) {
+      try {
+        const callerPhone: string =
+          payload.phone || payload.from || payload?.caller?.phone || payload?.sender?.phone || '';
+        const digits = String(callerPhone).replace(/\D/g, '');
+        if (digits.length >= 8) {
+          const supa = createClient(SUPABASE_URL, SERVICE_ROLE);
+          const { data: ch } = await supa
+            .from('api_channels')
+            .select('id, reject_calls, reject_call_message, calls_unlocked_until')
+            .eq('slug', 'sth_one')
+            .maybeSingle();
+          const unlocked = ch?.calls_unlocked_until
+            ? new Date(ch.calls_unlocked_until).getTime() > Date.now()
+            : false;
+          if (ch?.reject_calls && !unlocked) {
+            // throttle 10min por telefone
+            const { data: th } = await supa
+              .from('call_reject_throttle')
+              .select('last_at')
+              .eq('phone', digits).eq('channel_id', ch.id)
+              .maybeSingle();
+            const since = th?.last_at ? Date.now() - new Date(th.last_at).getTime() : Infinity;
+            if (since > 10 * 60 * 1000) {
+              await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}` },
+                body: JSON.stringify({ phone: digits, message: ch.reject_call_message }),
+              }).catch((e) => console.error('send-whatsapp call-reject error', e));
+              await supa.from('call_reject_throttle').upsert(
+                { phone: digits, channel_id: ch.id, last_at: new Date().toISOString() },
+                { onConflict: 'phone,channel_id' },
+              );
+            }
+          }
+        }
+      } catch (callErr) {
+        console.error('[inbound] call handler error', callErr);
+      }
+      return new Response(JSON.stringify({ ok: true, handled: 'call' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     if (evtType && !evtType.includes('message') && !evtType.includes('received') && evtType !== 'receivedcallback') {
       console.log('[inbound] skip event type', evtType);
       return new Response(JSON.stringify({ ok: true, skipped: 'event ' + evtType }), {
