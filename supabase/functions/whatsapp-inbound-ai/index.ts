@@ -259,10 +259,10 @@ Deno.serve(async (req) => {
       const first = (profile?.full_name || '').split(/\s+/)[0];
       // Template CRM 'boas_vindas' do canal fale_nutri tem prioridade
       const tplHandoff = pickOp('boas_vindas', 'fale_nutri');
-      const waLink = `https://wa.me/5521998984153?text=${encodeURIComponent('Olá! Sou aluno ativo da STH METHOD e gostaria de falar com o Nutri.')}`;
+      const shortLink = `https://sthmethod.com.br/n${first ? `?n=${encodeURIComponent(first)}` : ''}`;
       const handoff = tplHandoff
-        ? `${renderTemplate(tplHandoff, localCtx)}\n\n${waLink}`
-        : `${first ? `Olá, ${first}!` : 'Olá!'} Vi aqui que seu plano *${(localCtx.planName || '')}* está ativo. Para suporte direto com o *Nutri Alexandre*, fale pelo canal *Fale com o Nutri*:\n\n${waLink}`;
+        ? `${renderTemplate(tplHandoff, { ...localCtx, site: shortLink } as any)}`
+        : `Olá! 👋🌿\n\n${first ? `${first}, ` : ''}Sr. (a) será direcionado (a) ao canal *Fale com o Nutri* da STH METHOD.\n\n${shortLink}\n\nSeu atendimento é individualizado e todo o histórico fica registrado para mantermos a continuidade da sua evolução. 👊`;
       await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
