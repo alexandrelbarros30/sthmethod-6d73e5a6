@@ -586,6 +586,9 @@ export default function AdminAtendimento() {
         <DashboardCards channel={channel} />
 
         <Tabs value={tab} onValueChange={setTab}>
+        {/* Bloqueio de chamadas — atalho rápido */}
+        <CallBlockPanel compact />
+
           <TabsList className="bg-muted/40">
             <TabsTrigger value="tickets" className="gap-1.5"><ListIcon className="h-3.5 w-3.5" /> Tickets</TabsTrigger>
             <TabsTrigger value="kanban" className="gap-1.5"><LayoutGrid className="h-3.5 w-3.5" /> Kanban</TabsTrigger>
