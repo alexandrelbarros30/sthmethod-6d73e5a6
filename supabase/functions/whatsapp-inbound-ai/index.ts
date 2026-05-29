@@ -138,6 +138,32 @@ Deno.serve(async (req) => {
       console.error('crm_route_inbound (zapi) error', crmErr);
     }
 
+    // ===== STH One MENU ROUTER (interativo) =====
+    // Se houver fluxo de menu ativo / texto disparar menu, ele responde e encerra aqui.
+    try {
+      const digits = String(phone).replace(/\D/g, '');
+      if (digits.length >= 8) {
+        const menuResp = await fetch(`${SUPABASE_URL}/functions/v1/whatsapp-menu-router`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${ANON_KEY}`,
+            apikey: ANON_KEY,
+          },
+          body: JSON.stringify({ phone: digits, text, channel: 'sth_one' }),
+        });
+        const menuJson: any = await menuResp.json().catch(() => ({}));
+        if (menuJson?.handled) {
+          console.log('[inbound] handled by menu router', menuJson?.menu, menuJson?.status);
+          return new Response(JSON.stringify({ ok: true, handled_by: 'menu_router', ...menuJson }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
+    } catch (menuErr) {
+      console.error('menu router error (continuing to AI)', menuErr);
+    }
+
     const { data: cfg } = await supabase
       .from('ai_assistant_config')
       .select('system_prompt, model, auto_reply_enabled, engine, assistant_name, local_prompt, gemini_model, gemini_fallback_model, gemini_temperature, gemini_max_tokens, business_hours, out_of_hours_message, enforce_business_hours, fallback_enabled, fallback_message')
