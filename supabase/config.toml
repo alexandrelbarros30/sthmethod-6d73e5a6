@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.sth-ai-engine]
 verify_jwt = false
+
+[functions.sth-automation-engine]
+verify_jwt = false
