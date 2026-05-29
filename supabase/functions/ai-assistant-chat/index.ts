@@ -43,6 +43,9 @@ Deno.serve(async (req) => {
     let daysSinceExpiry: number | null = null;
     let isRecentInactive = false;
     let renewUrl = `https://sthmethod.com.br/student/renew`;
+    // === STH MEMORY (consulta antes de responder) ===
+    let memoryRowId: string | null = null;
+    let memoryBrainBlock = '';
     if (contextPhone) {
       const phone = String(contextPhone).replace(/\D/g, '');
       // Busca robusta via RPC server-side (normaliza dígitos no Postgres).
@@ -95,6 +98,40 @@ Deno.serve(async (req) => {
         memoryBlock = `\n\n# MEMÓRIA DO CRM (contato atual)\nTipo de contato: ${contactTypeLabel}\nTelefone: ${phone}`;
         localCtx = { phone, assistantName, contactType };
       }
+
+      // Upsert/consulta na tabela sth_memory (independente de ter profile)
+      try {
+        const { data: memId } = await supabase.rpc('sth_memory_upsert', {
+          _phone: phone,
+          _patch: {
+            full_name: localCtx.name || null,
+            user_id: (localCtx as any).user_id || null,
+            plan_name: localCtx.planName || null,
+            plan_status: localCtx.status || null,
+          } as any,
+        });
+        memoryRowId = (memId as any) || null;
+        if (memoryRowId) {
+          const { data: mem } = await supabase
+            .from('sth_memory')
+            .select('objective, score, temperature, preferred_tone, preferred_format, difficulties, preferences, last_question, last_answer, current_weight, initial_weight')
+            .eq('id', memoryRowId)
+            .maybeSingle();
+          if (mem) {
+            memoryBrainBlock = [
+              `\n\n# STH MEMORY (consulta obrigatória antes de responder)`,
+              `Score: ${mem.score}/100 — Temperatura: ${mem.temperature}`,
+              mem.objective ? `Objetivo: ${mem.objective}` : null,
+              mem.preferred_tone ? `Tom preferido: ${mem.preferred_tone}` : null,
+              mem.preferred_format ? `Formato preferido: ${mem.preferred_format}` : null,
+              mem.current_weight ? `Peso atual: ${mem.current_weight}${mem.initial_weight ? ` (inicial ${mem.initial_weight})` : ''}` : null,
+              Array.isArray(mem.difficulties) && mem.difficulties.length ? `Dificuldades anteriores: ${mem.difficulties.join(', ')}` : null,
+              Array.isArray(mem.preferences) && mem.preferences.length ? `Preferências: ${mem.preferences.join(', ')}` : null,
+              mem.last_question ? `Última pergunta: "${mem.last_question}"` : null,
+            ].filter(Boolean).join('\n');
+          }
+        }
+      } catch (_e) { /* memory opcional */ }
     }
 
     // MOTOR LOCAL (gratuito, sem créditos)
@@ -141,6 +178,7 @@ Deno.serve(async (req) => {
       const finalReply = intent === 'silent'
         ? '⚠️ Nenhuma regra correspondeu e o fallback automático está desligado. (Em produção, o assistente ficaria em silêncio aguardando atendimento humano.)'
         : reply;
+      await logLearningAndUpdateMemory(supabase, memoryRowId, last?.content || '', finalReply, 'local', intent);
       return new Response(JSON.stringify({ reply: finalReply, engine: 'local', intent, attachments }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -183,6 +221,7 @@ Deno.serve(async (req) => {
       if (!localCtx.assistantName) localCtx.assistantName = assistantName;
       const ruleHit = matchCustomRule(last?.content || '', localCtx, (rules as any) || []);
       if (ruleHit) {
+        await logLearningAndUpdateMemory(supabase, memoryRowId, last?.content || '', ruleHit.reply, 'gemini', ruleHit.intent);
         return new Response(JSON.stringify({
           reply: ruleHit.reply,
           engine: 'gemini',
@@ -229,7 +268,7 @@ Deno.serve(async (req) => {
             .join('\n\n')}`
         : '';
 
-      const sysFull = `${systemPrompt}\n\n${brain}${toneRule}${kbBlock}${memoryBlock}`.trim();
+      const sysFull = `${systemPrompt}\n\n${brain}${toneRule}${kbBlock}${memoryBlock}${memoryBrainBlock}`.trim();
       const result = await callGeminiWithFallback({
         systemPrompt: sysFull,
         history,
@@ -245,6 +284,7 @@ Deno.serve(async (req) => {
         gemini_last_error: result.error || null,
         gemini_last_used_at: new Date().toISOString(),
       } as any).eq('id', 1);
+      await logLearningAndUpdateMemory(supabase, memoryRowId, userText, result.reply, 'gemini', null);
       return new Response(JSON.stringify({
         reply: result.reply,
         engine: 'gemini',
@@ -288,6 +328,7 @@ Deno.serve(async (req) => {
 
     const data = await aiResp.json();
     const reply = data.choices?.[0]?.message?.content || '';
+    await logLearningAndUpdateMemory(supabase, memoryRowId, [...messages].reverse().find((m: Msg) => m.role === 'user')?.content || '', reply, 'ai', null);
     return new Response(JSON.stringify({ reply }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -298,3 +339,65 @@ Deno.serve(async (req) => {
     });
   }
 });
+
+// ============ STH MEMORY helpers ============
+async function logLearningAndUpdateMemory(
+  supabase: any,
+  memoryId: string | null,
+  question: string,
+  answer: string,
+  engine: string,
+  intent: string | null,
+) {
+  if (!memoryId) return;
+  try {
+    // Atualiza última interação e pergunta/resposta no resumo
+    await supabase.from('sth_memory').update({
+      last_question: question.slice(0, 500),
+      last_answer: (answer || '').slice(0, 1000),
+      last_interaction_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }).eq('id', memoryId);
+
+    await supabase.from('sth_memory_learning').insert({
+      memory_id: memoryId,
+      question: question.slice(0, 2000),
+      answer: (answer || '').slice(0, 4000),
+      engine,
+      intent,
+    });
+
+    // Detecta objeções comuns
+    const lower = (question || '').toLowerCase();
+    const patterns: { key: string; rx: RegExp }[] = [
+      { key: 'sem_tempo', rx: /(sem tempo|não tenho tempo|nao tenho tempo|tempo curto)/ },
+      { key: 'dieta_dificil', rx: /(dieta\s+(difícil|dificil|chata)|não consigo seguir|nao consigo seguir)/ },
+      { key: 'treino_cansativo', rx: /(treino\s+(cansativo|pesado)|cansad[oa] demais)/ },
+      { key: 'ansiedade', rx: /(ansiedade|ansios[oa])/ },
+      { key: 'plato', rx: /(plat[oô]|parou de emagrecer|travou)/ },
+    ];
+    for (const p of patterns) {
+      if (p.rx.test(lower)) {
+        await supabase.from('sth_memory_objections').insert({
+          memory_id: memoryId,
+          objection_key: p.key,
+          raw_text: question.slice(0, 500),
+        });
+      }
+    }
+
+    // Registra evento na timeline
+    await supabase.from('sth_memory_timeline').insert({
+      memory_id: memoryId,
+      event_type: 'mensagem_ia',
+      event_title: question.slice(0, 80) || 'Interação STH One',
+      event_description: (answer || '').slice(0, 300),
+      event_data: { engine, intent },
+    });
+
+    // Recalcula score
+    await supabase.rpc('sth_memory_recalc_score', { _memory_id: memoryId });
+  } catch (e) {
+    console.error('STH MEMORY log error', e);
+  }
+}
