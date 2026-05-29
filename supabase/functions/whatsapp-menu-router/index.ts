@@ -124,6 +124,17 @@ export async function routeMenu(opts: {
   const dryRun = !!opts.dryRun;
   if (!phone) return { handled: false };
 
+  // Global kill-switch / active menu config
+  const { data: settings } = await supa
+    .from('whatsapp_settings')
+    .select('enabled, active_main_menu_key')
+    .eq('id', true)
+    .maybeSingle();
+  if (settings && settings.enabled === false) {
+    return { handled: false, status: 'DISABLED' };
+  }
+  const MAIN_KEY = settings?.active_main_menu_key || 'main';
+
   // get/create session
   let { data: session } = await supa
     .from('whatsapp_sessions')
@@ -137,16 +148,16 @@ export async function routeMenu(opts: {
   if (!session) {
     const { data: created } = await supa
       .from('whatsapp_sessions')
-      .insert({ phone, current_menu_key: 'main', status: 'NOVO' })
+      .insert({ phone, current_menu_key: MAIN_KEY, status: 'NOVO' })
       .select('*')
       .single();
     session = created;
   } else if (expired || session.status === 'FINALIZADO') {
     await supa
       .from('whatsapp_sessions')
-      .update({ current_menu_key: 'main', status: 'NOVO', assigned_queue: null, last_interaction_at: new Date().toISOString() })
+      .update({ current_menu_key: MAIN_KEY, status: 'NOVO', assigned_queue: null, last_interaction_at: new Date().toISOString() })
       .eq('id', session.id);
-    session = { ...session, current_menu_key: 'main', status: 'NOVO', assigned_queue: null };
+    session = { ...session, current_menu_key: MAIN_KEY, status: 'NOVO', assigned_queue: null };
   }
 
   // If human took over, do not bot
@@ -169,7 +180,7 @@ export async function routeMenu(opts: {
   const upper = normalizeCommand(text);
   const cmd = GLOBAL_COMMANDS[upper];
   if (cmd) {
-    const target = cmd.menu || 'main';
+    const target = cmd.menu === 'main' ? MAIN_KEY : (cmd.menu || MAIN_KEY);
     const menuText = await buildMenuText(supa, target);
     await supa.from('whatsapp_sessions').update({
       current_menu_key: target,
@@ -184,20 +195,20 @@ export async function routeMenu(opts: {
 
   // If first contact / new session, show main menu (unless message is a number)
   if (session.status === 'NOVO' && !/^\d{1,2}$/.test(text)) {
-    const menuText = await buildMenuText(supa, 'main');
+    const menuText = await buildMenuText(supa, MAIN_KEY);
     await supa.from('whatsapp_sessions').update({
-      current_menu_key: 'main',
+      current_menu_key: MAIN_KEY,
       status: 'EM_TRIAGEM',
       last_interaction_at: new Date().toISOString(),
     }).eq('id', session.id);
     const res = await sendMessage(channel, phone, menuText, dryRun);
-    return { handled: true, reply: menuText, menu: 'main', sent: res.sent };
+    return { handled: true, reply: menuText, menu: MAIN_KEY, sent: res.sent };
   }
 
   // Numeric option
   const num = parseInt(text, 10);
   if (!isNaN(num) && /^\d{1,2}$/.test(text)) {
-    const currentMenu = session.current_menu_key || 'main';
+    const currentMenu = session.current_menu_key || MAIN_KEY;
     const { data: opt } = await supa
       .from('whatsapp_menu_options')
       .select('*')
@@ -228,7 +239,7 @@ export async function routeMenu(opts: {
     if (opt.queue) newStatus = 'AGUARDANDO_HUMANO';
     if (opt.ends_session) newStatus = 'FINALIZADO';
 
-    const nextMenu = opt.next_menu_key || (opt.returns_to_menu ? 'main' : currentMenu);
+    const nextMenu = opt.next_menu_key || (opt.returns_to_menu ? MAIN_KEY : currentMenu);
 
     await supa.from('whatsapp_sessions').update({
       current_menu_key: nextMenu,
