@@ -4094,6 +4094,272 @@ export type Database = {
         }
         Relationships: []
       }
+      sth_memory: {
+        Row: {
+          avg_response_seconds: number | null
+          created_at: string
+          current_weight: number | null
+          difficulties: string[] | null
+          full_name: string | null
+          id: string
+          initial_weight: number | null
+          last_answer: string | null
+          last_interaction_at: string | null
+          last_physical_update: string | null
+          last_question: string | null
+          last_seen_at: string | null
+          lead_interest: string | null
+          lead_plan_presented: string | null
+          meta: Json
+          objective: string | null
+          phone: string
+          photos_count: number
+          plan_name: string | null
+          plan_status: string | null
+          preferences: string[] | null
+          preferred_format: string | null
+          preferred_tone: string | null
+          response_frequency: string | null
+          score: number
+          temperature: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          avg_response_seconds?: number | null
+          created_at?: string
+          current_weight?: number | null
+          difficulties?: string[] | null
+          full_name?: string | null
+          id?: string
+          initial_weight?: number | null
+          last_answer?: string | null
+          last_interaction_at?: string | null
+          last_physical_update?: string | null
+          last_question?: string | null
+          last_seen_at?: string | null
+          lead_interest?: string | null
+          lead_plan_presented?: string | null
+          meta?: Json
+          objective?: string | null
+          phone: string
+          photos_count?: number
+          plan_name?: string | null
+          plan_status?: string | null
+          preferences?: string[] | null
+          preferred_format?: string | null
+          preferred_tone?: string | null
+          response_frequency?: string | null
+          score?: number
+          temperature?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          avg_response_seconds?: number | null
+          created_at?: string
+          current_weight?: number | null
+          difficulties?: string[] | null
+          full_name?: string | null
+          id?: string
+          initial_weight?: number | null
+          last_answer?: string | null
+          last_interaction_at?: string | null
+          last_physical_update?: string | null
+          last_question?: string | null
+          last_seen_at?: string | null
+          lead_interest?: string | null
+          lead_plan_presented?: string | null
+          meta?: Json
+          objective?: string | null
+          phone?: string
+          photos_count?: number
+          plan_name?: string | null
+          plan_status?: string | null
+          preferences?: string[] | null
+          preferred_format?: string | null
+          preferred_tone?: string | null
+          response_frequency?: string | null
+          score?: number
+          temperature?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      sth_memory_alerts: {
+        Row: {
+          acknowledged: boolean
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          created_at: string
+          data: Json
+          id: string
+          memory_id: string
+          message: string
+          severity: string
+        }
+        Insert: {
+          acknowledged?: boolean
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          created_at?: string
+          data?: Json
+          id?: string
+          memory_id: string
+          message: string
+          severity?: string
+        }
+        Update: {
+          acknowledged?: boolean
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          created_at?: string
+          data?: Json
+          id?: string
+          memory_id?: string
+          message?: string
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sth_memory_alerts_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "sth_memory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sth_memory_learning: {
+        Row: {
+          answer: string | null
+          created_at: string
+          engine: string | null
+          id: string
+          intent: string | null
+          memory_id: string | null
+          outcome: string | null
+          phone: string | null
+          question: string
+        }
+        Insert: {
+          answer?: string | null
+          created_at?: string
+          engine?: string | null
+          id?: string
+          intent?: string | null
+          memory_id?: string | null
+          outcome?: string | null
+          phone?: string | null
+          question: string
+        }
+        Update: {
+          answer?: string | null
+          created_at?: string
+          engine?: string | null
+          id?: string
+          intent?: string | null
+          memory_id?: string | null
+          outcome?: string | null
+          phone?: string | null
+          question?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sth_memory_learning_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "sth_memory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sth_memory_objections: {
+        Row: {
+          created_at: string
+          id: string
+          memory_id: string
+          objection_key: string
+          raw_text: string | null
+          resolution_note: string | null
+          resolved: boolean
+          resolved_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          memory_id: string
+          objection_key: string
+          raw_text?: string | null
+          resolution_note?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          memory_id?: string
+          objection_key?: string
+          raw_text?: string | null
+          resolution_note?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sth_memory_objections_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "sth_memory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sth_memory_timeline: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          event_data: Json
+          event_description: string | null
+          event_title: string
+          event_type: string
+          id: string
+          memory_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          event_data?: Json
+          event_description?: string | null
+          event_title: string
+          event_type: string
+          id?: string
+          memory_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          event_data?: Json
+          event_description?: string | null
+          event_title?: string
+          event_type?: string
+          id?: string
+          memory_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sth_memory_timeline_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "sth_memory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_content_batches: {
         Row: {
           batch_started_at: string | null
@@ -5249,6 +5515,11 @@ export type Database = {
         Returns: boolean
       }
       sth_crm_dashboard_stats: { Args: never; Returns: Json }
+      sth_memory_recalc_score: { Args: { _memory_id: string }; Returns: number }
+      sth_memory_upsert: {
+        Args: { _patch?: Json; _phone: string }
+        Returns: string
+      }
     }
     Enums: {
       app_role:
