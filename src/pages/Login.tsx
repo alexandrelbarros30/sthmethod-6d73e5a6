@@ -116,13 +116,27 @@ const Login = () => {
                   await Promise.all(regs.map(r => r.unregister()));
                 }
               } catch {}
-              toast.error("Falha de conexão. Toque em 'Limpar cache' abaixo e tente novamente.", { duration: 5000 });
+              // Auto-recover: reload once to clear stale SW/cache. Use a session flag to avoid loops.
+              const RELOAD_KEY = "sth-login-auto-recover";
+              const alreadyTried = sessionStorage.getItem(RELOAD_KEY) === "1";
+              if (!alreadyTried) {
+                sessionStorage.setItem(RELOAD_KEY, "1");
+                toast.message("Reconectando…", { duration: 2000 });
+                const url = new URL(window.location.href);
+                url.searchParams.set("_v", Date.now().toString());
+                setTimeout(() => window.location.replace(url.toString()), 400);
+                return;
+              }
+              toast.error("Sem conexão com o servidor. Verifique sua internet e tente novamente.", { duration: 5000 });
               setLoading(false);
               return;
             }
           }
           if (error) throw error;
         }
+
+        // Successful login path — clear recovery flag
+        try { sessionStorage.removeItem("sth-login-auto-recover"); } catch {}
 
         const userId = signInData.user?.id;
         if (!userId) { toast.error("Não foi possível autenticar. Tente novamente."); setLoading(false); return; }
