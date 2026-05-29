@@ -4721,6 +4721,211 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_menu_audit: {
+        Row: {
+          action: string
+          after_data: Json | null
+          before_data: Json | null
+          changed_by: string | null
+          created_at: string
+          id: string
+          menu_key: string | null
+          option_id: string | null
+        }
+        Insert: {
+          action: string
+          after_data?: Json | null
+          before_data?: Json | null
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          menu_key?: string | null
+          option_id?: string | null
+        }
+        Update: {
+          action?: string
+          after_data?: Json | null
+          before_data?: Json | null
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          menu_key?: string | null
+          option_id?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_menu_options: {
+        Row: {
+          active: boolean
+          channel: string
+          created_at: string
+          display_order: number
+          ends_session: boolean
+          id: string
+          label: string
+          menu_key: string
+          next_menu_key: string | null
+          option_number: number
+          queue: string | null
+          requires_active_student: boolean
+          requires_human: boolean
+          response_message: string
+          returns_to_menu: boolean
+          tag: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          channel?: string
+          created_at?: string
+          display_order?: number
+          ends_session?: boolean
+          id?: string
+          label: string
+          menu_key: string
+          next_menu_key?: string | null
+          option_number: number
+          queue?: string | null
+          requires_active_student?: boolean
+          requires_human?: boolean
+          response_message?: string
+          returns_to_menu?: boolean
+          tag?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          channel?: string
+          created_at?: string
+          display_order?: number
+          ends_session?: boolean
+          id?: string
+          label?: string
+          menu_key?: string
+          next_menu_key?: string | null
+          option_number?: number
+          queue?: string | null
+          requires_active_student?: boolean
+          requires_human?: boolean
+          response_message?: string
+          returns_to_menu?: boolean
+          tag?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_menu_options_menu_key_fkey"
+            columns: ["menu_key"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_menus"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      whatsapp_menus: {
+        Row: {
+          active: boolean
+          created_at: string
+          footer_message: string
+          header_message: string
+          id: string
+          key: string
+          parent_key: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          footer_message?: string
+          header_message?: string
+          id?: string
+          key: string
+          parent_key?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          footer_message?: string
+          header_message?: string
+          id?: string
+          key?: string
+          parent_key?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      whatsapp_session_tags: {
+        Row: {
+          created_at: string
+          id: string
+          session_id: string
+          tag: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          session_id: string
+          tag: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          session_id?: string
+          tag?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_session_tags_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_sessions: {
+        Row: {
+          assigned_queue: string | null
+          context: Json
+          created_at: string
+          current_menu_key: string | null
+          id: string
+          last_interaction_at: string
+          phone: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          assigned_queue?: string | null
+          context?: Json
+          created_at?: string
+          current_menu_key?: string | null
+          id?: string
+          last_interaction_at?: string
+          phone: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          assigned_queue?: string | null
+          context?: Json
+          created_at?: string
+          current_menu_key?: string | null
+          id?: string
+          last_interaction_at?: string
+          phone?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       workout_template_exercises: {
         Row: {
           custom_description: string | null
