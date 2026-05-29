@@ -1347,13 +1347,17 @@ export type Database = {
       }
       crm_contacts: {
         Row: {
+          assigned_to: string | null
           created_at: string
           email: string | null
           full_name: string | null
           id: string
           kind: string
           last_weight_update: string | null
+          lead_status: string | null
           notes: string | null
+          objective: string | null
+          origin: string | null
           phone: string
           plan_end: string | null
           plan_name: string | null
@@ -1364,13 +1368,17 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          assigned_to?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
           id?: string
           kind?: string
           last_weight_update?: string | null
+          lead_status?: string | null
           notes?: string | null
+          objective?: string | null
+          origin?: string | null
           phone: string
           plan_end?: string | null
           plan_name?: string | null
@@ -1381,13 +1389,17 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          assigned_to?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
           id?: string
           kind?: string
           last_weight_update?: string | null
+          lead_status?: string | null
           notes?: string | null
+          objective?: string | null
+          origin?: string | null
           phone?: string
           plan_end?: string | null
           plan_name?: string | null
@@ -1449,6 +1461,41 @@ export type Database = {
           url?: string
         }
         Relationships: []
+      }
+      crm_notes: {
+        Row: {
+          author_id: string | null
+          author_name: string | null
+          body: string
+          contact_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_name?: string | null
+          body: string
+          contact_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string | null
+          body?: string
+          contact_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_notes_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       crm_op_templates: {
         Row: {
@@ -1513,6 +1560,30 @@ export type Database = {
           name?: string
           scope?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      crm_tags: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          kind: string | null
+          name: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          kind?: string | null
+          name: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          kind?: string | null
+          name?: string
         }
         Relationships: []
       }
@@ -5177,6 +5248,7 @@ export type Database = {
         Args: { _consultant_id: string; _student_id: string }
         Returns: boolean
       }
+      sth_crm_dashboard_stats: { Args: never; Returns: Json }
     }
     Enums: {
       app_role:
