@@ -11,9 +11,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Flame, Users, Clock, LineChart, FlaskConical, Headphones, AlertTriangle,
-  DollarSign, Search, ArrowUpRight, Sparkles,
+  DollarSign, Search, ArrowUpRight, Sparkles, Tag as TagIcon, Plus, Trash2, MessageCircle,
 } from "lucide-react";
 import CrmContactDrawer from "@/components/admin/sth-crm/CrmContactDrawer";
+import { toast } from "sonner";
 
 type RoleArea = "admin" | "consultor";
 interface Props { area?: RoleArea }
@@ -265,7 +266,7 @@ const People = ({ onOpen }: { onOpen: (id: string) => void }) => {
 };
 
 export default function AdminSthCrm({ area = "admin" }: Props) {
-  const [tab, setTab] = useState<"dashboard" | "pessoas">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "pessoas" | "renovacoes" | "tags">("dashboard");
   const [openContactId, setOpenContactId] = useState<string | null>(null);
 
   return (
@@ -283,12 +284,16 @@ export default function AdminSthCrm({ area = "admin" }: Props) {
         </div>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-          <TabsList className="bg-muted/40">
+          <TabsList className="bg-muted/40 flex-wrap h-auto">
             <TabsTrigger value="dashboard" className="gap-2"><LineChart className="h-3.5 w-3.5" />Dashboard</TabsTrigger>
             <TabsTrigger value="pessoas" className="gap-2"><Users className="h-3.5 w-3.5" />Pessoas</TabsTrigger>
+            <TabsTrigger value="renovacoes" className="gap-2"><Clock className="h-3.5 w-3.5" />Renovações</TabsTrigger>
+            <TabsTrigger value="tags" className="gap-2"><TagIcon className="h-3.5 w-3.5" />Tags</TabsTrigger>
           </TabsList>
           <TabsContent value="dashboard" className="mt-6"><Dashboard /></TabsContent>
           <TabsContent value="pessoas" className="mt-6"><People onOpen={setOpenContactId} /></TabsContent>
+          <TabsContent value="renovacoes" className="mt-6"><Renovacoes onOpen={setOpenContactId} /></TabsContent>
+          <TabsContent value="tags" className="mt-6"><TagsManager /></TabsContent>
         </Tabs>
 
         <CrmContactDrawer contactId={openContactId} onClose={() => setOpenContactId(null)} />
