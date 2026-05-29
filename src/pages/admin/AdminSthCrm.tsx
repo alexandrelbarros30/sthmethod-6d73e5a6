@@ -266,6 +266,222 @@ const People = ({ onOpen }: { onOpen: (id: string) => void }) => {
 };
 
 export default function AdminSthCrm({ area = "admin" }: Props) {
+  return <AdminSthCrmInner {...arguments[0]} />;
+}
+
+interface RenewalRow {
+  id: string;
+  user_id: string;
+  end_date: string;
+  plan_id: string;
+  plan_name?: string | null;
+  full_name?: string | null;
+  phone?: string | null;
+  contact_id?: string | null;
+}
+
+const Renovacoes = ({ onOpen }: { onOpen: (id: string) => void }) => {
+  const [win, setWin] = useState("30");
+  const { data, isLoading } = useQuery({
+    queryKey: ["sth-crm-renewals", win],
+    queryFn: async () => {
+      const days = parseInt(win, 10);
+      const today = new Date().toISOString().slice(0, 10);
+      const limit = new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
+      const { data: subs, error } = await supabase
+        .from("subscriptions")
+        .select("id,user_id,end_date,plan_id")
+        .eq("status", "active")
+        .gte("end_date", today)
+        .lte("end_date", limit)
+        .order("end_date", { ascending: true })
+        .limit(300);
+      if (error) throw error;
+      const subsArr = (subs || []) as any[];
+      const userIds = [...new Set(subsArr.map((s) => s.user_id))];
+      const planIds = [...new Set(subsArr.map((s) => s.plan_id))];
+      const [profilesRes, plansRes, contactsRes] = await Promise.all([
+        userIds.length ? supabase.from("profiles").select("user_id,full_name,phone").in("user_id", userIds) : Promise.resolve({ data: [] as any[] }),
+        planIds.length ? supabase.from("plans").select("id,name").in("id", planIds) : Promise.resolve({ data: [] as any[] }),
+        userIds.length ? supabase.from("crm_contacts").select("id,user_id").in("user_id", userIds) : Promise.resolve({ data: [] as any[] }),
+      ]);
+      const pmap = new Map((profilesRes.data || []).map((p: any) => [p.user_id, p]));
+      const planmap = new Map((plansRes.data || []).map((p: any) => [p.id, p.name]));
+      const cmap = new Map((contactsRes.data || []).map((c: any) => [c.user_id, c.id]));
+      return subsArr.map<RenewalRow>((s) => ({
+        id: s.id, user_id: s.user_id, end_date: s.end_date, plan_id: s.plan_id,
+        plan_name: planmap.get(s.plan_id) || null,
+        full_name: pmap.get(s.user_id)?.full_name || null,
+        phone: pmap.get(s.user_id)?.phone || null,
+        contact_id: cmap.get(s.user_id) || null,
+      }));
+    },
+  });
+
+  const bucket = (days: number) => {
+    if (days <= 1) return { label: "Hoje/Amanhã", cls: "border-red-500/40 text-red-400 bg-red-500/10" };
+    if (days <= 3) return { label: `D-${days}`, cls: "border-rose-500/40 text-rose-400 bg-rose-500/10" };
+    if (days <= 7) return { label: `D-${days}`, cls: "border-amber-500/40 text-amber-400 bg-amber-500/10" };
+    if (days <= 15) return { label: `D-${days}`, cls: "border-sky-500/40 text-sky-400 bg-sky-500/10" };
+    return { label: `D-${days}`, cls: "border-emerald-500/40 text-emerald-400 bg-emerald-500/10" };
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+      <Card className="border-border/40">
+        <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-sm font-medium">Alertas de Renovação</p>
+            <p className="text-xs text-muted-foreground">Assinaturas ativas com vencimento próximo.</p>
+          </div>
+          <Select value={win} onValueChange={setWin}>
+            <SelectTrigger className="w-full md:w-48"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="3">Próximos 3 dias</SelectItem>
+              <SelectItem value="7">Próximos 7 dias</SelectItem>
+              <SelectItem value="15">Próximos 15 dias</SelectItem>
+              <SelectItem value="30">Próximos 30 dias</SelectItem>
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border/40">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b border-border/40 bg-muted/30">
+                <tr className="text-left text-[11px] uppercase tracking-wider text-muted-foreground">
+                  <th className="px-4 py-3 font-medium">Aluno</th>
+                  <th className="px-4 py-3 font-medium">Plano</th>
+                  <th className="px-4 py-3 font-medium">Vencimento</th>
+                  <th className="px-4 py-3 font-medium">Janela</th>
+                  <th className="px-4 py-3 font-medium text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(data || []).map((r) => {
+                  const days = Math.max(0, Math.ceil((new Date(r.end_date).getTime() - Date.now()) / 86400000));
+                  const b = bucket(days);
+                  const wa = r.phone ? `https://wa.me/${r.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá ${r.full_name || ""}, seu plano STH vence em ${days} dias. Vamos renovar? sthmethod.com.br/#planos`)}` : null;
+                  return (
+                    <tr key={r.id} className="border-b border-border/30 hover:bg-emerald-500/5">
+                      <td className="px-4 py-3">
+                        <button onClick={() => r.contact_id && onOpen(r.contact_id)} className="text-left font-medium hover:text-emerald-400">
+                          {r.full_name || "Sem nome"}
+                        </button>
+                        {r.phone && <div className="font-mono text-[11px] text-muted-foreground">{r.phone}</div>}
+                      </td>
+                      <td className="px-4 py-3 text-xs">{r.plan_name || "—"}</td>
+                      <td className="px-4 py-3 text-xs">{new Date(r.end_date).toLocaleDateString("pt-BR")}</td>
+                      <td className="px-4 py-3"><Badge variant="outline" className={b.cls}>{b.label}</Badge></td>
+                      <td className="px-4 py-3 text-right">
+                        {wa && (
+                          <a href={wa} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-md border border-emerald-500/40 px-2 py-1 text-xs text-emerald-400 hover:bg-emerald-500/10">
+                            <MessageCircle className="h-3 w-3" />WhatsApp
+                          </a>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {!isLoading && (data?.length || 0) === 0 && (
+                  <tr><td colSpan={5} className="px-4 py-10 text-center text-sm text-muted-foreground">Nenhuma renovação nesta janela.</td></tr>
+                )}
+                {isLoading && <tr><td colSpan={5} className="px-4 py-10 text-center text-sm text-muted-foreground">Carregando…</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+};
+
+interface TagRow { id: string; name: string; color: string | null; kind: string | null }
+
+const TagsManager = () => {
+  const [name, setName] = useState("");
+  const [color, setColor] = useState("#22c55e");
+  const [kind, setKind] = useState("general");
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["sth-crm-tags-catalog"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("crm_tags").select("id,name,color,kind").order("name");
+      if (error) throw error;
+      return (data || []) as TagRow[];
+    },
+  });
+
+  const create = async () => {
+    const n = name.trim();
+    if (!n) return;
+    const { error } = await supabase.from("crm_tags").insert({ name: n, color, kind } as any);
+    if (error) { toast.error(error.message); return; }
+    setName(""); toast.success("Tag criada"); refetch();
+  };
+
+  const remove = async (id: string) => {
+    const { error } = await supabase.from("crm_tags").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Tag removida"); refetch();
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+      <Card className="border-border/40">
+        <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-end">
+          <div className="flex-1">
+            <p className="mb-1 text-[11px] uppercase tracking-wider text-muted-foreground">Nome da tag</p>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Lead Quente" />
+          </div>
+          <div>
+            <p className="mb-1 text-[11px] uppercase tracking-wider text-muted-foreground">Cor</p>
+            <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="h-10 w-16 cursor-pointer rounded-md border border-border bg-background" />
+          </div>
+          <div className="w-full md:w-44">
+            <p className="mb-1 text-[11px] uppercase tracking-wider text-muted-foreground">Categoria</p>
+            <Select value={kind} onValueChange={setKind}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="general">Geral</SelectItem>
+                <SelectItem value="lead">Lead</SelectItem>
+                <SelectItem value="student">Aluno</SelectItem>
+                <SelectItem value="priority">Prioridade</SelectItem>
+                <SelectItem value="renewal">Renovação</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button onClick={create} className="gap-2 bg-emerald-500 text-black hover:bg-emerald-400">
+            <Plus className="h-4 w-4" />Adicionar
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border/40">
+        <CardContent className="p-4">
+          {isLoading && <p className="text-xs text-muted-foreground">Carregando…</p>}
+          <div className="flex flex-wrap gap-2">
+            {(data || []).map((t) => (
+              <div key={t.id} className="group flex items-center gap-2 rounded-full border border-border/60 bg-background/60 py-1 pl-3 pr-1">
+                <span className="h-2.5 w-2.5 rounded-full" style={{ background: t.color || "#22c55e" }} />
+                <span className="text-xs font-medium">{t.name}</span>
+                <span className="text-[10px] text-muted-foreground">· {t.kind}</span>
+                <button onClick={() => remove(t.id)} className="ml-1 rounded-full p-1 text-muted-foreground opacity-0 transition group-hover:opacity-100 hover:bg-red-500/10 hover:text-red-400">
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+            {!isLoading && (data?.length || 0) === 0 && <p className="text-xs text-muted-foreground">Nenhuma tag cadastrada.</p>}
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+};
+
+function AdminSthCrmInner({ area = "admin" }: Props) {
   const [tab, setTab] = useState<"dashboard" | "pessoas" | "renovacoes" | "tags">("dashboard");
   const [openContactId, setOpenContactId] = useState<string | null>(null);
 
