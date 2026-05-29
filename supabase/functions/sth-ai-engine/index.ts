@@ -105,7 +105,7 @@ async function generate(body: any, sb: any) {
   }
 
   const { data: templates } = await sb.from('sth_ai_templates')
-    .select('id,name,category,engine,body').eq('active', true)
+    .select('id,name,category,engine,body,uses_count').eq('active', true)
     .or(`category.eq.${intent},engine.eq.${engine}`).limit(6);
 
   // 5) Prompt
