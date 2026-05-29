@@ -1,102 +1,81 @@
-# Sistema WhatsApp STH One — Painéis de Atendimento CRM
+# STH CRM — Plano de Implementação
 
-Vou construir um sistema completo de menus interativos no WhatsApp, integrado ao CRM, com painel admin para edição dos fluxos sem código.
+Este é um módulo grande. Proponho construir em **3 fases** entregando valor incremental, reaproveitando as tabelas que já existem (`crm_contacts`, `crm_tickets`, `crm_ticket_messages`, `profiles`, `subscriptions`, `payments`, `weight_logs`, `body_images`, `evolution_notifications`, `nutri_conversations`, `plans`, `student_flow_status`) em vez de duplicar dados.
 
-## 1. Banco de Dados (migration)
+---
 
-Novas tabelas (todas com GRANTs + RLS apenas admin/staff):
+## Fase 1 — Núcleo do STH CRM (essa entrega)
 
-- **whatsapp_menus** — menus e submenus
-  - `key` (ex: `main`, `aluno_ativo`, `financeiro`), `title`, `header_message`, `footer_message`, `active`, `parent_key`
-- **whatsapp_menu_options** — cada botão/opção
-  - `menu_key`, `option_number` (1–9, 0=voltar), `label`, `response_message`, `tag`, `queue` (comercial/financeiro/nutri/tecnico/humano), `channel` (sth_one/fale_nutri), `requires_active_student` (bool), `requires_human` (bool), `ends_session` (bool), `returns_to_menu` (bool), `next_menu_key` (submenu), `active`, `order`
-- **whatsapp_sessions** — estado da conversa por telefone
-  - `phone`, `current_menu_key`, `last_interaction_at`, `context` (jsonb), `status` (NOVO, EM_TRIAGEM, AGUARDANDO_CLIENTE, AGUARDANDO_HUMANO, EM_ATENDIMENTO, PRIORIDADE, FINALIZADO, TRANSFERIDO), `assigned_queue`
-- **whatsapp_session_tags** — tags acumuladas por sessão (`session_id`, `tag`)
-- **whatsapp_menu_audit** — histórico de alterações (`menu_key`, `option_id`, `changed_by`, `before`, `after`, `created_at`)
+**Rota:** `/admin/sth-crm` (link no sidebar admin “STH CRM”).
 
-Seed inicial com todo o fluxo descrito (Menu principal + 6 submenus com todas as opções, mensagens e tags).
+**Dashboard principal** com 8 cards calculados em tempo real:
+- 🔥 Leads Novos (contatos `kind='lead'` sem assinatura ativa, últimos 30d)
+- 👊 Alunos Ativos (subscriptions `status=active` e `end_date>=hoje`)
+- ⏳ Renovações Próximas (end_date ≤ 30d)
+- 📊 Atualizações Pendentes (alunos sem `weight_logs` há 29+ dias)
+- 🧪 Exames Aguardando (documents tipo exame sem análise — usa tabela existente)
+- 📞 Atendimentos Abertos (`crm_tickets` com `closed_at IS NULL`)
+- 🚨 Prioridade Alta (tickets `priority` in sensitive/high)
+- 💰 Oportunidades (leads com tag “quente” + abandono carrinho de pagamento pending)
 
-## 2. Edge Function: `whatsapp-menu-router`
+**Lista unificada de pessoas** (Leads + Alunos) com:
+- Busca global (nome, telefone, email, plano, tags)
+- Filtros: tipo (lead/aluno), plano, status, tags, responsável, origem, objetivo, data
+- Tabela premium com avatar, nome, WhatsApp, plano, status, última interação, tags
+- Click → drawer lateral com ficha completa
 
-Nova função (ou módulo integrado a `wapi-inbound-nutri` / `whatsapp-inbound-ai`) que:
+**Ficha 360º do contato** (drawer):
+- Header: nome, foto, WhatsApp (botão direto), email, status, tags
+- Abas: Visão geral · Linha do tempo · Atendimentos · Renovações · Exames · Anotações
+- Linha do tempo agregada de: mensagens (`crm_ticket_messages`), atualizações (`weight_logs`, `evolution_notifications`), renovações (`subscriptions`), pagamentos (`payments`), anotações (`crm_notes` — nova)
+- Botões: Abrir/Encerrar/Transferir atendimento · Adicionar observação · Adicionar tag
 
-1. Recebe mensagem inbound
-2. Normaliza telefone, busca/cria `whatsapp_sessions`
-3. Reconhece comandos globais: `MENU`, `VOLTAR`, `INÍCIO`, `SAIR`, `ATENDENTE`, `HUMANO`, `NUTRI`, `FINANCEIRO`, `PLANOS`, `SUPORTE`
-4. Se sessão nova ou expirada (>2h sem atividade) → envia menu principal
-5. Se texto = número válido → executa opção:
-   - Aplica `tag` na sessão
-   - Verifica `requires_active_student` → se não for ativo e opção exigir, envia mensagem de bloqueio (caso opção 7)
-   - Se tiver `next_menu_key` → envia submenu
-   - Se tiver `queue` → muda `status` para AGUARDANDO_HUMANO e transfere
-   - Envia `response_message`
-6. Heurística de palavras sensíveis (colateral, sintoma, dor, tontura, sangra, mal-estar) → status PRIORIDADE + fila Nutri/Humano + mensagem de protocolo clínico
-7. Toda interação registrada em `crm_ticket_messages` (integração com CRM já existente)
-8. Envia respostas via `send-wapi` (canal STH One para menus, Fale com o Nutri para opção 7 com aluno ativo)
+**KPIs no header do dashboard**: Total Leads · Taxa Conversão · Alunos Ativos · Renovações 30d · Receita 30d · Atualizações Pendentes · Tempo Médio de Resposta.
 
-## 3. Integração com inbound atual
+## Fase 2 — Módulos especializados (entrega seguinte)
+- Módulo de Renovação dedicado com alertas 30/15/7/3/1 dias
+- Módulo de Exames com upload, status, responsável
+- Sistema de Tags global gerenciável
+- Atribuição de Responsável por contato
 
-Modificar `wapi-inbound-nutri/index.ts` e `whatsapp-inbound-ai/index.ts` para, antes da resposta atual da IA:
-- Chamar router de menu
-- Se a sessão estiver em fluxo de menu (não finalizada/transferida), o router responde
-- Se status = EM_ATENDIMENTO (humano assumiu) ou TRANSFERIDO → pula bot
-- Se finalizado e usuário escreve livre → cai na IA existente
+## Fase 3 — Automação & integrações
+- Disparos automáticos por status (W-API/Z-API já existentes)
+- Webhooks Gemini para sugestão de resposta
+- N8N (fora do escopo do app, apenas endpoint preparado)
 
-## 4. Painel Admin: `Painéis WhatsApp`
+---
 
-Nova rota `/admin/whatsapp-flows` (link adicionado em `AdminMotorRespostaApis.tsx` e em `AdminCRM` como aba "Painéis WhatsApp").
+## Detalhes técnicos
 
-Estrutura visual (Apple black piano + neon green STH):
+**Migrations necessárias (Fase 1):**
+- `crm_notes` (id, contact_id, author_id, body, created_at) — anotações livres
+- `crm_tags` (id, name, color, kind) — catálogo de tags
+- `crm_contact_tags` (contact_id, tag_id) — N:N
+- Adicionar coluna `assigned_to uuid` em `crm_contacts` e `crm_tickets` (se não existir)
+- Adicionar `origin text`, `objective text`, `notes text` em `crm_contacts` (se não existirem)
+- View `crm_dashboard_stats` (security definer function) para os 8 cards de uma vez
+- RLS: somente admin/consultor podem ler/editar (usar `has_admin_view` e `is_consultant_of`)
+- GRANTs para `authenticated` e `service_role`
 
-- **Sidebar de menus** (Menu Principal + Submenus, com toggle ativo/inativo)
-- **Editor de opções** (tabela drag-and-drop por menu):
-  - Número, Label, Tag, Fila, Canal, Requer aluno ativo, Requer humano, Encerra, Volta ao menu, Próximo menu, Status
-  - Editor inline da `response_message` (textarea com emojis preservados)
-- **Aba Sessões ativas** — lista de `whatsapp_sessions` com status, fila, telefone, última interação, tags
-- **Aba Histórico** — `whatsapp_menu_audit`
-- **Botão "Testar fluxo"** — modal simula conversa enviando inputs e mostrando respostas (sem enviar WhatsApp real)
-- **Estatísticas topo**: total sessões, em triagem, aguardando humano, prioridade, finalizadas hoje
+**Frontend (Fase 1):**
+- `src/pages/admin/AdminSthCrm.tsx` — página principal com tabs
+- `src/components/admin/sth-crm/CrmDashboard.tsx` — cards + KPIs
+- `src/components/admin/sth-crm/CrmPeopleList.tsx` — lista + busca + filtros
+- `src/components/admin/sth-crm/CrmContactDrawer.tsx` — ficha 360º
+- `src/components/admin/sth-crm/CrmTimeline.tsx` — timeline agregada
+- `src/components/admin/sth-crm/CrmNotes.tsx` — anotações
+- Rota em `src/App.tsx` + item de menu em `src/components/DashboardSidebar.tsx`
+- Visual: black piano, verde neon STH, cards `rounded-2xl shadow-apple`, framer-motion
 
-Componentes:
-- `src/pages/admin/AdminWhatsAppFlows.tsx`
-- `src/components/admin/whatsapp/MenuList.tsx`
-- `src/components/admin/whatsapp/MenuOptionEditor.tsx`
-- `src/components/admin/whatsapp/SessionsPanel.tsx`
-- `src/components/admin/whatsapp/FlowTester.tsx`
+**Reaproveitamento:**
+- NÃO crio nova tabela de “alunos” — já existe `profiles` + `subscriptions`. O CRM consulta com join virtual (decoupled queries conforme memória).
+- NÃO crio novo sistema de mensagens — já existe `crm_ticket_messages` e `nutri_conversations`.
+- NÃO crio nova tabela de exames agora — Fase 2.
 
-## 5. Status do atendimento
+---
 
-Enum aplicado em `whatsapp_sessions.status`:
-`NOVO | EM_TRIAGEM | AGUARDANDO_CLIENTE | AGUARDANDO_HUMANO | EM_ATENDIMENTO | PRIORIDADE | FINALIZADO | TRANSFERIDO`
+## Confirmação
 
-Badge colorido em todo o painel seguindo o design system.
+Vou entregar **apenas a Fase 1** nesta mensagem (já é grande: ~7 arquivos novos + 1 migration + 2 edits). Fase 2 e 3 ficam para próximas mensagens.
 
-## 6. Regras de segurança
-
-- Opção 7 (Fale com o Nutri) só libera se houver `subscriptions.status='active'` com `end_date >= now()`
-- Sensitive keywords sempre escalam para humano, nunca respondem prescrição
-- Bot nunca expõe tokens, IDs internos ou dados de outros usuários
-- RLS: tabelas só acessíveis por admin/consultor; sessões consultáveis por staff
-
-## 7. Roteamento por fila
-
-| Fila | Canal de saída | Quando |
-|---|---|---|
-| Comercial | STH One (`wapi-inbound-nutri` outbound) | Opções 1, planos, cupom |
-| Financeiro | STH One | Opção 3, comprovante, link |
-| Nutri | Fale com o Nutri | Opção 2.7, opção 7 ativo, sensível |
-| Técnico | STH One | Opção 5 |
-| Humano | STH One + alerta admin | Opção 6, fallback |
-
-## Escopo desta entrega
-
-Como é uma estrutura grande, esta primeira entrega inclui:
-1. Migration completa com seed do fluxo
-2. Edge function `whatsapp-menu-router` + integração nos dois inbounds
-3. Painel admin completo (editor + sessões + testador)
-4. Link no menu admin
-
-Tempo estimado de execução: bastante código, vou implementar tudo em sequência após sua aprovação.
-
-Confirma para eu seguir?
+Confirma que posso seguir com Fase 1?
