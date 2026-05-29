@@ -60,6 +60,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
     { to: "/admin/sth-crm", icon: Sparkles, label: "STH CRM" },
     { to: "/admin/sth-memory", icon: Brain, label: "STH Memory" },
     { to: "/admin/sth-ai-engine", icon: Sparkles, label: "STH AI Engine" },
+    { to: "/admin/sth-automation", icon: Activity, label: "STH Automation" },
     { to: "/admin/queue", icon: ListOrdered, label: "Fila Atendimento" },
     { to: "/admin/students", icon: User, label: "Alunos" },
     { to: "/admin/plans", icon: CreditCard, label: "Planos" },
