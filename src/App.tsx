@@ -86,6 +86,7 @@ import AdminUpdates from "./pages/admin/AdminUpdates";
 import AdminTeleatendimento from "./pages/admin/AdminTeleatendimento";
 import AdminBilling from "./pages/admin/AdminBilling";
 import AdminCRM from "./pages/admin/AdminCRM";
+import AdminSthCrm from "./pages/admin/AdminSthCrm";
 // Legacy screens (AdminWhatsApp, AdminFaleNutri) consolidados em AdminAtendimento + AdminMotorRespostaApis.
 // Mantidos os imports removidos; redirecionamos as rotas antigas para o novo fluxo.
 import { Navigate } from "react-router-dom";
@@ -239,6 +240,7 @@ const App = () => (
             <Route path="/admin/teleatendimento" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTeleatendimento /></ProtectedRoute>} />
             <Route path="/admin/billing" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBilling area="admin" /></ProtectedRoute>} />
             <Route path="/admin/crm" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCRM area="admin" /></ProtectedRoute>} />
+            <Route path="/admin/sth-crm" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSthCrm area="admin" /></ProtectedRoute>} />
             <Route path="/admin/whatsapp" element={<ProtectedRoute allowedRoles={["admin"]}><Navigate to="/admin/atendimento/configuracoes" replace /></ProtectedRoute>} />
             <Route path="/admin/fale-nutri" element={<ProtectedRoute allowedRoles={["admin"]}><Navigate to="/admin/atendimento" replace /></ProtectedRoute>} />
             <Route path="/admin/atendimento" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAtendimento /></ProtectedRoute>} />
