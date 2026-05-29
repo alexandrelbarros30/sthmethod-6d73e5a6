@@ -44,10 +44,18 @@ Deno.serve(async (req) => {
     const evtType = (payload.type || payload.event || '').toString().toLowerCase();
 
     // ===== CALL EVENTS: rejeita chamadas e envia mensagem automática =====
+    // ATENÇÃO: Z-API usa event="ReceivedCallback" para mensagens normais,
+    // então NÃO podemos usar includes('call'). Aceitar apenas eventos específicos
+    // de chamada de voz/vídeo.
+    const evtRaw = (payload.type || payload.event || '').toString();
     const isCallEvent =
-      evtType.includes('call') ||
-      payload?.callType || payload?.isVideoCall != null ||
-      payload?.event === 'CALL_RECEIVED' || payload?.event === 'incomingCall';
+      evtRaw === 'CALL_RECEIVED' ||
+      evtRaw === 'incomingCall' ||
+      evtRaw === 'call.received' ||
+      evtRaw === 'CallReceivedCallback' ||
+      payload?.callType != null ||
+      payload?.isVideoCall != null ||
+      payload?.isVoiceCall != null;
     if (isCallEvent) {
       try {
         const callerPhone: string =
