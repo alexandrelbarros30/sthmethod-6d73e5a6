@@ -53,3 +53,6 @@ verify_jwt = false
 
 [functions.sth-memory-scheduler]
 verify_jwt = false
+
+[functions.sth-ai-engine]
+verify_jwt = false
