@@ -91,6 +91,7 @@ import AdminCRM from "./pages/admin/AdminCRM";
 import { Navigate } from "react-router-dom";
 import AdminAtendimento from "./pages/admin/AdminAtendimento";
 import AdminMotorRespostaApis from "./pages/admin/AdminMotorRespostaApis";
+import AdminWhatsAppFlows from "./pages/admin/AdminWhatsAppFlows";
 import AdminCrmAuditoria from "./pages/admin/AdminCrmAuditoria";
 import AdminRegrasAutomacoes from "./pages/admin/AdminRegrasAutomacoes";
 import StudentConsultas from "./pages/student/StudentConsultas";
@@ -244,6 +245,7 @@ const App = () => (
             <Route path="/admin/atendimento/configuracoes" element={<ProtectedRoute allowedRoles={["admin"]}><AdminMotorRespostaApis /></ProtectedRoute>} />
             <Route path="/admin/atendimento/auditoria" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrmAuditoria /></ProtectedRoute>} />
             <Route path="/admin/atendimento/regras" element={<ProtectedRoute allowedRoles={["admin"]}><AdminRegrasAutomacoes /></ProtectedRoute>} />
+            <Route path="/admin/atendimento/fluxos-whatsapp" element={<ProtectedRoute allowedRoles={["admin"]}><AdminWhatsAppFlows /></ProtectedRoute>} />
             {/* Consultor routes */}
             <Route path="/consultor" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
             <Route path="/consultor/students" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
