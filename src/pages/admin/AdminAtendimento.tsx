@@ -589,6 +589,20 @@ export default function AdminAtendimento() {
         {/* Bloqueio de chamadas — atalho rápido */}
         <CallBlockPanel compact />
 
+        {/* Atalho — Painéis WhatsApp / Fluxos STH One */}
+        <Card className="border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-transparent">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.18em] text-emerald-400">Painéis WhatsApp</p>
+              <p className="text-sm font-medium">Menus interativos STH One — fluxos, filas, tags e roteamento</p>
+              <p className="text-xs text-muted-foreground">Configure o menu principal, submenus e direcionamento automático.</p>
+            </div>
+            <Button asChild className="bg-emerald-500 text-black hover:bg-emerald-400">
+              <Link to="/admin/atendimento/fluxos-whatsapp">Abrir painel</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="bg-muted/40">
             <TabsTrigger value="tickets" className="gap-1.5"><ListIcon className="h-3.5 w-3.5" /> Tickets</TabsTrigger>
