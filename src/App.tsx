@@ -88,6 +88,7 @@ import AdminBilling from "./pages/admin/AdminBilling";
 import AdminCRM from "./pages/admin/AdminCRM";
 import AdminSthCrm from "./pages/admin/AdminSthCrm";
 import AdminSthMemory from "./pages/admin/AdminSthMemory";
+import AdminSthAiEngine from "./pages/admin/AdminSthAiEngine";
 // Legacy screens (AdminWhatsApp, AdminFaleNutri) consolidados em AdminAtendimento + AdminMotorRespostaApis.
 // Mantidos os imports removidos; redirecionamos as rotas antigas para o novo fluxo.
 import { Navigate } from "react-router-dom";
