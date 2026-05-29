@@ -3984,6 +3984,45 @@ export type Database = {
         }
         Relationships: []
       }
+      sth_knowledge_base: {
+        Row: {
+          content: string
+          created_at: string
+          enabled: boolean
+          id: string
+          priority: number
+          slug: string
+          tags: string[]
+          title: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          priority?: number
+          slug: string
+          tags?: string[]
+          title: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          priority?: number
+          slug?: string
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
       student_content_batches: {
         Row: {
           batch_started_at: string | null
