@@ -198,11 +198,42 @@ Deno.serve(async (req) => {
         .map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', text: m.content }));
       const brain = (cfg as any)?.local_prompt || '';
       const toneRule = `\n\n# REGRA DE TOM POR TIPO DE CONTATO\n- Aluno ATIVO: tom de suporte/acompanhamento. NÃO oferecer plano novo. Foque em dúvidas, dieta, treino, exames, protocolo.\n- Aluno INATIVO: tom acolhedor + convite à renovação (${`https://sthmethod.com.br/student/renew`}). Não trate como novato.\n- Novo cliente / lead: apresentação + valores + cadastro (https://sthmethod.com.br/cadastro).`;
-      const sysFull = `${systemPrompt}\n\n${brain}${toneRule}${memoryBlock}`.trim();
+
+      // === BASE DE CONHECIMENTO STH METHOD (prioridade sobre Gemini) ===
+      const userText = last?.content || '';
+      const normalized = userText.toLowerCase();
+      const { data: kbAll } = await supabase
+        .from('sth_knowledge_base')
+        .select('slug, title, url, content, tags, priority')
+        .eq('enabled', true)
+        .order('priority', { ascending: true });
+      const kbMatches = (kbAll || [])
+        .map((k: any) => {
+          let score = 0;
+          const hay = `${k.title} ${k.tags?.join(' ') || ''} ${k.content}`.toLowerCase();
+          for (const term of normalized.split(/\W+/).filter((t) => t.length > 3)) {
+            if (hay.includes(term)) score += 1;
+          }
+          // tags têm peso extra
+          for (const tag of (k.tags || [])) {
+            if (normalized.includes(String(tag).toLowerCase())) score += 2;
+          }
+          return { ...k, score };
+        })
+        .filter((k: any) => k.score > 0)
+        .sort((a: any, b: any) => b.score - a.score)
+        .slice(0, 4);
+      const kbBlock = kbMatches.length
+        ? `\n\n# FONTE: STH METHOD (use estas informações como verdade absoluta — vêm de sthmethod.com.br e da base interna)\n${kbMatches
+            .map((k: any) => `## ${k.title}${k.url ? ` (${k.url})` : ''}\n${k.content}`)
+            .join('\n\n')}`
+        : '';
+
+      const sysFull = `${systemPrompt}\n\n${brain}${toneRule}${kbBlock}${memoryBlock}`.trim();
       const result = await callGeminiWithFallback({
         systemPrompt: sysFull,
         history,
-        userText: last?.content || '',
+        userText,
         model: (cfg as any)?.gemini_model || 'gemini-flash-latest',
         fallbackModel: (cfg as any)?.gemini_fallback_model || 'gemini-flash-lite-latest',
         temperature: Number((cfg as any)?.gemini_temperature ?? 0.4),
