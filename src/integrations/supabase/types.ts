@@ -4055,6 +4055,188 @@ export type Database = {
         }
         Relationships: []
       }
+      sth_ai_drafts: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          confidence: number | null
+          contact_name: string | null
+          contact_type: string | null
+          created_at: string
+          draft_text: string
+          engine: string
+          final_text: string | null
+          id: string
+          inbound_text: string | null
+          intent: string | null
+          latency_ms: number | null
+          memory_id: string | null
+          meta: Json
+          model: string | null
+          phone: string | null
+          rejected_reason: string | null
+          sent_at: string | null
+          status: string
+          template_id: string | null
+          ticket_id: string | null
+          tokens_in: number | null
+          tokens_out: number | null
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          confidence?: number | null
+          contact_name?: string | null
+          contact_type?: string | null
+          created_at?: string
+          draft_text: string
+          engine?: string
+          final_text?: string | null
+          id?: string
+          inbound_text?: string | null
+          intent?: string | null
+          latency_ms?: number | null
+          memory_id?: string | null
+          meta?: Json
+          model?: string | null
+          phone?: string | null
+          rejected_reason?: string | null
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+          ticket_id?: string | null
+          tokens_in?: number | null
+          tokens_out?: number | null
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          confidence?: number | null
+          contact_name?: string | null
+          contact_type?: string | null
+          created_at?: string
+          draft_text?: string
+          engine?: string
+          final_text?: string | null
+          id?: string
+          inbound_text?: string | null
+          intent?: string | null
+          latency_ms?: number | null
+          memory_id?: string | null
+          meta?: Json
+          model?: string | null
+          phone?: string | null
+          rejected_reason?: string | null
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+          ticket_id?: string | null
+          tokens_in?: number | null
+          tokens_out?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sth_ai_drafts_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "sth_memory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sth_ai_drafts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "sth_ai_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sth_ai_templates: {
+        Row: {
+          active: boolean
+          body: string
+          category: string
+          created_at: string
+          created_by: string | null
+          engine: string
+          id: string
+          name: string
+          success_count: number
+          tags: string[]
+          updated_at: string
+          uses_count: number
+        }
+        Insert: {
+          active?: boolean
+          body: string
+          category: string
+          created_at?: string
+          created_by?: string | null
+          engine?: string
+          id?: string
+          name: string
+          success_count?: number
+          tags?: string[]
+          updated_at?: string
+          uses_count?: number
+        }
+        Update: {
+          active?: boolean
+          body?: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          engine?: string
+          id?: string
+          name?: string
+          success_count?: number
+          tags?: string[]
+          updated_at?: string
+          uses_count?: number
+        }
+        Relationships: []
+      }
+      sth_ai_unsolved: {
+        Row: {
+          created_at: string
+          id: string
+          memory_id: string | null
+          phone: string | null
+          question: string
+          reason: string | null
+          resolved: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          memory_id?: string | null
+          phone?: string | null
+          question: string
+          reason?: string | null
+          resolved?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          memory_id?: string | null
+          phone?: string | null
+          question?: string
+          reason?: string | null
+          resolved?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sth_ai_unsolved_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "sth_memory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sth_knowledge_base: {
         Row: {
           content: string
@@ -5514,6 +5696,7 @@ export type Database = {
         Args: { _consultant_id: string; _student_id: string }
         Returns: boolean
       }
+      sth_ai_engine_stats: { Args: never; Returns: Json }
       sth_crm_dashboard_stats: { Args: never; Returns: Json }
       sth_memory_recalc_score: { Args: { _memory_id: string }; Returns: number }
       sth_memory_upsert: {
