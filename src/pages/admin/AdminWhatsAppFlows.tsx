@@ -543,10 +543,14 @@ export default function AdminWhatsAppFlows() {
 
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList>
+            <TabsTrigger value="config">Configurações</TabsTrigger>
             <TabsTrigger value="menus">Menus & Opções</TabsTrigger>
             <TabsTrigger value="sessoes">Sessões</TabsTrigger>
             <TabsTrigger value="testar">Testar fluxo</TabsTrigger>
           </TabsList>
+          <TabsContent value="config" className="mt-4">
+            <FlowSettings />
+          </TabsContent>
           <TabsContent value="menus" className="mt-4">
             <MenuEditor />
           </TabsContent>
@@ -559,5 +563,107 @@ export default function AdminWhatsAppFlows() {
         </Tabs>
       </div>
     </DashboardLayout>
+  );
+}
+
+function FlowSettings() {
+  const qc = useQueryClient();
+  const { data: settings } = useQuery({
+    queryKey: ["wa-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("whatsapp_settings")
+        .select("*")
+        .eq("id", true)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { enabled: boolean; active_main_menu_key: string } | null;
+    },
+  });
+  const { data: menus = [] } = useQuery({
+    queryKey: ["wa-menus-root"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("whatsapp_menus")
+        .select("key,title,active,parent_key")
+        .is("parent_key", null)
+        .order("title");
+      if (error) throw error;
+      return (data || []) as { key: string; title: string; active: boolean; parent_key: string | null }[];
+    },
+  });
+
+  const [enabled, setEnabled] = useState<boolean>(true);
+  const [activeKey, setActiveKey] = useState<string>("main");
+  useEffect(() => {
+    if (settings) {
+      setEnabled(settings.enabled);
+      setActiveKey(settings.active_main_menu_key);
+    }
+  }, [settings?.enabled, settings?.active_main_menu_key]);
+
+  const save = async () => {
+    const { error } = await supabase
+      .from("whatsapp_settings")
+      .upsert({ id: true, enabled, active_main_menu_key: activeKey, updated_at: new Date().toISOString() });
+    if (error) {
+      toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Configurações salvas" });
+    qc.invalidateQueries({ queryKey: ["wa-settings"] });
+  };
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <Card className={enabled ? "border-emerald-500/20" : "border-rose-500/30"}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Power className={`h-4 w-4 ${enabled ? "text-emerald-400" : "text-rose-400"}`} />
+            Menu interativo
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between rounded-lg border border-border/40 p-3">
+            <div>
+              <p className="text-sm font-medium">
+                {enabled ? "Ativado" : "Desligado"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Quando desligado, mensagens recebidas vão direto para a IA / atendimento humano, sem menu.
+              </p>
+            </div>
+            <Switch checked={enabled} onCheckedChange={setEnabled} />
+          </div>
+          <Button onClick={save} className="gap-2">
+            <Save className="h-4 w-4" /> Salvar configurações
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Fluxo de entrada</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Escolha qual fluxo (menu raiz) será disparado quando um novo contato chegar.
+          </p>
+          <Select value={activeKey} onValueChange={setActiveKey}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {menus.map((m) => (
+                <SelectItem key={m.key} value={m.key} disabled={!m.active}>
+                  {m.title} {!m.active && "(inativo)"}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Apenas menus raiz (sem menu pai) aparecem aqui. Submenus são acessados pelas opções de cada fluxo.
+          </p>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
