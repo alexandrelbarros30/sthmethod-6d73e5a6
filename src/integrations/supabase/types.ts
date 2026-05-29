@@ -4237,6 +4237,117 @@ export type Database = {
           },
         ]
       }
+      sth_auto_events: {
+        Row: {
+          action_taken: string | null
+          channel: string | null
+          classification: string | null
+          created_at: string
+          decision: string | null
+          id: string
+          intent: string | null
+          memory_id: string | null
+          payload: Json | null
+          phone: string
+          source: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_taken?: string | null
+          channel?: string | null
+          classification?: string | null
+          created_at?: string
+          decision?: string | null
+          id?: string
+          intent?: string | null
+          memory_id?: string | null
+          payload?: Json | null
+          phone: string
+          source?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_taken?: string | null
+          channel?: string | null
+          classification?: string | null
+          created_at?: string
+          decision?: string | null
+          id?: string
+          intent?: string | null
+          memory_id?: string | null
+          payload?: Json | null
+          phone?: string
+          source?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      sth_auto_score_log: {
+        Row: {
+          created_at: string
+          delta: number
+          id: string
+          memory_id: string | null
+          phone: string
+          reason: string
+        }
+        Insert: {
+          created_at?: string
+          delta?: number
+          id?: string
+          memory_id?: string | null
+          phone: string
+          reason: string
+        }
+        Update: {
+          created_at?: string
+          delta?: number
+          id?: string
+          memory_id?: string | null
+          phone?: string
+          reason?: string
+        }
+        Relationships: []
+      }
+      sth_auto_sessions: {
+        Row: {
+          closed_at: string | null
+          created_at: string
+          id: string
+          idle_warned: boolean
+          last_inbound_at: string
+          last_outbound_at: string | null
+          phone: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          idle_warned?: boolean
+          last_inbound_at?: string
+          last_outbound_at?: string | null
+          phone: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          idle_warned?: boolean
+          last_inbound_at?: string
+          last_outbound_at?: string | null
+          phone?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       sth_knowledge_base: {
         Row: {
           content: string
@@ -5697,6 +5808,7 @@ export type Database = {
         Returns: boolean
       }
       sth_ai_engine_stats: { Args: never; Returns: Json }
+      sth_automation_dashboard: { Args: never; Returns: Json }
       sth_crm_dashboard_stats: { Args: never; Returns: Json }
       sth_memory_recalc_score: { Args: { _memory_id: string }; Returns: number }
       sth_memory_upsert: {
