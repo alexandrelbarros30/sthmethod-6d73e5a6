@@ -266,7 +266,7 @@ const People = ({ onOpen }: { onOpen: (id: string) => void }) => {
 };
 
 export default function AdminSthCrm({ area = "admin" }: Props) {
-  return <AdminSthCrmInner {...arguments[0]} />;
+  return <AdminSthCrmInner area={area} />;
 }
 
 interface RenewalRow {
