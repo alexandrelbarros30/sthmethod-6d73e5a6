@@ -189,9 +189,6 @@ async function generate(body: any, sb: any) {
 
   // Increment template usage
   if (templates?.length) {
-    await Promise.all(templates.map((t: any) =>
-      sb.rpc('noop_dummy').catch(() => null), // placeholder no-op
-    ));
     for (const t of templates) {
       await sb.from('sth_ai_templates').update({ uses_count: (t.uses_count ?? 0) + 1 }).eq('id', t.id);
     }
