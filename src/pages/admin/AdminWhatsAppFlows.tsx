@@ -13,7 +13,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { MessageSquare, Send, Save, Plus, Trash2, Play, RefreshCw, Phone, Tag as TagIcon } from "lucide-react";
+import { MessageSquare, Send, Save, Plus, Trash2, Play, RefreshCw, Phone, Tag as TagIcon, Power } from "lucide-react";
 
 type Menu = {
   id: string;
