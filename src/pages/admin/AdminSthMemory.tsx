@@ -41,7 +41,9 @@ const TEMP_COLOR: Record<Memory["temperature"], string> = {
   pronto: "bg-emerald-500/15 text-emerald-300 border-emerald-500/40",
 };
 
-export default function AdminSthMemory({ area = "admin" as "admin" | "consultor" }) {
+type AreaRole = "admin" | "consultor";
+
+export default function AdminSthMemory({ area = "admin" as AreaRole }) {
   const [memories, setMemories] = useState<Memory[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -147,7 +149,7 @@ export default function AdminSthMemory({ area = "admin" as "admin" | "consultor"
   }, [memories, alerts]);
 
   return (
-    <DashboardLayout area={area}>
+    <DashboardLayout role={area} title="STH MEMORY" subtitle="Memória inteligente do STH One">
       <div className="space-y-6 p-4 md:p-6">
         <div className="flex items-center gap-3">
           <div className="rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 p-3">
