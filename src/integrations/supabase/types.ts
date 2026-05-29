@@ -4926,6 +4926,27 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_settings: {
+        Row: {
+          active_main_menu_key: string
+          enabled: boolean
+          id: boolean
+          updated_at: string
+        }
+        Insert: {
+          active_main_menu_key?: string
+          enabled?: boolean
+          id?: boolean
+          updated_at?: string
+        }
+        Update: {
+          active_main_menu_key?: string
+          enabled?: boolean
+          id?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       workout_template_exercises: {
         Row: {
           custom_description: string | null
