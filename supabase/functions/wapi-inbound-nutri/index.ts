@@ -12,11 +12,17 @@ Deno.serve(async (req) => {
     console.log('wapi-inbound-nutri payload:', JSON.stringify(payload).slice(0, 1000));
 
     // ===== CALL EVENT: rejeita chamadas (áudio/vídeo) e responde com mensagem automática =====
-    const evtType = String(payload?.event || payload?.type || '').toLowerCase();
+    // ATENÇÃO: não usar includes('call') — provedores enviam eventos como
+    // "ReceivedCallback" para mensagens normais, o que dispararia falso positivo.
+    const evtRaw = String(payload?.event || payload?.type || '');
     const isCallEvent =
-      evtType.includes('call') ||
-      payload?.callType || payload?.isVideoCall != null ||
-      payload?.event === 'CALL_RECEIVED' || payload?.event === 'incomingCall';
+      evtRaw === 'CALL_RECEIVED' ||
+      evtRaw === 'incomingCall' ||
+      evtRaw === 'call.received' ||
+      evtRaw === 'CallReceivedCallback' ||
+      payload?.callType != null ||
+      payload?.isVideoCall != null ||
+      payload?.isVoiceCall != null;
     if (isCallEvent) {
       try {
         const callerPhone: string =
