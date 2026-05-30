@@ -4348,6 +4348,116 @@ export type Database = {
         }
         Relationships: []
       }
+      sth_kb_articles: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          author_id: string | null
+          author_name: string | null
+          category: string
+          content: string
+          created_at: string
+          id: string
+          search_vector: unknown
+          status: string
+          summary: string | null
+          tags: string[]
+          title: string
+          updated_at: string
+          uses_count: number
+          version: number
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          author_id?: string | null
+          author_name?: string | null
+          category: string
+          content: string
+          created_at?: string
+          id?: string
+          search_vector?: unknown
+          status?: string
+          summary?: string | null
+          tags?: string[]
+          title: string
+          updated_at?: string
+          uses_count?: number
+          version?: number
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          author_id?: string | null
+          author_name?: string | null
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          search_vector?: unknown
+          status?: string
+          summary?: string | null
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          uses_count?: number
+          version?: number
+        }
+        Relationships: []
+      }
+      sth_kb_versions: {
+        Row: {
+          article_id: string
+          category: string
+          change_note: string | null
+          content: string
+          created_at: string
+          edited_by: string | null
+          edited_by_name: string | null
+          id: string
+          status: string
+          tags: string[]
+          title: string
+          version: number
+        }
+        Insert: {
+          article_id: string
+          category: string
+          change_note?: string | null
+          content: string
+          created_at?: string
+          edited_by?: string | null
+          edited_by_name?: string | null
+          id?: string
+          status: string
+          tags?: string[]
+          title: string
+          version: number
+        }
+        Update: {
+          article_id?: string
+          category?: string
+          change_note?: string | null
+          content?: string
+          created_at?: string
+          edited_by?: string | null
+          edited_by_name?: string | null
+          id?: string
+          status?: string
+          tags?: string[]
+          title?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sth_kb_versions_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "sth_kb_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sth_knowledge_base: {
         Row: {
           content: string
@@ -5810,6 +5920,18 @@ export type Database = {
       sth_ai_engine_stats: { Args: never; Returns: Json }
       sth_automation_dashboard: { Args: never; Returns: Json }
       sth_crm_dashboard_stats: { Args: never; Returns: Json }
+      sth_kb_search: {
+        Args: { _category?: string; _limit?: number; _query: string }
+        Returns: {
+          category: string
+          content: string
+          id: string
+          rank: number
+          summary: string
+          tags: string[]
+          title: string
+        }[]
+      }
       sth_memory_recalc_score: { Args: { _memory_id: string }; Returns: number }
       sth_memory_upsert: {
         Args: { _patch?: Json; _phone: string }

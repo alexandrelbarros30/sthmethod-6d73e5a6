@@ -108,6 +108,26 @@ async function generate(body: any, sb: any) {
     .select('id,name,category,engine,body,uses_count').eq('active', true)
     .or(`category.eq.${intent},engine.eq.${engine}`).limit(6);
 
+  // 4b) Knowledge Hub — base oficial STH METHOD
+  const intentToKbCategory: Record<string, string> = {
+    dieta: 'Nutrição', treino: 'Treinamento', protocolo: 'Consultoria',
+    exames: 'Exames', atualizacao: 'Plataforma', pagamento: 'Financeiro',
+    renovacao: 'Renovação', conversao: 'Comercial', cancelamento: 'Comercial',
+    duvida_geral: 'FAQ',
+  };
+  const kbCategory = intentToKbCategory[intent] || null;
+  let kbArticles: any[] = [];
+  try {
+    const { data: kb } = await sb.rpc('sth_kb_search', { _query: inbound, _category: kbCategory, _limit: 4 });
+    kbArticles = kb || [];
+    if (kbArticles.length === 0 && kbCategory) {
+      const { data: kb2 } = await sb.rpc('sth_kb_search', { _query: inbound, _category: null, _limit: 3 });
+      kbArticles = kb2 || [];
+    }
+  } catch (e) {
+    console.warn('sth_kb_search falhou', e);
+  }
+
   // 5) Prompt
   const contextBlock: string[] = [];
   contextBlock.push(`# CONTATO`);
@@ -132,6 +152,13 @@ async function generate(body: any, sb: any) {
   if (templates?.length) {
     contextBlock.push(`\n# TEMPLATES DISPONÍVEIS (use como referência, adapte ao contexto)`);
     templates.forEach((t: any) => contextBlock.push(`[${t.name}] (${t.category}/${t.engine}):\n${t.body}`));
+  }
+  if (kbArticles.length) {
+    contextBlock.push(`\n# BASE DE CONHECIMENTO STH METHOD (fonte oficial — siga rigorosamente)`);
+    kbArticles.forEach((k: any) => {
+      const body = (k.summary || k.content || '').slice(0, 1200);
+      contextBlock.push(`[${k.category}] ${k.title}\n${body}`);
+    });
   }
 
   const systemPrompt = `${SYSTEM_BASE}\n\n${ENGINE_GUIDE[engine]}\n\nINTENÇÃO DETECTADA: ${intent}\nTIPO DE CONTATO: ${contact_type}\n\n${contextBlock.join('\n')}`;
@@ -182,7 +209,7 @@ async function generate(body: any, sb: any) {
     latency_ms,
     tokens_in, tokens_out,
     status: 'pending',
-    meta: { templates_used: (templates || []).map((t: any) => t.id) },
+    meta: { templates_used: (templates || []).map((t: any) => t.id), kb_used: kbArticles.map((k: any) => k.id) },
   }).select('*').single();
 
   if (insErr) return { status: 500, body: { ok: false, error: insErr.message } };
@@ -191,6 +218,13 @@ async function generate(body: any, sb: any) {
   if (templates?.length) {
     for (const t of templates) {
       await sb.from('sth_ai_templates').update({ uses_count: (t.uses_count ?? 0) + 1 }).eq('id', t.id);
+    }
+  }
+  // Increment KB usage (best-effort: read-modify-write)
+  if (kbArticles.length) {
+    for (const k of kbArticles) {
+      const { data: cur } = await sb.from('sth_kb_articles').select('uses_count').eq('id', k.id).maybeSingle();
+      await sb.from('sth_kb_articles').update({ uses_count: ((cur?.uses_count ?? 0) + 1) }).eq('id', k.id);
     }
   }
 
