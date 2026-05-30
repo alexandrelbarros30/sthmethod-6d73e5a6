@@ -168,7 +168,7 @@ export default function AdminSthKnowledge({ area = "admin" }: { area?: "admin" |
   };
 
   return (
-    <DashboardLayout role={area}>
+    <DashboardLayout role={area} title="STH Knowledge Hub">
       <div className="min-h-screen bg-black text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
           {/* Header */}
