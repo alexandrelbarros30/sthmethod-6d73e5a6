@@ -66,7 +66,7 @@ export default function AdminSthGrowth() {
   const totalRet = (data?.retencao.baixo_risco || 0) + (data?.retencao.medio_risco || 0) + (data?.retencao.alto_risco || 0);
 
   return (
-    <DashboardLayout role="admin">
+    <DashboardLayout role="admin" title="STH Growth Center">
       <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
         <header className="space-y-1">
           <div className="flex items-center gap-2.5">
