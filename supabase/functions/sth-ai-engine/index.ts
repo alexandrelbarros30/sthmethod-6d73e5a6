@@ -108,6 +108,26 @@ async function generate(body: any, sb: any) {
     .select('id,name,category,engine,body,uses_count').eq('active', true)
     .or(`category.eq.${intent},engine.eq.${engine}`).limit(6);
 
+  // 4b) Knowledge Hub — base oficial STH METHOD
+  const intentToKbCategory: Record<string, string> = {
+    dieta: 'Nutrição', treino: 'Treinamento', protocolo: 'Consultoria',
+    exames: 'Exames', atualizacao: 'Plataforma', pagamento: 'Financeiro',
+    renovacao: 'Renovação', conversao: 'Comercial', cancelamento: 'Comercial',
+    duvida_geral: 'FAQ',
+  };
+  const kbCategory = intentToKbCategory[intent] || null;
+  let kbArticles: any[] = [];
+  try {
+    const { data: kb } = await sb.rpc('sth_kb_search', { _query: inbound, _category: kbCategory, _limit: 4 });
+    kbArticles = kb || [];
+    if (kbArticles.length === 0 && kbCategory) {
+      const { data: kb2 } = await sb.rpc('sth_kb_search', { _query: inbound, _category: null, _limit: 3 });
+      kbArticles = kb2 || [];
+    }
+  } catch (e) {
+    console.warn('sth_kb_search falhou', e);
+  }
+
   // 5) Prompt
   const contextBlock: string[] = [];
   contextBlock.push(`# CONTATO`);
@@ -132,6 +152,13 @@ async function generate(body: any, sb: any) {
   if (templates?.length) {
     contextBlock.push(`\n# TEMPLATES DISPONÍVEIS (use como referência, adapte ao contexto)`);
     templates.forEach((t: any) => contextBlock.push(`[${t.name}] (${t.category}/${t.engine}):\n${t.body}`));
+  }
+  if (kbArticles.length) {
+    contextBlock.push(`\n# BASE DE CONHECIMENTO STH METHOD (fonte oficial — siga rigorosamente)`);
+    kbArticles.forEach((k: any) => {
+      const body = (k.summary || k.content || '').slice(0, 1200);
+      contextBlock.push(`[${k.category}] ${k.title}\n${body}`);
+    });
   }
 
   const systemPrompt = `${SYSTEM_BASE}\n\n${ENGINE_GUIDE[engine]}\n\nINTENÇÃO DETECTADA: ${intent}\nTIPO DE CONTATO: ${contact_type}\n\n${contextBlock.join('\n')}`;
