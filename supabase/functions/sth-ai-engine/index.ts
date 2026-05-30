@@ -209,7 +209,7 @@ async function generate(body: any, sb: any) {
     latency_ms,
     tokens_in, tokens_out,
     status: 'pending',
-    meta: { templates_used: (templates || []).map((t: any) => t.id) },
+    meta: { templates_used: (templates || []).map((t: any) => t.id), kb_used: kbArticles.map((k: any) => k.id) },
   }).select('*').single();
 
   if (insErr) return { status: 500, body: { ok: false, error: insErr.message } };
@@ -218,6 +218,13 @@ async function generate(body: any, sb: any) {
   if (templates?.length) {
     for (const t of templates) {
       await sb.from('sth_ai_templates').update({ uses_count: (t.uses_count ?? 0) + 1 }).eq('id', t.id);
+    }
+  }
+  // Increment KB usage
+  if (kbArticles.length) {
+    for (const k of kbArticles) {
+      await sb.rpc('sth_kb_search', { _query: '', _category: null, _limit: 0 }).catch(() => {});
+      await sb.from('sth_kb_articles').update({ uses_count: (k.uses_count ?? 0) + 1 }).eq('id', k.id);
     }
   }
 
