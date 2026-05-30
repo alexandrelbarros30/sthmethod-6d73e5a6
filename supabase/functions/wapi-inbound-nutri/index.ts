@@ -123,6 +123,21 @@ Deno.serve(async (req) => {
       console.error('crm_route_inbound (wapi) error', crmErr);
     }
 
+    // ===== STH ONE AUTOMATION ENGINE (orquestrador — não-bloqueante) =====
+    try {
+      fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/sth-automation-engine`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+          apikey: Deno.env.get('SUPABASE_ANON_KEY')!,
+        },
+        body: JSON.stringify({ action: 'inbound', phone: digits, text: text || '' }),
+      }).catch((e) => console.error('sth-automation-engine (wapi) error', e));
+    } catch (autoErr) {
+      console.error('sth-automation-engine dispatch (wapi) error', autoErr);
+    }
+
     // ===== Helper: enviar resposta de ausência (mesmo para não identificados) =====
     const sendAwayIfOutsideHours = async (firstName: string | null) => {
       try {
