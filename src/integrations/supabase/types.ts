@@ -5919,6 +5919,7 @@ export type Database = {
       }
       sth_ai_engine_stats: { Args: never; Returns: Json }
       sth_automation_dashboard: { Args: never; Returns: Json }
+      sth_command_center: { Args: never; Returns: Json }
       sth_crm_dashboard_stats: { Args: never; Returns: Json }
       sth_growth_dashboard: { Args: never; Returns: Json }
       sth_kb_search: {
