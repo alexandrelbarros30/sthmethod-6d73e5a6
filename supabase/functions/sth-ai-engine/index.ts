@@ -220,11 +220,11 @@ async function generate(body: any, sb: any) {
       await sb.from('sth_ai_templates').update({ uses_count: (t.uses_count ?? 0) + 1 }).eq('id', t.id);
     }
   }
-  // Increment KB usage
+  // Increment KB usage (best-effort: read-modify-write)
   if (kbArticles.length) {
     for (const k of kbArticles) {
-      await sb.rpc('sth_kb_search', { _query: '', _category: null, _limit: 0 }).catch(() => {});
-      await sb.from('sth_kb_articles').update({ uses_count: (k.uses_count ?? 0) + 1 }).eq('id', k.id);
+      const { data: cur } = await sb.from('sth_kb_articles').select('uses_count').eq('id', k.id).maybeSingle();
+      await sb.from('sth_kb_articles').update({ uses_count: ((cur?.uses_count ?? 0) + 1) }).eq('id', k.id);
     }
   }
 
