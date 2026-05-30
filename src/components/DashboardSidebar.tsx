@@ -57,6 +57,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
   ],
   admin: [
     { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
+    { to: "/admin/sth-command", icon: Activity, label: "STH Command" },
     { to: "/admin/sth-crm", icon: Sparkles, label: "STH CRM" },
     { to: "/admin/sth-memory", icon: Brain, label: "STH Memory" },
     { to: "/admin/sth-ai-engine", icon: Sparkles, label: "STH AI Engine" },
