@@ -146,6 +146,20 @@ Deno.serve(async (req) => {
       console.error('crm_route_inbound (zapi) error', crmErr);
     }
 
+    // ===== STH ONE AUTOMATION ENGINE (orquestrador — não-bloqueante) =====
+    try {
+      const digits = String(phone).replace(/\D/g, '');
+      if (digits.length >= 8) {
+        fetch(`${SUPABASE_URL}/functions/v1/sth-automation-engine`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
+          body: JSON.stringify({ action: 'inbound', phone: digits, text }),
+        }).catch((e) => console.error('sth-automation-engine (zapi) error', e));
+      }
+    } catch (autoErr) {
+      console.error('sth-automation-engine dispatch (zapi) error', autoErr);
+    }
+
     // ===== STH One MENU ROUTER (interativo) =====
     // Se houver fluxo de menu ativo / texto disparar menu, ele responde e encerra aqui.
     try {
