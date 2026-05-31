@@ -35,7 +35,12 @@ type Config = { provider: string; model: string; custom_system_prompt: string | 
 type SimMsg = {
   role: "user" | "assistant";
   text: string;
-  meta?: { intent?: string; engine?: string; contact_type?: string; latency_ms?: number; draft_id?: string; sent?: boolean };
+  meta?: {
+    intent?: string; engine?: string; contact_type?: string;
+    latency_ms?: number; draft_id?: string; sent?: boolean;
+    web_grounded?: boolean;
+    web_sources?: { title: string; uri: string }[];
+  };
 };
 
 type Identity = {
