@@ -40,39 +40,37 @@ async function configureZapi() {
 async function configureWapi() {
   const instance = Deno.env.get("WAPI_INSTANCE_ID");
   const token = Deno.env.get("WAPI_TOKEN");
+  const clientToken = Deno.env.get("WAPI_CLIENT_TOKEN");
   if (!instance || !token) return { provider: "wapi", ok: false, error: "missing WAPI_INSTANCE_ID/TOKEN" };
 
-  // W-API.app: POST /instances/{id}/webhooks?token=...
-  const url = `https://api.w-api.app/v1/webhooks?connectionKey=${instance}`;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+  if (clientToken) headers["Client-Token"] = clientToken;
+
+  const base = `https://api.w-api.app/v1/webhooks`;
+  const endpoints = [
+    "/edit-webhook-received",
+    "/edit-webhook-delivery",
+    "/edit-webhook-disconnected",
+    "/edit-webhook-connected",
+    "/edit-webhook-message-status",
+  ];
   const attempts: any[] = [];
-  try {
-    const r = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({
-        webhookUrl: WEBHOOK_URL,
-        events: ["messages"],
-        enabled: true,
-      }),
-    });
-    attempts.push({ url, status: r.status, body: (await r.text()).slice(0, 300) });
-  } catch (e) {
-    attempts.push({ url, error: String(e) });
+  for (const ep of endpoints) {
+    const url = `${base}${ep}?instanceId=${instance}`;
+    try {
+      const r = await fetch(url, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ value: WEBHOOK_URL, enabled: true }),
+      });
+      attempts.push({ ep, status: r.status, body: (await r.text()).slice(0, 300) });
+    } catch (e) {
+      attempts.push({ ep, error: String(e) });
+    }
   }
-
-  // Fallback for legacy api.wapi.com.br pattern
-  const url2 = `https://api.wapi.com.br/v1/webhook/set`;
-  try {
-    const r = await fetch(url2, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ instance_id: instance, url: WEBHOOK_URL, events: ["message"] }),
-    });
-    attempts.push({ url: url2, status: r.status, body: (await r.text()).slice(0, 300) });
-  } catch (e) {
-    attempts.push({ url: url2, error: String(e) });
-  }
-
   return { provider: "wapi", ok: true, webhook: WEBHOOK_URL, attempts };
 }
 
