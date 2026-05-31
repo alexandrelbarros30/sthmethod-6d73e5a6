@@ -76,7 +76,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
       ],
     },
     {
-      group: "Atendimento",
+      group: "Atendimento (Legado — somente conferência)",
       icon: Headphones,
       children: [
         { to: "/admin/atendimento", icon: Headphones, label: "Atendimento (CRM)" },
