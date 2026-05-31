@@ -132,6 +132,17 @@ async function generate(body: any, sb: any) {
     console.warn('sth_kb_search falhou', e);
   }
 
+  // 4b.2) Planos ativos — fonte oficial interna (sempre injetada)
+  let activePlans: any[] = [];
+  try {
+    const { data: pls } = await sb.from('plans')
+      .select('name,price,card_price,duration_days,subtitle,benefits')
+      .eq('active', true).order('price', { ascending: true });
+    activePlans = pls || [];
+  } catch (e) {
+    console.warn('plans fetch falhou', e);
+  }
+
   // 4c) Web grounding — busca contexto na web (priorizando sthmethod.com.br) via Gemini google_search
   const webGroundingEnabled: boolean = body.web_grounding === true;
   let webSnippets: { title: string; uri: string; snippet?: string }[] = [];
