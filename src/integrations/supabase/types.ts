@@ -4313,6 +4313,7 @@ export type Database = {
         Row: {
           closed_at: string | null
           created_at: string
+          greeting_sent_at: string | null
           id: string
           idle_warned: boolean
           last_inbound_at: string
@@ -4325,6 +4326,7 @@ export type Database = {
         Insert: {
           closed_at?: string | null
           created_at?: string
+          greeting_sent_at?: string | null
           id?: string
           idle_warned?: boolean
           last_inbound_at?: string
@@ -4337,6 +4339,7 @@ export type Database = {
         Update: {
           closed_at?: string | null
           created_at?: string
+          greeting_sent_at?: string | null
           id?: string
           idle_warned?: boolean
           last_inbound_at?: string
@@ -4345,6 +4348,69 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      sth_engine_config: {
+        Row: {
+          auto_greeting_enabled: boolean
+          custom_system_prompt: string | null
+          id: number
+          model: string
+          provider: string
+          temperature: number | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          auto_greeting_enabled?: boolean
+          custom_system_prompt?: string | null
+          id?: number
+          model?: string
+          provider?: string
+          temperature?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          auto_greeting_enabled?: boolean
+          custom_system_prompt?: string | null
+          id?: number
+          model?: string
+          provider?: string
+          temperature?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      sth_greeting_templates: {
+        Row: {
+          classification: string
+          enabled: boolean
+          id: string
+          label: string
+          message: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          classification: string
+          enabled?: boolean
+          id?: string
+          label: string
+          message: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          classification?: string
+          enabled?: boolean
+          id?: string
+          label?: string
+          message?: string
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }

@@ -86,6 +86,12 @@ async function handleInbound(supabase: any, body: AnyRec) {
   }
 
   // 5. Session tracking
+  const { data: existingSession } = await supabase
+    .from('sth_auto_sessions')
+    .select('id, greeting_sent_at, status')
+    .eq('phone', phone)
+    .maybeSingle();
+
   await supabase.from('sth_auto_sessions').upsert(
     {
       phone,
@@ -98,13 +104,56 @@ async function handleInbound(supabase: any, body: AnyRec) {
     { onConflict: 'phone' },
   );
 
+  // 5b. Saudação automática (primeira mensagem da sessão)
+  const isNewSession = !existingSession || existingSession.status !== 'open' || !existingSession.greeting_sent_at;
+  let greetingSent = false;
+  if (isNewSession) {
+    const { data: cfg } = await supabase.from('sth_engine_config').select('auto_greeting_enabled').eq('id', 1).maybeSingle();
+    if (cfg?.auto_greeting_enabled !== false) {
+      const { data: tpl } = await supabase
+        .from('sth_greeting_templates')
+        .select('message, enabled')
+        .eq('classification', classification)
+        .maybeSingle();
+      if (tpl?.enabled && tpl?.message) {
+        const firstName = (user?.full_name || '').split(' ')[0] || 'Aluno';
+        const daysLeft = sub?.end_date
+          ? Math.max(0, Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86400000))
+          : 0;
+        const rendered = tpl.message
+          .replace(/\{nome\}/g, firstName)
+          .replace(/\{plano\}/g, sub?.plan_id || 'STH METHOD')
+          .replace(/\{dias_restantes\}/g, String(daysLeft));
+        try {
+          await fetch(`${SUPABASE_URL}/functions/v1/send-wapi`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
+            body: JSON.stringify({ phone, message: rendered }),
+          });
+          greetingSent = true;
+          await supabase
+            .from('sth_auto_sessions')
+            .update({ greeting_sent_at: new Date().toISOString() })
+            .eq('phone', phone);
+          await supabase.from('sth_auto_events').insert({
+            phone, user_id: user?.user_id || null, memory_id: memId,
+            classification, intent: 'saudacao', source: 'inbound',
+            decision: 'greeting', action_taken: 'greeting_sent',
+          });
+        } catch (e) {
+          console.error('greeting send failed', e);
+        }
+      }
+    }
+  }
+
   // 6. Generate AI draft (never auto-send — human approval queue)
   let decision = 'human';
   try {
     const r = await fetch(`${SUPABASE_URL}/functions/v1/sth-ai-engine`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
-      body: JSON.stringify({ action: 'draft', phone, text, intent, classification }),
+      body: JSON.stringify({ action: 'draft', phone, inbound_text: text, intent, classification }),
     });
     if (r.ok) decision = 'gemini';
   } catch (_) {}
@@ -122,7 +171,7 @@ async function handleInbound(supabase: any, body: AnyRec) {
     action_taken: 'draft_queued',
   });
 
-  return { ok: true, classification, intent, memory_id: memId, score_delta: delta };
+  return { ok: true, classification, intent, memory_id: memId, score_delta: delta, greeting_sent: greetingSent };
 }
 
 async function handleScheduler(supabase: any) {

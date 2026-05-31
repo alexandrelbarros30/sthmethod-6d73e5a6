@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Layers, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered, RefreshCw, NotebookPen, AlertCircle, ChevronDown, DollarSign, Bot, HeartHandshake, Headphones, Settings, Sparkles, Brain } from "lucide-react";
+import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Layers, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered, RefreshCw, NotebookPen, AlertCircle, ChevronDown, DollarSign, Bot, HeartHandshake, Headphones, Settings, Sparkles, Brain, Cpu } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -61,6 +61,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
     { to: "/admin/sth-crm", icon: Sparkles, label: "STH CRM" },
     { to: "/admin/sth-memory", icon: Brain, label: "STH Memory" },
     { to: "/admin/sth-ai-engine", icon: Sparkles, label: "STH AI Engine" },
+    { to: "/admin/sth-engine", icon: Cpu, label: "Motor de Resposta" },
     { to: "/admin/sth-automation", icon: Activity, label: "STH Automation" },
     { to: "/admin/sth-knowledge", icon: BookOpen, label: "STH Knowledge" },
     { to: "/admin/sth-growth", icon: TrendingUp, label: "STH Growth" },
