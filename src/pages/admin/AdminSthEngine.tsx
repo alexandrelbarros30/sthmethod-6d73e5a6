@@ -38,6 +38,62 @@ type SimMsg = {
   meta?: { intent?: string; engine?: string; contact_type?: string; latency_ms?: number; draft_id?: string; sent?: boolean };
 };
 
+type Identity = {
+  phone: string;
+  known: boolean;
+  contact_type: string;
+  suggested_engine: string;
+  full_name: string | null;
+  email: string | null;
+  user_id: string | null;
+  plan_name: string | null;
+  plan_status: string | null;
+  end_date: string | null;
+  days_remaining: number | null;
+  has_active_subscription: boolean;
+  objective: string | null;
+  memory_score: number | null;
+  temperature: string | null;
+  summary: string;
+};
+
+const CONTACT_TYPE_STYLE: Record<string, { color: string; Icon: any; label: string }> = {
+  aluno_ativo:   { color: "bg-emerald-500/15 text-emerald-300 border-emerald-500/40", Icon: UserCheck, label: "Aluno ativo" },
+  renovacao:     { color: "bg-amber-500/15 text-amber-300 border-amber-500/40",     Icon: UserCheck, label: "Renovação" },
+  aluno_inativo: { color: "bg-rose-500/15 text-rose-300 border-rose-500/40",        Icon: UserX,     label: "Aluno inativo" },
+  lead:          { color: "bg-sky-500/15 text-sky-300 border-sky-500/40",           Icon: UserPlus,  label: "Lead" },
+  tool_user:     { color: "bg-zinc-500/15 text-zinc-300 border-zinc-500/40",        Icon: HelpCircle, label: "Desconhecido" },
+};
+
+function IdentityCard({ data }: { data: Identity }) {
+  const style = CONTACT_TYPE_STYLE[data.contact_type] || CONTACT_TYPE_STYLE.tool_user;
+  const Icon = style.Icon;
+  return (
+    <div className={`rounded-md border p-3 space-y-2 ${style.color}`}>
+      <div className="flex items-start gap-2">
+        <Icon className="h-5 w-5 mt-0.5 shrink-0" />
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="outline" className="text-[10px] h-5">{style.label}</Badge>
+            {data.has_active_subscription && <Badge variant="outline" className="text-[10px] h-5">Assinatura ativa</Badge>}
+            {!data.known && <Badge variant="outline" className="text-[10px] h-5">Sem registro</Badge>}
+            {data.temperature && <Badge variant="outline" className="text-[10px] h-5">{data.temperature}</Badge>}
+          </div>
+          <p className="text-sm font-medium mt-1">{data.summary}</p>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-[11px] text-muted-foreground">
+            <div><strong className="text-foreground">Nome:</strong> {data.full_name || "—"}</div>
+            <div><strong className="text-foreground">Plano:</strong> {data.plan_name || "—"}</div>
+            <div><strong className="text-foreground">Objetivo:</strong> {data.objective || "—"}</div>
+            <div><strong className="text-foreground">Dias restantes:</strong> {data.days_remaining ?? "—"}</div>
+            <div><strong className="text-foreground">Score memória:</strong> {data.memory_score ?? 0}/100</div>
+            <div><strong className="text-foreground">Motor sugerido:</strong> {data.suggested_engine}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const CLASSIFICATIONS = [
   { value: "auto", label: "Auto (deixar IA detectar)" },
   { value: "aluno_ativo", label: "Aluno ativo" },
