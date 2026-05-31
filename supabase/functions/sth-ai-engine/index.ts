@@ -215,6 +215,17 @@ Responda em 4-10 bullets curtos com FATOS VERIFICÁVEIS extraídos das páginas 
       contextBlock.push(`[${k.category}] ${k.title}\n${body}`);
     });
   }
+  if (activePlans.length) {
+    contextBlock.push(`\n# PLANOS ATIVOS STH METHOD (fonte oficial — use SEMPRE estes valores ao citar planos/preços)`);
+    activePlans.forEach((p: any) => {
+      const parts = [`• ${p.name} — ${p.price || 's/preço'}`];
+      if (p.card_price) parts.push(`(cartão: ${p.card_price})`);
+      if (p.duration_days) parts.push(`· ${p.duration_days} dias`);
+      if (p.subtitle) parts.push(`\n  ${p.subtitle}`);
+      contextBlock.push(parts.join(' '));
+    });
+    contextBlock.push(`Site oficial: https://sthmethod.com.br`);
+  }
   if (webSummary) {
     contextBlock.push(`\n# CONTEXTO WEB (busca ao vivo — use como referência factual, mas mantenha o tom STH METHOD)`);
     contextBlock.push(webSummary.slice(0, 3000));
