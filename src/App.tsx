@@ -32,6 +32,7 @@ import Ginecomastia from "./pages/Ginecomastia";
 import HormoniosBfAlto from "./pages/HormoniosBfAlto";
 import TirzepatidaHipertrofia from "./pages/TirzepatidaHipertrofia";
 import TirzepatidaColaterais from "./pages/TirzepatidaColaterais";
+import HipertensaoArterial from "./pages/HipertensaoArterial";
 import CarboidratosHipertrofia from "./pages/CarboidratosHipertrofia";
 import ProteinaSuperavit from "./pages/ProteinaSuperavit";
 import OleosSementes from "./pages/OleosSementes";
@@ -187,6 +188,7 @@ const App = () => (
             <Route path="/tendencias/hormonios-bf-alto" element={<HormoniosBfAlto />} />
             <Route path="/tendencias/tirzepatida-hipertrofia" element={<TirzepatidaHipertrofia />} />
             <Route path="/tendencias/tirzepatida-colaterais" element={<TirzepatidaColaterais />} />
+            <Route path="/tendencias/hipertensao-arterial" element={<HipertensaoArterial />} />
             <Route path="/tendencias/carboidratos-hipertrofia" element={<CarboidratosHipertrofia />} />
             <Route path="/tendencias/proteina-superavit" element={<ProteinaSuperavit />} />
             <Route path="/tendencias/oleos-sementes" element={<OleosSementes />} />

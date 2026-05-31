@@ -17,8 +17,18 @@ import oleosImg from "@/assets/sthnews-oleos-sementes-hero.jpg";
 import ultraImg from "@/assets/sthnews-ultraprocessados-hero.jpg";
 import marcadoresImg from "@/assets/sthnews-marcadores-hero.jpg";
 import colateraisImg from "@/assets/sthnews-tirzepatida-colaterais-hero.jpg";
+import hipertensaoImg from "@/assets/sthnews-hipertensao-hero.jpg";
 
 const articles = [
+  {
+    to: "/tendencias/hipertensao-arterial",
+    tag: "CAPA",
+    tagClass: "bg-primary text-primary-foreground",
+    date: "Nova matéria",
+    title: "🫀 Hipertensão Arterial: o tratado tático completo",
+    desc: "Classificação, fisiopatologia, diagnóstico diferencial e conduta medicamentosa, suplementar e comportamental.",
+    img: hipertensaoImg,
+  },
   {
     to: "/tendencias/tirzepatida-colaterais",
     tag: "CAPA",
