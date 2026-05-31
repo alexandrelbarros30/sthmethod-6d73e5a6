@@ -97,7 +97,9 @@ async function generate(body: any, sb: any) {
 
   // 4) Templates ativos relevantes para a intenção detectada
   const intent = detectIntent(inbound);
-  const contact_type = classifyContact(memory, hasActiveSub);
+  const forced = (body.force_classification || '').toString();
+  const validForced = ['aluno_ativo','renovacao','aluno_inativo','lead','tool_user'].includes(forced);
+  const contact_type = validForced ? forced : classifyContact(memory, hasActiveSub);
   let engine: Engine = requestedEngine || 'humanizada';
   if (!requestedEngine) {
     if (contact_type === 'lead' || intent === 'conversao') engine = 'conversao';
