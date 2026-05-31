@@ -384,11 +384,12 @@ async function handleInbound(supabase: any, body: AnyRec) {
         apikey: ANON_KEY,
       },
       body: JSON.stringify({
-        action: "draft",
+        action: "generate",
         phone,
         inbound_text: text,
         intent,
         classification,
+        web_grounding: true,
       }),
     });
     const data = await r.json().catch(() => ({}));
