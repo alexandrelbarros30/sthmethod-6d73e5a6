@@ -330,6 +330,25 @@ REGRAS:
     contextBlock.push(`Como é o PRIMEIRO contato desta conversa, INICIE sua resposta com uma saudação personalizada baseada no template abaixo (adapte naturalmente, não copie literal). DEPOIS responda a dúvida do contato.`);
     contextBlock.push(`Template de referência:\n${rendered}`);
   }
+
+  // Aluno ativo entrando no canal COMERCIAL → orientar para Fale com o Nutri
+  const commercialIntents = ['conversao', 'pagamento', 'renovacao'];
+  if (contact_type === 'aluno_ativo' && commercialIntents.includes(intent)) {
+    const firstName = (memory?.full_name || contact?.full_name || profile?.full_name || '').split(' ')[0] || 'aluno';
+    const nutriLink = `https://wa.me/5521998984153?text=${encodeURIComponent(
+      `Oi Nutri! Sou ${firstName} e gostaria de falar com o Nutri para acompanhamento da consultoria.`,
+    )}`;
+    contextBlock.push(`\n# REGRA DE ROTEAMENTO (OBRIGATÓRIA)`);
+    contextBlock.push(
+      `Este contato é ALUNO ATIVO falando no canal COMERCIAL. Sua resposta DEVE: ` +
+      `(1) cumprimentar pelo nome, ` +
+      `(2) explicar que o canal comercial é exclusivo para novos alunos/planos/renovações, ` +
+      `(3) orientar a usar o canal "Fale com o Nutri" para dúvidas de acompanhamento, dieta, treino, protocolo e suporte da consultoria, ` +
+      `(4) entregar o link: ${nutriLink} ` +
+      `Não responda dúvidas técnicas de acompanhamento aqui — apenas redirecione com tom acolhedor STH METHOD.`,
+    );
+  }
+
   if (webSummary) {
     contextBlock.push(`\n# CONTEXTO WEB (busca ao vivo — use como referência factual, mas mantenha o tom STH METHOD)`);
     contextBlock.push(webSummary.slice(0, 3000));

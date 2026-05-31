@@ -149,7 +149,49 @@ async function handleInbound(supabase: any, body: AnyRec) {
 
   // 6. Generate AI draft (never auto-send — human approval queue)
   let decision = 'human';
+
+  // 6a. Aluno ativo no canal comercial → redireciona automaticamente para Fale com o Nutri
+  let nutriRedirectSent = false;
+  const isCommercialIntent = intent === 'comercial' || intent === 'financeiro';
+  if (classification === 'aluno_ativo' && isCommercialIntent) {
+    const firstName = (user?.full_name || '').split(' ')[0] || 'Aluno';
+    const nutriPhone = '5521998984153';
+    const nutriLink = `https://wa.me/${nutriPhone}?text=${encodeURIComponent(
+      `Oi Nutri! Sou ${firstName} e gostaria de falar com o Nutri para acompanhamento da consultoria.`,
+    )}`;
+    const redirectMsg =
+      `Olá, ${firstName}! 👋\n\n` +
+      `Identificamos que você já é aluno ativo do STH METHOD.\n\n` +
+      `Este canal é exclusivo para o time *Comercial* (novos alunos, planos e renovações).\n\n` +
+      `Para dúvidas de acompanhamento, dieta, treino, protocolo ou suporte da consultoria, ` +
+      `por favor utilize o canal *Fale com o Nutri*:\n\n` +
+      `👉 ${nutriLink}\n\n` +
+      `Assim sua solicitação chega direto na equipe responsável e o atendimento é mais rápido. 🙏`;
+    try {
+      const r = await fetch(`${SUPABASE_URL}/functions/v1/send-wapi`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
+        body: JSON.stringify({ phone, message: redirectMsg }),
+      });
+      if (r.ok) nutriRedirectSent = true;
+    } catch (e) {
+      console.error('nutri redirect send failed', e);
+    }
+    await supabase.from('sth_auto_events').insert({
+      phone,
+      user_id: user?.user_id || null,
+      memory_id: memId,
+      classification,
+      intent,
+      source: 'inbound',
+      decision: 'redirect_nutri',
+      action_taken: nutriRedirectSent ? 'redirect_sent' : 'redirect_failed',
+    });
+    decision = 'redirect_nutri';
+  }
+
   try {
+    if (nutriRedirectSent) throw new Error('skip draft after redirect');
     const r = await fetch(`${SUPABASE_URL}/functions/v1/sth-ai-engine`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
@@ -171,7 +213,15 @@ async function handleInbound(supabase: any, body: AnyRec) {
     action_taken: 'draft_queued',
   });
 
-  return { ok: true, classification, intent, memory_id: memId, score_delta: delta, greeting_sent: greetingSent };
+  return {
+    ok: true,
+    classification,
+    intent,
+    memory_id: memId,
+    score_delta: delta,
+    greeting_sent: greetingSent,
+    nutri_redirect_sent: nutriRedirectSent,
+  };
 }
 
 async function handleScheduler(supabase: any) {
