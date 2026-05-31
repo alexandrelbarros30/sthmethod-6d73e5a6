@@ -1189,6 +1189,25 @@ html, body {
 .scrollbar-none::-webkit-scrollbar { display: none; }
 .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* Mobile responsiveness helpers — universal */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Prevent long words / URLs from overflowing on mobile */
+@media (max-width: 767px) {
+  main h1, main h2, main h3, main h4,
+  main p, main span, main li, main a, main td, main th, main label {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  /* Make any direct horizontal lists (tabs, chip rows, button groups) scrollable on mobile */
+  main [role="tablist"] {
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Cards & containers should never produce horizontal overflow at the page level */
+  main .card, main [class*="rounded-"] { max-width: 100%; }
+}
+
 .tiptap p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
