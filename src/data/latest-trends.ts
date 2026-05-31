@@ -1,3 +1,4 @@
+import hipertensaoImg from "@/assets/sthnews-hipertensao-hero.jpg";
 import marcadoresImg from "@/assets/sthnews-marcadores-hero.jpg";
 import ultraImg from "@/assets/sthnews-ultraprocessados-hero.jpg";
 import oleosImg from "@/assets/sthnews-oleos-sementes-hero.jpg";
@@ -21,6 +22,7 @@ export interface TrendArticle {
 // Ordenado do mais recente para o mais antigo.
 // Ao publicar nova tendência, adicione no topo com data atual.
 export const LATEST_TRENDS: TrendArticle[] = [
+  { id: "hipertensao-arterial", path: "/tendencias/hipertensao-arterial", kicker: "Cardiovascular", title: "Hipertensão Arterial: o tratado tático completo", desc: "Classificação, fisiopatologia, diagnóstico diferencial e conduta medicamentosa, suplementar e comportamental.", img: hipertensaoImg, publishedAt: "2026-05-31" },
   { id: "marcadores-laboratoriais", path: "/tendencias/marcadores-laboratoriais", kicker: "Guia técnico", title: "Marcadores laboratoriais: o guia técnico completo", desc: "Painéis essenciais, recomendados e avançados — leitura clínica acima do achismo.", img: marcadoresImg, publishedAt: "2026-05-15" },
   { id: "ultraprocessados-saude-mental", path: "/tendencias/ultraprocessados-saude-mental", kicker: "Mitos nutricionais", title: "Ultraprocessados não estão destruindo magicamente sua saúde mental", desc: "Existe associação. Mas associação não é causa.", img: ultraImg, publishedAt: "2026-05-05" },
   { id: "oleos-sementes", path: "/tendencias/oleos-sementes", kicker: "Mitos nutricionais", title: "Você foi enganado sobre os óleos de sementes", desc: "Sozinhos, não são automaticamente inflamatórios.", img: oleosImg, publishedAt: "2026-04-28" },
