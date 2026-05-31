@@ -16,8 +16,18 @@ import proteinaImg from "@/assets/sthnews-proteina-hero.jpg";
 import oleosImg from "@/assets/sthnews-oleos-sementes-hero.jpg";
 import ultraImg from "@/assets/sthnews-ultraprocessados-hero.jpg";
 import marcadoresImg from "@/assets/sthnews-marcadores-hero.jpg";
+import colateraisImg from "@/assets/sthnews-tirzepatida-colaterais-hero.jpg";
 
 const articles = [
+  {
+    to: "/tendencias/tirzepatida-colaterais",
+    tag: "CAPA",
+    tagClass: "bg-primary text-primary-foreground",
+    date: "Nova matéria",
+    title: "💊 Tirzepatida: mapa tático completo dos colaterais",
+    desc: "Do arroto sulfúrico à pancreatite — cada sintoma cruzado com solução medicamentosa, suplementar e comportamental.",
+    img: colateraisImg,
+  },
   {
     to: "/tendencias/marcadores-laboratoriais",
     tag: "CAPA",
