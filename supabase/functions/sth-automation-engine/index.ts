@@ -1,11 +1,69 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { localRespond } from '../_shared/sth-local-responder.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 
 type AnyRec = Record<string, any>;
+
+function textFromCandidate(value: unknown): string {
+  if (!value) return '';
+  if (typeof value === 'string') return value.trim();
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const text = textFromCandidate(item);
+      if (text) return text;
+    }
+    return '';
+  }
+  if (typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    const candidates = [
+      obj.body,
+      obj.message,
+      obj.text,
+      obj.caption,
+      obj.content,
+      obj.title,
+      obj.description,
+      (obj.interactive as AnyRec | undefined)?.button_reply?.title,
+      (obj.interactive as AnyRec | undefined)?.list_reply?.title,
+    ];
+    for (const candidate of candidates) {
+      const text = textFromCandidate(candidate);
+      if (text) return text;
+    }
+  }
+  return '';
+}
+
+function extractInboundText(payload: AnyRec): string {
+  const candidates = [
+    payload?.text,
+    payload?.body,
+    payload?.message?.text,
+    payload?.message?.body,
+    payload?.message?.message,
+    payload?.data?.message?.text,
+    payload?.data?.message?.body,
+    payload?.data?.body,
+    payload?.messages?.[0]?.text?.body,
+    payload?.messages?.[0]?.text,
+    payload?.messages?.[0]?.body,
+    payload?.messages?.[0]?.caption,
+    payload?.messages?.[0]?.interactive?.button_reply?.title,
+    payload?.messages?.[0]?.interactive?.list_reply?.title,
+  ];
+
+  for (const candidate of candidates) {
+    const text = textFromCandidate(candidate);
+    if (text) return text;
+  }
+
+  return '';
+}
 
 function classifyIntent(text: string): string {
   const t = (text || '').toLowerCase();
@@ -33,7 +91,7 @@ function scoreFromText(text: string): { delta: number; reasons: string[] } {
 
 async function handleInbound(supabase: any, body: AnyRec) {
   const phone = String(body.phone || '').replace(/\D/g, '');
-  const text = String(body.text || body.message || '');
+  const text = extractInboundText(body);
   if (phone.length < 8) return { ok: false, error: 'invalid phone' };
 
   // 1. Identify user via profile
@@ -43,6 +101,7 @@ async function handleInbound(supabase: any, body: AnyRec) {
   // 2. Classify
   let classification = 'lead';
   let sub: any = null;
+  let planName: string | null = null;
   if (user?.user_id) {
     const { data: s } = await supabase
       .from('subscriptions')
@@ -54,6 +113,10 @@ async function handleInbound(supabase: any, body: AnyRec) {
     sub = s;
     if (s) {
       const days = Math.floor((new Date(s.end_date).getTime() - Date.now()) / 86400000);
+      if (s.plan_id) {
+        const { data: plan } = await supabase.from('plans').select('name').eq('id', s.plan_id).maybeSingle();
+        planName = plan?.name || null;
+      }
       if (s.status === 'active' && days >= 0) {
         classification = days <= 10 ? 'renovacao' : 'aluno_ativo';
       } else {
@@ -68,7 +131,7 @@ async function handleInbound(supabase: any, body: AnyRec) {
     _patch: {
       full_name: user?.full_name || null,
       user_id: user?.user_id || null,
-      plan_name: sub?.plan_id || null,
+      plan_name: planName || null,
       plan_status: classification,
       objective: user?.objective || null,
     },
@@ -147,8 +210,19 @@ async function handleInbound(supabase: any, body: AnyRec) {
     }
   }
 
-  // 6. Generate AI draft (never auto-send — human approval queue)
+  const { data: autoReplyCfg } = await supabase
+    .from('ai_assistant_config')
+    .select('auto_reply_enabled, engine, fallback_enabled, fallback_message')
+    .eq('id', 1)
+    .maybeSingle();
+
+  const autoReplyEnabled = autoReplyCfg?.auto_reply_enabled === true;
+  const responseEngine = (autoReplyCfg?.engine || 'local') as 'local' | 'ai' | 'gemini';
+
+  // 6. Generate/send automatic reply
   let decision = 'human';
+  let actionTaken = 'draft_queued';
+  let autoReplySent = false;
 
   // 6a. Aluno ativo no canal comercial → redireciona automaticamente para Fale com o Nutri
   let nutriRedirectSent = false;
@@ -188,17 +262,93 @@ async function handleInbound(supabase: any, body: AnyRec) {
       action_taken: nutriRedirectSent ? 'redirect_sent' : 'redirect_failed',
     });
     decision = 'redirect_nutri';
+    actionTaken = nutriRedirectSent ? 'redirect_sent' : 'redirect_failed';
   }
 
-  try {
-    if (nutriRedirectSent) throw new Error('skip draft after redirect');
+  const createDraft = async () => {
     const r = await fetch(`${SUPABASE_URL}/functions/v1/sth-ai-engine`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
       body: JSON.stringify({ action: 'draft', phone, inbound_text: text, intent, classification }),
     });
-    if (r.ok) decision = 'gemini';
-  } catch (_) {}
+    const data = await r.json().catch(() => ({}));
+    return { ok: r.ok && data?.ok && data?.draft?.id, draftId: data?.draft?.id || null, draft: data?.draft || null };
+  };
+
+  try {
+    if (!nutriRedirectSent && autoReplyEnabled && responseEngine === 'local') {
+      const localStatus = classification === 'aluno_ativo' || classification === 'renovacao'
+        ? 'active'
+        : classification === 'aluno_inativo'
+          ? 'expired'
+          : 'lead';
+      const localContactType = classification === 'aluno_inativo' ? 'aluno_inativo' : classification === 'lead' ? 'novo_cliente' : 'aluno_ativo';
+      const localResult = localRespond(text, {
+        name: user?.full_name || null,
+        status: localStatus,
+        planName,
+        endDate: sub?.end_date || null,
+        phone,
+        contactType: localContactType,
+        fallbackEnabled: autoReplyCfg?.fallback_enabled !== false,
+        fallbackMessage: autoReplyCfg?.fallback_message || null,
+      });
+
+      if (localResult.reply?.trim()) {
+        const sendRes = await fetch(`${SUPABASE_URL}/functions/v1/send-wapi`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
+          body: JSON.stringify({ phone, message: localResult.reply }),
+        });
+
+        if (sendRes.ok) {
+          autoReplySent = true;
+          decision = 'local_auto';
+          actionTaken = 'auto_reply_sent';
+
+          if (memId) {
+            await supabase.from('sth_memory_learning').insert({
+              memory_id: memId,
+              question: text,
+              answer: localResult.reply,
+              engine: 'sth-local-responder',
+              intent: localResult.intent,
+              outcome: 'sent',
+            });
+            await supabase.from('sth_memory').update({
+              last_question: text,
+              last_answer: localResult.reply,
+              last_interaction_at: new Date().toISOString(),
+            }).eq('id', memId);
+          }
+        }
+      }
+    }
+
+    if (!nutriRedirectSent && autoReplyEnabled && !autoReplySent && responseEngine !== 'local') {
+      const draftResult = await createDraft();
+      if (draftResult.ok && draftResult.draftId) {
+        const sendRes = await fetch(`${SUPABASE_URL}/functions/v1/sth-ai-engine`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
+          body: JSON.stringify({ action: 'send', draft_id: draftResult.draftId }),
+        });
+        const sendData = await sendRes.json().catch(() => ({}));
+        if (sendRes.ok && sendData?.ok) {
+          autoReplySent = true;
+          decision = responseEngine === 'gemini' ? 'gemini_auto' : 'ai_auto';
+          actionTaken = 'auto_reply_sent';
+        }
+      }
+    }
+
+    if (!nutriRedirectSent && !autoReplySent && actionTaken === 'draft_queued') {
+      const draftResult = await createDraft();
+      if (draftResult.ok) decision = 'gemini';
+    }
+  } catch (error) {
+    console.error('auto reply flow failed', error);
+  }
 
   // 7. Log orchestration event
   await supabase.from('sth_auto_events').insert({
@@ -210,7 +360,7 @@ async function handleInbound(supabase: any, body: AnyRec) {
     source: 'inbound',
     payload: { text: text.slice(0, 500) },
     decision,
-    action_taken: 'draft_queued',
+    action_taken: actionTaken,
   });
 
   return {
@@ -221,6 +371,7 @@ async function handleInbound(supabase: any, body: AnyRec) {
     score_delta: delta,
     greeting_sent: greetingSent,
     nutri_redirect_sent: nutriRedirectSent,
+    auto_reply_sent: autoReplySent,
   };
 }
 
