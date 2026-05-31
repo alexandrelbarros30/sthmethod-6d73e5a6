@@ -376,6 +376,7 @@ Deno.serve(async (req) => {
     else if (action === 'approve') result = await approve(body, sb, userId);
     else if (action === 'reject') result = await reject(body, sb, userId);
     else if (action === 'send') result = await sendDraft(body, sb, userId);
+    else if (action === 'identify') result = await identifyContact(body, sb);
     else result = { status: 400, body: { ok: false, error: `action inválida: ${action}` } };
 
     return new Response(JSON.stringify(result.body), {
