@@ -138,10 +138,15 @@ async function generate(body: any, sb: any) {
   let webSummary = '';
   if (webGroundingEnabled && GEMINI_API_KEY && inbound) {
     try {
-      const groundingPrompt = `Pesquise informações atualizadas e técnicas para responder esta pergunta de um contato da STH METHOD.
-Priorize fontes confiáveis (sthmethod.com.br, bulas oficiais, sociedades médicas, papers). Tema: ${intent}.
-Pergunta: "${inbound}"
-Responda em 4-8 bullets curtos com fatos verificáveis (sem opinião, sem cumprimentos). Cite fonte ao final de cada bullet entre colchetes.`;
+      const groundingPrompt = `Você é um pesquisador da STH METHOD. Execute OBRIGATORIAMENTE estas buscas no Google antes de responder:
+1) "site:sthmethod.com.br ${inbound}"
+2) "site:sthmethod.com.br planos preço valores"
+3) "${inbound} STH METHOD"
+4) Se for tema clínico/farmacológico, busque também em bulas oficiais, sociedades médicas e papers.
+
+Tema: ${intent}. Pergunta do contato: "${inbound}"
+
+Responda em 4-10 bullets curtos com FATOS VERIFICÁVEIS extraídos das páginas (preços, durações, nomes de planos, links, descrições). Cite a URL de origem ao final de cada bullet entre colchetes. Se encontrar planos no site sthmethod.com.br, liste cada plano com nome + preço + duração.`;
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
