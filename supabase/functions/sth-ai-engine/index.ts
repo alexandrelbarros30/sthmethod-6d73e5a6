@@ -47,14 +47,14 @@ function detectIntent(text: string): string {
 }
 
 function classifyContact(memory: any, hasActiveSub: boolean): string {
-  if (!memory) return 'lead';
   if (hasActiveSub) {
-    const last = memory.last_interaction_at ? new Date(memory.last_interaction_at).getTime() : 0;
+    const last = memory?.last_interaction_at ? new Date(memory.last_interaction_at).getTime() : 0;
     const days = (Date.now() - last) / 86_400_000;
-    if (days >= 21) return 'aluno_inativo';
+    if (last && days >= 21) return 'aluno_inativo';
     return 'aluno_ativo';
   }
-  if (memory.plan_name) return 'renovacao';
+  if (memory?.plan_name) return 'renovacao';
+  if (!memory) return 'lead';
   return 'lead';
 }
 
@@ -73,14 +73,35 @@ async function generate(body: any, sb: any) {
   const { data: contact } = await sb.from('crm_contacts').select('*').eq('phone', phone).maybeSingle();
   const { data: memory } = await sb.from('sth_memory').select('*').eq('phone', phone).maybeSingle();
 
+  // 1b) Fallback: busca perfil real pelo telefone (fuzzy) — garante identificação no 1º contato
+  let profile: any = null;
+  if (!contact?.user_id && !memory?.user_id) {
+    try {
+      const { data: prof } = await sb.rpc('find_profile_by_phone', { _phone: phone });
+      profile = Array.isArray(prof) && prof.length ? prof[0] : null;
+    } catch { /* ignore */ }
+  }
+
   // 2) Assinatura ativa
   let hasActiveSub = false;
-  if (contact?.user_id || memory?.user_id) {
-    const uid = contact?.user_id || memory?.user_id;
+  let activeSubMeta: { plan_name: string | null; end_date: string | null; days_remaining: number | null } = { plan_name: null, end_date: null, days_remaining: null };
+  const resolvedUid = contact?.user_id || memory?.user_id || profile?.user_id || null;
+  if (resolvedUid) {
+    const uid = resolvedUid;
     const { data: sub } = await sb.from('subscriptions').select('id,end_date,status')
       .eq('user_id', uid).eq('status', 'active').gte('end_date', new Date().toISOString().slice(0, 10))
       .limit(1).maybeSingle();
-    if (sub) hasActiveSub = true;
+    if (sub) {
+      hasActiveSub = true;
+      activeSubMeta.end_date = sub.end_date;
+      activeSubMeta.days_remaining = Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86_400_000);
+      // pega nome do plano
+      const { data: subFull } = await sb.from('subscriptions').select('plan_id').eq('id', sub.id).maybeSingle();
+      if (subFull?.plan_id) {
+        const { data: pl } = await sb.from('plans').select('name').eq('id', subFull.plan_id).maybeSingle();
+        activeSubMeta.plan_name = pl?.name || null;
+      }
+    }
   }
 
   // 3) Histórico recente (timeline + últimas mensagens)
@@ -111,6 +132,23 @@ async function generate(body: any, sb: any) {
   const { data: templates } = await sb.from('sth_ai_templates')
     .select('id,name,category,engine,body,uses_count').eq('active', true)
     .or(`category.eq.${intent},engine.eq.${engine}`).limit(6);
+
+  // 4a) Saudação por classificação — usada no PRIMEIRO contato
+  const isFirstContact = !memory?.last_interaction_at && (recentLearning?.length || 0) === 0;
+  let greetingTemplate: string | null = null;
+  try {
+    const greetClassMap: Record<string, string> = {
+      aluno_ativo: 'aluno_ativo',
+      renovacao: 'renovacao',
+      aluno_inativo: 'aluno_inativo',
+      lead: 'lead',
+      tool_user: 'tool_user',
+    };
+    const greetKey = greetClassMap[contact_type] || 'lead';
+    const { data: gr } = await sb.from('sth_greeting_templates')
+      .select('message,enabled').eq('classification', greetKey).maybeSingle();
+    if (gr?.enabled && gr?.message) greetingTemplate = gr.message as string;
+  } catch (e) { console.warn('greeting fetch falhou', e); }
 
   // 4b) Knowledge Hub — base oficial STH METHOD
   const intentToKbCategory: Record<string, string> = {
@@ -225,6 +263,17 @@ REGRAS:
   contextBlock.push(`Nome: ${memory?.full_name || contact?.full_name || 'desconhecido'}`);
   contextBlock.push(`Telefone: ${phone}`);
   contextBlock.push(`Tipo: ${contact_type}`);
+  contextBlock.push(`Primeiro contato nesta conversa: ${isFirstContact ? 'SIM' : 'NÃO'}`);
+  if (hasActiveSub) {
+    contextBlock.push(`Assinatura ativa: SIM — plano ${activeSubMeta.plan_name || '—'} (${activeSubMeta.days_remaining ?? '?'} dias restantes, vence ${activeSubMeta.end_date || '—'})`);
+  } else if (resolvedUid) {
+    contextBlock.push(`Assinatura ativa: NÃO — usuário cadastrado sem plano vigente (possível renovação / inativo)`);
+  } else {
+    contextBlock.push(`Assinatura ativa: NÃO — contato sem cadastro (LEAD ou ferramenta gratuita)`);
+  }
+  if (profile && !memory && !contact) {
+    contextBlock.push(`Identificado via tabela profiles (fuzzy match): user_id=${profile.user_id}, nome=${profile.full_name || '—'}`);
+  }
   if (memory?.plan_name) contextBlock.push(`Plano: ${memory.plan_name} (${memory.plan_status || '—'})`);
   if (memory?.objective) contextBlock.push(`Objetivo: ${memory.objective}`);
   if (memory?.current_weight) contextBlock.push(`Peso atual: ${memory.current_weight}kg (inicial: ${memory.initial_weight ?? '—'})`);
@@ -270,6 +319,16 @@ REGRAS:
     contextBlock.push(`• Conversões aprovadas 30d: ${dbStats.conversoes_30d}`);
     contextBlock.push(`• Renovações nos próximos 30d: ${dbStats.renovacoes_30d}`);
     contextBlock.push(`Use estes números APENAS se o contato/admin perguntar sobre métricas de operação. Não exponha para leads comuns.`);
+  }
+  if (isFirstContact && greetingTemplate) {
+    const firstName = (memory?.full_name || contact?.full_name || profile?.full_name || '').split(' ')[0] || 'amigo';
+    const rendered = greetingTemplate
+      .replace(/\{nome\}/g, firstName)
+      .replace(/\{plano\}/g, activeSubMeta.plan_name || memory?.plan_name || 'STH METHOD')
+      .replace(/\{dias_restantes\}/g, String(activeSubMeta.days_remaining ?? '—'));
+    contextBlock.push(`\n# SAUDAÇÃO OBRIGATÓRIA (PRIMEIRO CONTATO — tipo ${contact_type})`);
+    contextBlock.push(`Como é o PRIMEIRO contato desta conversa, INICIE sua resposta com uma saudação personalizada baseada no template abaixo (adapte naturalmente, não copie literal). DEPOIS responda a dúvida do contato.`);
+    contextBlock.push(`Template de referência:\n${rendered}`);
   }
   if (webSummary) {
     contextBlock.push(`\n# CONTEXTO WEB (busca ao vivo — use como referência factual, mas mantenha o tom STH METHOD)`);
