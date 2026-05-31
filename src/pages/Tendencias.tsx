@@ -19,6 +19,8 @@ import oleosImg from "@/assets/sthnews-oleos-sementes-hero.jpg";
 import ultraImg from "@/assets/sthnews-ultraprocessados-hero.jpg";
 import marcadoresImg from "@/assets/sthnews-marcadores-hero.jpg";
 import ghkcuImg from "@/assets/sthnews-ghkcu-hero.jpg";
+import hipertensaoImg from "@/assets/sthnews-hipertensao-hero.jpg";
+import colateraisImg from "@/assets/sthnews-tirzepatida-colaterais-hero.jpg";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -26,6 +28,8 @@ const fadeUp = {
 };
 
 const articles = [
+  { to: "/tendencias/hipertensao-arterial", kicker: "Cardiovascular", title: "🫀 Hipertensão Arterial: o tratado tático completo.", desc: "Classificação, fisiopatologia, diagnóstico diferencial e conduta medicamentosa, suplementar e comportamental.", img: hipertensaoImg },
+  { to: "/tendencias/tirzepatida-colaterais", kicker: "Tirzepatida & manejo", title: "💊 Tirzepatida: mapa tático completo dos colaterais.", desc: "Do arroto sulfúrico à pancreatite — cada sintoma cruzado com solução medicamentosa, suplementar e comportamental.", img: colateraisImg },
   { to: "/tendencias/ghk-cu", kicker: "Peptídeos", title: "🧬 GHK-Cu: o peptídeo-cobre sem perfume de vendedor.", desc: "O que a literatura sustenta sobre o tripeptídeo-cobre — e onde o marketing força a barra.", img: ghkcuImg },
   { to: "/tendencias/marcadores-laboratoriais", kicker: "Guia técnico", title: "🧪 Marcadores laboratoriais: o guia técnico completo.", desc: "Painéis essenciais, recomendados e avançados — leitura clínica acima do achismo.", img: marcadoresImg },
   { to: "/tendencias/ultraprocessados-saude-mental", kicker: "Mitos nutricionais", title: "🧠 Ultraprocessados não estão destruindo magicamente sua saúde mental.", desc: "Existe associação. Mas associação não é causa — o ecossistema alimentar inteiro é o que pesa.", img: ultraImg },
