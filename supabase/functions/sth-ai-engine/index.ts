@@ -5,6 +5,8 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')!;
 const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
+const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') || '';
+const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') || '';
 
 type Engine = 'rapida' | 'humanizada' | 'consultor' | 'conversao' | 'retencao' | 'renovacao';
 type Action = 'generate' | 'approve' | 'reject' | 'send';
@@ -163,31 +165,87 @@ async function generate(body: any, sb: any) {
 
   const systemPrompt = `${SYSTEM_BASE}\n\n${ENGINE_GUIDE[engine]}\n\nINTENÇÃO DETECTADA: ${intent}\nTIPO DE CONTATO: ${contact_type}\n\n${contextBlock.join('\n')}`;
 
-  // 6) Lovable AI Gateway (não-streaming, retornar texto pronto)
+  // 6) Carrega config de motor e roteia para provider escolhido
+  const { data: cfg } = await sb.from('sth_engine_config').select('*').eq('id', 1).maybeSingle();
+  const provider: string = cfg?.provider || 'lovable_gemini';
+  const cfgModel: string = cfg?.model || 'google/gemini-2.5-flash';
+  const customPrompt: string = cfg?.custom_system_prompt || '';
+  const finalSystem = provider === 'custom_prompt' && customPrompt
+    ? `${customPrompt}\n\nINTENÇÃO: ${intent}\nTIPO: ${contact_type}\n\n${contextBlock.join('\n')}`
+    : systemPrompt;
+
   const t0 = Date.now();
-  const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'google/gemini-2.5-flash',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: inbound },
-      ],
-    }),
-  });
+  let draft_text = '';
+  let tokens_in: number | null = null;
+  let tokens_out: number | null = null;
+  let providerError: string | null = null;
+
+  try {
+    if (provider === 'gemini_direct') {
+      if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY não configurada');
+      const gModel = cfgModel.replace(/^google\//, '') || 'gemini-2.5-flash';
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${gModel}:generateContent?key=${GEMINI_API_KEY}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: finalSystem }] },
+          contents: [{ role: 'user', parts: [{ text: inbound }] }],
+          generationConfig: { temperature: cfg?.temperature ?? 0.7 },
+        }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(`Gemini direct ${r.status}: ${JSON.stringify(j).slice(0,200)}`);
+      draft_text = j?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+      tokens_in = j?.usageMetadata?.promptTokenCount ?? null;
+      tokens_out = j?.usageMetadata?.candidatesTokenCount ?? null;
+    } else if (provider === 'openai_direct') {
+      if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY não configurada');
+      const oModel = cfgModel.replace(/^openai\//, '') || 'gpt-5-mini';
+      const r = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: oModel,
+          messages: [{ role: 'system', content: finalSystem }, { role: 'user', content: inbound }],
+        }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(`OpenAI direct ${r.status}: ${JSON.stringify(j).slice(0,200)}`);
+      draft_text = j?.choices?.[0]?.message?.content?.trim() || '';
+      tokens_in = j?.usage?.prompt_tokens ?? null;
+      tokens_out = j?.usage?.completion_tokens ?? null;
+    } else {
+      // lovable_gemini | lovable_gpt | custom_prompt → Lovable AI Gateway
+      const gatewayModel = provider === 'lovable_gpt'
+        ? (cfgModel.startsWith('openai/') ? cfgModel : 'openai/gpt-5-mini')
+        : (cfgModel.startsWith('google/') || cfgModel.startsWith('openai/') ? cfgModel : 'google/gemini-2.5-flash');
+      const r = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: gatewayModel,
+          messages: [{ role: 'system', content: finalSystem }, { role: 'user', content: inbound }],
+        }),
+      });
+      if (!r.ok) {
+        if (r.status === 429) return { status: 429, body: { ok: false, error: 'Rate limit. Aguarde alguns segundos.' } };
+        if (r.status === 402) return { status: 402, body: { ok: false, error: 'Créditos Lovable AI esgotados.' } };
+        const txt = await r.text();
+        throw new Error(`Lovable AI ${r.status}: ${txt.slice(0,200)}`);
+      }
+      const j = await r.json();
+      draft_text = j?.choices?.[0]?.message?.content?.trim() || '';
+      tokens_in = j?.usage?.prompt_tokens ?? null;
+      tokens_out = j?.usage?.completion_tokens ?? null;
+    }
+  } catch (e: any) {
+    providerError = e?.message || String(e);
+    console.error('AI provider error', providerError);
+  }
   const latency_ms = Date.now() - t0;
 
-  if (!aiRes.ok) {
-    if (aiRes.status === 429) return { status: 429, body: { ok: false, error: 'Rate limit. Aguarde alguns segundos.' } };
-    if (aiRes.status === 402) return { status: 402, body: { ok: false, error: 'Créditos Lovable AI esgotados.' } };
-    const txt = await aiRes.text();
-    return { status: 500, body: { ok: false, error: `AI gateway: ${aiRes.status} ${txt.slice(0,200)}` } };
+  if (providerError) {
+    return { status: 500, body: { ok: false, error: providerError, provider } };
   }
-  const aiJson = await aiRes.json();
-  const draft_text: string = aiJson?.choices?.[0]?.message?.content?.trim() || '';
-  const tokens_in = aiJson?.usage?.prompt_tokens ?? null;
-  const tokens_out = aiJson?.usage?.completion_tokens ?? null;
 
   if (!draft_text) {
     await sb.from('sth_ai_unsolved').insert({ memory_id: memory?.id || null, phone, question: inbound, reason: 'IA não retornou resposta' });
@@ -209,7 +267,7 @@ async function generate(body: any, sb: any) {
     latency_ms,
     tokens_in, tokens_out,
     status: 'pending',
-    meta: { templates_used: (templates || []).map((t: any) => t.id), kb_used: kbArticles.map((k: any) => k.id) },
+    meta: { templates_used: (templates || []).map((t: any) => t.id), kb_used: kbArticles.map((k: any) => k.id), provider },
   }).select('*').single();
 
   if (insErr) return { status: 500, body: { ok: false, error: insErr.message } };
