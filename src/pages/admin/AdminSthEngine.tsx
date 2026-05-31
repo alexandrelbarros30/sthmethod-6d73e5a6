@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Cpu, Save, Sparkles, MessageSquare, AlertCircle, Send, Bot, User, Trash2, FlaskConical } from "lucide-react";
+import { Cpu, Save, Sparkles, MessageSquare, AlertCircle, Send, Bot, User, Trash2, FlaskConical, Search, UserCheck, UserX, UserPlus, HelpCircle } from "lucide-react";
 
 const PROVIDERS = [
   { value: "lovable_gemini", label: "Lovable Gemini (recomendado)", desc: "Usa o Lovable AI Gateway com Google Gemini. Sem chave própria, sem custo extra." },
@@ -262,6 +262,28 @@ function SimulatorPanel({ currentProvider, currentModel }: { currentProvider: st
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<SimMsg[]>([]);
   const [loading, setLoading] = useState(false);
+  const [identifying, setIdentifying] = useState(false);
+  const [identity, setIdentity] = useState<any | null>(null);
+
+  const identify = async () => {
+    const cleanPhone = phone.replace(/\D/g, "");
+    if (cleanPhone.length < 8) return toast.error("Informe um telefone válido (DDI+DDD+número)");
+    setIdentifying(true);
+    setIdentity(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("sth-ai-engine", {
+        body: { action: "identify", phone: cleanPhone },
+      });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || "Falha ao identificar");
+      setIdentity(data.identification);
+      toast.success(data.identification?.summary || "Identificação concluída");
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao identificar contato");
+    } finally {
+      setIdentifying(false);
+    }
+  };
 
   const send = async () => {
     const text = input.trim();
@@ -338,7 +360,12 @@ function SimulatorPanel({ currentProvider, currentModel }: { currentProvider: st
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="space-y-1">
             <Label className="text-xs">Telefone simulado</Label>
-            <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="5511999990000" />
+            <div className="flex gap-2">
+              <Input value={phone} onChange={(e) => { setPhone(e.target.value); setIdentity(null); }} placeholder="5511999990000" />
+              <Button variant="secondary" size="sm" onClick={identify} disabled={identifying}>
+                <Search className="h-4 w-4 mr-1" /> {identifying ? "…" : "Identificar"}
+              </Button>
+            </div>
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Classificação</Label>
@@ -359,6 +386,8 @@ function SimulatorPanel({ currentProvider, currentModel }: { currentProvider: st
             </div>
           </div>
         </div>
+
+        {identity && <IdentityCard data={identity} />}
 
         <div className="h-[460px] overflow-y-auto rounded-md border border-border/40 bg-muted/20 p-4 space-y-3">
           {messages.length === 0 && (
