@@ -132,6 +132,41 @@ async function generate(body: any, sb: any) {
     console.warn('sth_kb_search falhou', e);
   }
 
+  // 4c) Web grounding — busca contexto na web (priorizando sthmethod.com.br) via Gemini google_search
+  const webGroundingEnabled: boolean = body.web_grounding === true;
+  let webSnippets: { title: string; uri: string; snippet?: string }[] = [];
+  let webSummary = '';
+  if (webGroundingEnabled && GEMINI_API_KEY && inbound) {
+    try {
+      const groundingPrompt = `Pesquise informações atualizadas e técnicas para responder esta pergunta de um contato da STH METHOD.
+Priorize fontes confiáveis (sthmethod.com.br, bulas oficiais, sociedades médicas, papers). Tema: ${intent}.
+Pergunta: "${inbound}"
+Responda em 4-8 bullets curtos com fatos verificáveis (sem opinião, sem cumprimentos). Cite fonte ao final de cada bullet entre colchetes.`;
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: groundingPrompt }] }],
+          tools: [{ google_search: {} }],
+          generationConfig: { temperature: 0.2 },
+        }),
+      });
+      if (r.ok) {
+        const j = await r.json();
+        webSummary = j?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text).filter(Boolean).join('\n').trim() || '';
+        const chunks = j?.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+        webSnippets = chunks.slice(0, 6).map((c: any) => ({
+          title: c?.web?.title || c?.web?.uri || 'fonte',
+          uri: c?.web?.uri || '',
+        })).filter((s: any) => s.uri);
+      } else {
+        console.warn('web grounding falhou', r.status, (await r.text()).slice(0, 200));
+      }
+    } catch (e) {
+      console.warn('web grounding error', e);
+    }
+  }
+
   // 5) Prompt
   const contextBlock: string[] = [];
   contextBlock.push(`# CONTATO`);
@@ -163,6 +198,14 @@ async function generate(body: any, sb: any) {
       const body = (k.summary || k.content || '').slice(0, 1200);
       contextBlock.push(`[${k.category}] ${k.title}\n${body}`);
     });
+  }
+  if (webSummary) {
+    contextBlock.push(`\n# CONTEXTO WEB (busca ao vivo — use como referência factual, mas mantenha o tom STH METHOD)`);
+    contextBlock.push(webSummary.slice(0, 3000));
+    if (webSnippets.length) {
+      contextBlock.push(`\nFontes consultadas:`);
+      webSnippets.forEach((s) => contextBlock.push(`- ${s.title} (${s.uri})`));
+    }
   }
 
   const systemPrompt = `${SYSTEM_BASE}\n\n${ENGINE_GUIDE[engine]}\n\nINTENÇÃO DETECTADA: ${intent}\nTIPO DE CONTATO: ${contact_type}\n\n${contextBlock.join('\n')}`;
@@ -269,7 +312,7 @@ async function generate(body: any, sb: any) {
     latency_ms,
     tokens_in, tokens_out,
     status: 'pending',
-    meta: { templates_used: (templates || []).map((t: any) => t.id), kb_used: kbArticles.map((k: any) => k.id), provider },
+    meta: { templates_used: (templates || []).map((t: any) => t.id), kb_used: kbArticles.map((k: any) => k.id), provider, web_sources: webSnippets, web_grounded: webGroundingEnabled && !!webSummary },
   }).select('*').single();
 
   if (insErr) return { status: 500, body: { ok: false, error: insErr.message } };
@@ -288,7 +331,7 @@ async function generate(body: any, sb: any) {
     }
   }
 
-  return { status: 200, body: { ok: true, draft, intent, engine, contact_type, latency_ms } };
+  return { status: 200, body: { ok: true, draft, intent, engine, contact_type, latency_ms, web_sources: webSnippets, web_grounded: webGroundingEnabled && !!webSummary } };
 }
 
 async function approve(body: any, sb: any, userId: string | null) {

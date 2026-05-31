@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Cpu, Save, Sparkles, MessageSquare, AlertCircle, Send, Bot, User, Trash2, FlaskConical, Search, UserCheck, UserX, UserPlus, HelpCircle } from "lucide-react";
+import { Cpu, Save, Sparkles, MessageSquare, AlertCircle, Send, Bot, User, Trash2, FlaskConical, Search, UserCheck, UserX, UserPlus, HelpCircle, Globe, ExternalLink } from "lucide-react";
 
 const PROVIDERS = [
   { value: "lovable_gemini", label: "Lovable Gemini (recomendado)", desc: "Usa o Lovable AI Gateway com Google Gemini. Sem chave própria, sem custo extra." },
@@ -35,7 +35,12 @@ type Config = { provider: string; model: string; custom_system_prompt: string | 
 type SimMsg = {
   role: "user" | "assistant";
   text: string;
-  meta?: { intent?: string; engine?: string; contact_type?: string; latency_ms?: number; draft_id?: string; sent?: boolean };
+  meta?: {
+    intent?: string; engine?: string; contact_type?: string;
+    latency_ms?: number; draft_id?: string; sent?: boolean;
+    web_grounded?: boolean;
+    web_sources?: { title: string; uri: string }[];
+  };
 };
 
 type Identity = {
@@ -320,6 +325,7 @@ function SimulatorPanel({ currentProvider, currentModel }: { currentProvider: st
   const [loading, setLoading] = useState(false);
   const [identifying, setIdentifying] = useState(false);
   const [identity, setIdentity] = useState<any | null>(null);
+  const [webGrounding, setWebGrounding] = useState(true);
 
   const identify = async () => {
     const cleanPhone = phone.replace(/\D/g, "");
@@ -357,6 +363,7 @@ function SimulatorPanel({ currentProvider, currentModel }: { currentProvider: st
           action: "generate",
           phone: cleanPhone,
           inbound_text: text,
+          web_grounding: webGrounding,
           ...(classification !== "auto" ? { force_classification: classification } : {}),
         },
       });
@@ -372,6 +379,8 @@ function SimulatorPanel({ currentProvider, currentModel }: { currentProvider: st
         latency_ms: data.latency_ms,
         draft_id: draft?.id,
         sent: false,
+        web_grounded: data.web_grounded,
+        web_sources: data.web_sources || [],
       };
 
       setMessages((m) => [...m, { role: "assistant", text: reply, meta }]);
@@ -413,7 +422,7 @@ function SimulatorPanel({ currentProvider, currentModel }: { currentProvider: st
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="space-y-1">
             <Label className="text-xs">Telefone simulado</Label>
             <div className="flex gap-2">
@@ -438,6 +447,15 @@ function SimulatorPanel({ currentProvider, currentModel }: { currentProvider: st
               <Switch checked={sendReal} onCheckedChange={setSendReal} />
               <span className="text-xs text-muted-foreground">
                 {sendReal ? "Vai disparar de verdade!" : "Apenas simulação"}
+              </span>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs flex items-center gap-1"><Globe className="h-3 w-3" /> Buscar na web</Label>
+            <div className="flex items-center gap-3 h-10 px-3 rounded-md border border-input">
+              <Switch checked={webGrounding} onCheckedChange={setWebGrounding} />
+              <span className="text-xs text-muted-foreground">
+                {webGrounding ? "Grounding ativo (Gemini)" : "Só contexto interno"}
               </span>
             </div>
           </div>
@@ -471,12 +489,28 @@ function SimulatorPanel({ currentProvider, currentModel }: { currentProvider: st
                     {m.meta.engine && <Badge variant="outline" className="text-[10px] h-4 px-1.5">{m.meta.engine}</Badge>}
                     {typeof m.meta.latency_ms === "number" && <span>{m.meta.latency_ms}ms</span>}
                     {m.meta.sent && <Badge className="text-[10px] h-4 px-1.5">enviado</Badge>}
+                    {m.meta.web_grounded && (
+                      <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-emerald-500/40 text-emerald-300">
+                        <Globe className="h-2.5 w-2.5 mr-0.5" /> web
+                      </Badge>
+                    )}
                     {m.meta.draft_id && (
                       <div className="flex gap-1 ml-1">
                         <button onClick={() => rateDraft(m.meta!.draft_id!, "approve")} className="hover:text-primary">👍</button>
                         <button onClick={() => rateDraft(m.meta!.draft_id!, "reject")} className="hover:text-destructive">👎</button>
                       </div>
                     )}
+                  </div>
+                )}
+                {m.role === "assistant" && m.meta?.web_sources && m.meta.web_sources.length > 0 && (
+                  <div className="mt-1 space-y-0.5">
+                    <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Fontes consultadas</p>
+                    {m.meta.web_sources.slice(0, 5).map((s, idx) => (
+                      <a key={idx} href={s.uri} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[10px] text-sky-400 hover:underline truncate">
+                        <ExternalLink className="h-2.5 w-2.5 shrink-0" />
+                        <span className="truncate">{s.title}</span>
+                      </a>
+                    ))}
                   </div>
                 )}
               </div>
