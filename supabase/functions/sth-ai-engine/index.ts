@@ -9,7 +9,7 @@ const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') || '';
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') || '';
 
 type Engine = 'rapida' | 'humanizada' | 'consultor' | 'conversao' | 'retencao' | 'renovacao';
-type Action = 'generate' | 'approve' | 'reject' | 'send';
+type Action = 'generate' | 'approve' | 'reject' | 'send' | 'identify';
 
 const SYSTEM_BASE = `Você é o STH AI ENGINE, assistente operacional da STH METHOD.
 REGRAS ABSOLUTAS:
@@ -350,6 +350,90 @@ async function sendDraft(body: any, sb: any, userId: string | null) {
   return { status: 200, body: { ok: true } };
 }
 
+async function identifyContact(body: any, sb: any) {
+  const phoneRaw: string = (body.phone || '').toString();
+  const phone = phoneRaw.replace(/\D/g, '');
+  if (!phone || phone.length < 8) {
+    return { status: 400, body: { ok: false, error: 'telefone inválido' } };
+  }
+
+  const { data: contact } = await sb.from('crm_contacts').select('*').eq('phone', phone).maybeSingle();
+  const { data: memory } = await sb.from('sth_memory').select('*').eq('phone', phone).maybeSingle();
+
+  // Tenta achar perfil pelo telefone (fallback via função SQL)
+  let profile: any = null;
+  try {
+    const { data: prof } = await sb.rpc('find_profile_by_phone', { _phone: phone });
+    profile = Array.isArray(prof) && prof.length ? prof[0] : null;
+  } catch { /* ignore */ }
+
+  const uid = contact?.user_id || memory?.user_id || profile?.user_id || null;
+
+  let sub: any = null;
+  let plan_name: string | null = null;
+  let days_remaining: number | null = null;
+  let hasActiveSub = false;
+  if (uid) {
+    const { data: s } = await sb.from('subscriptions')
+      .select('id,end_date,status,plan_id')
+      .eq('user_id', uid).order('end_date', { ascending: false }).limit(1).maybeSingle();
+    sub = s || null;
+    if (sub) {
+      const end = new Date(sub.end_date).getTime();
+      days_remaining = Math.floor((end - Date.now()) / 86_400_000);
+      hasActiveSub = sub.status === 'active' && days_remaining >= 0;
+      if (sub.plan_id) {
+        const { data: pl } = await sb.from('plans').select('name').eq('id', sub.plan_id).maybeSingle();
+        plan_name = pl?.name || null;
+      }
+    }
+  }
+
+  const contact_type = classifyContact(memory, hasActiveSub);
+
+  const known = !!(contact || memory || profile);
+  let summary: string;
+  if (hasActiveSub) {
+    summary = days_remaining !== null && days_remaining <= 7
+      ? `Aluno ATIVO — plano vencendo em ${days_remaining}d (renovação)`
+      : `Aluno ATIVO — plano ${plan_name || '—'} (${days_remaining ?? '?'}d restantes)`;
+  } else if (memory?.plan_name || sub) {
+    summary = `Aluno INATIVO / vencido — último plano: ${plan_name || memory?.plan_name || '—'}`;
+  } else if (known) {
+    summary = `LEAD conhecido (cadastrado, sem assinatura)`;
+  } else {
+    summary = `Contato DESCONHECIDO — sem registro no CRM/memória`;
+  }
+
+  return {
+    status: 200,
+    body: {
+      ok: true,
+      identification: {
+        phone,
+        known,
+        contact_type,
+        suggested_engine: contact_type === 'lead' ? 'conversao'
+          : contact_type === 'aluno_inativo' ? 'retencao'
+          : contact_type === 'renovacao' ? 'renovacao'
+          : 'humanizada',
+        full_name: memory?.full_name || contact?.full_name || profile?.full_name || null,
+        email: contact?.email || profile?.email || null,
+        user_id: uid,
+        plan_name,
+        plan_status: sub?.status || memory?.plan_status || null,
+        end_date: sub?.end_date || null,
+        days_remaining,
+        has_active_subscription: hasActiveSub,
+        objective: memory?.objective || profile?.objective || null,
+        memory_score: memory?.score ?? null,
+        temperature: memory?.temperature || null,
+        summary,
+      },
+    },
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -376,6 +460,7 @@ Deno.serve(async (req) => {
     else if (action === 'approve') result = await approve(body, sb, userId);
     else if (action === 'reject') result = await reject(body, sb, userId);
     else if (action === 'send') result = await sendDraft(body, sb, userId);
+    else if (action === 'identify') result = await identifyContact(body, sb);
     else result = { status: 400, body: { ok: false, error: `action inválida: ${action}` } };
 
     return new Response(JSON.stringify(result.body), {

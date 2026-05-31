@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Cpu, Save, Sparkles, MessageSquare, AlertCircle, Send, Bot, User, Trash2, FlaskConical } from "lucide-react";
+import { Cpu, Save, Sparkles, MessageSquare, AlertCircle, Send, Bot, User, Trash2, FlaskConical, Search, UserCheck, UserX, UserPlus, HelpCircle } from "lucide-react";
 
 const PROVIDERS = [
   { value: "lovable_gemini", label: "Lovable Gemini (recomendado)", desc: "Usa o Lovable AI Gateway com Google Gemini. Sem chave própria, sem custo extra." },
@@ -37,6 +37,62 @@ type SimMsg = {
   text: string;
   meta?: { intent?: string; engine?: string; contact_type?: string; latency_ms?: number; draft_id?: string; sent?: boolean };
 };
+
+type Identity = {
+  phone: string;
+  known: boolean;
+  contact_type: string;
+  suggested_engine: string;
+  full_name: string | null;
+  email: string | null;
+  user_id: string | null;
+  plan_name: string | null;
+  plan_status: string | null;
+  end_date: string | null;
+  days_remaining: number | null;
+  has_active_subscription: boolean;
+  objective: string | null;
+  memory_score: number | null;
+  temperature: string | null;
+  summary: string;
+};
+
+const CONTACT_TYPE_STYLE: Record<string, { color: string; Icon: any; label: string }> = {
+  aluno_ativo:   { color: "bg-emerald-500/15 text-emerald-300 border-emerald-500/40", Icon: UserCheck, label: "Aluno ativo" },
+  renovacao:     { color: "bg-amber-500/15 text-amber-300 border-amber-500/40",     Icon: UserCheck, label: "Renovação" },
+  aluno_inativo: { color: "bg-rose-500/15 text-rose-300 border-rose-500/40",        Icon: UserX,     label: "Aluno inativo" },
+  lead:          { color: "bg-sky-500/15 text-sky-300 border-sky-500/40",           Icon: UserPlus,  label: "Lead" },
+  tool_user:     { color: "bg-zinc-500/15 text-zinc-300 border-zinc-500/40",        Icon: HelpCircle, label: "Desconhecido" },
+};
+
+function IdentityCard({ data }: { data: Identity }) {
+  const style = CONTACT_TYPE_STYLE[data.contact_type] || CONTACT_TYPE_STYLE.tool_user;
+  const Icon = style.Icon;
+  return (
+    <div className={`rounded-md border p-3 space-y-2 ${style.color}`}>
+      <div className="flex items-start gap-2">
+        <Icon className="h-5 w-5 mt-0.5 shrink-0" />
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="outline" className="text-[10px] h-5">{style.label}</Badge>
+            {data.has_active_subscription && <Badge variant="outline" className="text-[10px] h-5">Assinatura ativa</Badge>}
+            {!data.known && <Badge variant="outline" className="text-[10px] h-5">Sem registro</Badge>}
+            {data.temperature && <Badge variant="outline" className="text-[10px] h-5">{data.temperature}</Badge>}
+          </div>
+          <p className="text-sm font-medium mt-1">{data.summary}</p>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-[11px] text-muted-foreground">
+            <div><strong className="text-foreground">Nome:</strong> {data.full_name || "—"}</div>
+            <div><strong className="text-foreground">Plano:</strong> {data.plan_name || "—"}</div>
+            <div><strong className="text-foreground">Objetivo:</strong> {data.objective || "—"}</div>
+            <div><strong className="text-foreground">Dias restantes:</strong> {data.days_remaining ?? "—"}</div>
+            <div><strong className="text-foreground">Score memória:</strong> {data.memory_score ?? 0}/100</div>
+            <div><strong className="text-foreground">Motor sugerido:</strong> {data.suggested_engine}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const CLASSIFICATIONS = [
   { value: "auto", label: "Auto (deixar IA detectar)" },
@@ -262,6 +318,28 @@ function SimulatorPanel({ currentProvider, currentModel }: { currentProvider: st
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<SimMsg[]>([]);
   const [loading, setLoading] = useState(false);
+  const [identifying, setIdentifying] = useState(false);
+  const [identity, setIdentity] = useState<any | null>(null);
+
+  const identify = async () => {
+    const cleanPhone = phone.replace(/\D/g, "");
+    if (cleanPhone.length < 8) return toast.error("Informe um telefone válido (DDI+DDD+número)");
+    setIdentifying(true);
+    setIdentity(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("sth-ai-engine", {
+        body: { action: "identify", phone: cleanPhone },
+      });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || "Falha ao identificar");
+      setIdentity(data.identification);
+      toast.success(data.identification?.summary || "Identificação concluída");
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao identificar contato");
+    } finally {
+      setIdentifying(false);
+    }
+  };
 
   const send = async () => {
     const text = input.trim();
@@ -338,7 +416,12 @@ function SimulatorPanel({ currentProvider, currentModel }: { currentProvider: st
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="space-y-1">
             <Label className="text-xs">Telefone simulado</Label>
-            <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="5511999990000" />
+            <div className="flex gap-2">
+              <Input value={phone} onChange={(e) => { setPhone(e.target.value); setIdentity(null); }} placeholder="5511999990000" />
+              <Button variant="secondary" size="sm" onClick={identify} disabled={identifying}>
+                <Search className="h-4 w-4 mr-1" /> {identifying ? "…" : "Identificar"}
+              </Button>
+            </div>
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Classificação</Label>
@@ -359,6 +442,8 @@ function SimulatorPanel({ currentProvider, currentModel }: { currentProvider: st
             </div>
           </div>
         </div>
+
+        {identity && <IdentityCard data={identity} />}
 
         <div className="h-[460px] overflow-y-auto rounded-md border border-border/40 bg-muted/20 p-4 space-y-3">
           {messages.length === 0 && (
