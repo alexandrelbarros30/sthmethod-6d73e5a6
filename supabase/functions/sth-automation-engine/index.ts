@@ -89,9 +89,25 @@ function scoreFromText(text: string): { delta: number; reasons: string[] } {
   return { delta, reasons };
 }
 
+async function sendAutoReply(
+  phone: string,
+  message: string,
+  provider?: string | null,
+): Promise<Response> {
+  const normalizedProvider = String(provider || '').toLowerCase();
+  const fnName = normalizedProvider === 'zapi' ? 'send-whatsapp' : 'send-wapi';
+
+  return fetch(`${SUPABASE_URL}/functions/v1/${fnName}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
+    body: JSON.stringify({ phone, message }),
+  });
+}
+
 async function handleInbound(supabase: any, body: AnyRec) {
   const phone = String(body.phone || '').replace(/\D/g, '');
   const text = extractInboundText(body);
+  const replyProvider = String(body.provider || '').toLowerCase() || 'wapi';
   if (phone.length < 8) return { ok: false, error: 'invalid phone' };
 
   // 1. Identify user via profile
@@ -188,11 +204,7 @@ async function handleInbound(supabase: any, body: AnyRec) {
           .replace(/\{plano\}/g, sub?.plan_id || 'STH METHOD')
           .replace(/\{dias_restantes\}/g, String(daysLeft));
         try {
-          await fetch(`${SUPABASE_URL}/functions/v1/send-wapi`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
-            body: JSON.stringify({ phone, message: rendered }),
-          });
+          await sendAutoReply(phone, rendered, replyProvider);
           greetingSent = true;
           await supabase
             .from('sth_auto_sessions')
@@ -242,11 +254,7 @@ async function handleInbound(supabase: any, body: AnyRec) {
       `👉 ${nutriLink}\n\n` +
       `Assim sua solicitação chega direto na equipe responsável e o atendimento é mais rápido. 🙏`;
     try {
-      const r = await fetch(`${SUPABASE_URL}/functions/v1/send-wapi`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
-        body: JSON.stringify({ phone, message: redirectMsg }),
-      });
+      const r = await sendAutoReply(phone, redirectMsg, replyProvider);
       if (r.ok) nutriRedirectSent = true;
     } catch (e) {
       console.error('nutri redirect send failed', e);
@@ -295,11 +303,7 @@ async function handleInbound(supabase: any, body: AnyRec) {
       });
 
       if (localResult.reply?.trim()) {
-        const sendRes = await fetch(`${SUPABASE_URL}/functions/v1/send-wapi`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
-          body: JSON.stringify({ phone, message: localResult.reply }),
-        });
+        const sendRes = await sendAutoReply(phone, localResult.reply, replyProvider);
 
         if (sendRes.ok) {
           autoReplySent = true;
