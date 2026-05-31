@@ -186,7 +186,8 @@ async function handleInbound(supabase: any, body: AnyRec) {
   // 5b. Saudação automática (primeira mensagem da sessão)
   const isNewSession = !existingSession || existingSession.status !== 'open' || !existingSession.greeting_sent_at;
   let greetingSent = false;
-  if (isNewSession) {
+  // Aluno ativo NÃO recebe saudação comercial — vai direto para "Fale com o Nutri" (bloco 6a).
+  if (isNewSession && classification !== 'aluno_ativo') {
     const { data: cfg } = await supabase.from('sth_engine_config').select('auto_greeting_enabled').eq('id', 1).maybeSingle();
     if (cfg?.auto_greeting_enabled !== false) {
       const { data: tpl } = await supabase
@@ -236,10 +237,10 @@ async function handleInbound(supabase: any, body: AnyRec) {
   let actionTaken = 'draft_queued';
   let autoReplySent = false;
 
-  // 6a. Aluno ativo no canal comercial → redireciona automaticamente para Fale com o Nutri
+  // 6a. Aluno ativo → SEMPRE redireciona para "Fale com o Nutri" (independente da intenção).
+  // Lead / aluno_inativo / renovação permanecem no canal comercial para conversão.
   let nutriRedirectSent = false;
-  const isCommercialIntent = intent === 'comercial' || intent === 'financeiro';
-  if (classification === 'aluno_ativo' && isCommercialIntent) {
+  if (classification === 'aluno_ativo') {
     const firstName = (user?.full_name || '').split(' ')[0] || 'Aluno';
     const nutriPhone = '5521998984153';
     const nutriLink = `https://wa.me/${nutriPhone}?text=${encodeURIComponent(
@@ -248,9 +249,9 @@ async function handleInbound(supabase: any, body: AnyRec) {
     const redirectMsg =
       `Olá, ${firstName}! 👋\n\n` +
       `Identificamos que você já é aluno ativo do STH METHOD.\n\n` +
-      `Este canal é exclusivo para o time *Comercial* (novos alunos, planos e renovações).\n\n` +
-      `Para dúvidas de acompanhamento, dieta, treino, protocolo ou suporte da consultoria, ` +
-      `por favor utilize o canal *Fale com o Nutri*:\n\n` +
+      `Este canal é exclusivo do time *Comercial* (novos alunos, planos e renovações).\n\n` +
+      `Qualquer assunto da consultoria — dieta, treino, protocolo, exames, suporte ou acompanhamento — ` +
+      `é tratado no canal *Fale com o Nutri*:\n\n` +
       `👉 ${nutriLink}\n\n` +
       `Assim sua solicitação chega direto na equipe responsável e o atendimento é mais rápido. 🙏`;
     try {
