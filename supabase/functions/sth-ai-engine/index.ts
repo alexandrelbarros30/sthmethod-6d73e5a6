@@ -263,7 +263,7 @@ async function generate(body: any, sb: any) {
     engine,
     inbound_text: inbound,
     draft_text,
-    model: 'google/gemini-2.5-flash',
+    model: `${provider}:${cfgModel}`,
     latency_ms,
     tokens_in, tokens_out,
     status: 'pending',
