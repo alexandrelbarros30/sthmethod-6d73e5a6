@@ -132,16 +132,32 @@ async function generate(body: any, sb: any) {
     console.warn('sth_kb_search falhou', e);
   }
 
+  // 4b.2) Planos ativos — fonte oficial interna (sempre injetada)
+  let activePlans: any[] = [];
+  try {
+    const { data: pls } = await sb.from('plans')
+      .select('name,price,card_price,duration_days,subtitle,benefits')
+      .eq('active', true).order('price', { ascending: true });
+    activePlans = pls || [];
+  } catch (e) {
+    console.warn('plans fetch falhou', e);
+  }
+
   // 4c) Web grounding — busca contexto na web (priorizando sthmethod.com.br) via Gemini google_search
   const webGroundingEnabled: boolean = body.web_grounding === true;
   let webSnippets: { title: string; uri: string; snippet?: string }[] = [];
   let webSummary = '';
   if (webGroundingEnabled && GEMINI_API_KEY && inbound) {
     try {
-      const groundingPrompt = `Pesquise informações atualizadas e técnicas para responder esta pergunta de um contato da STH METHOD.
-Priorize fontes confiáveis (sthmethod.com.br, bulas oficiais, sociedades médicas, papers). Tema: ${intent}.
-Pergunta: "${inbound}"
-Responda em 4-8 bullets curtos com fatos verificáveis (sem opinião, sem cumprimentos). Cite fonte ao final de cada bullet entre colchetes.`;
+      const groundingPrompt = `Você é um pesquisador da STH METHOD. Execute OBRIGATORIAMENTE estas buscas no Google antes de responder:
+1) "site:sthmethod.com.br ${inbound}"
+2) "site:sthmethod.com.br planos preço valores"
+3) "${inbound} STH METHOD"
+4) Se for tema clínico/farmacológico, busque também em bulas oficiais, sociedades médicas e papers.
+
+Tema: ${intent}. Pergunta do contato: "${inbound}"
+
+Responda em 4-10 bullets curtos com FATOS VERIFICÁVEIS extraídos das páginas (preços, durações, nomes de planos, links, descrições). Cite a URL de origem ao final de cada bullet entre colchetes. Se encontrar planos no site sthmethod.com.br, liste cada plano com nome + preço + duração.`;
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -198,6 +214,17 @@ Responda em 4-8 bullets curtos com fatos verificáveis (sem opinião, sem cumpri
       const body = (k.summary || k.content || '').slice(0, 1200);
       contextBlock.push(`[${k.category}] ${k.title}\n${body}`);
     });
+  }
+  if (activePlans.length) {
+    contextBlock.push(`\n# PLANOS ATIVOS STH METHOD (fonte oficial — use SEMPRE estes valores ao citar planos/preços)`);
+    activePlans.forEach((p: any) => {
+      const parts = [`• ${p.name} — ${p.price || 's/preço'}`];
+      if (p.card_price) parts.push(`(cartão: ${p.card_price})`);
+      if (p.duration_days) parts.push(`· ${p.duration_days} dias`);
+      if (p.subtitle) parts.push(`\n  ${p.subtitle}`);
+      contextBlock.push(parts.join(' '));
+    });
+    contextBlock.push(`Site oficial: https://sthmethod.com.br`);
   }
   if (webSummary) {
     contextBlock.push(`\n# CONTEXTO WEB (busca ao vivo — use como referência factual, mas mantenha o tom STH METHOD)`);
