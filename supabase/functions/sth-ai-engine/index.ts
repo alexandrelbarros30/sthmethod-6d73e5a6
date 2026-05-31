@@ -118,7 +118,7 @@ async function generate(body: any, sb: any) {
 
   // 4) Templates ativos relevantes para a intenção detectada
   const intent = detectIntent(inbound);
-  const forced = (body.force_classification || '').toString();
+  const forced = (body.force_classification || body.classification || '').toString();
   const validForced = ['aluno_ativo','renovacao','aluno_inativo','lead','tool_user'].includes(forced);
   const contact_type = validForced ? forced : classifyContact(memory, hasActiveSub);
   let engine: Engine = requestedEngine || 'humanizada';
@@ -346,6 +346,13 @@ REGRAS:
       `(3) orientar a usar o canal "Fale com o Nutri" para dúvidas de acompanhamento, dieta, treino, protocolo e suporte da consultoria, ` +
       `(4) entregar o link: ${nutriLink} ` +
       `Não responda dúvidas técnicas de acompanhamento aqui — apenas redirecione com tom acolhedor STH METHOD.`,
+    );
+  }
+  if (contact_type !== 'aluno_ativo' && contact_type !== 'renovacao') {
+    contextBlock.push(`\n# REGRA DE ROTEAMENTO (OBRIGATÓRIA)`);
+    contextBlock.push(
+      `Este contato NÃO é aluno ativo. Não oriente para o canal "Fale com o Nutri" e não diga que já existe consultoria ativa. ` +
+      `Mantenha o atendimento no canal comercial, falando apenas de planos, cadastro, pagamento, renovação de inativo ou próximos passos comerciais.`,
     );
   }
 
