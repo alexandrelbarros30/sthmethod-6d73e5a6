@@ -206,6 +206,8 @@ async function handleInbound(supabase: any, body: AnyRec) {
       }
     }
   }
+  const isActiveStudent =
+    classification === "aluno_ativo" || classification === "renovacao";
 
   // 3. Upsert memory
   const { data: memId } = await supabase.rpc("sth_memory_upsert", {
@@ -257,8 +259,8 @@ async function handleInbound(supabase: any, body: AnyRec) {
     existingSession.status !== "open" ||
     !existingSession.greeting_sent_at;
   let greetingSent = false;
-  // Aluno ativo NÃO recebe saudação comercial — vai direto para "Fale com o Nutri" (bloco 6a).
-  if (isNewSession && classification !== "aluno_ativo") {
+  // Contatos com assinatura ativa NÃO recebem saudação comercial — vão direto para "Fale com o Nutri" (bloco 6a).
+  if (isNewSession && !isActiveStudent) {
     const { data: cfg } = await supabase
       .from("sth_engine_config")
       .select("auto_greeting_enabled")
@@ -338,10 +340,10 @@ async function handleInbound(supabase: any, body: AnyRec) {
   let actionTaken = "draft_queued";
   let autoReplySent = false;
 
-  // 6a. Aluno ativo → SEMPRE redireciona para "Fale com o Nutri" (independente da intenção).
-  // Lead / aluno_inativo / renovação permanecem no canal comercial para conversão.
+  // 6a. Contatos com assinatura ativa → SEMPRE redirecionam para "Fale com o Nutri".
+  // Leads e alunos inativos permanecem no canal comercial.
   let nutriRedirectSent = false;
-  if (classification === "aluno_ativo") {
+  if (isActiveStudent) {
     const firstName = (user?.full_name || "").split(" ")[0] || "Aluno";
     const nutriPhone = "5521998984153";
     const nutriLink = `https://wa.me/${nutriPhone}?text=${encodeURIComponent(
@@ -388,6 +390,7 @@ async function handleInbound(supabase: any, body: AnyRec) {
         phone,
         inbound_text: text,
         intent,
+        force_classification: classification,
         classification,
         web_grounding: true,
       }),
