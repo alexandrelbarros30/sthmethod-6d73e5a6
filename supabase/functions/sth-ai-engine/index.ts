@@ -144,20 +144,27 @@ async function generate(body: any, sb: any) {
   }
 
   // 4c) Web grounding — busca contexto na web (priorizando sthmethod.com.br) via Gemini google_search
-  const webGroundingEnabled: boolean = body.web_grounding === true;
+  // Default: SEMPRE ligado (o site sthmethod.com.br é a fonte oficial). Só desativa se body.web_grounding === false.
+  const webGroundingEnabled: boolean = body.web_grounding !== false;
   let webSnippets: { title: string; uri: string; snippet?: string }[] = [];
   let webSummary = '';
   if (webGroundingEnabled && GEMINI_API_KEY && inbound) {
     try {
-      const groundingPrompt = `Você é um pesquisador da STH METHOD. Execute OBRIGATORIAMENTE estas buscas no Google antes de responder:
+      const groundingPrompt = `Você é um pesquisador oficial da STH METHOD. A FONTE PRINCIPAL e OBRIGATÓRIA de todas as respostas é o site https://sthmethod.com.br. Execute OBRIGATORIAMENTE estas buscas no Google antes de responder:
 1) "site:sthmethod.com.br ${inbound}"
-2) "site:sthmethod.com.br planos preço valores"
-3) "${inbound} STH METHOD"
-4) Se for tema clínico/farmacológico, busque também em bulas oficiais, sociedades médicas e papers.
+2) "site:sthmethod.com.br ${intent}"
+3) "site:sthmethod.com.br planos preços valores duração"
+4) "site:sthmethod.com.br como funciona consultoria"
+5) "site:sthmethod.com.br ${inbound} ${intent}"
+6) Se for tema clínico/farmacológico, complementar com bulas oficiais, sociedades médicas e papers indexados (PubMed, Anvisa).
 
 Tema: ${intent}. Pergunta do contato: "${inbound}"
 
-Responda em 4-10 bullets curtos com FATOS VERIFICÁVEIS extraídos das páginas (preços, durações, nomes de planos, links, descrições). Cite a URL de origem ao final de cada bullet entre colchetes. Se encontrar planos no site sthmethod.com.br, liste cada plano com nome + preço + duração.`;
+REGRAS:
+- Priorize SEMPRE conteúdo do domínio sthmethod.com.br. Outras fontes só como complemento factual.
+- Extraia detalhes literais: nomes de planos, preços, durações, benefícios, etapas do "como funciona", FAQ, testimonials.
+- Responda em 6-12 bullets curtos com FATOS VERIFICÁVEIS. Cite a URL de origem entre colchetes ao final de cada bullet.
+- Se encontrar planos, liste TODOS: nome + preço PIX + preço cartão + duração + público.`;
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -171,7 +178,7 @@ Responda em 4-10 bullets curtos com FATOS VERIFICÁVEIS extraídos das páginas 
         const j = await r.json();
         webSummary = j?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text).filter(Boolean).join('\n').trim() || '';
         const chunks = j?.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-        webSnippets = chunks.slice(0, 6).map((c: any) => ({
+        webSnippets = chunks.slice(0, 10).map((c: any) => ({
           title: c?.web?.title || c?.web?.uri || 'fonte',
           uri: c?.web?.uri || '',
         })).filter((s: any) => s.uri);
@@ -181,6 +188,35 @@ Responda em 4-10 bullets curtos com FATOS VERIFICÁVEIS extraídos das páginas 
     } catch (e) {
       console.warn('web grounding error', e);
     }
+  }
+
+  // 4d) Estatísticas internas do banco — sempre injetadas (alunos ativos/inativos/novos/leads)
+  let dbStats: any = null;
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const d30 = new Date(Date.now() - 30 * 86_400_000).toISOString();
+    const d7  = new Date(Date.now() -  7 * 86_400_000).toISOString();
+    const d45 = new Date(Date.now() - 45 * 86_400_000).toISOString();
+    const [a1, a2, a3, a4, a5, a6, a7] = await Promise.all([
+      sb.from('subscriptions').select('id', { count: 'exact', head: true }).eq('status', 'active').gte('end_date', today),
+      sb.from('subscriptions').select('id', { count: 'exact', head: true }).lt('end_date', today),
+      sb.from('crm_contacts').select('id', { count: 'exact', head: true }).eq('kind', 'lead'),
+      sb.from('crm_contacts').select('id', { count: 'exact', head: true }).eq('kind', 'lead').gte('created_at', d7),
+      sb.from('sth_memory').select('id', { count: 'exact', head: true }).in('temperature', ['quente', 'pronto']),
+      sb.from('payments').select('id', { count: 'exact', head: true }).eq('status', 'approved').gte('created_at', d30),
+      sb.from('subscriptions').select('id', { count: 'exact', head: true }).eq('status', 'active').gte('end_date', today).lte('end_date', new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10)),
+    ]);
+    dbStats = {
+      alunos_ativos: a1.count ?? 0,
+      alunos_inativos: a2.count ?? 0,
+      leads_total: a3.count ?? 0,
+      leads_novos_7d: a4.count ?? 0,
+      leads_quentes: a5.count ?? 0,
+      conversoes_30d: a6.count ?? 0,
+      renovacoes_30d: a7.count ?? 0,
+    };
+  } catch (e) {
+    console.warn('db stats fetch falhou', e);
   }
 
   // 5) Prompt
@@ -225,6 +261,15 @@ Responda em 4-10 bullets curtos com FATOS VERIFICÁVEIS extraídos das páginas 
       contextBlock.push(parts.join(' '));
     });
     contextBlock.push(`Site oficial: https://sthmethod.com.br`);
+  }
+  if (dbStats) {
+    contextBlock.push(`\n# ESTATÍSTICAS INTERNAS STH METHOD (banco de dados — tempo real)`);
+    contextBlock.push(`• Alunos ativos: ${dbStats.alunos_ativos}`);
+    contextBlock.push(`• Alunos inativos: ${dbStats.alunos_inativos}`);
+    contextBlock.push(`• Leads totais: ${dbStats.leads_total} (novos 7d: ${dbStats.leads_novos_7d}, quentes: ${dbStats.leads_quentes})`);
+    contextBlock.push(`• Conversões aprovadas 30d: ${dbStats.conversoes_30d}`);
+    contextBlock.push(`• Renovações nos próximos 30d: ${dbStats.renovacoes_30d}`);
+    contextBlock.push(`Use estes números APENAS se o contato/admin perguntar sobre métricas de operação. Não exponha para leads comuns.`);
   }
   if (webSummary) {
     contextBlock.push(`\n# CONTEXTO WEB (busca ao vivo — use como referência factual, mas mantenha o tom STH METHOD)`);
