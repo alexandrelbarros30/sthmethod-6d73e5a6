@@ -9,32 +9,14 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
     const payload: any = await req.json().catch(() => ({}));
-    const phone =
-      payload?.phone || payload?.from || payload?.sender?.phone ||
-      payload?.data?.from || payload?.message?.from || '';
-    const text =
-      payload?.message?.text || payload?.text || payload?.body ||
-      payload?.data?.message?.text || payload?.data?.body || '';
-    const fromMe = Boolean(payload?.fromMe ?? payload?.message?.fromMe ?? payload?.data?.fromMe);
-    if (fromMe || String(phone).replace(/\D/g, '').length < 8) {
-      return new Response(JSON.stringify({ ok: true, ignored: true }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    // 1) Roteia para CRM (tickets + histórico)
-    await fetch(`${SUPABASE_URL}/functions/v1/crm-inbound`, {
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/crm-inbound`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
-      body: JSON.stringify({ ...payload, provider: 'wapi' }),
-    }).catch(() => {});
-    // 2) Encaminha ao cérebro único
-    const r = await fetch(`${SUPABASE_URL}/functions/v1/sth-automation-engine`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
-      body: JSON.stringify({ action: 'inbound', phone, text }),
+      body: JSON.stringify({ ...payload, provider: payload?.provider || payload?.source || 'zapi' }),
     });
     const data = await r.json().catch(() => ({}));
-    return new Response(JSON.stringify({ ok: true, forwarded: true, engine: data }), {
+    return new Response(JSON.stringify({ ok: r.ok, forwarded: true, engine: data }), {
+      status: r.ok ? 200 : 502,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {
