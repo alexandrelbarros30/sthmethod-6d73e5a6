@@ -351,8 +351,6 @@ async function sendDraft(body: any, sb: any, userId: string | null) {
 }
 
 Deno.serve(async (req) => {
-  /* noop marker */
-  void 0;
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
