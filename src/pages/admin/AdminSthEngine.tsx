@@ -9,8 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Cpu, Save, Sparkles, MessageSquare, AlertCircle } from "lucide-react";
+import { Cpu, Save, Sparkles, MessageSquare, AlertCircle, Send, Bot, User, Trash2, FlaskConical } from "lucide-react";
 
 const PROVIDERS = [
   { value: "lovable_gemini", label: "Lovable Gemini (recomendado)", desc: "Usa o Lovable AI Gateway com Google Gemini. Sem chave própria, sem custo extra." },
@@ -30,6 +31,21 @@ const MODELS_BY_PROVIDER: Record<string, string[]> = {
 
 type Greeting = { id: string; classification: string; label: string; message: string; enabled: boolean };
 type Config = { provider: string; model: string; custom_system_prompt: string | null; temperature: number; auto_greeting_enabled: boolean };
+
+type SimMsg = {
+  role: "user" | "assistant";
+  text: string;
+  meta?: { intent?: string; engine?: string; contact_type?: string; latency_ms?: number; draft_id?: string; sent?: boolean };
+};
+
+const CLASSIFICATIONS = [
+  { value: "auto", label: "Auto (deixar IA detectar)" },
+  { value: "aluno_ativo", label: "Aluno ativo" },
+  { value: "renovacao", label: "Renovação (vencendo)" },
+  { value: "aluno_inativo", label: "Aluno inativo" },
+  { value: "lead", label: "Lead (possível cliente)" },
+  { value: "tool_user", label: "Novo / desconhecido" },
+];
 
 export default function AdminSthEngine() {
   const qc = useQueryClient();
@@ -95,10 +111,18 @@ export default function AdminSthEngine() {
           <Cpu className="h-6 w-6 text-primary" /> Motor de Resposta STH
         </h1>
         <p className="text-sm text-muted-foreground">
-          Escolha qual IA gera os rascunhos do atendimento e configure as saudações automáticas.
+          Escolha qual IA gera os rascunhos, configure saudações e teste a conversa em modo treino.
         </p>
       </header>
 
+      <Tabs defaultValue="config" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="config"><Cpu className="h-4 w-4 mr-2" /> Configuração</TabsTrigger>
+          <TabsTrigger value="greetings"><MessageSquare className="h-4 w-4 mr-2" /> Saudações</TabsTrigger>
+          <TabsTrigger value="simulator"><FlaskConical className="h-4 w-4 mr-2" /> Simulador</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="config" className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
@@ -178,7 +202,9 @@ export default function AdminSthEngine() {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
 
+        <TabsContent value="greetings" className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
@@ -219,6 +245,182 @@ export default function AdminSthEngine() {
           ))}
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="simulator" className="space-y-6">
+          <SimulatorPanel currentProvider={cfg.provider} currentModel={cfg.model} />
+        </TabsContent>
+      </Tabs>
     </div>
+  );
+}
+
+function SimulatorPanel({ currentProvider, currentModel }: { currentProvider: string; currentModel: string }) {
+  const [phone, setPhone] = useState("5511999990000");
+  const [classification, setClassification] = useState("auto");
+  const [sendReal, setSendReal] = useState(false);
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<SimMsg[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const send = async () => {
+    const text = input.trim();
+    if (!text) return;
+    const cleanPhone = phone.replace(/\D/g, "");
+    if (cleanPhone.length < 8) return toast.error("Informe um telefone válido (DDI+DDD+número)");
+
+    setMessages((m) => [...m, { role: "user", text }]);
+    setInput("");
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("sth-ai-engine", {
+        body: {
+          action: "generate",
+          phone: cleanPhone,
+          inbound_text: text,
+          ...(classification !== "auto" ? { force_classification: classification } : {}),
+        },
+      });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || "Falha ao gerar resposta");
+
+      const draft = data.draft;
+      const reply = draft?.draft_text || "(sem resposta)";
+      const meta = {
+        intent: data.intent,
+        engine: data.engine,
+        contact_type: data.contact_type,
+        latency_ms: data.latency_ms,
+        draft_id: draft?.id,
+        sent: false,
+      };
+
+      setMessages((m) => [...m, { role: "assistant", text: reply, meta }]);
+
+      if (sendReal && draft?.id) {
+        const { data: sd, error: serr } = await supabase.functions.invoke("sth-ai-engine", {
+          body: { action: "send", draft_id: draft.id },
+        });
+        if (serr || !sd?.ok) {
+          toast.error(`Falha no envio real: ${serr?.message || sd?.error || "erro"}`);
+        } else {
+          toast.success("Mensagem enviada via WhatsApp");
+          setMessages((m) => m.map((x) => (x.meta?.draft_id === draft.id ? { ...x, meta: { ...x.meta, sent: true } } : x)));
+        }
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao chamar o motor");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const rateDraft = async (draftId: string, action: "approve" | "reject") => {
+    const { error } = await supabase.functions.invoke("sth-ai-engine", {
+      body: { action, draft_id: draftId, ...(action === "reject" ? { reason: "Treino: resposta ruim" } : {}) },
+    });
+    if (error) return toast.error(error.message);
+    toast.success(action === "approve" ? "Marcada como boa ✅" : "Marcada como ruim — vai pro aprendizado");
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <FlaskConical className="h-4 w-4 text-primary" /> Simulador de Conversa
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">
+          Converse como se fosse um contato. Cada mensagem usa o motor ativo ({currentProvider} · {currentModel}) e fica salva como draft em <code>sth_ai_drafts</code> para aprendizado.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="space-y-1">
+            <Label className="text-xs">Telefone simulado</Label>
+            <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="5511999990000" />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Classificação</Label>
+            <Select value={classification} onValueChange={setClassification}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {CLASSIFICATIONS.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Envio real (WhatsApp)</Label>
+            <div className="flex items-center gap-3 h-10 px-3 rounded-md border border-input">
+              <Switch checked={sendReal} onCheckedChange={setSendReal} />
+              <span className="text-xs text-muted-foreground">
+                {sendReal ? "Vai disparar de verdade!" : "Apenas simulação"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="h-[460px] overflow-y-auto rounded-md border border-border/40 bg-muted/20 p-4 space-y-3">
+          {messages.length === 0 && (
+            <div className="text-center text-xs text-muted-foreground py-12">
+              Envie a primeira mensagem como se fosse o contato.
+            </div>
+          )}
+          {messages.map((m, i) => (
+            <div key={i} className={`flex gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+              {m.role === "assistant" && <Bot className="h-5 w-5 text-primary mt-1 shrink-0" />}
+              <div className={`max-w-[80%] space-y-1 ${m.role === "user" ? "items-end" : "items-start"}`}>
+                <div
+                  className={`px-3 py-2 rounded-2xl text-sm whitespace-pre-wrap ${
+                    m.role === "user"
+                      ? "bg-primary text-primary-foreground rounded-br-sm"
+                      : "bg-card border border-border/60 rounded-bl-sm"
+                  }`}
+                >
+                  {m.text}
+                </div>
+                {m.role === "assistant" && m.meta && (
+                  <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
+                    {m.meta.contact_type && <Badge variant="outline" className="text-[10px] h-4 px-1.5">{m.meta.contact_type}</Badge>}
+                    {m.meta.intent && <Badge variant="outline" className="text-[10px] h-4 px-1.5">{m.meta.intent}</Badge>}
+                    {m.meta.engine && <Badge variant="outline" className="text-[10px] h-4 px-1.5">{m.meta.engine}</Badge>}
+                    {typeof m.meta.latency_ms === "number" && <span>{m.meta.latency_ms}ms</span>}
+                    {m.meta.sent && <Badge className="text-[10px] h-4 px-1.5">enviado</Badge>}
+                    {m.meta.draft_id && (
+                      <div className="flex gap-1 ml-1">
+                        <button onClick={() => rateDraft(m.meta!.draft_id!, "approve")} className="hover:text-primary">👍</button>
+                        <button onClick={() => rateDraft(m.meta!.draft_id!, "reject")} className="hover:text-destructive">👎</button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              {m.role === "user" && <User className="h-5 w-5 text-muted-foreground mt-1 shrink-0" />}
+            </div>
+          ))}
+          {loading && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Bot className="h-4 w-4 animate-pulse" /> gerando resposta…
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-2">
+          <Input
+            placeholder="Digite como se fosse o contato…"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+            disabled={loading}
+          />
+          <Button onClick={send} disabled={loading || !input.trim()}>
+            <Send className="h-4 w-4 mr-2" /> Enviar
+          </Button>
+          <Button variant="outline" onClick={() => setMessages([])} disabled={loading}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
