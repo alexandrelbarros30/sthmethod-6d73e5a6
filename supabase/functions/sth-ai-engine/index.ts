@@ -9,7 +9,7 @@ const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') || '';
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') || '';
 
 type Engine = 'rapida' | 'humanizada' | 'consultor' | 'conversao' | 'retencao' | 'renovacao';
-type Action = 'generate' | 'approve' | 'reject' | 'send';
+type Action = 'generate' | 'approve' | 'reject' | 'send' | 'identify';
 
 const SYSTEM_BASE = `Você é o STH AI ENGINE, assistente operacional da STH METHOD.
 REGRAS ABSOLUTAS:
