@@ -94,14 +94,31 @@ async function sendAutoReply(
   message: string,
   provider?: string | null,
 ): Promise<Response> {
-  const normalizedProvider = String(provider || '').toLowerCase();
-  const fnName = normalizedProvider === 'zapi' ? 'send-whatsapp' : 'send-wapi';
+  const normalizedProvider = String(provider || '').toLowerCase() === 'zapi' ? 'zapi' : 'wapi';
+  const primaryFn = normalizedProvider === 'zapi' ? 'send-whatsapp' : 'send-wapi';
+  const fallbackFn = normalizedProvider === 'zapi' ? 'send-wapi' : 'send-whatsapp';
 
-  return fetch(`${SUPABASE_URL}/functions/v1/${fnName}`, {
+  const sendVia = (fnName: string) => fetch(`${SUPABASE_URL}/functions/v1/${fnName}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ANON_KEY}`, apikey: ANON_KEY },
     body: JSON.stringify({ phone, message }),
   });
+
+  let response = await sendVia(primaryFn);
+  if (response.ok) return response;
+
+  const failureBody = await response.clone().text().catch(() => '');
+  console.error('auto reply primary send failed', { provider: normalizedProvider, fnName: primaryFn, failureBody });
+
+  if (!failureBody || /credentials missing|instance|channel|provider|unauthorized|forbidden|not found|invalid/i.test(failureBody)) {
+    const fallbackResponse = await sendVia(fallbackFn);
+    if (fallbackResponse.ok) {
+      console.warn('auto reply sent via fallback provider', { requestedProvider: normalizedProvider, fallbackFn });
+      return fallbackResponse;
+    }
+  }
+
+  return response;
 }
 
 async function handleInbound(supabase: any, body: AnyRec) {
@@ -205,17 +222,22 @@ async function handleInbound(supabase: any, body: AnyRec) {
           .replace(/\{plano\}/g, sub?.plan_id || 'STH METHOD')
           .replace(/\{dias_restantes\}/g, String(daysLeft));
         try {
-          await sendAutoReply(phone, rendered, replyProvider);
-          greetingSent = true;
-          await supabase
-            .from('sth_auto_sessions')
-            .update({ greeting_sent_at: new Date().toISOString() })
-            .eq('phone', phone);
-          await supabase.from('sth_auto_events').insert({
-            phone, user_id: user?.user_id || null, memory_id: memId,
-            classification, intent: 'saudacao', source: 'inbound',
-            decision: 'greeting', action_taken: 'greeting_sent',
-          });
+          const greetingResponse = await sendAutoReply(phone, rendered, replyProvider);
+          if (greetingResponse.ok) {
+            greetingSent = true;
+            await supabase
+              .from('sth_auto_sessions')
+              .update({ greeting_sent_at: new Date().toISOString() })
+              .eq('phone', phone);
+            await supabase.from('sth_auto_events').insert({
+              phone, user_id: user?.user_id || null, memory_id: memId,
+              classification, intent: 'saudacao', source: 'inbound',
+              decision: 'greeting', action_taken: 'greeting_sent',
+            });
+          } else {
+            const errorText = await greetingResponse.text().catch(() => '');
+            console.error('greeting send failed', { phone, replyProvider, errorText });
+          }
         } catch (e) {
           console.error('greeting send failed', e);
         }
