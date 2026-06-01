@@ -27,35 +27,5 @@ verify_jwt = false
 [functions.send-whatsapp]
 verify_jwt = false
 
-[functions.crm-dispatch-campaign]
-verify_jwt = false
-
-[functions.crm-scheduler]
-verify_jwt = false
-
-[functions.crm-automation-runner]
-verify_jwt = false
-
-[functions.ai-assistant-chat]
-verify_jwt = false
-
-[functions.whatsapp-inbound-ai]
-verify_jwt = false
-
 [functions.send-wapi]
-verify_jwt = false
-
-[functions.wapi-inbound-nutri]
-verify_jwt = false
-
-[functions.nutri-ai-reply]
-verify_jwt = false
-
-[functions.sth-memory-scheduler]
-verify_jwt = false
-
-[functions.sth-ai-engine]
-verify_jwt = false
-
-[functions.sth-automation-engine]
 verify_jwt = false
