@@ -502,6 +502,419 @@ export type Database = {
           },
         ]
       }
+      crm_ai_runs: {
+        Row: {
+          conversation_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          model: string | null
+          prompt: string | null
+          response: string | null
+          tokens: number | null
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          model?: string | null
+          prompt?: string | null
+          response?: string | null
+          tokens?: number | null
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          model?: string | null
+          prompt?: string | null
+          response?: string | null
+          tokens?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_ai_runs_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "crm_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_campaign_recipients: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          display_name: string | null
+          error: string | null
+          id: string
+          phone: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          display_name?: string | null
+          error?: string | null
+          id?: string
+          phone: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          display_name?: string | null
+          error?: string | null
+          id?: string
+          phone?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_campaign_recipients_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "crm_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_campaigns: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          failed_count: number
+          id: string
+          media_url: string | null
+          message_template: string
+          name: string
+          scheduled_at: string | null
+          sent_count: number
+          status: string
+          target_filter: Json
+          total_count: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          failed_count?: number
+          id?: string
+          media_url?: string | null
+          message_template: string
+          name: string
+          scheduled_at?: string | null
+          sent_count?: number
+          status?: string
+          target_filter?: Json
+          total_count?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          failed_count?: number
+          id?: string
+          media_url?: string | null
+          message_template?: string
+          name?: string
+          scheduled_at?: string | null
+          sent_count?: number
+          status?: string
+          target_filter?: Json
+          total_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      crm_conversation_tags: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          tag_id: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          tag_id: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_conversation_tags_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "crm_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_conversation_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "crm_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_conversations: {
+        Row: {
+          assigned_to: string | null
+          channel: string
+          created_at: string
+          display_name: string | null
+          id: string
+          last_direction: string | null
+          last_message_at: string | null
+          last_message_preview: string | null
+          phone: string
+          pinned: boolean
+          status: string
+          unread_count: number
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          channel?: string
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          last_direction?: string | null
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          phone: string
+          pinned?: boolean
+          status?: string
+          unread_count?: number
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          channel?: string
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          last_direction?: string | null
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          phone?: string
+          pinned?: boolean
+          status?: string
+          unread_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      crm_messages: {
+        Row: {
+          body: string | null
+          conversation_id: string
+          created_at: string
+          direction: string
+          external_id: string | null
+          id: string
+          media_type: string | null
+          media_url: string | null
+          sent_by: string | null
+          source: string
+          status: string
+        }
+        Insert: {
+          body?: string | null
+          conversation_id: string
+          created_at?: string
+          direction: string
+          external_id?: string | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          sent_by?: string | null
+          source?: string
+          status?: string
+        }
+        Update: {
+          body?: string | null
+          conversation_id?: string
+          created_at?: string
+          direction?: string
+          external_id?: string | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          sent_by?: string | null
+          source?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "crm_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_queue_items: {
+        Row: {
+          closed_at: string | null
+          conversation_id: string | null
+          entered_at: string
+          id: string
+          notes: string | null
+          phone: string | null
+          picked_at: string | null
+          picked_by: string | null
+          priority: number
+          queue_id: string
+        }
+        Insert: {
+          closed_at?: string | null
+          conversation_id?: string | null
+          entered_at?: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          picked_at?: string | null
+          picked_by?: string | null
+          priority?: number
+          queue_id: string
+        }
+        Update: {
+          closed_at?: string | null
+          conversation_id?: string | null
+          entered_at?: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          picked_at?: string | null
+          picked_by?: string | null
+          priority?: number
+          queue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_queue_items_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "crm_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_queue_items_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "crm_queues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_queues: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          type: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          type: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          type?: string
+        }
+        Relationships: []
+      }
+      crm_tags: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      crm_tasks: {
+        Row: {
+          assigned_to: string | null
+          conversation_id: string | null
+          created_at: string
+          created_by: string | null
+          due_at: string | null
+          id: string
+          notes: string | null
+          phone: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_at?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_at?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_tasks_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "crm_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_popups: {
         Row: {
           active: boolean
@@ -3408,6 +3821,7 @@ export type Database = {
         Args: { _consultant_id: string; _student_id: string }
         Returns: boolean
       }
+      is_crm_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role:

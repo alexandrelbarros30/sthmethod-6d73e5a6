@@ -1,77 +1,84 @@
-# Limpeza Total — Começar do Zero
+## CRM Operacional — Camada sobre dados existentes
 
-Você marcou as 4 opções (inclusive "apenas desligar" + "apagar tudo"). Como confirmou "Sim, apagar mesmo", vou interpretar como **remoção completa**. A opção "desligar" fica naturalmente atendida (não sobra nada para rodar).
+Construir um CRM como camada operacional que **lê** dados já existentes (profiles, subscriptions, payments, dietas, treinos, protocolos, exames, fotos, peso) e **cria apenas** o que é específico de CRM: conversas, mensagens, tags, tarefas, IA, campanhas, filas e atendimento.
 
-**⚠️ Isto é IRREVERSÍVEL.** Revise a lista abaixo com calma antes de aprovar.
+### Princípios
+- **Zero duplicação**: nenhuma tabela de aluno/plano/pagamento/dieta/treino/protocolo será criada.
+- **Lookup por telefone**: ao abrir uma conversa, localizar `profiles.phone` e montar dossiê automático (nome, telefone, objetivo, plano ativo, datas, status assinatura/pagamento, último peso, última atualização).
+- **Identidade da conversa**: a conversa é ancorada em `phone` (string normalizada E.164). Se houver `profiles.user_id` correspondente, é vinculado dinamicamente — não armazenado redundantemente.
 
----
+### Novas tabelas (apenas CRM)
 
-## 1. Edge Functions a apagar (16)
+```text
+crm_conversations
+  id, phone (unique), display_name, last_message_at, last_message_preview,
+  unread_count, status (open|snoozed|closed), assigned_to (uuid → user_roles),
+  channel (whatsapp|manual), pinned, created_at, updated_at
 
-- `sth-automation-engine`
-- `sth-ai-engine`
-- `sth-memory-scheduler`
-- `crm-scheduler`
-- `crm-automation-runner`
-- `crm-dispatch-campaign`
-- `crm-inbound`
-- `crm-send`
-- `crm-test-connection`
-- `billing-auto-dispatch`
-- `whatsapp-inbound-ai`
-- `whatsapp-menu-router`
-- `whatsapp-delete-messages`
-- `nutri-ai-reply`
-- `wapi-inbound-nutri`
-- `setup-whatsapp-webhook`
-- `ai-assistant-chat`
-- `ai-suggest-rule`
-- `evolution-whatsapp`
+crm_messages
+  id, conversation_id → crm_conversations, direction (in|out),
+  body, media_url, media_type, sent_by (uuid|null=ai|null=system),
+  source (manual|ai|campaign|automation), external_id, status, created_at
 
-**Mantidas** (essenciais para o app funcionar):
-`send-whatsapp`, `send-wapi`, `create-payment`, `mercado-pago-webhook`, `verify-pix-receipt`, `analyze-diet`, `analyze-evolution-public`, `generate-meal-image`, `validate-coupon`, `fatsecret-search`, `import-students`, `admin-manage-students`, `reconcile-payments`.
+crm_tags
+  id, name (unique), color, created_at
 
-## 2. Páginas/Rotas Admin a apagar (18)
+crm_conversation_tags
+  conversation_id, tag_id  (PK composto)
 
-CRM/IA/Automação:
-- `AdminCRM.tsx`, `AdminSthCrm.tsx`, `AdminSthAiEngine.tsx`, `AdminSthAutomation.tsx`, `AdminSthEngine.tsx`, `AdminSthCommand.tsx`, `AdminSthGrowth.tsx`, `AdminSthKnowledge.tsx`, `AdminSthMemory.tsx`, `AdminMotorRespostaApis.tsx`, `AdminRegrasAutomacoes.tsx`, `AdminCrmAuditoria.tsx`, `AdminWhatsApp.tsx`, `AdminWhatsAppFlows.tsx`, `AdminMessages.tsx`, `AdminAtendimento.tsx`, `AdminFaleNutri.tsx`, `AdminTeleatendimento.tsx`
+crm_tasks
+  id, conversation_id (nullable), phone (nullable), title, notes,
+  due_at, status (todo|doing|done), assigned_to, created_by, created_at
 
-Treinamento:
-- `AdminTraining.tsx`, `AdminTrainingPrograms.tsx`, `AdminExerciseLibrary.tsx`, `AdminWorkoutTemplates.tsx`
+crm_ai_runs
+  id, conversation_id, prompt, response, model, tokens, created_at
 
-Componentes em `src/components/admin/sth-crm/`, `src/components/admin/CRMAutomationControl.tsx`, e relacionados serão removidos junto.
+crm_campaigns
+  id, name, message_template, target_filter (jsonb),
+  scheduled_at, status (draft|scheduled|sending|done|paused),
+  sent_count, failed_count, created_by, created_at
 
-Rotas em `src/App.tsx` e itens em `src/components/DashboardSidebar.tsx` correspondentes serão limpos.
+crm_campaign_recipients
+  id, campaign_id, phone, status (pending|sent|failed), error, sent_at
 
-## 3. Tabelas a apagar (DROP CASCADE)
+crm_queues
+  id, name, type (comercial|nutri|suporte), color, sort_order
 
-CRM/IA/Memória/Automação:
-- `crm_contacts`, `crm_tickets`, `crm_ticket_messages`, `crm_webhook_logs`, `crm_notes`, `crm_tags`, `crm_contact_tags`, `crm_campaigns`, `crm_campaign_runs`, `crm_automation_rules`
-- `sth_memory`, `sth_memory_objections`, `sth_memory_alerts`, `sth_auto_sessions`, `sth_auto_events`, `sth_ai_drafts`, `sth_ai_templates`, `sth_ai_unsolved`, `sth_kb_articles`
-- `nutri_conversations`, `nutri_messages`
-- `billing_automation`, `billing_campaigns`, `billing_dispatches`
-- `ai_assistant_config`, `ai_training_examples`
-- Funções relacionadas: `sth_automation_dashboard`, `sth_command_center`, `sth_growth_dashboard`, `sth_ai_engine_stats`, `sth_crm_dashboard_stats`, `sth_memory_*`, `sth_kb_*`, `crm_route_inbound`, `crm_set_protocol`, `advance_billing_campaign`, `sync_nutri_conversation`, `find_profile_by_phone`
+crm_queue_items
+  id, queue_id, conversation_id, priority, entered_at, picked_by, picked_at, closed_at
+```
 
-Treinamento (se existirem — confirmarei nomes na hora):
-- `training_programs`, `workouts`, `workout_exercises`, `exercises`, `workout_templates`, `student_workout_progress`
+Todas com RLS `TO authenticated`, scoped via `has_role(auth.uid(), 'admin'|'consultor'|'assistente'|'financeiro')`.
 
-**Não toco** em: `profiles`, `user_roles`, `subscriptions`, `payments`, `plans`, `weight_logs`, `body_images`, `documents`, `evolution_notifications`, `protocol_*`, `nutrition_*` (dietas), `coupons`, `ads`, `platform_updates`, `student_flow_status`, buckets de storage.
+### Páginas Admin
 
-## 4. Ordem de execução
+- `/admin/crm` — Inbox de conversas (lista + chat + dossiê lateral)
+- `/admin/crm/campanhas` — campanhas WhatsApp
+- `/admin/crm/filas` — filas (Comercial / Fale com Nutri / Suporte)
+- `/admin/crm/tarefas` — tarefas CRM
+- `/admin/crm/ia` — central de respostas com IA (Lovable AI Gateway, Gemini)
 
-1. Apagar Edge Functions (deploy-side)
-2. Migration única com DROP CASCADE de todas as tabelas/funções
-3. Remover arquivos de páginas, componentes e rotas do frontend
-4. Limpar imports/links órfãos em `App.tsx` e `DashboardSidebar.tsx`
+### Dossiê lateral (montado em tempo real)
+Hook `useStudentDossier(phone)` faz queries paralelas:
+1. `profiles` por phone → user_id, full_name, objective
+2. `subscriptions` por user_id → plano ativo, start/end, status
+3. `payments` por user_id → último pagamento + status
+4. `weight_logs` por user_id → último peso + data
+5. `student_diets`/`student_trainings`/`student_protocols` → última atualização
+6. `clinical_documents`, `body_images` → contagem + última data
 
----
+Tudo via `.in()` decoupled queries (padrão do projeto).
 
-## Última confirmação necessária
+### Edge Functions
+- `crm-send-whatsapp` — envia mensagem usando WAPI existente (`send-wapi`)
+- `crm-inbound-webhook` — recebe mensagens (webhook WhatsApp), cria/atualiza conversa
+- `crm-ai-suggest` — usa Lovable AI Gateway (Gemini) para sugerir resposta
+- `crm-campaign-dispatch` — dispara campanhas em lote
 
-Antes de eu seguir, me responde:
+### Navegação
+Adicionar grupo "CRM" no `DashboardSidebar` (admin): Conversas, Filas, Campanhas, Tarefas, IA.
 
-- **(a)** Aprovo a lista exata acima → executo tudo
-- **(b)** Quero ajustar algo (ex: manter Treinamento, manter `crm_inbound` para reaproveitar, etc.) → me diga o quê
-
-Recomendo fortemente que você **exporte/baixe um backup** do projeto Lovable antes (Settings → Project → Export), porque depois disso não há volta.
+### Fora de escopo
+- Não recriar tabelas de domínio existentes.
+- Não substituir lógica de pagamento/assinatura.
+- Não tocar em módulos de Treino/Dieta/Protocolo já consolidados.
