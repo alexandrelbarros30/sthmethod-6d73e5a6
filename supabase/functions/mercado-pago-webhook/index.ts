@@ -105,10 +105,20 @@ async function sendWelcomeWhatsapp(supabase: any, userId: string) {
   });
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  // Boas-vindas pós-pagamento DEVE sair da linha "Fale com o Nutri"
-  // (W-API / 5521998984153) — nunca do canal comercial Z-API,
-  // para evitar duplicidade na conversa do aluno.
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/send-wapi`, {
+  // Boas-vindas pós-pagamento sai por padrão da linha "Fale com o Nutri"
+  // (W-API / 5521998984153). O admin pode trocar o canal em
+  // crm_settings.auto_channel_map['payment_welcome'] = 'zapi' | 'wapi'.
+  let channel: "wapi" | "zapi" = "wapi";
+  try {
+    const { data: cfg } = await supabase
+      .from("crm_settings").select("value").eq("key", "auto_channel_map").maybeSingle();
+    const map = (cfg?.value || {}) as Record<string, "wapi" | "zapi">;
+    if (map.payment_welcome === "zapi" || map.payment_welcome === "wapi") {
+      channel = map.payment_welcome;
+    }
+  } catch (_) {}
+  const fnName = channel === "wapi" ? "send-wapi" : "send-whatsapp";
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/${fnName}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
