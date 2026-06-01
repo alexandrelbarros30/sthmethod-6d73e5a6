@@ -130,7 +130,17 @@ export const sendSystemTemplate = async (
     "content_all_ready",
     "lab_analysis_ready",
   ];
-  const fnName = NUTRI_CHANNEL_KEYS.includes(key) ? "send-wapi" : "send-whatsapp";
+
+  // Override editável pelo admin: crm_settings.auto_channel_map = { [system_key]: 'zapi'|'wapi' }
+  let resolvedChannel: "zapi" | "wapi" =
+    NUTRI_CHANNEL_KEYS.includes(key) ? "wapi" : "zapi";
+  try {
+    const { data: cfg } = await supabase
+      .from("crm_settings").select("value").eq("key", "auto_channel_map").maybeSingle();
+    const map = (cfg?.value || {}) as Record<string, "zapi" | "wapi">;
+    if (map[key] === "zapi" || map[key] === "wapi") resolvedChannel = map[key];
+  } catch { /* fallback ao default */ }
+  const fnName = resolvedChannel === "wapi" ? "send-wapi" : "send-whatsapp";
 
   // Try automatic send via the chosen channel edge function
   let autoOk = false;
