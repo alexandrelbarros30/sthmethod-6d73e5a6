@@ -77,17 +77,32 @@ export default function AdminCrmTemplates() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<Template>>(EMPTY);
   const [saving, setSaving] = useState(false);
+  const [autoMap, setAutoMap] = useState<Record<string, AutoChannel>>({});
+  const [autoOpen, setAutoOpen] = useState(false);
 
   async function load() {
     setLoading(true);
-    const { data, error } = await supabase
+    const [{ data, error }, cfg] = await Promise.all([
+      supabase
       .from("crm_message_templates")
       .select("*")
       .order("category")
-      .order("name");
+      .order("name"),
+      supabase.from("crm_settings").select("value").eq("key", "auto_channel_map").maybeSingle(),
+    ]);
     if (error) toast({ title: "Erro ao carregar", description: error.message });
     setItems((data ?? []) as Template[]);
+    setAutoMap(((cfg.data?.value || {}) as Record<string, AutoChannel>) || {});
     setLoading(false);
+  }
+
+  async function saveAutoMap(next: Record<string, AutoChannel>) {
+    setAutoMap(next);
+    const { error } = await supabase
+      .from("crm_settings")
+      .upsert({ key: "auto_channel_map", value: next, updated_at: new Date().toISOString() }, { onConflict: "key" });
+    if (error) toast({ title: "Erro ao salvar canal", description: error.message });
+    else toast({ title: "Canal de automação atualizado" });
   }
 
   useEffect(() => {
