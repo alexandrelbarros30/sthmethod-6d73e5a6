@@ -90,6 +90,7 @@ import AdminCrmTasks from "./pages/admin/AdminCrmTasks";
 import AdminCrmAi from "./pages/admin/AdminCrmAi";
 import AdminCrmPipeline from "./pages/admin/AdminCrmPipeline";
 import AdminCrmSettings from "./pages/admin/AdminCrmSettings";
+import AdminCrmTemplates from "./pages/admin/AdminCrmTemplates";
 import StudentConsultas from "./pages/student/StudentConsultas";
 import ConsultorDashboard from "./pages/consultor/ConsultorDashboard";
 import AssistenteDashboard from "./pages/assistente/AssistenteDashboard";
