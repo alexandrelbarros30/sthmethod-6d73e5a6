@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered, RefreshCw, NotebookPen, ChevronDown, DollarSign } from "lucide-react";
+import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered, RefreshCw, NotebookPen, ChevronDown, DollarSign, Inbox, Send, Sparkles, CheckSquare } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -60,6 +60,17 @@ const linksByRole: Record<AppRole, NavItem[]> = {
     { to: "/admin/queue", icon: ListOrdered, label: "Fila Atendimento" },
     { to: "/admin/students", icon: User, label: "Alunos" },
     { to: "/admin/plans", icon: CreditCard, label: "Planos" },
+    {
+      group: "CRM",
+      icon: MessageSquare,
+      children: [
+        { to: "/admin/crm", icon: Inbox, label: "Conversas" },
+        { to: "/admin/crm/filas", icon: ListOrdered, label: "Filas" },
+        { to: "/admin/crm/campanhas", icon: Send, label: "Campanhas" },
+        { to: "/admin/crm/tarefas", icon: CheckSquare, label: "Tarefas" },
+        { to: "/admin/crm/ia", icon: Sparkles, label: "IA" },
+      ],
+    },
     {
       group: "Financeiro",
       icon: DollarSign,
