@@ -221,6 +221,13 @@ export default function AdminCrmTemplates() {
         </TabsList>
       </Tabs>
 
+      <div className="flex items-center justify-between mb-3">
+        <div />
+        <Button size="sm" variant="outline" onClick={() => setAutoOpen(true)} className="gap-1.5">
+          <Zap className="w-3.5 h-3.5 text-amber-500" /> Canais dos disparos automáticos
+        </Button>
+      </div>
+
       <Card className="p-3 mb-4 flex items-start gap-3 bg-muted/30">
         <Icon className={`w-4 h-4 mt-0.5 ${meta.color}`} />
         <div className="flex-1 min-w-0">
