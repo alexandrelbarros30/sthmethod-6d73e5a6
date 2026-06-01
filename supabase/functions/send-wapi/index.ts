@@ -1,4 +1,5 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { createClient } from 'npm:@supabase/supabase-js@2';
 
 // W-API integration — linha secundária "Fale com o Nutri" (5521998984153)
 // Docs: https://w-api.app/ — endpoints em https://api.w-api.app/v1
@@ -14,9 +15,25 @@ Deno.serve(async (req) => {
       });
     }
 
-    const INSTANCE_ID = Deno.env.get('WAPI_INSTANCE_ID');
-    const TOKEN = Deno.env.get('WAPI_TOKEN');
-    const CLIENT_TOKEN = Deno.env.get('WAPI_CLIENT_TOKEN');
+    // Kill-switch global: respeita o toggle "Ativo/Inativo" em CRM → Configurações.
+    const admin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    );
+    const { data: cfgRow } = await admin
+      .from('crm_settings').select('value').eq('key', 'wapi').maybeSingle();
+    const cfg: any = cfgRow?.value || {};
+    if (cfg.enabled !== true) {
+      return new Response(JSON.stringify({
+        ok: false,
+        blocked: true,
+        error: 'Canal W-API está INATIVO em CRM → Configurações. Envio bloqueado.',
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    const INSTANCE_ID = (cfg.instance_id || '').trim() || Deno.env.get('WAPI_INSTANCE_ID');
+    const TOKEN = (cfg.token || '').trim() || Deno.env.get('WAPI_TOKEN');
+    const CLIENT_TOKEN = (cfg.client_token || '').trim() || Deno.env.get('WAPI_CLIENT_TOKEN');
     if (!INSTANCE_ID || !TOKEN) {
       return new Response(JSON.stringify({ ok: false, error: 'W-API credentials missing' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
