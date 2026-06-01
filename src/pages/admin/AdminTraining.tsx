@@ -66,15 +66,14 @@ const AdminTraining = () => {
 
   useEffect(() => {
     const uid = searchParams.get("uid");
-    if (uid && students?.length && !selectedStudent) {
+    if (uid && students?.length) {
       const found = students.find((s: any) => s.user_id === uid);
       if (found) {
-        setSelectedStudent(found);
-        setAssignOpen(true);
-        searchParams.delete("uid");
-        searchParams.delete("return");
-        setSearchParams(searchParams, { replace: true });
+        setSearch(found.full_name || found.email || "");
       }
+      searchParams.delete("uid");
+      searchParams.delete("return");
+      setSearchParams(searchParams, { replace: true });
     }
   }, [students, searchParams]);
 
