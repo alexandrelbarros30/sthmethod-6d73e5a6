@@ -10,6 +10,16 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
@@ -79,6 +89,9 @@ export default function AdminCrmTemplates() {
   const [saving, setSaving] = useState(false);
   const [autoMap, setAutoMap] = useState<Record<string, AutoChannel>>({});
   const [autoOpen, setAutoOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Template | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -155,11 +168,31 @@ export default function AdminCrmTemplates() {
     load();
   }
 
-  async function remove(id: string) {
-    if (!confirm("Excluir este template?")) return;
-    const { error } = await supabase.from("crm_message_templates").delete().eq("id", id);
-    if (error) toast({ title: "Erro", description: error.message });
-    else load();
+  function askRemove(t: Template) {
+    setDeleteTarget(t);
+    setDeleteConfirm("");
+  }
+
+  async function confirmRemove() {
+    if (!deleteTarget) return;
+    if (deleteConfirm.trim().toUpperCase() !== "DELETAR") {
+      toast({ title: "Confirmação inválida", description: "Digite DELETAR para confirmar." });
+      return;
+    }
+    setDeleting(true);
+    const { error } = await supabase
+      .from("crm_message_templates")
+      .delete()
+      .eq("id", deleteTarget.id);
+    setDeleting(false);
+    if (error) {
+      toast({ title: "Erro", description: error.message });
+      return;
+    }
+    toast({ title: "Template excluído" });
+    setDeleteTarget(null);
+    setDeleteConfirm("");
+    load();
   }
 
   async function duplicate(t: Template) {
@@ -296,7 +329,7 @@ export default function AdminCrmTemplates() {
                 <div className="flex flex-col gap-1">
                   <Button size="sm" variant="ghost" onClick={() => openEdit(t)}><Pencil className="w-3.5 h-3.5" /></Button>
                   <Button size="sm" variant="ghost" onClick={() => duplicate(t)}><Copy className="w-3.5 h-3.5" /></Button>
-                  <Button size="sm" variant="ghost" onClick={() => remove(t.id)}><Trash2 className="w-3.5 h-3.5 text-rose-500" /></Button>
+                  <Button size="sm" variant="ghost" onClick={() => askRemove(t)}><Trash2 className="w-3.5 h-3.5 text-rose-500" /></Button>
                 </div>
               </div>
             </Card>
