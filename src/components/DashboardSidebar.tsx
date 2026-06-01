@@ -129,12 +129,6 @@ const linksByRole: Record<AppRole, NavItem[]> = {
       ],
     },
     {
-      group: "WhatsApp",
-      icon: MessageSquare,
-      children: [
-      ],
-    },
-    {
       group: "Nutrição",
       icon: Salad,
       children: [
