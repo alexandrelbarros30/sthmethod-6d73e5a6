@@ -3467,6 +3467,75 @@ export type Database = {
           },
         ]
       }
+      supercoach_sync: {
+        Row: {
+          created_at: string
+          divergent_found_name: string | null
+          id: string
+          last_updated_at: string | null
+          observation: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+          updated_by_name: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          divergent_found_name?: string | null
+          id?: string
+          last_updated_at?: string | null
+          observation?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          updated_by_name?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          divergent_found_name?: string | null
+          id?: string
+          last_updated_at?: string | null
+          observation?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          updated_by_name?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      supercoach_sync_logs: {
+        Row: {
+          created_at: string
+          id: string
+          observation: string | null
+          performed_by: string | null
+          performed_by_name: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          observation?: string | null
+          performed_by?: string | null
+          performed_by_name?: string | null
+          status: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          observation?: string | null
+          performed_by?: string | null
+          performed_by_name?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       supplement_budgets: {
         Row: {
           created_at: string
