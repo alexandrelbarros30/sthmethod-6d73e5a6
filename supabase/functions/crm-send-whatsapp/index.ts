@@ -47,6 +47,12 @@ Deno.serve(async (req) => {
     const cfgKey = provider === 'zapi' ? 'zapi' : 'wapi';
     const { data: cfgRow } = await admin.from('crm_settings').select('value').eq('key', cfgKey).maybeSingle();
     const cfg: any = cfgRow?.value || {};
+    if (cfg.enabled !== true) {
+      return new Response(JSON.stringify({
+        ok: false, blocked: true,
+        error: `Canal ${provider.toUpperCase()} está INATIVO em CRM → Configurações.`,
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
 
     let resp: Response;
     let sendData: any = {};
