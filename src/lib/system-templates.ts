@@ -104,7 +104,7 @@ export const buildWhatsAppUrl = (phone: string, message: string): string | null 
 export const sendSystemTemplate = async (
   key: SystemTemplateKey,
   ctx: TemplateContext,
-  options?: { logHistory?: boolean; mode?: "auto" | "manual" }
+  options?: { logHistory?: boolean; mode?: "auto" | "manual"; silent?: boolean }
 ): Promise<{ ok: boolean; reason?: string; templateId?: string; message?: string }> => {
   const tpl = await getSystemTemplate(key);
   if (!tpl) return { ok: false, reason: "Template do sistema não encontrado. Cadastre em Mensagens → Automáticos." };
@@ -156,11 +156,14 @@ export const sendSystemTemplate = async (
   }
 
   // Fallback to wa.me if automatic failed or explicit manual mode
-  if (!autoOk || options?.mode === "manual") {
+  if ((!autoOk && !options?.silent) || options?.mode === "manual") {
     const fallbackMsg = tpl.image_url ? `${finalMessage}\n\n${tpl.image_url}` : finalMessage;
     const url = buildWhatsAppUrl(ctx.phone, fallbackMsg);
     if (url) window.open(url, "_blank");
     if (!autoOk) deliveryStatus = "failed";
+  }
+  if (!autoOk && options?.silent) {
+    deliveryStatus = "failed";
   }
 
   if (options?.logHistory && ctx.user_id) {
@@ -180,7 +183,12 @@ export const sendSystemTemplate = async (
     }
   }
 
-  return { ok: true, templateId: tpl.id, message: finalMessage, reason: deliveryError || undefined };
+  return {
+    ok: options?.silent ? autoOk : true,
+    templateId: tpl.id,
+    message: finalMessage,
+    reason: deliveryError || undefined,
+  };
 };
 
 export const SYSTEM_TEMPLATE_DEFINITIONS: Array<{

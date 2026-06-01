@@ -54,13 +54,13 @@ const ReleaseNotifyButton = ({ userId, type, label }: ReleaseNotifyButtonProps) 
           phone,
           user_id: userId,
         },
-        { logHistory: true, mode: "auto" },
+        { logHistory: true, mode: "auto", silent: true },
       );
 
       if (!res.ok) {
         toast.error(`Falha no envio: ${res.reason || "erro desconhecido"}`);
       } else if (res.reason) {
-        toast.message(`Liberado via fallback wa.me (${res.reason})`);
+        toast.error(`Falha no envio automático: ${res.reason}`);
       } else {
         toast.success("Liberado! Aluno notificado no WhatsApp.");
       }
