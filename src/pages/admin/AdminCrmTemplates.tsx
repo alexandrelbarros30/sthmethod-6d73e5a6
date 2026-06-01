@@ -23,7 +23,7 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Copy, Loader2, Variable, Zap, MessageSquare, Stethoscope } from "lucide-react";
+import { Plus, Pencil, Trash2, Copy, Loader2, Variable, Zap, MessageSquare, Stethoscope, Bot } from "lucide-react";
 import { TEMPLATE_CATEGORIES, AVAILABLE_VARIABLES, renderTemplate } from "@/lib/crm-templates";
 import { SYSTEM_TEMPLATE_DEFINITIONS, type SystemTemplateKey } from "@/lib/system-templates";
 
@@ -92,21 +92,42 @@ export default function AdminCrmTemplates() {
   const [deleteTarget, setDeleteTarget] = useState<Template | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiSaving, setAiSaving] = useState(false);
 
   async function load() {
     setLoading(true);
-    const [{ data, error }, cfg] = await Promise.all([
+    const [{ data, error }, cfg, ai] = await Promise.all([
       supabase
       .from("crm_message_templates")
       .select("*")
       .order("category")
       .order("name"),
       supabase.from("crm_settings").select("value").eq("key", "auto_channel_map").maybeSingle(),
+      supabase.from("crm_settings").select("value").eq("key", "ai_prompt_comercial").maybeSingle(),
     ]);
     if (error) toast({ title: "Erro ao carregar", description: error.message });
     setItems((data ?? []) as Template[]);
     setAutoMap(((cfg.data?.value || {}) as Record<string, AutoChannel>) || {});
+    setAiPrompt((ai.data?.value as any)?.prompt || "");
     setLoading(false);
+  }
+
+  async function saveAiPrompt() {
+    setAiSaving(true);
+    const { error } = await supabase
+      .from("crm_settings")
+      .upsert(
+        { key: "ai_prompt_comercial", value: { prompt: aiPrompt }, updated_at: new Date().toISOString() },
+        { onConflict: "key" }
+      );
+    setAiSaving(false);
+    if (error) toast({ title: "Erro ao salvar prompt", description: error.message });
+    else {
+      toast({ title: "Prompt da IA salvo" });
+      setAiOpen(false);
+    }
   }
 
   async function saveAutoMap(next: Record<string, AutoChannel>) {
@@ -256,9 +277,14 @@ export default function AdminCrmTemplates() {
 
       <div className="flex items-center justify-between mb-3">
         <div />
-        <Button size="sm" variant="outline" onClick={() => setAutoOpen(true)} className="gap-1.5">
-          <Zap className="w-3.5 h-3.5 text-amber-500" /> Canais dos disparos automáticos
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => setAiOpen(true)} className="gap-1.5">
+            <Bot className="w-3.5 h-3.5 text-emerald-400" /> Prompt IA — Comercial
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setAutoOpen(true)} className="gap-1.5">
+            <Zap className="w-3.5 h-3.5 text-amber-500" /> Canais dos disparos automáticos
+          </Button>
+        </div>
       </div>
 
       <Card className="p-3 mb-4 flex items-start gap-3 bg-muted/30">
