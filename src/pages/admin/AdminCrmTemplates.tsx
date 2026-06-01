@@ -15,8 +15,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, Copy, Loader2, Variable, Zap, MessageSquare, Stethoscope } from "lucide-react";
 import { TEMPLATE_CATEGORIES, AVAILABLE_VARIABLES, renderTemplate } from "@/lib/crm-templates";
+import { SYSTEM_TEMPLATE_DEFINITIONS, type SystemTemplateKey } from "@/lib/system-templates";
 
 type Channel = "zapi" | "wapi" | "both";
+type AutoChannel = "zapi" | "wapi";
+
+// Default channel for each system automation key (matches NUTRI_CHANNEL_KEYS in system-templates.ts)
+const NUTRI_DEFAULTS: SystemTemplateKey[] = [
+  "payment_welcome", "diet_updated", "training_updated", "protocol_updated",
+  "plan_updated", "content_all_ready", "lab_analysis_ready",
+];
+const defaultChannel = (k: SystemTemplateKey): AutoChannel =>
+  NUTRI_DEFAULTS.includes(k) ? "wapi" : "zapi";
 
 interface Template {
   id: string;
