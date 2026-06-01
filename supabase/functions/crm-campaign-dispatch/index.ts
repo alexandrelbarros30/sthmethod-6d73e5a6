@@ -28,12 +28,12 @@ Deno.serve(async (req) => {
 
     // Build recipient list from target filter
     const filter = (camp.target_filter || {}) as { type?: string };
-    const targets: { phone: string; name: string | null }[] = [];
+    const targets: { phone: string; name: string | null; user_id: string | null; plan: string | null; end_date: string | null; price: number | null }[] = [];
 
     if (filter.type === 'all_active' || filter.type === 'expiring' || filter.type === 'expired') {
       const today = new Date();
       const in7 = new Date(today.getTime() + 7 * 86400000);
-      let q = admin.from('subscriptions').select('user_id, end_date, status');
+      let q = admin.from('subscriptions').select('user_id, end_date, status, plan_id');
       if (filter.type === 'expired') q = q.lt('end_date', today.toISOString().slice(0, 10));
       else if (filter.type === 'expiring') q = q.gte('end_date', today.toISOString().slice(0, 10)).lte('end_date', in7.toISOString().slice(0, 10));
       else q = q.gte('end_date', today.toISOString().slice(0, 10));
@@ -41,14 +41,39 @@ Deno.serve(async (req) => {
       const uids = (subs || []).map((s: any) => s.user_id);
       if (uids.length) {
         const { data: profs } = await admin.from('profiles').select('user_id, full_name, phone').in('user_id', uids);
-        (profs || []).forEach((p: any) => { if (p.phone) targets.push({ phone: String(p.phone).replace(/\D/g, ''), name: p.full_name }); });
+        const planIds = Array.from(new Set((subs || []).map((s: any) => s.plan_id).filter(Boolean)));
+        const { data: plans } = planIds.length
+          ? await admin.from('plans').select('id, name, price').in('id', planIds)
+          : { data: [] as any[] };
+        const planMap = new Map((plans || []).map((p: any) => [p.id, p]));
+        const subMap = new Map((subs || []).map((s: any) => [s.user_id, s]));
+        (profs || []).forEach((p: any) => {
+          if (!p.phone) return;
+          const s = subMap.get(p.user_id);
+          const plan = s ? planMap.get(s.plan_id) : null;
+          targets.push({
+            phone: String(p.phone).replace(/\D/g, ''),
+            name: p.full_name,
+            user_id: p.user_id,
+            plan: plan?.name || null,
+            end_date: s?.end_date || null,
+            price: plan?.price ?? null,
+          });
+        });
       }
     } else if (filter.type === 'all_leads') {
       const { data: allProfs } = await admin.from('profiles').select('user_id, full_name, phone').not('phone', 'is', null).limit(5000);
       const { data: subs } = await admin.from('subscriptions').select('user_id');
       const withSub = new Set((subs || []).map((s: any) => s.user_id));
       (allProfs || []).forEach((p: any) => {
-        if (!withSub.has(p.user_id) && p.phone) targets.push({ phone: String(p.phone).replace(/\D/g, ''), name: p.full_name });
+        if (!withSub.has(p.user_id) && p.phone) targets.push({
+          phone: String(p.phone).replace(/\D/g, ''),
+          name: p.full_name,
+          user_id: p.user_id,
+          plan: null,
+          end_date: null,
+          price: null,
+        });
       });
     }
 
@@ -67,8 +92,29 @@ Deno.serve(async (req) => {
     // Dispatch (best-effort, throttled)
     let sent = 0, failed = 0;
     const wapiUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-wapi`;
+    const renewLink = 'https://sthmethod.com.br/aluno/renovar';
+    function fmtDate(d: string | null) {
+      if (!d) return '';
+      try { return new Date(d).toLocaleDateString('pt-BR'); } catch { return d; }
+    }
+    function fmtBRL(v: number | null) {
+      if (v == null) return '';
+      return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+    function renderVars(body: string, t: typeof unique[number]): string {
+      const ctx: Record<string, string> = {
+        nome: (t.name || '').split(' ')[0] || (t.name || ''),
+        plano: t.plan || '',
+        vencimento: fmtDate(t.end_date),
+        valor: fmtBRL(t.price),
+        dias_restantes: t.end_date ? String(Math.ceil((new Date(t.end_date).getTime() - Date.now()) / 86400000)) : '',
+        link_renovacao: renewLink,
+        telefone: t.phone || '',
+      };
+      return String(body).replace(/\{([a-z0-9_]+)\}/gi, (_m, k) => ctx[String(k).toLowerCase()] ?? '');
+    }
     for (const t of unique) {
-      const personalized = String(camp.message_template).replace(/\{nome\}/gi, t.name || '');
+      const personalized = renderVars(camp.message_template, t);
       try {
         const r = await fetch(wapiUrl, {
           method: 'POST',

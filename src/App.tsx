@@ -90,6 +90,7 @@ import AdminCrmTasks from "./pages/admin/AdminCrmTasks";
 import AdminCrmAi from "./pages/admin/AdminCrmAi";
 import AdminCrmPipeline from "./pages/admin/AdminCrmPipeline";
 import AdminCrmSettings from "./pages/admin/AdminCrmSettings";
+import AdminCrmTemplates from "./pages/admin/AdminCrmTemplates";
 import StudentConsultas from "./pages/student/StudentConsultas";
 import ConsultorDashboard from "./pages/consultor/ConsultorDashboard";
 import AssistenteDashboard from "./pages/assistente/AssistenteDashboard";
@@ -239,6 +240,7 @@ const App = () => (
             <Route path="/admin/crm/ia" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrmAi /></ProtectedRoute>} />
             <Route path="/admin/crm/pipeline" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrmPipeline /></ProtectedRoute>} />
             <Route path="/admin/crm/configuracoes" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrmSettings /></ProtectedRoute>} />
+            <Route path="/admin/crm/templates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrmTemplates /></ProtectedRoute>} />
             {/* Consultor routes */}
             <Route path="/consultor" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
             <Route path="/consultor/students" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />

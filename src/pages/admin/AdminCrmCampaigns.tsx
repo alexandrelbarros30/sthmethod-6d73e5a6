@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import { Send, Plus, Loader2 } from "lucide-react";
+import { Send, Plus, Loader2, FileText } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface Campaign {
   id: string; name: string; status: string; sent_count: number; failed_count: number; total_count: number;
@@ -24,6 +25,8 @@ export default function AdminCrmCampaigns() {
   const [target, setTarget] = useState<"all_active"|"expiring"|"expired"|"all_leads">("expiring");
   const [loading, setLoading] = useState(false);
   const [dispatching, setDispatching] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<{ id: string; name: string; body: string; category: string }[]>([]);
+  const [selectedTpl, setSelectedTpl] = useState<string>("");
 
   async function load() {
     const { data } = await supabase
@@ -33,7 +36,24 @@ export default function AdminCrmCampaigns() {
       .limit(50);
     setCampaigns((data ?? []) as Campaign[]);
   }
-  useEffect(() => { load(); }, []);
+  async function loadTemplates() {
+    const { data } = await supabase
+      .from("crm_message_templates")
+      .select("id, name, body, category")
+      .eq("active", true)
+      .order("name");
+    setTemplates((data ?? []) as any);
+  }
+  useEffect(() => { load(); loadTemplates(); }, []);
+
+  function applyTemplate(id: string) {
+    setSelectedTpl(id);
+    const t = templates.find((x) => x.id === id);
+    if (t) {
+      setTpl(t.body);
+      if (!name) setName(t.name);
+    }
+  }
 
   async function create() {
     if (!name.trim() || !tpl.trim()) { toast({ title: "Preencha nome e mensagem" }); return; }
@@ -65,9 +85,24 @@ export default function AdminCrmCampaigns() {
   return (
     <DashboardLayout role="admin" title="Campanhas WhatsApp" subtitle="Envio em massa para segmentos de alunos">
       <Card className="p-4 space-y-3">
-        <h3 className="text-sm font-semibold">Nova campanha</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold">Nova campanha</h3>
+          <Link to="/admin/crm/templates" className="text-[11px] text-primary hover:underline flex items-center gap-1">
+            <FileText className="w-3 h-3" /> Gerenciar templates
+          </Link>
+        </div>
+        {templates.length > 0 && (
+          <Select value={selectedTpl} onValueChange={applyTemplate}>
+            <SelectTrigger><SelectValue placeholder="Usar um template salvo (opcional)…" /></SelectTrigger>
+            <SelectContent>
+              {templates.map((t) => (
+                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <Input placeholder="Nome interno" value={name} onChange={(e) => setName(e.target.value)} />
-        <Textarea placeholder="Mensagem (use {nome} para personalizar)" rows={4} value={tpl} onChange={(e) => setTpl(e.target.value)} />
+        <Textarea placeholder="Mensagem (use {nome}, {plano}, {vencimento}, {valor}, {link_renovacao})" rows={5} value={tpl} onChange={(e) => setTpl(e.target.value)} />
         <div className="flex items-center gap-2">
           <Select value={target} onValueChange={(v: any) => setTarget(v)}>
             <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
