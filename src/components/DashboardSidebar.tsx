@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Layers, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered, RefreshCw, NotebookPen, AlertCircle, ChevronDown, DollarSign, Bot, HeartHandshake, Headphones, Settings, Sparkles, Brain, Cpu } from "lucide-react";
+import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered, RefreshCw, NotebookPen, ChevronDown, DollarSign } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -57,14 +57,6 @@ const linksByRole: Record<AppRole, NavItem[]> = {
   ],
   admin: [
     { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
-    { to: "/admin/sth-command", icon: Activity, label: "STH Command" },
-    { to: "/admin/sth-crm", icon: Sparkles, label: "STH CRM" },
-    { to: "/admin/sth-memory", icon: Brain, label: "STH Memory" },
-    { to: "/admin/sth-ai-engine", icon: Sparkles, label: "STH AI Engine" },
-    { to: "/admin/sth-engine", icon: Cpu, label: "Motor de Resposta" },
-    { to: "/admin/sth-automation", icon: Activity, label: "STH Automation" },
-    { to: "/admin/sth-knowledge", icon: BookOpen, label: "STH Knowledge" },
-    { to: "/admin/sth-growth", icon: TrendingUp, label: "STH Growth" },
     { to: "/admin/queue", icon: ListOrdered, label: "Fila Atendimento" },
     { to: "/admin/students", icon: User, label: "Alunos" },
     { to: "/admin/plans", icon: CreditCard, label: "Planos" },
@@ -74,19 +66,6 @@ const linksByRole: Record<AppRole, NavItem[]> = {
       children: [
         { to: "/admin/payments", icon: Wallet, label: "Pagamentos" },
         { to: "/admin/revenue", icon: TrendingUp, label: "Faturamento" },
-      ],
-    },
-    {
-      group: "Atendimento (Legado — somente conferência)",
-      icon: Headphones,
-      children: [
-        { to: "/admin/atendimento", icon: Headphones, label: "Atendimento (CRM)" },
-        { to: "/admin/billing", icon: AlertCircle, label: "Cobranças e Renovações" },
-        { to: "/admin/crm", icon: Megaphone, label: "Campanhas & Ofertas" },
-        { to: "/admin/ai-assistant", icon: Bot, label: "Assistente IA" },
-        { to: "/admin/atendimento/configuracoes", icon: Settings, label: "Motor de Resposta & APIs" },
-        { to: "/admin/atendimento/regras", icon: ListChecks, label: "Regras & Políticas" },
-        { to: "/admin/atendimento/auditoria", icon: ListChecks, label: "Limpeza & Consolidação" },
       ],
     },
     {
@@ -150,13 +129,6 @@ const linksByRole: Record<AppRole, NavItem[]> = {
       ],
     },
     {
-      group: "WhatsApp",
-      icon: MessageSquare,
-      children: [
-        { to: "/admin/messages", icon: MessageSquare, label: "Mensagens" },
-      ],
-    },
-    {
       group: "Nutrição",
       icon: Salad,
       children: [
@@ -183,14 +155,6 @@ const linksByRole: Record<AppRole, NavItem[]> = {
     { to: "/consultor", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/consultor/queue", icon: ListOrdered, label: "Fila Atendimento" },
     { to: "/consultor/students", icon: Users, label: "Meus Alunos" },
-    {
-      group: "WhatsApp",
-      icon: MessageSquare,
-      children: [
-        { to: "/consultor/billing", icon: AlertCircle, label: "Cobranças e Renovações" },
-        { to: "/consultor/crm", icon: Megaphone, label: "Campanhas & Ofertas" },
-      ],
-    },
     {
       group: "Nutrição",
       icon: Salad,
@@ -231,13 +195,6 @@ const linksByRole: Record<AppRole, NavItem[]> = {
         { to: "/financeiro/payments", icon: Wallet, label: "Pagamentos" },
         { to: "/financeiro/billing", icon: Receipt, label: "Faturamento" },
         { to: "/financeiro/revenue", icon: TrendingUp, label: "Receita" },
-      ],
-    },
-    {
-      group: "WhatsApp",
-      icon: MessageSquare,
-      children: [
-        { to: "/financeiro/cobrancas", icon: AlertCircle, label: "Cobranças e Renovações" },
       ],
     },
     { to: "/financeiro/plans", icon: CreditCard, label: "Planos" },

@@ -72,8 +72,6 @@ import AdminExerciseLibrary from "./pages/admin/AdminExerciseLibrary";
 import AdminTrainingPrograms from "./pages/admin/AdminTrainingPrograms";
 import AdminContent from "./pages/admin/AdminContent";
 import AdminLayoutExterno from "./pages/admin/AdminLayoutExterno";
-import AdminMessages from "./pages/admin/AdminMessages";
-import AdminAIAssistant from "./pages/admin/AdminAIAssistant";
 import AdminRoles from "./pages/admin/AdminRoles";
 import AdminStaff from "./pages/admin/AdminStaff";
 import AdminCoupons from "./pages/admin/AdminCoupons";
@@ -85,25 +83,6 @@ import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminBudgets from "./pages/admin/AdminBudgets";
 import AdminQueue from "./pages/admin/AdminQueue";
 import AdminUpdates from "./pages/admin/AdminUpdates";
-import AdminTeleatendimento from "./pages/admin/AdminTeleatendimento";
-import AdminBilling from "./pages/admin/AdminBilling";
-import AdminCRM from "./pages/admin/AdminCRM";
-import AdminSthCrm from "./pages/admin/AdminSthCrm";
-import AdminSthMemory from "./pages/admin/AdminSthMemory";
-import AdminSthAiEngine from "./pages/admin/AdminSthAiEngine";
-import AdminSthAutomation from "./pages/admin/AdminSthAutomation";
-import AdminSthKnowledge from "./pages/admin/AdminSthKnowledge";
-import AdminSthGrowth from "./pages/admin/AdminSthGrowth";
-import AdminSthCommand from "./pages/admin/AdminSthCommand";
-import AdminSthEngine from "./pages/admin/AdminSthEngine";
-// Legacy screens (AdminWhatsApp, AdminFaleNutri) consolidados em AdminAtendimento + AdminMotorRespostaApis.
-// Mantidos os imports removidos; redirecionamos as rotas antigas para o novo fluxo.
-import { Navigate } from "react-router-dom";
-import AdminAtendimento from "./pages/admin/AdminAtendimento";
-import AdminMotorRespostaApis from "./pages/admin/AdminMotorRespostaApis";
-import AdminWhatsAppFlows from "./pages/admin/AdminWhatsAppFlows";
-import AdminCrmAuditoria from "./pages/admin/AdminCrmAuditoria";
-import AdminRegrasAutomacoes from "./pages/admin/AdminRegrasAutomacoes";
 import StudentConsultas from "./pages/student/StudentConsultas";
 import ConsultorDashboard from "./pages/consultor/ConsultorDashboard";
 import AssistenteDashboard from "./pages/assistente/AssistenteDashboard";
@@ -235,8 +214,6 @@ const App = () => (
             <Route path="/admin/exercise-library" element={<ProtectedRoute allowedRoles={["admin"]}><AdminExerciseLibrary /></ProtectedRoute>} />
             <Route path="/admin/workout-templates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTrainingPrograms /></ProtectedRoute>} />
             <Route path="/admin/content" element={<ProtectedRoute allowedRoles={["admin"]}><AdminContent /></ProtectedRoute>} />
-            <Route path="/admin/messages" element={<ProtectedRoute allowedRoles={["admin"]}><AdminMessages /></ProtectedRoute>} />
-            <Route path="/admin/ai-assistant" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAIAssistant /></ProtectedRoute>} />
             <Route path="/admin/layout" element={<ProtectedRoute allowedRoles={["admin"]}><AdminLayoutExterno /></ProtectedRoute>} />
             <Route path="/admin/roles" element={<ProtectedRoute allowedRoles={["admin"]}><AdminRoles /></ProtectedRoute>} />
             <Route path="/admin/staff" element={<ProtectedRoute allowedRoles={["admin"]}><AdminStaff /></ProtectedRoute>} />
@@ -248,24 +225,6 @@ const App = () => (
             <Route path="/admin/ads" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAds /></ProtectedRoute>} />
             <Route path="/admin/queue" element={<ProtectedRoute allowedRoles={["admin"]}><AdminQueue /></ProtectedRoute>} />
             <Route path="/admin/updates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminUpdates /></ProtectedRoute>} />
-            <Route path="/admin/teleatendimento" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTeleatendimento /></ProtectedRoute>} />
-            <Route path="/admin/billing" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBilling area="admin" /></ProtectedRoute>} />
-            <Route path="/admin/crm" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCRM area="admin" /></ProtectedRoute>} />
-            <Route path="/admin/sth-crm" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSthCrm area="admin" /></ProtectedRoute>} />
-            <Route path="/admin/sth-memory" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><AdminSthMemory area="admin" /></ProtectedRoute>} />
-            <Route path="/admin/sth-ai-engine" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><AdminSthAiEngine area="admin" /></ProtectedRoute>} />
-            <Route path="/admin/sth-automation" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><AdminSthAutomation /></ProtectedRoute>} />
-            <Route path="/admin/sth-knowledge" element={<ProtectedRoute allowedRoles={["admin","consultor","assistente"]}><AdminSthKnowledge area="admin" /></ProtectedRoute>} />
-            <Route path="/admin/sth-growth" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><AdminSthGrowth /></ProtectedRoute>} />
-            <Route path="/admin/sth-command" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><AdminSthCommand /></ProtectedRoute>} />
-            <Route path="/admin/sth-engine" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSthEngine /></ProtectedRoute>} />
-            <Route path="/admin/whatsapp" element={<ProtectedRoute allowedRoles={["admin"]}><Navigate to="/admin/atendimento/configuracoes" replace /></ProtectedRoute>} />
-            <Route path="/admin/fale-nutri" element={<ProtectedRoute allowedRoles={["admin"]}><Navigate to="/admin/atendimento" replace /></ProtectedRoute>} />
-            <Route path="/admin/atendimento" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAtendimento /></ProtectedRoute>} />
-            <Route path="/admin/atendimento/configuracoes" element={<ProtectedRoute allowedRoles={["admin"]}><AdminMotorRespostaApis /></ProtectedRoute>} />
-            <Route path="/admin/atendimento/auditoria" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrmAuditoria /></ProtectedRoute>} />
-            <Route path="/admin/atendimento/regras" element={<ProtectedRoute allowedRoles={["admin"]}><AdminRegrasAutomacoes /></ProtectedRoute>} />
-            <Route path="/admin/atendimento/fluxos-whatsapp" element={<ProtectedRoute allowedRoles={["admin"]}><AdminWhatsAppFlows /></ProtectedRoute>} />
             {/* Consultor routes */}
             <Route path="/consultor" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
             <Route path="/consultor/students" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
@@ -278,8 +237,6 @@ const App = () => (
             <Route path="/consultor/workout-templates" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminTrainingPrograms /></ProtectedRoute>} />
             <Route path="/consultor/protocol-library" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminProtocolLibrary /></ProtectedRoute>} />
             <Route path="/consultor/queue" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminQueue /></ProtectedRoute>} />
-            <Route path="/consultor/billing" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminBilling area="consultor" /></ProtectedRoute>} />
-            <Route path="/consultor/crm" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminCRM area="consultor" /></ProtectedRoute>} />
             {/* Assistente routes */}
             <Route path="/assistente" element={<ProtectedRoute allowedRoles={["assistente"]}><AssistenteDashboard /></ProtectedRoute>} />
             <Route path="/assistente/students" element={<ProtectedRoute allowedRoles={["assistente"]}><AdminStudents /></ProtectedRoute>} />
@@ -290,7 +247,6 @@ const App = () => (
             <Route path="/financeiro/plans" element={<ProtectedRoute allowedRoles={["financeiro"]}><AdminPlans /></ProtectedRoute>} />
             <Route path="/financeiro/revenue" element={<ProtectedRoute allowedRoles={["financeiro"]}><FinanceiroDashboard /></ProtectedRoute>} />
             <Route path="/financeiro/billing" element={<ProtectedRoute allowedRoles={["financeiro"]}><AdminRevenue /></ProtectedRoute>} />
-            <Route path="/financeiro/cobrancas" element={<ProtectedRoute allowedRoles={["financeiro"]}><AdminBilling area="financeiro" /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <div className="fixed bottom-1 right-1 text-[9px] text-muted-foreground/40 pointer-events-none z-50 font-mono">
