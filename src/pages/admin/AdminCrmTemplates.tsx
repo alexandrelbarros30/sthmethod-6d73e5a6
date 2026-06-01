@@ -515,6 +515,8 @@ export default function AdminCrmTemplates() {
       </Dialog>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) { setDeleteTarget(null); setDeleteConfirm(""); } }}>
+        {/* placeholder anchor */}
+      </AlertDialog>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-rose-500">Excluir template permanentemente?</AlertDialogTitle>
