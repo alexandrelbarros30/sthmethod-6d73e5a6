@@ -677,6 +677,7 @@ export type Database = {
           last_message_preview: string | null
           phone: string
           pinned: boolean
+          pipeline_stage: string | null
           status: string
           unread_count: number
           updated_at: string
@@ -692,6 +693,7 @@ export type Database = {
           last_message_preview?: string | null
           phone: string
           pinned?: boolean
+          pipeline_stage?: string | null
           status?: string
           unread_count?: number
           updated_at?: string
@@ -707,6 +709,7 @@ export type Database = {
           last_message_preview?: string | null
           phone?: string
           pinned?: boolean
+          pipeline_stage?: string | null
           status?: string
           unread_count?: number
           updated_at?: string

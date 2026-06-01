@@ -65,6 +65,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
       icon: MessageSquare,
       children: [
         { to: "/admin/crm", icon: Inbox, label: "Conversas" },
+        { to: "/admin/crm/pipeline", icon: TrendingUp, label: "Pipeline Comercial" },
         { to: "/admin/crm/filas", icon: ListOrdered, label: "Filas" },
         { to: "/admin/crm/campanhas", icon: Send, label: "Campanhas" },
         { to: "/admin/crm/tarefas", icon: CheckSquare, label: "Tarefas" },
