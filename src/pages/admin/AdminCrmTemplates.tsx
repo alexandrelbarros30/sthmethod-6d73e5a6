@@ -15,8 +15,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, Copy, Loader2, Variable, Zap, MessageSquare, Stethoscope } from "lucide-react";
 import { TEMPLATE_CATEGORIES, AVAILABLE_VARIABLES, renderTemplate } from "@/lib/crm-templates";
+import { SYSTEM_TEMPLATE_DEFINITIONS, type SystemTemplateKey } from "@/lib/system-templates";
 
 type Channel = "zapi" | "wapi" | "both";
+type AutoChannel = "zapi" | "wapi";
+
+// Default channel for each system automation key (matches NUTRI_CHANNEL_KEYS in system-templates.ts)
+const NUTRI_DEFAULTS: SystemTemplateKey[] = [
+  "payment_welcome", "diet_updated", "training_updated", "protocol_updated",
+  "plan_updated", "content_all_ready", "lab_analysis_ready",
+];
+const defaultChannel = (k: SystemTemplateKey): AutoChannel =>
+  NUTRI_DEFAULTS.includes(k) ? "wapi" : "zapi";
 
 interface Template {
   id: string;
@@ -67,17 +77,32 @@ export default function AdminCrmTemplates() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<Template>>(EMPTY);
   const [saving, setSaving] = useState(false);
+  const [autoMap, setAutoMap] = useState<Record<string, AutoChannel>>({});
+  const [autoOpen, setAutoOpen] = useState(false);
 
   async function load() {
     setLoading(true);
-    const { data, error } = await supabase
+    const [{ data, error }, cfg] = await Promise.all([
+      supabase
       .from("crm_message_templates")
       .select("*")
       .order("category")
-      .order("name");
+      .order("name"),
+      supabase.from("crm_settings").select("value").eq("key", "auto_channel_map").maybeSingle(),
+    ]);
     if (error) toast({ title: "Erro ao carregar", description: error.message });
     setItems((data ?? []) as Template[]);
+    setAutoMap(((cfg.data?.value || {}) as Record<string, AutoChannel>) || {});
     setLoading(false);
+  }
+
+  async function saveAutoMap(next: Record<string, AutoChannel>) {
+    setAutoMap(next);
+    const { error } = await supabase
+      .from("crm_settings")
+      .upsert({ key: "auto_channel_map", value: next, updated_at: new Date().toISOString() }, { onConflict: "key" });
+    if (error) toast({ title: "Erro ao salvar canal", description: error.message });
+    else toast({ title: "Canal de automação atualizado" });
   }
 
   useEffect(() => {
@@ -195,6 +220,13 @@ export default function AdminCrmTemplates() {
           </TabsTrigger>
         </TabsList>
       </Tabs>
+
+      <div className="flex items-center justify-between mb-3">
+        <div />
+        <Button size="sm" variant="outline" onClick={() => setAutoOpen(true)} className="gap-1.5">
+          <Zap className="w-3.5 h-3.5 text-amber-500" /> Canais dos disparos automáticos
+        </Button>
+      </div>
 
       <Card className="p-3 mb-4 flex items-start gap-3 bg-muted/30">
         <Icon className={`w-4 h-4 mt-0.5 ${meta.color}`} />
@@ -369,6 +401,56 @@ export default function AdminCrmTemplates() {
             <Button onClick={save} disabled={saving}>
               {saving && <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />} Salvar
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={autoOpen} onOpenChange={setAutoOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-amber-500" /> Canal de cada disparo automático
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground mb-3">
+            Escolha por qual linha cada mensagem automática do sistema será enviada. Use <b>Fale com o Nutri</b> para
+            comunicação de aluno ativo (dieta, treino, protocolo, exames) e <b>STH One</b> para comercial
+            (cobrança, renovação, recuperação).
+          </p>
+          <div className="space-y-2">
+            {SYSTEM_TEMPLATE_DEFINITIONS.map((def) => {
+              const current = autoMap[def.key] || defaultChannel(def.key);
+              return (
+                <div key={def.key} className="flex items-center gap-3 p-2.5 rounded-md border">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{def.label}</p>
+                    <p className="text-[11px] text-muted-foreground line-clamp-1">{def.description}</p>
+                    <code className="text-[10px] text-muted-foreground/70">{def.key}</code>
+                  </div>
+                  <Select
+                    value={current}
+                    onValueChange={(v) => saveAutoMap({ ...autoMap, [def.key]: v as AutoChannel })}
+                  >
+                    <SelectTrigger className="w-52 h-8 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="zapi">
+                        <span className="flex items-center gap-1.5">
+                          <MessageSquare className="w-3 h-3 text-emerald-400" /> STH One — Comercial
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="wapi">
+                        <span className="flex items-center gap-1.5">
+                          <Stethoscope className="w-3 h-3 text-cyan-400" /> Fale com o Nutri
+                        </span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              );
+            })}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAutoOpen(false)}>Fechar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
