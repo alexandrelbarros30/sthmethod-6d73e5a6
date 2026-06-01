@@ -57,7 +57,7 @@ export default function AdminCrmSettings() {
       const { data, error } = await supabase.functions.invoke("crm-test-whatsapp", { body: { provider } });
       if (error) throw error;
       if (data?.ok) {
-        toast({ title: "Conexão OK", description: `${provider.toUpperCase()} respondeu com sucesso (fonte: ${data?.source || "—"}).` });
+        toast({ title: "Conexão OK", description: data?.message || `${provider.toUpperCase()} conectada (fonte: ${data?.source || "—"}).` });
       } else {
         const desc = data?.error || data?.data?.error || JSON.stringify(data?.data || data).slice(0, 250);
         toast({ title: "Conexão falhou", description: desc, variant: "destructive" as any });
