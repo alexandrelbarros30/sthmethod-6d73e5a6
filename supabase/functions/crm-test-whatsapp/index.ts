@@ -31,8 +31,21 @@ Deno.serve(async (req) => {
       }
       const r = await fetch(`https://api.z-api.io/instances/${id}/token/${tok}/status`, { headers: { 'Client-Token': client } });
       const d = await r.json().catch(() => ({}));
-      const ok = r.ok && !(d && (d as any).error);
-      return new Response(JSON.stringify({ ok, status: r.status, data: d, error: (d as any)?.error, source: cfg.client_token ? 'crm_settings' : 'env' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      // Z-API /status retorna { connected, smartphoneConnected, error? }.
+      // "You are already connected" NÃO é falha — significa instância logada.
+      const dd: any = d || {};
+      const benignErrors = ['you are already connected'];
+      const errStr = typeof dd.error === 'string' ? dd.error.toLowerCase() : '';
+      const isBenign = benignErrors.some((e) => errStr.includes(e));
+      const ok = r.ok && (dd.connected === true || isBenign) && !(errStr && !isBenign);
+      return new Response(JSON.stringify({
+        ok,
+        status: r.status,
+        data: d,
+        error: ok ? null : (dd.error || null),
+        message: ok ? (dd.smartphoneConnected ? 'Instância conectada e celular pareado.' : 'Instância conectada.') : null,
+        source: cfg.client_token ? 'crm_settings' : 'env',
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     if (provider === 'wapi') {
       const { data: row } = await admin.from('crm_settings').select('value').eq('key', 'wapi').maybeSingle();
@@ -48,8 +61,16 @@ Deno.serve(async (req) => {
       if (client) headers['Client-Token'] = client;
       const r = await fetch(`${serverUrl.replace(/\/$/, '')}/v1/instance/status-instance?instanceId=${id}`, { headers });
       const d = await r.json().catch(() => ({}));
-      const ok = r.ok && !(d && (d as any).error);
-      return new Response(JSON.stringify({ ok, status: r.status, data: d, error: (d as any)?.error, source: cfg.token ? 'crm_settings' : 'env' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      const dd: any = d || {};
+      const ok = r.ok && (dd.connected === true) && !dd.error;
+      return new Response(JSON.stringify({
+        ok,
+        status: r.status,
+        data: d,
+        error: ok ? null : (dd.error || null),
+        message: ok ? 'Instância W-API conectada.' : null,
+        source: cfg.token ? 'crm_settings' : 'env',
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     return new Response(JSON.stringify({ ok: false, error: 'unknown provider' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (err) {
