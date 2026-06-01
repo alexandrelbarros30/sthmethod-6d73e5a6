@@ -95,10 +95,11 @@ export default function AdminCrmTemplates() {
   const [aiOpen, setAiOpen] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiSaving, setAiSaving] = useState(false);
+  const [aiEngine, setAiEngine] = useState<"lovable" | "local" | "gemini_api">("lovable");
 
   async function load() {
     setLoading(true);
-    const [{ data, error }, cfg, ai] = await Promise.all([
+    const [{ data, error }, cfg, ai, eng] = await Promise.all([
       supabase
       .from("crm_message_templates")
       .select("*")
@@ -106,26 +107,33 @@ export default function AdminCrmTemplates() {
       .order("name"),
       supabase.from("crm_settings").select("value").eq("key", "auto_channel_map").maybeSingle(),
       supabase.from("crm_settings").select("value").eq("key", "ai_prompt_comercial").maybeSingle(),
+      supabase.from("crm_settings").select("value").eq("key", "ai_engine").maybeSingle(),
     ]);
     if (error) toast({ title: "Erro ao carregar", description: error.message });
     setItems((data ?? []) as Template[]);
     setAutoMap(((cfg.data?.value || {}) as Record<string, AutoChannel>) || {});
     setAiPrompt((ai.data?.value as any)?.prompt || "");
+    const storedEng = (eng.data?.value as any)?.engine;
+    if (storedEng === "lovable" || storedEng === "local" || storedEng === "gemini_api") setAiEngine(storedEng);
     setLoading(false);
   }
 
   async function saveAiPrompt() {
     setAiSaving(true);
-    const { error } = await supabase
-      .from("crm_settings")
-      .upsert(
+    const [{ error }, { error: e2 }] = await Promise.all([
+      supabase.from("crm_settings").upsert(
         { key: "ai_prompt_comercial", value: { prompt: aiPrompt }, updated_at: new Date().toISOString() },
         { onConflict: "key" }
-      );
+      ),
+      supabase.from("crm_settings").upsert(
+        { key: "ai_engine", value: { engine: aiEngine }, updated_at: new Date().toISOString() },
+        { onConflict: "key" }
+      ),
+    ]);
     setAiSaving(false);
-    if (error) toast({ title: "Erro ao salvar prompt", description: error.message });
+    if (error || e2) toast({ title: "Erro ao salvar", description: (error || e2)?.message });
     else {
-      toast({ title: "Prompt da IA salvo" });
+      toast({ title: "Configuração da IA salva" });
       setAiOpen(false);
     }
   }
