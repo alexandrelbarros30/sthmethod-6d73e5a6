@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered, RefreshCw, NotebookPen, ChevronDown, DollarSign, Inbox, Send, Sparkles, CheckSquare } from "lucide-react";
+import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered, RefreshCw, NotebookPen, ChevronDown, DollarSign, Inbox, Send, Sparkles, CheckSquare, Zap } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -71,6 +71,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
         { to: "/admin/crm/templates", icon: NotebookPen, label: "Templates" },
         { to: "/admin/crm/tarefas", icon: CheckSquare, label: "Tarefas" },
         { to: "/admin/crm/ia", icon: Sparkles, label: "IA" },
+        { to: "/admin/crm/supercoach", icon: Zap, label: "SuperCoach" },
         { to: "/admin/crm/configuracoes", icon: PanelTop, label: "Configurações WhatsApp" },
       ],
     },
