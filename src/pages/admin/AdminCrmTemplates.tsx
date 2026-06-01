@@ -404,6 +404,56 @@ export default function AdminCrmTemplates() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={autoOpen} onOpenChange={setAutoOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-amber-500" /> Canal de cada disparo automático
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground mb-3">
+            Escolha por qual linha cada mensagem automática do sistema será enviada. Use <b>Fale com o Nutri</b> para
+            comunicação de aluno ativo (dieta, treino, protocolo, exames) e <b>STH One</b> para comercial
+            (cobrança, renovação, recuperação).
+          </p>
+          <div className="space-y-2">
+            {SYSTEM_TEMPLATE_DEFINITIONS.map((def) => {
+              const current = autoMap[def.key] || defaultChannel(def.key);
+              return (
+                <div key={def.key} className="flex items-center gap-3 p-2.5 rounded-md border">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{def.label}</p>
+                    <p className="text-[11px] text-muted-foreground line-clamp-1">{def.description}</p>
+                    <code className="text-[10px] text-muted-foreground/70">{def.key}</code>
+                  </div>
+                  <Select
+                    value={current}
+                    onValueChange={(v) => saveAutoMap({ ...autoMap, [def.key]: v as AutoChannel })}
+                  >
+                    <SelectTrigger className="w-52 h-8 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="zapi">
+                        <span className="flex items-center gap-1.5">
+                          <MessageSquare className="w-3 h-3 text-emerald-400" /> STH One — Comercial
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="wapi">
+                        <span className="flex items-center gap-1.5">
+                          <Stethoscope className="w-3 h-3 text-cyan-400" /> Fale com o Nutri
+                        </span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              );
+            })}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAutoOpen(false)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
