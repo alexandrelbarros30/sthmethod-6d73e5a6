@@ -396,16 +396,16 @@ export default function AdminSuperCoach() {
 
             {/* Table */}
             <Card className="overflow-hidden border-foreground/10">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+              <div className="overflow-x-auto" style={{ scrollbarWidth: "thin" }}>
+                <table className="min-w-max text-sm">
                   <thead className="bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground">
                     <tr>
-                      <th className="text-left px-4 py-3">Aluno</th>
-                      <th className="text-left px-4 py-3">Contato</th>
-                      <th className="text-left px-4 py-3">Plano</th>
-                      <th className="text-left px-4 py-3">Vigência STH</th>
-                      <th className="text-left px-4 py-3">SuperCoach</th>
-                      <th className="text-right px-4 py-3">Ações</th>
+                      <th className="text-left px-4 py-3 whitespace-nowrap">Aluno</th>
+                      <th className="text-left px-4 py-3 whitespace-nowrap">Contato</th>
+                      <th className="text-left px-4 py-3 whitespace-nowrap">Plano</th>
+                      <th className="text-left px-4 py-3 whitespace-nowrap">Vigência STH</th>
+                      <th className="text-left px-4 py-3 whitespace-nowrap">SuperCoach</th>
+                      <th className="text-right px-4 py-3 whitespace-nowrap">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -472,33 +472,33 @@ export default function AdminSuperCoach() {
                                 </div>
                               )}
                             </td>
-                            <td className="px-4 py-3">
-                              <div className="flex flex-wrap items-center justify-end gap-1.5">
-                                <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={openSuperCoach}>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs whitespace-nowrap shrink-0" onClick={openSuperCoach}>
                                   <ExternalLink className="w-3.5 h-3.5" /> SuperCoach
                                 </Button>
-                                <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => copyText(searchName, "Nome para busca")}>
+                                <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs whitespace-nowrap shrink-0" onClick={() => copyText(searchName, "Nome para busca")}>
                                   <Copy className="w-3.5 h-3.5" /> Nome
                                 </Button>
-                                <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => row.endDate && copyText(formatDate(row.endDate), "Vencimento")} disabled={!row.endDate}>
+                                <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs whitespace-nowrap shrink-0" onClick={() => row.endDate && copyText(formatDate(row.endDate), "Vencimento")} disabled={!row.endDate}>
                                   <Calendar className="w-3.5 h-3.5" /> Vencimento
                                 </Button>
                                 <Button
                                   size="sm"
-                                  className="h-8 gap-1.5 text-xs bg-success text-success-foreground hover:bg-success/90"
+                                  className="h-8 gap-1.5 text-xs bg-success text-success-foreground hover:bg-success/90 whitespace-nowrap shrink-0"
                                   onClick={() => markUpdated(row)}
                                   disabled={savingId === row.user_id}
                                 >
                                   {savingId === row.user_id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
                                   Atualizado
                                 </Button>
-                                <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => openActionDialog(row, "not_found")}>
+                                <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs whitespace-nowrap shrink-0" onClick={() => openActionDialog(row, "not_found")}>
                                   <UserX className="w-3.5 h-3.5" /> Não encontrado
                                 </Button>
-                                <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => openActionDialog(row, "divergent_name")}>
+                                <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs whitespace-nowrap shrink-0" onClick={() => openActionDialog(row, "divergent_name")}>
                                   <AlertTriangle className="w-3.5 h-3.5" /> Divergente
                                 </Button>
-                                <Button size="sm" variant="ghost" className="h-8 gap-1.5 text-xs" onClick={() => openActionDialog(row, "review_manually")}>
+                                <Button size="sm" variant="ghost" className="h-8 gap-1.5 text-xs whitespace-nowrap shrink-0" onClick={() => openActionDialog(row, "review_manually")}>
                                   <HelpCircle className="w-3.5 h-3.5" /> Revisar
                                 </Button>
                               </div>
