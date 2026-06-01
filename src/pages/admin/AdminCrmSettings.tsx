@@ -56,13 +56,22 @@ export default function AdminCrmSettings() {
     try {
       const { data, error } = await supabase.functions.invoke("crm-test-whatsapp", { body: { provider } });
       if (error) throw error;
-      if (data?.ok) toast({ title: "Conexão OK", description: provider.toUpperCase() + " respondeu com sucesso." });
-      else toast({ title: "Conexão falhou", description: data?.error || JSON.stringify(data?.data || data).slice(0, 200) });
+      if (data?.ok) {
+        toast({ title: "Conexão OK", description: `${provider.toUpperCase()} respondeu com sucesso (fonte: ${data?.source || "—"}).` });
+      } else {
+        const desc = data?.error || data?.data?.error || JSON.stringify(data?.data || data).slice(0, 250);
+        toast({ title: "Conexão falhou", description: desc, variant: "destructive" as any });
+      }
     } catch (e: any) {
       toast({ title: "Erro no teste", description: e?.message || String(e) });
     } finally {
       setTesting(null);
     }
+  }
+
+  async function saveAndTest(key: "zapi" | "wapi", value: any) {
+    await save(key, value);
+    await testConn(key);
   }
 
   function copy(text: string, id: string) {
