@@ -17,6 +17,17 @@ Deno.serve(async (req) => {
 
     const { conversation_id, phone, prompt: customPrompt } = await req.json();
 
+    // Load admin-editable Comercial assistant prompt
+    let systemPrompt = 'Você é um assistente de atendimento ao aluno da consultoria STH METHOD. Seja claro, técnico, neutro e cordial. Responda em português do Brasil.';
+    try {
+      const { data: cfg } = await supabase
+        .from('crm_settings').select('value').eq('key', 'ai_prompt_comercial').maybeSingle();
+      const stored = (cfg?.value as any)?.prompt;
+      if (stored && typeof stored === 'string' && stored.trim().length > 0) {
+        systemPrompt = stored;
+      }
+    } catch (_) { /* fallback default */ }
+
     // Build context: dossier + last 10 messages
     let context = '';
     if (conversation_id) {
@@ -55,7 +66,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model,
         messages: [
-          { role: 'system', content: 'Você é um assistente de atendimento ao aluno da consultoria STH METHOD. Seja claro, técnico, neutro e cordial. Responda em português do Brasil.' },
+          { role: 'system', content: systemPrompt },
           { role: 'user', content: `${context}\n${userPrompt}` },
         ],
       }),
