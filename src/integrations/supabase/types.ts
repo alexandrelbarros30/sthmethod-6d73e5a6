@@ -731,8 +731,10 @@ export type Database = {
       crm_message_templates: {
         Row: {
           active: boolean
+          automation_trigger: string | null
           body: string
           category: string
+          channel: string
           created_at: string
           created_by: string | null
           description: string | null
@@ -746,8 +748,10 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          automation_trigger?: string | null
           body: string
           category?: string
+          channel?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -761,8 +765,10 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          automation_trigger?: string | null
           body?: string
           category?: string
+          channel?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
