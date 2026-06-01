@@ -257,7 +257,7 @@ export const SYSTEM_TEMPLATE_DEFINITIONS: Array<{
     label: "Treino atualizado (automático)",
     description: "Disparado automaticamente quando o admin define/atualiza o treino ativo do aluno.",
     defaultContent:
-      "🏋️ Treino pronto 👊\n\nSeu treino já está disponível no app\n\nApp ST Coach\nAndroid: https://play.google.com/store/apps/details?id=com.appsupercoach.app\niPhone: https://apps.apple.com/us/app/st-coach/id1537125272#?platform=iphone\n\n🔐 Login: seu e-mail\nSenha: 123456 ou a cadastrada 👊",
+      "Olá, {nome}!\n\nSeu treino está disponível 👇\n\n🏋️ App Super Coach\n(📱 Android:\nhttps://play.google.com/store/apps/details?id=com.appsupercoach.app\n\n🍏 Apple:\nhttps://apps.apple.com/us/app/st-coach/id1537125272#?platform=iphone)\n\n🔐 Acesso (ambos):\nLogin: {email}\nSenha: 123456 ou senha cadastrada",
   },
   {
     key: "protocol_updated",
