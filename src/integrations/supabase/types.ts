@@ -672,12 +672,16 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          is_lead: boolean
           last_direction: string | null
           last_message_at: string | null
           last_message_preview: string | null
+          nutri_category: string | null
           phone: string
           pinned: boolean
           pipeline_stage: string | null
+          provider: string | null
+          queue_type: string | null
           status: string
           unread_count: number
           updated_at: string
@@ -688,12 +692,16 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          is_lead?: boolean
           last_direction?: string | null
           last_message_at?: string | null
           last_message_preview?: string | null
+          nutri_category?: string | null
           phone: string
           pinned?: boolean
           pipeline_stage?: string | null
+          provider?: string | null
+          queue_type?: string | null
           status?: string
           unread_count?: number
           updated_at?: string
@@ -704,12 +712,16 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          is_lead?: boolean
           last_direction?: string | null
           last_message_at?: string | null
           last_message_preview?: string | null
+          nutri_category?: string | null
           phone?: string
           pinned?: boolean
           pipeline_stage?: string | null
+          provider?: string | null
+          queue_type?: string | null
           status?: string
           unread_count?: number
           updated_at?: string
@@ -844,6 +856,27 @@ export type Database = {
           name?: string
           sort_order?: number
           type?: string
+        }
+        Relationships: []
+      }
+      crm_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
         }
         Relationships: []
       }
