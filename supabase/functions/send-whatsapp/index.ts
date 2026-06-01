@@ -1,4 +1,5 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { createClient } from 'npm:@supabase/supabase-js@2';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -11,9 +12,27 @@ Deno.serve(async (req) => {
       });
     }
 
-    const INSTANCE_ID = Deno.env.get('ZAPI_INSTANCE_ID');
-    const INSTANCE_TOKEN = Deno.env.get('ZAPI_INSTANCE_TOKEN');
-    const CLIENT_TOKEN = Deno.env.get('ZAPI_CLIENT_TOKEN');
+    // Kill-switch global: respeita o toggle "Ativo/Inativo" em CRM → Configurações.
+    // Sem isso, automações legadas (notify-student-update, lembretes, fila, etc.)
+    // disparam para múltiplos alunos assim que a Z-API fica conectada.
+    const admin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    );
+    const { data: cfgRow } = await admin
+      .from('crm_settings').select('value').eq('key', 'zapi').maybeSingle();
+    const cfg: any = cfgRow?.value || {};
+    if (cfg.enabled !== true) {
+      return new Response(JSON.stringify({
+        ok: false,
+        blocked: true,
+        error: 'Canal Z-API está INATIVO em CRM → Configurações. Envio bloqueado.',
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    const INSTANCE_ID = (cfg.instance_id || '').trim() || Deno.env.get('ZAPI_INSTANCE_ID');
+    const INSTANCE_TOKEN = (cfg.instance_token || '').trim() || Deno.env.get('ZAPI_INSTANCE_TOKEN');
+    const CLIENT_TOKEN = (cfg.client_token || '').trim() || Deno.env.get('ZAPI_CLIENT_TOKEN');
     if (!INSTANCE_ID || !INSTANCE_TOKEN || !CLIENT_TOKEN) {
       return new Response(JSON.stringify({ ok: false, error: 'Z-API credentials missing' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
