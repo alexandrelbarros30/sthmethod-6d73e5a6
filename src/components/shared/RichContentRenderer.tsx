@@ -9,6 +9,27 @@ interface RichContentRendererProps {
   showZebra?: boolean;
 }
 
+// Convert emoji characters into Twemoji <img> SVGs so they render as
+// colorful drawings consistently across all devices (Windows, Android, etc.).
+const EMOJI_RE = /(\p{Extended_Pictographic}(?:\uFE0F)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F)?)*)/gu;
+function toCodePoint(unicodeSurrogates: string): string {
+  const points: string[] = [];
+  let i = 0;
+  while (i < unicodeSurrogates.length) {
+    const cp = unicodeSurrogates.codePointAt(i)!;
+    if (cp !== 0xfe0f) points.push(cp.toString(16));
+    i += cp > 0xffff ? 2 : 1;
+  }
+  return points.join("-");
+}
+function twemojify(html: string): string {
+  return html.replace(EMOJI_RE, (match) => {
+    const code = toCodePoint(match);
+    if (!code) return match;
+    return `<img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/${code}.svg" alt="${match}" class="twemoji" draggable="false" loading="lazy" style="height:1.1em;width:1.1em;display:inline-block;vertical-align:-0.15em;margin:0 0.05em;" />`;
+  });
+}
+
 // Allow leading emojis/symbols/whitespace before the heading keyword (e.g. "☕ Lanche da tarde", "🍽️ Almoço")
 const LEADING_DECOR = "[\\s\\p{Emoji_Presentation}\\p{Extended_Pictographic}\\p{S}\\p{P}]*";
 const MEAL_HEADING_RE = new RegExp(`^${LEADING_DECOR}(REFEIC[ÃA]O\\s*\\d*|REFEI[CÇ][ÃA]O\\s*\\d*|PRE[- ]?TREINO|P[OÓ]S[- ]?TREINO|CEIA|LANCHE(\\s+(DA\\s+TARDE|DA\\s+MANH[ÃA]|DA\\s+NOITE))?\\s*\\d*|CAFÉ\\s*DA\\s*MANH[ÃA]|CAFE\\s*DA\\s*MANHA|ALMO[CÇ]O|JANTAR|MANH[ÃA]|TARDE|NOITE|MEDICAMENTOS)`, "iu");
@@ -59,16 +80,17 @@ const RichContentRenderer = ({
   const isHTML = /<[a-z][\s\S]*>/i.test(content);
 
   if (isHTML) {
-    const processedContent = addBulletsAndZebraToHTML(content, { showParagraphBullets, stripLeadingMarkers, showZebra });
+    const withEmojis = twemojify(content);
+    const processedContent = addBulletsAndZebraToHTML(withEmojis, { showParagraphBullets, stripLeadingMarkers, showZebra });
     const safeContent = DOMPurify.sanitize(processedContent, {
       ALLOWED_TAGS: [
         "p", "br", "hr", "span", "div",
         "h1", "h2", "h3", "h4", "h5", "h6",
         "ul", "ol", "li",
         "strong", "b", "em", "i", "u", "s", "mark", "code",
-        "blockquote", "a",
+        "blockquote", "a", "img",
       ],
-      ALLOWED_ATTR: ["style", "class", "href", "target", "rel"],
+      ALLOWED_ATTR: ["style", "class", "href", "target", "rel", "src", "alt", "draggable", "loading"],
       ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
       FORBID_TAGS: ["script", "iframe", "object", "embed", "form", "input", "style"],
       FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover"],
@@ -88,6 +110,7 @@ const RichContentRenderer = ({
           "[&_mark]:bg-foreground/15 [&_mark]:text-foreground [&_mark]:px-0.5 [&_mark]:rounded",
           "[&_hr]:border-foreground/20 [&_hr]:my-3",
           "[&_s]:line-through",
+          "[&_img.twemoji]:inline-block [&_img.twemoji]:h-[1.1em] [&_img.twemoji]:w-[1.1em] [&_img.twemoji]:align-[-0.15em] [&_img.twemoji]:mx-[0.05em] [&_img.twemoji]:my-0",
           className
         )}
         dangerouslySetInnerHTML={{ __html: safeContent }}
@@ -96,9 +119,19 @@ const RichContentRenderer = ({
   }
 
   return (
-    <div className={cn("whitespace-pre-wrap text-sm text-foreground font-body leading-relaxed", className)}>
-      {content}
-    </div>
+    <div
+      className={cn(
+        "whitespace-pre-wrap text-sm text-foreground font-body leading-relaxed",
+        "[&_img.twemoji]:inline-block [&_img.twemoji]:h-[1.1em] [&_img.twemoji]:w-[1.1em] [&_img.twemoji]:align-[-0.15em] [&_img.twemoji]:mx-[0.05em]",
+        className
+      )}
+      dangerouslySetInnerHTML={{
+        __html: DOMPurify.sanitize(twemojify(content.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>")), {
+          ALLOWED_TAGS: ["img", "br"],
+          ALLOWED_ATTR: ["src", "alt", "class", "draggable", "loading", "style"],
+        }),
+      }}
+    />
   );
 };
 
