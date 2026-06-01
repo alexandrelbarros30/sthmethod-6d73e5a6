@@ -728,6 +728,54 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_message_templates: {
+        Row: {
+          active: boolean
+          body: string
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_automatic: boolean
+          key: string
+          media_url: string | null
+          name: string
+          updated_at: string
+          variables: string[]
+        }
+        Insert: {
+          active?: boolean
+          body: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_automatic?: boolean
+          key: string
+          media_url?: string | null
+          name: string
+          updated_at?: string
+          variables?: string[]
+        }
+        Update: {
+          active?: boolean
+          body?: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_automatic?: boolean
+          key?: string
+          media_url?: string | null
+          name?: string
+          updated_at?: string
+          variables?: string[]
+        }
+        Relationships: []
+      }
       crm_messages: {
         Row: {
           body: string | null
