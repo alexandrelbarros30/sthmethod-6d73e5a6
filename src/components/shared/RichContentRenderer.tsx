@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import DOMPurify from "dompurify";
+import { twemojify } from "@/lib/twemoji";
 
 interface RichContentRendererProps {
   content: string;
@@ -8,6 +9,7 @@ interface RichContentRendererProps {
   stripLeadingMarkers?: boolean;
   showZebra?: boolean;
 }
+
 
 // Allow leading emojis/symbols/whitespace before the heading keyword (e.g. "☕ Lanche da tarde", "🍽️ Almoço")
 const LEADING_DECOR = "[\\s\\p{Emoji_Presentation}\\p{Extended_Pictographic}\\p{S}\\p{P}]*";
@@ -59,16 +61,17 @@ const RichContentRenderer = ({
   const isHTML = /<[a-z][\s\S]*>/i.test(content);
 
   if (isHTML) {
-    const processedContent = addBulletsAndZebraToHTML(content, { showParagraphBullets, stripLeadingMarkers, showZebra });
+    const withEmojis = twemojify(content);
+    const processedContent = addBulletsAndZebraToHTML(withEmojis, { showParagraphBullets, stripLeadingMarkers, showZebra });
     const safeContent = DOMPurify.sanitize(processedContent, {
       ALLOWED_TAGS: [
         "p", "br", "hr", "span", "div",
         "h1", "h2", "h3", "h4", "h5", "h6",
         "ul", "ol", "li",
         "strong", "b", "em", "i", "u", "s", "mark", "code",
-        "blockquote", "a",
+        "blockquote", "a", "img",
       ],
-      ALLOWED_ATTR: ["style", "class", "href", "target", "rel"],
+      ALLOWED_ATTR: ["style", "class", "href", "target", "rel", "src", "alt", "draggable", "loading"],
       ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
       FORBID_TAGS: ["script", "iframe", "object", "embed", "form", "input", "style"],
       FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover"],
@@ -88,6 +91,7 @@ const RichContentRenderer = ({
           "[&_mark]:bg-foreground/15 [&_mark]:text-foreground [&_mark]:px-0.5 [&_mark]:rounded",
           "[&_hr]:border-foreground/20 [&_hr]:my-3",
           "[&_s]:line-through",
+          "[&_img.twemoji]:inline-block [&_img.twemoji]:h-[1.1em] [&_img.twemoji]:w-[1.1em] [&_img.twemoji]:align-[-0.15em] [&_img.twemoji]:mx-[0.05em] [&_img.twemoji]:my-0",
           className
         )}
         dangerouslySetInnerHTML={{ __html: safeContent }}
@@ -96,9 +100,19 @@ const RichContentRenderer = ({
   }
 
   return (
-    <div className={cn("whitespace-pre-wrap text-sm text-foreground font-body leading-relaxed", className)}>
-      {content}
-    </div>
+    <div
+      className={cn(
+        "whitespace-pre-wrap text-sm text-foreground font-body leading-relaxed",
+        "[&_img.twemoji]:inline-block [&_img.twemoji]:h-[1.1em] [&_img.twemoji]:w-[1.1em] [&_img.twemoji]:align-[-0.15em] [&_img.twemoji]:mx-[0.05em]",
+        className
+      )}
+      dangerouslySetInnerHTML={{
+        __html: DOMPurify.sanitize(twemojify(content.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>")), {
+          ALLOWED_TAGS: ["img", "br"],
+          ALLOWED_ATTR: ["src", "alt", "class", "draggable", "loading", "style"],
+        }),
+      }}
+    />
   );
 };
 

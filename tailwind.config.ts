@@ -17,10 +17,12 @@ export default {
         display: [
           "-apple-system", "BlinkMacSystemFont", "Inter",
           "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "sans-serif",
+          "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", "EmojiOne Color", "Android Emoji",
         ],
         body: [
           "-apple-system", "BlinkMacSystemFont", "Inter",
           "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "sans-serif",
+          "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", "EmojiOne Color", "Android Emoji",
         ],
       },
       colors: {
