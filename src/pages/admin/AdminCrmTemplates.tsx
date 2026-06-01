@@ -515,8 +515,6 @@ export default function AdminCrmTemplates() {
       </Dialog>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) { setDeleteTarget(null); setDeleteConfirm(""); } }}>
-        {/* placeholder anchor */}
-      </AlertDialog>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-rose-500">Excluir template permanentemente?</AlertDialogTitle>
@@ -544,6 +542,32 @@ export default function AdminCrmTemplates() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={aiOpen} onOpenChange={setAiOpen}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bot className="w-4 h-4 text-emerald-400" /> Prompt do Assistente IA — Canal Comercial (STH One)
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground">
+            Este prompt é usado pela IA para sugerir respostas no canal Comercial.
+            Dúvidas sobre dieta, treino, protocolo e exames são automaticamente encaminhadas ao Fale com o Nutri.
+          </p>
+          <Textarea
+            value={aiPrompt}
+            onChange={(e) => setAiPrompt(e.target.value)}
+            rows={22}
+            className="font-mono text-xs"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAiOpen(false)} disabled={aiSaving}>Cancelar</Button>
+            <Button onClick={saveAiPrompt} disabled={aiSaving}>
+              {aiSaving && <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />} Salvar prompt
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
