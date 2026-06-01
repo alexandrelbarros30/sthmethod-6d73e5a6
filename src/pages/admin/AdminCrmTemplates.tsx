@@ -95,10 +95,11 @@ export default function AdminCrmTemplates() {
   const [aiOpen, setAiOpen] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiSaving, setAiSaving] = useState(false);
+  const [aiEngine, setAiEngine] = useState<"lovable" | "local" | "gemini_api">("lovable");
 
   async function load() {
     setLoading(true);
-    const [{ data, error }, cfg, ai] = await Promise.all([
+    const [{ data, error }, cfg, ai, eng] = await Promise.all([
       supabase
       .from("crm_message_templates")
       .select("*")
@@ -106,26 +107,33 @@ export default function AdminCrmTemplates() {
       .order("name"),
       supabase.from("crm_settings").select("value").eq("key", "auto_channel_map").maybeSingle(),
       supabase.from("crm_settings").select("value").eq("key", "ai_prompt_comercial").maybeSingle(),
+      supabase.from("crm_settings").select("value").eq("key", "ai_engine").maybeSingle(),
     ]);
     if (error) toast({ title: "Erro ao carregar", description: error.message });
     setItems((data ?? []) as Template[]);
     setAutoMap(((cfg.data?.value || {}) as Record<string, AutoChannel>) || {});
     setAiPrompt((ai.data?.value as any)?.prompt || "");
+    const storedEng = (eng.data?.value as any)?.engine;
+    if (storedEng === "lovable" || storedEng === "local" || storedEng === "gemini_api") setAiEngine(storedEng);
     setLoading(false);
   }
 
   async function saveAiPrompt() {
     setAiSaving(true);
-    const { error } = await supabase
-      .from("crm_settings")
-      .upsert(
+    const [{ error }, { error: e2 }] = await Promise.all([
+      supabase.from("crm_settings").upsert(
         { key: "ai_prompt_comercial", value: { prompt: aiPrompt }, updated_at: new Date().toISOString() },
         { onConflict: "key" }
-      );
+      ),
+      supabase.from("crm_settings").upsert(
+        { key: "ai_engine", value: { engine: aiEngine }, updated_at: new Date().toISOString() },
+        { onConflict: "key" }
+      ),
+    ]);
     setAiSaving(false);
-    if (error) toast({ title: "Erro ao salvar prompt", description: error.message });
+    if (error || e2) toast({ title: "Erro ao salvar", description: (error || e2)?.message });
     else {
-      toast({ title: "Prompt da IA salvo" });
+      toast({ title: "Configuração da IA salva" });
       setAiOpen(false);
     }
   }
@@ -554,6 +562,23 @@ export default function AdminCrmTemplates() {
             Este prompt é usado pela IA para sugerir respostas no canal Comercial.
             Dúvidas sobre dieta, treino, protocolo e exames são automaticamente encaminhadas ao Fale com o Nutri.
           </p>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Motor de resposta</Label>
+            <Select value={aiEngine} onValueChange={(v) => setAiEngine(v as any)}>
+              <SelectTrigger className="h-9 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="lovable">Lovable AI (Gemini via gateway) — padrão</SelectItem>
+                <SelectItem value="gemini_api">Gemini API direto (GEMINI_API_KEY)</SelectItem>
+                <SelectItem value="local">Local (regras, sem IA externa)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-muted-foreground">
+              <b>Lovable</b>: usa créditos Lovable AI. <b>Gemini API</b>: usa sua chave Google direta.
+              <b> Local</b>: respostas determinísticas por regras (saudação + menu), sem custo.
+            </p>
+          </div>
           <Textarea
             value={aiPrompt}
             onChange={(e) => setAiPrompt(e.target.value)}
