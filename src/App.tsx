@@ -214,8 +214,6 @@ const App = () => (
             <Route path="/admin/exercise-library" element={<ProtectedRoute allowedRoles={["admin"]}><AdminExerciseLibrary /></ProtectedRoute>} />
             <Route path="/admin/workout-templates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTrainingPrograms /></ProtectedRoute>} />
             <Route path="/admin/content" element={<ProtectedRoute allowedRoles={["admin"]}><AdminContent /></ProtectedRoute>} />
-            <Route path="/admin/messages" element={<ProtectedRoute allowedRoles={["admin"]}><AdminMessages /></ProtectedRoute>} />
-            <Route path="/admin/ai-assistant" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAIAssistant /></ProtectedRoute>} />
             <Route path="/admin/layout" element={<ProtectedRoute allowedRoles={["admin"]}><AdminLayoutExterno /></ProtectedRoute>} />
             <Route path="/admin/roles" element={<ProtectedRoute allowedRoles={["admin"]}><AdminRoles /></ProtectedRoute>} />
             <Route path="/admin/staff" element={<ProtectedRoute allowedRoles={["admin"]}><AdminStaff /></ProtectedRoute>} />
