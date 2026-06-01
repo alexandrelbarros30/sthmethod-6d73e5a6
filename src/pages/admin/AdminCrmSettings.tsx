@@ -130,11 +130,14 @@ export default function AdminCrmSettings() {
           </div>
           <div className="flex gap-2">
             <Button onClick={() => save("zapi", zapi)} disabled={saving === "zapi"}>{saving === "zapi" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar"}</Button>
+            <Button variant="secondary" onClick={() => saveAndTest("zapi", zapi)} disabled={saving === "zapi" || testing === "zapi"}>
+              {(saving === "zapi" || testing === "zapi") ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar e Testar"}
+            </Button>
             <Button variant="outline" onClick={() => testConn("zapi")} disabled={testing === "zapi"}>
               {testing === "zapi" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Testar Conexão"}
             </Button>
           </div>
-          <p className="text-[11px] text-muted-foreground">As credenciais reais ficam armazenadas como secrets do backend (ZAPI_INSTANCE_ID, ZAPI_INSTANCE_TOKEN, ZAPI_CLIENT_TOKEN). Os campos acima servem para auditoria/operação.</p>
+          <p className="text-[11px] text-muted-foreground">Os valores acima são a <b>fonte oficial</b> usada pelos envios e pelo teste de conexão. Atualize o Client-Token aqui sempre que regenerar no painel Z-API.</p>
         </Card>
 
         {/* W-API */}
@@ -167,11 +170,14 @@ export default function AdminCrmSettings() {
           </div>
           <div className="flex gap-2">
             <Button onClick={() => save("wapi", wapi)} disabled={saving === "wapi"}>{saving === "wapi" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar"}</Button>
+            <Button variant="secondary" onClick={() => saveAndTest("wapi", wapi)} disabled={saving === "wapi" || testing === "wapi"}>
+              {(saving === "wapi" || testing === "wapi") ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar e Testar"}
+            </Button>
             <Button variant="outline" onClick={() => testConn("wapi")} disabled={testing === "wapi"}>
               {testing === "wapi" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Testar Conexão"}
             </Button>
           </div>
-          <p className="text-[11px] text-muted-foreground">Credenciais reais: secrets WAPI_INSTANCE_ID, WAPI_TOKEN, WAPI_CLIENT_TOKEN.</p>
+          <p className="text-[11px] text-muted-foreground">Os valores acima são a <b>fonte oficial</b> usada pelos envios e testes. Não é mais necessário mexer em secrets do backend.</p>
         </Card>
 
         {/* IA */}
