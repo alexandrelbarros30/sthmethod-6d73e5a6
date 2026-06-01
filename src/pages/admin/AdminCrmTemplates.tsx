@@ -562,6 +562,23 @@ export default function AdminCrmTemplates() {
             Este prompt é usado pela IA para sugerir respostas no canal Comercial.
             Dúvidas sobre dieta, treino, protocolo e exames são automaticamente encaminhadas ao Fale com o Nutri.
           </p>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Motor de resposta</Label>
+            <Select value={aiEngine} onValueChange={(v) => setAiEngine(v as any)}>
+              <SelectTrigger className="h-9 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="lovable">Lovable AI (Gemini via gateway) — padrão</SelectItem>
+                <SelectItem value="gemini_api">Gemini API direto (GEMINI_API_KEY)</SelectItem>
+                <SelectItem value="local">Local (regras, sem IA externa)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-muted-foreground">
+              <b>Lovable</b>: usa créditos Lovable AI. <b>Gemini API</b>: usa sua chave Google direta.
+              <b> Local</b>: respostas determinísticas por regras (saudação + menu), sem custo.
+            </p>
+          </div>
           <Textarea
             value={aiPrompt}
             onChange={(e) => setAiPrompt(e.target.value)}
