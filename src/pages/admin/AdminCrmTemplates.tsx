@@ -487,6 +487,35 @@ export default function AdminCrmTemplates() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) { setDeleteTarget(null); setDeleteConfirm(""); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-rose-500">Excluir template permanentemente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você está prestes a excluir <b>{deleteTarget?.name}</b> (<code>{deleteTarget?.key}</code>).
+              Esta ação é <b>irreversível</b>. Para confirmar, digite <b>DELETAR</b> abaixo.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Input
+            autoFocus
+            value={deleteConfirm}
+            onChange={(e) => setDeleteConfirm(e.target.value)}
+            placeholder="Digite DELETAR para confirmar"
+            className="mt-2"
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmRemove(); }}
+              disabled={deleting || deleteConfirm.trim().toUpperCase() !== "DELETAR"}
+              className="bg-rose-600 hover:bg-rose-700"
+            >
+              {deleting && <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />} Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }
