@@ -10,20 +10,25 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Copy, Loader2, Variable } from "lucide-react";
+import { Plus, Pencil, Trash2, Copy, Loader2, Variable, Zap, MessageSquare, Stethoscope } from "lucide-react";
 import { TEMPLATE_CATEGORIES, AVAILABLE_VARIABLES, renderTemplate } from "@/lib/crm-templates";
+
+type Channel = "zapi" | "wapi" | "both";
 
 interface Template {
   id: string;
   key: string;
   name: string;
   category: string;
+  channel: Channel;
   body: string;
   media_url: string | null;
   active: boolean;
   is_automatic: boolean;
+  automation_trigger: string | null;
   variables: string[];
   description: string | null;
 }
@@ -32,10 +37,12 @@ const EMPTY: Partial<Template> = {
   key: "",
   name: "",
   category: "outro",
+  channel: "zapi",
   body: "",
   media_url: "",
   active: true,
   is_automatic: false,
+  automation_trigger: "",
   variables: [],
   description: "",
 };
@@ -56,6 +63,7 @@ export default function AdminCrmTemplates() {
   const [items, setItems] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
+  const [tab, setTab] = useState<"zapi" | "wapi">("zapi");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<Template>>(EMPTY);
   const [saving, setSaving] = useState(false);
@@ -96,10 +104,12 @@ export default function AdminCrmTemplates() {
       key: editing.key!.trim(),
       name: editing.name!.trim(),
       category: editing.category || "outro",
+      channel: editing.channel || "zapi",
       body: editing.body!,
       media_url: editing.media_url?.trim() || null,
       active: !!editing.active,
       is_automatic: !!editing.is_automatic,
+      automation_trigger: editing.is_automatic ? (editing.automation_trigger?.trim() || null) : null,
       variables: detectVars(editing.body || ""),
       description: editing.description?.trim() || null,
     };
@@ -132,10 +142,12 @@ export default function AdminCrmTemplates() {
       key: `${t.key}_copia_${Date.now()}`,
       name: `${t.name} (cópia)`,
       category: t.category,
+      channel: t.channel,
       body: t.body,
       media_url: t.media_url,
       active: false,
       is_automatic: false,
+      automation_trigger: null,
       variables: t.variables,
       description: t.description,
       created_by: user?.id,
@@ -151,10 +163,50 @@ export default function AdminCrmTemplates() {
     setEditing((e) => ({ ...e, body: (e.body || "") + ` {${v}}` }));
   }
 
-  const filtered = filter === "all" ? items : items.filter((i) => i.category === filter);
+  const byChannel = items.filter((i) => i.channel === tab || i.channel === "both");
+  const filtered = filter === "all" ? byChannel : byChannel.filter((i) => i.category === filter);
+
+  const channelMeta = {
+    zapi: {
+      label: "STH One — Comercial",
+      desc: "Captação, planos, cadastro, conversão, renovação e recuperação. Linha: +55 21 99849-6289.",
+      icon: MessageSquare,
+      color: "text-emerald-400",
+    },
+    wapi: {
+      label: "Fale com o Nutri",
+      desc: "Atendimento de alunos ativos: dieta, treino, protocolo, exames, atualização de ciclo. Linha: +55 21 99898-4153.",
+      icon: Stethoscope,
+      color: "text-cyan-400",
+    },
+  } as const;
+  const meta = channelMeta[tab];
+  const Icon = meta.icon;
 
   return (
     <DashboardLayout role="admin" title="Templates de Mensagens" subtitle="Mensagens reutilizáveis (manuais e automáticas) com variáveis do banco">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="mb-4">
+        <TabsList className="grid grid-cols-2 w-full max-w-md">
+          <TabsTrigger value="zapi" className="gap-1.5">
+            <MessageSquare className="w-3.5 h-3.5 text-emerald-400" /> STH One
+          </TabsTrigger>
+          <TabsTrigger value="wapi" className="gap-1.5">
+            <Stethoscope className="w-3.5 h-3.5 text-cyan-400" /> Fale com o Nutri
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      <Card className="p-3 mb-4 flex items-start gap-3 bg-muted/30">
+        <Icon className={`w-4 h-4 mt-0.5 ${meta.color}`} />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold">{meta.label}</p>
+          <p className="text-[11px] text-muted-foreground">{meta.desc}</p>
+        </div>
+        <Badge variant="outline" className="text-[10px]">
+          {byChannel.length} templates
+        </Badge>
+      </Card>
+
       <div className="flex items-center gap-2 mb-4">
         <Select value={filter} onValueChange={setFilter}>
           <SelectTrigger className="w-64"><SelectValue /></SelectTrigger>
@@ -166,13 +218,15 @@ export default function AdminCrmTemplates() {
           </SelectContent>
         </Select>
         <div className="flex-1" />
-        <Button onClick={openNew} size="sm"><Plus className="w-3.5 h-3.5 mr-1" /> Novo template</Button>
+        <Button onClick={() => { setEditing({ ...EMPTY, channel: tab }); setOpen(true); }} size="sm">
+          <Plus className="w-3.5 h-3.5 mr-1" /> Novo template
+        </Button>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12"><Loader2 className="w-5 h-5 animate-spin" /></div>
       ) : filtered.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nenhum template.</p>
+        <p className="text-sm text-muted-foreground">Nenhum template neste canal.</p>
       ) : (
         <div className="grid gap-3">
           {filtered.map((t) => (
@@ -182,11 +236,23 @@ export default function AdminCrmTemplates() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-semibold">{t.name}</p>
                     <Badge variant="outline" className="text-[10px]">{TEMPLATE_CATEGORIES.find((c) => c.value === t.category)?.label || t.category}</Badge>
-                    {t.is_automatic && <Badge className="text-[10px] bg-amber-500/15 text-amber-600 border-amber-500/30">Automática</Badge>}
+                    {t.is_automatic && (
+                      <Badge className="text-[10px] bg-amber-500/15 text-amber-600 border-amber-500/30 gap-1">
+                        <Zap className="w-2.5 h-2.5" /> Automática
+                      </Badge>
+                    )}
                     {!t.active && <Badge variant="outline" className="text-[10px] text-muted-foreground">Inativa</Badge>}
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-0.5">chave: <code>{t.key}</code></p>
                   <p className="text-xs text-muted-foreground mt-2 whitespace-pre-line line-clamp-3">{t.body}</p>
+                  {t.is_automatic && t.automation_trigger && (
+                    <div className="mt-2 rounded border border-amber-500/30 bg-amber-500/5 p-2">
+                      <p className="text-[10px] font-medium text-amber-600 flex items-center gap-1">
+                        <Zap className="w-2.5 h-2.5" /> Como dispara automaticamente
+                      </p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">{t.automation_trigger}</p>
+                    </div>
+                  )}
                   {t.variables?.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
                       {t.variables.map((v) => (
@@ -220,14 +286,27 @@ export default function AdminCrmTemplates() {
                 <Input value={editing.name || ""} onChange={(e) => setEditing({ ...editing, name: e.target.value })} placeholder="ex: Cobrança vencido" />
               </div>
             </div>
-            <div>
-              <Label className="text-xs">Categoria</Label>
-              <Select value={editing.category || "outro"} onValueChange={(v) => setEditing({ ...editing, category: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {TEMPLATE_CATEGORIES.map((c) => (<SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Canal</Label>
+                <Select value={editing.channel || "zapi"} onValueChange={(v) => setEditing({ ...editing, channel: v as Channel })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="zapi">STH One — Comercial (Z-API)</SelectItem>
+                    <SelectItem value="wapi">Fale com o Nutri (W-API)</SelectItem>
+                    <SelectItem value="both">Ambos os canais</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Categoria</Label>
+                <Select value={editing.category || "outro"} onValueChange={(v) => setEditing({ ...editing, category: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {TEMPLATE_CATEGORIES.map((c) => (<SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div>
               <Label className="text-xs">Mensagem</Label>
@@ -258,9 +337,26 @@ export default function AdminCrmTemplates() {
               </div>
               <div className="flex items-center gap-2">
                 <Switch checked={!!editing.is_automatic} onCheckedChange={(c) => setEditing({ ...editing, is_automatic: c })} />
-                <Label className="text-xs">Usado em automações</Label>
+                <Label className="text-xs flex items-center gap-1"><Zap className="w-3 h-3 text-amber-500" /> Disparo automático</Label>
               </div>
             </div>
+            {editing.is_automatic && (
+              <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
+                <Label className="text-xs flex items-center gap-1 text-amber-600">
+                  <Zap className="w-3 h-3" /> Como esta mensagem dispara automaticamente
+                </Label>
+                <Textarea
+                  rows={2}
+                  value={editing.automation_trigger || ""}
+                  onChange={(e) => setEditing({ ...editing, automation_trigger: e.target.value })}
+                  placeholder="ex: Disparado 3 dias antes do vencimento do plano para todos os alunos ativos."
+                  className="bg-background"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Descreva quando e para quem o sistema envia. Esta descrição aparece no card do template e na auditoria de envios automáticos.
+                </p>
+              </div>
+            )}
             {editing.body && (
               <div className="rounded-md border bg-muted/30 p-3">
                 <p className="text-[11px] font-medium text-muted-foreground mb-1">Pré-visualização (dados de exemplo)</p>
