@@ -162,7 +162,10 @@ export default function AdminSuperCoach() {
 
       return profiles.map((p: any) => {
         const sub = subs?.find((s: any) => s.user_id === p.user_id);
-        const sync = syncs?.find((s: any) => s.user_id === p.user_id) || null;
+        const syncRaw = syncs?.find((s: any) => s.user_id === p.user_id) || null;
+        const sync: SyncRow | null = syncRaw
+          ? { ...syncRaw, status: syncRaw.status as SyncStatus }
+          : null;
         const parts: string[] = (p.full_name || "").trim().split(/\s+/);
         const firstName = parts[0] || "";
         const secondName = parts[1] || "";
@@ -327,7 +330,7 @@ export default function AdminSuperCoach() {
   };
 
   return (
-    <DashboardLayout role="admin">
+    <DashboardLayout role="admin" title="SuperCoach Admin">
       <div className="space-y-6 pb-12">
         {/* Header */}
         <div className="flex flex-wrap items-end justify-between gap-4">
