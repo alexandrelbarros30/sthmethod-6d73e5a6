@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.send-wapi]
 verify_jwt = false
+
+[functions.crm-inbound-webhook]
+verify_jwt = false
