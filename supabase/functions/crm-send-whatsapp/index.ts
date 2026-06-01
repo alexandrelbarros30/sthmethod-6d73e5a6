@@ -1,6 +1,11 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
+// Routes outbound WhatsApp:
+// - provider "zapi" (STH One / Comercial) → send-whatsapp function (Z-API)
+// - provider "wapi" (Fale com o Nutri)     → send-wapi function (W-API)
+// Auto-detects from conversation.provider when not supplied.
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -19,13 +24,23 @@ Deno.serve(async (req) => {
     if (!auth?.claims) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     const userId = auth.claims.sub;
 
-    const { conversation_id, phone, body, image_url } = await req.json();
+    const { conversation_id, phone, body, image_url, provider: explicitProvider } = await req.json();
     if (!conversation_id || !phone || (!body && !image_url)) {
       return new Response(JSON.stringify({ error: 'conversation_id, phone and body required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // call existing send-wapi function
-    const url = `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-wapi`;
+    const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+
+    // Resolve provider: explicit → conversation.provider → queue_type → default
+    let provider = (explicitProvider || '').toLowerCase();
+    if (!provider) {
+      const { data: conv } = await admin.from('crm_conversations').select('provider, queue_type').eq('id', conversation_id).maybeSingle();
+      provider = (conv?.provider as string) || (conv?.queue_type === 'comercial' || conv?.queue_type === 'financeiro' ? 'zapi' : 'wapi');
+    }
+    const targetFn = provider === 'zapi' ? 'send-whatsapp' : 'send-wapi';
+    const source = provider === 'zapi' ? 'zapi' : 'wapi';
+
+    const url = `${Deno.env.get('SUPABASE_URL')}/functions/v1/${targetFn}`;
     const resp = await fetch(url, {
       method: 'POST',
       headers: {
@@ -38,14 +53,12 @@ Deno.serve(async (req) => {
     const status = resp.ok ? 'sent' : 'failed';
     const externalId = (sendData as any)?.messageId || null;
 
-    // Use service role for DB write to bypass RLS-safe insert (already authenticated)
-    const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     await admin.from('crm_messages').insert({
       conversation_id, direction: 'out', body, media_url: image_url || null,
-      sent_by: userId, source: 'manual', status, external_id: externalId,
+      sent_by: userId, source, status, external_id: externalId,
     });
 
-    return new Response(JSON.stringify({ ok: resp.ok, status, data: sendData }), {
+    return new Response(JSON.stringify({ ok: resp.ok, status, provider, data: sendData }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {

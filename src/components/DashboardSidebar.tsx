@@ -70,6 +70,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
         { to: "/admin/crm/campanhas", icon: Send, label: "Campanhas" },
         { to: "/admin/crm/tarefas", icon: CheckSquare, label: "Tarefas" },
         { to: "/admin/crm/ia", icon: Sparkles, label: "IA" },
+        { to: "/admin/crm/configuracoes", icon: PanelTop, label: "Configurações WhatsApp" },
       ],
     },
     {
