@@ -62,7 +62,10 @@ const ReleaseNotifyButton = ({ userId, type, label }: ReleaseNotifyButtonProps) 
       } else if (res.reason) {
         toast.error(`Falha no envio automático: ${res.reason}`);
       } else {
-        toast.success("Liberado! Aluno notificado no WhatsApp.");
+        toast.success("Liberado! Mensagem enviada à fila do WhatsApp.", {
+          description:
+            "A entrega depende do WhatsApp do destinatário. Confirme com o aluno se não chegar em alguns minutos.",
+        });
       }
     } catch (err: any) {
       toast.error("Erro ao liberar/notificar.");
