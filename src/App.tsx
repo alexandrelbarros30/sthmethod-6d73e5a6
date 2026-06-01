@@ -83,6 +83,11 @@ import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminBudgets from "./pages/admin/AdminBudgets";
 import AdminQueue from "./pages/admin/AdminQueue";
 import AdminUpdates from "./pages/admin/AdminUpdates";
+import AdminCrm from "./pages/admin/AdminCrm";
+import AdminCrmCampaigns from "./pages/admin/AdminCrmCampaigns";
+import AdminCrmQueues from "./pages/admin/AdminCrmQueues";
+import AdminCrmTasks from "./pages/admin/AdminCrmTasks";
+import AdminCrmAi from "./pages/admin/AdminCrmAi";
 import StudentConsultas from "./pages/student/StudentConsultas";
 import ConsultorDashboard from "./pages/consultor/ConsultorDashboard";
 import AssistenteDashboard from "./pages/assistente/AssistenteDashboard";
@@ -225,6 +230,11 @@ const App = () => (
             <Route path="/admin/ads" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAds /></ProtectedRoute>} />
             <Route path="/admin/queue" element={<ProtectedRoute allowedRoles={["admin"]}><AdminQueue /></ProtectedRoute>} />
             <Route path="/admin/updates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminUpdates /></ProtectedRoute>} />
+            <Route path="/admin/crm" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrm /></ProtectedRoute>} />
+            <Route path="/admin/crm/campanhas" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrmCampaigns /></ProtectedRoute>} />
+            <Route path="/admin/crm/filas" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrmQueues /></ProtectedRoute>} />
+            <Route path="/admin/crm/tarefas" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrmTasks /></ProtectedRoute>} />
+            <Route path="/admin/crm/ia" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrmAi /></ProtectedRoute>} />
             {/* Consultor routes */}
             <Route path="/consultor" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
             <Route path="/consultor/students" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
