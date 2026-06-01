@@ -10,6 +10,7 @@ import { Search, Layers, FolderCog } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import StudentProgramAssignDialog from "@/components/admin/StudentProgramAssignDialog";
+import ReleaseNotifyButton from "@/components/admin/ReleaseNotifyButton";
 
 const AdminTraining = () => {
   const navigate = useNavigate();
@@ -27,15 +28,31 @@ const AdminTraining = () => {
       const userIds = (profiles || []).map((p: any) => p.user_id);
       const { data: assigns } = await supabase
         .from("student_workout_assignments")
-        .select("user_id, active")
+        .select("user_id, active, template_id")
         .in("user_id", userIds.length ? userIds : ["00000000-0000-0000-0000-000000000000"]);
-      const counts: Record<string, number> = {};
-      (assigns || []).forEach((a: any) => {
-        if (a.active) counts[a.user_id] = (counts[a.user_id] || 0) + 1;
+      const activeAssigns = (assigns || []).filter((a: any) => a.active);
+      const templateIds = Array.from(new Set(activeAssigns.map((a: any) => a.template_id))).filter(Boolean);
+      const { data: templates } = templateIds.length
+        ? await supabase.from("workout_templates").select("id, program_id").in("id", templateIds as string[])
+        : { data: [] as any[] };
+      const programIds = Array.from(new Set((templates || []).map((t: any) => t.program_id))).filter(Boolean);
+      const { data: programs } = programIds.length
+        ? await supabase.from("training_programs").select("id, title").in("id", programIds as string[])
+        : { data: [] as any[] };
+      const tplToProg: Record<string, string> = {};
+      (templates || []).forEach((t: any) => { tplToProg[t.id] = t.program_id; });
+      const progTitle: Record<string, string> = {};
+      (programs || []).forEach((p: any) => { progTitle[p.id] = p.title; });
+      const studentPrograms: Record<string, Set<string>> = {};
+      activeAssigns.forEach((a: any) => {
+        const progId = tplToProg[a.template_id];
+        if (!progId) return;
+        if (!studentPrograms[a.user_id]) studentPrograms[a.user_id] = new Set();
+        studentPrograms[a.user_id].add(progId);
       });
       return (profiles || []).map((p: any) => ({
         ...p,
-        assignedCount: counts[p.user_id] || 0,
+        assignedPrograms: Array.from(studentPrograms[p.user_id] || []).map((id) => progTitle[id]).filter(Boolean),
         initials:
           p.full_name
             ?.split(" ")
@@ -109,7 +126,7 @@ const AdminTraining = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead className="font-body">Aluno</TableHead>
-                  <TableHead className="font-body">Treinos atribuídos</TableHead>
+                  <TableHead className="font-body">Programa atribuído</TableHead>
                   <TableHead className="font-body text-right">Ação</TableHead>
                 </TableRow>
               </TableHeader>
@@ -136,19 +153,26 @@ const AdminTraining = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant={s.assignedCount > 0 ? "secondary" : "outline"}
-                          className="text-xs"
-                        >
-                          {s.assignedCount > 0
-                            ? `${s.assignedCount} treino(s)`
-                            : "Sem atribuição"}
-                        </Badge>
+                        {s.assignedPrograms.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {s.assignedPrograms.map((title: string) => (
+                              <Badge key={title} variant="secondary" className="text-xs">{title}</Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <Badge variant="outline" className="text-xs">Sem atribuição</Badge>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" onClick={() => openAssign(s)}>
-                          <Layers className="w-3 h-3 mr-1" /> Atribuir programa
-                        </Button>
+                        <div className="flex items-center justify-end gap-2 flex-wrap">
+                          <Button variant="ghost" size="sm" onClick={() => openAssign(s)}>
+                            <Layers className="w-3 h-3 mr-1" />
+                            {s.assignedPrograms.length > 0 ? "Alterar" : "Atribuir programa"}
+                          </Button>
+                          {s.assignedPrograms.length > 0 && (
+                            <ReleaseNotifyButton userId={s.user_id} type="training" />
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
