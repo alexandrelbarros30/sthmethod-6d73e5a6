@@ -396,7 +396,7 @@ export default function AdminSuperCoach() {
 
             {/* Table */}
             <Card className="overflow-hidden border-foreground/10">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" style={{ scrollbarWidth: "thin" }}>
                 <table className="w-full text-sm">
                   <thead className="bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground">
                     <tr>
