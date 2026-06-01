@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
+import DashboardSidebar from "@/components/DashboardSidebar";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ function fmtTime(s: string | null) {
 export default function AdminCrm() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const isMobile = useIsMobile();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [draft, setDraft] = useState("");
@@ -167,8 +169,9 @@ export default function AdminCrm() {
   }
 
   return (
-    <DashboardLayout>
-      <div className="h-[calc(100vh-3rem)] md:h-screen flex">
+    <div className="min-h-screen bg-background">
+      <DashboardSidebar role="admin" />
+      <div className={`flex ${isMobile ? "pt-12 h-screen" : "ml-60 h-screen"}`}>
         {/* Conversations list */}
         <div className="w-72 border-r border-border/50 flex flex-col">
           <div className="p-3 border-b border-border/50 space-y-2">
@@ -271,6 +274,6 @@ export default function AdminCrm() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   );
 }
