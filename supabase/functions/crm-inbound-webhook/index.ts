@@ -518,13 +518,23 @@ Deno.serve(async (req) => {
     const channelEnabled = provider === 'wapi'
       ? (wapiCfg?.value as any)?.enabled === true
       : (zapiCfg?.value as any)?.enabled === true;
+    const shouldSendCommercialIdentification = provider === 'zapi' && channelEnabled && (
+      isNewSession ||
+      !(await admin
+        .from('crm_messages')
+        .select('id', { head: true, count: 'exact' })
+        .eq('conversation_id', conv!.id)
+        .eq('direction', 'out')
+        .eq('source', 'zapi')
+      ).count
+    );
 
     // === Canal Comercial (Z-API) → mensagem de identificação (1x por sessão) ===
     // Sempre envia na 1ª msg da sessão, independente de hora ou ai_mode.
     // Aluno ativo → direciona para Fale com o Nutri.
     // Aluno vencido → mensagem de renovação.
     // Lead → mensagem comercial padrão.
-    if (provider === 'zapi' && channelEnabled && isNewSession) {
+    if (shouldSendCommercialIdentification) {
       const firstName = (displayName || profile?.full_name || '').toString().split(' ')[0] || '';
       const defaults: Record<string, string> = {
         aluno_ativo:
