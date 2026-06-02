@@ -44,6 +44,15 @@ Deno.serve(async (req) => {
     const fullPhone = digits.startsWith('55') ? digits : `55${digits}`;
 
     const base = `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}`;
+    const statusResp = await fetch(`${base}/status`, { headers: { 'Client-Token': CLIENT_TOKEN } });
+    const statusData = await statusResp.json().catch(() => ({}));
+    const statusErr = typeof (statusData as any)?.error === 'string' ? (statusData as any).error.toLowerCase() : '';
+    const statusOk = statusResp.ok && (((statusData as any)?.connected === true) || statusErr.includes('you are already connected'));
+    if (!statusOk) {
+      return new Response(JSON.stringify({ ok: false, error: 'Instância Z-API não conectada', status: statusData }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     const headers = {
       'Content-Type': 'application/json',
       'Client-Token': CLIENT_TOKEN,

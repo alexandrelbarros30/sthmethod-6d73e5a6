@@ -43,7 +43,21 @@ Deno.serve(async (req) => {
     const digits = String(phone).replace(/\D/g, '');
     const fullPhone = digits.startsWith('55') ? digits : `55${digits}`;
 
-    const base = `https://api.w-api.app/v1/message`;
+    const serverUrl = ((cfg.server_url || '').trim() || 'https://api.w-api.app').replace(/\/$/, '');
+    const statusHeaders: Record<string, string> = {
+      Authorization: `Bearer ${TOKEN}`,
+    };
+    if (CLIENT_TOKEN) statusHeaders['Client-Token'] = CLIENT_TOKEN;
+    const statusResp = await fetch(`${serverUrl}/v1/instance/status-instance?instanceId=${INSTANCE_ID}`, { headers: statusHeaders });
+    const statusData = await statusResp.json().catch(() => ({}));
+    const statusOk = statusResp.ok && (statusData as any)?.connected === true && !(statusData as any)?.error;
+    if (!statusOk) {
+      return new Response(JSON.stringify({ ok: false, error: 'Instância W-API não conectada', status: statusData }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const base = `${serverUrl}/v1/message`;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${TOKEN}`,
