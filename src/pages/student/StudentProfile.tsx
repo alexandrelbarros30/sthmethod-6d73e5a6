@@ -8,7 +8,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   User, CheckCircle, AlertCircle, CalendarDays, Camera, Shield,
   FileText, CreditCard, ChevronRight, Scale, TrendingUp, Activity,
-  Flame, Zap, Target
+  Flame, Zap, Target, BellOff
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -431,6 +431,44 @@ const StudentProfile = () => {
             </div>
           </div>
           <ChangePasswordDialog />
+        </CardContent>
+      </Card>
+
+      {/* ===== PREFERÊNCIAS DE COMUNICAÇÃO ===== */}
+      <Card className="mb-4">
+        <CardContent className="py-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <BellOff className="w-5 h-5 text-muted-foreground shrink-0" />
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground">Mensagens automáticas via WhatsApp</p>
+              <p className="text-xs text-muted-foreground">
+                {fullProfile?.whatsapp_opt_out
+                  ? "Você não está recebendo mensagens automáticas."
+                  : "Você recebe lembretes de evolução, renovação e atualizações de conteúdo."}
+              </p>
+            </div>
+          </div>
+          <Button
+            variant={fullProfile?.whatsapp_opt_out ? "default" : "outline"}
+            size="sm"
+            className="shrink-0"
+            onClick={async () => {
+              const willOptOut = !fullProfile?.whatsapp_opt_out;
+              if (willOptOut && !window.confirm(
+                "Tem certeza que deseja cancelar o recebimento das mensagens automáticas (lembretes de evolução, renovação, novidades)?"
+              )) return;
+              const { error } = await supabase.from("profiles").update({
+                whatsapp_opt_out: willOptOut,
+                whatsapp_opt_out_at: willOptOut ? new Date().toISOString() : null,
+                whatsapp_opt_out_reason: willOptOut ? "Solicitação do aluno pelo painel" : null,
+              }).eq("user_id", user!.id);
+              if (error) { toast.error("Não foi possível salvar."); return; }
+              toast.success(willOptOut ? "Envio cancelado." : "Envio reativado.");
+              refetchProfile();
+            }}
+          >
+            {fullProfile?.whatsapp_opt_out ? "Reativar envio" : "Cancelar envio"}
+          </Button>
         </CardContent>
       </Card>
 
