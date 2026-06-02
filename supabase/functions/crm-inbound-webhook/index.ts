@@ -259,7 +259,6 @@ Deno.serve(async (req) => {
         : `Bem-vindo de volta, ${firstName}! 💪 Você voltará a receber as comunicações da STH METHOD normalmente.`;
       try {
         if (provider === 'wapi') {
-          const cfg: any = (wapiCfg_unused => null)(0); // placeholder
           const { data: wcfg } = await admin.from('crm_settings').select('value').eq('key', 'wapi').maybeSingle();
           const c: any = wcfg?.value || {};
           const INSTANCE_ID = (c.instance_id || '').trim() || Deno.env.get('WAPI_INSTANCE_ID');
