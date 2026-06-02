@@ -248,9 +248,32 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'invalid secret' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     const phoneRaw = payload?.phone || payload?.from || payload?.data?.from || payload?.message?.from || '';
-    const body = payload?.message || payload?.text || payload?.body || payload?.data?.message?.text || '';
+    // Z-API: text.message | image.caption | audio (sem texto) | document.caption
+    const rawText =
+      (typeof payload?.text === 'string' ? payload.text : payload?.text?.message) ||
+      payload?.message?.conversation ||
+      (typeof payload?.message === 'string' ? payload.message : '') ||
+      payload?.image?.caption ||
+      payload?.video?.caption ||
+      payload?.document?.caption ||
+      payload?.body ||
+      payload?.data?.message?.text ||
+      '';
+    const body = typeof rawText === 'string' ? rawText : '';
     const externalId = payload?.messageId || payload?.id || null;
     const name = payload?.senderName || payload?.pushName || null;
+
+    // Ignora mensagens enviadas por mim e mensagens de grupo
+    const isFromMe = payload?.fromMe === true || payload?.from_me === true;
+    const isGroup =
+      payload?.isGroup === true ||
+      payload?.is_group === true ||
+      String(phoneRaw).startsWith('120363') ||
+      String(phoneRaw).includes('-') ||
+      String(phoneRaw).includes('@g.us');
+    if (isFromMe || isGroup) {
+      return new Response(JSON.stringify({ ok: true, skipped: isFromMe ? 'fromMe' : 'group' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
 
     const phone = normalizePhone(phoneRaw);
     if (!phone || !body) {
