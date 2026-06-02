@@ -533,16 +533,195 @@ Deno.serve(async (req) => {
     const channelEnabled = provider === 'wapi'
       ? (wapiCfg?.value as any)?.enabled === true
       : (zapiCfg?.value as any)?.enabled === true;
-    const shouldSendCommercialIdentification = provider === 'zapi' && channelEnabled && (
-      isNewSession ||
-      !(await admin
-        .from('crm_messages')
-        .select('id', { head: true, count: 'exact' })
-        .eq('conversation_id', conv!.id)
-        .eq('direction', 'out')
-        .eq('source', 'zapi')
-      ).count
-    );
+    const { count: outboundZapiCount } = await admin
+      .from('crm_messages')
+      .select('id', { head: true, count: 'exact' })
+      .eq('conversation_id', conv!.id)
+      .eq('direction', 'out')
+      .eq('source', 'zapi');
+    const hasIdentificationSent = (outboundZapiCount ?? 0) > 0;
+    const shouldSendCommercialIdentification =
+      provider === 'zapi' && channelEnabled && (isNewSession || !hasIdentificationSent);
+
+    // Detecta escolha de menu (1-5) ou pedido de voltar (0/menu/voltar)
+    const trimmedBody = String(body).trim();
+    const menuChoice: '0' | '1' | '2' | '3' | '4' | '5' | null =
+      /^[0-5]$/.test(trimmedBody)
+        ? (trimmedBody as any)
+        : /^(menu|voltar|in[ií]cio|inicio)$/i.test(trimmedBody)
+        ? '0'
+        : null;
+
+    // Helper: envia texto via Z-API e registra em crm_messages
+    const sendZapiText = async (message: string, modelTag: string) => {
+      const c = (zapiCfg?.value as any) || {};
+      const INSTANCE_ID = (c.instance_id || Deno.env.get('ZAPI_INSTANCE_ID') || '').trim();
+      const INSTANCE_TOKEN = (c.instance_token || Deno.env.get('ZAPI_INSTANCE_TOKEN') || '').trim();
+      const CLIENT_TOKEN = (c.client_token || Deno.env.get('ZAPI_CLIENT_TOKEN') || '').trim();
+      let sent = false;
+      let messageId: string | null = null;
+      if (INSTANCE_ID && INSTANCE_TOKEN) {
+        const r = await fetch(`https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(CLIENT_TOKEN ? { 'Client-Token': CLIENT_TOKEN } : {}) },
+          body: JSON.stringify({ phone, message }),
+        });
+        const j = await r.json().catch(() => ({}));
+        sent = r.ok;
+        messageId = j?.messageId || j?.id || null;
+      }
+      await admin.from('crm_messages').insert({
+        conversation_id: conv!.id,
+        direction: 'out',
+        body: message,
+        source: 'zapi',
+        external_id: messageId,
+        status: sent ? 'sent' : 'failed',
+      });
+      return { sent, messageId, modelTag };
+    };
+
+    // Defaults dos menus (sobrescritos por crm_settings se houver). Footer "voltar ao menu" automático.
+    const MENU_BACK = '\n\n0️⃣ Voltar ao menu principal';
+    const FIRST_NAME = (displayName || profile?.full_name || '').toString().split(' ')[0] || '';
+    const NOME_SEP = FIRST_NAME ? ' ' : '';
+    const renderTpl = (s: string) =>
+      s.replace(/\{nome\}/gi, FIRST_NAME).replace(/\{nomeSep\}/gi, NOME_SEP);
+
+    const MENU_DEFAULTS: Record<string, string> = {
+      '1':
+        '*Planos STH METHOD* 💎\n\n' +
+        'Temos 3 opções para atender às suas necessidades:\n\n' +
+        '🔹 *30D*\n' +
+        '• Promoção (PIX): *R$ 85,90* / 30 dias\n' +
+        '• Normal: R$ 94,90 (cartão R$ 99,90)\n' +
+        '_Ideal para iniciar, organizar a rotina e sentir os primeiros resultados._\n\n' +
+        '🔹 *90D*\n' +
+        '• Promoção (PIX): *R$ 209,90* / 90 dias\n' +
+        '• Normal: R$ 249,90 (cartão R$ 276,45)\n' +
+        '_Para quem busca continuidade, estratégia e evolução consistente._\n\n' +
+        '🔹 *6M*\n' +
+        '• Promoção (PIX): *R$ 449,90* / 180 dias\n' +
+        '• Normal: R$ 449,90 (cartão R$ 528,90)\n' +
+        '_Para quem deseja transformação profunda, previsível e sustentável._\n\n' +
+        '🌐 Detalhes e contratação: https://sthmethod.com.br',
+      '2':
+        '*Como funciona a STH METHOD* 🧬\n\n' +
+        'A STH METHOD é uma consultoria em performance, saúde e transformação corporal, baseada em ciência, estratégia e respeito à individualidade.\n\n' +
+        '*O que você recebe na consultoria:*\n\n' +
+        '✅ *Plano Alimentar Personalizado*\n' +
+        '• Dieta conforme objetivos, rotina e preferências\n' +
+        '• Ajustes periódicos conforme sua evolução\n\n' +
+        '✅ *Treino Personalizado*\n' +
+        '• Estruturado para seu nível e objetivo\n' +
+        '• Atualizações para manter progressão e gerar novos estímulos\n\n' +
+        '✅ *Protocolo Inteligente*\n' +
+        '• Estratégias individualizadas (histórico, rotina, evolução)\n' +
+        '• Planejamento integrado para potencializar resultados\n' +
+        '• Ajustes sempre que necessário\n\n' +
+        '✅ *Análise e Interpretação de Exames*\n' +
+        '• Avaliação detalhada dos exames laboratoriais\n' +
+        '• Monitoramento de marcadores de saúde, performance, recuperação e composição\n' +
+        '• Dados usados para otimizar todas as estratégias\n\n' +
+        '✅ *Acompanhamento Contínuo*\n' +
+        '• Suporte da equipe para dúvidas\n' +
+        '• Monitoramento constante da evolução\n\n' +
+        '✅ *Avaliação Mensal*\n' +
+        '• Todo mês você atualiza suas informações na plataforma',
+      '3':
+        'Olá{nomeSep}{nome}! 💚\n\n' +
+        'Eu sou a *Vanessa*, consultora da STH METHOD. Será um prazer te atender pessoalmente.\n\n' +
+        'Me conta rapidinho:\n' +
+        '• Qual é o seu *objetivo* principal?\n' +
+        '• Você já fez consultoria antes?\n' +
+        '• Qual o melhor *horário* para conversarmos?\n\n' +
+        'Atendimento humano: Seg–Sex 9h–19h • Sáb 9h–14h.\n' +
+        'Respondo assim que possível dentro desse horário. 🙏',
+      '4_ex_aluno':
+        'Que bom te ver de volta{nomeSep}{nome}! 🙌\n\n' +
+        'Identificamos que você *já foi aluno* da STH METHOD. Para *renovar* sua consultoria, escolha uma das opções abaixo:\n\n' +
+        '🔹 *30D* — PIX R$ 85,90 (normal R$ 94,90 / cartão R$ 99,90)\n' +
+        '🔹 *90D* — PIX R$ 209,90 (normal R$ 249,90 / cartão R$ 276,45)\n' +
+        '🔹 *6M* — PIX R$ 449,90 (normal R$ 449,90 / cartão R$ 528,90)\n\n' +
+        '👉 Renove agora: https://sthmethod.com.br/aluno/renovar\n\n' +
+        'Se preferir, responda *3* para falar com um consultor.',
+      '4_aluno_ativo':
+        '{nome}, você é *aluno ativo* da STH METHOD ✅\n\n' +
+        'Dúvidas sobre *dieta, treino, protocolo, exames ou atualização* devem ser tratadas no canal exclusivo *Fale com o Nutri*:\n\n' +
+        '👉 https://wa.me/5521998984153\n\n' +
+        'Este canal aqui é *comercial* (planos, renovação e financeiro).',
+      '5':
+        '*Financeiro / Renovação* 💳\n\n' +
+        'Você pode renovar sua consultoria a qualquer momento escolhendo um dos planos:\n\n' +
+        '🔹 *30D* — PIX R$ 85,90 (normal R$ 94,90 / cartão R$ 99,90)\n' +
+        '🔹 *90D* — PIX R$ 209,90 (normal R$ 249,90 / cartão R$ 276,45)\n' +
+        '🔹 *6M* — PIX R$ 449,90 (normal R$ 449,90 / cartão R$ 528,90)\n\n' +
+        '👉 Link de renovação: https://sthmethod.com.br/aluno/renovar\n\n' +
+        'Em caso de dúvida sobre pagamento, comprovante ou cobrança, responda aqui mesmo que um consultor te atende no horário comercial.',
+    };
+
+    const getMenuTpl = (key: string, fallback: string): string => {
+      const map: Record<string, any> = {
+        '1': menu1Cfg,
+        '2': menu2Cfg,
+        '3': menu3Cfg,
+        '4_ex_aluno': menu4ExCfg,
+        '4_aluno_ativo': menu4ActiveCfg,
+        '5': menu5Cfg,
+      };
+      const v = (map[key]?.value as any)?.message;
+      return String(v && String(v).trim() ? v : fallback);
+    };
+
+    // === Menu handler (Z-API) — só age se já enviamos a identificação e não vamos reenviá-la ===
+    if (
+      provider === 'zapi' &&
+      channelEnabled &&
+      !shouldSendCommercialIdentification &&
+      hasIdentificationSent &&
+      menuChoice !== null
+    ) {
+      try {
+        let menuKey: string;
+        if (menuChoice === '0') {
+          // Reenvia o menu principal (identificação) conforme perfil atual
+          const defaultsId: Record<string, string> = {
+            aluno_ativo:
+              'Olá{nomeSep}{nome}! 👋 Você é *aluno ativo* da STH METHOD.\n\nEste canal é *comercial* (planos, renovação e financeiro). Como posso ajudar?\n1️⃣ Conhecer planos\n2️⃣ Como funciona\n3️⃣ Falar com consultor (Vanessa)\n4️⃣ Já sou aluno\n5️⃣ Financeiro / Renovação',
+            aluno_vencido:
+              'Olá{nomeSep}{nome}! 👋 Sua assinatura está *vencida*. Como posso ajudar?\n1️⃣ Conhecer planos\n2️⃣ Como funciona\n3️⃣ Falar com consultor (Vanessa)\n4️⃣ Já sou aluno\n5️⃣ Financeiro / Renovação',
+            lead:
+              'Olá{nomeSep}{nome}! 👋 Seja bem-vindo(a) à *STH METHOD*. Como posso ajudar?\n1️⃣ Conhecer planos\n2️⃣ Como funciona\n3️⃣ Falar com consultor (Vanessa)\n4️⃣ Já sou aluno\n5️⃣ Financeiro / Renovação',
+          };
+          const tplCfg =
+            identifiedAs === 'aluno_ativo' ? (comIdActive?.value as any)?.message
+            : identifiedAs === 'aluno_vencido' ? (comIdExpired?.value as any)?.message
+            : (comIdLead?.value as any)?.message;
+          const tpl = String(tplCfg || defaultsId[identifiedAs] || defaultsId.lead);
+          const out = renderTpl(tpl);
+          const r = await sendZapiText(out, `menu_0_${identifiedAs}`);
+          autoReply = { sent: r.sent, engine: 'menu', model: r.modelTag };
+        } else {
+          if (menuChoice === '4') {
+            menuKey = identifiedAs === 'aluno_ativo' ? '4_aluno_ativo' : '4_ex_aluno';
+          } else {
+            menuKey = menuChoice;
+          }
+          const tpl = getMenuTpl(menuKey, MENU_DEFAULTS[menuKey] || '');
+          const out = renderTpl(tpl) + MENU_BACK;
+          const r = await sendZapiText(out, `menu_${menuKey}`);
+          autoReply = { sent: r.sent, engine: 'menu', model: r.modelTag };
+        }
+
+        return new Response(
+          JSON.stringify({ ok: true, queue: finalQueue, is_lead: isLead, tags: tagsToApply, auto_reply: autoReply, menu: menuChoice }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      } catch (e) {
+        console.error('menu reply failed', e);
+        autoReply = { sent: false, reason: String(e) };
+      }
+    }
 
     // === Canal Comercial (Z-API) → mensagem de identificação (1x por sessão) ===
     // Sempre envia na 1ª msg da sessão, independente de hora ou ai_mode.
