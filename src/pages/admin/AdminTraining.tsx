@@ -6,11 +6,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Layers, FolderCog } from "lucide-react";
+import { Search, Layers, FolderCog, Eye, Dumbbell } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import StudentProgramAssignDialog from "@/components/admin/StudentProgramAssignDialog";
 import ReleaseNotifyButton from "@/components/admin/ReleaseNotifyButton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const AdminTraining = () => {
   const navigate = useNavigate();
@@ -18,6 +20,9 @@ const AdminTraining = () => {
   const [search, setSearch] = useState("");
   const [assignOpen, setAssignOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [returnToManage, setReturnToManage] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   const { data: students } = useQuery({
     queryKey: ["admin-students-training-assign-list"],
@@ -66,10 +71,14 @@ const AdminTraining = () => {
 
   useEffect(() => {
     const uid = searchParams.get("uid");
+    const ret = searchParams.get("return");
     if (uid && students?.length) {
       const found = students.find((s: any) => s.user_id === uid);
       if (found) {
         setSearch(found.full_name || found.email || "");
+        setSelectedStudent(found);
+        setDialogOpen(true);
+        if (ret === "manage") setReturnToManage(uid);
       }
       searchParams.delete("uid");
       searchParams.delete("return");
@@ -190,6 +199,70 @@ const AdminTraining = () => {
         userId={selectedStudent?.user_id || null}
         userName={selectedStudent?.full_name}
       />
+
+      {/* Training Management Popup (X to close → return to manage) */}
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(o) => {
+          setDialogOpen(o);
+          if (!o && returnToManage) {
+            navigate(`/admin/students?manage=${returnToManage}`);
+            setReturnToManage(null);
+          }
+        }}
+      >
+        <DialogContent
+          className={isMobile
+            ? "!inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 !w-screen !max-w-none !h-[100dvh] !max-h-none rounded-none border-0 p-4 !flex !flex-col overflow-hidden"
+            : "w-[calc(100vw-0.75rem)] max-w-lg max-h-[94dvh] min-h-0 overflow-hidden !flex !flex-col p-6"
+          }
+        >
+          <DialogHeader className="pr-8">
+            <DialogTitle className="font-display text-base sm:text-lg flex items-center gap-2">
+              <Dumbbell className="w-4 h-4" /> Treino — {selectedStudent?.full_name || "Aluno"}
+            </DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
+              Atribua um programa e libere o treino para o aluno.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pt-2">
+            <div>
+              <p className="text-xs text-muted-foreground mb-1.5">Programa(s) atribuído(s)</p>
+              {selectedStudent?.assignedPrograms?.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedStudent.assignedPrograms.map((title: string) => (
+                    <Badge key={title} variant="secondary" className="text-xs">{title}</Badge>
+                  ))}
+                </div>
+              ) : (
+                <Badge variant="outline" className="text-xs">Sem atribuição</Badge>
+              )}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button variant="outline" size="sm" className="flex-1" onClick={() => setAssignOpen(true)}>
+                <Layers className="w-3.5 h-3.5 mr-1.5" />
+                {selectedStudent?.assignedPrograms?.length > 0 ? "Alterar programa" : "Atribuir programa"}
+              </Button>
+              {selectedStudent?.user_id && selectedStudent.assignedPrograms?.length > 0 && (
+                <ReleaseNotifyButton userId={selectedStudent.user_id} type="training" />
+              )}
+            </div>
+
+            {selectedStudent?.user_id && (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-full sm:w-auto"
+                onClick={() => window.open(`/dashboard/training?preview_as=${selectedStudent.user_id}`, "_blank", "noopener,noreferrer")}
+              >
+                <Eye className="w-4 h-4 mr-1" /> Visualizar como aluno
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
