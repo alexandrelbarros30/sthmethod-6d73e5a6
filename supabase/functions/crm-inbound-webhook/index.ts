@@ -230,7 +230,6 @@ Deno.serve(async (req) => {
     const provided = req.headers.get('x-webhook-secret') || url.searchParams.get('secret') || '';
 
     const payload = await req.json().catch(() => ({})) as any;
-    console.log('[crm-inbound-webhook] provider=', provider, 'payload=', JSON.stringify(payload).slice(0, 2000));
 
     // Autenticação flexível:
     // 1) secret correto via header/query OU
