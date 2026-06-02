@@ -72,6 +72,29 @@ function renderTemplate(content: string, ctx: Record<string, any>): string {
   msg = msg.replace(/\{nome_completo\}/g, ctx.full_name || "Aluno");
   msg = msg.replace(/\{email\}/g, ctx.email || "");
   msg = msg.replace(/\{telefone\}/g, ctx.phone || "");
+  msg = msg.replace(/\{plano\}/g, ctx.plan_name || "—");
+  msg = msg.replace(/\{valor\}/g, ctx.amount || ctx.plan_price || "—");
+  if (ctx.end_date) {
+    const d = new Date(String(ctx.end_date) + "T00:00:00");
+    const venc = d.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
+    msg = msg.replace(/\{vencimento\}/g, venc);
+    msg = msg.replace(/\{data_vencimento\}/g, venc);
+    const diff = Math.max(0, Math.ceil((d.getTime() - Date.now()) / 86400000));
+    msg = msg.replace(/\{dias_restantes\}/g, String(diff));
+    const over = Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
+    msg = msg.replace(/\{dias_vencido\}/g, String(over));
+  } else {
+    msg = msg.replace(/\{vencimento\}/g, "—");
+    msg = msg.replace(/\{data_vencimento\}/g, "—");
+    msg = msg.replace(/\{dias_restantes\}/g, "—");
+    msg = msg.replace(/\{dias_vencido\}/g, "—");
+  }
+  const link = ctx.user_id
+    ? `https://sthmethod.com.br/dashboard/renew?uid=${ctx.user_id}`
+    : "";
+  msg = msg.replace(/\{link\}/g, link);
+  msg = msg.replace(/\{link_renovacao\}/g, link);
+  msg = msg.replace(/\{cupom\}/g, ctx.cupom || "");
   return msg;
 }
 
@@ -85,6 +108,28 @@ async function sendAutomationWhatsapp(
   if (!profile?.phone) {
     console.log(`[${trigger}] no phone for`, userId);
     return;
+  }
+  // Carrega assinatura ativa mais recente + plano para popular {plano}, {vencimento}, {valor}.
+  const { data: sub } = await supabase
+    .from("subscriptions")
+    .select("end_date, plan_id")
+    .eq("user_id", userId)
+    .order("end_date", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  let planName: string | null = null;
+  let planPrice: string | null = null;
+  if (sub?.plan_id) {
+    const { data: plan } = await supabase
+      .from("plans").select("name, price").eq("id", sub.plan_id).maybeSingle();
+    if (plan) {
+      planName = plan.name || null;
+      if (plan.price != null) {
+        planPrice = Number(plan.price).toLocaleString("pt-BR", {
+          style: "currency", currency: "BRL",
+        });
+      }
+    }
   }
   // Templates de automação são gerenciados na CRM (crm_message_templates).
   // Resolução por prioridade: automation_trigger=<trigger> → key=<trigger>
@@ -120,7 +165,14 @@ async function sendAutomationWhatsapp(
     return;
   }
   const message = renderTemplate(tpl.body, {
-    full_name: profile.full_name, email: profile.email, phone: profile.phone,
+    full_name: profile.full_name,
+    email: profile.email,
+    phone: profile.phone,
+    user_id: userId,
+    plan_name: planName,
+    plan_price: planPrice,
+    amount: planPrice,
+    end_date: sub?.end_date || null,
   });
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
