@@ -359,7 +359,17 @@ export default function AdminCrm() {
           <div className="p-3 border-b border-border/50 space-y-2">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold">Conversas</h2>
-              <Button size="sm" variant="ghost" onClick={handleNewConversation} className="h-7 w-7 p-0"><Plus className="w-4 h-4" /></Button>
+              <div className="flex items-center gap-0.5">
+                <Button
+                  size="sm" variant="ghost"
+                  onClick={openSilentDialog}
+                  title="Disparo silencioso (encerramento de expediente)"
+                  className="h-7 w-7 p-0"
+                >
+                  <BellOff className="w-4 h-4 text-violet-400" />
+                </Button>
+                <Button size="sm" variant="ghost" onClick={handleNewConversation} className="h-7 w-7 p-0"><Plus className="w-4 h-4" /></Button>
+              </div>
             </div>
             <div className="relative">
               <Search className="w-3.5 h-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
