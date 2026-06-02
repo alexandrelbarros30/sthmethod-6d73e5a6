@@ -55,6 +55,17 @@ Deno.serve(async (req) => {
     for (const r of RULES) summary[r.trigger] = { eligible: 0, sent: 0, skipped: 0, errors: 0 };
     const details: any[] = [];
 
+    // Trava global do dia: usuários que já receberam QUALQUER cobrança hoje
+    // (mesmo de outra régua/assinatura) não recebem de novo. Evita duplicidade
+    // quando há subscriptions sobrepostas ou regras coincidentes no mesmo dia.
+    const startOfDayIso = today.toISOString();
+    const { data: sentToday } = await admin
+      .from('subscription_reminder_log')
+      .select('user_id')
+      .gte('sent_at', startOfDayIso)
+      .eq('status', 'sent');
+    const alreadySentToday = new Set((sentToday || []).map((r: any) => r.user_id));
+
     for (const rule of RULES) {
       const tpl = tplMap.get(rule.trigger);
       if (!tpl || !tpl.active) continue;
@@ -83,6 +94,12 @@ Deno.serve(async (req) => {
       summary[rule.trigger].eligible = list.length;
 
       for (const sub of list) {
+        // Trava: um aluno só recebe 1 cobrança automática por dia
+        if (alreadySentToday.has(sub.user_id)) {
+          summary[rule.trigger].skipped++;
+          continue;
+        }
+
         // Dedup
         const { data: logRow } = await admin
           .from('subscription_reminder_log')
@@ -176,6 +193,7 @@ Deno.serve(async (req) => {
 
         if (ok) summary[rule.trigger].sent++;
         else summary[rule.trigger].errors++;
+        if (ok) alreadySentToday.add(sub.user_id);
       }
     }
 
