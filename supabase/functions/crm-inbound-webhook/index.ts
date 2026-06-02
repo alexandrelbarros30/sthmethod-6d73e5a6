@@ -1,6 +1,129 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
+function localEngineReply(input: string): string {
+  const t = (input || '').toLowerCase();
+  if (/^\s*(ol[áa]|oi|bom dia|boa tarde|boa noite)/.test(t)) {
+    return 'Olá! Seja bem-vindo(a) à STH METHOD. 👋\n\nComo posso ajudar?\n1️⃣ Conhecer planos\n2️⃣ Como funciona\n3️⃣ Falar com consultor\n4️⃣ Já sou aluno';
+  }
+  if (/\b1\b|plano|valor|pre[çc]o/.test(t)) {
+    return 'Temos planos mensais, trimestrais e semestrais. Posso te enviar os valores atualizados — me diga seu objetivo (emagrecimento, hipertrofia, performance ou saúde).';
+  }
+  if (/\b2\b|como funciona|metodologia/.test(t)) {
+    return 'A STH METHOD é uma consultoria científica: planejamento alimentar individualizado, treino guiado pelo app ST Coach, protocolos estratégicos e acompanhamento de exames.';
+  }
+  if (/\b3\b|consultor|humano|atendente/.test(t)) {
+    return 'Vou te encaminhar para um consultor humano. Pode me confirmar seu nome completo e e-mail?';
+  }
+  if (/\b4\b|aluno|j[áa] sou|nutri/.test(t)) {
+    return 'Perfeito! O canal exclusivo para alunos ativos é o Fale com o Nutri: https://wa.me/5521998984153';
+  }
+  return 'Recebi sua mensagem. Para te ajudar melhor, responda com 1️⃣ Planos, 2️⃣ Como funciona, 3️⃣ Falar com consultor ou 4️⃣ Já sou aluno.';
+}
+
+async function generateAiReply({
+  admin,
+  conversationId,
+  phone,
+}: {
+  admin: ReturnType<typeof createClient>;
+  conversationId: string;
+  phone: string;
+}): Promise<{ response: string; model: string; engine: string }> {
+  let systemPrompt = 'Você é um assistente de atendimento ao aluno da consultoria STH METHOD. Seja claro, técnico, neutro e cordial. Responda em português do Brasil.';
+  let engine: 'lovable' | 'local' | 'gemini_api' = 'lovable';
+
+  const [{ data: cfg }, { data: engCfg }] = await Promise.all([
+    admin.from('crm_settings').select('value').eq('key', 'ai_prompt_comercial').maybeSingle(),
+    admin.from('crm_settings').select('value').eq('key', 'ai_engine').maybeSingle(),
+  ]);
+
+  const storedPrompt = (cfg?.value as any)?.prompt;
+  if (storedPrompt && typeof storedPrompt === 'string' && storedPrompt.trim()) {
+    systemPrompt = storedPrompt;
+  }
+
+  const storedEngine = (engCfg?.value as any)?.engine;
+  if (storedEngine === 'lovable' || storedEngine === 'local' || storedEngine === 'gemini_api') {
+    engine = storedEngine;
+  }
+
+  const [{ data: msgs }, { data: profiles }] = await Promise.all([
+    admin
+      .from('crm_messages')
+      .select('direction, body, created_at')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: false })
+      .limit(10),
+    admin
+      .from('profiles')
+      .select('full_name, objective, weight')
+      .in('phone', phoneCandidates(phone))
+      .limit(1),
+  ]);
+
+  const history = (msgs || [])
+    .reverse()
+    .map((m: any) => `${m.direction === 'in' ? 'Aluno' : 'Atendente'}: ${m.body}`)
+    .join('\n');
+
+  let context = history ? `Histórico recente da conversa:\n${history}\n\n` : '';
+  if (profiles?.[0]) {
+    context += `Aluno: ${profiles[0].full_name} | Objetivo: ${profiles[0].objective || '—'} | Peso: ${profiles[0].weight || '—'}kg\n\n`;
+  }
+
+  const userPrompt = 'Com base no contexto acima, responda a última mensagem de forma curta, cordial e profissional (tom STH METHOD, neutro e técnico, em português do Brasil). Não use emojis em excesso. Máximo 4 frases.';
+
+  if (engine === 'local') {
+    return { response: localEngineReply(context), model: 'local/rules', engine };
+  }
+
+  if (engine === 'gemini_api') {
+    const gkey = Deno.env.get('GEMINI_API_KEY') || Deno.env.get('GEMINI_API_KEY_FALLBACK');
+    if (!gkey) throw new Error('GEMINI_API_KEY missing');
+
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${gkey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ role: 'user', parts: [{ text: `${context}\n${userPrompt}` }] }],
+      }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(`Gemini API error: ${JSON.stringify(d)}`);
+
+    return {
+      response: (d as any)?.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join('') || '',
+      model: 'gemini-2.5-flash (api)',
+      engine,
+    };
+  }
+
+  const apiKey = Deno.env.get('LOVABLE_API_KEY');
+  if (!apiKey) throw new Error('LOVABLE_API_KEY missing');
+
+  const resp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: 'google/gemini-2.5-flash',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `${context}\n${userPrompt}` },
+      ],
+    }),
+  });
+  const data = await resp.json().catch(() => ({}));
+  if (!resp.ok) throw new Error(`AI gateway error: ${JSON.stringify(data)}`);
+
+  return {
+    response: (data as any)?.choices?.[0]?.message?.content || '',
+    model: 'google/gemini-2.5-flash',
+    engine,
+  };
+}
+
 // Public webhook (no JWT). Use ?provider=zapi|wapi and ?secret=... in URL.
 // Z-API → channel "comercial" (STH One)
 // W-API → channel "nutri" (Fale com o Nutri)
@@ -92,6 +215,11 @@ Deno.serve(async (req) => {
     }
 
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const [{ data: aiModeCfg }, { data: wapiCfg }, { data: zapiCfg }] = await Promise.all([
+      admin.from('crm_settings').select('value').eq('key', 'ai_mode').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'wapi').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'zapi').maybeSingle(),
+    ]);
 
     // 1. lookup profile + subscription
     const candidates = phoneCandidates(phone);
@@ -168,7 +296,42 @@ Deno.serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ ok: true, queue: finalQueue, is_lead: isLead, tags: tagsToApply }), {
+    let autoReply: { sent: boolean; reason?: string; engine?: string; model?: string } | undefined;
+    const aiMode = ((aiModeCfg?.value as any)?.mode || 'copilot') as 'copilot' | 'auto';
+    const channelEnabled = provider === 'wapi'
+      ? (wapiCfg?.value as any)?.enabled === true
+      : (zapiCfg?.value as any)?.enabled === true;
+
+    if (aiMode === 'auto' && channelEnabled) {
+      try {
+        const ai = await generateAiReply({ admin, conversationId: conv!.id, phone });
+        if (ai.response?.trim()) {
+          const fnName = provider === 'wapi' ? 'send-wapi' : 'send-whatsapp';
+          const { data: sendData, error: sendError } = await admin.functions.invoke(fnName, {
+            body: { phone, message: ai.response.trim() },
+          });
+
+          if (sendError) throw sendError;
+          if (!sendData?.ok) throw new Error(sendData?.error || 'Falha no envio automático');
+
+          await admin.from('crm_messages').insert({
+            conversation_id: conv!.id,
+            direction: 'out',
+            body: ai.response.trim(),
+            source: provider === 'zapi' ? 'zapi' : 'wapi',
+            external_id: sendData?.messageId || null,
+            status: 'sent',
+          });
+
+          autoReply = { sent: true, engine: ai.engine, model: ai.model };
+        }
+      } catch (autoErr) {
+        console.error('crm-inbound-webhook auto-reply', autoErr);
+        autoReply = { sent: false, reason: String(autoErr) };
+      }
+    }
+
+    return new Response(JSON.stringify({ ok: true, queue: finalQueue, is_lead: isLead, tags: tagsToApply, auto_reply: autoReply }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {
