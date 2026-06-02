@@ -88,7 +88,7 @@ const AdminTraining = () => {
 
   const openAssign = (student: any) => {
     setSelectedStudent(student);
-    setAssignOpen(true);
+    setDialogOpen(true);
   };
 
   return (
