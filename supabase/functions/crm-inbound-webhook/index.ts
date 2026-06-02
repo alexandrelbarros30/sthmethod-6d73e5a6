@@ -739,6 +739,70 @@ Deno.serve(async (req) => {
     // Aluno ativo → direciona para Fale com o Nutri.
     // Aluno vencido → mensagem de renovação.
     // Lead → mensagem comercial padrão.
+    if (provider === 'zapi' && !withinHours && channelEnabled && isNewSession) {
+      // Fora do horário comercial → mensagem de ausência (1x por sessão).
+      // Não dispara identificação/menu/IA — apenas confirma o recebimento.
+      const firstName = (displayName || profile?.full_name || '').toString().split(' ')[0] || '';
+      const defaultsAway: Record<string, string> = {
+        aluno_ativo:
+          'Olá{nomeSep}{nome}! 🌙 Nosso atendimento de hoje foi encerrado.\n\nPara dúvidas sobre *dieta, treino e protocolo*, fale direto com o Nutri:\n👉 https://wa.me/5521998984153\n\nNo primeiro horário do próximo expediente entraremos em contato.\n\n✅ Equipe STH METHOD',
+        aluno_vencido:
+          'Olá{nomeSep}{nome}! 🌙 Nosso atendimento de hoje foi encerrado.\n\nPara *renovar* seu plano agora mesmo, acesse:\n👉 https://sthmethod.com.br/cadastro\n\nNo primeiro horário do próximo expediente um consultor entra em contato.\n\n✅ Equipe STH METHOD',
+        lead:
+          'Olá{nomeSep}{nome}! 🌙 Nosso atendimento de hoje foi encerrado.\n\nAcesse agora: 👉 https://sthmethod.com.br/cadastro\nRealize seu cadastro e escolha o plano ideal.\n\nNo primeiro horário do próximo expediente entraremos em contato.\n\n✅ Equipe STH METHOD',
+      };
+      const tplAwayCfg =
+        identifiedAs === 'aluno_ativo' ? (comAwayActiveCfg?.value as any)?.message
+        : identifiedAs === 'aluno_vencido' ? (comAwayExpiredCfg?.value as any)?.message
+        : (comAwayLeadCfg?.value as any)?.message;
+      const tplAway = String(tplAwayCfg || defaultsAway[identifiedAs] || defaultsAway.lead);
+      const awayMsg = tplAway
+        .replace(/\{nome\}/gi, firstName)
+        .replace(/\{nomeSep\}/gi, firstName ? ' ' : '');
+      try {
+        const c = (zapiCfg?.value as any) || {};
+        const INSTANCE_ID = (c.instance_id || Deno.env.get('ZAPI_INSTANCE_ID') || '').trim();
+        const INSTANCE_TOKEN = (c.instance_token || Deno.env.get('ZAPI_INSTANCE_TOKEN') || '').trim();
+        const CLIENT_TOKEN = (c.client_token || Deno.env.get('ZAPI_CLIENT_TOKEN') || '').trim();
+        let sent = false;
+        let messageId: string | null = null;
+        if (INSTANCE_ID && INSTANCE_TOKEN && awayMsg) {
+          const r = await fetch(`https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...(CLIENT_TOKEN ? { 'Client-Token': CLIENT_TOKEN } : {}) },
+            body: JSON.stringify({ phone, message: awayMsg }),
+          });
+          const j = await r.json().catch(() => ({}));
+          sent = r.ok;
+          messageId = j?.messageId || j?.id || null;
+        }
+        await admin.from('crm_messages').insert({
+          conversation_id: conv!.id,
+          direction: 'out',
+          body: awayMsg,
+          source: 'zapi',
+          external_id: messageId,
+          status: sent ? 'sent' : 'failed',
+        });
+        autoReply = { sent, engine: 'away', model: `comercial_away_${identifiedAs}` };
+      } catch (e) {
+        console.error('comercial away message failed', e);
+        autoReply = { sent: false, reason: String(e) };
+      }
+      return new Response(
+        JSON.stringify({ ok: true, queue: finalQueue, is_lead: isLead, tags: tagsToApply, auto_reply: autoReply }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+    else if (provider === 'zapi' && !withinHours && channelEnabled && !isNewSession) {
+      // Já enviou ausência nesta sessão → silêncio até o próximo expediente
+      autoReply = { sent: false, reason: 'comercial_out_of_hours_silent_after_first' };
+      return new Response(
+        JSON.stringify({ ok: true, queue: finalQueue, is_lead: isLead, tags: tagsToApply, auto_reply: autoReply }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
     if (shouldSendCommercialIdentification) {
       const firstName = (displayName || profile?.full_name || '').toString().split(' ')[0] || '';
       const defaults: Record<string, string> = {
