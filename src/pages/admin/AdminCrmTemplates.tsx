@@ -343,6 +343,11 @@ export default function AdminCrmTemplates() {
                         <Zap className="w-2.5 h-2.5" /> Automática
                       </Badge>
                     )}
+                    {t.silent_dispatch && (
+                      <Badge className="text-[10px] bg-violet-500/15 text-violet-500 border-violet-500/30">
+                        🔕 Silenciosa
+                      </Badge>
+                    )}
                     {!t.active && <Badge variant="outline" className="text-[10px] text-muted-foreground">Inativa</Badge>}
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-0.5">chave: <code>{t.key}</code></p>
