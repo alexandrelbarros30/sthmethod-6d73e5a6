@@ -9,8 +9,8 @@ const RULES: Array<{ trigger: string; offset: number; coupon?: string }> = [
   { trigger: 'renewal_pre_3d', offset: -3 },
   { trigger: 'renewal_d1', offset: 1 },
   { trigger: 'renewal_d7', offset: 7 },
-  { trigger: 'renewal_d15', offset: 15, coupon: 'RETOMA20' },
-  { trigger: 'renewal_d30', offset: 30 },
+  { trigger: 'renewal_d15', offset: 15, coupon: 'RETOMA10' },
+  { trigger: 'renewal_d30', offset: 30, coupon: 'RETOMA20' },
 ];
 
 function render(body: string, ctx: Record<string, string>): string {
