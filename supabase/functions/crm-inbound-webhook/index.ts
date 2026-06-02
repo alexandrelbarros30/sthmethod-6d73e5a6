@@ -228,11 +228,25 @@ Deno.serve(async (req) => {
     const provider = (url.searchParams.get('provider') || 'wapi').toLowerCase(); // zapi | wapi
     const expectedSecret = Deno.env.get('MP_WEBHOOK_SECRET') || '';
     const provided = req.headers.get('x-webhook-secret') || url.searchParams.get('secret') || '';
-    if (expectedSecret && provided !== expectedSecret) {
-      return new Response(JSON.stringify({ error: 'invalid secret' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
 
     const payload = await req.json().catch(() => ({})) as any;
+
+    // Autenticação flexível:
+    // 1) secret correto via header/query OU
+    // 2) instanceId do payload bate com o ZAPI_INSTANCE_ID / WAPI_INSTANCE_ID configurado
+    const payloadInstance = String(
+      payload?.instanceId || payload?.instance_id || payload?.instance || ''
+    ).trim();
+    const expectedInstance = (
+      provider === 'zapi'
+        ? Deno.env.get('ZAPI_INSTANCE_ID')
+        : Deno.env.get('WAPI_INSTANCE_ID')
+    ) || '';
+    const secretOk = expectedSecret && provided === expectedSecret;
+    const instanceOk = expectedInstance && payloadInstance && payloadInstance === expectedInstance;
+    if (expectedSecret && !secretOk && !instanceOk) {
+      return new Response(JSON.stringify({ error: 'invalid secret' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
     const phoneRaw = payload?.phone || payload?.from || payload?.data?.from || payload?.message?.from || '';
     const body = payload?.message || payload?.text || payload?.body || payload?.data?.message?.text || '';
     const externalId = payload?.messageId || payload?.id || null;
