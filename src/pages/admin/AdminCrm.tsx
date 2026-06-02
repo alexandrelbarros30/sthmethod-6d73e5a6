@@ -569,6 +569,84 @@ export default function AdminCrm() {
           </div>
         </div>
       </div>
+
+      <Dialog open={silentOpen} onOpenChange={setSilentOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BellOff className="w-4 h-4 text-violet-400" /> Disparo silencioso
+            </DialogTitle>
+            <DialogDescription className="text-[11px]">
+              Envio manual em massa para conversas <b>inativas há 30+ min</b> que fizeram contato <b>após 19h hoje</b>.
+              Roteia automaticamente pelo canal de cada conversa (Comercial ou Nutri). NÃO substitui automações de ausência/encerramento.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">Template silencioso</p>
+              <Select value={silentTemplateId} onValueChange={setSilentTemplateId}>
+                <SelectTrigger><SelectValue placeholder="Selecione um template" /></SelectTrigger>
+                <SelectContent>
+                  {silentTemplates.length === 0 && <div className="px-2 py-1 text-xs text-muted-foreground">Nenhum template silencioso. Crie em CRM → Templates.</div>}
+                  {silentTemplates.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {silentTemplateId && (
+                <Card className="mt-2 p-3 bg-muted/30">
+                  <p className="text-[10px] uppercase text-muted-foreground mb-1">Pré-visualização</p>
+                  <p className="text-xs whitespace-pre-line">{silentTemplates.find((t) => t.id === silentTemplateId)?.body}</p>
+                </Card>
+              )}
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                  Conversas elegíveis ({silentEligible.length})
+                </p>
+                <div className="flex gap-2 text-[10px]">
+                  <button className="underline text-muted-foreground" onClick={() => {
+                    const sel: Record<string, boolean> = {};
+                    silentEligible.forEach((c) => { sel[c.id] = true; });
+                    setSilentSelected(sel);
+                  }}>Selecionar todas</button>
+                  <button className="underline text-muted-foreground" onClick={() => setSilentSelected({})}>Limpar</button>
+                </div>
+              </div>
+              <div className="border rounded-md max-h-72 overflow-y-auto divide-y divide-border/40">
+                {silentEligible.length === 0 && (
+                  <p className="p-4 text-xs text-muted-foreground text-center">Nenhuma conversa atende ao critério agora.</p>
+                )}
+                {silentEligible.map((c) => (
+                  <label key={c.id} className="flex items-center gap-2 px-3 py-2 hover:bg-accent/40 cursor-pointer">
+                    <Checkbox
+                      checked={!!silentSelected[c.id]}
+                      onCheckedChange={(v) => setSilentSelected((s) => ({ ...s, [c.id]: !!v }))}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium truncate">{c.display_name || formatPhoneBR(c.phone)}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">
+                        {formatPhoneBR(c.phone)} · último: {fmtTime(c.last_message_at)}
+                      </p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSilentOpen(false)} disabled={silentSending}>Cancelar</Button>
+            <Button onClick={runSilentBroadcast} disabled={silentSending || !silentTemplateId || silentEligible.length === 0}>
+              {silentSending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <BellOff className="w-3.5 h-3.5 mr-1" />}
+              Enviar silencioso ({Object.values(silentSelected).filter(Boolean).length})
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
