@@ -51,6 +51,7 @@ interface Template {
   automation_trigger: string | null;
   variables: string[];
   description: string | null;
+  silent_dispatch?: boolean;
 }
 
 const EMPTY: Partial<Template> = {
@@ -65,6 +66,7 @@ const EMPTY: Partial<Template> = {
   automation_trigger: "",
   variables: [],
   description: "",
+  silent_dispatch: false,
 };
 
 const PREVIEW_CTX = {
@@ -179,6 +181,7 @@ export default function AdminCrmTemplates() {
       automation_trigger: editing.is_automatic ? (editing.automation_trigger?.trim() || null) : null,
       variables: detectVars(editing.body || ""),
       description: editing.description?.trim() || null,
+      silent_dispatch: !!editing.silent_dispatch,
     };
     let error;
     if (editing.id) {
