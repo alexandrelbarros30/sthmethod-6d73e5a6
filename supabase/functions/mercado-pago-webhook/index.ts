@@ -401,7 +401,20 @@ serve(async (req) => {
       // Renovação/upgrade → template payment_renewal. Ambos saem silenciosos
       // pela linha "Fale com o Nutri".
       try {
-        if (payment.action_type === "new") {
+        // Lock atômico: o MP frequentemente envia o mesmo evento em paralelo
+        // (múltiplos topics) e duas execuções simultâneas conseguiam passar pelo
+        // dedup por message_history. Aqui só a primeira chamada que conseguir
+        // marcar automation_sent_at prossegue com o disparo.
+        const { data: claim } = await supabase
+          .from("payments")
+          .update({ automation_sent_at: new Date().toISOString() })
+          .eq("id", payment.id)
+          .is("automation_sent_at", null)
+          .select("id")
+          .maybeSingle();
+        if (!claim) {
+          console.log("[automation-whatsapp] skipped (already claimed) for", payment.id);
+        } else if (payment.action_type === "new") {
           await sendAutomationWhatsapp(supabase, payment.user_id, "payment_welcome");
         } else if (payment.action_type === "renewal" || payment.action_type === "upgrade") {
           await sendAutomationWhatsapp(supabase, payment.user_id, "payment_renewal");
