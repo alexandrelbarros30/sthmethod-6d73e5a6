@@ -130,12 +130,12 @@ export const useEvolutionReminders = () => {
                 .from("evolution_reminders")
                 .update({ auto_sent_at: new Date().toISOString(), seen: true })
                 .eq("id", r.id);
-          } else {
-            // Mesmo se falhou silenciosamente, remove da notificação para não poluir o painel.
-            await supabase
-              .from("evolution_reminders")
-              .update({ seen: true })
-              .eq("id", r.id);
+            } else {
+              console.warn("[evolution-auto-dispatch] envio não confirmado", {
+                reminderId: r.id,
+                userId: r.student_user_id,
+                reason: result.reason,
+              });
             }
           } catch (err) {
             console.warn("[evolution-auto-dispatch] failed", err);
