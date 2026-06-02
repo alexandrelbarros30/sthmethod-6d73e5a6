@@ -82,10 +82,22 @@ async function sendWelcomeWhatsapp(supabase: any, userId: string) {
     console.log("[welcome-whatsapp] no phone for", userId);
     return;
   }
-  const { data: tpl } = await supabase
-    .from("message_templates").select("id, content, image_url").eq("system_key", "payment_welcome").maybeSingle();
-  if (!tpl?.content) {
-    console.warn("[welcome-whatsapp] payment_welcome template missing");
+  // Templates de automação são gerenciados na CRM (crm_message_templates).
+  // Resolução por prioridade: automation_trigger='payment_welcome' →
+  // key='payment_welcome' → key='automacao_pagamento_aprovado'.
+  let tpl: { id: string; body: string; media_url: string | null } | null = null;
+  {
+    const { data } = await supabase
+      .from("crm_message_templates")
+      .select("id, body, media_url, active")
+      .or("automation_trigger.eq.payment_welcome,key.eq.payment_welcome,key.eq.automacao_pagamento_aprovado")
+      .eq("active", true)
+      .limit(1)
+      .maybeSingle();
+    if (data?.body) tpl = { id: data.id, body: data.body, media_url: data.media_url };
+  }
+  if (!tpl?.body) {
+    console.warn("[welcome-whatsapp] payment_welcome template missing in crm_message_templates");
     return;
   }
   // Dedup: if welcome was already sent in last 24h, skip
@@ -100,24 +112,14 @@ async function sendWelcomeWhatsapp(supabase: any, userId: string) {
     console.log("[welcome-whatsapp] already sent recently for", userId);
     return;
   }
-  const message = renderTemplate(tpl.content, {
+  const message = renderTemplate(tpl.body, {
     full_name: profile.full_name, email: profile.email, phone: profile.phone,
   });
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  // Boas-vindas pós-pagamento sai por padrão da linha "Fale com o Nutri"
-  // (W-API / 5521998984153). O admin pode trocar o canal em
-  // crm_settings.auto_channel_map['payment_welcome'] = 'zapi' | 'wapi'.
-  let channel: "wapi" | "zapi" = "wapi";
-  try {
-    const { data: cfg } = await supabase
-      .from("crm_settings").select("value").eq("key", "auto_channel_map").maybeSingle();
-    const map = (cfg?.value || {}) as Record<string, "wapi" | "zapi">;
-    if (map.payment_welcome === "zapi" || map.payment_welcome === "wapi") {
-      channel = map.payment_welcome;
-    }
-  } catch (_) {}
-  const fnName = channel === "wapi" ? "send-wapi" : "send-whatsapp";
+  // Boas-vindas pós-pagamento sempre sai pela linha "Fale com o Nutri"
+  // (W-API / 5521998984153). Disparo automático silencioso.
+  const fnName = "send-wapi";
   const res = await fetch(`${SUPABASE_URL}/functions/v1/${fnName}`, {
     method: "POST",
     headers: {
@@ -125,7 +127,7 @@ async function sendWelcomeWhatsapp(supabase: any, userId: string) {
       "Authorization": `Bearer ${SERVICE_ROLE}`,
       "apikey": SERVICE_ROLE,
     },
-    body: JSON.stringify({ phone: profile.phone, message, image_url: tpl.image_url || null }),
+    body: JSON.stringify({ phone: profile.phone, message, image_url: tpl.media_url || null }),
   });
   const j = await res.json().catch(() => ({}));
   const ok = !!j?.ok;
@@ -136,7 +138,7 @@ async function sendWelcomeWhatsapp(supabase: any, userId: string) {
       content: message,
       recipient_phone: profile.phone,
       recipient_name: profile.full_name,
-      image_url: tpl.image_url || null,
+      image_url: tpl.media_url || null,
       status: ok ? "sent" : "failed",
       sent_at: new Date().toISOString(),
     });
@@ -336,11 +338,16 @@ serve(async (req) => {
     // If approved for the first time, activate subscription once.
     if (newStatus === "approved" && payment && previousStatus !== "approved") {
       await activateSubscriptionForPayment(supabase, payment);
-      // Auto-send welcome WhatsApp (does not depend on admin being online)
-      try {
-        await sendWelcomeWhatsapp(supabase, payment.user_id);
-      } catch (e) {
-        console.error("[welcome-whatsapp] failed", e);
+      // Boas-vindas só para NOVO aluno (primeira compra). Renovações/upgrades não
+      // disparam o template "Pagamento aprovado".
+      if (payment.action_type === "new") {
+        try {
+          await sendWelcomeWhatsapp(supabase, payment.user_id);
+        } catch (e) {
+          console.error("[welcome-whatsapp] failed", e);
+        }
+      } else {
+        console.log("[welcome-whatsapp] skipped (action_type=", payment.action_type, ")");
       }
     }
 
