@@ -2295,6 +2295,7 @@ export type Database = {
         Row: {
           action_type: string
           amount: number
+          automation_sent_at: string | null
           coupon_discount: number | null
           coupon_id: string | null
           created_at: string
@@ -2310,6 +2311,7 @@ export type Database = {
         Insert: {
           action_type?: string
           amount: number
+          automation_sent_at?: string | null
           coupon_discount?: number | null
           coupon_id?: string | null
           created_at?: string
@@ -2325,6 +2327,7 @@ export type Database = {
         Update: {
           action_type?: string
           amount?: number
+          automation_sent_at?: string | null
           coupon_discount?: number | null
           coupon_id?: string | null
           created_at?: string
