@@ -3426,6 +3426,39 @@ export type Database = {
           },
         ]
       }
+      subscription_reminder_log: {
+        Row: {
+          end_date: string
+          error_message: string | null
+          id: string
+          sent_at: string
+          status: string
+          subscription_id: string | null
+          trigger: string
+          user_id: string
+        }
+        Insert: {
+          end_date: string
+          error_message?: string | null
+          id?: string
+          sent_at?: string
+          status?: string
+          subscription_id?: string | null
+          trigger: string
+          user_id: string
+        }
+        Update: {
+          end_date?: string
+          error_message?: string | null
+          id?: string
+          sent_at?: string
+          status?: string
+          subscription_id?: string | null
+          trigger?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           created_at: string
