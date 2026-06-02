@@ -373,11 +373,22 @@ Deno.serve(async (req) => {
     ]);
 
     // Horários de atendimento humano (separados por canal)
-    const [{ data: hoursComCfg }, { data: hoursNutriCfg }, { data: nutriAwayActive }, { data: nutriAwayInactive }] = await Promise.all([
+    const [
+      { data: hoursComCfg },
+      { data: hoursNutriCfg },
+      { data: nutriAwayActive },
+      { data: nutriAwayInactive },
+      { data: comAwayActiveCfg },
+      { data: comAwayExpiredCfg },
+      { data: comAwayLeadCfg },
+    ] = await Promise.all([
       admin.from('crm_settings').select('value').eq('key', 'business_hours_comercial').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'business_hours_nutri').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'nutri_away_active').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'nutri_away_inactive').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'comercial_away_active').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'comercial_away_expired').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'comercial_away_lead').maybeSingle(),
     ]);
     const [{ data: comIdActive }, { data: comIdExpired }, { data: comIdLead }] = await Promise.all([
       admin.from('crm_settings').select('value').eq('key', 'comercial_id_active').maybeSingle(),
