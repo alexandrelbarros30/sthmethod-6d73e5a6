@@ -732,11 +732,11 @@ Deno.serve(async (req) => {
       const firstName = (displayName || profile?.full_name || '').toString().split(' ')[0] || '';
       const defaults: Record<string, string> = {
         aluno_ativo:
-          'Olá{nomeSep}{nome}! 👋 Identificamos você como *aluno ativo* da STH METHOD.\n\nPara dúvidas sobre *dieta, treino e protocolo*, fale direto com o Nutri no canal exclusivo:\n👉 https://wa.me/5521998984153\n\nEste canal aqui é *comercial* (planos, renovação e financeiro). Se sua dúvida for sobre isso, pode mandar que te respondemos no horário de atendimento (Seg-Sex 9h–19h, Sáb 9h–14h).',
+          'Olá{nomeSep}{nome}! 👋 Identificamos você como *aluno ativo* da STH METHOD.\n\nPara dúvidas sobre *dieta, treino e protocolo*, fale direto com o Nutri no canal exclusivo:\n👉 https://wa.me/5521998984153\n\nEste canal aqui é *comercial* (planos, renovação e financeiro). Como posso ajudar?\n1️⃣ Conhecer planos\n2️⃣ Como funciona\n3️⃣ Falar com consultor (Vanessa)\n4️⃣ Já sou aluno\n5️⃣ Financeiro / Renovação\n\nAtendimento humano: Seg-Sex 9h–19h, Sáb 9h–14h.',
         aluno_vencido:
-          'Olá{nomeSep}{nome}! 👋 Que bom te ver de volta. Identificamos que sua assinatura *está vencida*.\n\nPosso te enviar os planos atualizados para *renovar* sua consultoria? Responda com:\n1️⃣ Quero renovar\n2️⃣ Já renovei\n3️⃣ Falar com consultor\n\nAtendimento humano: Seg-Sex 9h–19h, Sáb 9h–14h.',
+          'Olá{nomeSep}{nome}! 👋 Que bom te ver de volta. Identificamos que sua assinatura *está vencida*.\n\nComo posso ajudar?\n1️⃣ Conhecer planos\n2️⃣ Como funciona\n3️⃣ Falar com consultor (Vanessa)\n4️⃣ Já sou aluno (renovar)\n5️⃣ Financeiro / Renovação\n\nAtendimento humano: Seg-Sex 9h–19h, Sáb 9h–14h.',
         lead:
-          'Olá{nomeSep}{nome}! 👋 Seja bem-vindo(a) à *STH METHOD*.\n\nComo posso te ajudar hoje?\n1️⃣ Conhecer planos\n2️⃣ Como funciona a consultoria\n3️⃣ Falar com consultor\n4️⃣ Já sou aluno\n\nAtendimento humano: Seg-Sex 9h–19h, Sáb 9h–14h. Aos domingos: somente atendimento por mensagem.',
+          'Olá{nomeSep}{nome}! 👋 Seja bem-vindo(a) à *STH METHOD*.\n\nComo posso te ajudar hoje?\n1️⃣ Conhecer planos\n2️⃣ Como funciona a consultoria\n3️⃣ Falar com consultor (Vanessa)\n4️⃣ Já sou aluno\n5️⃣ Financeiro / Renovação\n\nAtendimento humano: Seg-Sex 9h–19h, Sáb 9h–14h. Aos domingos: somente atendimento por mensagem.',
       };
       const tplFromCfg =
         identifiedAs === 'aluno_ativo' ? (comIdActive?.value as any)?.message
