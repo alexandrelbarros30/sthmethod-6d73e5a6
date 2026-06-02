@@ -91,11 +91,15 @@ export const useEvolutionReminders = () => {
       }
 
       // Auto-dispatch WhatsApp for any reminder that hasn't been auto-sent yet (incl. legacy).
+      // Regra: disparo automático SILENCIOSO (sem abrir wa.me) e ao concluir
+      // remove da fila de notificações (seen = true). Janela: a partir de 24/05/2026.
+      const DISPATCH_START = "2026-05-24";
       const { data: pending } = await supabase
         .from("evolution_reminders")
         .select("id, student_user_id, student_name")
         .is("auto_sent_at", null)
         .lte("due_date", today)
+        .gte("due_date", DISPATCH_START)
         .limit(50);
 
       if (pending && pending.length > 0) {
@@ -119,13 +123,19 @@ export const useEvolutionReminders = () => {
                 email: prof.email,
                 user_id: r.student_user_id,
               },
-              { logHistory: true, mode: "auto" },
+            { logHistory: true, mode: "auto", silent: true },
             );
             if (result.ok) {
               await supabase
                 .from("evolution_reminders")
                 .update({ auto_sent_at: new Date().toISOString(), seen: true })
                 .eq("id", r.id);
+          } else {
+            // Mesmo se falhou silenciosamente, remove da notificação para não poluir o painel.
+            await supabase
+              .from("evolution_reminders")
+              .update({ seen: true })
+              .eq("id", r.id);
             }
           } catch (err) {
             console.warn("[evolution-auto-dispatch] failed", err);
