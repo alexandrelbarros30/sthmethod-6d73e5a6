@@ -446,7 +446,20 @@ export default function AdminCrmTemplates() {
                 <Switch checked={!!editing.is_automatic} onCheckedChange={(c) => setEditing({ ...editing, is_automatic: c })} />
                 <Label className="text-xs flex items-center gap-1"><Zap className="w-3 h-3 text-amber-500" /> Disparo automático</Label>
               </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={!!editing.silent_dispatch} onCheckedChange={(c) => setEditing({ ...editing, silent_dispatch: c })} />
+                <Label className="text-xs flex items-center gap-1">🔕 Disparo silencioso</Label>
+              </div>
             </div>
+            {editing.silent_dispatch && (
+              <div className="rounded-md border border-violet-500/30 bg-violet-500/5 p-3">
+                <p className="text-[11px] text-violet-500 font-medium">🔕 Mensagem silenciosa do Admin</p>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Fica disponível no CRM em <b>Disparo silencioso</b>. NÃO substitui automações de ausência/encerramento de expediente —
+                  é um envio manual em massa para conversas filtradas pelo admin (ex.: inativas 30+ min após contato pós-19h).
+                </p>
+              </div>
+            )}
             {editing.is_automatic && (
               <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
                 <Label className="text-xs flex items-center gap-1 text-amber-600">
