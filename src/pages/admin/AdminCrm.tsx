@@ -73,6 +73,67 @@ export default function AdminCrm() {
   const [channelFilter, setChannelFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [newTagName, setNewTagName] = useState("");
+  const [silentOpen, setSilentOpen] = useState(false);
+  const [silentTemplateId, setSilentTemplateId] = useState<string>("");
+  const [silentSelected, setSilentSelected] = useState<Record<string, boolean>>({});
+  const [silentSending, setSilentSending] = useState(false);
+
+  const { data: silentTemplates = [] } = useQuery<Array<{ id: string; name: string; body: string; channel: string }>>({
+    queryKey: ["crm-silent-templates"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("crm_message_templates")
+        .select("id, name, body, channel")
+        .eq("silent_dispatch", true)
+        .eq("active", true)
+        .order("name");
+      if (error) throw error;
+      return (data ?? []) as any;
+    },
+  });
+
+  // Conversas elegíveis: contato após 19h (hoje) e inativas há 30+ min
+  const silentEligible = useMemo(() => {
+    const now = new Date();
+    const today19 = new Date(now); today19.setHours(19, 0, 0, 0);
+    const cutoff = new Date(now.getTime() - 30 * 60 * 1000);
+    return conversations.filter((c) => {
+      if (!c.last_message_at) return false;
+      if (c.status !== "open") return false;
+      const t = new Date(c.last_message_at);
+      return t >= today19 && t <= cutoff;
+    });
+  }, [conversations]);
+
+  function openSilentDialog() {
+    const first = silentTemplates[0]?.id || "";
+    setSilentTemplateId(first);
+    const sel: Record<string, boolean> = {};
+    silentEligible.forEach((c) => { sel[c.id] = true; });
+    setSilentSelected(sel);
+    setSilentOpen(true);
+  }
+
+  async function runSilentBroadcast() {
+    const tpl = silentTemplates.find((t) => t.id === silentTemplateId);
+    if (!tpl) { toast({ title: "Selecione um template silencioso" }); return; }
+    const targets = silentEligible.filter((c) => silentSelected[c.id]);
+    if (targets.length === 0) { toast({ title: "Nenhuma conversa selecionada" }); return; }
+    setSilentSending(true);
+    let ok = 0, fail = 0;
+    for (const c of targets) {
+      try {
+        const { data, error } = await supabase.functions.invoke("crm-send-whatsapp", {
+          body: { conversation_id: c.id, phone: c.phone, body: tpl.body },
+        });
+        if (error || data?.ok === false) fail++; else ok++;
+      } catch { fail++; }
+    }
+    setSilentSending(false);
+    setSilentOpen(false);
+    qc.invalidateQueries({ queryKey: ["crm-conversations"] });
+    toast({ title: "Disparo silencioso concluído", description: `${ok} enviadas · ${fail} falhas` });
+  }
 
   const { data: conversations = [] } = useQuery<Conv[]>({
     queryKey: ["crm-conversations"],
