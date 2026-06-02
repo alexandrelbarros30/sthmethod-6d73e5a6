@@ -215,6 +215,92 @@ Deno.serve(async (req) => {
     }
 
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+
+    // === OPT-OUT por palavra-chave ===
+    // "CANCELAR ENVIO" → marca o aluno como opt-out e responde 1x confirmando.
+    // "VOLTAR" → reativa o recebimento (se já estava opt-out).
+    const normalizedBody = String(body).trim().toUpperCase();
+    const isOptOutKeyword = /\bCANCELAR\s+ENVIO\b/.test(normalizedBody);
+    const isReactivateKeyword = /^VOLTAR$/.test(normalizedBody);
+    if (isOptOutKeyword || isReactivateKeyword) {
+      const candidates = phoneCandidates(phone);
+      const { data: matchedProfile } = await admin
+        .from('profiles').select('user_id, full_name').in('phone', candidates).limit(1).maybeSingle();
+
+      if (matchedProfile?.user_id) {
+        await admin.from('profiles').update({
+          whatsapp_opt_out: isOptOutKeyword,
+          whatsapp_opt_out_at: isOptOutKeyword ? new Date().toISOString() : null,
+          whatsapp_opt_out_reason: isOptOutKeyword ? 'Solicitação do aluno via WhatsApp (CANCELAR ENVIO)' : null,
+        }).eq('user_id', matchedProfile.user_id);
+      }
+
+      // Registra a mensagem do aluno na conversa (mesmo que mute as automações depois)
+      let { data: convRow } = await admin.from('crm_conversations').select('id').eq('phone', phone).maybeSingle();
+      if (!convRow) {
+        const ins = await admin.from('crm_conversations').insert({
+          phone, display_name: name || matchedProfile?.full_name || null,
+          channel: 'whatsapp', status: 'open', provider,
+          queue_type: provider === 'zapi' ? 'comercial' : 'nutri',
+          is_lead: !matchedProfile,
+        }).select('id').single();
+        convRow = ins.data;
+      }
+      await admin.from('crm_messages').insert({
+        conversation_id: convRow!.id, direction: 'in', body: String(body),
+        source: provider === 'zapi' ? 'zapi' : 'wapi', external_id: externalId, status: 'received',
+      });
+
+      // Responde diretamente via API do provider — NÃO usa send-whatsapp/send-wapi
+      // pois eles bloqueariam pelo próprio opt-out que acabamos de marcar.
+      const firstName = (matchedProfile?.full_name || '').split(' ')[0] || 'Aluno';
+      const replyMessage = isOptOutKeyword
+        ? `Tudo certo, ${firstName}. Você não receberá mais mensagens automáticas da STH METHOD. ✅\n\nPara reativar a qualquer momento, basta responder *VOLTAR*.`
+        : `Bem-vindo de volta, ${firstName}! 💪 Você voltará a receber as comunicações da STH METHOD normalmente.`;
+      try {
+        if (provider === 'wapi') {
+          const cfg: any = (wapiCfg_unused => null)(0); // placeholder
+          const { data: wcfg } = await admin.from('crm_settings').select('value').eq('key', 'wapi').maybeSingle();
+          const c: any = wcfg?.value || {};
+          const INSTANCE_ID = (c.instance_id || '').trim() || Deno.env.get('WAPI_INSTANCE_ID');
+          const TOKEN = (c.token || '').trim() || Deno.env.get('WAPI_TOKEN');
+          const CLIENT_TOKEN = (c.client_token || '').trim() || Deno.env.get('WAPI_CLIENT_TOKEN');
+          const serverUrl = ((c.server_url || '').trim() || 'https://api.w-api.app').replace(/\/$/, '');
+          if (INSTANCE_ID && TOKEN) {
+            const h: Record<string, string> = { 'Content-Type': 'application/json', Authorization: `Bearer ${TOKEN}` };
+            if (CLIENT_TOKEN) h['Client-Token'] = CLIENT_TOKEN;
+            await fetch(`${serverUrl}/v1/message/send-text?instanceId=${INSTANCE_ID}`, {
+              method: 'POST', headers: h,
+              body: JSON.stringify({ phone, message: replyMessage }),
+            });
+          }
+        } else {
+          const { data: zcfg } = await admin.from('crm_settings').select('value').eq('key', 'zapi').maybeSingle();
+          const c: any = zcfg?.value || {};
+          const INSTANCE_ID = (c.instance_id || '').trim() || Deno.env.get('ZAPI_INSTANCE_ID');
+          const INSTANCE_TOKEN = (c.instance_token || '').trim() || Deno.env.get('ZAPI_INSTANCE_TOKEN');
+          const CLIENT_TOKEN = (c.client_token || '').trim() || Deno.env.get('ZAPI_CLIENT_TOKEN');
+          if (INSTANCE_ID && INSTANCE_TOKEN && CLIENT_TOKEN) {
+            await fetch(`https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Client-Token': CLIENT_TOKEN },
+              body: JSON.stringify({ phone, message: replyMessage }),
+            });
+          }
+        }
+        await admin.from('crm_messages').insert({
+          conversation_id: convRow!.id, direction: 'out', body: replyMessage,
+          source: provider === 'zapi' ? 'zapi' : 'wapi', status: 'sent',
+        });
+      } catch (e) {
+        console.error('opt-out confirm reply failed', e);
+      }
+
+      return new Response(JSON.stringify({
+        ok: true, opt_out: isOptOutKeyword, reactivated: isReactivateKeyword,
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     const [{ data: aiModeCfg }, { data: wapiCfg }, { data: zapiCfg }] = await Promise.all([
       admin.from('crm_settings').select('value').eq('key', 'ai_mode').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'wapi').maybeSingle(),
