@@ -8,12 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, MessageSquare, Sparkles, Copy, Check } from "lucide-react";
+import { Loader2, MessageSquare, Sparkles, Copy, Check, Clock, BellOff } from "lucide-react";
 
 type ZapiCfg = { enabled: boolean; instance_id: string; instance_token: string; client_token: string; webhook: string };
 type WapiCfg = { enabled: boolean; server_url: string; instance_id: string; token: string; client_token: string; webhook: string };
 type AiMode = { mode: "copilot" | "auto" };
+type Hours = { tz: string; mon_fri: { start: string; end: string } | null; sat: { start: string; end: string } | null; sun: { start: string; end: string } | null };
+const DEFAULT_HOURS: Hours = { tz: "America/Sao_Paulo", mon_fri: { start: "09:00", end: "19:00" }, sat: { start: "09:00", end: "14:00" }, sun: null };
 
 const PROJECT_URL = import.meta.env.VITE_SUPABASE_URL as string;
 
@@ -26,17 +29,36 @@ export default function AdminCrmSettings() {
   const [wapi, setWapi] = useState<WapiCfg>({ enabled: false, server_url: "https://api.w-api.app", instance_id: "", token: "", client_token: "", webhook: "" });
   const [aiMode, setAiMode] = useState<AiMode>({ mode: "copilot" });
   const [copied, setCopied] = useState<string | null>(null);
+  const [hoursCom, setHoursCom] = useState<Hours>(DEFAULT_HOURS);
+  const [hoursNutri, setHoursNutri] = useState<Hours>({ ...DEFAULT_HOURS, mon_fri: { start: "09:00", end: "18:00" } });
+  const [awayComLead, setAwayComLead] = useState("");
+  const [awayComActive, setAwayComActive] = useState("");
+  const [awayComExpired, setAwayComExpired] = useState("");
+  const [awayNutriActive, setAwayNutriActive] = useState("");
+  const [awayNutriInactive, setAwayNutriInactive] = useState("");
 
   const zapiWebhook = `${PROJECT_URL}/functions/v1/crm-inbound-webhook?provider=zapi`;
   const wapiWebhook = `${PROJECT_URL}/functions/v1/crm-inbound-webhook?provider=wapi`;
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("crm_settings").select("key,value").in("key", ["zapi","wapi","ai_mode"]);
+      const { data } = await supabase.from("crm_settings").select("key,value").in("key", [
+        "zapi","wapi","ai_mode",
+        "business_hours_comercial","business_hours_nutri",
+        "comercial_away_lead","comercial_away_active","comercial_away_expired",
+        "nutri_away_active","nutri_away_inactive",
+      ]);
       (data ?? []).forEach((r: any) => {
         if (r.key === "zapi") setZapi({ ...zapi, ...(r.value || {}) });
         if (r.key === "wapi") setWapi({ ...wapi, ...(r.value || {}) });
         if (r.key === "ai_mode") setAiMode({ mode: r.value?.mode || "copilot" });
+        if (r.key === "business_hours_comercial" && r.value) setHoursCom({ ...DEFAULT_HOURS, ...r.value });
+        if (r.key === "business_hours_nutri" && r.value) setHoursNutri({ ...DEFAULT_HOURS, ...r.value });
+        if (r.key === "comercial_away_lead") setAwayComLead(r.value?.message || "");
+        if (r.key === "comercial_away_active") setAwayComActive(r.value?.message || "");
+        if (r.key === "comercial_away_expired") setAwayComExpired(r.value?.message || "");
+        if (r.key === "nutri_away_active") setAwayNutriActive(r.value?.message || "");
+        if (r.key === "nutri_away_inactive") setAwayNutriInactive(r.value?.message || "");
       });
       setLoading(false);
     })();
@@ -197,6 +219,79 @@ export default function AdminCrmSettings() {
           <Button onClick={() => save("ai_mode", aiMode)} disabled={saving === "ai_mode"}>
             {saving === "ai_mode" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar modo"}
           </Button>
+        </Card>
+
+        {/* Horários de atendimento */}
+        <Card className="p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 text-amber-400" />
+            <h2 className="text-base font-semibold">Horários de atendimento</h2>
+          </div>
+          <p className="text-xs text-muted-foreground">Fora destes horários cada canal envia automaticamente sua mensagem de ausência (1x por sessão).</p>
+
+          {[
+            { key: "business_hours_comercial", label: "STH One — Comercial (Z-API)", state: hoursCom, set: setHoursCom },
+            { key: "business_hours_nutri", label: "Fale com o Nutri (W-API)", state: hoursNutri, set: setHoursNutri },
+          ].map(({ key, label, state, set }) => (
+            <div key={key} className="space-y-3 border-t border-border pt-3 first:border-0 first:pt-0">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">{label}</p>
+                <Button size="sm" onClick={() => save(key, state)} disabled={saving === key}>
+                  {saving === key ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar"}
+                </Button>
+              </div>
+              {(["mon_fri","sat","sun"] as const).map((d) => (
+                <div key={d} className="grid grid-cols-[110px_1fr_1fr_auto] items-center gap-2">
+                  <Label className="text-xs">{d === "mon_fri" ? "Seg–Sex" : d === "sat" ? "Sábado" : "Domingo"}</Label>
+                  <Input
+                    type="time"
+                    value={state[d]?.start ?? ""}
+                    disabled={!state[d]}
+                    onChange={(e) => set({ ...state, [d]: { start: e.target.value, end: state[d]?.end ?? "18:00" } } as Hours)}
+                  />
+                  <Input
+                    type="time"
+                    value={state[d]?.end ?? ""}
+                    disabled={!state[d]}
+                    onChange={(e) => set({ ...state, [d]: { start: state[d]?.start ?? "09:00", end: e.target.value } } as Hours)}
+                  />
+                  <div className="flex items-center gap-1">
+                    <Switch
+                      checked={!!state[d]}
+                      onCheckedChange={(v) => set({ ...state, [d]: v ? { start: "09:00", end: "18:00" } : null } as Hours)}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </Card>
+
+        {/* Mensagens de ausência */}
+        <Card className="p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <BellOff className="w-4 h-4 text-violet-400" />
+            <h2 className="text-base font-semibold">Mensagens de ausência (fora do expediente)</h2>
+          </div>
+          <p className="text-xs text-muted-foreground">Disparadas automaticamente na 1ª mensagem de cada sessão fora do horário. Variáveis: <code>{"{nome}"}</code> e <code>{"{nomeSep}"}</code>.</p>
+
+          {[
+            { key: "comercial_away_lead", label: "Comercial — Lead", value: awayComLead, set: setAwayComLead },
+            { key: "comercial_away_active", label: "Comercial — Aluno ativo", value: awayComActive, set: setAwayComActive },
+            { key: "comercial_away_expired", label: "Comercial — Aluno vencido", value: awayComExpired, set: setAwayComExpired },
+            { key: "nutri_away_active", label: "Nutri — Aluno ativo", value: awayNutriActive, set: setAwayNutriActive },
+            { key: "nutri_away_inactive", label: "Nutri — Lead/Vencido", value: awayNutriInactive, set: setAwayNutriInactive },
+          ].map(({ key, label, value, set }) => (
+            <div key={key} className="space-y-2 border-t border-border pt-3 first:border-0 first:pt-0">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">{label}</Label>
+                <Button size="sm" onClick={() => save(key, { message: value })} disabled={saving === key}>
+                  {saving === key ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar"}
+                </Button>
+              </div>
+              <Textarea value={value} onChange={(e) => set(e.target.value)} rows={5} className="text-xs font-mono" />
+            </div>
+          ))}
         </Card>
       </div>
     </div>
