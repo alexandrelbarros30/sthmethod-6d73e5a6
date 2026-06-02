@@ -335,6 +335,16 @@ Deno.serve(async (req) => {
       admin.from('crm_settings').select('value').eq('key', 'zapi').maybeSingle(),
     ]);
 
+    // Horários de atendimento humano (separados por canal)
+    const [{ data: hoursComCfg }, { data: hoursNutriCfg }, { data: nutriAwayActive }, { data: nutriAwayInactive }] = await Promise.all([
+      admin.from('crm_settings').select('value').eq('key', 'business_hours_comercial').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'business_hours_nutri').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'nutri_away_active').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'nutri_away_inactive').maybeSingle(),
+    ]);
+    const channelHours = provider === 'wapi' ? (hoursNutriCfg?.value as any) : (hoursComCfg?.value as any);
+    const withinHours = isWithinBusinessHours(channelHours);
+
     // 1. lookup profile + subscription (identificação do contato)
     const candidates = phoneCandidates(phone);
     const { data: profiles } = await admin.from('profiles').select('user_id, full_name, objective').in('phone', candidates).limit(1);
@@ -435,6 +445,17 @@ Deno.serve(async (req) => {
       if (toInsert.length) await admin.from('crm_conversation_tags').insert(toInsert);
     }
 
+    // Tag OUT_OF_HOURS para visibilidade no CRM (fora do horário humano)
+    if (!withinHours) {
+      const { data: tagRow } = await admin.from('crm_tags').select('id').eq('name', 'OUT_OF_HOURS').maybeSingle();
+      if (tagRow?.id) {
+        await admin.from('crm_conversation_tags').upsert(
+          { conversation_id: conv!.id, tag_id: tagRow.id },
+          { onConflict: 'conversation_id,tag_id', ignoreDuplicates: true } as any,
+        );
+      }
+    }
+
     // 6. enqueue
     const queueName = finalQueue === 'comercial' ? 'Atendimento Comercial'
       : finalQueue === 'financeiro' ? 'Financeiro'
@@ -456,7 +477,42 @@ Deno.serve(async (req) => {
       ? (wapiCfg?.value as any)?.enabled === true
       : (zapiCfg?.value as any)?.enabled === true;
 
-    if (aiMode === 'auto' && channelEnabled) {
+    // === Canal Nutri (W-API) fora do horário → mensagem de ausência (só 1x por sessão) ===
+    // Aluno ativo recebe mensagem priorizada; lead/vencido é direcionado ao Comercial.
+    // Não dispara IA aqui — o objetivo é apenas confirmar o recebimento.
+    if (provider === 'wapi' && !withinHours && channelEnabled) {
+      const isFirstOfSession = isNewSession;
+      if (isFirstOfSession) {
+        const tplVal = identifiedAs === 'aluno_ativo'
+          ? (nutriAwayActive?.value as any)?.message
+          : (nutriAwayInactive?.value as any)?.message;
+        const firstName = (displayName || profile?.full_name || '').toString().split(' ')[0] || 'Aluno';
+        const awayMessage = String(tplVal || '').replace(/\{nome\}/gi, firstName);
+        if (awayMessage) {
+          try {
+            const { data: sendData, error: sendError } = await admin.functions.invoke('send-wapi', {
+              body: { phone, message: awayMessage },
+            });
+            if (sendError) throw sendError;
+            await admin.from('crm_messages').insert({
+              conversation_id: conv!.id,
+              direction: 'out',
+              body: awayMessage,
+              source: 'wapi',
+              external_id: sendData?.messageId || null,
+              status: sendData?.ok ? 'sent' : 'failed',
+            });
+            autoReply = { sent: !!sendData?.ok, engine: 'away', model: `nutri_away_${identifiedAs}` };
+          } catch (e) {
+            console.error('nutri away message failed', e);
+            autoReply = { sent: false, reason: String(e) };
+          }
+        }
+      } else {
+        autoReply = { sent: false, reason: 'out_of_hours_silent_after_first' };
+      }
+    }
+    else if (aiMode === 'auto' && channelEnabled) {
       try {
         const ai = await generateAiReply({ admin, conversationId: conv!.id, phone });
         if (ai.response?.trim()) {
