@@ -245,7 +245,7 @@ const AdminTraining = () => {
                 <Layers className="w-3.5 h-3.5 mr-1.5" />
                 {selectedStudent?.assignedPrograms?.length > 0 ? "Alterar programa" : "Atribuir programa"}
               </Button>
-              {selectedStudent?.user_id && selectedStudent.assignedPrograms?.length > 0 && (
+              {selectedStudent?.user_id && (
                 <ReleaseNotifyButton userId={selectedStudent.user_id} type="training" />
               )}
             </div>
