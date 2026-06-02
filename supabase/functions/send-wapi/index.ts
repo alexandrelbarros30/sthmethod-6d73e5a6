@@ -20,6 +20,16 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
+    // Opt-out: bloqueia se o aluno respondeu "CANCELAR ENVIO" ou foi marcado manualmente.
+    try {
+      const { data: optOut } = await admin.rpc('is_phone_opted_out', { _phone: String(phone) });
+      if (optOut === true) {
+        return new Response(JSON.stringify({
+          ok: false, blocked: true, opt_out: true,
+          error: 'Aluno optou por não receber mensagens (CANCELAR ENVIO). Envio bloqueado.',
+        }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    } catch (_) { /* não bloqueia em caso de falha do RPC */ }
     const { data: cfgRow } = await admin
       .from('crm_settings').select('value').eq('key', 'wapi').maybeSingle();
     const cfg: any = cfgRow?.value || {};
