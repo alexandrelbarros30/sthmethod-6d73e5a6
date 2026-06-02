@@ -2538,6 +2538,9 @@ export type Database = {
           updated_at: string
           user_id: string
           weight: number | null
+          whatsapp_opt_out: boolean
+          whatsapp_opt_out_at: string | null
+          whatsapp_opt_out_reason: string | null
         }
         Insert: {
           accessibility_theme?: string | null
@@ -2580,6 +2583,9 @@ export type Database = {
           updated_at?: string
           user_id: string
           weight?: number | null
+          whatsapp_opt_out?: boolean
+          whatsapp_opt_out_at?: string | null
+          whatsapp_opt_out_reason?: string | null
         }
         Update: {
           accessibility_theme?: string | null
@@ -2622,6 +2628,9 @@ export type Database = {
           updated_at?: string
           user_id?: string
           weight?: number | null
+          whatsapp_opt_out?: boolean
+          whatsapp_opt_out_at?: string | null
+          whatsapp_opt_out_reason?: string | null
         }
         Relationships: []
       }
@@ -4014,6 +4023,7 @@ export type Database = {
         Returns: boolean
       }
       is_crm_staff: { Args: { _user_id: string }; Returns: boolean }
+      is_phone_opted_out: { Args: { _phone: string }; Returns: boolean }
     }
     Enums: {
       app_role:

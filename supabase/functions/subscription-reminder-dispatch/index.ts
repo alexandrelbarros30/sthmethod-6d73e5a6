@@ -96,9 +96,18 @@ Deno.serve(async (req) => {
         // Perfil + telefone
         const { data: profile } = await admin
           .from('profiles')
-          .select('full_name, phone, email')
+          .select('full_name, phone, email, whatsapp_opt_out')
           .eq('user_id', sub.user_id)
           .maybeSingle();
+        if (profile?.whatsapp_opt_out === true) {
+          await admin.from('subscription_reminder_log').insert({
+            user_id: sub.user_id, subscription_id: sub.id, end_date: sub.end_date,
+            trigger: rule.trigger, status: 'skipped_opt_out',
+            error_message: 'Aluno optou por não receber mensagens',
+          });
+          summary[rule.trigger].skipped++;
+          continue;
+        }
         const phone = (profile?.phone || '').replace(/\D/g, '');
         if (!phone) {
           await admin.from('subscription_reminder_log').insert({
