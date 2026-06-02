@@ -14,6 +14,9 @@ import StudentDossier from "@/components/admin/crm/StudentDossier";
 import { toast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { BellOff } from "lucide-react";
 
 interface Conv {
   id: string;
@@ -70,6 +73,24 @@ export default function AdminCrm() {
   const [channelFilter, setChannelFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [newTagName, setNewTagName] = useState("");
+  const [silentOpen, setSilentOpen] = useState(false);
+  const [silentTemplateId, setSilentTemplateId] = useState<string>("");
+  const [silentSelected, setSilentSelected] = useState<Record<string, boolean>>({});
+  const [silentSending, setSilentSending] = useState(false);
+
+  const { data: silentTemplates = [] } = useQuery<Array<{ id: string; name: string; body: string; channel: string }>>({
+    queryKey: ["crm-silent-templates"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("crm_message_templates")
+        .select("id, name, body, channel")
+        .eq("silent_dispatch", true)
+        .eq("active", true)
+        .order("name");
+      if (error) throw error;
+      return (data ?? []) as any;
+    },
+  });
 
   const { data: conversations = [] } = useQuery<Conv[]>({
     queryKey: ["crm-conversations"],
@@ -98,6 +119,49 @@ export default function AdminCrm() {
       return (data ?? []) as Msg[];
     },
   });
+
+  // Conversas elegíveis para disparo silencioso: contato após 19h (hoje) e inativas há 30+ min
+  const silentEligible = useMemo(() => {
+    const now = new Date();
+    const today19 = new Date(now); today19.setHours(19, 0, 0, 0);
+    const cutoff = new Date(now.getTime() - 30 * 60 * 1000);
+    return conversations.filter((c) => {
+      if (!c.last_message_at) return false;
+      if (c.status !== "open") return false;
+      const t = new Date(c.last_message_at);
+      return t >= today19 && t <= cutoff;
+    });
+  }, [conversations]);
+
+  function openSilentDialog() {
+    const first = silentTemplates[0]?.id || "";
+    setSilentTemplateId(first);
+    const sel: Record<string, boolean> = {};
+    silentEligible.forEach((c) => { sel[c.id] = true; });
+    setSilentSelected(sel);
+    setSilentOpen(true);
+  }
+
+  async function runSilentBroadcast() {
+    const tpl = silentTemplates.find((t) => t.id === silentTemplateId);
+    if (!tpl) { toast({ title: "Selecione um template silencioso" }); return; }
+    const targets = silentEligible.filter((c) => silentSelected[c.id]);
+    if (targets.length === 0) { toast({ title: "Nenhuma conversa selecionada" }); return; }
+    setSilentSending(true);
+    let ok = 0, fail = 0;
+    for (const c of targets) {
+      try {
+        const { data, error } = await supabase.functions.invoke("crm-send-whatsapp", {
+          body: { conversation_id: c.id, phone: c.phone, body: tpl.body },
+        });
+        if (error || data?.ok === false) fail++; else ok++;
+      } catch { fail++; }
+    }
+    setSilentSending(false);
+    setSilentOpen(false);
+    qc.invalidateQueries({ queryKey: ["crm-conversations"] });
+    toast({ title: "Disparo silencioso concluído", description: `${ok} enviadas · ${fail} falhas` });
+  }
 
   // tags
   const { data: allTags = [] } = useQuery<Tag[]>({
@@ -295,7 +359,17 @@ export default function AdminCrm() {
           <div className="p-3 border-b border-border/50 space-y-2">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold">Conversas</h2>
-              <Button size="sm" variant="ghost" onClick={handleNewConversation} className="h-7 w-7 p-0"><Plus className="w-4 h-4" /></Button>
+              <div className="flex items-center gap-0.5">
+                <Button
+                  size="sm" variant="ghost"
+                  onClick={openSilentDialog}
+                  title="Disparo silencioso (encerramento de expediente)"
+                  className="h-7 w-7 p-0"
+                >
+                  <BellOff className="w-4 h-4 text-violet-400" />
+                </Button>
+                <Button size="sm" variant="ghost" onClick={handleNewConversation} className="h-7 w-7 p-0"><Plus className="w-4 h-4" /></Button>
+              </div>
             </div>
             <div className="relative">
               <Search className="w-3.5 h-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -495,6 +569,84 @@ export default function AdminCrm() {
           </div>
         </div>
       </div>
+
+      <Dialog open={silentOpen} onOpenChange={setSilentOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BellOff className="w-4 h-4 text-violet-400" /> Disparo silencioso
+            </DialogTitle>
+            <DialogDescription className="text-[11px]">
+              Envio manual em massa para conversas <b>inativas há 30+ min</b> que fizeram contato <b>após 19h hoje</b>.
+              Roteia automaticamente pelo canal de cada conversa (Comercial ou Nutri). NÃO substitui automações de ausência/encerramento.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">Template silencioso</p>
+              <Select value={silentTemplateId} onValueChange={setSilentTemplateId}>
+                <SelectTrigger><SelectValue placeholder="Selecione um template" /></SelectTrigger>
+                <SelectContent>
+                  {silentTemplates.length === 0 && <div className="px-2 py-1 text-xs text-muted-foreground">Nenhum template silencioso. Crie em CRM → Templates.</div>}
+                  {silentTemplates.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {silentTemplateId && (
+                <Card className="mt-2 p-3 bg-muted/30">
+                  <p className="text-[10px] uppercase text-muted-foreground mb-1">Pré-visualização</p>
+                  <p className="text-xs whitespace-pre-line">{silentTemplates.find((t) => t.id === silentTemplateId)?.body}</p>
+                </Card>
+              )}
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                  Conversas elegíveis ({silentEligible.length})
+                </p>
+                <div className="flex gap-2 text-[10px]">
+                  <button className="underline text-muted-foreground" onClick={() => {
+                    const sel: Record<string, boolean> = {};
+                    silentEligible.forEach((c) => { sel[c.id] = true; });
+                    setSilentSelected(sel);
+                  }}>Selecionar todas</button>
+                  <button className="underline text-muted-foreground" onClick={() => setSilentSelected({})}>Limpar</button>
+                </div>
+              </div>
+              <div className="border rounded-md max-h-72 overflow-y-auto divide-y divide-border/40">
+                {silentEligible.length === 0 && (
+                  <p className="p-4 text-xs text-muted-foreground text-center">Nenhuma conversa atende ao critério agora.</p>
+                )}
+                {silentEligible.map((c) => (
+                  <label key={c.id} className="flex items-center gap-2 px-3 py-2 hover:bg-accent/40 cursor-pointer">
+                    <Checkbox
+                      checked={!!silentSelected[c.id]}
+                      onCheckedChange={(v) => setSilentSelected((s) => ({ ...s, [c.id]: !!v }))}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium truncate">{c.display_name || formatPhoneBR(c.phone)}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">
+                        {formatPhoneBR(c.phone)} · último: {fmtTime(c.last_message_at)}
+                      </p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSilentOpen(false)} disabled={silentSending}>Cancelar</Button>
+            <Button onClick={runSilentBroadcast} disabled={silentSending || !silentTemplateId || silentEligible.length === 0}>
+              {silentSending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <BellOff className="w-3.5 h-3.5 mr-1" />}
+              Enviar silencioso ({Object.values(silentSelected).filter(Boolean).length})
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

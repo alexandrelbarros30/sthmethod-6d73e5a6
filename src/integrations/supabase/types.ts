@@ -758,6 +758,7 @@ export type Database = {
           key: string
           media_url: string | null
           name: string
+          silent_dispatch: boolean
           updated_at: string
           variables: string[]
         }
@@ -775,6 +776,7 @@ export type Database = {
           key: string
           media_url?: string | null
           name: string
+          silent_dispatch?: boolean
           updated_at?: string
           variables?: string[]
         }
@@ -792,6 +794,7 @@ export type Database = {
           key?: string
           media_url?: string | null
           name?: string
+          silent_dispatch?: boolean
           updated_at?: string
           variables?: string[]
         }

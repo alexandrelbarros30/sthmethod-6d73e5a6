@@ -51,6 +51,7 @@ interface Template {
   automation_trigger: string | null;
   variables: string[];
   description: string | null;
+  silent_dispatch?: boolean;
 }
 
 const EMPTY: Partial<Template> = {
@@ -65,6 +66,7 @@ const EMPTY: Partial<Template> = {
   automation_trigger: "",
   variables: [],
   description: "",
+  silent_dispatch: false,
 };
 
 const PREVIEW_CTX = {
@@ -179,6 +181,7 @@ export default function AdminCrmTemplates() {
       automation_trigger: editing.is_automatic ? (editing.automation_trigger?.trim() || null) : null,
       variables: detectVars(editing.body || ""),
       description: editing.description?.trim() || null,
+      silent_dispatch: !!editing.silent_dispatch,
     };
     let error;
     if (editing.id) {
@@ -340,6 +343,11 @@ export default function AdminCrmTemplates() {
                         <Zap className="w-2.5 h-2.5" /> Automática
                       </Badge>
                     )}
+                    {t.silent_dispatch && (
+                      <Badge className="text-[10px] bg-violet-500/15 text-violet-500 border-violet-500/30">
+                        🔕 Silenciosa
+                      </Badge>
+                    )}
                     {!t.active && <Badge variant="outline" className="text-[10px] text-muted-foreground">Inativa</Badge>}
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-0.5">chave: <code>{t.key}</code></p>
@@ -438,7 +446,20 @@ export default function AdminCrmTemplates() {
                 <Switch checked={!!editing.is_automatic} onCheckedChange={(c) => setEditing({ ...editing, is_automatic: c })} />
                 <Label className="text-xs flex items-center gap-1"><Zap className="w-3 h-3 text-amber-500" /> Disparo automático</Label>
               </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={!!editing.silent_dispatch} onCheckedChange={(c) => setEditing({ ...editing, silent_dispatch: c })} />
+                <Label className="text-xs flex items-center gap-1">🔕 Disparo silencioso</Label>
+              </div>
             </div>
+            {editing.silent_dispatch && (
+              <div className="rounded-md border border-violet-500/30 bg-violet-500/5 p-3">
+                <p className="text-[11px] text-violet-500 font-medium">🔕 Mensagem silenciosa do Admin</p>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Fica disponível no CRM em <b>Disparo silencioso</b>. NÃO substitui automações de ausência/encerramento de expediente —
+                  é um envio manual em massa para conversas filtradas pelo admin (ex.: inativas 30+ min após contato pós-19h).
+                </p>
+              </div>
+            )}
             {editing.is_automatic && (
               <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
                 <Label className="text-xs flex items-center gap-1 text-amber-600">
