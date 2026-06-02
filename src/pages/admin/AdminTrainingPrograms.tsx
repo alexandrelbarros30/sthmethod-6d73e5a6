@@ -17,6 +17,7 @@ import { Plus, Pencil, Trash2, Users, ChevronRight, Layers, ArrowLeft, Copy, Tar
 import { toast } from "sonner";
 import ProgramWorkouts from "@/components/admin/ProgramWorkouts";
 import { processAndUpload, validateImageFile } from "@/lib/image-upload";
+import ReleaseNotifyButton from "@/components/admin/ReleaseNotifyButton";
 
 const OBJECTIVES = [
   { value: "hypertrophy", label: "Hipertrofia" },
@@ -643,6 +644,7 @@ const AdminTrainingPrograms = () => {
                         <p className="text-sm font-medium truncate">{s.full_name || "Sem nome"}</p>
                         <p className="text-[11px] text-muted-foreground truncate">{s.email} · {s.active}/{s.total} ativos</p>
                       </div>
+                      <ReleaseNotifyButton userId={s.user_id} type="training" />
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive h-7 text-xs">
