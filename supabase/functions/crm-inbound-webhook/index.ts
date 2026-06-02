@@ -306,7 +306,7 @@ Deno.serve(async (req) => {
       admin.from('crm_settings').select('value').eq('key', 'zapi').maybeSingle(),
     ]);
 
-    // 1. lookup profile + subscription
+    // 1. lookup profile + subscription (identificação do contato)
     const candidates = phoneCandidates(phone);
     const { data: profiles } = await admin.from('profiles').select('user_id, full_name, objective').in('phone', candidates).limit(1);
     const profile = profiles?.[0];
@@ -314,19 +314,21 @@ Deno.serve(async (req) => {
     let isLead = !profile;
     let queueOverride: string | null = null;
     const tagsToApply: string[] = [];
+    let identifiedAs: 'aluno_ativo' | 'aluno_vencido' | 'lead' = 'lead';
 
     if (profile) {
       const { data: subs } = await admin.from('subscriptions').select('end_date,status').eq('user_id', profile.user_id).order('end_date', { ascending: false }).limit(1);
       const sub = subs?.[0];
       if (sub) {
         const days = Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86400000);
-        if (days < 0) { tagsToApply.push('RENOVACAO'); queueOverride = 'comercial'; }
-        else { tagsToApply.push('ALUNO_ATIVO'); }
+        if (days < 0) { tagsToApply.push('RENOVACAO'); queueOverride = 'comercial'; identifiedAs = 'aluno_vencido'; }
+        else { tagsToApply.push('ALUNO_ATIVO'); identifiedAs = 'aluno_ativo'; }
       } else {
-        tagsToApply.push('LEAD'); isLead = true;
+        tagsToApply.push('LEAD'); isLead = true; identifiedAs = 'lead';
       }
     } else {
       tagsToApply.push('LEAD');
+      identifiedAs = 'lead';
     }
 
     // 2. classify message
@@ -334,20 +336,58 @@ Deno.serve(async (req) => {
     const finalQueue = queueOverride || cls.queue || (provider === 'zapi' ? 'comercial' : 'nutri');
     for (const t of cls.tags) if (!tagsToApply.includes(t)) tagsToApply.push(t);
 
-    // 3. upsert conversation
-    let { data: conv } = await admin.from('crm_conversations').select('id, queue_type').eq('phone', phone).maybeSingle();
+    // 3. upsert conversation + regra de sessão (janela 2h, reset silencioso)
+    const SESSION_TTL_MS = 2 * 60 * 60 * 1000; // 2 horas
+    const now = new Date();
+    const sessionExpiresAt = new Date(now.getTime() + SESSION_TTL_MS);
+
+    let { data: conv } = await admin
+      .from('crm_conversations')
+      .select('id, queue_type, status, session_expires_at, session_count')
+      .eq('phone', phone)
+      .maybeSingle();
+
+    // Define se é uma NOVA sessão: conversa nova, encerrada, ou expirada.
+    const isNewSession = !conv
+      || conv.status === 'closed'
+      || !conv.session_expires_at
+      || new Date(conv.session_expires_at).getTime() < now.getTime();
+
     if (!conv) {
       const ins = await admin.from('crm_conversations').insert({
         phone, display_name: displayName, channel: 'whatsapp', status: 'open',
         provider, queue_type: finalQueue, nutri_category: cls.nutriCategory, is_lead: isLead,
+        user_id: profile?.user_id || null,
+        identified_as: identifiedAs,
+        session_started_at: now.toISOString(),
+        session_expires_at: sessionExpiresAt.toISOString(),
+        session_count: 1,
       }).select('id, queue_type').single();
       conv = ins.data;
+    } else if (isNewSession) {
+      // Nova sessão → reidentifica do zero (silenciosamente)
+      await admin.from('crm_conversations').update({
+        provider,
+        status: 'open',
+        display_name: displayName || undefined,
+        queue_type: finalQueue,
+        nutri_category: cls.nutriCategory,
+        is_lead: isLead,
+        user_id: profile?.user_id || null,
+        identified_as: identifiedAs,
+        session_started_at: now.toISOString(),
+        session_expires_at: sessionExpiresAt.toISOString(),
+        session_count: (conv.session_count || 0) + 1,
+      }).eq('id', conv.id);
     } else {
-      const upd: any = { provider };
+      // Mesma sessão → mantém identificação, só estende janela
+      const upd: any = { provider, session_expires_at: sessionExpiresAt.toISOString() };
       if (displayName) upd.display_name = displayName;
       if (!conv.queue_type) upd.queue_type = finalQueue;
       if (cls.nutriCategory) upd.nutri_category = cls.nutriCategory;
       upd.is_lead = isLead;
+      if (profile?.user_id) upd.user_id = profile.user_id;
+      upd.identified_as = identifiedAs;
       await admin.from('crm_conversations').update(upd).eq('id', conv.id);
     }
 
