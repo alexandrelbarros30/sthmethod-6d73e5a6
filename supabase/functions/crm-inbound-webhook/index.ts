@@ -384,6 +384,21 @@ Deno.serve(async (req) => {
       admin.from('crm_settings').select('value').eq('key', 'comercial_id_expired').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'comercial_id_lead').maybeSingle(),
     ]);
+    const [
+      { data: menu1Cfg },
+      { data: menu2Cfg },
+      { data: menu3Cfg },
+      { data: menu4ExCfg },
+      { data: menu4ActiveCfg },
+      { data: menu5Cfg },
+    ] = await Promise.all([
+      admin.from('crm_settings').select('value').eq('key', 'comercial_menu_1_planos').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'comercial_menu_2_como_funciona').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'comercial_menu_3_consultor').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'comercial_menu_4_ex_aluno').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'comercial_menu_4_aluno_ativo').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'comercial_menu_5_financeiro').maybeSingle(),
+    ]);
     const channelHours = provider === 'wapi' ? (hoursNutriCfg?.value as any) : (hoursComCfg?.value as any);
     const withinHours = isWithinBusinessHours(channelHours);
 
