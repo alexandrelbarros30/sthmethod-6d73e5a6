@@ -672,6 +672,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          identified_as: string | null
           is_lead: boolean
           last_direction: string | null
           last_message_at: string | null
@@ -682,9 +683,13 @@ export type Database = {
           pipeline_stage: string | null
           provider: string | null
           queue_type: string | null
+          session_count: number
+          session_expires_at: string | null
+          session_started_at: string | null
           status: string
           unread_count: number
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           assigned_to?: string | null
@@ -692,6 +697,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          identified_as?: string | null
           is_lead?: boolean
           last_direction?: string | null
           last_message_at?: string | null
@@ -702,9 +708,13 @@ export type Database = {
           pipeline_stage?: string | null
           provider?: string | null
           queue_type?: string | null
+          session_count?: number
+          session_expires_at?: string | null
+          session_started_at?: string | null
           status?: string
           unread_count?: number
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           assigned_to?: string | null
@@ -712,6 +722,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          identified_as?: string | null
           is_lead?: boolean
           last_direction?: string | null
           last_message_at?: string | null
@@ -722,9 +733,13 @@ export type Database = {
           pipeline_stage?: string | null
           provider?: string | null
           queue_type?: string | null
+          session_count?: number
+          session_expires_at?: string | null
+          session_started_at?: string | null
           status?: string
           unread_count?: number
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -4010,6 +4025,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      crm_expire_idle_conversations: { Args: never; Returns: number }
       has_admin_view: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
