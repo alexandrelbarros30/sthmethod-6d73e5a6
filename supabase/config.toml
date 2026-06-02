@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.crm-inbound-webhook]
 verify_jwt = false
+
+[functions.subscription-reminder-dispatch]
+verify_jwt = false
