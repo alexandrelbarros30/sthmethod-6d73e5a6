@@ -135,6 +135,35 @@ function normalizePhone(raw: string): string {
   return d;
 }
 
+// === Horário de atendimento humano (timezone America/Sao_Paulo) ===
+function spNow() {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Sao_Paulo',
+    weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false,
+  }).formatToParts(new Date());
+  const wd = parts.find(p => p.type === 'weekday')?.value || '';
+  const h = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10);
+  const m = parseInt(parts.find(p => p.type === 'minute')?.value || '0', 10);
+  const map: Record<string, number> = { Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 };
+  return { dow: map[wd] ?? 0, minutes: h * 60 + m };
+}
+
+function hhmmToMin(s: string): number {
+  const [h, m] = String(s || '0:0').split(':').map(n => parseInt(n, 10) || 0);
+  return h * 60 + m;
+}
+
+function isWithinBusinessHours(cfg: any): boolean {
+  if (!cfg) return true; // sem config = sempre atendendo
+  const { dow, minutes } = spNow();
+  let win: any = null;
+  if (dow >= 1 && dow <= 5) win = cfg.mon_fri;
+  else if (dow === 6) win = cfg.sat;
+  else win = cfg.sun;
+  if (!win || !win.start || !win.end) return false;
+  return minutes >= hhmmToMin(win.start) && minutes < hhmmToMin(win.end);
+}
+
 function phoneCandidates(d: string): string[] {
   if (!d) return [];
   const set = new Set<string>([d]);
