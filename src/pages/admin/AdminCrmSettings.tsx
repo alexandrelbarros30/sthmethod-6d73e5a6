@@ -8,12 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, MessageSquare, Sparkles, Copy, Check } from "lucide-react";
+import { Loader2, MessageSquare, Sparkles, Copy, Check, Clock, BellOff } from "lucide-react";
 
 type ZapiCfg = { enabled: boolean; instance_id: string; instance_token: string; client_token: string; webhook: string };
 type WapiCfg = { enabled: boolean; server_url: string; instance_id: string; token: string; client_token: string; webhook: string };
 type AiMode = { mode: "copilot" | "auto" };
+type Hours = { tz: string; mon_fri: { start: string; end: string } | null; sat: { start: string; end: string } | null; sun: { start: string; end: string } | null };
+const DEFAULT_HOURS: Hours = { tz: "America/Sao_Paulo", mon_fri: { start: "09:00", end: "19:00" }, sat: { start: "09:00", end: "14:00" }, sun: null };
 
 const PROJECT_URL = import.meta.env.VITE_SUPABASE_URL as string;
 
@@ -26,17 +29,36 @@ export default function AdminCrmSettings() {
   const [wapi, setWapi] = useState<WapiCfg>({ enabled: false, server_url: "https://api.w-api.app", instance_id: "", token: "", client_token: "", webhook: "" });
   const [aiMode, setAiMode] = useState<AiMode>({ mode: "copilot" });
   const [copied, setCopied] = useState<string | null>(null);
+  const [hoursCom, setHoursCom] = useState<Hours>(DEFAULT_HOURS);
+  const [hoursNutri, setHoursNutri] = useState<Hours>({ ...DEFAULT_HOURS, mon_fri: { start: "09:00", end: "18:00" } });
+  const [awayComLead, setAwayComLead] = useState("");
+  const [awayComActive, setAwayComActive] = useState("");
+  const [awayComExpired, setAwayComExpired] = useState("");
+  const [awayNutriActive, setAwayNutriActive] = useState("");
+  const [awayNutriInactive, setAwayNutriInactive] = useState("");
 
   const zapiWebhook = `${PROJECT_URL}/functions/v1/crm-inbound-webhook?provider=zapi`;
   const wapiWebhook = `${PROJECT_URL}/functions/v1/crm-inbound-webhook?provider=wapi`;
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("crm_settings").select("key,value").in("key", ["zapi","wapi","ai_mode"]);
+      const { data } = await supabase.from("crm_settings").select("key,value").in("key", [
+        "zapi","wapi","ai_mode",
+        "business_hours_comercial","business_hours_nutri",
+        "comercial_away_lead","comercial_away_active","comercial_away_expired",
+        "nutri_away_active","nutri_away_inactive",
+      ]);
       (data ?? []).forEach((r: any) => {
         if (r.key === "zapi") setZapi({ ...zapi, ...(r.value || {}) });
         if (r.key === "wapi") setWapi({ ...wapi, ...(r.value || {}) });
         if (r.key === "ai_mode") setAiMode({ mode: r.value?.mode || "copilot" });
+        if (r.key === "business_hours_comercial" && r.value) setHoursCom({ ...DEFAULT_HOURS, ...r.value });
+        if (r.key === "business_hours_nutri" && r.value) setHoursNutri({ ...DEFAULT_HOURS, ...r.value });
+        if (r.key === "comercial_away_lead") setAwayComLead(r.value?.message || "");
+        if (r.key === "comercial_away_active") setAwayComActive(r.value?.message || "");
+        if (r.key === "comercial_away_expired") setAwayComExpired(r.value?.message || "");
+        if (r.key === "nutri_away_active") setAwayNutriActive(r.value?.message || "");
+        if (r.key === "nutri_away_inactive") setAwayNutriInactive(r.value?.message || "");
       });
       setLoading(false);
     })();
