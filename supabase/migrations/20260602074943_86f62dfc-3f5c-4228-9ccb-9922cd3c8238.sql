@@ -1,0 +1,1 @@
+UPDATE public.evolution_reminders SET auto_sent_at = now(), seen = true WHERE id IN ('280113da-5d21-413e-b227-44bec09c36f7','38fb2db0-3db4-47f7-bb55-6db891c1a6e5','646c9c34-9b71-44cd-b525-722c09711c82','73e6c256-a5f8-4322-9b69-c807e64a685a','6850a106-c8b1-458c-8706-d21725d1f164');
