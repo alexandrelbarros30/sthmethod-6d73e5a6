@@ -379,6 +379,11 @@ Deno.serve(async (req) => {
       admin.from('crm_settings').select('value').eq('key', 'nutri_away_active').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'nutri_away_inactive').maybeSingle(),
     ]);
+    const [{ data: comIdActive }, { data: comIdExpired }, { data: comIdLead }] = await Promise.all([
+      admin.from('crm_settings').select('value').eq('key', 'comercial_id_active').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'comercial_id_expired').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'comercial_id_lead').maybeSingle(),
+    ]);
     const channelHours = provider === 'wapi' ? (hoursNutriCfg?.value as any) : (hoursComCfg?.value as any);
     const withinHours = isWithinBusinessHours(channelHours);
 
@@ -514,10 +519,66 @@ Deno.serve(async (req) => {
       ? (wapiCfg?.value as any)?.enabled === true
       : (zapiCfg?.value as any)?.enabled === true;
 
+    // === Canal Comercial (Z-API) → mensagem de identificação (1x por sessão) ===
+    // Sempre envia na 1ª msg da sessão, independente de hora ou ai_mode.
+    // Aluno ativo → direciona para Fale com o Nutri.
+    // Aluno vencido → mensagem de renovação.
+    // Lead → mensagem comercial padrão.
+    if (provider === 'zapi' && channelEnabled && isNewSession) {
+      const firstName = (displayName || profile?.full_name || '').toString().split(' ')[0] || '';
+      const defaults: Record<string, string> = {
+        aluno_ativo:
+          'Olá{nomeSep}{nome}! 👋 Identificamos você como *aluno ativo* da STH METHOD.\n\nPara dúvidas sobre *dieta, treino e protocolo*, fale direto com o Nutri no canal exclusivo:\n👉 https://wa.me/5521998984153\n\nEste canal aqui é *comercial* (planos, renovação e financeiro). Se sua dúvida for sobre isso, pode mandar que te respondemos no horário de atendimento (Seg-Sex 9h–19h, Sáb 9h–14h).',
+        aluno_vencido:
+          'Olá{nomeSep}{nome}! 👋 Que bom te ver de volta. Identificamos que sua assinatura *está vencida*.\n\nPosso te enviar os planos atualizados para *renovar* sua consultoria? Responda com:\n1️⃣ Quero renovar\n2️⃣ Já renovei\n3️⃣ Falar com consultor\n\nAtendimento humano: Seg-Sex 9h–19h, Sáb 9h–14h.',
+        lead:
+          'Olá{nomeSep}{nome}! 👋 Seja bem-vindo(a) à *STH METHOD*.\n\nComo posso te ajudar hoje?\n1️⃣ Conhecer planos\n2️⃣ Como funciona a consultoria\n3️⃣ Falar com consultor\n4️⃣ Já sou aluno\n\nAtendimento humano: Seg-Sex 9h–19h, Sáb 9h–14h. Aos domingos: somente atendimento por mensagem.',
+      };
+      const tplFromCfg =
+        identifiedAs === 'aluno_ativo' ? (comIdActive?.value as any)?.message
+        : identifiedAs === 'aluno_vencido' ? (comIdExpired?.value as any)?.message
+        : (comIdLead?.value as any)?.message;
+      const tpl = String(tplFromCfg || defaults[identifiedAs] || defaults.lead);
+      const msgOut = tpl
+        .replace(/\{nome\}/gi, firstName)
+        .replace(/\{nomeSep\}/gi, firstName ? ' ' : '');
+
+      try {
+        const c = (zapiCfg?.value as any) || {};
+        const INSTANCE_ID = (c.instance_id || Deno.env.get('ZAPI_INSTANCE_ID') || '').trim();
+        const INSTANCE_TOKEN = (c.instance_token || Deno.env.get('ZAPI_INSTANCE_TOKEN') || '').trim();
+        const CLIENT_TOKEN = (c.client_token || Deno.env.get('ZAPI_CLIENT_TOKEN') || '').trim();
+        let sent = false;
+        let messageId: string | null = null;
+        if (INSTANCE_ID && INSTANCE_TOKEN) {
+          const r = await fetch(`https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...(CLIENT_TOKEN ? { 'Client-Token': CLIENT_TOKEN } : {}) },
+            body: JSON.stringify({ phone, message: msgOut }),
+          });
+          const j = await r.json().catch(() => ({}));
+          sent = r.ok;
+          messageId = j?.messageId || j?.id || null;
+        }
+        await admin.from('crm_messages').insert({
+          conversation_id: conv!.id,
+          direction: 'out',
+          body: msgOut,
+          source: 'zapi',
+          external_id: messageId,
+          status: sent ? 'sent' : 'failed',
+        });
+        autoReply = { sent, engine: 'identification', model: `comercial_${identifiedAs}` };
+      } catch (e) {
+        console.error('comercial identification send failed', e);
+        autoReply = { sent: false, reason: String(e) };
+      }
+    }
+
     // === Canal Nutri (W-API) fora do horário → mensagem de ausência (só 1x por sessão) ===
     // Aluno ativo recebe mensagem priorizada; lead/vencido é direcionado ao Comercial.
     // Não dispara IA aqui — o objetivo é apenas confirmar o recebimento.
-    if (provider === 'wapi' && !withinHours && channelEnabled) {
+    else if (provider === 'wapi' && !withinHours && channelEnabled) {
       const isFirstOfSession = isNewSession;
       if (isFirstOfSession) {
         const tplVal = identifiedAs === 'aluno_ativo'
