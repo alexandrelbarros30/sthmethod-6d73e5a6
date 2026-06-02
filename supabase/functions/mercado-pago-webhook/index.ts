@@ -75,32 +75,39 @@ function renderTemplate(content: string, ctx: Record<string, any>): string {
   return msg;
 }
 
-async function sendWelcomeWhatsapp(supabase: any, userId: string) {
+async function sendAutomationWhatsapp(
+  supabase: any,
+  userId: string,
+  trigger: "payment_welcome" | "payment_renewal",
+) {
   const { data: profile } = await supabase
     .from("profiles").select("full_name, phone, email").eq("user_id", userId).maybeSingle();
   if (!profile?.phone) {
-    console.log("[welcome-whatsapp] no phone for", userId);
+    console.log(`[${trigger}] no phone for`, userId);
     return;
   }
   // Templates de automação são gerenciados na CRM (crm_message_templates).
-  // Resolução por prioridade: automation_trigger='payment_welcome' →
-  // key='payment_welcome' → key='automacao_pagamento_aprovado'.
+  // Resolução por prioridade: automation_trigger=<trigger> → key=<trigger>
+  // → fallback por key específica conhecida.
+  const legacyKey = trigger === "payment_welcome"
+    ? "automacao_pagamento_aprovado"
+    : "automacao_pagamento_renovacao";
   let tpl: { id: string; body: string; media_url: string | null } | null = null;
   {
     const { data } = await supabase
       .from("crm_message_templates")
       .select("id, body, media_url, active")
-      .or("automation_trigger.eq.payment_welcome,key.eq.payment_welcome,key.eq.automacao_pagamento_aprovado")
+      .or(`automation_trigger.eq.${trigger},key.eq.${trigger},key.eq.${legacyKey}`)
       .eq("active", true)
       .limit(1)
       .maybeSingle();
     if (data?.body) tpl = { id: data.id, body: data.body, media_url: data.media_url };
   }
   if (!tpl?.body) {
-    console.warn("[welcome-whatsapp] payment_welcome template missing in crm_message_templates");
+    console.warn(`[${trigger}] template missing in crm_message_templates`);
     return;
   }
-  // Dedup: if welcome was already sent in last 24h, skip
+  // Dedup: se já enviamos este mesmo template em 24h, não repetir.
   const { data: recent } = await supabase
     .from("message_history")
     .select("id")
@@ -109,7 +116,7 @@ async function sendWelcomeWhatsapp(supabase: any, userId: string) {
     .gte("created_at", new Date(Date.now() - 86400000).toISOString())
     .limit(1);
   if (recent && recent.length > 0) {
-    console.log("[welcome-whatsapp] already sent recently for", userId);
+    console.log(`[${trigger}] already sent recently for`, userId);
     return;
   }
   const message = renderTemplate(tpl.body, {
@@ -117,8 +124,8 @@ async function sendWelcomeWhatsapp(supabase: any, userId: string) {
   });
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  // Boas-vindas pós-pagamento sempre sai pela linha "Fale com o Nutri"
-  // (W-API / 5521998984153). Disparo automático silencioso.
+  // Disparo automático silencioso sempre pela linha "Fale com o Nutri"
+  // (W-API / 5521998984153) — vale para boas-vindas e renovação.
   const fnName = "send-wapi";
   const res = await fetch(`${SUPABASE_URL}/functions/v1/${fnName}`, {
     method: "POST",
@@ -143,9 +150,9 @@ async function sendWelcomeWhatsapp(supabase: any, userId: string) {
       sent_at: new Date().toISOString(),
     });
   } catch (e) {
-    console.error("[welcome-whatsapp] history insert failed", e);
+    console.error(`[${trigger}] history insert failed`, e);
   }
-  console.log("[welcome-whatsapp] result", { userId, ok });
+  console.log(`[${trigger}] result`, { userId, ok });
 }
 
 async function activateSubscriptionForPayment(supabase: any, payment: any) {
@@ -338,16 +345,19 @@ serve(async (req) => {
     // If approved for the first time, activate subscription once.
     if (newStatus === "approved" && payment && previousStatus !== "approved") {
       await activateSubscriptionForPayment(supabase, payment);
-      // Boas-vindas só para NOVO aluno (primeira compra). Renovações/upgrades não
-      // disparam o template "Pagamento aprovado".
-      if (payment.action_type === "new") {
-        try {
-          await sendWelcomeWhatsapp(supabase, payment.user_id);
-        } catch (e) {
-          console.error("[welcome-whatsapp] failed", e);
+      // Boas-vindas: NOVO aluno (primeira compra) → template payment_welcome.
+      // Renovação/upgrade → template payment_renewal. Ambos saem silenciosos
+      // pela linha "Fale com o Nutri".
+      try {
+        if (payment.action_type === "new") {
+          await sendAutomationWhatsapp(supabase, payment.user_id, "payment_welcome");
+        } else if (payment.action_type === "renewal" || payment.action_type === "upgrade") {
+          await sendAutomationWhatsapp(supabase, payment.user_id, "payment_renewal");
+        } else {
+          console.log("[automation-whatsapp] skipped (action_type=", payment.action_type, ")");
         }
-      } else {
-        console.log("[welcome-whatsapp] skipped (action_type=", payment.action_type, ")");
+      } catch (e) {
+        console.error("[automation-whatsapp] failed", e);
       }
     }
 
