@@ -28,7 +28,7 @@ const FLOW_KEYS = [
   { key: "comercial_menu_2_como_funciona", label: "Como funciona a STH METHOD",    hasImage: false, defaultMsg: "*Como funciona a STH METHOD* 🧬\n\nA STH METHOD é uma consultoria em performance, saúde e transformação corporal, baseada em ciência e estratégia.\n\n✅ *Plano Alimentar Personalizado*\n✅ *Treino Personalizado*\n✅ *Protocolo Inteligente*\n✅ *Análise de Exames*\n✅ *Acompanhamento Contínuo*\n✅ *Avaliação Mensal*" },
   { key: "comercial_formas_pagamento",  label: "Formas de Pagamento",              hasImage: false, defaultMsg: "*Formas de pagamento* 💳\n\n💳 Cartão de Crédito\n📲 PIX\n💰 Parcelamento disponível conforme o plano\n\n1️⃣ Ver Planos\n2️⃣ Falar com consultor\n0️⃣ Voltar" },
   { key: "comercial_handoff_consultor", label: "Transferência para Consultor",     hasImage: false, defaultMsg: "Perfeito.\n\nVou encaminhar você para um *consultor* da equipe STH METHOD.\n\nAguarde alguns instantes. 🙏" },
-  { key: "comercial_lista_planos",      label: "Lista de Planos (imagem opcional)", hasImage: true, defaultMsg: "" },
+  { key: "comercial_lista_planos",      label: "Lista de Planos (imagem opcional)", hasImage: true, defaultMsg: "*Planos STH METHOD* 💎\n\n{planos}\n\n{cta}\n\n0️⃣ Voltar" },
 ] as const;
 
 const PROJECT_URL = import.meta.env.VITE_SUPABASE_URL as string;
