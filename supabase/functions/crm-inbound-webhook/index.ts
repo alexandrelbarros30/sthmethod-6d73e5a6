@@ -410,6 +410,17 @@ Deno.serve(async (req) => {
       admin.from('crm_settings').select('value').eq('key', 'comercial_menu_4_aluno_ativo').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'comercial_menu_5_financeiro').maybeSingle(),
     ]);
+    const [
+      { data: leadMenuCfg },
+      { data: formasPagCfg },
+      { data: handoffConsCfg },
+      { data: listaPlanosCfg },
+    ] = await Promise.all([
+      admin.from('crm_settings').select('value').eq('key', 'comercial_lead_menu').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'comercial_formas_pagamento').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'comercial_handoff_consultor').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'comercial_lista_planos').maybeSingle(),
+    ]);
     const channelHours = provider === 'wapi' ? (hoursNutriCfg?.value as any) : (hoursComCfg?.value as any);
     const withinHours = isWithinBusinessHours(channelHours);
 
