@@ -662,6 +662,7 @@ Deno.serve(async (req) => {
       const imgIdExpired = ((comIdExpired?.value as any)?.image_url as string | undefined) || null;
       const imgIdLead = ((comIdLead?.value as any)?.image_url as string | undefined) || null;
       const imgListaPlanos = ((listaPlanosCfg?.value as any)?.image_url as string | undefined) || null;
+      const tplListaPlanos = ((listaPlanosCfg?.value as any)?.message as string | undefined) || '';
 
       // === Lista de planos ativos (deduplicada por duração) ===
       const { data: planList } = await admin.from('plans')
@@ -679,8 +680,14 @@ Deno.serve(async (req) => {
           return '*Planos STH METHOD* 💎\n\nAcesse https://sthmethod.com.br para conhecer os planos atuais.';
         }
         const lines = plans.map((p: any, i: number) =>
-          `${i + 1}️⃣ *${p.name}* — ${p.price} (${p.duration_days} dias)`);
-        return `*Planos STH METHOD* 💎\n\n${lines.join('\n')}\n\n${cta}\n\n0️⃣ Voltar`;
+          `${i + 1}️⃣ *${p.name}* — ${p.price} (${p.duration_days} dias) no Pix`);
+        const planosTxt = lines.join('\n');
+        const tpl = (tplListaPlanos && tplListaPlanos.trim())
+          ? tplListaPlanos
+          : '*Planos STH METHOD* 💎\n\n{planos}\n\n{cta}\n\n0️⃣ Voltar';
+        return tpl
+          .replace(/\{planos\}/g, planosTxt)
+          .replace(/\{cta\}/g, cta);
       };
 
       // === Transferência para consultor humano ===

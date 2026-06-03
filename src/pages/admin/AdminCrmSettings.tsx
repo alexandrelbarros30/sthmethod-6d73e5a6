@@ -28,7 +28,7 @@ const FLOW_KEYS = [
   { key: "comercial_menu_2_como_funciona", label: "Como funciona a STH METHOD",    hasImage: false, defaultMsg: "*Como funciona a STH METHOD* 🧬\n\nA STH METHOD é uma consultoria em performance, saúde e transformação corporal, baseada em ciência e estratégia.\n\n✅ *Plano Alimentar Personalizado*\n✅ *Treino Personalizado*\n✅ *Protocolo Inteligente*\n✅ *Análise de Exames*\n✅ *Acompanhamento Contínuo*\n✅ *Avaliação Mensal*" },
   { key: "comercial_formas_pagamento",  label: "Formas de Pagamento",              hasImage: false, defaultMsg: "*Formas de pagamento* 💳\n\n💳 Cartão de Crédito\n📲 PIX\n💰 Parcelamento disponível conforme o plano\n\n1️⃣ Ver Planos\n2️⃣ Falar com consultor\n0️⃣ Voltar" },
   { key: "comercial_handoff_consultor", label: "Transferência para Consultor",     hasImage: false, defaultMsg: "Perfeito.\n\nVou encaminhar você para um *consultor* da equipe STH METHOD.\n\nAguarde alguns instantes. 🙏" },
-  { key: "comercial_lista_planos",      label: "Lista de Planos (imagem opcional)", hasImage: true, defaultMsg: "" },
+  { key: "comercial_lista_planos",      label: "Lista de Planos (imagem opcional)", hasImage: true, defaultMsg: "*Planos STH METHOD* 💎\n\n{planos}\n\n{cta}\n\n0️⃣ Voltar" },
 ] as const;
 
 const PROJECT_URL = import.meta.env.VITE_SUPABASE_URL as string;
@@ -348,8 +348,9 @@ export default function AdminCrmSettings() {
             <h2 className="text-base font-semibold">Templates do Fluxo Comercial (Z-API)</h2>
           </div>
           <p className="text-xs text-muted-foreground">
-            Textos enviados automaticamente em cada etapa do fluxo (STH One). Variáveis: <code>{"{nome}"}</code> e <code>{"{nomeSep}"}</code>.
-            Algumas etapas aceitam imagem opcional (enviada junto com a mensagem como legenda).
+            Textos enviados automaticamente em cada etapa do fluxo (STH One). Variáveis: <code>{"{nome}"}</code>, <code>{"{nomeSep}"}</code>.
+            Em <b>Lista de Planos</b>, use <code>{"{planos}"}</code> (lista gerada do BD) e <code>{"{cta}"}</code> (chamada para ação).
+            Algumas etapas aceitam imagem opcional (enviada junto da mensagem como legenda).
           </p>
 
           {FLOW_KEYS.map(({ key, label, hasImage }) => {
@@ -367,7 +368,7 @@ export default function AdminCrmSettings() {
                   onChange={(e) => setFlowTpls(prev => ({ ...prev, [key]: { ...tpl, message: e.target.value } }))}
                   rows={5}
                   className="text-xs font-mono"
-                  placeholder={key === "comercial_lista_planos" ? "(opcional — a lista de planos é gerada automaticamente. Use só se quiser uma legenda extra.)" : ""}
+                  placeholder={key === "comercial_lista_planos" ? "Ex.: *Planos STH METHOD* 💎\n\n{planos}\n\n{cta}\n\n0️⃣ Voltar" : ""}
                 />
                 {hasImage && (
                   <div className="flex items-center gap-3 pt-1">
