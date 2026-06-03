@@ -671,9 +671,14 @@ export type Database = {
           channel: string
           created_at: string
           display_name: string | null
+          flow_context: Json
+          flow_state: string | null
+          human_handoff: boolean
           id: string
           identified_as: string | null
+          inactivity_warned_at: string | null
           is_lead: boolean
+          last_bot_message_at: string | null
           last_direction: string | null
           last_message_at: string | null
           last_message_preview: string | null
@@ -696,9 +701,14 @@ export type Database = {
           channel?: string
           created_at?: string
           display_name?: string | null
+          flow_context?: Json
+          flow_state?: string | null
+          human_handoff?: boolean
           id?: string
           identified_as?: string | null
+          inactivity_warned_at?: string | null
           is_lead?: boolean
+          last_bot_message_at?: string | null
           last_direction?: string | null
           last_message_at?: string | null
           last_message_preview?: string | null
@@ -721,9 +731,14 @@ export type Database = {
           channel?: string
           created_at?: string
           display_name?: string | null
+          flow_context?: Json
+          flow_state?: string | null
+          human_handoff?: boolean
           id?: string
           identified_as?: string | null
+          inactivity_warned_at?: string | null
           is_lead?: boolean
+          last_bot_message_at?: string | null
           last_direction?: string | null
           last_message_at?: string | null
           last_message_preview?: string | null
