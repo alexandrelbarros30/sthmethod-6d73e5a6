@@ -10,13 +10,26 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, MessageSquare, Sparkles, Copy, Check, Clock, BellOff } from "lucide-react";
+import { Loader2, MessageSquare, Sparkles, Copy, Check, Clock, BellOff, ImageIcon, Upload, X, Workflow } from "lucide-react";
 
 type ZapiCfg = { enabled: boolean; instance_id: string; instance_token: string; client_token: string; webhook: string };
 type WapiCfg = { enabled: boolean; server_url: string; instance_id: string; token: string; client_token: string; webhook: string };
 type AiMode = { mode: "copilot" | "auto" };
 type Hours = { tz: string; mon_fri: { start: string; end: string } | null; sat: { start: string; end: string } | null; sun: { start: string; end: string } | null };
 const DEFAULT_HOURS: Hours = { tz: "America/Sao_Paulo", mon_fri: { start: "09:00", end: "19:00" }, sat: { start: "09:00", end: "14:00" }, sun: null };
+
+type FlowTpl = { message: string; image_url?: string | null };
+
+const FLOW_KEYS = [
+  { key: "comercial_id_active",         label: "Saudação — Aluno Ativo",          hasImage: true,  defaultMsg: "Olá{nomeSep}{nome}! 👋\n\nIdentificamos que você possui um *acompanhamento ativo* na STH METHOD.\n\nPara assuntos sobre *dieta, treino, protocolo, exames ou evolução*, utilize uma das opções abaixo:\n\n🟢 Digite *NUTRI*\nou\n🟢 Clique em *Fale com o Nutri*:\n👉 https://wa.me/5521998984153" },
+  { key: "comercial_id_expired",        label: "Saudação — Aluno Vencido (menu)", hasImage: true,  defaultMsg: "Olá{nomeSep}{nome}! 👋\n\nIdentificamos que você já fez parte da STH METHOD.\n\nComo podemos ajudar?\n\n1️⃣ Conhecer os planos\n2️⃣ Formas de pagamento\n3️⃣ Falar com um consultor" },
+  { key: "comercial_id_lead",           label: "Lead — Pedido de Nome",            hasImage: true,  defaultMsg: "Olá! 👋\n\nSeja bem-vindo(a) à *STH METHOD*.\n\nQual é o seu *nome*?" },
+  { key: "comercial_lead_menu",         label: "Lead — Menu após nome",            hasImage: false, defaultMsg: "Prazer, {nome}.\n\nComo posso ajudar?\n\n1️⃣ Como funciona\n2️⃣ Conhecer os planos\n3️⃣ Falar com um consultor" },
+  { key: "comercial_menu_2_como_funciona", label: "Como funciona a STH METHOD",    hasImage: false, defaultMsg: "*Como funciona a STH METHOD* 🧬\n\nA STH METHOD é uma consultoria em performance, saúde e transformação corporal, baseada em ciência e estratégia.\n\n✅ *Plano Alimentar Personalizado*\n✅ *Treino Personalizado*\n✅ *Protocolo Inteligente*\n✅ *Análise de Exames*\n✅ *Acompanhamento Contínuo*\n✅ *Avaliação Mensal*" },
+  { key: "comercial_formas_pagamento",  label: "Formas de Pagamento",              hasImage: false, defaultMsg: "*Formas de pagamento* 💳\n\n💳 Cartão de Crédito\n📲 PIX\n💰 Parcelamento disponível conforme o plano\n\n1️⃣ Ver Planos\n2️⃣ Falar com consultor\n0️⃣ Voltar" },
+  { key: "comercial_handoff_consultor", label: "Transferência para Consultor",     hasImage: false, defaultMsg: "Perfeito.\n\nVou encaminhar você para um *consultor* da equipe STH METHOD.\n\nAguarde alguns instantes. 🙏" },
+  { key: "comercial_lista_planos",      label: "Lista de Planos (imagem opcional)", hasImage: true, defaultMsg: "" },
+] as const;
 
 const PROJECT_URL = import.meta.env.VITE_SUPABASE_URL as string;
 
@@ -36,6 +49,8 @@ export default function AdminCrmSettings() {
   const [awayComExpired, setAwayComExpired] = useState("");
   const [awayNutriActive, setAwayNutriActive] = useState("");
   const [awayNutriInactive, setAwayNutriInactive] = useState("");
+  const [flowTpls, setFlowTpls] = useState<Record<string, FlowTpl>>({});
+  const [uploadingKey, setUploadingKey] = useState<string | null>(null);
 
   const zapiWebhook = `${PROJECT_URL}/functions/v1/crm-inbound-webhook?provider=zapi`;
   const wapiWebhook = `${PROJECT_URL}/functions/v1/crm-inbound-webhook?provider=wapi`;
@@ -47,7 +62,9 @@ export default function AdminCrmSettings() {
         "business_hours_comercial","business_hours_nutri",
         "comercial_away_lead","comercial_away_active","comercial_away_expired",
         "nutri_away_active","nutri_away_inactive",
+        ...FLOW_KEYS.map(k => k.key),
       ]);
+      const tpls: Record<string, FlowTpl> = {};
       (data ?? []).forEach((r: any) => {
         if (r.key === "zapi") setZapi({ ...zapi, ...(r.value || {}) });
         if (r.key === "wapi") setWapi({ ...wapi, ...(r.value || {}) });
@@ -59,7 +76,11 @@ export default function AdminCrmSettings() {
         if (r.key === "comercial_away_expired") setAwayComExpired(r.value?.message || "");
         if (r.key === "nutri_away_active") setAwayNutriActive(r.value?.message || "");
         if (r.key === "nutri_away_inactive") setAwayNutriInactive(r.value?.message || "");
+        const fk = FLOW_KEYS.find(k => k.key === r.key);
+        if (fk) tpls[r.key] = { message: r.value?.message ?? fk.defaultMsg, image_url: r.value?.image_url ?? null };
       });
+      FLOW_KEYS.forEach(k => { if (!tpls[k.key]) tpls[k.key] = { message: k.defaultMsg, image_url: null }; });
+      setFlowTpls(tpls);
       setLoading(false);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -100,6 +121,32 @@ export default function AdminCrmSettings() {
     navigator.clipboard.writeText(text);
     setCopied(id);
     setTimeout(() => setCopied(null), 1500);
+  }
+
+  async function uploadFlowImage(key: string, file: File) {
+    if (!file.type.startsWith("image/")) { toast({ title: "Selecione uma imagem" }); return; }
+    if (file.size > 5 * 1024 * 1024) { toast({ title: "Máximo 5MB" }); return; }
+    setUploadingKey(key);
+    try {
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const path = `flow-templates/${key}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("crm-media").upload(path, file, { upsert: true, contentType: file.type });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from("crm-media").getPublicUrl(path);
+      const next: FlowTpl = { ...(flowTpls[key] || { message: "" }), image_url: data.publicUrl };
+      setFlowTpls(prev => ({ ...prev, [key]: next }));
+      await save(key, next);
+    } catch (e: any) {
+      toast({ title: "Erro no upload", description: e?.message || String(e), variant: "destructive" as any });
+    } finally {
+      setUploadingKey(null);
+    }
+  }
+
+  async function removeFlowImage(key: string) {
+    const next: FlowTpl = { ...(flowTpls[key] || { message: "" }), image_url: null };
+    setFlowTpls(prev => ({ ...prev, [key]: next }));
+    await save(key, next);
   }
 
   if (loading) {
