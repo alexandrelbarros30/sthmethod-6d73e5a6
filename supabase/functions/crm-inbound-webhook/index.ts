@@ -572,17 +572,27 @@ Deno.serve(async (req) => {
 
     // Helper: envia texto via Z-API, registra em crm_messages e atualiza timer de inatividade.
     const sendZapiText = async (message: string, modelTag: string) => {
+      return sendZapiMedia(message, null, modelTag);
+    };
+    const sendZapiMedia = async (message: string, imageUrl: string | null | undefined, modelTag: string) => {
       const c = (zapiCfg?.value as any) || {};
       const INSTANCE_ID = (c.instance_id || Deno.env.get('ZAPI_INSTANCE_ID') || '').trim();
       const INSTANCE_TOKEN = (c.instance_token || Deno.env.get('ZAPI_INSTANCE_TOKEN') || '').trim();
       const CLIENT_TOKEN = (c.client_token || Deno.env.get('ZAPI_CLIENT_TOKEN') || '').trim();
       let sent = false;
       let messageId: string | null = null;
-      if (INSTANCE_ID && INSTANCE_TOKEN && message) {
-        const r = await fetch(`https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`, {
+      if (INSTANCE_ID && INSTANCE_TOKEN && (message || imageUrl)) {
+        const useImage = !!(imageUrl && String(imageUrl).trim());
+        const endpoint = useImage
+          ? `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-image`
+          : `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`;
+        const body = useImage
+          ? { phone, image: String(imageUrl).trim(), caption: message }
+          : { phone, message };
+        const r = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...(CLIENT_TOKEN ? { 'Client-Token': CLIENT_TOKEN } : {}) },
-          body: JSON.stringify({ phone, message }),
+          body: JSON.stringify(body),
         });
         const j = await r.json().catch(() => ({}));
         sent = r.ok;
