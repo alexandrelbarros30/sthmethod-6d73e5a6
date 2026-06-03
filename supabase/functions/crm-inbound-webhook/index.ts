@@ -544,26 +544,22 @@ Deno.serve(async (req) => {
     const channelEnabled = provider === 'wapi'
       ? (wapiCfg?.value as any)?.enabled === true
       : (zapiCfg?.value as any)?.enabled === true;
-    const { count: outboundZapiCount } = await admin
-      .from('crm_messages')
-      .select('id', { head: true, count: 'exact' })
-      .eq('conversation_id', conv!.id)
-      .eq('direction', 'out')
-      .eq('source', 'zapi');
-    const hasIdentificationSent = (outboundZapiCount ?? 0) > 0;
-    const shouldSendCommercialIdentification =
-      provider === 'zapi' && channelEnabled && (isNewSession || !hasIdentificationSent);
 
-    // Detecta escolha de menu (1-5) ou pedido de voltar (0/menu/voltar)
-    const trimmedBody = String(body).trim();
-    const menuChoice: '0' | '1' | '2' | '3' | '4' | '5' | null =
-      /^[0-5]$/.test(trimmedBody)
-        ? (trimmedBody as any)
-        : /^(menu|voltar|in[ií]cio|inicio)$/i.test(trimmedBody)
-        ? '0'
-        : null;
+    const FIRST_NAME = (displayName || profile?.full_name || '').toString().split(' ')[0] || '';
+    const NOME_SEP = FIRST_NAME ? ' ' : '';
+    const renderTpl = (s: string, extra: Record<string, string> = {}) => {
+      const nameToUse = extra.nome || FIRST_NAME;
+      let out = String(s || '')
+        .replace(/\{nome\}/gi, nameToUse)
+        .replace(/\{nomeSep\}/gi, nameToUse ? ' ' : '');
+      for (const [k, v] of Object.entries(extra)) {
+        if (k === 'nome') continue;
+        out = out.replace(new RegExp(`\\{${k}\\}`, 'gi'), String(v ?? ''));
+      }
+      return out;
+    };
 
-    // Helper: envia texto via Z-API e registra em crm_messages
+    // Helper: envia texto via Z-API, registra em crm_messages e atualiza timer de inatividade.
     const sendZapiText = async (message: string, modelTag: string) => {
       const c = (zapiCfg?.value as any) || {};
       const INSTANCE_ID = (c.instance_id || Deno.env.get('ZAPI_INSTANCE_ID') || '').trim();
@@ -571,7 +567,7 @@ Deno.serve(async (req) => {
       const CLIENT_TOKEN = (c.client_token || Deno.env.get('ZAPI_CLIENT_TOKEN') || '').trim();
       let sent = false;
       let messageId: string | null = null;
-      if (INSTANCE_ID && INSTANCE_TOKEN) {
+      if (INSTANCE_ID && INSTANCE_TOKEN && message) {
         const r = await fetch(`https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...(CLIENT_TOKEN ? { 'Client-Token': CLIENT_TOKEN } : {}) },
@@ -589,275 +585,296 @@ Deno.serve(async (req) => {
         external_id: messageId,
         status: sent ? 'sent' : 'failed',
       });
+      await admin.from('crm_conversations').update({
+        last_bot_message_at: new Date().toISOString(),
+        inactivity_warned_at: null,
+      }).eq('id', conv!.id);
       return { sent, messageId, modelTag };
     };
 
-    // Defaults dos menus (sobrescritos por crm_settings se houver). Footer "voltar ao menu" automático.
-    const MENU_BACK = '\n\n0️⃣ Voltar ao menu principal';
-    const FIRST_NAME = (displayName || profile?.full_name || '').toString().split(' ')[0] || '';
-    const NOME_SEP = FIRST_NAME ? ' ' : '';
-    const renderTpl = (s: string) =>
-      s.replace(/\{nome\}/gi, FIRST_NAME).replace(/\{nomeSep\}/gi, NOME_SEP);
+    // ============================================================
+    // === Canal Comercial (Z-API) — Máquina de estados STH ONE ===
+    // ============================================================
+    if (provider === 'zapi') {
+      // Em nova sessão: reseta estado e handoff (fluxo reinicia do zero)
+      if (isNewSession) {
+        await admin.from('crm_conversations').update({
+          flow_state: null,
+          flow_context: {},
+          human_handoff: false,
+          inactivity_warned_at: null,
+        }).eq('id', conv!.id);
+      } else {
+        // Resposta do cliente zera o aviso (cron não vai encerrar)
+        await admin.from('crm_conversations').update({ inactivity_warned_at: null }).eq('id', conv!.id);
+      }
 
-    const MENU_DEFAULTS: Record<string, string> = {
-      '1':
-        '*Planos STH METHOD* 💎\n\n' +
-        'Temos 3 opções para atender às suas necessidades:\n\n' +
-        '🔹 *30D*\n' +
-        '• Promoção (PIX): *R$ 85,90* / 30 dias\n' +
-        '• Normal: R$ 94,90 (cartão R$ 99,90)\n' +
-        '_Ideal para iniciar, organizar a rotina e sentir os primeiros resultados._\n\n' +
-        '🔹 *90D*\n' +
-        '• Promoção (PIX): *R$ 209,90* / 90 dias\n' +
-        '• Normal: R$ 249,90 (cartão R$ 276,45)\n' +
-        '_Para quem busca continuidade, estratégia e evolução consistente._\n\n' +
-        '🔹 *6M*\n' +
-        '• Promoção (PIX): *R$ 449,90* / 180 dias\n' +
-        '• Normal: R$ 449,90 (cartão R$ 528,90)\n' +
-        '_Para quem deseja transformação profunda, previsível e sustentável._\n\n' +
-        '🌐 Detalhes e contratação: https://sthmethod.com.br',
-      '2':
-        '*Como funciona a STH METHOD* 🧬\n\n' +
-        'A STH METHOD é uma consultoria em performance, saúde e transformação corporal, baseada em ciência, estratégia e respeito à individualidade.\n\n' +
-        '*O que você recebe na consultoria:*\n\n' +
-        '✅ *Plano Alimentar Personalizado*\n' +
-        '• Dieta conforme objetivos, rotina e preferências\n' +
-        '• Ajustes periódicos conforme sua evolução\n\n' +
-        '✅ *Treino Personalizado*\n' +
-        '• Estruturado para seu nível e objetivo\n' +
-        '• Atualizações para manter progressão e gerar novos estímulos\n\n' +
-        '✅ *Protocolo Inteligente*\n' +
-        '• Estratégias individualizadas (histórico, rotina, evolução)\n' +
-        '• Planejamento integrado para potencializar resultados\n' +
-        '• Ajustes sempre que necessário\n\n' +
-        '✅ *Análise e Interpretação de Exames*\n' +
-        '• Avaliação detalhada dos exames laboratoriais\n' +
-        '• Monitoramento de marcadores de saúde, performance, recuperação e composição\n' +
-        '• Dados usados para otimizar todas as estratégias\n\n' +
-        '✅ *Acompanhamento Contínuo*\n' +
-        '• Suporte da equipe para dúvidas\n' +
-        '• Monitoramento constante da evolução\n\n' +
-        '✅ *Avaliação Mensal*\n' +
-        '• Todo mês você atualiza suas informações na plataforma',
-      '3':
-        'Olá{nomeSep}{nome}! 💚\n\n' +
-        'Eu sou a *Vanessa*, consultora da STH METHOD. Será um prazer te atender pessoalmente.\n\n' +
-        'Me conta rapidinho:\n' +
-        '• Qual é o seu *objetivo* principal?\n' +
-        '• Você já fez consultoria antes?\n' +
-        '• Qual o melhor *horário* para conversarmos?\n\n' +
-        'Atendimento humano: Seg–Sex 9h–19h • Sáb 9h–14h.\n' +
-        'Respondo assim que possível dentro desse horário. 🙏',
-      '4_ex_aluno':
-        'Que bom te ver de volta{nomeSep}{nome}! 🙌\n\n' +
-        'Identificamos que você *já foi aluno* da STH METHOD. Para *renovar* sua consultoria, escolha uma das opções abaixo:\n\n' +
-        '🔹 *30D* — PIX R$ 85,90 (normal R$ 94,90 / cartão R$ 99,90)\n' +
-        '🔹 *90D* — PIX R$ 209,90 (normal R$ 249,90 / cartão R$ 276,45)\n' +
-        '🔹 *6M* — PIX R$ 449,90 (normal R$ 449,90 / cartão R$ 528,90)\n\n' +
-        '👉 Renove agora: https://sthmethod.com.br/aluno/renovar\n\n' +
-        'Se preferir, responda *3* para falar com um consultor.',
-      '4_aluno_ativo':
-        '{nome}, você é *aluno ativo* da STH METHOD ✅\n\n' +
-        'Dúvidas sobre *dieta, treino, protocolo, exames ou atualização* devem ser tratadas no canal exclusivo *Fale com o Nutri*:\n\n' +
-        '👉 https://wa.me/5521998984153\n\n' +
-        'Este canal aqui é *comercial* (planos, renovação e financeiro).',
-      '5':
-        '*Financeiro / Renovação* 💳\n\n' +
-        'Você pode renovar sua consultoria a qualquer momento escolhendo um dos planos:\n\n' +
-        '🔹 *30D* — PIX R$ 85,90 (normal R$ 94,90 / cartão R$ 99,90)\n' +
-        '🔹 *90D* — PIX R$ 209,90 (normal R$ 249,90 / cartão R$ 276,45)\n' +
-        '🔹 *6M* — PIX R$ 449,90 (normal R$ 449,90 / cartão R$ 528,90)\n\n' +
-        '👉 Link de renovação: https://sthmethod.com.br/aluno/renovar\n\n' +
-        'Em caso de dúvida sobre pagamento, comprovante ou cobrança, responda aqui mesmo que um consultor te atende no horário comercial.',
-    };
+      const { data: cstate } = await admin
+        .from('crm_conversations')
+        .select('flow_state, flow_context, human_handoff')
+        .eq('id', conv!.id)
+        .maybeSingle();
+      const flowState = isNewSession ? null : ((cstate?.flow_state as string | null) || null);
+      const flowCtx: any = isNewSession ? {} : ((cstate?.flow_context as any) || {});
+      const isHandoff = !isNewSession && cstate?.human_handoff === true;
 
-    const getMenuTpl = (key: string, fallback: string): string => {
-      const map: Record<string, any> = {
-        '1': menu1Cfg,
-        '2': menu2Cfg,
-        '3': menu3Cfg,
-        '4_ex_aluno': menu4ExCfg,
-        '4_aluno_ativo': menu4ActiveCfg,
-        '5': menu5Cfg,
+      const trimmed = String(body).trim();
+
+      // === Templates principais (sobrescrevíveis por crm_settings) ===
+      const tplAtivo = String((comIdActive?.value as any)?.message ||
+        'Olá{nomeSep}{nome}! 👋\n\nIdentificamos que você possui um *acompanhamento ativo* na STH METHOD.\n\nPara assuntos sobre *dieta, treino, protocolo, exames ou evolução*, utilize uma das opções abaixo:\n\n🟢 Digite *NUTRI*\nou\n🟢 Clique em *Fale com o Nutri*:\n👉 https://wa.me/5521998984153');
+      const tplInativoMenu = String((comIdExpired?.value as any)?.message ||
+        'Olá{nomeSep}{nome}! 👋\n\nIdentificamos que você já fez parte da STH METHOD.\n\nComo podemos ajudar?\n\n1️⃣ Conhecer os planos\n2️⃣ Formas de pagamento\n3️⃣ Falar com um consultor');
+      const tplLeadAskName = String((comIdLead?.value as any)?.message ||
+        'Olá! 👋\n\nSeja bem-vindo(a) à *STH METHOD*.\n\nQual é o seu *nome*?');
+      const tplLeadMenu = 'Prazer, {nome}.\n\nComo posso ajudar?\n\n1️⃣ Como funciona\n2️⃣ Conhecer os planos\n3️⃣ Falar com um consultor';
+      const tplComoFunciona = String((menu2Cfg?.value as any)?.message ||
+        '*Como funciona a STH METHOD* 🧬\n\nA STH METHOD é uma consultoria em performance, saúde e transformação corporal, baseada em ciência e estratégia.\n\n✅ *Plano Alimentar Personalizado*\n✅ *Treino Personalizado*\n✅ *Protocolo Inteligente*\n✅ *Análise de Exames*\n✅ *Acompanhamento Contínuo*\n✅ *Avaliação Mensal*');
+      const tplFormasPag = '*Formas de pagamento* 💳\n\n💳 Cartão de Crédito\n📲 PIX\n💰 Parcelamento disponível conforme o plano\n\n1️⃣ Ver Planos\n2️⃣ Falar com consultor\n0️⃣ Voltar';
+      const tplConsultorMsg = 'Perfeito.\n\nVou encaminhar você para um *consultor* da equipe STH METHOD.\n\nAguarde alguns instantes. 🙏';
+
+      // === Lista de planos ativos (deduplicada por duração) ===
+      const { data: planList } = await admin.from('plans')
+        .select('id, name, price, duration_days')
+        .eq('active', true)
+        .order('duration_days', { ascending: true });
+      const seenDur = new Set<number>();
+      const plans = (planList || []).filter((p: any) => {
+        if (!p?.duration_days || seenDur.has(p.duration_days)) return false;
+        seenDur.add(p.duration_days);
+        return true;
+      });
+      const renderPlanList = (cta: string) => {
+        if (!plans.length) {
+          return '*Planos STH METHOD* 💎\n\nAcesse https://sthmethod.com.br para conhecer os planos atuais.';
+        }
+        const lines = plans.map((p: any, i: number) =>
+          `${i + 1}️⃣ *${p.name}* — ${p.price} (${p.duration_days} dias)`);
+        return `*Planos STH METHOD* 💎\n\n${lines.join('\n')}\n\n${cta}\n\n0️⃣ Voltar`;
       };
-      const v = (map[key]?.value as any)?.message;
-      return String(v && String(v).trim() ? v : fallback);
-    };
 
-    // === Menu handler (Z-API) — só age se já enviamos a identificação e não vamos reenviá-la ===
-    if (
-      provider === 'zapi' &&
-      channelEnabled &&
-      !shouldSendCommercialIdentification &&
-      hasIdentificationSent &&
-      menuChoice !== null
-    ) {
-      try {
-        let menuKey: string;
-        if (menuChoice === '0') {
-          // Reenvia o menu principal (identificação) conforme perfil atual
-          const defaultsId: Record<string, string> = {
-            aluno_ativo:
-              'Olá{nomeSep}{nome}! 👋 Você é *aluno ativo* da STH METHOD.\n\nEste canal é *comercial* (planos, renovação e financeiro). Como posso ajudar?\n1️⃣ Conhecer planos\n2️⃣ Como funciona\n3️⃣ Falar com consultor (Vanessa)\n4️⃣ Já sou aluno\n5️⃣ Financeiro / Renovação',
-            aluno_vencido:
-              'Olá{nomeSep}{nome}! 👋 Sua assinatura está *vencida*. Como posso ajudar?\n1️⃣ Conhecer planos\n2️⃣ Como funciona\n3️⃣ Falar com consultor (Vanessa)\n4️⃣ Já sou aluno\n5️⃣ Financeiro / Renovação',
-            lead:
-              'Olá{nomeSep}{nome}! 👋 Seja bem-vindo(a) à *STH METHOD*. Como posso ajudar?\n1️⃣ Conhecer planos\n2️⃣ Como funciona\n3️⃣ Falar com consultor (Vanessa)\n4️⃣ Já sou aluno\n5️⃣ Financeiro / Renovação',
-          };
-          const tplCfg =
-            identifiedAs === 'aluno_ativo' ? (comIdActive?.value as any)?.message
-            : identifiedAs === 'aluno_vencido' ? (comIdExpired?.value as any)?.message
-            : (comIdLead?.value as any)?.message;
-          const tpl = String(tplCfg || defaultsId[identifiedAs] || defaultsId.lead);
-          const out = renderTpl(tpl);
-          const r = await sendZapiText(out, `menu_0_${identifiedAs}`);
-          autoReply = { sent: r.sent, engine: 'menu', model: r.modelTag };
-        } else {
-          if (menuChoice === '4') {
-            menuKey = identifiedAs === 'aluno_ativo' ? '4_aluno_ativo' : '4_ex_aluno';
+      // === Transferência para consultor humano ===
+      const handoffConsultor = async () => {
+        await admin.from('crm_conversations').update({
+          flow_state: 'handoff_consultor',
+          human_handoff: true,
+        }).eq('id', conv!.id);
+        const { data: q } = await admin.from('crm_queues').select('id').eq('name', 'Atendimento Comercial').maybeSingle();
+        if (q) {
+          const { data: openItem } = await admin.from('crm_queue_items')
+            .select('id').eq('conversation_id', conv!.id).is('closed_at', null).maybeSingle();
+          if (openItem) {
+            await admin.from('crm_queue_items').update({ priority: 0 }).eq('id', openItem.id);
           } else {
-            menuKey = menuChoice;
+            await admin.from('crm_queue_items').insert({
+              queue_id: q.id, conversation_id: conv!.id, phone, priority: 0,
+            });
           }
-          const tpl = getMenuTpl(menuKey, MENU_DEFAULTS[menuKey] || '');
-          const out = renderTpl(tpl) + MENU_BACK;
-          const r = await sendZapiText(out, `menu_${menuKey}`);
-          autoReply = { sent: r.sent, engine: 'menu', model: r.modelTag };
         }
-
-        return new Response(
-          JSON.stringify({ ok: true, queue: finalQueue, is_lead: isLead, tags: tagsToApply, auto_reply: autoReply, menu: menuChoice }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-        );
-      } catch (e) {
-        console.error('menu reply failed', e);
-        autoReply = { sent: false, reason: String(e) };
-      }
-    }
-
-    // === Canal Comercial (Z-API) → mensagem de identificação (1x por sessão) ===
-    // Sempre envia na 1ª msg da sessão, independente de hora ou ai_mode.
-    // Aluno ativo → direciona para Fale com o Nutri.
-    // Aluno vencido → mensagem de renovação.
-    // Lead → mensagem comercial padrão.
-    if (provider === 'zapi' && !withinHours && channelEnabled && isNewSession) {
-      // Fora do horário comercial → mensagem de ausência (1x por sessão).
-      // Não dispara identificação/menu/IA — apenas confirma o recebimento.
-      const firstName = (displayName || profile?.full_name || '').toString().split(' ')[0] || '';
-      const defaultsAway: Record<string, string> = {
-        aluno_ativo:
-          'Olá{nomeSep}{nome}! 🌙 Nosso atendimento de hoje foi encerrado.\n\nPara dúvidas sobre *dieta, treino e protocolo*, fale direto com o Nutri:\n👉 https://wa.me/5521998984153\n\nNo primeiro horário do próximo expediente entraremos em contato.\n\n✅ Equipe STH METHOD',
-        aluno_vencido:
-          'Olá{nomeSep}{nome}! 🌙 Nosso atendimento de hoje foi encerrado.\n\nPara *renovar* seu plano agora mesmo, acesse:\n👉 https://sthmethod.com.br/cadastro\n\nNo primeiro horário do próximo expediente um consultor entra em contato.\n\n✅ Equipe STH METHOD',
-        lead:
-          'Olá{nomeSep}{nome}! 🌙 Nosso atendimento de hoje foi encerrado.\n\nAcesse agora: 👉 https://sthmethod.com.br/cadastro\nRealize seu cadastro e escolha o plano ideal.\n\nNo primeiro horário do próximo expediente entraremos em contato.\n\n✅ Equipe STH METHOD',
+        const r = await sendZapiText(renderTpl(tplConsultorMsg), 'handoff_consultor');
+        autoReply = { sent: r.sent, engine: 'flow', model: 'handoff_consultor' };
       };
-      const tplAwayCfg =
-        identifiedAs === 'aluno_ativo' ? (comAwayActiveCfg?.value as any)?.message
-        : identifiedAs === 'aluno_vencido' ? (comAwayExpiredCfg?.value as any)?.message
-        : (comAwayLeadCfg?.value as any)?.message;
-      const tplAway = String(tplAwayCfg || defaultsAway[identifiedAs] || defaultsAway.lead);
-      const awayMsg = tplAway
-        .replace(/\{nome\}/gi, firstName)
-        .replace(/\{nomeSep\}/gi, firstName ? ' ' : '');
-      try {
-        const c = (zapiCfg?.value as any) || {};
-        const INSTANCE_ID = (c.instance_id || Deno.env.get('ZAPI_INSTANCE_ID') || '').trim();
-        const INSTANCE_TOKEN = (c.instance_token || Deno.env.get('ZAPI_INSTANCE_TOKEN') || '').trim();
-        const CLIENT_TOKEN = (c.client_token || Deno.env.get('ZAPI_CLIENT_TOKEN') || '').trim();
-        let sent = false;
-        let messageId: string | null = null;
-        if (INSTANCE_ID && INSTANCE_TOKEN && awayMsg) {
-          const r = await fetch(`https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...(CLIENT_TOKEN ? { 'Client-Token': CLIENT_TOKEN } : {}) },
-            body: JSON.stringify({ phone, message: awayMsg }),
-          });
-          const j = await r.json().catch(() => ({}));
-          sent = r.ok;
-          messageId = j?.messageId || j?.id || null;
+
+      // === Roteamento ===
+      if (!channelEnabled) {
+        autoReply = { sent: false, reason: 'channel_disabled' };
+      } else if (isHandoff || flowState === 'handoff_consultor' || flowState === 'handoff_nutri') {
+        // Atendimento humano em andamento → bot silencioso. Timer suspenso.
+        autoReply = { sent: false, reason: 'human_handoff_active' };
+      } else if (!withinHours && isNewSession) {
+        // Mensagem de ausência fora de horário (1x por sessão).
+        const defaultsAway: Record<string, string> = {
+          aluno_ativo:
+            'Olá{nomeSep}{nome}! 🌙 Nosso atendimento de hoje foi encerrado.\n\nPara dúvidas sobre *dieta, treino e protocolo*, fale direto com o Nutri:\n👉 https://wa.me/5521998984153\n\nNo primeiro horário do próximo expediente entraremos em contato.\n\n✅ Equipe STH METHOD',
+          aluno_vencido:
+            'Olá{nomeSep}{nome}! 🌙 Nosso atendimento de hoje foi encerrado.\n\nPara *renovar* seu plano agora mesmo, acesse:\n👉 https://sthmethod.com.br/cadastro\n\nNo primeiro horário do próximo expediente um consultor entra em contato.\n\n✅ Equipe STH METHOD',
+          lead:
+            'Olá{nomeSep}{nome}! 🌙 Nosso atendimento de hoje foi encerrado.\n\nAcesse agora: 👉 https://sthmethod.com.br/cadastro\nRealize seu cadastro e escolha o plano ideal.\n\nNo primeiro horário do próximo expediente entraremos em contato.\n\n✅ Equipe STH METHOD',
+        };
+        const tplAwayCfg =
+          identifiedAs === 'aluno_ativo' ? (comAwayActiveCfg?.value as any)?.message
+          : identifiedAs === 'aluno_vencido' ? (comAwayExpiredCfg?.value as any)?.message
+          : (comAwayLeadCfg?.value as any)?.message;
+        const tplAway = String(tplAwayCfg || defaultsAway[identifiedAs] || defaultsAway.lead);
+        const r = await sendZapiText(renderTpl(tplAway), `away_${identifiedAs}`);
+        autoReply = { sent: r.sent, engine: 'away', model: `comercial_away_${identifiedAs}` };
+      } else if (!withinHours && !isNewSession) {
+        autoReply = { sent: false, reason: 'comercial_out_of_hours_silent_after_first' };
+      } else if (!flowState) {
+        // === 1ª mensagem da sessão → identificação por perfil ===
+        if (identifiedAs === 'aluno_ativo') {
+          const r = await sendZapiText(renderTpl(tplAtivo), 'id_ativo');
+          await admin.from('crm_conversations').update({ flow_state: 'ativo_aguardando_nutri' }).eq('id', conv!.id);
+          autoReply = { sent: r.sent, engine: 'flow', model: 'ativo_aguardando_nutri' };
+        } else if (identifiedAs === 'aluno_vencido') {
+          const r = await sendZapiText(renderTpl(tplInativoMenu), 'id_inativo');
+          await admin.from('crm_conversations').update({ flow_state: 'inativo_main_menu' }).eq('id', conv!.id);
+          autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_main_menu' };
+        } else {
+          const r = await sendZapiText(renderTpl(tplLeadAskName), 'lead_ask_name');
+          await admin.from('crm_conversations').update({ flow_state: 'lead_awaiting_name' }).eq('id', conv!.id);
+          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_awaiting_name' };
         }
-        await admin.from('crm_messages').insert({
-          conversation_id: conv!.id,
-          direction: 'out',
-          body: awayMsg,
-          source: 'zapi',
-          external_id: messageId,
-          status: sent ? 'sent' : 'failed',
-        });
-        autoReply = { sent, engine: 'away', model: `comercial_away_${identifiedAs}` };
-      } catch (e) {
-        console.error('comercial away message failed', e);
-        autoReply = { sent: false, reason: String(e) };
       }
+      // === ALUNO ATIVO ===
+      else if (flowState === 'ativo_aguardando_nutri') {
+        if (/^(nutri|fale com o nutri)$/i.test(trimmed)) {
+          const r = await sendZapiText(
+            `Perfeito${NOME_SEP}${FIRST_NAME}! Continue o atendimento com o Nutri por aqui:\n👉 https://wa.me/5521998984153`,
+            'handoff_nutri',
+          );
+          await admin.from('crm_conversations').update({
+            flow_state: 'handoff_nutri',
+            human_handoff: true,
+          }).eq('id', conv!.id);
+          autoReply = { sent: r.sent, engine: 'flow', model: 'handoff_nutri' };
+        } else {
+          const r = await sendZapiText(renderTpl(tplAtivo), 'id_ativo_repeat');
+          autoReply = { sent: r.sent, engine: 'flow', model: 'ativo_aguardando_nutri' };
+        }
+      }
+      // === ALUNO INATIVO ===
+      else if (flowState === 'inativo_main_menu') {
+        if (trimmed === '1') {
+          const r = await sendZapiText(renderPlanList('Responda com o *número* do plano para gerar seu link de renovação.'), 'inativo_planos');
+          await admin.from('crm_conversations').update({ flow_state: 'inativo_awaiting_plan' }).eq('id', conv!.id);
+          autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_awaiting_plan' };
+        } else if (trimmed === '2') {
+          const r = await sendZapiText(tplFormasPag, 'inativo_pag');
+          await admin.from('crm_conversations').update({ flow_state: 'inativo_pay_menu' }).eq('id', conv!.id);
+          autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_pay_menu' };
+        } else if (trimmed === '3') {
+          await handoffConsultor();
+        } else {
+          const r = await sendZapiText(renderTpl(tplInativoMenu), 'id_inativo_repeat');
+          autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_main_menu' };
+        }
+      }
+      else if (flowState === 'inativo_awaiting_plan') {
+        if (trimmed === '0') {
+          const r = await sendZapiText(renderTpl(tplInativoMenu), 'id_inativo_back');
+          await admin.from('crm_conversations').update({ flow_state: 'inativo_main_menu' }).eq('id', conv!.id);
+          autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_main_menu' };
+        } else if (/^[1-9]$/.test(trimmed) && plans[parseInt(trimmed, 10) - 1]) {
+          const chosen: any = plans[parseInt(trimmed, 10) - 1];
+          const link = `https://sthmethod.com.br/aluno/renovar?plan=${chosen.id}`;
+          const msg = `Perfeito${NOME_SEP}${FIRST_NAME}.\n\nVocê escolheu o plano *${chosen.name}* (${chosen.price}).\n\n🔗 *Link de Renovação:*\n${link}\n\nSeu cadastro já foi localizado em nosso sistema. Após a confirmação do pagamento sua consultoria será reativada.\n\nCaso não localize o cadastro:\n🔗 https://sthmethod.com.br/cadastro\n\n0️⃣ Voltar ao menu`;
+          const r = await sendZapiText(msg, 'inativo_renew_link');
+          await admin.from('crm_conversations').update({
+            flow_state: 'inativo_main_menu',
+            flow_context: { ...flowCtx, plano_escolhido: chosen.id },
+          }).eq('id', conv!.id);
+          autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_renew_link' };
+        } else {
+          const r = await sendZapiText('Não entendi sua escolha. Responda com o *número* do plano desejado, ou *0* para voltar.', 'inativo_plan_invalid');
+          autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_awaiting_plan' };
+        }
+      }
+      else if (flowState === 'inativo_pay_menu') {
+        if (trimmed === '1') {
+          const r = await sendZapiText(renderPlanList('Responda com o *número* do plano para gerar seu link de renovação.'), 'inativo_planos');
+          await admin.from('crm_conversations').update({ flow_state: 'inativo_awaiting_plan' }).eq('id', conv!.id);
+          autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_awaiting_plan' };
+        } else if (trimmed === '2') {
+          await handoffConsultor();
+        } else if (trimmed === '0') {
+          const r = await sendZapiText(renderTpl(tplInativoMenu), 'id_inativo_back');
+          await admin.from('crm_conversations').update({ flow_state: 'inativo_main_menu' }).eq('id', conv!.id);
+          autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_main_menu' };
+        } else {
+          const r = await sendZapiText(tplFormasPag, 'inativo_pag_repeat');
+          autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_pay_menu' };
+        }
+      }
+      // === LEAD ===
+      else if (flowState === 'lead_awaiting_name') {
+        const captured = trimmed.replace(/[^\p{L}\s'\-]/gu, '').trim().slice(0, 40);
+        const firstWord = (captured.split(/\s+/)[0] || 'amigo(a)').slice(0, 24);
+        const newCtx = { ...flowCtx, nome: firstWord };
+        const upd: any = {
+          flow_state: 'lead_main_menu',
+          flow_context: newCtx,
+        };
+        if (captured) upd.display_name = captured;
+        await admin.from('crm_conversations').update(upd).eq('id', conv!.id);
+        const r = await sendZapiText(renderTpl(tplLeadMenu, { nome: firstWord }), 'lead_main_menu');
+        autoReply = { sent: r.sent, engine: 'flow', model: 'lead_main_menu' };
+      }
+      else if (flowState === 'lead_main_menu') {
+        const leadName = (flowCtx?.nome as string) || FIRST_NAME;
+        if (trimmed === '1') {
+          const r = await sendZapiText(
+            renderTpl(tplComoFunciona, { nome: leadName }) + '\n\n1️⃣ Conhecer os planos\n2️⃣ Falar com consultor\n0️⃣ Voltar',
+            'lead_como_funciona',
+          );
+          await admin.from('crm_conversations').update({ flow_state: 'lead_como_funciona' }).eq('id', conv!.id);
+          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_como_funciona' };
+        } else if (trimmed === '2') {
+          const r = await sendZapiText(renderPlanList('Responda com o *número* do plano escolhido.'), 'lead_planos');
+          await admin.from('crm_conversations').update({ flow_state: 'lead_awaiting_plan' }).eq('id', conv!.id);
+          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_awaiting_plan' };
+        } else if (trimmed === '3') {
+          await handoffConsultor();
+        } else {
+          const r = await sendZapiText(renderTpl(tplLeadMenu, { nome: leadName }), 'lead_main_menu_repeat');
+          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_main_menu' };
+        }
+      }
+      else if (flowState === 'lead_como_funciona') {
+        const leadName = (flowCtx?.nome as string) || FIRST_NAME;
+        if (trimmed === '1') {
+          const r = await sendZapiText(renderPlanList('Responda com o *número* do plano escolhido.'), 'lead_planos');
+          await admin.from('crm_conversations').update({ flow_state: 'lead_awaiting_plan' }).eq('id', conv!.id);
+          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_awaiting_plan' };
+        } else if (trimmed === '2') {
+          await handoffConsultor();
+        } else if (trimmed === '0') {
+          const r = await sendZapiText(renderTpl(tplLeadMenu, { nome: leadName }), 'lead_main_menu_back');
+          await admin.from('crm_conversations').update({ flow_state: 'lead_main_menu' }).eq('id', conv!.id);
+          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_main_menu' };
+        } else {
+          const r = await sendZapiText('Responda: *1* Conhecer planos · *2* Falar com consultor · *0* Voltar.', 'lead_como_funciona_repeat');
+          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_como_funciona' };
+        }
+      }
+      else if (flowState === 'lead_awaiting_plan') {
+        const leadName = (flowCtx?.nome as string) || FIRST_NAME;
+        if (trimmed === '0') {
+          const r = await sendZapiText(renderTpl(tplLeadMenu, { nome: leadName }), 'lead_main_menu_back');
+          await admin.from('crm_conversations').update({ flow_state: 'lead_main_menu' }).eq('id', conv!.id);
+          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_main_menu' };
+        } else if (/^[1-9]$/.test(trimmed) && plans[parseInt(trimmed, 10) - 1]) {
+          const chosen: any = plans[parseInt(trimmed, 10) - 1];
+          const msg = `Excelente escolha, ${leadName}.\n\nVocê escolheu o plano *${chosen.name}* (${chosen.price}).\n\nPara iniciar seu acompanhamento:\n🔗 https://sthmethod.com.br/cadastro\n\nApós finalizar o cadastro nossa equipe continuará seu atendimento.\n\n0️⃣ Voltar ao menu`;
+          const r = await sendZapiText(msg, 'lead_cadastro_link');
+          await admin.from('crm_conversations').update({
+            flow_state: 'lead_main_menu',
+            flow_context: { ...flowCtx, plano_escolhido: chosen.id },
+          }).eq('id', conv!.id);
+          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_cadastro_link' };
+        } else {
+          const r = await sendZapiText('Não entendi sua escolha. Responda com o *número* do plano, ou *0* para voltar.', 'lead_plan_invalid');
+          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_awaiting_plan' };
+        }
+      }
+      else {
+        // Estado desconhecido → reseta
+        await admin.from('crm_conversations').update({ flow_state: null }).eq('id', conv!.id);
+        autoReply = { sent: false, reason: 'unknown_state_reset' };
+      }
+
       return new Response(
-        JSON.stringify({ ok: true, queue: finalQueue, is_lead: isLead, tags: tagsToApply, auto_reply: autoReply }),
+        JSON.stringify({ ok: true, queue: finalQueue, is_lead: isLead, tags: tagsToApply, auto_reply: autoReply, flow_state: flowState }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
-    else if (provider === 'zapi' && !withinHours && channelEnabled && !isNewSession) {
-      // Já enviou ausência nesta sessão → silêncio até o próximo expediente
-      autoReply = { sent: false, reason: 'comercial_out_of_hours_silent_after_first' };
-      return new Response(
-        JSON.stringify({ ok: true, queue: finalQueue, is_lead: isLead, tags: tagsToApply, auto_reply: autoReply }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
-    }
 
-    if (shouldSendCommercialIdentification) {
-      const firstName = (displayName || profile?.full_name || '').toString().split(' ')[0] || '';
-      const defaults: Record<string, string> = {
-        aluno_ativo:
-          'Olá{nomeSep}{nome}! 👋 Identificamos você como *aluno ativo* da STH METHOD.\n\nPara dúvidas sobre *dieta, treino e protocolo*, fale direto com o Nutri no canal exclusivo:\n👉 https://wa.me/5521998984153\n\nEste canal aqui é *comercial* (planos, renovação e financeiro). Como posso ajudar?\n1️⃣ Conhecer planos\n2️⃣ Como funciona\n3️⃣ Falar com consultor (Vanessa)\n4️⃣ Já sou aluno\n5️⃣ Financeiro / Renovação\n\nAtendimento humano: Seg-Sex 9h–19h, Sáb 9h–14h.',
-        aluno_vencido:
-          'Olá{nomeSep}{nome}! 👋 Que bom te ver de volta. Identificamos que sua assinatura *está vencida*.\n\nComo posso ajudar?\n1️⃣ Conhecer planos\n2️⃣ Como funciona\n3️⃣ Falar com consultor (Vanessa)\n4️⃣ Já sou aluno (renovar)\n5️⃣ Financeiro / Renovação\n\nAtendimento humano: Seg-Sex 9h–19h, Sáb 9h–14h.',
-        lead:
-          'Olá{nomeSep}{nome}! 👋 Seja bem-vindo(a) à *STH METHOD*.\n\nComo posso te ajudar hoje?\n1️⃣ Conhecer planos\n2️⃣ Como funciona a consultoria\n3️⃣ Falar com consultor (Vanessa)\n4️⃣ Já sou aluno\n5️⃣ Financeiro / Renovação\n\nAtendimento humano: Seg-Sex 9h–19h, Sáb 9h–14h. Aos domingos: somente atendimento por mensagem.',
-      };
-      const tplFromCfg =
-        identifiedAs === 'aluno_ativo' ? (comIdActive?.value as any)?.message
-        : identifiedAs === 'aluno_vencido' ? (comIdExpired?.value as any)?.message
-        : (comIdLead?.value as any)?.message;
-      const tpl = String(tplFromCfg || defaults[identifiedAs] || defaults.lead);
-      const msgOut = tpl
-        .replace(/\{nome\}/gi, firstName)
-        .replace(/\{nomeSep\}/gi, firstName ? ' ' : '');
-
-      try {
-        const c = (zapiCfg?.value as any) || {};
-        const INSTANCE_ID = (c.instance_id || Deno.env.get('ZAPI_INSTANCE_ID') || '').trim();
-        const INSTANCE_TOKEN = (c.instance_token || Deno.env.get('ZAPI_INSTANCE_TOKEN') || '').trim();
-        const CLIENT_TOKEN = (c.client_token || Deno.env.get('ZAPI_CLIENT_TOKEN') || '').trim();
-        let sent = false;
-        let messageId: string | null = null;
-        if (INSTANCE_ID && INSTANCE_TOKEN) {
-          const r = await fetch(`https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...(CLIENT_TOKEN ? { 'Client-Token': CLIENT_TOKEN } : {}) },
-            body: JSON.stringify({ phone, message: msgOut }),
-          });
-          const j = await r.json().catch(() => ({}));
-          sent = r.ok;
-          messageId = j?.messageId || j?.id || null;
-        }
-        await admin.from('crm_messages').insert({
-          conversation_id: conv!.id,
-          direction: 'out',
-          body: msgOut,
-          source: 'zapi',
-          external_id: messageId,
-          status: sent ? 'sent' : 'failed',
-        });
-        autoReply = { sent, engine: 'identification', model: `comercial_${identifiedAs}` };
-      } catch (e) {
-        console.error('comercial identification send failed', e);
-        autoReply = { sent: false, reason: String(e) };
-      }
-    }
-
-    // === Canal Nutri (W-API) fora do horário → mensagem de ausência (só 1x por sessão) ===
+    // ============================================================
+    // === Canal Nutri (W-API) — comportamento original ===========
+    // ============================================================
+    // Fora do horário → mensagem de ausência (só 1x por sessão).
     // Aluno ativo recebe mensagem priorizada; lead/vencido é direcionado ao Comercial.
-    // Não dispara IA aqui — o objetivo é apenas confirmar o recebimento.
-    else if (provider === 'wapi' && !withinHours && channelEnabled) {
+    if (provider === 'wapi' && !withinHours && channelEnabled) {
       const isFirstOfSession = isNewSession;
       if (isFirstOfSession) {
         const tplVal = identifiedAs === 'aluno_ativo'
