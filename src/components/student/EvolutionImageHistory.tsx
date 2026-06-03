@@ -43,7 +43,9 @@ const EvolutionImageHistory = ({ allImages }: Props) => {
         {Object.entries(imagesByDate).map(([date, imgs]) => (
           <div key={date} className="mb-5 last:mb-0">
             <div className="flex items-center gap-2 mb-2">
-              <p className="text-xs font-semibold text-muted-foreground">{date}</p>
+              <p className="text-xs font-semibold text-muted-foreground">
+                {new Date((imgs as any[])[0]?.uploaded_at).toLocaleDateString("pt-BR")}
+              </p>
               <p className="text-[10px] text-muted-foreground/70">
                 {new Date((imgs as any[])[0]?.uploaded_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
               </p>
