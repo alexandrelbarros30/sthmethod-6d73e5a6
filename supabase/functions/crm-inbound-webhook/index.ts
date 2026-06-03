@@ -648,11 +648,20 @@ Deno.serve(async (req) => {
         'Olá{nomeSep}{nome}! 👋\n\nIdentificamos que você já fez parte da STH METHOD.\n\nComo podemos ajudar?\n\n1️⃣ Conhecer os planos\n2️⃣ Formas de pagamento\n3️⃣ Falar com um consultor');
       const tplLeadAskName = String((comIdLead?.value as any)?.message ||
         'Olá! 👋\n\nSeja bem-vindo(a) à *STH METHOD*.\n\nQual é o seu *nome*?');
-      const tplLeadMenu = 'Prazer, {nome}.\n\nComo posso ajudar?\n\n1️⃣ Como funciona\n2️⃣ Conhecer os planos\n3️⃣ Falar com um consultor';
+      const tplLeadMenu = String((leadMenuCfg?.value as any)?.message ||
+        'Prazer, {nome}.\n\nComo posso ajudar?\n\n1️⃣ Como funciona\n2️⃣ Conhecer os planos\n3️⃣ Falar com um consultor');
       const tplComoFunciona = String((menu2Cfg?.value as any)?.message ||
         '*Como funciona a STH METHOD* 🧬\n\nA STH METHOD é uma consultoria em performance, saúde e transformação corporal, baseada em ciência e estratégia.\n\n✅ *Plano Alimentar Personalizado*\n✅ *Treino Personalizado*\n✅ *Protocolo Inteligente*\n✅ *Análise de Exames*\n✅ *Acompanhamento Contínuo*\n✅ *Avaliação Mensal*');
-      const tplFormasPag = '*Formas de pagamento* 💳\n\n💳 Cartão de Crédito\n📲 PIX\n💰 Parcelamento disponível conforme o plano\n\n1️⃣ Ver Planos\n2️⃣ Falar com consultor\n0️⃣ Voltar';
-      const tplConsultorMsg = 'Perfeito.\n\nVou encaminhar você para um *consultor* da equipe STH METHOD.\n\nAguarde alguns instantes. 🙏';
+      const tplFormasPag = String((formasPagCfg?.value as any)?.message ||
+        '*Formas de pagamento* 💳\n\n💳 Cartão de Crédito\n📲 PIX\n💰 Parcelamento disponível conforme o plano\n\n1️⃣ Ver Planos\n2️⃣ Falar com consultor\n0️⃣ Voltar');
+      const tplConsultorMsg = String((handoffConsCfg?.value as any)?.message ||
+        'Perfeito.\n\nVou encaminhar você para um *consultor* da equipe STH METHOD.\n\nAguarde alguns instantes. 🙏');
+
+      // Imagens opcionais por template
+      const imgIdActive = ((comIdActive?.value as any)?.image_url as string | undefined) || null;
+      const imgIdExpired = ((comIdExpired?.value as any)?.image_url as string | undefined) || null;
+      const imgIdLead = ((comIdLead?.value as any)?.image_url as string | undefined) || null;
+      const imgListaPlanos = ((listaPlanosCfg?.value as any)?.image_url as string | undefined) || null;
 
       // === Lista de planos ativos (deduplicada por duração) ===
       const { data: planList } = await admin.from('plans')
