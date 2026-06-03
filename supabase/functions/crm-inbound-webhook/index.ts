@@ -681,25 +681,6 @@ Deno.serve(async (req) => {
       } else if (isHandoff || flowState === 'handoff_consultor' || flowState === 'handoff_nutri') {
         // Atendimento humano em andamento → bot silencioso. Timer suspenso.
         autoReply = { sent: false, reason: 'human_handoff_active' };
-      } else if (!withinHours && isNewSession) {
-        // Mensagem de ausência fora de horário (1x por sessão).
-        const defaultsAway: Record<string, string> = {
-          aluno_ativo:
-            'Olá{nomeSep}{nome}! 🌙 Nosso atendimento de hoje foi encerrado.\n\nPara dúvidas sobre *dieta, treino e protocolo*, fale direto com o Nutri:\n👉 https://wa.me/5521998984153\n\nNo primeiro horário do próximo expediente entraremos em contato.\n\n✅ Equipe STH METHOD',
-          aluno_vencido:
-            'Olá{nomeSep}{nome}! 🌙 Nosso atendimento de hoje foi encerrado.\n\nPara *renovar* seu plano agora mesmo, acesse:\n👉 https://sthmethod.com.br/cadastro\n\nNo primeiro horário do próximo expediente um consultor entra em contato.\n\n✅ Equipe STH METHOD',
-          lead:
-            'Olá{nomeSep}{nome}! 🌙 Nosso atendimento de hoje foi encerrado.\n\nAcesse agora: 👉 https://sthmethod.com.br/cadastro\nRealize seu cadastro e escolha o plano ideal.\n\nNo primeiro horário do próximo expediente entraremos em contato.\n\n✅ Equipe STH METHOD',
-        };
-        const tplAwayCfg =
-          identifiedAs === 'aluno_ativo' ? (comAwayActiveCfg?.value as any)?.message
-          : identifiedAs === 'aluno_vencido' ? (comAwayExpiredCfg?.value as any)?.message
-          : (comAwayLeadCfg?.value as any)?.message;
-        const tplAway = String(tplAwayCfg || defaultsAway[identifiedAs] || defaultsAway.lead);
-        const r = await sendZapiText(renderTpl(tplAway), `away_${identifiedAs}`);
-        autoReply = { sent: r.sent, engine: 'away', model: `comercial_away_${identifiedAs}` };
-      } else if (!withinHours && !isNewSession) {
-        autoReply = { sent: false, reason: 'comercial_out_of_hours_silent_after_first' };
       } else if (!flowState) {
         // === 1ª mensagem da sessão → identificação por perfil ===
         if (identifiedAs === 'aluno_ativo') {
