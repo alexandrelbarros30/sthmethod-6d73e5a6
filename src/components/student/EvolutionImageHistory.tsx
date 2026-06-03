@@ -10,12 +10,24 @@ interface Props {
 const labels: Record<string, string> = { front: "Frente", back: "Costas", profile: "Perfil" };
 
 const EvolutionImageHistory = ({ allImages }: Props) => {
-  const imagesByDate = allImages.reduce((acc: Record<string, any[]>, img: any) => {
-    const date = new Date(img.uploaded_at).toLocaleDateString("pt-BR");
-    if (!acc[date]) acc[date] = [];
-    acc[date].push(img);
-    return acc;
-  }, {});
+  // Agrupa por sessão (janela de 10 min) para que Frente/Costas/Perfil
+  // de um mesmo envio fiquem juntos mesmo cruzando a virada do minuto.
+  const SESSION_WINDOW_MS = 10 * 60 * 1000;
+  const sorted = [...allImages].sort(
+    (a: any, b: any) => new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime()
+  );
+  const imagesByDate: Record<string, any[]> = {};
+  let currentKey: string | null = null;
+  let currentAnchor = 0;
+  for (const img of sorted) {
+    const t = new Date(img.uploaded_at).getTime();
+    if (currentKey === null || Math.abs(currentAnchor - t) > SESSION_WINDOW_MS) {
+      currentKey = `${new Date(img.uploaded_at).toLocaleDateString("pt-BR")}__${t}`;
+      currentAnchor = t;
+      imagesByDate[currentKey] = [];
+    }
+    imagesByDate[currentKey].push(img);
+  }
 
   if (!Object.keys(imagesByDate).length) return null;
 
