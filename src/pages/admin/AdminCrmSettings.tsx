@@ -340,6 +340,77 @@ export default function AdminCrmSettings() {
             </div>
           ))}
         </Card>
+
+        {/* Templates do Fluxo Comercial */}
+        <Card className="p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <Workflow className="w-4 h-4 text-emerald-400" />
+            <h2 className="text-base font-semibold">Templates do Fluxo Comercial (Z-API)</h2>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Textos enviados automaticamente em cada etapa do fluxo (STH One). Variáveis: <code>{"{nome}"}</code> e <code>{"{nomeSep}"}</code>.
+            Algumas etapas aceitam imagem opcional (enviada junto com a mensagem como legenda).
+          </p>
+
+          {FLOW_KEYS.map(({ key, label, hasImage }) => {
+            const tpl = flowTpls[key] || { message: "", image_url: null };
+            return (
+              <div key={key} className="space-y-2 border-t border-border pt-3 first:border-0 first:pt-0">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">{label}</Label>
+                  <Button size="sm" onClick={() => save(key, tpl)} disabled={saving === key}>
+                    {saving === key ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar"}
+                  </Button>
+                </div>
+                <Textarea
+                  value={tpl.message}
+                  onChange={(e) => setFlowTpls(prev => ({ ...prev, [key]: { ...tpl, message: e.target.value } }))}
+                  rows={5}
+                  className="text-xs font-mono"
+                  placeholder={key === "comercial_lista_planos" ? "(opcional — a lista de planos é gerada automaticamente. Use só se quiser uma legenda extra.)" : ""}
+                />
+                {hasImage && (
+                  <div className="flex items-center gap-3 pt-1">
+                    {tpl.image_url ? (
+                      <div className="relative">
+                        <img src={tpl.image_url} alt={label} className="w-20 h-20 object-cover rounded border border-border" />
+                        <button
+                          type="button"
+                          onClick={() => removeFlowImage(key)}
+                          className="absolute -top-2 -right-2 p-1 bg-destructive text-destructive-foreground rounded-full"
+                          aria-label="Remover imagem"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="w-20 h-20 rounded border border-dashed border-border flex items-center justify-center text-muted-foreground">
+                        <ImageIcon className="w-5 h-5" />
+                      </div>
+                    )}
+                    <label className="cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          e.currentTarget.value = "";
+                          if (f) uploadFlowImage(key, f);
+                        }}
+                      />
+                      <span className="inline-flex items-center gap-1 text-xs px-3 py-2 rounded border border-border hover:bg-muted">
+                        {uploadingKey === key ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+                        {tpl.image_url ? "Substituir imagem" : "Enviar imagem"}
+                      </span>
+                    </label>
+                    <p className="text-[11px] text-muted-foreground">JPG/PNG até 5MB. Enviada via Z-API como imagem + legenda.</p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </Card>
       </div>
     </div>
   );
