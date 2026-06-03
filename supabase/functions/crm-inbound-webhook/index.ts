@@ -714,15 +714,15 @@ Deno.serve(async (req) => {
       } else if (!flowState) {
         // === 1ª mensagem da sessão → identificação por perfil ===
         if (identifiedAs === 'aluno_ativo') {
-          const r = await sendZapiText(renderTpl(tplAtivo), 'id_ativo');
+          const r = await sendZapiMedia(renderTpl(tplAtivo), imgIdActive, 'id_ativo');
           await admin.from('crm_conversations').update({ flow_state: 'ativo_aguardando_nutri' }).eq('id', conv!.id);
           autoReply = { sent: r.sent, engine: 'flow', model: 'ativo_aguardando_nutri' };
         } else if (identifiedAs === 'aluno_vencido') {
-          const r = await sendZapiText(renderTpl(tplInativoMenu), 'id_inativo');
+          const r = await sendZapiMedia(renderTpl(tplInativoMenu), imgIdExpired, 'id_inativo');
           await admin.from('crm_conversations').update({ flow_state: 'inativo_main_menu' }).eq('id', conv!.id);
           autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_main_menu' };
         } else {
-          const r = await sendZapiText(renderTpl(tplLeadAskName), 'lead_ask_name');
+          const r = await sendZapiMedia(renderTpl(tplLeadAskName), imgIdLead, 'lead_ask_name');
           await admin.from('crm_conversations').update({ flow_state: 'lead_awaiting_name' }).eq('id', conv!.id);
           autoReply = { sent: r.sent, engine: 'flow', model: 'lead_awaiting_name' };
         }
@@ -740,14 +740,14 @@ Deno.serve(async (req) => {
           }).eq('id', conv!.id);
           autoReply = { sent: r.sent, engine: 'flow', model: 'handoff_nutri' };
         } else {
-          const r = await sendZapiText(renderTpl(tplAtivo), 'id_ativo_repeat');
+          const r = await sendZapiMedia(renderTpl(tplAtivo), imgIdActive, 'id_ativo_repeat');
           autoReply = { sent: r.sent, engine: 'flow', model: 'ativo_aguardando_nutri' };
         }
       }
       // === ALUNO INATIVO ===
       else if (flowState === 'inativo_main_menu') {
         if (trimmed === '1') {
-          const r = await sendZapiText(renderPlanList('Responda com o *número* do plano para gerar seu link de renovação.'), 'inativo_planos');
+          const r = await sendZapiMedia(renderPlanList('Responda com o *número* do plano para gerar seu link de renovação.'), imgListaPlanos, 'inativo_planos');
           await admin.from('crm_conversations').update({ flow_state: 'inativo_awaiting_plan' }).eq('id', conv!.id);
           autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_awaiting_plan' };
         } else if (trimmed === '2') {
@@ -763,7 +763,7 @@ Deno.serve(async (req) => {
       }
       else if (flowState === 'inativo_awaiting_plan') {
         if (trimmed === '0') {
-          const r = await sendZapiText(renderTpl(tplInativoMenu), 'id_inativo_back');
+          const r = await sendZapiMedia(renderTpl(tplInativoMenu), imgIdExpired, 'id_inativo_back');
           await admin.from('crm_conversations').update({ flow_state: 'inativo_main_menu' }).eq('id', conv!.id);
           autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_main_menu' };
         } else if (/^[1-9]$/.test(trimmed) && plans[parseInt(trimmed, 10) - 1]) {
@@ -783,13 +783,13 @@ Deno.serve(async (req) => {
       }
       else if (flowState === 'inativo_pay_menu') {
         if (trimmed === '1') {
-          const r = await sendZapiText(renderPlanList('Responda com o *número* do plano para gerar seu link de renovação.'), 'inativo_planos');
+          const r = await sendZapiMedia(renderPlanList('Responda com o *número* do plano para gerar seu link de renovação.'), imgListaPlanos, 'inativo_planos');
           await admin.from('crm_conversations').update({ flow_state: 'inativo_awaiting_plan' }).eq('id', conv!.id);
           autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_awaiting_plan' };
         } else if (trimmed === '2') {
           await handoffConsultor();
         } else if (trimmed === '0') {
-          const r = await sendZapiText(renderTpl(tplInativoMenu), 'id_inativo_back');
+          const r = await sendZapiMedia(renderTpl(tplInativoMenu), imgIdExpired, 'id_inativo_back');
           await admin.from('crm_conversations').update({ flow_state: 'inativo_main_menu' }).eq('id', conv!.id);
           autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_main_menu' };
         } else {
@@ -821,7 +821,7 @@ Deno.serve(async (req) => {
           await admin.from('crm_conversations').update({ flow_state: 'lead_como_funciona' }).eq('id', conv!.id);
           autoReply = { sent: r.sent, engine: 'flow', model: 'lead_como_funciona' };
         } else if (trimmed === '2') {
-          const r = await sendZapiText(renderPlanList('Responda com o *número* do plano escolhido.'), 'lead_planos');
+          const r = await sendZapiMedia(renderPlanList('Responda com o *número* do plano escolhido.'), imgListaPlanos, 'lead_planos');
           await admin.from('crm_conversations').update({ flow_state: 'lead_awaiting_plan' }).eq('id', conv!.id);
           autoReply = { sent: r.sent, engine: 'flow', model: 'lead_awaiting_plan' };
         } else if (trimmed === '3') {
@@ -834,7 +834,7 @@ Deno.serve(async (req) => {
       else if (flowState === 'lead_como_funciona') {
         const leadName = (flowCtx?.nome as string) || FIRST_NAME;
         if (trimmed === '1') {
-          const r = await sendZapiText(renderPlanList('Responda com o *número* do plano escolhido.'), 'lead_planos');
+          const r = await sendZapiMedia(renderPlanList('Responda com o *número* do plano escolhido.'), imgListaPlanos, 'lead_planos');
           await admin.from('crm_conversations').update({ flow_state: 'lead_awaiting_plan' }).eq('id', conv!.id);
           autoReply = { sent: r.sent, engine: 'flow', model: 'lead_awaiting_plan' };
         } else if (trimmed === '2') {
