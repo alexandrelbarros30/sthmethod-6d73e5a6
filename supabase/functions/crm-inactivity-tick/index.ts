@@ -94,8 +94,7 @@ Deno.serve(async (req) => {
     } else if (c.inactivity_warned_at) {
       const sinceWarn = now - new Date(c.inactivity_warned_at).getTime();
       if (sinceWarn >= FIVE_MIN) {
-        const msg = `Atendimento encerrado por inatividade.\n\nQuando desejar continuar, basta enviar uma nova mensagem.\n\nEquipe STH METHOD 💪`;
-        await sendZapi(c.phone, msg, c.id, 'inactivity_close');
+        // Encerramento silencioso: o fluxo de atendimento já cuida da comunicação.
         await admin.from('crm_conversations').update({
           status: 'closed',
           flow_state: null,
