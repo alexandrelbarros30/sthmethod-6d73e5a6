@@ -33,13 +33,27 @@ const AdminImageHistory = ({ allImages, onUpdate }: Props) => {
   const [deleteTarget, setDeleteTarget] = useState<{ type: "group"; groupKey: string; imgs: any[] } | { type: "single"; img: any } | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const imagesByGroup = allImages.reduce((acc: Record<string, any[]>, img: any) => {
-    const d = new Date(img.uploaded_at);
-    const key = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,"0")}-${d.getDate().toString().padStart(2,"0")}T${d.getHours().toString().padStart(2,"0")}:${d.getMinutes().toString().padStart(2,"0")}`;
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(img);
-    return acc;
-  }, {});
+  // Agrupa uploads por "sessão": fotos enviadas dentro de uma janela curta
+  // (10 min) entram no mesmo grupo, mesmo que tenham segundos/minutos
+  // diferentes. Isso evita que Frente/Costas/Perfil de um mesmo envio
+  // apareçam em cards separados quando o upload cruza a virada do minuto.
+  const SESSION_WINDOW_MS = 10 * 60 * 1000;
+  const sorted = [...allImages].sort(
+    (a: any, b: any) => new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime()
+  );
+  const imagesByGroup: Record<string, any[]> = {};
+  let currentKey: string | null = null;
+  let currentAnchor = 0;
+  for (const img of sorted) {
+    const t = new Date(img.uploaded_at).getTime();
+    if (currentKey === null || Math.abs(currentAnchor - t) > SESSION_WINDOW_MS) {
+      const d = new Date(img.uploaded_at);
+      currentKey = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,"0")}-${d.getDate().toString().padStart(2,"0")}T${d.getHours().toString().padStart(2,"0")}:${d.getMinutes().toString().padStart(2,"0")}`;
+      currentAnchor = t;
+      imagesByGroup[currentKey] = [];
+    }
+    imagesByGroup[currentKey].push(img);
+  }
 
   if (!Object.keys(imagesByGroup).length) return null;
 
