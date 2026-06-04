@@ -547,7 +547,9 @@ Deno.serve(async (req) => {
     const aiMode = ((aiModeCfg?.value as any)?.mode || 'copilot') as 'copilot' | 'auto';
     const channelEnabled = provider === 'wapi'
       ? (wapiCfg?.value as any)?.enabled === true
-      : (zapiCfg?.value as any)?.enabled === true;
+      : provider === 'wapi_sucesso'
+        ? (wapiSucessoCfg?.value as any)?.enabled === true
+        : (zapiCfg?.value as any)?.enabled === true;
 
     const FIRST_NAME = (displayName || profile?.full_name || '').toString().split(' ')[0] || '';
     const NOME_SEP = FIRST_NAME ? ' ' : '';
