@@ -329,6 +329,7 @@ export default function AdminCrmSettings() {
           {[
             { key: "business_hours_comercial", label: "STH One — Comercial (Z-API)", state: hoursCom, set: setHoursCom },
             { key: "business_hours_nutri", label: "Fale com o Nutri (W-API)", state: hoursNutri, set: setHoursNutri },
+            { key: "business_hours_sucesso", label: "Sucesso do Aluno (W-API)", state: hoursSucesso, set: setHoursSucesso },
           ].map(({ key, label, state, set }) => (
             <div key={key} className="space-y-3 border-t border-border pt-3 first:border-0 first:pt-0">
               <div className="flex items-center justify-between">
