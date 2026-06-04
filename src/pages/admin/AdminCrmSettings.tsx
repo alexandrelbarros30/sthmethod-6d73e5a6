@@ -40,10 +40,12 @@ export default function AdminCrmSettings() {
   const [testing, setTesting] = useState<string | null>(null);
   const [zapi, setZapi] = useState<ZapiCfg>({ enabled: false, instance_id: "", instance_token: "", client_token: "", webhook: "" });
   const [wapi, setWapi] = useState<WapiCfg>({ enabled: false, server_url: "https://api.w-api.app", instance_id: "", token: "", client_token: "", webhook: "" });
+  const [wapiSucesso, setWapiSucesso] = useState<WapiCfg>({ enabled: false, server_url: "https://api.w-api.app", instance_id: "", token: "", client_token: "", webhook: "" });
   const [aiMode, setAiMode] = useState<AiMode>({ mode: "copilot" });
   const [copied, setCopied] = useState<string | null>(null);
   const [hoursCom, setHoursCom] = useState<Hours>(DEFAULT_HOURS);
   const [hoursNutri, setHoursNutri] = useState<Hours>({ ...DEFAULT_HOURS, mon_fri: { start: "09:00", end: "18:00" } });
+  const [hoursSucesso, setHoursSucesso] = useState<Hours>({ ...DEFAULT_HOURS, mon_fri: { start: "09:00", end: "18:00" } });
   const [awayComLead, setAwayComLead] = useState("");
   const [awayComActive, setAwayComActive] = useState("");
   const [awayComExpired, setAwayComExpired] = useState("");
@@ -54,12 +56,13 @@ export default function AdminCrmSettings() {
 
   const zapiWebhook = `${PROJECT_URL}/functions/v1/crm-inbound-webhook?provider=zapi`;
   const wapiWebhook = `${PROJECT_URL}/functions/v1/crm-inbound-webhook?provider=wapi`;
+  const wapiSucessoWebhook = `${PROJECT_URL}/functions/v1/crm-inbound-webhook?provider=wapi_sucesso`;
 
   useEffect(() => {
     (async () => {
       const { data } = await supabase.from("crm_settings").select("key,value").in("key", [
-        "zapi","wapi","ai_mode",
-        "business_hours_comercial","business_hours_nutri",
+        "zapi","wapi","wapi_sucesso","ai_mode",
+        "business_hours_comercial","business_hours_nutri","business_hours_sucesso",
         "comercial_away_lead","comercial_away_active","comercial_away_expired",
         "nutri_away_active","nutri_away_inactive",
         ...FLOW_KEYS.map(k => k.key),
@@ -68,9 +71,11 @@ export default function AdminCrmSettings() {
       (data ?? []).forEach((r: any) => {
         if (r.key === "zapi") setZapi({ ...zapi, ...(r.value || {}) });
         if (r.key === "wapi") setWapi({ ...wapi, ...(r.value || {}) });
+        if (r.key === "wapi_sucesso") setWapiSucesso({ ...wapiSucesso, ...(r.value || {}) });
         if (r.key === "ai_mode") setAiMode({ mode: r.value?.mode || "copilot" });
         if (r.key === "business_hours_comercial" && r.value) setHoursCom({ ...DEFAULT_HOURS, ...r.value });
         if (r.key === "business_hours_nutri" && r.value) setHoursNutri({ ...DEFAULT_HOURS, ...r.value });
+        if (r.key === "business_hours_sucesso" && r.value) setHoursSucesso({ ...DEFAULT_HOURS, ...r.value });
         if (r.key === "comercial_away_lead") setAwayComLead(r.value?.message || "");
         if (r.key === "comercial_away_active") setAwayComActive(r.value?.message || "");
         if (r.key === "comercial_away_expired") setAwayComExpired(r.value?.message || "");
@@ -94,7 +99,7 @@ export default function AdminCrmSettings() {
     else toast({ title: "Configuração salva" });
   }
 
-  async function testConn(provider: "zapi" | "wapi") {
+  async function testConn(provider: "zapi" | "wapi" | "wapi_sucesso") {
     setTesting(provider);
     try {
       const { data, error } = await supabase.functions.invoke("crm-test-whatsapp", { body: { provider } });
@@ -112,7 +117,7 @@ export default function AdminCrmSettings() {
     }
   }
 
-  async function saveAndTest(key: "zapi" | "wapi", value: any) {
+  async function saveAndTest(key: "zapi" | "wapi" | "wapi_sucesso", value: any) {
     await save(key, value);
     await testConn(key);
   }
@@ -255,6 +260,45 @@ export default function AdminCrmSettings() {
           <p className="text-[11px] text-muted-foreground">Os valores acima são a <b>fonte oficial</b> usada pelos envios e testes. Não é mais necessário mexer em secrets do backend.</p>
         </Card>
 
+        {/* Sucesso do Aluno (W-API) */}
+        <Card className="p-5 space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-emerald-400" />
+                <h2 className="text-base font-semibold">Sucesso do Aluno (W-API)</h2>
+                <Badge variant={wapiSucesso.enabled ? "default" : "secondary"}>{wapiSucesso.enabled ? "Ativo" : "Inativo"}</Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Canal dedicado ao acompanhamento e sucesso do aluno.</p>
+            </div>
+            <Switch checked={wapiSucesso.enabled} onCheckedChange={(v) => setWapiSucesso({ ...wapiSucesso, enabled: v })} />
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div className="space-y-1 sm:col-span-2"><Label>Server URL</Label><Input value={wapiSucesso.server_url} onChange={(e) => setWapiSucesso({ ...wapiSucesso, server_url: e.target.value })} /></div>
+            <div className="space-y-1"><Label>Instance ID</Label><Input value={wapiSucesso.instance_id} onChange={(e) => setWapiSucesso({ ...wapiSucesso, instance_id: e.target.value })} /></div>
+            <div className="space-y-1"><Label>Token</Label><Input value={wapiSucesso.token} onChange={(e) => setWapiSucesso({ ...wapiSucesso, token: e.target.value })} type="password" /></div>
+            <div className="space-y-1 sm:col-span-2"><Label>Client Token (opcional)</Label><Input value={wapiSucesso.client_token} onChange={(e) => setWapiSucesso({ ...wapiSucesso, client_token: e.target.value })} type="password" /></div>
+          </div>
+          <div className="space-y-1">
+            <Label>Webhook (configure este URL na W-API)</Label>
+            <div className="flex gap-2">
+              <Input readOnly value={wapiSucessoWebhook} className="font-mono text-[11px]" />
+              <Button variant="outline" size="icon" onClick={() => copy(wapiSucessoWebhook, "wapi-sucesso-wh")}>
+                {copied === "wapi-sucesso-wh" ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              </Button>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => save("wapi_sucesso", wapiSucesso)} disabled={saving === "wapi_sucesso"}>{saving === "wapi_sucesso" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar"}</Button>
+            <Button variant="secondary" onClick={() => saveAndTest("wapi_sucesso", wapiSucesso)} disabled={saving === "wapi_sucesso" || testing === "wapi_sucesso"}>
+              {(saving === "wapi_sucesso" || testing === "wapi_sucesso") ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar e Testar"}
+            </Button>
+            <Button variant="outline" onClick={() => testConn("wapi_sucesso")} disabled={testing === "wapi_sucesso"}>
+              {testing === "wapi_sucesso" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Testar Conexão"}
+            </Button>
+          </div>
+        </Card>
+
         {/* IA */}
         <Card className="p-5 space-y-4">
           <div className="flex items-center gap-2">
@@ -285,6 +329,7 @@ export default function AdminCrmSettings() {
           {[
             { key: "business_hours_comercial", label: "STH One — Comercial (Z-API)", state: hoursCom, set: setHoursCom },
             { key: "business_hours_nutri", label: "Fale com o Nutri (W-API)", state: hoursNutri, set: setHoursNutri },
+            { key: "business_hours_sucesso", label: "Sucesso do Aluno (W-API)", state: hoursSucesso, set: setHoursSucesso },
           ].map(({ key, label, state, set }) => (
             <div key={key} className="space-y-3 border-t border-border pt-3 first:border-0 first:pt-0">
               <div className="flex items-center justify-between">

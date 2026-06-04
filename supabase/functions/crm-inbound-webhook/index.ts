@@ -225,7 +225,7 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const provider = (url.searchParams.get('provider') || 'wapi').toLowerCase(); // zapi | wapi
+    const provider = (url.searchParams.get('provider') || 'wapi').toLowerCase(); // zapi | wapi | wapi_sucesso
     const expectedSecret = Deno.env.get('MP_WEBHOOK_SECRET') || '';
     const provided = req.headers.get('x-webhook-secret') || url.searchParams.get('secret') || '';
 
@@ -240,7 +240,7 @@ Deno.serve(async (req) => {
     const expectedInstance = (
       provider === 'zapi'
         ? Deno.env.get('ZAPI_INSTANCE_ID')
-        : Deno.env.get('WAPI_INSTANCE_ID')
+        : (provider === 'wapi_sucesso' ? '' : Deno.env.get('WAPI_INSTANCE_ID'))
     ) || '';
     const secretOk = expectedSecret && provided === expectedSecret;
     const instanceOk = expectedInstance && payloadInstance && payloadInstance === expectedInstance;
@@ -324,12 +324,12 @@ Deno.serve(async (req) => {
         ? `Tudo certo, ${firstName}. Você não receberá mais mensagens automáticas da STH METHOD. ✅\n\nPara reativar a qualquer momento, basta responder *VOLTAR*.`
         : `Bem-vindo de volta, ${firstName}! 💪 Você voltará a receber as comunicações da STH METHOD normalmente.`;
       try {
-        if (provider === 'wapi') {
-          const { data: wcfg } = await admin.from('crm_settings').select('value').eq('key', 'wapi').maybeSingle();
+        if (provider === 'wapi' || provider === 'wapi_sucesso') {
+          const { data: wcfg } = await admin.from('crm_settings').select('value').eq('key', provider).maybeSingle();
           const c: any = wcfg?.value || {};
-          const INSTANCE_ID = (c.instance_id || '').trim() || Deno.env.get('WAPI_INSTANCE_ID');
-          const TOKEN = (c.token || '').trim() || Deno.env.get('WAPI_TOKEN');
-          const CLIENT_TOKEN = (c.client_token || '').trim() || Deno.env.get('WAPI_CLIENT_TOKEN');
+          const INSTANCE_ID = (c.instance_id || (provider === 'wapi' ? Deno.env.get('WAPI_INSTANCE_ID') : '') || '').trim();
+          const TOKEN = (c.token || (provider === 'wapi' ? Deno.env.get('WAPI_TOKEN') : '') || '').trim();
+          const CLIENT_TOKEN = (c.client_token || (provider === 'wapi' ? Deno.env.get('WAPI_CLIENT_TOKEN') : '') || '').trim();
           const serverUrl = ((c.server_url || '').trim() || 'https://api.w-api.app').replace(/\/$/, '');
           if (INSTANCE_ID && TOKEN) {
             const h: Record<string, string> = { 'Content-Type': 'application/json', Authorization: `Bearer ${TOKEN}` };
@@ -366,16 +366,18 @@ Deno.serve(async (req) => {
       }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const [{ data: aiModeCfg }, { data: wapiCfg }, { data: zapiCfg }] = await Promise.all([
+    const [{ data: aiModeCfg }, { data: wapiCfg }, { data: zapiCfg }, { data: wapiSucessoCfg }] = await Promise.all([
       admin.from('crm_settings').select('value').eq('key', 'ai_mode').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'wapi').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'zapi').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'wapi_sucesso').maybeSingle(),
     ]);
 
     // Horários de atendimento humano (separados por canal)
     const [
       { data: hoursComCfg },
       { data: hoursNutriCfg },
+      { data: hoursSucessoCfg },
       { data: nutriAwayActive },
       { data: nutriAwayInactive },
       { data: comAwayActiveCfg },
@@ -384,6 +386,7 @@ Deno.serve(async (req) => {
     ] = await Promise.all([
       admin.from('crm_settings').select('value').eq('key', 'business_hours_comercial').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'business_hours_nutri').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'business_hours_sucesso').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'nutri_away_active').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'nutri_away_inactive').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'comercial_away_active').maybeSingle(),
@@ -413,7 +416,7 @@ Deno.serve(async (req) => {
     const formasPagCfg = getFlowStep('comercial_formas_pagamento');
     const handoffConsCfg = getFlowStep('comercial_handoff_consultor');
     const listaPlanosCfg = getFlowStep('comercial_lista_planos');
-    const channelHours = provider === 'wapi' ? (hoursNutriCfg?.value as any) : (hoursComCfg?.value as any);
+    const channelHours = provider === 'wapi_sucesso' ? (hoursSucessoCfg?.value as any) : (provider === 'wapi' ? (hoursNutriCfg?.value as any) : (hoursComCfg?.value as any));
     const withinHours = isWithinBusinessHours(channelHours);
 
     // 1. lookup profile + subscription (identificação do contato)
@@ -546,7 +549,9 @@ Deno.serve(async (req) => {
     const aiMode = ((aiModeCfg?.value as any)?.mode || 'copilot') as 'copilot' | 'auto';
     const channelEnabled = provider === 'wapi'
       ? (wapiCfg?.value as any)?.enabled === true
-      : (zapiCfg?.value as any)?.enabled === true;
+      : provider === 'wapi_sucesso'
+        ? (wapiSucessoCfg?.value as any)?.enabled === true
+        : (zapiCfg?.value as any)?.enabled === true;
 
     const FIRST_NAME = (displayName || profile?.full_name || '').toString().split(' ')[0] || '';
     const NOME_SEP = FIRST_NAME ? ' ' : '';
@@ -895,7 +900,7 @@ Deno.serve(async (req) => {
     // ============================================================
     // Fora do horário → mensagem de ausência (só 1x por sessão).
     // Aluno ativo recebe mensagem priorizada; lead/vencido é direcionado ao Comercial.
-    if (provider === 'wapi' && !withinHours && channelEnabled) {
+    if ((provider === 'wapi' || provider === 'wapi_sucesso') && !withinHours && channelEnabled) {
       const isFirstOfSession = isNewSession;
       if (isFirstOfSession) {
         const tplVal = identifiedAs === 'aluno_ativo'
@@ -905,7 +910,8 @@ Deno.serve(async (req) => {
         const awayMessage = String(tplVal || '').replace(/\{nome\}/gi, firstName);
         if (awayMessage) {
           try {
-            const { data: sendData, error: sendError } = await admin.functions.invoke('send-wapi', {
+            const fnName = provider === 'wapi_sucesso' ? 'send-wapi-sucesso' : (provider === 'wapi' ? 'send-wapi' : 'send-whatsapp');
+            const { data: sendData, error: sendError } = await admin.functions.invoke(fnName, {
               body: { phone, message: awayMessage },
             });
             if (sendError) throw sendError;
@@ -913,7 +919,7 @@ Deno.serve(async (req) => {
               conversation_id: conv!.id,
               direction: 'out',
               body: awayMessage,
-              source: 'wapi',
+              source: provider,
               external_id: sendData?.messageId || null,
               status: sendData?.ok ? 'sent' : 'failed',
             });
@@ -931,7 +937,7 @@ Deno.serve(async (req) => {
       try {
         const ai = await generateAiReply({ admin, conversationId: conv!.id, phone });
         if (ai.response?.trim()) {
-          const fnName = provider === 'wapi' ? 'send-wapi' : 'send-whatsapp';
+          const fnName = provider === 'wapi_sucesso' ? 'send-wapi-sucesso' : (provider === 'wapi' ? 'send-wapi' : 'send-whatsapp');
           const { data: sendData, error: sendError } = await admin.functions.invoke(fnName, {
             body: { phone, message: ai.response.trim() },
           });
@@ -943,7 +949,7 @@ Deno.serve(async (req) => {
             conversation_id: conv!.id,
             direction: 'out',
             body: ai.response.trim(),
-            source: provider === 'zapi' ? 'zapi' : 'wapi',
+            source: provider,
             external_id: sendData?.messageId || null,
             status: 'sent',
           });
