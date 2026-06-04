@@ -377,6 +377,7 @@ Deno.serve(async (req) => {
     const [
       { data: hoursComCfg },
       { data: hoursNutriCfg },
+      { data: hoursSucessoCfg },
       { data: nutriAwayActive },
       { data: nutriAwayInactive },
       { data: comAwayActiveCfg },
