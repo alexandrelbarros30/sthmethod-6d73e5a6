@@ -75,6 +75,7 @@ export default function AdminCrmSettings() {
         if (r.key === "ai_mode") setAiMode({ mode: r.value?.mode || "copilot" });
         if (r.key === "business_hours_comercial" && r.value) setHoursCom({ ...DEFAULT_HOURS, ...r.value });
         if (r.key === "business_hours_nutri" && r.value) setHoursNutri({ ...DEFAULT_HOURS, ...r.value });
+        if (r.key === "business_hours_sucesso" && r.value) setHoursSucesso({ ...DEFAULT_HOURS, ...r.value });
         if (r.key === "comercial_away_lead") setAwayComLead(r.value?.message || "");
         if (r.key === "comercial_away_active") setAwayComActive(r.value?.message || "");
         if (r.key === "comercial_away_expired") setAwayComExpired(r.value?.message || "");
