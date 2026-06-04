@@ -390,37 +390,29 @@ Deno.serve(async (req) => {
       admin.from('crm_settings').select('value').eq('key', 'comercial_away_expired').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'comercial_away_lead').maybeSingle(),
     ]);
-    const [{ data: comIdActive }, { data: comIdExpired }, { data: comIdLead }] = await Promise.all([
-      admin.from('crm_settings').select('value').eq('key', 'comercial_id_active').maybeSingle(),
-      admin.from('crm_settings').select('value').eq('key', 'comercial_id_expired').maybeSingle(),
-      admin.from('crm_settings').select('value').eq('key', 'comercial_id_lead').maybeSingle(),
-    ]);
-    const [
-      { data: menu1Cfg },
-      { data: menu2Cfg },
-      { data: menu3Cfg },
-      { data: menu4ExCfg },
-      { data: menu4ActiveCfg },
-      { data: menu5Cfg },
-    ] = await Promise.all([
-      admin.from('crm_settings').select('value').eq('key', 'comercial_menu_1_planos').maybeSingle(),
-      admin.from('crm_settings').select('value').eq('key', 'comercial_menu_2_como_funciona').maybeSingle(),
-      admin.from('crm_settings').select('value').eq('key', 'comercial_menu_3_consultor').maybeSingle(),
-      admin.from('crm_settings').select('value').eq('key', 'comercial_menu_4_ex_aluno').maybeSingle(),
-      admin.from('crm_settings').select('value').eq('key', 'comercial_menu_4_aluno_ativo').maybeSingle(),
-      admin.from('crm_settings').select('value').eq('key', 'comercial_menu_5_financeiro').maybeSingle(),
-    ]);
-    const [
-      { data: leadMenuCfg },
-      { data: formasPagCfg },
-      { data: handoffConsCfg },
-      { data: listaPlanosCfg },
-    ] = await Promise.all([
-      admin.from('crm_settings').select('value').eq('key', 'comercial_lead_menu').maybeSingle(),
-      admin.from('crm_settings').select('value').eq('key', 'comercial_formas_pagamento').maybeSingle(),
-      admin.from('crm_settings').select('value').eq('key', 'comercial_handoff_consultor').maybeSingle(),
-      admin.from('crm_settings').select('value').eq('key', 'comercial_lista_planos').maybeSingle(),
-    ]);
+    // 1. Fetch all flow steps from crm_flow_steps
+    const { data: flowSteps } = await admin.from('crm_flow_steps').select('*');
+    const getFlowStep = (key: string) => {
+      const step = (flowSteps || []).find(s => s.key === key);
+      if (step) return { value: { message: step.message, image_url: step.media_url, media_type: step.media_type } };
+      return null;
+    };
+
+    const comIdActive = getFlowStep('comercial_id_active');
+    const comIdExpired = getFlowStep('comercial_id_expired');
+    const comIdLead = getFlowStep('comercial_id_lead');
+
+    const menu1Cfg = getFlowStep('comercial_menu_1_planos');
+    const menu2Cfg = getFlowStep('comercial_menu_2_como_funciona');
+    const menu3Cfg = getFlowStep('comercial_menu_3_consultor');
+    const menu4ExCfg = getFlowStep('comercial_menu_4_ex_aluno');
+    const menu4ActiveCfg = getFlowStep('comercial_menu_4_aluno_ativo');
+    const menu5Cfg = getFlowStep('comercial_menu_5_financeiro');
+
+    const leadMenuCfg = getFlowStep('comercial_lead_menu');
+    const formasPagCfg = getFlowStep('comercial_formas_pagamento');
+    const handoffConsCfg = getFlowStep('comercial_handoff_consultor');
+    const listaPlanosCfg = getFlowStep('comercial_lista_planos');
     const channelHours = provider === 'wapi' ? (hoursNutriCfg?.value as any) : (hoursComCfg?.value as any);
     const withinHours = isWithinBusinessHours(channelHours);
 
@@ -582,13 +574,24 @@ Deno.serve(async (req) => {
       let sent = false;
       let messageId: string | null = null;
       if (INSTANCE_ID && INSTANCE_TOKEN && (message || imageUrl)) {
-        const useImage = !!(imageUrl && String(imageUrl).trim());
-        const endpoint = useImage
-          ? `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-image`
-          : `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`;
-        const body = useImage
-          ? { phone, image: String(imageUrl).trim(), caption: message }
-          : { phone, message };
+        const url = String(imageUrl || '').trim();
+        const isPdf = url.toLowerCase().includes('.pdf') || url.includes('media_type=pdf');
+        const useMedia = !!url;
+        
+        let endpoint = `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`;
+        let body: any = { phone, message };
+
+        if (useMedia) {
+          if (isPdf) {
+            const ext = (url.split('?')[0].split('.').pop() || 'pdf').toLowerCase();
+            endpoint = `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-document/${ext}`;
+            body = { phone, document: url, fileName: `documento.${ext}`, caption: message };
+          } else {
+            endpoint = `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-image`;
+            body = { phone, image: url, caption: message };
+          }
+        }
+
         const r = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...(CLIENT_TOKEN ? { 'Client-Token': CLIENT_TOKEN } : {}) },

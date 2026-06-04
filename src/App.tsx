@@ -91,6 +91,7 @@ import AdminCrmAi from "./pages/admin/AdminCrmAi";
 import AdminCrmPipeline from "./pages/admin/AdminCrmPipeline";
 import AdminCrmSettings from "./pages/admin/AdminCrmSettings";
 import AdminCrmTemplates from "./pages/admin/AdminCrmTemplates";
+import AdminCrmFlow from "./pages/admin/AdminCrmFlow";
 import AdminSuperCoach from "./pages/admin/AdminSuperCoach";
 import StudentConsultas from "./pages/student/StudentConsultas";
 import ConsultorDashboard from "./pages/consultor/ConsultorDashboard";
