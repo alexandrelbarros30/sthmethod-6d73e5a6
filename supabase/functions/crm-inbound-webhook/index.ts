@@ -385,6 +385,7 @@ Deno.serve(async (req) => {
     ] = await Promise.all([
       admin.from('crm_settings').select('value').eq('key', 'business_hours_comercial').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'business_hours_nutri').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'business_hours_sucesso').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'nutri_away_active').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'nutri_away_inactive').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'comercial_away_active').maybeSingle(),
