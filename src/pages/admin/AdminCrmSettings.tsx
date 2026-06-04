@@ -69,6 +69,7 @@ export default function AdminCrmSettings() {
       (data ?? []).forEach((r: any) => {
         if (r.key === "zapi") setZapi({ ...zapi, ...(r.value || {}) });
         if (r.key === "wapi") setWapi({ ...wapi, ...(r.value || {}) });
+        if (r.key === "wapi_sucesso") setWapiSucesso({ ...wapiSucesso, ...(r.value || {}) });
         if (r.key === "ai_mode") setAiMode({ mode: r.value?.mode || "copilot" });
         if (r.key === "business_hours_comercial" && r.value) setHoursCom({ ...DEFAULT_HOURS, ...r.value });
         if (r.key === "business_hours_nutri" && r.value) setHoursNutri({ ...DEFAULT_HOURS, ...r.value });
