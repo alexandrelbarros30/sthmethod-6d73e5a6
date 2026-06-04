@@ -366,10 +366,11 @@ Deno.serve(async (req) => {
       }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const [{ data: aiModeCfg }, { data: wapiCfg }, { data: zapiCfg }] = await Promise.all([
+    const [{ data: aiModeCfg }, { data: wapiCfg }, { data: zapiCfg }, { data: wapiSucessoCfg }] = await Promise.all([
       admin.from('crm_settings').select('value').eq('key', 'ai_mode').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'wapi').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'zapi').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'wapi_sucesso').maybeSingle(),
     ]);
 
     // Horários de atendimento humano (separados por canal)
