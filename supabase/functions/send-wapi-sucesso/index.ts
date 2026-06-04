@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
       }
     } catch (_) { /* não bloqueia em caso de falha do RPC */ }
     const { data: cfgRow } = await admin
-      .from('crm_settings').select('value').eq('key', 'wapi').maybeSingle();
+      .from('crm_settings').select('value').eq('key', 'wapi_sucesso').maybeSingle();
     const cfg: any = cfgRow?.value || {};
     if (cfg.enabled !== true) {
       return new Response(JSON.stringify({
