@@ -114,7 +114,7 @@ export default function AdminCrmSettings() {
     }
   }
 
-  async function saveAndTest(key: "zapi" | "wapi", value: any) {
+  async function saveAndTest(key: "zapi" | "wapi" | "wapi_sucesso", value: any) {
     await save(key, value);
     await testConn(key);
   }
