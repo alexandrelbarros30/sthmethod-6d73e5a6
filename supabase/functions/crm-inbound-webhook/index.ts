@@ -908,7 +908,8 @@ Deno.serve(async (req) => {
         const awayMessage = String(tplVal || '').replace(/\{nome\}/gi, firstName);
         if (awayMessage) {
           try {
-            const { data: sendData, error: sendError } = await admin.functions.invoke('send-wapi', {
+            const fnName = provider === 'wapi_sucesso' ? 'send-wapi-sucesso' : (provider === 'wapi' ? 'send-wapi' : 'send-whatsapp');
+            const { data: sendData, error: sendError } = await admin.functions.invoke(fnName, {
               body: { phone, message: awayMessage },
             });
             if (sendError) throw sendError;
