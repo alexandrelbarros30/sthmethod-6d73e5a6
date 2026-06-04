@@ -898,7 +898,7 @@ Deno.serve(async (req) => {
     // ============================================================
     // Fora do horário → mensagem de ausência (só 1x por sessão).
     // Aluno ativo recebe mensagem priorizada; lead/vencido é direcionado ao Comercial.
-    if (provider === 'wapi' && !withinHours && channelEnabled) {
+    if ((provider === 'wapi' || provider === 'wapi_sucesso') && !withinHours && channelEnabled) {
       const isFirstOfSession = isNewSession;
       if (isFirstOfSession) {
         const tplVal = identifiedAs === 'aluno_ativo'
