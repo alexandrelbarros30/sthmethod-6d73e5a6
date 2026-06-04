@@ -416,7 +416,7 @@ Deno.serve(async (req) => {
     const formasPagCfg = getFlowStep('comercial_formas_pagamento');
     const handoffConsCfg = getFlowStep('comercial_handoff_consultor');
     const listaPlanosCfg = getFlowStep('comercial_lista_planos');
-    const channelHours = provider === 'wapi' ? (hoursNutriCfg?.value as any) : (hoursComCfg?.value as any);
+    const channelHours = provider === 'wapi_sucesso' ? (hoursSucessoCfg?.value as any) : (provider === 'wapi' ? (hoursNutriCfg?.value as any) : (hoursComCfg?.value as any));
     const withinHours = isWithinBusinessHours(channelHours);
 
     // 1. lookup profile + subscription (identificação do contato)
