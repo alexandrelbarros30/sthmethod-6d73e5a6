@@ -30,6 +30,7 @@ import AdminBodyImageUpload from "@/components/admin/AdminBodyImageUpload";
 import AdminImageHistory from "@/components/admin/AdminImageHistory";
 import AnamnesisEntryItem from "@/components/shared/AnamnesisEntryItem";
 import EvolutionComparison from "@/components/shared/EvolutionComparison";
+import EvolutionUpdateHistory from "@/components/shared/EvolutionUpdateHistory";
 import EvolutionGenerator from "@/components/admin/EvolutionGenerator";
 import AdminEvolutionUpdate from "@/components/admin/AdminEvolutionUpdate";
 import ExcelJS from "exceljs";
