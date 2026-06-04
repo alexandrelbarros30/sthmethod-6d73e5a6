@@ -194,7 +194,16 @@ export default function AdminCrmFlow() {
     const { error } = await supabase
       .from("crm_flow_steps")
       .upsert({ 
-        ...step, 
+        id: step.id,
+        key: step.key,
+        label: step.label,
+        message: step.message,
+        media_url: step.media_url,
+        media_type: step.media_type,
+        actions: step.actions,
+        order_index: step.order_index,
+        position_x: step.position_x,
+        position_y: step.position_y,
         updated_at: new Date().toISOString() 
       });
     
@@ -207,6 +216,38 @@ export default function AdminCrmFlow() {
       setSteps(prev => prev.map(s => s.id === step.id ? step : s));
     }
   }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingStep) return;
+
+    setSaving(true);
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const filePath = `flow-assets/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('crm-media')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      toast({ title: "Erro no upload", description: uploadError.message, variant: "destructive" });
+      setSaving(false);
+      return;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('crm-media')
+      .getPublicUrl(filePath);
+
+    setEditingStep({ 
+      ...editingStep, 
+      media_url: publicUrl,
+      media_type: file.type.startsWith('image') ? 'image' : 'document'
+    });
+    setSaving(false);
+    toast({ title: "Sucesso", description: "Arquivo enviado" });
+  };
 
   const handleAddStep = async () => {
     const newStep = {
@@ -403,10 +444,45 @@ export default function AdminCrmFlow() {
                             placeholder="https://..."
                             className="text-xs"
                           />
-                          <Button variant="outline" size="icon" className="shrink-0">
-                            <Upload className="w-4 h-4" />
-                          </Button>
+                          <div className="relative">
+                            <input
+                              type="file"
+                              id="flow-file-upload"
+                              className="hidden"
+                              onChange={handleFileUpload}
+                              accept="image/*,application/pdf"
+                            />
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              className="shrink-0"
+                              onClick={() => document.getElementById('flow-file-upload')?.click()}
+                              disabled={saving}
+                            >
+                              <Upload className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
+                        {editingStep.media_url && (
+                          <div className="mt-2 relative group">
+                            {editingStep.media_type === 'image' ? (
+                              <img src={editingStep.media_url} className="w-full h-32 object-cover rounded-md border" />
+                            ) : (
+                              <div className="flex items-center gap-2 p-2 bg-slate-50 border rounded-md">
+                                <FileText className="w-4 h-4 text-primary" />
+                                <span className="text-xs truncate">{editingStep.media_url}</span>
+                              </div>
+                            )}
+                            <button 
+                              onClick={() => {
+                                setEditingStep({...editingStep, media_url: null, media_type: null});
+                              }}
+                              className="absolute -top-2 -right-2 bg-white border shadow-sm rounded-full p-1 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
 
