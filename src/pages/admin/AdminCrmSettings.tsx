@@ -62,7 +62,7 @@ export default function AdminCrmSettings() {
     (async () => {
       const { data } = await supabase.from("crm_settings").select("key,value").in("key", [
         "zapi","wapi","wapi_sucesso","ai_mode",
-        "business_hours_comercial","business_hours_nutri",
+        "business_hours_comercial","business_hours_nutri","business_hours_sucesso",
         "comercial_away_lead","comercial_away_active","comercial_away_expired",
         "nutri_away_active","nutri_away_inactive",
         ...FLOW_KEYS.map(k => k.key),
