@@ -1932,6 +1932,9 @@ const AdminStudents = () => {
                     {snapshotsOpen && (
                       <CardContent>
                         <EvolutionComparison userId={selected.user_id} />
+                        <div className="mt-4">
+                          <EvolutionUpdateHistory userId={selected.user_id} />
+                        </div>
                       </CardContent>
                     )}
                   </Card>
