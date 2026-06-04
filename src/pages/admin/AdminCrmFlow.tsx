@@ -32,7 +32,7 @@ type FlowStep = {
   media_url?: string | null;
   media_type?: string | null;
   order_index: number;
-  actions: any[];
+  actions: any;
 };
 
 export default function AdminCrmFlow() {
