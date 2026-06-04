@@ -769,6 +769,8 @@ export type Database = {
           media_url: string | null
           message: string | null
           order_index: number | null
+          position_x: number | null
+          position_y: number | null
           updated_at: string | null
         }
         Insert: {
@@ -781,6 +783,8 @@ export type Database = {
           media_url?: string | null
           message?: string | null
           order_index?: number | null
+          position_x?: number | null
+          position_y?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -793,6 +797,8 @@ export type Database = {
           media_url?: string | null
           message?: string | null
           order_index?: number | null
+          position_x?: number | null
+          position_y?: number | null
           updated_at?: string | null
         }
         Relationships: []
