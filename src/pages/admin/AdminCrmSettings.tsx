@@ -40,6 +40,7 @@ export default function AdminCrmSettings() {
   const [testing, setTesting] = useState<string | null>(null);
   const [zapi, setZapi] = useState<ZapiCfg>({ enabled: false, instance_id: "", instance_token: "", client_token: "", webhook: "" });
   const [wapi, setWapi] = useState<WapiCfg>({ enabled: false, server_url: "https://api.w-api.app", instance_id: "", token: "", client_token: "", webhook: "" });
+  const [wapiSucesso, setWapiSucesso] = useState<WapiCfg>({ enabled: false, server_url: "https://api.w-api.app", instance_id: "", token: "", client_token: "", webhook: "" });
   const [aiMode, setAiMode] = useState<AiMode>({ mode: "copilot" });
   const [copied, setCopied] = useState<string | null>(null);
   const [hoursCom, setHoursCom] = useState<Hours>(DEFAULT_HOURS);
