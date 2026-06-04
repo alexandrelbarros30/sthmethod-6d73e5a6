@@ -225,7 +225,7 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const provider = (url.searchParams.get('provider') || 'wapi').toLowerCase(); // zapi | wapi
+    const provider = (url.searchParams.get('provider') || 'wapi').toLowerCase(); // zapi | wapi | wapi_sucesso
     const expectedSecret = Deno.env.get('MP_WEBHOOK_SECRET') || '';
     const provided = req.headers.get('x-webhook-secret') || url.searchParams.get('secret') || '';
 
@@ -240,7 +240,7 @@ Deno.serve(async (req) => {
     const expectedInstance = (
       provider === 'zapi'
         ? Deno.env.get('ZAPI_INSTANCE_ID')
-        : Deno.env.get('WAPI_INSTANCE_ID')
+        : (provider === 'wapi_sucesso' ? '' : Deno.env.get('WAPI_INSTANCE_ID'))
     ) || '';
     const secretOk = expectedSecret && provided === expectedSecret;
     const instanceOk = expectedInstance && payloadInstance && payloadInstance === expectedInstance;
