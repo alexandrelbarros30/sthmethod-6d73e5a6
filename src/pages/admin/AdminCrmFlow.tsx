@@ -390,7 +390,8 @@ export default function AdminCrmFlow() {
                       </Button>
                     </Panel>
                   )}
-                <ReactFlowWrapper />
+                  <ReactFlowWrapper />
+                </ReactFlow>
               )}
             </div>
 
