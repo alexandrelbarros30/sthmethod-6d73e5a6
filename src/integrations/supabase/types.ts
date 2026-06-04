@@ -758,6 +758,45 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_flow_steps: {
+        Row: {
+          actions: Json | null
+          created_at: string | null
+          id: string
+          key: string
+          label: string
+          media_type: string | null
+          media_url: string | null
+          message: string | null
+          order_index: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          actions?: Json | null
+          created_at?: string | null
+          id?: string
+          key: string
+          label: string
+          media_type?: string | null
+          media_url?: string | null
+          message?: string | null
+          order_index?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          actions?: Json | null
+          created_at?: string | null
+          id?: string
+          key?: string
+          label?: string
+          media_type?: string | null
+          media_url?: string | null
+          message?: string | null
+          order_index?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       crm_message_templates: {
         Row: {
           active: boolean
