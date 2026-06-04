@@ -30,6 +30,7 @@ import AdminBodyImageUpload from "@/components/admin/AdminBodyImageUpload";
 import AdminImageHistory from "@/components/admin/AdminImageHistory";
 import AnamnesisEntryItem from "@/components/shared/AnamnesisEntryItem";
 import EvolutionComparison from "@/components/shared/EvolutionComparison";
+import EvolutionUpdateHistory from "@/components/shared/EvolutionUpdateHistory";
 import EvolutionGenerator from "@/components/admin/EvolutionGenerator";
 import AdminEvolutionUpdate from "@/components/admin/AdminEvolutionUpdate";
 import ExcelJS from "exceljs";
@@ -1595,6 +1596,12 @@ const AdminStudents = () => {
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Comparação de Evolução</h3>
                   <EvolutionComparison userId={selected.user_id} />
                 </section>
+
+                {/* Histórico cronológico de todas as atualizações arquivadas */}
+                <section>
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Histórico de Atualizações</h3>
+                  <EvolutionUpdateHistory userId={selected.user_id} />
+                </section>
               </div>
             </ScrollArea>
           )}
@@ -1925,6 +1932,9 @@ const AdminStudents = () => {
                     {snapshotsOpen && (
                       <CardContent>
                         <EvolutionComparison userId={selected.user_id} />
+                        <div className="mt-4">
+                          <EvolutionUpdateHistory userId={selected.user_id} />
+                        </div>
                       </CardContent>
                     )}
                   </Card>
