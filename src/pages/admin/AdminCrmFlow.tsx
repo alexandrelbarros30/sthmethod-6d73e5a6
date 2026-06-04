@@ -311,6 +311,58 @@ export default function AdminCrmFlow() {
                   </div>
                 </div>
 
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label>Respostas / Ações (Opções de menu)</Label>
+                    <Button variant="outline" size="sm" onClick={() => {
+                      const step = steps.find(s => s.id === editingId);
+                      if (step) {
+                        const actions = Array.isArray(step.actions) ? step.actions : [];
+                        setSteps(steps.map(s => s.id === editingId ? { ...s, actions: [...actions, { label: "", next_step_key: "" }] } : s));
+                      }
+                    }}>
+                      <Plus className="w-3 h-3 mr-1" /> Add Opção
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {Array.isArray(steps.find(s => s.id === editingId)?.actions) && steps.find(s => s.id === editingId)?.actions.map((action: any, idx: number) => (
+                      <div key={idx} className="flex gap-2 items-center">
+                        <Input 
+                          placeholder="Ex: 1 ou 'Sim'" 
+                          value={action.label} 
+                          className="flex-1"
+                          onChange={(e) => {
+                            const newActions = [...steps.find(s => s.id === editingId)!.actions];
+                            newActions[idx].label = e.target.value;
+                            setSteps(steps.map(s => s.id === editingId ? { ...s, actions: newActions } : s));
+                          }}
+                        />
+                        <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                        <select 
+                          className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex-1"
+                          value={action.next_step_key}
+                          onChange={(e) => {
+                            const newActions = [...steps.find(s => s.id === editingId)!.actions];
+                            newActions[idx].next_step_key = e.target.value;
+                            setSteps(steps.map(s => s.id === editingId ? { ...s, actions: newActions } : s));
+                          }}
+                        >
+                          <option value="">Selecione o próximo passo...</option>
+                          {steps.filter(s => s.id !== editingId).map(s => (
+                            <option key={s.id} value={s.key}>{s.label}</option>
+                          ))}
+                        </select>
+                        <Button variant="ghost" size="icon" onClick={() => {
+                          const newActions = steps.find(s => s.id === editingId)!.actions.filter((_: any, i: number) => i !== idx);
+                          setSteps(steps.map(s => s.id === editingId ? { ...s, actions: newActions } : s));
+                        }}>
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <Separator />
 
                 <div className="flex justify-end gap-3">
