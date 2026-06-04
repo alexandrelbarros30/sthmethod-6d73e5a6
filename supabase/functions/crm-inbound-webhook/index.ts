@@ -947,7 +947,7 @@ Deno.serve(async (req) => {
             conversation_id: conv!.id,
             direction: 'out',
             body: ai.response.trim(),
-            source: provider === 'zapi' ? 'zapi' : 'wapi',
+            source: provider,
             external_id: sendData?.messageId || null,
             status: 'sent',
           });
