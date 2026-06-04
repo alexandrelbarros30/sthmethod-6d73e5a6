@@ -164,9 +164,15 @@ export default function AdminCrmSettings() {
     <div className="min-h-screen bg-background">
       <DashboardSidebar role="admin" />
       <div className={`${isMobile ? "pt-16" : "ml-60"} p-6 max-w-4xl mx-auto space-y-6`}>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Configurações de WhatsApp</h1>
-          <p className="text-sm text-muted-foreground mt-1">Integração operacional dos canais STH One (Z-API) e Fale com o Nutri (W-API).</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Configurações de WhatsApp</h1>
+            <p className="text-sm text-muted-foreground mt-1">Integração operacional dos canais STH One (Z-API) e Fale com o Nutri (W-API).</p>
+          </div>
+          <Button onClick={() => window.location.href = "/admin/crm/flow"} variant="outline" className="gap-2">
+            <Workflow className="w-4 h-4" />
+            Editar Fluxo de Atendimento
+          </Button>
         </div>
 
         {/* Z-API */}
