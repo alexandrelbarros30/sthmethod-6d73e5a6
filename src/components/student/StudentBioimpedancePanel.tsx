@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import CircumferenceTracker from "@/components/student/CircumferenceTracker";
 import EvolutionComparison from "@/components/shared/EvolutionComparison";
+import EvolutionUpdateHistory from "@/components/shared/EvolutionUpdateHistory";
 import {
   ChartContainer, ChartTooltip, ChartTooltipContent,
 } from "@/components/ui/chart";
