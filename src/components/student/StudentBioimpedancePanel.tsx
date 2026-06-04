@@ -425,6 +425,9 @@ const StudentBioimpedancePanel = ({ userId: propUserId }: Props) => {
 
       {/* Comparação de evolução + gráficos completos */}
       {userId && <EvolutionComparison userId={userId} />}
+
+      {/* Histórico cronológico de todas as atualizações arquivadas */}
+      {userId && <EvolutionUpdateHistory userId={userId} />}
     </div>
   );
 };
