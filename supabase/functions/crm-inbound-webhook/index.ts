@@ -935,7 +935,7 @@ Deno.serve(async (req) => {
       try {
         const ai = await generateAiReply({ admin, conversationId: conv!.id, phone });
         if (ai.response?.trim()) {
-          const fnName = provider === 'wapi' ? 'send-wapi' : 'send-whatsapp';
+          const fnName = provider === 'wapi_sucesso' ? 'send-wapi-sucesso' : (provider === 'wapi' ? 'send-wapi' : 'send-whatsapp');
           const { data: sendData, error: sendError } = await admin.functions.invoke(fnName, {
             body: { phone, message: ai.response.trim() },
           });
