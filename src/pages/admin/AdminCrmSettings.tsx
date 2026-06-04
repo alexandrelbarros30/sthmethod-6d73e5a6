@@ -45,6 +45,7 @@ export default function AdminCrmSettings() {
   const [copied, setCopied] = useState<string | null>(null);
   const [hoursCom, setHoursCom] = useState<Hours>(DEFAULT_HOURS);
   const [hoursNutri, setHoursNutri] = useState<Hours>({ ...DEFAULT_HOURS, mon_fri: { start: "09:00", end: "18:00" } });
+  const [hoursSucesso, setHoursSucesso] = useState<Hours>({ ...DEFAULT_HOURS, mon_fri: { start: "09:00", end: "18:00" } });
   const [awayComLead, setAwayComLead] = useState("");
   const [awayComActive, setAwayComActive] = useState("");
   const [awayComExpired, setAwayComExpired] = useState("");
