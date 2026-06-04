@@ -324,12 +324,12 @@ Deno.serve(async (req) => {
         ? `Tudo certo, ${firstName}. Você não receberá mais mensagens automáticas da STH METHOD. ✅\n\nPara reativar a qualquer momento, basta responder *VOLTAR*.`
         : `Bem-vindo de volta, ${firstName}! 💪 Você voltará a receber as comunicações da STH METHOD normalmente.`;
       try {
-        if (provider === 'wapi') {
-          const { data: wcfg } = await admin.from('crm_settings').select('value').eq('key', 'wapi').maybeSingle();
+        if (provider === 'wapi' || provider === 'wapi_sucesso') {
+          const { data: wcfg } = await admin.from('crm_settings').select('value').eq('key', provider).maybeSingle();
           const c: any = wcfg?.value || {};
-          const INSTANCE_ID = (c.instance_id || '').trim() || Deno.env.get('WAPI_INSTANCE_ID');
-          const TOKEN = (c.token || '').trim() || Deno.env.get('WAPI_TOKEN');
-          const CLIENT_TOKEN = (c.client_token || '').trim() || Deno.env.get('WAPI_CLIENT_TOKEN');
+          const INSTANCE_ID = (c.instance_id || (provider === 'wapi' ? Deno.env.get('WAPI_INSTANCE_ID') : '') || '').trim();
+          const TOKEN = (c.token || (provider === 'wapi' ? Deno.env.get('WAPI_TOKEN') : '') || '').trim();
+          const CLIENT_TOKEN = (c.client_token || (provider === 'wapi' ? Deno.env.get('WAPI_CLIENT_TOKEN') : '') || '').trim();
           const serverUrl = ((c.server_url || '').trim() || 'https://api.w-api.app').replace(/\/$/, '');
           if (INSTANCE_ID && TOKEN) {
             const h: Record<string, string> = { 'Content-Type': 'application/json', Authorization: `Bearer ${TOKEN}` };
