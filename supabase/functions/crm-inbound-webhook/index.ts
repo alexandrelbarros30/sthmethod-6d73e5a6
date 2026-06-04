@@ -574,13 +574,24 @@ Deno.serve(async (req) => {
       let sent = false;
       let messageId: string | null = null;
       if (INSTANCE_ID && INSTANCE_TOKEN && (message || imageUrl)) {
-        const useImage = !!(imageUrl && String(imageUrl).trim());
-        const endpoint = useImage
-          ? `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-image`
-          : `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`;
-        const body = useImage
-          ? { phone, image: String(imageUrl).trim(), caption: message }
-          : { phone, message };
+        const url = String(imageUrl || '').trim();
+        const isPdf = url.toLowerCase().includes('.pdf') || url.includes('media_type=pdf');
+        const useMedia = !!url;
+        
+        let endpoint = `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`;
+        let body: any = { phone, message };
+
+        if (useMedia) {
+          if (isPdf) {
+            const ext = (url.split('?')[0].split('.').pop() || 'pdf').toLowerCase();
+            endpoint = `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-document/${ext}`;
+            body = { phone, document: url, fileName: `documento.${ext}`, caption: message };
+          } else {
+            endpoint = `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-image`;
+            body = { phone, image: url, caption: message };
+          }
+        }
+
         const r = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...(CLIENT_TOKEN ? { 'Client-Token': CLIENT_TOKEN } : {}) },
