@@ -244,6 +244,7 @@ const App = () => (
             <Route path="/admin/crm/configuracoes" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrmSettings /></ProtectedRoute>} />
             <Route path="/admin/crm/templates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrmTemplates /></ProtectedRoute>} />
             <Route path="/admin/crm/supercoach" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSuperCoach /></ProtectedRoute>} />
+            <Route path="/admin/crm/fluxo" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrmFlow /></ProtectedRoute>} />
             {/* Consultor routes */}
             <Route path="/consultor" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
             <Route path="/consultor/students" element={<ProtectedRoute allowedRoles={["consultor"]}><ConsultorDashboard /></ProtectedRoute>} />
