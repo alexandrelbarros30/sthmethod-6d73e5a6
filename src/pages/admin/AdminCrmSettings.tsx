@@ -258,6 +258,45 @@ export default function AdminCrmSettings() {
           <p className="text-[11px] text-muted-foreground">Os valores acima são a <b>fonte oficial</b> usada pelos envios e testes. Não é mais necessário mexer em secrets do backend.</p>
         </Card>
 
+        {/* Sucesso do Aluno (W-API) */}
+        <Card className="p-5 space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-emerald-400" />
+                <h2 className="text-base font-semibold">Sucesso do Aluno (W-API)</h2>
+                <Badge variant={wapiSucesso.enabled ? "default" : "secondary"}>{wapiSucesso.enabled ? "Ativo" : "Inativo"}</Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Canal dedicado ao acompanhamento e sucesso do aluno.</p>
+            </div>
+            <Switch checked={wapiSucesso.enabled} onCheckedChange={(v) => setWapiSucesso({ ...wapiSucesso, enabled: v })} />
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div className="space-y-1 sm:col-span-2"><Label>Server URL</Label><Input value={wapiSucesso.server_url} onChange={(e) => setWapiSucesso({ ...wapiSucesso, server_url: e.target.value })} /></div>
+            <div className="space-y-1"><Label>Instance ID</Label><Input value={wapiSucesso.instance_id} onChange={(e) => setWapiSucesso({ ...wapiSucesso, instance_id: e.target.value })} /></div>
+            <div className="space-y-1"><Label>Token</Label><Input value={wapiSucesso.token} onChange={(e) => setWapiSucesso({ ...wapiSucesso, token: e.target.value })} type="password" /></div>
+            <div className="space-y-1 sm:col-span-2"><Label>Client Token (opcional)</Label><Input value={wapiSucesso.client_token} onChange={(e) => setWapiSucesso({ ...wapiSucesso, client_token: e.target.value })} type="password" /></div>
+          </div>
+          <div className="space-y-1">
+            <Label>Webhook (configure este URL na W-API)</Label>
+            <div className="flex gap-2">
+              <Input readOnly value={wapiSucessoWebhook} className="font-mono text-[11px]" />
+              <Button variant="outline" size="icon" onClick={() => copy(wapiSucessoWebhook, "wapi-sucesso-wh")}>
+                {copied === "wapi-sucesso-wh" ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              </Button>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => save("wapi_sucesso", wapiSucesso)} disabled={saving === "wapi_sucesso"}>{saving === "wapi_sucesso" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar"}</Button>
+            <Button variant="secondary" onClick={() => saveAndTest("wapi_sucesso", wapiSucesso)} disabled={saving === "wapi_sucesso" || testing === "wapi_sucesso"}>
+              {(saving === "wapi_sucesso" || testing === "wapi_sucesso") ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar e Testar"}
+            </Button>
+            <Button variant="outline" onClick={() => testConn("wapi_sucesso")} disabled={testing === "wapi_sucesso"}>
+              {testing === "wapi_sucesso" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Testar Conexão"}
+            </Button>
+          </div>
+        </Card>
+
         {/* IA */}
         <Card className="p-5 space-y-4">
           <div className="flex items-center gap-2">
