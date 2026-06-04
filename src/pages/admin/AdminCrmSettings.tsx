@@ -55,6 +55,7 @@ export default function AdminCrmSettings() {
 
   const zapiWebhook = `${PROJECT_URL}/functions/v1/crm-inbound-webhook?provider=zapi`;
   const wapiWebhook = `${PROJECT_URL}/functions/v1/crm-inbound-webhook?provider=wapi`;
+  const wapiSucessoWebhook = `${PROJECT_URL}/functions/v1/crm-inbound-webhook?provider=wapi_sucesso`;
 
   useEffect(() => {
     (async () => {
