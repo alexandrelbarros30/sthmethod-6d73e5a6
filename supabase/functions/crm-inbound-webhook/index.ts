@@ -917,7 +917,7 @@ Deno.serve(async (req) => {
               conversation_id: conv!.id,
               direction: 'out',
               body: awayMessage,
-              source: 'wapi',
+              source: provider,
               external_id: sendData?.messageId || null,
               status: sendData?.ok ? 'sent' : 'failed',
             });
