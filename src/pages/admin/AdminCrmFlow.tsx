@@ -102,7 +102,11 @@ export default function AdminCrmFlow() {
     if (error) {
       toast({ title: "Erro ao carregar", description: error.message, variant: "destructive" });
     } else {
-      setSteps(data || []);
+      const formattedSteps = (data || []).map(step => ({
+        ...step,
+        actions: Array.isArray(step.actions) ? step.actions : []
+      })) as FlowStep[];
+      setSteps(formattedSteps);
     }
     setLoading(false);
   }, []);
@@ -413,7 +417,7 @@ export default function AdminCrmFlow() {
                         <Label className="flex items-center gap-2">
                           <LinkIcon className="w-3 h-3" /> Conexões / Opções
                         </Label>
-                        <Button variant="outline" size="xs" onClick={() => {
+                        <Button variant="outline" size="sm" onClick={() => {
                           const newActions = [...(editingStep.actions || [])];
                           newActions.push({ label: "Nova Opção", next_step_key: "" });
                           handleUpdateEditingStep("actions", newActions);
