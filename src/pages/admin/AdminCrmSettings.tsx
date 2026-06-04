@@ -96,7 +96,7 @@ export default function AdminCrmSettings() {
     else toast({ title: "Configuração salva" });
   }
 
-  async function testConn(provider: "zapi" | "wapi") {
+  async function testConn(provider: "zapi" | "wapi" | "wapi_sucesso") {
     setTesting(provider);
     try {
       const { data, error } = await supabase.functions.invoke("crm-test-whatsapp", { body: { provider } });
