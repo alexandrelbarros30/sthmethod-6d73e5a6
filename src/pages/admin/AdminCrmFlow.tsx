@@ -40,7 +40,8 @@ import ReactFlow, {
   Handle,
   Position,
   NodeChange,
-  applyNodeChanges
+  applyNodeChanges,
+  useReactFlow
 } from "reactflow";
 import "reactflow/dist/style.css";
 
@@ -80,6 +81,17 @@ const StepNode = ({ data, selected }: any) => {
 const nodeTypes = {
   step: StepNode,
 };
+
+function ReactFlowWrapper() {
+  const { fitView } = useReactFlow();
+  return (
+    <Panel position="bottom-right" className="flex gap-2">
+      <Button variant="secondary" size="sm" onClick={() => fitView({ duration: 800 })} className="shadow-md">
+        Centralizar Fluxo
+      </Button>
+    </Panel>
+  );
+}
 
 export default function AdminCrmFlow() {
   const isMobile = useIsMobile();
@@ -378,7 +390,7 @@ export default function AdminCrmFlow() {
                       </Button>
                     </Panel>
                   )}
-                </ReactFlow>
+                <ReactFlowWrapper />
               )}
             </div>
 
