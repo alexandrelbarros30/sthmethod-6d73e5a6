@@ -1596,6 +1596,12 @@ const AdminStudents = () => {
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Comparação de Evolução</h3>
                   <EvolutionComparison userId={selected.user_id} />
                 </section>
+
+                {/* Histórico cronológico de todas as atualizações arquivadas */}
+                <section>
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Histórico de Atualizações</h3>
+                  <EvolutionUpdateHistory userId={selected.user_id} />
+                </section>
               </div>
             </ScrollArea>
           )}
