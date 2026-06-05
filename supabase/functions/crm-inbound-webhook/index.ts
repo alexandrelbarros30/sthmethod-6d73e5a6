@@ -177,8 +177,8 @@ function phoneCandidates(d: string): string[] {
   return Array.from(set);
 }
 
-// Triagem por palavras-chave
-function classify(text: string): { queue: 'comercial'|'nutri'|'financeiro'|null; nutriCategory: string | null; tags: string[] } {
+// Triagem por palavras-chave atualizada para os 3 canais
+function classify(text: string): { queue: 'comercial'|'nutri'|'sucesso'|'financeiro'|null; nutriCategory: string | null; tags: string[] } {
   const t = String(text || '').toLowerCase();
   const tags: string[] = [];
   let queue: any = null;
@@ -186,18 +186,25 @@ function classify(text: string): { queue: 'comercial'|'nutri'|'financeiro'|null;
 
   const has = (...kw: string[]) => kw.some(k => t.includes(k));
 
-  // Financeiro
-  if (has('cobran', 'pagamento', 'pagar', 'pix', 'boleto', 'comprovante', 'fatura', 'cartao', 'cartão')) {
-    queue = 'financeiro'; tags.push('FINANCEIRO','PAGAMENTO');
+  // 1. Sucesso do Aluno (Financeiro/Renovação/Admin)
+  if (has('cobran', 'pagamento', 'pagar', 'pix', 'boleto', 'comprovante', 'fatura', 'cartao', 'cartão', 'financeiro', 'vencido')) {
+    queue = 'sucesso'; tags.push('FINANCEIRO','PAGAMENTO');
   }
-  // Comercial
+  else if (has('renovar', 'renovação', 'renovacao', 'reativar', 'renova')) {
+    queue = 'sucesso'; tags.push('RENOVACAO');
+  }
+  else if (has('peso', 'medidas', 'foto', 'evolução', 'evolucao', 'atualização', 'atualizacao', 'progresso', 'exame', 'exames')) {
+    // Atualizações podem cair no Sucesso (administrativo) ou Nutri (técnico)
+    // Pela regra nova, Sucesso gerencia a jornada de atualização.
+    queue = 'sucesso'; tags.push('SUCESSO','ATUALIZACAO');
+  }
+
+  // 2. Comercial (Novos interessados)
   else if (has('preço','preco','plano','planos','contratar','assinar','quero entrar','quero começar','quero comecar','quanto custa','valor','valores')) {
     queue = 'comercial'; tags.push('COMERCIAL','INTERESSE');
   }
-  else if (has('renovar','renovação','renovacao','reativar')) {
-    queue = 'comercial'; tags.push('COMERCIAL','RENOVACAO');
-  }
-  // Nutri
+
+  // 3. Nutri (Dúvidas técnicas)
   else if (has('dieta','refeição','refeicao','cardápio','cardapio','calorias','macros')) {
     queue = 'nutri'; nutriCategory = 'Dieta'; tags.push('NUTRI','DIETA');
   }
@@ -206,12 +213,6 @@ function classify(text: string): { queue: 'comercial'|'nutri'|'financeiro'|null;
   }
   else if (has('protocolo','suplemento','hormonio','hormônio','peptide','peptideo','peptídeo','ciclo')) {
     queue = 'nutri'; nutriCategory = 'Protocolo'; tags.push('NUTRI','PROTOCOLO');
-  }
-  else if (has('exame','exames','laboratório','laboratorio','sangue','hemograma')) {
-    queue = 'nutri'; nutriCategory = 'Exames'; tags.push('NUTRI','EXAMES');
-  }
-  else if (has('peso','medidas','foto','evolução','evolucao','atualização','atualizacao','progresso')) {
-    queue = 'nutri'; nutriCategory = 'Atualização'; tags.push('NUTRI','ATUALIZACAO');
   }
   else if (has('urgente','urgência','urgencia','prioridade','emergência','emergencia')) {
     queue = 'nutri'; nutriCategory = 'Prioridade'; tags.push('NUTRI','PRIORIDADE');
@@ -427,15 +428,23 @@ Deno.serve(async (req) => {
     let isLead = !profile;
     let queueOverride: string | null = null;
     const tagsToApply: string[] = [];
-    let identifiedAs: 'aluno_ativo' | 'aluno_vencido' | 'lead' = 'lead';
+    let identifiedAs: 'aluno_ativo' | 'aluno_vencido' | 'lead' | 'ex_aluno' = 'lead';
 
     if (profile) {
       const { data: subs } = await admin.from('subscriptions').select('end_date,status').eq('user_id', profile.user_id).order('end_date', { ascending: false }).limit(1);
       const sub = subs?.[0];
       if (sub) {
         const days = Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86400000);
-        if (days < 0) { tagsToApply.push('RENOVACAO'); queueOverride = 'comercial'; identifiedAs = 'aluno_vencido'; }
-        else { tagsToApply.push('ALUNO_ATIVO'); identifiedAs = 'aluno_ativo'; }
+        if (days < -365) { 
+          tagsToApply.push('EX_ALUNO'); 
+          identifiedAs = 'ex_aluno'; 
+        } else if (days < 0) { 
+          tagsToApply.push('ALUNO_VENCIDO'); 
+          identifiedAs = 'aluno_vencido'; 
+        } else { 
+          tagsToApply.push('ALUNO_ATIVO'); 
+          identifiedAs = 'aluno_ativo'; 
+        }
       } else {
         tagsToApply.push('LEAD'); isLead = true; identifiedAs = 'lead';
       }
@@ -446,7 +455,16 @@ Deno.serve(async (req) => {
 
     // 2. classify message
     const cls = classify(body);
-    const finalQueue = queueOverride || cls.queue || (provider === 'zapi' ? 'comercial' : 'nutri');
+    
+    // Regra: Aluno Ativo, Inativo ou Ex-Aluno sempre vai para Sucesso do Aluno no primeiro contato (se não vier via Nutri)
+    let finalQueue: string = cls.queue || (provider === 'zapi' ? 'comercial' : 'nutri');
+    
+    if (identifiedAs !== 'lead' && provider === 'zapi') {
+      finalQueue = 'sucesso';
+    }
+    
+    if (queueOverride) finalQueue = queueOverride;
+
     for (const t of cls.tags) if (!tagsToApply.includes(t)) tagsToApply.push(t);
 
     // 3. upsert conversation + regra de sessão (janela 2h, reset silencioso)
@@ -532,6 +550,7 @@ Deno.serve(async (req) => {
 
     // 6. enqueue
     const queueName = finalQueue === 'comercial' ? 'Atendimento Comercial'
+      : finalQueue === 'sucesso' ? 'Sucesso do Aluno'
       : finalQueue === 'financeiro' ? 'Financeiro'
       : (cls.nutriCategory || 'Dieta');
     const { data: queue } = await admin.from('crm_queues').select('id').eq('name', queueName).maybeSingle();
@@ -728,35 +747,46 @@ Deno.serve(async (req) => {
         autoReply = { sent: false, reason: 'human_handoff_active' };
       } else if (!flowState) {
         // === 1ª mensagem da sessão → identificação por perfil ===
-        if (identifiedAs === 'aluno_ativo') {
-          const r = await sendZapiMedia(renderTpl(tplAtivo), imgIdActive, 'id_ativo');
-          await admin.from('crm_conversations').update({ flow_state: 'ativo_aguardando_nutri' }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'ativo_aguardando_nutri' };
-        } else if (identifiedAs === 'aluno_vencido') {
-          const r = await sendZapiMedia(renderTpl(tplInativoMenu), imgIdExpired, 'id_inativo');
-          await admin.from('crm_conversations').update({ flow_state: 'inativo_main_menu' }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_main_menu' };
+        if (identifiedAs === 'aluno_ativo' || identifiedAs === 'aluno_vencido' || identifiedAs === 'ex_aluno') {
+          // Encaminha para o Sucesso do Aluno
+          const tplSucesso = String((getFlowStep('sucesso_main_menu')?.value as any)?.message || 
+            'Olá{nomeSep}{nome}! 👋\n\nEste é o canal de *Sucesso do Aluno* da STH METHOD.\n\nComo posso te ajudar?\n\n1️⃣ Atualizar Peso e Fotos\n2️⃣ Renovar Plano\n3️⃣ Verificar Pagamento\n4️⃣ Reativar Consultoria\n5️⃣ Dúvidas Administrativas\n6️⃣ Falar com o Nutri');
+          
+          const r = await sendZapiText(renderTpl(tplSucesso), 'handoff_sucesso');
+          await admin.from('crm_conversations').update({ flow_state: 'sucesso_main_menu' }).eq('id', conv!.id);
+          autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_main_menu' };
         } else {
           const r = await sendZapiMedia(renderTpl(tplLeadAskName), imgIdLead, 'lead_ask_name');
           await admin.from('crm_conversations').update({ flow_state: 'lead_awaiting_name' }).eq('id', conv!.id);
           autoReply = { sent: r.sent, engine: 'flow', model: 'lead_awaiting_name' };
         }
       }
-      // === ALUNO ATIVO ===
-      else if (flowState === 'ativo_aguardando_nutri') {
-        if (/^(nutri|fale com o nutri)$/i.test(trimmed)) {
-          const r = await sendZapiText(
-            `Perfeito${NOME_SEP}${FIRST_NAME}! Continue o atendimento com o Nutri por aqui:\n👉 https://wa.me/5521998984153`,
-            'handoff_nutri',
-          );
-          await admin.from('crm_conversations').update({
-            flow_state: 'handoff_nutri',
-            human_handoff: true,
-          }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'handoff_nutri' };
+      // === SUCESSO DO ALUNO (MENU PRINCIPAL) ===
+      else if (flowState === 'sucesso_main_menu') {
+        if (trimmed === '1') {
+          const r = await sendZapiText('Para atualizar seu peso e fotos, acesse nossa plataforma:\n👉 https://sthmethod.com.br/student/update', 'sucesso_atualizacao');
+          autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_atualizacao' };
+        } else if (trimmed === '2') {
+          const r = await sendZapiText('Para renovar seu plano, acesse:\n👉 https://sthmethod.com.br/student/renew', 'sucesso_renovacao');
+          autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_renovacao' };
+        } else if (trimmed === '3') {
+          const r = await sendZapiText('Seu status de pagamento pode ser verificado em sua área do aluno.\nQualquer dúvida, envie o comprovante por aqui.', 'sucesso_financeiro');
+          autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_financeiro' };
+        } else if (trimmed === '4') {
+          const r = await sendZapiText('Ficamos felizes com seu interesse em voltar! Um consultor entrará em contato em breve para te passar as melhores condições.', 'sucesso_reativacao');
+          autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_reativacao' };
+        } else if (trimmed === '5') {
+          await handoffConsultor();
+        } else if (trimmed === '6') {
+          const tplHandoff = String((getFlowStep('sucesso_nutri_handoff')?.value as any)?.message || 
+            'Entendido! Vou te transferir para o canal *Fale com o Nutri* para suporte técnico.\n\n👉 https://wa.me/5521998984153');
+          const r = await sendZapiText(renderTpl(tplHandoff), 'sucesso_nutri_handoff');
+          await admin.from('crm_conversations').update({ flow_state: 'handoff_nutri', human_handoff: true }).eq('id', conv!.id);
+          autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_nutri_handoff' };
         } else {
-          const r = await sendZapiMedia(renderTpl(tplAtivo), imgIdActive, 'id_ativo_repeat');
-          autoReply = { sent: r.sent, engine: 'flow', model: 'ativo_aguardando_nutri' };
+          const tplSucesso = String((getFlowStep('sucesso_main_menu')?.value as any)?.message || '...');
+          const r = await sendZapiText(renderTpl(tplSucesso), 'sucesso_main_menu_repeat');
+          autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_main_menu' };
         }
       }
       // === ALUNO INATIVO ===
@@ -890,7 +920,7 @@ Deno.serve(async (req) => {
       }
 
       return new Response(
-        JSON.stringify({ ok: true, queue: finalQueue, is_lead: isLead, tags: tagsToApply, auto_reply: autoReply, flow_state: flowState }),
+        JSON.stringify({ ok: true, queue: finalQueue, is_lead: isLead, tags: tagsToApply, auto_reply: autoReply, flow_state: flowState, identified_as: identifiedAs }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
