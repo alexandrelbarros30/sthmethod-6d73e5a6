@@ -750,16 +750,16 @@ Deno.serve(async (req) => {
       } else if (!flowState) {
         // === 1ª mensagem da sessão → identificação por perfil ===
         if (identifiedAs === 'aluno_ativo' || identifiedAs === 'aluno_vencido' || identifiedAs === 'ex_aluno') {
-          // Identificação obrigatória
+          // Identificação obrigatória para o canal Sucesso
           let msg = tplAtivo;
           if (identifiedAs === 'aluno_vencido') msg = tplInativo;
           if (identifiedAs === 'ex_aluno') msg = tplExAluno;
           
-          const r = await sendZapiText(renderTpl(msg), 'identificacao_obrigatoria');
+          await sendZapiText(renderTpl(msg), 'identificacao_obrigatoria');
           
-          // Transferência automática para Sucesso do Aluno
+          // Transferência automática para Sucesso do Aluno (Menu Principal v1.0)
           const tplSucesso = String((getFlowStep('sucesso_main_menu')?.value as any)?.message || 
-            'Olá{nomeSep}{nome}! 👋\n\nEste é o canal de *Sucesso do Aluno* da STH METHOD.\n\nComo posso te ajudar?\n\n1️⃣ Atualizar Peso e Fotos\n2️⃣ Renovar Plano\n3️⃣ Verificar Pagamento\n4️⃣ Reativar Consultoria\n5️⃣ Dúvidas Administrativas\n6️⃣ Falar com o Nutri');
+            'Olá, {nome}! 👋\n\nBem-vindo ao Sucesso do Aluno STH Method.\n\nComo podemos ajudar?\n\n1️⃣ Atualizar Peso e Fotos\n2️⃣ Renovar Minha Consultoria\n3️⃣ Verificar Pagamentos\n4️⃣ Reativar Consultoria\n5️⃣ Receber Meus Acessos\n6️⃣ Dúvidas Administrativas\n7️⃣ Falar com o Nutri');
           
           await admin.from('crm_conversations').update({ 
             flow_state: 'sucesso_main_menu',
@@ -769,31 +769,53 @@ Deno.serve(async (req) => {
           const r2 = await sendZapiText(renderTpl(tplSucesso), 'handoff_sucesso');
           autoReply = { sent: r2.sent, engine: 'flow', model: 'sucesso_main_menu' };
         } else {
-          // LEAD
+          // LEAD caindo no canal comercial (ou vindo do sucesso)
+          const msgLeadRedirect = 'Olá!\n\nIdentificamos que você ainda não possui uma consultoria ativa na STH Method.\n\nPara informações sobre planos, valores e inscrições, você será direcionado ao setor responsável.\n\n🟢 *Comercial | STH Method*';
+          await sendZapiText(msgLeadRedirect, 'lead_redirect_comercial');
+          
           const r = await sendZapiText(renderTpl(tplSaudacaoLead), 'comercial_saudacao_lead');
           await admin.from('crm_conversations').update({ flow_state: 'lead_main_menu' }).eq('id', conv!.id);
           autoReply = { sent: r.sent, engine: 'flow', model: 'lead_main_menu' };
         }
       }
-      // === SUCESSO DO ALUNO (MENU PRINCIPAL) ===
+      // === SUCESSO DO ALUNO (ESTADOS V1.0) ===
       else if (flowState === 'sucesso_main_menu') {
         if (trimmed === '1') {
-          const r = await sendZapiText('Para atualizar seu peso e fotos, acesse nossa plataforma:\n👉 https://sthmethod.com.br/student/update', 'sucesso_atualizacao');
+          const tpl = String((getFlowStep('sucesso_atualizar_peso')?.value as any)?.message || 'Para atualizar seu peso e fotos, acesse nossa plataforma: https://sthmethod.com.br');
+          const r = await sendZapiText(renderTpl(tpl), 'sucesso_atualizacao');
           autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_atualizacao' };
         } else if (trimmed === '2') {
-          const r = await sendZapiText('Para renovar seu plano, acesse:\n👉 https://sthmethod.com.br/student/renew', 'sucesso_renovacao');
+          // Obter dados de assinatura para renovação
+          let vencimento = '—';
+          if (profile?.user_id) {
+            const { data: subs } = await admin.from('subscriptions').select('end_date').eq('user_id', profile.user_id).order('end_date', { ascending: false }).limit(1);
+            if (subs?.[0]) vencimento = new Date(subs[0].end_date).toLocaleDateString('pt-BR');
+          }
+          const tpl = String((getFlowStep('sucesso_renovar')?.value as any)?.message || '...');
+          const planosTxt = plans.map((p: any, i: number) => `${i + 1}️⃣ *${p.name}* — ${p.price}`).join('\n');
+          const r = await sendZapiText(renderTpl(tpl, { vencimento, planos_disponiveis: planosTxt }), 'sucesso_renovacao');
+          await admin.from('crm_conversations').update({ flow_state: 'sucesso_awaiting_renew' }).eq('id', conv!.id);
           autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_renovacao' };
         } else if (trimmed === '3') {
-          const r = await sendZapiText('Seu status de pagamento pode ser verificado em sua área do aluno.\nQualquer dúvida, envie o comprovante por aqui.', 'sucesso_financeiro');
+          const tpl = String((getFlowStep('sucesso_verificar_pagamentos')?.value as any)?.message || '...');
+          const r = await sendZapiText(renderTpl(tpl, { situacao_financeira: 'Regularizado ✅', link_pagamento: 'https://sthmethod.com.br/financeiro' }), 'sucesso_financeiro');
           autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_financeiro' };
         } else if (trimmed === '4') {
-          const r = await sendZapiText('Ficamos felizes com seu interesse em voltar! Um consultor entrará em contato em breve para te passar as melhores condições.', 'sucesso_reativacao');
+          const tpl = String((getFlowStep('sucesso_reativar')?.value as any)?.message || '...');
+          const planosTxt = plans.map((p: any, i: number) => `${i + 1}️⃣ *${p.name}* — ${p.price}`).join('\n');
+          const r = await sendZapiText(renderTpl(tpl, { planos_disponiveis: planosTxt }), 'sucesso_reativacao');
+          await admin.from('crm_conversations').update({ flow_state: 'sucesso_awaiting_reactivate' }).eq('id', conv!.id);
           autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_reativacao' };
         } else if (trimmed === '5') {
-          await handoffConsultor();
+          const { data: userAuth } = await admin.auth.admin.getUserById(profile?.user_id || '');
+          const email = userAuth?.user?.email || '—';
+          const tpl = String((getFlowStep('sucesso_receber_acessos')?.value as any)?.message || '...');
+          const r = await sendZapiText(renderTpl(tpl, { email }), 'sucesso_acessos');
+          autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_acessos' };
         } else if (trimmed === '6') {
-          const tplHandoff = String((getFlowStep('sucesso_nutri_handoff')?.value as any)?.message || 
-            'Entendido! Vou te transferir para o canal *Fale com o Nutri* para suporte técnico.\n\n👉 https://wa.me/5521998984153');
+          await handoffConsultor();
+        } else if (trimmed === '7') {
+          const tplHandoff = String((getFlowStep('sucesso_nutri_handoff')?.value as any)?.message || '...');
           const r = await sendZapiText(renderTpl(tplHandoff), 'sucesso_nutri_handoff');
           await admin.from('crm_conversations').update({ flow_state: 'handoff_nutri', human_handoff: true }).eq('id', conv!.id);
           autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_nutri_handoff' };
@@ -801,6 +823,18 @@ Deno.serve(async (req) => {
           const tplSucesso = String((getFlowStep('sucesso_main_menu')?.value as any)?.message || '...');
           const r = await sendZapiText(renderTpl(tplSucesso), 'sucesso_main_menu_repeat');
           autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_main_menu' };
+        }
+      }
+      else if (flowState === 'sucesso_awaiting_renew' || flowState === 'sucesso_awaiting_reactivate') {
+        if (trimmed === '1') {
+          const r = await sendZapiText('Perfeito! Segue o link para pagamento: https://sthmethod.com.br/checkout\n\nAssim que o pagamento for aprovado sua consultoria continuará ativa normalmente.', 'sucesso_renew_confirm');
+          await admin.from('crm_conversations').update({ flow_state: 'sucesso_main_menu' }).eq('id', conv!.id);
+          autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_renew_confirm' };
+        } else if (trimmed === '2') {
+          await handoffConsultor();
+        } else {
+          const r = await sendZapiText('Não entendi sua escolha. Responda com *1* para Sim ou *2* para falar com um especialista.', 'sucesso_invalid_choice');
+          autoReply = { sent: r.sent, engine: 'flow', model: flowState };
         }
       }
       // === ALUNO INATIVO ===
