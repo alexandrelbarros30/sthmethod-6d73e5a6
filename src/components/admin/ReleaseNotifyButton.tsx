@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { KeyRound, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,9 +36,14 @@ const LABEL_MAP: Record<ReleaseNotifyButtonProps["type"], string> = {
  */
 const ReleaseNotifyButton = ({ userId, type, label }: ReleaseNotifyButtonProps) => {
   const [loading, setLoading] = useState(false);
+  const clickLockRef = useRef(false);
 
   const handleClick = async () => {
+    if (clickLockRef.current || loading) return;
+    clickLockRef.current = true;
     setLoading(true);
+    const readyColumn = COLUMN_MAP[type];
+    let reservedReadyAt: string | null = null;
     try {
       const { data: profile } = await supabase
         .from("profiles")
@@ -50,6 +55,28 @@ const ReleaseNotifyButton = ({ userId, type, label }: ReleaseNotifyButtonProps) 
       if (!phone) {
         toast.error("Aluno sem telefone cadastrado.");
         return;
+      }
+
+      // Remove imediatamente o envio agendado deste tipo para evitar corrida
+      // entre o clique manual e o setTimeout disparado após o save.
+      try {
+        const { data: batch } = await supabase
+          .from("student_content_batches")
+          .select(`last_individual_sent, ${readyColumn}`)
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        reservedReadyAt = ((batch as any)?.[readyColumn] as string | null) ?? null;
+
+        if (reservedReadyAt) {
+          await supabase
+            .from("student_content_batches")
+            .update({ [readyColumn]: null } as any)
+            .eq("user_id", userId)
+            .eq(readyColumn, reservedReadyAt);
+        }
+      } catch (err) {
+        console.warn("[ReleaseNotifyButton] reserve scheduled send failed", err);
       }
 
       const res = await sendSystemTemplate(
@@ -64,8 +91,22 @@ const ReleaseNotifyButton = ({ userId, type, label }: ReleaseNotifyButtonProps) 
       );
 
       if (!res.ok) {
+        if (reservedReadyAt) {
+          await supabase
+            .from("student_content_batches")
+            .update({ [readyColumn]: reservedReadyAt } as any)
+            .eq("user_id", userId)
+            .is(readyColumn, null);
+        }
         toast.error(`Falha no envio: ${res.reason || "erro desconhecido"}`);
       } else if (res.reason) {
+        if (reservedReadyAt) {
+          await supabase
+            .from("student_content_batches")
+            .update({ [readyColumn]: reservedReadyAt } as any)
+            .eq("user_id", userId)
+            .is(readyColumn, null);
+        }
         toast.error(`Falha no envio automático: ${res.reason}`);
       } else {
         toast.success("Liberado! Mensagem enviada à fila do WhatsApp.", {
@@ -88,7 +129,6 @@ const ReleaseNotifyButton = ({ userId, type, label }: ReleaseNotifyButtonProps) 
               {
                 user_id: userId,
                 last_individual_sent: sentMap,
-                [COLUMN_MAP[type]]: null,
               } as any,
               { onConflict: "user_id" },
             );
@@ -97,9 +137,21 @@ const ReleaseNotifyButton = ({ userId, type, label }: ReleaseNotifyButtonProps) 
         }
       }
     } catch (err: any) {
+      if (reservedReadyAt) {
+        try {
+          await supabase
+            .from("student_content_batches")
+            .update({ [readyColumn]: reservedReadyAt } as any)
+            .eq("user_id", userId)
+            .is(readyColumn, null);
+        } catch (restoreErr) {
+          console.warn("[ReleaseNotifyButton] restore scheduled send failed", restoreErr);
+        }
+      }
       toast.error("Erro ao liberar/notificar.");
       console.warn("[ReleaseNotifyButton] failed", err);
     } finally {
+      clickLockRef.current = false;
       setLoading(false);
     }
   };
