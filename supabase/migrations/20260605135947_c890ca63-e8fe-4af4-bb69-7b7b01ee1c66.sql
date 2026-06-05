@@ -1,0 +1,2 @@
+UPDATE public.crm_flow_steps SET message = replace(replace(message, E'\\r\\n', E'\n'), E'\\n', E'\n') WHERE message LIKE '%\\n%';
+UPDATE public.crm_message_templates SET body = replace(replace(body, E'\\r\\n', E'\n'), E'\\n', E'\n') WHERE body LIKE '%\\n%';
