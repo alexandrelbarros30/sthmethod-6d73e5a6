@@ -750,17 +750,29 @@ Deno.serve(async (req) => {
       } else if (!flowState) {
         // === 1ª mensagem da sessão → identificação por perfil ===
         if (identifiedAs === 'aluno_ativo' || identifiedAs === 'aluno_vencido' || identifiedAs === 'ex_aluno') {
-          // Encaminha para o Sucesso do Aluno
+          // Identificação obrigatória
+          let msg = tplAtivo;
+          if (identifiedAs === 'aluno_vencido') msg = tplInativo;
+          if (identifiedAs === 'ex_aluno') msg = tplExAluno;
+          
+          const r = await sendZapiText(renderTpl(msg), 'identificacao_obrigatoria');
+          
+          // Transferência automática para Sucesso do Aluno
           const tplSucesso = String((getFlowStep('sucesso_main_menu')?.value as any)?.message || 
             'Olá{nomeSep}{nome}! 👋\n\nEste é o canal de *Sucesso do Aluno* da STH METHOD.\n\nComo posso te ajudar?\n\n1️⃣ Atualizar Peso e Fotos\n2️⃣ Renovar Plano\n3️⃣ Verificar Pagamento\n4️⃣ Reativar Consultoria\n5️⃣ Dúvidas Administrativas\n6️⃣ Falar com o Nutri');
           
-          const r = await sendZapiText(renderTpl(tplSucesso), 'handoff_sucesso');
-          await admin.from('crm_conversations').update({ flow_state: 'sucesso_main_menu' }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_main_menu' };
+          await admin.from('crm_conversations').update({ 
+            flow_state: 'sucesso_main_menu',
+            queue_type: 'sucesso' 
+          }).eq('id', conv!.id);
+          
+          const r2 = await sendZapiText(renderTpl(tplSucesso), 'handoff_sucesso');
+          autoReply = { sent: r2.sent, engine: 'flow', model: 'sucesso_main_menu' };
         } else {
-          const r = await sendZapiMedia(renderTpl(tplLeadAskName), imgIdLead, 'lead_ask_name');
-          await admin.from('crm_conversations').update({ flow_state: 'lead_awaiting_name' }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_awaiting_name' };
+          // LEAD
+          const r = await sendZapiText(renderTpl(tplSaudacaoLead), 'comercial_saudacao_lead');
+          await admin.from('crm_conversations').update({ flow_state: 'lead_main_menu' }).eq('id', conv!.id);
+          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_main_menu' };
         }
       }
       // === SUCESSO DO ALUNO (MENU PRINCIPAL) ===
