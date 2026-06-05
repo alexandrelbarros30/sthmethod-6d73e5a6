@@ -62,15 +62,91 @@ function PhotoCell({ url, label }: { url: string | null; label: string }) {
 
 const EvolutionComparison = ({ userId }: Props) => {
   const { data: snapshots = [], isLoading } = useQuery({
-    queryKey: ["evolution-snapshots", userId],
+    queryKey: ["evolution-snapshots-with-current", userId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("evolution_snapshots")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: true });
-      if (error) throw error;
-      return (data || []) as EvolutionSnapshot[];
+      const [snapsRes, profileRes, weightRes, imagesRes, bioRes] = await Promise.all([
+        supabase
+          .from("evolution_snapshots")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: true }),
+        supabase
+          .from("profiles")
+          .select(
+            "weight, bmr, tdee, daily_calories, protein_g, carbs_g, fat_g, activity_type, does_cardio, physical_activity_level, training_days_per_week, training_duration_minutes, training_intensity, cardio_days_per_week, cardio_duration_minutes, cardio_intensity"
+          )
+          .eq("user_id", userId)
+          .maybeSingle(),
+        supabase
+          .from("weight_logs")
+          .select("weight, logged_at")
+          .eq("user_id", userId)
+          .order("logged_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from("body_images")
+          .select("type, image_url")
+          .eq("user_id", userId)
+          .eq("is_current", true),
+        supabase
+          .from("bioimpedance_logs")
+          .select("body_fat_pct, lean_mass_kg, fat_mass_kg, logged_at")
+          .eq("user_id", userId)
+          .order("logged_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
+      if (snapsRes.error) throw snapsRes.error;
+      const list = (snapsRes.data || []) as EvolutionSnapshot[];
+
+      const p: any = profileRes.data || {};
+      const w: any = weightRes.data || {};
+      const imgs: any[] = imagesRes.data || [];
+      const bio: any = bioRes.data || {};
+      const front = imgs.find((i) => i.type === "front")?.image_url ?? null;
+      const back = imgs.find((i) => i.type === "back")?.image_url ?? null;
+      const profilePic = imgs.find((i) => i.type === "profile")?.image_url ?? null;
+
+      const currentWeight = w.weight ?? p.weight ?? null;
+      const hasAnyCurrent =
+        currentWeight !== null ||
+        p.daily_calories !== null ||
+        front || back || profilePic ||
+        bio.body_fat_pct !== null;
+
+      if (hasAnyCurrent) {
+        const virtual: EvolutionSnapshot = {
+          id: "__current__",
+          created_at: new Date().toISOString(),
+          source: "atual",
+          notes: "",
+          weight: currentWeight,
+          bmr: p.bmr ?? null,
+          tdee: p.tdee ?? null,
+          daily_calories: p.daily_calories ?? null,
+          protein_g: p.protein_g ?? null,
+          carbs_g: p.carbs_g ?? null,
+          fat_g: p.fat_g ?? null,
+          activity_type: p.activity_type ?? null,
+          does_cardio: p.does_cardio ?? null,
+          physical_activity_level: p.physical_activity_level ?? null,
+          training_days_per_week: p.training_days_per_week ?? null,
+          training_duration_minutes: p.training_duration_minutes ?? null,
+          training_intensity: p.training_intensity ?? null,
+          cardio_days_per_week: p.cardio_days_per_week ?? null,
+          cardio_duration_minutes: p.cardio_duration_minutes ?? null,
+          cardio_intensity: p.cardio_intensity ?? null,
+          body_image_front_url: front,
+          body_image_back_url: back,
+          body_image_profile_url: profilePic,
+          body_fat_pct: bio.body_fat_pct ?? null,
+          lean_mass_kg: bio.lean_mass_kg ?? null,
+          fat_mass_kg: bio.fat_mass_kg ?? null,
+        };
+        list.push(virtual);
+      }
+      return list;
     },
     enabled: !!userId,
   });
@@ -80,8 +156,7 @@ const EvolutionComparison = ({ userId }: Props) => {
 
   useEffect(() => {
     if (snapshots.length >= 1 && !beforeId) setBeforeId(snapshots[0].id);
-    if (snapshots.length >= 2 && !afterId) setAfterId(snapshots[snapshots.length - 1].id);
-    if (snapshots.length === 1 && !afterId) setAfterId(snapshots[0].id);
+    if (snapshots.length >= 1 && !afterId) setAfterId(snapshots[snapshots.length - 1].id);
   }, [snapshots, beforeId, afterId]);
 
   const before = useMemo(() => snapshots.find((s) => s.id === beforeId), [snapshots, beforeId]);
@@ -100,7 +175,9 @@ const EvolutionComparison = ({ userId }: Props) => {
   }
 
   const formatLabel = (s: EvolutionSnapshot) =>
-    `${format(new Date(s.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })} · ${s.source}`;
+    s.id === "__current__"
+      ? `Atual (agora) · ${format(new Date(s.created_at), "dd/MM/yyyy", { locale: ptBR })}`
+      : `${format(new Date(s.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })} · ${s.source}`;
 
   const setQuickRange = (which: "first-last" | "last-two") => {
     if (snapshots.length === 0) return;
