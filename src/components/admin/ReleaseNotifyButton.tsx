@@ -17,6 +17,12 @@ const KEY_MAP: Record<ReleaseNotifyButtonProps["type"], SystemTemplateKey> = {
   protocol: "protocol_updated",
 };
 
+const COLUMN_MAP: Record<ReleaseNotifyButtonProps["type"], "diet_ready_at" | "training_ready_at" | "protocol_ready_at"> = {
+  diet: "diet_ready_at",
+  training: "training_ready_at",
+  protocol: "protocol_ready_at",
+};
+
 const LABEL_MAP: Record<ReleaseNotifyButtonProps["type"], string> = {
   diet: "Liberar Dieta",
   training: "Liberar Treino",
@@ -66,6 +72,29 @@ const ReleaseNotifyButton = ({ userId, type, label }: ReleaseNotifyButtonProps) 
           description:
             "A entrega depende do WhatsApp do destinatário. Confirme com o aluno se não chegar em alguns minutos.",
         });
+        // Anti-duplicidade: marca como já enviado para cancelar o
+        // setTimeout agendado pelo save (notifyStudentContentUpdate).
+        try {
+          const { data: batch } = await supabase
+            .from("student_content_batches")
+            .select("last_individual_sent")
+            .eq("user_id", userId)
+            .maybeSingle();
+          const sentMap = ((batch?.last_individual_sent || {}) as Record<string, string>);
+          sentMap[type] = new Date().toISOString();
+          await supabase
+            .from("student_content_batches")
+            .upsert(
+              {
+                user_id: userId,
+                last_individual_sent: sentMap,
+                [COLUMN_MAP[type]]: null,
+              } as any,
+              { onConflict: "user_id" },
+            );
+        } catch (err) {
+          console.warn("[ReleaseNotifyButton] dedup mark failed", err);
+        }
       }
     } catch (err: any) {
       toast.error("Erro ao liberar/notificar.");
