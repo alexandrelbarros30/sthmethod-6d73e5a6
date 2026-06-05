@@ -402,16 +402,11 @@ Deno.serve(async (req) => {
       return null;
     };
 
-    const comIdActive = getFlowStep('comercial_id_active');
-    const comIdExpired = getFlowStep('comercial_id_expired');
-    const comIdLead = getFlowStep('comercial_id_lead');
-
-    const menu1Cfg = getFlowStep('comercial_menu_1_planos');
-    const menu2Cfg = getFlowStep('comercial_menu_2_como_funciona');
-    const menu3Cfg = getFlowStep('comercial_menu_3_consultor');
-    const menu4ExCfg = getFlowStep('comercial_menu_4_ex_aluno');
-    const menu4ActiveCfg = getFlowStep('comercial_menu_4_aluno_ativo');
-    const menu5Cfg = getFlowStep('comercial_menu_5_financeiro');
+    const comIdActive = getFlowStep('comercial_ident_ativo');
+    const comIdExpired = getFlowStep('comercial_ident_inativo');
+    const comIdExAluno = getFlowStep('comercial_ident_exaluno');
+    const comSaudacaoLead = getFlowStep('comercial_saudacao_lead');
+    const comConhecerConsultoria = getFlowStep('comercial_conhecer_consultoria');
 
     const leadMenuCfg = getFlowStep('comercial_lead_menu');
     const formasPagCfg = getFlowStep('comercial_formas_pagamento');
@@ -670,19 +665,26 @@ Deno.serve(async (req) => {
 
       // === Templates principais (sobrescrevíveis por crm_settings) ===
       const tplAtivo = String((comIdActive?.value as any)?.message ||
-        'Olá{nomeSep}{nome}! 👋\n\nIdentificamos que você possui um *acompanhamento ativo* na STH METHOD.\n\nPara assuntos sobre *dieta, treino, protocolo, exames ou evolução*, utilize uma das opções abaixo:\n\n🟢 Digite *NUTRI*\nou\n🟢 Clique em *Fale com o Nutri*:\n👉 https://wa.me/5521998984153');
-      const tplInativoMenu = String((comIdExpired?.value as any)?.message ||
-        'Olá{nomeSep}{nome}! 👋\n\nIdentificamos que você já fez parte da STH METHOD.\n\nComo podemos ajudar?\n\n1️⃣ Conhecer os planos\n2️⃣ Formas de pagamento\n3️⃣ Falar com um consultor');
-      const tplLeadAskName = String((comIdLead?.value as any)?.message ||
-        'Olá! 👋\n\nSeja bem-vindo(a) à *STH METHOD*.\n\nQual é o seu *nome*?');
+        'Olá, {nome}!\n\nIdentificamos que você possui uma consultoria ativa na STH Method.\n\nPara assuntos relacionados ao seu acompanhamento, atualizações, pagamentos, renovação ou suporte administrativo, você será direcionado ao setor responsável.\n\n🏆 Sucesso do Aluno | STH Method\n\nTransferindo atendimento...');
+      const tplInativo = String((comIdExpired?.value as any)?.message ||
+        'Olá, {nome}!\n\nLocalizamos seu cadastro em nossa base.\n\nPara reativação ou continuidade do acompanhamento, você será direcionado ao setor responsável.\n\n🏆 Sucesso do Aluno | STH Method\n\nTransferindo atendimento...');
+      const tplExAluno = String((comIdExAluno?.value as any)?.message ||
+        'Olá, {nome}!\n\nEncontramos seu histórico na STH Method.\n\nPara retorno à consultoria ou novas condições de acompanhamento, você será direcionado ao setor responsável.\n\n🏆 Sucesso do Aluno | STH Method\n\nTransferindo atendimento...');
+
+      const tplSaudacaoLead = String((comSaudacaoLead?.value as any)?.message ||
+        'Olá! 👋\n\nSeja bem-vindo à STH Method.\n\nSomos uma consultoria especializada em emagrecimento, hipertrofia, performance e saúde baseada em ciência.\n\nComo podemos ajudar?\n\n1️⃣ Conhecer a Consultoria\n2️⃣ Ver Planos e Valores\n3️⃣ Iniciar Minha Inscrição\n4️⃣ Formas de Pagamento\n5️⃣ Falar com Especialista');
+
+      const tplConhecerConsultoria = String((comConhecerConsultoria?.value as any)?.message ||
+        'A STH Method oferece acompanhamento individualizado para pessoas que buscam melhorar sua composição corporal, saúde e performance.\n\nO acompanhamento inclui:\n\n✅ Planejamento nutricional individualizado\n✅ Treinamento personalizado\n✅ Aplicativo ST Coach\n✅ Portal exclusivo do aluno\n✅ Atualizações periódicas\n✅ Estratégias baseadas em evidências científicas\n✅ Acompanhamento contínuo\n\nDeseja conhecer nossos planos?\n\n1️⃣ Sim\n2️⃣ Falar com Especialista');
+
       const tplLeadMenu = String((leadMenuCfg?.value as any)?.message ||
-        'Prazer, {nome}.\n\nComo posso ajudar?\n\n1️⃣ Como funciona\n2️⃣ Conhecer os planos\n3️⃣ Falar com um consultor');
-      const tplComoFunciona = String((menu2Cfg?.value as any)?.message ||
-        '*Como funciona a STH METHOD* 🧬\n\nA STH METHOD é uma consultoria em performance, saúde e transformação corporal, baseada em ciência e estratégia.\n\n✅ *Plano Alimentar Personalizado*\n✅ *Treino Personalizado*\n✅ *Protocolo Inteligente*\n✅ *Análise de Exames*\n✅ *Acompanhamento Contínuo*\n✅ *Avaliação Mensal*');
+        'Como posso ajudar?\n\n1️⃣ Conhecer a Consultoria\n2️⃣ Ver Planos e Valores\n3️⃣ Iniciar Minha Inscrição\n4️⃣ Formas de Pagamento\n5️⃣ Falar com Especialista');
+
       const tplFormasPag = String((formasPagCfg?.value as any)?.message ||
-        '*Formas de pagamento* 💳\n\n💳 Cartão de Crédito\n📲 PIX\n💰 Parcelamento disponível conforme o plano\n\n1️⃣ Ver Planos\n2️⃣ Falar com consultor\n0️⃣ Voltar');
+        'Atualmente trabalhamos com:\n\n✅ PIX\n✅ Cartão de Crédito\n✅ Parcelamento conforme plano disponível\n\nCaso deseje, podemos apresentar os planos disponíveis para você.');
+
       const tplConsultorMsg = String((handoffConsCfg?.value as any)?.message ||
-        'Perfeito.\n\nVou encaminhar você para um *consultor* da equipe STH METHOD.\n\nAguarde alguns instantes. 🙏');
+        'Perfeito.\n\nVou encaminhar você para um *consultor* da equipe STH Method.\n\nAguarde alguns instantes. 🙏');
 
       // Imagens opcionais por template
       const imgIdActive = ((comIdActive?.value as any)?.image_url as string | undefined) || null;
@@ -748,17 +750,29 @@ Deno.serve(async (req) => {
       } else if (!flowState) {
         // === 1ª mensagem da sessão → identificação por perfil ===
         if (identifiedAs === 'aluno_ativo' || identifiedAs === 'aluno_vencido' || identifiedAs === 'ex_aluno') {
-          // Encaminha para o Sucesso do Aluno
+          // Identificação obrigatória
+          let msg = tplAtivo;
+          if (identifiedAs === 'aluno_vencido') msg = tplInativo;
+          if (identifiedAs === 'ex_aluno') msg = tplExAluno;
+          
+          const r = await sendZapiText(renderTpl(msg), 'identificacao_obrigatoria');
+          
+          // Transferência automática para Sucesso do Aluno
           const tplSucesso = String((getFlowStep('sucesso_main_menu')?.value as any)?.message || 
             'Olá{nomeSep}{nome}! 👋\n\nEste é o canal de *Sucesso do Aluno* da STH METHOD.\n\nComo posso te ajudar?\n\n1️⃣ Atualizar Peso e Fotos\n2️⃣ Renovar Plano\n3️⃣ Verificar Pagamento\n4️⃣ Reativar Consultoria\n5️⃣ Dúvidas Administrativas\n6️⃣ Falar com o Nutri');
           
-          const r = await sendZapiText(renderTpl(tplSucesso), 'handoff_sucesso');
-          await admin.from('crm_conversations').update({ flow_state: 'sucesso_main_menu' }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_main_menu' };
+          await admin.from('crm_conversations').update({ 
+            flow_state: 'sucesso_main_menu',
+            queue_type: 'sucesso' 
+          }).eq('id', conv!.id);
+          
+          const r2 = await sendZapiText(renderTpl(tplSucesso), 'handoff_sucesso');
+          autoReply = { sent: r2.sent, engine: 'flow', model: 'sucesso_main_menu' };
         } else {
-          const r = await sendZapiMedia(renderTpl(tplLeadAskName), imgIdLead, 'lead_ask_name');
-          await admin.from('crm_conversations').update({ flow_state: 'lead_awaiting_name' }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_awaiting_name' };
+          // LEAD
+          const r = await sendZapiText(renderTpl(tplSaudacaoLead), 'comercial_saudacao_lead');
+          await admin.from('crm_conversations').update({ flow_state: 'lead_main_menu' }).eq('id', conv!.id);
+          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_main_menu' };
         }
       }
       // === SUCESSO DO ALUNO (MENU PRINCIPAL) ===
@@ -859,57 +873,60 @@ Deno.serve(async (req) => {
       else if (flowState === 'lead_main_menu') {
         const leadName = (flowCtx?.nome as string) || FIRST_NAME;
         if (trimmed === '1') {
-          const r = await sendZapiText(
-            renderTpl(tplComoFunciona, { nome: leadName }) + '\n\n1️⃣ Conhecer os planos\n2️⃣ Falar com consultor\n0️⃣ Voltar',
-            'lead_como_funciona',
-          );
-          await admin.from('crm_conversations').update({ flow_state: 'lead_como_funciona' }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_como_funciona' };
+          const r = await sendZapiText(renderTpl(tplConhecerConsultoria), 'comercial_conhecer_consultoria');
+          await admin.from('crm_conversations').update({ flow_state: 'lead_conhecer_consultoria' }).eq('id', conv!.id);
+          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_conhecer_consultoria' };
         } else if (trimmed === '2') {
-          const r = await sendZapiMedia(renderPlanList('Responda com o *número* do plano escolhido.'), imgListaPlanos, 'lead_planos');
+          const r = await sendZapiMedia(renderPlanList('Deseja iniciar sua inscrição?\n\n1️⃣ Sim\n2️⃣ Tirar dúvidas\n3️⃣ Falar com Especialista'), imgListaPlanos, 'lead_planos');
           await admin.from('crm_conversations').update({ flow_state: 'lead_awaiting_plan' }).eq('id', conv!.id);
           autoReply = { sent: r.sent, engine: 'flow', model: 'lead_awaiting_plan' };
         } else if (trimmed === '3') {
+          const msg = 'Perfeito! 🚀\n\nPara iniciar sua consultoria, realize seu cadastro através do link abaixo:\n\n🌐 https://sthmethod.com.br/cadastro\n\nApós concluir o cadastro, nossa equipe receberá suas informações e dará continuidade ao processo de contratação.\n\nCaso tenha qualquer dificuldade durante o preenchimento, basta responder esta mensagem.';
+          const r = await sendZapiText(msg, 'comercial_iniciar_inscricao');
+          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_iniciar_inscricao' };
+        } else if (trimmed === '4') {
+          const r = await sendZapiText(renderTpl(tplFormasPag), 'comercial_formas_pagamento');
+          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_formas_pagamento' };
+        } else if (trimmed === '5') {
           await handoffConsultor();
         } else {
-          const r = await sendZapiText(renderTpl(tplLeadMenu, { nome: leadName }), 'lead_main_menu_repeat');
+          const r = await sendZapiText(renderTpl(tplSaudacaoLead), 'lead_main_menu_repeat');
           autoReply = { sent: r.sent, engine: 'flow', model: 'lead_main_menu' };
         }
       }
-      else if (flowState === 'lead_como_funciona') {
-        const leadName = (flowCtx?.nome as string) || FIRST_NAME;
+      else if (flowState === 'lead_conhecer_consultoria') {
         if (trimmed === '1') {
-          const r = await sendZapiMedia(renderPlanList('Responda com o *número* do plano escolhido.'), imgListaPlanos, 'lead_planos');
+          const r = await sendZapiMedia(renderPlanList('Deseja iniciar sua inscrição?\n\n1️⃣ Sim\n2️⃣ Tirar dúvidas\n3️⃣ Falar com Especialista'), imgListaPlanos, 'lead_planos');
           await admin.from('crm_conversations').update({ flow_state: 'lead_awaiting_plan' }).eq('id', conv!.id);
           autoReply = { sent: r.sent, engine: 'flow', model: 'lead_awaiting_plan' };
         } else if (trimmed === '2') {
           await handoffConsultor();
-        } else if (trimmed === '0') {
-          const r = await sendZapiText(renderTpl(tplLeadMenu, { nome: leadName }), 'lead_main_menu_back');
-          await admin.from('crm_conversations').update({ flow_state: 'lead_main_menu' }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_main_menu' };
         } else {
-          const r = await sendZapiText('Responda: *1* Conhecer planos · *2* Falar com consultor · *0* Voltar.', 'lead_como_funciona_repeat');
-          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_como_funciona' };
+          const r = await sendZapiText(renderTpl(tplConhecerConsultoria), 'lead_conhecer_repeat');
+          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_conhecer_consultoria' };
         }
       }
       else if (flowState === 'lead_awaiting_plan') {
         const leadName = (flowCtx?.nome as string) || FIRST_NAME;
-        if (trimmed === '0') {
-          const r = await sendZapiText(renderTpl(tplLeadMenu, { nome: leadName }), 'lead_main_menu_back');
-          await admin.from('crm_conversations').update({ flow_state: 'lead_main_menu' }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_main_menu' };
+        if (trimmed === '1' || trimmed === 'sim') {
+          const msg = 'Perfeito! 🚀\n\nPara iniciar sua consultoria, realize seu cadastro através do link abaixo:\n\n🌐 https://sthmethod.com.br/cadastro\n\nApós concluir o cadastro, nossa equipe receberá suas informações e dará continuidade ao processo de contratação.\n\nCaso tenha qualquer dificuldade durante o preenchimento, basta responder esta mensagem.';
+          const r = await sendZapiText(msg, 'lead_cadastro_link');
+          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_cadastro_link' };
+        } else if (trimmed === '2' || trimmed === 'tirar dúvidas') {
+          await handoffConsultor();
+        } else if (trimmed === '3' || trimmed === 'especialista') {
+          await handoffConsultor();
         } else if (/^[1-9]$/.test(trimmed) && plans[parseInt(trimmed, 10) - 1]) {
           const chosen: any = plans[parseInt(trimmed, 10) - 1];
-          const msg = `Excelente escolha, ${leadName}.\n\nVocê escolheu o plano *${chosen.name}* (${chosen.price}).\n\nPara iniciar seu acompanhamento:\n🔗 https://sthmethod.com.br/cadastro\n\nApós finalizar o cadastro nossa equipe continuará seu atendimento.\n\n0️⃣ Voltar ao menu`;
-          const r = await sendZapiText(msg, 'lead_cadastro_link');
+          const msg = `Excelente escolha!\n\nVocê escolheu o plano *${chosen.name}* (${chosen.price}).\n\nPara iniciar seu acompanhamento:\n🔗 https://sthmethod.com.br/cadastro\n\nApós finalizar o cadastro nossa equipe continuará seu atendimento.`;
+          const r = await sendZapiText(msg, 'lead_cadastro_link_with_plan');
           await admin.from('crm_conversations').update({
             flow_state: 'lead_main_menu',
             flow_context: { ...flowCtx, plano_escolhido: chosen.id },
           }).eq('id', conv!.id);
           autoReply = { sent: r.sent, engine: 'flow', model: 'lead_cadastro_link' };
         } else {
-          const r = await sendZapiText('Não entendi sua escolha. Responda com o *número* do plano, ou *0* para voltar.', 'lead_plan_invalid');
+          const r = await sendZapiText('Não entendi sua escolha. Responda com *1* para Sim, *2* para tirar dúvidas, ou o número do plano desejado.', 'lead_plan_invalid');
           autoReply = { sent: r.sent, engine: 'flow', model: 'lead_awaiting_plan' };
         }
       }
