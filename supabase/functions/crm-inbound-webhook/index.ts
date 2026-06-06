@@ -362,9 +362,11 @@ Deno.serve(async (req) => {
         upd.session_count = (conv.session_count || 0) + 1; 
         upd.flow_state = null; 
         upd.flow_context = {}; 
-        // Only reset human_handoff if the conversation is not assigned to an agent
-        if (!conv.assigned_to) {
+        
+        // Se a conversa estava fechada ou expirou sem um atendente fixo, resetamos para o bot
+        if (conv.status === 'closed' || !conv.assigned_to) {
           upd.human_handoff = false; 
+          upd.assigned_to = null;
         }
       }
       if (displayName) upd.display_name = displayName;
