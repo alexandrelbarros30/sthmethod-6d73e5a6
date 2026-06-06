@@ -616,10 +616,19 @@ Deno.serve(async (req) => {
     } else if (conv.flow_state === 'sucesso_main_menu') {
       const trimmed = body.trim();
       if (trimmed === '1') { await sendMessage(String(getFlowStep('sucesso_atualizar_peso')?.message || 'Acesse a plataforma para atualizar peso.'), 'sucesso_atualizacao'); }
-      else if (trimmed === '2' || trimmed === '4') { await sendMessage('Iniciando processo de renovação/reativação...', 'sucesso_renov'); await handoffConsultor(); }
-      else if (trimmed === '3') { await sendMessage('Verificando pagamentos...', 'sucesso_pag'); }
+      else if (trimmed === '2' || trimmed === '4') { 
+        const stepKey = trimmed === '2' ? 'sucesso_renovar' : 'sucesso_reativar';
+        await sendMessage(String(getFlowStep(stepKey)?.message || 'Iniciando processo de renovação/reativação...'), stepKey);
+        await handoffConsultor(); 
+      }
+      else if (trimmed === '3') { await sendMessage(String(getFlowStep('sucesso_verificar_pagamentos')?.message || 'Verificando pagamentos...'), 'sucesso_pag'); }
+      else if (trimmed === '5') { await sendMessage(String(getFlowStep('sucesso_receber_acessos')?.message || 'Enviando seus acessos...'), 'sucesso_acessos'); }
       else if (trimmed === '6') { await handoffConsultor(); }
-      else if (trimmed === '7') { await sendMessage('Transferindo para o Nutri...', 'sucesso_nutri'); await admin.from('crm_conversations').update({ flow_state: 'nutri_main', human_handoff: true }).eq('id', conv.id); await sendMessage(String(getFlowStep('nutri_reception')?.message || 'Olá! Você está no canal Fale com o Nutri...'), 'nutri_reception', null, 'wapi'); }
+      else if (trimmed === '7') { 
+        await sendMessage(String(getFlowStep('sucesso_nutri_handoff')?.message || 'Transferindo para o Nutri...'), 'sucesso_nutri'); 
+        await admin.from('crm_conversations').update({ flow_state: 'nutri_main', human_handoff: true }).eq('id', conv.id); 
+        await sendMessage(String(getFlowStep('nutri_reception')?.message || 'Olá! Você está no canal Fale com o Nutri...'), 'nutri_reception', null, 'wapi'); 
+      }
       else { await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Escolha uma opção.'), 'sucesso_repeat'); }
       autoReply = { sent: true, engine: 'flow' };
     } else if (conv.flow_state === 'lead_main_menu') {
