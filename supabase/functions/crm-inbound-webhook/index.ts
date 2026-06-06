@@ -215,7 +215,7 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const provider = (url.searchParams.get('provider') || 'wapi').toLowerCase();
+    const requestedProvider = (url.searchParams.get('provider') || '').toLowerCase();
     const expectedSecret = Deno.env.get('MP_WEBHOOK_SECRET') || '';
     const provided = req.headers.get('x-webhook-secret') || url.searchParams.get('secret') || '';
     
@@ -227,21 +227,35 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: true, skipped: true, reason: 'invalid_json' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     
+    const payloadInstance = String(payload?.instanceId || payload?.instance_id || payload?.instance || payload?.data?.instanceId || '').trim();
+    const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const [{ data: wapiCfgRow }, { data: wapiSucessoCfgRow }, { data: zapiCfgRow }] = await Promise.all([
+      admin.from('crm_settings').select('value').eq('key', 'wapi').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'wapi_sucesso').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'zapi').maybeSingle(),
+    ]);
+
+    const configuredInstances = {
+      zapi: String((zapiCfgRow?.value as any)?.instance_id || Deno.env.get('ZAPI_INSTANCE_ID') || '').trim(),
+      wapi: String((wapiCfgRow?.value as any)?.instance_id || Deno.env.get('WAPI_INSTANCE_ID') || '').trim(),
+      wapi_sucesso: String((wapiSucessoCfgRow?.value as any)?.instance_id || '').trim(),
+    };
+
+    let provider = requestedProvider || 'wapi';
+    if (payloadInstance) {
+      if (payloadInstance === configuredInstances.zapi) provider = 'zapi';
+      else if (payloadInstance === configuredInstances.wapi_sucesso) provider = 'wapi_sucesso';
+      else if (payloadInstance === configuredInstances.wapi) provider = 'wapi';
+    }
+
     console.log(`Incoming webhook from ${provider}:`, JSON.stringify(payload));
 
-    // For Z-API, check instanceId as a fallback if secret is missing
-    const payloadInstance = String(payload?.instanceId || payload?.instance_id || payload?.instance || payload?.data?.instanceId || '').trim();
-    const expectedZapiInstance = Deno.env.get('ZAPI_INSTANCE_ID') || '';
-    const expectedWapiInstance = Deno.env.get('WAPI_INSTANCE_ID') || '';
-    
-    const isZapiMatch = provider === 'zapi' && payloadInstance && payloadInstance === expectedZapiInstance;
-    const isWapiMatch = provider.startsWith('wapi') && payloadInstance && (payloadInstance === expectedWapiInstance || payloadInstance === 'GH64FC-CY4H5F-HG45BP' || payloadInstance === 'LD8PF8-KICHIC-44N76P');
+    const isZapiMatch = payloadInstance && payloadInstance === configuredInstances.zapi;
+    const isWapiMatch = payloadInstance && (payloadInstance === configuredInstances.wapi || payloadInstance === configuredInstances.wapi_sucesso);
     const secretOk = expectedSecret && provided === expectedSecret;
     
-    // If no secret and no instance match, reject
     if (expectedSecret && !secretOk && !isZapiMatch && !isWapiMatch) {
-      console.error(`Invalid secret or instance. Secret: ${provided}, Instance: ${payloadInstance}, Provider: ${provider}`);
-      // Temporarily allowing while debugging, but logging the failure
+      console.error(`Invalid secret or instance. Secret: ${provided}, Instance: ${payloadInstance}, Requested provider: ${requestedProvider || 'none'}, Resolved provider: ${provider}`);
     }
 
 
@@ -258,8 +272,6 @@ Deno.serve(async (req) => {
 
     const phone = normalizePhone(phoneRaw);
     if (!phone || !body) return new Response(JSON.stringify({ ok: true, skipped: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-
-    const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
     // OPT-OUT
     const normalizedBody = String(body).trim().toUpperCase();

@@ -32,6 +32,7 @@ const FLOW_KEYS = [
 ] as const;
 
 const PROJECT_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const INBOUND_WEBHOOK_BASE = `${PROJECT_URL}/functions/v1/crm-inbound-webhook`;
 
 export default function AdminCrmSettings() {
   const isMobile = useIsMobile();
@@ -54,9 +55,9 @@ export default function AdminCrmSettings() {
   const [flowTpls, setFlowTpls] = useState<Record<string, FlowTpl>>({});
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
 
-  const zapiWebhook = `${PROJECT_URL}/functions/v1/crm-inbound-webhook?provider=zapi`;
-  const wapiWebhook = `${PROJECT_URL}/functions/v1/crm-inbound-webhook?provider=wapi`;
-  const wapiSucessoWebhook = `${PROJECT_URL}/functions/v1/crm-inbound-webhook?provider=wapi_sucesso`;
+  const zapiWebhook = `${INBOUND_WEBHOOK_BASE}?provider=zapi`;
+  const wapiWebhook = INBOUND_WEBHOOK_BASE;
+  const wapiSucessoWebhook = INBOUND_WEBHOOK_BASE;
 
   useEffect(() => {
     (async () => {
@@ -247,6 +248,7 @@ export default function AdminCrmSettings() {
                 {copied === "wapi-wh" ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               </Button>
             </div>
+            <p className="text-[11px] text-muted-foreground">Use este mesmo link no painel W-API. O canal é identificado automaticamente pelo <b>Instance ID</b> salvo acima.</p>
           </div>
           <div className="flex gap-2">
             <Button onClick={() => save("wapi", wapi)} disabled={saving === "wapi"}>{saving === "wapi" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar"}</Button>
@@ -287,6 +289,7 @@ export default function AdminCrmSettings() {
                 {copied === "wapi-sucesso-wh" ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               </Button>
             </div>
+            <p className="text-[11px] text-muted-foreground">Use este mesmo link no painel W-API. O backend diferencia automaticamente Sucesso x Nutri pela instância configurada.</p>
           </div>
           <div className="flex gap-2">
             <Button onClick={() => save("wapi_sucesso", wapiSucesso)} disabled={saving === "wapi_sucesso"}>{saving === "wapi_sucesso" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar"}</Button>
