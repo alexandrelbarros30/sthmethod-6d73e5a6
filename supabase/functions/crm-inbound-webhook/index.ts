@@ -640,31 +640,103 @@ Deno.serve(async (req) => {
       return { sent, messageId, modelTag };
     };
 
-    // ============================================================
-    // === Canal Comercial (Z-API) — Máquina de estados STH ONE ===
-    // ============================================================
-    if (provider === 'zapi') {
-      // Em nova sessão: reseta estado e handoff (fluxo reinicia do zero)
-      if (isNewSession) {
-        await admin.from('crm_conversations').update({
-          flow_state: null,
-          flow_context: {},
-          human_handoff: false,
-          inactivity_warned_at: null,
-        }).eq('id', conv!.id);
-      } else {
-        // Resposta do cliente zera o aviso (cron não vai encerrar)
-        await admin.from('crm_conversations').update({ inactivity_warned_at: null }).eq('id', conv!.id);
-      }
+    // === NOVOS HELPERS UNIFICADOS ===
+    const sendMessage = async (message: string, tag: string, imageUrl?: string | null) => {
+      let sent = false;
+      let messageId: string | null = null;
+      
+      const tplMessage = renderTpl(message);
 
-      const { data: cstate } = await admin
-        .from('crm_conversations')
-        .select('flow_state, flow_context, human_handoff')
-        .eq('id', conv!.id)
-        .maybeSingle();
-      const flowState = isNewSession ? null : ((cstate?.flow_state as string | null) || null);
-      const flowCtx: any = isNewSession ? {} : ((cstate?.flow_context as any) || {});
-      const isHandoff = !isNewSession && cstate?.human_handoff === true;
+      if (provider === 'zapi') {
+        const r = await sendZapiMedia(tplMessage, imageUrl, tag);
+        sent = r.sent;
+        messageId = r.messageId;
+      } else {
+        const fnName = provider === 'wapi_sucesso' ? 'send-wapi-sucesso' : 'send-wapi';
+        try {
+          const { data, error } = await admin.functions.invoke(fnName, {
+            body: { phone, message: tplMessage, image_url: imageUrl }
+          });
+          if (!error && data?.ok) {
+            sent = true;
+            messageId = data.messageId;
+          }
+        } catch (e) {
+          console.error(`Error sending message via ${fnName}`, e);
+        }
+        
+        if (sent) {
+          await admin.from('crm_messages').insert({
+            conversation_id: conv!.id, direction: 'out', body: tplMessage,
+            source: provider, external_id: messageId, status: 'sent',
+          });
+          await admin.from('crm_conversations').update({
+            last_bot_message_at: new Date().toISOString(), inactivity_warned_at: null,
+          }).eq('id', conv!.id);
+        }
+      }
+      return { sent, messageId, tag };
+    };
+
+    // === Lista de planos ativos ===
+    const { data: planList } = await admin.from('plans')
+      .select('id, name, price, duration_days')
+      .eq('active', true)
+      .order('duration_days', { ascending: true });
+    const seenDur = new Set<number>();
+    const plans = (planList || []).filter((p: any) => {
+      if (!p?.duration_days || seenDur.has(p.duration_days)) return false;
+      seenDur.add(p.duration_days);
+      return true;
+    });
+
+    const handoffConsultor = async () => {
+      await admin.from('crm_conversations').update({
+        flow_state: 'handoff_consultor',
+        human_handoff: true,
+      }).eq('id', conv!.id);
+      
+      const queueName = (provider === 'wapi' ? 'Dieta' : (provider === 'wapi_sucesso' ? 'Sucesso do Aluno' : 'Atendimento Comercial'));
+      const { data: q } = await admin.from('crm_queues').select('id').eq('name', queueName).maybeSingle();
+      if (q) {
+        const { data: openItem } = await admin.from('crm_queue_items')
+          .select('id').eq('conversation_id', conv!.id).is('closed_at', null).maybeSingle();
+        if (openItem) {
+          await admin.from('crm_queue_items').update({ priority: 0 }).eq('id', openItem.id);
+        } else {
+          await admin.from('crm_queue_items').insert({
+            queue_id: q.id, conversation_id: conv!.id, phone, priority: 0,
+          });
+        }
+      }
+      const r = await sendMessage(String(handoffConsCfg?.value?.message || 'Vou te encaminhar para um consultor da equipe STH Method. Aguarde alguns instantes. 🙏'), 'handoff_consultor');
+      autoReply = { sent: r.sent, engine: 'flow', model: 'handoff_consultor' };
+    };
+
+    const trimmed = String(body).trim();
+
+    // === Máquina de Estados e Roteamento ===
+    if (isNewSession) {
+      await admin.from('crm_conversations').update({
+        flow_state: null,
+        flow_context: {},
+        human_handoff: false,
+        inactivity_warned_at: null,
+      }).eq('id', conv!.id);
+    } else {
+      await admin.from('crm_conversations').update({ inactivity_warned_at: null }).eq('id', conv!.id);
+    }
+
+    const { data: cstate } = await admin
+      .from('crm_conversations')
+      .select('flow_state, flow_context, human_handoff')
+      .eq('id', conv!.id)
+      .maybeSingle();
+
+    const flowState = isNewSession ? null : ((cstate?.flow_state as string | null) || null);
+    const flowCtx: any = isNewSession ? {} : ((cstate?.flow_context as any) || {});
+    const isHandoff = !isNewSession && cstate?.human_handoff === true;
+
 
       const trimmed = String(body).trim();
 
