@@ -355,10 +355,12 @@ Deno.serve(async (req) => {
       return out;
     };
 
-    const sendMessage = async (message: string, tag: string, imageUrl?: string | null) => {
+    const sendMessage = async (message: string, tag: string, imageUrl?: string | null, targetProvider?: string) => {
       const tplMessage = renderTpl(message);
       let sent = false; let messageId: string | null = null;
-      if (provider === 'zapi') {
+      const activeProvider = targetProvider || provider;
+      
+      if (activeProvider === 'zapi') {
         const c = (zapiCfg?.value as any) || {};
         const INSTANCE_ID = (c.instance_id || Deno.env.get('ZAPI_INSTANCE_ID') || '').trim();
         const INSTANCE_TOKEN = (c.instance_token || Deno.env.get('ZAPI_INSTANCE_TOKEN') || '').trim();
@@ -372,12 +374,12 @@ Deno.serve(async (req) => {
           const j = await r.json().catch(() => ({})); sent = r.ok; messageId = j?.messageId || j?.id || null;
         }
       } else {
-        const fnName = provider === 'wapi_sucesso' ? 'send-wapi-sucesso' : 'send-wapi';
+        const fnName = activeProvider === 'wapi_sucesso' ? 'send-wapi-sucesso' : 'send-wapi';
         const { data, error } = await admin.functions.invoke(fnName, { body: { phone, message: tplMessage, image_url: imageUrl } });
         if (!error && data?.ok) { sent = true; messageId = data.messageId; }
       }
       if (sent) {
-        await admin.from('crm_messages').insert({ conversation_id: conv.id, direction: 'out', body: tplMessage, source: provider, external_id: messageId, status: 'sent' });
+        await admin.from('crm_messages').insert({ conversation_id: conv.id, direction: 'out', body: tplMessage, source: activeProvider, external_id: messageId, status: 'sent' });
         await admin.from('crm_conversations').update({ last_bot_message_at: new Date().toISOString(), inactivity_warned_at: null }).eq('id', conv.id);
       }
       return { sent, messageId, tag };
@@ -449,7 +451,7 @@ Deno.serve(async (req) => {
       if (has('renov', 'pagamento', 'pagar', 'cobran', 'segunda via', 'cadastro', 'senha', 'acesso', 'contrato', 'reativar')) {
         const r = await sendMessage(String(getFlowStep('nutri_transfer_sucesso')?.message || 'Sua solicitação é administrativa. Redirecionando para Sucesso...'), 'nutri_transfer_sucesso');
         await admin.from('crm_conversations').update({ flow_state: 'sucesso_main_menu', queue_type: 'sucesso' }).eq('id', conv.id);
-        await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu');
+        await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu', null, 'wapi_sucesso');
         autoReply = { sent: r.sent, engine: 'flow' };
       }
     } else if (conv.flow_state === 'sucesso_main_menu') {
@@ -458,7 +460,7 @@ Deno.serve(async (req) => {
       else if (trimmed === '2' || trimmed === '4') { await sendMessage('Iniciando processo de renovação/reativação...', 'sucesso_renov'); await handoffConsultor(); }
       else if (trimmed === '3') { await sendMessage('Verificando pagamentos...', 'sucesso_pag'); }
       else if (trimmed === '6') { await handoffConsultor(); }
-      else if (trimmed === '7') { await sendMessage('Transferindo para o Nutri...', 'sucesso_nutri'); await admin.from('crm_conversations').update({ flow_state: 'nutri_main', human_handoff: true }).eq('id', conv.id); }
+      else if (trimmed === '7') { await sendMessage('Transferindo para o Nutri...', 'sucesso_nutri'); await admin.from('crm_conversations').update({ flow_state: 'nutri_main', human_handoff: true }).eq('id', conv.id); await sendMessage(String(getFlowStep('nutri_reception')?.message || 'Olá! Você está no canal Fale com o Nutri...'), 'nutri_reception', null, 'wapi'); }
       else { await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Escolha uma opção.'), 'sucesso_repeat'); }
       autoReply = { sent: true, engine: 'flow' };
     } else if (conv.flow_state === 'lead_main_menu') {
