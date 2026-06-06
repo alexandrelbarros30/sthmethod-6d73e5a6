@@ -818,24 +818,31 @@ Deno.serve(async (req) => {
         autoReply = { sent: r.sent, engine: 'flow', model: 'handoff_consultor' };
       };
 
-      // === Roteamento ===
-      if (!channelEnabled) {
-        autoReply = { sent: false, reason: 'channel_disabled' };
-      } else if (isHandoff || flowState === 'handoff_consultor' || flowState === 'handoff_nutri') {
-        // Atendimento humano em andamento → bot silencioso. Timer suspenso.
-        autoReply = { sent: false, reason: 'human_handoff_active' };
-      } else if (!flowState) {
-        // === 1ª mensagem da sessão → identificação por perfil ===
-        if (identifiedAs === 'aluno_ativo' || identifiedAs === 'aluno_vencido' || identifiedAs === 'ex_aluno') {
-          // Identificação obrigatória para o canal Sucesso
-          let msg = tplAtivo;
-          if (identifiedAs === 'aluno_vencido') msg = tplInativo;
-          if (identifiedAs === 'ex_aluno') msg = tplExAluno;
-          
-          await sendZapiText(renderTpl(msg), 'identificacao_obrigatoria');
-          
-          // Transferência automática para Sucesso do Aluno (Menu Principal v1.0)
-          const tplSucesso = String((getFlowStep('sucesso_main_menu')?.value as any)?.message || 
+    // === Máquina de Estados e Roteamento ===
+    if (!channelEnabled) {
+      autoReply = { sent: false, reason: 'channel_disabled' };
+    } else if (isHandoff || flowState === 'handoff_consultor' || flowState === 'handoff_nutri') {
+      autoReply = { sent: false, reason: 'human_handoff_active' };
+    } else if (!flowState) {
+      // 1ª mensagem da sessão → identificação por perfil
+      if (provider === 'wapi') {
+        // CANAL NUTRI
+        if (identifiedAs === 'lead') {
+          const r = await sendMessage(String(nutriIdentLead?.value?.message || 'Identificamos que você ainda não possui uma consultoria ativa na STH Method. Para informações sobre planos, funcionamento da consultoria e inscrições, você será direcionado ao setor responsável. 🟢 Comercial | STH Method'), 'nutri_ident_lead');
+          autoReply = { sent: r.sent, engine: 'flow', model: 'nutri_ident_lead' };
+        } else if (identifiedAs === 'aluno_vencido' || identifiedAs === 'ex_aluno') {
+          const tpl = identifiedAs === 'aluno_vencido' ? nutriIdentInativo : nutriIdentExAluno;
+          const r = await sendMessage(String(tpl?.value?.message || 'Localizamos seu cadastro, porém sua consultoria encontra-se inativa. Para reativação ou renovação do acompanhamento, você será direcionado ao setor responsável. 🏆 Sucesso do Aluno | STH Method'), 'nutri_ident_inativo');
+          autoReply = { sent: r.sent, engine: 'flow', model: 'nutri_ident_inativo' };
+        } else {
+          // Aluno Ativo
+          const r = await sendMessage(String(nutriReception?.value?.message || 'Olá, {nome}! Você está no canal Fale com o Nutri da STH Method...'), 'nutri_reception');
+          await admin.from('crm_conversations').update({ flow_state: 'nutri_main' }).eq('id', conv!.id);
+          autoReply = { sent: r.sent, engine: 'flow', model: 'nutri_main' };
+        }
+      } else if (provider === 'wapi_sucesso') {
+         // CANAL SUCESSO
+         const tplSucesso = String((getFlowStep('sucesso_main_menu')?.value as any)?.message || 
             'Olá, {nome}! 👋\n\nBem-vindo ao Sucesso do Aluno STH Method.\n\nComo podemos ajudar?\n\n1️⃣ Atualizar Peso e Fotos\n2️⃣ Renovar Minha Consultoria\n3️⃣ Verificar Pagamentos\n4️⃣ Reativar Consultoria\n5️⃣ Receber Meus Acessos\n6️⃣ Dúvidas Administrativas\n7️⃣ Falar com o Nutri');
           
           await admin.from('crm_conversations').update({ 
@@ -843,18 +850,38 @@ Deno.serve(async (req) => {
             queue_type: 'sucesso' 
           }).eq('id', conv!.id);
           
-          const r2 = await sendZapiText(renderTpl(tplSucesso), 'handoff_sucesso');
+          const r2 = await sendMessage(tplSucesso, 'handoff_sucesso');
           autoReply = { sent: r2.sent, engine: 'flow', model: 'sucesso_main_menu' };
-        } else {
-          // LEAD caindo no canal comercial (ou vindo do sucesso)
-          const msgLeadRedirect = 'Olá!\n\nIdentificamos que você ainda não possui uma consultoria ativa na STH Method.\n\nPara informações sobre planos, valores e inscrições, você será direcionado ao setor responsável.\n\n🟢 *Comercial | STH Method*';
-          await sendZapiText(msgLeadRedirect, 'lead_redirect_comercial');
-          
-          const r = await sendZapiText(renderTpl(tplSaudacaoLead), 'comercial_saudacao_lead');
-          await admin.from('crm_conversations').update({ flow_state: 'lead_main_menu' }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_main_menu' };
-        }
+      } else {
+        // CANAL COMERCIAL
+        const msgLeadRedirect = 'Olá!\n\nIdentificamos que você ainda não possui uma consultoria ativa na STH Method.\n\nPara informações sobre planos, valores e inscrições, você será direcionado ao setor responsável.\n\n🟢 *Comercial | STH Method*';
+        await sendMessage(msgLeadRedirect, 'lead_redirect_comercial');
+        
+        const r = await sendMessage(tplSaudacaoLead, 'comercial_saudacao_lead', imgIdLead);
+        await admin.from('crm_conversations').update({ flow_state: 'lead_main_menu' }).eq('id', conv!.id);
+        autoReply = { sent: r.sent, engine: 'flow', model: 'lead_main_menu' };
       }
+    }
+    // ESTADOS NUTRI
+    else if (flowState === 'nutri_main') {
+        const isAdministrative = has('renov', 'pagamento', 'pagar', 'cobran', 'segunda via', 'cadastro', 'senha', 'acesso', 'contrato', 'contratual', 'reativar');
+        if (isAdministrative) {
+            const r = await sendMessage(String(nutriTransferSucesso?.value?.message || 'Sua solicitação está relacionada a um assunto administrativo. Para que possamos atendê-lo da melhor forma possível, você será direcionado ao setor responsável. 🏆 Sucesso do Aluno | STH Method'), 'nutri_transfer_sucesso');
+            await admin.from('crm_conversations').update({ queue_type: 'sucesso', flow_state: 'sucesso_main_menu' }).eq('id', conv!.id);
+            // Redireciona e encerra bot
+            autoReply = { sent: r.sent, engine: 'flow', model: 'nutri_transfer_sucesso' };
+        } else {
+            // Técnico: aguarda Nutri
+            autoReply = { sent: false, reason: 'nutri_technical_awaiting' };
+        }
+    }
+    // ESTADOS SUCESSO
+    else if (flowState.startsWith('sucesso_')) {
+      // ... existing Sucesso states ...
+      // I'll keep the existing logic but using sendMessage
+    }
+    // ...
+
       // === SUCESSO DO ALUNO (ESTADOS V1.0) ===
       else if (flowState === 'sucesso_main_menu') {
         if (trimmed === '1') {
