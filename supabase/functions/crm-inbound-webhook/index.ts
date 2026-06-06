@@ -326,8 +326,7 @@ Deno.serve(async (req) => {
       const isOptOut = /\bCANCELAR\s+ENVIO\b/.test(normalizedBody);
       const isManualClose = normalizedBody === '#SAIR' || normalizedBody === '#ENCERRAR';
       
-      const candidates = phoneCandidates(phone);
-      const { data: profile } = await admin.from('profiles').select('user_id, full_name').in('phone', candidates).limit(1).maybeSingle();
+      const profile = await findProfileByPhone(admin, phone, 'user_id, full_name, phone');
       
       if (isManualClose) {
         const { data: conv } = await admin.from('crm_conversations').select('id').eq('phone', phone).maybeSingle();
@@ -391,9 +390,7 @@ Deno.serve(async (req) => {
     const channelHours = provider === 'wapi_sucesso' ? hoursSucessoCfg?.value : (provider === 'wapi' ? hoursNutriCfg?.value : hoursComCfg?.value);
     const withinHours = isWithinBusinessHours(channelHours);
 
-    const candidates = phoneCandidates(phone);
-    const { data: profiles } = await admin.from('profiles').select('user_id, full_name, objective').in('phone', candidates).limit(1);
-    const profile = profiles?.[0];
+    const profile = await findProfileByPhone(admin, phone, 'user_id, full_name, objective, phone');
     let displayName = name || profile?.full_name || null;
     let identifiedAs: 'aluno_ativo' | 'aluno_vencido' | 'lead' | 'ex_aluno' = 'lead';
 
@@ -443,7 +440,7 @@ Deno.serve(async (req) => {
         await admin.from('crm_messages').insert({ conversation_id: conv.id, direction: 'out', body: farewellMessage, source: provider, status: 'sent', metadata: { type: 'timeout_farewell' } });
       }
 
-      const upd: any = { provider, session_expires_at: sessionExpiresAt.toISOString(), status: 'open', is_lead: identifiedAs === 'lead', user_id: profile?.user_id, identified_as: identifiedAs };
+      const upd: any = { provider, queue_type: finalQueue, nutri_category: cls.nutriCategory, session_expires_at: sessionExpiresAt.toISOString(), status: 'open', is_lead: identifiedAs === 'lead', user_id: profile?.user_id, identified_as: identifiedAs };
       
       if (isNewSession) { 
         upd.session_started_at = now.toISOString(); 
