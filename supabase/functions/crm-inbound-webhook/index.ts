@@ -473,8 +473,13 @@ Deno.serve(async (req) => {
     let autoReply: any;
     const channelEnabled = provider === 'wapi' ? (wapiCfg?.value as any)?.enabled === true : (provider === 'wapi_sucesso' ? (wapiSucessoCfg?.value as any)?.enabled === true : (zapiCfg?.value as any)?.enabled === true);
 
-    if (!channelEnabled) autoReply = { sent: false, reason: 'disabled' };
-    else if (conv.human_handoff || conv.assigned_to) autoReply = { sent: false, reason: 'handoff' };
+    // Se houver atendente humano ou flag de handoff, ignoramos completamente mensagens automáticas
+    if (conv.human_handoff || conv.assigned_to) {
+      console.log(`Human active on conversation ${conv.id} (assigned: ${conv.assigned_to}, handoff: ${conv.human_handoff}). Skipping auto-replies.`);
+      autoReply = { sent: false, reason: 'handoff' };
+    } else if (!channelEnabled) {
+      autoReply = { sent: false, reason: 'disabled' };
+    }
     else if (!withinHours) {
       if (isNewSession) {
         let msg = '';
