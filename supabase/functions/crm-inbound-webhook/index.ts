@@ -571,7 +571,7 @@ Deno.serve(async (req) => {
           if (identifiedAs === 'aluno_ativo') {
             msg = nutriAwayActive?.value?.message || "Olá! No momento estamos fora do horário de expediente no canal Fale com o Nutri. Deixe sua dúvida e responderemos assim que retornarmos! 👋";
           } else {
-            msg = "No momento estamos fora do horário de expediente no canal Fale com o Nutri.\n\nPara atendimento agora, acesse nosso canal de Sucesso do Aluno: https://wa.me/5521972486650";
+            msg = "No momento estamos fora do horário de expediente no canal Fale com o Nutri.\n\nIdentificamos que seu plano não está ativo. Você pode realizar sua renovação agora mesmo pelo link abaixo:\n\n🔗 Renovação: https://sthmethod.com.br/renovacao\n🌐 Site: https://sthmethod.com.br\n\nPara outros assuntos, acesse nosso canal de Sucesso do Aluno: https://wa.me/5521972486650";
           }
         }
         if (msg) { 
