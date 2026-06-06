@@ -404,6 +404,10 @@ Deno.serve(async (req) => {
           await admin.from('crm_conversations').update({ flow_state: 'nutri_main' }).eq('id', conv.id);
           autoReply = { sent: r.sent, engine: 'flow' };
         }
+      } else if (provider === 'wapi_sucesso') {
+        const r = await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu');
+        await admin.from('crm_conversations').update({ flow_state: 'sucesso_main_menu', queue_type: 'sucesso' }).eq('id', conv.id);
+        autoReply = { sent: r.sent, engine: 'flow' };
       } else {
         if (identifiedAs !== 'lead') {
           const step = identifiedAs === 'aluno_ativo' ? 'comercial_ident_ativo' : (identifiedAs === 'aluno_vencido' ? 'comercial_ident_inativo' : 'comercial_ident_exaluno');
