@@ -378,36 +378,42 @@ Deno.serve(async (req) => {
     const sessionExpiresAt = new Date(now.getTime() + SESSION_TTL_MS);
     let { data: conv } = await admin.from('crm_conversations').select('*').eq('phone', phone).maybeSingle();
     const isExpired = conv?.session_expires_at && new Date(conv.session_expires_at).getTime() < now.getTime();
-    const isNewSession = !conv || conv.status === 'closed' || isExpired;
+    
+    // CRITICAL FIX: If human is active, prevent session reset/expiry logic that could re-enable the bot
+    const isHumanActive = conv?.human_handoff || conv?.assigned_to;
+    const isNewSession = !conv || conv.status === 'closed' || (isExpired && !isHumanActive);
 
     if (!conv) {
       const ins = await admin.from('crm_conversations').insert({ phone, display_name: displayName, channel: 'whatsapp', status: 'open', provider, queue_type: finalQueue, nutri_category: cls.nutriCategory, is_lead: identifiedAs === 'lead', user_id: profile?.user_id, identified_as: identifiedAs, session_started_at: now.toISOString(), session_expires_at: sessionExpiresAt.toISOString(), session_count: 1 }).select('*').single();
       conv = ins.data;
     } else {
-      if (isExpired && conv.status === 'open' && !conv.assigned_to && !conv.human_handoff) {
+      if (isExpired && conv.status === 'open' && !isHumanActive) {
         // Enviar despedida por timeout se estava aberto e não é atendimento humano
         const fnName = provider === 'wapi_sucesso' ? 'send-wapi-sucesso' : (provider === 'zapi' ? null : 'send-wapi');
         if (fnName) {
           await admin.functions.invoke(fnName, { body: { phone, message: farewellMessage } });
-        } else if (provider === 'zapi') {
-          // Implementação direta simplificada para o timeout no zapi se necessário, ou ignorar se for muito complexo no momento
         }
         await admin.from('crm_messages').insert({ conversation_id: conv.id, direction: 'out', body: farewellMessage, source: provider, status: 'sent', metadata: { type: 'timeout_farewell' } });
       }
 
       const upd: any = { provider, session_expires_at: sessionExpiresAt.toISOString(), status: 'open', is_lead: identifiedAs === 'lead', user_id: profile?.user_id, identified_as: identifiedAs };
+      
       if (isNewSession) { 
         upd.session_started_at = now.toISOString(); 
         upd.session_count = (conv.session_count || 0) + 1; 
         upd.flow_state = null; 
         upd.flow_context = {}; 
         
-        // Se a conversa estava fechada ou expirou sem um atendente fixo, resetamos para o bot
+        // Se a conversa estava fechada ou expirou sem um atendente fixo (e não é humano ativo), resetamos para o bot
         if (conv.status === 'closed' || !conv.assigned_to) {
           upd.human_handoff = false; 
           upd.assigned_to = null;
         }
+      } else if (isHumanActive) {
+        // Se humano está ativo, garantimos que human_handoff permaneça true mesmo se houver nova mensagem
+        upd.human_handoff = true;
       }
+
       if (displayName) upd.display_name = displayName;
       await admin.from('crm_conversations').update(upd).eq('id', conv.id);
       conv = { ...conv, ...upd };
