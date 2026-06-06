@@ -215,14 +215,21 @@ Deno.serve(async (req) => {
     const expectedSecret = Deno.env.get('MP_WEBHOOK_SECRET') || '';
     const provided = req.headers.get('x-webhook-secret') || url.searchParams.get('secret') || '';
     const payload = await req.json().catch(() => ({})) as any;
+    console.log(`Incoming webhook from ${provider}:`, JSON.stringify(payload));
+
 
     const payloadInstance = String(payload?.instanceId || payload?.instance_id || payload?.instance || '').trim();
-    const expectedInstance = (provider === 'zapi' ? Deno.env.get('ZAPI_INSTANCE_ID') : (provider === 'wapi_sucesso' ? '' : Deno.env.get('WAPI_INSTANCE_ID'))) || '';
+    
+    // Webhook secret validation (if provided)
     const secretOk = expectedSecret && provided === expectedSecret;
-    const instanceOk = expectedInstance && payloadInstance && payloadInstance === expectedInstance;
-    if (expectedSecret && !secretOk && !instanceOk) {
+    
+    // For W-API, we don't always have the instanceId in the body in a way that matches env vars easily,
+    // so if the secret matches, we trust it. If no secret, we at least log or skip if it's clearly not ours.
+    if (expectedSecret && !secretOk) {
+      console.error(`Invalid secret provided: ${provided}`);
       return new Response(JSON.stringify({ error: 'invalid secret' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
+
 
     const phoneRaw = payload?.phone || payload?.from || payload?.data?.from || payload?.message?.from || '';
     const rawText = (typeof payload?.text === 'string' ? payload.text : payload?.text?.message) || payload?.message?.conversation || (typeof payload?.message === 'string' ? payload.message : '') || payload?.image?.caption || payload?.video?.caption || payload?.document?.caption || payload?.body || payload?.data?.message?.text || '';
