@@ -618,8 +618,20 @@ Deno.serve(async (req) => {
       if (trimmed === '1') { await sendMessage(String(getFlowStep('sucesso_atualizar_peso')?.message || 'Acesse a plataforma para atualizar peso.'), 'sucesso_atualizacao'); }
       else if (trimmed === '2' || trimmed === '4') { 
         const stepKey = trimmed === '2' ? 'sucesso_renovar' : 'sucesso_reativar';
-        await sendMessage(String(getFlowStep(stepKey)?.message || 'Iniciando processo de renovação/reativação...'), stepKey);
-        await handoffConsultor(); 
+        const msg = String(getFlowStep(stepKey)?.message || 'Para renovar ou reativar sua consultoria de forma 100% automática, acesse os links abaixo:');
+        
+        let customMsg = msg;
+        if (!customMsg.includes('sthmethod.com.br')) {
+          customMsg += '\n\n🔗 Renovação: https://sthmethod.com.br/renovacao\n🌐 Site: https://sthmethod.com.br';
+        }
+        
+        await sendMessage(customMsg, stepKey);
+        
+        if (withinHours) {
+          await handoffConsultor(); 
+        } else {
+          await sendMessage("Nosso atendimento humano está encerrado no momento, mas você pode concluir tudo pelo site acima! 👋", "away_renovacao_info");
+        }
       }
       else if (trimmed === '3') { await sendMessage(String(getFlowStep('sucesso_verificar_pagamentos')?.message || 'Verificando pagamentos...'), 'sucesso_pag'); }
       else if (trimmed === '5') { await sendMessage(String(getFlowStep('sucesso_receber_acessos')?.message || 'Enviando seus acessos...'), 'sucesso_acessos'); }
