@@ -565,7 +565,8 @@ Deno.serve(async (req) => {
             else msg = comAwayExpired?.value?.message;
           }
         } else {
-          msg = identifiedAs === 'aluno_ativo' ? nutriAwayActive?.value?.message : nutriAwayInactive?.value?.message;
+          // No Fale com o Nutri, se estiver fora do horário, redirecionamos para o Sucesso do Aluno
+          msg = "No momento estamos fora do horário de expediente no canal Fale com o Nutri.\n\nPara questões administrativas ou atendimento automatizado agora, por favor acesse nosso canal de Sucesso do Aluno: https://wa.me/5521972486650\n\nCaso sua dúvida seja técnica, responderemos assim que retornarmos! 👋";
         }
         if (msg) { 
           const r = await sendMessage(msg, 'away'); 
