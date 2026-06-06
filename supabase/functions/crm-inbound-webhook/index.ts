@@ -401,8 +401,10 @@ Deno.serve(async (req) => {
         }
       } else {
         const fnName = activeProvider === 'wapi_sucesso' ? 'send-wapi-sucesso' : 'send-wapi';
+        console.log(`Invoking ${fnName} for phone ${phone}`);
         const { data, error } = await admin.functions.invoke(fnName, { body: { phone, message: tplMessage, image_url: imageUrl } });
-        if (!error && data?.ok) { sent = true; messageId = data.messageId; }
+        console.log(`Response from ${fnName}:`, { data, error });
+        if (!error && (data?.ok || data?.messageId)) { sent = true; messageId = data.messageId || data?.id; }
       }
       if (sent) {
         await admin.from('crm_messages').insert({ conversation_id: conv.id, direction: 'out', body: tplMessage, source: activeProvider, external_id: messageId, status: 'sent' });
