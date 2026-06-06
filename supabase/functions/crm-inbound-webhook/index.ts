@@ -25,16 +25,20 @@ async function generateAiReply({
   admin,
   conversationId,
   phone,
+  queue = 'comercial',
 }: {
   admin: ReturnType<typeof createClient>;
   conversationId: string;
   phone: string;
+  queue?: string;
 }): Promise<{ response: string; model: string; engine: string }> {
   let systemPrompt = 'Você é um assistente de atendimento ao aluno da consultoria STH METHOD. Seja claro, técnico, neutro e cordial. Responda em português do Brasil.';
   let engine: 'lovable' | 'local' | 'gemini_api' = 'lovable';
 
+  const promptKey = queue === 'sucesso' ? 'ai_prompt_sucesso' : 'ai_prompt_comercial';
+  
   const [{ data: cfg }, { data: engCfg }] = await Promise.all([
-    admin.from('crm_settings').select('value').eq('key', 'ai_prompt_comercial').maybeSingle(),
+    admin.from('crm_settings').select('value').eq('key', promptKey).maybeSingle(),
     admin.from('crm_settings').select('value').eq('key', 'ai_engine').maybeSingle(),
   ]);
 
@@ -261,7 +265,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: true, opt_out: isOptOut }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const [{ data: aiModeCfg }, { data: wapiCfg }, { data: zapiCfg }, { data: wapiSucessoCfg }, { data: hoursComCfg }, { data: hoursNutriCfg }, { data: hoursSucessoCfg }, { data: nutriAwayActive }, { data: nutriAwayInactive }, { data: flowSteps }] = await Promise.all([
+    const [{ data: aiModeCfg }, { data: wapiCfg }, { data: zapiCfg }, { data: wapiSucessoCfg }, { data: hoursComCfg }, { data: hoursNutriCfg }, { data: hoursSucessoCfg }, { data: nutriAwayActive }, { data: nutriAwayInactive }, { data: comAwayLead }, { data: comAwayActive }, { data: comAwayExpired }, { data: flowSteps }] = await Promise.all([
       admin.from('crm_settings').select('value').eq('key', 'ai_mode').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'wapi').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'zapi').maybeSingle(),
@@ -271,6 +275,9 @@ Deno.serve(async (req) => {
       admin.from('crm_settings').select('value').eq('key', 'business_hours_sucesso').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'nutri_away_active').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'nutri_away_inactive').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'comercial_away_lead').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'comercial_away_active').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'comercial_away_expired').maybeSingle(),
       admin.from('crm_flow_steps').select('*'),
     ]);
 
@@ -373,7 +380,14 @@ Deno.serve(async (req) => {
     else if (conv.human_handoff) autoReply = { sent: false, reason: 'handoff' };
     else if (!withinHours) {
       if (isNewSession) {
-        const msg = identifiedAs === 'aluno_ativo' ? nutriAwayActive?.value?.message : nutriAwayInactive?.value?.message;
+        let msg = '';
+        if (provider === 'zapi') {
+          if (identifiedAs === 'lead') msg = comAwayLead?.value?.message;
+          else if (identifiedAs === 'aluno_ativo') msg = comAwayActive?.value?.message;
+          else msg = comAwayExpired?.value?.message;
+        } else {
+          msg = identifiedAs === 'aluno_ativo' ? nutriAwayActive?.value?.message : nutriAwayInactive?.value?.message;
+        }
         if (msg) { const r = await sendMessage(msg, 'away'); autoReply = { sent: r.sent, engine: 'away' }; }
       }
     } else if (!conv.flow_state) {
@@ -429,7 +443,7 @@ Deno.serve(async (req) => {
     }
 
     if (!autoReply && (aiModeCfg?.value as any)?.mode === 'auto') {
-      const ai = await generateAiReply({ admin, conversationId: conv.id, phone });
+      const ai = await generateAiReply({ admin, conversationId: conv.id, phone, queue: conv.queue_type });
       if (ai.response) { const r = await sendMessage(ai.response, 'ai'); autoReply = { sent: r.sent, engine: ai.engine }; }
     }
 
