@@ -433,7 +433,7 @@ Deno.serve(async (req) => {
     const channelEnabled = provider === 'wapi' ? (wapiCfg?.value as any)?.enabled === true : (provider === 'wapi_sucesso' ? (wapiSucessoCfg?.value as any)?.enabled === true : (zapiCfg?.value as any)?.enabled === true);
 
     if (!channelEnabled) autoReply = { sent: false, reason: 'disabled' };
-    else if (conv.human_handoff) autoReply = { sent: false, reason: 'handoff' };
+    else if (conv.human_handoff || conv.assigned_to) autoReply = { sent: false, reason: 'handoff' };
     else if (!withinHours) {
       if (isNewSession) {
         let msg = '';
