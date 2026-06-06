@@ -531,15 +531,25 @@ Deno.serve(async (req) => {
     let autoReply: any;
     const channelEnabled = provider === 'wapi' ? (wapiCfg?.value as any)?.enabled === true : (provider === 'wapi_sucesso' ? (wapiSucessoCfg?.value as any)?.enabled === true : (zapiCfg?.value as any)?.enabled === true);
 
-    // Se houver atendente humano ou flag de handoff, ignoramos completamente mensagens automáticas
-    if (conv.human_handoff === true || !!conv.assigned_to) {
-      console.log(`Human active on conversation ${conv.id} (assigned: ${conv.assigned_to}, handoff: ${conv.human_handoff}). Skipping auto-replies.`);
-      autoReply = { sent: false, reason: 'human_active' };
-    } else if (!channelEnabled) {
+    // Se houver atendente humano ou flag de handoff, ignoramos mensagens automáticas de fluxo,
+    // MAS ainda enviamos mensagem de ausência se estiver fora do horário de expediente.
+    const isChannelEnabled = channelEnabled;
+
+    if (!isChannelEnabled) {
       autoReply = { sent: false, reason: 'disabled' };
-    }
-    else if (!withinHours) {
-      if (isNewSession || forceSucessoQueue) {
+    } else if (!withinHours) {
+      // Fora do horário de expediente: enviar mensagem de ausência se for nova sessão 
+      // ou se não enviamos uma mensagem de ausência recentemente (últimas 4 horas)
+      const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+      const { data: lastAwayMsg } = await admin.from('crm_messages')
+        .select('id')
+        .eq('conversation_id', conv.id)
+        .eq('direction', 'out')
+        .gt('created_at', fourHoursAgo)
+        .or('body.ilike.%expediente%,body.ilike.%atendimento de hoje foi encerrado%')
+        .maybeSingle();
+
+      if (isNewSession || forceSucessoQueue || !lastAwayMsg) {
         let msg = '';
         if (provider === 'zapi') {
           // Comercial (Z-API)
@@ -555,7 +565,7 @@ Deno.serve(async (req) => {
               session_expires_at: new Date().toISOString() 
             }).eq('id', conv.id);
             autoReply = { sent: r.sent, engine: 'away_redirect' };
-            msg = ''; // Clear to prevent double message
+            msg = ''; 
           } else {
             if (identifiedAs === 'lead') msg = comAwayLead?.value?.message || "Olá! No momento estamos fora do horário de expediente no canal Comercial.\n\nPara conhecer nossos planos e contratar agora mesmo de forma 100% automatizada, acesse nosso site:\n\n🌐 Site: https://sthmethod.com.br\n\nResponderemos sua mensagem assim que retornarmos! 👋";
             else if (identifiedAs === 'aluno_ativo') msg = comAwayActive?.value?.message || "Olá! No momento estamos fora do horário de expediente no canal Comercial. Como você é um aluno ativo, você pode tirar dúvidas técnicas diretamente com seu Nutri ou tratar assuntos administrativos no Sucesso do Aluno:\n\n🍎 Fale com o Nutri: https://wa.me/5521972486650\n🎓 Sucesso do Aluno: https://wa.me/5521972486650\n\nResponderemos assim que retornarmos! 👋";
@@ -573,7 +583,12 @@ Deno.serve(async (req) => {
           const r = await sendMessage(msg, 'away'); 
           autoReply = { sent: r.sent, engine: 'away' }; 
         }
+      } else {
+        autoReply = { sent: false, reason: 'away_already_sent' };
       }
+    } else if (conv.human_handoff === true || !!conv.assigned_to) {
+      console.log(`Human active on conversation ${conv.id} (assigned: ${conv.assigned_to}, handoff: ${conv.human_handoff}). Skipping auto-replies.`);
+      autoReply = { sent: false, reason: 'human_active' };
     } else if (!conv.flow_state) {
       if (provider === 'wapi') {
         if (identifiedAs === 'lead') {
