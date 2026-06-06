@@ -555,6 +555,7 @@ Deno.serve(async (req) => {
               session_expires_at: new Date().toISOString() 
             }).eq('id', conv.id);
             autoReply = { sent: r.sent, engine: 'away_redirect' };
+            msg = ''; // Clear to prevent double message
           } else {
             if (identifiedAs === 'lead') msg = comAwayLead?.value?.message || "Olá! No momento estamos fora do horário de expediente no canal Comercial.\n\nPara conhecer nossos planos e contratar agora mesmo de forma 100% automatizada, acesse nosso site:\n\n🌐 Site: https://sthmethod.com.br\n\nResponderemos sua mensagem assim que retornarmos! 👋";
             else if (identifiedAs === 'aluno_ativo') msg = comAwayActive?.value?.message || "Olá! No momento estamos fora do horário de expediente no canal Comercial. Como você é um aluno ativo, você pode tirar dúvidas técnicas diretamente com seu Nutri ou tratar assuntos administrativos no Sucesso do Aluno:\n\n🍎 Fale com o Nutri: https://wa.me/5521972486650\n🎓 Sucesso do Aluno: https://wa.me/5521972486650\n\nResponderemos assim que retornarmos! 👋";
