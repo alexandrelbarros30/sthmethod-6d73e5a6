@@ -347,7 +347,10 @@ Deno.serve(async (req) => {
 
     const FIRST_NAME = (displayName || profile?.full_name || '').toString().split(' ')[0] || '';
     const renderTpl = (s: string, extra: Record<string, string> = {}) => {
-      let out = String(s || '').replace(/\{nome\}/gi, extra.nome || FIRST_NAME).replace(/\{nomeSep\}/gi, (extra.nome || FIRST_NAME) ? ' ' : '');
+      let out = String(s || '')
+        .replace(/\\n/g, '\n') // Fix literal \n strings to real newlines
+        .replace(/\{nome\}/gi, extra.nome || FIRST_NAME)
+        .replace(/\{nomeSep\}/gi, (extra.nome || FIRST_NAME) ? ' ' : '');
       for (const [k, v] of Object.entries(extra)) if (k !== 'nome') out = out.replace(new RegExp(`\\{${k}\\}`, 'gi'), String(v ?? ''));
       return out;
     };
