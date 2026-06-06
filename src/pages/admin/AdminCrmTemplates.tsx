@@ -46,6 +46,7 @@ interface Template {
   channel: Channel;
   body: string;
   media_url: string | null;
+  pdf_url: string | null;
   active: boolean;
   is_automatic: boolean;
   automation_trigger: string | null;
@@ -61,6 +62,7 @@ const EMPTY: Partial<Template> = {
   channel: "zapi",
   body: "",
   media_url: "",
+  pdf_url: "",
   active: true,
   is_automatic: false,
   automation_trigger: "",
@@ -159,7 +161,7 @@ export default function AdminCrmTemplates() {
   }
 
   function openEdit(t: Template) {
-    setEditing({ ...t, media_url: t.media_url || "" });
+    setEditing({ ...t, media_url: t.media_url || "", pdf_url: t.pdf_url || "" });
     setOpen(true);
   }
 
@@ -176,6 +178,7 @@ export default function AdminCrmTemplates() {
       channel: editing.channel || "zapi",
       body: editing.body!,
       media_url: editing.media_url?.trim() || null,
+      pdf_url: editing.pdf_url?.trim() || null,
       active: !!editing.active,
       is_automatic: !!editing.is_automatic,
       automation_trigger: editing.is_automatic ? (editing.automation_trigger?.trim() || null) : null,
@@ -235,6 +238,7 @@ export default function AdminCrmTemplates() {
       channel: t.channel,
       body: t.body,
       media_url: t.media_url,
+      pdf_url: t.pdf_url,
       active: false,
       is_automatic: false,
       automation_trigger: null,
@@ -429,9 +433,15 @@ export default function AdminCrmTemplates() {
                 ))}
               </div>
             </div>
-            <div>
-              <Label className="text-xs">URL de mídia (opcional)</Label>
-              <Input value={editing.media_url || ""} onChange={(e) => setEditing({ ...editing, media_url: e.target.value })} placeholder="https://..." />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">URL da Imagem/Vídeo (opcional)</Label>
+                <Input value={editing.media_url || ""} onChange={(e) => setEditing({ ...editing, media_url: e.target.value })} placeholder="https://... (jpg, png, mp4)" />
+              </div>
+              <div>
+                <Label className="text-xs">URL do PDF (opcional)</Label>
+                <Input value={editing.pdf_url || ""} onChange={(e) => setEditing({ ...editing, pdf_url: e.target.value })} placeholder="https://... (pdf)" />
+              </div>
             </div>
             <div>
               <Label className="text-xs">Descrição interna</Label>
