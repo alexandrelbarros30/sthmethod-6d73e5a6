@@ -389,6 +389,12 @@ Deno.serve(async (req) => {
     const getFlowStep = (key: string) => (flowSteps || []).find(s => s.key === key);
     const channelHours = provider === 'wapi_sucesso' ? hoursSucessoCfg?.value : (provider === 'wapi' ? hoursNutriCfg?.value : hoursComCfg?.value);
     const withinHours = isWithinBusinessHours(channelHours);
+    
+    // NOVO: Redirecionamento automático para Sucesso do Aluno quando fora do horário comercial
+    let forceSucessoQueue = false;
+    if (!withinHours && provider === 'zapi') {
+      forceSucessoQueue = true;
+    }
 
     const profile = await findProfileByPhone(admin, phone, 'user_id, full_name, objective, phone');
     let displayName = name || profile?.full_name || null;
@@ -407,7 +413,7 @@ Deno.serve(async (req) => {
 
     const cls = classify(body);
     let finalQueue = cls.queue || (provider === 'zapi' ? 'comercial' : 'nutri');
-    if (identifiedAs !== 'lead' && provider === 'zapi') finalQueue = 'sucesso';
+    if ((identifiedAs !== 'lead' && provider === 'zapi') || forceSucessoQueue) finalQueue = 'sucesso';
 
     const [{ data: sessionTimeoutCfg }, { data: farewellMsgCfg }] = await Promise.all([
       admin.from('crm_settings').select('value').eq('key', 'session_timeout_minutes').maybeSingle(),
@@ -531,16 +537,29 @@ Deno.serve(async (req) => {
       autoReply = { sent: false, reason: 'disabled' };
     }
     else if (!withinHours) {
-      if (isNewSession) {
+      if (isNewSession || forceSucessoQueue) {
         let msg = '';
         if (provider === 'zapi') {
-          if (identifiedAs === 'lead') msg = comAwayLead?.value?.message;
-          else if (identifiedAs === 'aluno_ativo') msg = comAwayActive?.value?.message;
-          else msg = comAwayExpired?.value?.message;
+          // Se for redirecionamento forçado por horário, usamos a mensagem de Sucesso do Aluno
+          if (forceSucessoQueue) {
+            msg = String(getFlowStep('sucesso_main_menu')?.message || 'Bem-vindo ao Sucesso do Aluno. No momento estamos fora do horário de expediente, mas sua mensagem foi recebida e será processada automaticamente.');
+            // Garantimos que o estado do fluxo seja atualizado para o menu de sucesso
+            await admin.from('crm_conversations').update({ 
+              flow_state: 'sucesso_main_menu', 
+              queue_type: 'sucesso' 
+            }).eq('id', conv.id);
+          } else {
+            if (identifiedAs === 'lead') msg = comAwayLead?.value?.message;
+            else if (identifiedAs === 'aluno_ativo') msg = comAwayActive?.value?.message;
+            else msg = comAwayExpired?.value?.message;
+          }
         } else {
           msg = identifiedAs === 'aluno_ativo' ? nutriAwayActive?.value?.message : nutriAwayInactive?.value?.message;
         }
-        if (msg) { const r = await sendMessage(msg, 'away'); autoReply = { sent: r.sent, engine: 'away' }; }
+        if (msg) { 
+          const r = await sendMessage(msg, 'away'); 
+          autoReply = { sent: r.sent, engine: 'away' }; 
+        }
       }
     } else if (!conv.flow_state) {
       if (provider === 'wapi') {
