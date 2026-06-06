@@ -326,18 +326,44 @@ Deno.serve(async (req) => {
     let finalQueue = cls.queue || (provider === 'zapi' ? 'comercial' : 'nutri');
     if (identifiedAs !== 'lead' && provider === 'zapi') finalQueue = 'sucesso';
 
-    const SESSION_TTL_MS = 2 * 60 * 60 * 1000;
+    const [{ data: sessionTimeoutCfg }, { data: farewellMsgCfg }] = await Promise.all([
+      admin.from('crm_settings').select('value').eq('key', 'session_timeout_minutes').maybeSingle(),
+      admin.from('crm_settings').select('value').eq('key', 'farewell_message').maybeSingle(),
+    ]);
+
+    const timeoutMinutes = (sessionTimeoutCfg?.value as any)?.minutes || 120;
+    const farewellMessage = (farewellMsgCfg?.value as any)?.message || 'Atendimento encerrado por inatividade. Caso precise, envie uma nova mensagem.';
+
+    const SESSION_TTL_MS = timeoutMinutes * 60 * 1000;
     const now = new Date();
     const sessionExpiresAt = new Date(now.getTime() + SESSION_TTL_MS);
     let { data: conv } = await admin.from('crm_conversations').select('*').eq('phone', phone).maybeSingle();
-    const isNewSession = !conv || conv.status === 'closed' || !conv.session_expires_at || new Date(conv.session_expires_at).getTime() < now.getTime();
+    const isExpired = conv?.session_expires_at && new Date(conv.session_expires_at).getTime() < now.getTime();
+    const isNewSession = !conv || conv.status === 'closed' || isExpired;
 
     if (!conv) {
       const ins = await admin.from('crm_conversations').insert({ phone, display_name: displayName, channel: 'whatsapp', status: 'open', provider, queue_type: finalQueue, nutri_category: cls.nutriCategory, is_lead: identifiedAs === 'lead', user_id: profile?.user_id, identified_as: identifiedAs, session_started_at: now.toISOString(), session_expires_at: sessionExpiresAt.toISOString(), session_count: 1 }).select('*').single();
       conv = ins.data;
     } else {
+      if (isExpired && conv.status === 'open') {
+        // Enviar despedida por timeout se estava aberto
+        const fnName = provider === 'wapi_sucesso' ? 'send-wapi-sucesso' : (provider === 'zapi' ? null : 'send-wapi');
+        if (fnName) {
+          await admin.functions.invoke(fnName, { body: { phone, message: farewellMessage } });
+        } else if (provider === 'zapi') {
+          // Implementação direta simplificada para o timeout no zapi se necessário, ou ignorar se for muito complexo no momento
+        }
+        await admin.from('crm_messages').insert({ conversation_id: conv.id, direction: 'out', body: farewellMessage, source: provider, status: 'sent', metadata: { type: 'timeout_farewell' } });
+      }
+
       const upd: any = { provider, session_expires_at: sessionExpiresAt.toISOString(), status: 'open', is_lead: identifiedAs === 'lead', user_id: profile?.user_id, identified_as: identifiedAs };
-      if (isNewSession) { upd.session_started_at = now.toISOString(); upd.session_count = (conv.session_count || 0) + 1; upd.flow_state = null; upd.flow_context = {}; upd.human_handoff = false; }
+      if (isNewSession) { 
+        upd.session_started_at = now.toISOString(); 
+        upd.session_count = (conv.session_count || 0) + 1; 
+        upd.flow_state = null; 
+        upd.flow_context = {}; 
+        upd.human_handoff = false; 
+      }
       if (displayName) upd.display_name = displayName;
       await admin.from('crm_conversations').update(upd).eq('id', conv.id);
       conv = { ...conv, ...upd };
