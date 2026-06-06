@@ -16,7 +16,7 @@ function localEngineReply(input: string): string {
     return 'Vou te encaminhar para um consultor humano. Pode me confirmar seu nome completo e e-mail?';
   }
   if (/\b4\b|aluno|j[áa] sou|nutri/.test(t)) {
-    return 'Perfeito! O canal exclusivo para alunos ativos é o Fale com o Nutri: https://wa.me/5521998984153';
+    return 'Perfeito! O canal exclusivo para alunos ativos é o Sucesso do Aluno: https://wa.me/5521991751515';
   }
   return 'Recebi sua mensagem. Para te ajudar melhor, responda com 1️⃣ Planos, 2️⃣ Como funciona, 3️⃣ Falar com consultor ou 4️⃣ Já sou aluno.';
 }
@@ -544,7 +544,7 @@ Deno.serve(async (req) => {
         if (provider === 'zapi') {
           // Se for redirecionamento forçado por horário, usamos a mensagem de Sucesso do Aluno
           if (forceSucessoQueue) {
-            msg = "No momento estamos fora do horário de expediente no canal Comercial.\n\nPara um atendimento automatizado agora, por favor acesse nosso canal de Sucesso do Aluno: https://wa.me/5521998984153\n\nEstamos encerrando este atendimento aqui para você seguir por lá! 👋";
+            msg = "No momento estamos fora do horário de expediente no canal Comercial.\n\nPara um atendimento automatizado agora, por favor acesse nosso canal de Sucesso do Aluno: https://wa.me/5521991751515\n\nEstamos encerrando este atendimento aqui para você seguir por lá! 👋";
             
             const r = await sendMessage(msg, 'away_redirect');
             
