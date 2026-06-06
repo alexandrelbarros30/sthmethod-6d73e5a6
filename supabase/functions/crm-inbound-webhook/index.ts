@@ -124,10 +124,6 @@ async function generateAiReply({
   };
 }
 
-// Public webhook (no JWT). Use ?provider=zapi|wapi and ?secret=... in URL.
-// Z-API → channel "comercial" (STH One)
-// W-API → channel "nutri" (Fale com o Nutri)
-
 function normalizePhone(raw: string): string {
   let d = String(raw || '').replace(/\D+/g, '').replace(/^0+/, '');
   if (d.length >= 12 && d.startsWith('55')) return d;
@@ -135,7 +131,6 @@ function normalizePhone(raw: string): string {
   return d;
 }
 
-// === Horário de atendimento humano (timezone America/Sao_Paulo) ===
 function spNow() {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/Sao_Paulo',
@@ -154,7 +149,7 @@ function hhmmToMin(s: string): number {
 }
 
 function isWithinBusinessHours(cfg: any): boolean {
-  if (!cfg) return true; // sem config = sempre atendendo
+  if (!cfg) return true;
   const { dow, minutes } = spNow();
   let win: any = null;
   if (dow >= 1 && dow <= 5) win = cfg.mon_fri;
@@ -177,16 +172,13 @@ function phoneCandidates(d: string): string[] {
   return Array.from(set);
 }
 
-// Triagem por palavras-chave atualizada para os 3 canais
 function classify(text: string): { queue: 'comercial'|'nutri'|'sucesso'|'financeiro'|null; nutriCategory: string | null; tags: string[] } {
   const t = String(text || '').toLowerCase();
   const tags: string[] = [];
   let queue: any = null;
   let nutriCategory: string | null = null;
-
   const has = (...kw: string[]) => kw.some(k => t.includes(k));
 
-  // 1. Sucesso do Aluno (Financeiro/Renovação/Admin)
   if (has('cobran', 'pagamento', 'pagar', 'pix', 'boleto', 'comprovante', 'fatura', 'cartao', 'cartão', 'financeiro', 'vencido')) {
     queue = 'sucesso'; tags.push('FINANCEIRO','PAGAMENTO');
   }
@@ -194,17 +186,11 @@ function classify(text: string): { queue: 'comercial'|'nutri'|'sucesso'|'finance
     queue = 'sucesso'; tags.push('RENOVACAO');
   }
   else if (has('peso', 'medidas', 'foto', 'evolução', 'evolucao', 'atualização', 'atualizacao', 'progresso', 'exame', 'exames')) {
-    // Atualizações podem cair no Sucesso (administrativo) ou Nutri (técnico)
-    // Pela regra nova, Sucesso gerencia a jornada de atualização.
     queue = 'sucesso'; tags.push('SUCESSO','ATUALIZACAO');
   }
-
-  // 2. Comercial (Novos interessados)
   else if (has('preço','preco','plano','planos','contratar','assinar','quero entrar','quero começar','quero comecar','quanto custa','valor','valores')) {
     queue = 'comercial'; tags.push('COMERCIAL','INTERESSE');
   }
-
-  // 3. Nutri (Dúvidas técnicas)
   else if (has('dieta','refeição','refeicao','cardápio','cardapio','calorias','macros')) {
     queue = 'nutri'; nutriCategory = 'Dieta'; tags.push('NUTRI','DIETA');
   }
@@ -217,7 +203,6 @@ function classify(text: string): { queue: 'comercial'|'nutri'|'sucesso'|'finance
   else if (has('urgente','urgência','urgencia','prioridade','emergência','emergencia')) {
     queue = 'nutri'; nutriCategory = 'Prioridade'; tags.push('NUTRI','PRIORIDADE');
   }
-
   return { queue, nutriCategory, tags };
 }
 
@@ -226,828 +211,221 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const provider = (url.searchParams.get('provider') || 'wapi').toLowerCase(); // zapi | wapi | wapi_sucesso
+    const provider = (url.searchParams.get('provider') || 'wapi').toLowerCase();
     const expectedSecret = Deno.env.get('MP_WEBHOOK_SECRET') || '';
     const provided = req.headers.get('x-webhook-secret') || url.searchParams.get('secret') || '';
-
     const payload = await req.json().catch(() => ({})) as any;
 
-    // Autenticação flexível:
-    // 1) secret correto via header/query OU
-    // 2) instanceId do payload bate com o ZAPI_INSTANCE_ID / WAPI_INSTANCE_ID configurado
-    const payloadInstance = String(
-      payload?.instanceId || payload?.instance_id || payload?.instance || ''
-    ).trim();
-    const expectedInstance = (
-      provider === 'zapi'
-        ? Deno.env.get('ZAPI_INSTANCE_ID')
-        : (provider === 'wapi_sucesso' ? '' : Deno.env.get('WAPI_INSTANCE_ID'))
-    ) || '';
+    const payloadInstance = String(payload?.instanceId || payload?.instance_id || payload?.instance || '').trim();
+    const expectedInstance = (provider === 'zapi' ? Deno.env.get('ZAPI_INSTANCE_ID') : (provider === 'wapi_sucesso' ? '' : Deno.env.get('WAPI_INSTANCE_ID'))) || '';
     const secretOk = expectedSecret && provided === expectedSecret;
     const instanceOk = expectedInstance && payloadInstance && payloadInstance === expectedInstance;
     if (expectedSecret && !secretOk && !instanceOk) {
       return new Response(JSON.stringify({ error: 'invalid secret' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
+
     const phoneRaw = payload?.phone || payload?.from || payload?.data?.from || payload?.message?.from || '';
-    // Z-API: text.message | image.caption | audio (sem texto) | document.caption
-    const rawText =
-      (typeof payload?.text === 'string' ? payload.text : payload?.text?.message) ||
-      payload?.message?.conversation ||
-      (typeof payload?.message === 'string' ? payload.message : '') ||
-      payload?.image?.caption ||
-      payload?.video?.caption ||
-      payload?.document?.caption ||
-      payload?.body ||
-      payload?.data?.message?.text ||
-      '';
+    const rawText = (typeof payload?.text === 'string' ? payload.text : payload?.text?.message) || payload?.message?.conversation || (typeof payload?.message === 'string' ? payload.message : '') || payload?.image?.caption || payload?.video?.caption || payload?.document?.caption || payload?.body || payload?.data?.message?.text || '';
     const body = typeof rawText === 'string' ? rawText : '';
     const externalId = payload?.messageId || payload?.id || null;
     const name = payload?.senderName || payload?.pushName || null;
 
-    // Ignora mensagens enviadas por mim e mensagens de grupo
-    const isFromMe = payload?.fromMe === true || payload?.from_me === true;
-    const isGroup =
-      payload?.isGroup === true ||
-      payload?.is_group === true ||
-      String(phoneRaw).startsWith('120363') ||
-      String(phoneRaw).includes('-') ||
-      String(phoneRaw).includes('@g.us');
-    if (isFromMe || isGroup) {
-      return new Response(JSON.stringify({ ok: true, skipped: isFromMe ? 'fromMe' : 'group' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
-
-    const phone = normalizePhone(phoneRaw);
-    if (!phone || !body) {
+    if (payload?.fromMe === true || payload?.from_me === true || payload?.isGroup === true || payload?.is_group === true || String(phoneRaw).startsWith('120363') || String(phoneRaw).includes('-') || String(phoneRaw).includes('@g.us')) {
       return new Response(JSON.stringify({ ok: true, skipped: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    const phone = normalizePhone(phoneRaw);
+    if (!phone || !body) return new Response(JSON.stringify({ ok: true, skipped: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
-    // === OPT-OUT por palavra-chave ===
-    // "CANCELAR ENVIO" → marca o aluno como opt-out e responde 1x confirmando.
-    // "VOLTAR" → reativa o recebimento (se já estava opt-out).
+    // OPT-OUT
     const normalizedBody = String(body).trim().toUpperCase();
-    const isOptOutKeyword = /\bCANCELAR\s+ENVIO\b/.test(normalizedBody);
-    const isReactivateKeyword = /^VOLTAR$/.test(normalizedBody);
-    if (isOptOutKeyword || isReactivateKeyword) {
+    if (/\bCANCELAR\s+ENVIO\b/.test(normalizedBody) || /^VOLTAR$/.test(normalizedBody)) {
+      const isOptOut = /\bCANCELAR\s+ENVIO\b/.test(normalizedBody);
       const candidates = phoneCandidates(phone);
-      const { data: matchedProfile } = await admin
-        .from('profiles').select('user_id, full_name').in('phone', candidates).limit(1).maybeSingle();
-
-      if (matchedProfile?.user_id) {
-        await admin.from('profiles').update({
-          whatsapp_opt_out: isOptOutKeyword,
-          whatsapp_opt_out_at: isOptOutKeyword ? new Date().toISOString() : null,
-          whatsapp_opt_out_reason: isOptOutKeyword ? 'Solicitação do aluno via WhatsApp (CANCELAR ENVIO)' : null,
-        }).eq('user_id', matchedProfile.user_id);
+      const { data: profile } = await admin.from('profiles').select('user_id, full_name').in('phone', candidates).limit(1).maybeSingle();
+      if (profile?.user_id) {
+        await admin.from('profiles').update({ whatsapp_opt_out: isOptOut, whatsapp_opt_out_at: isOptOut ? new Date().toISOString() : null }).eq('user_id', profile.user_id);
       }
-
-      // Registra a mensagem do aluno na conversa (mesmo que mute as automações depois)
-      let { data: convRow } = await admin.from('crm_conversations').select('id').eq('phone', phone).maybeSingle();
-      if (!convRow) {
-        const ins = await admin.from('crm_conversations').insert({
-          phone, display_name: name || matchedProfile?.full_name || null,
-          channel: 'whatsapp', status: 'open', provider,
-          queue_type: provider === 'zapi' ? 'comercial' : 'nutri',
-          is_lead: !matchedProfile,
-        }).select('id').single();
-        convRow = ins.data;
-      }
-      await admin.from('crm_messages').insert({
-        conversation_id: convRow!.id, direction: 'in', body: String(body),
-        source: provider === 'zapi' ? 'zapi' : 'wapi', external_id: externalId, status: 'received',
-      });
-
-      // Responde diretamente via API do provider — NÃO usa send-whatsapp/send-wapi
-      // pois eles bloqueariam pelo próprio opt-out que acabamos de marcar.
-      const firstName = (matchedProfile?.full_name || '').split(' ')[0] || 'Aluno';
-      const replyMessage = isOptOutKeyword
-        ? `Tudo certo, ${firstName}. Você não receberá mais mensagens automáticas da STH METHOD. ✅\n\nPara reativar a qualquer momento, basta responder *VOLTAR*.`
-        : `Bem-vindo de volta, ${firstName}! 💪 Você voltará a receber as comunicações da STH METHOD normalmente.`;
-      try {
-        if (provider === 'wapi' || provider === 'wapi_sucesso') {
-          const { data: wcfg } = await admin.from('crm_settings').select('value').eq('key', provider).maybeSingle();
-          const c: any = wcfg?.value || {};
-          const INSTANCE_ID = (c.instance_id || (provider === 'wapi' ? Deno.env.get('WAPI_INSTANCE_ID') : '') || '').trim();
-          const TOKEN = (c.token || (provider === 'wapi' ? Deno.env.get('WAPI_TOKEN') : '') || '').trim();
-          const CLIENT_TOKEN = (c.client_token || (provider === 'wapi' ? Deno.env.get('WAPI_CLIENT_TOKEN') : '') || '').trim();
-          const serverUrl = ((c.server_url || '').trim() || 'https://api.w-api.app').replace(/\/$/, '');
-          if (INSTANCE_ID && TOKEN) {
-            const h: Record<string, string> = { 'Content-Type': 'application/json', Authorization: `Bearer ${TOKEN}` };
-            if (CLIENT_TOKEN) h['Client-Token'] = CLIENT_TOKEN;
-            await fetch(`${serverUrl}/v1/message/send-text?instanceId=${INSTANCE_ID}`, {
-              method: 'POST', headers: h,
-              body: JSON.stringify({ phone, message: replyMessage }),
-            });
-          }
-        } else {
-          const { data: zcfg } = await admin.from('crm_settings').select('value').eq('key', 'zapi').maybeSingle();
-          const c: any = zcfg?.value || {};
-          const INSTANCE_ID = (c.instance_id || '').trim() || Deno.env.get('ZAPI_INSTANCE_ID');
-          const INSTANCE_TOKEN = (c.instance_token || '').trim() || Deno.env.get('ZAPI_INSTANCE_TOKEN');
-          const CLIENT_TOKEN = (c.client_token || '').trim() || Deno.env.get('ZAPI_CLIENT_TOKEN');
-          if (INSTANCE_ID && INSTANCE_TOKEN && CLIENT_TOKEN) {
-            await fetch(`https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Client-Token': CLIENT_TOKEN },
-              body: JSON.stringify({ phone, message: replyMessage }),
-            });
-          }
-        }
-        await admin.from('crm_messages').insert({
-          conversation_id: convRow!.id, direction: 'out', body: replyMessage,
-          source: provider === 'zapi' ? 'zapi' : 'wapi', status: 'sent',
-        });
-      } catch (e) {
-        console.error('opt-out confirm reply failed', e);
-      }
-
-      return new Response(JSON.stringify({
-        ok: true, opt_out: isOptOutKeyword, reactivated: isReactivateKeyword,
-      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ ok: true, opt_out: isOptOut }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const [{ data: aiModeCfg }, { data: wapiCfg }, { data: zapiCfg }, { data: wapiSucessoCfg }] = await Promise.all([
+    const [{ data: aiModeCfg }, { data: wapiCfg }, { data: zapiCfg }, { data: wapiSucessoCfg }, { data: hoursComCfg }, { data: hoursNutriCfg }, { data: hoursSucessoCfg }, { data: nutriAwayActive }, { data: nutriAwayInactive }, { data: flowSteps }] = await Promise.all([
       admin.from('crm_settings').select('value').eq('key', 'ai_mode').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'wapi').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'zapi').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'wapi_sucesso').maybeSingle(),
-    ]);
-
-    // Horários de atendimento humano (separados por canal)
-    const [
-      { data: hoursComCfg },
-      { data: hoursNutriCfg },
-      { data: hoursSucessoCfg },
-      { data: nutriAwayActive },
-      { data: nutriAwayInactive },
-      { data: comAwayActiveCfg },
-      { data: comAwayExpiredCfg },
-      { data: comAwayLeadCfg },
-    ] = await Promise.all([
       admin.from('crm_settings').select('value').eq('key', 'business_hours_comercial').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'business_hours_nutri').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'business_hours_sucesso').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'nutri_away_active').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'nutri_away_inactive').maybeSingle(),
-      admin.from('crm_settings').select('value').eq('key', 'comercial_away_active').maybeSingle(),
-      admin.from('crm_settings').select('value').eq('key', 'comercial_away_expired').maybeSingle(),
-      admin.from('crm_settings').select('value').eq('key', 'comercial_away_lead').maybeSingle(),
+      admin.from('crm_flow_steps').select('*'),
     ]);
-    // 1. Fetch all flow steps from crm_flow_steps
-    const { data: flowSteps } = await admin.from('crm_flow_steps').select('*');
-    const getFlowStep = (key: string) => {
-      const step = (flowSteps || []).find(s => s.key === key);
-      if (step) return { value: { message: step.message, image_url: step.media_url, media_type: step.media_type } };
-      return null;
-    };
 
-    const comIdActive = getFlowStep('comercial_ident_ativo');
-    const comIdExpired = getFlowStep('comercial_ident_inativo');
-    const comIdExAluno = getFlowStep('comercial_ident_exaluno');
-    const comSaudacaoLead = getFlowStep('comercial_saudacao_lead');
-    const comConhecerConsultoria = getFlowStep('comercial_conhecer_consultoria');
-
-    const leadMenuCfg = getFlowStep('comercial_lead_menu');
-    const formasPagCfg = getFlowStep('comercial_formas_pagamento');
-    const handoffConsCfg = getFlowStep('comercial_handoff_consultor');
-    const listaPlanosCfg = getFlowStep('comercial_lista_planos');
-    const channelHours = provider === 'wapi_sucesso' ? (hoursSucessoCfg?.value as any) : (provider === 'wapi' ? (hoursNutriCfg?.value as any) : (hoursComCfg?.value as any));
+    const getFlowStep = (key: string) => (flowSteps || []).find(s => s.key === key);
+    const channelHours = provider === 'wapi_sucesso' ? hoursSucessoCfg?.value : (provider === 'wapi' ? hoursNutriCfg?.value : hoursComCfg?.value);
     const withinHours = isWithinBusinessHours(channelHours);
 
-    // 1. lookup profile + subscription (identificação do contato)
     const candidates = phoneCandidates(phone);
     const { data: profiles } = await admin.from('profiles').select('user_id, full_name, objective').in('phone', candidates).limit(1);
     const profile = profiles?.[0];
     let displayName = name || profile?.full_name || null;
-    let isLead = !profile;
-    let queueOverride: string | null = null;
-    const tagsToApply: string[] = [];
     let identifiedAs: 'aluno_ativo' | 'aluno_vencido' | 'lead' | 'ex_aluno' = 'lead';
 
     if (profile) {
-      const { data: subs } = await admin.from('subscriptions').select('end_date,status').eq('user_id', profile.user_id).order('end_date', { ascending: false }).limit(1);
+      const { data: subs } = await admin.from('subscriptions').select('end_date').eq('user_id', profile.user_id).order('end_date', { ascending: false }).limit(1);
       const sub = subs?.[0];
       if (sub) {
         const days = Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86400000);
-        if (days < -365) { 
-          tagsToApply.push('EX_ALUNO'); 
-          identifiedAs = 'ex_aluno'; 
-        } else if (days < 0) { 
-          tagsToApply.push('ALUNO_VENCIDO'); 
-          identifiedAs = 'aluno_vencido'; 
-        } else { 
-          tagsToApply.push('ALUNO_ATIVO'); 
-          identifiedAs = 'aluno_ativo'; 
-        }
-      } else {
-        tagsToApply.push('LEAD'); isLead = true; identifiedAs = 'lead';
+        if (days < -365) identifiedAs = 'ex_aluno';
+        else if (days < 0) identifiedAs = 'aluno_vencido';
+        else identifiedAs = 'aluno_ativo';
       }
-    } else {
-      tagsToApply.push('LEAD');
-      identifiedAs = 'lead';
     }
 
-    // 2. classify message
     const cls = classify(body);
-    
-    // Regra: Aluno Ativo, Inativo ou Ex-Aluno sempre vai para Sucesso do Aluno no primeiro contato (se não vier via Nutri)
-    let finalQueue: string = cls.queue || (provider === 'zapi' ? 'comercial' : 'nutri');
-    
-    if (identifiedAs !== 'lead' && provider === 'zapi') {
-      finalQueue = 'sucesso';
-    }
-    
-    if (queueOverride) finalQueue = queueOverride;
+    let finalQueue = cls.queue || (provider === 'zapi' ? 'comercial' : 'nutri');
+    if (identifiedAs !== 'lead' && provider === 'zapi') finalQueue = 'sucesso';
 
-    for (const t of cls.tags) if (!tagsToApply.includes(t)) tagsToApply.push(t);
-
-    // 3. upsert conversation + regra de sessão (janela 2h, reset silencioso)
-    const SESSION_TTL_MS = 2 * 60 * 60 * 1000; // 2 horas
+    const SESSION_TTL_MS = 2 * 60 * 60 * 1000;
     const now = new Date();
     const sessionExpiresAt = new Date(now.getTime() + SESSION_TTL_MS);
-
-    let { data: conv } = await admin
-      .from('crm_conversations')
-      .select('id, queue_type, status, session_expires_at, session_count')
-      .eq('phone', phone)
-      .maybeSingle();
-
-    // Define se é uma NOVA sessão: conversa nova, encerrada, ou expirada.
-    const isNewSession = !conv
-      || conv.status === 'closed'
-      || !conv.session_expires_at
-      || new Date(conv.session_expires_at).getTime() < now.getTime();
+    let { data: conv } = await admin.from('crm_conversations').select('*').eq('phone', phone).maybeSingle();
+    const isNewSession = !conv || conv.status === 'closed' || !conv.session_expires_at || new Date(conv.session_expires_at).getTime() < now.getTime();
 
     if (!conv) {
-      const ins = await admin.from('crm_conversations').insert({
-        phone, display_name: displayName, channel: 'whatsapp', status: 'open',
-        provider, queue_type: finalQueue, nutri_category: cls.nutriCategory, is_lead: isLead,
-        user_id: profile?.user_id || null,
-        identified_as: identifiedAs,
-        session_started_at: now.toISOString(),
-        session_expires_at: sessionExpiresAt.toISOString(),
-        session_count: 1,
-      }).select('id, queue_type').single();
+      const ins = await admin.from('crm_conversations').insert({ phone, display_name: displayName, channel: 'whatsapp', status: 'open', provider, queue_type: finalQueue, nutri_category: cls.nutriCategory, is_lead: identifiedAs === 'lead', user_id: profile?.user_id, identified_as: identifiedAs, session_started_at: now.toISOString(), session_expires_at: sessionExpiresAt.toISOString(), session_count: 1 }).select('*').single();
       conv = ins.data;
-    } else if (isNewSession) {
-      // Nova sessão → reidentifica do zero (silenciosamente)
-      await admin.from('crm_conversations').update({
-        provider,
-        status: 'open',
-        display_name: displayName || undefined,
-        queue_type: finalQueue,
-        nutri_category: cls.nutriCategory,
-        is_lead: isLead,
-        user_id: profile?.user_id || null,
-        identified_as: identifiedAs,
-        session_started_at: now.toISOString(),
-        session_expires_at: sessionExpiresAt.toISOString(),
-        session_count: (conv.session_count || 0) + 1,
-      }).eq('id', conv.id);
     } else {
-      // Mesma sessão → mantém identificação, só estende janela
-      const upd: any = { provider, session_expires_at: sessionExpiresAt.toISOString() };
+      const upd: any = { provider, session_expires_at: sessionExpiresAt.toISOString(), status: 'open', is_lead: identifiedAs === 'lead', user_id: profile?.user_id, identified_as: identifiedAs };
+      if (isNewSession) { upd.session_started_at = now.toISOString(); upd.session_count = (conv.session_count || 0) + 1; upd.flow_state = null; upd.flow_context = {}; upd.human_handoff = false; }
       if (displayName) upd.display_name = displayName;
-      if (!conv.queue_type) upd.queue_type = finalQueue;
-      if (cls.nutriCategory) upd.nutri_category = cls.nutriCategory;
-      upd.is_lead = isLead;
-      if (profile?.user_id) upd.user_id = profile.user_id;
-      upd.identified_as = identifiedAs;
       await admin.from('crm_conversations').update(upd).eq('id', conv.id);
+      conv = { ...conv, ...upd };
     }
 
-    // 4. insert message
-    await admin.from('crm_messages').insert({
-      conversation_id: conv!.id, direction: 'in', body: String(body),
-      source: provider === 'zapi' ? 'zapi' : 'wapi', external_id: externalId, status: 'received',
-    });
-
-    // 5. apply tags
-    if (tagsToApply.length) {
-      const { data: tagRows } = await admin.from('crm_tags').select('id,name').in('name', tagsToApply);
-      const existing = await admin.from('crm_conversation_tags').select('tag_id').eq('conversation_id', conv!.id);
-      const existSet = new Set((existing.data || []).map((r: any) => r.tag_id));
-      const toInsert = (tagRows || []).filter((t: any) => !existSet.has(t.id)).map((t: any) => ({ conversation_id: conv!.id, tag_id: t.id }));
-      if (toInsert.length) await admin.from('crm_conversation_tags').insert(toInsert);
-    }
-
-    // Tag OUT_OF_HOURS para visibilidade no CRM (fora do horário humano)
-    if (!withinHours) {
-      const { data: tagRow } = await admin.from('crm_tags').select('id').eq('name', 'OUT_OF_HOURS').maybeSingle();
-      if (tagRow?.id) {
-        await admin.from('crm_conversation_tags').upsert(
-          { conversation_id: conv!.id, tag_id: tagRow.id },
-          { onConflict: 'conversation_id,tag_id', ignoreDuplicates: true } as any,
-        );
-      }
-    }
-
-    // 6. enqueue
-    const queueName = finalQueue === 'comercial' ? 'Atendimento Comercial'
-      : finalQueue === 'sucesso' ? 'Sucesso do Aluno'
-      : finalQueue === 'financeiro' ? 'Financeiro'
-      : (cls.nutriCategory || 'Dieta');
-    const { data: queue } = await admin.from('crm_queues').select('id').eq('name', queueName).maybeSingle();
-    if (queue) {
-      const { data: openItem } = await admin.from('crm_queue_items').select('id').eq('conversation_id', conv!.id).is('closed_at', null).maybeSingle();
-      if (!openItem) {
-        await admin.from('crm_queue_items').insert({
-          queue_id: queue.id, conversation_id: conv!.id, phone,
-          priority: finalQueue === 'comercial' ? 2 : (cls.nutriCategory === 'Prioridade' ? 0 : 5),
-        });
-      }
-    }
-
-    let autoReply: { sent: boolean; reason?: string; engine?: string; model?: string } | undefined;
-    const aiMode = ((aiModeCfg?.value as any)?.mode || 'copilot') as 'copilot' | 'auto';
-    const channelEnabled = provider === 'wapi'
-      ? (wapiCfg?.value as any)?.enabled === true
-      : provider === 'wapi_sucesso'
-        ? (wapiSucessoCfg?.value as any)?.enabled === true
-        : (zapiCfg?.value as any)?.enabled === true;
+    await admin.from('crm_messages').insert({ conversation_id: conv.id, direction: 'in', body: String(body), source: provider, external_id: externalId, status: 'received' });
 
     const FIRST_NAME = (displayName || profile?.full_name || '').toString().split(' ')[0] || '';
-    const NOME_SEP = FIRST_NAME ? ' ' : '';
     const renderTpl = (s: string, extra: Record<string, string> = {}) => {
-      const nameToUse = extra.nome || FIRST_NAME;
-      let out = String(s || '')
-        .replace(/\{nome\}/gi, nameToUse)
-        .replace(/\{nomeSep\}/gi, nameToUse ? ' ' : '');
-      for (const [k, v] of Object.entries(extra)) {
-        if (k === 'nome') continue;
-        out = out.replace(new RegExp(`\\{${k}\\}`, 'gi'), String(v ?? ''));
-      }
+      let out = String(s || '').replace(/\{nome\}/gi, extra.nome || FIRST_NAME).replace(/\{nomeSep\}/gi, (extra.nome || FIRST_NAME) ? ' ' : '');
+      for (const [k, v] of Object.entries(extra)) if (k !== 'nome') out = out.replace(new RegExp(`\\{${k}\\}`, 'gi'), String(v ?? ''));
       return out;
     };
 
-    // Helper: envia texto via Z-API, registra em crm_messages e atualiza timer de inatividade.
-    const sendZapiText = async (message: string, modelTag: string) => {
-      return sendZapiMedia(message, null, modelTag);
-    };
-    const sendZapiMedia = async (message: string, imageUrl: string | null | undefined, modelTag: string) => {
-      const c = (zapiCfg?.value as any) || {};
-      const INSTANCE_ID = (c.instance_id || Deno.env.get('ZAPI_INSTANCE_ID') || '').trim();
-      const INSTANCE_TOKEN = (c.instance_token || Deno.env.get('ZAPI_INSTANCE_TOKEN') || '').trim();
-      const CLIENT_TOKEN = (c.client_token || Deno.env.get('ZAPI_CLIENT_TOKEN') || '').trim();
-      let sent = false;
-      let messageId: string | null = null;
-      if (INSTANCE_ID && INSTANCE_TOKEN && (message || imageUrl)) {
-        const url = String(imageUrl || '').trim();
-        const isPdf = url.toLowerCase().includes('.pdf') || url.includes('media_type=pdf');
-        const useMedia = !!url;
-        
-        let endpoint = `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`;
-        let body: any = { phone, message };
-
-        if (useMedia) {
-          if (isPdf) {
-            const ext = (url.split('?')[0].split('.').pop() || 'pdf').toLowerCase();
-            endpoint = `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-document/${ext}`;
-            body = { phone, document: url, fileName: `documento.${ext}`, caption: message };
-          } else {
-            endpoint = `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-image`;
-            body = { phone, image: url, caption: message };
-          }
+    const sendMessage = async (message: string, tag: string, imageUrl?: string | null) => {
+      const tplMessage = renderTpl(message);
+      let sent = false; let messageId: string | null = null;
+      if (provider === 'zapi') {
+        const c = (zapiCfg?.value as any) || {};
+        const INSTANCE_ID = (c.instance_id || Deno.env.get('ZAPI_INSTANCE_ID') || '').trim();
+        const INSTANCE_TOKEN = (c.instance_token || Deno.env.get('ZAPI_INSTANCE_TOKEN') || '').trim();
+        const CLIENT_TOKEN = (c.client_token || Deno.env.get('ZAPI_CLIENT_TOKEN') || '').trim();
+        if (INSTANCE_ID && INSTANCE_TOKEN) {
+          const isPdf = String(imageUrl || '').toLowerCase().includes('.pdf');
+          const endpoint = `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-${imageUrl ? (isPdf ? 'document' : 'image') : 'text'}`;
+          const bodyPayload: any = { phone, message: tplMessage };
+          if (imageUrl) { if (isPdf) { bodyPayload.document = imageUrl; bodyPayload.fileName = 'documento.pdf'; bodyPayload.caption = tplMessage; } else { bodyPayload.image = imageUrl; bodyPayload.caption = tplMessage; } }
+          const r = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(CLIENT_TOKEN ? { 'Client-Token': CLIENT_TOKEN } : {}) }, body: JSON.stringify(bodyPayload) });
+          const j = await r.json().catch(() => ({})); sent = r.ok; messageId = j?.messageId || j?.id || null;
         }
-
-        const r = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...(CLIENT_TOKEN ? { 'Client-Token': CLIENT_TOKEN } : {}) },
-          body: JSON.stringify(body),
-        });
-        const j = await r.json().catch(() => ({}));
-        sent = r.ok;
-        messageId = j?.messageId || j?.id || null;
+      } else {
+        const fnName = provider === 'wapi_sucesso' ? 'send-wapi-sucesso' : 'send-wapi';
+        const { data, error } = await admin.functions.invoke(fnName, { body: { phone, message: tplMessage, image_url: imageUrl } });
+        if (!error && data?.ok) { sent = true; messageId = data.messageId; }
       }
-      await admin.from('crm_messages').insert({
-        conversation_id: conv!.id,
-        direction: 'out',
-        body: message,
-        source: 'zapi',
-        external_id: messageId,
-        status: sent ? 'sent' : 'failed',
-      });
-      await admin.from('crm_conversations').update({
-        last_bot_message_at: new Date().toISOString(),
-        inactivity_warned_at: null,
-      }).eq('id', conv!.id);
-      return { sent, messageId, modelTag };
+      if (sent) {
+        await admin.from('crm_messages').insert({ conversation_id: conv.id, direction: 'out', body: tplMessage, source: provider, external_id: messageId, status: 'sent' });
+        await admin.from('crm_conversations').update({ last_bot_message_at: new Date().toISOString(), inactivity_warned_at: null }).eq('id', conv.id);
+      }
+      return { sent, messageId, tag };
     };
 
-    // ============================================================
-    // === Canal Comercial (Z-API) — Máquina de estados STH ONE ===
-    // ============================================================
-    if (provider === 'zapi') {
-      // Em nova sessão: reseta estado e handoff (fluxo reinicia do zero)
+    const handoffConsultor = async () => {
+      await admin.from('crm_conversations').update({ flow_state: 'handoff_consultor', human_handoff: true }).eq('id', conv.id);
+      const qName = provider === 'wapi' ? 'Dieta' : (provider === 'wapi_sucesso' ? 'Sucesso do Aluno' : 'Atendimento Comercial');
+      const { data: q } = await admin.from('crm_queues').select('id').eq('name', qName).maybeSingle();
+      if (q) {
+        const { data: open } = await admin.from('crm_queue_items').select('id').eq('conversation_id', conv.id).is('closed_at', null).maybeSingle();
+        if (open) await admin.from('crm_queue_items').update({ priority: 0 }).eq('id', open.id);
+        else await admin.from('crm_queue_items').insert({ queue_id: q.id, conversation_id: conv.id, phone, priority: 0 });
+      }
+      const r = await sendMessage(String(getFlowStep('comercial_handoff_consultor')?.message || 'Vou te encaminhar para um consultor da equipe STH Method. Aguarde alguns instantes. 🙏'), 'handoff_consultor');
+      return { sent: r.sent, engine: 'flow', model: 'handoff_consultor' };
+    };
+
+    let autoReply: any;
+    const channelEnabled = provider === 'wapi' ? (wapiCfg?.value as any)?.enabled === true : (provider === 'wapi_sucesso' ? (wapiSucessoCfg?.value as any)?.enabled === true : (zapiCfg?.value as any)?.enabled === true);
+
+    if (!channelEnabled) autoReply = { sent: false, reason: 'disabled' };
+    else if (conv.human_handoff) autoReply = { sent: false, reason: 'handoff' };
+    else if (!withinHours) {
       if (isNewSession) {
-        await admin.from('crm_conversations').update({
-          flow_state: null,
-          flow_context: {},
-          human_handoff: false,
-          inactivity_warned_at: null,
-        }).eq('id', conv!.id);
-      } else {
-        // Resposta do cliente zera o aviso (cron não vai encerrar)
-        await admin.from('crm_conversations').update({ inactivity_warned_at: null }).eq('id', conv!.id);
+        const msg = identifiedAs === 'aluno_ativo' ? nutriAwayActive?.value?.message : nutriAwayInactive?.value?.message;
+        if (msg) { const r = await sendMessage(msg, 'away'); autoReply = { sent: r.sent, engine: 'away' }; }
       }
-
-      const { data: cstate } = await admin
-        .from('crm_conversations')
-        .select('flow_state, flow_context, human_handoff')
-        .eq('id', conv!.id)
-        .maybeSingle();
-      const flowState = isNewSession ? null : ((cstate?.flow_state as string | null) || null);
-      const flowCtx: any = isNewSession ? {} : ((cstate?.flow_context as any) || {});
-      const isHandoff = !isNewSession && cstate?.human_handoff === true;
-
-      const trimmed = String(body).trim();
-
-      // === Templates principais (sobrescrevíveis por crm_settings) ===
-      const tplAtivo = String((comIdActive?.value as any)?.message ||
-        'Olá, {nome}!\n\nIdentificamos que você possui uma consultoria ativa na STH Method.\n\nPara assuntos relacionados ao seu acompanhamento, atualizações, pagamentos, renovação ou suporte administrativo, você será direcionado ao setor responsável.\n\n🏆 Sucesso do Aluno | STH Method\n\nTransferindo atendimento...');
-      const tplInativo = String((comIdExpired?.value as any)?.message ||
-        'Olá, {nome}!\n\nLocalizamos seu cadastro em nossa base.\n\nPara reativação ou continuidade do acompanhamento, você será direcionado ao setor responsável.\n\n🏆 Sucesso do Aluno | STH Method\n\nTransferindo atendimento...');
-      const tplExAluno = String((comIdExAluno?.value as any)?.message ||
-        'Olá, {nome}!\n\nEncontramos seu histórico na STH Method.\n\nPara retorno à consultoria ou novas condições de acompanhamento, você será direcionado ao setor responsável.\n\n🏆 Sucesso do Aluno | STH Method\n\nTransferindo atendimento...');
-
-      const tplSaudacaoLead = String((comSaudacaoLead?.value as any)?.message ||
-        'Olá! 👋\n\nSeja bem-vindo à STH Method.\n\nSomos uma consultoria especializada em emagrecimento, hipertrofia, performance e saúde baseada em ciência.\n\nComo podemos ajudar?\n\n1️⃣ Conhecer a Consultoria\n2️⃣ Ver Planos e Valores\n3️⃣ Iniciar Minha Inscrição\n4️⃣ Formas de Pagamento\n5️⃣ Falar com Especialista');
-
-      const tplConhecerConsultoria = String((comConhecerConsultoria?.value as any)?.message ||
-        'A STH Method oferece acompanhamento individualizado para pessoas que buscam melhorar sua composição corporal, saúde e performance.\n\nO acompanhamento inclui:\n\n✅ Planejamento nutricional individualizado\n✅ Treinamento personalizado\n✅ Aplicativo ST Coach\n✅ Portal exclusivo do aluno\n✅ Atualizações periódicas\n✅ Estratégias baseadas em evidências científicas\n✅ Acompanhamento contínuo\n\nDeseja conhecer nossos planos?\n\n1️⃣ Sim\n2️⃣ Falar com Especialista');
-
-      const tplLeadMenu = String((leadMenuCfg?.value as any)?.message ||
-        'Como posso ajudar?\n\n1️⃣ Conhecer a Consultoria\n2️⃣ Ver Planos e Valores\n3️⃣ Iniciar Minha Inscrição\n4️⃣ Formas de Pagamento\n5️⃣ Falar com Especialista');
-
-      const tplFormasPag = String((formasPagCfg?.value as any)?.message ||
-        'Atualmente trabalhamos com:\n\n✅ PIX\n✅ Cartão de Crédito\n✅ Parcelamento conforme plano disponível\n\nCaso deseje, podemos apresentar os planos disponíveis para você.');
-
-      const tplConsultorMsg = String((handoffConsCfg?.value as any)?.message ||
-        'Perfeito.\n\nVou encaminhar você para um *consultor* da equipe STH Method.\n\nAguarde alguns instantes. 🙏');
-
-      // Imagens opcionais por template
-      const imgIdActive = ((comIdActive?.value as any)?.image_url as string | undefined) || null;
-      const imgIdExpired = ((comIdExpired?.value as any)?.image_url as string | undefined) || null;
-      const imgIdLead = ((comIdLead?.value as any)?.image_url as string | undefined) || null;
-      const imgListaPlanos = ((listaPlanosCfg?.value as any)?.image_url as string | undefined) || null;
-      const tplListaPlanos = ((listaPlanosCfg?.value as any)?.message as string | undefined) || '';
-
-      // === Lista de planos ativos (deduplicada por duração) ===
-      const { data: planList } = await admin.from('plans')
-        .select('id, name, price, duration_days')
-        .eq('active', true)
-        .order('duration_days', { ascending: true });
-      const seenDur = new Set<number>();
-      const plans = (planList || []).filter((p: any) => {
-        if (!p?.duration_days || seenDur.has(p.duration_days)) return false;
-        seenDur.add(p.duration_days);
-        return true;
-      });
-      const renderPlanList = (cta: string) => {
-        if (!plans.length) {
-          return '*Planos STH METHOD* 💎\n\nAcesse https://sthmethod.com.br para conhecer os planos atuais.';
-        }
-        const lines = plans.map((p: any, i: number) =>
-          `${i + 1}️⃣ *${p.name}* — ${p.price} (${p.duration_days} dias) no Pix`);
-        const planosTxt = lines.join('\n');
-        const tpl = (tplListaPlanos && tplListaPlanos.trim())
-          ? tplListaPlanos
-          : '*Planos STH METHOD* 💎\n\n{planos}\n\n{cta}\n\n0️⃣ Voltar';
-        return tpl
-          .replace(/\{planos\}/g, planosTxt)
-          .replace(/\{cta\}/g, cta);
-      };
-
-      // === Transferência para consultor humano ===
-      const handoffConsultor = async () => {
-        await admin.from('crm_conversations').update({
-          flow_state: 'handoff_consultor',
-          human_handoff: true,
-        }).eq('id', conv!.id);
-        const { data: q } = await admin.from('crm_queues').select('id').eq('name', 'Atendimento Comercial').maybeSingle();
-        if (q) {
-          const { data: openItem } = await admin.from('crm_queue_items')
-            .select('id').eq('conversation_id', conv!.id).is('closed_at', null).maybeSingle();
-          if (openItem) {
-            await admin.from('crm_queue_items').update({ priority: 0 }).eq('id', openItem.id);
-          } else {
-            await admin.from('crm_queue_items').insert({
-              queue_id: q.id, conversation_id: conv!.id, phone, priority: 0,
-            });
-          }
-        }
-        const r = await sendZapiText(renderTpl(tplConsultorMsg), 'handoff_consultor');
-        autoReply = { sent: r.sent, engine: 'flow', model: 'handoff_consultor' };
-      };
-
-      // === Roteamento ===
-      if (!channelEnabled) {
-        autoReply = { sent: false, reason: 'channel_disabled' };
-      } else if (isHandoff || flowState === 'handoff_consultor' || flowState === 'handoff_nutri') {
-        // Atendimento humano em andamento → bot silencioso. Timer suspenso.
-        autoReply = { sent: false, reason: 'human_handoff_active' };
-      } else if (!flowState) {
-        // === 1ª mensagem da sessão → identificação por perfil ===
-        if (identifiedAs === 'aluno_ativo' || identifiedAs === 'aluno_vencido' || identifiedAs === 'ex_aluno') {
-          // Identificação obrigatória para o canal Sucesso
-          let msg = tplAtivo;
-          if (identifiedAs === 'aluno_vencido') msg = tplInativo;
-          if (identifiedAs === 'ex_aluno') msg = tplExAluno;
-          
-          await sendZapiText(renderTpl(msg), 'identificacao_obrigatoria');
-          
-          // Transferência automática para Sucesso do Aluno (Menu Principal v1.0)
-          const tplSucesso = String((getFlowStep('sucesso_main_menu')?.value as any)?.message || 
-            'Olá, {nome}! 👋\n\nBem-vindo ao Sucesso do Aluno STH Method.\n\nComo podemos ajudar?\n\n1️⃣ Atualizar Peso e Fotos\n2️⃣ Renovar Minha Consultoria\n3️⃣ Verificar Pagamentos\n4️⃣ Reativar Consultoria\n5️⃣ Receber Meus Acessos\n6️⃣ Dúvidas Administrativas\n7️⃣ Falar com o Nutri');
-          
-          await admin.from('crm_conversations').update({ 
-            flow_state: 'sucesso_main_menu',
-            queue_type: 'sucesso' 
-          }).eq('id', conv!.id);
-          
-          const r2 = await sendZapiText(renderTpl(tplSucesso), 'handoff_sucesso');
-          autoReply = { sent: r2.sent, engine: 'flow', model: 'sucesso_main_menu' };
+    } else if (!conv.flow_state) {
+      if (provider === 'wapi') {
+        if (identifiedAs === 'lead') {
+          const r = await sendMessage(String(getFlowStep('nutri_ident_lead')?.message || 'Identificamos que você ainda não possui uma consultoria ativa...'), 'nutri_ident_lead');
+          autoReply = { sent: r.sent, engine: 'flow' };
+        } else if (identifiedAs === 'aluno_vencido' || identifiedAs === 'ex_aluno') {
+          const step = identifiedAs === 'aluno_vencido' ? 'nutri_ident_inativo' : 'nutri_ident_exaluno';
+          const r = await sendMessage(String(getFlowStep(step)?.message || 'Localizamos seu cadastro, porém sua consultoria encontra-se inativa...'), step);
+          autoReply = { sent: r.sent, engine: 'flow' };
         } else {
-          // LEAD caindo no canal comercial (ou vindo do sucesso)
-          const msgLeadRedirect = 'Olá!\n\nIdentificamos que você ainda não possui uma consultoria ativa na STH Method.\n\nPara informações sobre planos, valores e inscrições, você será direcionado ao setor responsável.\n\n🟢 *Comercial | STH Method*';
-          await sendZapiText(msgLeadRedirect, 'lead_redirect_comercial');
-          
-          const r = await sendZapiText(renderTpl(tplSaudacaoLead), 'comercial_saudacao_lead');
-          await admin.from('crm_conversations').update({ flow_state: 'lead_main_menu' }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_main_menu' };
-        }
-      }
-      // === SUCESSO DO ALUNO (ESTADOS V1.0) ===
-      else if (flowState === 'sucesso_main_menu') {
-        if (trimmed === '1') {
-          const tpl = String((getFlowStep('sucesso_atualizar_peso')?.value as any)?.message || 'Para atualizar seu peso e fotos, acesse nossa plataforma: https://sthmethod.com.br');
-          const r = await sendZapiText(renderTpl(tpl), 'sucesso_atualizacao');
-          autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_atualizacao' };
-        } else if (trimmed === '2') {
-          // Obter dados de assinatura para renovação
-          let vencimento = '—';
-          if (profile?.user_id) {
-            const { data: subs } = await admin.from('subscriptions').select('end_date').eq('user_id', profile.user_id).order('end_date', { ascending: false }).limit(1);
-            if (subs?.[0]) vencimento = new Date(subs[0].end_date).toLocaleDateString('pt-BR');
-          }
-          const tpl = String((getFlowStep('sucesso_renovar')?.value as any)?.message || '...');
-          const planosTxt = plans.map((p: any, i: number) => `${i + 1}️⃣ *${p.name}* — ${p.price}`).join('\n');
-          const r = await sendZapiText(renderTpl(tpl, { vencimento, planos_disponiveis: planosTxt }), 'sucesso_renovacao');
-          await admin.from('crm_conversations').update({ flow_state: 'sucesso_awaiting_renew' }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_renovacao' };
-        } else if (trimmed === '3') {
-          const tpl = String((getFlowStep('sucesso_verificar_pagamentos')?.value as any)?.message || '...');
-          const r = await sendZapiText(renderTpl(tpl, { situacao_financeira: 'Regularizado ✅', link_pagamento: 'https://sthmethod.com.br/financeiro' }), 'sucesso_financeiro');
-          autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_financeiro' };
-        } else if (trimmed === '4') {
-          const tpl = String((getFlowStep('sucesso_reativar')?.value as any)?.message || '...');
-          const planosTxt = plans.map((p: any, i: number) => `${i + 1}️⃣ *${p.name}* — ${p.price}`).join('\n');
-          const r = await sendZapiText(renderTpl(tpl, { planos_disponiveis: planosTxt }), 'sucesso_reativacao');
-          await admin.from('crm_conversations').update({ flow_state: 'sucesso_awaiting_reactivate' }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_reativacao' };
-        } else if (trimmed === '5') {
-          const { data: userAuth } = await admin.auth.admin.getUserById(profile?.user_id || '');
-          const email = userAuth?.user?.email || '—';
-          const tpl = String((getFlowStep('sucesso_receber_acessos')?.value as any)?.message || '...');
-          const r = await sendZapiText(renderTpl(tpl, { email }), 'sucesso_acessos');
-          autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_acessos' };
-        } else if (trimmed === '6') {
-          await handoffConsultor();
-        } else if (trimmed === '7') {
-          const tplHandoff = String((getFlowStep('sucesso_nutri_handoff')?.value as any)?.message || '...');
-          const r = await sendZapiText(renderTpl(tplHandoff), 'sucesso_nutri_handoff');
-          await admin.from('crm_conversations').update({ flow_state: 'handoff_nutri', human_handoff: true }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_nutri_handoff' };
-        } else {
-          const tplSucesso = String((getFlowStep('sucesso_main_menu')?.value as any)?.message || '...');
-          const r = await sendZapiText(renderTpl(tplSucesso), 'sucesso_main_menu_repeat');
-          autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_main_menu' };
-        }
-      }
-      else if (flowState === 'sucesso_awaiting_renew' || flowState === 'sucesso_awaiting_reactivate') {
-        if (trimmed === '1') {
-          const r = await sendZapiText('Perfeito! Segue o link para pagamento: https://sthmethod.com.br/checkout\n\nAssim que o pagamento for aprovado sua consultoria continuará ativa normalmente.', 'sucesso_renew_confirm');
-          await admin.from('crm_conversations').update({ flow_state: 'sucesso_main_menu' }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'sucesso_renew_confirm' };
-        } else if (trimmed === '2') {
-          await handoffConsultor();
-        } else {
-          const r = await sendZapiText('Não entendi sua escolha. Responda com *1* para Sim ou *2* para falar com um especialista.', 'sucesso_invalid_choice');
-          autoReply = { sent: r.sent, engine: 'flow', model: flowState };
-        }
-      }
-      // === ALUNO INATIVO ===
-      else if (flowState === 'inativo_main_menu') {
-        if (trimmed === '1') {
-          const r = await sendZapiMedia(renderPlanList('Responda com o *número* do plano para gerar seu link de renovação.'), imgListaPlanos, 'inativo_planos');
-          await admin.from('crm_conversations').update({ flow_state: 'inativo_awaiting_plan' }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_awaiting_plan' };
-        } else if (trimmed === '2') {
-          const r = await sendZapiText(tplFormasPag, 'inativo_pag');
-          await admin.from('crm_conversations').update({ flow_state: 'inativo_pay_menu' }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_pay_menu' };
-        } else if (trimmed === '3') {
-          await handoffConsultor();
-        } else {
-          const r = await sendZapiText(renderTpl(tplInativoMenu), 'id_inativo_repeat');
-          autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_main_menu' };
-        }
-      }
-      else if (flowState === 'inativo_awaiting_plan') {
-        if (trimmed === '0') {
-          const r = await sendZapiMedia(renderTpl(tplInativoMenu), imgIdExpired, 'id_inativo_back');
-          await admin.from('crm_conversations').update({ flow_state: 'inativo_main_menu' }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_main_menu' };
-        } else if (/^[1-9]$/.test(trimmed) && plans[parseInt(trimmed, 10) - 1]) {
-          const chosen: any = plans[parseInt(trimmed, 10) - 1];
-          const link = `https://sthmethod.com.br/aluno/renovar?plan=${chosen.id}`;
-          const msg = `Perfeito${NOME_SEP}${FIRST_NAME}.\n\nVocê escolheu o plano *${chosen.name}* (${chosen.price}).\n\n🔗 *Link de Renovação:*\n${link}\n\nSeu cadastro já foi localizado em nosso sistema. Após a confirmação do pagamento sua consultoria será reativada.\n\nCaso não localize o cadastro:\n🔗 https://sthmethod.com.br/cadastro\n\n0️⃣ Voltar ao menu`;
-          const r = await sendZapiText(msg, 'inativo_renew_link');
-          await admin.from('crm_conversations').update({
-            flow_state: 'inativo_main_menu',
-            flow_context: { ...flowCtx, plano_escolhido: chosen.id },
-          }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_renew_link' };
-        } else {
-          const r = await sendZapiText('Não entendi sua escolha. Responda com o *número* do plano desejado, ou *0* para voltar.', 'inativo_plan_invalid');
-          autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_awaiting_plan' };
-        }
-      }
-      else if (flowState === 'inativo_pay_menu') {
-        if (trimmed === '1') {
-          const r = await sendZapiMedia(renderPlanList('Responda com o *número* do plano para gerar seu link de renovação.'), imgListaPlanos, 'inativo_planos');
-          await admin.from('crm_conversations').update({ flow_state: 'inativo_awaiting_plan' }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_awaiting_plan' };
-        } else if (trimmed === '2') {
-          await handoffConsultor();
-        } else if (trimmed === '0') {
-          const r = await sendZapiMedia(renderTpl(tplInativoMenu), imgIdExpired, 'id_inativo_back');
-          await admin.from('crm_conversations').update({ flow_state: 'inativo_main_menu' }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_main_menu' };
-        } else {
-          const r = await sendZapiText(tplFormasPag, 'inativo_pag_repeat');
-          autoReply = { sent: r.sent, engine: 'flow', model: 'inativo_pay_menu' };
-        }
-      }
-      // === LEAD ===
-      else if (flowState === 'lead_awaiting_name') {
-        const captured = trimmed.replace(/[^\p{L}\s'\-]/gu, '').trim().slice(0, 40);
-        const firstWord = (captured.split(/\s+/)[0] || 'amigo(a)').slice(0, 24);
-        const newCtx = { ...flowCtx, nome: firstWord };
-        const upd: any = {
-          flow_state: 'lead_main_menu',
-          flow_context: newCtx,
-        };
-        if (captured) upd.display_name = captured;
-        await admin.from('crm_conversations').update(upd).eq('id', conv!.id);
-        const r = await sendZapiText(renderTpl(tplLeadMenu, { nome: firstWord }), 'lead_main_menu');
-        autoReply = { sent: r.sent, engine: 'flow', model: 'lead_main_menu' };
-      }
-      else if (flowState === 'lead_main_menu') {
-        const leadName = (flowCtx?.nome as string) || FIRST_NAME;
-        if (trimmed === '1') {
-          const r = await sendZapiText(renderTpl(tplConhecerConsultoria), 'comercial_conhecer_consultoria');
-          await admin.from('crm_conversations').update({ flow_state: 'lead_conhecer_consultoria' }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_conhecer_consultoria' };
-        } else if (trimmed === '2') {
-          const r = await sendZapiMedia(renderPlanList('Deseja iniciar sua inscrição?\n\n1️⃣ Sim\n2️⃣ Tirar dúvidas\n3️⃣ Falar com Especialista'), imgListaPlanos, 'lead_planos');
-          await admin.from('crm_conversations').update({ flow_state: 'lead_awaiting_plan' }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_awaiting_plan' };
-        } else if (trimmed === '3') {
-          const msg = 'Perfeito! 🚀\n\nPara iniciar sua consultoria, realize seu cadastro através do link abaixo:\n\n🌐 https://sthmethod.com.br/cadastro\n\nApós concluir o cadastro, nossa equipe receberá suas informações e dará continuidade ao processo de contratação.\n\nCaso tenha qualquer dificuldade durante o preenchimento, basta responder esta mensagem.';
-          const r = await sendZapiText(msg, 'comercial_iniciar_inscricao');
-          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_iniciar_inscricao' };
-        } else if (trimmed === '4') {
-          const r = await sendZapiText(renderTpl(tplFormasPag), 'comercial_formas_pagamento');
-          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_formas_pagamento' };
-        } else if (trimmed === '5') {
-          await handoffConsultor();
-        } else {
-          const r = await sendZapiText(renderTpl(tplSaudacaoLead), 'lead_main_menu_repeat');
-          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_main_menu' };
-        }
-      }
-      else if (flowState === 'lead_conhecer_consultoria') {
-        if (trimmed === '1') {
-          const r = await sendZapiMedia(renderPlanList('Deseja iniciar sua inscrição?\n\n1️⃣ Sim\n2️⃣ Tirar dúvidas\n3️⃣ Falar com Especialista'), imgListaPlanos, 'lead_planos');
-          await admin.from('crm_conversations').update({ flow_state: 'lead_awaiting_plan' }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_awaiting_plan' };
-        } else if (trimmed === '2') {
-          await handoffConsultor();
-        } else {
-          const r = await sendZapiText(renderTpl(tplConhecerConsultoria), 'lead_conhecer_repeat');
-          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_conhecer_consultoria' };
-        }
-      }
-      else if (flowState === 'lead_awaiting_plan') {
-        const leadName = (flowCtx?.nome as string) || FIRST_NAME;
-        if (trimmed === '1' || trimmed === 'sim') {
-          const msg = 'Perfeito! 🚀\n\nPara iniciar sua consultoria, realize seu cadastro através do link abaixo:\n\n🌐 https://sthmethod.com.br/cadastro\n\nApós concluir o cadastro, nossa equipe receberá suas informações e dará continuidade ao processo de contratação.\n\nCaso tenha qualquer dificuldade durante o preenchimento, basta responder esta mensagem.';
-          const r = await sendZapiText(msg, 'lead_cadastro_link');
-          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_cadastro_link' };
-        } else if (trimmed === '2' || trimmed === 'tirar dúvidas') {
-          await handoffConsultor();
-        } else if (trimmed === '3' || trimmed === 'especialista') {
-          await handoffConsultor();
-        } else if (/^[1-9]$/.test(trimmed) && plans[parseInt(trimmed, 10) - 1]) {
-          const chosen: any = plans[parseInt(trimmed, 10) - 1];
-          const msg = `Excelente escolha!\n\nVocê escolheu o plano *${chosen.name}* (${chosen.price}).\n\nPara iniciar seu acompanhamento:\n🔗 https://sthmethod.com.br/cadastro\n\nApós finalizar o cadastro nossa equipe continuará seu atendimento.`;
-          const r = await sendZapiText(msg, 'lead_cadastro_link_with_plan');
-          await admin.from('crm_conversations').update({
-            flow_state: 'lead_main_menu',
-            flow_context: { ...flowCtx, plano_escolhido: chosen.id },
-          }).eq('id', conv!.id);
-          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_cadastro_link' };
-        } else {
-          const r = await sendZapiText('Não entendi sua escolha. Responda com *1* para Sim, *2* para tirar dúvidas, ou o número do plano desejado.', 'lead_plan_invalid');
-          autoReply = { sent: r.sent, engine: 'flow', model: 'lead_awaiting_plan' };
-        }
-      }
-      else {
-        // Estado desconhecido → reseta
-        await admin.from('crm_conversations').update({ flow_state: null }).eq('id', conv!.id);
-        autoReply = { sent: false, reason: 'unknown_state_reset' };
-      }
-
-      return new Response(
-        JSON.stringify({ ok: true, queue: finalQueue, is_lead: isLead, tags: tagsToApply, auto_reply: autoReply, flow_state: flowState, identified_as: identifiedAs }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
-    }
-
-    // ============================================================
-    // === Canal Nutri (W-API) — comportamento original ===========
-    // ============================================================
-    // Fora do horário → mensagem de ausência (só 1x por sessão).
-    // Aluno ativo recebe mensagem priorizada; lead/vencido é direcionado ao Comercial.
-    if ((provider === 'wapi' || provider === 'wapi_sucesso') && !withinHours && channelEnabled) {
-      const isFirstOfSession = isNewSession;
-      if (isFirstOfSession) {
-        const tplVal = identifiedAs === 'aluno_ativo'
-          ? (nutriAwayActive?.value as any)?.message
-          : (nutriAwayInactive?.value as any)?.message;
-        const firstName = (displayName || profile?.full_name || '').toString().split(' ')[0] || 'Aluno';
-        const awayMessage = String(tplVal || '').replace(/\{nome\}/gi, firstName);
-        if (awayMessage) {
-          try {
-            const fnName = provider === 'wapi_sucesso' ? 'send-wapi-sucesso' : (provider === 'wapi' ? 'send-wapi' : 'send-whatsapp');
-            const { data: sendData, error: sendError } = await admin.functions.invoke(fnName, {
-              body: { phone, message: awayMessage },
-            });
-            if (sendError) throw sendError;
-            await admin.from('crm_messages').insert({
-              conversation_id: conv!.id,
-              direction: 'out',
-              body: awayMessage,
-              source: provider,
-              external_id: sendData?.messageId || null,
-              status: sendData?.ok ? 'sent' : 'failed',
-            });
-            autoReply = { sent: !!sendData?.ok, engine: 'away', model: `nutri_away_${identifiedAs}` };
-          } catch (e) {
-            console.error('nutri away message failed', e);
-            autoReply = { sent: false, reason: String(e) };
-          }
+          const r = await sendMessage(String(getFlowStep('nutri_reception')?.message || 'Olá! Você está no canal Fale com o Nutri...'), 'nutri_reception');
+          await admin.from('crm_conversations').update({ flow_state: 'nutri_main' }).eq('id', conv.id);
+          autoReply = { sent: r.sent, engine: 'flow' };
         }
       } else {
-        autoReply = { sent: false, reason: 'out_of_hours_silent_after_first' };
-      }
-    }
-    else if (aiMode === 'auto' && channelEnabled) {
-      try {
-        const ai = await generateAiReply({ admin, conversationId: conv!.id, phone });
-        if (ai.response?.trim()) {
-          const fnName = provider === 'wapi_sucesso' ? 'send-wapi-sucesso' : (provider === 'wapi' ? 'send-wapi' : 'send-whatsapp');
-          const { data: sendData, error: sendError } = await admin.functions.invoke(fnName, {
-            body: { phone, message: ai.response.trim() },
-          });
-
-          if (sendError) throw sendError;
-          if (!sendData?.ok) throw new Error(sendData?.error || 'Falha no envio automático');
-
-          await admin.from('crm_messages').insert({
-            conversation_id: conv!.id,
-            direction: 'out',
-            body: ai.response.trim(),
-            source: provider,
-            external_id: sendData?.messageId || null,
-            status: 'sent',
-          });
-
-          autoReply = { sent: true, engine: ai.engine, model: ai.model };
+        if (identifiedAs !== 'lead') {
+          const step = identifiedAs === 'aluno_ativo' ? 'comercial_ident_ativo' : (identifiedAs === 'aluno_vencido' ? 'comercial_ident_inativo' : 'comercial_ident_exaluno');
+          await sendMessage(String(getFlowStep(step)?.message || 'Redirecionando para Sucesso...'), step);
+          const r = await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu');
+          await admin.from('crm_conversations').update({ flow_state: 'sucesso_main_menu', queue_type: 'sucesso' }).eq('id', conv.id);
+          autoReply = { sent: r.sent, engine: 'flow' };
+        } else {
+          const r = await sendMessage(String(getFlowStep('comercial_saudacao_lead')?.message || 'Seja bem-vindo à STH Method...'), 'comercial_saudacao_lead');
+          await admin.from('crm_conversations').update({ flow_state: 'lead_main_menu' }).eq('id', conv.id);
+          autoReply = { sent: r.sent, engine: 'flow' };
         }
-      } catch (autoErr) {
-        console.error('crm-inbound-webhook auto-reply', autoErr);
-        autoReply = { sent: false, reason: String(autoErr) };
       }
+    } else if (conv.flow_state === 'nutri_main') {
+      const has = (...kw: string[]) => kw.some(k => body.toLowerCase().includes(k));
+      if (has('renov', 'pagamento', 'pagar', 'cobran', 'segunda via', 'cadastro', 'senha', 'acesso', 'contrato', 'reativar')) {
+        const r = await sendMessage(String(getFlowStep('nutri_transfer_sucesso')?.message || 'Sua solicitação é administrativa. Redirecionando para Sucesso...'), 'nutri_transfer_sucesso');
+        await admin.from('crm_conversations').update({ flow_state: 'sucesso_main_menu', queue_type: 'sucesso' }).eq('id', conv.id);
+        await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu');
+        autoReply = { sent: r.sent, engine: 'flow' };
+      }
+    } else if (conv.flow_state === 'sucesso_main_menu') {
+      const trimmed = body.trim();
+      if (trimmed === '1') { await sendMessage(String(getFlowStep('sucesso_atualizar_peso')?.message || 'Acesse a plataforma para atualizar peso.'), 'sucesso_atualizacao'); }
+      else if (trimmed === '2' || trimmed === '4') { await sendMessage('Iniciando processo de renovação/reativação...', 'sucesso_renov'); await handoffConsultor(); }
+      else if (trimmed === '3') { await sendMessage('Verificando pagamentos...', 'sucesso_pag'); }
+      else if (trimmed === '6') { await handoffConsultor(); }
+      else if (trimmed === '7') { await sendMessage('Transferindo para o Nutri...', 'sucesso_nutri'); await admin.from('crm_conversations').update({ flow_state: 'nutri_main', human_handoff: true }).eq('id', conv.id); }
+      else { await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Escolha uma opção.'), 'sucesso_repeat'); }
+      autoReply = { sent: true, engine: 'flow' };
+    } else if (conv.flow_state === 'lead_main_menu') {
+      const trimmed = body.trim();
+      if (trimmed === '1') { await sendMessage(String(getFlowStep('comercial_conhecer_consultoria')?.message || 'Sobre a consultoria...'), 'com_conhecer'); }
+      else if (trimmed === '5') { await handoffConsultor(); }
+      else { await sendMessage(String(getFlowStep('comercial_saudacao_lead')?.message || 'Escolha uma opção.'), 'com_repeat'); }
+      autoReply = { sent: true, engine: 'flow' };
     }
 
-    return new Response(JSON.stringify({ ok: true, queue: finalQueue, is_lead: isLead, tags: tagsToApply, auto_reply: autoReply }), {
-      status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    if (!autoReply && (aiModeCfg?.value as any)?.mode === 'auto') {
+      const ai = await generateAiReply({ admin, conversationId: conv.id, phone });
+      if (ai.response) { const r = await sendMessage(ai.response, 'ai'); autoReply = { sent: r.sent, engine: ai.engine }; }
+    }
+
+    return new Response(JSON.stringify({ ok: true, autoReply }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (err) {
-    console.error('crm-inbound-webhook', err);
+    console.error(err);
     return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });
