@@ -509,7 +509,7 @@ Deno.serve(async (req) => {
         if (!error && (data?.ok || data?.messageId)) { sent = true; messageId = data.messageId || data?.id; }
       }
       if (sent) {
-        await admin.from('crm_messages').insert({ conversation_id: conv.id, direction: 'out', body: tplMessage, source: activeProvider, external_id: messageId, status: 'sent' });
+        await admin.from('crm_messages').insert({ conversation_id: conv.id, direction: 'out', body: tplMessage, source: activeProvider, external_id: messageId, status: 'sent', metadata: { tag } });
         await admin.from('crm_conversations').update({ last_bot_message_at: new Date().toISOString(), inactivity_warned_at: null }).eq('id', conv.id);
       }
       return { sent, messageId, tag };
@@ -546,7 +546,7 @@ Deno.serve(async (req) => {
         .eq('conversation_id', conv.id)
         .eq('direction', 'out')
         .gt('created_at', fourHoursAgo)
-        .or('body.ilike.%expediente%,body.ilike.%atendimento de hoje foi encerrado%')
+        .or('metadata->>tag.eq.away,metadata->>tag.eq.away_redirect,body.ilike.%fora do horário%,body.ilike.%expediente%')
         .maybeSingle();
 
       if (isNewSession || forceSucessoQueue || !lastAwayMsg) {
@@ -577,7 +577,7 @@ Deno.serve(async (req) => {
         } else {
           // Fale com o Nutri (W-API)
           if (identifiedAs === 'aluno_ativo') msg = nutriAwayActive?.value?.message || "Olá! No momento estamos fora do horário de expediente no canal Fale com o Nutri. Deixe sua dúvida técnica e responderemos assim que retornarmos! 👋";
-          else msg = "No momento estamos fora do horário de expediente no canal Fale com o Nutri.\n\nIdentificamos que seu plano não está ativo. Você pode realizar sua renovação agora mesmo de forma automática pelo link abaixo:\n\n🔗 Renovação: https://sthmethod.com.br/renovacao\n🌐 Site: https://sthmethod.com.br\n\nPara outros assuntos, acesse nosso canal de Sucesso do Aluno: https://wa.me/5521972486650";
+          else msg = nutriAwayInactive?.value?.message || "No momento estamos fora do horário de expediente no canal Fale com o Nutri.\n\nIdentificamos que seu plano não está ativo. Você pode realizar sua renovação agora mesmo de forma automática pelo link abaixo:\n\n🔗 Renovação: https://sthmethod.com.br/renovacao\n🌐 Site: https://sthmethod.com.br\n\nPara outros assuntos, acesse nosso canal de Sucesso do Aluno: https://wa.me/5521972486650";
         }
         if (msg) { 
           const r = await sendMessage(msg, 'away'); 
