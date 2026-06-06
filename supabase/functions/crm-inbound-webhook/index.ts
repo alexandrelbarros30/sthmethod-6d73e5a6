@@ -52,18 +52,14 @@ async function generateAiReply({
     engine = storedEngine;
   }
 
-  const [{ data: msgs }, { data: profiles }] = await Promise.all([
+  const [{ data: msgs }, profile] = await Promise.all([
     admin
       .from('crm_messages')
       .select('direction, body, created_at')
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: false })
       .limit(10),
-    admin
-      .from('profiles')
-      .select('full_name, objective, weight')
-      .in('phone', phoneCandidates(phone))
-      .limit(1),
+    findProfileByPhone(admin, phone, 'full_name, objective, weight, phone'),
   ]);
 
   const history = (msgs || [])
@@ -72,8 +68,8 @@ async function generateAiReply({
     .join('\n');
 
   let context = history ? `Histórico recente da conversa:\n${history}\n\n` : '';
-  if (profiles?.[0]) {
-    context += `Aluno: ${profiles[0].full_name} | Objetivo: ${profiles[0].objective || '—'} | Peso: ${profiles[0].weight || '—'}kg\n\n`;
+  if (profile) {
+    context += `Aluno: ${profile.full_name} | Objetivo: ${profile.objective || '—'} | Peso: ${profile.weight || '—'}kg\n\n`;
   }
 
   const userPrompt = 'Com base no contexto acima, responda a última mensagem de forma curta, cordial e profissional (tom STH METHOD, neutro e técnico, em português do Brasil). Não use emojis em excesso. Máximo 4 frases.';
