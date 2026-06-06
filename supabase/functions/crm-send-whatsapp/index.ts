@@ -65,10 +65,16 @@ Deno.serve(async (req) => {
       }
       const base = `https://api.z-api.io/instances/${id}/token/${tok}`;
       const headers = { 'Content-Type': 'application/json', 'Client-Token': client };
-      const endpoint = image_url ? `${base}/send-image` : `${base}/send-text`;
-      const payload = image_url
-        ? { phone: fullPhone, image: image_url, caption: body || '' }
-        : { phone: fullPhone, message: body };
+      let endpoint = `${base}/send-text`;
+      let payload: Record<string, unknown> = { phone: fullPhone, message: body };
+      if (image_url) {
+        endpoint = `${base}/send-image`;
+        payload = { phone: fullPhone, image: image_url, caption: body || '' };
+      } else if (document_url) {
+        const ext = (document_url.split('?')[0].split('.').pop() || 'pdf').toLowerCase();
+        endpoint = `${base}/send-document/${ext}`;
+        payload = { phone: fullPhone, document: document_url, fileName: document_name || `documento.${ext}`, caption: body || '' };
+      }
       resp = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload) });
       sendData = await resp.json().catch(() => ({}));
     } else {
