@@ -362,7 +362,10 @@ Deno.serve(async (req) => {
         upd.session_count = (conv.session_count || 0) + 1; 
         upd.flow_state = null; 
         upd.flow_context = {}; 
-        upd.human_handoff = false; 
+        // Only reset human_handoff if the conversation is not assigned to an agent
+        if (!conv.assigned_to) {
+          upd.human_handoff = false; 
+        }
       }
       if (displayName) upd.display_name = displayName;
       await admin.from('crm_conversations').update(upd).eq('id', conv.id);
