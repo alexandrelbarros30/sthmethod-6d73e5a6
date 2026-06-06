@@ -392,8 +392,10 @@ Deno.serve(async (req) => {
     
     // NOVO: Redirecionamento automático para Sucesso do Aluno quando fora do horário comercial
     let forceSucessoQueue = false;
+    let redirectToSucessoNumber = false;
     if (!withinHours && provider === 'zapi') {
       forceSucessoQueue = true;
+      redirectToSucessoNumber = true;
     }
 
     const profile = await findProfileByPhone(admin, phone, 'user_id, full_name, objective, phone');
