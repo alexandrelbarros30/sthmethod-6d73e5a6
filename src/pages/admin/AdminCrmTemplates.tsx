@@ -268,8 +268,8 @@ export default function AdminCrmTemplates() {
       color: "text-emerald-400",
     },
     wapi: {
-      label: "Fale com o Nutri",
-      desc: "Atendimento de alunos ativos: dieta, treino, protocolo, exames, atualização de ciclo. Linha: +55 21 99898-4153.",
+      label: "Sucesso do Aluno & Nutri",
+      desc: "Suporte administrativo (onboarding, acessos) e suporte técnico (dieta, treino, exames). Linha: +55 21 99898-4153.",
       icon: Stethoscope,
       color: "text-cyan-400",
     },
