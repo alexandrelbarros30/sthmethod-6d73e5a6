@@ -407,11 +407,16 @@ Deno.serve(async (req) => {
     const comIdExAluno = getFlowStep('comercial_ident_exaluno');
     const comSaudacaoLead = getFlowStep('comercial_saudacao_lead');
     const comConhecerConsultoria = getFlowStep('comercial_conhecer_consultoria');
-
     const leadMenuCfg = getFlowStep('comercial_lead_menu');
     const formasPagCfg = getFlowStep('comercial_formas_pagamento');
     const handoffConsCfg = getFlowStep('comercial_handoff_consultor');
     const listaPlanosCfg = getFlowStep('comercial_lista_planos');
+
+    const nutriIdentLead = getFlowStep('nutri_ident_lead');
+    const nutriIdentInativo = getFlowStep('nutri_ident_inativo');
+    const nutriIdentExAluno = getFlowStep('nutri_ident_exaluno');
+    const nutriReception = getFlowStep('nutri_reception');
+    const nutriTransferSucesso = getFlowStep('nutri_transfer_sucesso');
     const channelHours = provider === 'wapi_sucesso' ? (hoursSucessoCfg?.value as any) : (provider === 'wapi' ? (hoursNutriCfg?.value as any) : (hoursComCfg?.value as any));
     const withinHours = isWithinBusinessHours(channelHours);
 
