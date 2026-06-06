@@ -176,6 +176,57 @@ function phoneCandidates(d: string): string[] {
   return Array.from(set);
 }
 
+function digitsOnly(raw: string | null | undefined): string {
+  return String(raw || '').replace(/\D+/g, '').replace(/^0+/, '');
+}
+
+function phoneMatchScore(candidatePhone: string | null | undefined, targetPhone: string): number {
+  const candidate = digitsOnly(candidatePhone);
+  const target = digitsOnly(targetPhone);
+  if (!candidate || !target) return 0;
+  if (candidate === target) return 100;
+  if (candidate.length >= 11 && target.length >= 11 && candidate.slice(-11) === target.slice(-11)) return 80;
+  if (candidate.length >= 10 && target.length >= 10 && candidate.slice(-10) === target.slice(-10)) return 60;
+  return 0;
+}
+
+function buildPhoneSearchPatterns(phone: string): string[] {
+  const patterns = new Set<string>();
+
+  for (const variant of phoneCandidates(phone)) {
+    const digits = digitsOnly(variant);
+    const local = digits.startsWith('55') ? digits.slice(2) : digits;
+    if (local.length < 10) continue;
+
+    const ddd = local.slice(0, 2);
+    const middle = local.slice(2, -4);
+    const last4 = local.slice(-4);
+
+    patterns.add(`%${ddd}%${middle}%${last4}%`);
+    patterns.add(`%${middle}%${last4}%`);
+  }
+
+  return Array.from(patterns);
+}
+
+async function findProfileByPhone(admin: ReturnType<typeof createClient>, phone: string, selectFields: string) {
+  const patterns = buildPhoneSearchPatterns(phone);
+  if (!patterns.length) return null;
+
+  let query = admin.from('profiles').select(selectFields).not('phone', 'is', null);
+  query = query.or(patterns.map((pattern) => `phone.ilike.${pattern}`).join(','));
+
+  const { data, error } = await query.limit(20);
+  if (error) throw error;
+
+  const ranked = (data || [])
+    .map((row: any) => ({ ...row, _score: phoneMatchScore(row.phone, phone), _digits: digitsOnly(row.phone) }))
+    .filter((row: any) => row._score > 0)
+    .sort((a: any, b: any) => b._score - a._score || b._digits.length - a._digits.length);
+
+  return ranked[0] ?? null;
+}
+
 function classify(text: string): { queue: 'comercial'|'nutri'|'sucesso'|'financeiro'|null; nutriCategory: string | null; tags: string[] } {
   const t = String(text || '').toLowerCase();
   const tags: string[] = [];
