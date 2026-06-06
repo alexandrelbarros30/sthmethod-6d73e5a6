@@ -57,6 +57,7 @@ Deno.serve(async (req) => {
     .eq('provider', 'zapi')
     .eq('status', 'open')
     .eq('human_handoff', false)
+    .is('assigned_to', null)
     .not('last_bot_message_at', 'is', null)
     .limit(500);
 

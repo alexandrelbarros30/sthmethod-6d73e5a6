@@ -345,8 +345,8 @@ Deno.serve(async (req) => {
       const ins = await admin.from('crm_conversations').insert({ phone, display_name: displayName, channel: 'whatsapp', status: 'open', provider, queue_type: finalQueue, nutri_category: cls.nutriCategory, is_lead: identifiedAs === 'lead', user_id: profile?.user_id, identified_as: identifiedAs, session_started_at: now.toISOString(), session_expires_at: sessionExpiresAt.toISOString(), session_count: 1 }).select('*').single();
       conv = ins.data;
     } else {
-      if (isExpired && conv.status === 'open') {
-        // Enviar despedida por timeout se estava aberto
+      if (isExpired && conv.status === 'open' && !conv.assigned_to && !conv.human_handoff) {
+        // Enviar despedida por timeout se estava aberto e não é atendimento humano
         const fnName = provider === 'wapi_sucesso' ? 'send-wapi-sucesso' : (provider === 'zapi' ? null : 'send-wapi');
         if (fnName) {
           await admin.functions.invoke(fnName, { body: { phone, message: farewellMessage } });
@@ -362,7 +362,12 @@ Deno.serve(async (req) => {
         upd.session_count = (conv.session_count || 0) + 1; 
         upd.flow_state = null; 
         upd.flow_context = {}; 
-        upd.human_handoff = false; 
+        
+        // Se a conversa estava fechada ou expirou sem um atendente fixo, resetamos para o bot
+        if (conv.status === 'closed' || !conv.assigned_to) {
+          upd.human_handoff = false; 
+          upd.assigned_to = null;
+        }
       }
       if (displayName) upd.display_name = displayName;
       await admin.from('crm_conversations').update(upd).eq('id', conv.id);
@@ -430,7 +435,7 @@ Deno.serve(async (req) => {
     const channelEnabled = provider === 'wapi' ? (wapiCfg?.value as any)?.enabled === true : (provider === 'wapi_sucesso' ? (wapiSucessoCfg?.value as any)?.enabled === true : (zapiCfg?.value as any)?.enabled === true);
 
     if (!channelEnabled) autoReply = { sent: false, reason: 'disabled' };
-    else if (conv.human_handoff) autoReply = { sent: false, reason: 'handoff' };
+    else if (conv.human_handoff || conv.assigned_to) autoReply = { sent: false, reason: 'handoff' };
     else if (!withinHours) {
       if (isNewSession) {
         let msg = '';

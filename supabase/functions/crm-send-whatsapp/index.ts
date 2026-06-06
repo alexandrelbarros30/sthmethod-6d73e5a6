@@ -99,6 +99,13 @@ Deno.serve(async (req) => {
       sent_by: userId, source, status, external_id: externalId,
     });
 
+    await admin.from('crm_conversations').update({
+      human_handoff: true,
+      assigned_to: userId,
+      status: 'open',
+      updated_at: new Date().toISOString()
+    }).eq('id', conversation_id);
+
     return new Response(JSON.stringify({ ok: status === 'sent', status, provider, data: sendData, error: sendData?.error }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

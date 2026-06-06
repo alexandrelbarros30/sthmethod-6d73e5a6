@@ -278,7 +278,11 @@ export default function AdminCrm() {
 
   async function transferTo(uid: string | null) {
     if (!activeId) return;
-    await supabase.from("crm_conversations").update({ assigned_to: uid }).eq("id", activeId);
+    await supabase.from("crm_conversations").update({ 
+      assigned_to: uid,
+      human_handoff: uid ? true : false,
+      updated_at: new Date().toISOString()
+    }).eq("id", activeId);
     qc.invalidateQueries({ queryKey: ["crm-conversations"] });
     toast({ title: uid ? "Atendimento transferido" : "Atendimento liberado" });
   }
