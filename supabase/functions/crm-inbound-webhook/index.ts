@@ -380,7 +380,7 @@ Deno.serve(async (req) => {
     const isExpired = conv?.session_expires_at && new Date(conv.session_expires_at).getTime() < now.getTime();
     
     // CRITICAL FIX: If human is active, prevent session reset/expiry logic that could re-enable the bot
-    const isHumanActive = conv?.human_handoff || conv?.assigned_to;
+    const isHumanActive = conv?.human_handoff === true || !!conv?.assigned_to;
     const isNewSession = !conv || conv.status === 'closed' || (isExpired && !isHumanActive);
 
     if (!conv) {
