@@ -93,11 +93,12 @@ function playBeep() {
   } catch {}
 }
 
-export default function AdminCrm() {
+export default function AdminCrm({ forcedProvider }: { forcedProvider?: Provider } = {}) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const isMobile = useIsMobile();
-  const [channel, setChannel] = useState<Provider>("zapi");
+  const [channel, setChannel] = useState<Provider>(forcedProvider ?? "zapi");
+  useEffect(() => { if (forcedProvider) setChannel(forcedProvider); }, [forcedProvider]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [draft, setDraft] = useState("");

@@ -84,6 +84,8 @@ import AdminBudgets from "./pages/admin/AdminBudgets";
 import AdminQueue from "./pages/admin/AdminQueue";
 import AdminUpdates from "./pages/admin/AdminUpdates";
 import AdminCrm from "./pages/admin/AdminCrm";
+import AdminChatChannel from "./pages/admin/AdminChatChannel";
+import AdminChatInstall from "./pages/admin/AdminChatInstall";
 import AdminCrmCampaigns from "./pages/admin/AdminCrmCampaigns";
 import AdminCrmQueues from "./pages/admin/AdminCrmQueues";
 import AdminCrmTasks from "./pages/admin/AdminCrmTasks";
@@ -236,6 +238,8 @@ const App = () => (
             <Route path="/admin/queue" element={<ProtectedRoute allowedRoles={["admin"]}><AdminQueue /></ProtectedRoute>} />
             <Route path="/admin/updates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminUpdates /></ProtectedRoute>} />
             <Route path="/admin/crm" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrm /></ProtectedRoute>} />
+            <Route path="/admin/crm/instalar" element={<ProtectedRoute allowedRoles={["admin"]}><AdminChatInstall /></ProtectedRoute>} />
+            <Route path="/chat/:canal" element={<ProtectedRoute allowedRoles={["admin","consultor","assistente","financeiro"]}><AdminChatChannel /></ProtectedRoute>} />
             <Route path="/admin/crm/campanhas" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrmCampaigns /></ProtectedRoute>} />
             <Route path="/admin/crm/filas" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrmQueues /></ProtectedRoute>} />
             <Route path="/admin/crm/tarefas" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrmTasks /></ProtectedRoute>} />
