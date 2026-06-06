@@ -544,7 +544,7 @@ Deno.serve(async (req) => {
         if (provider === 'zapi') {
           // Se for redirecionamento forçado por horário, usamos a mensagem de Sucesso do Aluno
           if (forceSucessoQueue) {
-            msg = "No momento estamos fora do horário de expediente no canal Comercial.\n\nPara um atendimento automatizado agora, por favor acesse nosso canal de Sucesso do Aluno: https://wa.me/5521991751515\n\nEstamos encerrando este atendimento aqui para você seguir por lá! 👋";
+            msg = "No momento estamos fora do horário de expediente no canal Comercial.\n\nPara um atendimento automatizado agora, por favor acesse nosso canal de Sucesso do Aluno: https://wa.me/5521972486650\n\nEstamos encerrando este atendimento aqui para você seguir por lá! 👋";
             
             const r = await sendMessage(msg, 'away_redirect');
             
