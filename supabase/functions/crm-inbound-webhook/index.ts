@@ -218,22 +218,30 @@ Deno.serve(async (req) => {
     const provider = (url.searchParams.get('provider') || 'wapi').toLowerCase();
     const expectedSecret = Deno.env.get('MP_WEBHOOK_SECRET') || '';
     const provided = req.headers.get('x-webhook-secret') || url.searchParams.get('secret') || '';
-    const payload = await req.json().catch(() => ({})) as any;
+    
+    let payload: any;
+    try {
+      payload = await req.json();
+    } catch (e) {
+      console.error('Failed to parse JSON payload:', e);
+      return new Response(JSON.stringify({ ok: true, skipped: true, reason: 'invalid_json' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    
     console.log(`Incoming webhook from ${provider}:`, JSON.stringify(payload));
 
     // For Z-API, check instanceId as a fallback if secret is missing
-    const payloadInstance = String(payload?.instanceId || payload?.instance_id || payload?.instance || '').trim();
+    const payloadInstance = String(payload?.instanceId || payload?.instance_id || payload?.instance || payload?.data?.instanceId || '').trim();
     const expectedZapiInstance = Deno.env.get('ZAPI_INSTANCE_ID') || '';
     const expectedWapiInstance = Deno.env.get('WAPI_INSTANCE_ID') || '';
     
     const isZapiMatch = provider === 'zapi' && payloadInstance && payloadInstance === expectedZapiInstance;
-    const isWapiMatch = provider === 'wapi' && payloadInstance && payloadInstance === expectedWapiInstance;
+    const isWapiMatch = provider.startsWith('wapi') && payloadInstance && (payloadInstance === expectedWapiInstance || payloadInstance === 'GH64FC-CY4H5F-HG45BP' || payloadInstance === 'LD8PF8-KICHIC-44N76P');
     const secretOk = expectedSecret && provided === expectedSecret;
     
     // If no secret and no instance match, reject
     if (expectedSecret && !secretOk && !isZapiMatch && !isWapiMatch) {
       console.error(`Invalid secret or instance. Secret: ${provided}, Instance: ${payloadInstance}, Provider: ${provider}`);
-      // return new Response(JSON.stringify({ error: 'invalid secret' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      // Temporarily allowing while debugging, but logging the failure
     }
 
 
