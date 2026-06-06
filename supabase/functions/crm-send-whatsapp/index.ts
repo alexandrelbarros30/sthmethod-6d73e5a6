@@ -24,8 +24,8 @@ Deno.serve(async (req) => {
     if (!auth?.claims) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     const userId = auth.claims.sub;
 
-    const { conversation_id, phone, body, image_url, provider: explicitProvider } = await req.json();
-    if (!conversation_id || !phone || (!body && !image_url)) {
+    const { conversation_id, phone, body, image_url, document_url, document_name, provider: explicitProvider } = await req.json();
+    if (!conversation_id || !phone || (!body && !image_url && !document_url)) {
       return new Response(JSON.stringify({ error: 'conversation_id, phone and body required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
@@ -37,14 +37,14 @@ Deno.serve(async (req) => {
       const { data: conv } = await admin.from('crm_conversations').select('provider, queue_type').eq('id', conversation_id).maybeSingle();
       provider = (conv?.provider as string) || (conv?.queue_type === 'comercial' || conv?.queue_type === 'financeiro' ? 'zapi' : 'wapi');
     }
-    const source = provider === 'zapi' ? 'zapi' : 'wapi';
+    const source = provider === 'zapi' ? 'zapi' : (provider === 'wapi_sucesso' ? 'wapi_sucesso' : 'wapi');
 
     // Normaliza telefone BR
     const digits = String(phone).replace(/\D/g, '');
     const fullPhone = digits.startsWith('55') ? digits : `55${digits}`;
 
     // Carrega credenciais do banco (fallback para env)
-    const cfgKey = provider === 'zapi' ? 'zapi' : 'wapi';
+    const cfgKey = provider === 'zapi' ? 'zapi' : (provider === 'wapi_sucesso' ? 'wapi_sucesso' : 'wapi');
     const { data: cfgRow } = await admin.from('crm_settings').select('value').eq('key', cfgKey).maybeSingle();
     const cfg: any = cfgRow?.value || {};
     if (cfg.enabled !== true) {
@@ -65,10 +65,16 @@ Deno.serve(async (req) => {
       }
       const base = `https://api.z-api.io/instances/${id}/token/${tok}`;
       const headers = { 'Content-Type': 'application/json', 'Client-Token': client };
-      const endpoint = image_url ? `${base}/send-image` : `${base}/send-text`;
-      const payload = image_url
-        ? { phone: fullPhone, image: image_url, caption: body || '' }
-        : { phone: fullPhone, message: body };
+      let endpoint = `${base}/send-text`;
+      let payload: Record<string, unknown> = { phone: fullPhone, message: body };
+      if (image_url) {
+        endpoint = `${base}/send-image`;
+        payload = { phone: fullPhone, image: image_url, caption: body || '' };
+      } else if (document_url) {
+        const ext = (document_url.split('?')[0].split('.').pop() || 'pdf').toLowerCase();
+        endpoint = `${base}/send-document/${ext}`;
+        payload = { phone: fullPhone, document: document_url, fileName: document_name || `documento.${ext}`, caption: body || '' };
+      }
       resp = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload) });
       sendData = await resp.json().catch(() => ({}));
     } else {
@@ -81,12 +87,16 @@ Deno.serve(async (req) => {
       }
       const headers: Record<string, string> = { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` };
       if (client) headers['Client-Token'] = client;
-      const endpoint = image_url
-        ? `${serverUrl}/v1/message/send-image?instanceId=${id}`
-        : `${serverUrl}/v1/message/send-text?instanceId=${id}`;
-      const payload = image_url
-        ? { phone: fullPhone, image: image_url, caption: body || '' }
-        : { phone: fullPhone, message: body };
+      let endpoint = `${serverUrl}/v1/message/send-text?instanceId=${id}`;
+      let payload: Record<string, unknown> = { phone: fullPhone, message: body };
+      if (image_url) {
+        endpoint = `${serverUrl}/v1/message/send-image?instanceId=${id}`;
+        payload = { phone: fullPhone, image: image_url, caption: body || '' };
+      } else if (document_url) {
+        const ext = (document_url.split('?')[0].split('.').pop() || 'pdf').toLowerCase();
+        endpoint = `${serverUrl}/v1/message/send-document?instanceId=${id}`;
+        payload = { phone: fullPhone, document: document_url, fileName: document_name || `documento.${ext}`, caption: body || '' };
+      }
       resp = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload) });
       sendData = await resp.json().catch(() => ({}));
     }
@@ -95,7 +105,9 @@ Deno.serve(async (req) => {
     const externalId = sendData?.messageId || sendData?.id || sendData?.zaapId || null;
 
     await admin.from('crm_messages').insert({
-      conversation_id, direction: 'out', body, media_url: image_url || null,
+      conversation_id, direction: 'out', body,
+      media_url: image_url || document_url || null,
+      media_type: image_url ? 'image' : (document_url ? 'document' : null),
       sent_by: userId, source, status, external_id: externalId,
     });
 
