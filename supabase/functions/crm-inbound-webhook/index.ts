@@ -544,12 +544,21 @@ Deno.serve(async (req) => {
         if (provider === 'zapi') {
           // Se for redirecionamento forçado por horário, usamos a mensagem de Sucesso do Aluno
           if (forceSucessoQueue) {
-            msg = String(getFlowStep('sucesso_main_menu')?.message || 'Bem-vindo ao Sucesso do Aluno. No momento estamos fora do horário de expediente, mas sua mensagem foi recebida e será processada automaticamente.');
-            // Garantimos que o estado do fluxo seja atualizado para o menu de sucesso
+            msg = "No momento estamos fora do horário de expediente no canal Comercial.\n\nPara um atendimento automatizado agora, por favor acesse nosso canal de Sucesso do Aluno: https://wa.me/5521998984153\n\nEstamos encerrando este atendimento aqui para você seguir por lá! 👋";
+            
+            const r = await sendMessage(msg, 'away_redirect');
+            
+            // Fechamos a conversa no canal comercial
             await admin.from('crm_conversations').update({ 
-              flow_state: 'sucesso_main_menu', 
-              queue_type: 'sucesso' 
+              status: 'closed', 
+              human_handoff: false, 
+              assigned_to: null,
+              flow_state: null,
+              flow_context: {},
+              session_expires_at: new Date().toISOString() 
             }).eq('id', conv.id);
+            
+            autoReply = { sent: r.sent, engine: 'away_redirect' };
           } else {
             if (identifiedAs === 'lead') msg = comAwayLead?.value?.message;
             else if (identifiedAs === 'aluno_ativo') msg = comAwayActive?.value?.message;
