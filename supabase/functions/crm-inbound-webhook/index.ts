@@ -380,7 +380,7 @@ Deno.serve(async (req) => {
     const isExpired = conv?.session_expires_at && new Date(conv.session_expires_at).getTime() < now.getTime();
     
     // CRITICAL FIX: If human is active, prevent session reset/expiry logic that could re-enable the bot
-    const isHumanActive = conv?.human_handoff || conv?.assigned_to;
+    const isHumanActive = conv?.human_handoff === true || !!conv?.assigned_to;
     const isNewSession = !conv || conv.status === 'closed' || (isExpired && !isHumanActive);
 
     if (!conv) {
@@ -480,9 +480,9 @@ Deno.serve(async (req) => {
     const channelEnabled = provider === 'wapi' ? (wapiCfg?.value as any)?.enabled === true : (provider === 'wapi_sucesso' ? (wapiSucessoCfg?.value as any)?.enabled === true : (zapiCfg?.value as any)?.enabled === true);
 
     // Se houver atendente humano ou flag de handoff, ignoramos completamente mensagens automáticas
-    if (conv.human_handoff || conv.assigned_to) {
+    if (conv.human_handoff === true || !!conv.assigned_to) {
       console.log(`Human active on conversation ${conv.id} (assigned: ${conv.assigned_to}, handoff: ${conv.human_handoff}). Skipping auto-replies.`);
-      autoReply = { sent: false, reason: 'handoff' };
+      autoReply = { sent: false, reason: 'human_active' };
     } else if (!channelEnabled) {
       autoReply = { sent: false, reason: 'disabled' };
     }
