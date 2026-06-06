@@ -52,18 +52,14 @@ async function generateAiReply({
     engine = storedEngine;
   }
 
-  const [{ data: msgs }, { data: profiles }] = await Promise.all([
+  const [{ data: msgs }, profile] = await Promise.all([
     admin
       .from('crm_messages')
       .select('direction, body, created_at')
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: false })
       .limit(10),
-    admin
-      .from('profiles')
-      .select('full_name, objective, weight')
-      .in('phone', phoneCandidates(phone))
-      .limit(1),
+    findProfileByPhone(admin, phone, 'full_name, objective, weight, phone'),
   ]);
 
   const history = (msgs || [])
@@ -72,8 +68,8 @@ async function generateAiReply({
     .join('\n');
 
   let context = history ? `Histórico recente da conversa:\n${history}\n\n` : '';
-  if (profiles?.[0]) {
-    context += `Aluno: ${profiles[0].full_name} | Objetivo: ${profiles[0].objective || '—'} | Peso: ${profiles[0].weight || '—'}kg\n\n`;
+  if (profile) {
+    context += `Aluno: ${profile.full_name} | Objetivo: ${profile.objective || '—'} | Peso: ${profile.weight || '—'}kg\n\n`;
   }
 
   const userPrompt = 'Com base no contexto acima, responda a última mensagem de forma curta, cordial e profissional (tom STH METHOD, neutro e técnico, em português do Brasil). Não use emojis em excesso. Máximo 4 frases.';
@@ -174,6 +170,57 @@ function phoneCandidates(d: string): string[] {
     if (local.length === 10) set.add(local.slice(0,2) + '9' + local.slice(2));
   }
   return Array.from(set);
+}
+
+function digitsOnly(raw: string | null | undefined): string {
+  return String(raw || '').replace(/\D+/g, '').replace(/^0+/, '');
+}
+
+function phoneMatchScore(candidatePhone: string | null | undefined, targetPhone: string): number {
+  const candidate = digitsOnly(candidatePhone);
+  const target = digitsOnly(targetPhone);
+  if (!candidate || !target) return 0;
+  if (candidate === target) return 100;
+  if (candidate.length >= 11 && target.length >= 11 && candidate.slice(-11) === target.slice(-11)) return 80;
+  if (candidate.length >= 10 && target.length >= 10 && candidate.slice(-10) === target.slice(-10)) return 60;
+  return 0;
+}
+
+function buildPhoneSearchPatterns(phone: string): string[] {
+  const patterns = new Set<string>();
+
+  for (const variant of phoneCandidates(phone)) {
+    const digits = digitsOnly(variant);
+    const local = digits.startsWith('55') ? digits.slice(2) : digits;
+    if (local.length < 10) continue;
+
+    const ddd = local.slice(0, 2);
+    const middle = local.slice(2, -4);
+    const last4 = local.slice(-4);
+
+    patterns.add(`%${ddd}%${middle}%${last4}%`);
+    patterns.add(`%${middle}%${last4}%`);
+  }
+
+  return Array.from(patterns);
+}
+
+async function findProfileByPhone(admin: ReturnType<typeof createClient>, phone: string, selectFields: string) {
+  const patterns = buildPhoneSearchPatterns(phone);
+  if (!patterns.length) return null;
+
+  let query = admin.from('profiles').select(selectFields).not('phone', 'is', null);
+  query = query.or(patterns.map((pattern) => `phone.ilike.${pattern}`).join(','));
+
+  const { data, error } = await query.limit(20);
+  if (error) throw error;
+
+  const ranked = (data || [])
+    .map((row: any) => ({ ...row, _score: phoneMatchScore(row.phone, phone), _digits: digitsOnly(row.phone) }))
+    .filter((row: any) => row._score > 0)
+    .sort((a: any, b: any) => b._score - a._score || b._digits.length - a._digits.length);
+
+  return ranked[0] ?? null;
 }
 
 function classify(text: string): { queue: 'comercial'|'nutri'|'sucesso'|'financeiro'|null; nutriCategory: string | null; tags: string[] } {
@@ -279,8 +326,7 @@ Deno.serve(async (req) => {
       const isOptOut = /\bCANCELAR\s+ENVIO\b/.test(normalizedBody);
       const isManualClose = normalizedBody === '#SAIR' || normalizedBody === '#ENCERRAR';
       
-      const candidates = phoneCandidates(phone);
-      const { data: profile } = await admin.from('profiles').select('user_id, full_name').in('phone', candidates).limit(1).maybeSingle();
+      const profile = await findProfileByPhone(admin, phone, 'user_id, full_name, phone');
       
       if (isManualClose) {
         const { data: conv } = await admin.from('crm_conversations').select('id').eq('phone', phone).maybeSingle();
@@ -344,9 +390,7 @@ Deno.serve(async (req) => {
     const channelHours = provider === 'wapi_sucesso' ? hoursSucessoCfg?.value : (provider === 'wapi' ? hoursNutriCfg?.value : hoursComCfg?.value);
     const withinHours = isWithinBusinessHours(channelHours);
 
-    const candidates = phoneCandidates(phone);
-    const { data: profiles } = await admin.from('profiles').select('user_id, full_name, objective').in('phone', candidates).limit(1);
-    const profile = profiles?.[0];
+    const profile = await findProfileByPhone(admin, phone, 'user_id, full_name, objective, phone');
     let displayName = name || profile?.full_name || null;
     let identifiedAs: 'aluno_ativo' | 'aluno_vencido' | 'lead' | 'ex_aluno' = 'lead';
 
@@ -396,7 +440,7 @@ Deno.serve(async (req) => {
         await admin.from('crm_messages').insert({ conversation_id: conv.id, direction: 'out', body: farewellMessage, source: provider, status: 'sent', metadata: { type: 'timeout_farewell' } });
       }
 
-      const upd: any = { provider, session_expires_at: sessionExpiresAt.toISOString(), status: 'open', is_lead: identifiedAs === 'lead', user_id: profile?.user_id, identified_as: identifiedAs };
+      const upd: any = { provider, queue_type: finalQueue, nutri_category: cls.nutriCategory, session_expires_at: sessionExpiresAt.toISOString(), status: 'open', is_lead: identifiedAs === 'lead', user_id: profile?.user_id, identified_as: identifiedAs };
       
       if (isNewSession) { 
         upd.session_started_at = now.toISOString(); 
