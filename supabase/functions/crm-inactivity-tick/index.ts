@@ -86,12 +86,15 @@ Deno.serve(async (req) => {
 
     if (!c.inactivity_warned_at && sinceBot >= FIVE_MIN) {
       const msg = `Olá${nomeSep}${firstName}.\n\nPercebi que você não respondeu à nossa última mensagem.\n\nSe ainda precisar de ajuda, basta responder esta conversa. 🙂`;
-      await sendZapi(c.phone, msg, c.id, 'inactivity_warning');
-      await admin.from('crm_conversations').update({
-        inactivity_warned_at: new Date().toISOString(),
-        last_bot_message_at: new Date().toISOString(),
-      }).eq('id', c.id);
-      warned++;
+      const { sent } = await sendZapi(c.phone, msg, c.id, 'inactivity_warning');
+      
+      if (sent) {
+        await admin.from('crm_conversations').update({
+          inactivity_warned_at: new Date().toISOString(),
+          last_bot_message_at: new Date().toISOString(),
+        }).eq('id', c.id);
+        warned++;
+      }
     } else if (c.inactivity_warned_at) {
       const sinceWarn = now - new Date(c.inactivity_warned_at).getTime();
       if (sinceWarn >= FIVE_MIN) {
