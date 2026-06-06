@@ -562,7 +562,9 @@ Deno.serve(async (req) => {
           } else {
             if (identifiedAs === 'lead') msg = comAwayLead?.value?.message;
             else if (identifiedAs === 'aluno_ativo') msg = comAwayActive?.value?.message;
-            else msg = comAwayExpired?.value?.message;
+            else {
+              msg = "Olá! No momento estamos fora do horário de expediente.\n\nLocalizamos seu cadastro e vimos que seu plano está inativo. Para renovar agora de forma 100% automatizada, utilize os links abaixo:\n\n🔗 Renovação: https://sthmethod.com.br/renovacao\n🌐 Site: https://sthmethod.com.br\n\nResponderemos sua mensagem assim que retornarmos! 👋";
+            }
           }
         } else {
           // No Fale com o Nutri
