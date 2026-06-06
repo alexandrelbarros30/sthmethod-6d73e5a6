@@ -1,0 +1,17 @@
+{
+  "id": "/chat/sucesso",
+  "name": "STH · Sucesso do Aluno",
+  "short_name": "Sucesso",
+  "description": "Chat do canal Sucesso do Aluno — STH METHOD",
+  "start_url": "/chat/sucesso?pwa=1",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b141a",
+  "theme_color": "#a78bfa",
+  "icons": [
+    { "src": "/pwa-sucesso-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/pwa-sucesso-512.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/pwa-sucesso-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
