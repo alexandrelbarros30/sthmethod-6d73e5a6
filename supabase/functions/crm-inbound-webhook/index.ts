@@ -232,7 +232,6 @@ Deno.serve(async (req) => {
       // return new Response(JSON.stringify({ error: 'invalid secret' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    }
 
 
     const phoneRaw = payload?.phone || payload?.from || payload?.data?.from || payload?.message?.from || '';
