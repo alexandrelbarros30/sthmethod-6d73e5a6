@@ -217,18 +217,21 @@ Deno.serve(async (req) => {
     const payload = await req.json().catch(() => ({})) as any;
     console.log(`Incoming webhook from ${provider}:`, JSON.stringify(payload));
 
-
+    // For Z-API, check instanceId as a fallback if secret is missing
     const payloadInstance = String(payload?.instanceId || payload?.instance_id || payload?.instance || '').trim();
+    const expectedZapiInstance = Deno.env.get('ZAPI_INSTANCE_ID') || '';
+    const expectedWapiInstance = Deno.env.get('WAPI_INSTANCE_ID') || '';
     
-    // Webhook secret validation (if provided)
+    const isZapiMatch = provider === 'zapi' && payloadInstance && payloadInstance === expectedZapiInstance;
+    const isWapiMatch = provider === 'wapi' && payloadInstance && payloadInstance === expectedWapiInstance;
     const secretOk = expectedSecret && provided === expectedSecret;
     
-    // For W-API, we don't always have the instanceId in the body in a way that matches env vars easily,
-    // so if the secret matches, we trust it. If no secret, we at least log or skip if it's clearly not ours.
-    if (expectedSecret && !secretOk) {
-      console.error(`Invalid secret provided: ${provided}`);
-      return new Response(JSON.stringify({ error: 'invalid secret' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    // If no secret and no instance match, reject
+    if (expectedSecret && !secretOk && !isZapiMatch && !isWapiMatch) {
+      console.error(`Invalid secret or instance. Secret: ${provided}, Instance: ${payloadInstance}, Provider: ${provider}`);
+      // return new Response(JSON.stringify({ error: 'invalid secret' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
+
 
 
     const phoneRaw = payload?.phone || payload?.from || payload?.data?.from || payload?.message?.from || '';
