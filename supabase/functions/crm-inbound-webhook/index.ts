@@ -273,12 +273,51 @@ Deno.serve(async (req) => {
     const phone = normalizePhone(phoneRaw);
     if (!phone || !body) return new Response(JSON.stringify({ ok: true, skipped: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
-    // OPT-OUT
+    // OPT-OUT and MANUAL CLOSE
     const normalizedBody = String(body).trim().toUpperCase();
-    if (/\bCANCELAR\s+ENVIO\b/.test(normalizedBody) || /^VOLTAR$/.test(normalizedBody)) {
+    if (/\bCANCELAR\s+ENVIO\b/.test(normalizedBody) || /^VOLTAR$/.test(normalizedBody) || normalizedBody === '#SAIR' || normalizedBody === '#ENCERRAR') {
       const isOptOut = /\bCANCELAR\s+ENVIO\b/.test(normalizedBody);
+      const isManualClose = normalizedBody === '#SAIR' || normalizedBody === '#ENCERRAR';
+      
       const candidates = phoneCandidates(phone);
       const { data: profile } = await admin.from('profiles').select('user_id, full_name').in('phone', candidates).limit(1).maybeSingle();
+      
+      if (isManualClose) {
+        const { data: conv } = await admin.from('crm_conversations').select('id').eq('phone', phone).maybeSingle();
+        if (conv) {
+          const farewellMsg = "Atendimento encerrado com sucesso. Caso precise de algo mais, estamos à disposição! 👋";
+          
+          // Enviar mensagem de despedida
+          if (provider === 'zapi') {
+            const c = (zapiCfgRow?.value as any) || {};
+            const INSTANCE_ID = (c.instance_id || Deno.env.get('ZAPI_INSTANCE_ID') || '').trim();
+            const INSTANCE_TOKEN = (c.instance_token || Deno.env.get('ZAPI_INSTANCE_TOKEN') || '').trim();
+            const CLIENT_TOKEN = (c.client_token || Deno.env.get('ZAPI_CLIENT_TOKEN') || '').trim();
+            if (INSTANCE_ID && INSTANCE_TOKEN) {
+              await fetch(`https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...(CLIENT_TOKEN ? { 'Client-Token': CLIENT_TOKEN } : {}) },
+                body: JSON.stringify({ phone, message: farewellMsg }),
+              });
+            }
+          } else {
+            const fnName = provider === 'wapi_sucesso' ? 'send-wapi-sucesso' : 'send-wapi';
+            await admin.functions.invoke(fnName, { body: { phone, message: farewellMsg } });
+          }
+
+          await admin.from('crm_messages').insert({ conversation_id: conv.id, direction: 'out', body: farewellMsg, source: provider, status: 'sent', metadata: { type: 'manual_close' } });
+          await admin.from('crm_conversations').update({ 
+            status: 'closed', 
+            human_handoff: false, 
+            assigned_to: null,
+            flow_state: null,
+            flow_context: {},
+            session_expires_at: new Date().toISOString() 
+          }).eq('id', conv.id);
+        }
+        return new Response(JSON.stringify({ ok: true, manual_close: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
       if (profile?.user_id) {
         await admin.from('profiles').update({ whatsapp_opt_out: isOptOut, whatsapp_opt_out_at: isOptOut ? new Date().toISOString() : null }).eq('user_id', profile.user_id);
       }
