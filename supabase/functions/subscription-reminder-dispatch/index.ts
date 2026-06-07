@@ -5,12 +5,13 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 // D-3 (3 dias antes do vencimento), D+1, D+7, D+15 (cupom RETOMA20), D+30.
 // Roda 1x/dia via pg_cron. Dedup por (user_id, end_date, trigger).
 
-const RULES: Array<{ trigger: string; offset: number; coupon?: string }> = [
+const RULES: Array<{ trigger: string; offset: number; coupon?: string; cycle_days?: number }> = [
   { trigger: 'renewal_pre_3d', offset: -3 },
+  { trigger: 'cycle_update_d_minus_1', offset: -1, cycle_days: 30 },
   { trigger: 'renewal_d1', offset: 1 },
   { trigger: 'renewal_d7', offset: 7 },
   { trigger: 'renewal_d15', offset: 15, coupon: 'RETOMA10' },
-  { trigger: 'renewal_d30', offset: 30, coupon: 'RETOMA20' },
+  { trigger: 'renewal_d30', offset: 30, coupon: 'RETOMA10' },
 ];
 
 function render(body: string, ctx: Record<string, string>): string {
@@ -71,14 +72,27 @@ Deno.serve(async (req) => {
       if (!tpl || !tpl.active) continue;
 
       // end_date alvo = hoje - offset (D-3 => end_date = hoje+3; D+7 => end_date = hoje-7)
-      const target = new Date(today);
-      target.setDate(target.getDate() - rule.offset);
-      const targetIso = target.toISOString().slice(0, 10);
-
-      let q = admin
-        .from('subscriptions')
-        .select('id, user_id, end_date, plan_id')
-        .eq('end_date', targetIso);
+      // Se for atualização de ciclo (cycle_days), buscamos por (start_date + cycle_days - 1)
+      let q;
+      if (rule.cycle_days) {
+        const target = new Date(today);
+        target.setDate(target.getDate() - rule.offset); // offset é -1, então target = hoje+1
+        
+        // Buscamos assinaturas ativas onde (hoje + 1 dia) coincide com um marco de cycle_days (30, 60, 90...)
+        // Simplificamos buscando assinaturas onde: (hoje + 1 - start_date) % cycle_days == 0
+        q = admin
+          .from('subscriptions')
+          .select('id, user_id, start_date, end_date, plan_id')
+          .eq('status', 'active');
+      } else {
+        const target = new Date(today);
+        target.setDate(target.getDate() - rule.offset);
+        const targetIso = target.toISOString().slice(0, 10);
+        q = admin
+          .from('subscriptions')
+          .select('id, user_id, start_date, end_date, plan_id')
+          .eq('end_date', targetIso);
+      }
       if (forceUser) q = q.eq('user_id', forceUser);
 
       const { data: subs, error: subErr } = await q;
@@ -88,7 +102,21 @@ Deno.serve(async (req) => {
       const seen = new Set<string>();
       const list = (subs || []).filter(s => {
         if (seen.has(s.user_id)) return false;
-        seen.add(s.user_id); return true;
+        
+        if (rule.cycle_days) {
+          const start = new Date(s.start_date + 'T00:00:00');
+          const diffTime = Math.abs(today.getTime() - start.getTime());
+          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+          // Queremos disparar 1 dia antes de completar múltiplos de 30 dias (29, 59, 89...)
+          const targetDay = diffDays + 1;
+          if (targetDay % rule.cycle_days !== 0 || targetDay === 0) return false;
+          
+          // Não disparar se o plano já vence amanhã (o lembrete de renovação D-3 já deve ter ocorrido ou o D+0 ocorrerá)
+          // Mas o usuário pediu especificamente "a cada final de ciclo 30-1 enviar lembrete"
+        }
+
+        seen.add(s.user_id); 
+        return true;
       });
 
       summary[rule.trigger].eligible = list.length;
