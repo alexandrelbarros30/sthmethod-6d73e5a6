@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
 
     // Build recipient list from target filter
     const filter = (camp.target_filter || {}) as { type?: string };
-    const targets: { phone: string; name: string | null; user_id: string | null; plan: string | null; end_date: string | null; price: number | null }[] = [];
+    const targets: { phone: string; name: string | null; user_id: string | null; plan: string | null; plan_id: string | null; end_date: string | null; price: number | null }[] = [];
 
     if (filter.type === 'all_active' || filter.type === 'expiring' || filter.type === 'expired') {
       const today = new Date();
