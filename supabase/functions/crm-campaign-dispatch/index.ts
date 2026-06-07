@@ -56,6 +56,7 @@ Deno.serve(async (req) => {
             name: p.full_name,
             user_id: p.user_id,
             plan: plan?.name || null,
+            plan_id: s?.plan_id || null,
             end_date: s?.end_date || null,
             price: plan?.price ?? null,
           });
