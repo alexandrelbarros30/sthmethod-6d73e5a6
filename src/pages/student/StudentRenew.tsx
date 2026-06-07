@@ -17,6 +17,7 @@ const StudentRenew = () => {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const targetUserId = searchParams.get("uid");
+  const targetPlanId = searchParams.get("pid");
 
   const isAuthorized = user?.id === targetUserId;
 
@@ -28,6 +29,16 @@ const StudentRenew = () => {
     },
     enabled: isAuthorized,
   });
+
+  useEffect(() => {
+    if (plans && targetPlanId && !selectedPlan) {
+      const plan = plans.find((p: any) => p.id === targetPlanId);
+      if (plan) {
+        setSelectedPlan(plan);
+        setCheckoutOpen(true);
+      }
+    }
+  }, [plans, targetPlanId, selectedPlan]);
 
   const { data: profile } = useQuery({
     queryKey: ["renew-profile", user?.id],
