@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
 
     // Build recipient list from target filter
     const filter = (camp.target_filter || {}) as { type?: string };
-    const targets: { phone: string; name: string | null; user_id: string | null; plan: string | null; end_date: string | null; price: number | null }[] = [];
+    const targets: { phone: string; name: string | null; user_id: string | null; plan: string | null; plan_id: string | null; end_date: string | null; price: number | null }[] = [];
 
     if (filter.type === 'all_active' || filter.type === 'expiring' || filter.type === 'expired') {
       const today = new Date();
@@ -56,6 +56,7 @@ Deno.serve(async (req) => {
             name: p.full_name,
             user_id: p.user_id,
             plan: plan?.name || null,
+            plan_id: s?.plan_id || null,
             end_date: s?.end_date || null,
             price: plan?.price ?? null,
           });
@@ -93,7 +94,6 @@ Deno.serve(async (req) => {
     let sent = 0, failed = 0;
     const sendApiUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/crm-send-whatsapp`;
     const provider = camp.channel || 'zapi';
-    const renewLink = 'https://sthmethod.com.br/aluno/renovar';
     function fmtDate(d: string | null) {
       if (!d) return '';
       try { return new Date(d).toLocaleDateString('pt-BR'); } catch { return d; }
@@ -103,6 +103,7 @@ Deno.serve(async (req) => {
       return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
     function renderVars(body: string, t: typeof unique[number]): string {
+      const renewLink = `https://sthmethod.com.br/dashboard/renew?uid=${t.user_id}${t.plan_id ? `&pid=${t.plan_id}` : ''}`;
       const ctx: Record<string, string> = {
         nome: (t.name || '').split(' ')[0] || (t.name || ''),
         plano: t.plan || '',

@@ -90,7 +90,7 @@ function renderTemplate(content: string, ctx: Record<string, any>): string {
     msg = msg.replace(/\{dias_vencido\}/g, "—");
   }
   const link = ctx.user_id
-    ? `https://sthmethod.com.br/dashboard/renew?uid=${ctx.user_id}`
+    ? `https://sthmethod.com.br/dashboard/renew?uid=${ctx.user_id}${ctx.plan_id ? `&pid=${ctx.plan_id}` : ''}`
     : "";
   msg = msg.replace(/\{link\}/g, link);
   msg = msg.replace(/\{link_renovacao\}/g, link);
@@ -169,6 +169,7 @@ async function sendAutomationWhatsapp(
     email: profile.email,
     phone: profile.phone,
     user_id: userId,
+    plan_id: sub?.plan_id || null,
     plan_name: planName,
     plan_price: planPrice,
     amount: planPrice,

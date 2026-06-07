@@ -17,6 +17,7 @@ const StudentRenew = () => {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const targetUserId = searchParams.get("uid");
+  const targetPlanId = searchParams.get("pid");
 
   const isAuthorized = user?.id === targetUserId;
 
@@ -28,6 +29,16 @@ const StudentRenew = () => {
     },
     enabled: isAuthorized,
   });
+
+  useEffect(() => {
+    if (plans && targetPlanId && !selectedPlan) {
+      const plan = plans.find((p: any) => p.id === targetPlanId);
+      if (plan) {
+        setSelectedPlan(plan);
+        setCheckoutOpen(true);
+      }
+    }
+  }, [plans, targetPlanId, selectedPlan]);
 
   const { data: profile } = useQuery({
     queryKey: ["renew-profile", user?.id],
@@ -63,14 +74,15 @@ const StudentRenew = () => {
   }
 
   if (!isAuthorized) {
+    const loginUrl = `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
     return (
       <DashboardLayout role="student" title="Acesso Negado" subtitle="">
         <Card className="max-w-md mx-auto mt-12">
           <CardContent className="py-10 text-center space-y-4">
             <p className="text-sm text-muted-foreground">
-              Este link de pagamento não pertence à sua conta. Faça login com a conta correta.
+              Este link de pagamento não pertence à sua conta ou você não está autenticado.
             </p>
-            <Button onClick={() => navigate("/login")}>Fazer Login</Button>
+            <Button onClick={() => navigate(loginUrl)}>Fazer Login</Button>
           </CardContent>
         </Card>
       </DashboardLayout>
