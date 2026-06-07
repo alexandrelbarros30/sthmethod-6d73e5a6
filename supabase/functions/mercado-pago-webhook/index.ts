@@ -90,7 +90,7 @@ function renderTemplate(content: string, ctx: Record<string, any>): string {
     msg = msg.replace(/\{dias_vencido\}/g, "—");
   }
   const link = ctx.user_id
-    ? `https://sthmethod.com.br/dashboard/renew?uid=${ctx.user_id}`
+    ? `https://sthmethod.com.br/dashboard/renew?uid=${ctx.user_id}${ctx.plan_id ? `&pid=${ctx.plan_id}` : ''}`
     : "";
   msg = msg.replace(/\{link\}/g, link);
   msg = msg.replace(/\{link_renovacao\}/g, link);
