@@ -630,33 +630,50 @@ Deno.serve(async (req) => {
       }
     } else if (conv.flow_state === 'sucesso_main_menu') {
       const trimmed = body.trim();
-      if (trimmed === '1') { await sendMessage(String(getFlowStep('sucesso_atualizar_peso')?.message || 'Acesse a plataforma para atualizar peso.'), 'sucesso_atualizacao'); }
-      else if (trimmed === '2' || trimmed === '4') { 
+      const lower = trimmed.toLowerCase();
+      const isBack = trimmed === '0' || ['menu','voltar','inicio','início','start'].includes(lower);
+      const menuHint = '\n\n_Digite *0* para voltar ao menu ou *#SAIR* para encerrar._';
+
+      if (isBack) {
+        await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Menu principal.'), 'sucesso_back_menu');
+      } else if (trimmed === '1') {
+        await sendMessage(String(getFlowStep('sucesso_atualizar_peso')?.message || 'Acesse a plataforma para atualizar peso.') + menuHint, 'sucesso_atualizacao');
+      } else if (trimmed === '2' || trimmed === '4') {
+        // 100% AUTOMATIZADO — sem handoff humano. Apenas envia link e oferece retorno ao menu.
         const stepKey = trimmed === '2' ? 'sucesso_renovar' : 'sucesso_reativar';
-        const msg = String(getFlowStep(stepKey)?.message || 'Para renovar ou reativar sua consultoria de forma 100% automática, acesse os links abaixo:');
-        
-        let customMsg = msg;
+        let customMsg = String(getFlowStep(stepKey)?.message || 'Para renovar ou reativar sua consultoria de forma 100% automática, acesse o link abaixo:');
         if (!customMsg.includes('sthmethod.com.br')) {
           customMsg += '\n\n🔗 Renovação: https://sthmethod.com.br/renovacao\n🌐 Site: https://sthmethod.com.br';
         }
-        
+        customMsg += '\n\n✅ O processo é 100% automatizado — basta acessar o link e concluir em poucos cliques.' + menuHint;
         await sendMessage(customMsg, stepKey);
-        
-        if (withinHours) {
-          await handoffConsultor(); 
+      } else if (trimmed === '3') {
+        await sendMessage(String(getFlowStep('sucesso_verificar_pagamentos')?.message || 'Verificando pagamentos...') + menuHint, 'sucesso_pag');
+      } else if (trimmed === '5') {
+        await sendMessage(String(getFlowStep('sucesso_receber_acessos')?.message || 'Enviando seus acessos...') + menuHint, 'sucesso_acessos');
+      } else if (trimmed === '6') {
+        // Última opção — humano. Antes oferece autoatendimento.
+        const selfHelp = 'Antes de chamar um atendente, confira se uma das opções abaixo já resolve sua dúvida (mais rápido!):\n\n1️⃣ Atualizar Peso e Fotos\n2️⃣ Renovar Consultoria (automático)\n3️⃣ Verificar Pagamentos\n4️⃣ Reativar Consultoria (automático)\n5️⃣ Receber Acessos\n\n_Se mesmo assim precisar de atendimento humano, digite *6* novamente._' + menuHint;
+        // marca flag para que o próximo "6" force handoff
+        if ((conv.flow_context as any)?.human_requested) {
+          await handoffConsultor();
         } else {
-          await sendMessage("Nosso atendimento humano está encerrado no momento, mas você pode concluir tudo pelo site acima! 👋", "away_renovacao_info");
+          await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), human_requested: true } }).eq('id', conv.id);
+          await sendMessage(selfHelp, 'sucesso_human_confirm');
         }
+      } else if (trimmed === '7') {
+        // Transferência automática para o Nutri — NÃO marcar human_handoff (deixar o bot do Nutri assumir).
+        await sendMessage(String(getFlowStep('sucesso_nutri_handoff')?.message || 'Transferindo para o Nutri...'), 'sucesso_nutri');
+        await admin.from('crm_conversations').update({
+          flow_state: null,
+          flow_context: {},
+          human_handoff: false,
+          queue_type: 'nutri',
+        }).eq('id', conv.id);
+        await sendMessage(String(getFlowStep('nutri_reception')?.message || 'Olá! Você está no canal Fale com o Nutri...'), 'nutri_reception', null, 'wapi');
+      } else {
+        await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Escolha uma opção válida.') + menuHint, 'sucesso_repeat');
       }
-      else if (trimmed === '3') { await sendMessage(String(getFlowStep('sucesso_verificar_pagamentos')?.message || 'Verificando pagamentos...'), 'sucesso_pag'); }
-      else if (trimmed === '5') { await sendMessage(String(getFlowStep('sucesso_receber_acessos')?.message || 'Enviando seus acessos...'), 'sucesso_acessos'); }
-      else if (trimmed === '6') { await handoffConsultor(); }
-      else if (trimmed === '7') { 
-        await sendMessage(String(getFlowStep('sucesso_nutri_handoff')?.message || 'Transferindo para o Nutri...'), 'sucesso_nutri'); 
-        await admin.from('crm_conversations').update({ flow_state: 'nutri_main', human_handoff: true }).eq('id', conv.id); 
-        await sendMessage(String(getFlowStep('nutri_reception')?.message || 'Olá! Você está no canal Fale com o Nutri...'), 'nutri_reception', null, 'wapi'); 
-      }
-      else { await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Escolha uma opção.'), 'sucesso_repeat'); }
       autoReply = { sent: true, engine: 'flow' };
     } else if (conv.flow_state === 'lead_main_menu') {
       const trimmed = body.trim();
