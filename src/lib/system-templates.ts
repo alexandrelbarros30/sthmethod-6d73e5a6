@@ -86,7 +86,9 @@ export const renderTemplate = (content: string, ctx: TemplateContext): string =>
     msg = msg.replace(/\{dias_restantes\}/g, "—");
     msg = msg.replace(/\{dias_vencido\}/g, "—");
   }
-  const link = ctx.user_id ? `${window.location.origin}/dashboard/renew?uid=${ctx.user_id}` : "";
+  const link = ctx.user_id 
+    ? `${window.location.origin}/dashboard/renew?uid=${ctx.user_id}${ctx.plan_id ? `&pid=${ctx.plan_id}` : ''}` 
+    : "";
   msg = msg.replace(/\{link\}/g, link);
   msg = msg.replace(/\{link_renovacao\}/g, link);
   msg = msg.replace(/\{cupom\}/g, (ctx as any).cupom || "VOLTASTH");
