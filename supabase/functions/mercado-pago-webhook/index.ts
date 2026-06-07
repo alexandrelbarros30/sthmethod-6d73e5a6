@@ -169,6 +169,7 @@ async function sendAutomationWhatsapp(
     email: profile.email,
     phone: profile.phone,
     user_id: userId,
+    plan_id: sub?.plan_id || null,
     plan_name: planName,
     plan_price: planPrice,
     amount: planPrice,
