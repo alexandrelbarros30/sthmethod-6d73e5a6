@@ -93,7 +93,6 @@ Deno.serve(async (req) => {
     let sent = 0, failed = 0;
     const sendApiUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/crm-send-whatsapp`;
     const provider = camp.channel || 'zapi';
-    const renewLink = 'https://sthmethod.com.br/aluno/renovar';
     function fmtDate(d: string | null) {
       if (!d) return '';
       try { return new Date(d).toLocaleDateString('pt-BR'); } catch { return d; }
@@ -103,6 +102,7 @@ Deno.serve(async (req) => {
       return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
     function renderVars(body: string, t: typeof unique[number]): string {
+      const renewLink = `https://sthmethod.com.br/dashboard/renew?uid=${t.user_id}${t.plan_id ? `&pid=${t.plan_id}` : ''}`;
       const ctx: Record<string, string> = {
         nome: (t.name || '').split(' ')[0] || (t.name || ''),
         plano: t.plan || '',
