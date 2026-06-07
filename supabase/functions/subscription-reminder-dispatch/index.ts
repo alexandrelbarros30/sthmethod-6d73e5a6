@@ -139,7 +139,7 @@ Deno.serve(async (req) => {
         const endDate = new Date(sub.end_date + 'T00:00:00');
         const daysLeft = Math.max(0, Math.ceil((endDate.getTime() - today.getTime()) / 86400000));
         const daysOver = Math.max(0, Math.floor((today.getTime() - endDate.getTime()) / 86400000));
-        const link = `https://sthmethod.com.br/dashboard/renew?uid=${sub.user_id}`;
+        const link = `https://sthmethod.com.br/dashboard/renew?uid=${sub.user_id}&pid=${sub.plan_id}`;
 
         const ctx: Record<string, string> = {
           nome: firstName,
