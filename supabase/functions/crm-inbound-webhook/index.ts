@@ -483,8 +483,8 @@ Deno.serve(async (req) => {
       return out;
     };
 
-    const sendMessage = async (message: string, tag: string, imageUrl?: string | null, targetProvider?: string) => {
-      const tplMessage = renderTpl(message);
+    const sendMessage = async (message: string, tag: string, imageUrl?: string | null, targetProvider?: string, extraTplData: Record<string, string> = {}) => {
+      const tplMessage = renderTpl(message, extraTplData);
       let sent = false; let messageId: string | null = null;
       const activeProvider = targetProvider || provider;
       
@@ -573,14 +573,23 @@ Deno.serve(async (req) => {
           }
         } else if (provider === 'wapi_sucesso') {
           // Sucesso do Aluno (W-API Sucesso)
-          msg = "Olá! No momento estamos fora do horário de expediente no canal Sucesso do Aluno.\n\nPara um autoatendimento rápido, você pode utilizar as opções abaixo:\n\n1️⃣ Atualizar Peso/Medidas (App)\n2️⃣ Renovação de Plano: https://sthmethod.com.br/renovacao\n3️⃣ Financeiro/Pagamentos: https://sthmethod.com.br/financeiro\n\nDeixe sua mensagem e responderemos assim que retornarmos! 👋";
+          if (identifiedAs === 'lead') {
+            msg = comAwayLead?.value?.message || "Olá! 🌙 Nosso atendimento de hoje foi encerrado.\n\nPara conhecer nossos planos e realizar seu cadastro agora mesmo, acesse:\n\n🌐 Cadastro: https://sthmethod.com.br/cadastro\n\nResponderemos sua mensagem assim que retornarmos! 👋";
+          } else {
+            msg = "Olá! No momento estamos fora do horário de expediente no canal Sucesso do Aluno.\n\nPara um autoatendimento rápido, você pode utilizar as opções abaixo:\n\n1️⃣ Atualizar Peso/Medidas (App)\n2️⃣ Renovação de Plano: {link_renovacao}\n3️⃣ Financeiro/Pagamentos: https://sthmethod.com.br/financeiro\n\nDeixe sua mensagem e responderemos assim que retornarmos! 👋";
+          }
         } else {
           // Fale com o Nutri (W-API)
           if (identifiedAs === 'aluno_ativo') msg = nutriAwayActive?.value?.message || "Olá! No momento estamos fora do horário de expediente no canal Fale com o Nutri. Deixe sua dúvida técnica e responderemos assim que retornarmos! 👋";
           else msg = nutriAwayInactive?.value?.message || "No momento estamos fora do horário de expediente no canal Fale com o Nutri.\n\nIdentificamos que seu plano não está ativo. Você pode realizar sua renovação agora mesmo de forma automática pelo link abaixo:\n\n🔗 Renovação: https://sthmethod.com.br/renovacao\n🌐 Site: https://sthmethod.com.br\n\nPara outros assuntos, acesse nosso canal de Sucesso do Aluno: https://wa.me/5521972486650";
         }
         if (msg) { 
-          const r = await sendMessage(msg, 'away'); 
+          // Link de renovação baseado no perfil
+          const renewalLink = (identifiedAs === 'aluno_ativo' || identifiedAs === 'aluno_vencido' || identifiedAs === 'ex_aluno')
+            ? (profile?.user_id ? `https://sthmethod.com.br/renovacao?u=${profile.user_id}` : 'https://sthmethod.com.br/renovacao')
+            : 'https://sthmethod.com.br/cadastro';
+          
+          const r = await sendMessage(msg, 'away', null, undefined, { link_renovacao: renewalLink }); 
           autoReply = { sent: r.sent, engine: 'away' }; 
         }
       } else {
