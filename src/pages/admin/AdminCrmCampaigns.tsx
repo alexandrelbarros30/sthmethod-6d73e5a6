@@ -23,6 +23,7 @@ export default function AdminCrmCampaigns() {
   const [name, setName] = useState("");
   const [tpl, setTpl] = useState("");
   const [target, setTarget] = useState<"all_active"|"expiring"|"expired"|"all_leads">("expiring");
+  const [channel, setChannel] = useState<"zapi"|"wapi"|"wapi_sucesso">("zapi");
   const [loading, setLoading] = useState(false);
   const [dispatching, setDispatching] = useState<string | null>(null);
   const [templates, setTemplates] = useState<{ id: string; name: string; body: string; category: string }[]>([]);
@@ -61,6 +62,7 @@ export default function AdminCrmCampaigns() {
     const { error } = await supabase.from("crm_campaigns").insert({
       name: name.trim(), message_template: tpl.trim(),
       target_filter: { type: target }, status: "draft", created_by: user?.id,
+      channel: channel,
     });
     setLoading(false);
     if (error) { toast({ title: "Erro", description: error.message }); return; }
@@ -103,19 +105,35 @@ export default function AdminCrmCampaigns() {
         )}
         <Input placeholder="Nome interno" value={name} onChange={(e) => setName(e.target.value)} />
         <Textarea placeholder="Mensagem (use {nome}, {plano}, {vencimento}, {valor}, {link_renovacao})" rows={5} value={tpl} onChange={(e) => setTpl(e.target.value)} />
-        <div className="flex items-center gap-2">
-          <Select value={target} onValueChange={(v: any) => setTarget(v)}>
-            <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all_active">Todos ativos</SelectItem>
-              <SelectItem value="expiring">Vencendo em 7 dias</SelectItem>
-              <SelectItem value="expired">Vencidos</SelectItem>
-              <SelectItem value="all_leads">Leads (sem assinatura)</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button onClick={create} disabled={loading} size="sm">
-            {loading ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Plus className="w-3.5 h-3.5 mr-1" />} Criar
-          </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="space-y-1">
+            <Label className="text-[10px] text-muted-foreground uppercase">Canal de envio</Label>
+            <Select value={channel} onValueChange={(v: any) => setChannel(v)}>
+              <SelectTrigger className="w-56 h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="zapi">STH One — Comercial</SelectItem>
+                <SelectItem value="wapi">Fale com o Nutri</SelectItem>
+                <SelectItem value="wapi_sucesso">Sucesso do Aluno</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[10px] text-muted-foreground uppercase">Público alvo</Label>
+            <Select value={target} onValueChange={(v: any) => setTarget(v)}>
+              <SelectTrigger className="w-56 h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all_active">Todos ativos</SelectItem>
+                <SelectItem value="expiring">Vencendo em 7 dias</SelectItem>
+                <SelectItem value="expired">Vencidos</SelectItem>
+                <SelectItem value="all_leads">Leads (sem assinatura)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="pt-5">
+            <Button onClick={create} disabled={loading} size="sm">
+              {loading ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Plus className="w-3.5 h-3.5 mr-1" />} Criar
+            </Button>
+          </div>
         </div>
       </Card>
 

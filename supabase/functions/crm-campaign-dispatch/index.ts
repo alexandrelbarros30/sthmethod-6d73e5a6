@@ -91,7 +91,8 @@ Deno.serve(async (req) => {
 
     // Dispatch (best-effort, throttled)
     let sent = 0, failed = 0;
-    const wapiUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-wapi`;
+    const sendApiUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/crm-send-whatsapp`;
+    const provider = camp.channel || 'zapi';
     const renewLink = 'https://sthmethod.com.br/aluno/renovar';
     function fmtDate(d: string | null) {
       if (!d) return '';
@@ -116,10 +117,41 @@ Deno.serve(async (req) => {
     for (const t of unique) {
       const personalized = renderVars(camp.message_template, t);
       try {
-        const r = await fetch(wapiUrl, {
+        // Encontrar ou criar conversa para logar no CRM
+        let conversation_id = '';
+        const { data: conv } = await admin.from('crm_conversations')
+          .select('id')
+          .eq('phone', t.phone)
+          .eq('queue_type', provider === 'zapi' ? 'comercial' : (provider === 'wapi_sucesso' ? 'sucesso' : 'nutri'))
+          .maybeSingle();
+        
+        if (conv) {
+          conversation_id = conv.id;
+        } else {
+          const { data: newConv } = await admin.from('crm_conversations').insert({
+            phone: t.phone,
+            display_name: t.name,
+            channel: 'whatsapp',
+            status: 'open',
+            provider: provider,
+            queue_type: provider === 'zapi' ? 'comercial' : (provider === 'wapi_sucesso' ? 'sucesso' : 'nutri')
+          }).select('id').single();
+          conversation_id = newConv?.id || '';
+        }
+
+        const r = await fetch(sendApiUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}` },
-          body: JSON.stringify({ phone: t.phone, message: personalized, image_url: camp.media_url || undefined }),
+          headers: { 
+            'Content-Type': 'application/json', 
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}` 
+          },
+          body: JSON.stringify({ 
+            conversation_id,
+            phone: t.phone, 
+            body: personalized, 
+            image_url: camp.media_url || undefined,
+            provider
+          }),
         });
         if (r.ok) {
           sent++;
