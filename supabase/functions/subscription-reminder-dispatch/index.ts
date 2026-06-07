@@ -160,11 +160,41 @@ Deno.serve(async (req) => {
 
         if (dryRun) { summary[rule.trigger].sent++; continue; }
 
-        // Dispara via canal comercial Z-API (silencioso)
+        // Dispara via CRM (respeitando o canal do template)
         let ok = false; let err: string | null = null;
         try {
-          const { data, error } = await admin.functions.invoke('send-whatsapp', {
-            body: { phone, message: finalMessage },
+          const provider = tpl.channel || 'zapi';
+          const queue_type = provider === 'zapi' ? 'comercial' : (provider === 'wapi_sucesso' ? 'sucesso' : 'nutri');
+          
+          // Encontrar ou criar conversa para logar no CRM
+          let conversation_id = '';
+          const { data: conv } = await admin.from('crm_conversations')
+            .select('id')
+            .eq('phone', phone)
+            .eq('queue_type', queue_type)
+            .maybeSingle();
+          
+          if (conv) {
+            conversation_id = conv.id;
+          } else {
+            const { data: newConv } = await admin.from('crm_conversations').insert({
+              phone,
+              display_name: profile.full_name,
+              channel: 'whatsapp',
+              status: 'open',
+              provider: provider,
+              queue_type: queue_type
+            }).select('id').single();
+            conversation_id = newConv?.id || '';
+          }
+
+          const { data, error } = await admin.functions.invoke('crm-send-whatsapp', {
+            body: { 
+              conversation_id,
+              phone, 
+              body: finalMessage,
+              provider
+            },
           });
           if (error) throw error;
           if (data?.ok) ok = true;
@@ -177,19 +207,6 @@ Deno.serve(async (req) => {
           user_id: sub.user_id, subscription_id: sub.id, end_date: sub.end_date,
           trigger: rule.trigger, status: ok ? 'sent' : 'failed', error_message: err,
         });
-
-        // Espelha no message_history para visibilidade no histórico geral
-        try {
-          await admin.from('message_history').insert({
-            user_id: sub.user_id,
-            content: finalMessage,
-            recipient_phone: phone,
-            recipient_name: profile?.full_name || null,
-            status: ok ? 'sent' : 'failed',
-            sent_at: new Date().toISOString(),
-            error_message: err,
-          });
-        } catch (_) { /* opcional */ }
 
         if (ok) summary[rule.trigger].sent++;
         else summary[rule.trigger].errors++;

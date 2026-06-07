@@ -158,8 +158,43 @@ const AdminNotifications = () => {
 
     const phone = profile.phone.replace(/\D/g, "");
     const fullPhone = phone.startsWith("55") ? phone : `55${phone}`;
-    window.open(`https://wa.me/${fullPhone}?text=${encodeURIComponent(message)}`, "_blank");
-    markEvolutionSeen.mutate(reminder.id);
+    try {
+      // Find or create conversation in CRM
+      let conversation_id = '';
+      const { data: conv } = await supabase.from('crm_conversations')
+        .select('id')
+        .eq('phone', fullPhone)
+        .eq('queue_type', 'nutri')
+        .maybeSingle();
+      
+      if (conv) {
+        conversation_id = conv.id;
+      } else {
+        const { data: newConv } = await supabase.from('crm_conversations').insert({
+          phone: fullPhone,
+          display_name: profile.full_name,
+          channel: 'whatsapp',
+          status: 'open',
+          provider: 'wapi',
+          queue_type: 'nutri'
+        }).select('id').single();
+        conversation_id = newConv?.id || '';
+      }
+
+      await supabase.functions.invoke("crm-send-whatsapp", {
+        body: { 
+          conversation_id,
+          phone: fullPhone, 
+          body: message,
+          provider: 'wapi'
+        }
+      });
+      toast.success("Lembrete enviado via WhatsApp");
+      markEvolutionSeen.mutate(reminder.id);
+    } catch (error) {
+      console.error("Error sending WhatsApp:", error);
+      toast.error("Falha ao enviar mensagem");
+    }
   };
 
   const unseenPayment = paymentNotifs.filter((n: any) => !n.seen).length;
