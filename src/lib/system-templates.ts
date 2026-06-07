@@ -33,6 +33,7 @@ export interface TemplateContext {
   phone?: string | null;
   email?: string | null;
   user_id?: string | null;
+  plan_id?: string | null;
   plan_name?: string | null;
   plan_price?: string | null;
   end_date?: string | null;
