@@ -27,8 +27,8 @@ import { Plus, Pencil, Trash2, Copy, Loader2, Variable, Zap, MessageSquare, Stet
 import { TEMPLATE_CATEGORIES, AVAILABLE_VARIABLES, renderTemplate } from "@/lib/crm-templates";
 import { SYSTEM_TEMPLATE_DEFINITIONS, type SystemTemplateKey } from "@/lib/system-templates";
 
-type Channel = "zapi" | "wapi" | "both";
-type AutoChannel = "zapi" | "wapi";
+type Channel = "zapi" | "wapi" | "wapi_sucesso" | "both";
+type AutoChannel = "zapi" | "wapi" | "wapi_sucesso";
 
 // Default channel for each system automation key (matches NUTRI_CHANNEL_KEYS in system-templates.ts)
 const NUTRI_DEFAULTS: SystemTemplateKey[] = [
@@ -87,7 +87,7 @@ export default function AdminCrmTemplates() {
   const [items, setItems] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
-  const [tab, setTab] = useState<"zapi" | "wapi">("zapi");
+  const [tab, setTab] = useState<AutoChannel>("zapi");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<Template>>(EMPTY);
   const [saving, setSaving] = useState(false);
@@ -268,10 +268,16 @@ export default function AdminCrmTemplates() {
       color: "text-emerald-400",
     },
     wapi: {
-      label: "Sucesso do Aluno & Nutri",
-      desc: "Suporte administrativo (onboarding, acessos) e suporte técnico (dieta, treino, exames). Linha: +55 21 99898-4153.",
+      label: "Fale com o Nutri",
+      desc: "Suporte técnico (dieta, treino, exames). Linha: +55 21 99898-4153.",
       icon: Stethoscope,
       color: "text-cyan-400",
+    },
+    wapi_sucesso: {
+      label: "Sucesso do Aluno",
+      desc: "Onboarding, acessos e suporte administrativo.",
+      icon: Zap,
+      color: "text-amber-400",
     },
   } as const;
   const meta = channelMeta[tab];
@@ -280,12 +286,15 @@ export default function AdminCrmTemplates() {
   return (
     <DashboardLayout role="admin" title="Templates de Mensagens" subtitle="Mensagens reutilizáveis (manuais e automáticas) com variáveis do banco">
       <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="mb-4">
-        <TabsList className="grid grid-cols-2 w-full max-w-md">
+        <TabsList className="grid grid-cols-3 w-full max-w-lg">
           <TabsTrigger value="zapi" className="gap-1.5">
-            <MessageSquare className="w-3.5 h-3.5 text-emerald-400" /> STH One
+            <MessageSquare className="w-3.5 h-3.5 text-emerald-400" /> Comercial
           </TabsTrigger>
           <TabsTrigger value="wapi" className="gap-1.5">
-            <Stethoscope className="w-3.5 h-3.5 text-cyan-400" /> Fale com o Nutri
+            <Stethoscope className="w-3.5 h-3.5 text-cyan-400" /> Nutri
+          </TabsTrigger>
+          <TabsTrigger value="wapi_sucesso" className="gap-1.5">
+            <Zap className="w-3.5 h-3.5 text-amber-400" /> Sucesso
           </TabsTrigger>
         </TabsList>
       </Tabs>
@@ -405,6 +414,7 @@ export default function AdminCrmTemplates() {
                   <SelectContent>
                     <SelectItem value="zapi">STH One — Comercial (Z-API)</SelectItem>
                     <SelectItem value="wapi">Fale com o Nutri (W-API)</SelectItem>
+                    <SelectItem value="wapi_sucesso">Sucesso do Aluno (W-API)</SelectItem>
                     <SelectItem value="both">Ambos os canais</SelectItem>
                   </SelectContent>
                 </Select>

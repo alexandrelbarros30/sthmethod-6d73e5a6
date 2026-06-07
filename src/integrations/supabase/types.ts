@@ -586,6 +586,7 @@ export type Database = {
       }
       crm_campaigns: {
         Row: {
+          channel: string | null
           created_at: string
           created_by: string | null
           failed_count: number
@@ -601,6 +602,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          channel?: string | null
           created_at?: string
           created_by?: string | null
           failed_count?: number
@@ -616,6 +618,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          channel?: string | null
           created_at?: string
           created_by?: string | null
           failed_count?: number
