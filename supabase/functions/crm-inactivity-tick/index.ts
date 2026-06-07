@@ -2,7 +2,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 // Roda a cada 1 min via pg_cron.
-// Para o canal Comercial (Z-API):
+// Para todos os canais (Z-API e W-API):
 //  - 5 min após a última msg do bot sem resposta → envia 1º aviso.
 //  - 5 min depois (10 min total) → envia encerramento e fecha sessão.
 // Suspenso quando human_handoff = true.
@@ -12,39 +12,22 @@ Deno.serve(async (req) => {
 
   const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
-  const { data: zcfgRow } = await admin.from('crm_settings').select('value').eq('key', 'zapi').maybeSingle();
-  const zcfg: any = zcfgRow?.value || {};
-  const INSTANCE_ID = (zcfg.instance_id || Deno.env.get('ZAPI_INSTANCE_ID') || '').trim();
-  const INSTANCE_TOKEN = (zcfg.instance_token || Deno.env.get('ZAPI_INSTANCE_TOKEN') || '').trim();
-  const CLIENT_TOKEN = (zcfg.client_token || Deno.env.get('ZAPI_CLIENT_TOKEN') || '').trim();
-  const channelEnabled = zcfg?.enabled === true;
-
-  const sendZapi = async (phone: string, message: string, convId: string, tag: string) => {
-    let sent = false;
-    let messageId: string | null = null;
-    if (channelEnabled && INSTANCE_ID && INSTANCE_TOKEN) {
-      try {
-        const r = await fetch(`https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...(CLIENT_TOKEN ? { 'Client-Token': CLIENT_TOKEN } : {}) },
-          body: JSON.stringify({ phone, message }),
-        });
-        const j = await r.json().catch(() => ({}));
-        sent = r.ok;
-        messageId = j?.messageId || j?.id || null;
-      } catch (e) {
-        console.error('inactivity send failed', tag, e);
-      }
+  const sendViaCrm = async (phone: string, body: string, conversation_id: string, provider: string) => {
+    try {
+      const r = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/crm-send-whatsapp`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+        },
+        body: JSON.stringify({ phone, body, conversation_id, provider }),
+      });
+      const data = await r.json().catch(() => ({}));
+      return { ok: r.ok && data?.ok, error: data?.error };
+    } catch (e) {
+      console.error('inactivity send failed', provider, e);
+      return { ok: false, error: String(e) };
     }
-    await admin.from('crm_messages').insert({
-      conversation_id: convId,
-      direction: 'out',
-      body: message,
-      source: 'zapi',
-      external_id: messageId,
-      status: sent ? 'sent' : 'failed',
-    });
-    return { sent, messageId };
   };
 
   const now = Date.now();
@@ -53,8 +36,7 @@ Deno.serve(async (req) => {
   // Conversas elegíveis: bot já respondeu, está ativo, sem handoff
   const { data: convs } = await admin
     .from('crm_conversations')
-    .select('id, phone, display_name, last_bot_message_at, inactivity_warned_at, flow_state, status')
-    .eq('provider', 'zapi')
+    .select('id, phone, display_name, last_bot_message_at, inactivity_warned_at, flow_state, status, provider')
     .eq('status', 'open')
     .eq('human_handoff', false)
     .is('assigned_to', null)
@@ -86,9 +68,9 @@ Deno.serve(async (req) => {
 
     if (!c.inactivity_warned_at && sinceBot >= FIVE_MIN) {
       const msg = `Olá${nomeSep}${firstName}.\n\nPercebi que você não respondeu à nossa última mensagem.\n\nSe ainda precisar de ajuda, basta responder esta conversa. 🙂`;
-      const { sent } = await sendZapi(c.phone, msg, c.id, 'inactivity_warning');
+      const { ok } = await sendViaCrm(c.phone, msg, c.id, c.provider || 'zapi');
       
-      if (sent) {
+      if (ok) {
         await admin.from('crm_conversations').update({
           inactivity_warned_at: new Date().toISOString(),
           last_bot_message_at: new Date().toISOString(),
