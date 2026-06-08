@@ -17,6 +17,7 @@ import Free from "./pages/Free";
 import ComoFunciona from "./pages/ComoFunciona";
 import Tendencias from "./pages/Tendencias";
 import FitnessCenario2026 from "./pages/FitnessCenario2026";
+import QuartetoMagico from "./pages/QuartetoMagico";
 import RecomposicaoAvancada from "./pages/RecomposicaoAvancada";
 import SubcutaneaEstrategia from "./pages/SubcutaneaEstrategia";
 import CinturaEstetica from "./pages/CinturaEstetica";
@@ -164,6 +165,7 @@ const App = () => (
             <Route path="/free" element={<Free />} />
             <Route path="/tendencias" element={<Tendencias />} />
             <Route path="/tendencias/cenario-fitness-2026" element={<FitnessCenario2026 />} />
+            <Route path="/tendencias/quarteto-magico" element={<QuartetoMagico />} />
             <Route path="/tendencias/recomposicao-avancada" element={<RecomposicaoAvancada />} />
             <Route path="/tendencias/subcutanea-estrategia" element={<SubcutaneaEstrategia />} />
             <Route path="/tendencias/cintura-estetica" element={<CinturaEstetica />} />

@@ -21,6 +21,15 @@ import hipertensaoImg from "@/assets/sthnews-hipertensao-hero.jpg";
 
 const articles = [
   {
+    to: "/tendencias/quarteto-magico",
+    tag: "CAPA",
+    tagClass: "bg-primary text-primary-foreground",
+    date: "Nova matéria",
+    title: "🪄 O Quarteto Mágico da Transformação",
+    desc: "Por que dieta e treino sozinhos não bastam. Entenda a sinergia entre Protocolo, Dieta, Treino e Exames.",
+    img: triadeImg,
+  },
+  {
     to: "/tendencias/hipertensao-arterial",
     tag: "CAPA",
     tagClass: "bg-primary text-primary-foreground",
