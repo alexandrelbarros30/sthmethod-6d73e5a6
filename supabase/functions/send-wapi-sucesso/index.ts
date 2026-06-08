@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const { phone, message, image_url, document_url, document_name } = await req.json();
+    const { phone, message, image_url, document_url, document_name, buttons, list } = await req.json();
     if (!phone || (!message && !image_url && !document_url)) {
       return new Response(JSON.stringify({ ok: false, error: 'phone and message (or media) required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -77,7 +77,23 @@ Deno.serve(async (req) => {
     let endpoint = `${base}/send-text?instanceId=${INSTANCE_ID}`;
     let body: Record<string, unknown> = { phone: fullPhone, message };
 
-    if (image_url) {
+    if (buttons) {
+      endpoint = `${base}/send-button-list?instanceId=${INSTANCE_ID}`;
+      body = {
+        phone: fullPhone,
+        message: message || '',
+        buttons: buttons,
+      };
+    } else if (list) {
+      endpoint = `${base}/send-option-list?instanceId=${INSTANCE_ID}`;
+      body = {
+        phone: fullPhone,
+        title: list.title || 'Selecione uma opção',
+        message: message || '',
+        buttonLabel: list.buttonLabel || 'Ver Opções',
+        sections: list.sections,
+      };
+    } else if (image_url) {
       endpoint = `${base}/send-image?instanceId=${INSTANCE_ID}`;
       body = { phone: fullPhone, image: image_url, caption: message ?? '' };
     } else if (document_url) {
