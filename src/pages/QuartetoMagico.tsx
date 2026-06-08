@@ -101,20 +101,25 @@ const QuartetoMagico = () => {
   return (
     <div className="min-h-screen bg-[#050505] text-foreground antialiased selection:bg-primary selection:text-white">
       <header className="fixed top-0 inset-x-0 z-50 bg-black/40 backdrop-blur-xl border-b border-white/5">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link to={backTo} className="flex items-center gap-2 text-[13px] font-medium text-muted-foreground hover:text-white transition-colors">
-            <BackIcon className="w-4 h-4" />
-            <span>{isStudent ? "Início" : "STH News"}</span>
+        <div className="max-w-6xl mx-auto px-6 h-12 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 shrink-0">
+            <span className="text-[13px] font-semibold tracking-tight text-white">STH METHOD</span>
           </Link>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-            <span className="text-[13px] font-bold tracking-tight uppercase">STH News Special</span>
+
+          {/* Desktop links */}
+          <div className="hidden lg:flex items-center gap-7 text-[11px] text-zinc-500 uppercase tracking-[0.15em] font-semibold">
+            <Link to="/como-funciona" className="hover:text-white transition-colors">Como Funciona</Link>
+            <Link to="/tendencias" className="text-white transition-colors">STH News</Link>
+            <Link to="/questionario" className="hover:text-white transition-colors">Macros</Link>
+            <Link to="/triagem-marcadores" className="hover:text-white transition-colors">Triagem</Link>
+            <Link to="/diario-alimentar" className="hover:text-white transition-colors">Diário</Link>
           </div>
-          {isStudent ? (
-            <Link to="/dashboard"><Button size="sm" variant="ghost" className="text-[12px] h-8 rounded-full border border-white/10 hover:bg-white/5">Painel</Button></Link>
-          ) : (
-            <Link to="/cadastro"><Button size="sm" className="text-[12px] h-8 rounded-full bg-white text-black hover:bg-white/90">Começar Agora</Button></Link>
-          )}
+
+          <div className="flex items-center gap-2">
+            <Link to="/login">
+              <Button size="sm" className="text-[11px] h-7 rounded-full bg-white text-black hover:bg-white/90">Acessar</Button>
+            </Link>
+          </div>
         </div>
       </header>
 

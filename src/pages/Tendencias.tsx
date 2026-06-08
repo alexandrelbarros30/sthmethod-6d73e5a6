@@ -57,15 +57,25 @@ const Tendencias = () => {
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
       <header className="fixed top-0 inset-x-0 z-50 bg-background/80 backdrop-blur-2xl border-b border-border/40">
-        <div className="max-w-6xl mx-auto px-6 h-11 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-1.5 text-[12px] text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Início</span>
+        <div className="max-w-6xl mx-auto px-6 h-12 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 shrink-0">
+            <span className="text-[13px] font-semibold tracking-tight text-foreground">STH METHOD</span>
           </Link>
-          <span className="text-[12px] font-semibold tracking-tight">STH News</span>
-          <Link to="/cadastro">
-            <Button size="sm" className="text-[11px] h-7 rounded-full bg-foreground text-background hover:bg-foreground/90">Começar</Button>
-          </Link>
+
+          {/* Desktop links */}
+          <div className="hidden lg:flex items-center gap-7 text-[11px] text-muted-foreground uppercase tracking-[0.15em] font-semibold">
+            <Link to="/como-funciona" className="hover:text-foreground transition-colors">Como Funciona</Link>
+            <Link to="/tendencias" className="text-foreground transition-colors">STH News</Link>
+            <Link to="/questionario" className="hover:text-foreground transition-colors">Macros</Link>
+            <Link to="/triagem-marcadores" className="hover:text-foreground transition-colors">Triagem</Link>
+            <Link to="/diario-alimentar" className="hover:text-foreground transition-colors">Diário</Link>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Link to="/login">
+              <Button size="sm" className="text-[11px] h-7 rounded-full bg-foreground text-background hover:bg-foreground/90">Acessar</Button>
+            </Link>
+          </div>
         </div>
       </header>
 

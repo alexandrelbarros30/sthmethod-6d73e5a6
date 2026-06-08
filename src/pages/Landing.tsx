@@ -178,14 +178,14 @@ const Landing = () => {
           </Link>
 
           {/* Desktop links */}
-          <div className="hidden lg:flex items-center gap-7 text-[12px] text-muted-foreground">
+          <div className="hidden lg:flex items-center gap-7 text-[12px] text-muted-foreground uppercase tracking-widest font-semibold">
             <Link to="/como-funciona" className="hover:text-foreground transition-colors">Como Funciona</Link>
             <a href="#planos" className="hover:text-foreground transition-colors">Planos</a>
             <Link to="/tendencias" className="hover:text-foreground transition-colors">STH News</Link>
             <a href="#resultados" className="hover:text-foreground transition-colors">Resultados</a>
             <Link to="/questionario" className="hover:text-foreground transition-colors">Macros</Link>
             <Link to="/triagem-marcadores" className="hover:text-foreground transition-colors">Triagem</Link>
-            <Link to="/diario-alimentar" className="hover:text-foreground transition-colors">Diário Alimentar</Link>
+            <Link to="/diario-alimentar" className="hover:text-foreground transition-colors">Diário</Link>
           </div>
 
           {/* Right side: CTA + hamburger */}
