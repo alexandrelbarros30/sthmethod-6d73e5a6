@@ -432,7 +432,7 @@ const QuartetoMagico = () => {
             </motion.h2>
             <motion.p 
               initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}
-              className="text-lg text-zinc-500 font-light"
+              className="text-lg text-zinc-400 font-light"
             >
               Entregamos a estratégia completa para a sua transformação.
             </motion.p>
