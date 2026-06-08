@@ -1,5 +1,5 @@
 import { test, expect, beforeAll, vi } from "vitest";
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import Tendencias from "./Tendencias";
 import { AuthProvider } from "@/contexts/AuthContext";
