@@ -48,9 +48,11 @@ test("mobile menu opens and closes", async () => {
   expect(screen.getByLabelText(/Fechar menu/i)).toBeInTheDocument();
   expect(screen.getByRole("dialog")).toBeInTheDocument();
 
-  // Check if link is present
-  const sthNewsLink = screen.getByText("STH News", { selector: "nav a" });
+  // Check if link is present in the mobile menu specifically
+  const mobileMenu = screen.getByRole("dialog");
+  const sthNewsLink = screen.getByText("STH News", { selector: "#mobile-menu nav a" });
   expect(sthNewsLink).toBeInTheDocument();
+  expect(mobileMenu).toContainElement(sthNewsLink);
 
   // Close menu by clicking a link
   await act(async () => {
