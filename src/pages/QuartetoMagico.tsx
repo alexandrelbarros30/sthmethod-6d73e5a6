@@ -301,8 +301,8 @@ const QuartetoMagico = () => {
         >
           <p>Sem o estímulo mecânico correto, a sinalização para hipertrofia não acontece. O treino é o que diz ao corpo <span className="text-white font-semibold">onde construir</span>.</p>
           <p>Com nosso aplicativo exclusivo e vídeos guiados, garantimos que cada série tenha a intensidade e a técnica necessárias para esculpir o físico dos sonhos.</p>
-          <div className="flex items-center gap-4 text-primary text-sm font-bold uppercase tracking-tighter">
-            <Activity className="w-5 h-5" />
+          <div className="flex items-center gap-4 text-white text-sm font-bold uppercase tracking-tighter">
+            <Activity className="w-5 h-5 text-primary" />
             Sinalização Mecânica de Precisão
           </div>
         </Section>
