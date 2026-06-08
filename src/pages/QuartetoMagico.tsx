@@ -288,8 +288,8 @@ const QuartetoMagico = () => {
         >
           <p>O combustível e o material de construção. Na STH, a dieta é ajustada para a sua <span className="text-white font-semibold">taxa metabólica real</span>, não baseada em fórmulas genéricas de internet.</p>
           <p>Entregamos estratégias de ciclagem de carboidratos e manipulação de insulina que permitem comer com prazer enquanto o corpo derrete gordura.</p>
-          <div className="flex items-center gap-4 text-primary text-sm font-bold uppercase tracking-tighter">
-            <Target className="w-5 h-5" />
+          <div className="flex items-center gap-4 text-white text-sm font-bold uppercase tracking-tighter">
+            <Target className="w-5 h-5 text-primary" />
             Ajuste Metabólico Individualizado
           </div>
         </Section>
