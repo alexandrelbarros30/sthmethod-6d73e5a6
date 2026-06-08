@@ -820,14 +820,16 @@ Deno.serve(async (req) => {
         }
       } else if (trimmed === '7') {
         // Transferência automática para o Nutri — NÃO marcar human_handoff (deixar o bot do Nutri assumir).
-        await sendMessage(String(getFlowStep('sucesso_nutri_handoff')?.message || 'Transferindo para o Nutri...'), 'sucesso_nutri');
+        const flowStepNutri = getFlowStep('sucesso_nutri_handoff');
+        await sendMessage(String(flowStepNutri?.message || 'Transferindo para o Nutri...'), 'sucesso_nutri', null, undefined, {}, flowStepNutri);
         await admin.from('crm_conversations').update({
           flow_state: null,
           flow_context: {},
           human_handoff: false,
           queue_type: 'nutri',
         }).eq('id', conv.id);
-        await sendMessage(String(getFlowStep('nutri_reception')?.message || 'Olá! Você está no canal Fale com o Nutri...'), 'nutri_reception', null, 'wapi');
+        const flowStepReception = getFlowStep('nutri_reception');
+        await sendMessage(String(flowStepReception?.message || 'Olá! Você está no canal Fale com o Nutri...'), 'nutri_reception', null, 'wapi', {}, flowStepReception);
       } else {
         // Increment error count to prevent infinite loops
         const errorCount = ((conv.flow_context as any)?.error_count || 0) + 1;
