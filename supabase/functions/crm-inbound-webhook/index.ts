@@ -457,13 +457,19 @@ Deno.serve(async (req) => {
     let identifiedAs: 'aluno_ativo' | 'aluno_vencido' | 'lead' | 'ex_aluno' = 'lead';
 
     if (profile) {
-      const { data: subs } = await admin.from('subscriptions').select('end_date').eq('user_id', profile.user_id).order('end_date', { ascending: false }).limit(1);
+      const { data: subs } = await admin.from('subscriptions').select('end_date, status').eq('user_id', profile.user_id).order('end_date', { ascending: false }).limit(1);
       const sub = subs?.[0];
       if (sub) {
-        const days = Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86400000);
-        if (days < -365) identifiedAs = 'ex_aluno';
-        else if (days < 0) identifiedAs = 'aluno_vencido';
-        else identifiedAs = 'aluno_ativo';
+        // Se o status for explicitamente 'active', consideramos ativo independente da data (ex: planos vitalícios ou com erro de data)
+        // Ou se a data de término for no futuro
+        const isFuture = new Date(sub.end_date).getTime() > Date.now();
+        if (sub.status === 'active' || isFuture) {
+          identifiedAs = 'aluno_ativo';
+        } else {
+          const days = Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86400000);
+          if (days < -365) identifiedAs = 'ex_aluno';
+          else identifiedAs = 'aluno_vencido';
+        }
       }
     }
 
@@ -670,6 +676,8 @@ Deno.serve(async (req) => {
       autoReply = { sent: false, reason: 'disabled' };
     } else if (conv.human_handoff === true || !!conv.assigned_to) {
       console.log(`Atendimento humano ativo na conversa ${conv.id} (atendente: ${conv.assigned_to}, handoff: ${conv.human_handoff}). Interrompendo disparos automáticos.`);
+      // Adicional: Garantir que o human_handoff permaneça true na base caso houver nova mensagem
+      await admin.from('crm_conversations').update({ human_handoff: true }).eq('id', conv.id);
       autoReply = { sent: false, reason: 'human_active' };
     } else if (todayNoticeActive) {
       // Dedup: 1x por sessão / 4h, como o away.
