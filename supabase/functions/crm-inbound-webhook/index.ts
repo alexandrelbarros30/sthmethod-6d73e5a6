@@ -719,6 +719,10 @@ Deno.serve(async (req) => {
       const isBack = trimmed === '0' || ['menu','voltar','inicio','início','start'].includes(lower);
       const menuHint = '\n\n_Digite *0* para voltar ao menu ou *#SAIR* para encerrar._';
 
+      if (isBack || trimmed === '1' || trimmed === '2' || trimmed === '3' || trimmed === '4' || trimmed === '5' || (trimmed === '6' && !(conv.flow_context as any)?.human_requested) || trimmed === '7') {
+        await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
+      }
+
       if (isBack) {
         await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Menu principal.'), 'sucesso_back_menu');
       } else if (trimmed === '1') {
@@ -741,6 +745,7 @@ Deno.serve(async (req) => {
         const selfHelp = 'Antes de chamar um atendente, confira se uma das opções abaixo já resolve sua dúvida (mais rápido!):\n\n1️⃣ Atualizar Peso e Fotos\n2️⃣ Renovar Consultoria (automático)\n3️⃣ Verificar Pagamentos\n4️⃣ Reativar Consultoria (automático)\n5️⃣ Receber Acessos\n\n_Se mesmo assim precisar de atendimento humano, digite *6* novamente._' + menuHint;
         // marca flag para que o próximo "6" force handoff
         if ((conv.flow_context as any)?.human_requested) {
+          await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
           await handoffConsultor();
         } else {
           await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), human_requested: true } }).eq('id', conv.id);
@@ -757,14 +762,39 @@ Deno.serve(async (req) => {
         }).eq('id', conv.id);
         await sendMessage(String(getFlowStep('nutri_reception')?.message || 'Olá! Você está no canal Fale com o Nutri...'), 'nutri_reception', null, 'wapi');
       } else {
-        await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Escolha uma opção válida.') + menuHint, 'sucesso_repeat');
+        // Increment error count to prevent infinite loops
+        const errorCount = ((conv.flow_context as any)?.error_count || 0) + 1;
+        if (errorCount >= 3) {
+          const stopMsg = "Ops, parece que não estou conseguindo te entender. Para não te atrapalhar, vou aguardar você digitar uma opção válida ou aguardar um atendente humano.\n\n_Dica: Digite apenas o número da opção desejada._";
+          await sendMessage(stopMsg, 'sucesso_error_limit');
+          await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
+        } else {
+          await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: errorCount } }).eq('id', conv.id);
+          await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Escolha uma opção válida.') + menuHint, 'sucesso_repeat');
+        }
       }
       autoReply = { sent: true, engine: 'flow' };
     } else if (conv.flow_state === 'lead_main_menu') {
       const trimmed = body.trim();
-      if (trimmed === '1') { await sendMessage(String(getFlowStep('comercial_conhecer_consultoria')?.message || 'Sobre a consultoria...'), 'com_conhecer'); }
-      else if (trimmed === '5') { await handoffConsultor(); }
-      else { await sendMessage(String(getFlowStep('comercial_saudacao_lead')?.message || 'Escolha uma opção.'), 'com_repeat'); }
+      if (trimmed === '1') { 
+        await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
+        await sendMessage(String(getFlowStep('comercial_conhecer_consultoria')?.message || 'Sobre a consultoria...'), 'com_conhecer'); 
+      }
+      else if (trimmed === '5') { 
+        await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
+        await handoffConsultor(); 
+      }
+      else { 
+        const errorCount = ((conv.flow_context as any)?.error_count || 0) + 1;
+        if (errorCount >= 3) {
+          const stopMsg = "Ops, não consegui entender sua opção. Vou aguardar você digitar um número válido ou entrar em contato com um consultor.\n\n_Dica: Digite apenas o número da opção._";
+          await sendMessage(stopMsg, 'comercial_error_limit');
+          await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
+        } else {
+          await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: errorCount } }).eq('id', conv.id);
+          await sendMessage(String(getFlowStep('comercial_saudacao_lead')?.message || 'Escolha uma opção.'), 'com_repeat'); 
+        }
+      }
       autoReply = { sent: true, engine: 'flow' };
     }
 
