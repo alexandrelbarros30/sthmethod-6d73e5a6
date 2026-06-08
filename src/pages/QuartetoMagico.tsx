@@ -37,34 +37,49 @@ const staggerContainer = {
 
 const Section = ({
   number, kicker, title, image, alt, children, reverse = false
-}: { number: string; kicker: string; title: string; image: string; alt: string; children: React.ReactNode; reverse?: boolean }) => (
-  <motion.section
-    initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp}
-    className="py-24 md:py-40 border-t border-border/40 overflow-hidden"
-  >
-    <div className={`max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-12 md:gap-24 items-center ${reverse ? 'md:flex-row-reverse' : ''}`}>
-      <div className={reverse ? 'md:order-2' : ''}>
-        <p className="text-[11px] font-bold tracking-[0.3em] text-primary uppercase mb-6 flex items-center gap-2">
-          <span className="w-8 h-[1px] bg-primary/30"></span>
-          {number} — {kicker}
-        </p>
-        <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-foreground mb-8 leading-[1.1]">
-          {title}
-        </h2>
-        <div className="space-y-6 text-lg md:text-xl leading-relaxed text-muted-foreground font-light">
-          {children}
+}: { number: string; kicker: string; title: string; image: string; alt: string; children: React.ReactNode; reverse?: boolean }) => {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"]
+  });
+  const y = useTransform(scrollYProgress, [0, 1], [-100, 100]);
+
+  return (
+    <motion.section
+      ref={ref}
+      initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp}
+      className="py-24 md:py-40 border-t border-border/40 overflow-hidden"
+    >
+      <div className={`max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-12 md:gap-24 items-center ${reverse ? 'md:flex-row-reverse' : ''}`}>
+        <div className={reverse ? 'md:order-2' : ''}>
+          <p className="text-[11px] font-bold tracking-[0.3em] text-primary uppercase mb-6 flex items-center gap-2">
+            <span className="w-8 h-[1px] bg-primary/30"></span>
+            {number} — {kicker}
+          </p>
+          <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-white mb-8 leading-[1.1]">
+            {title}
+          </h2>
+          <div className="space-y-6 text-lg md:text-xl leading-relaxed text-zinc-400 font-light">
+            {children}
+          </div>
+        </div>
+        <div className={`${reverse ? 'md:order-1' : ''} relative group h-[500px] md:h-[600px]`}>
+          <div className="absolute -inset-4 bg-primary/5 rounded-[2.5rem] blur-2xl group-hover:bg-primary/10 transition-colors duration-500"></div>
+          <div className="relative h-full w-full rounded-[2rem] overflow-hidden bg-muted shadow-2xl shadow-black/20">
+            <motion.img 
+              src={image} alt={alt} 
+              style={{ y }}
+              className="absolute inset-0 w-full h-[120%] object-cover" 
+              loading="lazy" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
+          </div>
         </div>
       </div>
-      <div className={`${reverse ? 'md:order-1' : ''} relative group`}>
-        <div className="absolute -inset-4 bg-primary/5 rounded-[2.5rem] blur-2xl group-hover:bg-primary/10 transition-colors duration-500"></div>
-        <div className="relative rounded-[2rem] overflow-hidden bg-muted aspect-[4/5] md:aspect-square shadow-2xl shadow-black/20">
-          <img src={image} alt={alt} className="w-full h-full object-cover scale-105 group-hover:scale-100 transition-transform duration-700 ease-out" loading="lazy" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60"></div>
-        </div>
-      </div>
-    </div>
-  </motion.section>
-);
+    </motion.section>
+  );
+};
 
 const QuartetoMagico = () => {
   const { user, role } = useAuth();
