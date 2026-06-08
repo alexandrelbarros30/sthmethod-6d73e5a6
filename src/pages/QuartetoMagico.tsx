@@ -61,7 +61,7 @@ const Section = ({
           <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-white mb-8 leading-[1.1]">
             {title}
           </h2>
-          <div className="space-y-6 text-lg md:text-xl leading-relaxed text-zinc-400 font-light">
+          <div className="space-y-6 text-lg md:text-xl leading-relaxed text-zinc-300 font-light">
             {children}
           </div>
         </div>
@@ -126,7 +126,7 @@ const QuartetoMagico = () => {
           </Link>
 
           {/* Desktop links */}
-          <nav className="hidden lg:flex items-center gap-7 text-[11px] text-zinc-500 uppercase tracking-[0.15em] font-semibold">
+          <nav className="hidden lg:flex items-center gap-7 text-[11px] text-zinc-400 uppercase tracking-[0.15em] font-semibold">
             {navLinks.map((link) => {
               const isActive = location.pathname === link.href;
               return (
@@ -187,7 +187,7 @@ const QuartetoMagico = () => {
                       className={`py-4 px-4 rounded-xl transition-all duration-200 uppercase tracking-widest text-[11px] font-bold flex items-center justify-between group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                         isActive 
                           ? "bg-white/10 text-white" 
-                          : "text-zinc-500 hover:text-white hover:bg-white/5"
+                          : "text-zinc-400 hover:text-white hover:bg-white/5"
                       }`}
                     >
                       {item.label}
@@ -231,7 +231,7 @@ const QuartetoMagico = () => {
               </motion.h1>
               <motion.p 
                 variants={fadeUp}
-                className="max-w-2xl mx-auto text-lg md:text-2xl text-zinc-400 font-light leading-relaxed mb-12"
+                className="max-w-2xl mx-auto text-lg md:text-2xl text-zinc-300 font-light leading-relaxed mb-12"
               >
                 Muitas pessoas acreditam que resultados vêm apenas da dieta. Outras apostam tudo no treino. Na STH, o resultado é matemática de precisão.
               </motion.p>
@@ -248,7 +248,7 @@ const QuartetoMagico = () => {
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5, duration: 1 }}
             className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
           >
-            <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-500">Scroll para explorar</span>
+            <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-400">Scroll para explorar</span>
             <div className="w-[1px] h-12 bg-gradient-to-b from-primary to-transparent"></div>
           </motion.div>
         </section>
@@ -334,10 +334,10 @@ const QuartetoMagico = () => {
                 </div>
                 <h2 className="text-4xl md:text-7xl font-bold tracking-tight text-white mb-10 leading-[1.05]">
                   De Semaglutida <br />
-                  <span className="text-zinc-500 italic">para a</span> <br />
+                  <span className="text-zinc-400 italic">para a</span> <br />
                   <span className="text-primary">Retatrutida.</span>
                 </h2>
-                <div className="space-y-6 text-lg md:text-xl text-zinc-400 font-light leading-relaxed">
+                <div className="space-y-6 text-lg md:text-xl text-zinc-300 font-light leading-relaxed">
                   <p>A ciência evoluiu. Antigamente falávamos apenas em déficit calórico. Hoje, usamos ferramentas de <span className="text-white font-medium">terceira geração</span>.</p>
                   <p>A <span className="text-white font-medium">Retatrutida</span> (triplo agonista GLP-1/GIP/GCG) oferece controle glicêmico e saciedade sem precedentes no mercado atual.</p>
                   <p>Aliamos isso a <span className="text-white font-medium">Peptídeos de GH</span> (como Ipamorelin ou CJC-1295) para garantir que a queima de gordura ocorra preservando cada grama de massa muscular.</p>
@@ -356,9 +356,9 @@ const QuartetoMagico = () => {
                 <div className="absolute -bottom-6 -left-6 bg-black/80 backdrop-blur-2xl border border-white/10 p-8 rounded-3xl shadow-2xl max-w-[280px]">
                   <div className="flex items-center gap-3 mb-4">
                     <TrendingUp className="text-primary w-6 h-6" />
-                    <span className="text-xs font-bold uppercase tracking-widest text-zinc-300">Performance</span>
+                    <span className="text-xs font-bold uppercase tracking-widest text-zinc-200">Performance</span>
                   </div>
-                  <p className="text-sm text-zinc-400 leading-relaxed">
+                  <p className="text-sm text-zinc-300 leading-relaxed">
                     Resultados reais acontecem quando existe método. Ciência, estratégia e constância.
                   </p>
                 </div>
@@ -378,7 +378,7 @@ const QuartetoMagico = () => {
               <h2 className="text-4xl md:text-7xl font-black tracking-tighter text-white mb-6 uppercase">
                 A BANCA <span className="text-primary italic">CIENTÍFICA.</span>
               </h2>
-              <p className="max-w-2xl mx-auto text-xl text-zinc-500 font-light">
+              <p className="max-w-2xl mx-auto text-xl text-zinc-400 font-light">
                 Não trabalhamos com promessas, trabalhamos com literatura e evidência clínica.
               </p>
             </motion.div>
@@ -432,7 +432,7 @@ const QuartetoMagico = () => {
             </motion.h2>
             <motion.p 
               initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}
-              className="text-lg text-zinc-500 font-light"
+              className="text-lg text-zinc-400 font-light"
             >
               Entregamos a estratégia completa para a sua transformação.
             </motion.p>
@@ -443,10 +443,10 @@ const QuartetoMagico = () => {
               initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
               className="p-10 rounded-[2.5rem] bg-zinc-900/50 border border-white/5 flex flex-col"
             >
-              <h3 className="text-2xl font-bold text-zinc-500 mb-8 uppercase tracking-widest">O Caminho Comum</h3>
+              <h3 className="text-2xl font-bold text-zinc-400 mb-8 uppercase tracking-widest">O Caminho Comum</h3>
               <ul className="space-y-6">
                 {["Apenas Dieta restritiva", "Treino sem acompanhamento", "Zero monitoramento hormonal", "Protocolos genéricos", "Resultados temporários"].map((item) => (
-                  <li key={item} className="flex items-center gap-4 text-zinc-600 line-through decoration-zinc-700">
+                  <li key={item} className="flex items-center gap-4 text-zinc-500 line-through decoration-zinc-700">
                     <div className="w-1.5 h-1.5 rounded-full bg-zinc-700"></div>
                     {item}
                   </li>
@@ -493,7 +493,7 @@ const QuartetoMagico = () => {
               ESCOLHA SEU <br />
               <span className="text-primary italic">PLANO.</span>
             </motion.h2>
-            <motion.p variants={fadeUp} className="max-w-xl mx-auto text-xl text-zinc-400 font-light mb-16 leading-relaxed">
+            <motion.p variants={fadeUp} className="max-w-xl mx-auto text-xl text-zinc-300 font-light mb-16 leading-relaxed">
               Descubra o que o Quarteto Mágico pode fazer pelo seu projeto hoje mesmo. Resultados reais não acontecem por acaso.
             </motion.p>
             
@@ -520,13 +520,13 @@ const QuartetoMagico = () => {
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
           <div className="text-left">
             <h4 className="text-xl font-bold tracking-tight text-white mb-4">STH Method</h4>
-            <p className="max-w-md text-sm text-zinc-500 font-light leading-relaxed">
+            <p className="max-w-md text-sm text-zinc-400 font-light leading-relaxed">
               Ciência, estratégia e constância para transformar vidas. <br />
               Onde o impossível encontra o método.
             </p>
           </div>
           <div className="text-left md:text-right">
-             <p className="text-[10px] text-zinc-700 font-bold uppercase tracking-[0.3em]">
+             <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.3em]">
                © 2026 STH Method. Todos os direitos reservados.
              </p>
           </div>
