@@ -1,7 +1,8 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import ginecoImg from "@/assets/sthnews-gineco-hero.jpg";
 import bfAltoImg from "@/assets/sthnews-bfalto-hero.jpg";
 import trembolonaImg from "@/assets/sthnews-trembolona-hero.jpg";
@@ -54,6 +55,8 @@ const articles = [
 ];
 
 const Tendencias = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
       <header className="fixed top-0 inset-x-0 z-50 bg-background/80 backdrop-blur-2xl border-b border-border/40">
@@ -72,11 +75,51 @@ const Tendencias = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <Link to="/login">
+            <Link to="/login" className="hidden sm:block">
               <Button size="sm" className="text-[11px] h-7 rounded-full bg-foreground text-background hover:bg-foreground/90">Acessar</Button>
             </Link>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-1.5 rounded-full hover:bg-muted/50 transition-colors text-foreground"
+              aria-label="Menu"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="lg:hidden border-t border-border/50 overflow-hidden bg-background/95 backdrop-blur-xl"
+            >
+              <div className="px-5 py-4 flex flex-col gap-1 text-sm">
+                {[
+                  { href: "/como-funciona", label: "Como Funciona" },
+                  { href: "/tendencias", label: "STH News" },
+                  { href: "/questionario", label: "Macros" },
+                  { href: "/triagem-marcadores", label: "Triagem" },
+                  { href: "/diario-alimentar", label: "Diário" },
+                  { href: "/login", label: "Acessar Conta" },
+                ].map((item) => (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="py-3 px-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors uppercase tracking-widest text-[11px] font-semibold"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       <section className="pt-32 md:pt-40 pb-16 md:pb-24 text-center px-6">
