@@ -17,6 +17,7 @@ import Free from "./pages/Free";
 import ComoFunciona from "./pages/ComoFunciona";
 import Tendencias from "./pages/Tendencias";
 import FitnessCenario2026 from "./pages/FitnessCenario2026";
+import QuartetoMagico from "./pages/QuartetoMagico";
 import RecomposicaoAvancada from "./pages/RecomposicaoAvancada";
 import SubcutaneaEstrategia from "./pages/SubcutaneaEstrategia";
 import CinturaEstetica from "./pages/CinturaEstetica";
