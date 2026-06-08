@@ -24,9 +24,9 @@ const articles = [
     to: "/tendencias/quarteto-magico",
     tag: "CAPA",
     tagClass: "bg-primary text-primary-foreground",
-    date: "Nova matéria",
-    title: "🪄 O Quarteto Mágico da Transformação",
-    desc: "Por que dieta e treino sozinhos não bastam. Entenda a sinergia entre Protocolo, Dieta, Treino e Exames.",
+    date: "Edição Especial 2026",
+    title: "🪄 O Quarteto Mágico: Retatrutida & Peptídeos.",
+    desc: "Por que dieta e treino sozinhos são obsoletos. A nova ciência da sinergia entre Protocolo, GH Peptides e Exames de precisão.",
     img: triadeImg,
   },
   {
