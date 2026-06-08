@@ -223,6 +223,19 @@ async function findProfileByPhone(admin: ReturnType<typeof createClient>, phone:
   return ranked[0] ?? null;
 }
 
+async function getPlansFormatted(admin: ReturnType<typeof createClient>): Promise<string> {
+  const { data: plans } = await admin.from('plans').select('*').eq('active', true).order('order_index', { ascending: true });
+  if (!plans || plans.length === 0) return 'Consulte nossos consultores para valores atualizados.';
+  
+  return plans.map(p => {
+    let s = `📋 *${p.name}*\n`;
+    if (p.description) s += `${p.description}\n`;
+    s += `💰 Investimento: R$ ${p.price}\n`;
+    if (p.duration_months) s += `📅 Período: ${p.duration_months} meses\n`;
+    return s;
+  }).join('\n');
+}
+
 function classify(text: string): { queue: 'comercial'|'nutri'|'sucesso'|'financeiro'|null; nutriCategory: string | null; tags: string[] } {
   const t = String(text || '').toLowerCase();
   const tags: string[] = [];
@@ -534,13 +547,59 @@ Deno.serve(async (req) => {
         const INSTANCE_ID = (c.instance_id || Deno.env.get('ZAPI_INSTANCE_ID') || '').trim();
         const INSTANCE_TOKEN = (c.instance_token || Deno.env.get('ZAPI_INSTANCE_TOKEN') || '').trim();
         const CLIENT_TOKEN = (c.client_token || Deno.env.get('ZAPI_CLIENT_TOKEN') || '').trim();
+        
         if (INSTANCE_ID && INSTANCE_TOKEN) {
           const isPdf = String(imageUrl || '').toLowerCase().includes('.pdf');
-          const endpoint = `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-${imageUrl ? (isPdf ? 'document' : 'image') : 'text'}`;
-          const bodyPayload: any = { phone, message: tplMessage };
-          if (imageUrl) { if (isPdf) { bodyPayload.document = imageUrl; bodyPayload.fileName = 'documento.pdf'; bodyPayload.caption = tplMessage; } else { bodyPayload.image = imageUrl; bodyPayload.caption = tplMessage; } }
-          const r = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(CLIENT_TOKEN ? { 'Client-Token': CLIENT_TOKEN } : {}) }, body: JSON.stringify(bodyPayload) });
-          const j = await r.json().catch(() => ({})); sent = r.ok; messageId = j?.messageId || j?.id || null;
+          let endpoint = `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-${imageUrl ? (isPdf ? 'document' : 'image') : 'text'}`;
+          let bodyPayload: any = { phone, message: tplMessage };
+
+          // Suporte a Menus Interativos no Z-API
+          if (flowStep?.display_format === 'buttons' && flowStep.actions?.length > 0) {
+            endpoint = `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-button-list`;
+            bodyPayload = {
+              phone,
+              message: tplMessage,
+              buttonList: {
+                buttons: flowStep.actions.slice(0, 3).map((a: any) => ({
+                  id: a.label,
+                  label: a.label.length > 20 ? a.label.substring(0, 17) + '...' : a.label
+                }))
+              }
+            };
+          } else if (flowStep?.display_format === 'list' && flowStep.actions?.length > 0) {
+            endpoint = `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-option-list`;
+            bodyPayload = {
+              phone,
+              message: tplMessage,
+              optionList: {
+                title: 'Opções',
+                buttonLabel: 'Ver Opções',
+                options: flowStep.actions.slice(0, 10).map((a: any, i: number) => ({
+                  id: a.label,
+                  title: a.label.length > 20 ? a.label.substring(0, 17) + '...' : a.label,
+                  description: `Opção ${i + 1}`
+                }))
+              }
+            };
+          } else if (imageUrl) {
+            if (isPdf) { 
+              bodyPayload.document = imageUrl; 
+              bodyPayload.fileName = 'documento.pdf'; 
+              bodyPayload.caption = tplMessage; 
+            } else { 
+              bodyPayload.image = imageUrl; 
+              bodyPayload.caption = tplMessage; 
+            }
+          }
+
+          const r = await fetch(endpoint, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json', ...(CLIENT_TOKEN ? { 'Client-Token': CLIENT_TOKEN } : {}) }, 
+            body: JSON.stringify(bodyPayload) 
+          });
+          const j = await r.json().catch(() => ({})); 
+          sent = r.ok; 
+          messageId = j?.messageId || j?.id || null;
         }
       } else {
         const fnName = activeProvider === 'wapi_sucesso' ? 'send-wapi-sucesso' : 'send-wapi';
@@ -596,7 +655,8 @@ Deno.serve(async (req) => {
         if (open) await admin.from('crm_queue_items').update({ priority: 0 }).eq('id', open.id);
         else await admin.from('crm_queue_items').insert({ queue_id: q.id, conversation_id: conv.id, phone, priority: 0 });
       }
-      const r = await sendMessage(String(getFlowStep('comercial_handoff_consultor')?.message || 'Vou te encaminhar para um consultor da equipe STH Method. Aguarde alguns instantes. 🙏'), 'handoff_consultor');
+      const flowStep = getFlowStep('comercial_handoff_consultor');
+      const r = await sendMessage(String(flowStep?.message || 'Vou te encaminhar para um consultor da equipe STH Method. Aguarde alguns instantes. 🙏'), 'handoff_consultor', null, undefined, {}, flowStep);
       return { sent: r.sent, engine: 'flow', model: 'handoff_consultor' };
     };
 
@@ -709,12 +769,16 @@ Deno.serve(async (req) => {
       } else {
         if (identifiedAs !== 'lead') {
           const step = identifiedAs === 'aluno_ativo' ? 'comercial_ident_ativo' : (identifiedAs === 'aluno_vencido' ? 'comercial_ident_inativo' : 'comercial_ident_exaluno');
-          await sendMessage(String(getFlowStep(step)?.message || 'Redirecionando para Sucesso...'), step);
-          const r = await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu');
+          const flowStepIdent = getFlowStep(step);
+          await sendMessage(String(flowStepIdent?.message || 'Redirecionando para Sucesso...'), step, null, undefined, {}, flowStepIdent);
+          
+          const flowStepMain = getFlowStep('sucesso_main_menu');
+          const r = await sendMessage(String(flowStepMain?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu', null, undefined, {}, flowStepMain);
           await admin.from('crm_conversations').update({ flow_state: 'sucesso_main_menu', queue_type: 'sucesso' }).eq('id', conv.id);
           autoReply = { sent: r.sent, engine: 'flow' };
         } else {
-          const r = await sendMessage(String(getFlowStep('comercial_saudacao_lead')?.message || 'Seja bem-vindo à STH Method...'), 'comercial_saudacao_lead');
+          const flowStep = getFlowStep('comercial_saudacao_lead');
+          const r = await sendMessage(String(flowStep?.message || 'Seja bem-vindo à STH Method...'), 'comercial_saudacao_lead', null, undefined, {}, flowStep);
           await admin.from('crm_conversations').update({ flow_state: 'lead_main_menu' }).eq('id', conv.id);
           autoReply = { sent: r.sent, engine: 'flow' };
         }
@@ -722,9 +786,11 @@ Deno.serve(async (req) => {
     } else if (conv.flow_state === 'nutri_main') {
       const has = (...kw: string[]) => kw.some(k => body.toLowerCase().includes(k));
       if (has('renov', 'pagamento', 'pagar', 'cobran', 'segunda via', 'cadastro', 'senha', 'acesso', 'contrato', 'reativar')) {
-        const r = await sendMessage(String(getFlowStep('nutri_transfer_sucesso')?.message || 'Sua solicitação é administrativa. Redirecionando para Sucesso...'), 'nutri_transfer_sucesso');
+        const flowStepTransfer = getFlowStep('nutri_transfer_sucesso');
+        const r = await sendMessage(String(flowStepTransfer?.message || 'Sua solicitação é administrativa. Redirecionando para Sucesso...'), 'nutri_transfer_sucesso', null, undefined, {}, flowStepTransfer);
         await admin.from('crm_conversations').update({ flow_state: 'sucesso_main_menu', queue_type: 'sucesso' }).eq('id', conv.id);
-        await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu', null, 'wapi_sucesso');
+        const flowStepSucesso = getFlowStep('sucesso_main_menu');
+        await sendMessage(String(flowStepSucesso?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu', null, 'wapi_sucesso', {}, flowStepSucesso);
         autoReply = { sent: r.sent, engine: 'flow' };
       }
     } else if (conv.flow_state === 'sucesso_main_menu') {
@@ -738,7 +804,8 @@ Deno.serve(async (req) => {
       }
 
       if (isBack) {
-        await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Menu principal.'), 'sucesso_back_menu');
+        const flowStepBack = getFlowStep('sucesso_main_menu');
+        await sendMessage(String(flowStepBack?.message || 'Menu principal.'), 'sucesso_back_menu', null, undefined, {}, flowStepBack);
       } else if (trimmed === '1') {
         await sendMessage(String(getFlowStep('sucesso_atualizar_peso')?.message || 'Acesse a plataforma para atualizar peso.') + menuHint, 'sucesso_atualizacao');
       } else if (trimmed === '2' || trimmed === '4') {
@@ -767,14 +834,16 @@ Deno.serve(async (req) => {
         }
       } else if (trimmed === '7') {
         // Transferência automática para o Nutri — NÃO marcar human_handoff (deixar o bot do Nutri assumir).
-        await sendMessage(String(getFlowStep('sucesso_nutri_handoff')?.message || 'Transferindo para o Nutri...'), 'sucesso_nutri');
+        const flowStepNutri = getFlowStep('sucesso_nutri_handoff');
+        await sendMessage(String(flowStepNutri?.message || 'Transferindo para o Nutri...'), 'sucesso_nutri', null, undefined, {}, flowStepNutri);
         await admin.from('crm_conversations').update({
           flow_state: null,
           flow_context: {},
           human_handoff: false,
           queue_type: 'nutri',
         }).eq('id', conv.id);
-        await sendMessage(String(getFlowStep('nutri_reception')?.message || 'Olá! Você está no canal Fale com o Nutri...'), 'nutri_reception', null, 'wapi');
+        const flowStepReception = getFlowStep('nutri_reception');
+        await sendMessage(String(flowStepReception?.message || 'Olá! Você está no canal Fale com o Nutri...'), 'nutri_reception', null, 'wapi', {}, flowStepReception);
       } else {
         // Increment error count to prevent infinite loops
         const errorCount = ((conv.flow_context as any)?.error_count || 0) + 1;
@@ -790,9 +859,32 @@ Deno.serve(async (req) => {
       autoReply = { sent: true, engine: 'flow' };
     } else if (conv.flow_state === 'lead_main_menu') {
       const trimmed = body.trim();
-      if (trimmed === '1') { 
+      const lower = trimmed.toLowerCase();
+      const isBack = trimmed === '0' || ['menu','voltar','inicio','início','start'].includes(lower);
+
+      if (isBack) {
+        const flowStep = getFlowStep('comercial_saudacao_lead');
+        await sendMessage(String(flowStep?.message || 'Escolha uma opção.'), 'com_repeat', null, undefined, {}, flowStep);
+      } else if (trimmed === '1') { 
         await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
-        await sendMessage(String(getFlowStep('comercial_conhecer_consultoria')?.message || 'Sobre a consultoria...'), 'com_conhecer'); 
+        const flowStep = getFlowStep('comercial_conhecer_consultoria');
+        await sendMessage(String(flowStep?.message || 'Sobre a consultoria...'), 'com_conhecer', null, undefined, {}, flowStep); 
+      }
+      else if (trimmed === '2') {
+        await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
+        const plans = await getPlansFormatted(admin);
+        const flowStep = getFlowStep('comercial_lista_planos');
+        await sendMessage(String(flowStep?.message || '{planos}').replace('{planos}', plans), 'com_planos', null, undefined, { planos: plans }, flowStep);
+      }
+      else if (trimmed === '3') {
+        await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
+        const flowStep = getFlowStep('comercial_sucesso_handoff'); // Ou algum link de inscrição
+        await sendMessage(String(flowStep?.message || 'Para iniciar sua inscrição, acesse: https://sthmethod.com.br/cadastro'), 'com_inscricao', null, undefined, {}, flowStep);
+      }
+      else if (trimmed === '4') {
+        await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
+        const flowStep = getFlowStep('comercial_formas_pagamento');
+        await sendMessage(String(flowStep?.message || 'Formas de pagamento...'), 'com_pagto', null, undefined, {}, flowStep);
       }
       else if (trimmed === '5') { 
         await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
@@ -806,7 +898,8 @@ Deno.serve(async (req) => {
           await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
         } else {
           await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: errorCount } }).eq('id', conv.id);
-          await sendMessage(String(getFlowStep('comercial_saudacao_lead')?.message || 'Escolha uma opção.'), 'com_repeat'); 
+          const flowStep = getFlowStep('comercial_saudacao_lead');
+          await sendMessage(String(flowStep?.message || 'Escolha uma opção.'), 'com_repeat', null, undefined, {}, flowStep); 
         }
       }
       autoReply = { sent: true, engine: 'flow' };
