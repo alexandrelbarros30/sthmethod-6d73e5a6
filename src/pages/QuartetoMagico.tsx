@@ -493,7 +493,7 @@ const QuartetoMagico = () => {
               ESCOLHA SEU <br />
               <span className="text-primary italic">PLANO.</span>
             </motion.h2>
-            <motion.p variants={fadeUp} className="max-w-xl mx-auto text-xl text-zinc-400 font-light mb-16 leading-relaxed">
+            <motion.p variants={fadeUp} className="max-w-xl mx-auto text-xl text-zinc-300 font-light mb-16 leading-relaxed">
               Descubra o que o Quarteto Mágico pode fazer pelo seu projeto hoje mesmo. Resultados reais não acontecem por acaso.
             </motion.p>
             
