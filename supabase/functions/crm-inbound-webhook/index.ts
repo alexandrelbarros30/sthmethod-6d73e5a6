@@ -858,9 +858,32 @@ Deno.serve(async (req) => {
       autoReply = { sent: true, engine: 'flow' };
     } else if (conv.flow_state === 'lead_main_menu') {
       const trimmed = body.trim();
-      if (trimmed === '1') { 
+      const lower = trimmed.toLowerCase();
+      const isBack = trimmed === '0' || ['menu','voltar','inicio','início','start'].includes(lower);
+
+      if (isBack) {
+        const flowStep = getFlowStep('comercial_saudacao_lead');
+        await sendMessage(String(flowStep?.message || 'Escolha uma opção.'), 'com_repeat', null, undefined, {}, flowStep);
+      } else if (trimmed === '1') { 
         await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
-        await sendMessage(String(getFlowStep('comercial_conhecer_consultoria')?.message || 'Sobre a consultoria...'), 'com_conhecer'); 
+        const flowStep = getFlowStep('comercial_conhecer_consultoria');
+        await sendMessage(String(flowStep?.message || 'Sobre a consultoria...'), 'com_conhecer', null, undefined, {}, flowStep); 
+      }
+      else if (trimmed === '2') {
+        await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
+        const plans = await getPlansFormatted(admin);
+        const flowStep = getFlowStep('comercial_lista_planos');
+        await sendMessage(String(flowStep?.message || '{planos}').replace('{planos}', plans), 'com_planos', null, undefined, { planos: plans }, flowStep);
+      }
+      else if (trimmed === '3') {
+        await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
+        const flowStep = getFlowStep('comercial_sucesso_handoff'); // Ou algum link de inscrição
+        await sendMessage(String(flowStep?.message || 'Para iniciar sua inscrição, acesse: https://sthmethod.com.br/cadastro'), 'com_inscricao', null, undefined, {}, flowStep);
+      }
+      else if (trimmed === '4') {
+        await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
+        const flowStep = getFlowStep('comercial_formas_pagamento');
+        await sendMessage(String(flowStep?.message || 'Formas de pagamento...'), 'com_pagto', null, undefined, {}, flowStep);
       }
       else if (trimmed === '5') { 
         await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
