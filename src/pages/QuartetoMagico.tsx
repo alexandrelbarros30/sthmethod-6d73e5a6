@@ -378,7 +378,7 @@ const QuartetoMagico = () => {
               <h2 className="text-4xl md:text-7xl font-black tracking-tighter text-white mb-6 uppercase">
                 A BANCA <span className="text-primary italic">CIENTÍFICA.</span>
               </h2>
-              <p className="max-w-2xl mx-auto text-xl text-zinc-500 font-light">
+              <p className="max-w-2xl mx-auto text-xl text-zinc-400 font-light">
                 Não trabalhamos com promessas, trabalhamos com literatura e evidência clínica.
               </p>
             </motion.div>
