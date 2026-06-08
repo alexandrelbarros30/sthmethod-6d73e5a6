@@ -655,7 +655,8 @@ Deno.serve(async (req) => {
         if (open) await admin.from('crm_queue_items').update({ priority: 0 }).eq('id', open.id);
         else await admin.from('crm_queue_items').insert({ queue_id: q.id, conversation_id: conv.id, phone, priority: 0 });
       }
-      const r = await sendMessage(String(getFlowStep('comercial_handoff_consultor')?.message || 'Vou te encaminhar para um consultor da equipe STH Method. Aguarde alguns instantes. 🙏'), 'handoff_consultor');
+      const flowStep = getFlowStep('comercial_handoff_consultor');
+      const r = await sendMessage(String(flowStep?.message || 'Vou te encaminhar para um consultor da equipe STH Method. Aguarde alguns instantes. 🙏'), 'handoff_consultor', null, undefined, {}, flowStep);
       return { sent: r.sent, engine: 'flow', model: 'handoff_consultor' };
     };
 
