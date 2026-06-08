@@ -719,6 +719,10 @@ Deno.serve(async (req) => {
       const isBack = trimmed === '0' || ['menu','voltar','inicio','início','start'].includes(lower);
       const menuHint = '\n\n_Digite *0* para voltar ao menu ou *#SAIR* para encerrar._';
 
+      if (isBack || trimmed === '1' || trimmed === '2' || trimmed === '3' || trimmed === '4' || trimmed === '5' || (trimmed === '6' && !(conv.flow_context as any)?.human_requested) || trimmed === '7') {
+        await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
+      }
+
       if (isBack) {
         await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Menu principal.'), 'sucesso_back_menu');
       } else if (trimmed === '1') {
@@ -741,6 +745,7 @@ Deno.serve(async (req) => {
         const selfHelp = 'Antes de chamar um atendente, confira se uma das opções abaixo já resolve sua dúvida (mais rápido!):\n\n1️⃣ Atualizar Peso e Fotos\n2️⃣ Renovar Consultoria (automático)\n3️⃣ Verificar Pagamentos\n4️⃣ Reativar Consultoria (automático)\n5️⃣ Receber Acessos\n\n_Se mesmo assim precisar de atendimento humano, digite *6* novamente._' + menuHint;
         // marca flag para que o próximo "6" force handoff
         if ((conv.flow_context as any)?.human_requested) {
+          await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
           await handoffConsultor();
         } else {
           await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), human_requested: true } }).eq('id', conv.id);
