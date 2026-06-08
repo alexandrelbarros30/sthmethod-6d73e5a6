@@ -61,7 +61,7 @@ const Section = ({
           <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-white mb-8 leading-[1.1]">
             {title}
           </h2>
-          <div className="space-y-6 text-lg md:text-xl leading-relaxed text-zinc-300 font-light">
+          <div className="space-y-6 text-lg md:text-xl leading-relaxed text-zinc-200 font-light">
             {children}
           </div>
         </div>
@@ -231,7 +231,7 @@ const QuartetoMagico = () => {
               </motion.h1>
               <motion.p 
                 variants={fadeUp}
-                className="max-w-2xl mx-auto text-lg md:text-2xl text-zinc-300 font-light leading-relaxed mb-12"
+                className="max-w-2xl mx-auto text-lg md:text-2xl text-zinc-200 font-light leading-relaxed mb-12"
               >
                 Muitas pessoas acreditam que resultados vêm apenas da dieta. Outras apostam tudo no treino. Na STH, o resultado é matemática de precisão.
               </motion.p>
@@ -337,7 +337,7 @@ const QuartetoMagico = () => {
                   <span className="text-zinc-400 italic">para a</span> <br />
                   <span className="text-primary">Retatrutida.</span>
                 </h2>
-                <div className="space-y-6 text-lg md:text-xl text-zinc-300 font-light leading-relaxed">
+                <div className="space-y-6 text-lg md:text-xl text-zinc-200 font-light leading-relaxed">
                   <p>A ciência evoluiu. Antigamente falávamos apenas em déficit calórico. Hoje, usamos ferramentas de <span className="text-white font-medium">terceira geração</span>.</p>
                   <p>A <span className="text-white font-medium">Retatrutida</span> (triplo agonista GLP-1/GIP/GCG) oferece controle glicêmico e saciedade sem precedentes no mercado atual.</p>
                   <p>Aliamos isso a <span className="text-white font-medium">Peptídeos de GH</span> (como Ipamorelin ou CJC-1295) para garantir que a queima de gordura ocorra preservando cada grama de massa muscular.</p>
