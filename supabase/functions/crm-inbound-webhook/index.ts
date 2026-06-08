@@ -776,9 +776,25 @@ Deno.serve(async (req) => {
       autoReply = { sent: true, engine: 'flow' };
     } else if (conv.flow_state === 'lead_main_menu') {
       const trimmed = body.trim();
-      if (trimmed === '1') { await sendMessage(String(getFlowStep('comercial_conhecer_consultoria')?.message || 'Sobre a consultoria...'), 'com_conhecer'); }
-      else if (trimmed === '5') { await handoffConsultor(); }
-      else { await sendMessage(String(getFlowStep('comercial_saudacao_lead')?.message || 'Escolha uma opção.'), 'com_repeat'); }
+      if (trimmed === '1') { 
+        await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
+        await sendMessage(String(getFlowStep('comercial_conhecer_consultoria')?.message || 'Sobre a consultoria...'), 'com_conhecer'); 
+      }
+      else if (trimmed === '5') { 
+        await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
+        await handoffConsultor(); 
+      }
+      else { 
+        const errorCount = ((conv.flow_context as any)?.error_count || 0) + 1;
+        if (errorCount >= 3) {
+          const stopMsg = "Ops, não consegui entender sua opção. Vou aguardar você digitar um número válido ou entrar em contato com um consultor.\n\n_Dica: Digite apenas o número da opção._";
+          await sendMessage(stopMsg, 'comercial_error_limit');
+          await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
+        } else {
+          await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: errorCount } }).eq('id', conv.id);
+          await sendMessage(String(getFlowStep('comercial_saudacao_lead')?.message || 'Escolha uma opção.'), 'com_repeat'); 
+        }
+      }
       autoReply = { sent: true, engine: 'flow' };
     }
 
