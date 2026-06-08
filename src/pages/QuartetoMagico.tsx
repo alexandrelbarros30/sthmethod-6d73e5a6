@@ -337,7 +337,7 @@ const QuartetoMagico = () => {
                   <span className="text-zinc-500 italic">para a</span> <br />
                   <span className="text-primary">Retatrutida.</span>
                 </h2>
-                <div className="space-y-6 text-lg md:text-xl text-zinc-400 font-light leading-relaxed">
+                <div className="space-y-6 text-lg md:text-xl text-zinc-300 font-light leading-relaxed">
                   <p>A ciência evoluiu. Antigamente falávamos apenas em déficit calórico. Hoje, usamos ferramentas de <span className="text-white font-medium">terceira geração</span>.</p>
                   <p>A <span className="text-white font-medium">Retatrutida</span> (triplo agonista GLP-1/GIP/GCG) oferece controle glicêmico e saciedade sem precedentes no mercado atual.</p>
                   <p>Aliamos isso a <span className="text-white font-medium">Peptídeos de GH</span> (como Ipamorelin ou CJC-1295) para garantir que a queima de gordura ocorra preservando cada grama de massa muscular.</p>
