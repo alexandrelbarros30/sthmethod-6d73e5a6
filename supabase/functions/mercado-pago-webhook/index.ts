@@ -415,7 +415,7 @@ serve(async (req) => {
           .maybeSingle();
         if (!claim) {
           console.log("[automation-whatsapp] skipped (already claimed) for", payment.id);
-        } else if (payment.action_type === "new") {
+        } else if (payment.action_type === "new" || payment.action_type === "unlock") {
           await sendAutomationWhatsapp(supabase, payment.user_id, "payment_welcome");
         } else if (payment.action_type === "renewal" || payment.action_type === "upgrade") {
           await sendAutomationWhatsapp(supabase, payment.user_id, "payment_renewal");
