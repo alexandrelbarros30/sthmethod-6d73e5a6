@@ -347,15 +347,15 @@ const QuartetoMagico = () => {
             <motion.div variants={fadeUp} className="flex flex-col md:flex-row items-center justify-center gap-6">
               {!isStudent && (
                 <Link to="/cadastro">
-                  <Button size="lg" className="rounded-full bg-primary text-black hover:bg-white transition-all duration-300 px-12 h-16 text-lg font-bold shadow-xl shadow-primary/20 group">
+                  <Button size="lg" className="rounded-full bg-white text-black hover:scale-105 transition-all duration-300 px-12 h-20 text-xl font-black shadow-[0_0_40px_-5px_rgba(255,255,255,0.3)] group">
                     QUERO MEU PROJETO 
-                    <ArrowLeft className="w-5 h-5 ml-2 rotate-180 group-hover:translate-x-1 transition-transform" />
+                    <ArrowLeft className="w-6 h-6 ml-3 rotate-180 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
               )}
               <Link to="/tendencias">
-                <Button variant="outline" size="lg" className="rounded-full border-white/10 hover:bg-white/5 px-10 h-16 text-zinc-400">
-                  Ver outros artigos
+                <Button variant="outline" size="lg" className="rounded-full border-white/20 hover:bg-white/5 px-10 h-20 text-zinc-300 font-medium">
+                  Explorar STH News
                 </Button>
               </Link>
             </motion.div>
