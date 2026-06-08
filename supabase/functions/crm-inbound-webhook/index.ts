@@ -223,6 +223,19 @@ async function findProfileByPhone(admin: ReturnType<typeof createClient>, phone:
   return ranked[0] ?? null;
 }
 
+async function getPlansFormatted(admin: ReturnType<typeof createClient>): Promise<string> {
+  const { data: plans } = await admin.from('plans').select('*').eq('active', true).order('order_index', { ascending: true });
+  if (!plans || plans.length === 0) return 'Consulte nossos consultores para valores atualizados.';
+  
+  return plans.map(p => {
+    let s = `📋 *${p.name}*\n`;
+    if (p.description) s += `${p.description}\n`;
+    s += `💰 Investimento: R$ ${p.price}\n`;
+    if (p.duration_months) s += `📅 Período: ${p.duration_months} meses\n`;
+    return s;
+  }).join('\n');
+}
+
 function classify(text: string): { queue: 'comercial'|'nutri'|'sucesso'|'financeiro'|null; nutriCategory: string | null; tags: string[] } {
   const t = String(text || '').toLowerCase();
   const tags: string[] = [];
