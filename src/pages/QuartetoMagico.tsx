@@ -61,7 +61,7 @@ const Section = ({
           <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-white mb-8 leading-[1.1]">
             {title}
           </h2>
-          <div className="space-y-6 text-lg md:text-xl leading-relaxed text-zinc-400 font-light">
+          <div className="space-y-6 text-lg md:text-xl leading-relaxed text-zinc-300 font-light">
             {children}
           </div>
         </div>
