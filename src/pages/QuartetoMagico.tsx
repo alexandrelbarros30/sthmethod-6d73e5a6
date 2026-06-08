@@ -263,7 +263,7 @@ const QuartetoMagico = () => {
                     Resultados reais acontecem quando existe método. Ciência, estratégia e constância.
                   </p>
                 </div>
-              </div>
+              </motion.div>
             </div>
           </div>
         </section>
