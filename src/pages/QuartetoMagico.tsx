@@ -443,7 +443,7 @@ const QuartetoMagico = () => {
               initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
               className="p-10 rounded-[2.5rem] bg-zinc-900/50 border border-white/5 flex flex-col"
             >
-              <h3 className="text-2xl font-bold text-zinc-500 mb-8 uppercase tracking-widest">O Caminho Comum</h3>
+              <h3 className="text-2xl font-bold text-zinc-400 mb-8 uppercase tracking-widest">O Caminho Comum</h3>
               <ul className="space-y-6">
                 {["Apenas Dieta restritiva", "Treino sem acompanhamento", "Zero monitoramento hormonal", "Protocolos genéricos", "Resultados temporários"].map((item) => (
                   <li key={item} className="flex items-center gap-4 text-zinc-600 line-through decoration-zinc-700">
