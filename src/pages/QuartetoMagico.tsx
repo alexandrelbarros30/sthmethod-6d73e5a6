@@ -231,7 +231,7 @@ const QuartetoMagico = () => {
               </motion.h1>
               <motion.p 
                 variants={fadeUp}
-                className="max-w-2xl mx-auto text-lg md:text-2xl text-zinc-100 font-light leading-relaxed mb-12"
+                className="max-w-2xl mx-auto text-lg md:text-2xl text-white font-medium leading-relaxed mb-12"
               >
                 Muitas pessoas acreditam que resultados vêm apenas da dieta. Outras apostam tudo no treino. Na STH, o resultado é matemática de precisão.
               </motion.p>
@@ -493,7 +493,7 @@ const QuartetoMagico = () => {
               ESCOLHA SEU <br />
               <span className="text-primary italic">PLANO.</span>
             </motion.h2>
-            <motion.p variants={fadeUp} className="max-w-xl mx-auto text-xl text-zinc-100 font-light mb-16 leading-relaxed">
+            <motion.p variants={fadeUp} className="max-w-xl mx-auto text-xl text-white font-medium mb-16 leading-relaxed">
               Descubra o que o Quarteto Mágico pode fazer pelo seu projeto hoje mesmo. Resultados reais não acontecem por acaso.
             </motion.p>
             
