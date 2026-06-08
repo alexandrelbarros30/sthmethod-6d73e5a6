@@ -879,6 +879,7 @@ export type Database = {
           id: string
           media_type: string | null
           media_url: string | null
+          metadata: Json | null
           sent_by: string | null
           source: string
           status: string
@@ -892,6 +893,7 @@ export type Database = {
           id?: string
           media_type?: string | null
           media_url?: string | null
+          metadata?: Json | null
           sent_by?: string | null
           source?: string
           status?: string
@@ -905,6 +907,7 @@ export type Database = {
           id?: string
           media_type?: string | null
           media_url?: string | null
+          metadata?: Json | null
           sent_by?: string | null
           source?: string
           status?: string
