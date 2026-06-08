@@ -3,11 +3,11 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import heroImg from "@/assets/sthnews-triade-thumb.jpg";
-import sinergiaImg from "@/assets/sthnews-plato-hero.jpg";
-import examesImg from "@/assets/sthnews-marcadores-hero.jpg";
-import protocoloImg from "@/assets/sthnews-subq-hero.jpg";
-import vereditoImg from "@/assets/sthnews-recomposicao-corporal.jpg";
+import heroImg from "@/assets/sthnews-triade-glass-1.jpg";
+import sinergiaImg from "@/assets/sthnews-triade-glass-2.jpg";
+import examesImg from "@/assets/sthnews-triade-glass-3.jpg";
+import protocoloImg from "@/assets/sthnews-triade-glass-4.jpg";
+import vereditoImg from "@/assets/sthnews-triade-glass-5.jpg";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
