@@ -61,7 +61,7 @@ const Section = ({
           <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-white mb-8 leading-[1.1]">
             {title}
           </h2>
-          <div className="space-y-6 text-lg md:text-xl leading-relaxed text-zinc-200 font-light">
+          <div className="space-y-6 text-lg md:text-xl leading-relaxed text-zinc-100 font-light">
             {children}
           </div>
         </div>
@@ -126,7 +126,7 @@ const QuartetoMagico = () => {
           </Link>
 
           {/* Desktop links */}
-          <nav className="hidden lg:flex items-center gap-7 text-[11px] text-zinc-400 uppercase tracking-[0.15em] font-semibold">
+          <nav className="hidden lg:flex items-center gap-7 text-[11px] text-zinc-300 uppercase tracking-[0.15em] font-semibold">
             {navLinks.map((link) => {
               const isActive = location.pathname === link.href;
               return (
@@ -231,7 +231,7 @@ const QuartetoMagico = () => {
               </motion.h1>
               <motion.p 
                 variants={fadeUp}
-                className="max-w-2xl mx-auto text-lg md:text-2xl text-zinc-200 font-light leading-relaxed mb-12"
+                className="max-w-2xl mx-auto text-lg md:text-2xl text-zinc-100 font-light leading-relaxed mb-12"
               >
                 Muitas pessoas acreditam que resultados vêm apenas da dieta. Outras apostam tudo no treino. Na STH, o resultado é matemática de precisão.
               </motion.p>
@@ -261,7 +261,7 @@ const QuartetoMagico = () => {
               className="relative"
             >
               <span className="absolute -top-20 -left-10 text-[200px] font-serif text-white/5 leading-none select-none">"</span>
-              <p className="text-3xl md:text-5xl font-light leading-[1.3] text-zinc-200 tracking-tight italic">
+              <p className="text-3xl md:text-5xl font-light leading-[1.3] text-zinc-100 tracking-tight italic">
                 Nenhum desses pilares funciona em sua <span className="text-white font-medium not-italic">máxima capacidade sozinho.</span> Quando eles trabalham em sinergia, o resultado deixa de ser uma aposta e vira ciência pura.
               </p>
             </motion.div>
@@ -337,7 +337,7 @@ const QuartetoMagico = () => {
                   <span className="text-zinc-400 italic">para a</span> <br />
                   <span className="text-primary">Retatrutida.</span>
                 </h2>
-                <div className="space-y-6 text-lg md:text-xl text-zinc-200 font-light leading-relaxed">
+                <div className="space-y-6 text-lg md:text-xl text-zinc-100 font-light leading-relaxed">
                   <p>A ciência evoluiu. Antigamente falávamos apenas em déficit calórico. Hoje, usamos ferramentas de <span className="text-white font-medium">terceira geração</span>.</p>
                   <p>A <span className="text-white font-medium">Retatrutida</span> (triplo agonista GLP-1/GIP/GCG) oferece controle glicêmico e saciedade sem precedentes no mercado atual.</p>
                   <p>Aliamos isso a <span className="text-white font-medium">Peptídeos de GH</span> (como Ipamorelin ou CJC-1295) para garantir que a queima de gordura ocorra preservando cada grama de massa muscular.</p>
@@ -356,9 +356,9 @@ const QuartetoMagico = () => {
                 <div className="absolute -bottom-6 -left-6 bg-black/80 backdrop-blur-2xl border border-white/10 p-8 rounded-3xl shadow-2xl max-w-[280px]">
                   <div className="flex items-center gap-3 mb-4">
                     <TrendingUp className="text-primary w-6 h-6" />
-                    <span className="text-xs font-bold uppercase tracking-widest text-zinc-200">Performance</span>
+                    <span className="text-xs font-bold uppercase tracking-widest text-zinc-100">Performance</span>
                   </div>
-                  <p className="text-sm text-zinc-300 leading-relaxed">
+                  <p className="text-sm text-zinc-200 leading-relaxed">
                     Resultados reais acontecem quando existe método. Ciência, estratégia e constância.
                   </p>
                 </div>
@@ -378,7 +378,7 @@ const QuartetoMagico = () => {
               <h2 className="text-4xl md:text-7xl font-black tracking-tighter text-white mb-6 uppercase">
                 A BANCA <span className="text-primary italic">CIENTÍFICA.</span>
               </h2>
-              <p className="max-w-2xl mx-auto text-xl text-zinc-200 font-light">
+              <p className="max-w-2xl mx-auto text-xl text-zinc-100 font-light">
                 Não trabalhamos com promessas, trabalhamos com literatura e evidência clínica.
               </p>
             </motion.div>
@@ -411,7 +411,7 @@ const QuartetoMagico = () => {
                 >
                   <item.icon className="w-12 h-12 text-primary mb-8 group-hover:scale-110 transition-transform duration-500" />
                   <h3 className="text-2xl font-bold text-white mb-4">{item.title}</h3>
-                  <p className="text-zinc-200 font-light leading-relaxed">
+                  <p className="text-zinc-100 font-light leading-relaxed">
                     {item.desc}
                   </p>
                 </motion.div>
@@ -432,7 +432,7 @@ const QuartetoMagico = () => {
             </motion.h2>
             <motion.p 
               initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}
-              className="text-lg text-zinc-400 font-light"
+              className="text-lg text-zinc-300 font-light"
             >
               Entregamos a estratégia completa para a sua transformação.
             </motion.p>
@@ -443,10 +443,10 @@ const QuartetoMagico = () => {
               initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
               className="p-10 rounded-[2.5rem] bg-zinc-900/50 border border-white/5 flex flex-col"
             >
-              <h3 className="text-2xl font-bold text-zinc-400 mb-8 uppercase tracking-widest">O Caminho Comum</h3>
+              <h3 className="text-2xl font-bold text-zinc-300 mb-8 uppercase tracking-widest">O Caminho Comum</h3>
               <ul className="space-y-6">
                 {["Apenas Dieta restritiva", "Treino sem acompanhamento", "Zero monitoramento hormonal", "Protocolos genéricos", "Resultados temporários"].map((item) => (
-                  <li key={item} className="flex items-center gap-4 text-zinc-500 line-through decoration-zinc-700">
+                  <li key={item} className="flex items-center gap-4 text-zinc-400 line-through decoration-zinc-600">
                     <div className="w-1.5 h-1.5 rounded-full bg-zinc-700"></div>
                     {item}
                   </li>
@@ -471,7 +471,7 @@ const QuartetoMagico = () => {
                   "Interpretação de exames por especialistas",
                   "Ajustes contínuos mensais"
                 ].map((item) => (
-                  <li key={item} className="flex items-center gap-4 text-zinc-200">
+                  <li key={item} className="flex items-center gap-4 text-zinc-100">
                     <CheckCircle2 className="text-primary w-5 h-5 flex-shrink-0" />
                     {item}
                   </li>
@@ -493,7 +493,7 @@ const QuartetoMagico = () => {
               ESCOLHA SEU <br />
               <span className="text-primary italic">PLANO.</span>
             </motion.h2>
-            <motion.p variants={fadeUp} className="max-w-xl mx-auto text-xl text-zinc-300 font-light mb-16 leading-relaxed">
+            <motion.p variants={fadeUp} className="max-w-xl mx-auto text-xl text-zinc-100 font-light mb-16 leading-relaxed">
               Descubra o que o Quarteto Mágico pode fazer pelo seu projeto hoje mesmo. Resultados reais não acontecem por acaso.
             </motion.p>
             
@@ -507,7 +507,7 @@ const QuartetoMagico = () => {
                 </Link>
               )}
               <Link to="/tendencias">
-                <Button variant="outline" size="lg" className="rounded-full border-white/20 hover:bg-white/5 px-10 h-20 text-zinc-300 font-medium">
+                <Button variant="outline" size="lg" className="rounded-full border-white/20 hover:bg-white/5 px-10 h-20 text-zinc-100 font-medium">
                   Explorar STH News
                 </Button>
               </Link>
@@ -520,7 +520,7 @@ const QuartetoMagico = () => {
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
           <div className="text-left">
             <h4 className="text-xl font-bold tracking-tight text-white mb-4">STH Method</h4>
-            <p className="max-w-md text-sm text-zinc-400 font-light leading-relaxed">
+            <p className="max-w-md text-sm text-zinc-300 font-light leading-relaxed">
               Ciência, estratégia e constância para transformar vidas. <br />
               Onde o impossível encontra o método.
             </p>
