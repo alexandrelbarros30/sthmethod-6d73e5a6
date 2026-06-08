@@ -313,8 +313,23 @@ Deno.serve(async (req) => {
     const externalId = payload?.messageId || payload?.id || null;
     const name = payload?.senderName || payload?.pushName || payload?.sender?.pushName || null;
 
-    if (payload?.fromMe === true || payload?.from_me === true || payload?.isGroup === true || payload?.is_group === true || String(phoneRaw).startsWith('120363') || String(phoneRaw).includes('-') || String(phoneRaw).includes('@g.us')) {
-      return new Response(JSON.stringify({ ok: true, skipped: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    if (payload?.fromMe === true || payload?.from_me === true) {
+      // Se a mensagem partiu de "mim" (do atendente via WhatsApp Web/Celular), 
+      // marcamos a conversa como atendimento humano para silenciar o bot.
+      const phone = normalizePhone(phoneRaw);
+      if (phone) {
+        console.log(`Mensagem enviada pelo atendente (fromMe) para ${phone}. Ativando handoff humano.`);
+        await admin.from('crm_conversations').update({ 
+          human_handoff: true, 
+          status: 'open',
+          updated_at: new Date().toISOString()
+        }).eq('phone', phone);
+      }
+      return new Response(JSON.stringify({ ok: true, skipped: true, reason: 'from_me' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    if (payload?.isGroup === true || payload?.is_group === true || String(phoneRaw).startsWith('120363') || String(phoneRaw).includes('-') || String(phoneRaw).includes('@g.us')) {
+      return new Response(JSON.stringify({ ok: true, skipped: true, reason: 'group_message' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const phone = normalizePhone(phoneRaw);
