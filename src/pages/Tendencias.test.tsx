@@ -1,4 +1,4 @@
-import { test, expect, beforeAll } from "vitest";
+import { test, expect, beforeAll, vi } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import Tendencias from "./Tendencias";
@@ -6,14 +6,16 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 beforeAll(() => {
-  // Mock IntersectionObserver
-  global.IntersectionObserver = class IntersectionObserver {
+  // Polyfill IntersectionObserver for JSDOM
+  class IntersectionObserverMock {
     constructor() {}
     disconnect() {}
     observe() {}
     unobserve() {}
     takeRecords() { return []; }
-  } as any;
+  }
+
+  vi.stubGlobal('IntersectionObserver', IntersectionObserverMock);
 });
 
 const queryClient = new QueryClient();
@@ -55,5 +57,6 @@ test("mobile menu opens and closes", async () => {
     fireEvent.click(sthNewsLink);
   });
   
+  // Verify it closes
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });
