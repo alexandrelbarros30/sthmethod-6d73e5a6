@@ -483,7 +483,7 @@ Deno.serve(async (req) => {
       return out;
     };
 
-    const sendMessage = async (message: string, tag: string, imageUrl?: string | null, targetProvider?: string, extraTplData: Record<string, string> = {}) => {
+    const sendMessage = async (message: string, tag: string, imageUrl?: string | null, targetProvider?: string, extraTplData: Record<string, string> = {}, flowStep?: any) => {
       const tplMessage = renderTpl(message, extraTplData);
       let sent = false; let messageId: string | null = null;
       const activeProvider = targetProvider || provider;
@@ -504,7 +504,38 @@ Deno.serve(async (req) => {
       } else {
         const fnName = activeProvider === 'wapi_sucesso' ? 'send-wapi-sucesso' : 'send-wapi';
         console.log(`Invoking ${fnName} for phone ${phone}`);
-        const { data, error } = await admin.functions.invoke(fnName, { body: { phone, message: tplMessage, image_url: imageUrl } });
+        
+        let buttons = null;
+        let list = null;
+        
+        if (flowStep?.display_format === 'buttons' && flowStep.actions?.length > 0) {
+          buttons = flowStep.actions.slice(0, 3).map((a: any) => ({
+            id: a.label, // Usamos o gatilho como ID
+            label: a.label.length > 20 ? a.label.substring(0, 17) + '...' : a.label
+          }));
+        } else if (flowStep?.display_format === 'list' && flowStep.actions?.length > 0) {
+          list = {
+            title: 'Opções',
+            buttonLabel: 'Ver Opções',
+            sections: [{
+              title: 'Escolha uma opção',
+              rows: flowStep.actions.slice(0, 10).map((a: any) => ({
+                id: a.label,
+                title: a.label.length > 20 ? a.label.substring(0, 17) + '...' : a.label
+              }))
+            }]
+          };
+        }
+
+        const { data, error } = await admin.functions.invoke(fnName, { 
+          body: { 
+            phone, 
+            message: tplMessage, 
+            image_url: imageUrl,
+            buttons,
+            list
+          } 
+        });
         console.log(`Response from ${fnName}:`, { data, error });
         if (!error && (data?.ok || data?.messageId)) { sent = true; messageId = data.messageId || data?.id; }
       }
@@ -601,19 +632,22 @@ Deno.serve(async (req) => {
     } else if (!conv.flow_state) {
       if (provider === 'wapi') {
         if (identifiedAs === 'lead') {
-          const r = await sendMessage(String(getFlowStep('nutri_ident_lead')?.message || 'Identificamos que você ainda não possui uma consultoria ativa...'), 'nutri_ident_lead');
+          const r = await sendMessage(String(getFlowStep('nutri_ident_lead')?.message || 'Identificamos que você ainda não possui uma consultoria ativa...'), 'nutri_ident_lead', null, undefined, {}, getFlowStep('nutri_ident_lead'));
           autoReply = { sent: r.sent, engine: 'flow' };
         } else if (identifiedAs === 'aluno_vencido' || identifiedAs === 'ex_aluno') {
-          const step = identifiedAs === 'aluno_vencido' ? 'nutri_ident_inativo' : 'nutri_ident_exaluno';
-          const r = await sendMessage(String(getFlowStep(step)?.message || 'Localizamos seu cadastro, porém sua consultoria encontra-se inativa...'), step);
+          const stepKey = identifiedAs === 'aluno_vencido' ? 'nutri_ident_inativo' : 'nutri_ident_exaluno';
+          const flowStep = getFlowStep(stepKey);
+          const r = await sendMessage(String(flowStep?.message || 'Localizamos seu cadastro, porém sua consultoria encontra-se inativa...'), stepKey, null, undefined, {}, flowStep);
           autoReply = { sent: r.sent, engine: 'flow' };
         } else {
-          const r = await sendMessage(String(getFlowStep('nutri_reception')?.message || 'Olá! Você está no canal Fale com o Nutri...'), 'nutri_reception');
+          const flowStep = getFlowStep('nutri_reception');
+          const r = await sendMessage(String(flowStep?.message || 'Olá! Você está no canal Fale com o Nutri...'), 'nutri_reception', null, undefined, {}, flowStep);
           await admin.from('crm_conversations').update({ flow_state: 'nutri_main' }).eq('id', conv.id);
           autoReply = { sent: r.sent, engine: 'flow' };
         }
       } else if (provider === 'wapi_sucesso') {
-        const r = await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu');
+        const flowStep = getFlowStep('sucesso_main_menu');
+        const r = await sendMessage(String(flowStep?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu', null, undefined, {}, flowStep);
         await admin.from('crm_conversations').update({ flow_state: 'sucesso_main_menu', queue_type: 'sucesso' }).eq('id', conv.id);
         autoReply = { sent: r.sent, engine: 'flow' };
       } else {

@@ -765,6 +765,7 @@ export type Database = {
         Row: {
           actions: Json | null
           created_at: string | null
+          display_format: string | null
           id: string
           key: string
           label: string
@@ -779,6 +780,7 @@ export type Database = {
         Insert: {
           actions?: Json | null
           created_at?: string | null
+          display_format?: string | null
           id?: string
           key: string
           label: string
@@ -793,6 +795,7 @@ export type Database = {
         Update: {
           actions?: Json | null
           created_at?: string | null
+          display_format?: string | null
           id?: string
           key?: string
           label?: string
