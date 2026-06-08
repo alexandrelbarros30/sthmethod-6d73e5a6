@@ -1,8 +1,8 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { ArrowLeft, ArrowUpRight, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ginecoImg from "@/assets/sthnews-gineco-hero.jpg";
 import bfAltoImg from "@/assets/sthnews-bfalto-hero.jpg";
 import trembolonaImg from "@/assets/sthnews-trembolona-hero.jpg";
@@ -56,32 +56,63 @@ const articles = [
 
 const Tendencias = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [mobileMenuOpen]);
+
+  const navLinks = [
+    { href: "/como-funciona", label: "Como Funciona" },
+    { href: "/tendencias", label: "STH News" },
+    { href: "/questionario", label: "Macros" },
+    { href: "/triagem-marcadores", label: "Triagem" },
+    { href: "/diario-alimentar", label: "Diário" },
+  ];
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
       <header className="fixed top-0 inset-x-0 z-50 bg-background/80 backdrop-blur-2xl border-b border-border/40">
         <div className="max-w-6xl mx-auto px-6 h-12 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 shrink-0">
+          <Link to="/" className="flex items-center gap-2 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md">
             <span className="text-[13px] font-semibold tracking-tight text-foreground">STH METHOD</span>
           </Link>
 
           {/* Desktop links */}
-          <div className="hidden lg:flex items-center gap-7 text-[11px] text-muted-foreground uppercase tracking-[0.15em] font-semibold">
-            <Link to="/como-funciona" className="hover:text-foreground transition-colors">Como Funciona</Link>
-            <Link to="/tendencias" className="text-foreground transition-colors">STH News</Link>
-            <Link to="/questionario" className="hover:text-foreground transition-colors">Macros</Link>
-            <Link to="/triagem-marcadores" className="hover:text-foreground transition-colors">Triagem</Link>
-            <Link to="/diario-alimentar" className="hover:text-foreground transition-colors">Diário</Link>
-          </div>
+          <nav className="hidden lg:flex items-center gap-7 text-[11px] text-muted-foreground uppercase tracking-[0.15em] font-semibold">
+            {navLinks.map((link) => {
+              const isActive = location.pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className={`${
+                    isActive ? "text-primary font-bold" : "hover:text-foreground"
+                  } transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-8 rounded-sm`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
 
           <div className="flex items-center gap-2">
-            <Link to="/login" className="hidden sm:block">
+            <Link to="/login" className="hidden sm:block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-full">
               <Button size="sm" className="text-[11px] h-7 rounded-full bg-foreground text-background hover:bg-foreground/90">Acessar</Button>
             </Link>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-1.5 rounded-full hover:bg-muted/50 transition-colors text-foreground"
-              aria-label="Menu"
+              className="lg:hidden p-1.5 rounded-full hover:bg-muted/50 transition-colors text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -92,31 +123,39 @@ const Tendencias = () => {
         <AnimatePresence>
           {mobileMenuOpen && (
             <motion.div
+              id="mobile-menu"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Menu de navegação mobile"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.25, ease: "easeInOut" }}
               className="lg:hidden border-t border-border/50 overflow-hidden bg-background/95 backdrop-blur-xl"
             >
-              <div className="px-5 py-4 flex flex-col gap-1 text-sm">
+              <nav className="px-5 py-6 flex flex-col gap-2">
                 {[
-                  { href: "/como-funciona", label: "Como Funciona" },
-                  { href: "/tendencias", label: "STH News" },
-                  { href: "/questionario", label: "Macros" },
-                  { href: "/triagem-marcadores", label: "Triagem" },
-                  { href: "/diario-alimentar", label: "Diário" },
+                  ...navLinks,
                   { href: "/login", label: "Acessar Conta" },
-                ].map((item) => (
-                  <Link
-                    key={item.href}
-                    to={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="py-3 px-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors uppercase tracking-widest text-[11px] font-semibold"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
+                ].map((item) => {
+                  const isActive = location.pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      to={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`py-4 px-4 rounded-xl transition-all duration-200 uppercase tracking-widest text-[11px] font-bold flex items-center justify-between group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                        isActive 
+                          ? "bg-primary/10 text-primary" 
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      }`}
+                    >
+                      {item.label}
+                      {isActive && <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.6)]" />}
+                    </Link>
+                  );
+                })}
+              </nav>
             </motion.div>
           )}
         </AnimatePresence>
