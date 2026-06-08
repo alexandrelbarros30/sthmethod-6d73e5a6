@@ -275,8 +275,8 @@ const QuartetoMagico = () => {
         >
           <p>Não é sobre "tomar algo", é sobre <span className="text-white font-semibold">otimização de receptores</span> e construção de um ambiente anabólico favorável.</p>
           <p>O protocolo STH é desenhado para potencializar cada grama de músculo e acelerar o metabolismo lipídico, garantindo que o seu esforço seja multiplicado pela química da eficiência.</p>
-          <div className="flex items-center gap-4 text-primary text-sm font-bold uppercase tracking-tighter">
-            <Zap className="w-5 h-5" />
+          <div className="flex items-center gap-4 text-white text-sm font-bold uppercase tracking-tighter">
+            <Zap className="w-5 h-5 text-primary" />
             Sinergia de Compostos de Alta Performance
           </div>
         </Section>
