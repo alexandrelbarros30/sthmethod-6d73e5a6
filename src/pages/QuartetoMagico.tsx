@@ -231,7 +231,7 @@ const QuartetoMagico = () => {
               </motion.h1>
               <motion.p 
                 variants={fadeUp}
-                className="max-w-2xl mx-auto text-lg md:text-2xl text-zinc-400 font-light leading-relaxed mb-12"
+                className="max-w-2xl mx-auto text-lg md:text-2xl text-zinc-300 font-light leading-relaxed mb-12"
               >
                 Muitas pessoas acreditam que resultados vêm apenas da dieta. Outras apostam tudo no treino. Na STH, o resultado é matemática de precisão.
               </motion.p>
