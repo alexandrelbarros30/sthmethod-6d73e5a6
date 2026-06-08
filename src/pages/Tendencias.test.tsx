@@ -64,6 +64,8 @@ test("mobile menu opens and closes", async () => {
     if (sthNewsLink) fireEvent.click(sthNewsLink);
   });
   
-  // Verify it closes
-  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  // Verify it closes - using waitFor for AnimatePresence to finish
+  await waitFor(() => {
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  }, { timeout: 2000 });
 });
