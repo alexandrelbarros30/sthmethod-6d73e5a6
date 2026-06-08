@@ -16,6 +16,9 @@ beforeAll(() => {
   }
 
   vi.stubGlobal('IntersectionObserver', IntersectionObserverMock);
+  
+  // Mock window.scrollTo
+  window.scrollTo = vi.fn();
 });
 
 const queryClient = new QueryClient();
@@ -50,13 +53,15 @@ test("mobile menu opens and closes", async () => {
 
   // Check if link is present in the mobile menu specifically
   const mobileMenu = screen.getByRole("dialog");
-  const sthNewsLink = screen.getByText("STH News", { selector: "#mobile-menu nav a" });
+  const mobileLinks = screen.getAllByText("STH News");
+  // Find the one that's a child of the mobile menu
+  const sthNewsLink = mobileLinks.find(link => mobileMenu.contains(link));
+  
   expect(sthNewsLink).toBeInTheDocument();
-  expect(mobileMenu).toContainElement(sthNewsLink);
-
+  
   // Close menu by clicking a link
   await act(async () => {
-    fireEvent.click(sthNewsLink);
+    if (sthNewsLink) fireEvent.click(sthNewsLink);
   });
   
   // Verify it closes
