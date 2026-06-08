@@ -50,6 +50,7 @@ type FlowStep = {
   key: string;
   label: string;
   message: string;
+  display_format: 'text' | 'buttons' | 'list';
   media_url?: string | null;
   media_type?: string | null;
   order_index: number;
@@ -65,8 +66,12 @@ const StepNode = ({ data, selected }: any) => {
       <Handle type="target" position={Position.Top} className="!bg-primary w-3 h-3" />
       <div className="flex flex-col gap-1">
         <div className="flex items-center justify-between mb-1">
-          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate max-w-[100px]">{data.key}</div>
-          {data.hasMedia && <ImageIcon className="w-3 h-3 text-primary" />}
+          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate max-w-[80px]">{data.key}</div>
+          <div className="flex gap-1">
+            {data.display_format === 'buttons' && <div className="w-2 h-2 rounded-full bg-blue-400" title="Botões" />}
+            {data.display_format === 'list' && <div className="w-2 h-2 rounded-full bg-green-400" title="Lista" />}
+            {data.hasMedia && <ImageIcon className="w-3 h-3 text-primary" />}
+          </div>
         </div>
         <div className="text-sm font-semibold text-slate-800 truncate">{data.label}</div>
         <div className="text-[10px] text-slate-500 line-clamp-2 italic h-7 overflow-hidden">
@@ -139,6 +144,7 @@ export default function AdminCrmFlow() {
         label: step.label, 
         key: step.key,
         message: step.message,
+        display_format: step.display_format || 'text',
         hasMedia: !!step.media_url,
         mediaType: step.media_type
       },
@@ -210,6 +216,7 @@ export default function AdminCrmFlow() {
         key: step.key,
         label: step.label,
         message: step.message,
+        display_format: step.display_format || 'text',
         media_url: step.media_url,
         media_type: step.media_type,
         actions: step.actions,
@@ -435,6 +442,28 @@ export default function AdminCrmFlow() {
                           placeholder="ex_id_saudacao"
                           className="font-mono text-xs uppercase"
                         />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Formato de Exibição (W-API)</Label>
+                        <div className="flex gap-2 p-1 bg-slate-100 rounded-lg">
+                          {(['text', 'buttons', 'list'] as const).map((fmt) => (
+                            <button
+                              key={fmt}
+                              onClick={() => handleUpdateEditingStep("display_format", fmt)}
+                              className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${
+                                editingStep.display_format === fmt || (!editingStep.display_format && fmt === 'text')
+                                  ? "bg-white shadow-sm text-primary"
+                                  : "text-slate-500 hover:text-slate-700"
+                              }`}
+                            >
+                              {fmt === 'text' ? 'Texto' : fmt === 'buttons' ? 'Botões' : 'Lista'}
+                            </button>
+                          ))}
+                        </div>
+                        <p className="text-[10px] text-slate-400 italic">
+                          Botões suportam até 3 opções. Lista até 10.
+                        </p>
                       </div>
 
                       <div className="space-y-2">
