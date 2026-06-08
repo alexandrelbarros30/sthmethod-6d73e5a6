@@ -126,7 +126,7 @@ const QuartetoMagico = () => {
           </Link>
 
           {/* Desktop links */}
-          <nav className="hidden lg:flex items-center gap-7 text-[11px] text-zinc-500 uppercase tracking-[0.15em] font-semibold">
+          <nav className="hidden lg:flex items-center gap-7 text-[11px] text-zinc-400 uppercase tracking-[0.15em] font-semibold">
             {navLinks.map((link) => {
               const isActive = location.pathname === link.href;
               return (
