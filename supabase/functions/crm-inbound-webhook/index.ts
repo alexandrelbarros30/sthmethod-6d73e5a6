@@ -856,7 +856,8 @@ Deno.serve(async (req) => {
           await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
         } else {
           await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: errorCount } }).eq('id', conv.id);
-          await sendMessage(String(getFlowStep('comercial_saudacao_lead')?.message || 'Escolha uma opção.'), 'com_repeat'); 
+          const flowStep = getFlowStep('comercial_saudacao_lead');
+          await sendMessage(String(flowStep?.message || 'Escolha uma opção.'), 'com_repeat', null, undefined, {}, flowStep); 
         }
       }
       autoReply = { sent: true, engine: 'flow' };
