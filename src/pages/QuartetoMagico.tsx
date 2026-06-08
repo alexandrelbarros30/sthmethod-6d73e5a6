@@ -446,7 +446,7 @@ const QuartetoMagico = () => {
               <h3 className="text-2xl font-bold text-zinc-400 mb-8 uppercase tracking-widest">O Caminho Comum</h3>
               <ul className="space-y-6">
                 {["Apenas Dieta restritiva", "Treino sem acompanhamento", "Zero monitoramento hormonal", "Protocolos genéricos", "Resultados temporários"].map((item) => (
-                  <li key={item} className="flex items-center gap-4 text-zinc-600 line-through decoration-zinc-700">
+                  <li key={item} className="flex items-center gap-4 text-zinc-500 line-through decoration-zinc-700">
                     <div className="w-1.5 h-1.5 rounded-full bg-zinc-700"></div>
                     {item}
                   </li>
