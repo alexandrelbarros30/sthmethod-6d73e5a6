@@ -588,12 +588,14 @@ Deno.serve(async (req) => {
     let autoReply: any;
     const channelEnabled = provider === 'wapi' ? (wapiCfg?.value as any)?.enabled === true : (provider === 'wapi_sucesso' ? (wapiSucessoCfg?.value as any)?.enabled === true : (zapiCfg?.value as any)?.enabled === true);
 
-    // Se houver atendente humano ou flag de handoff, ignoramos mensagens automáticas de fluxo,
-    // MAS ainda enviamos mensagem de ausência se estiver fora do horário de expediente.
+    // Se houver atendente humano ou flag de handoff, ignoramos mensagens automáticas de fluxo e ausência.
     const isChannelEnabled = channelEnabled;
 
     if (!isChannelEnabled) {
       autoReply = { sent: false, reason: 'disabled' };
+    } else if (conv.human_handoff === true || !!conv.assigned_to) {
+      console.log(`Atendimento humano ativo na conversa ${conv.id} (atendente: ${conv.assigned_to}, handoff: ${conv.human_handoff}). Interrompendo disparos automáticos.`);
+      autoReply = { sent: false, reason: 'human_active' };
     } else if (todayNoticeActive) {
       // Dedup: 1x por sessão / 4h, como o away.
       const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
@@ -668,9 +670,6 @@ Deno.serve(async (req) => {
       } else {
         autoReply = { sent: false, reason: 'away_already_sent' };
       }
-    } else if (conv.human_handoff === true || !!conv.assigned_to) {
-      console.log(`Human active on conversation ${conv.id} (assigned: ${conv.assigned_to}, handoff: ${conv.human_handoff}). Skipping auto-replies.`);
-      autoReply = { sent: false, reason: 'human_active' };
     } else if (!conv.flow_state) {
       if (provider === 'wapi') {
         if (identifiedAs === 'lead') {
