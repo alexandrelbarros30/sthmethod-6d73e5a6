@@ -755,12 +755,16 @@ Deno.serve(async (req) => {
       } else {
         if (identifiedAs !== 'lead') {
           const step = identifiedAs === 'aluno_ativo' ? 'comercial_ident_ativo' : (identifiedAs === 'aluno_vencido' ? 'comercial_ident_inativo' : 'comercial_ident_exaluno');
-          await sendMessage(String(getFlowStep(step)?.message || 'Redirecionando para Sucesso...'), step);
-          const r = await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu');
+          const flowStepIdent = getFlowStep(step);
+          await sendMessage(String(flowStepIdent?.message || 'Redirecionando para Sucesso...'), step, null, undefined, {}, flowStepIdent);
+          
+          const flowStepMain = getFlowStep('sucesso_main_menu');
+          const r = await sendMessage(String(flowStepMain?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu', null, undefined, {}, flowStepMain);
           await admin.from('crm_conversations').update({ flow_state: 'sucesso_main_menu', queue_type: 'sucesso' }).eq('id', conv.id);
           autoReply = { sent: r.sent, engine: 'flow' };
         } else {
-          const r = await sendMessage(String(getFlowStep('comercial_saudacao_lead')?.message || 'Seja bem-vindo à STH Method...'), 'comercial_saudacao_lead');
+          const flowStep = getFlowStep('comercial_saudacao_lead');
+          const r = await sendMessage(String(flowStep?.message || 'Seja bem-vindo à STH Method...'), 'comercial_saudacao_lead', null, undefined, {}, flowStep);
           await admin.from('crm_conversations').update({ flow_state: 'lead_main_menu' }).eq('id', conv.id);
           autoReply = { sent: r.sent, engine: 'flow' };
         }
