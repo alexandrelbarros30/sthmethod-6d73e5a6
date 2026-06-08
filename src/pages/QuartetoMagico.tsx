@@ -358,7 +358,7 @@ const QuartetoMagico = () => {
                     <TrendingUp className="text-primary w-6 h-6" />
                     <span className="text-xs font-bold uppercase tracking-widest text-zinc-300">Performance</span>
                   </div>
-                  <p className="text-sm text-zinc-400 leading-relaxed">
+                  <p className="text-sm text-zinc-300 leading-relaxed">
                     Resultados reais acontecem quando existe método. Ciência, estratégia e constância.
                   </p>
                 </div>
