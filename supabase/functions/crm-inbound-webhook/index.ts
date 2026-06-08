@@ -389,6 +389,32 @@ Deno.serve(async (req) => {
     const getFlowStep = (key: string) => (flowSteps || []).find(s => s.key === key);
     const channelHours = provider === 'wapi_sucesso' ? hoursSucessoCfg?.value : (provider === 'wapi' ? hoursNutriCfg?.value : hoursComCfg?.value);
     const withinHours = isWithinBusinessHours(channelHours);
+
+    // AVISO DO DIA (Nutri): janela pontual que sobrepõe o atendimento até `start_hhmm`.
+    // Após esse horário (mesmo dia), volta ao comportamento padrão automaticamente.
+    let todayNoticeActive = false;
+    let todayNoticeMessage = '';
+    if (provider === 'wapi') {
+      try {
+        const { data: noticeCfg } = await admin
+          .from('crm_settings').select('value').eq('key', 'nutri_today_notice').maybeSingle();
+        const v: any = noticeCfg?.value || null;
+        if (v?.enabled !== false && v?.date && v?.start_hhmm && v?.message) {
+          const spDate = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit',
+          }).format(new Date());
+          if (spDate === String(v.date)) {
+            const { minutes } = spNow();
+            if (minutes < hhmmToMin(String(v.start_hhmm))) {
+              todayNoticeActive = true;
+              todayNoticeMessage = String(v.message);
+            }
+          }
+        }
+      } catch (e) {
+        console.error('today_notice check failed', e);
+      }
+    }
     
     // NOVO: Redirecionamento automático para Sucesso do Aluno quando fora do horário comercial
     let forceSucessoQueue = false;
@@ -568,6 +594,22 @@ Deno.serve(async (req) => {
 
     if (!isChannelEnabled) {
       autoReply = { sent: false, reason: 'disabled' };
+    } else if (todayNoticeActive) {
+      // Dedup: 1x por sessão / 4h, como o away.
+      const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+      const { data: lastNotice } = await admin.from('crm_messages')
+        .select('id')
+        .eq('conversation_id', conv.id)
+        .eq('direction', 'out')
+        .gt('created_at', fourHoursAgo)
+        .filter('metadata->>tag', 'eq', 'today_notice')
+        .maybeSingle();
+      if (isNewSession || !lastNotice) {
+        const r = await sendMessage(todayNoticeMessage, 'today_notice');
+        autoReply = { sent: r.sent, engine: 'today_notice' };
+      } else {
+        autoReply = { sent: false, reason: 'today_notice_already_sent' };
+      }
     } else if (!withinHours) {
       // Fora do horário de expediente: enviar mensagem de ausência se for nova sessão 
       // ou se não enviamos uma mensagem de ausência recentemente (últimas 4 horas)
