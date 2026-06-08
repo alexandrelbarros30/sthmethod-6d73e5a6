@@ -790,7 +790,8 @@ Deno.serve(async (req) => {
       }
 
       if (isBack) {
-        await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Menu principal.'), 'sucesso_back_menu');
+        const flowStepBack = getFlowStep('sucesso_main_menu');
+        await sendMessage(String(flowStepBack?.message || 'Menu principal.'), 'sucesso_back_menu', null, undefined, {}, flowStepBack);
       } else if (trimmed === '1') {
         await sendMessage(String(getFlowStep('sucesso_atualizar_peso')?.message || 'Acesse a plataforma para atualizar peso.') + menuHint, 'sucesso_atualizacao');
       } else if (trimmed === '2' || trimmed === '4') {
