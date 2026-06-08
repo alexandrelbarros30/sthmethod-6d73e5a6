@@ -772,9 +772,11 @@ Deno.serve(async (req) => {
     } else if (conv.flow_state === 'nutri_main') {
       const has = (...kw: string[]) => kw.some(k => body.toLowerCase().includes(k));
       if (has('renov', 'pagamento', 'pagar', 'cobran', 'segunda via', 'cadastro', 'senha', 'acesso', 'contrato', 'reativar')) {
-        const r = await sendMessage(String(getFlowStep('nutri_transfer_sucesso')?.message || 'Sua solicitação é administrativa. Redirecionando para Sucesso...'), 'nutri_transfer_sucesso');
+        const flowStepTransfer = getFlowStep('nutri_transfer_sucesso');
+        const r = await sendMessage(String(flowStepTransfer?.message || 'Sua solicitação é administrativa. Redirecionando para Sucesso...'), 'nutri_transfer_sucesso', null, undefined, {}, flowStepTransfer);
         await admin.from('crm_conversations').update({ flow_state: 'sucesso_main_menu', queue_type: 'sucesso' }).eq('id', conv.id);
-        await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu', null, 'wapi_sucesso');
+        const flowStepSucesso = getFlowStep('sucesso_main_menu');
+        await sendMessage(String(flowStepSucesso?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu', null, 'wapi_sucesso', {}, flowStepSucesso);
         autoReply = { sent: r.sent, engine: 'flow' };
       }
     } else if (conv.flow_state === 'sucesso_main_menu') {
