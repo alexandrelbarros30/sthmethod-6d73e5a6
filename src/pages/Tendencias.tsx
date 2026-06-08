@@ -28,6 +28,7 @@ const fadeUp = {
 };
 
 const articles = [
+  { to: "/tendencias/quarteto-magico", kicker: "Conceito STH", title: "🪄 O Quarteto Mágico da Transformação.", desc: "Por que dieta e treino sozinhos não bastam. Entenda a sinergia entre Protocolo, Dieta, Treino e Exames.", img: triadeImg },
   { to: "/tendencias/hipertensao-arterial", kicker: "Cardiovascular", title: "🫀 Hipertensão Arterial: o tratado tático completo.", desc: "Classificação, fisiopatologia, diagnóstico diferencial e conduta medicamentosa, suplementar e comportamental.", img: hipertensaoImg },
   { to: "/tendencias/tirzepatida-colaterais", kicker: "Tirzepatida & manejo", title: "💊 Tirzepatida: mapa tático completo dos colaterais.", desc: "Do arroto sulfúrico à pancreatite — cada sintoma cruzado com solução medicamentosa, suplementar e comportamental.", img: colateraisImg },
   { to: "/tendencias/ghk-cu", kicker: "Peptídeos", title: "🧬 GHK-Cu: o peptídeo-cobre sem perfume de vendedor.", desc: "O que a literatura sustenta sobre o tripeptídeo-cobre — e onde o marketing força a barra.", img: ghkcuImg },
