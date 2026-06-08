@@ -1,9 +1,10 @@
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Home, CheckCircle2, Zap, Target, Activity, ClipboardList, TrendingUp } from "lucide-react";
+import { ArrowLeft, Home, CheckCircle2, Zap, Target, Activity, ClipboardList, TrendingUp, Beaker, ShieldCheck, Microscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
+
 
 // Assets
 import heroImg from "@/assets/sthnews-triade-glass-1.jpg";
@@ -282,6 +283,60 @@ const QuartetoMagico = () => {
             </div>
           </div>
         </section>
+
+        {/* Evidence/Scientific Support Section (Banca) */}
+        <section className="py-24 md:py-40 px-6 bg-[#0a0a0a] border-y border-white/5 relative">
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+          <div className="max-w-6xl mx-auto relative z-10">
+            <motion.div
+              initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}
+              className="text-center mb-20"
+            >
+              <h2 className="text-4xl md:text-7xl font-black tracking-tighter text-white mb-6 uppercase">
+                A BANCA <span className="text-primary italic">CIENTÍFICA.</span>
+              </h2>
+              <p className="max-w-2xl mx-auto text-xl text-zinc-500 font-light">
+                Não trabalhamos com promessas, trabalhamos com literatura e evidência clínica.
+              </p>
+            </motion.div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {[
+                {
+                  icon: Microscope,
+                  title: "Triplo Agonismo",
+                  desc: "A transição para a Retatrutida não é moda, é o aproveitamento do efeito sinérgico nos receptores GLP-1, GIP e Glucagon para termogênese máxima."
+                },
+                {
+                  icon: Beaker,
+                  title: "Farmacocinética",
+                  desc: "Ajustamos a meia-vida dos compostos para garantir estabilidade anabólica, evitando picos que geram colaterais indesejados."
+                },
+                {
+                  icon: ShieldCheck,
+                  title: "Segurança Ativa",
+                  desc: "Protocolos cardioprotetores e hepatoprotetores integrados. O resultado só é sustentável se a máquina estiver preservada."
+                }
+              ].map((item, idx) => (
+                <motion.div
+                  key={item.title}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.2 }}
+                  className="p-10 rounded-3xl bg-white/[0.02] border border-white/10 hover:bg-white/[0.05] transition-colors group"
+                >
+                  <item.icon className="w-12 h-12 text-primary mb-8 group-hover:scale-110 transition-transform duration-500" />
+                  <h3 className="text-2xl font-bold text-white mb-4">{item.title}</h3>
+                  <p className="text-zinc-400 font-light leading-relaxed">
+                    {item.desc}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
 
         {/* Comparison Section: "Apenas Dieta" vs "STH Method" */}
         <section className="py-24 md:py-40 px-6 bg-black">
