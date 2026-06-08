@@ -757,7 +757,16 @@ Deno.serve(async (req) => {
         }).eq('id', conv.id);
         await sendMessage(String(getFlowStep('nutri_reception')?.message || 'Olá! Você está no canal Fale com o Nutri...'), 'nutri_reception', null, 'wapi');
       } else {
-        await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Escolha uma opção válida.') + menuHint, 'sucesso_repeat');
+        // Increment error count to prevent infinite loops
+        const errorCount = ((conv.flow_context as any)?.error_count || 0) + 1;
+        if (errorCount >= 3) {
+          const stopMsg = "Ops, parece que não estou conseguindo te entender. Para não te atrapalhar, vou aguardar você digitar uma opção válida ou aguardar um atendente humano.\n\n_Dica: Digite apenas o número da opção desejada._";
+          await sendMessage(stopMsg, 'sucesso_error_limit');
+          await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
+        } else {
+          await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: errorCount } }).eq('id', conv.id);
+          await sendMessage(String(getFlowStep('sucesso_main_menu')?.message || 'Escolha uma opção válida.') + menuHint, 'sucesso_repeat');
+        }
       }
       autoReply = { sent: true, engine: 'flow' };
     } else if (conv.flow_state === 'lead_main_menu') {
