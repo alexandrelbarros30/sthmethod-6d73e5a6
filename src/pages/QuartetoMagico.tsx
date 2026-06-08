@@ -334,7 +334,7 @@ const QuartetoMagico = () => {
                 </div>
                 <h2 className="text-4xl md:text-7xl font-bold tracking-tight text-white mb-10 leading-[1.05]">
                   De Semaglutida <br />
-                  <span className="text-zinc-500 italic">para a</span> <br />
+                  <span className="text-zinc-400 italic">para a</span> <br />
                   <span className="text-primary">Retatrutida.</span>
                 </h2>
                 <div className="space-y-6 text-lg md:text-xl text-zinc-300 font-light leading-relaxed">
