@@ -314,8 +314,8 @@ const QuartetoMagico = () => {
         >
           <p>O mapa do tesouro. Eles dizem exatamente onde você está e para onde podemos ir com total <span className="text-white font-semibold">segurança e controle</span>.</p>
           <p>Monitoramos marcadores de inflamação, perfil lipídico e saúde hepática em tempo real. A saúde é o que permite a constância do seu projeto.</p>
-          <div className="flex items-center gap-4 text-primary text-sm font-bold uppercase tracking-tighter">
-            <ClipboardList className="w-5 h-5" />
+          <div className="flex items-center gap-4 text-white text-sm font-bold uppercase tracking-tighter">
+            <ClipboardList className="w-5 h-5 text-primary" />
             Monitoramento Clínico Contínuo
           </div>
         </Section>
