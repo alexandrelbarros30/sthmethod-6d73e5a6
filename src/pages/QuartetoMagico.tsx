@@ -526,7 +526,7 @@ const QuartetoMagico = () => {
             </p>
           </div>
           <div className="text-left md:text-right">
-             <p className="text-[10px] text-zinc-700 font-bold uppercase tracking-[0.3em]">
+             <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.3em]">
                © 2026 STH Method. Todos os direitos reservados.
              </p>
           </div>
