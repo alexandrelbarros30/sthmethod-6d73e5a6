@@ -520,7 +520,7 @@ const QuartetoMagico = () => {
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
           <div className="text-left">
             <h4 className="text-xl font-bold tracking-tight text-white mb-4">STH Method</h4>
-            <p className="max-w-md text-sm text-zinc-500 font-light leading-relaxed">
+            <p className="max-w-md text-sm text-zinc-400 font-light leading-relaxed">
               Ciência, estratégia e constância para transformar vidas. <br />
               Onde o impossível encontra o método.
             </p>
