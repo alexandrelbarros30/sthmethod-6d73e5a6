@@ -1,5 +1,5 @@
 import { motion, useScroll, useTransform, useSpring, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { ArrowLeft, Home, CheckCircle2, Zap, Target, Activity, ClipboardList, TrendingUp, Beaker, ShieldCheck, Microscope, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -86,6 +86,26 @@ const QuartetoMagico = () => {
   const { user, role } = useAuth();
   const isStudent = !!user && role === "student";
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [mobileMenuOpen]);
+
+  const navLinks = [
+    { href: "/como-funciona", label: "Como Funciona" },
+    { href: "/tendencias", label: "STH News" },
+    { href: "/questionario", label: "Macros" },
+    { href: "/triagem-marcadores", label: "Triagem" },
+    { href: "/diario-alimentar", label: "Diário" },
+  ];
   
   const targetRef = useRef(null);
   const { scrollYProgress } = useScroll({
@@ -101,27 +121,38 @@ const QuartetoMagico = () => {
     <div className="min-h-screen bg-[#050505] text-foreground antialiased selection:bg-primary selection:text-white">
       <header className="fixed top-0 inset-x-0 z-50 bg-black/40 backdrop-blur-xl border-b border-white/5">
         <div className="max-w-6xl mx-auto px-6 h-12 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 shrink-0">
+          <Link to="/" className="flex items-center gap-2 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md">
             <span className="text-[13px] font-semibold tracking-tight text-white">STH METHOD</span>
           </Link>
 
           {/* Desktop links */}
-          <div className="hidden lg:flex items-center gap-7 text-[11px] text-zinc-500 uppercase tracking-[0.15em] font-semibold">
-            <Link to="/como-funciona" className="hover:text-white transition-colors">Como Funciona</Link>
-            <Link to="/tendencias" className="text-white transition-colors">STH News</Link>
-            <Link to="/questionario" className="hover:text-white transition-colors">Macros</Link>
-            <Link to="/triagem-marcadores" className="hover:text-white transition-colors">Triagem</Link>
-            <Link to="/diario-alimentar" className="hover:text-white transition-colors">Diário</Link>
-          </div>
+          <nav className="hidden lg:flex items-center gap-7 text-[11px] text-zinc-500 uppercase tracking-[0.15em] font-semibold">
+            {navLinks.map((link) => {
+              const isActive = location.pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className={`${
+                    isActive ? "text-white font-bold" : "hover:text-white/80"
+                  } transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-8 rounded-sm`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
 
           <div className="flex items-center gap-2">
-            <Link to="/login" className="hidden sm:block">
+            <Link to="/login" className="hidden sm:block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-full">
               <Button size="sm" className="text-[11px] h-7 rounded-full bg-white text-black hover:bg-white/90">Acessar</Button>
             </Link>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-1.5 rounded-full hover:bg-white/5 transition-colors text-white"
-              aria-label="Menu"
+              className="lg:hidden p-1.5 rounded-full hover:bg-white/5 transition-colors text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-menu-dark"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -132,31 +163,39 @@ const QuartetoMagico = () => {
         <AnimatePresence>
           {mobileMenuOpen && (
             <motion.div
+              id="mobile-menu-dark"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Menu de navegação mobile"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.25, ease: "easeInOut" }}
               className="lg:hidden border-t border-white/5 overflow-hidden bg-black/95 backdrop-blur-xl"
             >
-              <div className="px-5 py-4 flex flex-col gap-1 text-sm">
+              <nav className="px-5 py-6 flex flex-col gap-2">
                 {[
-                  { href: "/como-funciona", label: "Como Funciona" },
-                  { href: "/tendencias", label: "STH News" },
-                  { href: "/questionario", label: "Macros" },
-                  { href: "/triagem-marcadores", label: "Triagem" },
-                  { href: "/diario-alimentar", label: "Diário" },
+                  ...navLinks,
                   { href: "/login", label: "Acessar Conta" },
-                ].map((item) => (
-                  <Link
-                    key={item.href}
-                    to={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="py-3 px-3 rounded-lg text-zinc-500 hover:text-white hover:bg-white/5 transition-colors uppercase tracking-widest text-[11px] font-semibold"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
+                ].map((item) => {
+                  const isActive = location.pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      to={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`py-4 px-4 rounded-xl transition-all duration-200 uppercase tracking-widest text-[11px] font-bold flex items-center justify-between group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                        isActive 
+                          ? "bg-white/10 text-white" 
+                          : "text-zinc-500 hover:text-white hover:bg-white/5"
+                      }`}
+                    >
+                      {item.label}
+                      {isActive && <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.6)]" />}
+                    </Link>
+                  );
+                })}
+              </nav>
             </motion.div>
           )}
         </AnimatePresence>
