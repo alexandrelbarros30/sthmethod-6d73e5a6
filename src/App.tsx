@@ -165,6 +165,7 @@ const App = () => (
             <Route path="/free" element={<Free />} />
             <Route path="/tendencias" element={<Tendencias />} />
             <Route path="/tendencias/cenario-fitness-2026" element={<FitnessCenario2026 />} />
+            <Route path="/tendencias/quarteto-magico" element={<QuartetoMagico />} />
             <Route path="/tendencias/recomposicao-avancada" element={<RecomposicaoAvancada />} />
             <Route path="/tendencias/subcutanea-estrategia" element={<SubcutaneaEstrategia />} />
             <Route path="/tendencias/cintura-estetica" element={<CinturaEstetica />} />
