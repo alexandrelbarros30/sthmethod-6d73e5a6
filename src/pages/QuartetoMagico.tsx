@@ -1,6 +1,6 @@
-import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { motion, useScroll, useTransform, useSpring, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Home, CheckCircle2, Zap, Target, Activity, ClipboardList, TrendingUp, Beaker, ShieldCheck, Microscope } from "lucide-react";
+import { ArrowLeft, Home, CheckCircle2, Zap, Target, Activity, ClipboardList, TrendingUp, Beaker, ShieldCheck, Microscope, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRef, useEffect, useState } from "react";
@@ -85,8 +85,7 @@ const Section = ({
 const QuartetoMagico = () => {
   const { user, role } = useAuth();
   const isStudent = !!user && role === "student";
-  const backTo = isStudent ? "/dashboard" : "/tendencias";
-  const BackIcon = isStudent ? Home : ArrowLeft;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const targetRef = useRef(null);
   const { scrollYProgress } = useScroll({
@@ -116,11 +115,51 @@ const QuartetoMagico = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <Link to="/login">
+            <Link to="/login" className="hidden sm:block">
               <Button size="sm" className="text-[11px] h-7 rounded-full bg-white text-black hover:bg-white/90">Acessar</Button>
             </Link>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-1.5 rounded-full hover:bg-white/5 transition-colors text-white"
+              aria-label="Menu"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="lg:hidden border-t border-white/5 overflow-hidden bg-black/95 backdrop-blur-xl"
+            >
+              <div className="px-5 py-4 flex flex-col gap-1 text-sm">
+                {[
+                  { href: "/como-funciona", label: "Como Funciona" },
+                  { href: "/tendencias", label: "STH News" },
+                  { href: "/questionario", label: "Macros" },
+                  { href: "/triagem-marcadores", label: "Triagem" },
+                  { href: "/diario-alimentar", label: "Diário" },
+                  { href: "/login", label: "Acessar Conta" },
+                ].map((item) => (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="py-3 px-3 rounded-lg text-zinc-500 hover:text-white hover:bg-white/5 transition-colors uppercase tracking-widest text-[11px] font-semibold"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       <main ref={targetRef}>
