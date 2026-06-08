@@ -187,7 +187,7 @@ const QuartetoMagico = () => {
                       className={`py-4 px-4 rounded-xl transition-all duration-200 uppercase tracking-widest text-[11px] font-bold flex items-center justify-between group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                         isActive 
                           ? "bg-white/10 text-white" 
-                          : "text-zinc-500 hover:text-white hover:bg-white/5"
+                          : "text-zinc-400 hover:text-white hover:bg-white/5"
                       }`}
                     >
                       {item.label}
