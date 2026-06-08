@@ -275,8 +275,8 @@ const QuartetoMagico = () => {
         >
           <p>Não é sobre "tomar algo", é sobre <span className="text-white font-semibold">otimização de receptores</span> e construção de um ambiente anabólico favorável.</p>
           <p>O protocolo STH é desenhado para potencializar cada grama de músculo e acelerar o metabolismo lipídico, garantindo que o seu esforço seja multiplicado pela química da eficiência.</p>
-          <div className="flex items-center gap-4 text-primary text-sm font-bold uppercase tracking-tighter">
-            <Zap className="w-5 h-5" />
+          <div className="flex items-center gap-4 text-white text-sm font-bold uppercase tracking-tighter">
+            <Zap className="w-5 h-5 text-primary" />
             Sinergia de Compostos de Alta Performance
           </div>
         </Section>
@@ -288,8 +288,8 @@ const QuartetoMagico = () => {
         >
           <p>O combustível e o material de construção. Na STH, a dieta é ajustada para a sua <span className="text-white font-semibold">taxa metabólica real</span>, não baseada em fórmulas genéricas de internet.</p>
           <p>Entregamos estratégias de ciclagem de carboidratos e manipulação de insulina que permitem comer com prazer enquanto o corpo derrete gordura.</p>
-          <div className="flex items-center gap-4 text-primary text-sm font-bold uppercase tracking-tighter">
-            <Target className="w-5 h-5" />
+          <div className="flex items-center gap-4 text-white text-sm font-bold uppercase tracking-tighter">
+            <Target className="w-5 h-5 text-primary" />
             Ajuste Metabólico Individualizado
           </div>
         </Section>
@@ -301,8 +301,8 @@ const QuartetoMagico = () => {
         >
           <p>Sem o estímulo mecânico correto, a sinalização para hipertrofia não acontece. O treino é o que diz ao corpo <span className="text-white font-semibold">onde construir</span>.</p>
           <p>Com nosso aplicativo exclusivo e vídeos guiados, garantimos que cada série tenha a intensidade e a técnica necessárias para esculpir o físico dos sonhos.</p>
-          <div className="flex items-center gap-4 text-primary text-sm font-bold uppercase tracking-tighter">
-            <Activity className="w-5 h-5" />
+          <div className="flex items-center gap-4 text-white text-sm font-bold uppercase tracking-tighter">
+            <Activity className="w-5 h-5 text-primary" />
             Sinalização Mecânica de Precisão
           </div>
         </Section>
@@ -314,8 +314,8 @@ const QuartetoMagico = () => {
         >
           <p>O mapa do tesouro. Eles dizem exatamente onde você está e para onde podemos ir com total <span className="text-white font-semibold">segurança e controle</span>.</p>
           <p>Monitoramos marcadores de inflamação, perfil lipídico e saúde hepática em tempo real. A saúde é o que permite a constância do seu projeto.</p>
-          <div className="flex items-center gap-4 text-primary text-sm font-bold uppercase tracking-tighter">
-            <ClipboardList className="w-5 h-5" />
+          <div className="flex items-center gap-4 text-white text-sm font-bold uppercase tracking-tighter">
+            <ClipboardList className="w-5 h-5 text-primary" />
             Monitoramento Clínico Contínuo
           </div>
         </Section>
