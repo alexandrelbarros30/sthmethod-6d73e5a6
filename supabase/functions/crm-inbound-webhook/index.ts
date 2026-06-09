@@ -192,9 +192,11 @@ function phoneCandidates(d: string): string[] {
     const ddd = sans55.slice(0, 2);
     const rest = sans55.slice(2);
     
+    // Se tem 9 dígitos começando com 9, gera a versão com 8
     if (rest.length === 9 && rest[0] === '9') set.add(ddd + rest.slice(1));
+    // Se tem 8 dígitos, gera a versão com 9 extra
     if (rest.length === 8) set.add(ddd + '9' + rest);
-  } else {
+  } else if (digits.length >= 8) {
     // Se não tem 55, adiciona versão com 55
     set.add('55' + digits);
     const ddd = digits.slice(0, 2);
@@ -208,7 +210,10 @@ function phoneCandidates(d: string): string[] {
 }
 
 function digitsOnly(raw: string | null | undefined): string {
-  return String(raw || '').replace(/\D+/g, '').replace(/^0+/, '');
+  if (!raw) return '';
+  // Remove tudo que não é dígito, mas se for wa_id completo, pega só a parte numérica antes do @
+  const clean = String(raw).split('@')[0];
+  return clean.replace(/\D+/g, '').replace(/^0+/, '');
 }
 
 function phoneMatchScore(candidatePhone: string | null | undefined, targetPhone: string): number {
