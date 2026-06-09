@@ -892,11 +892,40 @@ Deno.serve(async (req) => {
           const r = await sendMessage(String(flowStep?.message || 'Localizamos seu cadastro, porém sua consultoria encontra-se inativa...'), stepKey, null, undefined, {}, flowStep);
           autoReply = { sent: r.sent, engine: 'flow' };
         } else {
+          // ALUNO ATIVO - Menu de Recepção do Nutri
           const flowStep = getFlowStep('nutri_reception');
-          const r = await sendMessage(String(flowStep?.message || 'Olá! Você está no canal Fale com o Nutri...'), 'nutri_reception', null, undefined, {}, flowStep);
-          await admin.from('crm_conversations').update({ flow_state: 'nutri_main' }).eq('id', conv.id);
-          autoReply = { sent: r.sent, engine: 'flow' };
+          
+          // Idempotência por contato e ciclo de conversa (sessão)
+          const idempotencyKey = `nutri_reception_${conv.session_count || 1}`;
+          const { data: existingLog } = await admin
+            .from('automation_logs')
+            .select('id')
+            .eq('contact_phone', phone)
+            .eq('idempotency_key', idempotencyKey)
+            .eq('event_type', 'menu_sent')
+            .maybeSingle();
+
+          if (!existingLog) {
+            const r = await sendMessage(String(flowStep?.message || 'Olá! Você está no canal Fale com o Nutri...'), 'nutri_reception', null, undefined, {}, flowStep);
+            
+            await admin.from('automation_logs').insert({
+              contact_phone: phone,
+              event_type: 'menu_sent',
+              queue_type: 'nutri',
+              flow_state: 'nutri_main',
+              action_taken: 'sent',
+              idempotency_key: idempotencyKey,
+              severity: 'info',
+              metadata: { message: r.sent ? 'Success' : 'Failed', session_count: conv.session_count }
+            });
+
+            await admin.from('crm_conversations').update({ flow_state: 'nutri_main' }).eq('id', conv.id);
+            autoReply = { sent: r.sent, engine: 'flow' };
+          } else {
+            autoReply = { sent: false, reason: 'idempotency_blocked' };
+          }
         }
+
       } else if (provider === 'wapi_sucesso') {
         const flowStep = getFlowStep('sucesso_main_menu');
         // Prevenir duplicação no início da sessão (dedup 30s)
