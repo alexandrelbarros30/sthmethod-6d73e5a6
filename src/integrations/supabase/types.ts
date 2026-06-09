@@ -859,6 +859,21 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_message_locks: {
+        Row: {
+          locked_at: string | null
+          phone: string
+        }
+        Insert: {
+          locked_at?: string | null
+          phone: string
+        }
+        Update: {
+          locked_at?: string | null
+          phone?: string
+        }
+        Relationships: []
+      }
       crm_message_templates: {
         Row: {
           active: boolean

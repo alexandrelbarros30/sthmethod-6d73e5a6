@@ -283,10 +283,12 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
+    const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const url = new URL(req.url);
     const requestedProvider = (url.searchParams.get('provider') || '').toLowerCase();
     const expectedSecret = Deno.env.get('MP_WEBHOOK_SECRET') || '';
     const provided = req.headers.get('x-webhook-secret') || url.searchParams.get('secret') || '';
+
     
     let payload: any;
     try {
@@ -297,7 +299,6 @@ Deno.serve(async (req) => {
     }
     
     const payloadInstance = String(payload?.instanceId || payload?.instance_id || payload?.instance || payload?.data?.instanceId || '').trim();
-    const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const [{ data: wapiCfgRow }, { data: wapiSucessoCfgRow }, { data: zapiCfgRow }] = await Promise.all([
       admin.from('crm_settings').select('value').eq('key', 'wapi').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'wapi_sucesso').maybeSingle(),
@@ -357,6 +358,30 @@ Deno.serve(async (req) => {
 
     const phone = normalizePhone(phoneRaw);
     if (!phone || !body) return new Response(JSON.stringify({ ok: true, skipped: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
+    // CRITICAL LOCK: Evitar processamento paralelo para o mesmo telefone
+    // Remove locks expirados (mais de 10 segundos)
+    await admin.from('crm_message_locks').delete().lt('locked_at', new Date(Date.now() - 10000).toISOString());
+    
+    // Tenta obter o lock
+    const { error: lockError } = await admin.from('crm_message_locks').insert({ phone });
+    if (lockError) {
+      console.log(`Lock ativo para ${phone}. Ignorando processamento paralelo.`);
+      return new Response(JSON.stringify({ ok: true, skipped: true, reason: 'concurrency_lock' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Função para liberar o lock sempre ao final
+    const releaseLock = async () => {
+      await admin.from('crm_message_locks').delete().eq('phone', phone);
+    };
+
+    // LOG DE INÍCIO
+    await admin.from('automation_logs').insert({
+      contact_phone: phone,
+      event_type: 'automation_triggered',
+      metadata: { body: body.substring(0, 50), provider }
+    });
+
 
     // OPT-OUT and MANUAL CLOSE
     const normalizedBody = String(body).trim().toUpperCase();
@@ -685,17 +710,22 @@ Deno.serve(async (req) => {
     if (!isChannelEnabled) {
       autoReply = { sent: false, reason: 'disabled' };
     } else if (conv.human_handoff === true || !!conv.assigned_to) {
-      console.log(`Atendimento humano ativo na conversa ${conv.id} (atendente: ${conv.assigned_to}, handoff: ${conv.human_handoff}). Interrompendo disparos automáticos.`);
-      // Adicional: Garantir que o human_handoff permaneça true na base caso houver nova mensagem
-      await admin.from('crm_conversations').update({ human_handoff: true }).eq('id', conv.id);
+      console.log(`Atendimento humano ativo na conversa ${conv.id}. Bloqueando automação.`);
       
-      // Marcar lock de ausência para não disparar away message se o atendente responder fora de hora ou se houver delay
+      await admin.from('automation_logs').insert({
+        contact_phone: phone,
+        event_type: 'blocked_human_active',
+        reason: 'Conversation assigned to agent or handoff active',
+        metadata: { conversation_id: conv.id, assigned_to: conv.assigned_to }
+      });
+
+      await admin.from('crm_conversations').update({ human_handoff: true }).eq('id', conv.id);
       await admin.from('crm_away_locks').upsert({ 
         conversation_id: conv.id, 
         last_sent_at: new Date().toISOString() 
       });
-
       autoReply = { sent: false, reason: 'human_active' };
+
     } else if (todayNoticeActive) {
       // Dedup: 1x por sessão / 4h, como o away.
       const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
