@@ -766,6 +766,7 @@ export type Database = {
           unread_count: number
           updated_at: string
           user_id: string | null
+          wa_id: string | null
         }
         Insert: {
           assigned_to?: string | null
@@ -796,6 +797,7 @@ export type Database = {
           unread_count?: number
           updated_at?: string
           user_id?: string | null
+          wa_id?: string | null
         }
         Update: {
           assigned_to?: string | null
@@ -826,6 +828,7 @@ export type Database = {
           unread_count?: number
           updated_at?: string
           user_id?: string | null
+          wa_id?: string | null
         }
         Relationships: []
       }
