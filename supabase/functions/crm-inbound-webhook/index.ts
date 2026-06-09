@@ -697,27 +697,24 @@ Deno.serve(async (req) => {
         autoReply = { sent: false, reason: 'today_notice_already_sent' };
       }
     } else if (!withinHours) {
-      // Fora do horário de expediente: enviar mensagem de ausência se for nova sessão 
-      // ou se não enviamos uma mensagem de ausência recentemente (últimas 4 horas)
+      // Fora do horário de expediente: enviar mensagem de ausência se não enviamos uma recentemente (últimas 4 horas)
       const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
-      const { data: lastAwayMsg } = await admin.functions.invoke('check-last-away', { 
-        body: { conversation_id: conv.id, fourHoursAgo } 
-      }).then(r => r.data || { lastAwayMsg: null }).catch(() => ({ lastAwayMsg: null }));
+      
+      // Tentamos buscar um "lock" ativo para esta conversa
+      const { data: awayLock } = await admin.from('crm_away_locks')
+        .select('last_sent_at')
+        .eq('conversation_id', conv.id)
+        .gt('last_sent_at', fourHoursAgo)
+        .maybeSingle();
 
-      // Fallback manual se a edge function falhar (para segurança)
-      let hasLastAway = !!lastAwayMsg;
-      if (!hasLastAway) {
-        const { data } = await admin.from('crm_messages')
-          .select('id')
-          .eq('conversation_id', conv.id)
-          .eq('direction', 'out')
-          .gt('created_at', fourHoursAgo)
-          .or('metadata->>tag.eq.away,metadata->>tag.eq.away_redirect,body.ilike.%fora do horário%,body.ilike.%expediente%')
-          .maybeSingle();
-        hasLastAway = !!data;
-      }
-
-      if (isNewSession || !hasLastAway) {
+      if (!awayLock) {
+        // Se não houver lock ativo, marcamos ou atualizamos o lock ANTES de enviar para evitar race conditions
+        const { error: lockErr } = await admin.from('crm_away_locks').upsert({ 
+          conversation_id: conv.id, 
+          last_sent_at: new Date().toISOString() 
+        });
+        
+        if (lockErr) console.error('Error setting away lock:', lockErr);
         let msg = '';
         if (provider === 'zapi') {
           // Comercial (Z-API)
