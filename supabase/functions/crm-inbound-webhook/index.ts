@@ -1254,7 +1254,7 @@ Deno.serve(async (req) => {
     }
 
     if (!autoReply && (aiModeCfg?.value as any)?.mode === 'auto') {
-      const ai = await generateAiReply({ admin, conversationId: conv.id, phone, queue: conv.queue_type });
+      const ai = await generateAiReply({ admin, conversationId: conv.id, phone, waId: conv.wa_id, queue: conv.queue_type });
       if (ai.response) { const r = await sendMessage(ai.response, 'ai'); autoReply = { sent: r.sent, engine: ai.engine }; }
     }
 
