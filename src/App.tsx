@@ -62,8 +62,10 @@ import StudentMetabolic from "./pages/student/StudentMetabolic";
 import StudentAds from "./pages/student/StudentAds";
 import DiarioAlimentar from "./pages/DiarioAlimentar";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminNutriMetrics from "./pages/admin/AdminNutriMetrics";
 import AdminFixCurty from "./pages/admin/AdminFixCurty";
 import AdminStudents from "./pages/admin/AdminStudents";
+
 import AdminPlans from "./pages/admin/AdminPlans";
 import AdminPayments from "./pages/admin/AdminPayments";
 import AdminRevenue from "./pages/admin/AdminRevenue";
@@ -215,6 +217,8 @@ const App = () => (
             <Route path="/dashboard/consultas" element={<ProtectedRoute allowedRoles={["student"]}><StudentConsultas /></ProtectedRoute>} />
             {/* Admin routes */}
             <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/metrics" element={<ProtectedRoute allowedRoles={["admin"]}><AdminNutriMetrics /></ProtectedRoute>} />
+
             <Route path="/admin/fix-curty" element={<ProtectedRoute allowedRoles={["admin"]}><AdminFixCurty /></ProtectedRoute>} />
             <Route path="/admin/students" element={<ProtectedRoute allowedRoles={["admin"]}><AdminStudents /></ProtectedRoute>} />
             <Route path="/admin/plans" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPlans /></ProtectedRoute>} />
