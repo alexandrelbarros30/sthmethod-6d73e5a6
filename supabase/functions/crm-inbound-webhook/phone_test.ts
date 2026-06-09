@@ -39,24 +39,30 @@ function phoneCandidates(d: string): string[] {
 }
 
 function phoneMatchScore(row: any, targetPhone: string, targetWaId: string | null): number {
-  const candidatePhone = digitsOnly(row.phone);
+  const candidate = digitsOnly(row.phone);
   const candidateWaId = row.whatsapp_id;
   const target = digitsOnly(targetPhone);
   
   if (targetWaId && candidateWaId === targetWaId) return 1000;
-  if (!candidatePhone || !target) return 0;
-  if (candidatePhone === target) return 100;
+  if (!candidate || !target) return 0;
+  if (candidate === target) return 100;
   
-  const c8 = candidatePhone.slice(-8);
+  const c8 = candidate.slice(-8);
   const t8 = target.slice(-8);
+  
   if (c8 === t8) {
-    if (candidatePhone.slice(-11) === target.slice(-11)) return 95;
-    if (candidatePhone.slice(-10) === target.slice(-10)) return 90;
+    const getDDD = (s: string) => {
+      const sansDDI = s.startsWith('55') ? s.slice(2) : s;
+      return sansDDI.slice(0, 2);
+    };
     
-    if (candidatePhone.length >= 10 && target.length >= 10) {
-      const cDDD = candidatePhone.slice(-11, -9) || candidatePhone.slice(-10, -8);
-      const tDDD = target.slice(-11, -9) || target.slice(-10, -8);
-      if (cDDD === tDDD) return 85;
+    const cDDD = getDDD(candidate);
+    const tDDD = getDDD(target);
+    
+    if (cDDD === tDDD) {
+       if (candidate.slice(-11) === target.slice(-11)) return 95;
+       if (candidate.slice(-10) === target.slice(-10)) return 90;
+       return 85;
     }
     return 60;
   }
