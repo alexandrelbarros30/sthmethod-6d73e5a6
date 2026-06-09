@@ -882,12 +882,13 @@ Deno.serve(async (req) => {
             .maybeSingle();
 
           if (!recentMsg) {
-            const r = await sendMessage(String(flowStep?.message || 'Seja bem-vindo à STH Method...'), 'comercial_saudacao_lead', null, undefined, {}, flowStep);
+            const r = await sendMessage(String(flowStep?.message || 'Olá! Seja bem-vindo(a) à STH METHOD. 👋\n\nComo posso ajudar?\n\n1️⃣ Conhecer planos e valores\n2️⃣ Como funciona a metodologia\n3️⃣ Falar com um consultor\n4️⃣ Já sou aluno'), 'comercial_saudacao_lead', null, undefined, {}, flowStep);
             await admin.from('crm_conversations').update({ flow_state: 'lead_main_menu' }).eq('id', conv.id);
             autoReply = { sent: r.sent, engine: 'flow' };
           } else {
             autoReply = { sent: false, reason: 'duplicate_prevented' };
           }
+
         }
       }
     } else if (conv.flow_state === 'nutri_main') {
