@@ -928,8 +928,6 @@ Deno.serve(async (req) => {
             autoReply = { sent: false, reason: 'idempotency_blocked' };
           }
         }
-
-        }
       }
     } else if (conv.flow_state === 'nutri_main') {
       const has = (...kw: string[]) => kw.some(k => body.toLowerCase().includes(k));
