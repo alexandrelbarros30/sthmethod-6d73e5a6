@@ -882,19 +882,23 @@ Deno.serve(async (req) => {
           }
         } else {
           const flowStep = getFlowStep('comercial_saudacao_lead');
-          // Prevenir duplicação no início da sessão (dedup 30s)
-          const thirtySecsAgo = new Date(Date.now() - 30 * 1000).toISOString();
-          const { data: recentMsg } = await admin.from('crm_messages')
+          const menuTemplate = 'Olá! Seja bem-vindo(a) à STH METHOD. 👋\n\nComo posso ajudar?\n\n1️⃣ Conhecer planos e valores\n2️⃣ Como funciona a metodologia\n3️⃣ Falar com um consultor\n4️⃣ Já sou aluno';
+          const finalMenu = String(flowStep?.message || menuTemplate);
+          const currentHash = await hashTemplate(finalMenu);
+
+          // Idempotência por contato e ciclo de conversa (sessão)
+          const idempotencyKey = `menu_lead_${conv.session_count || 1}`;
+          
+          const { data: existingLog } = await admin
+            .from('automation_logs')
             .select('id')
-            .eq('conversation_id', conv.id)
-            .eq('direction', 'out')
-            .gt('created_at', thirtySecsAgo)
-            .eq('metadata->>tag', 'comercial_saudacao_lead')
+            .eq('contact_phone', phone)
+            .eq('idempotency_key', idempotencyKey)
+            .eq('event_type', 'menu_sent')
             .maybeSingle();
 
-          if (!recentMsg) {
-            const menuTemplate = 'Olá! Seja bem-vindo(a) à STH METHOD. 👋\n\nComo posso ajudar?\n\n1️⃣ Conhecer planos e valores\n2️⃣ Como funciona a metodologia\n3️⃣ Falar com um consultor\n4️⃣ Já sou aluno';
-            const r = await sendMessage(String(flowStep?.message || menuTemplate), 'comercial_saudacao_lead', null, undefined, {}, flowStep);
+          if (!existingLog) {
+            const r = await sendMessage(finalMenu, 'comercial_saudacao_lead', null, undefined, {}, flowStep);
             
             await admin.from('automation_logs').insert({
               contact_phone: phone,
@@ -902,7 +906,10 @@ Deno.serve(async (req) => {
               queue_type: 'comercial',
               flow_state: 'lead_main_menu',
               action_taken: 'sent',
-              metadata: { message: r.sent ? 'Success' : 'Failed' }
+              idempotency_key: idempotencyKey,
+              template_hash: currentHash,
+              severity: 'info',
+              metadata: { message: r.sent ? 'Success' : 'Failed', session_count: conv.session_count }
             });
 
             await admin.from('crm_conversations').update({ flow_state: 'lead_main_menu' }).eq('id', conv.id);
@@ -914,10 +921,13 @@ Deno.serve(async (req) => {
               queue_type: 'comercial',
               flow_state: 'lead_main_menu',
               action_taken: 'blocked',
-              reason: 'Duplicate prevented (recent message sent)'
+              idempotency_key: idempotencyKey,
+              severity: 'warning',
+              reason: 'Idempotency blocked (menu already sent in this session)'
             });
-            autoReply = { sent: false, reason: 'duplicate_prevented' };
+            autoReply = { sent: false, reason: 'idempotency_blocked' };
           }
+        }
 
         }
       }
