@@ -679,6 +679,13 @@ Deno.serve(async (req) => {
       console.log(`Atendimento humano ativo na conversa ${conv.id} (atendente: ${conv.assigned_to}, handoff: ${conv.human_handoff}). Interrompendo disparos automáticos.`);
       // Adicional: Garantir que o human_handoff permaneça true na base caso houver nova mensagem
       await admin.from('crm_conversations').update({ human_handoff: true }).eq('id', conv.id);
+      
+      // Marcar lock de ausência para não disparar away message se o atendente responder fora de hora ou se houver delay
+      await admin.from('crm_away_locks').upsert({ 
+        conversation_id: conv.id, 
+        last_sent_at: new Date().toISOString() 
+      });
+
       autoReply = { sent: false, reason: 'human_active' };
     } else if (todayNoticeActive) {
       // Dedup: 1x por sessão / 4h, como o away.
