@@ -179,14 +179,20 @@ function phoneCandidates(d: string): string[] {
   if (digits.startsWith('55') && digits.length > 10) {
     const sans55 = digits.slice(2);
     set.add(sans55);
-    // Variações com e sem o 9 extra (Brasil)
-    if (sans55.length === 11 && sans55[2] === '9') set.add(sans55.slice(0, 2) + sans55.slice(3));
-    if (sans55.length === 10) set.add(sans55.slice(0, 2) + '9' + sans55.slice(2));
+    // Brasil: DDD + 9 ou 8 dígitos
+    const ddd = sans55.slice(0, 2);
+    const rest = sans55.slice(2);
+    
+    if (rest.length === 9 && rest[0] === '9') set.add(ddd + rest.slice(1));
+    if (rest.length === 8) set.add(ddd + '9' + rest);
   } else {
     // Se não tem 55, adiciona versão com 55
     set.add('55' + digits);
-    if (digits.length === 11 && digits[2] === '9') set.add(digits.slice(0, 2) + digits.slice(3));
-    if (digits.length === 10) set.add(digits.slice(0, 2) + '9' + digits.slice(2));
+    const ddd = digits.slice(0, 2);
+    const rest = digits.slice(2);
+    
+    if (rest.length === 9 && rest[0] === '9') set.add(ddd + rest.slice(1));
+    if (rest.length === 8) set.add(ddd + '9' + rest);
   }
   
   return Array.from(set);
@@ -200,26 +206,57 @@ function phoneMatchScore(candidatePhone: string | null | undefined, targetPhone:
   const candidate = digitsOnly(candidatePhone);
   const target = digitsOnly(targetPhone);
   if (!candidate || !target) return 0;
+  
+  // Match exato (normalizado)
   if (candidate === target) return 100;
-  if (candidate.length >= 11 && target.length >= 11 && candidate.slice(-11) === target.slice(-11)) return 80;
-  if (candidate.length >= 10 && target.length >= 10 && candidate.slice(-10) === target.slice(-10)) return 60;
+  
+  // Match dos últimos 8 dígitos (corpo do número sem 9 extra e sem DDD)
+  const c8 = candidate.slice(-8);
+  const t8 = target.slice(-8);
+  if (c8 === t8) {
+    // Se os últimos 8 batem, verificamos o DDD (últimos 10 ou 11)
+    const cLast10 = candidate.slice(-10);
+    const tLast10 = target.slice(-10).replace(/^9/, ''); // Remove 9 extra se houver
+    const tLast11 = target.slice(-11);
+    
+    if (candidate.slice(-11) === target.slice(-11)) return 95;
+    if (candidate.slice(-10) === target.slice(-10)) return 90;
+    
+    // Fallback para variação de 9º dígito
+    if (candidate.length >= 10 && target.length >= 10) {
+      const cDDD = candidate.slice(-11, -9) || candidate.slice(-10, -8);
+      const tDDD = target.slice(-11, -9) || target.slice(-10, -8);
+      if (cDDD === tDDD) return 85;
+    }
+    
+    return 60;
+  }
+  
   return 0;
 }
 
 function buildPhoneSearchPatterns(phone: string): string[] {
   const patterns = new Set<string>();
+  const digits = digitsOnly(phone);
+  
+  // SEMPRE incluir o padrão dos últimos 8 dígitos como fallback global
+  if (digits.length >= 8) {
+    patterns.add(`%${digits.slice(-8)}%`);
+  }
 
   for (const variant of phoneCandidates(phone)) {
-    const digits = digitsOnly(variant);
-    const local = digits.startsWith('55') ? digits.slice(2) : digits;
-    if (local.length < 10) continue;
+    const local = digitsOnly(variant).startsWith('55') ? digitsOnly(variant).slice(2) : digitsOnly(variant);
+    if (local.length < 8) continue;
 
-    const ddd = local.slice(0, 2);
-    const middle = local.slice(2, -4);
     const last4 = local.slice(-4);
-
-    patterns.add(`%${ddd}%${middle}%${last4}%`);
+    const middle = local.slice(-8, -4);
+    
     patterns.add(`%${middle}%${last4}%`);
+    
+    if (local.length >= 10) {
+      const ddd = local.slice(0, 2);
+      patterns.add(`%${ddd}%${middle}%${last4}%`);
+    }
   }
 
   return Array.from(patterns);
@@ -229,19 +266,42 @@ async function findProfileByPhone(admin: ReturnType<typeof createClient>, phone:
   const patterns = buildPhoneSearchPatterns(phone);
   if (!patterns.length) return null;
 
-  let query = admin.from('profiles').select(selectFields).not('phone', 'is', null);
-  query = query.or(patterns.map((pattern) => `phone.ilike.${pattern}`).join(','));
+  // Busca inicial ampla para capturar variações
+  const { data, error } = await admin
+    .from('profiles')
+    .select(selectFields + ', phone')
+    .not('phone', 'is', null)
+    .or(patterns.map((p) => `phone.ilike.${p}`).join(','))
+    .limit(50);
 
-  const { data, error } = await query.limit(20);
-  if (error) throw error;
+  if (error) {
+    console.error('findProfileByPhone error:', error);
+    return null;
+  }
 
-  const ranked = (data || [])
-    .map((row: any) => ({ ...row, _score: phoneMatchScore(row.phone, phone), _digits: digitsOnly(row.phone) }))
-    .filter((row: any) => row._score > 0)
+  if (!data || data.length === 0) {
+    console.log(`Nenhum perfil encontrado para padrões: ${patterns.join(', ')}`);
+    return null;
+  }
+
+  // Ranking refinado em memória
+  const ranked = data
+    .map((row: any) => ({ 
+      ...row, 
+      _score: phoneMatchScore(row.phone, phone), 
+      _digits: digitsOnly(row.phone) 
+    }))
+    .filter((row: any) => row._score > 40) // Aumentamos o threshold para evitar falsos positivos
     .sort((a: any, b: any) => b._score - a._score || b._digits.length - a._digits.length);
 
-  return ranked[0] ?? null;
+  if (ranked.length > 0) {
+    console.log(`Perfil encontrado: ${ranked[0].full_name} (Score: ${ranked[0]._score}) para o telefone ${phone}`);
+    return ranked[0];
+  }
+
+  return null;
 }
+
 
 async function getPlansFormatted(admin: ReturnType<typeof createClient>): Promise<string> {
   const { data: plans } = await admin.from('plans').select('*').eq('active', true).order('order_index', { ascending: true });
