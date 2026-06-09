@@ -708,20 +708,27 @@ Deno.serve(async (req) => {
         .or('metadata->>tag.eq.away,metadata->>tag.eq.away_redirect,body.ilike.%fora do horário%,body.ilike.%expediente%')
         .maybeSingle();
 
-      if (isNewSession || forceSucessoQueue || !lastAwayMsg) {
+      // IMPORTANTE: NÃO bypassar dedup por forceSucessoQueue — caso contrário, o redirect
+      // para o Sucesso do Aluno é enviado a cada mensagem recebida do mesmo contato
+      // dentro da mesma janela de 4h (loop visível no WhatsApp do cliente).
+      if (isNewSession || !lastAwayMsg) {
         let msg = '';
         if (provider === 'zapi') {
           // Comercial (Z-API)
           if (forceSucessoQueue) {
             msg = "No momento estamos fora do horário de expediente no canal Comercial.\n\nPara um atendimento automatizado agora, por favor acesse nosso canal de Sucesso do Aluno: https://wa.me/5521972486650\n\nEstamos encerrando este atendimento aqui para você seguir por lá! 👋";
             const r = await sendMessage(msg, 'away_redirect');
+            // Mantemos a sessão "aberta" por uma janela de silêncio (4h) para evitar
+            // que cada nova mensagem do contato seja tratada como nova sessão e
+            // dispare novamente a mesma mensagem de redirecionamento.
+            const silenceUntil = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
             await admin.from('crm_conversations').update({ 
-              status: 'closed', 
+              status: 'open', 
               human_handoff: false, 
               assigned_to: null,
               flow_state: null,
               flow_context: {},
-              session_expires_at: new Date().toISOString() 
+              session_expires_at: silenceUntil
             }).eq('id', conv.id);
             autoReply = { sent: r.sent, engine: 'away_redirect' };
             msg = ''; 
