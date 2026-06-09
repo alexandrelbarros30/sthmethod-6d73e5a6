@@ -1019,8 +1019,30 @@ Deno.serve(async (req) => {
         }
       }
     } else if (conv.flow_state === 'nutri_main') {
+      const trimmed = body.trim();
       const has = (...kw: string[]) => kw.some(k => body.toLowerCase().includes(k));
-      if (has('renov', 'pagamento', 'pagar', 'cobran', 'segunda via', 'cadastro', 'senha', 'acesso', 'contrato', 'reativar')) {
+      
+      if (trimmed === '1') {
+        const flowStep = getFlowStep('nutri_dieta');
+        const r = await sendMessage(String(flowStep?.message || 'Sobre sua Dieta...'), 'nutri_dieta', null, undefined, {}, flowStep);
+        autoReply = { sent: r.sent, engine: 'flow' };
+      } else if (trimmed === '2') {
+        const flowStep = getFlowStep('nutri_treino');
+        const r = await sendMessage(String(flowStep?.message || 'Sobre seu Treino...'), 'nutri_treino', null, undefined, {}, flowStep);
+        autoReply = { sent: r.sent, engine: 'flow' };
+      } else if (trimmed === '3') {
+        const flowStep = getFlowStep('nutri_exames');
+        const r = await sendMessage(String(flowStep?.message || 'Sobre seus Exames...'), 'nutri_exames', null, undefined, {}, flowStep);
+        autoReply = { sent: r.sent, engine: 'flow' };
+      } else if (trimmed === '4') {
+        const flowStep = getFlowStep('nutri_protocolo');
+        const r = await sendMessage(String(flowStep?.message || 'Sobre seu Protocolo...'), 'nutri_protocolo', null, undefined, {}, flowStep);
+        autoReply = { sent: r.sent, engine: 'flow' };
+      } else if (trimmed === '5') {
+        const flowStep = getFlowStep('nutri_urgencia');
+        const r = await sendMessage(String(flowStep?.message || 'Sobre sua Urgência...'), 'nutri_urgencia', null, undefined, {}, flowStep);
+        autoReply = { sent: r.sent, engine: 'flow' };
+      } else if (has('renov', 'pagamento', 'pagar', 'cobran', 'segunda via', 'cadastro', 'senha', 'acesso', 'contrato', 'reativar')) {
         const flowStepTransfer = getFlowStep('nutri_transfer_sucesso');
         const r = await sendMessage(String(flowStepTransfer?.message || 'Sua solicitação é administrativa. Redirecionando para Sucesso...'), 'nutri_transfer_sucesso', null, undefined, {}, flowStepTransfer);
         await admin.from('crm_conversations').update({ flow_state: 'sucesso_main_menu', queue_type: 'sucesso' }).eq('id', conv.id);
@@ -1028,6 +1050,7 @@ Deno.serve(async (req) => {
         await sendMessage(String(flowStepSucesso?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu', null, 'wapi_sucesso', {}, flowStepSucesso);
         autoReply = { sent: r.sent, engine: 'flow' };
       }
+
     } else if (conv.flow_state === 'sucesso_main_menu') {
       const trimmed = body.trim();
       const lower = trimmed.toLowerCase();
