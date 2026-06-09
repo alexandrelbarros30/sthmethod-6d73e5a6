@@ -700,18 +700,24 @@ Deno.serve(async (req) => {
       // Fora do horário de expediente: enviar mensagem de ausência se for nova sessão 
       // ou se não enviamos uma mensagem de ausência recentemente (últimas 4 horas)
       const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
-      const { data: lastAwayMsg } = await admin.from('crm_messages')
-        .select('id')
-        .eq('conversation_id', conv.id)
-        .eq('direction', 'out')
-        .gt('created_at', fourHoursAgo)
-        .or('metadata->>tag.eq.away,metadata->>tag.eq.away_redirect,body.ilike.%fora do horário%,body.ilike.%expediente%')
-        .maybeSingle();
+      const { data: lastAwayMsg } = await admin.functions.invoke('check-last-away', { 
+        body: { conversation_id: conv.id, fourHoursAgo } 
+      }).then(r => r.data || { lastAwayMsg: null }).catch(() => ({ lastAwayMsg: null }));
 
-      // IMPORTANTE: NÃO bypassar dedup por forceSucessoQueue — caso contrário, o redirect
-      // para o Sucesso do Aluno é enviado a cada mensagem recebida do mesmo contato
-      // dentro da mesma janela de 4h (loop visível no WhatsApp do cliente).
-      if (isNewSession || !lastAwayMsg) {
+      // Fallback manual se a edge function falhar (para segurança)
+      let hasLastAway = !!lastAwayMsg;
+      if (!hasLastAway) {
+        const { data } = await admin.from('crm_messages')
+          .select('id')
+          .eq('conversation_id', conv.id)
+          .eq('direction', 'out')
+          .gt('created_at', fourHoursAgo)
+          .or('metadata->>tag.eq.away,metadata->>tag.eq.away_redirect,body.ilike.%fora do horário%,body.ilike.%expediente%')
+          .maybeSingle();
+        hasLastAway = !!data;
+      }
+
+      if (isNewSession || !hasLastAway) {
         let msg = '';
         if (provider === 'zapi') {
           // Comercial (Z-API)
