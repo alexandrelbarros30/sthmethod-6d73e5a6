@@ -28,11 +28,13 @@ async function generateAiReply({
   admin,
   conversationId,
   phone,
+  waId = null,
   queue = 'comercial',
 }: {
   admin: ReturnType<typeof createClient>;
   conversationId: string;
   phone: string;
+  waId?: string | null;
   queue?: string;
 }): Promise<{ response: string; model: string; engine: string }> {
   let systemPrompt = 'Você é um assistente de atendimento ao aluno da consultoria STH METHOD. Seja claro, técnico, neutro e cordial. Responda em português do Brasil.';
