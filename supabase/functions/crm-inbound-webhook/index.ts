@@ -161,14 +161,23 @@ function isWithinBusinessHours(cfg: any): boolean {
 
 function phoneCandidates(d: string): string[] {
   if (!d) return [];
-  const set = new Set<string>([d]);
-  const local = d.startsWith('55') ? d.slice(2) : d;
-  if (local) {
-    set.add(local);
-    set.add('55' + local);
-    if (local.length === 11 && local[2] === '9') set.add(local.slice(0,2) + local.slice(3));
-    if (local.length === 10) set.add(local.slice(0,2) + '9' + local.slice(2));
+  const digits = digitsOnly(d);
+  const set = new Set<string>([digits]);
+  
+  // Se tem 55, adiciona versão sem 55
+  if (digits.startsWith('55') && digits.length > 10) {
+    const sans55 = digits.slice(2);
+    set.add(sans55);
+    // Variações com e sem o 9 extra (Brasil)
+    if (sans55.length === 11 && sans55[2] === '9') set.add(sans55.slice(0, 2) + sans55.slice(3));
+    if (sans55.length === 10) set.add(sans55.slice(0, 2) + '9' + sans55.slice(2));
+  } else {
+    // Se não tem 55, adiciona versão com 55
+    set.add('55' + digits);
+    if (digits.length === 11 && digits[2] === '9') set.add(digits.slice(0, 2) + digits.slice(3));
+    if (digits.length === 10) set.add(digits.slice(0, 2) + '9' + digits.slice(2));
   }
+  
   return Array.from(set);
 }
 
