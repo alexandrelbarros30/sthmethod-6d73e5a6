@@ -52,13 +52,15 @@ Deno.test("Phone Normalization - Should handle various Brazilian formats", () =>
     { input: "5521972486650", expectedContains: ["21972486650", "2172486650"] },
     { input: "21972486650", expectedContains: ["5521972486650", "2172486650"] },
     { input: "2172486650", expectedContains: ["552172486650", "21972486650"] },
-    { input: "+55 (21) 97248-6650", expectedContains: ["21972486650"] }
+    { input: "+55 (21) 97248-6650", expectedContains: ["21972486650"] },
+    // Failing case reported by user: 6493070839 should match a 9-digit number in DB
+    { input: "556493070839", expectedContains: ["64993070839", "6493070839"] }
   ];
 
   for (const { input, expectedContains } of testCases) {
     const candidates = phoneCandidates(input);
     for (const expected of expectedContains) {
-      assertEquals(candidates.includes(expected), true, `Input ${input} should produce candidate ${expected}`);
+      assertEquals(candidates.includes(expected), true, `Input ${input} should produce candidate ${expected}. Got: ${candidates.join(', ')}`);
     }
   }
 });
@@ -67,7 +69,15 @@ Deno.test("Search Patterns - Should generate fuzzy patterns for database search"
   const input = "21972486650";
   const patterns = buildPhoneSearchPatterns(input);
   
-  // Patterns should help find numbers regardless of how they are stored (with/soft spaces, dashes, etc)
   assertEquals(patterns.some(p => p.includes("21") && p.includes("97248") && p.includes("6650")), true);
   assertEquals(patterns.some(p => p.includes("21") && p.includes("7248") && p.includes("6650")), true);
 });
+
+Deno.test("Failing Case Search Patterns - 8 digits input should find 9 digits DB", () => {
+  const input = "556493070839"; // 8 digits after DDD
+  const patterns = buildPhoneSearchPatterns(input);
+  
+  // Should have a pattern that matches the 9-digit version
+  assertEquals(patterns.some(p => p.includes("64") && p.includes("99307") && p.includes("0839")), true);
+});
+
