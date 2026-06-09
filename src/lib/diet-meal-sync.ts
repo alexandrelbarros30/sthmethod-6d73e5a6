@@ -553,7 +553,8 @@ export const syncStudentDietMeals = async (
 
     if (meal.foods.length > 0) {
       // Find matching per-meal macros from AI analysis (meal_number is 1-based, sort_order is 0-based)
-      const mealMacro = effectiveMacros?.find((m) => m.meal_number === meal.sort_order + 1);
+      // Match macros by sequential index (1-based) to avoid issues with non-sequential sort_orders from the parser
+      const mealMacro = effectiveMacros?.find((m) => m.meal_number === i + 1);
 
       const rows = meal.foods.map((food, index) => {
         const foodCount = meal.foods.length;
