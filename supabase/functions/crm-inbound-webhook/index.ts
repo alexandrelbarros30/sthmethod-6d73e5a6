@@ -1041,13 +1041,36 @@ Deno.serve(async (req) => {
       else { 
         const errorCount = ((conv.flow_context as any)?.error_count || 0) + 1;
         if (errorCount >= 3) {
-          const stopMsg = "Ops, não consegui entender sua opção. Vou aguardar você digitar um número válido ou entrar em contato com um consultor.\n\n_Dica: Digite apenas o número da opção._";
-          await sendMessage(stopMsg, 'comercial_error_limit');
+          const fallbackMsg = "Não entendi sua opção. Para te ajudar, escolha uma das opções abaixo:\n\n1️⃣ Conhecer planos\n2️⃣ Como funciona\n3️⃣ Falar com consultor\n4️⃣ Já sou aluno\n\n_Ou digite apenas o número da opção._";
+          await sendMessage(fallbackMsg, 'comercial_fallback');
+          
+          await admin.from('automation_logs').insert({
+            contact_phone: phone,
+            event_type: 'menu_fallback',
+            queue_type: 'comercial',
+            flow_state: 'lead_main_menu',
+            action_taken: 'fallback',
+            severity: 'critical',
+            metadata: { error_count: errorCount, alert: 'High frequency fallback' }
+          });
+
           await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
         } else {
           await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: errorCount } }).eq('id', conv.id);
           const flowStep = getFlowStep('comercial_saudacao_lead');
-          await sendMessage(String(flowStep?.message || 'Escolha uma opção.'), 'com_repeat', null, undefined, {}, flowStep); 
+          const menuTemplate = 'Olá! Seja bem-vindo(a) à STH METHOD. 👋\n\nComo posso ajudar?\n\n1️⃣ Conhecer planos e valores\n2️⃣ Como funciona a metodologia\n3️⃣ Falar com um consultor\n4️⃣ Já sou aluno';
+          const finalMenu = String(flowStep?.message || menuTemplate);
+          await sendMessage(finalMenu, 'com_repeat', null, undefined, {}, flowStep);
+          
+          await admin.from('automation_logs').insert({
+            contact_phone: phone,
+            event_type: 'menu_repeat',
+            queue_type: 'comercial',
+            flow_state: 'lead_main_menu',
+            action_taken: 'sent',
+            severity: 'warning',
+            metadata: { error_count: errorCount }
+          });
         }
       }
       autoReply = { sent: true, engine: 'flow' };
