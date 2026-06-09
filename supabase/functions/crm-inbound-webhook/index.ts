@@ -128,9 +128,18 @@ async function generateAiReply({
 }
 
 function normalizePhone(raw: string): string {
-  let d = String(raw || '').replace(/\D+/g, '').replace(/^0+/, '');
-  // Retornamos com o 55 para comunicação externa, mas findProfile cuidará da busca flexível
+  // Remove tudo que não é dígito, exceto se for um ID de contato do WhatsApp (ex: @s.whatsapp.net)
+  // Mas para o telefone em si, queremos apenas os dígitos.
+  let clean = String(raw || '').split('@')[0]; // Remove @s.whatsapp.net se houver
+  let d = clean.replace(/\D+/g, '').replace(/^0+/, '');
+  
+  // Se o número começar com 55 e tiver 12 ou 13 dígitos, é um número brasileiro com DDI
+  // Se tiver 10 ou 11 dígitos, assumimos que falta o DDI 55
   if (d.length === 10 || d.length === 11) return '55' + d;
+  
+  // Caso especial: alguns provedores mandam 550... ou algo assim
+  if (d.startsWith('550')) d = '55' + d.substring(3);
+
   return d;
 }
 
