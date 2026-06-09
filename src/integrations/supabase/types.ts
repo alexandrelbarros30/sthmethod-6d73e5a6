@@ -223,9 +223,12 @@ export type Database = {
           event_type: string
           flow_state: string | null
           id: string
+          idempotency_key: string | null
           metadata: Json | null
           queue_type: string | null
           reason: string | null
+          severity: string | null
+          template_hash: string | null
         }
         Insert: {
           action_taken?: string | null
@@ -234,9 +237,12 @@ export type Database = {
           event_type: string
           flow_state?: string | null
           id?: string
+          idempotency_key?: string | null
           metadata?: Json | null
           queue_type?: string | null
           reason?: string | null
+          severity?: string | null
+          template_hash?: string | null
         }
         Update: {
           action_taken?: string | null
@@ -245,9 +251,12 @@ export type Database = {
           event_type?: string
           flow_state?: string | null
           id?: string
+          idempotency_key?: string | null
           metadata?: Json | null
           queue_type?: string | null
           reason?: string | null
+          severity?: string | null
+          template_hash?: string | null
         }
         Relationships: []
       }
@@ -870,14 +879,17 @@ export type Database = {
       }
       crm_message_locks: {
         Row: {
+          context_key: string | null
           locked_at: string | null
           phone: string
         }
         Insert: {
+          context_key?: string | null
           locked_at?: string | null
           phone: string
         }
         Update: {
+          context_key?: string | null
           locked_at?: string | null
           phone?: string
         }
