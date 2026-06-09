@@ -216,29 +216,30 @@ function digitsOnly(raw: string | null | undefined): string {
   return clean.replace(/\D+/g, '').replace(/^0+/, '');
 }
 
-function phoneMatchScore(candidatePhone: string | null | undefined, targetPhone: string): number {
-  const candidate = digitsOnly(candidatePhone);
+function phoneMatchScore(row: any, targetPhone: string, targetWaId: string | null): number {
+  const candidatePhone = digitsOnly(row.phone);
+  const candidateWaId = row.whatsapp_id;
   const target = digitsOnly(targetPhone);
-  if (!candidate || !target) return 0;
+  
+  // Prioridade máxima: whatsapp_id exato
+  if (targetWaId && candidateWaId === targetWaId) return 1000;
+  
+  if (!candidatePhone || !target) return 0;
   
   // Match exato (normalizado)
-  if (candidate === target) return 100;
+  if (candidatePhone === target) return 100;
   
   // Match dos últimos 8 dígitos (corpo do número sem 9 extra e sem DDD)
-  const c8 = candidate.slice(-8);
+  const c8 = candidatePhone.slice(-8);
   const t8 = target.slice(-8);
   if (c8 === t8) {
     // Se os últimos 8 batem, verificamos o DDD (últimos 10 ou 11)
-    const cLast10 = candidate.slice(-10);
-    const tLast10 = target.slice(-10).replace(/^9/, ''); // Remove 9 extra se houver
-    const tLast11 = target.slice(-11);
-    
-    if (candidate.slice(-11) === target.slice(-11)) return 95;
-    if (candidate.slice(-10) === target.slice(-10)) return 90;
+    if (candidatePhone.slice(-11) === target.slice(-11)) return 95;
+    if (candidatePhone.slice(-10) === target.slice(-10)) return 90;
     
     // Fallback para variação de 9º dígito
-    if (candidate.length >= 10 && target.length >= 10) {
-      const cDDD = candidate.slice(-11, -9) || candidate.slice(-10, -8);
+    if (candidatePhone.length >= 10 && target.length >= 10) {
+      const cDDD = candidatePhone.slice(-11, -9) || candidatePhone.slice(-10, -8);
       const tDDD = target.slice(-11, -9) || target.slice(-10, -8);
       if (cDDD === tDDD) return 85;
     }
@@ -276,16 +277,22 @@ function buildPhoneSearchPatterns(phone: string): string[] {
   return Array.from(patterns);
 }
 
-async function findProfileByPhone(admin: ReturnType<typeof createClient>, phone: string, selectFields: string) {
+async function findProfileByPhone(admin: ReturnType<typeof createClient>, phone: string, selectFields: string, waId: string | null = null) {
   const patterns = buildPhoneSearchPatterns(phone);
-  if (!patterns.length) return null;
+  
+  // Se tiver waId, incluímos na busca OR
+  let orCondition = patterns.map((p) => `phone.ilike.${p}`).join(',');
+  if (waId) {
+    orCondition = `whatsapp_id.eq.${waId},` + orCondition;
+  }
+
+  if (!orCondition) return null;
 
   // Busca inicial ampla para capturar variações
   const { data, error } = await admin
     .from('profiles')
-    .select(selectFields + ', phone')
-    .not('phone', 'is', null)
-    .or(patterns.map((p) => `phone.ilike.${p}`).join(','))
+    .select(selectFields + ', phone, whatsapp_id')
+    .or(orCondition)
     .limit(50);
 
   if (error) {
@@ -294,7 +301,7 @@ async function findProfileByPhone(admin: ReturnType<typeof createClient>, phone:
   }
 
   if (!data || data.length === 0) {
-    console.log(`Nenhum perfil encontrado para padrões: ${patterns.join(', ')}`);
+    console.log(`Nenhum perfil encontrado para padrões: ${patterns.join(', ')} e waId: ${waId}`);
     return null;
   }
 
@@ -302,11 +309,27 @@ async function findProfileByPhone(admin: ReturnType<typeof createClient>, phone:
   const ranked = data
     .map((row: any) => ({ 
       ...row, 
-      _score: phoneMatchScore(row.phone, phone), 
+      _score: phoneMatchScore(row, phone, waId), 
       _digits: digitsOnly(row.phone) 
     }))
-    .filter((row: any) => row._score > 40) // Aumentamos o threshold para evitar falsos positivos
+    .filter((row: any) => row._score > 40)
     .sort((a: any, b: any) => b._score - a._score || b._digits.length - a._digits.length);
+
+  if (ranked.length > 0) {
+    const found = ranked[0];
+    console.log(`Perfil encontrado: ${found.full_name} (Score: ${found._score}) para o telefone ${phone}`);
+    
+    // Auto-update do whatsapp_id se não estiver preenchido e tivermos um waId
+    if (waId && !found.whatsapp_id && found._score >= 80) {
+       console.log(`Atualizando whatsapp_id para o perfil ${found.full_name}`);
+       await admin.from('profiles').update({ whatsapp_id: waId }).eq('phone', found.phone);
+    }
+
+    return found;
+  }
+
+  return null;
+}
 
   if (ranked.length > 0) {
     console.log(`Perfil encontrado: ${ranked[0].full_name} (Score: ${ranked[0]._score}) para o telefone ${phone}`);
