@@ -329,18 +329,18 @@ const QuartetoMagico = () => {
               <motion.div
                 initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}
               >
-                <div className="inline-block px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-bold uppercase tracking-[0.2em] mb-8">
+                <div className="inline-block px-4 py-2 rounded-full bg-black/55 border border-primary/35 text-white text-[11px] font-extrabold uppercase tracking-[0.2em] mb-8 shadow-[0_12px_32px_rgba(0,0,0,0.3)] backdrop-blur-md">
                   Evolução STH Method 2026
                 </div>
                 <h2 className="text-4xl md:text-7xl font-bold tracking-tight text-white mb-10 leading-[1.05]">
                   De Semaglutida <br />
-                  <span className="text-zinc-400 italic">para a</span> <br />
-                  <span className="text-primary">Retatrutida.</span>
+                  <span className="text-zinc-100 italic">para a</span> <br />
+                  <span className="text-white [text-shadow:0_0_22px_rgba(255,255,255,0.18)]">Retatrutida.</span>
                 </h2>
-                <div className="space-y-6 text-lg md:text-xl text-white font-medium leading-relaxed">
-                  <p>A ciência evoluiu. Antigamente falávamos apenas em déficit calórico. Hoje, usamos ferramentas de <span className="text-white font-medium">terceira geração</span>.</p>
-                  <p>A <span className="text-white font-medium">Retatrutida</span> (triplo agonista GLP-1/GIP/GCG) oferece controle glicêmico e saciedade sem precedentes no mercado atual.</p>
-                  <p>Aliamos isso a <span className="text-white font-medium">Peptídeos de GH</span> (como Ipamorelin ou CJC-1295) para garantir que a queima de gordura ocorra preservando cada grama de massa muscular.</p>
+                <div className="space-y-6 text-lg md:text-xl text-white font-semibold leading-relaxed">
+                  <p>A ciência evoluiu. Antigamente falávamos apenas em déficit calórico. Hoje, usamos ferramentas de <span className="text-white font-extrabold">terceira geração</span>.</p>
+                  <p>A <span className="text-white font-extrabold">Retatrutida</span> (triplo agonista GLP-1/GIP/GCG) oferece controle glicêmico e saciedade sem precedentes no mercado atual.</p>
+                  <p>Aliamos isso a <span className="text-white font-extrabold">Peptídeos de GH</span> (como Ipamorelin ou CJC-1295) para garantir que a queima de gordura ocorra preservando cada grama de massa muscular.</p>
                 </div>
               </motion.div>
               
@@ -358,7 +358,7 @@ const QuartetoMagico = () => {
                     <TrendingUp className="text-primary w-6 h-6" />
                     <span className="text-xs font-bold uppercase tracking-widest text-zinc-100">Performance</span>
                   </div>
-                  <p className="text-sm text-zinc-200 leading-relaxed">
+                  <p className="text-sm text-white font-medium leading-relaxed">
                     Resultados reais acontecem quando existe método. Ciência, estratégia e constância.
                   </p>
                 </div>
