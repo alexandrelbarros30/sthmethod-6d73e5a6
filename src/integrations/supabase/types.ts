@@ -543,6 +543,29 @@ export type Database = {
           },
         ]
       }
+      crm_away_locks: {
+        Row: {
+          conversation_id: string
+          last_sent_at: string
+        }
+        Insert: {
+          conversation_id: string
+          last_sent_at?: string
+        }
+        Update: {
+          conversation_id?: string
+          last_sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_away_locks_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: true
+            referencedRelation: "crm_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crm_campaign_recipients: {
         Row: {
           campaign_id: string
