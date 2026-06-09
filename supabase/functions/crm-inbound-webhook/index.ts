@@ -126,7 +126,7 @@ async function generateAiReply({
 
 function normalizePhone(raw: string): string {
   let d = String(raw || '').replace(/\D+/g, '').replace(/^0+/, '');
-  if (d.length >= 12 && d.startsWith('55')) return d;
+  // Retornamos com o 55 para comunicação externa, mas findProfile cuidará da busca flexível
   if (d.length === 10 || d.length === 11) return '55' + d;
   return d;
 }
