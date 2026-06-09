@@ -291,12 +291,13 @@ async function findProfileByPhone(admin: ReturnType<typeof createClient>, phone:
   const patterns = buildPhoneSearchPatterns(phone);
   
   // Se tiver waId, incluímos na busca OR
-  let orCondition = patterns.map((p) => `phone.ilike.${p}`).join(',');
+  const conditions = patterns.map((p) => `phone.ilike.${p}`);
   if (waId) {
-    orCondition = `whatsapp_id.eq.${waId},` + orCondition;
+    conditions.unshift(`whatsapp_id.eq.${waId}`);
   }
 
-  if (!orCondition) return null;
+  if (conditions.length === 0) return null;
+  const orCondition = conditions.join(',');
 
   // Busca inicial ampla para capturar variações
   const { data, error } = await admin
