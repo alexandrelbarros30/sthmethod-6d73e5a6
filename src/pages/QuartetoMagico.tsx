@@ -54,8 +54,8 @@ const Section = ({
     >
       <div className={`max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-12 md:gap-24 items-center ${reverse ? 'md:flex-row-reverse' : ''}`}>
         <div className={reverse ? 'md:order-2' : ''}>
-          <p className="text-[11px] font-bold tracking-[0.3em] text-primary uppercase mb-6 flex items-center gap-2">
-            <span className="w-8 h-[1px] bg-primary/30"></span>
+          <p className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-black/45 px-4 py-2 text-[12px] font-extrabold tracking-[0.18em] text-white uppercase mb-6 shadow-[0_10px_30px_rgba(0,0,0,0.28)] backdrop-blur-md">
+            <span className="w-8 h-[1px] bg-primary"></span>
             {number} — {kicker}
           </p>
           <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-white mb-8 leading-[1.1]">
@@ -236,10 +236,10 @@ const QuartetoMagico = () => {
                 Muitas pessoas acreditam que resultados vêm apenas da dieta. Outras apostam tudo no treino. Na STH, o resultado é matemática de precisão.
               </motion.p>
               <motion.div variants={fadeUp} className="flex flex-wrap items-center justify-center gap-4">
-                <div className="px-6 py-3 rounded-full bg-white/5 border border-white/10 backdrop-blur-md text-[13px] font-bold uppercase tracking-widest text-white">Protocolo</div>
-                <div className="px-6 py-3 rounded-full bg-white/5 border border-white/10 backdrop-blur-md text-[13px] font-bold uppercase tracking-widest text-white">Dieta</div>
-                <div className="px-6 py-3 rounded-full bg-white/5 border border-white/10 backdrop-blur-md text-[13px] font-bold uppercase tracking-widest text-white">Treino</div>
-                <div className="px-6 py-3 rounded-full bg-white/5 border border-white/10 backdrop-blur-md text-[13px] font-bold uppercase tracking-widest text-white">Exames</div>
+                <div className="min-w-[140px] px-6 py-3 rounded-full bg-black/55 border border-white/20 backdrop-blur-xl text-[14px] font-extrabold uppercase tracking-[0.18em] text-white shadow-[0_12px_32px_rgba(0,0,0,0.34)] text-center">Protocolo</div>
+                <div className="min-w-[140px] px-6 py-3 rounded-full bg-black/55 border border-white/20 backdrop-blur-xl text-[14px] font-extrabold uppercase tracking-[0.18em] text-white shadow-[0_12px_32px_rgba(0,0,0,0.34)] text-center">Dieta</div>
+                <div className="min-w-[140px] px-6 py-3 rounded-full bg-black/55 border border-white/20 backdrop-blur-xl text-[14px] font-extrabold uppercase tracking-[0.18em] text-white shadow-[0_12px_32px_rgba(0,0,0,0.34)] text-center">Treino</div>
+                <div className="min-w-[140px] px-6 py-3 rounded-full bg-black/55 border border-white/20 backdrop-blur-xl text-[14px] font-extrabold uppercase tracking-[0.18em] text-white shadow-[0_12px_32px_rgba(0,0,0,0.34)] text-center">Exames</div>
               </motion.div>
             </motion.div>
           </div>
