@@ -104,7 +104,7 @@ const AutomationLogsPanel = () => {
       case 'critical':
         return <Badge variant="destructive"><AlertTriangle className="w-3 h-3 mr-1" /> Crítico</Badge>;
       case 'warning':
-        return <Badge variant="warning" className="bg-orange-500 text-white"><AlertTriangle className="w-3 h-3 mr-1" /> Aviso</Badge>;
+        return <Badge className="bg-orange-500 text-white hover:bg-orange-600"><AlertTriangle className="w-3 h-3 mr-1" /> Aviso</Badge>;
       case 'info':
         return <Badge variant="outline" className="text-blue-500 border-blue-500"><Info className="w-3 h-3 mr-1" /> Info</Badge>;
       default:
