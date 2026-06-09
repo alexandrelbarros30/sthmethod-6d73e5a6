@@ -1,12 +1,19 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { assertEquals } from "https://deno.land/std@0.208.0/assert/mod.ts";
 
-// Mocking some functions for testing or importing them if they were exported
-// For this test, we re-implement the logic to verify its correctness
-
+// Mocking functions from index.ts logic
 function digitsOnly(raw: string | null | undefined): string {
-  return String(raw || '').replace(/\D+/g, '').replace(/^0+/, '');
+  if (!raw) return '';
+  const clean = String(raw).split('@')[0];
+  return clean.replace(/\D+/g, '').replace(/^0+/, '');
+}
+
+function normalizePhone(raw: string): string {
+  let clean = String(raw || '').split('@')[0];
+  let d = clean.replace(/\D+/g, '').replace(/^0+/, '');
+  if (d.length === 10 || d.length === 11) return '55' + d;
+  if (d.startsWith('550')) d = '55' + d.substring(3);
+  return d;
 }
 
 function phoneCandidates(d: string): string[] {
@@ -17,43 +24,57 @@ function phoneCandidates(d: string): string[] {
   if (digits.startsWith('55') && digits.length > 10) {
     const sans55 = digits.slice(2);
     set.add(sans55);
-    if (sans55.length === 11 && sans55[2] === '9') set.add(sans55.slice(0, 2) + sans55.slice(3));
-    if (sans55.length === 10) set.add(sans55.slice(0, 2) + '9' + sans55.slice(2));
-  } else {
+    const ddd = sans55.slice(0, 2);
+    const rest = sans55.slice(2);
+    if (rest.length === 9 && rest[0] === '9') set.add(ddd + rest.slice(1));
+    if (rest.length === 8) set.add(ddd + '9' + rest);
+  } else if (digits.length >= 8) {
     set.add('55' + digits);
-    if (digits.length === 11 && digits[2] === '9') set.add(digits.slice(0, 2) + digits.slice(3));
-    if (digits.length === 10) set.add(digits.slice(0, 2) + '9' + digits.slice(2));
+    const ddd = digits.slice(0, 2);
+    const rest = digits.slice(2);
+    if (rest.length === 9 && rest[0] === '9') set.add(ddd + rest.slice(1));
+    if (rest.length === 8) set.add(ddd + '9' + rest);
   }
-  
   return Array.from(set);
 }
 
-function buildPhoneSearchPatterns(phone: string): string[] {
-  const patterns = new Set<string>();
-
-  for (const variant of phoneCandidates(phone)) {
-    const digits = digitsOnly(variant);
-    const local = digits.startsWith('55') ? digits.slice(2) : digits;
-    if (local.length < 10) continue;
-
-    const ddd = local.slice(0, 2);
-    const middle = local.slice(2, -4);
-    const last4 = local.slice(-4);
-
-    patterns.add(`%${ddd}%${middle}%${last4}%`);
-    patterns.add(`%${middle}%${last4}%`);
+function phoneMatchScore(row: any, targetPhone: string, targetWaId: string | null): number {
+  const candidatePhone = digitsOnly(row.phone);
+  const candidateWaId = row.whatsapp_id;
+  const target = digitsOnly(targetPhone);
+  
+  if (targetWaId && candidateWaId === targetWaId) return 1000;
+  if (!candidatePhone || !target) return 0;
+  if (candidatePhone === target) return 100;
+  
+  const c8 = candidatePhone.slice(-8);
+  const t8 = target.slice(-8);
+  if (c8 === t8) {
+    if (candidatePhone.slice(-11) === target.slice(-11)) return 95;
+    if (candidatePhone.slice(-10) === target.slice(-10)) return 90;
+    
+    if (candidatePhone.length >= 10 && target.length >= 10) {
+      const cDDD = candidatePhone.slice(-11, -9) || candidatePhone.slice(-10, -8);
+      const tDDD = target.slice(-11, -9) || target.slice(-10, -8);
+      if (cDDD === tDDD) return 85;
+    }
+    return 60;
   }
-
-  return Array.from(patterns);
+  return 0;
 }
 
-Deno.test("Phone Normalization - Should handle various Brazilian formats", () => {
+Deno.test("Phone Normalization - Should handle leading zeros and WhatsApp formats", () => {
+  assertEquals(normalizePhone("021972486650"), "5521972486650");
+  assertEquals(normalizePhone("5521972486650@s.whatsapp.net"), "5521972486650");
+  assertEquals(normalizePhone("55021972486650"), "5521972486650");
+});
+
+Deno.test("Phone Candidates - Should handle various Brazilian formats", () => {
   const testCases = [
     { input: "5521972486650", expectedContains: ["21972486650", "2172486650"] },
     { input: "21972486650", expectedContains: ["5521972486650", "2172486650"] },
     { input: "2172486650", expectedContains: ["552172486650", "21972486650"] },
     { input: "+55 (21) 97248-6650", expectedContains: ["21972486650"] },
-    // Failing case reported by user: 6493070839 should match a 9-digit number in DB
     { input: "556493070839", expectedContains: ["64993070839", "6493070839"] }
   ];
 
@@ -65,19 +86,15 @@ Deno.test("Phone Normalization - Should handle various Brazilian formats", () =>
   }
 });
 
-Deno.test("Search Patterns - Should generate fuzzy patterns for database search", () => {
-  const input = "21972486650";
-  const patterns = buildPhoneSearchPatterns(input);
+Deno.test("Phone Match Score - Should prioritize whatsapp_id", () => {
+  const row = { phone: "5521972486650", whatsapp_id: "WID123" };
   
-  assertEquals(patterns.some(p => p.includes("21") && p.includes("97248") && p.includes("6650")), true);
-  assertEquals(patterns.some(p => p.includes("21") && p.includes("7248") && p.includes("6650")), true);
-});
-
-Deno.test("Failing Case Search Patterns - 8 digits input should find 9 digits DB", () => {
-  const input = "556493070839"; // 8 digits after DDD
-  const patterns = buildPhoneSearchPatterns(input);
+  // exact waId match
+  assertEquals(phoneMatchScore(row, "551188888888", "WID123"), 1000);
   
-  // Should have a pattern that matches the 9-digit version
-  assertEquals(patterns.some(p => p.includes("64") && p.includes("99307") && p.includes("0839")), true);
+  // exact phone match
+  assertEquals(phoneMatchScore(row, "5521972486650", null), 100);
+  
+  // 9th digit variation
+  assertEquals(phoneMatchScore(row, "552172486650", null), 85);
 });
-
