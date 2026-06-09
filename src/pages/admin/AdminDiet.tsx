@@ -312,7 +312,7 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
     setNewMealMacros(null);
   };
 
-  const startEdit = (diet: any) => {
+  const startEdit = async (diet: any) => {
     const d = new Date(diet.created_at);
     setEditingId(diet.id);
     setEditCreatedAt(diet.created_at || null);
@@ -330,6 +330,37 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
     setEditFatG(diet.fat_g != null ? String(diet.fat_g) : "");
     setEditHydrationL(diet.hydration_l != null ? String(diet.hydration_l) : "");
     setPreviewDiet(null);
+
+    // Recuperar macros por refeição existentes para não perder na edição
+    try {
+      const { data: meals } = await supabase
+        .from("diet_meals")
+        .select("id, sort_order, diet_foods(energy_kcal, protein_g, carbs_g, fat_g)")
+        .eq("diet_id", diet.id)
+        .order("sort_order");
+
+      if (meals && meals.length > 0) {
+        const recoveredMacros = meals.map((m: any, idx) => {
+          const foodSums = (m.diet_foods || []).reduce((acc: any, f: any) => ({
+            energy_kcal: acc.energy_kcal + (f.energy_kcal || 0),
+            protein_g: acc.protein_g + (f.protein_g || 0),
+            carbs_g: acc.carbs_g + (f.carbs_g || 0),
+            fat_g: acc.fat_g + (f.fat_g || 0),
+          }), { energy_kcal: 0, protein_g: 0, carbs_g: 0, fat_g: 0 });
+
+          return {
+            meal_number: idx + 1,
+            energy_kcal: foodSums.energy_kcal,
+            protein_g: foodSums.protein_g,
+            carbs_g: foodSums.carbs_g,
+            fat_g: foodSums.fat_g,
+          };
+        });
+        setEditMealMacros(recoveredMacros);
+      }
+    } catch (err) {
+      console.error("Erro ao recuperar macros das refeições:", err);
+    }
   };
 
   const cancelEdit = () => {
