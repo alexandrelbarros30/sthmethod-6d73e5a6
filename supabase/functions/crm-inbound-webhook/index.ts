@@ -597,7 +597,7 @@ Deno.serve(async (req) => {
       redirectToSucessoNumber = true;
     }
 
-    const profile = await findProfileByPhone(admin, phone, 'user_id, full_name, objective, phone');
+    const profile = await findProfileByPhone(admin, phone, 'user_id, full_name, objective, phone', waId);
     let displayName = name || profile?.full_name || null;
     let identifiedAs: 'aluno_ativo' | 'aluno_vencido' | 'lead' | 'ex_aluno' = 'lead';
 
