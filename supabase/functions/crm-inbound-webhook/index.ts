@@ -882,10 +882,29 @@ Deno.serve(async (req) => {
             .maybeSingle();
 
           if (!recentMsg) {
-            const r = await sendMessage(String(flowStep?.message || 'Olá! Seja bem-vindo(a) à STH METHOD. 👋\n\nComo posso ajudar?\n\n1️⃣ Conhecer planos e valores\n2️⃣ Como funciona a metodologia\n3️⃣ Falar com um consultor\n4️⃣ Já sou aluno'), 'comercial_saudacao_lead', null, undefined, {}, flowStep);
+            const menuTemplate = 'Olá! Seja bem-vindo(a) à STH METHOD. 👋\n\nComo posso ajudar?\n\n1️⃣ Conhecer planos e valores\n2️⃣ Como funciona a metodologia\n3️⃣ Falar com um consultor\n4️⃣ Já sou aluno';
+            const r = await sendMessage(String(flowStep?.message || menuTemplate), 'comercial_saudacao_lead', null, undefined, {}, flowStep);
+            
+            await admin.from('automation_logs').insert({
+              contact_phone: phone,
+              event_type: 'menu_sent',
+              queue_type: 'comercial',
+              flow_state: 'lead_main_menu',
+              action_taken: 'sent',
+              metadata: { message: r.sent ? 'Success' : 'Failed' }
+            });
+
             await admin.from('crm_conversations').update({ flow_state: 'lead_main_menu' }).eq('id', conv.id);
             autoReply = { sent: r.sent, engine: 'flow' };
           } else {
+            await admin.from('automation_logs').insert({
+              contact_phone: phone,
+              event_type: 'menu_blocked',
+              queue_type: 'comercial',
+              flow_state: 'lead_main_menu',
+              action_taken: 'blocked',
+              reason: 'Duplicate prevented (recent message sent)'
+            });
             autoReply = { sent: false, reason: 'duplicate_prevented' };
           }
 

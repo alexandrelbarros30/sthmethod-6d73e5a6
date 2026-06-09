@@ -217,27 +217,36 @@ export type Database = {
       }
       automation_logs: {
         Row: {
+          action_taken: string | null
           contact_phone: string
           created_at: string | null
           event_type: string
+          flow_state: string | null
           id: string
           metadata: Json | null
+          queue_type: string | null
           reason: string | null
         }
         Insert: {
+          action_taken?: string | null
           contact_phone: string
           created_at?: string | null
           event_type: string
+          flow_state?: string | null
           id?: string
           metadata?: Json | null
+          queue_type?: string | null
           reason?: string | null
         }
         Update: {
+          action_taken?: string | null
           contact_phone?: string
           created_at?: string | null
           event_type?: string
+          flow_state?: string | null
           id?: string
           metadata?: Json | null
+          queue_type?: string | null
           reason?: string | null
         }
         Relationships: []
