@@ -439,6 +439,9 @@ Deno.serve(async (req) => {
 
 
     const phoneRaw = payload?.data?.from || payload?.phone || payload?.from || payload?.message?.from || payload?.sender?.id || '';
+    const phone = normalizePhone(phoneRaw);
+    const waId = String(phoneRaw || '').split('@')[0]; // Usamos o ID puramente numérico como waId
+    
     const audioUrl = payload?.audio?.audioUrl || payload?.audioUrl || null;
     const rawText = payload?.data?.body || (typeof payload?.text === 'string' ? payload.text : payload?.text?.message) || payload?.message?.conversation || (typeof payload?.message === 'string' ? payload.message : '') || payload?.image?.caption || payload?.video?.caption || payload?.document?.caption || payload?.body || payload?.data?.message?.text || payload?.msgContent?.conversation || (audioUrl ? '[Áudio recebido]' : '');
     const body = typeof rawText === 'string' ? rawText : '';
@@ -448,7 +451,6 @@ Deno.serve(async (req) => {
     if (payload?.fromMe === true || payload?.from_me === true) {
       // Se a mensagem partiu de "mim" (do atendente via WhatsApp Web/Celular), 
       // marcamos a conversa como atendimento humano para silenciar o bot.
-      const phone = normalizePhone(phoneRaw);
       if (phone) {
         console.log(`Mensagem enviada pelo atendente (fromMe) para ${phone}. Ativando handoff humano.`);
         await admin.from('crm_conversations').update({ 
