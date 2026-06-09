@@ -1,5 +1,8 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { crypto } from "https://deno.land/std@0.192.0/crypto/mod.ts";
+import { encode as hexEncode } from "https://deno.land/std@0.192.0/encoding/hex.ts";
+
 
 function localEngineReply(input: string): string {
   const t = (input || '').toLowerCase();
