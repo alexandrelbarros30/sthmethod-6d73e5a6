@@ -62,7 +62,7 @@ async function generateAiReply({
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: false })
       .limit(10),
-    findProfileByPhone(admin, phone, 'full_name, objective, weight, phone'),
+    findProfileByPhone(admin, phone, 'full_name, objective, weight, phone', (msgs?.[0] as any)?.wa_id || null),
   ]);
 
   const history = (msgs || [])
