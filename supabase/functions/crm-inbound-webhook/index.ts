@@ -1,5 +1,8 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { crypto } from "https://deno.land/std@0.192.0/crypto/mod.ts";
+import { encode as hexEncode } from "https://deno.land/std@0.192.0/encoding/hex.ts";
+
 
 function localEngineReply(input: string): string {
   const t = (input || '').toLowerCase();
@@ -130,6 +133,14 @@ function normalizePhone(raw: string): string {
   if (d.length === 10 || d.length === 11) return '55' + d;
   return d;
 }
+
+async function hashTemplate(text: string): Promise<string> {
+  const msgUint8 = new TextEncoder().encode(text);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 
 function spNow() {
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -871,19 +882,23 @@ Deno.serve(async (req) => {
           }
         } else {
           const flowStep = getFlowStep('comercial_saudacao_lead');
-          // Prevenir duplicação no início da sessão (dedup 30s)
-          const thirtySecsAgo = new Date(Date.now() - 30 * 1000).toISOString();
-          const { data: recentMsg } = await admin.from('crm_messages')
+          const menuTemplate = 'Olá! Seja bem-vindo(a) à STH METHOD. 👋\n\nComo posso ajudar?\n\n1️⃣ Conhecer planos e valores\n2️⃣ Como funciona a metodologia\n3️⃣ Falar com um consultor\n4️⃣ Já sou aluno';
+          const finalMenu = String(flowStep?.message || menuTemplate);
+          const currentHash = await hashTemplate(finalMenu);
+
+          // Idempotência por contato e ciclo de conversa (sessão)
+          const idempotencyKey = `menu_lead_${conv.session_count || 1}`;
+          
+          const { data: existingLog } = await admin
+            .from('automation_logs')
             .select('id')
-            .eq('conversation_id', conv.id)
-            .eq('direction', 'out')
-            .gt('created_at', thirtySecsAgo)
-            .eq('metadata->>tag', 'comercial_saudacao_lead')
+            .eq('contact_phone', phone)
+            .eq('idempotency_key', idempotencyKey)
+            .eq('event_type', 'menu_sent')
             .maybeSingle();
 
-          if (!recentMsg) {
-            const menuTemplate = 'Olá! Seja bem-vindo(a) à STH METHOD. 👋\n\nComo posso ajudar?\n\n1️⃣ Conhecer planos e valores\n2️⃣ Como funciona a metodologia\n3️⃣ Falar com um consultor\n4️⃣ Já sou aluno';
-            const r = await sendMessage(String(flowStep?.message || menuTemplate), 'comercial_saudacao_lead', null, undefined, {}, flowStep);
+          if (!existingLog) {
+            const r = await sendMessage(finalMenu, 'comercial_saudacao_lead', null, undefined, {}, flowStep);
             
             await admin.from('automation_logs').insert({
               contact_phone: phone,
@@ -891,7 +906,10 @@ Deno.serve(async (req) => {
               queue_type: 'comercial',
               flow_state: 'lead_main_menu',
               action_taken: 'sent',
-              metadata: { message: r.sent ? 'Success' : 'Failed' }
+              idempotency_key: idempotencyKey,
+              template_hash: currentHash,
+              severity: 'info',
+              metadata: { message: r.sent ? 'Success' : 'Failed', session_count: conv.session_count }
             });
 
             await admin.from('crm_conversations').update({ flow_state: 'lead_main_menu' }).eq('id', conv.id);
@@ -903,11 +921,12 @@ Deno.serve(async (req) => {
               queue_type: 'comercial',
               flow_state: 'lead_main_menu',
               action_taken: 'blocked',
-              reason: 'Duplicate prevented (recent message sent)'
+              idempotency_key: idempotencyKey,
+              severity: 'warning',
+              reason: 'Idempotency blocked (menu already sent in this session)'
             });
-            autoReply = { sent: false, reason: 'duplicate_prevented' };
+            autoReply = { sent: false, reason: 'idempotency_blocked' };
           }
-
         }
       }
     } else if (conv.flow_state === 'nutri_main') {
@@ -1020,13 +1039,36 @@ Deno.serve(async (req) => {
       else { 
         const errorCount = ((conv.flow_context as any)?.error_count || 0) + 1;
         if (errorCount >= 3) {
-          const stopMsg = "Ops, não consegui entender sua opção. Vou aguardar você digitar um número válido ou entrar em contato com um consultor.\n\n_Dica: Digite apenas o número da opção._";
-          await sendMessage(stopMsg, 'comercial_error_limit');
+          const fallbackMsg = "Não entendi sua opção. Para te ajudar, escolha uma das opções abaixo:\n\n1️⃣ Conhecer planos\n2️⃣ Como funciona\n3️⃣ Falar com consultor\n4️⃣ Já sou aluno\n\n_Ou digite apenas o número da opção._";
+          await sendMessage(fallbackMsg, 'comercial_fallback');
+          
+          await admin.from('automation_logs').insert({
+            contact_phone: phone,
+            event_type: 'menu_fallback',
+            queue_type: 'comercial',
+            flow_state: 'lead_main_menu',
+            action_taken: 'fallback',
+            severity: 'critical',
+            metadata: { error_count: errorCount, alert: 'High frequency fallback' }
+          });
+
           await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
         } else {
           await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: errorCount } }).eq('id', conv.id);
           const flowStep = getFlowStep('comercial_saudacao_lead');
-          await sendMessage(String(flowStep?.message || 'Escolha uma opção.'), 'com_repeat', null, undefined, {}, flowStep); 
+          const menuTemplate = 'Olá! Seja bem-vindo(a) à STH METHOD. 👋\n\nComo posso ajudar?\n\n1️⃣ Conhecer planos e valores\n2️⃣ Como funciona a metodologia\n3️⃣ Falar com um consultor\n4️⃣ Já sou aluno';
+          const finalMenu = String(flowStep?.message || menuTemplate);
+          await sendMessage(finalMenu, 'com_repeat', null, undefined, {}, flowStep);
+          
+          await admin.from('automation_logs').insert({
+            contact_phone: phone,
+            event_type: 'menu_repeat',
+            queue_type: 'comercial',
+            flow_state: 'lead_main_menu',
+            action_taken: 'sent',
+            severity: 'warning',
+            metadata: { error_count: errorCount }
+          });
         }
       }
       autoReply = { sent: true, engine: 'flow' };
