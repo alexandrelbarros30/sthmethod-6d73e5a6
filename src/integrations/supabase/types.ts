@@ -215,6 +215,33 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_logs: {
+        Row: {
+          contact_phone: string
+          created_at: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          reason: string | null
+        }
+        Insert: {
+          contact_phone: string
+          created_at?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          reason?: string | null
+        }
+        Update: {
+          contact_phone?: string
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          reason?: string | null
+        }
+        Relationships: []
+      }
       bioimpedance_logs: {
         Row: {
           arm_cm: number | null
