@@ -766,6 +766,7 @@ export type Database = {
           unread_count: number
           updated_at: string
           user_id: string | null
+          wa_id: string | null
         }
         Insert: {
           assigned_to?: string | null
@@ -796,6 +797,7 @@ export type Database = {
           unread_count?: number
           updated_at?: string
           user_id?: string | null
+          wa_id?: string | null
         }
         Update: {
           assigned_to?: string | null
@@ -826,6 +828,7 @@ export type Database = {
           unread_count?: number
           updated_at?: string
           user_id?: string | null
+          wa_id?: string | null
         }
         Relationships: []
       }
@@ -2717,6 +2720,7 @@ export type Database = {
           updated_at: string
           user_id: string
           weight: number | null
+          whatsapp_id: string | null
           whatsapp_opt_out: boolean
           whatsapp_opt_out_at: string | null
           whatsapp_opt_out_reason: string | null
@@ -2762,6 +2766,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           weight?: number | null
+          whatsapp_id?: string | null
           whatsapp_opt_out?: boolean
           whatsapp_opt_out_at?: string | null
           whatsapp_opt_out_reason?: string | null
@@ -2807,6 +2812,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           weight?: number | null
+          whatsapp_id?: string | null
           whatsapp_opt_out?: boolean
           whatsapp_opt_out_at?: string | null
           whatsapp_opt_out_reason?: string | null

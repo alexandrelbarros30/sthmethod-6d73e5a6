@@ -28,11 +28,13 @@ async function generateAiReply({
   admin,
   conversationId,
   phone,
+  waId = null,
   queue = 'comercial',
 }: {
   admin: ReturnType<typeof createClient>;
   conversationId: string;
   phone: string;
+  waId?: string | null;
   queue?: string;
 }): Promise<{ response: string; model: string; engine: string }> {
   let systemPrompt = 'Você é um assistente de atendimento ao aluno da consultoria STH METHOD. Seja claro, técnico, neutro e cordial. Responda em português do Brasil.';
@@ -62,7 +64,7 @@ async function generateAiReply({
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: false })
       .limit(10),
-    findProfileByPhone(admin, phone, 'full_name, objective, weight, phone'),
+    findProfileByPhone(admin, phone, 'full_name, objective, weight, phone', waId),
   ]);
 
   const history = (msgs || [])
@@ -128,9 +130,18 @@ async function generateAiReply({
 }
 
 function normalizePhone(raw: string): string {
-  let d = String(raw || '').replace(/\D+/g, '').replace(/^0+/, '');
-  // Retornamos com o 55 para comunicação externa, mas findProfile cuidará da busca flexível
+  // Remove tudo que não é dígito, exceto se for um ID de contato do WhatsApp (ex: @s.whatsapp.net)
+  // Mas para o telefone em si, queremos apenas os dígitos.
+  let clean = String(raw || '').split('@')[0]; // Remove @s.whatsapp.net se houver
+  let d = clean.replace(/\D+/g, '').replace(/^0+/, '');
+  
+  // Se o número começar com 55 e tiver 12 ou 13 dígitos, é um número brasileiro com DDI
+  // Se tiver 10 ou 11 dígitos, assumimos que falta o DDI 55
   if (d.length === 10 || d.length === 11) return '55' + d;
+  
+  // Caso especial: alguns provedores mandam 550... ou algo assim
+  if (d.startsWith('550')) d = '55' + d.substring(3);
+
   return d;
 }
 
@@ -183,9 +194,11 @@ function phoneCandidates(d: string): string[] {
     const ddd = sans55.slice(0, 2);
     const rest = sans55.slice(2);
     
+    // Se tem 9 dígitos começando com 9, gera a versão com 8
     if (rest.length === 9 && rest[0] === '9') set.add(ddd + rest.slice(1));
+    // Se tem 8 dígitos, gera a versão com 9 extra
     if (rest.length === 8) set.add(ddd + '9' + rest);
-  } else {
+  } else if (digits.length >= 8) {
     // Se não tem 55, adiciona versão com 55
     set.add('55' + digits);
     const ddd = digits.slice(0, 2);
@@ -199,12 +212,20 @@ function phoneCandidates(d: string): string[] {
 }
 
 function digitsOnly(raw: string | null | undefined): string {
-  return String(raw || '').replace(/\D+/g, '').replace(/^0+/, '');
+  if (!raw) return '';
+  // Remove tudo que não é dígito, mas se for wa_id completo, pega só a parte numérica antes do @
+  const clean = String(raw).split('@')[0];
+  return clean.replace(/\D+/g, '').replace(/^0+/, '');
 }
 
-function phoneMatchScore(candidatePhone: string | null | undefined, targetPhone: string): number {
-  const candidate = digitsOnly(candidatePhone);
+function phoneMatchScore(row: any, targetPhone: string, targetWaId: string | null): number {
+  const candidate = digitsOnly(row.phone);
+  const candidateWaId = row.whatsapp_id;
   const target = digitsOnly(targetPhone);
+  
+  // Prioridade máxima: whatsapp_id exato
+  if (targetWaId && candidateWaId === targetWaId) return 1000;
+  
   if (!candidate || !target) return 0;
   
   // Match exato (normalizado)
@@ -213,20 +234,24 @@ function phoneMatchScore(candidatePhone: string | null | undefined, targetPhone:
   // Match dos últimos 8 dígitos (corpo do número sem 9 extra e sem DDD)
   const c8 = candidate.slice(-8);
   const t8 = target.slice(-8);
+  
   if (c8 === t8) {
-    // Se os últimos 8 batem, verificamos o DDD (últimos 10 ou 11)
-    const cLast10 = candidate.slice(-10);
-    const tLast10 = target.slice(-10).replace(/^9/, ''); // Remove 9 extra se houver
-    const tLast11 = target.slice(-11);
+    // Se os últimos 8 batem, verificamos o DDD.
+    // O DDD geralmente está antes dos últimos 8 ou 9 dígitos.
+    const getDDD = (s: string) => {
+      const sansDDI = s.startsWith('55') ? s.slice(2) : s;
+      return sansDDI.slice(0, 2);
+    };
     
-    if (candidate.slice(-11) === target.slice(-11)) return 95;
-    if (candidate.slice(-10) === target.slice(-10)) return 90;
+    const cDDD = getDDD(candidate);
+    const tDDD = getDDD(target);
     
-    // Fallback para variação de 9º dígito
-    if (candidate.length >= 10 && target.length >= 10) {
-      const cDDD = candidate.slice(-11, -9) || candidate.slice(-10, -8);
-      const tDDD = target.slice(-11, -9) || target.slice(-10, -8);
-      if (cDDD === tDDD) return 85;
+    if (cDDD === tDDD) {
+       // Se o DDD bate e os últimos 8 batem, é quase certamente o mesmo aluno
+       // (podendo variar apenas o 9º dígito ou o DDI)
+       if (candidate.slice(-11) === target.slice(-11)) return 95;
+       if (candidate.slice(-10) === target.slice(-10)) return 90;
+       return 85;
     }
     
     return 60;
@@ -262,16 +287,23 @@ function buildPhoneSearchPatterns(phone: string): string[] {
   return Array.from(patterns);
 }
 
-async function findProfileByPhone(admin: ReturnType<typeof createClient>, phone: string, selectFields: string) {
+async function findProfileByPhone(admin: ReturnType<typeof createClient>, phone: string, selectFields: string, waId: string | null = null) {
   const patterns = buildPhoneSearchPatterns(phone);
-  if (!patterns.length) return null;
+  
+  // Se tiver waId, incluímos na busca OR
+  const conditions = patterns.map((p) => `phone.ilike.${p}`);
+  if (waId) {
+    conditions.unshift(`whatsapp_id.eq.${waId}`);
+  }
+
+  if (conditions.length === 0) return null;
+  const orCondition = conditions.join(',');
 
   // Busca inicial ampla para capturar variações
   const { data, error } = await admin
     .from('profiles')
-    .select(selectFields + ', phone')
-    .not('phone', 'is', null)
-    .or(patterns.map((p) => `phone.ilike.${p}`).join(','))
+    .select(selectFields + ', phone, whatsapp_id')
+    .or(orCondition)
     .limit(50);
 
   if (error) {
@@ -280,7 +312,7 @@ async function findProfileByPhone(admin: ReturnType<typeof createClient>, phone:
   }
 
   if (!data || data.length === 0) {
-    console.log(`Nenhum perfil encontrado para padrões: ${patterns.join(', ')}`);
+    console.log(`Nenhum perfil encontrado para padrões: ${patterns.join(', ')} e waId: ${waId}`);
     return null;
   }
 
@@ -288,11 +320,27 @@ async function findProfileByPhone(admin: ReturnType<typeof createClient>, phone:
   const ranked = data
     .map((row: any) => ({ 
       ...row, 
-      _score: phoneMatchScore(row.phone, phone), 
+      _score: phoneMatchScore(row, phone, waId), 
       _digits: digitsOnly(row.phone) 
     }))
-    .filter((row: any) => row._score > 40) // Aumentamos o threshold para evitar falsos positivos
+    .filter((row: any) => row._score > 40)
     .sort((a: any, b: any) => b._score - a._score || b._digits.length - a._digits.length);
+
+  if (ranked.length > 0) {
+    const found = ranked[0];
+    console.log(`Perfil encontrado: ${found.full_name} (Score: ${found._score}) para o telefone ${phone}`);
+    
+    // Auto-update do whatsapp_id se não estiver preenchido e tivermos um waId
+    if (waId && !found.whatsapp_id && found._score >= 80) {
+       console.log(`Atualizando whatsapp_id para o perfil ${found.full_name}`);
+       await admin.from('profiles').update({ whatsapp_id: waId }).eq('phone', found.phone);
+    }
+
+    return found;
+  }
+
+  return null;
+}
 
   if (ranked.length > 0) {
     console.log(`Perfil encontrado: ${ranked[0].full_name} (Score: ${ranked[0]._score}) para o telefone ${phone}`);
@@ -402,6 +450,9 @@ Deno.serve(async (req) => {
 
 
     const phoneRaw = payload?.data?.from || payload?.phone || payload?.from || payload?.message?.from || payload?.sender?.id || '';
+    const phone = normalizePhone(phoneRaw);
+    const waId = String(phoneRaw || '').split('@')[0]; // Usamos o ID puramente numérico como waId
+    
     const audioUrl = payload?.audio?.audioUrl || payload?.audioUrl || null;
     const rawText = payload?.data?.body || (typeof payload?.text === 'string' ? payload.text : payload?.text?.message) || payload?.message?.conversation || (typeof payload?.message === 'string' ? payload.message : '') || payload?.image?.caption || payload?.video?.caption || payload?.document?.caption || payload?.body || payload?.data?.message?.text || payload?.msgContent?.conversation || (audioUrl ? '[Áudio recebido]' : '');
     const body = typeof rawText === 'string' ? rawText : '';
@@ -411,7 +462,6 @@ Deno.serve(async (req) => {
     if (payload?.fromMe === true || payload?.from_me === true) {
       // Se a mensagem partiu de "mim" (do atendente via WhatsApp Web/Celular), 
       // marcamos a conversa como atendimento humano para silenciar o bot.
-      const phone = normalizePhone(phoneRaw);
       if (phone) {
         console.log(`Mensagem enviada pelo atendente (fromMe) para ${phone}. Ativando handoff humano.`);
         await admin.from('crm_conversations').update({ 
@@ -460,7 +510,7 @@ Deno.serve(async (req) => {
       const isOptOut = /\bCANCELAR\s+ENVIO\b/.test(normalizedBody);
       const isManualClose = normalizedBody === '#SAIR' || normalizedBody === '#ENCERRAR';
       
-      const profile = await findProfileByPhone(admin, phone, 'user_id, full_name, phone');
+      const profile = await findProfileByPhone(admin, phone, 'user_id, full_name, phone', waId);
       
       if (isManualClose) {
         const { data: conv } = await admin.from('crm_conversations').select('id').eq('phone', phone).maybeSingle();
@@ -558,7 +608,7 @@ Deno.serve(async (req) => {
       redirectToSucessoNumber = true;
     }
 
-    const profile = await findProfileByPhone(admin, phone, 'user_id, full_name, objective, phone');
+    const profile = await findProfileByPhone(admin, phone, 'user_id, full_name, objective, phone', waId);
     let displayName = name || profile?.full_name || null;
     let identifiedAs: 'aluno_ativo' | 'aluno_vencido' | 'lead' | 'ex_aluno' = 'lead';
 
@@ -602,7 +652,22 @@ Deno.serve(async (req) => {
     const isNewSession = !conv || conv.status === 'closed' || (isExpired && !isHumanActive);
 
     if (!conv) {
-      const ins = await admin.from('crm_conversations').insert({ phone, display_name: displayName, channel: 'whatsapp', status: 'open', provider, queue_type: finalQueue, nutri_category: cls.nutriCategory, is_lead: identifiedAs === 'lead', user_id: profile?.user_id, identified_as: identifiedAs, session_started_at: now.toISOString(), session_expires_at: sessionExpiresAt.toISOString(), session_count: 1 }).select('*').single();
+      const ins = await admin.from('crm_conversations').insert({ 
+        phone, 
+        wa_id: waId,
+        display_name: displayName, 
+        channel: 'whatsapp', 
+        status: 'open', 
+        provider, 
+        queue_type: finalQueue, 
+        nutri_category: cls.nutriCategory, 
+        is_lead: identifiedAs === 'lead', 
+        user_id: profile?.user_id, 
+        identified_as: identifiedAs, 
+        session_started_at: now.toISOString(), 
+        session_expires_at: sessionExpiresAt.toISOString(), 
+        session_count: 1 
+      }).select('*').single();
       conv = ins.data;
     } else {
       if (isExpired && conv.status === 'open' && !isHumanActive) {
@@ -614,9 +679,20 @@ Deno.serve(async (req) => {
         await admin.from('crm_messages').insert({ conversation_id: conv.id, direction: 'out', body: farewellMessage, source: provider, status: 'sent', metadata: { type: 'timeout_farewell' } });
       }
 
-      const upd: any = { provider, queue_type: finalQueue, nutri_category: cls.nutriCategory, session_expires_at: sessionExpiresAt.toISOString(), status: 'open', is_lead: identifiedAs === 'lead', user_id: profile?.user_id, identified_as: identifiedAs };
+      const upd: any = { 
+        provider, 
+        wa_id: waId,
+        queue_type: finalQueue, 
+        nutri_category: cls.nutriCategory, 
+        session_expires_at: sessionExpiresAt.toISOString(), 
+        status: 'open', 
+        is_lead: identifiedAs === 'lead', 
+        user_id: profile?.user_id, 
+        identified_as: identifiedAs 
+      };
       
       if (isNewSession) { 
+
         upd.session_started_at = now.toISOString(); 
         upd.session_count = (conv.session_count || 0) + 1; 
         upd.flow_state = null; 
@@ -1187,7 +1263,7 @@ Deno.serve(async (req) => {
     }
 
     if (!autoReply && (aiModeCfg?.value as any)?.mode === 'auto') {
-      const ai = await generateAiReply({ admin, conversationId: conv.id, phone, queue: conv.queue_type });
+      const ai = await generateAiReply({ admin, conversationId: conv.id, phone, waId: conv.wa_id, queue: conv.queue_type });
       if (ai.response) { const r = await sendMessage(ai.response, 'ai'); autoReply = { sent: r.sent, engine: ai.engine }; }
     }
 
