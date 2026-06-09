@@ -504,7 +504,7 @@ export const syncStudentDietMeals = async (
       const mealCount = meals.length;
 
       fallbackPerMealMacros = meals.map((m, idx) => ({
-        meal_number: m.sort_order + 1,
+        meal_number: idx + 1, // Use sequential number consistent with AI
         energy_kcal: Math.round((totalKcal / mealCount) * 10) / 10,
         protein_g: Math.round((totalProtein / mealCount) * 10) / 10,
         carbs_g: Math.round((totalCarbs / mealCount) * 10) / 10,
