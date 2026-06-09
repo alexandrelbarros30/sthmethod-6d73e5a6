@@ -219,31 +219,39 @@ function digitsOnly(raw: string | null | undefined): string {
 }
 
 function phoneMatchScore(row: any, targetPhone: string, targetWaId: string | null): number {
-  const candidatePhone = digitsOnly(row.phone);
+  const candidate = digitsOnly(row.phone);
   const candidateWaId = row.whatsapp_id;
   const target = digitsOnly(targetPhone);
   
   // Prioridade máxima: whatsapp_id exato
   if (targetWaId && candidateWaId === targetWaId) return 1000;
   
-  if (!candidatePhone || !target) return 0;
+  if (!candidate || !target) return 0;
   
   // Match exato (normalizado)
-  if (candidatePhone === target) return 100;
+  if (candidate === target) return 100;
   
   // Match dos últimos 8 dígitos (corpo do número sem 9 extra e sem DDD)
-  const c8 = candidatePhone.slice(-8);
+  const c8 = candidate.slice(-8);
   const t8 = target.slice(-8);
+  
   if (c8 === t8) {
-    // Se os últimos 8 batem, verificamos o DDD (últimos 10 ou 11)
-    if (candidatePhone.slice(-11) === target.slice(-11)) return 95;
-    if (candidatePhone.slice(-10) === target.slice(-10)) return 90;
+    // Se os últimos 8 batem, verificamos o DDD.
+    // O DDD geralmente está antes dos últimos 8 ou 9 dígitos.
+    const getDDD = (s: string) => {
+      const sansDDI = s.startsWith('55') ? s.slice(2) : s;
+      return sansDDI.slice(0, 2);
+    };
     
-    // Fallback para variação de 9º dígito
-    if (candidatePhone.length >= 10 && target.length >= 10) {
-      const cDDD = candidatePhone.slice(-11, -9) || candidatePhone.slice(-10, -8);
-      const tDDD = target.slice(-11, -9) || target.slice(-10, -8);
-      if (cDDD === tDDD) return 85;
+    const cDDD = getDDD(candidate);
+    const tDDD = getDDD(target);
+    
+    if (cDDD === tDDD) {
+       // Se o DDD bate e os últimos 8 batem, é quase certamente o mesmo aluno
+       // (podendo variar apenas o 9º dígito ou o DDI)
+       if (candidate.slice(-11) === target.slice(-11)) return 95;
+       if (candidate.slice(-10) === target.slice(-10)) return 90;
+       return 85;
     }
     
     return 60;
