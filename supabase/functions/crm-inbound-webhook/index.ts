@@ -499,7 +499,7 @@ Deno.serve(async (req) => {
       const isOptOut = /\bCANCELAR\s+ENVIO\b/.test(normalizedBody);
       const isManualClose = normalizedBody === '#SAIR' || normalizedBody === '#ENCERRAR';
       
-      const profile = await findProfileByPhone(admin, phone, 'user_id, full_name, phone');
+      const profile = await findProfileByPhone(admin, phone, 'user_id, full_name, phone', waId);
       
       if (isManualClose) {
         const { data: conv } = await admin.from('crm_conversations').select('id').eq('phone', phone).maybeSingle();
