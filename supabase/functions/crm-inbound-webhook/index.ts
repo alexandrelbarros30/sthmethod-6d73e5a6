@@ -782,24 +782,66 @@ Deno.serve(async (req) => {
         }
       } else if (provider === 'wapi_sucesso') {
         const flowStep = getFlowStep('sucesso_main_menu');
-        const r = await sendMessage(String(flowStep?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu', null, undefined, {}, flowStep);
-        await admin.from('crm_conversations').update({ flow_state: 'sucesso_main_menu', queue_type: 'sucesso' }).eq('id', conv.id);
-        autoReply = { sent: r.sent, engine: 'flow' };
+        // Prevenir duplicação no início da sessão (dedup 30s)
+        const thirtySecsAgo = new Date(Date.now() - 30 * 1000).toISOString();
+        const { data: recentMsg } = await admin.from('crm_messages')
+          .select('id')
+          .eq('conversation_id', conv.id)
+          .eq('direction', 'out')
+          .gt('created_at', thirtySecsAgo)
+          .eq('metadata->>tag', 'sucesso_main_menu')
+          .maybeSingle();
+
+        if (!recentMsg) {
+          const r = await sendMessage(String(flowStep?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu', null, undefined, {}, flowStep);
+          await admin.from('crm_conversations').update({ flow_state: 'sucesso_main_menu', queue_type: 'sucesso' }).eq('id', conv.id);
+          autoReply = { sent: r.sent, engine: 'flow' };
+        } else {
+          autoReply = { sent: false, reason: 'duplicate_prevented' };
+        }
       } else {
         if (identifiedAs !== 'lead') {
           const step = identifiedAs === 'aluno_ativo' ? 'comercial_ident_ativo' : (identifiedAs === 'aluno_vencido' ? 'comercial_ident_inativo' : 'comercial_ident_exaluno');
           const flowStepIdent = getFlowStep(step);
-          await sendMessage(String(flowStepIdent?.message || 'Redirecionando para Sucesso...'), step, null, undefined, {}, flowStepIdent);
           
-          const flowStepMain = getFlowStep('sucesso_main_menu');
-          const r = await sendMessage(String(flowStepMain?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu', null, undefined, {}, flowStepMain);
-          await admin.from('crm_conversations').update({ flow_state: 'sucesso_main_menu', queue_type: 'sucesso' }).eq('id', conv.id);
-          autoReply = { sent: r.sent, engine: 'flow' };
+          // Prevenir duplicação no início da sessão (dedup 30s)
+          const thirtySecsAgo = new Date(Date.now() - 30 * 1000).toISOString();
+          const { data: recentMsg } = await admin.from('crm_messages')
+            .select('id')
+            .eq('conversation_id', conv.id)
+            .eq('direction', 'out')
+            .gt('created_at', thirtySecsAgo)
+            .eq('metadata->>tag', step)
+            .maybeSingle();
+
+          if (!recentMsg) {
+            await sendMessage(String(flowStepIdent?.message || 'Redirecionando para Sucesso...'), step, null, undefined, {}, flowStepIdent);
+            const flowStepMain = getFlowStep('sucesso_main_menu');
+            const r = await sendMessage(String(flowStepMain?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu', null, undefined, {}, flowStepMain);
+            await admin.from('crm_conversations').update({ flow_state: 'sucesso_main_menu', queue_type: 'sucesso' }).eq('id', conv.id);
+            autoReply = { sent: r.sent, engine: 'flow' };
+          } else {
+            autoReply = { sent: false, reason: 'duplicate_prevented' };
+          }
         } else {
           const flowStep = getFlowStep('comercial_saudacao_lead');
-          const r = await sendMessage(String(flowStep?.message || 'Seja bem-vindo à STH Method...'), 'comercial_saudacao_lead', null, undefined, {}, flowStep);
-          await admin.from('crm_conversations').update({ flow_state: 'lead_main_menu' }).eq('id', conv.id);
-          autoReply = { sent: r.sent, engine: 'flow' };
+          // Prevenir duplicação no início da sessão (dedup 30s)
+          const thirtySecsAgo = new Date(Date.now() - 30 * 1000).toISOString();
+          const { data: recentMsg } = await admin.from('crm_messages')
+            .select('id')
+            .eq('conversation_id', conv.id)
+            .eq('direction', 'out')
+            .gt('created_at', thirtySecsAgo)
+            .eq('metadata->>tag', 'comercial_saudacao_lead')
+            .maybeSingle();
+
+          if (!recentMsg) {
+            const r = await sendMessage(String(flowStep?.message || 'Seja bem-vindo à STH Method...'), 'comercial_saudacao_lead', null, undefined, {}, flowStep);
+            await admin.from('crm_conversations').update({ flow_state: 'lead_main_menu' }).eq('id', conv.id);
+            autoReply = { sent: r.sent, engine: 'flow' };
+          } else {
+            autoReply = { sent: false, reason: 'duplicate_prevented' };
+          }
         }
       }
     } else if (conv.flow_state === 'nutri_main') {
