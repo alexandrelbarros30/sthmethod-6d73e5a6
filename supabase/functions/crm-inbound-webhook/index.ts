@@ -643,7 +643,22 @@ Deno.serve(async (req) => {
     const isNewSession = !conv || conv.status === 'closed' || (isExpired && !isHumanActive);
 
     if (!conv) {
-      const ins = await admin.from('crm_conversations').insert({ phone, display_name: displayName, channel: 'whatsapp', status: 'open', provider, queue_type: finalQueue, nutri_category: cls.nutriCategory, is_lead: identifiedAs === 'lead', user_id: profile?.user_id, identified_as: identifiedAs, session_started_at: now.toISOString(), session_expires_at: sessionExpiresAt.toISOString(), session_count: 1 }).select('*').single();
+      const ins = await admin.from('crm_conversations').insert({ 
+        phone, 
+        wa_id: waId,
+        display_name: displayName, 
+        channel: 'whatsapp', 
+        status: 'open', 
+        provider, 
+        queue_type: finalQueue, 
+        nutri_category: cls.nutriCategory, 
+        is_lead: identifiedAs === 'lead', 
+        user_id: profile?.user_id, 
+        identified_as: identifiedAs, 
+        session_started_at: now.toISOString(), 
+        session_expires_at: sessionExpiresAt.toISOString(), 
+        session_count: 1 
+      }).select('*').single();
       conv = ins.data;
     } else {
       if (isExpired && conv.status === 'open' && !isHumanActive) {
@@ -655,9 +670,20 @@ Deno.serve(async (req) => {
         await admin.from('crm_messages').insert({ conversation_id: conv.id, direction: 'out', body: farewellMessage, source: provider, status: 'sent', metadata: { type: 'timeout_farewell' } });
       }
 
-      const upd: any = { provider, queue_type: finalQueue, nutri_category: cls.nutriCategory, session_expires_at: sessionExpiresAt.toISOString(), status: 'open', is_lead: identifiedAs === 'lead', user_id: profile?.user_id, identified_as: identifiedAs };
+      const upd: any = { 
+        provider, 
+        wa_id: waId,
+        queue_type: finalQueue, 
+        nutri_category: cls.nutriCategory, 
+        session_expires_at: sessionExpiresAt.toISOString(), 
+        status: 'open', 
+        is_lead: identifiedAs === 'lead', 
+        user_id: profile?.user_id, 
+        identified_as: identifiedAs 
+      };
       
       if (isNewSession) { 
+
         upd.session_started_at = now.toISOString(); 
         upd.session_count = (conv.session_count || 0) + 1; 
         upd.flow_state = null; 
