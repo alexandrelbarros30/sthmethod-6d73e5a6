@@ -53,6 +53,7 @@ const AdminBudgets = () => {
   // Budget form
   const [budgetTitle, setBudgetTitle] = useState("Orçamento de Suplementos");
   const [budgetNotes, setBudgetNotes] = useState("");
+  const [budgetDuration, setBudgetDuration] = useState("");
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([]);
 
   // Fetch students
@@ -93,7 +94,7 @@ const AdminBudgets = () => {
   });
 
   const saveMutation = useMutation({
-    mutationFn: async (data: { id?: string; userId: string; title: string; items: BudgetItem[]; total: number; notes: string; status: string }) => {
+    mutationFn: async (data: { id?: string; userId: string; title: string; items: BudgetItem[]; total: number; notes: string; status: string; duration?: string }) => {
       const payload = {
         user_id: data.userId,
         title: data.title,
@@ -101,6 +102,7 @@ const AdminBudgets = () => {
         total: data.total,
         notes: data.notes,
         status: data.status,
+        duration: data.duration,
       };
 
       const { data: budget, error } = data.id 
@@ -112,10 +114,6 @@ const AdminBudgets = () => {
       // Se foi gerado um orçamento (não apenas rascunho), notifica o canal Nutri
       if (data.status === "sent") {
         try {
-          const student = students?.find((s: any) => s.user_id === data.userId);
-          const studentName = student?.full_name || "Aluno";
-          const studentPhone = student?.phone || "Não informado";
-          
           const targetPhone = "5521975194237";
           let { data: conv } = await supabase
             .from("crm_conversations")
@@ -160,7 +158,7 @@ const AdminBudgets = () => {
               formulaCounter++;
             });
 
-            const body = `🚨 *NOVO ORÇAMENTO GERADO*\n\n👤 *Aluno:* ${studentName}\n📱 *Telefone:* ${studentPhone}\n📝 *Título:* ${data.title}\n\n*ITENS DO ORÇAMENTO:*${itemsText}\n\n💰 *TOTAL:* R$ ${data.total.toFixed(2)}${data.notes ? `\n\n📝 *OBS:* ${data.notes}` : ""}`;
+            const body = `🚨 *NOVO ORÇAMENTO GERADO*\n\n📝 *Título:* ${data.title}${data.duration ? `\n⏳ *Plano/Duração:* ${data.duration}` : ""}\n\n*ITENS DO ORÇAMENTO:*${itemsText}\n\n💰 *TOTAL:* R$ ${data.total.toFixed(2)}${data.notes ? `\n\n📝 *OBS:* ${data.notes}` : ""}`;
 
             await supabase.functions.invoke("crm-send-whatsapp", {
               body: {
@@ -206,10 +204,6 @@ const AdminBudgets = () => {
 
       if (status === "sent") {
         try {
-          const { data: profile } = await supabase.from("profiles").select("full_name, phone").eq("user_id", budget.user_id).maybeSingle();
-          const studentName = profile?.full_name || "Aluno";
-          const studentPhone = profile?.phone || "Não informado";
-
           const targetPhone = "5521975194237";
           let { data: conv } = await supabase
             .from("crm_conversations")
@@ -255,7 +249,7 @@ const AdminBudgets = () => {
               formulaCounter++;
             });
 
-            const body = `🚨 *ORÇAMENTO ENVIADO*\n\n👤 *Aluno:* ${studentName}\n📱 *Telefone:* ${studentPhone}\n📝 *Título:* ${budget.title}\n\n*ITENS DO ORÇAMENTO:*${itemsText}\n\n💰 *TOTAL:* R$ ${Number(budget.total).toFixed(2)}${budget.notes ? `\n\n📝 *OBS:* ${budget.notes}` : ""}`;
+            const body = `🚨 *ORÇAMENTO ENVIADO*\n\n📝 *Título:* ${budget.title}${budget.duration ? `\n⏳ *Plano/Duração:* ${budget.duration}` : ""}\n\n*ITENS DO ORÇAMENTO:*${itemsText}\n\n💰 *TOTAL:* R$ ${Number(budget.total).toFixed(2)}${budget.notes ? `\n\n📝 *OBS:* ${budget.notes}` : ""}`;
             
             await supabase.functions.invoke("crm-send-whatsapp", {
               body: {
@@ -280,6 +274,7 @@ const AdminBudgets = () => {
   const resetForm = () => {
     setBudgetTitle("Orçamento de Suplementos");
     setBudgetNotes("");
+    setBudgetDuration("");
     setBudgetItems([]);
     setSelectedStudent(null);
     setEditingId(null);
@@ -291,6 +286,7 @@ const AdminBudgets = () => {
     setEditingId(budget.id);
     setBudgetTitle(budget.title);
     setBudgetNotes(budget.notes || "");
+    setBudgetDuration(budget.duration || "");
     setBudgetItems(budget.items as BudgetItem[] || []);
     setDialogOpen(true);
   };
@@ -347,6 +343,13 @@ const AdminBudgets = () => {
     if (latestProtocol && latestProtocol.content) {
       const sp = latestProtocol;
       const lines = htmlToLines(sp.content);
+      
+      // Try to extract duration (e.g., Sem 1-4, 30 dias)
+      const durationMatch = sp.content.match(/(?:Sem|Semanas?|Dias?)\s*(\d+(?:[-–—]\d+)?)/i);
+      if (durationMatch) {
+        setBudgetDuration(durationMatch[0].trim());
+      }
+
       let currentCategory = "metabolico";
       let currentOrigin = "Protocolo";
       lines.forEach((raw: string) => {
@@ -404,10 +407,10 @@ const AdminBudgets = () => {
       return next;
     });
 
-    if (field === "unit_price" && selectedStudent) {
+    if (field === "unit_price" && selectedStudent && budgetTitle === "Orçamento de Suplementos") {
       const name = selectedStudent.full_name || "Aluno";
       const phone = selectedStudent.phone || "";
-      setBudgetTitle(`Orçamento de Suplementos — ${name}${phone ? ` (${phone})` : ""}`);
+      setBudgetTitle(`${name}${phone ? ` — ${phone}` : ""}`);
     }
   };
 
@@ -427,7 +430,9 @@ const AdminBudgets = () => {
 
   const copyBudgetText = (budget: any) => {
     const items = (budget.items as BudgetItem[]) || [];
-    let text = `📋 ${budget.title}\n\n`;
+    let text = `📋 ${budget.title}\n`;
+    if (budget.duration) text += `⏳ Plano: ${budget.duration}\n`;
+    text += "\n";
     // Group by origin (section): MANHÃ, ALMOÇO, PRÉ-TREINO, etc.
     const groups = new Map<string, BudgetItem[]>();
     items.forEach((item) => {
@@ -588,7 +593,16 @@ const AdminBudgets = () => {
                     </Button>
                   </div>
 
-                  <Input value={budgetTitle} onChange={(e) => setBudgetTitle(e.target.value)} placeholder="Título do orçamento" />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="md:col-span-2">
+                      <Label className="text-xs mb-1 block text-muted-foreground">Título do Orçamento</Label>
+                      <Input value={budgetTitle} onChange={(e) => setBudgetTitle(e.target.value)} placeholder="Título do orçamento" />
+                    </div>
+                    <div>
+                      <Label className="text-xs mb-1 block text-muted-foreground">Duração/Plano (Ex: 30 dias)</Label>
+                      <Input value={budgetDuration} onChange={(e) => setBudgetDuration(e.target.value)} placeholder="Ex: 30 dias" />
+                    </div>
+                  </div>
 
                   {budgetItems.length > 0 && (
                     <div className="border border-border rounded-xl overflow-hidden">
@@ -681,6 +695,7 @@ const AdminBudgets = () => {
                         items: budgetItems,
                         total: totalBudget,
                         notes: budgetNotes,
+                        duration: budgetDuration,
                         status: "draft",
                       })}
                       disabled={budgetItems.length === 0}
@@ -695,6 +710,7 @@ const AdminBudgets = () => {
                         items: budgetItems,
                         total: totalBudget,
                         notes: budgetNotes,
+                        duration: budgetDuration,
                         status: "sent",
                       })}
                       disabled={budgetItems.length === 0}
@@ -716,9 +732,16 @@ const AdminBudgets = () => {
             </DialogHeader>
             {previewBudget && (
               <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Aluno: <span className="font-medium text-foreground">{getStudentName(previewBudget.user_id)}</span>
-                </p>
+                <div className="flex justify-between items-start gap-2">
+                  <p className="text-sm text-muted-foreground">
+                    Aluno: <span className="font-medium text-foreground">{getStudentName(previewBudget.user_id)}</span>
+                  </p>
+                  {previewBudget.duration && (
+                    <Badge variant="outline" className="text-primary border-primary/20">
+                      {previewBudget.duration}
+                    </Badge>
+                  )}
+                </div>
                 <div className="space-y-2">
                   {(() => {
                     const items = (previewBudget.items as BudgetItem[]) || [];
