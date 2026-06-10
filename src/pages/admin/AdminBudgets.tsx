@@ -78,13 +78,16 @@ const AdminBudgets = () => {
     enabled: !!selectedStudent?.user_id,
     queryFn: async () => {
       const userId = selectedStudent.user_id;
-      const [{ data: categoryContent }, { data: protocols }, { data: extraCats }, { data: studentProtocols }] = await Promise.all([
+      const [categoryContentRes, extraCatsRes, studentProtocolsRes] = await Promise.all([
         supabase.from("protocol_category_content" as any).select("*").eq("user_id", userId),
-        supabase.from("protocols" as any).select("*").eq("user_id", userId).order("sort_order"),
         supabase.from("protocol_extra_categories" as any).select("*").eq("user_id", userId).order("sort_order"),
         supabase.from("student_protocols" as any).select("*").eq("user_id", userId).eq("visible", true).order("updated_at", { ascending: false }),
       ]);
-      return { categoryContent, protocols, extraCats, studentProtocols };
+      return { 
+        categoryContent: categoryContentRes.data || [], 
+        extraCats: extraCatsRes.data || [], 
+        studentProtocols: studentProtocolsRes.data || [] 
+      };
     },
   });
 
@@ -282,29 +285,17 @@ const AdminBudgets = () => {
     const items: BudgetItem[] = [];
     const targetCategories = ["endocrino", "cardiovascular", "metabolico", "pre_pos_treino"];
 
-    // From protocols table (individual items)
-    (protocolData.protocols || []).forEach((p: any) => {
-      if (targetCategories.includes(p.category)) {
-        items.push({
-          name: p.name,
-          dosage: p.dosage || "",
-          quantity: "1",
-          unit_price: 0,
-          subtotal: 0,
-          category: p.category,
-          origin: categoryLabels[p.category] || "Protocolo",
-        });
-      }
-    });
+    // Items are now imported ONLY from student_protocols (visible rich-text content)
+    // to avoid bringing in old/hidden data from protocols or protocol_category_content tables.
 
-    // Helper: convert HTML to plain text lines without breaking inline formatting
+    // Helper: convert HTML to plain text lines
     const htmlToLines = (html: string): string[] => {
       const withBreaks = html
         .replace(/<\s*br\s*\/?>/gi, "\n")
         .replace(/<\/(p|div|li|h[1-6]|tr)>/gi, "\n")
         .replace(/<li[^>]*>/gi, "• ");
       const stripped = withBreaks
-        .replace(/<[^>]+>/g, "") // strip remaining inline tags
+        .replace(/<[^>]+>/g, "")
         .replace(/&nbsp;/g, " ")
         .replace(/&amp;/g, "&")
         .replace(/&lt;/g, "<")
@@ -315,65 +306,17 @@ const AdminBudgets = () => {
         .filter((l) => l.length > 2);
     };
 
-    // Helper: split a line into "name" and "dosage"
-    // e.g. "Tadalafila: 5 mg (Diário)" → { name: "Tadalafila", dosage: "5 mg (Diário)" }
-    // e.g. "Ômega-3 (TG): 4g / dia" → { name: "Ômega-3 (TG)", dosage: "4g / dia" }
     const splitNameDosage = (line: string): { name: string; dosage: string } => {
-      // Prefer split on first " — ", " - " or ":" that comes AFTER a closing parenthesis or letter
       const colonIdx = line.search(/\s*[:–—]\s+/);
       if (colonIdx > 0) {
         const name = line.slice(0, colonIdx).trim();
         const dosage = line.slice(colonIdx).replace(/^\s*[:–—]\s+/, "").trim();
         if (name.length > 1 && dosage.length > 0) return { name, dosage };
       }
-      // Fallback: detect dosage pattern at end (e.g. "5 mg", "200 UI", "4g")
       const m = line.match(/^(.+?)\s+(\d[\d.,]*\s?(?:mg|mcg|µg|g|ui|iu|ml|l|%|kcal|cps|caps|comp|gotas|puffs?)\b.*)$/i);
       if (m) return { name: m[1].trim().replace(/[:\-–—]\s*$/, ""), dosage: m[2].trim() };
       return { name: line, dosage: "" };
     };
-
-    // From category content - parse text lines
-    (protocolData.categoryContent || []).forEach((cc: any) => {
-      if (targetCategories.includes(cc.category) && cc.content) {
-        const lines = htmlToLines(cc.content);
-        lines.forEach((line: string) => {
-          // Skip headers/titles
-          if (line.match(/^(suporte|sistema|pré|pós|cardiovascular|metabólico|hepático|renal)\b/i)) return;
-          const { name, dosage } = splitNameDosage(line);
-          const existing = items.find((i) => i.name.toLowerCase() === name.toLowerCase());
-          if (!existing) {
-            items.push({
-              name,
-              dosage,
-              quantity: "1",
-              unit_price: 0,
-              subtotal: 0,
-              category: cc.category,
-              origin: categoryLabels[cc.category] || "Protocolo",
-            });
-          }
-        });
-      }
-    });
-
-    // From extra categories
-    (protocolData.extraCats || []).forEach((ec: any) => {
-      if (ec.content) {
-        const lines = htmlToLines(ec.content);
-        lines.forEach((line: string) => {
-          const { name, dosage } = splitNameDosage(line);
-          items.push({
-            name,
-            dosage,
-            quantity: "1",
-            unit_price: 0,
-            subtotal: 0,
-            category: "extra",
-            origin: ec.title || ec.name || "Outros",
-          });
-        });
-      }
-    });
 
     // From student_protocols rich-text content (numbered lists per section)
     const sectionToCategory = (header: string): string => {
@@ -383,8 +326,10 @@ const AdminBudgets = () => {
       if (/pr[ée]\s*-?\s*treino|p[óo]s\s*-?\s*treino|treino/.test(h)) return "pre_pos_treino";
       return "metabolico";
     };
-    (protocolData.studentProtocols || []).forEach((sp: any) => {
-      if (!sp.content) return;
+    // Only import from the MOST RECENT visible protocol
+    const latestProtocol = (protocolData.studentProtocols as any[])?.[0];
+    if (latestProtocol && latestProtocol.content) {
+      const sp = latestProtocol;
       const lines = htmlToLines(sp.content);
       let currentCategory = "metabolico";
       let currentOrigin = "Protocolo";
@@ -423,7 +368,7 @@ const AdminBudgets = () => {
           origin: currentOrigin,
         });
       });
-    });
+    }
 
     setBudgetItems(items);
     if (items.length === 0) {
