@@ -343,6 +343,13 @@ const AdminBudgets = () => {
     if (latestProtocol && latestProtocol.content) {
       const sp = latestProtocol;
       const lines = htmlToLines(sp.content);
+      
+      // Try to extract duration (e.g., Sem 1-4, 30 dias)
+      const durationMatch = sp.content.match(/(?:Sem|Semanas?|Dias?)\s*(\d+(?:[-–—]\d+)?)/i);
+      if (durationMatch) {
+        setBudgetDuration(durationMatch[0].trim());
+      }
+
       let currentCategory = "metabolico";
       let currentOrigin = "Protocolo";
       lines.forEach((raw: string) => {
