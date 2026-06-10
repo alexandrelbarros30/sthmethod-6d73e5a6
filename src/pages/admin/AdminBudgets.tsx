@@ -227,7 +227,7 @@ const AdminBudgets = () => {
           }
 
           if (conv) {
-            const items = (budget.items as BudgetItem[]) || [];
+            const items = (budget.items as unknown as BudgetItem[]) || [];
             const groups = new Map<string, BudgetItem[]>();
             items.forEach((item) => {
               const key = item.origin || categoryLabels[item.category] || "Outros";
