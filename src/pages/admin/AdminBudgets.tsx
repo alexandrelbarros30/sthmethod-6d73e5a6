@@ -326,7 +326,6 @@ const AdminBudgets = () => {
     const latestProtocol = (protocolData.studentProtocols || [])[0];
     if (latestProtocol && latestProtocol.content) {
       const sp = latestProtocol;
-      if (!sp.content) return;
       const lines = htmlToLines(sp.content);
       let currentCategory = "metabolico";
       let currentOrigin = "Protocolo";
