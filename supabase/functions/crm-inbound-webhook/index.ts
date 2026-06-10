@@ -600,7 +600,11 @@ Deno.serve(async (req) => {
       }
     }
     
-    // NOVO: Redirecionamento automático para Sucesso do Aluno quando fora do horário comercial
+    // Redirecionamento automático para Sucesso do Aluno quando fora do horário comercial.
+    // IMPORTANTE: não acionamos para leads em nova sessão — o menu de boas-vindas do
+    // canal Comercial deve aparecer SEMPRE no primeiro contato, mesmo fora do horário.
+    // O redirect/away continua valendo para alunos identificados e para mensagens
+    // subsequentes dentro da janela de silêncio (4h) controlada por crm_away_locks.
     let forceSucessoQueue = false;
     let redirectToSucessoNumber = false;
     if (!withinHours && provider === 'zapi') {
@@ -889,7 +893,11 @@ Deno.serve(async (req) => {
       } else {
         autoReply = { sent: false, reason: 'today_notice_already_sent' };
       }
-    } else if (!withinHours) {
+    } else if (!withinHours && !(provider === 'zapi' && isNewSession)) {
+      // Em nova sessão no Comercial (Z-API), pulamos a mensagem de ausência para
+      // garantir que o menu de boas-vindas/identificação SEMPRE seja enviado primeiro,
+      // mesmo fora do horário. Mensagens subsequentes na mesma sessão continuam
+      // recebendo a ausência via crm_away_locks.
       // Fora do horário de expediente: enviar mensagem de ausência se não enviamos uma recentemente (últimas 4 horas)
       const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
       
