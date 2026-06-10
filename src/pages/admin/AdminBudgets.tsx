@@ -364,7 +364,7 @@ const AdminBudgets = () => {
           origin: currentOrigin,
         });
       });
-    });
+    }
 
     setBudgetItems(items);
     if (items.length === 0) {
