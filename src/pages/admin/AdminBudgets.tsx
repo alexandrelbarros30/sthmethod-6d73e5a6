@@ -204,10 +204,6 @@ const AdminBudgets = () => {
 
       if (status === "sent") {
         try {
-          const { data: profile } = await supabase.from("profiles").select("full_name, phone").eq("user_id", budget.user_id).maybeSingle();
-          const studentName = profile?.full_name || "Aluno";
-          const studentPhone = profile?.phone || "Não informado";
-
           const targetPhone = "5521975194237";
           let { data: conv } = await supabase
             .from("crm_conversations")
@@ -253,7 +249,7 @@ const AdminBudgets = () => {
               formulaCounter++;
             });
 
-            const body = `🚨 *ORÇAMENTO ENVIADO*\n\n👤 *Aluno:* ${studentName}\n📱 *Telefone:* ${studentPhone}\n📝 *Título:* ${budget.title}\n\n*ITENS DO ORÇAMENTO:*${itemsText}\n\n💰 *TOTAL:* R$ ${Number(budget.total).toFixed(2)}${budget.notes ? `\n\n📝 *OBS:* ${budget.notes}` : ""}`;
+            const body = `🚨 *ORÇAMENTO ENVIADO*\n\n📝 *Título:* ${budget.title}${budget.duration ? `\n⏳ *Plano/Duração:* ${budget.duration}` : ""}\n\n*ITENS DO ORÇAMENTO:*${itemsText}\n\n💰 *TOTAL:* R$ ${Number(budget.total).toFixed(2)}${budget.notes ? `\n\n📝 *OBS:* ${budget.notes}` : ""}`;
             
             await supabase.functions.invoke("crm-send-whatsapp", {
               body: {
