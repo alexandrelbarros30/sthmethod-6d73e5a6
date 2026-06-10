@@ -693,6 +693,7 @@ const AdminBudgets = () => {
                         items: budgetItems,
                         total: totalBudget,
                         notes: budgetNotes,
+                        duration: budgetDuration,
                         status: "draft",
                       })}
                       disabled={budgetItems.length === 0}
