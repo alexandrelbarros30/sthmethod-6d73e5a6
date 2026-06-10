@@ -78,12 +78,16 @@ const AdminBudgets = () => {
     enabled: !!selectedStudent?.user_id,
     queryFn: async () => {
       const userId = selectedStudent.user_id;
-      const [{ data: categoryContent }, { data: extraCats }, { data: studentProtocols }] = await Promise.all([
+      const [categoryContentRes, extraCatsRes, studentProtocolsRes] = await Promise.all([
         supabase.from("protocol_category_content" as any).select("*").eq("user_id", userId),
         supabase.from("protocol_extra_categories" as any).select("*").eq("user_id", userId).order("sort_order"),
         supabase.from("student_protocols" as any).select("*").eq("user_id", userId).eq("visible", true).order("updated_at", { ascending: false }),
       ]);
-      return { categoryContent, extraCats, studentProtocols };
+      return { 
+        categoryContent: categoryContentRes.data || [], 
+        extraCats: extraCatsRes.data || [], 
+        studentProtocols: studentProtocolsRes.data || [] 
+      };
     },
   });
 
