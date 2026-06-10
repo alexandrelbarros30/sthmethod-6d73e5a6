@@ -600,7 +600,11 @@ Deno.serve(async (req) => {
       }
     }
     
-    // NOVO: Redirecionamento automático para Sucesso do Aluno quando fora do horário comercial
+    // Redirecionamento automático para Sucesso do Aluno quando fora do horário comercial.
+    // IMPORTANTE: não acionamos para leads em nova sessão — o menu de boas-vindas do
+    // canal Comercial deve aparecer SEMPRE no primeiro contato, mesmo fora do horário.
+    // O redirect/away continua valendo para alunos identificados e para mensagens
+    // subsequentes dentro da janela de silêncio (4h) controlada por crm_away_locks.
     let forceSucessoQueue = false;
     let redirectToSucessoNumber = false;
     if (!withinHours && provider === 'zapi') {
