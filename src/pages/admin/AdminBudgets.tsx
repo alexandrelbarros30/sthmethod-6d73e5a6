@@ -591,7 +591,16 @@ const AdminBudgets = () => {
                     </Button>
                   </div>
 
-                  <Input value={budgetTitle} onChange={(e) => setBudgetTitle(e.target.value)} placeholder="Título do orçamento" />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="md:col-span-2">
+                      <Label className="text-xs mb-1 block text-muted-foreground">Título do Orçamento</Label>
+                      <Input value={budgetTitle} onChange={(e) => setBudgetTitle(e.target.value)} placeholder="Título do orçamento" />
+                    </div>
+                    <div>
+                      <Label className="text-xs mb-1 block text-muted-foreground">Duração/Plano (Ex: 30 dias)</Label>
+                      <Input value={budgetDuration} onChange={(e) => setBudgetDuration(e.target.value)} placeholder="Ex: 30 dias" />
+                    </div>
+                  </div>
 
                   {budgetItems.length > 0 && (
                     <div className="border border-border rounded-xl overflow-hidden">
