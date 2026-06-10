@@ -286,6 +286,7 @@ const AdminBudgets = () => {
     setEditingId(budget.id);
     setBudgetTitle(budget.title);
     setBudgetNotes(budget.notes || "");
+    setBudgetDuration(budget.duration || "");
     setBudgetItems(budget.items as BudgetItem[] || []);
     setDialogOpen(true);
   };
