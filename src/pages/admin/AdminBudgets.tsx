@@ -407,10 +407,10 @@ const AdminBudgets = () => {
       return next;
     });
 
-    if (field === "unit_price" && selectedStudent) {
+    if (field === "unit_price" && selectedStudent && budgetTitle === "Orçamento de Suplementos") {
       const name = selectedStudent.full_name || "Aluno";
       const phone = selectedStudent.phone || "";
-      setBudgetTitle(`Orçamento de Suplementos — ${name}${phone ? ` (${phone})` : ""}`);
+      setBudgetTitle(`${name}${phone ? ` — ${phone}` : ""}`);
     }
   };
 
