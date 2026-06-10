@@ -430,7 +430,9 @@ const AdminBudgets = () => {
 
   const copyBudgetText = (budget: any) => {
     const items = (budget.items as BudgetItem[]) || [];
-    let text = `📋 ${budget.title}\n\n`;
+    let text = `📋 ${budget.title}\n`;
+    if (budget.duration) text += `⏳ Plano: ${budget.duration}\n`;
+    text += "\n";
     // Group by origin (section): MANHÃ, ALMOÇO, PRÉ-TREINO, etc.
     const groups = new Map<string, BudgetItem[]>();
     items.forEach((item) => {
