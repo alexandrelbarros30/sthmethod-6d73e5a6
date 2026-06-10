@@ -53,6 +53,7 @@ const AdminBudgets = () => {
   // Budget form
   const [budgetTitle, setBudgetTitle] = useState("Orçamento de Suplementos");
   const [budgetNotes, setBudgetNotes] = useState("");
+  const [budgetDuration, setBudgetDuration] = useState("");
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([]);
 
   // Fetch students
