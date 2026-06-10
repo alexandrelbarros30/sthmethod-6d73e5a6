@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Plus, Trash2, Eye, Send, FileText, Pill, Copy, Download } from "lucide-react";
+import { Search, Plus, Trash2, Eye, Send, FileText, Pill, Copy, Download, Pencil } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -48,6 +48,7 @@ const AdminBudgets = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewBudget, setPreviewBudget] = useState<any>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   // Budget form
   const [budgetTitle, setBudgetTitle] = useState("Orçamento de Suplementos");
@@ -92,15 +93,19 @@ const AdminBudgets = () => {
   });
 
   const saveMutation = useMutation({
-    mutationFn: async (data: { userId: string; title: string; items: BudgetItem[]; total: number; notes: string; status: string }) => {
-      const { data: budget, error } = await supabase.from("supplement_budgets").insert({
+    mutationFn: async (data: { id?: string; userId: string; title: string; items: BudgetItem[]; total: number; notes: string; status: string }) => {
+      const payload = {
         user_id: data.userId,
         title: data.title,
         items: data.items as any,
         total: data.total,
         notes: data.notes,
         status: data.status,
-      }).select().single();
+      };
+
+      const { data: budget, error } = data.id 
+        ? await supabase.from("supplement_budgets").update(payload).eq("id", data.id).select().single()
+        : await supabase.from("supplement_budgets").insert(payload).select().single();
 
       if (error) throw error;
 
@@ -277,6 +282,17 @@ const AdminBudgets = () => {
     setBudgetNotes("");
     setBudgetItems([]);
     setSelectedStudent(null);
+    setEditingId(null);
+  };
+
+  const startEdit = (budget: any) => {
+    const student = students?.find((s: any) => s.user_id === budget.user_id);
+    setSelectedStudent(student || { user_id: budget.user_id, full_name: "Aluno" });
+    setEditingId(budget.id);
+    setBudgetTitle(budget.title);
+    setBudgetNotes(budget.notes || "");
+    setBudgetItems(budget.items as BudgetItem[] || []);
+    setDialogOpen(true);
   };
 
   // Parse protocol items into budget items
@@ -492,6 +508,9 @@ const AdminBudgets = () => {
                         </p>
                       </div>
                       <div className="flex gap-1.5 shrink-0">
+                        <Button size="sm" variant="ghost" onClick={() => startEdit(b)}>
+                          <Pencil className="w-4 h-4" />
+                        </Button>
                         <Button size="sm" variant="ghost" onClick={() => { setPreviewBudget(b); setPreviewOpen(true); }}>
                           <Eye className="w-4 h-4" />
                         </Button>
@@ -520,7 +539,7 @@ const AdminBudgets = () => {
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <Pill className="w-5 h-5" /> Novo Orçamento
+                <Pill className="w-5 h-5" /> {editingId ? "Editar Orçamento" : "Novo Orçamento"}
               </DialogTitle>
             </DialogHeader>
 
@@ -656,6 +675,7 @@ const AdminBudgets = () => {
                     <Button
                       variant="outline"
                       onClick={() => saveMutation.mutate({
+                        id: editingId || undefined,
                         userId: selectedStudent.user_id,
                         title: budgetTitle,
                         items: budgetItems,
@@ -665,10 +685,11 @@ const AdminBudgets = () => {
                       })}
                       disabled={budgetItems.length === 0}
                     >
-                      Salvar Rascunho
+                      {editingId ? "Atualizar Rascunho" : "Salvar Rascunho"}
                     </Button>
                     <Button
                       onClick={() => saveMutation.mutate({
+                        id: editingId || undefined,
                         userId: selectedStudent.user_id,
                         title: budgetTitle,
                         items: budgetItems,
@@ -678,7 +699,7 @@ const AdminBudgets = () => {
                       })}
                       disabled={budgetItems.length === 0}
                     >
-                      <Send className="w-4 h-4 mr-1.5" /> Salvar e Enviar
+                      <Send className="w-4 h-4 mr-1.5" /> {editingId ? "Atualizar e Enviar" : "Salvar e Enviar"}
                     </Button>
                   </div>
                 </>
