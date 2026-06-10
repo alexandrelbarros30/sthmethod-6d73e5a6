@@ -3766,6 +3766,7 @@ export type Database = {
       supplement_budgets: {
         Row: {
           created_at: string
+          duration: string | null
           id: string
           items: Json
           notes: string | null
@@ -3777,6 +3778,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          duration?: string | null
           id?: string
           items?: Json
           notes?: string | null
@@ -3788,6 +3790,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          duration?: string | null
           id?: string
           items?: Json
           notes?: string | null
