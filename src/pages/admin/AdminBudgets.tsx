@@ -114,10 +114,6 @@ const AdminBudgets = () => {
       // Se foi gerado um orçamento (não apenas rascunho), notifica o canal Nutri
       if (data.status === "sent") {
         try {
-          const student = students?.find((s: any) => s.user_id === data.userId);
-          const studentName = student?.full_name || "Aluno";
-          const studentPhone = student?.phone || "Não informado";
-          
           const targetPhone = "5521975194237";
           let { data: conv } = await supabase
             .from("crm_conversations")
@@ -162,7 +158,7 @@ const AdminBudgets = () => {
               formulaCounter++;
             });
 
-            const body = `🚨 *NOVO ORÇAMENTO GERADO*\n\n👤 *Aluno:* ${studentName}\n📱 *Telefone:* ${studentPhone}\n📝 *Título:* ${data.title}\n\n*ITENS DO ORÇAMENTO:*${itemsText}\n\n💰 *TOTAL:* R$ ${data.total.toFixed(2)}${data.notes ? `\n\n📝 *OBS:* ${data.notes}` : ""}`;
+            const body = `🚨 *NOVO ORÇAMENTO GERADO*\n\n📝 *Título:* ${data.title}${data.duration ? `\n⏳ *Plano/Duração:* ${data.duration}` : ""}\n\n*ITENS DO ORÇAMENTO:*${itemsText}\n\n💰 *TOTAL:* R$ ${data.total.toFixed(2)}${data.notes ? `\n\n📝 *OBS:* ${data.notes}` : ""}`;
 
             await supabase.functions.invoke("crm-send-whatsapp", {
               body: {
