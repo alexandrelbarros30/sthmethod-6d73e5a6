@@ -104,7 +104,10 @@ const AdminBudgets = () => {
       // Se foi gerado um orçamento (não apenas rascunho), notifica o canal Nutri
       if (data.status === "sent") {
         try {
-          // Busca ou cria conversa para o destinatário da notificação
+          const student = students?.find((s: any) => s.user_id === data.userId);
+          const studentName = student?.full_name || "Aluno";
+          const studentPhone = student?.phone || "Não informado";
+          
           const targetPhone = "5521975194237";
           let { data: conv } = await supabase
             .from("crm_conversations")
@@ -114,7 +117,7 @@ const AdminBudgets = () => {
             .maybeSingle();
 
           if (!conv) {
-            const { data: newConv, error: convError } = await supabase
+            const { data: newConv } = await supabase
               .from("crm_conversations")
               .insert({
                 phone: targetPhone,
@@ -126,24 +129,36 @@ const AdminBudgets = () => {
               })
               .select()
               .single();
-            
-            if (convError) {
-              console.error("Erro ao criar conversa para notificação:", convError);
-            } else {
-              conv = newConv;
-            }
+            conv = newConv;
           }
 
           if (conv) {
-            const student = students?.find((s: any) => s.user_id === data.userId);
-            const studentName = student?.full_name || "Aluno";
-            const studentPhone = student?.phone || "Não informado";
+            const groups = new Map<string, BudgetItem[]>();
+            data.items.forEach((item) => {
+              const key = item.origin || categoryLabels[item.category] || "Outros";
+              if (!groups.has(key)) groups.set(key, []);
+              groups.get(key)!.push(item);
+            });
+
+            let itemsText = "";
+            let formulaCounter = 1;
+            groups.forEach((groupItems, origin) => {
+              itemsText += `\n*Fórmula ${formulaCounter} (${origin})*\n`;
+              groupItems.forEach((item) => {
+                itemsText += `• ${item.name}${item.dosage ? ` — ${item.dosage}` : ""}\n`;
+              });
+              const groupSubtotal = groupItems.reduce((s, i) => s + (i.subtotal || 0), 0);
+              if (groupSubtotal > 0) itemsText += `_Subtotal: R$ ${groupSubtotal.toFixed(2)}_\n`;
+              formulaCounter++;
+            });
+
+            const body = `🚨 *NOVO ORÇAMENTO GERADO*\n\n👤 *Aluno:* ${studentName}\n📱 *Telefone:* ${studentPhone}\n📝 *Título:* ${data.title}\n\n*ITENS DO ORÇAMENTO:*${itemsText}\n\n💰 *TOTAL:* R$ ${data.total.toFixed(2)}${data.notes ? `\n\n📝 *OBS:* ${data.notes}` : ""}`;
 
             await supabase.functions.invoke("crm-send-whatsapp", {
               body: {
                 conversation_id: conv.id,
                 phone: targetPhone,
-                body: `🚨 *NOVO ORÇAMENTO GERADO*\n\n👤 *Aluno:* ${studentName}\n📱 *Telefone:* ${studentPhone}\n💰 *Total:* R$ ${data.total.toFixed(2)}\n📝 *Título:* ${data.title}\n\nConsulte o painel administrativo para detalhes.`,
+                body,
                 provider: "wapi"
               }
             });
@@ -183,6 +198,10 @@ const AdminBudgets = () => {
 
       if (status === "sent") {
         try {
+          const { data: profile } = await supabase.from("profiles").select("full_name, phone").eq("user_id", budget.user_id).maybeSingle();
+          const studentName = profile?.full_name || "Aluno";
+          const studentPhone = profile?.phone || "Não informado";
+
           const targetPhone = "5521975194237";
           let { data: conv } = await supabase
             .from("crm_conversations")
@@ -208,13 +227,33 @@ const AdminBudgets = () => {
           }
 
           if (conv) {
-            const { data: profile } = await supabase.from("profiles").select("full_name, phone").eq("user_id", budget.user_id).maybeSingle();
+            const items = (budget.items as unknown as BudgetItem[]) || [];
+            const groups = new Map<string, BudgetItem[]>();
+            items.forEach((item) => {
+              const key = item.origin || categoryLabels[item.category] || "Outros";
+              if (!groups.has(key)) groups.set(key, []);
+              groups.get(key)!.push(item);
+            });
+
+            let itemsText = "";
+            let formulaCounter = 1;
+            groups.forEach((groupItems, origin) => {
+              itemsText += `\n*Fórmula ${formulaCounter} (${origin})*\n`;
+              groupItems.forEach((item) => {
+                itemsText += `• ${item.name}${item.dosage ? ` — ${item.dosage}` : ""}\n`;
+              });
+              const groupSubtotal = groupItems.reduce((s, i) => s + (i.subtotal || 0), 0);
+              if (groupSubtotal > 0) itemsText += `_Subtotal: R$ ${groupSubtotal.toFixed(2)}_\n`;
+              formulaCounter++;
+            });
+
+            const body = `🚨 *ORÇAMENTO ENVIADO*\n\n👤 *Aluno:* ${studentName}\n📱 *Telefone:* ${studentPhone}\n📝 *Título:* ${budget.title}\n\n*ITENS DO ORÇAMENTO:*${itemsText}\n\n💰 *TOTAL:* R$ ${Number(budget.total).toFixed(2)}${budget.notes ? `\n\n📝 *OBS:* ${budget.notes}` : ""}`;
             
             await supabase.functions.invoke("crm-send-whatsapp", {
               body: {
                 conversation_id: conv.id,
                 phone: targetPhone,
-                body: `🚨 *ORÇAMENTO ENVIADO*\n\n👤 *Aluno:* ${profile?.full_name || "Aluno"}\n📱 *Telefone:* ${profile?.phone || "Não informado"}\n💰 *Total:* R$ ${Number(budget.total).toFixed(2)}\n📝 *Título:* ${budget.title}\n\nConsulte o painel administrativo para detalhes.`,
+                body,
                 provider: "wapi"
               }
             });
@@ -403,6 +442,12 @@ const AdminBudgets = () => {
       }
       return next;
     });
+
+    if (field === "unit_price" && selectedStudent) {
+      const name = selectedStudent.full_name || "Aluno";
+      const phone = selectedStudent.phone || "";
+      setBudgetTitle(`Orçamento de Suplementos — ${name}${phone ? ` (${phone})` : ""}`);
+    }
   };
 
   const removeItem = (idx: number) => {
