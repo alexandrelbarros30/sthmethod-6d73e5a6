@@ -274,6 +274,7 @@ const AdminBudgets = () => {
   const resetForm = () => {
     setBudgetTitle("Orçamento de Suplementos");
     setBudgetNotes("");
+    setBudgetDuration("");
     setBudgetItems([]);
     setSelectedStudent(null);
     setEditingId(null);
