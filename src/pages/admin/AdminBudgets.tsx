@@ -178,8 +178,51 @@ const AdminBudgets = () => {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await supabase.from("supplement_budgets").update({ status }).eq("id", id);
+      const { data: budget, error } = await supabase.from("supplement_budgets").update({ status }).eq("id", id).select().single();
       if (error) throw error;
+
+      if (status === "sent") {
+        try {
+          const targetPhone = "5521975194237";
+          let { data: conv } = await supabase
+            .from("crm_conversations")
+            .select("id")
+            .eq("phone", targetPhone)
+            .eq("queue_type", "nutri")
+            .maybeSingle();
+
+          if (!conv) {
+            const { data: newConv } = await supabase
+              .from("crm_conversations")
+              .insert({
+                phone: targetPhone,
+                display_name: "Farmácia / Notificação Nutri",
+                queue_type: "nutri",
+                provider: "wapi",
+                status: "open",
+                identified_as: "other"
+              })
+              .select()
+              .single();
+            conv = newConv;
+          }
+
+          if (conv) {
+            const { data: profile } = await supabase.from("profiles").select("full_name, phone").eq("user_id", budget.user_id).maybeSingle();
+            
+            await supabase.functions.invoke("crm-send-whatsapp", {
+              body: {
+                conversation_id: conv.id,
+                phone: targetPhone,
+                body: `🚨 *ORÇAMENTO ENVIADO*\n\n👤 *Aluno:* ${profile?.full_name || "Aluno"}\n📱 *Telefone:* ${profile?.phone || "Não informado"}\n💰 *Total:* R$ ${Number(budget.total).toFixed(2)}\n📝 *Título:* ${budget.title}\n\nConsulte o painel administrativo para detalhes.`,
+                provider: "wapi"
+              }
+            });
+          }
+        } catch (err) {
+          console.error("Falha ao enviar notificação de orçamento:", err);
+        }
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["supplement-budgets"] });
