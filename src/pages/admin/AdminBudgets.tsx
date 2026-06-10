@@ -327,7 +327,7 @@ const AdminBudgets = () => {
       return "metabolico";
     };
     // Only import from the MOST RECENT visible protocol
-    const latestProtocol = (protocolData.studentProtocols || [])[0];
+    const latestProtocol = (protocolData.studentProtocols as any[])?.[0];
     if (latestProtocol && latestProtocol.content) {
       const sp = latestProtocol;
       const lines = htmlToLines(sp.content);
