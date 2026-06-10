@@ -79,10 +79,10 @@ const AdminBudgets = () => {
     queryFn: async () => {
       const userId = selectedStudent.user_id;
       const [{ data: categoryContent }, { data: protocols }, { data: extraCats }, { data: studentProtocols }] = await Promise.all([
-        supabase.from("protocol_category_content").select("*").eq("user_id", userId).eq("is_hidden", false),
-        supabase.from("protocols").select("*").eq("user_id", userId).eq("is_hidden", false).order("sort_order"),
-        supabase.from("protocol_extra_categories").select("*").eq("user_id", userId).eq("is_hidden", false).order("sort_order"),
-        supabase.from("student_protocols").select("*").eq("user_id", userId).eq("is_hidden", false).order("updated_at", { ascending: false }),
+        supabase.from("protocol_category_content").select("*").eq("user_id", userId),
+        supabase.from("protocols").select("*").eq("user_id", userId).order("sort_order"),
+        supabase.from("protocol_extra_categories").select("*").eq("user_id", userId).order("sort_order"),
+        supabase.from("student_protocols").select("*").eq("user_id", userId).eq("visible", true).order("updated_at", { ascending: false }),
       ]);
       return { categoryContent, protocols, extraCats, studentProtocols };
     },
