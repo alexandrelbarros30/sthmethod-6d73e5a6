@@ -94,7 +94,7 @@ const AdminBudgets = () => {
   });
 
   const saveMutation = useMutation({
-    mutationFn: async (data: { id?: string; userId: string; title: string; items: BudgetItem[]; total: number; notes: string; status: string }) => {
+    mutationFn: async (data: { id?: string; userId: string; title: string; items: BudgetItem[]; total: number; notes: string; status: string; duration?: string }) => {
       const payload = {
         user_id: data.userId,
         title: data.title,
@@ -102,6 +102,7 @@ const AdminBudgets = () => {
         total: data.total,
         notes: data.notes,
         status: data.status,
+        duration: data.duration,
       };
 
       const { data: budget, error } = data.id 
