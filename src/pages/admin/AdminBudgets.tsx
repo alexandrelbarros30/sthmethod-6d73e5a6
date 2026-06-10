@@ -732,9 +732,16 @@ const AdminBudgets = () => {
             </DialogHeader>
             {previewBudget && (
               <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Aluno: <span className="font-medium text-foreground">{getStudentName(previewBudget.user_id)}</span>
-                </p>
+                <div className="flex justify-between items-start gap-2">
+                  <p className="text-sm text-muted-foreground">
+                    Aluno: <span className="font-medium text-foreground">{getStudentName(previewBudget.user_id)}</span>
+                  </p>
+                  {previewBudget.duration && (
+                    <Badge variant="outline" className="text-primary border-primary/20">
+                      {previewBudget.duration}
+                    </Badge>
+                  )}
+                </div>
                 <div className="space-y-2">
                   {(() => {
                     const items = (previewBudget.items as BudgetItem[]) || [];
