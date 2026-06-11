@@ -459,18 +459,55 @@ Deno.serve(async (req) => {
     const externalId = payload?.messageId || payload?.id || null;
     const name = payload?.senderName || payload?.pushName || payload?.sender?.pushName || null;
 
-    if (payload?.fromMe === true || payload?.from_me === true) {
-      // Se a mensagem partiu de "mim" (do atendente via WhatsApp Web/Celular), 
-      // marcamos a conversa como atendimento humano para silenciar o bot.
+    // ===== Detecção de mensagem enviada manualmente pelo atendente =====
+    // Z-API envia type="SendCallback" com fromMe=true quando habilitado.
+    // W-API costuma enviar fromMe=true em qualquer envio.
+    // fromApi=true significa que partiu da nossa própria automação — NÃO é handoff.
+    const evtType = String(payload?.type || '').toLowerCase();
+    const isFromMe = payload?.fromMe === true || payload?.from_me === true;
+    const isFromApi = payload?.fromApi === true || payload?.from_api === true;
+    const isSendEvent = evtType === 'sendcallback' || evtType === 'send_callback' || evtType === 'sentcallback';
+    if ((isFromMe || isSendEvent) && !isFromApi) {
       if (phone) {
-        console.log(`Mensagem enviada pelo atendente (fromMe) para ${phone}. Ativando handoff humano.`);
-        await admin.from('crm_conversations').update({ 
-          human_handoff: true, 
+        console.log(`Atendente respondeu manualmente para ${phone} via ${provider} (type=${evtType||'-'}, fromMe=${isFromMe}, fromApi=${isFromApi}). Ativando handoff humano e silenciando o bot por 24h.`);
+        // Atualiza TODAS as conversas desse telefone (vale para canal comercial, sucesso e nutri).
+        await admin.from('crm_conversations').update({
+          human_handoff: true,
           status: 'open',
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         }).eq('phone', phone);
+
+        // Registra a mensagem no histórico (quando vier conteúdo) para o painel mostrar o que o humano enviou.
+        try {
+          if (body && body.trim().length > 0) {
+            const { data: convRow } = await admin
+              .from('crm_conversations')
+              .select('id')
+              .eq('phone', phone)
+              .order('updated_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            if (convRow?.id) {
+              await admin.from('crm_messages').insert({
+                conversation_id: convRow.id,
+                direction: 'out',
+                source: provider,
+                status: 'sent',
+                body,
+                metadata: { type: 'manual_human', external_id: externalId },
+              });
+              await admin.from('crm_conversations').update({
+                last_message_at: new Date().toISOString(),
+                last_message_preview: body.slice(0, 200),
+                last_direction: 'out',
+              }).eq('id', convRow.id);
+            }
+          }
+        } catch (e) {
+          console.error('Falha ao registrar mensagem manual do atendente:', e);
+        }
       }
-      return new Response(JSON.stringify({ ok: true, skipped: true, reason: 'from_me' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ ok: true, skipped: true, reason: 'human_manual_reply' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (payload?.isGroup === true || payload?.is_group === true || String(phoneRaw).startsWith('120363') || String(phoneRaw).includes('-') || String(phoneRaw).includes('@g.us')) {
