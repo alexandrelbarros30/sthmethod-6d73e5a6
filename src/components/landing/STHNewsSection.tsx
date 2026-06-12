@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
+import restauracaoImg from "@/assets/sthnews-atrofia-hero.jpg";
 import subqImg from "@/assets/sthnews-subq-glass-1.jpg";
 import cinturaImg from "@/assets/sthnews-subq-glass-2.jpg";
 import triadeImg from "@/assets/sthnews-triade-thumb.jpg";
@@ -20,6 +21,15 @@ import colateraisImg from "@/assets/sthnews-tirzepatida-colaterais-hero.jpg";
 import hipertensaoImg from "@/assets/sthnews-hipertensao-hero.jpg";
 
 const articles = [
+  {
+    to: "/tendencias/restauracao-muscular",
+    tag: "CAPA",
+    tagClass: "bg-primary text-primary-foreground",
+    date: "Nova matéria",
+    title: "O músculo lembra: restaurando o físico após 10 anos de hormônios",
+    desc: "Memória miotonuclear, reset do eixo HPT e o caminho real para reverter atrofia crônica.",
+    img: restauracaoImg,
+  },
   {
     to: "/tendencias/quarteto-magico",
     tag: "CAPA",

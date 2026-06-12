@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { ArrowLeft, ArrowUpRight, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
+import restauracaoImg from "@/assets/sthnews-atrofia-hero.jpg";
 import ginecoImg from "@/assets/sthnews-gineco-hero.jpg";
 import bfAltoImg from "@/assets/sthnews-bfalto-hero.jpg";
 import trembolonaImg from "@/assets/sthnews-trembolona-hero.jpg";
@@ -29,6 +30,7 @@ const fadeUp = {
 };
 
 const articles = [
+  { to: "/tendencias/restauracao-muscular", kicker: "Reabilitação hormonal", title: "O músculo lembra: restaurando o físico após 10 anos de hormônios", desc: "Memória miotonuclear, reset do eixo HPT e o caminho real para reverter atrofia crônica.", img: restauracaoImg },
   { to: "/tendencias/quarteto-magico", kicker: "Edição Especial 2026", title: "🪄 O Quarteto Mágico: Retatrutida & Peptídeos.", desc: "Por que dieta e treino sozinhos são obsoletos. A nova ciência da sinergia entre Protocolo, GH Peptides e Exames de precisão.", img: triadeImg },
   { to: "/tendencias/hipertensao-arterial", kicker: "Cardiovascular", title: "🫀 Hipertensão Arterial: o tratado tático completo.", desc: "Classificação, fisiopatologia, diagnóstico diferencial e conduta medicamentosa, suplementar e comportamental.", img: hipertensaoImg },
   { to: "/tendencias/tirzepatida-colaterais", kicker: "Tirzepatida & manejo", title: "💊 Tirzepatida: mapa tático completo dos colaterais.", desc: "Do arroto sulfúrico à pancreatite — cada sintoma cruzado com solução medicamentosa, suplementar e comportamental.", img: colateraisImg },
