@@ -342,13 +342,7 @@ async function findProfileByPhone(admin: ReturnType<typeof createClient>, phone:
   return null;
 }
 
-  if (ranked.length > 0) {
-    console.log(`Perfil encontrado: ${ranked[0].full_name} (Score: ${ranked[0]._score}) para o telefone ${phone}`);
-    return ranked[0];
-  }
 
-  return null;
-}
 
 
 async function getPlansFormatted(admin: ReturnType<typeof createClient>): Promise<string> {
