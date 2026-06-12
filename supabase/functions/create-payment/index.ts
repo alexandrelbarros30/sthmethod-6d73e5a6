@@ -85,12 +85,13 @@ serve(async (req) => {
 
         if (!isExpired && !isMaxed && !wrongPlan) {
           if (coupon.discount_type === "percentage") {
-            couponDiscount = finalAmount * (Number(coupon.discount_value) / 100);
+            // Cupom calculado sobre o valor cheio (originalAmount), não sobre o valor já descontado
+            couponDiscount = originalAmount * (Number(coupon.discount_value) / 100);
           } else {
-            couponDiscount = Math.min(Number(coupon.discount_value), finalAmount);
+            couponDiscount = Math.min(Number(coupon.discount_value), originalAmount);
           }
           couponDiscount = Math.round(couponDiscount * 100) / 100;
-          finalAmount = Math.max(0, finalAmount - couponDiscount);
+          finalAmount = Math.max(0, originalAmount - couponDiscount);
           validCouponId = coupon.id;
 
           await supabaseAdmin
