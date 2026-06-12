@@ -40,6 +40,7 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const dryRun = url.searchParams.get('dry_run') === '1';
   const forceUser = url.searchParams.get('user_id') || undefined;
+  const retryFailed = url.searchParams.get('retry_failed') === '1';
 
   try {
     // Carrega os templates
@@ -131,12 +132,20 @@ Deno.serve(async (req) => {
         // Dedup
         const { data: logRow } = await admin
           .from('subscription_reminder_log')
-          .select('id')
+          .select('id, status')
           .eq('user_id', sub.user_id)
           .eq('end_date', sub.end_date)
           .eq('trigger', rule.trigger)
           .maybeSingle();
-        if (logRow) { summary[rule.trigger].skipped++; continue; }
+        if (logRow) {
+          // Quando retry_failed=1, reenvia se a tentativa anterior falhou
+          // (ex.: Z-API estava desconectada). Apaga o log antigo p/ recriar.
+          if (retryFailed && logRow.status === 'failed') {
+            await admin.from('subscription_reminder_log').delete().eq('id', logRow.id);
+          } else {
+            summary[rule.trigger].skipped++; continue;
+          }
+        }
 
         // Perfil + telefone
         const { data: profile } = await admin
