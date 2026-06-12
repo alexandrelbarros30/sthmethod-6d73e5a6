@@ -509,7 +509,8 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: true, skipped: true, reason: 'group_message' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const phone = normalizePhone(phoneRaw);
+    // phone ja foi declarado acima
+
     if (!phone || !body) return new Response(JSON.stringify({ ok: true, skipped: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
     // CRITICAL LOCK: Evitar processamento paralelo para o mesmo telefone
