@@ -40,6 +40,7 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const dryRun = url.searchParams.get('dry_run') === '1';
   const forceUser = url.searchParams.get('user_id') || undefined;
+  const retryFailed = url.searchParams.get('retry_failed') === '1';
 
   try {
     // Carrega os templates
@@ -131,12 +132,20 @@ Deno.serve(async (req) => {
         // Dedup
         const { data: logRow } = await admin
           .from('subscription_reminder_log')
-          .select('id')
+          .select('id, status')
           .eq('user_id', sub.user_id)
           .eq('end_date', sub.end_date)
           .eq('trigger', rule.trigger)
           .maybeSingle();
-        if (logRow) { summary[rule.trigger].skipped++; continue; }
+        if (logRow) {
+          // Quando retry_failed=1, reenvia se a tentativa anterior falhou
+          // (ex.: Z-API estava desconectada). Apaga o log antigo p/ recriar.
+          if (retryFailed && logRow.status === 'failed') {
+            await admin.from('subscription_reminder_log').delete().eq('id', logRow.id);
+          } else {
+            summary[rule.trigger].skipped++; continue;
+          }
+        }
 
         // Perfil + telefone
         const { data: profile } = await admin
@@ -188,20 +197,21 @@ Deno.serve(async (req) => {
 
         if (dryRun) { summary[rule.trigger].sent++; continue; }
 
-        // Dispara via CRM (respeitando o canal do template)
+        // Dispara direto pelo canal (send-whatsapp/send-wapi/send-wapi-sucesso).
+        // crm-send-whatsapp exige JWT de usuário e não funciona server-to-server.
         let ok = false; let err: string | null = null;
         try {
           const provider = tpl.channel || 'zapi';
           const queue_type = provider === 'zapi' ? 'comercial' : (provider === 'wapi_sucesso' ? 'sucesso' : 'nutri');
-          
-          // Encontrar ou criar conversa para logar no CRM
+
+          // Garante conversa no CRM (para histórico)
           let conversation_id = '';
           const { data: conv } = await admin.from('crm_conversations')
             .select('id')
             .eq('phone', phone)
             .eq('queue_type', queue_type)
             .maybeSingle();
-          
+
           if (conv) {
             conversation_id = conv.id;
           } else {
@@ -216,17 +226,26 @@ Deno.serve(async (req) => {
             conversation_id = newConv?.id || '';
           }
 
-          const { data, error } = await admin.functions.invoke('crm-send-whatsapp', {
-            body: { 
-              conversation_id,
-              phone, 
-              body: finalMessage,
-              provider
-            },
+          const fnName = provider === 'zapi'
+            ? 'send-whatsapp'
+            : (provider === 'wapi_sucesso' ? 'send-wapi-sucesso' : 'send-wapi');
+          const { data, error } = await admin.functions.invoke(fnName, {
+            body: { phone, message: finalMessage },
           });
           if (error) throw error;
-          if (data?.ok) ok = true;
-          else err = data?.error || 'falha no envio';
+          if (data?.ok) {
+            ok = true;
+            // Log no CRM para histórico unificado
+            if (conversation_id) {
+              await admin.from('crm_messages').insert({
+                conversation_id, direction: 'out', body: finalMessage,
+                source: provider, status: 'sent',
+                external_id: data?.messageId || null,
+              });
+            }
+          } else {
+            err = data?.error || 'falha no envio';
+          }
         } catch (e: any) {
           err = e?.message || String(e);
         }
