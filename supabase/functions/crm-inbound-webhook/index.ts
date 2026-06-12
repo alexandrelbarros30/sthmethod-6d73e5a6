@@ -342,13 +342,7 @@ async function findProfileByPhone(admin: ReturnType<typeof createClient>, phone:
   return null;
 }
 
-  if (ranked.length > 0) {
-    console.log(`Perfil encontrado: ${ranked[0].full_name} (Score: ${ranked[0]._score}) para o telefone ${phone}`);
-    return ranked[0];
-  }
 
-  return null;
-}
 
 
 async function getPlansFormatted(admin: ReturnType<typeof createClient>): Promise<string> {
@@ -464,9 +458,9 @@ Deno.serve(async (req) => {
     // W-API costuma enviar fromMe=true em qualquer envio.
     // fromApi=true significa que partiu da nossa própria automação — NÃO é handoff.
     const evtType = String(payload?.type || '').toLowerCase();
-    const isFromMe = payload?.fromMe === true || payload?.from_me === true;
-    const isFromApi = payload?.fromApi === true || payload?.from_api === true;
-    const isSendEvent = evtType === 'sendcallback' || evtType === 'send_callback' || evtType === 'sentcallback';
+    const isFromMe = payload?.fromMe === true || payload?.from_me === true || payload?.data?.fromMe === true;
+    const isFromApi = payload?.fromApi === true || payload?.from_api === true || payload?.data?.fromApi === true;
+    const isSendEvent = evtType === 'sendcallback' || evtType === 'send_callback' || evtType === 'sentcallback' || evtType === 'sent_callback';
     if ((isFromMe || isSendEvent) && !isFromApi) {
       if (phone) {
         console.log(`Atendente respondeu manualmente para ${phone} via ${provider} (type=${evtType||'-'}, fromMe=${isFromMe}, fromApi=${isFromApi}). Ativando handoff humano e silenciando o bot por 24h.`);
