@@ -22,6 +22,15 @@ import hipertensaoImg from "@/assets/sthnews-hipertensao-hero.jpg";
 
 const articles = [
   {
+    to: "/tendencias/restauracao-muscular",
+    tag: "CAPA",
+    tagClass: "bg-primary text-primary-foreground",
+    date: "Nova matéria",
+    title: "O músculo lembra: restaurando o físico após 10 anos de hormônios",
+    desc: "Memória miotonuclear, reset do eixo HPT e o caminho real para reverter atrofia crônica.",
+    img: restauracaoImg,
+  },
+  {
     to: "/tendencias/quarteto-magico",
     tag: "CAPA",
     tagClass: "bg-primary text-primary-foreground",
