@@ -450,6 +450,7 @@ Deno.serve(async (req) => {
     const audioUrl = payload?.audio?.audioUrl || payload?.audioUrl || null;
     const rawText = payload?.data?.body || (typeof payload?.text === 'string' ? payload.text : payload?.text?.message) || payload?.message?.conversation || (typeof payload?.message === 'string' ? payload.message : '') || payload?.image?.caption || payload?.video?.caption || payload?.document?.caption || payload?.body || payload?.data?.message?.text || payload?.msgContent?.conversation || (audioUrl ? '[Áudio recebido]' : '');
     const body = typeof rawText === 'string' ? rawText : '';
+    const phone = normalizePhone(phoneRaw);
     const externalId = payload?.messageId || payload?.id || null;
     const name = payload?.senderName || payload?.pushName || payload?.sender?.pushName || null;
 
