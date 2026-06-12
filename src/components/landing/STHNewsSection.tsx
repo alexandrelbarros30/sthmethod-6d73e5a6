@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
+import restauracaoImg from "@/assets/sthnews-atrofia-hero.jpg";
 import subqImg from "@/assets/sthnews-subq-glass-1.jpg";
 import cinturaImg from "@/assets/sthnews-subq-glass-2.jpg";
 import triadeImg from "@/assets/sthnews-triade-thumb.jpg";
