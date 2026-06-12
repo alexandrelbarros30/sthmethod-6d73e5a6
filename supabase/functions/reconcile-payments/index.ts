@@ -57,7 +57,7 @@ async function activateSubscriptionForPayment(supabase: any, payment: any) {
       status: "active",
       start_date: startDate.toISOString().split("T")[0],
       end_date: endDate.toISOString().split("T")[0],
-    }).eq("id", existingSub.id);
+    }).eq("user_id", payment.user_id);
   } else {
     await supabase.from("subscriptions").insert({
       user_id: payment.user_id,
