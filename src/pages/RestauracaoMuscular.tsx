@@ -220,7 +220,6 @@ const RestauracaoMuscular = () => {
           <li>Wenker EP et al. <em>The use of hCG-based combination therapy for recovery of spermatogenesis after testosterone use.</em> J Sex Med, 2015.</li>
           <li>Skorupskaite K et al. <em>Kisspeptin and reproductive physiology in men.</em> Hum Reprod Update, 2020.</li>
         </ul>
-      </Section>
       </section>
 
       <section className="py-32 md:py-40 px-6 text-center border-t border-border/40">
