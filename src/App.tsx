@@ -29,6 +29,7 @@ import GhkCu from "./pages/GhkCu";
 import Gestrinona from "./pages/Gestrinona";
 import PlatoMetabolico from "./pages/PlatoMetabolico";
 import Trembolona from "./pages/Trembolona";
+import RestauracaoMuscular from "./pages/RestauracaoMuscular";
 import Ginecomastia from "./pages/Ginecomastia";
 import HormoniosBfAlto from "./pages/HormoniosBfAlto";
 import TirzepatidaHipertrofia from "./pages/TirzepatidaHipertrofia";
@@ -179,6 +180,7 @@ const App = () => (
             <Route path="/tendencias/gestrinona" element={<Gestrinona />} />
             <Route path="/tendencias/plato-metabolico" element={<PlatoMetabolico />} />
             <Route path="/tendencias/trembolona" element={<Trembolona />} />
+            <Route path="/tendencias/restauracao-muscular" element={<RestauracaoMuscular />} />
             <Route path="/tendencias/ginecomastia" element={<Ginecomastia />} />
             <Route path="/tendencias/hormonios-bf-alto" element={<HormoniosBfAlto />} />
             <Route path="/tendencias/tirzepatida-hipertrofia" element={<TirzepatidaHipertrofia />} />
