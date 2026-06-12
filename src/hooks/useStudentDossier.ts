@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { phoneCandidates } from "@/lib/phone";
+import { phoneCandidates, normalizePhone } from "@/lib/phone";
 
 export interface StudentDossier {
   matched: boolean;
@@ -65,13 +65,28 @@ export function useStudentDossier(phone: string | null | undefined) {
       };
       if (!candidates.length) return empty;
 
-      // 1. find profile by any phone variant
-      const { data: profiles } = await supabase
+      // 1. find profile — phones can be stored with mask like "(21) 97678-0642"
+      //    so we search by the last 8 digits and rank the best match in memory.
+      const target = normalizePhone(phone);
+      const last8 = target.slice(-8);
+      const { data: rawProfiles } = await supabase
         .from("profiles")
         .select("user_id, full_name, email, phone, objective, weight, height, gender, avatar_url")
-        .in("phone", candidates)
-        .limit(1);
-      const profile = profiles?.[0];
+        .ilike("phone", `%${last8}%`)
+        .limit(50);
+      const scored = (rawProfiles || [])
+        .map((p: any) => {
+          const d = (p.phone || "").replace(/\D+/g, "");
+          let score = 0;
+          if (d === target) score = 100;
+          else if (d.slice(-11) === target.slice(-11) && target.length >= 11) score = 95;
+          else if (d.slice(-10) === target.slice(-10) && target.length >= 10) score = 90;
+          else if (d.slice(-8) === last8) score = 80;
+          return { p, score };
+        })
+        .filter((x) => x.score > 0)
+        .sort((a, b) => b.score - a.score);
+      const profile = scored[0]?.p;
       if (!profile) return empty;
 
       const uid = profile.user_id;
