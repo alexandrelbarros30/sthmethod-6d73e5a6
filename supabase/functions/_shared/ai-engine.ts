@@ -160,3 +160,100 @@ export async function loadEngineAndPrompt(
   if (stored === 'openai' || stored === 'lovable' || stored === 'gemini_api' || stored === 'local') engine = stored;
   return { engine, systemPrompt };
 }
+
+// =====================================================================
+// AI MEMORY — armazena fatos/preferências/aprendizados por contato e global
+// para evoluir o atendimento humanizado a cada conversa.
+// =====================================================================
+
+export interface AiMemoryRow {
+  id?: string;
+  scope: 'contact' | 'global';
+  contact_phone?: string | null;
+  user_id?: string | null;
+  category: 'preferencia' | 'objetivo' | 'restricao' | 'historico' | 'contexto' | 'fato' | 'aprendizado';
+  content: string;
+  source_conversation_id?: string | null;
+  confidence?: number;
+}
+
+/** Busca memórias relevantes (do contato + globais recentes) para injetar no prompt. */
+export async function fetchAiMemories(
+  admin: any,
+  { phone, userId, limit = 20 }: { phone?: string | null; userId?: string | null; limit?: number },
+): Promise<AiMemoryRow[]> {
+  const out: AiMemoryRow[] = [];
+  try {
+    if (phone || userId) {
+      let q = admin.from('crm_ai_memory').select('*').eq('scope', 'contact').order('created_at', { ascending: false }).limit(limit);
+      if (userId) q = q.eq('user_id', userId);
+      else if (phone) q = q.eq('contact_phone', phone);
+      const { data } = await q;
+      if (Array.isArray(data)) out.push(...data);
+    }
+    const { data: globalRows } = await admin
+      .from('crm_ai_memory').select('*').eq('scope', 'global')
+      .order('created_at', { ascending: false }).limit(15);
+    if (Array.isArray(globalRows)) out.push(...globalRows);
+  } catch (_) { /* memória é best-effort */ }
+  return out;
+}
+
+/** Formata memórias para inserir no system prompt. */
+export function renderMemoryBlock(memories: AiMemoryRow[]): string {
+  if (!memories.length) return '';
+  const grouped: Record<string, string[]> = {};
+  for (const m of memories) {
+    const key = `${m.scope === 'global' ? '🌐 Global' : '👤 Contato'} · ${m.category}`;
+    (grouped[key] ||= []).push(`- ${m.content}`);
+  }
+  const sections = Object.entries(grouped).map(([k, v]) => `### ${k}\n${v.join('\n')}`).join('\n\n');
+  return `\n\n---\nMemória da IA (aprendizados acumulados de conversas anteriores — use para personalizar e humanizar o atendimento; NÃO repita literalmente, apenas considere):\n${sections}`;
+}
+
+/**
+ * Extrai memórias (fatos curtos e úteis) da última troca e salva.
+ * Usa o mesmo motor configurado para gerar uma lista JSON enxuta.
+ * Best-effort: nunca quebra o fluxo se falhar.
+ */
+export async function extractAndSaveAiMemory({
+  admin,
+  engine,
+  phone,
+  userId,
+  conversationId,
+  recentHistory,
+}: {
+  admin: any;
+  engine: AiEngine;
+  phone?: string | null;
+  userId?: string | null;
+  conversationId?: string | null;
+  recentHistory: string;
+}): Promise<number> {
+  try {
+    const system = 'Você extrai memórias úteis para um CRM de consultoria nutricional/esportiva. Retorne SOMENTE JSON válido no formato {"memories":[{"category":"preferencia|objetivo|restricao|historico|contexto|fato|aprendizado","content":"frase curta em PT-BR","scope":"contact|global","confidence":0.0-1.0}]}. Inclua apenas fatos NOVOS, específicos e duráveis (ex: objetivo, restrição alimentar, horário preferido, dor, plano contratado, lesão, alergia, preferência de comunicação). Ignore saudações, agradecimentos, conteúdo trivial. Máximo 5 itens. Se nada relevante, retorne {"memories":[]}.';
+    const user = `Conversa recente:\n${recentHistory}\n\nExtraia memórias úteis em JSON.`;
+    const { response } = await callAiEngine({ engine: engine === 'local' ? 'lovable' : engine, systemPrompt: system, userPrompt: user });
+    const match = (response || '').match(/\{[\s\S]*\}/);
+    if (!match) return 0;
+    let parsed: any;
+    try { parsed = JSON.parse(match[0]); } catch { return 0; }
+    const items = Array.isArray(parsed?.memories) ? parsed.memories : [];
+    if (!items.length) return 0;
+    const rows = items.slice(0, 5).map((m: any) => ({
+      scope: m?.scope === 'global' ? 'global' : 'contact',
+      contact_phone: m?.scope === 'global' ? null : (phone || null),
+      user_id: m?.scope === 'global' ? null : (userId || null),
+      category: ['preferencia','objetivo','restricao','historico','contexto','fato','aprendizado'].includes(m?.category) ? m.category : 'fato',
+      content: String(m?.content || '').trim().slice(0, 500),
+      source_conversation_id: conversationId || null,
+      confidence: typeof m?.confidence === 'number' ? Math.max(0, Math.min(1, m.confidence)) : 0.75,
+    })).filter((r: any) => r.content.length > 4);
+    if (!rows.length) return 0;
+    await admin.from('crm_ai_memory').insert(rows);
+    return rows.length;
+  } catch (_) {
+    return 0;
+  }
+}

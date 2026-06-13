@@ -547,6 +547,51 @@ export type Database = {
           },
         ]
       }
+      crm_ai_memory: {
+        Row: {
+          category: string
+          confidence: number | null
+          contact_phone: string | null
+          content: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          scope: string
+          source_conversation_id: string | null
+          source_message_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          category?: string
+          confidence?: number | null
+          contact_phone?: string | null
+          content: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          scope?: string
+          source_conversation_id?: string | null
+          source_message_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          confidence?: number | null
+          contact_phone?: string | null
+          content?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          scope?: string
+          source_conversation_id?: string | null
+          source_message_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       crm_ai_runs: {
         Row: {
           conversation_id: string | null
