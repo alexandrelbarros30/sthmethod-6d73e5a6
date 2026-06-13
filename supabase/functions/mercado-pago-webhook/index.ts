@@ -101,7 +101,8 @@ function renderTemplate(content: string, ctx: Record<string, any>): string {
 async function sendAutomationWhatsapp(
   supabase: any,
   userId: string,
-  trigger: "payment_welcome" | "payment_renewal",
+  trigger: string,
+  channel: "nutri" | "comercial" = "nutri",
 ) {
   const { data: profile } = await supabase
     .from("profiles").select("full_name, phone, email").eq("user_id", userId).maybeSingle();
@@ -133,10 +134,16 @@ async function sendAutomationWhatsapp(
   }
   // Templates de automação são gerenciados na CRM (crm_message_templates).
   // Resolução por prioridade: automation_trigger=<trigger> → key=<trigger>
-  // → fallback por key específica conhecida.
-  const legacyKey = trigger === "payment_welcome"
-    ? "automacao_pagamento_aprovado"
-    : "automacao_pagamento_renovacao";
+  // → fallback por key legada conhecida.
+  const legacyKeyMap: Record<string, string> = {
+    payment_welcome: "automacao_pagamento_aprovado",
+    payment_welcome_new: "automacao_pagamento_aprovado",
+    payment_renewal: "automacao_pagamento_renovacao",
+    payment_welcome_renewal: "automacao_pagamento_renovacao",
+    payment_welcome_reactivation: "automacao_pagamento_reativacao",
+    payment_thanks_comercial: "automacao_pagamento_comercial",
+  };
+  const legacyKey = legacyKeyMap[trigger] || trigger;
   let tpl: { id: string; body: string; media_url: string | null } | null = null;
   {
     const { data } = await supabase
@@ -177,9 +184,10 @@ async function sendAutomationWhatsapp(
   });
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  // Disparo automático silencioso sempre pela linha "Fale com o Nutri"
-  // (W-API / 5521998984153) — vale para boas-vindas e renovação.
-  const fnName = "send-wapi";
+  // Canal:
+  //  - nutri    → send-wapi   (Fale com o Nutri, 5521998984153)
+  //  - comercial→ send-whatsapp (Z-API canal comercial)
+  const fnName = channel === "comercial" ? "send-whatsapp" : "send-wapi";
   const res = await fetch(`${SUPABASE_URL}/functions/v1/${fnName}`, {
     method: "POST",
     headers: {
@@ -205,7 +213,7 @@ async function sendAutomationWhatsapp(
   } catch (e) {
     console.error(`[${trigger}] history insert failed`, e);
   }
-  console.log(`[${trigger}] result`, { userId, ok });
+  console.log(`[${trigger}][${channel}] result`, { userId, ok });
 }
 
 async function activateSubscriptionForPayment(supabase: any, payment: any) {
@@ -413,10 +421,30 @@ serve(async (req) => {
 
     // If approved for the first time, activate subscription once.
     if (newStatus === "approved" && payment && previousStatus !== "approved") {
+      // Classifica o tipo de adesão ANTES de ativar (depois disso a sub já
+      // está ativa com end_date futuro e não dá pra distinguir reativação).
+      let kind: "novo" | "reativacao" | "renovacao" = "novo";
+      try {
+        const { data: prevSub } = await supabase
+          .from("subscriptions")
+          .select("end_date, status")
+          .eq("user_id", payment.user_id)
+          .order("end_date", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (prevSub) {
+          const prevEnd = new Date(String(prevSub.end_date) + "T23:59:59");
+          kind = prevEnd < new Date() ? "reativacao" : "renovacao";
+        }
+      } catch (e) {
+        console.error("[kind] failed to classify", e);
+      }
       await activateSubscriptionForPayment(supabase, payment);
       // Boas-vindas: NOVO aluno (primeira compra) → template payment_welcome.
-      // Renovação/upgrade → template payment_renewal. Ambos saem silenciosos
-      // pela linha "Fale com o Nutri".
+      // Reativação (assinatura vencida) e Renovação (ainda ativa) recebem
+      // mensagens diferenciadas pela linha "Fale com o Nutri".
+      // Em PARALELO, o canal Comercial (Z-API) envia agradecimento pela
+      // escolha do plano com nome + vencimento.
       try {
         // Lock atômico: o MP frequentemente envia o mesmo evento em paralelo
         // (múltiplos topics) e duas execuções simultâneas conseguiam passar pelo
@@ -431,12 +459,18 @@ serve(async (req) => {
           .maybeSingle();
         if (!claim) {
           console.log("[automation-whatsapp] skipped (already claimed) for", payment.id);
-        } else if (payment.action_type === "new" || payment.action_type === "unlock") {
-          await sendAutomationWhatsapp(supabase, payment.user_id, "payment_welcome");
-        } else if (payment.action_type === "renewal" || payment.action_type === "upgrade") {
-          await sendAutomationWhatsapp(supabase, payment.user_id, "payment_renewal");
         } else {
-          console.log("[automation-whatsapp] skipped (action_type=", payment.action_type, ")");
+          // Trigger do canal Nutri por tipo de adesão.
+          const nutriTrigger =
+            kind === "novo" ? "payment_welcome_new"
+            : kind === "reativacao" ? "payment_welcome_reactivation"
+            : "payment_welcome_renewal";
+          // Dispara os 2 canais em paralelo: Comercial (agradecimento) +
+          // Nutri (saudação personalizada por tipo de adesão).
+          await Promise.allSettled([
+            sendAutomationWhatsapp(supabase, payment.user_id, "payment_thanks_comercial", "comercial"),
+            sendAutomationWhatsapp(supabase, payment.user_id, nutriTrigger, "nutri"),
+          ]);
         }
       } catch (e) {
         console.error("[automation-whatsapp] failed", e);
