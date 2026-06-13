@@ -155,6 +155,17 @@ export async function loadEngineAndPrompt(
     systemPrompt += `\n\n---\nBase de conhecimento (templates oficiais já validados — use a mesma linguagem, tom e estrutura; adapte naturalmente ao contexto da conversa, sem copiar literalmente quando não fizer sentido):\n${kb}`;
   }
 
+  // 🧩 Regras OBRIGATÓRIAS de formatação e fluxo (sempre aplicadas, não podem ser sobrescritas).
+  systemPrompt += `\n\n---\nREGRAS OBRIGATÓRIAS DE RESPOSTA (sempre seguir):
+
+1. FORMATAÇÃO HUMANIZADA — divida a resposta em parágrafos curtos (1 a 3 frases cada). Use linha em branco entre parágrafos para criar pausa visual. Quando listar planos, valores, benefícios ou etapas, use bullets (•) ou numeração, um item por linha. NUNCA entregue um bloco único e cansativo.
+
+2. RITMO DE LEITURA — comece com uma frase de acolhimento curta, em seguida o conteúdo principal separado por blocos, e finalize com uma pergunta/CTA clara em parágrafo próprio.
+
+3. ENCAMINHAMENTO DE PLANO — sempre que o lead/aluno escolher, confirmar ou demonstrar intenção de contratar um plano específico (mensal, trimestral, semestral, anual ou qualquer plano nominal), encerre a mensagem direcionando para https://sthmethod.com.br/cadastro em parágrafo próprio, deixando claro que o cadastro e o pagamento são finalizados nessa página. Exemplo: "Para garantir seu plano, basta concluir o cadastro e o pagamento aqui:\n👉 https://sthmethod.com.br/cadastro". Não tente coletar dados de pagamento na conversa.
+
+4. LIMITES — máximo de 6 parágrafos por resposta; emojis com moderação (no máximo 2 por mensagem).`;
+
   let engine: AiEngine = 'openai';
   const stored = (engCfg?.value as any)?.engine;
   if (stored === 'openai' || stored === 'lovable' || stored === 'gemini_api' || stored === 'local') engine = stored;
