@@ -316,6 +316,9 @@ function classify(text: string): { queue: 'comercial'|'nutri'|'sucesso'|'finance
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
+  let lockAcquired = false;
+  let releaseLock: null | (() => Promise<void>) = null;
+
   try {
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const url = new URL(req.url);
@@ -378,10 +381,13 @@ Deno.serve(async (req) => {
     // Z-API envia type="SendCallback" com fromMe=true quando habilitado.
     // W-API costuma enviar fromMe=true em qualquer envio.
     // fromApi=true significa que partiu da nossa própria automação — NÃO é handoff.
-    const evtType = String(payload?.type || '').toLowerCase();
+    const evtType = String(payload?.type || payload?.event || '').toLowerCase();
     const isFromMe = payload?.fromMe === true || payload?.from_me === true || payload?.data?.fromMe === true;
     const isFromApi = payload?.fromApi === true || payload?.from_api === true || payload?.data?.fromApi === true;
     const isSendEvent = evtType === 'sendcallback' || evtType === 'send_callback' || evtType === 'sentcallback' || evtType === 'sent_callback';
+    const isStatusEvent = evtType === 'messagestatuscallback' || evtType === 'message_status_callback';
+    const isReactionEvent = !!payload?.reaction;
+    const isEditEvent = payload?.isEdit === true || payload?.is_edit === true;
     if ((isFromMe || isSendEvent) && !isFromApi) {
       if (phone) {
         console.log(`Atendente respondeu manualmente para ${phone} via ${provider} (type=${evtType||'-'}, fromMe=${isFromMe}, fromApi=${isFromApi}). Ativando handoff humano e silenciando o bot por 24h.`);
@@ -429,6 +435,10 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: true, skipped: true, reason: 'group_message' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    if (isStatusEvent || isReactionEvent || isEditEvent) {
+      return new Response(JSON.stringify({ ok: true, skipped: true, reason: 'non_message_event' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     // phone ja foi declarado acima
 
     if (!phone || !body) return new Response(JSON.stringify({ ok: true, skipped: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -443,11 +453,64 @@ Deno.serve(async (req) => {
       console.log(`Lock ativo para ${phone}. Ignorando processamento paralelo.`);
       return new Response(JSON.stringify({ ok: true, skipped: true, reason: 'concurrency_lock' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
+    lockAcquired = true;
 
     // Função para liberar o lock sempre ao final
-    const releaseLock = async () => {
+    releaseLock = async () => {
       await admin.from('crm_message_locks').delete().eq('phone', phone);
     };
+
+    const finish = async (payload: Record<string, unknown>, status = 200) => {
+      if (lockAcquired && releaseLock) {
+        lockAcquired = false;
+        await releaseLock();
+      }
+      return new Response(JSON.stringify(payload), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    };
+
+    if (externalId) {
+      const { data: existingByExternalId } = await admin
+        .from('crm_messages')
+        .select('id')
+        .eq('source', provider)
+        .eq('external_id', externalId)
+        .limit(1)
+        .maybeSingle();
+
+      if (existingByExternalId) {
+        await admin.from('automation_logs').insert({
+          contact_phone: phone,
+          event_type: 'blocked_duplicate',
+          reason: 'Duplicate webhook event by external_id',
+          metadata: { provider, external_id: externalId },
+        });
+        return await finish({ ok: true, skipped: true, reason: 'duplicate_external_id' });
+      }
+    }
+
+    const recentEchoThreshold = new Date(Date.now() - 120000).toISOString();
+    const looksLikeBotTemplate = body.length >= 80 || body.includes('\n');
+    if (looksLikeBotTemplate) {
+      const { data: recentEcho } = await admin
+        .from('crm_messages')
+        .select('id')
+        .eq('direction', 'out')
+        .eq('source', provider)
+        .eq('body', body)
+        .gt('created_at', recentEchoThreshold)
+        .limit(1)
+        .maybeSingle();
+
+      if (recentEcho) {
+        await admin.from('automation_logs').insert({
+          contact_phone: phone,
+          event_type: 'blocked_duplicate',
+          reason: 'Provider echo matched a recent outbound template',
+          metadata: { provider, external_id: externalId },
+        });
+        return await finish({ ok: true, skipped: true, reason: 'provider_echo' });
+      }
+    }
 
     // LOG DE INÍCIO
     await admin.from('automation_logs').insert({
@@ -498,13 +561,13 @@ Deno.serve(async (req) => {
             session_expires_at: new Date().toISOString() 
           }).eq('id', conv.id);
         }
-        return new Response(JSON.stringify({ ok: true, manual_close: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        return await finish({ ok: true, manual_close: true });
       }
 
       if (profile?.user_id) {
         await admin.from('profiles').update({ whatsapp_opt_out: isOptOut, whatsapp_opt_out_at: isOptOut ? new Date().toISOString() : null }).eq('user_id', profile.user_id);
       }
-      return new Response(JSON.stringify({ ok: true, opt_out: isOptOut }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return await finish({ ok: true, opt_out: isOptOut });
     }
 
     const [{ data: aiModeCfg }, { data: wapiCfg }, { data: zapiCfg }, { data: wapiSucessoCfg }, { data: hoursComCfg }, { data: hoursNutriCfg }, { data: hoursSucessoCfg }, { data: nutriAwayActive }, { data: nutriAwayInactive }, { data: comAwayLead }, { data: comAwayActive }, { data: comAwayExpired }, { data: flowSteps }] = await Promise.all([
@@ -1232,9 +1295,12 @@ Deno.serve(async (req) => {
       if (ai.response) { const r = await sendMessage(ai.response, 'ai'); autoReply = { sent: r.sent, engine: ai.engine }; }
     }
 
-    return new Response(JSON.stringify({ ok: true, autoReply }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return await finish({ ok: true, autoReply });
   } catch (err) {
     console.error(err);
+    if (lockAcquired && releaseLock) {
+      await releaseLock().catch((releaseErr) => console.error('Failed to release crm_message_lock', releaseErr));
+    }
     return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });
