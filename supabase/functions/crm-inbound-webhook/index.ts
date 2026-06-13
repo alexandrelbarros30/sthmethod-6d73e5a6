@@ -139,6 +139,22 @@ function digitsOnly(raw: string | null | undefined): string {
   return clean.replace(/\D+/g, '').replace(/^0+/, '');
 }
 
+function buildInternalPhones(_configuredInstances: { zapi: string; wapi: string; wapi_sucesso: string }, connectedPhone: string): Set<string> {
+  const numbers = new Set<string>();
+  const hardcodedKnownInternalNumbers = [
+    '5521998984153',
+    '5521998496289',
+    '5521972486650',
+  ];
+
+  for (const raw of [connectedPhone, ...hardcodedKnownInternalNumbers]) {
+    const digits = digitsOnly(raw);
+    if (digits) numbers.add(digits);
+  }
+
+  return numbers;
+}
+
 function phoneMatchScore(row: any, targetPhone: string, targetWaId: string | null): number {
   const candidate = digitsOnly(row.phone);
   const candidateWaId = row.whatsapp_id;
@@ -440,7 +456,9 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: true, skipped: true, reason: 'non_message_event' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    if (connectedPhone && phone === connectedPhone) {
+    const internalPhones = buildInternalPhones(configuredInstances, connectedPhone);
+
+    if ((connectedPhone && phone === connectedPhone) || internalPhones.has(phone)) {
       return new Response(JSON.stringify({ ok: true, skipped: true, reason: 'self_echo' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
