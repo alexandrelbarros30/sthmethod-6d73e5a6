@@ -18,7 +18,10 @@ async function generateAiReply({
   waId?: string | null;
   queue?: string;
 }): Promise<{ response: string; model: string; engine: string }> {
-  const promptKey: 'ai_prompt_comercial' | 'ai_prompt_sucesso' = queue === 'sucesso' ? 'ai_prompt_sucesso' : 'ai_prompt_comercial';
+  const promptKey: 'ai_prompt_comercial' | 'ai_prompt_sucesso' | 'ai_prompt_nutri' =
+    queue === 'sucesso' ? 'ai_prompt_sucesso'
+    : queue === 'nutri' ? 'ai_prompt_nutri'
+    : 'ai_prompt_comercial';
   const { engine, systemPrompt: basePrompt } = await loadEngineAndPrompt(admin as any, promptKey);
 
   const [{ data: msgs }, profile] = await Promise.all([
