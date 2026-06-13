@@ -311,6 +311,14 @@ const Cadastro = () => {
         },
       });
       if (error) throw error;
+      // Supabase oculta o erro de "email já cadastrado" por padrão (anti-enumeration):
+      // retorna user com identities=[] e sem session. Tratamos como duplicado.
+      const identities = (data.user as any)?.identities;
+      if (data.user && Array.isArray(identities) && identities.length === 0) {
+        toast.error("Este email já está cadastrado. Faça login ou recupere sua senha.");
+        setTimeout(() => navigate(`/login?email=${encodeURIComponent(email)}`), 1200);
+        return;
+      }
       if (data.user) {
         setUserId(data.user.id);
         // Wait for handle_new_user trigger to create profile, then save data
