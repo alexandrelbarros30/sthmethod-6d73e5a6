@@ -291,6 +291,22 @@ async function activateSubscriptionForPayment(supabase: any, payment: any) {
   }
 
   console.log(`Subscription activated for user ${payment.user_id}, plan ${payment.plan_id}, ${durationDays} days`);
+
+  // Self-heal: mark onboarding_complete=true once the student has a paid
+  // subscription. Without this, the client gate in StudentSubscription keeps
+  // showing the onboarding wizard even after the payment was approved
+  // (happened with Cristiano Jorge — paid PIX, sub active, mas onboarding
+  // continuava false porque o callback onPaymentSuccess depende do diálogo
+  // ficar aberto).
+  try {
+    await supabase
+      .from("profiles")
+      .update({ onboarding_complete: true })
+      .eq("user_id", payment.user_id)
+      .eq("onboarding_complete", false);
+  } catch (e) {
+    console.error("[onboarding-flag] failed to set onboarding_complete", e);
+  }
 }
 
 serve(async (req) => {

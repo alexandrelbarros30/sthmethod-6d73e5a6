@@ -55,6 +55,7 @@ export async function buildContextFromUser(userId: string): Promise<TemplateCont
     }
   }
   ctx.link_renovacao = `${window.location.origin}/aluno/renovar`;
+  ctx.link_pagamento = `${window.location.origin}/dashboard/pagar?uid=${userId}`;
   return ctx;
 }
 
@@ -81,6 +82,7 @@ export const AVAILABLE_VARIABLES = [
   { key: "valor", desc: "Preço do plano (R$)" },
   { key: "dias_restantes", desc: "Dias até vencer" },
   { key: "link_renovacao", desc: "Link de renovação" },
+  { key: "link_pagamento", desc: "Link de pagamento (1ª adesão)" },
   { key: "email", desc: "E-mail do aluno" },
   { key: "telefone", desc: "Telefone do aluno" },
 ];

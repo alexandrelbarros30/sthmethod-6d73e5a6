@@ -2093,6 +2093,7 @@ const AdminStudents = () => {
               { icon: CreditCard, label: "Assinatura", action: () => { setManageOpen(false); openSub(selected); } },
               { icon: Lock, label: "Alterar Senha", action: () => { setManageOpen(false); setPasswordReset({ userId: selected?.user_id, name: selected?.full_name || selected?.email }); setNewPassword(""); } },
               { icon: Link2, label: "Link Renovação", action: () => { navigator.clipboard.writeText(`${window.location.origin}/dashboard/renew?uid=${selected?.user_id}`); toast.success("Link copiado!"); setManageOpen(false); } },
+              { icon: Link2, label: "Link 1ª Adesão", action: () => { navigator.clipboard.writeText(`${window.location.origin}/dashboard/pagar?uid=${selected?.user_id}`); toast.success("Link de pagamento copiado!"); setManageOpen(false); } },
               { icon: Trash2, label: "Excluir", action: () => { setManageOpen(false); setDeleteTarget({ userId: selected?.user_id, name: selected?.full_name || selected?.email }); }, destructive: true },
             ].map(({ icon: Icon, label, action, destructive }) => (
               <button
