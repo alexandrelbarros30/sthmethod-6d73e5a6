@@ -117,19 +117,30 @@ export async function loadEngineAndPrompt(
   promptKey: 'ai_prompt_comercial' | 'ai_prompt_sucesso' | 'ai_prompt_aluno',
 ): Promise<{ engine: AiEngine; systemPrompt: string }> {
   const defaultPrompt = 'Você é o assistente oficial da consultoria STH METHOD. Tom: claro, técnico, neutro, cordial. Português do Brasil. Nunca prometa resultados milagrosos nem invente dados clínicos. Quando o aluno pedir algo fora do escopo (alteração de dieta, treino ou protocolo), oriente que será encaminhado ao consultor humano.';
-  const [{ data: cfg }, { data: engCfg }, { data: globalCfg }, { data: globalToggle }] = await Promise.all([
+  const channelEnabledKey = `${promptKey}_enabled`;
+  const [{ data: cfg }, { data: engCfg }, { data: globalCfg }, { data: globalToggle }, { data: channelToggle }] = await Promise.all([
     admin.from('crm_settings').select('value').eq('key', promptKey).maybeSingle(),
     admin.from('crm_settings').select('value').eq('key', 'ai_engine').maybeSingle(),
     admin.from('crm_settings').select('value').eq('key', 'ai_prompt_global').maybeSingle(),
     admin.from('crm_settings').select('value').eq('key', 'ai_prompt_global_enabled').maybeSingle(),
+    admin.from('crm_settings').select('value').eq('key', channelEnabledKey).maybeSingle(),
   ]);
-  let systemPrompt = defaultPrompt;
   const storedPrompt = (cfg?.value as any)?.prompt;
-  if (storedPrompt && typeof storedPrompt === 'string' && storedPrompt.trim()) systemPrompt = storedPrompt;
+  const channelText = (typeof storedPrompt === 'string' && storedPrompt.trim()) ? storedPrompt.trim() : '';
+  // Default: channel prompts are ENABLED unless explicitly set to false
+  const channelEnabled = (channelToggle?.value as any)?.enabled !== false;
   const globalEnabled = (globalToggle?.value as any)?.enabled === true;
-  const globalPrompt = (globalCfg?.value as any)?.prompt;
-  if (globalEnabled && typeof globalPrompt === 'string' && globalPrompt.trim()) {
-    systemPrompt = globalPrompt;
+  const globalPromptRaw = (globalCfg?.value as any)?.prompt;
+  const globalText = (typeof globalPromptRaw === 'string' && globalPromptRaw.trim()) ? globalPromptRaw.trim() : '';
+
+  let systemPrompt = defaultPrompt;
+  if (globalEnabled && globalText) {
+    // Global is the base. Channel prompt acts as auxiliary only when enabled.
+    systemPrompt = channelEnabled && channelText
+      ? `${globalText}\n\n---\nInstruções auxiliares específicas deste canal:\n${channelText}`
+      : globalText;
+  } else if (channelEnabled && channelText) {
+    systemPrompt = channelText;
   }
   let engine: AiEngine = 'openai';
   const stored = (engCfg?.value as any)?.engine;
