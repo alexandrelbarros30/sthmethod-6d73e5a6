@@ -1393,29 +1393,28 @@ Deno.serve(async (req) => {
         await sendMessage(String(flowStepSucesso?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu', null, 'wapi_sucesso', {}, flowStepSucesso);
       }
       else { 
-        const errorCount = ((conv.flow_context as any)?.error_count || 0) + 1;
-        if (errorCount >= 3) {
-          const fallbackMsg = "Não entendi sua opção. Para te ajudar, escolha uma das opções abaixo:\n\n1️⃣ Conhecer planos\n2️⃣ Como funciona\n3️⃣ Falar com consultor\n4️⃣ Já sou aluno\n\n_Ou digite apenas o número da opção._";
-          await sendMessage(fallbackMsg, 'comercial_fallback');
-          
+        // Fallback inteligente: em vez de repetir o menu, deixar a AI responder
+        // de forma humanizada quando o lead escreve texto livre.
+        const ai = await generateAiReply({ admin, conversationId: conv.id, phone, waId: conv.wa_id, queue: conv.queue_type });
+        if (ai?.response) {
+          await sendMessage(ai.response, 'ai_smart_fallback');
+          await admin.from('crm_conversations').update({
+            flow_context: { ...(conv.flow_context || {}), error_count: 0 },
+          }).eq('id', conv.id);
           await admin.from('automation_logs').insert({
             contact_phone: phone,
-            event_type: 'menu_fallback',
+            event_type: 'ai_smart_fallback',
             queue_type: 'comercial',
             flow_state: 'lead_main_menu',
-            action_taken: 'fallback',
-            severity: 'critical',
-            metadata: { error_count: errorCount, alert: 'High frequency fallback' }
+            action_taken: 'ai_reply',
+            severity: 'info',
+            metadata: { engine: ai.engine || 'ai' },
           });
-
-          await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: 0 } }).eq('id', conv.id);
         } else {
-          await admin.from('crm_conversations').update({ flow_context: { ...(conv.flow_context || {}), error_count: errorCount } }).eq('id', conv.id);
+          // Se a AI não respondeu, cai no menu padrão (sem loop crítico)
           const flowStep = getFlowStep('comercial_saudacao_lead');
           const menuTemplate = 'Olá! Seja bem-vindo(a) à STH METHOD. 👋\n\nComo posso ajudar?\n\n1️⃣ Conhecer planos e valores\n2️⃣ Como funciona a metodologia\n3️⃣ Falar com um consultor\n4️⃣ Já sou aluno';
-          const finalMenu = String(flowStep?.message || menuTemplate);
-          await sendMessage(finalMenu, 'com_repeat', null, undefined, {}, flowStep);
-          
+          await sendMessage(String(flowStep?.message || menuTemplate), 'com_repeat', null, undefined, {}, flowStep);
           await admin.from('automation_logs').insert({
             contact_phone: phone,
             event_type: 'menu_repeat',
@@ -1423,7 +1422,7 @@ Deno.serve(async (req) => {
             flow_state: 'lead_main_menu',
             action_taken: 'sent',
             severity: 'warning',
-            metadata: { error_count: errorCount }
+            metadata: { reason: 'ai_no_response' },
           });
         }
       }
