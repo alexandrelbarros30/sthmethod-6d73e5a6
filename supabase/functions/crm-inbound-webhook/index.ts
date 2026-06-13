@@ -371,6 +371,7 @@ Deno.serve(async (req) => {
     const phone = normalizePhone(phoneRaw);
     const waId = String(phoneRaw || '').split('@')[0]; // Usamos o ID puramente numérico como waId
     
+    const connectedPhone = normalizePhone(payload?.connectedPhone || payload?.data?.connectedPhone || '');
     const audioUrl = payload?.audio?.audioUrl || payload?.audioUrl || null;
     const rawText = payload?.data?.body || (typeof payload?.text === 'string' ? payload.text : payload?.text?.message) || payload?.message?.conversation || (typeof payload?.message === 'string' ? payload.message : '') || payload?.image?.caption || payload?.video?.caption || payload?.document?.caption || payload?.body || payload?.data?.message?.text || payload?.msgContent?.conversation || (audioUrl ? '[Áudio recebido]' : '');
     const body = typeof rawText === 'string' ? rawText : '';
@@ -437,6 +438,10 @@ Deno.serve(async (req) => {
 
     if (isStatusEvent || isReactionEvent || isEditEvent) {
       return new Response(JSON.stringify({ ok: true, skipped: true, reason: 'non_message_event' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    if (connectedPhone && phone === connectedPhone) {
+      return new Response(JSON.stringify({ ok: true, skipped: true, reason: 'self_echo' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // phone ja foi declarado acima
