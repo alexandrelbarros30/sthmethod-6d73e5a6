@@ -118,12 +118,15 @@ export async function loadEngineAndPrompt(
 ): Promise<{ engine: AiEngine; systemPrompt: string }> {
   const defaultPrompt = 'Você é o assistente oficial da consultoria STH METHOD. Tom: claro, técnico, neutro, cordial. Português do Brasil. Nunca prometa resultados milagrosos nem invente dados clínicos. Quando o aluno pedir algo fora do escopo (alteração de dieta, treino ou protocolo), oriente que será encaminhado ao consultor humano.';
   const channelEnabledKey = `${promptKey}_enabled`;
-  const [{ data: cfg }, { data: engCfg }, { data: globalCfg }, { data: globalToggle }, { data: channelToggle }] = await Promise.all([
+  const channelFilter = promptKey === 'ai_prompt_comercial' ? ['zapi','both'] : promptKey === 'ai_prompt_sucesso' ? ['wapi','both'] : ['both'];
+  const [{ data: cfg }, { data: engCfg }, { data: globalCfg }, { data: globalToggle }, { data: channelToggle }, { data: tmplToggle }, { data: tmpls }] = await Promise.all([
     admin.from('crm_settings').select('value').eq('key', promptKey).maybeSingle(),
     admin.from('crm_settings').select('value').eq('key', 'ai_engine').maybeSingle(),
     admin.from('crm_settings').select('value').eq('key', 'ai_prompt_global').maybeSingle(),
     admin.from('crm_settings').select('value').eq('key', 'ai_prompt_global_enabled').maybeSingle(),
     admin.from('crm_settings').select('value').eq('key', channelEnabledKey).maybeSingle(),
+    admin.from('crm_settings').select('value').eq('key', 'ai_templates_enabled').maybeSingle(),
+    admin.from('crm_message_templates').select('name,category,body,channel').eq('active', true).in('channel', channelFilter).limit(80),
   ]);
   const storedPrompt = (cfg?.value as any)?.prompt;
   const channelText = (typeof storedPrompt === 'string' && storedPrompt.trim()) ? storedPrompt.trim() : '';
@@ -142,6 +145,16 @@ export async function loadEngineAndPrompt(
   } else if (channelEnabled && channelText) {
     systemPrompt = channelText;
   }
+
+  // Inject templates as knowledge base (default ON unless explicitly disabled)
+  const templatesEnabled = (tmplToggle?.value as any)?.enabled !== false;
+  if (templatesEnabled && Array.isArray(tmpls) && tmpls.length) {
+    const kb = tmpls
+      .map((t: any, i: number) => `#${i + 1} [${t.category || 'outro'}] ${t.name || ''}\n${(t.body || '').toString().trim()}`)
+      .join('\n\n');
+    systemPrompt += `\n\n---\nBase de conhecimento (templates oficiais já validados — use a mesma linguagem, tom e estrutura; adapte naturalmente ao contexto da conversa, sem copiar literalmente quando não fizer sentido):\n${kb}`;
+  }
+
   let engine: AiEngine = 'openai';
   const stored = (engCfg?.value as any)?.engine;
   if (stored === 'openai' || stored === 'lovable' || stored === 'gemini_api' || stored === 'local') engine = stored;
