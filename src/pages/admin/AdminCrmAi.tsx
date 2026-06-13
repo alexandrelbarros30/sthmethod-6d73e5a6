@@ -9,6 +9,7 @@ import { Sparkles, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 interface Run { id: string; prompt: string | null; response: string | null; model: string | null; created_at: string; }
 type Engine = "openai" | "lovable" | "gemini_api" | "local";
@@ -26,6 +27,9 @@ export default function AdminCrmAi() {
   const [engine, setEngine] = useState<Engine>("openai");
   const [prompts, setPrompts] = useState<Record<string, string>>({});
   const [savingKey, setSavingKey] = useState<string | null>(null);
+  const [globalPrompt, setGlobalPrompt] = useState("");
+  const [globalEnabled, setGlobalEnabled] = useState(false);
+  const [savingGlobal, setSavingGlobal] = useState(false);
 
   async function load() {
     const [{ data: runsData }, { data: settings }] = await Promise.all([
@@ -34,7 +38,7 @@ export default function AdminCrmAi() {
       .select("id, prompt, response, model, created_at")
       .order("created_at", { ascending: false })
       .limit(50),
-      supabase.from("crm_settings").select("key,value").in("key", ["ai_engine", ...PROMPT_KEYS.map(p => p.key)]),
+      supabase.from("crm_settings").select("key,value").in("key", ["ai_engine", "ai_prompt_global", "ai_prompt_global_enabled", ...PROMPT_KEYS.map(p => p.key)]),
     ]);
     setRuns((runsData ?? []) as Run[]);
     const map: Record<string, string> = {};
@@ -43,6 +47,10 @@ export default function AdminCrmAi() {
       if (s.key === "ai_engine") {
         const e = s.value?.engine;
         if (e === "openai" || e === "lovable" || e === "gemini_api" || e === "local") eng = e;
+      } else if (s.key === "ai_prompt_global") {
+        setGlobalPrompt(s.value?.prompt || "");
+      } else if (s.key === "ai_prompt_global_enabled") {
+        setGlobalEnabled(s.value?.enabled === true);
       } else {
         map[s.key] = s.value?.prompt || "";
       }
@@ -65,6 +73,24 @@ export default function AdminCrmAi() {
     setSavingKey(null);
     if (error) toast({ title: "Erro", description: error.message });
     else toast({ title: "Prompt salvo" });
+  }
+
+  async function saveGlobal() {
+    setSavingGlobal(true);
+    const { error } = await supabase.from("crm_settings").upsert([
+      { key: "ai_prompt_global", value: { prompt: globalPrompt || "" } as any },
+      { key: "ai_prompt_global_enabled", value: { enabled: globalEnabled } as any },
+    ], { onConflict: "key" });
+    setSavingGlobal(false);
+    if (error) toast({ title: "Erro", description: error.message });
+    else toast({ title: globalEnabled ? "Prompt global ativo" : "Prompt global salvo (desativado)" });
+  }
+
+  async function toggleGlobal(next: boolean) {
+    setGlobalEnabled(next);
+    const { error } = await supabase.from("crm_settings").upsert({ key: "ai_prompt_global_enabled", value: { enabled: next } as any }, { onConflict: "key" });
+    if (error) toast({ title: "Erro", description: error.message });
+    else toast({ title: next ? "Prompt global ativado — substituirá os 3 canais" : "Prompt global desativado — voltando aos prompts por canal" });
   }
 
   async function ask() {
@@ -99,10 +125,30 @@ export default function AdminCrmAi() {
         <p className="text-[11px] text-muted-foreground">Aplica-se ao webhook do WhatsApp, sugestões no painel e chat do aluno.</p>
       </Card>
 
+      <Card className="p-4 space-y-3 mb-6 border-primary/40">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <Label className="text-sm">Prompt global único</Label>
+            <p className="text-[11px] text-muted-foreground mt-1">Quando ativado, este prompt substitui os prompts por canal (Comercial, Sucesso e Chat do Aluno) em todas as conversas.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-muted-foreground">{globalEnabled ? "Ativo" : "Inativo"}</span>
+            <Switch checked={globalEnabled} onCheckedChange={toggleGlobal} />
+          </div>
+        </div>
+        <Textarea rows={8} placeholder="Escreva aqui o prompt único que será usado em TODOS os canais quando o toggle estiver ativo..." value={globalPrompt} onChange={(e) => setGlobalPrompt(e.target.value)} />
+        <div>
+          <Button size="sm" variant="outline" onClick={saveGlobal} disabled={savingGlobal}>
+            {savingGlobal ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : null}
+            Salvar prompt global
+          </Button>
+        </div>
+      </Card>
+
       <div className="grid gap-3 mb-6">
         {PROMPT_KEYS.map(({ key, label }) => (
           <Card key={key} className="p-4 space-y-2">
-            <Label className="text-xs">{label}</Label>
+            <Label className="text-xs">{label}{globalEnabled ? " (ignorado — prompt global ativo)" : ""}</Label>
             <Textarea rows={5} value={prompts[key] || ""} onChange={(e) => setPrompts((p) => ({ ...p, [key]: e.target.value }))} />
             <div>
               <Button size="sm" variant="outline" onClick={() => savePrompt(key)} disabled={savingKey === key}>

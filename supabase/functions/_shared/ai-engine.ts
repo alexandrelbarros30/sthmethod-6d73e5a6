@@ -117,13 +117,20 @@ export async function loadEngineAndPrompt(
   promptKey: 'ai_prompt_comercial' | 'ai_prompt_sucesso' | 'ai_prompt_aluno',
 ): Promise<{ engine: AiEngine; systemPrompt: string }> {
   const defaultPrompt = 'Você é o assistente oficial da consultoria STH METHOD. Tom: claro, técnico, neutro, cordial. Português do Brasil. Nunca prometa resultados milagrosos nem invente dados clínicos. Quando o aluno pedir algo fora do escopo (alteração de dieta, treino ou protocolo), oriente que será encaminhado ao consultor humano.';
-  const [{ data: cfg }, { data: engCfg }] = await Promise.all([
+  const [{ data: cfg }, { data: engCfg }, { data: globalCfg }, { data: globalToggle }] = await Promise.all([
     admin.from('crm_settings').select('value').eq('key', promptKey).maybeSingle(),
     admin.from('crm_settings').select('value').eq('key', 'ai_engine').maybeSingle(),
+    admin.from('crm_settings').select('value').eq('key', 'ai_prompt_global').maybeSingle(),
+    admin.from('crm_settings').select('value').eq('key', 'ai_prompt_global_enabled').maybeSingle(),
   ]);
   let systemPrompt = defaultPrompt;
   const storedPrompt = (cfg?.value as any)?.prompt;
   if (storedPrompt && typeof storedPrompt === 'string' && storedPrompt.trim()) systemPrompt = storedPrompt;
+  const globalEnabled = (globalToggle?.value as any)?.enabled === true;
+  const globalPrompt = (globalCfg?.value as any)?.prompt;
+  if (globalEnabled && typeof globalPrompt === 'string' && globalPrompt.trim()) {
+    systemPrompt = globalPrompt;
+  }
   let engine: AiEngine = 'openai';
   const stored = (engCfg?.value as any)?.engine;
   if (stored === 'openai' || stored === 'lovable' || stored === 'gemini_api' || stored === 'local') engine = stored;
