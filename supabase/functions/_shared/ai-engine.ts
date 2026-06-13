@@ -114,11 +114,17 @@ export async function callAiEngine({
 
 export async function loadEngineAndPrompt(
   admin: any,
-  promptKey: 'ai_prompt_comercial' | 'ai_prompt_sucesso' | 'ai_prompt_aluno',
+  promptKey: 'ai_prompt_comercial' | 'ai_prompt_sucesso' | 'ai_prompt_nutri' | 'ai_prompt_aluno',
 ): Promise<{ engine: AiEngine; systemPrompt: string }> {
   const defaultPrompt = 'Você é o assistente oficial da consultoria STH METHOD. Tom: claro, técnico, neutro, cordial. Português do Brasil. Nunca prometa resultados milagrosos nem invente dados clínicos. Quando o aluno pedir algo fora do escopo (alteração de dieta, treino ou protocolo), oriente que será encaminhado ao consultor humano.';
   const channelEnabledKey = `${promptKey}_enabled`;
-  const channelFilter = promptKey === 'ai_prompt_comercial' ? ['zapi','both'] : promptKey === 'ai_prompt_sucesso' ? ['wapi','both'] : ['both'];
+  const channelFilter = promptKey === 'ai_prompt_comercial'
+    ? ['zapi','both']
+    : promptKey === 'ai_prompt_nutri'
+      ? ['wapi','both']
+      : promptKey === 'ai_prompt_sucesso'
+        ? ['wapi_sucesso','wapi','both']
+        : ['both'];
   const [{ data: cfg }, { data: engCfg }, { data: globalCfg }, { data: globalToggle }, { data: channelToggle }, { data: tmplToggle }, { data: tmpls }] = await Promise.all([
     admin.from('crm_settings').select('value').eq('key', promptKey).maybeSingle(),
     admin.from('crm_settings').select('value').eq('key', 'ai_engine').maybeSingle(),
