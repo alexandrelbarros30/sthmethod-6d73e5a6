@@ -897,6 +897,7 @@ Deno.serve(async (req) => {
 
     // Se houver atendente humano ou flag de handoff, ignoramos mensagens automáticas de fluxo e ausência.
     const isChannelEnabled = channelEnabled;
+    const aiMode = String((aiModeCfg?.value as any)?.mode || 'auto'); // off | auto | ai_only
 
     if (!isChannelEnabled) {
       autoReply = { sent: false, reason: 'disabled' };
@@ -917,6 +918,20 @@ Deno.serve(async (req) => {
       });
       autoReply = { sent: false, reason: 'human_active' };
 
+    } else if (aiMode === 'ai_only') {
+      // MODO AI GLOBAL: ignora fluxo, ausência e menus — IA responde tudo.
+      try {
+        const ai = await generateAiReply({ admin, conversationId: conv.id, phone, waId: conv.wa_id, queue: conv.queue_type });
+        if (ai.response) {
+          const r = await sendMessage(ai.response, 'ai_only');
+          autoReply = { sent: r.sent, engine: ai.engine, mode: 'ai_only' };
+        } else {
+          autoReply = { sent: false, reason: 'ai_empty_response' };
+        }
+      } catch (e) {
+        console.error('ai_only failed', e);
+        autoReply = { sent: false, reason: 'ai_error', error: String(e) };
+      }
     } else if (todayNoticeActive) {
       // Dedup: 1x por sessão / 4h, como o away.
       const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
@@ -1314,7 +1329,7 @@ Deno.serve(async (req) => {
       autoReply = { sent: true, engine: 'flow' };
     }
 
-    if (!autoReply && (aiModeCfg?.value as any)?.mode === 'auto') {
+    if (!autoReply && (aiMode === 'auto' || aiMode === 'ai_only')) {
       const ai = await generateAiReply({ admin, conversationId: conv.id, phone, waId: conv.wa_id, queue: conv.queue_type });
       if (ai.response) { const r = await sendMessage(ai.response, 'ai'); autoReply = { sent: r.sent, engine: ai.engine }; }
     }
