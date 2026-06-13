@@ -8,6 +8,27 @@ function digitsOnly(raw: string | null | undefined): string {
   return clean.replace(/\D+/g, '').replace(/^0+/, '');
 }
 
+function buildInternalPhones(configuredInstances: { zapi: string; wapi: string; wapi_sucesso: string }, connectedPhone: string): Set<string> {
+  const numbers = new Set<string>();
+  const hardcodedKnownInternalNumbers = [
+    '5521998984153',
+    '5521998496289',
+    '5521972486650',
+  ];
+
+  for (const raw of [connectedPhone, ...hardcodedKnownInternalNumbers]) {
+    const digits = digitsOnly(raw);
+    if (digits) numbers.add(digits);
+  }
+
+  for (const key of Object.keys(configuredInstances) as Array<keyof typeof configuredInstances>) {
+    const instanceId = configuredInstances[key];
+    if (!instanceId) continue;
+  }
+
+  return numbers;
+}
+
 function normalizePhone(raw: string): string {
   let clean = String(raw || '').split('@')[0];
   let d = clean.replace(/\D+/g, '').replace(/^0+/, '');
@@ -103,4 +124,16 @@ Deno.test("Phone Match Score - Should prioritize whatsapp_id", () => {
   
   // 9th digit variation
   assertEquals(phoneMatchScore(row, "552172486650", null), 85);
+});
+
+Deno.test("Internal phones - Should treat operation numbers as self echo", () => {
+  const internalPhones = buildInternalPhones(
+    { zapi: "zapi-instance", wapi: "wapi-instance", wapi_sucesso: "wapi-sucesso-instance" },
+    "5521998984153",
+  );
+
+  assertEquals(internalPhones.has("5521998984153"), true);
+  assertEquals(internalPhones.has("5521998496289"), true);
+  assertEquals(internalPhones.has("5521972486650"), true);
+  assertEquals(internalPhones.has("5511999999999"), false);
 });
