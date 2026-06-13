@@ -2,27 +2,8 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { crypto } from "https://deno.land/std@0.192.0/crypto/mod.ts";
 import { encode as hexEncode } from "https://deno.land/std@0.192.0/encoding/hex.ts";
-
-
-function localEngineReply(input: string): string {
-  const t = (input || '').toLowerCase();
-  if (/^\s*(ol[áa]|oi|bom dia|boa tarde|boa noite)/.test(t)) {
-    return 'Olá! Seja bem-vindo(a) à STH METHOD. 👋\n\nComo posso ajudar?\n1️⃣ Conhecer planos\n2️⃣ Como funciona\n3️⃣ Falar com consultor\n4️⃣ Já sou aluno';
-  }
-  if (/\b1\b|plano|valor|pre[çc]o/.test(t)) {
-    return 'Temos planos mensais, trimestrais e semestrais. Posso te enviar os valores atualizados — me diga seu objetivo (emagrecimento, hipertrofia, performance ou saúde).';
-  }
-  if (/\b2\b|como funciona|metodologia/.test(t)) {
-    return 'A STH METHOD é uma consultoria científica: planejamento alimentar individualizado, treino guiado pelo app ST Coach, protocolos estratégicos e acompanhamento de exames.';
-  }
-  if (/\b3\b|consultor|humano|atendente/.test(t)) {
-    return 'Vou te encaminhar para um consultor humano. Pode me confirmar seu nome completo e e-mail?';
-  }
-  if (/\b4\b|aluno|j[áa] sou|nutri/.test(t)) {
-    return 'Perfeito! O canal exclusivo para alunos ativos é o Sucesso do Aluno: https://wa.me/5521972486650';
-  }
-  return 'Recebi sua mensagem. Para te ajudar melhor, responda com 1️⃣ Planos, 2️⃣ Como funciona, 3️⃣ Falar com consultor ou 4️⃣ Já sou aluno.';
-}
+import { callAiEngine, loadEngineAndPrompt } from '../_shared/ai-engine.ts';
+import { buildStudentContext } from '../_shared/student-context.ts';
 
 async function generateAiReply({
   admin,
@@ -37,25 +18,8 @@ async function generateAiReply({
   waId?: string | null;
   queue?: string;
 }): Promise<{ response: string; model: string; engine: string }> {
-  let systemPrompt = 'Você é um assistente de atendimento ao aluno da consultoria STH METHOD. Seja claro, técnico, neutro e cordial. Responda em português do Brasil.';
-  let engine: 'lovable' | 'local' | 'gemini_api' = 'lovable';
-
-  const promptKey = queue === 'sucesso' ? 'ai_prompt_sucesso' : 'ai_prompt_comercial';
-  
-  const [{ data: cfg }, { data: engCfg }] = await Promise.all([
-    admin.from('crm_settings').select('value').eq('key', promptKey).maybeSingle(),
-    admin.from('crm_settings').select('value').eq('key', 'ai_engine').maybeSingle(),
-  ]);
-
-  const storedPrompt = (cfg?.value as any)?.prompt;
-  if (storedPrompt && typeof storedPrompt === 'string' && storedPrompt.trim()) {
-    systemPrompt = storedPrompt;
-  }
-
-  const storedEngine = (engCfg?.value as any)?.engine;
-  if (storedEngine === 'lovable' || storedEngine === 'local' || storedEngine === 'gemini_api') {
-    engine = storedEngine;
-  }
+  const promptKey: 'ai_prompt_comercial' | 'ai_prompt_sucesso' = queue === 'sucesso' ? 'ai_prompt_sucesso' : 'ai_prompt_comercial';
+  const { engine, systemPrompt } = await loadEngineAndPrompt(admin as any, promptKey);
 
   const [{ data: msgs }, profile] = await Promise.all([
     admin
@@ -64,7 +28,7 @@ async function generateAiReply({
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: false })
       .limit(10),
-    findProfileByPhone(admin, phone, 'full_name, objective, weight, phone', waId),
+    findProfileByPhone(admin, phone, 'user_id, full_name, objective, weight, phone', waId),
   ]);
 
   const history = (msgs || [])
@@ -72,61 +36,18 @@ async function generateAiReply({
     .map((m: any) => `${m.direction === 'in' ? 'Aluno' : 'Atendente'}: ${m.body}`)
     .join('\n');
 
-  let context = history ? `Histórico recente da conversa:\n${history}\n\n` : '';
-  if (profile) {
+  let context = '';
+  if (profile?.user_id) {
+    const dossier = await buildStudentContext(admin as any, profile.user_id);
+    if (dossier) context += dossier + '\n';
+  } else if (profile) {
     context += `Aluno: ${profile.full_name} | Objetivo: ${profile.objective || '—'} | Peso: ${profile.weight || '—'}kg\n\n`;
   }
+  if (history) context += `Histórico recente da conversa:\n${history}\n\n`;
 
-  const userPrompt = 'Com base no contexto acima, responda a última mensagem de forma curta, cordial e profissional (tom STH METHOD, neutro e técnico, em português do Brasil). Não use emojis em excesso. Máximo 4 frases.';
+  const userPrompt = `${context}\nCom base no contexto acima, responda a última mensagem do aluno de forma curta, cordial e profissional (tom STH METHOD, neutro e técnico, em português do Brasil). Não use emojis em excesso. Máximo 4 frases.`;
 
-  if (engine === 'local') {
-    return { response: localEngineReply(context), model: 'local/rules', engine };
-  }
-
-  if (engine === 'gemini_api') {
-    const gkey = Deno.env.get('GEMINI_API_KEY') || Deno.env.get('GEMINI_API_KEY_FALLBACK');
-    if (!gkey) throw new Error('GEMINI_API_KEY missing');
-
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${gkey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-        contents: [{ role: 'user', parts: [{ text: `${context}\n${userPrompt}` }] }],
-      }),
-    });
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(`Gemini API error: ${JSON.stringify(d)}`);
-
-    return {
-      response: (d as any)?.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join('') || '',
-      model: 'gemini-2.5-flash (api)',
-      engine,
-    };
-  }
-
-  const apiKey = Deno.env.get('LOVABLE_API_KEY');
-  if (!apiKey) throw new Error('LOVABLE_API_KEY missing');
-
-  const resp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model: 'google/gemini-2.5-flash',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: `${context}\n${userPrompt}` },
-      ],
-    }),
-  });
-  const data = await resp.json().catch(() => ({}));
-  if (!resp.ok) throw new Error(`AI gateway error: ${JSON.stringify(data)}`);
-
-  return {
-    response: (data as any)?.choices?.[0]?.message?.content || '',
-    model: 'google/gemini-2.5-flash',
-    engine,
-  };
+  return await callAiEngine({ engine, systemPrompt, userPrompt });
 }
 
 function normalizePhone(raw: string): string {
