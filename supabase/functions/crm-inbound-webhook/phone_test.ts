@@ -8,7 +8,7 @@ function digitsOnly(raw: string | null | undefined): string {
   return clean.replace(/\D+/g, '').replace(/^0+/, '');
 }
 
-function buildInternalPhones(configuredInstances: { zapi: string; wapi: string; wapi_sucesso: string }, connectedPhone: string): Set<string> {
+function buildInternalPhones(_configuredInstances: { zapi: string; wapi: string; wapi_sucesso: string }, connectedPhone: string): Set<string> {
   const numbers = new Set<string>();
   const hardcodedKnownInternalNumbers = [
     '5521998984153',
@@ -19,11 +19,6 @@ function buildInternalPhones(configuredInstances: { zapi: string; wapi: string; 
   for (const raw of [connectedPhone, ...hardcodedKnownInternalNumbers]) {
     const digits = digitsOnly(raw);
     if (digits) numbers.add(digits);
-  }
-
-  for (const key of Object.keys(configuredInstances) as Array<keyof typeof configuredInstances>) {
-    const instanceId = configuredInstances[key];
-    if (!instanceId) continue;
   }
 
   return numbers;
