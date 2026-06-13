@@ -126,6 +126,23 @@ export default function AdminCrmAi() {
 
   return (
     <DashboardLayout role="admin" title="Motor de Resposta IA" subtitle="ChatGPT / Gemini para os 3 canais (Comercial, Sucesso, App do Aluno)">
+      <Card className="p-4 space-y-3 mb-4 border-primary/40">
+        <Label>Forma de atendimento (WhatsApp Comercial / Sucesso / Nutri)</Label>
+        <Select value={aiMode} onValueChange={(v) => saveMode(v as AiMode)}>
+          <SelectTrigger className="max-w-md"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="off">Apenas fluxo + humano (IA desligada)</SelectItem>
+            <SelectItem value="auto">Fluxo primeiro, IA como fallback (padrão)</SelectItem>
+            <SelectItem value="ai_only">IA Global responde TUDO (ignora fluxo/menus) — modo de teste</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-[11px] text-muted-foreground">
+          {aiMode === "ai_only" && "⚠️ A IA assumirá todas as conversas de WhatsApp. Menus, identificação de aluno e mensagens de ausência são ignorados. Atendimento humano (handoff) continua tendo prioridade."}
+          {aiMode === "auto" && "Comportamento atual: o fluxo automatizado responde primeiro; quando não há resposta de fluxo, a IA assume."}
+          {aiMode === "off" && "Apenas o fluxo automatizado (menus, ausência, handoff humano) — nenhuma chamada à IA será feita."}
+        </p>
+      </Card>
+
       <Card className="p-4 space-y-3 mb-4">
         <Label>Motor de IA usado em todos os canais</Label>
         <Select value={engine} onValueChange={(v) => saveEngine(v as Engine)}>
