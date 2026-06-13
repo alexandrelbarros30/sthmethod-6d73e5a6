@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, Pencil, Save, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -33,6 +33,10 @@ export default function AdminCrmAi() {
   const [globalPrompt, setGlobalPrompt] = useState("");
   const [globalEnabled, setGlobalEnabled] = useState(false);
   const [savingGlobal, setSavingGlobal] = useState(false);
+  const [templatesEnabled, setTemplatesEnabled] = useState(true);
+  const [editingRunId, setEditingRunId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState("");
+  const [savingRun, setSavingRun] = useState(false);
 
   async function load() {
     const [{ data: runsData }, { data: settings }] = await Promise.all([
@@ -42,7 +46,7 @@ export default function AdminCrmAi() {
       .order("created_at", { ascending: false })
       .limit(50),
       supabase.from("crm_settings").select("key,value").in("key", [
-        "ai_engine", "ai_mode", "ai_prompt_global", "ai_prompt_global_enabled",
+        "ai_engine", "ai_mode", "ai_prompt_global", "ai_prompt_global_enabled", "ai_templates_enabled",
         ...PROMPT_KEYS.map(p => p.key),
         ...PROMPT_KEYS.map(p => `${p.key}_enabled`),
       ]),
@@ -63,6 +67,8 @@ export default function AdminCrmAi() {
         setGlobalPrompt(s.value?.prompt || "");
       } else if (s.key === "ai_prompt_global_enabled") {
         setGlobalEnabled(s.value?.enabled === true);
+      } else if (s.key === "ai_templates_enabled") {
+        setTemplatesEnabled(s.value?.enabled !== false);
       } else if (s.key.endsWith("_enabled")) {
         const base = s.key.replace(/_enabled$/, "");
         enabledMap[base] = s.value?.enabled !== false;
@@ -124,6 +130,42 @@ export default function AdminCrmAi() {
     const { error } = await supabase.from("crm_settings").upsert({ key: `${key}_enabled`, value: { enabled: next } as any }, { onConflict: "key" });
     if (error) toast({ title: "Erro", description: error.message });
     else toast({ title: next ? "Prompt deste canal ativado" : "Prompt deste canal suspenso" });
+  }
+
+  async function toggleTemplates(next: boolean) {
+    setTemplatesEnabled(next);
+    const { error } = await supabase.from("crm_settings").upsert({ key: "ai_templates_enabled", value: { enabled: next } as any }, { onConflict: "key" });
+    if (error) toast({ title: "Erro", description: error.message });
+    else toast({ title: next ? "Templates integrados como base da IA" : "Templates desconectados da IA" });
+  }
+
+  function startEditRun(r: Run) {
+    setEditingRunId(r.id);
+    setEditingText(r.response || "");
+  }
+
+  async function saveEditRun() {
+    if (!editingRunId) return;
+    setSavingRun(true);
+    const { error } = await supabase.from("crm_ai_runs").update({ response: editingText }).eq("id", editingRunId);
+    setSavingRun(false);
+    if (error) { toast({ title: "Erro", description: error.message }); return; }
+    toast({ title: "Resposta atualizada" });
+    setEditingRunId(null);
+    setEditingText("");
+    load();
+  }
+
+  async function saveRunAsTemplate(r: Run) {
+    const body = (editingRunId === r.id ? editingText : r.response) || "";
+    if (!body.trim()) { toast({ title: "Vazio", description: "Nada para salvar" }); return; }
+    const key = `ai_run_${r.id.slice(0, 8)}`;
+    const name = (r.prompt || "Resposta IA").slice(0, 60);
+    const { error } = await supabase.from("crm_message_templates").insert({
+      key, name, body, category: "automacao", channel: "both", active: true, created_by: user?.id,
+    });
+    if (error) toast({ title: "Erro", description: error.message });
+    else toast({ title: "Template criado e integrado à IA", description: name });
   }
 
   async function ask() {
@@ -195,6 +237,19 @@ export default function AdminCrmAi() {
         </div>
       </Card>
 
+      <Card className="p-4 space-y-2 mb-6 border-primary/40">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <Label className="text-sm">Templates como base de conhecimento da IA</Label>
+            <p className="text-[11px] text-muted-foreground mt-1">Quando ativado, todos os templates ATIVOS de mensagens são enviados como referência ao motor de IA (Comercial recebe templates zapi/both, Sucesso recebe wapi/both, Chat do Aluno recebe both). Isso gera fluidez e mantém a IA alinhada à linguagem oficial.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-muted-foreground">{templatesEnabled ? "Integrado" : "Desligado"}</span>
+            <Switch checked={templatesEnabled} onCheckedChange={toggleTemplates} />
+          </div>
+        </div>
+      </Card>
+
       <div className="grid gap-3 mb-6">
         {PROMPT_KEYS.map(({ key, label }) => (
           <Card key={key} className="p-4 space-y-2">
@@ -235,7 +290,31 @@ export default function AdminCrmAi() {
           <Card key={r.id} className="p-3 space-y-2">
             <p className="text-[11px] text-muted-foreground">{new Date(r.created_at).toLocaleString("pt-BR")} · {r.model || "—"}</p>
             <p className="text-xs text-muted-foreground"><b>Prompt:</b> {r.prompt}</p>
-            <p className="text-sm whitespace-pre-wrap">{r.response}</p>
+            {editingRunId === r.id ? (
+              <Textarea rows={6} value={editingText} onChange={(e) => setEditingText(e.target.value)} />
+            ) : (
+              <p className="text-sm whitespace-pre-wrap">{r.response}</p>
+            )}
+            <div className="flex flex-wrap gap-2 pt-1">
+              {editingRunId === r.id ? (
+                <>
+                  <Button size="sm" variant="default" onClick={saveEditRun} disabled={savingRun}>
+                    {savingRun ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Save className="w-3.5 h-3.5 mr-1" />}
+                    Salvar edição
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => { setEditingRunId(null); setEditingText(""); }}>
+                    <X className="w-3.5 h-3.5 mr-1" /> Cancelar
+                  </Button>
+                </>
+              ) : (
+                <Button size="sm" variant="outline" onClick={() => startEditRun(r)}>
+                  <Pencil className="w-3.5 h-3.5 mr-1" /> Editar resposta
+                </Button>
+              )}
+              <Button size="sm" variant="outline" onClick={() => saveRunAsTemplate(r)}>
+                <Sparkles className="w-3.5 h-3.5 mr-1" /> Salvar como template (integra à IA)
+              </Button>
+            </div>
           </Card>
         ))}
       </div>
