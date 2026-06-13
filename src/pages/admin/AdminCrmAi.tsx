@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 
 interface Run { id: string; prompt: string | null; response: string | null; model: string | null; created_at: string; }
 type Engine = "openai" | "lovable" | "gemini_api" | "local";
+type AiMode = "off" | "auto" | "ai_only";
 const PROMPT_KEYS = [
   { key: "ai_prompt_comercial", label: "Comercial (Leads / WhatsApp Comercial)" },
   { key: "ai_prompt_sucesso", label: "Sucesso do Aluno (WhatsApp pós-venda)" },
@@ -25,6 +26,7 @@ export default function AdminCrmAi() {
   const [loading, setLoading] = useState(false);
   const [runs, setRuns] = useState<Run[]>([]);
   const [engine, setEngine] = useState<Engine>("openai");
+  const [aiMode, setAiMode] = useState<AiMode>("auto");
   const [prompts, setPrompts] = useState<Record<string, string>>({});
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [globalPrompt, setGlobalPrompt] = useState("");
@@ -38,7 +40,7 @@ export default function AdminCrmAi() {
       .select("id, prompt, response, model, created_at")
       .order("created_at", { ascending: false })
       .limit(50),
-      supabase.from("crm_settings").select("key,value").in("key", ["ai_engine", "ai_prompt_global", "ai_prompt_global_enabled", ...PROMPT_KEYS.map(p => p.key)]),
+      supabase.from("crm_settings").select("key,value").in("key", ["ai_engine", "ai_mode", "ai_prompt_global", "ai_prompt_global_enabled", ...PROMPT_KEYS.map(p => p.key)]),
     ]);
     setRuns((runsData ?? []) as Run[]);
     const map: Record<string, string> = {};
@@ -47,6 +49,9 @@ export default function AdminCrmAi() {
       if (s.key === "ai_engine") {
         const e = s.value?.engine;
         if (e === "openai" || e === "lovable" || e === "gemini_api" || e === "local") eng = e;
+      } else if (s.key === "ai_mode") {
+        const m = s.value?.mode;
+        if (m === "off" || m === "auto" || m === "ai_only") setAiMode(m);
       } else if (s.key === "ai_prompt_global") {
         setGlobalPrompt(s.value?.prompt || "");
       } else if (s.key === "ai_prompt_global_enabled") {
@@ -65,6 +70,16 @@ export default function AdminCrmAi() {
     const { error } = await supabase.from("crm_settings").upsert({ key: "ai_engine", value: { engine: next } as any }, { onConflict: "key" });
     if (error) toast({ title: "Erro", description: error.message });
     else toast({ title: "Engine atualizado", description: `Agora usando: ${next}` });
+  }
+
+  async function saveMode(next: AiMode) {
+    setAiMode(next);
+    const { error } = await supabase.from("crm_settings").upsert({ key: "ai_mode", value: { mode: next } as any }, { onConflict: "key" });
+    if (error) toast({ title: "Erro", description: error.message });
+    else {
+      const label = next === "off" ? "Atendimento 100% humano (IA desligada)" : next === "ai_only" ? "IA Global responde TUDO (fluxos desligados)" : "Fluxo + IA como fallback";
+      toast({ title: "Modo de atendimento atualizado", description: label });
+    }
   }
 
   async function savePrompt(key: string) {
