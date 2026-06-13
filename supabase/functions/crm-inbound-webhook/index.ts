@@ -488,30 +488,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    const recentEchoThreshold = new Date(Date.now() - 120000).toISOString();
-    const looksLikeBotTemplate = body.length >= 80 || body.includes('\n');
-    if (looksLikeBotTemplate) {
-      const { data: recentEcho } = await admin
-        .from('crm_messages')
-        .select('id')
-        .eq('direction', 'out')
-        .eq('source', provider)
-        .eq('body', body)
-        .gt('created_at', recentEchoThreshold)
-        .limit(1)
-        .maybeSingle();
-
-      if (recentEcho) {
-        await admin.from('automation_logs').insert({
-          contact_phone: phone,
-          event_type: 'blocked_duplicate',
-          reason: 'Provider echo matched a recent outbound template',
-          metadata: { provider, external_id: externalId },
-        });
-        return await finish({ ok: true, skipped: true, reason: 'provider_echo' });
-      }
-    }
-
     // LOG DE INÍCIO
     await admin.from('automation_logs').insert({
       contact_phone: phone,
@@ -666,6 +642,31 @@ Deno.serve(async (req) => {
     const sessionExpiresAt = new Date(now.getTime() + SESSION_TTL_MS);
     let { data: conv } = await admin.from('crm_conversations').select('*').eq('phone', phone).maybeSingle();
     const isExpired = conv?.session_expires_at && new Date(conv.session_expires_at).getTime() < now.getTime();
+
+    const recentEchoThreshold = new Date(Date.now() - 120000).toISOString();
+    const looksLikeBotTemplate = body.length >= 80 || body.includes('\n');
+    if (looksLikeBotTemplate && conv?.id) {
+      const { data: recentEcho } = await admin
+        .from('crm_messages')
+        .select('id')
+        .eq('conversation_id', conv.id)
+        .eq('direction', 'out')
+        .eq('source', provider)
+        .eq('body', body)
+        .gt('created_at', recentEchoThreshold)
+        .limit(1)
+        .maybeSingle();
+
+      if (recentEcho) {
+        await admin.from('automation_logs').insert({
+          contact_phone: phone,
+          event_type: 'blocked_duplicate',
+          reason: 'Provider echo matched a recent outbound template',
+          metadata: { provider, external_id: externalId, conversation_id: conv.id },
+        });
+        return await finish({ ok: true, skipped: true, reason: 'provider_echo' });
+      }
+    }
     
     // CRITICAL FIX: If human is active, prevent session reset/expiry logic that could re-enable the bot
     const isHumanActive = conv?.human_handoff === true || !!conv?.assigned_to;
