@@ -61,6 +61,7 @@ import StudentBioimpedance from "./pages/student/StudentBioimpedance";
 import StudentProfile from "./pages/student/StudentProfile";
 import StudentMetabolic from "./pages/student/StudentMetabolic";
 import StudentAds from "./pages/student/StudentAds";
+import StudentAssistant from "./pages/student/StudentAssistant";
 import DiarioAlimentar from "./pages/DiarioAlimentar";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminNutriMetrics from "./pages/admin/AdminNutriMetrics";
