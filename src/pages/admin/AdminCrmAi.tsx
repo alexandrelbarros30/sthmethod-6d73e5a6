@@ -28,6 +28,7 @@ export default function AdminCrmAi() {
   const [engine, setEngine] = useState<Engine>("openai");
   const [aiMode, setAiMode] = useState<AiMode>("auto");
   const [prompts, setPrompts] = useState<Record<string, string>>({});
+  const [promptEnabled, setPromptEnabled] = useState<Record<string, boolean>>({});
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [globalPrompt, setGlobalPrompt] = useState("");
   const [globalEnabled, setGlobalEnabled] = useState(false);
@@ -40,10 +41,16 @@ export default function AdminCrmAi() {
       .select("id, prompt, response, model, created_at")
       .order("created_at", { ascending: false })
       .limit(50),
-      supabase.from("crm_settings").select("key,value").in("key", ["ai_engine", "ai_mode", "ai_prompt_global", "ai_prompt_global_enabled", ...PROMPT_KEYS.map(p => p.key)]),
+      supabase.from("crm_settings").select("key,value").in("key", [
+        "ai_engine", "ai_mode", "ai_prompt_global", "ai_prompt_global_enabled",
+        ...PROMPT_KEYS.map(p => p.key),
+        ...PROMPT_KEYS.map(p => `${p.key}_enabled`),
+      ]),
     ]);
     setRuns((runsData ?? []) as Run[]);
     const map: Record<string, string> = {};
+    const enabledMap: Record<string, boolean> = {};
+    PROMPT_KEYS.forEach(p => { enabledMap[p.key] = true; }); // default ON
     let eng: Engine = "openai";
     (settings || []).forEach((s: any) => {
       if (s.key === "ai_engine") {
@@ -56,12 +63,16 @@ export default function AdminCrmAi() {
         setGlobalPrompt(s.value?.prompt || "");
       } else if (s.key === "ai_prompt_global_enabled") {
         setGlobalEnabled(s.value?.enabled === true);
+      } else if (s.key.endsWith("_enabled")) {
+        const base = s.key.replace(/_enabled$/, "");
+        enabledMap[base] = s.value?.enabled !== false;
       } else {
         map[s.key] = s.value?.prompt || "";
       }
     });
     setEngine(eng);
     setPrompts(map);
+    setPromptEnabled(enabledMap);
   }
   useEffect(() => { load(); }, []);
 
@@ -106,6 +117,13 @@ export default function AdminCrmAi() {
     const { error } = await supabase.from("crm_settings").upsert({ key: "ai_prompt_global_enabled", value: { enabled: next } as any }, { onConflict: "key" });
     if (error) toast({ title: "Erro", description: error.message });
     else toast({ title: next ? "Prompt global ativado — substituirá os 3 canais" : "Prompt global desativado — voltando aos prompts por canal" });
+  }
+
+  async function togglePromptEnabled(key: string, next: boolean) {
+    setPromptEnabled(p => ({ ...p, [key]: next }));
+    const { error } = await supabase.from("crm_settings").upsert({ key: `${key}_enabled`, value: { enabled: next } as any }, { onConflict: "key" });
+    if (error) toast({ title: "Erro", description: error.message });
+    else toast({ title: next ? "Prompt deste canal ativado" : "Prompt deste canal suspenso" });
   }
 
   async function ask() {
@@ -180,8 +198,19 @@ export default function AdminCrmAi() {
       <div className="grid gap-3 mb-6">
         {PROMPT_KEYS.map(({ key, label }) => (
           <Card key={key} className="p-4 space-y-2">
-            <Label className="text-xs">{label}{globalEnabled ? " (ignorado — prompt global ativo)" : ""}</Label>
-            <Textarea rows={5} value={prompts[key] || ""} onChange={(e) => setPrompts((p) => ({ ...p, [key]: e.target.value }))} />
+            <div className="flex items-center justify-between gap-3">
+              <Label className="text-xs">
+                {label}
+                {globalEnabled
+                  ? (promptEnabled[key] ? " (auxiliar — soma ao prompt global)" : " (suspenso — apenas global opera)")
+                  : (promptEnabled[key] ? "" : " (suspenso)")}
+              </Label>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-muted-foreground">{promptEnabled[key] ? "Ativo" : "Suspenso"}</span>
+                <Switch checked={promptEnabled[key] ?? true} onCheckedChange={(v) => togglePromptEnabled(key, v)} />
+              </div>
+            </div>
+            <Textarea rows={5} value={prompts[key] || ""} onChange={(e) => setPrompts((p) => ({ ...p, [key]: e.target.value }))} disabled={!promptEnabled[key]} />
             <div>
               <Button size="sm" variant="outline" onClick={() => savePrompt(key)} disabled={savingKey === key}>
                 {savingKey === key ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : null}
