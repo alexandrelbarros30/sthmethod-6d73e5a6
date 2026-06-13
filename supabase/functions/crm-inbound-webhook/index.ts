@@ -2,7 +2,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { crypto } from "https://deno.land/std@0.192.0/crypto/mod.ts";
 import { encode as hexEncode } from "https://deno.land/std@0.192.0/encoding/hex.ts";
-import { callAiEngine, loadEngineAndPrompt } from '../_shared/ai-engine.ts';
+import { callAiEngine, loadEngineAndPrompt, fetchAiMemories, renderMemoryBlock, extractAndSaveAiMemory } from '../_shared/ai-engine.ts';
 import { buildStudentContext } from '../_shared/student-context.ts';
 
 async function generateAiReply({
@@ -19,7 +19,7 @@ async function generateAiReply({
   queue?: string;
 }): Promise<{ response: string; model: string; engine: string }> {
   const promptKey: 'ai_prompt_comercial' | 'ai_prompt_sucesso' = queue === 'sucesso' ? 'ai_prompt_sucesso' : 'ai_prompt_comercial';
-  const { engine, systemPrompt } = await loadEngineAndPrompt(admin as any, promptKey);
+  const { engine, systemPrompt: basePrompt } = await loadEngineAndPrompt(admin as any, promptKey);
 
   const [{ data: msgs }, profile] = await Promise.all([
     admin
@@ -45,9 +45,28 @@ async function generateAiReply({
   }
   if (history) context += `Histórico recente da conversa:\n${history}\n\n`;
 
+  // 🧠 Memória da IA — aprendizados acumulados de conversas anteriores.
+  const memories = await fetchAiMemories(admin as any, { phone, userId: profile?.user_id || null });
+  const systemPrompt = basePrompt + renderMemoryBlock(memories);
+
   const userPrompt = `${context}\nCom base no contexto acima, responda a última mensagem do aluno de forma curta, cordial e profissional (tom STH METHOD, neutro e técnico, em português do Brasil). Não use emojis em excesso. Máximo 4 frases.`;
 
-  return await callAiEngine({ engine, systemPrompt, userPrompt });
+  const reply = await callAiEngine({ engine, systemPrompt, userPrompt });
+
+  // Extração assíncrona (best-effort, não bloqueia a resposta).
+  if (history) {
+    const tailHistory = history + `\nAtendente: ${reply.response}`;
+    extractAndSaveAiMemory({
+      admin,
+      engine,
+      phone,
+      userId: profile?.user_id || null,
+      conversationId,
+      recentHistory: tailHistory,
+    }).catch(() => {});
+  }
+
+  return reply;
 }
 
 function normalizePhone(raw: string): string {
