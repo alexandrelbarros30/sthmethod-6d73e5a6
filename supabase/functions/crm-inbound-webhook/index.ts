@@ -1146,11 +1146,47 @@ Deno.serve(async (req) => {
             .maybeSingle();
 
           if (!recentMsg) {
-            await sendMessage(String(flowStepIdent?.message || 'Redirecionando para Sucesso...'), step, null, undefined, {}, flowStepIdent);
-            const flowStepMain = getFlowStep('sucesso_main_menu');
-            const r = await sendMessage(String(flowStepMain?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu', null, undefined, {}, flowStepMain);
-            await admin.from('crm_conversations').update({ flow_state: 'sucesso_main_menu', queue_type: 'sucesso' }).eq('id', conv.id);
-            autoReply = { sent: r.sent, engine: 'flow' };
+            if (identifiedAs === 'aluno_ativo') {
+              // Regra: aluno ATIVO que chega no canal Comercial deve ser
+              // transferido DIRETAMENTE para o canal "Fale com o Nutri" (W-API).
+              // 1) Saudação + aviso de transferência respondidos PELO próprio canal Comercial (Z-API).
+              const transferMsg = String(
+                flowStepIdent?.message ||
+                `Olá${FIRST_NAME ? ' ' + FIRST_NAME : ''}! 👋\n\nIdentificamos que você já é aluno ativo da STH METHOD.\n\nO canal *Comercial* atende apenas novos interessados. Estamos te transferindo agora para o canal exclusivo *Fale com o Nutri*, onde nossa equipe técnica vai te atender. ✅\n\nNenhuma ação necessária — sua mensagem já foi encaminhada.`
+              );
+              await sendMessage(transferMsg, 'comercial_ident_ativo', null, undefined, {}, flowStepIdent);
+
+              // 2) Atualiza a conversa para o canal Nutri e zera o estado de fluxo.
+              await admin.from('crm_conversations').update({
+                queue_type: 'nutri',
+                flow_state: 'nutri_main',
+                flow_context: { ...(conv.flow_context || {}), transferred_from: 'comercial', transferred_at: new Date().toISOString() },
+              }).eq('id', conv.id);
+
+              // 3) Saudação de recepção do Nutri enviada pelo canal W-API, já com a mensagem original do aluno encaminhada.
+              const flowStepReception = getFlowStep('nutri_reception');
+              const receptionBase = String(flowStepReception?.message || `Olá${FIRST_NAME ? ' ' + FIRST_NAME : ''}! Você está no canal *Fale com o Nutri* — atendimento técnico exclusivo para alunos ativos. 👨‍⚕️\n\nComo posso te ajudar?\n\n1️⃣ Dieta\n2️⃣ Treino\n3️⃣ Exames\n4️⃣ Protocolo\n5️⃣ Urgência`);
+              const receptionMsg = `${receptionBase}\n\n———\n📩 *Mensagem recebida via Comercial:*\n"${String(body).trim().slice(0, 500)}"`;
+              const r = await sendMessage(receptionMsg, 'nutri_reception', null, 'wapi', {}, flowStepReception);
+
+              await admin.from('automation_logs').insert({
+                contact_phone: phone,
+                event_type: 'comercial_to_nutri_transfer',
+                queue_type: 'nutri',
+                flow_state: 'nutri_main',
+                action_taken: 'transferred',
+                severity: 'info',
+                metadata: { identified_as: 'aluno_ativo', original_message: String(body).slice(0, 500) },
+              });
+              autoReply = { sent: r.sent, engine: 'flow', transfer: 'comercial->nutri' };
+            } else {
+              // Vencido / Ex-aluno continuam encaminhados para Sucesso do Aluno.
+              await sendMessage(String(flowStepIdent?.message || 'Redirecionando para Sucesso...'), step, null, undefined, {}, flowStepIdent);
+              const flowStepMain = getFlowStep('sucesso_main_menu');
+              const r = await sendMessage(String(flowStepMain?.message || 'Bem-vindo ao Sucesso do Aluno...'), 'sucesso_main_menu', null, undefined, {}, flowStepMain);
+              await admin.from('crm_conversations').update({ flow_state: 'sucesso_main_menu', queue_type: 'sucesso' }).eq('id', conv.id);
+              autoReply = { sent: r.sent, engine: 'flow' };
+            }
           } else {
             autoReply = { sent: false, reason: 'duplicate_prevented' };
           }
