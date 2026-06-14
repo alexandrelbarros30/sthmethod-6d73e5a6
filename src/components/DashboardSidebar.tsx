@@ -68,6 +68,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
         { to: "/admin/crm/pipeline", icon: TrendingUp, label: "Pipeline Comercial" },
         { to: "/admin/crm/filas", icon: ListOrdered, label: "Filas" },
         { to: "/admin/crm/campanhas", icon: Send, label: "Campanhas" },
+        { to: "/admin/crm/automacoes", icon: Zap, label: "Automações" },
         { to: "/admin/crm/templates", icon: NotebookPen, label: "Templates" },
         { to: "/admin/crm/tarefas", icon: CheckSquare, label: "Tarefas" },
         { to: "/admin/crm/ia", icon: Sparkles, label: "IA" },
