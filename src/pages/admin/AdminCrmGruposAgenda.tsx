@@ -9,6 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Save, Send, Users, Image as ImageIcon, Plus, X } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { RefreshCw, Check } from "lucide-react";
 
 interface Row {
   id: string;
@@ -26,6 +28,8 @@ interface Row {
 
 const WEEKDAYS = ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
 
+interface ZapiGroup { id: string; name: string; image?: string | null }
+
 export default function AdminCrmGruposAgenda() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,6 +37,28 @@ export default function AdminCrmGruposAgenda() {
   const [saving, setSaving] = useState<string | null>(null);
   const [testing, setTesting] = useState<string | null>(null);
   const [newGroup, setNewGroup] = useState<Record<string, string>>({});
+  const [pickerOpen, setPickerOpen] = useState<string | null>(null);
+  const [groupsCache, setGroupsCache] = useState<ZapiGroup[] | null>(null);
+  const [loadingGroups, setLoadingGroups] = useState(false);
+  const [search, setSearch] = useState("");
+
+  async function fetchGroups(force = false) {
+    if (!force && groupsCache) return;
+    setLoadingGroups(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("crm-zapi-list-groups");
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || "Falha ao listar grupos");
+      setGroupsCache(data.groups || []);
+    } catch (e: any) {
+      toast({ title: "Erro ao listar grupos", description: e?.message || String(e) });
+    } finally { setLoadingGroups(false); }
+  }
+
+  function openPicker(id: string) {
+    setPickerOpen(id);
+    fetchGroups(false);
+  }
 
   async function load() {
     setLoading(true);
