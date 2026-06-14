@@ -349,46 +349,6 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      {/* Search Results */}
-      {filteredProfiles && filteredProfiles.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-display flex items-center gap-2">
-              <Search className="w-4 h-4" /> Resultados ({filteredProfiles.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="max-h-[300px]">
-              <div className="space-y-2">
-                {filteredProfiles.map((p: any) => (
-                  <div key={p.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">{p.full_name || "Sem nome"}</p>
-                      <p className="text-xs text-muted-foreground truncate">{p.email}</p>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => navigate(`/admin/students?manage=${p.user_id}`)}>
-                        <Settings className="w-3.5 h-3.5" /> Gerenciar
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => navigate(`/admin/students?edit=${p.user_id}`)}>
-                        <ExternalLink className="w-3.5 h-3.5" /> Ficha
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      )}
-      {filteredProfiles && filteredProfiles.length === 0 && (
-        <Card className="mb-6">
-          <CardContent className="py-6 text-center text-sm text-muted-foreground">
-            Nenhum aluno encontrado para "{searchTerm}"
-          </CardContent>
-        </Card>
-      )}
-
       {/* Atividade ao vivo */}
       <Card className="premium-card mb-6 border-border/40 bg-card/55 backdrop-blur-2xl">
         <CardHeader className="pb-3 pt-5 px-5">
