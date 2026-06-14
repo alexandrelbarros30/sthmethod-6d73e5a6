@@ -1016,12 +1016,11 @@ Deno.serve(async (req) => {
       } else {
         autoReply = { sent: false, reason: 'today_notice_already_sent' };
       }
-    } else if (!withinHours && !(provider === 'zapi' && isNewSession)) {
-      // Em nova sessão no Comercial (Z-API), pulamos a mensagem de ausência para
-      // garantir que o menu de boas-vindas/identificação SEMPRE seja enviado primeiro,
-      // mesmo fora do horário. Mensagens subsequentes na mesma sessão continuam
-      // recebendo a ausência via crm_away_locks.
-      // Fora do horário de expediente: enviar mensagem de ausência se não enviamos uma recentemente (últimas 4 horas)
+    } else if (!withinHours) {
+      // Fora do horário de expediente: SEMPRE enviar mensagem de ausência,
+      // independente de canal, identificação (lead/ativo/vencido) ou estado
+      // da conversa (nova sessão, fluxo em andamento, etc.). Dedup por 4h
+      // via crm_away_locks para não repetir na mesma janela.
       const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
       
       // Tentamos buscar um "lock" ativo para esta conversa
