@@ -252,6 +252,9 @@ export default function AdminCrmGruposAgenda() {
                         <Plus className="w-3.5 h-3.5" />
                       </Button>
                     </div>
+                    <Button size="sm" variant="secondary" className="w-full mt-2" onClick={() => openPicker(r.id)}>
+                      <Users className="w-3.5 h-3.5 mr-1" /> Escolher dos meus grupos
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -271,6 +274,68 @@ export default function AdminCrmGruposAgenda() {
           );
         })}
       </div>
+
+      <Dialog open={!!pickerOpen} onOpenChange={(v) => !v && setPickerOpen(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>Meus grupos (Z-API)</span>
+              <Button size="sm" variant="ghost" onClick={() => fetchGroups(true)} disabled={loadingGroups}>
+                {loadingGroups ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          <Input
+            placeholder="Buscar grupo por nome…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="text-sm"
+          />
+          <div className="max-h-[60vh] overflow-y-auto -mx-2 px-2 space-y-1">
+            {loadingGroups && !groupsCache && (
+              <div className="text-center text-muted-foreground text-sm py-8">
+                <Loader2 className="w-4 h-4 mx-auto animate-spin mb-2" /> Buscando grupos na Z-API…
+              </div>
+            )}
+            {groupsCache && groupsCache.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-6">Nenhum grupo encontrado. A instância precisa estar conectada ao WhatsApp e participar de pelo menos 1 grupo.</p>
+            )}
+            {(groupsCache || [])
+              .filter((g) => !search.trim() || g.name.toLowerCase().includes(search.toLowerCase()))
+              .map((g) => {
+                const row = pickerOpen ? rows.find((x) => x.id === pickerOpen) : null;
+                const cur = row ? (draft[row.id]?.group_ids ?? row.group_ids) : [];
+                const already = cur.includes(g.id) || cur.includes(`${g.id}@g.us`);
+                return (
+                  <button
+                    key={g.id}
+                    disabled={already}
+                    onClick={() => {
+                      if (!pickerOpen || !row) return;
+                      patch(row.id, { group_ids: [...cur, g.id] });
+                      toast({ title: "Grupo adicionado", description: g.name });
+                    }}
+                    className={`w-full flex items-center gap-3 px-2 py-2 rounded border text-left transition ${
+                      already ? "border-emerald-500/40 bg-emerald-500/5 cursor-default" : "border-border hover:bg-accent/40"
+                    }`}
+                  >
+                    {g.image ? (
+                      <img src={g.image} alt="" className="w-8 h-8 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center"><Users className="w-4 h-4 text-muted-foreground" /></div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{g.name}</p>
+                      <p className="text-[10px] text-muted-foreground font-mono truncate">{g.id}</p>
+                    </div>
+                    {already && <Check className="w-4 h-4 text-emerald-500" />}
+                  </button>
+                );
+              })}
+          </div>
+          <p className="text-[10px] text-muted-foreground">Não esqueça de clicar em <b>Salvar alterações</b> depois de escolher.</p>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
