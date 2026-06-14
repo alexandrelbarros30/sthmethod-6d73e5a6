@@ -12,6 +12,12 @@ import { template as couponApplied } from './coupon-applied.tsx'
 import { template as planChanged } from './plan-changed.tsx'
 import { template as emailChangeConfirm } from './email-change-confirm.tsx'
 import { template as inactivityReminder } from './inactivity-reminder.tsx'
+import { template as authPreviewSignup } from './auth-preview-signup.tsx'
+import { template as authPreviewRecovery } from './auth-preview-recovery.tsx'
+import { template as authPreviewMagiclink } from './auth-preview-magiclink.tsx'
+import { template as authPreviewInvite } from './auth-preview-invite.tsx'
+import { template as authPreviewEmailChange } from './auth-preview-email-change.tsx'
+import { template as authPreviewReauth } from './auth-preview-reauthentication.tsx'
 
 export interface TemplateEntry {
   component: ComponentType<any>
@@ -34,4 +40,10 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'plan-changed': planChanged,
   'email-change-confirm': emailChangeConfirm,
   'inactivity-reminder': inactivityReminder,
+  'auth-preview-signup': authPreviewSignup,
+  'auth-preview-recovery': authPreviewRecovery,
+  'auth-preview-magiclink': authPreviewMagiclink,
+  'auth-preview-invite': authPreviewInvite,
+  'auth-preview-email-change': authPreviewEmailChange,
+  'auth-preview-reauthentication': authPreviewReauth,
 }
