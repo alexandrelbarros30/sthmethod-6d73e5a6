@@ -11,6 +11,8 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2, Save, Send, Users, Image as ImageIcon, Plus, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { RefreshCw, Check } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ShieldAlert } from "lucide-react";
 
 interface Row {
   id: string;
@@ -41,6 +43,8 @@ export default function AdminCrmGruposAgenda() {
   const [groupsCache, setGroupsCache] = useState<ZapiGroup[] | null>(null);
   const [loadingGroups, setLoadingGroups] = useState(false);
   const [search, setSearch] = useState("");
+  const [killSwitch, setKillSwitch] = useState<boolean>(true);
+  const [killBusy, setKillBusy] = useState(false);
 
   async function fetchGroups(force = false) {
     if (!force && groupsCache) return;
@@ -68,9 +72,21 @@ export default function AdminCrmGruposAgenda() {
       .order("weekday").order("hour_brt");
     if (error) toast({ title: "Erro ao carregar", description: error.message });
     setRows((data ?? []) as Row[]);
+    const { data: ks } = await supabase.from("crm_settings").select("value").eq("key", "group_broadcasts").maybeSingle();
+    setKillSwitch(((ks?.value as any)?.enabled ?? true) === true);
     setLoading(false);
   }
   useEffect(() => { load(); }, []);
+
+  async function toggleKillSwitch(v: boolean) {
+    if (!v && !confirm("PARAR todos os disparos automáticos em grupos? Nenhuma mensagem será enviada até você reativar.")) return;
+    setKillBusy(true);
+    const { error } = await supabase.from("crm_settings").upsert({ key: "group_broadcasts", value: { enabled: v } }, { onConflict: "key" });
+    setKillBusy(false);
+    if (error) { toast({ title: "Erro", description: error.message }); return; }
+    setKillSwitch(v);
+    toast({ title: v ? "Disparos ATIVADOS" : "Disparos PARADOS", description: v ? "O cron volta a enviar normalmente." : "Nada será enviado até reativar." });
+  }
 
   function patch(id: string, p: Partial<Row>) {
     setDraft((d) => ({ ...d, [id]: { ...d[id], ...p } }));
@@ -86,6 +102,8 @@ export default function AdminCrmGruposAgenda() {
       text_first: m.text_first,
       group_ids: m.group_ids,
       active: m.active,
+      weekday: m.weekday,
+      hour_brt: m.hour_brt,
     }).eq("id", r.id);
     setSaving(null);
     if (error) { toast({ title: "Erro", description: error.message }); return; }
