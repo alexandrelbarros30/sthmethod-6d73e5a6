@@ -11,6 +11,8 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2, Save, Send, Users, Image as ImageIcon, Plus, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { RefreshCw, Check } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ShieldAlert } from "lucide-react";
 
 interface Row {
   id: string;
@@ -41,6 +43,8 @@ export default function AdminCrmGruposAgenda() {
   const [groupsCache, setGroupsCache] = useState<ZapiGroup[] | null>(null);
   const [loadingGroups, setLoadingGroups] = useState(false);
   const [search, setSearch] = useState("");
+  const [killSwitch, setKillSwitch] = useState<boolean>(true);
+  const [killBusy, setKillBusy] = useState(false);
 
   async function fetchGroups(force = false) {
     if (!force && groupsCache) return;
@@ -68,9 +72,21 @@ export default function AdminCrmGruposAgenda() {
       .order("weekday").order("hour_brt");
     if (error) toast({ title: "Erro ao carregar", description: error.message });
     setRows((data ?? []) as Row[]);
+    const { data: ks } = await supabase.from("crm_settings").select("value").eq("key", "group_broadcasts").maybeSingle();
+    setKillSwitch(((ks?.value as any)?.enabled ?? true) === true);
     setLoading(false);
   }
   useEffect(() => { load(); }, []);
+
+  async function toggleKillSwitch(v: boolean) {
+    if (!v && !confirm("PARAR todos os disparos automáticos em grupos? Nenhuma mensagem será enviada até você reativar.")) return;
+    setKillBusy(true);
+    const { error } = await supabase.from("crm_settings").upsert({ key: "group_broadcasts", value: { enabled: v } }, { onConflict: "key" });
+    setKillBusy(false);
+    if (error) { toast({ title: "Erro", description: error.message }); return; }
+    setKillSwitch(v);
+    toast({ title: v ? "Disparos ATIVADOS" : "Disparos PARADOS", description: v ? "O cron volta a enviar normalmente." : "Nada será enviado até reativar." });
+  }
 
   function patch(id: string, p: Partial<Row>) {
     setDraft((d) => ({ ...d, [id]: { ...d[id], ...p } }));
@@ -86,6 +102,8 @@ export default function AdminCrmGruposAgenda() {
       text_first: m.text_first,
       group_ids: m.group_ids,
       active: m.active,
+      weekday: m.weekday,
+      hour_brt: m.hour_brt,
     }).eq("id", r.id);
     setSaving(null);
     if (error) { toast({ title: "Erro", description: error.message }); return; }
@@ -139,6 +157,26 @@ export default function AdminCrmGruposAgenda() {
 
   return (
     <DashboardLayout role="admin" title="Disparos em Grupos" subtitle="Agendamento semanal — Z-API Comercial (21 99849-6289)">
+      <Card className={`p-4 mb-4 ${killSwitch ? "bg-emerald-500/5 border-emerald-500/40" : "bg-red-500/10 border-red-500/50"}`}>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            <ShieldAlert className={`w-5 h-5 ${killSwitch ? "text-emerald-500" : "text-red-500"}`} />
+            <div>
+              <p className="font-semibold text-sm">
+                {killSwitch ? "Disparos automáticos ATIVADOS" : "⛔ Disparos automáticos PARADOS"}
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                Botão de segurança global. Quando desligado, o cron NÃO envia nenhuma mensagem em grupo (disparo manual com "Disparar agora" continua funcionando).
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-muted-foreground">{killSwitch ? "Ligado" : "Parado"}</span>
+            <Switch checked={killSwitch} disabled={killBusy} onCheckedChange={toggleKillSwitch} />
+          </div>
+        </div>
+      </Card>
+
       <Card className="p-3 mb-4 bg-amber-500/5 border-amber-500/30">
         <p className="text-xs text-amber-700 dark:text-amber-300">
           Cole os IDs dos grupos no formato <code>12036xxxxxxxxx@g.us</code> (ou só a parte numérica). O cron roda a cada hora e dispara automaticamente no dia/horário configurado (horário de Brasília).
@@ -155,12 +193,32 @@ export default function AdminCrmGruposAgenda() {
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-semibold">{r.label}</h3>
-                    <Badge variant="outline" className="text-[10px]">{WEEKDAYS[r.weekday]} · {String(r.hour_brt).padStart(2,"0")}h BRT</Badge>
+                    <Badge variant="outline" className="text-[10px]">{WEEKDAYS[m.weekday]} · {String(m.hour_brt).padStart(2,"0")}h BRT</Badge>
                     {r.last_sent_at && (
                       <Badge variant="outline" className="text-[10px]">Último: {new Date(r.last_sent_at).toLocaleString("pt-BR")}</Badge>
                     )}
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-1 font-mono">{r.key}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-1">
+                      <label className="text-[10px] text-muted-foreground">Dia</label>
+                      <Select value={String(m.weekday)} onValueChange={(v) => patch(r.id, { weekday: Number(v) })}>
+                        <SelectTrigger className="h-7 w-[110px] text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {WEEKDAYS.map((d, i) => <SelectItem key={i} value={String(i)}>{d}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <label className="text-[10px] text-muted-foreground">Hora BRT</label>
+                      <Select value={String(m.hour_brt)} onValueChange={(v) => patch(r.id, { hour_brt: Number(v) })}>
+                        <SelectTrigger className="h-7 w-[80px] text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent className="max-h-[260px]">
+                          {Array.from({ length: 24 }).map((_, h) => <SelectItem key={h} value={String(h)}>{String(h).padStart(2,"0")}h</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2">

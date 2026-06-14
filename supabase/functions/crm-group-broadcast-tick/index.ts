@@ -75,6 +75,14 @@ Deno.serve(async (req) => {
   }
   const base = `https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}`;
 
+  // Kill-switch global dos disparos em grupo (segurança).
+  const { data: gbCfg } = await admin.from('crm_settings').select('value').eq('key', 'group_broadcasts').maybeSingle();
+  const gbEnabled = (gbCfg?.value as any)?.enabled !== false; // default ON
+  if (!gbEnabled && !force_id) {
+    return new Response(JSON.stringify({ ok: false, skipped: 'group_broadcasts kill-switch off' }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  }
+
   // Carrega broadcasts elegíveis.
   let query = admin.from('crm_group_broadcasts').select('*').eq('active', true);
   if (force_id) query = query.eq('id', force_id);
