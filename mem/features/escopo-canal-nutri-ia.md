@@ -4,3 +4,4 @@ description: Prompt ai_prompt_nutri dedicado + memória global; IA nunca diz que
 type: feature
 ---
 Webhook crm-inbound-webhook mapeia queue 'nutri' -> ai_prompt_nutri (W-API 5521 99898-4153). Regra crítica injetada no prompt e em crm_ai_memory (scope=global, aprendizado): NUNCA dizer encaminhar/transferir para Fale com o Nutri estando nele; nunca enviar o próprio número. Admin/pagamento -> Sucesso do Aluno (5521 97248-6650). loadEngineAndPrompt aceita ai_prompt_nutri com channelFilter ['wapi','both'].
+REGRA DE AUSÊNCIA: fora do horário de expediente o webhook envia ausência SEMPRE — independente de canal, identificação ou estado da conversa (nova sessão, fluxo em andamento, primeiro contato no Comercial). Dedup de 4h via crm_away_locks.
