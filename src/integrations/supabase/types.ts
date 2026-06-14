@@ -925,6 +925,54 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_group_broadcasts: {
+        Row: {
+          active: boolean
+          created_at: string
+          group_ids: string[]
+          hour_brt: number
+          id: string
+          image_urls: string[]
+          key: string
+          label: string
+          last_sent_at: string | null
+          message_body: string
+          text_first: boolean
+          updated_at: string
+          weekday: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          group_ids?: string[]
+          hour_brt: number
+          id?: string
+          image_urls?: string[]
+          key: string
+          label: string
+          last_sent_at?: string | null
+          message_body: string
+          text_first?: boolean
+          updated_at?: string
+          weekday: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          group_ids?: string[]
+          hour_brt?: number
+          id?: string
+          image_urls?: string[]
+          key?: string
+          label?: string
+          last_sent_at?: string | null
+          message_body?: string
+          text_first?: boolean
+          updated_at?: string
+          weekday?: number
+        }
+        Relationships: []
+      }
       crm_message_locks: {
         Row: {
           context_key: string | null
