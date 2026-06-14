@@ -6,6 +6,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 // Roda 1x/dia via pg_cron. Dedup por (user_id, end_date, trigger).
 
 const RULES: Array<{ trigger: string; offset: number; coupon?: string; cycle_days?: number }> = [
+  { trigger: 'evolution_close_pre_5d', offset: -5 },
   { trigger: 'renewal_pre_3d', offset: -3 },
   { trigger: 'cycle_update_d_minus_1', offset: -1, cycle_days: 30 },
   { trigger: 'renewal_d1', offset: 1 },
