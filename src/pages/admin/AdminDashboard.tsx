@@ -244,6 +244,61 @@ const AdminDashboard = () => {
 
   return (
     <DashboardLayout role="admin" title="Dashboard" subtitle="Visão geral da consultoria.">
+      {/* Pesquisa rápida — destaque no topo */}
+      <section className="mb-6">
+        <div className="rounded-[28px] border border-border/50 bg-card/60 p-4 sm:p-5 backdrop-blur-3xl">
+          <div className="flex items-center gap-2 mb-3">
+            <Search className="w-4 h-4 text-foreground/70" />
+            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Pesquisar aluno</p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/70" />
+              <Input
+                autoFocus
+                placeholder="Digite o nome ou e-mail do aluno..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-14 text-base rounded-2xl border-border/40 bg-background/80 pl-12 placeholder:text-muted-foreground/60 focus-visible:ring-2 focus-visible:ring-foreground/30"
+              />
+            </div>
+            <Button onClick={() => navigate("/admin/students")} variant="outline" className="h-14 rounded-2xl gap-2 border-border/40 px-5">
+              <Users className="w-4 h-4" /> Ver todos
+            </Button>
+          </div>
+          {filteredProfiles && (
+            <div className="mt-4 rounded-2xl border border-border/40 bg-background/60">
+              {filteredProfiles.length > 0 ? (
+                <ScrollArea className="max-h-[320px]">
+                  <div className="p-2">
+                    {filteredProfiles.slice(0, 30).map((p: any) => (
+                      <div key={p.id} className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl hover:bg-muted/40">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{p.full_name || "Sem nome"}</p>
+                          <p className="text-xs text-muted-foreground truncate">{p.email}</p>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs gap-1" onClick={() => navigate(`/admin/students?manage=${p.user_id}`)}>
+                            <Settings className="w-3.5 h-3.5" /> Gerenciar
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs gap-1" onClick={() => navigate(`/admin/students?edit=${p.user_id}`)}>
+                            <ExternalLink className="w-3.5 h-3.5" /> Ficha
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              ) : (
+                <div className="py-6 text-center text-sm text-muted-foreground">
+                  Nenhum aluno encontrado para "{searchTerm}"
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+
       <section className="mb-8 rounded-[28px] border border-border/50 bg-card/40 px-4 py-4 backdrop-blur-3xl sm:px-5 sm:py-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
