@@ -55,6 +55,7 @@ Deno.serve(async (req) => {
   let idempotencyKey: string
   let messageId: string
   let templateData: Record<string, any> = {}
+  let manual = false
   try {
     const body = await req.json()
     templateName = body.templateName || body.template_name
@@ -64,6 +65,7 @@ Deno.serve(async (req) => {
     if (body.templateData && typeof body.templateData === 'object') {
       templateData = body.templateData
     }
+    manual = body.manual === true
   } catch {
     return new Response(
       JSON.stringify({ error: 'Invalid JSON in request body' }),
@@ -119,6 +121,44 @@ Deno.serve(async (req) => {
 
   // Create Supabase client with service role (bypasses RLS)
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+  // 1b. Check admin-managed template settings (enabled / auto_send / overrides)
+  const { data: tplSettings } = await supabase
+    .from('email_template_settings')
+    .select('enabled, auto_send, subject_override, body_html_override')
+    .eq('template_key', templateName)
+    .maybeSingle()
+
+  if (tplSettings) {
+    if (!tplSettings.enabled) {
+      console.log('Template disabled by admin, skipping', { templateName })
+      await supabase.from('email_send_log').insert({
+        message_id: messageId,
+        template_name: templateName,
+        recipient_email: recipientEmail,
+        status: 'suppressed',
+        error_message: 'Template disabled by admin',
+      })
+      return new Response(
+        JSON.stringify({ success: false, reason: 'template_disabled' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
+    }
+    if (!tplSettings.auto_send && !manual) {
+      console.log('Auto-send disabled and not a manual call, skipping', { templateName })
+      await supabase.from('email_send_log').insert({
+        message_id: messageId,
+        template_name: templateName,
+        recipient_email: recipientEmail,
+        status: 'suppressed',
+        error_message: 'Auto-send disabled (manual only)',
+      })
+      return new Response(
+        JSON.stringify({ success: false, reason: 'auto_send_disabled' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
+    }
+  }
 
   // 2. Check suppression list (fail-closed: if we can't verify, don't send)
   const { data: suppressed, error: suppressionError } = await supabase
@@ -278,19 +318,27 @@ Deno.serve(async (req) => {
   }
 
   // 4. Render React Email template to HTML and plain text
-  const html = await renderAsync(
-    React.createElement(template.component, templateData)
-  )
-  const plainText = await renderAsync(
-    React.createElement(template.component, templateData),
-    { plainText: true }
-  )
+  // If admin set a body_html_override, use it (with simple {var} interpolation).
+  let html: string
+  let plainText: string
+  if (tplSettings?.body_html_override) {
+    html = interpolate(tplSettings.body_html_override, templateData)
+    plainText = stripHtml(html)
+  } else {
+    html = await renderAsync(React.createElement(template.component, templateData))
+    plainText = await renderAsync(
+      React.createElement(template.component, templateData),
+      { plainText: true },
+    )
+  }
 
-  // Resolve subject — supports static string or dynamic function
+  // Resolve subject — admin override > template subject (static or fn)
   const resolvedSubject =
-    typeof template.subject === 'function'
-      ? template.subject(templateData)
-      : template.subject
+    tplSettings?.subject_override?.trim()
+      ? interpolate(tplSettings.subject_override, templateData)
+      : typeof template.subject === 'function'
+        ? template.subject(templateData)
+        : template.subject
 
   // 5. Enqueue the pre-rendered email for async processing by the dispatcher.
   // The dispatcher (process-email-queue) handles sending, retries, and rate-limit backoff.
