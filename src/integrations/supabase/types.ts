@@ -1562,6 +1562,42 @@ export type Database = {
         }
         Relationships: []
       }
+      email_template_settings: {
+        Row: {
+          auto_send: boolean
+          body_html_override: string | null
+          category: string
+          enabled: boolean
+          notes: string | null
+          subject_override: string | null
+          template_key: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          auto_send?: boolean
+          body_html_override?: string | null
+          category?: string
+          enabled?: boolean
+          notes?: string | null
+          subject_override?: string | null
+          template_key: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          auto_send?: boolean
+          body_html_override?: string | null
+          category?: string
+          enabled?: boolean
+          notes?: string | null
+          subject_override?: string | null
+          template_key?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       email_unsubscribe_tokens: {
         Row: {
           created_at: string
