@@ -16,6 +16,21 @@ const SENDER_DOMAIN = "notify.sthmethod.com.br"
 // even though actual sending uses the subdomain above.
 const FROM_DOMAIN = "sthmethod.com.br"
 
+// Simple {key} interpolation for admin-managed overrides.
+function interpolate(template: string, data: Record<string, any>): string {
+  return template.replace(/\{(\w+)\}/g, (_, k) =>
+    data[k] !== undefined && data[k] !== null ? String(data[k]) : `{${k}}`,
+  )
+}
+
+function stripHtml(html: string): string {
+  return html.replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 // Generate a cryptographically random 32-byte hex token
 function generateToken(): string {
   const bytes = new Uint8Array(32)
