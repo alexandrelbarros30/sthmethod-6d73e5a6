@@ -924,67 +924,21 @@ Deno.serve(async (req) => {
     if (!isChannelEnabled) {
       autoReply = { sent: false, reason: 'disabled' };
     } else if (conv.human_handoff === true || !!conv.assigned_to) {
-      // Verifica se o humano está respondendo. Se inativo há ≥5 min, IA assume temporariamente.
-      const FIVE_MIN = 5 * 60 * 1000;
-      const { data: lastHuman } = await admin.from('crm_messages')
-        .select('created_at')
-        .eq('conversation_id', conv.id)
-        .eq('direction', 'out')
-        .eq('metadata->>type', 'manual_human')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      const refTs = lastHuman?.created_at || conv.updated_at || conv.created_at;
-      const idleMs = refTs ? (Date.now() - new Date(refTs).getTime()) : 0;
-      const humanIdle = idleMs >= FIVE_MIN;
-
-      if (humanIdle && aiMode !== 'off') {
-        const ctx: any = (conv.flow_context as any) || {};
-        const fillerAt = ctx.ai_assist_filler_at ? new Date(ctx.ai_assist_filler_at).getTime() : 0;
-        // Envia o "só mais um instante" UMA vez por ciclo de inatividade (reseta quando humano volta).
-        const refMs = refTs ? new Date(refTs).getTime() : 0;
-        if (fillerAt < refMs) {
-          const filler = 'Só mais um instante, já te respondo! 🙏';
-          const r = await sendMessage(filler, 'ai_assist_filler');
-          await admin.from('crm_conversations').update({
-            flow_context: { ...ctx, ai_assist_filler_at: new Date().toISOString() },
-          }).eq('id', conv.id);
-          autoReply = { sent: r.sent, engine: 'filler', reason: 'human_idle_filler', idle_min: Math.round(idleMs/60000) };
-        } else {
-          try {
-            const ai = await generateAiReply({ admin, conversationId: conv.id, phone, waId: conv.wa_id, queue: conv.queue_type });
-            if (ai.response) {
-              const r = await sendMessage(ai.response, 'ai_human_idle');
-              autoReply = { sent: r.sent, engine: ai.engine, reason: 'ai_takeover_human_idle', idle_min: Math.round(idleMs/60000) };
-            } else {
-              autoReply = { sent: false, reason: 'ai_empty_during_handoff' };
-            }
-          } catch (e) {
-            console.error('AI takeover error:', e);
-            autoReply = { sent: false, reason: 'ai_error_during_handoff' };
-          }
-        }
-        await admin.from('automation_logs').insert({
-          contact_phone: phone,
-          event_type: 'ai_assist_handoff',
-          reason: `Humano inativo há ${Math.round(idleMs/60000)} min — IA cobrindo`,
-          metadata: { conversation_id: conv.id, idle_min: Math.round(idleMs/60000), step: autoReply?.reason }
-        });
-      } else {
-        console.log(`Atendimento humano ativo na conversa ${conv.id}. Bloqueando automação. (idle=${Math.round(idleMs/60000)}min)`);
-        await admin.from('automation_logs').insert({
-          contact_phone: phone,
-          event_type: 'blocked_human_active',
-          reason: 'Conversation assigned to agent or handoff active',
-          metadata: { conversation_id: conv.id, assigned_to: conv.assigned_to, idle_min: Math.round(idleMs/60000) }
-        });
-        await admin.from('crm_conversations').update({ human_handoff: true }).eq('id', conv.id);
-        await admin.from('crm_away_locks').upsert({ 
-          conversation_id: conv.id, 
-          last_sent_at: new Date().toISOString() 
-        });
-        autoReply = { sent: false, reason: 'human_active', idle_min: Math.round(idleMs/60000) };
-      }
+      // Atendente humano ativo: IA fica TOTALMENTE silenciada até o handoff ser encerrado manualmente.
+      // (Removido o "AI takeover" por inatividade — causava respostas duplicadas com a atendente.)
+      console.log(`Atendimento humano ativo na conversa ${conv.id}. Bloqueando automação por completo.`);
+      await admin.from('automation_logs').insert({
+        contact_phone: phone,
+        event_type: 'blocked_human_active',
+        reason: 'Conversation assigned to agent or handoff active',
+        metadata: { conversation_id: conv.id, assigned_to: conv.assigned_to }
+      });
+      await admin.from('crm_conversations').update({ human_handoff: true }).eq('id', conv.id);
+      await admin.from('crm_away_locks').upsert({
+        conversation_id: conv.id,
+        last_sent_at: new Date().toISOString()
+      });
+      autoReply = { sent: false, reason: 'human_active' };
 
     } else if (aiMode === 'ai_only') {
       // MODO AI GLOBAL: ignora fluxo, ausência e menus — IA responde tudo.
