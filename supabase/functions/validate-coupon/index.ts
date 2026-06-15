@@ -57,6 +57,49 @@ serve(async (req) => {
       .update({ current_uses: coupon.current_uses + 1 })
       .eq("id", coupon_id);
 
+    // Dispara e-mail "Cupom aplicado" (best-effort; não bloqueia validação)
+    try {
+      const token = authHeader.replace(/^Bearer\s+/i, "");
+      const userClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: `Bearer ${token}` } } },
+      );
+      const { data: { user } } = await userClient.auth.getUser();
+      if (user?.id) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("email, full_name")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        let planName = "";
+        if (plan_id) {
+          const { data: pl } = await supabase.from("plans").select("name").eq("id", plan_id).maybeSingle();
+          planName = pl?.name || "";
+        }
+        const discount = coupon.discount_type === "percentage"
+          ? `${coupon.discount_value}%`
+          : new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(coupon.discount_value || 0));
+        if (prof?.email) {
+          await supabase.from("email_scheduled_sends").insert({
+            template_key: "coupon-applied",
+            recipient_user_id: user.id,
+            recipient_email: prof.email,
+            recipient_name: prof.full_name,
+            template_data: {
+              name: prof.full_name || "",
+              couponCode: coupon.code || "",
+              discount,
+              planName,
+            },
+            source: `coupon:${coupon.id}:${user.id}`,
+          });
+        }
+      }
+    } catch (e) {
+      console.error("[coupon-applied email] failed", e);
+    }
+
     return new Response(JSON.stringify({
       valid: true,
       discount_type: coupon.discount_type,

@@ -58,6 +58,53 @@ function extractPaymentId(body: any): string | null {
   return null;
 }
 
+// Enfileira um e-mail transacional via fila unificada (email_scheduled_sends).
+// Dedup por `source` para evitar duplicatas em retries do webhook MP.
+async function enqueueEmail(
+  supabase: any,
+  templateKey: string,
+  userId: string,
+  source: string,
+  data: Record<string, unknown>,
+) {
+  try {
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("email, full_name")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!prof?.email) return;
+
+    const { data: existing } = await supabase
+      .from("email_scheduled_sends")
+      .select("id")
+      .eq("source", source)
+      .eq("template_key", templateKey)
+      .limit(1);
+    if (existing && existing.length > 0) return;
+
+    await supabase.from("email_scheduled_sends").insert({
+      template_key: templateKey,
+      recipient_user_id: userId,
+      recipient_email: prof.email,
+      recipient_name: prof.full_name,
+      template_data: { name: prof.full_name || "", siteUrl: "https://sthmethod.com", ...data },
+      source,
+    });
+  } catch (e) {
+    console.error("[enqueueEmail] failed", templateKey, e);
+  }
+}
+
+function fmtBRL(value: number | null | undefined): string {
+  if (value == null) return "";
+  try {
+    return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(value));
+  } catch {
+    return `R$ ${Number(value).toFixed(2)}`;
+  }
+}
+
 function isPaymentNotification(body: any): boolean {
   return body?.type === "payment"
     || body?.action === "payment.created"
@@ -419,6 +466,32 @@ serve(async (req) => {
       throw updateError;
     }
 
+    // ===== E-mails de status de pagamento (pending / failed) =====
+    const planName = payment?.plans?.name || "";
+    const amountStr = fmtBRL(payment?.amount);
+    const methodStr = payment?.method || "";
+    const paymentDateStr = new Date().toLocaleDateString("pt-BR");
+
+    if (newStatus === "pending" && previousStatus !== "pending" && payment) {
+      await enqueueEmail(
+        supabase,
+        "payment-pending",
+        payment.user_id,
+        `mp:${payment.id}:pending`,
+        { planName, amount: amountStr, method: methodStr },
+      );
+    }
+
+    if (newStatus === "rejected" && previousStatus !== "rejected" && payment) {
+      await enqueueEmail(
+        supabase,
+        "payment-failed",
+        payment.user_id,
+        `mp:${payment.id}:rejected`,
+        { planName, amount: amountStr, method: methodStr, reason: "Pagamento recusado pelo emissor" },
+      );
+    }
+
     // If approved for the first time, activate subscription once.
     if (newStatus === "approved" && payment && previousStatus !== "approved") {
       // Classifica o tipo de adesão ANTES de ativar (depois disso a sub já
@@ -471,6 +544,34 @@ serve(async (req) => {
             sendAutomationWhatsapp(supabase, payment.user_id, "payment_thanks_comercial", "comercial"),
             sendAutomationWhatsapp(supabase, payment.user_id, nutriTrigger, "nutri"),
           ]);
+
+          // ===== E-mails de pagamento aprovado =====
+          if (kind === "novo") {
+            await Promise.allSettled([
+              enqueueEmail(
+                supabase,
+                "welcome-post-payment",
+                payment.user_id,
+                `mp:${payment.id}:welcome-post-payment`,
+                { planName },
+              ),
+              enqueueEmail(
+                supabase,
+                "payment-receipt-first",
+                payment.user_id,
+                `mp:${payment.id}:receipt-first`,
+                { planName, amount: amountStr, method: methodStr, paymentDate: paymentDateStr },
+              ),
+            ]);
+          } else {
+            await enqueueEmail(
+              supabase,
+              "payment-receipt-renewal",
+              payment.user_id,
+              `mp:${payment.id}:receipt-renewal`,
+              { planName, amount: amountStr, method: methodStr, paymentDate: paymentDateStr },
+            );
+          }
         }
       } catch (e) {
         console.error("[automation-whatsapp] failed", e);
