@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered, RefreshCw, NotebookPen, ChevronDown, DollarSign, Inbox, Send, Sparkles, CheckSquare, Zap, Workflow } from "lucide-react";
+import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered, RefreshCw, NotebookPen, ChevronDown, DollarSign, Inbox, Send, Sparkles, CheckSquare, Zap, Workflow, Mail } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -120,6 +120,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
         { to: "/admin/popups", icon: Megaphone, label: "Popups" },
         { to: "/admin/notifications", icon: Bell, label: "Notificações" },
         { to: "/admin/updates", icon: RefreshCw, label: "Atualizações" },
+        { to: "/admin/emails", icon: Mail, label: "E-mails" },
       ],
     },
     {

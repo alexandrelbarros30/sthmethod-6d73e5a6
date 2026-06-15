@@ -230,17 +230,49 @@ async function handleWebhook(req: Request): Promise<Response> {
     newEmail: payload.data.new_email,
   }
 
-  // Render React Email to HTML and plain text
-  const html = await renderAsync(React.createElement(EmailTemplate, templateProps))
-  const text = await renderAsync(React.createElement(EmailTemplate, templateProps), {
-    plainText: true,
-  })
-
   // Enqueue email for async processing by the dispatcher (process-email-queue).
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   )
+
+  // Check admin-managed template settings (enabled / subject_override / body_html_override)
+  const { data: tplSettings } = await supabase
+    .from('email_template_settings')
+    .select('enabled, subject_override, body_html_override')
+    .eq('template_key', emailType)
+    .maybeSingle()
+
+  if (tplSettings && !tplSettings.enabled) {
+    console.log('Auth template disabled by admin, skipping', { emailType })
+    return new Response(
+      JSON.stringify({ success: true, skipped: 'template_disabled' }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    )
+  }
+
+  // Render: admin HTML override (with {var} interpolation) or React Email template
+  const interpolate = (tpl: string) =>
+    tpl.replace(/\{(\w+)\}/g, (_, k) => {
+      const v = (templateProps as any)[k]
+      return v !== undefined && v !== null ? String(v) : `{${k}}`
+    })
+
+  let html: string
+  let text: string
+  if (tplSettings?.body_html_override) {
+    html = interpolate(tplSettings.body_html_override)
+    text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+  } else {
+    html = await renderAsync(React.createElement(EmailTemplate, templateProps))
+    text = await renderAsync(React.createElement(EmailTemplate, templateProps), {
+      plainText: true,
+    })
+  }
+
+  const subject = tplSettings?.subject_override?.trim()
+    ? interpolate(tplSettings.subject_override)
+    : (EMAIL_SUBJECTS[emailType] || 'Notification')
 
   const messageId = crypto.randomUUID()
 
@@ -260,7 +292,7 @@ async function handleWebhook(req: Request): Promise<Response> {
       to: payload.data.email,
       from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
       sender_domain: SENDER_DOMAIN,
-      subject: EMAIL_SUBJECTS[emailType] || 'Notification',
+      subject,
       html,
       text,
       purpose: 'transactional',
