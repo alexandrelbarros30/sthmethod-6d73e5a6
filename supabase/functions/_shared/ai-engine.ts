@@ -142,14 +142,27 @@ export async function loadEngineAndPrompt(
   const globalPromptRaw = (globalCfg?.value as any)?.prompt;
   const globalText = (typeof globalPromptRaw === 'string' && globalPromptRaw.trim()) ? globalPromptRaw.trim() : '';
 
+  // 🔒 CRITICAL: extract "fisiculturismo avançado / never push away" rules so they sit at the TOP
+  // of the system prompt. Gemini models weight early instructions much more heavily.
+  const criticalPreamble = extractCriticalPreamble(channelText);
+
   let systemPrompt = defaultPrompt;
   if (globalEnabled && globalText) {
     // Global is the base. Channel prompt acts as auxiliary only when enabled.
-    systemPrompt = channelEnabled && channelText
-      ? `${globalText}\n\n---\nInstruções auxiliares específicas deste canal:\n${channelText}`
-      : globalText;
+    // BUT: if critical rules exist, they MUST prefix everything.
+    if (criticalPreamble) {
+      systemPrompt = channelEnabled && channelText
+        ? `${criticalPreamble}\n\n---\n${globalText}\n\n---\nInstruções auxiliares específicas deste canal:\n${channelText.replace(criticalPreamble, '').trim()}`
+        : `${criticalPreamble}\n\n---\n${globalText}`;
+    } else {
+      systemPrompt = channelEnabled && channelText
+        ? `${globalText}\n\n---\nInstruções auxiliares específicas deste canal:\n${channelText}`
+        : globalText;
+    }
   } else if (channelEnabled && channelText) {
-    systemPrompt = channelText;
+    systemPrompt = criticalPreamble
+      ? `${criticalPreamble}\n\n---\n${channelText.replace(criticalPreamble, '').trim()}`
+      : channelText;
   }
 
   // Inject templates as knowledge base (default ON unless explicitly disabled)
@@ -176,6 +189,38 @@ export async function loadEngineAndPrompt(
   const stored = (engCfg?.value as any)?.engine;
   if (stored === 'openai' || stored === 'lovable' || stored === 'gemini_api' || stored === 'local') engine = stored;
   return { engine, systemPrompt };
+}
+
+/**
+ * Extracts the "fisiculturismo avançado" critical-rule block from a channel prompt
+ * so it can be placed at the very beginning of the system prompt.
+ * Gemini (and most instruction-tuned models) prioritise early system text.
+ */
+function extractCriticalPreamble(channelText: string): string {
+  if (!channelText) return '';
+  // Look for the dedicated section header
+  const startMarkers = [
+    'FISICULTURISMO AVANÇADO E SUBSTÂNCIAS ERGOGÊNICAS',
+    '⚠️ REGRA CRÍTICA — NUNCA afaste',
+    'REGRA CRÍTICA — NUNCA afaste',
+  ];
+  let startIdx = -1;
+  for (const m of startMarkers) {
+    const idx = channelText.indexOf(m);
+    if (idx !== -1) { startIdx = idx; break; }
+  }
+  if (startIdx === -1) return '';
+
+  // Capture until the next major separator or end of prompt
+  const endMarkers = ['\n━━━━━━━━━━━━━━━━━━', '\n---\n', '\n# ', '\n## '];
+  let endIdx = channelText.length;
+  for (const m of endMarkers) {
+    const idx = channelText.indexOf(m, startIdx + 1);
+    if (idx !== -1 && idx < endIdx) endIdx = idx;
+  }
+
+  const block = channelText.slice(startIdx, endIdx).trim();
+  return block ? `🔒 REGRAS CRÍTICAS DE PRIORIDADE MÁXIMA — estas instruções sobrescrevem qualquer outra:\n${block}` : '';
 }
 
 // =====================================================================
