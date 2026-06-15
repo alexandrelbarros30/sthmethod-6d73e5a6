@@ -252,6 +252,7 @@ const App = () => (
             <Route path="/admin/ads" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAds /></ProtectedRoute>} />
             <Route path="/admin/queue" element={<ProtectedRoute allowedRoles={["admin"]}><AdminQueue /></ProtectedRoute>} />
             <Route path="/admin/updates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminUpdates /></ProtectedRoute>} />
+            <Route path="/admin/emails" element={<ProtectedRoute allowedRoles={["admin"]}><AdminEmails /></ProtectedRoute>} />
             <Route path="/admin/crm" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrm /></ProtectedRoute>} />
             <Route path="/admin/crm/instalar" element={<ProtectedRoute allowedRoles={["admin"]}><AdminChatInstall /></ProtectedRoute>} />
             <Route path="/chat/:canal" element={<ProtectedRoute allowedRoles={["admin","consultor","assistente","financeiro"]}><AdminChatChannel /></ProtectedRoute>} />
