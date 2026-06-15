@@ -198,26 +198,33 @@ export async function loadEngineAndPrompt(
  */
 function extractCriticalPreamble(channelText: string): string {
   if (!channelText) return '';
-  // Look for the dedicated section header
   const startMarkers = [
     'FISICULTURISMO AVANÇADO E SUBSTÂNCIAS ERGOGÊNICAS',
     '⚠️ REGRA CRÍTICA — NUNCA afaste',
     'REGRA CRÍTICA — NUNCA afaste',
   ];
-  let startIdx = -1;
+  let headerIdx = -1;
   for (const m of startMarkers) {
     const idx = channelText.indexOf(m);
-    if (idx !== -1) { startIdx = idx; break; }
+    if (idx !== -1) { headerIdx = idx; break; }
   }
-  if (startIdx === -1) return '';
+  if (headerIdx === -1) return '';
 
-  // Capture until the next major separator or end of prompt
-  const endMarkers = ['\n━━━━━━━━━━━━━━━━━━', '\n---\n', '\n# ', '\n## '];
-  let endIdx = channelText.length;
-  for (const m of endMarkers) {
-    const idx = channelText.indexOf(m, startIdx + 1);
-    if (idx !== -1 && idx < endIdx) endIdx = idx;
-  }
+  // The section is delimited by lines of "━" characters.
+  // Pattern: ━━━ / TITLE / ━━━ / <content> / ━━━ / NEXT SECTION ...
+  // So we want to start at the ━━━ line BEFORE the title and end at the
+  // 2nd ━━━ line AFTER the title (which opens the next section).
+  const bar = /━{3,}/g;
+  const bars: number[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = bar.exec(channelText)) !== null) bars.push(m.index);
+
+  // bars before/after the header marker
+  const before = [...bars].filter((i) => i < headerIdx).pop();
+  const after = bars.filter((i) => i > headerIdx);
+  const startIdx = before ?? headerIdx;
+  // after[0] is the bar immediately closing the title; after[1] opens the next section.
+  const endIdx = after[1] ?? after[0] ?? channelText.length;
 
   const block = channelText.slice(startIdx, endIdx).trim();
   return block ? `🔒 REGRAS CRÍTICAS DE PRIORIDADE MÁXIMA — estas instruções sobrescrevem qualquer outra:\n${block}` : '';
