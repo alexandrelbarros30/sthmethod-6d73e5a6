@@ -1499,6 +1499,57 @@ export type Database = {
         }
         Relationships: []
       }
+      email_scheduled_sends: {
+        Row: {
+          attempts: number
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          id: string
+          processed_at: string | null
+          recipient_email: string
+          recipient_name: string | null
+          recipient_user_id: string | null
+          scheduled_at: string
+          source: string
+          status: string
+          template_data: Json
+          template_key: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          processed_at?: string | null
+          recipient_email: string
+          recipient_name?: string | null
+          recipient_user_id?: string | null
+          scheduled_at?: string
+          source?: string
+          status?: string
+          template_data?: Json
+          template_key: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          processed_at?: string | null
+          recipient_email?: string
+          recipient_name?: string | null
+          recipient_user_id?: string | null
+          scheduled_at?: string
+          source?: string
+          status?: string
+          template_data?: Json
+          template_key?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -1565,8 +1616,10 @@ export type Database = {
       email_template_settings: {
         Row: {
           auto_send: boolean
+          automation_rule: Json | null
           body_html_override: string | null
           category: string
+          custom_variables: Json
           enabled: boolean
           notes: string | null
           subject_override: string | null
@@ -1576,8 +1629,10 @@ export type Database = {
         }
         Insert: {
           auto_send?: boolean
+          automation_rule?: Json | null
           body_html_override?: string | null
           category?: string
+          custom_variables?: Json
           enabled?: boolean
           notes?: string | null
           subject_override?: string | null
@@ -1587,8 +1642,10 @@ export type Database = {
         }
         Update: {
           auto_send?: boolean
+          automation_rule?: Json | null
           body_html_override?: string | null
           category?: string
+          custom_variables?: Json
           enabled?: boolean
           notes?: string | null
           subject_override?: string | null
