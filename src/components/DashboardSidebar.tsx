@@ -120,7 +120,6 @@ const linksByRole: Record<AppRole, NavItem[]> = {
         { to: "/admin/popups", icon: Megaphone, label: "Popups" },
         { to: "/admin/notifications", icon: Bell, label: "Notificações" },
         { to: "/admin/updates", icon: RefreshCw, label: "Atualizações" },
-        { to: "/admin/emails", icon: Mail, label: "E-mails" },
       ],
     },
     {
@@ -133,6 +132,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
     },
     { to: "/admin/coupons", icon: Ticket, label: "Cupons" },
     { to: "/admin/budgets", icon: Receipt, label: "Orçamentos" },
+    { to: "/admin/emails", icon: Mail, label: "E-mails" },
   ],
   admin_viewer: [
     { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
