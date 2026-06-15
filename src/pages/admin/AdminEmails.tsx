@@ -12,7 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { Mail, Send, Save, Edit3, Search, RefreshCw } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Mail, Send, Save, Edit3, Search, RefreshCw, Plus, Trash2, Calendar as CalendarIcon, Zap, X } from "lucide-react";
 
 interface Settings {
   template_key: string;
@@ -22,6 +23,8 @@ interface Settings {
   body_html_override: string | null;
   notes: string | null;
   updated_at: string;
+  custom_variables?: Array<{ key: string; label?: string; defaultValue?: string }> | null;
+  automation_rule?: { type: string; days?: number } | null;
 }
 
 interface LogRow {
@@ -34,6 +37,25 @@ interface LogRow {
   created_at: string;
 }
 
+interface StudentLite {
+  user_id: string;
+  full_name: string | null;
+  email: string | null;
+}
+
+interface ScheduledRow {
+  id: string;
+  template_key: string;
+  recipient_email: string;
+  recipient_name: string | null;
+  scheduled_at: string;
+  status: string;
+  source: string;
+  error_message: string | null;
+  processed_at: string | null;
+  attempts: number;
+}
+
 export default function AdminEmails() {
   const [settings, setSettings] = useState<Record<string, Settings>>({});
   const [loading, setLoading] = useState(true);
@@ -42,11 +64,26 @@ export default function AdminEmails() {
   const [editSubject, setEditSubject] = useState("");
   const [editBody, setEditBody] = useState("");
   const [editNotes, setEditNotes] = useState("");
+  const [editVars, setEditVars] = useState<Array<{ key: string; label: string; defaultValue: string }>>([]);
+  const [editAutoType, setEditAutoType] = useState<string>("none");
+  const [editAutoDays, setEditAutoDays] = useState<number>(7);
   const [saving, setSaving] = useState(false);
   const [logs, setLogs] = useState<LogRow[]>([]);
   const [testDialog, setTestDialog] = useState<EmailTemplateMeta | null>(null);
   const [testEmail, setTestEmail] = useState("");
   const [sending, setSending] = useState(false);
+
+  // Manual dispatch
+  const [students, setStudents] = useState<StudentLite[]>([]);
+  const [studentSearch, setStudentSearch] = useState("");
+  const [dispatchTemplate, setDispatchTemplate] = useState<string>("");
+  const [dispatchStudent, setDispatchStudent] = useState<StudentLite | null>(null);
+  const [dispatchData, setDispatchData] = useState<Record<string, string>>({});
+  const [dispatchScheduled, setDispatchScheduled] = useState<string>(""); // datetime-local
+  const [dispatching, setDispatching] = useState(false);
+
+  // Scheduled list
+  const [scheduled, setScheduled] = useState<ScheduledRow[]>([]);
 
   async function load() {
     setLoading(true);
@@ -68,9 +105,30 @@ export default function AdminEmails() {
     setLogs((data || []) as LogRow[]);
   }
 
+  async function loadScheduled() {
+    const { data } = await supabase
+      .from("email_scheduled_sends")
+      .select("id,template_key,recipient_email,recipient_name,scheduled_at,status,source,error_message,processed_at,attempts")
+      .order("scheduled_at", { ascending: false })
+      .limit(200);
+    setScheduled((data || []) as ScheduledRow[]);
+  }
+
+  async function loadStudents() {
+    const { data } = await supabase
+      .from("profiles")
+      .select("user_id, full_name, email")
+      .not("email", "is", null)
+      .order("full_name", { ascending: true })
+      .limit(2000);
+    setStudents((data || []) as StudentLite[]);
+  }
+
   useEffect(() => {
     load();
     loadLogs();
+    loadScheduled();
+    loadStudents();
   }, []);
 
   async function toggle(key: string, field: "enabled" | "auto_send", value: boolean) {
@@ -91,17 +149,33 @@ export default function AdminEmails() {
     setEditSubject(s?.subject_override ?? "");
     setEditBody(s?.body_html_override ?? "");
     setEditNotes(s?.notes ?? "");
+    setEditVars(
+      (s?.custom_variables || []).map((v) => ({
+        key: v.key,
+        label: v.label || "",
+        defaultValue: v.defaultValue || "",
+      })),
+    );
+    setEditAutoType(s?.automation_rule?.type ?? "none");
+    setEditAutoDays(Number(s?.automation_rule?.days ?? 7));
   }
 
   async function saveEdit() {
     if (!editing) return;
     setSaving(true);
+    const cleanVars = editVars
+      .map((v) => ({ key: v.key.trim(), label: v.label.trim(), defaultValue: v.defaultValue }))
+      .filter((v) => v.key.length > 0);
+    const automation_rule =
+      editAutoType === "none" ? null : { type: editAutoType, days: Number(editAutoDays) || 0 };
     const { error } = await supabase
       .from("email_template_settings")
       .update({
         subject_override: editSubject.trim() || null,
         body_html_override: editBody.trim() || null,
         notes: editNotes.trim() || null,
+        custom_variables: cleanVars,
+        automation_rule,
       })
       .eq("template_key", editing.key);
     setSaving(false);
@@ -156,6 +230,106 @@ export default function AdminEmails() {
         t.description.toLowerCase().includes(q),
     );
   }, [search]);
+
+  const filteredStudents = useMemo(() => {
+    const q = studentSearch.trim().toLowerCase();
+    if (!q) return students.slice(0, 50);
+    return students
+      .filter(
+        (s) =>
+          (s.full_name || "").toLowerCase().includes(q) ||
+          (s.email || "").toLowerCase().includes(q),
+      )
+      .slice(0, 50);
+  }, [students, studentSearch]);
+
+  const dispatchMeta = useMemo(
+    () => EMAIL_TEMPLATES.find((t) => t.key === dispatchTemplate) || null,
+    [dispatchTemplate],
+  );
+
+  const dispatchVarKeys = useMemo(() => {
+    if (!dispatchMeta) return [] as string[];
+    const custom = settings[dispatchMeta.key]?.custom_variables || [];
+    return Array.from(new Set([...dispatchMeta.variables, ...custom.map((v) => v.key)]));
+  }, [dispatchMeta, settings]);
+
+  async function submitDispatch() {
+    if (!dispatchMeta || !dispatchStudent?.email) {
+      toast({ title: "Selecione template e aluno", variant: "destructive" });
+      return;
+    }
+    setDispatching(true);
+    try {
+      const scheduledAt = dispatchScheduled
+        ? new Date(dispatchScheduled).toISOString()
+        : new Date().toISOString();
+
+      // Merge defaults from custom_variables with admin-typed values
+      const customDefaults = (settings[dispatchMeta.key]?.custom_variables || []).reduce(
+        (acc, v) => {
+          if (v.defaultValue) acc[v.key] = v.defaultValue;
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
+      const merged = { ...customDefaults, ...dispatchData };
+
+      const { error } = await supabase.from("email_scheduled_sends").insert({
+        template_key: dispatchMeta.key,
+        recipient_user_id: dispatchStudent.user_id,
+        recipient_email: dispatchStudent.email,
+        recipient_name: dispatchStudent.full_name,
+        template_data: merged,
+        scheduled_at: scheduledAt,
+        source: "manual",
+      });
+      if (error) throw error;
+      toast({
+        title: dispatchScheduled ? "Agendado" : "Na fila",
+        description: `${dispatchMeta.displayName} → ${dispatchStudent.email}`,
+      });
+      setDispatchStudent(null);
+      setDispatchData({});
+      setDispatchScheduled("");
+      loadScheduled();
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setDispatching(false);
+    }
+  }
+
+  async function runNow() {
+    setDispatching(true);
+    try {
+      const { error } = await supabase.functions.invoke("process-scheduled-emails", { body: {} });
+      if (error) throw error;
+      toast({ title: "Fila processada" });
+      setTimeout(() => {
+        loadScheduled();
+        loadLogs();
+      }, 1500);
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setDispatching(false);
+    }
+  }
+
+  async function cancelScheduled(id: string) {
+    const { error } = await supabase
+      .from("email_scheduled_sends")
+      .update({ status: "cancelled", processed_at: new Date().toISOString() })
+      .eq("id", id)
+      .eq("status", "pending");
+    if (error) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Cancelado" });
+    loadScheduled();
+  }
 
   const grouped = useMemo(
     () => ({
@@ -254,6 +428,8 @@ export default function AdminEmails() {
       <Tabs defaultValue="templates" className="space-y-4">
         <TabsList>
           <TabsTrigger value="templates">Templates</TabsTrigger>
+          <TabsTrigger value="dispatch">Disparo manual</TabsTrigger>
+          <TabsTrigger value="scheduled">Agendamentos</TabsTrigger>
           <TabsTrigger value="history">Histórico de envios</TabsTrigger>
         </TabsList>
 
@@ -331,10 +507,170 @@ export default function AdminEmails() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="dispatch" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Disparar e-mail para um aluno</CardTitle>
+              <CardDescription>
+                Envia agora ou agenda para uma data futura. Use as variáveis abaixo para personalizar.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <Label>Template</Label>
+                  <Select value={dispatchTemplate} onValueChange={(v) => { setDispatchTemplate(v); setDispatchData({}); }}>
+                    <SelectTrigger><SelectValue placeholder="Escolha um template" /></SelectTrigger>
+                    <SelectContent>
+                      {EMAIL_TEMPLATES.map((t) => (
+                        <SelectItem key={t.key} value={t.key}>{t.displayName}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Agendar para (opcional)</Label>
+                  <Input
+                    type="datetime-local"
+                    value={dispatchScheduled}
+                    onChange={(e) => setDispatchScheduled(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label>Aluno</Label>
+                <Input
+                  placeholder="Buscar por nome ou e-mail..."
+                  value={studentSearch}
+                  onChange={(e) => setStudentSearch(e.target.value)}
+                />
+                {dispatchStudent ? (
+                  <div className="mt-2 flex items-center justify-between p-2 rounded-md border border-primary/30 bg-primary/5">
+                    <div className="text-sm">
+                      <div className="font-medium">{dispatchStudent.full_name || "—"}</div>
+                      <div className="text-xs text-muted-foreground">{dispatchStudent.email}</div>
+                    </div>
+                    <Button size="sm" variant="ghost" onClick={() => setDispatchStudent(null)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="mt-2 max-h-48 overflow-y-auto border rounded-md divide-y divide-border/40">
+                    {filteredStudents.length === 0 && (
+                      <div className="p-3 text-xs text-muted-foreground">Nenhum aluno encontrado.</div>
+                    )}
+                    {filteredStudents.map((s) => (
+                      <button
+                        key={s.user_id}
+                        onClick={() => setDispatchStudent(s)}
+                        className="w-full text-left p-2 hover:bg-muted/40 text-sm"
+                      >
+                        <div className="font-medium">{s.full_name || "—"}</div>
+                        <div className="text-xs text-muted-foreground">{s.email}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {dispatchMeta && dispatchVarKeys.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Variáveis</Label>
+                  <div className="grid sm:grid-cols-2 gap-2">
+                    {dispatchVarKeys.map((k) => (
+                      <div key={k}>
+                        <Label className="text-[11px] text-muted-foreground">{`{${k}}`}</Label>
+                        <Input
+                          value={dispatchData[k] ?? ""}
+                          onChange={(e) => setDispatchData((d) => ({ ...d, [k]: e.target.value }))}
+                          placeholder={
+                            (settings[dispatchMeta.key]?.custom_variables || []).find((v) => v.key === k)?.defaultValue || ""
+                          }
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={runNow} disabled={dispatching}>
+                  <RefreshCw className="h-4 w-4 mr-2" /> Processar fila agora
+                </Button>
+                <Button onClick={submitDispatch} disabled={dispatching || !dispatchMeta || !dispatchStudent}>
+                  {dispatchScheduled ? <CalendarIcon className="h-4 w-4 mr-2" /> : <Send className="h-4 w-4 mr-2" />}
+                  {dispatchScheduled ? "Agendar" : "Enviar agora"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="scheduled">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Agendamentos e disparos manuais</CardTitle>
+                <CardDescription>Inclui envios automáticos via regras de automação.</CardDescription>
+              </div>
+              <Button size="sm" variant="outline" onClick={loadScheduled}>
+                <RefreshCw className="h-4 w-4 mr-2" /> Atualizar
+              </Button>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Quando</TableHead>
+                    <TableHead>Template</TableHead>
+                    <TableHead>Destinatário</TableHead>
+                    <TableHead>Origem</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {scheduled.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground">
+                        Nenhum agendamento.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {scheduled.map((r) => (
+                    <TableRow key={r.id}>
+                      <TableCell className="text-xs whitespace-nowrap">
+                        {new Date(r.scheduled_at).toLocaleString("pt-BR")}
+                      </TableCell>
+                      <TableCell className="text-xs">{r.template_key}</TableCell>
+                      <TableCell className="text-xs">
+                        <div>{r.recipient_name || "—"}</div>
+                        <div className="text-muted-foreground">{r.recipient_email}</div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-[10px]">{r.source}</Badge>
+                      </TableCell>
+                      <TableCell>{statusBadge(r.status)}</TableCell>
+                      <TableCell>
+                        {r.status === "pending" && (
+                          <Button size="sm" variant="ghost" onClick={() => cancelScheduled(r.id)}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing?.displayName}</DialogTitle>
             <DialogDescription>
@@ -368,6 +704,84 @@ export default function AdminEmails() {
                 </p>
               )}
             </div>
+
+            <div className="space-y-2 border-t border-border/40 pt-4">
+              <div className="flex items-center justify-between">
+                <Label className="flex items-center gap-2">
+                  <Plus className="h-3.5 w-3.5" /> Variáveis customizadas
+                </Label>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setEditVars((v) => [...v, { key: "", label: "", defaultValue: "" }])}
+                >
+                  + Adicionar
+                </Button>
+              </div>
+              {editVars.length === 0 && (
+                <p className="text-xs text-muted-foreground">Nenhuma variável extra. Use as padrões acima.</p>
+              )}
+              {editVars.map((v, idx) => (
+                <div key={idx} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 items-center">
+                  <Input
+                    placeholder="chave (ex: cupom)"
+                    value={v.key}
+                    onChange={(e) =>
+                      setEditVars((arr) => arr.map((x, i) => (i === idx ? { ...x, key: e.target.value } : x)))
+                    }
+                  />
+                  <Input
+                    placeholder="rótulo"
+                    value={v.label}
+                    onChange={(e) =>
+                      setEditVars((arr) => arr.map((x, i) => (i === idx ? { ...x, label: e.target.value } : x)))
+                    }
+                  />
+                  <Input
+                    placeholder="valor padrão"
+                    value={v.defaultValue}
+                    onChange={(e) =>
+                      setEditVars((arr) => arr.map((x, i) => (i === idx ? { ...x, defaultValue: e.target.value } : x)))
+                    }
+                  />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setEditVars((arr) => arr.filter((_, i) => i !== idx))}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-2 border-t border-border/40 pt-4">
+              <Label className="flex items-center gap-2">
+                <Zap className="h-3.5 w-3.5" /> Automação
+              </Label>
+              <div className="grid grid-cols-[1fr_120px] gap-2">
+                <Select value={editAutoType} onValueChange={setEditAutoType}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem automação</SelectItem>
+                    <SelectItem value="inactivity_days">Após N dias sem login</SelectItem>
+                    <SelectItem value="before_expiry_days">N dias antes do vencimento</SelectItem>
+                    <SelectItem value="after_expiry_days">N dias após o vencimento</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="number"
+                  min={0}
+                  value={editAutoDays}
+                  onChange={(e) => setEditAutoDays(Number(e.target.value))}
+                  disabled={editAutoType === "none"}
+                />
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                O job de automação roda 1x por dia e cria envios na fila de agendamentos.
+              </p>
+            </div>
+
             <div>
               <Label>Notas internas</Label>
               <Textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} rows={2} />
