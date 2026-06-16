@@ -409,8 +409,8 @@ const ConsultantLinksTab = () => {
                     <label key={s.user_id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50 cursor-pointer transition-colors">
                       <Checkbox checked={selectedStudentIds.has(s.user_id)} onCheckedChange={() => toggleStudent(s.user_id)} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{s.full_name || "—"}</p>
-                        <p className="text-xs text-muted-foreground truncate">{s.email}</p>
+                        <p className="text-sm font-medium text-foreground break-words">{s.full_name || "—"}</p>
+                        <p className="text-xs text-muted-foreground break-words">{s.email}</p>
                       </div>
                     </label>
                   ))}
