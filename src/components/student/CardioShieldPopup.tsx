@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { MessageCircle, ExternalLink, X } from "lucide-react";
 import cardioShield from "@/assets/performeth/cardio-shield.png";
 
-const WHATSAPP = "5521972486650";
+const WHATSAPP = "5521998496289";
 const SITE = "https://performethlabs.com.br";
 
 interface Props {
