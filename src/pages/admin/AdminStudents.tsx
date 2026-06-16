@@ -1287,8 +1287,8 @@ const AdminStudents = () => {
                           <span className="text-xs font-bold text-primary">{s.initials}</span>
                         </div>
                         <div className="min-w-0">
-                          <p className="font-medium text-sm truncate">{s.full_name || "Sem nome"}</p>
-                          <p className="text-xs text-muted-foreground truncate">{s.email}</p>
+                          <p className="font-medium text-sm break-words">{s.full_name || "Sem nome"}</p>
+                          <p className="text-xs text-muted-foreground break-words">{s.email}</p>
                           {s.phone && <p className="text-[10px] text-muted-foreground">{s.phone}</p>}
                         </div>
                       </div>
