@@ -166,7 +166,6 @@ function buildInternalPhones(_configuredInstances: { zapi: string; wapi: string;
   const hardcodedKnownInternalNumbers = [
     '5521998984153',
     '5521998496289',
-    '5521972486650',
   ];
 
   for (const raw of [connectedPhone, ...hardcodedKnownInternalNumbers]) {
@@ -996,7 +995,7 @@ Deno.serve(async (req) => {
         if (provider === 'zapi') {
           // Comercial (Z-API)
           if (forceSucessoQueue) {
-            msg = "No momento estamos fora do horário de expediente no canal Comercial.\n\nPara um atendimento automatizado agora, por favor acesse nosso canal de Sucesso do Aluno: https://wa.me/5521972486650\n\nEstamos encerrando este atendimento aqui para você seguir por lá! 👋";
+            msg = "No momento estamos fora do horário de expediente no canal Comercial.\n\nPara um atendimento automatizado agora, por favor acesse nosso canal de Sucesso do Aluno: https://wa.me/5521998496289\n\nEstamos encerrando este atendimento aqui para você seguir por lá! 👋";
             const r = await sendMessage(msg, 'away_redirect');
             // Mantemos a sessão "aberta" por uma janela de silêncio (4h) para evitar
             // que cada nova mensagem do contato seja tratada como nova sessão e
@@ -1014,7 +1013,7 @@ Deno.serve(async (req) => {
             msg = ''; 
           } else {
             if (identifiedAs === 'lead') msg = comAwayLead?.value?.message || "Olá! No momento estamos fora do horário de expediente no canal Comercial.\n\nPara conhecer nossos planos e contratar agora mesmo de forma 100% automatizada, acesse nosso site:\n\n🌐 Site: https://sthmethod.com.br\n\nResponderemos sua mensagem assim que retornarmos! 👋";
-            else if (identifiedAs === 'aluno_ativo') msg = comAwayActive?.value?.message || "Olá! No momento estamos fora do horário de expediente no canal Comercial. Como você é um aluno ativo, você pode tirar dúvidas técnicas diretamente com seu Nutri ou tratar assuntos administrativos no Sucesso do Aluno:\n\n🍎 Fale com o Nutri: https://wa.me/5521972486650\n🎓 Sucesso do Aluno: https://wa.me/5521972486650\n\nResponderemos assim que retornarmos! 👋";
+            else if (identifiedAs === 'aluno_ativo') msg = comAwayActive?.value?.message || "Olá! No momento estamos fora do horário de expediente no canal Comercial. Como você é um aluno ativo, você pode tirar dúvidas técnicas diretamente com seu Nutri ou tratar assuntos administrativos no Sucesso do Aluno:\n\n🍎 Fale com o Nutri: https://wa.me/5521998496289\n🎓 Sucesso do Aluno: https://wa.me/5521998496289\n\nResponderemos assim que retornarmos! 👋";
             else msg = comAwayExpired?.value?.message || "Olá! No momento estamos fora do horário de expediente.\n\nLocalizamos seu cadastro e vimos que seu plano está inativo. Para renovar agora de forma 100% automatizada, utilize os links abaixo:\n\n🔗 Renovação: https://sthmethod.com.br/renovacao\n🌐 Site: https://sthmethod.com.br\n\nResponderemos sua mensagem assim que retornarmos! 👋";
           }
         } else if (provider === 'wapi_sucesso') {
@@ -1027,7 +1026,7 @@ Deno.serve(async (req) => {
         } else {
           // Fale com o Nutri (W-API)
           if (identifiedAs === 'aluno_ativo') msg = nutriAwayActive?.value?.message || "Olá! No momento estamos fora do horário de expediente no canal Fale com o Nutri. Deixe sua dúvida técnica e responderemos assim que retornarmos! 👋";
-          else msg = nutriAwayInactive?.value?.message || "No momento estamos fora do horário de expediente no canal Fale com o Nutri.\n\nIdentificamos que seu plano não está ativo. Você pode realizar sua renovação agora mesmo de forma automática pelo link abaixo:\n\n🔗 Renovação: https://sthmethod.com.br/renovacao\n🌐 Site: https://sthmethod.com.br\n\nPara outros assuntos, acesse nosso canal de Sucesso do Aluno: https://wa.me/5521972486650";
+          else msg = nutriAwayInactive?.value?.message || "No momento estamos fora do horário de expediente no canal Fale com o Nutri.\n\nIdentificamos que seu plano não está ativo. Você pode realizar sua renovação agora mesmo de forma automática pelo link abaixo:\n\n🔗 Renovação: https://sthmethod.com.br/renovacao\n🌐 Site: https://sthmethod.com.br\n\nPara outros assuntos, acesse nosso canal de Sucesso do Aluno: https://wa.me/5521998496289";
         }
         if (msg) { 
           // Link de renovação baseado no perfil
