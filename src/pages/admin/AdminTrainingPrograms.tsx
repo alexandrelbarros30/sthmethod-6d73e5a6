@@ -610,8 +610,8 @@ const AdminTrainingPrograms = () => {
                             }
                           />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{s.full_name || "Sem nome"}</p>
-                            <p className="text-xs text-muted-foreground truncate">{s.email}</p>
+                            <p className="text-sm font-medium break-words">{s.full_name || "Sem nome"}</p>
+                            <p className="text-xs text-muted-foreground break-words">{s.email}</p>
                           </div>
                         </label>
                       );
@@ -641,8 +641,8 @@ const AdminTrainingPrograms = () => {
                   {assignedStudents.map((s: any) => (
                     <div key={s.user_id} className="flex items-center gap-2 px-3 py-2">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{s.full_name || "Sem nome"}</p>
-                        <p className="text-[11px] text-muted-foreground truncate">{s.email} · {s.active}/{s.total} ativos</p>
+                        <p className="text-sm font-medium break-words">{s.full_name || "Sem nome"}</p>
+                        <p className="text-[11px] text-muted-foreground break-words">{s.email} · {s.active}/{s.total} ativos</p>
                       </div>
                       <ReleaseNotifyButton userId={s.user_id} type="training" />
                       <AlertDialog>

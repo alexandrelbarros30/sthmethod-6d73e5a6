@@ -1287,8 +1287,8 @@ const AdminStudents = () => {
                           <span className="text-xs font-bold text-primary">{s.initials}</span>
                         </div>
                         <div className="min-w-0">
-                          <p className="font-medium text-sm truncate">{s.full_name || "Sem nome"}</p>
-                          <p className="text-xs text-muted-foreground truncate">{s.email}</p>
+                          <p className="font-medium text-sm break-words">{s.full_name || "Sem nome"}</p>
+                          <p className="text-xs text-muted-foreground break-words">{s.email}</p>
                           {s.phone && <p className="text-[10px] text-muted-foreground">{s.phone}</p>}
                         </div>
                       </div>
@@ -1342,8 +1342,8 @@ const AdminStudents = () => {
                               <span className="text-xs font-bold text-primary">{s.initials}</span>
                             </div>
                             <div className="min-w-0">
-                              <p className="font-medium text-sm font-body truncate">{s.full_name || "Sem nome"}</p>
-                              <p className="text-xs text-muted-foreground font-body truncate">{s.email}</p>
+                              <p className="font-medium text-sm font-body break-words">{s.full_name || "Sem nome"}</p>
+                              <p className="text-xs text-muted-foreground font-body break-words">{s.email}</p>
                             </div>
                           </div>
                         </TableCell>
@@ -2068,8 +2068,8 @@ const AdminStudents = () => {
                 <span className="text-sm font-bold text-primary">{selected?.initials}</span>
               </div>
               <div className="min-w-0">
-                <p className="truncate">{selected?.full_name || "Aluno"}</p>
-                <p className="text-xs text-muted-foreground font-normal truncate">{selected?.email}</p>
+                <p className="break-words">{selected?.full_name || "Aluno"}</p>
+                <p className="text-xs text-muted-foreground font-normal break-words">{selected?.email}</p>
               </div>
             </DialogTitle>
           </DialogHeader>

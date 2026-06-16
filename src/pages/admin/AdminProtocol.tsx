@@ -646,8 +646,8 @@ const AdminProtocol = () => {
                         <span className="text-xs font-bold text-primary">{s.initials}</span>
                       </div>
                       <div className="min-w-0">
-                        <p className="font-medium text-sm font-body truncate">{s.full_name || "Sem nome"}</p>
-                        <p className="text-xs text-muted-foreground truncate">{s.email || "Sem e-mail"}</p>
+                        <p className="font-medium text-sm font-body break-words">{s.full_name || "Sem nome"}</p>
+                        <p className="text-xs text-muted-foreground break-words">{s.email || "Sem e-mail"}</p>
                       </div>
                     </div>
                     <Badge variant={s.protocolCount > 0 ? "secondary" : "outline"} className="text-[10px] shrink-0">

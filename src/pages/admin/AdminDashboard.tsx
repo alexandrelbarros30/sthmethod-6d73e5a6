@@ -287,8 +287,8 @@ const AdminDashboard = () => {
                     {filteredProfiles.slice(0, 30).map((p: any) => (
                       <div key={p.id} className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl hover:bg-muted/40">
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium truncate">{p.full_name || "Sem nome"}</p>
-                          <p className="text-xs text-muted-foreground truncate">{p.email}{p.phone ? ` · ${p.phone}` : ""}</p>
+                          <p className="text-sm font-medium break-words">{p.full_name || "Sem nome"}</p>
+                          <p className="text-xs text-muted-foreground break-words">{p.email}{p.phone ? ` · ${p.phone}` : ""}</p>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
                           <Button variant="ghost" size="sm" className="h-8 px-2 text-xs gap-1" onClick={() => navigate(`/admin/students?manage=${p.user_id}`)}>
@@ -399,11 +399,11 @@ const AdminDashboard = () => {
                 <div key={lead.id} className="flex flex-col gap-1 py-2 border-b border-border/50 last:border-0">
                   <div className="flex items-center gap-2 min-w-0">
                     <Sparkles className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <p className="text-sm font-medium truncate flex-1">{lead.full_name || lead.email}</p>
+                    <p className="text-sm font-medium break-words flex-1">{lead.full_name || lead.email}</p>
                     <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/30 shrink-0">Free</Badge>
                   </div>
                   <div className="flex items-center justify-between pl-6">
-                    <p className="text-xs text-muted-foreground truncate">
+                    <p className="text-xs text-muted-foreground break-words">
                       {lead.phone} • {objLabel} • {lead.weight}kg • {dayLabel}
                     </p>
                     <Button
@@ -524,8 +524,8 @@ const RecentStudents = ({ profiles, subscriptions, navigate, queryClient, active
                             </span>
                           </div>
                           <div className="min-w-0">
-                            <p className={`text-sm font-medium font-body ${color.text} truncate`}>{p.full_name || "Sem nome"}</p>
-                            <p className="text-xs text-muted-foreground font-body truncate">{p.email}</p>
+                            <p className={`text-sm font-medium font-body ${color.text} break-words`}>{p.full_name || "Sem nome"}</p>
+                            <p className="text-xs text-muted-foreground font-body break-words">{p.email}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">

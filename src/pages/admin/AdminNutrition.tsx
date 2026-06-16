@@ -131,8 +131,8 @@ const AdminNutrition = () => {
                     <span className="text-sm font-bold text-primary">{s.initials}</span>
                   </div>
                   <div className="min-w-0">
-                    <p className="font-medium text-sm font-body truncate">{s.full_name || "Sem nome"}</p>
-                    <p className="text-xs text-muted-foreground font-body truncate">{s.email}</p>
+                    <p className="font-medium text-sm font-body break-words">{s.full_name || "Sem nome"}</p>
+                    <p className="text-xs text-muted-foreground font-body break-words">{s.email}</p>
                     {s.weight && <p className="text-xs text-muted-foreground mt-0.5">{s.weight}kg</p>}
                   </div>
                 </button>

@@ -58,7 +58,6 @@ const linksByRole: Record<AppRole, NavItem[]> = {
   admin: [
     { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/admin/queue", icon: ListOrdered, label: "Fila Atendimento" },
-    { to: "/admin/students", icon: User, label: "Alunos" },
     { to: "/admin/plans", icon: CreditCard, label: "Planos" },
     {
       group: "CRM",
@@ -137,7 +136,6 @@ const linksByRole: Record<AppRole, NavItem[]> = {
   admin_viewer: [
     { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/admin/queue", icon: ListOrdered, label: "Fila Atendimento" },
-    { to: "/admin/students", icon: User, label: "Alunos" },
     { to: "/admin/plans", icon: CreditCard, label: "Planos" },
     {
       group: "Financeiro",
