@@ -80,7 +80,7 @@ const PRODUCTS = [
   },
 ];
 
-const WHATSAPP = "5521972486650";
+const WHATSAPP = "5521998496289";
 const SITE = "https://performethlabs.com.br";
 
 interface Props {

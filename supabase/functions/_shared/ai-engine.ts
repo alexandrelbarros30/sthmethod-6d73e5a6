@@ -24,7 +24,7 @@ export function localEngineReply(input: string): string {
     return 'Vou te encaminhar para um consultor humano. Pode me confirmar seu nome completo e e-mail?';
   }
   if (/\b4\b|aluno|j[áa] sou|nutri/.test(t)) {
-    return 'Perfeito! O canal exclusivo para alunos ativos é o Sucesso do Aluno: https://wa.me/5521972486650';
+    return 'Perfeito! O canal exclusivo para alunos ativos é o Sucesso do Aluno: https://wa.me/5521998496289';
   }
   return 'Recebi sua mensagem. Para te ajudar melhor, responda com 1️⃣ Planos, 2️⃣ Como funciona, 3️⃣ Falar com consultor ou 4️⃣ Já sou aluno.';
 }

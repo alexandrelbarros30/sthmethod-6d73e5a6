@@ -98,7 +98,7 @@ export default function StudentAssistant() {
           role: "assistant",
           ts: Date.now(),
           content:
-            "Tive um problema para responder agora. Tente novamente em instantes ou fale com o consultor: https://wa.me/5521972486650",
+            "Tive um problema para responder agora. Tente novamente em instantes ou fale com o consultor: https://wa.me/5521998496289",
         },
       ]);
     } finally {
