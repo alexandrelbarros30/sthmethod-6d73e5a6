@@ -934,6 +934,35 @@ export default function AdminEmails() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!previewTpl} onOpenChange={(o) => !o && setPreviewTpl(null)}>
+        <DialogContent className="max-w-3xl max-h-[92vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-4 w-4" /> Pré-visualização — {previewTpl?.displayName}
+            </DialogTitle>
+            <DialogDescription>
+              Assunto: <span className="font-medium text-foreground">{previewSubject}</span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden rounded-md border border-border/40 bg-white">
+            <iframe
+              title="email-preview"
+              srcDoc={previewHtml}
+              className="w-full h-[60vh] bg-white"
+              sandbox=""
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewTpl(null)}>Fechar</Button>
+            {previewTpl && (
+              <Button onClick={() => { const t = previewTpl; setPreviewTpl(null); setTestDialog(t); }}>
+                <Send className="h-4 w-4 mr-2" /> Enviar teste
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
