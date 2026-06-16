@@ -42,6 +42,7 @@ import AdminFlowStatusDialog from "@/components/admin/AdminFlowStatusDialog";
 import PreviewUnlockToggle from "@/components/admin/PreviewUnlockToggle";
 import StudentProgramAssignDialog from "@/components/admin/StudentProgramAssignDialog";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
+import { normalizePhone } from "@/lib/phone";
 import {
   objectiveLabels, activityLabels,
   trainingIntensityOptions, cardioIntensityOptions,
@@ -226,11 +227,14 @@ const AdminStudents = () => {
     ? []
     : students?.filter((s: any) => {
         const term = searchTerm.toLowerCase();
-        return (
-          s.full_name?.toLowerCase().includes(term) ||
-          s.email?.toLowerCase().includes(term) ||
-          s.phone?.toLowerCase().includes(term)
-        );
+        if (s.full_name?.toLowerCase().includes(term)) return true;
+        if (s.email?.toLowerCase().includes(term)) return true;
+        const termDigits = term.replace(/\D/g, "");
+        if (termDigits.length >= 3) {
+          const phoneDigits = normalizePhone(s.phone);
+          if (phoneDigits.includes(termDigits)) return true;
+        }
+        return false;
       });
 
   const saveAnamneseMutation = useMutation({

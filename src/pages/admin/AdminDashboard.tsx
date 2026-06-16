@@ -12,6 +12,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
+import { normalizePhone } from "@/lib/phone";
 
 const getEffectiveSubscriptionMap = (subscriptions: any[] | undefined) => {
   const map = new Map<string, any>();
@@ -94,7 +95,7 @@ const AdminDashboard = () => {
   const { data: profiles } = useQuery({
     queryKey: ["admin-profiles"],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("id, user_id, full_name, email, onboarding_complete, admin_confirmed, created_at").order("created_at", { ascending: false });
+      const { data } = await supabase.from("profiles").select("id, user_id, full_name, email, phone, onboarding_complete, admin_confirmed, created_at").order("created_at", { ascending: false });
       return data || [];
     },
   });
@@ -237,9 +238,16 @@ const AdminDashboard = () => {
   const filteredProfiles = useMemo(() => {
     if (!searchTerm.trim() || !profiles) return null;
     const term = searchTerm.toLowerCase();
-    return profiles.filter((p: any) =>
-      p.full_name?.toLowerCase().includes(term) || p.email?.toLowerCase().includes(term)
-    );
+    const termDigits = term.replace(/\D/g, "");
+    return profiles.filter((p: any) => {
+      if (p.full_name?.toLowerCase().includes(term)) return true;
+      if (p.email?.toLowerCase().includes(term)) return true;
+      if (termDigits.length >= 3) {
+        const phoneDigits = normalizePhone(p.phone);
+        if (phoneDigits.includes(termDigits)) return true;
+      }
+      return false;
+    });
   }, [searchTerm, profiles]);
 
   return (
@@ -247,16 +255,21 @@ const AdminDashboard = () => {
       {/* Pesquisa rápida — destaque no topo */}
       <section className="mb-6">
         <div className="rounded-[28px] border border-border/50 bg-card/60 p-4 sm:p-5 backdrop-blur-3xl">
-          <div className="flex items-center gap-2 mb-3">
-            <Search className="w-4 h-4 text-foreground/70" />
-            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Pesquisar aluno</p>
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="flex items-center gap-2">
+              <Search className="w-4 h-4 text-foreground/70" />
+              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Pesquisar aluno</p>
+            </div>
+            <Button onClick={() => navigate("/admin/students?create=true")} size="sm" className="h-9 rounded-2xl gap-2 bg-foreground text-background hover:bg-foreground/90">
+              <UserPlus className="w-4 h-4" /> Novo aluno
+            </Button>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/70" />
               <Input
                 autoFocus
-                placeholder="Digite o nome ou e-mail do aluno..."
+                placeholder="Digite o nome, e-mail ou telefone do aluno..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="h-14 text-base rounded-2xl border-border/40 bg-background/80 pl-12 placeholder:text-muted-foreground/60 focus-visible:ring-2 focus-visible:ring-foreground/30"
@@ -275,7 +288,7 @@ const AdminDashboard = () => {
                       <div key={p.id} className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl hover:bg-muted/40">
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium truncate">{p.full_name || "Sem nome"}</p>
-                          <p className="text-xs text-muted-foreground truncate">{p.email}</p>
+                          <p className="text-xs text-muted-foreground truncate">{p.email}{p.phone ? ` · ${p.phone}` : ""}</p>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
                           <Button variant="ghost" size="sm" className="h-8 px-2 text-xs gap-1" onClick={() => navigate(`/admin/students?manage=${p.user_id}`)}>
@@ -296,38 +309,6 @@ const AdminDashboard = () => {
               )}
             </div>
           )}
-        </div>
-      </section>
-
-      <section className="mb-8 rounded-[28px] border border-border/50 bg-card/40 px-4 py-4 backdrop-blur-3xl sm:px-5 sm:py-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-2">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Operação</p>
-            <div className="space-y-1">
-              <h1 className="text-[30px] leading-none text-foreground">Dashboard administrativo</h1>
-              <p className="max-w-2xl text-sm text-muted-foreground">
-                Visão consolidada de alunos, ativações e sinais de acompanhamento em tempo real.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="relative min-w-0 flex-1 sm:min-w-[280px]">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
-              <Input
-                placeholder="Pesquisar aluno..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-11 rounded-2xl border-border/40 bg-background/70 pl-10 placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-foreground/20"
-              />
-            </div>
-            <Button onClick={() => navigate("/admin/students?create=true")} className="premium-btn h-11 rounded-2xl gap-2 bg-foreground text-background hover:bg-foreground/90">
-              <UserPlus className="w-4 h-4" /> Novo aluno
-            </Button>
-            <Button variant="outline" onClick={() => navigate("/admin/students")} className="h-11 rounded-2xl gap-2 border-border/40">
-              <Search className="w-4 h-4" /> Pesquisar aluno
-            </Button>
-          </div>
         </div>
       </section>
 
