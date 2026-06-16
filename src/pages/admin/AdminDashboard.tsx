@@ -524,8 +524,8 @@ const RecentStudents = ({ profiles, subscriptions, navigate, queryClient, active
                             </span>
                           </div>
                           <div className="min-w-0">
-                            <p className={`text-sm font-medium font-body ${color.text} truncate`}>{p.full_name || "Sem nome"}</p>
-                            <p className="text-xs text-muted-foreground font-body truncate">{p.email}</p>
+                            <p className={`text-sm font-medium font-body ${color.text} break-words`}>{p.full_name || "Sem nome"}</p>
+                            <p className="text-xs text-muted-foreground font-body break-words">{p.email}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
