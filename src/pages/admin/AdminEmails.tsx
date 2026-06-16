@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mail, Send, Save, Edit3, Search, RefreshCw, Plus, Trash2, Calendar as CalendarIcon, Zap, X } from "lucide-react";
+import { Mail, Send, Save, Edit3, Search, RefreshCw, Plus, Trash2, Calendar as CalendarIcon, Zap, X, Eye, Power, PowerOff } from "lucide-react";
 
 interface Settings {
   template_key: string;
@@ -72,6 +72,12 @@ export default function AdminEmails() {
   const [testDialog, setTestDialog] = useState<EmailTemplateMeta | null>(null);
   const [testEmail, setTestEmail] = useState("");
   const [sending, setSending] = useState(false);
+
+  // Preview
+  const [previewTpl, setPreviewTpl] = useState<EmailTemplateMeta | null>(null);
+  const [previewHtml, setPreviewHtml] = useState<string>("");
+  const [previewSubject, setPreviewSubject] = useState<string>("");
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   // Manual dispatch
   const [students, setStudents] = useState<StudentLite[]>([]);
@@ -141,6 +147,90 @@ export default function AdminEmails() {
       toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
       load();
     }
+  }
+
+  async function toggleAll(value: boolean) {
+    setBulkBusy(true);
+    try {
+      // Ensure a row exists for every template, then update enabled.
+      const rows = EMAIL_TEMPLATES.map((t) => ({ template_key: t.key, enabled: value }));
+      const { error } = await supabase
+        .from("email_template_settings")
+        .upsert(rows, { onConflict: "template_key" });
+      if (error) throw error;
+      toast({ title: value ? "Todos ativados" : "Todos desativados" });
+      await load();
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  function buildSampleData(t: EmailTemplateMeta): Record<string, string> {
+    const base: Record<string, string> = {
+      name: "Aluno Exemplo",
+      siteName: "STH METHOD",
+      siteUrl: "https://sthmethod.com",
+      confirmationUrl: "https://sthmethod.com/confirm?token=abc",
+      renewUrl: "https://sthmethod.com/renovar",
+      recipient: "aluno@exemplo.com",
+      email: "aluno@exemplo.com",
+      oldEmail: "antigo@exemplo.com",
+      newEmail: "novo@exemplo.com",
+      token: "123456",
+      planName: "Plano Premium 6 meses",
+      amount: "R$ 528,90",
+      method: "Cartão de crédito",
+      paymentDate: new Date().toLocaleDateString("pt-BR"),
+      reason: "Cartão recusado pelo emissor",
+      expiresAt: new Date(Date.now() + 7 * 86400000).toLocaleDateString("pt-BR"),
+      oldPlan: "Plano Mensal",
+      newPlan: "Plano Premium 6 meses",
+      couponCode: "STH10",
+      discount: "10%",
+      lastSeenAt: new Date(Date.now() - 14 * 86400000).toLocaleDateString("pt-BR"),
+    };
+    // include custom variable defaults
+    const custom = settings[t.key]?.custom_variables || [];
+    custom.forEach((v) => { if (v.defaultValue) base[v.key] = v.defaultValue; });
+    return base;
+  }
+
+  function interpolate(tpl: string, data: Record<string, string>) {
+    return tpl.replace(/\{(\w+)\}/g, (_, k) => data[k] ?? `{${k}}`);
+  }
+
+  function openPreview(t: EmailTemplateMeta) {
+    const s = settings[t.key];
+    const data = buildSampleData(t);
+    const subject = (s?.subject_override?.trim() || t.defaultSubject);
+    let html: string;
+    if (s?.body_html_override?.trim()) {
+      html = interpolate(s.body_html_override, data);
+    } else {
+      // Stub preview when no custom HTML is set
+      const rows = t.variables
+        .map((v) => `<tr><td style="padding:4px 8px;color:#888;font-size:12px">${v}</td><td style="padding:4px 8px;font-size:13px">${data[v] ?? ""}</td></tr>`)
+        .join("");
+      html = `
+<!doctype html><html><body style="margin:0;padding:24px;background:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',Inter,Arial,sans-serif;color:#111">
+  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:14px;padding:28px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+    <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6e6e73;margin-bottom:6px">STH METHOD</div>
+    <h1 style="margin:0 0 12px;font-size:22px;font-weight:600">${interpolate(subject, data)}</h1>
+    <p style="color:#444;font-size:14px;line-height:1.55">Pré-visualização do template padrão <strong>${t.displayName}</strong>. O conteúdo final é renderizado pelo sistema com o React Email no momento do envio.</p>
+    <p style="color:#555;font-size:13px;margin-top:18px"><strong>Gatilho:</strong> ${t.trigger}</p>
+    <table style="width:100%;border-collapse:collapse;margin-top:14px;background:#fafafa;border-radius:8px;overflow:hidden">
+      <thead><tr><th colspan="2" style="text-align:left;padding:8px 8px;font-size:11px;color:#6e6e73;text-transform:uppercase;letter-spacing:.08em">Variáveis</th></tr></thead>
+      <tbody>${rows || '<tr><td style="padding:8px;font-size:12px;color:#888">Sem variáveis</td></tr>'}</tbody>
+    </table>
+    <p style="color:#9a9a9f;font-size:11px;margin-top:24px">Use o botão "Testar" para enviar o template real ao seu e-mail.</p>
+  </div>
+</body></html>`;
+    }
+    setPreviewTpl(t);
+    setPreviewSubject(interpolate(subject, data));
+    setPreviewHtml(html);
   }
 
   function openEdit(t: EmailTemplateMeta) {
@@ -395,6 +485,9 @@ export default function AdminEmails() {
                 <Button size="sm" variant="outline" onClick={() => openEdit(t)} className="flex-1">
                   <Edit3 className="h-3.5 w-3.5 mr-1" /> Editar
                 </Button>
+                <Button size="sm" variant="outline" onClick={() => openPreview(t)} className="flex-1">
+                  <Eye className="h-3.5 w-3.5 mr-1" /> Preview
+                </Button>
                 <Button size="sm" variant="outline" onClick={() => setTestDialog(t)} className="flex-1">
                   <Send className="h-3.5 w-3.5 mr-1" /> Testar
                 </Button>
@@ -420,9 +513,29 @@ export default function AdminEmails() {
             </p>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={() => { load(); loadLogs(); }}>
-          <RefreshCw className="h-4 w-4 mr-2" /> Atualizar
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => toggleAll(true)}
+            disabled={bulkBusy}
+            className="border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+          >
+            <Power className="h-4 w-4 mr-2" /> Ativar todos
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => toggleAll(false)}
+            disabled={bulkBusy}
+            className="border-red-500/40 text-red-400 hover:bg-red-500/10"
+          >
+            <PowerOff className="h-4 w-4 mr-2" /> Desativar todos
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => { load(); loadLogs(); }}>
+            <RefreshCw className="h-4 w-4 mr-2" /> Atualizar
+          </Button>
+        </div>
       </header>
 
       <Tabs defaultValue="templates" className="space-y-4">
@@ -818,6 +931,35 @@ export default function AdminEmails() {
             <Button onClick={sendTest} disabled={sending || !testEmail}>
               <Send className="h-4 w-4 mr-2" /> {sending ? "Enviando..." : "Enviar"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!previewTpl} onOpenChange={(o) => !o && setPreviewTpl(null)}>
+        <DialogContent className="max-w-3xl max-h-[92vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-4 w-4" /> Pré-visualização — {previewTpl?.displayName}
+            </DialogTitle>
+            <DialogDescription>
+              Assunto: <span className="font-medium text-foreground">{previewSubject}</span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden rounded-md border border-border/40 bg-white">
+            <iframe
+              title="email-preview"
+              srcDoc={previewHtml}
+              className="w-full h-[60vh] bg-white"
+              sandbox=""
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewTpl(null)}>Fechar</Button>
+            {previewTpl && (
+              <Button onClick={() => { const t = previewTpl; setPreviewTpl(null); setTestDialog(t); }}>
+                <Send className="h-4 w-4 mr-2" /> Enviar teste
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
