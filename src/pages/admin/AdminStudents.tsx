@@ -1319,24 +1319,24 @@ const AdminStudents = () => {
               </div>
 
               {/* Desktop table */}
-              <div className="hidden sm:block overflow-x-auto">
-                <Table>
+              <div className="hidden sm:block">
+                <Table className="table-fixed w-full">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="font-body">Aluno</TableHead>
-                      <TableHead className="font-body hidden md:table-cell">Telefone</TableHead>
-                      <TableHead className="font-body hidden lg:table-cell">Cadastro</TableHead>
-                      <TableHead className="font-body">Plano</TableHead>
-                      <TableHead className="font-body hidden lg:table-cell">Início</TableHead>
-                      <TableHead className="font-body">Vencimento</TableHead>
-                      <TableHead className="font-body">Status</TableHead>
-                      <TableHead className="font-body text-right">Ações</TableHead>
+                      <TableHead className="font-body hidden xl:table-cell w-[140px]">Telefone</TableHead>
+                      <TableHead className="font-body hidden 2xl:table-cell w-[110px]">Cadastro</TableHead>
+                      <TableHead className="font-body w-[110px]">Plano</TableHead>
+                      <TableHead className="font-body hidden 2xl:table-cell w-[100px]">Início</TableHead>
+                      <TableHead className="font-body hidden lg:table-cell w-[110px]">Vencimento</TableHead>
+                      <TableHead className="font-body w-[100px]">Status</TableHead>
+                      <TableHead className="font-body text-right w-[120px]">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredStudents?.map((s: any) => (
                       <TableRow key={s.user_id}>
-                        <TableCell>
+                        <TableCell className="py-2 pr-2">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                               <span className="text-xs font-bold text-primary">{s.initials}</span>
@@ -1347,8 +1347,8 @@ const AdminStudents = () => {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="font-body text-sm hidden md:table-cell">{s.phone || "—"}</TableCell>
-                        <TableCell className="font-body text-xs text-muted-foreground hidden lg:table-cell">
+                        <TableCell className="font-body text-sm hidden xl:table-cell py-2 px-2 break-words">{s.phone || "—"}</TableCell>
+                        <TableCell className="font-body text-xs text-muted-foreground hidden 2xl:table-cell py-2 px-2">
                           {s.created_at ? (
                             <>
                               {new Date(s.created_at).toLocaleDateString("pt-BR")}
@@ -1357,7 +1357,7 @@ const AdminStudents = () => {
                             </>
                           ) : "—"}
                         </TableCell>
-                        <TableCell className="font-body text-sm">
+                        <TableCell className="font-body text-sm py-2 px-2">
                           {s.plan !== "—" ? (
                             <Badge variant="outline" className={`text-xs font-medium ${getPlanTierClasses(getPlanTier(s.planDurationDays)).badge}`}>
                               {s.plan}
@@ -1366,15 +1366,15 @@ const AdminStudents = () => {
                             <span className="text-muted-foreground">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="font-body text-sm hidden lg:table-cell">{s.startDate ? new Date(s.startDate).toLocaleDateString("pt-BR") : "—"}</TableCell>
-                        <TableCell className="font-body text-sm">{s.endDate ? new Date(s.endDate).toLocaleDateString("pt-BR") : "—"}</TableCell>
-                        <TableCell>
+                        <TableCell className="font-body text-sm hidden 2xl:table-cell py-2 px-2">{s.startDate ? new Date(s.startDate).toLocaleDateString("pt-BR") : "—"}</TableCell>
+                        <TableCell className="font-body text-sm hidden lg:table-cell py-2 px-2">{s.endDate ? new Date(s.endDate).toLocaleDateString("pt-BR") : "—"}</TableCell>
+                        <TableCell className="py-2 px-2">
                           <Badge variant={s.status === "active" ? "secondary" : s.status === "suspended" ? "outline" : "destructive"} className="text-xs">
                             {s.status === "active" ? "Ativo" : s.status === "suspended" ? "Suspenso" : s.status === "expired" ? "Vencido" : "Sem plano"}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="outline" size="sm" className="text-xs" onClick={() => { setSelected(s); setManageOpen(true); }}>
+                        <TableCell className="text-right py-2 pl-2">
+                          <Button variant="outline" size="sm" className="text-xs whitespace-nowrap" onClick={() => { setSelected(s); setManageOpen(true); }}>
                             Gerenciar
                           </Button>
                         </TableCell>
