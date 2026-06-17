@@ -767,6 +767,8 @@ Deno.serve(async (req) => {
         if (conv.status === 'closed' || !conv.assigned_to) {
           upd.human_handoff = false; 
           upd.assigned_to = null;
+          upd.human_intro_sent = false;
+          upd.ai_paused_until = null;
         }
       } else if (isHumanActive) {
         // Se humano está ativo, garantimos que human_handoff permaneça true mesmo se houver nova mensagem
