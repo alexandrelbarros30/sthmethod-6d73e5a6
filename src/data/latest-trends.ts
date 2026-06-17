@@ -9,6 +9,7 @@ import bfAltoImg from "@/assets/sthnews-bfalto-hero.jpg";
 import ginecoImg from "@/assets/sthnews-gineco-hero.jpg";
 import trembolonaImg from "@/assets/sthnews-trembolona-hero.jpg";
 import restauracaoImg from "@/assets/sthnews-atrofia-hero.jpg";
+import clenbuterolImg from "@/assets/sthnews-clenbuterol-hero.jpg";
 
 export interface TrendArticle {
   id: string;
@@ -23,6 +24,7 @@ export interface TrendArticle {
 // Ordenado do mais recente para o mais antigo.
 // Ao publicar nova tendência, adicione no topo com data atual.
 export const LATEST_TRENDS: TrendArticle[] = [
+  { id: "clenbuterol", path: "/tendencias/clenbuterol", kicker: "Termogênese & risco", title: "Clenbuterol: o termogênico mais poderoso ou uma bomba-relógio cardiovascular?", desc: "Mecanismo beta-2 adrenérgico, perda de gordura acelerada e o preço fisiológico que o coração paga.", img: clenbuterolImg, publishedAt: "2026-06-17" },
   { id: "restauracao-muscular", path: "/tendencias/restauracao-muscular", kicker: "Reabilitação hormonal", title: "O músculo lembra: restaurando o físico após 10 anos de hormônios", desc: "Memória miotonuclear, reset do eixo HPT e o caminho real para reverter atrofia crônica.", img: restauracaoImg, publishedAt: "2026-06-12" },
   { id: "hipertensao-arterial", path: "/tendencias/hipertensao-arterial", kicker: "Cardiovascular", title: "Hipertensão Arterial: o tratado tático completo", desc: "Classificação, fisiopatologia, diagnóstico diferencial e conduta medicamentosa, suplementar e comportamental.", img: hipertensaoImg, publishedAt: "2026-05-31" },
   { id: "marcadores-laboratoriais", path: "/tendencias/marcadores-laboratoriais", kicker: "Guia técnico", title: "Marcadores laboratoriais: o guia técnico completo", desc: "Painéis essenciais, recomendados e avançados — leitura clínica acima do achismo.", img: marcadoresImg, publishedAt: "2026-05-15" },
