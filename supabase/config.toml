@@ -15,6 +15,8 @@ project_id = "tthahgwkkdyvxdbhsgyb"
     verify_jwt = false
   [functions.get-custom-payment-link]
     verify_jwt = false
+  [functions.create-custom-pix]
+    verify_jwt = false
   [functions.crm-inactivity-tick]
     verify_jwt = false
   [functions.crm-inbound-webhook]
