@@ -413,6 +413,44 @@ serve(async (req) => {
       return new Response(JSON.stringify({ received: true, note: "no external_reference" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // ===== Pagamento avulso (link com valor livre) =====
+    if (typeof internalPaymentId === "string" && internalPaymentId.startsWith("cpay:")) {
+      const cpId = internalPaymentId.slice(5);
+      const statusMap: Record<string, string> = {
+        approved: "approved", pending: "pending", in_process: "pending",
+        rejected: "rejected", cancelled: "cancelled", refunded: "refunded",
+      };
+      const newStatus = statusMap[mpPayment.status] || mpPayment.status;
+
+      const { data: prev } = await supabase
+        .from("custom_payments")
+        .select("status, link_id")
+        .eq("id", cpId)
+        .maybeSingle();
+      if (!prev) {
+        return new Response(JSON.stringify({ received: true, note: "custom payment not found" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      await supabase.from("custom_payments")
+        .update({ status: newStatus, mp_payment_id: String(paymentId) })
+        .eq("id", cpId);
+
+      // Incrementa current_uses do link na primeira aprovação
+      if (newStatus === "approved" && prev.status !== "approved" && prev.link_id) {
+        const { data: link } = await supabase
+          .from("custom_payment_links")
+          .select("current_uses")
+          .eq("id", prev.link_id)
+          .maybeSingle();
+        if (link) {
+          await supabase.from("custom_payment_links")
+            .update({ current_uses: (link.current_uses || 0) + 1 })
+            .eq("id", prev.link_id);
+        }
+      }
+
+      return new Response(JSON.stringify({ received: true, custom_payment_id: cpId, status: newStatus }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     const { data: existingPayment, error: existingPaymentError } = await supabase
       .from("payments")
       .select("status")
