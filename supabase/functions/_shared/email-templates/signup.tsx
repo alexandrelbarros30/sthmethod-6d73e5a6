@@ -1,34 +1,10 @@
 /// <reference types="npm:@types/react@18.3.1" />
-
 import * as React from 'npm:react@18.3.1'
+import { Body, Button, Container, Head, Heading, Hr, Html, Link, Preview, Section, Text } from 'npm:@react-email/components@0.0.22'
 
-import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Hr,
-  Html,
-  Link,
-  Preview,
-  Section,
-  Text,
-} from 'npm:@react-email/components@0.0.22'
+interface SignupEmailProps { siteName: string; siteUrl: string; recipient: string; confirmationUrl: string }
 
-interface SignupEmailProps {
-  siteName: string
-  siteUrl: string
-  recipient: string
-  confirmationUrl: string
-}
-
-export const SignupEmail = ({
-  siteName,
-  siteUrl,
-  recipient,
-  confirmationUrl,
-}: SignupEmailProps) => (
+export const SignupEmail = ({ siteName, siteUrl, recipient, confirmationUrl }: SignupEmailProps) => (
   <Html lang="pt-BR" dir="ltr">
     <Head />
     <Preview>Confirme seu e-mail no STH METHOD</Preview>
@@ -39,18 +15,13 @@ export const SignupEmail = ({
           <Text style={badge}>CONFIRMAÇÃO DE CADASTRO</Text>
         </Section>
         <Heading style={h1}>Confirme seu e-mail</Heading>
-        <Text style={text}>
-          Recebemos seu cadastro com o e-mail{' '}
-          <Link href={`mailto:${recipient}`} style={link}>{recipient}</Link>. Para
-          ativar seu acesso à plataforma, clique no botão abaixo:
-        </Text>
+        <Text style={text}>Obrigado por se cadastrar no <Link href={siteUrl} style={link}><strong>STH METHOD</strong></Link>.</Text>
+        <Text style={text}>Confirme seu e-mail <strong>{recipient}</strong> clicando no botão abaixo para liberar o acesso à sua área:</Text>
         <Section style={{ textAlign: 'center', margin: '28px 0' }}>
           <Button style={button} href={confirmationUrl}>Confirmar e-mail</Button>
         </Section>
         <Hr style={hr} />
-        <Text style={footer}>
-          Se você não criou esta conta, ignore esta mensagem com segurança.
-        </Text>
+        <Text style={footer}>Se você não criou esta conta, ignore este e-mail.</Text>
         <Text style={footer}>STH METHOD · sthmethod.com.br</Text>
       </Container>
     </Body>

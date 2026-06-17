@@ -1,29 +1,10 @@
 /// <reference types="npm:@types/react@18.3.1" />
-
 import * as React from 'npm:react@18.3.1'
+import { Body, Button, Container, Head, Heading, Hr, Html, Preview, Section, Text } from 'npm:@react-email/components@0.0.22'
 
-import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Hr,
-  Html,
-  Preview,
-  Section,
-  Text,
-} from 'npm:@react-email/components@0.0.22'
+interface RecoveryEmailProps { siteName: string; confirmationUrl: string }
 
-interface RecoveryEmailProps {
-  siteName: string
-  confirmationUrl: string
-}
-
-export const RecoveryEmail = ({
-  siteName,
-  confirmationUrl,
-}: RecoveryEmailProps) => (
+export const RecoveryEmail = ({ siteName, confirmationUrl }: RecoveryEmailProps) => (
   <Html lang="pt-BR" dir="ltr">
     <Head />
     <Preview>Redefinir senha do STH METHOD</Preview>
@@ -34,17 +15,12 @@ export const RecoveryEmail = ({
           <Text style={badge}>REDEFINIÇÃO DE SENHA</Text>
         </Section>
         <Heading style={h1}>Redefinir sua senha</Heading>
-        <Text style={text}>
-          Recebemos um pedido para redefinir a senha da sua conta. Clique no
-          botão abaixo para escolher uma nova senha. O link expira em alguns minutos.
-        </Text>
+        <Text style={text}>Recebemos um pedido para redefinir a senha da sua conta. Clique no botão abaixo para escolher uma nova senha. O link expira em alguns minutos.</Text>
         <Section style={{ textAlign: 'center', margin: '28px 0' }}>
           <Button style={button} href={confirmationUrl}>Redefinir senha</Button>
         </Section>
         <Hr style={hr} />
-        <Text style={footer}>
-          Se você não solicitou essa alteração, ignore este e-mail — sua senha permanecerá a mesma.
-        </Text>
+        <Text style={footer}>Se você não solicitou essa alteração, ignore este e-mail — sua senha permanecerá a mesma.</Text>
         <Text style={footer}>STH METHOD · sthmethod.com.br</Text>
       </Container>
     </Body>

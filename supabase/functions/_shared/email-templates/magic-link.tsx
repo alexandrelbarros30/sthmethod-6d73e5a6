@@ -1,29 +1,10 @@
 /// <reference types="npm:@types/react@18.3.1" />
-
 import * as React from 'npm:react@18.3.1'
+import { Body, Button, Container, Head, Heading, Hr, Html, Preview, Section, Text } from 'npm:@react-email/components@0.0.22'
 
-import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Hr,
-  Html,
-  Preview,
-  Section,
-  Text,
-} from 'npm:@react-email/components@0.0.22'
+interface MagicLinkEmailProps { siteName: string; confirmationUrl: string }
 
-interface MagicLinkEmailProps {
-  siteName: string
-  confirmationUrl: string
-}
-
-export const MagicLinkEmail = ({
-  siteName,
-  confirmationUrl,
-}: MagicLinkEmailProps) => (
+export const MagicLinkEmail = ({ siteName, confirmationUrl }: MagicLinkEmailProps) => (
   <Html lang="pt-BR" dir="ltr">
     <Head />
     <Preview>Seu link de acesso ao STH METHOD</Preview>
@@ -34,16 +15,12 @@ export const MagicLinkEmail = ({
           <Text style={badge}>LINK DE ACESSO</Text>
         </Section>
         <Heading style={h1}>Entrar na plataforma</Heading>
-        <Text style={text}>
-          Clique no botão abaixo para acessar sua conta. O link é de uso único e expira em alguns minutos.
-        </Text>
+        <Text style={text}>Clique no botão abaixo para acessar sua conta. O link é de uso único e expira em alguns minutos.</Text>
         <Section style={{ textAlign: 'center', margin: '28px 0' }}>
           <Button style={button} href={confirmationUrl}>Acessar plataforma</Button>
         </Section>
         <Hr style={hr} />
-        <Text style={footer}>
-          Se você não solicitou esse acesso, ignore este e-mail.
-        </Text>
+        <Text style={footer}>Se você não solicitou esse acesso, ignore este e-mail.</Text>
         <Text style={footer}>STH METHOD · sthmethod.com.br</Text>
       </Container>
     </Body>
