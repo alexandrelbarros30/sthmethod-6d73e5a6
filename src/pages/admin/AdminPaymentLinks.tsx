@@ -15,7 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 type Link = { id: string; code: string; label: string; amount: number; description: string | null; max_uses: number; current_uses: number; expires_at: string | null; active: boolean; notes: string | null; created_at: string; student_user_id: string | null };
 type Payment = { id: string; link_id: string; payer_name: string; payer_email: string | null; payer_phone: string | null; amount: number; method: string; status: string; reconciled: boolean; reconciled_plan_id: string | null; reconciled_at: string | null; reconciled_notes: string | null; mp_payment_id: string | null; created_at: string };
-type Plan = { id: string; name: string };
+type Plan = { id: string; name: string; duration_days: number | null };
 type Student = { user_id: string; full_name: string | null; email: string | null };
 
 const fmt = (n: number) => Number(n).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -46,7 +46,7 @@ export default function AdminPaymentLinks() {
     const [l, p, pl, st] = await Promise.all([
       supabase.from("custom_payment_links").select("*").order("created_at", { ascending: false }),
       supabase.from("custom_payments").select("*").order("created_at", { ascending: false }).limit(100),
-      supabase.from("plans").select("id, name").order("name"),
+      supabase.from("plans").select("id, name, duration_days").order("name"),
       supabase.from("profiles").select("user_id, full_name, email").order("full_name").limit(2000),
     ]);
     setLinks((l.data as any) || []);
@@ -127,14 +127,70 @@ export default function AdminPaymentLinks() {
   async function handleReconcile() {
     if (!reconciling) return;
     if (!reconcilePlanId) { toast({ title: "Selecione o plano" }); return; }
-    const { error } = await supabase.from("custom_payments").update({
+    const link = linkByCode.get(reconciling.link_id);
+    const studentId = link?.student_user_id || null;
+    if (!studentId) {
+      toast({ title: "Link sem aluno vinculado", description: "Este pagamento não está atrelado a um aluno; não é possível ativar plano automaticamente." });
+      return;
+    }
+    const plan = plans.find((p) => p.id === reconcilePlanId);
+    const durationDays = plan?.duration_days || 30;
+
+    // 1) Marca o pagamento como reconciliado
+    const { error: upErr } = await supabase.from("custom_payments").update({
       reconciled: true,
       reconciled_plan_id: reconcilePlanId,
       reconciled_notes: reconcileNotes.trim() || null,
       reconciled_at: new Date().toISOString(),
     }).eq("id", reconciling.id);
-    if (error) { toast({ title: "Erro", description: error.message }); return; }
-    toast({ title: "Pagamento reconciliado" });
+    if (upErr) { toast({ title: "Erro", description: upErr.message }); return; }
+
+    // 2) Ativa/atualiza a assinatura do aluno com o plano reconciliado
+    const today = new Date();
+    const { data: existingSub } = await supabase
+      .from("subscriptions")
+      .select("id, start_date, end_date, status")
+      .eq("user_id", studentId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    let baseDate = new Date(today);
+    if (existingSub?.end_date) {
+      const currentEnd = new Date(existingSub.end_date + "T23:59:59");
+      if (currentEnd > today && existingSub.status === "active") {
+        baseDate = currentEnd;
+      }
+    }
+    const endDate = new Date(baseDate);
+    endDate.setDate(endDate.getDate() + durationDays);
+    const startStr = today.toISOString().split("T")[0];
+    const endStr = endDate.toISOString().split("T")[0];
+
+    let subErr: any = null;
+    if (existingSub) {
+      const r = await supabase.from("subscriptions").update({
+        plan_id: reconcilePlanId,
+        status: "active",
+        start_date: startStr,
+        end_date: endStr,
+      }).eq("id", existingSub.id);
+      subErr = r.error;
+    } else {
+      const r = await supabase.from("subscriptions").insert({
+        user_id: studentId,
+        plan_id: reconcilePlanId,
+        status: "active",
+        start_date: startStr,
+        end_date: endStr,
+      });
+      subErr = r.error;
+    }
+    if (subErr) {
+      toast({ title: "Pagamento reconciliado, mas falhou ao atualizar assinatura", description: subErr.message });
+    } else {
+      toast({ title: "Plano ativado", description: `Vence em ${endDate.toLocaleDateString("pt-BR")} (${durationDays} dias).` });
+    }
     setReconciling(null); setReconcilePlanId(""); setReconcileNotes("");
     load();
   }
@@ -328,7 +384,7 @@ export default function AdminPaymentLinks() {
                 </Select>
               </div>
               <div><Label>Anotação (opcional)</Label><Textarea rows={2} value={reconcileNotes} onChange={(e) => setReconcileNotes(e.target.value)} /></div>
-              <p className="text-[11px] text-muted-foreground">Esta ação marca o pagamento como reconciliado. A ativação do plano para o aluno ainda é feita manualmente na tela de pagamentos.</p>
+              <p className="text-[11px] text-muted-foreground">Ao confirmar, a assinatura do aluno será ativada com o plano selecionado, calculando o novo vencimento conforme a duração do plano (somando dias restantes se ainda estiver ativo).</p>
             </div>
           )}
           <DialogFooter>
