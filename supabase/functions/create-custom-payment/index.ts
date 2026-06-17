@@ -51,15 +51,33 @@ Deno.serve(async (req) => {
       } catch { /* anonymous ok */ }
     }
 
+    // Se o link está vinculado a um aluno, FIXAMOS nome/e-mail/telefone do perfil dele,
+    // ignorando o que o formulário enviar. Isso garante que o pagamento é sempre atrelado ao aluno.
+    let finalName = String(payer_name).trim();
+    let finalEmail: string | null = payer_email ? String(payer_email).trim() : null;
+    let finalPhone: string | null = payer_phone ? String(payer_phone).replace(/\D/g, "") : null;
+    if ((link as any).student_user_id) {
+      const { data: prof } = await admin
+        .from("profiles")
+        .select("full_name, email, phone")
+        .eq("user_id", (link as any).student_user_id)
+        .maybeSingle();
+      if (prof) {
+        if (prof.full_name && prof.full_name.trim().length >= 2) finalName = prof.full_name.trim();
+        if (prof.email) finalEmail = String(prof.email).trim();
+        if (prof.phone) finalPhone = String(prof.phone).replace(/\D/g, "");
+      }
+    }
+
     // Cria registro de pagamento
     const { data: cp, error: cpErr } = await admin
       .from("custom_payments")
       .insert({
         link_id: link.id,
         payer_user_id: payerUserId,
-        payer_name: String(payer_name).trim(),
-        payer_email: payer_email ? String(payer_email).trim() : null,
-        payer_phone: payer_phone ? String(payer_phone).replace(/\D/g, "") : null,
+        payer_name: finalName,
+        payer_email: finalEmail,
+        payer_phone: finalPhone,
         amount,
         method,
         status: "pending",
@@ -78,8 +96,8 @@ Deno.serve(async (req) => {
         currency_id: "BRL",
       }],
       payer: {
-        name: String(payer_name).trim(),
-        email: payer_email || "aluno@sthmethod.com.br",
+        name: finalName,
+        email: finalEmail || "aluno@sthmethod.com.br",
       },
       external_reference: `cpay:${cp.id}`,
       back_urls: {
