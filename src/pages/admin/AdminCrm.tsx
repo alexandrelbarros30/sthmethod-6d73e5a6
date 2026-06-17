@@ -543,7 +543,8 @@ export default function AdminCrm({ forcedProvider }: { forcedProvider?: Provider
 
                     <textarea
                       value={draft}
-                      onChange={(e) => setDraft(e.target.value)}
+                      onChange={(e) => { setDraft(e.target.value); pingTypingLock(); }}
+                      onFocus={() => pingTypingLock()}
                       onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                       placeholder="Digite uma mensagem..."
                       className="flex-1 resize-none rounded-2xl border border-border/50 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 max-h-32 min-h-[36px]"
