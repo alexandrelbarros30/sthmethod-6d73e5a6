@@ -73,13 +73,13 @@ const Clenbuterol = () => {
           className="max-w-4xl mx-auto text-4xl sm:text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-semibold tracking-[-0.04em] leading-[0.95] text-foreground"
         >
           O termogênico <br />
-          <span className="text-muted-foreground">mais poderoso do fisiculturismo.</span>
+          <span className="text-muted-foreground">mais eficaz do fisiculturismo.</span>
         </motion.h1>
         <motion.p
           initial="hidden" animate="visible" variants={fadeUp}
           className="max-w-xl mx-auto mt-8 text-lg md:text-xl text-muted-foreground font-light leading-relaxed"
         >
-          Ou uma bomba-relógio cardiovascular? Ambos os lados têm motivos para pensar assim.
+          Quando bem conduzido, entrega resultados extraordinários com segurança. O segredo está no protocolo de suporte.
         </motion.p>
       </section>
 
@@ -97,7 +97,7 @@ const Clenbuterol = () => {
           initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}
           className="text-2xl md:text-3xl font-light leading-[1.35] text-foreground tracking-tight"
         >
-          A maioria das pessoas conhece os resultados do Clenbuterol. <span className="text-primary">Pouquíssimas entendem seus riscos.</span> Ele não é hormônio, não é anabolizante, não é peptídeo — e ainda assim produz transformações corporais impressionantes.
+          A maioria das pessoas conhece os resultados do Clenbuterol. <span className="text-primary">Pouquíssimas entendem como conduzi-lo com segurança.</span> Ele não é hormônio, não é anabolizante, não é peptídeo — e ainda assim produz transformações corporais impressionantes quando acompanhado de um protocolo de suporte inteligente.
         </motion.p>
       </section>
 
@@ -133,8 +133,9 @@ const Clenbuterol = () => {
         <p>Apesar de aparecer em estratégias de composição corporal — minimizar ganho de gordura no bulking, melhorar definição, preservar magra no déficit — Clenbuterol <span className="text-foreground font-medium">não substitui testosterona, dieta adequada ou treino eficiente</span>.</p>
       </Section>
 
-      <Section number="05" kicker="Colaterais" title="O preço fisiológico é real."
+      <Section number="05" kicker="Sinais a monitorar" title="O corpo avisa — e o protocolo responde."
         image={coracaoImg} alt="Sobrecarga cardiovascular">
+        <p>Como todo recurso potente, o Clenbuterol exige escuta fisiológica. Reconhecer cada sinal precocemente permite ajustar dose, suporte e janela de uso antes que qualquer desconforto evolua.</p>
         <div className="grid gap-4">
           {[
             ["Cardiovasculares", "Taquicardia, palpitações, hipertensão, arritmias, sobrecarga cardíaca."],
@@ -150,10 +151,27 @@ const Clenbuterol = () => {
         </div>
       </Section>
 
-      <Section number="06" kicker="O coração paga a conta" title="A sobrecarga cardiovascular é o verdadeiro risco.">
-        <p>O problema não está apenas nos tremores. Está na <span className="text-foreground font-medium">sobrecarga cardiovascular acumulada</span>.</p>
-        <p>A utilização inadequada pode favorecer hipertrofia cardíaca patológica, arritmias, disfunção ventricular e alterações estruturais do miocárdio.</p>
-        <p className="text-foreground font-medium">Quanto maior a exposição, maior deve ser o respeito ao risco cardiovascular.</p>
+      <Section number="06" kicker="Protocolo de suporte" title="Como atenuar o impacto e usar com segurança.">
+        <p>Esse é o capítulo que separa o usuário amador do estrategista. Um suporte bem desenhado neutraliza a maior parte dos efeitos adversos e mantém o ganho de performance intacto.</p>
+        <div className="grid gap-4">
+          {[
+            ["Taurina — 3 a 5 g/dia", "Reduz cãibras, tremores e protege contra a depleção induzida pelo agonismo beta-2. Pilar não negociável do protocolo."],
+            ["Potássio e magnésio", "Reposição diária via dieta ou suplementação (cloreto de magnésio, citrato de potássio). Previne arritmias, câimbras e fadiga muscular."],
+            ["Hidratação dirigida", "35 a 45 ml/kg/dia + eletrólitos. A termogênese aumenta perdas hídricas e iônicas — repor é obrigatório."],
+            ["Ômega-3 (EPA/DHA 2–3 g)", "Cardioprotetor, anti-inflamatório e estabilizador de ritmo cardíaco."],
+            ["CoQ10 (100–200 mg) + L-carnitina", "Suporte mitocondrial e proteção do miocárdio frente à demanda energética elevada."],
+            ["Cardio de baixa intensidade", "Zona 2 substitui HIIT durante o ciclo. Mantém oxidação de gordura sem somar estresse cardíaco."],
+            ["Sono e cortisol", "Última dose até 14h, higiene do sono rigorosa, magnésio glicinato à noite. Recuperação é parte do protocolo."],
+            ["Ciclagem inteligente", "2 semanas on / 2 semanas off, ou esquema 2 dias on / 2 dias off. Evita dessensibilização e dá descanso ao sistema cardiovascular."],
+            ["Dose progressiva", "Iniciar em 20 mcg e titular conforme tolerância. Teto individual — não comparativo. Mais nunca é melhor."],
+          ].map(([t, d]) => (
+            <div key={t} className="py-5 border-t border-border/40">
+              <p className="text-foreground font-medium text-base mb-1">{t}</p>
+              <p className="text-[15px]">{d}</p>
+            </div>
+          ))}
+        </div>
+        <p className="text-foreground font-medium">Com esse pacote bem aplicado, o Clenbuterol deixa de ser um susto fisiológico e passa a ser uma ferramenta cirúrgica de composição corporal.</p>
       </Section>
 
       <Section number="07" kicker="Monitoramento" title="Exames fundamentais antes e durante.">
@@ -178,19 +196,19 @@ const Clenbuterol = () => {
 
       <Section number="09" kicker="O veredito" title="Entre acelerar e sobrecarregar há uma linha fina."
         image={vereditoImg} alt="Estratégia clínica">
-        <p>O Clenbuterol é uma das ferramentas termogênicas mais potentes já utilizadas. Sua capacidade de aumentar o gasto energético é real e amplamente documentada.</p>
-        <p>Mas, diferentemente de muitos recursos modernos para emagrecimento, ele cobra um preço fisiológico consideravelmente maior.</p>
-        <p className="text-foreground font-medium">Entre acelerar o metabolismo e sobrecarregar o coração existe uma linha extremamente fina. E essa linha se chama estratégia.</p>
+        <p>O Clenbuterol é uma das ferramentas termogênicas mais potentes já utilizadas. Sua capacidade de aumentar o gasto energético é real, amplamente documentada — e, com suporte adequado, segura para o praticante avançado.</p>
+        <p>A diferença entre quem colhe resultados extraordinários e quem colhe sustos não está na molécula: está no protocolo que a acompanha.</p>
+        <p className="text-foreground font-medium">Taurina, eletrólitos, ômega-3, cardio inteligente, ciclagem e dose individualizada transformam o Clenbuterol em uma ferramenta de elite — não em um risco.</p>
       </Section>
 
       <section className="py-32 md:py-40 px-6 text-center border-t border-border/40">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
           <h2 className="text-4xl md:text-6xl font-semibold tracking-[-0.03em] leading-[1] text-foreground mb-6">
-            O corpo responde ao estímulo. <br />
-            <span className="text-muted-foreground">O coração paga a conta.</span>
+            O estímulo é poderoso. <br />
+            <span className="text-muted-foreground">O suporte é o que sustenta o resultado.</span>
           </h2>
           <p className="max-w-md mx-auto text-lg text-muted-foreground font-light mb-10">
-            Ciência, monitoramento e individualização determinam se a aceleração produz evolução — ou consequências.
+            Com ciência, monitoramento e o protocolo de suporte certo, a aceleração se transforma em evolução real.
           </p>
           {!isStudent && (
             <Link to="/cadastro">
