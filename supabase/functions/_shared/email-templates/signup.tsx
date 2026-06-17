@@ -1,58 +1,28 @@
 /// <reference types="npm:@types/react@18.3.1" />
-
 import * as React from 'npm:react@18.3.1'
+import { Body, Button, Container, Head, Heading, Hr, Html, Link, Preview, Section, Text } from 'npm:@react-email/components@0.0.22'
 
-import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Link,
-  Preview,
-  Text,
-} from 'npm:@react-email/components@0.0.22'
+interface SignupEmailProps { siteName: string; siteUrl: string; recipient: string; confirmationUrl: string }
 
-interface SignupEmailProps {
-  siteName: string
-  siteUrl: string
-  recipient: string
-  confirmationUrl: string
-}
-
-export const SignupEmail = ({
-  siteName,
-  siteUrl,
-  recipient,
-  confirmationUrl,
-}: SignupEmailProps) => (
-  <Html lang="en" dir="ltr">
+export const SignupEmail = ({ siteName, siteUrl, recipient, confirmationUrl }: SignupEmailProps) => (
+  <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>Confirm your email for {siteName}</Preview>
+    <Preview>Confirme seu e-mail no STH METHOD</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Confirm your email</Heading>
-        <Text style={text}>
-          Thanks for signing up for{' '}
-          <Link href={siteUrl} style={link}>
-            <strong>{siteName}</strong>
-          </Link>
-          !
-        </Text>
-        <Text style={text}>
-          Please confirm your email address (
-          <Link href={`mailto:${recipient}`} style={link}>
-            {recipient}
-          </Link>
-          ) by clicking the button below:
-        </Text>
-        <Button style={button} href={confirmationUrl}>
-          Verify Email
-        </Button>
-        <Text style={footer}>
-          If you didn't create an account, you can safely ignore this email.
-        </Text>
+        <Section style={brandRow}>
+          <Text style={brand}>STH METHOD</Text>
+          <Text style={badge}>CONFIRMAÇÃO DE CADASTRO</Text>
+        </Section>
+        <Heading style={h1}>Confirme seu e-mail</Heading>
+        <Text style={text}>Obrigado por se cadastrar no <Link href={siteUrl} style={link}><strong>STH METHOD</strong></Link>.</Text>
+        <Text style={text}>Confirme seu e-mail <strong>{recipient}</strong> clicando no botão abaixo para liberar o acesso à sua área:</Text>
+        <Section style={{ textAlign: 'center', margin: '28px 0' }}>
+          <Button style={button} href={confirmationUrl}>Confirmar e-mail</Button>
+        </Section>
+        <Hr style={hr} />
+        <Text style={footer}>Se você não criou esta conta, ignore este e-mail.</Text>
+        <Text style={footer}>STH METHOD · sthmethod.com.br</Text>
       </Container>
     </Body>
   </Html>
@@ -60,27 +30,14 @@ export const SignupEmail = ({
 
 export default SignupEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const link = { color: 'inherit', textDecoration: 'underline' }
-const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+const main = { backgroundColor: '#ffffff', fontFamily: 'Inter, Arial, sans-serif', color: '#1c1c1c' }
+const container = { padding: '32px 28px', maxWidth: '560px', margin: '0 auto' }
+const brandRow = { paddingBottom: '24px', borderBottom: '1px solid #ededed', marginBottom: '24px' }
+const brand = { fontSize: '13px', letterSpacing: '0.18em', fontWeight: 700, color: '#121212', margin: 0 }
+const badge = { fontSize: '11px', letterSpacing: '0.16em', color: '#8c8c8c', margin: '6px 0 0' }
+const h1 = { fontSize: '22px', fontWeight: 700, color: '#121212', margin: '0 0 14px' }
+const text = { fontSize: '15px', lineHeight: '1.6', color: '#3a3a3a', margin: '0 0 14px' }
+const link = { color: '#121212', textDecoration: 'underline' }
+const button = { backgroundColor: '#121212', color: '#ffffff', padding: '14px 28px', borderRadius: '14px', textDecoration: 'none', fontWeight: 600, fontSize: '15px' }
+const hr = { border: 'none', borderTop: '1px solid #ededed', margin: '32px 0 20px' }
+const footer = { fontSize: '12px', color: '#8c8c8c', margin: '4px 0' }
