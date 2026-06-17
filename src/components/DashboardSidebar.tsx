@@ -212,6 +212,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
       icon: DollarSign,
       children: [
         { to: "/financeiro/payments", icon: Wallet, label: "Pagamentos" },
+        { to: "/financeiro/payment-links", icon: Wallet, label: "Links de Pagamento" },
         { to: "/financeiro/billing", icon: Receipt, label: "Faturamento" },
         { to: "/financeiro/revenue", icon: TrendingUp, label: "Receita" },
       ],
