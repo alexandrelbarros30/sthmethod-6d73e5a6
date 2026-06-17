@@ -221,6 +221,19 @@ export default function AdminCrm({ forcedProvider }: { forcedProvider?: Provider
     });
   }, [activeId, qc]);
 
+  // Typing lock — pausa a IA por 5min enquanto o atendente está digitando no painel.
+  // Reinicia o cronômetro a cada tecla (debounce de 1.2s entre chamadas).
+  const typingLockRef = useRef<number>(0);
+  function pingTypingLock() {
+    if (!activeId) return;
+    const now = Date.now();
+    if (now - typingLockRef.current < 1200) return;
+    typingLockRef.current = now;
+    supabase.functions.invoke("crm-typing-lock", {
+      body: { conversation_id: activeId, seconds: 300 },
+    }).catch(() => { /* silencioso — não atrapalha o atendente */ });
+  }
+
   // Total unread → tab title
   useEffect(() => {
     const total = conversations.reduce((s, c) => s + (c.unread_count || 0), 0);
@@ -543,7 +556,8 @@ export default function AdminCrm({ forcedProvider }: { forcedProvider?: Provider
 
                     <textarea
                       value={draft}
-                      onChange={(e) => setDraft(e.target.value)}
+                      onChange={(e) => { setDraft(e.target.value); pingTypingLock(); }}
+                      onFocus={() => pingTypingLock()}
                       onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                       placeholder="Digite uma mensagem..."
                       className="flex-1 resize-none rounded-2xl border border-border/50 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 max-h-32 min-h-[36px]"

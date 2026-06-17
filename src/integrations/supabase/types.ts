@@ -783,6 +783,7 @@ export type Database = {
       }
       crm_conversations: {
         Row: {
+          ai_paused_until: string | null
           assigned_to: string | null
           channel: string
           created_at: string
@@ -790,6 +791,7 @@ export type Database = {
           flow_context: Json
           flow_state: string | null
           human_handoff: boolean
+          human_intro_sent: boolean
           id: string
           identified_as: string | null
           inactivity_warned_at: string | null
@@ -814,6 +816,7 @@ export type Database = {
           wa_id: string | null
         }
         Insert: {
+          ai_paused_until?: string | null
           assigned_to?: string | null
           channel?: string
           created_at?: string
@@ -821,6 +824,7 @@ export type Database = {
           flow_context?: Json
           flow_state?: string | null
           human_handoff?: boolean
+          human_intro_sent?: boolean
           id?: string
           identified_as?: string | null
           inactivity_warned_at?: string | null
@@ -845,6 +849,7 @@ export type Database = {
           wa_id?: string | null
         }
         Update: {
+          ai_paused_until?: string | null
           assigned_to?: string | null
           channel?: string
           created_at?: string
@@ -852,6 +857,7 @@ export type Database = {
           flow_context?: Json
           flow_state?: string | null
           human_handoff?: boolean
+          human_intro_sent?: boolean
           id?: string
           identified_as?: string | null
           inactivity_warned_at?: string | null
