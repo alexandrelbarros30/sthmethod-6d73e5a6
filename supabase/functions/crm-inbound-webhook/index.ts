@@ -939,6 +939,26 @@ Deno.serve(async (req) => {
       });
       autoReply = { sent: false, reason: 'human_active' };
 
+    } else if ((conv as any).ai_paused_until && new Date((conv as any).ai_paused_until).getTime() > Date.now()) {
+      // Atendente humano está DIGITANDO no painel — IA pausada temporariamente.
+      console.log(`IA pausada por digitação humana até ${(conv as any).ai_paused_until} (conv ${conv.id}).`);
+      await admin.from('automation_logs').insert({
+        contact_phone: phone,
+        event_type: 'blocked_human_typing',
+        reason: 'Human agent typing in panel',
+        metadata: { conversation_id: conv.id, ai_paused_until: (conv as any).ai_paused_until }
+      });
+      // Envia aviso discreto ao aluno APENAS na primeira vez do handoff de digitação.
+      if (!(conv as any).human_intro_sent) {
+        try {
+          await sendMessage('Um consultor da equipe vai te responder em instantes 🙏', 'human_intro');
+          await admin.from('crm_conversations').update({ human_intro_sent: true }).eq('id', conv.id);
+        } catch (e) {
+          console.error('failed to send human_intro', e);
+        }
+      }
+      autoReply = { sent: false, reason: 'human_typing' };
+
     } else if (aiMode === 'ai_only') {
       // MODO AI GLOBAL: ignora fluxo, ausência e menus — IA responde tudo.
       try {
