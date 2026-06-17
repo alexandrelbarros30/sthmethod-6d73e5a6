@@ -236,6 +236,7 @@ const App = () => (
             <Route path="/admin/students" element={<ProtectedRoute allowedRoles={["admin"]}><AdminStudents /></ProtectedRoute>} />
             <Route path="/admin/plans" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPlans /></ProtectedRoute>} />
             <Route path="/admin/payments" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPayments /></ProtectedRoute>} />
+            <Route path="/admin/payment-links" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPaymentLinks /></ProtectedRoute>} />
             <Route path="/admin/revenue" element={<ProtectedRoute allowedRoles={["admin"]}><AdminRevenue /></ProtectedRoute>} />
             <Route path="/admin/diet" element={<ProtectedRoute allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><AdminDiet /></Suspense></ProtectedRoute>} />
             <Route path="/admin/nutrition" element={<ProtectedRoute allowedRoles={["admin"]}><AdminNutrition /></ProtectedRoute>} />
@@ -290,10 +291,12 @@ const App = () => (
             {/* Financeiro routes */}
             <Route path="/financeiro" element={<ProtectedRoute allowedRoles={["financeiro"]}><FinanceiroDashboard /></ProtectedRoute>} />
             <Route path="/financeiro/payments" element={<ProtectedRoute allowedRoles={["financeiro"]}><AdminPayments /></ProtectedRoute>} />
+            <Route path="/financeiro/payment-links" element={<ProtectedRoute allowedRoles={["financeiro"]}><AdminPaymentLinks /></ProtectedRoute>} />
             <Route path="/financeiro/plans" element={<ProtectedRoute allowedRoles={["financeiro"]}><AdminPlans /></ProtectedRoute>} />
             <Route path="/financeiro/revenue" element={<ProtectedRoute allowedRoles={["financeiro"]}><FinanceiroDashboard /></ProtectedRoute>} />
             <Route path="/financeiro/billing" element={<ProtectedRoute allowedRoles={["financeiro"]}><AdminRevenue /></ProtectedRoute>} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
+            <Route path="/pagar/:code" element={<PagarLink />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <div className="fixed bottom-1 right-1 text-[9px] text-muted-foreground/40 pointer-events-none z-50 font-mono">
