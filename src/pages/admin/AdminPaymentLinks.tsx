@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Copy, Plus, Link2, CheckCircle2, RefreshCcw } from "lucide-react";
+import { Copy, Plus, Link2, CheckCircle2, RefreshCcw, QrCode, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 type Link = { id: string; code: string; label: string; amount: number; description: string | null; max_uses: number; current_uses: number; expires_at: string | null; active: boolean; notes: string | null; created_at: string; student_user_id: string | null };
@@ -37,6 +37,9 @@ export default function AdminPaymentLinks() {
   const [reconciling, setReconciling] = useState<Payment | null>(null);
   const [reconcilePlanId, setReconcilePlanId] = useState<string>("");
   const [reconcileNotes, setReconcileNotes] = useState<string>("");
+
+  const [pixDialog, setPixDialog] = useState<{ link: Link; qr_code: string | null; qr_code_base64: string | null; ticket_url: string | null; expires_at: string | null } | null>(null);
+  const [pixGenerating, setPixGenerating] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
@@ -84,6 +87,41 @@ export default function AdminPaymentLinks() {
     const url = `${window.location.origin}/pagar/${code}`;
     navigator.clipboard.writeText(url);
     toast({ title: "Link copiado", description: url });
+  }
+
+  async function generatePix(l: Link) {
+    setPixGenerating(l.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-custom-pix", { body: { code: l.code } });
+      if (error) throw error;
+      const d = data as any;
+      if (d?.error) throw new Error(d.error);
+      setPixDialog({ link: l, qr_code: d.qr_code, qr_code_base64: d.qr_code_base64, ticket_url: d.ticket_url, expires_at: d.expires_at });
+    } catch (err: any) {
+      toast({ title: "Erro ao gerar Pix", description: err?.message || "Tente novamente" });
+    } finally {
+      setPixGenerating(null);
+    }
+  }
+
+  function copyPixCode() {
+    if (!pixDialog?.qr_code) return;
+    navigator.clipboard.writeText(pixDialog.qr_code);
+    toast({ title: "Pix copia-e-cola copiado" });
+  }
+
+  function copyWhatsappMessage() {
+    if (!pixDialog) return;
+    const student = pixDialog.link.student_user_id ? studentById.get(pixDialog.link.student_user_id) : null;
+    const firstName = student?.full_name?.split(" ")[0] || "";
+    const url = `${window.location.origin}/pagar/${pixDialog.link.code}`;
+    const msg = `Olá${firstName ? " " + firstName : ""}! Segue seu Pix da STH METHOD:\n\n` +
+      `${pixDialog.link.label}\nValor: ${fmt(pixDialog.link.amount)}\n\n` +
+      `Pix copia-e-cola:\n${pixDialog.qr_code || "—"}\n\n` +
+      `Ou abra direto: ${url}\n` +
+      (pixDialog.expires_at ? `\nVálido até ${new Date(pixDialog.expires_at).toLocaleString("pt-BR")}` : "");
+    navigator.clipboard.writeText(msg);
+    toast({ title: "Mensagem copiada para WhatsApp" });
   }
 
   async function handleReconcile() {
@@ -135,6 +173,9 @@ export default function AdminPaymentLinks() {
               <div className="flex gap-1">
                 <Button size="sm" variant="ghost" onClick={() => copyLink(l.code)} title="Copiar link"><Copy className="w-3.5 h-3.5" /></Button>
                 <Button size="sm" variant="ghost" onClick={() => window.open(`/pagar/${l.code}`, "_blank")} title="Abrir"><Link2 className="w-3.5 h-3.5" /></Button>
+                <Button size="sm" variant="outline" onClick={() => generatePix(l)} disabled={pixGenerating === l.id} title="Gerar Pix agora">
+                  {pixGenerating === l.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><QrCode className="w-3.5 h-3.5 mr-1" />Gerar Pix</>}
+                </Button>
                 <Button size="sm" variant="ghost" onClick={() => toggleActive(l)}>{l.active ? "Pausar" : "Ativar"}</Button>
               </div>
             </div>
@@ -226,6 +267,46 @@ export default function AdminPaymentLinks() {
           <DialogFooter>
             <Button variant="ghost" onClick={() => setShowNew(false)}>Cancelar</Button>
             <Button onClick={handleCreate}>Criar link</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* QR Pix gerado */}
+      <Dialog open={!!pixDialog} onOpenChange={(o) => !o && setPixDialog(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Pix pronto · {pixDialog?.link.label}</DialogTitle></DialogHeader>
+          {pixDialog && (
+            <div className="space-y-4 text-sm">
+              <div className="bg-muted/30 rounded-xl p-4 text-center space-y-3">
+                {pixDialog.qr_code_base64 && (
+                  <img src={`data:image/png;base64,${pixDialog.qr_code_base64}`} alt="QR Pix" className="mx-auto w-56 h-56 rounded-lg bg-white p-2" />
+                )}
+                <p className="text-lg font-semibold">{fmt(pixDialog.link.amount)}</p>
+                {pixDialog.expires_at && (
+                  <p className="text-[11px] text-muted-foreground">Válido até {new Date(pixDialog.expires_at).toLocaleString("pt-BR")}</p>
+                )}
+              </div>
+              {pixDialog.qr_code && (
+                <div className="bg-background border rounded-xl p-2 text-[10px] font-mono break-all max-h-24 overflow-auto">
+                  {pixDialog.qr_code}
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="outline" onClick={copyPixCode}><Copy className="w-4 h-4 mr-1" />Copia-e-cola</Button>
+                <Button onClick={copyWhatsappMessage}><Copy className="w-4 h-4 mr-1" />Mensagem WhatsApp</Button>
+              </div>
+              {pixDialog.ticket_url && (
+                <a href={pixDialog.ticket_url} target="_blank" rel="noreferrer" className="block text-center text-xs text-emerald-600 underline">
+                  Abrir página oficial do Mercado Pago
+                </a>
+              )}
+              <p className="text-[11px] text-muted-foreground">
+                Pix do Mercado Pago expira em ~30 min. Gere novamente se passar do prazo. O webhook reconcilia automaticamente quando o aluno pagar.
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPixDialog(null)}>Fechar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
