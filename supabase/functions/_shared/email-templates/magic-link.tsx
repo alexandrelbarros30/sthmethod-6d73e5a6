@@ -8,10 +8,8 @@ import {
   Container,
   Head,
   Heading,
-  Hr,
   Html,
   Preview,
-  Section,
   Text,
 } from 'npm:@react-email/components@0.0.22'
 
@@ -24,27 +22,22 @@ export const MagicLinkEmail = ({
   siteName,
   confirmationUrl,
 }: MagicLinkEmailProps) => (
-  <Html lang="pt-BR" dir="ltr">
+  <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Seu link de acesso ao STH METHOD</Preview>
+    <Preview>Your login link for {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Section style={brandRow}>
-          <Text style={brand}>STH METHOD</Text>
-          <Text style={badge}>LINK DE ACESSO</Text>
-        </Section>
-        <Heading style={h1}>Entrar na plataforma</Heading>
+        <Heading style={h1}>Your login link</Heading>
         <Text style={text}>
-          Clique no botão abaixo para acessar sua conta. O link é de uso único e expira em alguns minutos.
+          Click the button below to log in to {siteName}. This link will expire
+          shortly.
         </Text>
-        <Section style={{ textAlign: 'center', margin: '28px 0' }}>
-          <Button style={button} href={confirmationUrl}>Acessar plataforma</Button>
-        </Section>
-        <Hr style={hr} />
+        <Button style={button} href={confirmationUrl}>
+          Log In
+        </Button>
         <Text style={footer}>
-          Se você não solicitou esse acesso, ignore este e-mail.
+          If you didn't request this link, you can safely ignore this email.
         </Text>
-        <Text style={footer}>STH METHOD · sthmethod.com.br</Text>
       </Container>
     </Body>
   </Html>
@@ -52,13 +45,26 @@ export const MagicLinkEmail = ({
 
 export default MagicLinkEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Inter, Arial, sans-serif', color: '#1c1c1c' }
-const container = { padding: '32px 28px', maxWidth: '560px', margin: '0 auto' }
-const brandRow = { paddingBottom: '24px', borderBottom: '1px solid #ededed', marginBottom: '24px' }
-const brand = { fontSize: '13px', letterSpacing: '0.18em', fontWeight: 700, color: '#121212', margin: 0 }
-const badge = { fontSize: '11px', letterSpacing: '0.16em', color: '#8c8c8c', margin: '6px 0 0' }
-const h1 = { fontSize: '22px', fontWeight: 700, color: '#121212', margin: '0 0 14px' }
-const text = { fontSize: '15px', lineHeight: '1.6', color: '#3a3a3a', margin: '0 0 14px' }
-const button = { backgroundColor: '#121212', color: '#ffffff', padding: '14px 28px', borderRadius: '14px', textDecoration: 'none', fontWeight: 600, fontSize: '15px' }
-const hr = { border: 'none', borderTop: '1px solid #ededed', margin: '32px 0 20px' }
-const footer = { fontSize: '12px', color: '#8c8c8c', margin: '4px 0' }
+const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
+const container = { padding: '20px 25px' }
+const h1 = {
+  fontSize: '22px',
+  fontWeight: 'bold' as const,
+  color: '#000000',
+  margin: '0 0 20px',
+}
+const text = {
+  fontSize: '14px',
+  color: '#55575d',
+  lineHeight: '1.5',
+  margin: '0 0 25px',
+}
+const button = {
+  backgroundColor: '#000000',
+  color: '#ffffff',
+  fontSize: '14px',
+  borderRadius: '8px',
+  padding: '12px 20px',
+  textDecoration: 'none',
+}
+const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
