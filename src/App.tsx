@@ -71,6 +71,8 @@ import AdminStudents from "./pages/admin/AdminStudents";
 
 import AdminPlans from "./pages/admin/AdminPlans";
 import AdminPayments from "./pages/admin/AdminPayments";
+import AdminPaymentLinks from "./pages/admin/AdminPaymentLinks";
+import PagarLink from "./pages/PagarLink";
 import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminNutrition from "./pages/admin/AdminNutrition";
 import AdminTraining from "./pages/admin/AdminTraining";
