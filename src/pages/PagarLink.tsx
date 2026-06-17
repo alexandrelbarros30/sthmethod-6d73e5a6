@@ -25,7 +25,6 @@ export default function PagarLink() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [method, setMethod] = useState<"pix" | "credit">("pix");
 
   useEffect(() => {
     (async () => {
@@ -54,7 +53,7 @@ export default function PagarLink() {
     setSubmitting(true);
     try {
       const { data, error } = await supabase.functions.invoke("create-custom-payment", {
-        body: { code: link.code, payer_name: name.trim(), payer_email: email.trim() || null, payer_phone: phone.replace(/\D/g, "") || null, method },
+        body: { code: link.code, payer_name: name.trim(), payer_email: email.trim() || null, payer_phone: phone.replace(/\D/g, "") || null },
       });
       if (error) throw error;
       const url = (data as any)?.init_point || (data as any)?.sandbox_init_point;
@@ -102,7 +101,7 @@ export default function PagarLink() {
 
         {status === "approved" && (
           <div className="flex items-center gap-2 text-emerald-600 text-sm border border-emerald-500/30 bg-emerald-500/10 rounded-xl px-3 py-2">
-            <CheckCircle2 className="w-4 h-4" /> Pagamento aprovado. Em instantes a equipe acerta seu plano.
+            <CheckCircle2 className="w-4 h-4" /> Pix recebido. Em instantes a equipe acerta seu plano com o consultor.
           </div>
         )}
         {status === "pending" && (
@@ -131,16 +130,12 @@ export default function PagarLink() {
               <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(opcional)" />
             </div>
           </div>
-          <div>
-            <Label>Forma de pagamento</Label>
-            <div className="grid grid-cols-2 gap-2 mt-1">
-              <button type="button" onClick={() => setMethod("pix")} className={`rounded-xl border px-3 py-2 text-sm font-medium transition ${method === "pix" ? "border-foreground bg-foreground text-background" : "border-border/60 hover:bg-muted"}`}>Pix</button>
-              <button type="button" onClick={() => setMethod("credit")} className={`rounded-xl border px-3 py-2 text-sm font-medium transition ${method === "credit" ? "border-foreground bg-foreground text-background" : "border-border/60 hover:bg-muted"}`}>Cartão</button>
-            </div>
+          <div className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2 text-center text-xs text-muted-foreground">
+            Pagamento exclusivo via <span className="font-semibold text-foreground">Pix</span> — aprovação imediata.
           </div>
 
           <Button type="submit" disabled={submitting} className="w-full h-11 rounded-xl">
-            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : `Pagar ${fmt(link.amount)} com Mercado Pago`}
+            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : `Pagar ${fmt(link.amount)} via Pix`}
           </Button>
         </form>
 
