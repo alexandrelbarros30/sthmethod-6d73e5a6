@@ -1283,6 +1283,142 @@ export type Database = {
           },
         ]
       }
+      custom_payment_links: {
+        Row: {
+          active: boolean
+          amount: number
+          code: string
+          created_at: string
+          created_by: string | null
+          current_uses: number
+          description: string | null
+          expires_at: string | null
+          id: string
+          label: string
+          max_uses: number
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          amount: number
+          code: string
+          created_at?: string
+          created_by?: string | null
+          current_uses?: number
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          label: string
+          max_uses?: number
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          amount?: number
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          current_uses?: number
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          label?: string
+          max_uses?: number
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      custom_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          link_id: string
+          method: string
+          mp_payment_id: string | null
+          mp_preference_id: string | null
+          payer_email: string | null
+          payer_name: string
+          payer_phone: string | null
+          payer_user_id: string | null
+          reconciled: boolean
+          reconciled_at: string | null
+          reconciled_by: string | null
+          reconciled_notes: string | null
+          reconciled_plan_id: string | null
+          reconciled_subscription_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          link_id: string
+          method?: string
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
+          payer_email?: string | null
+          payer_name: string
+          payer_phone?: string | null
+          payer_user_id?: string | null
+          reconciled?: boolean
+          reconciled_at?: string | null
+          reconciled_by?: string | null
+          reconciled_notes?: string | null
+          reconciled_plan_id?: string | null
+          reconciled_subscription_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          link_id?: string
+          method?: string
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
+          payer_email?: string | null
+          payer_name?: string
+          payer_phone?: string | null
+          payer_user_id?: string | null
+          reconciled?: boolean
+          reconciled_at?: string | null
+          reconciled_by?: string | null
+          reconciled_notes?: string | null
+          reconciled_plan_id?: string | null
+          reconciled_subscription_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_payments_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "custom_payment_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custom_payments_reconciled_plan_id_fkey"
+            columns: ["reconciled_plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custom_payments_reconciled_subscription_id_fkey"
+            columns: ["reconciled_subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_popups: {
         Row: {
           active: boolean
