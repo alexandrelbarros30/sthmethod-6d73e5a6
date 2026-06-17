@@ -1297,6 +1297,7 @@ export type Database = {
           label: string
           max_uses: number
           notes: string | null
+          student_user_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1312,6 +1313,7 @@ export type Database = {
           label: string
           max_uses?: number
           notes?: string | null
+          student_user_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1327,6 +1329,7 @@ export type Database = {
           label?: string
           max_uses?: number
           notes?: string | null
+          student_user_id?: string | null
           updated_at?: string
         }
         Relationships: []

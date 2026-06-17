@@ -16,11 +16,12 @@ Deno.serve(async (req) => {
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     const body = await req.json().catch(() => ({}));
-    const { code, payer_name, payer_email, payer_phone, method = "pix" } = body || {};
+    const { code, payer_name, payer_email, payer_phone } = body || {};
+    // Sempre PIX: pagamento avulso entra como saldo no aluno e é reconciliado pelo admin.
+    const method = "pix";
 
     if (!code) return new Response(JSON.stringify({ error: "code required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     if (!payer_name || String(payer_name).trim().length < 2) return new Response(JSON.stringify({ error: "payer_name required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    if (!["pix", "credit", "debit"].includes(method)) return new Response(JSON.stringify({ error: "invalid method" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     // Carrega o link
     const { data: link } = await admin
@@ -37,8 +38,8 @@ Deno.serve(async (req) => {
     const amount = Number(link.amount);
     if (!(amount > 0)) throw new Error("invalid amount");
 
-    // Tenta identificar o usuário (opcional)
-    let payerUserId: string | null = null;
+    // Tenta identificar o usuário logado (opcional). Se o link já tem aluno vinculado, ele tem prioridade.
+    let payerUserId: string | null = (link as any).student_user_id || null;
     const authHeader = req.headers.get("Authorization");
     if (authHeader?.startsWith("Bearer ")) {
       try {
@@ -46,7 +47,7 @@ Deno.serve(async (req) => {
           global: { headers: { Authorization: authHeader } },
         });
         const { data: { user } } = await userClient.auth.getUser();
-        if (user) payerUserId = user.id;
+        if (user && !payerUserId) payerUserId = user.id;
       } catch { /* anonymous ok */ }
     }
 
@@ -66,13 +67,6 @@ Deno.serve(async (req) => {
       .select()
       .single();
     if (cpErr) throw cpErr;
-
-    // Tipos excluídos por método
-    const excludedPaymentTypes: Record<string, string[]> = {
-      pix:    ["credit_card", "debit_card", "ticket", "prepaid_card"],
-      credit: ["bank_transfer", "debit_card", "ticket", "prepaid_card"],
-      debit:  ["bank_transfer", "credit_card", "ticket", "prepaid_card"],
-    };
 
     const origin = req.headers.get("origin") || "https://sthmethod.com.br";
     const preference: any = {
@@ -96,8 +90,14 @@ Deno.serve(async (req) => {
       notification_url: `${Deno.env.get("SUPABASE_URL")}/functions/v1/mercado-pago-webhook`,
       payment_methods: {
         excluded_payment_methods: [],
-        excluded_payment_types: (excludedPaymentTypes[method] || []).map((id: string) => ({ id })),
-        installments: method === "credit" ? 3 : 1,
+        excluded_payment_types: [
+          { id: "credit_card" },
+          { id: "debit_card" },
+          { id: "ticket" },
+          { id: "prepaid_card" },
+          { id: "atm" },
+        ],
+        installments: 1,
         default_installments: 1,
       },
     };

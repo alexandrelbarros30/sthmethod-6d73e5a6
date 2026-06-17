@@ -13,9 +13,10 @@ import { toast } from "@/hooks/use-toast";
 import { Copy, Plus, Link2, CheckCircle2, RefreshCcw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
-type Link = { id: string; code: string; label: string; amount: number; description: string | null; max_uses: number; current_uses: number; expires_at: string | null; active: boolean; notes: string | null; created_at: string };
+type Link = { id: string; code: string; label: string; amount: number; description: string | null; max_uses: number; current_uses: number; expires_at: string | null; active: boolean; notes: string | null; created_at: string; student_user_id: string | null };
 type Payment = { id: string; link_id: string; payer_name: string; payer_email: string | null; payer_phone: string | null; amount: number; method: string; status: string; reconciled: boolean; reconciled_plan_id: string | null; reconciled_at: string | null; reconciled_notes: string | null; mp_payment_id: string | null; created_at: string };
 type Plan = { id: string; name: string };
+type Student = { user_id: string; full_name: string | null; email: string | null };
 
 const fmt = (n: number) => Number(n).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const randomCode = () => Math.random().toString(36).slice(2, 8);
@@ -27,10 +28,11 @@ export default function AdminPaymentLinks() {
   const [links, setLinks] = useState<Link[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [showNew, setShowNew] = useState(false);
-  const [form, setForm] = useState({ code: randomCode(), label: "", amount: "", description: "", max_uses: "0", expires_at: "", notes: "" });
+  const [form, setForm] = useState({ code: randomCode(), label: "", amount: "", description: "", max_uses: "1", expires_at: "", notes: "", student_user_id: "" });
 
   const [reconciling, setReconciling] = useState<Payment | null>(null);
   const [reconcilePlanId, setReconcilePlanId] = useState<string>("");
@@ -38,33 +40,38 @@ export default function AdminPaymentLinks() {
 
   async function load() {
     setLoading(true);
-    const [l, p, pl] = await Promise.all([
+    const [l, p, pl, st] = await Promise.all([
       supabase.from("custom_payment_links").select("*").order("created_at", { ascending: false }),
       supabase.from("custom_payments").select("*").order("created_at", { ascending: false }).limit(100),
       supabase.from("plans").select("id, name").order("name"),
+      supabase.from("profiles").select("user_id, full_name, email").order("full_name").limit(2000),
     ]);
     setLinks((l.data as any) || []);
     setPayments((p.data as any) || []);
     setPlans((pl.data as any) || []);
+    setStudents((st.data as any) || []);
     setLoading(false);
   }
   useEffect(() => { load(); }, []);
 
   const linkByCode = useMemo(() => new Map(links.map((l) => [l.id, l])), [links]);
+  const studentById = useMemo(() => new Map(students.map((s) => [s.user_id, s])), [students]);
 
   async function handleCreate() {
     if (!form.label.trim() || !form.amount) { toast({ title: "Preencha label e valor" }); return; }
     const amount = Number(String(form.amount).replace(",", "."));
     if (!(amount > 0)) { toast({ title: "Valor inválido" }); return; }
     const code = (form.code || randomCode()).toLowerCase().replace(/[^a-z0-9-]/g, "");
+    if (!form.student_user_id) { toast({ title: "Selecione o aluno vinculado" }); return; }
     const { error } = await supabase.from("custom_payment_links").insert({
       code, label: form.label.trim(), amount, description: form.description.trim() || null,
       max_uses: Number(form.max_uses) || 0, expires_at: form.expires_at || null, notes: form.notes.trim() || null,
+      student_user_id: form.student_user_id,
     });
     if (error) { toast({ title: "Erro", description: error.message }); return; }
     toast({ title: "Link criado" });
     setShowNew(false);
-    setForm({ code: randomCode(), label: "", amount: "", description: "", max_uses: "0", expires_at: "", notes: "" });
+    setForm({ code: randomCode(), label: "", amount: "", description: "", max_uses: "1", expires_at: "", notes: "", student_user_id: "" });
     load();
   }
 
@@ -95,7 +102,7 @@ export default function AdminPaymentLinks() {
   }
 
   return (
-    <DashboardLayout role={layoutRole} title="Links de pagamento" subtitle="Cobrança avulsa via Mercado Pago + reconciliação manual com plano">
+    <DashboardLayout role={layoutRole} title="Links de pagamento" subtitle="Cobrança Pix avulsa vinculada ao aluno · reconciliação manual com o plano combinado">
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-muted-foreground">{loading ? "Carregando..." : `${links.length} link(s) · ${payments.length} pagamento(s)`}</p>
         <div className="flex gap-2">
@@ -117,6 +124,9 @@ export default function AdminPaymentLinks() {
                   {l.expires_at && new Date(l.expires_at) < new Date() && <Badge variant="destructive" className="text-[10px]">expirado</Badge>}
                 </div>
                 <p className="text-[11px] text-muted-foreground font-mono">/pagar/{l.code}</p>
+                {l.student_user_id && (
+                  <p className="text-[11px] text-muted-foreground">Aluno: {studentById.get(l.student_user_id)?.full_name || studentById.get(l.student_user_id)?.email || l.student_user_id.slice(0, 8)}</p>
+                )}
               </div>
               <div className="text-right">
                 <p className="font-semibold text-sm">{fmt(l.amount)}</p>
@@ -143,8 +153,17 @@ export default function AdminPaymentLinks() {
             return (
               <div key={p.id} className="px-4 py-3 flex flex-wrap items-center gap-3">
                 <div className="flex-1 min-w-[220px]">
-                  <p className="text-sm font-medium">{p.payer_name} <span className="text-muted-foreground font-normal">· {link?.label || "—"}</span></p>
+                  <p className="text-sm font-medium">
+                    {p.payer_name}
+                    {link?.student_user_id && (
+                      <span className="ml-1 text-[10px] uppercase tracking-wider text-emerald-600">vinculado</span>
+                    )}
+                    <span className="text-muted-foreground font-normal"> · {link?.label || "—"}</span>
+                  </p>
                   <p className="text-[11px] text-muted-foreground">{[p.payer_email, p.payer_phone].filter(Boolean).join(" · ") || "sem contato"}</p>
+                  {link?.student_user_id && (
+                    <p className="text-[10px] text-muted-foreground">→ {studentById.get(link.student_user_id)?.full_name || studentById.get(link.student_user_id)?.email || link.student_user_id.slice(0,8)}</p>
+                  )}
                   <p className="text-[10px] text-muted-foreground">{new Date(p.created_at).toLocaleString("pt-BR")}</p>
                 </div>
                 <div className="text-right min-w-[110px]">
@@ -178,11 +197,25 @@ export default function AdminPaymentLinks() {
         <DialogContent>
           <DialogHeader><DialogTitle>Novo link de pagamento</DialogTitle></DialogHeader>
           <div className="space-y-3">
+            <div>
+              <Label>Aluno vinculado</Label>
+              <Select value={form.student_user_id} onValueChange={(v) => setForm({ ...form, student_user_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione o aluno" /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {students.map((s) => (
+                    <SelectItem key={s.user_id} value={s.user_id}>
+                      {s.full_name || s.email || s.user_id.slice(0, 8)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground mt-1">O Pix será registrado como saldo na conta deste aluno. O plano é definido depois pelo financeiro.</p>
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <div><Label>Código (URL)</Label><Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} /></div>
               <div><Label>Valor (R$)</Label><Input value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="ex: 297,00" /></div>
             </div>
-            <div><Label>Título</Label><Input value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Ex: Avaliação avulsa" /></div>
+            <div><Label>Título</Label><Input value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Ex: Adesão consultoria personalizada" /></div>
             <div><Label>Descrição (opcional)</Label><Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Aparece para o aluno" /></div>
             <div className="grid grid-cols-2 gap-2">
               <div><Label>Limite de usos (0 = ilimitado)</Label><Input type="number" value={form.max_uses} onChange={(e) => setForm({ ...form, max_uses: e.target.value })} /></div>
