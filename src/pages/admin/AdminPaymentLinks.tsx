@@ -384,7 +384,7 @@ export default function AdminPaymentLinks() {
                 </Select>
               </div>
               <div><Label>Anotação (opcional)</Label><Textarea rows={2} value={reconcileNotes} onChange={(e) => setReconcileNotes(e.target.value)} /></div>
-              <p className="text-[11px] text-muted-foreground">Esta ação marca o pagamento como reconciliado. A ativação do plano para o aluno ainda é feita manualmente na tela de pagamentos.</p>
+              <p className="text-[11px] text-muted-foreground">Ao confirmar, a assinatura do aluno será ativada com o plano selecionado, calculando o novo vencimento conforme a duração do plano (somando dias restantes se ainda estiver ativo).</p>
             </div>
           )}
           <DialogFooter>
