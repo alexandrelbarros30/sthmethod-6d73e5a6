@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, ShieldCheck, CheckCircle2, AlertCircle } from "lucide-react";
+import { Loader2, ShieldCheck, CheckCircle2, AlertCircle, Lock } from "lucide-react";
 
-type Link = { id: string; code: string; label: string; amount: number; description: string | null; expires_at: string | null; active: boolean };
+type Link = { id: string; code: string; label: string; amount: number; description: string | null; expires_at: string | null; active: boolean; has_student: boolean };
+type StudentInfo = { full_name: string | null; email: string | null; phone: string | null };
 
 const fmt = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -18,6 +19,7 @@ export default function PagarLink() {
   const status = sp.get("status");
 
   const [link, setLink] = useState<Link | null>(null);
+  const [student, setStudent] = useState<StudentInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -29,16 +31,26 @@ export default function PagarLink() {
   useEffect(() => {
     (async () => {
       if (!code) return;
-      const { data, error } = await supabase
-        .from("custom_payment_links")
-        .select("id, code, label, amount, description, expires_at, active")
-        .eq("code", code.toLowerCase())
-        .maybeSingle();
+      const { data, error } = await supabase.functions.invoke("get-custom-payment-link", {
+        body: { code: code.toLowerCase() },
+      });
       if (error) setError(error.message);
-      else if (!data) setError("Link não encontrado.");
-      else if (!data.active) setError("Este link está inativo.");
-      else if (data.expires_at && new Date(data.expires_at) < new Date()) setError("Este link expirou.");
-      else setLink({ ...data, amount: Number(data.amount) });
+      else {
+        const l = (data as any)?.link;
+        const s = (data as any)?.student as StudentInfo | null;
+        if (!l) setError("Link não encontrado.");
+        else if (!l.active) setError("Este link está inativo.");
+        else if (l.expires_at && new Date(l.expires_at) < new Date()) setError("Este link expirou.");
+        else {
+          setLink(l);
+          if (s) {
+            setStudent(s);
+            setName(s.full_name || "");
+            setEmail(s.email || "");
+            setPhone(s.phone || "");
+          }
+        }
+      }
       setLoading(false);
     })();
   }, [code]);
@@ -116,20 +128,38 @@ export default function PagarLink() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="name">Nome completo</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required placeholder="Como aparece no documento" />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="email">E-mail</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="(opcional)" />
+          {link.has_student && student ? (
+            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-2">
+              <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-emerald-700">
+                <Lock className="w-3.5 h-3.5" /> Link exclusivo deste aluno
+              </div>
+              <div className="text-sm">
+                <p className="font-semibold text-foreground">{student.full_name || "—"}</p>
+                {student.email && <p className="text-xs text-muted-foreground">{student.email}</p>}
+                {student.phone && <p className="text-xs text-muted-foreground">{student.phone}</p>}
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                O Pix será registrado automaticamente na conta deste aluno. Se você não é {student.full_name?.split(" ")[0] || "este aluno"}, não prossiga.
+              </p>
             </div>
-            <div>
-              <Label htmlFor="phone">WhatsApp</Label>
-              <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(opcional)" />
-            </div>
-          </div>
+          ) : (
+            <>
+              <div>
+                <Label htmlFor="name">Nome completo</Label>
+                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required placeholder="Como aparece no documento" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="email">E-mail</Label>
+                  <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="(opcional)" />
+                </div>
+                <div>
+                  <Label htmlFor="phone">WhatsApp</Label>
+                  <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(opcional)" />
+                </div>
+              </div>
+            </>
+          )}
           <div className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2 text-center text-xs text-muted-foreground">
             Pagamento exclusivo via <span className="font-semibold text-foreground">Pix</span> — aprovação imediata.
           </div>
