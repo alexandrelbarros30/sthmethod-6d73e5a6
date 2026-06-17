@@ -1,0 +1,2 @@
+ALTER TABLE public.custom_payment_links ADD COLUMN IF NOT EXISTS student_user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_custom_payment_links_student ON public.custom_payment_links(student_user_id);
