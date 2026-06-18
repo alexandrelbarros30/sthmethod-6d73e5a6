@@ -29,6 +29,7 @@ const AdminPayments = () => {
     amount: "",
     paid_at: new Date().toISOString().split("T")[0],
     notes: "",
+    dispatch_welcome: true,
   });
 
   const { data: paymentSettings } = useQuery({
