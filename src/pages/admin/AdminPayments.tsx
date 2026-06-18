@@ -728,6 +728,24 @@ const AdminPayments = () => {
               />
             </div>
 
+            <div className="flex items-start gap-3 rounded-md border border-border bg-muted/30 p-3">
+              <input
+                id="dispatch_welcome"
+                type="checkbox"
+                className="mt-1 h-4 w-4 accent-primary"
+                checked={manualForm.dispatch_welcome}
+                onChange={(e) => setManualForm((f) => ({ ...f, dispatch_welcome: e.target.checked }))}
+              />
+              <label htmlFor="dispatch_welcome" className="text-xs leading-snug cursor-pointer">
+                <span className="font-semibold">Disparar boas-vindas pós-pagamento</span>
+                <span className="block text-muted-foreground mt-0.5">
+                  Como este pagamento foi confirmado manualmente pelo admin (fora do checkout),
+                  o sistema enviará WhatsApp pelo canal Comercial + Nutri e os e-mails de
+                  boas-vindas/recibo, colocando o aluno no fluxo de atendimento padrão.
+                </span>
+              </label>
+            </div>
+
             <div className="flex gap-2 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => setManualOpen(false)}>Cancelar</Button>
               <Button
