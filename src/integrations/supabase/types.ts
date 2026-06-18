@@ -2256,6 +2256,66 @@ export type Database = {
         }
         Relationships: []
       }
+      image_consents: {
+        Row: {
+          allow_tagging: boolean | null
+          authorized: boolean | null
+          created_at: string
+          created_by: string | null
+          id: string
+          ip_address: string | null
+          notes: string | null
+          payer_email: string | null
+          payer_name: string
+          payer_phone: string | null
+          responded_at: string | null
+          signature_name: string | null
+          social_handle: string | null
+          token: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          allow_tagging?: boolean | null
+          authorized?: boolean | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ip_address?: string | null
+          notes?: string | null
+          payer_email?: string | null
+          payer_name?: string
+          payer_phone?: string | null
+          responded_at?: string | null
+          signature_name?: string | null
+          social_handle?: string | null
+          token?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          allow_tagging?: boolean | null
+          authorized?: boolean | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ip_address?: string | null
+          notes?: string | null
+          payer_email?: string | null
+          payer_name?: string
+          payer_phone?: string | null
+          responded_at?: string | null
+          signature_name?: string | null
+          social_handle?: string | null
+          token?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       lab_screenings: {
         Row: {
           age: number | null
@@ -4649,6 +4709,22 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      get_image_consent_by_token: {
+        Args: { _token: string }
+        Returns: {
+          allow_tagging: boolean
+          authorized: boolean
+          has_user: boolean
+          id: string
+          payer_email: string
+          payer_name: string
+          payer_phone: string
+          responded_at: string
+          signature_name: string
+          social_handle: string
+          token: string
+        }[]
+      }
       has_admin_view: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
@@ -4679,6 +4755,21 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      submit_image_consent: {
+        Args: {
+          _allow_tagging: boolean
+          _authorized: boolean
+          _ip_address: string
+          _payer_email: string
+          _payer_name: string
+          _payer_phone: string
+          _signature_name: string
+          _social_handle: string
+          _token: string
+          _user_agent: string
+        }
+        Returns: Json
       }
     }
     Enums: {
