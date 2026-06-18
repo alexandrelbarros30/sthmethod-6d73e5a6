@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type SystemTemplateKey =
   | "payment_welcome"
+  | "student_update_received"
   | "evolution_update_reminder"
   | "renewal_link"
   | "renewal_reminder"
@@ -126,6 +127,7 @@ export const sendSystemTemplate = async (
   // não pelo canal comercial Z-API. Mantém Z-API como padrão para o resto.
   const NUTRI_CHANNEL_KEYS: SystemTemplateKey[] = [
     "payment_welcome",
+    "student_update_received",
     "diet_updated",
     "training_updated",
     "protocol_updated",
@@ -206,6 +208,13 @@ export const SYSTEM_TEMPLATE_DEFINITIONS: Array<{
     description: "Aberto automaticamente quando um pagamento é aprovado (via webhook ou confirmação manual).",
     defaultContent:
       "Olá {nome}! 🎉\n\nSeu pagamento foi aprovado e seu acesso à STH Method está liberado.\n\nVamos juntos nessa jornada! 💪",
+  },
+  {
+    key: "student_update_received",
+    label: "Confirmação de atualização do aluno (automático)",
+    description: "Enviado ao próprio aluno ativo quando ele envia novas fotos, documentos clínicos ou atualiza peso/medidas pela plataforma. Sai pelo canal Fale com o Nutri.",
+    defaultContent:
+      "Olá, {nome}! 👋\n\nRecebemos {update_label} na plataforma STH METHOD. ✅\n\nSeu nutri já foi avisado e fará contato em breve para falar sobre essa atualização.\n\nObrigado por manter sua evolução em dia! 💪",
   },
   {
     key: "evolution_update_reminder",
