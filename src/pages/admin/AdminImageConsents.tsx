@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
-import { Copy, Plus, MessageCircle, RefreshCcw, CheckCircle2, XCircle, Clock, ImageIcon, Pencil } from "lucide-react";
+import { Copy, Plus, MessageCircle, RefreshCcw, CheckCircle2, XCircle, Clock, ImageIcon, Pencil, Eye } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 type Consent = {
@@ -96,6 +96,10 @@ export default function AdminImageConsents() {
     toast({ title: "Link copiado", description: url });
   }
 
+  function previewUrl(token: string) {
+    window.open(getUrl(token), "_blank", "noopener,noreferrer");
+  }
+
   function sendWhatsapp(c: Consent) {
     const phone = onlyDigits(c.payer_phone || "");
     if (!phone) { toast({ title: "Sem telefone cadastrado" }); return; }
@@ -178,6 +182,7 @@ export default function AdminImageConsents() {
                 </div>
                 <div className="flex gap-1 flex-wrap">
                   <Button size="sm" variant="ghost" onClick={() => copyUrl(c.token)} title="Copiar link"><Copy className="w-3.5 h-3.5" /></Button>
+                  <Button size="sm" variant="ghost" onClick={() => previewUrl(c.token)} title="Pré-visualizar link"><Eye className="w-3.5 h-3.5" /></Button>
                   <Button size="sm" variant="outline" onClick={() => sendWhatsapp(c)} disabled={!(c.payer_phone || student?.phone)}>
                     <MessageCircle className="w-3.5 h-3.5 mr-1" />WhatsApp
                   </Button>

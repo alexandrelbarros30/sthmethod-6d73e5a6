@@ -41,6 +41,7 @@ import AdminMetabolicPanel from "@/components/admin/AdminMetabolicPanel";
 import AdminFlowStatusDialog from "@/components/admin/AdminFlowStatusDialog";
 import PreviewUnlockToggle from "@/components/admin/PreviewUnlockToggle";
 import StudentProgramAssignDialog from "@/components/admin/StudentProgramAssignDialog";
+import StudentImageConsentCard from "@/components/admin/StudentImageConsentCard";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
 import { normalizePhone } from "@/lib/phone";
 import {
@@ -1071,6 +1072,13 @@ const AdminStudents = () => {
             <DocumentUpload
               userId={selected.user_id}
               onUploaded={() => qc.invalidateQueries({ queryKey: ["admin-students-list"] })}
+            />
+          )}
+          {selected?.user_id && (
+            <StudentImageConsentCard
+              userId={selected.user_id}
+              studentName={selectedMerged?.full_name}
+              studentPhone={selectedMerged?.phone}
             />
           )}
           {renderSaveTabButton("docs", isCreate)}
