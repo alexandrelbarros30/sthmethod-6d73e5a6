@@ -93,6 +93,7 @@ export const renderTemplate = (content: string, ctx: TemplateContext): string =>
   msg = msg.replace(/\{link\}/g, link);
   msg = msg.replace(/\{link_renovacao\}/g, link);
   msg = msg.replace(/\{cupom\}/g, (ctx as any).cupom || "VOLTASTH");
+  msg = msg.replace(/\{update_label\}/g, (ctx as any).update_label || "uma atualização");
   return msg;
 };
 
