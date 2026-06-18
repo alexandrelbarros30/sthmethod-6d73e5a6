@@ -1077,8 +1077,8 @@ const AdminStudents = () => {
           {selected?.user_id && (
             <StudentImageConsentCard
               userId={selected.user_id}
-              studentName={(fullProfile as any)?.full_name || (selected as any)?.full_name}
-              studentPhone={(fullProfile as any)?.phone || (selected as any)?.phone}
+              studentName={selectedMerged?.full_name}
+              studentPhone={selectedMerged?.phone}
             />
           )}
           {renderSaveTabButton("docs", isCreate)}
