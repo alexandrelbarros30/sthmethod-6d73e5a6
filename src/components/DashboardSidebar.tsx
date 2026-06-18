@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered, RefreshCw, NotebookPen, ChevronDown, DollarSign, Inbox, Send, Sparkles, CheckSquare, Zap, Workflow, Mail } from "lucide-react";
+import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered, RefreshCw, NotebookPen, ChevronDown, DollarSign, Inbox, Send, Sparkles, CheckSquare, Zap, Workflow, Mail, ImageIcon } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -86,6 +86,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
         { to: "/admin/revenue", icon: TrendingUp, label: "Faturamento" },
       ],
     },
+    { to: "/admin/image-consents", icon: ImageIcon, label: "Autorização de Imagens" },
     {
       group: "Nutrição",
       icon: Salad,
@@ -174,6 +175,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
     { to: "/consultor", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/consultor/queue", icon: ListOrdered, label: "Fila Atendimento" },
     { to: "/consultor/students", icon: Users, label: "Meus Alunos" },
+    { to: "/consultor/image-consents", icon: ImageIcon, label: "Autorização de Imagens" },
     {
       group: "Nutrição",
       icon: Salad,
