@@ -73,6 +73,8 @@ import AdminPlans from "./pages/admin/AdminPlans";
 import AdminPayments from "./pages/admin/AdminPayments";
 import AdminPaymentLinks from "./pages/admin/AdminPaymentLinks";
 import PagarLink from "./pages/PagarLink";
+import AdminImageConsents from "./pages/admin/AdminImageConsents";
+import AutorizacaoImagem from "./pages/AutorizacaoImagem";
 import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminNutrition from "./pages/admin/AdminNutrition";
 import AdminTraining from "./pages/admin/AdminTraining";
@@ -237,6 +239,7 @@ const App = () => (
             <Route path="/admin/plans" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPlans /></ProtectedRoute>} />
             <Route path="/admin/payments" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPayments /></ProtectedRoute>} />
             <Route path="/admin/payment-links" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPaymentLinks /></ProtectedRoute>} />
+            <Route path="/admin/image-consents" element={<ProtectedRoute allowedRoles={["admin"]}><AdminImageConsents /></ProtectedRoute>} />
             <Route path="/admin/revenue" element={<ProtectedRoute allowedRoles={["admin"]}><AdminRevenue /></ProtectedRoute>} />
             <Route path="/admin/diet" element={<ProtectedRoute allowedRoles={["admin"]}><Suspense fallback={<LazyFallback />}><AdminDiet /></Suspense></ProtectedRoute>} />
             <Route path="/admin/nutrition" element={<ProtectedRoute allowedRoles={["admin"]}><AdminNutrition /></ProtectedRoute>} />
@@ -284,6 +287,7 @@ const App = () => (
             <Route path="/consultor/workout-templates" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminTrainingPrograms /></ProtectedRoute>} />
             <Route path="/consultor/protocol-library" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminProtocolLibrary /></ProtectedRoute>} />
             <Route path="/consultor/queue" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminQueue /></ProtectedRoute>} />
+            <Route path="/consultor/image-consents" element={<ProtectedRoute allowedRoles={["consultor"]}><AdminImageConsents /></ProtectedRoute>} />
             {/* Assistente routes */}
             <Route path="/assistente" element={<ProtectedRoute allowedRoles={["assistente"]}><AssistenteDashboard /></ProtectedRoute>} />
             <Route path="/assistente/students" element={<ProtectedRoute allowedRoles={["assistente"]}><AdminStudents /></ProtectedRoute>} />
@@ -297,6 +301,7 @@ const App = () => (
             <Route path="/financeiro/billing" element={<ProtectedRoute allowedRoles={["financeiro"]}><AdminRevenue /></ProtectedRoute>} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/pagar/:code" element={<PagarLink />} />
+            <Route path="/autorizacao-imagem/:token" element={<AutorizacaoImagem />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <div className="fixed bottom-1 right-1 text-[9px] text-muted-foreground/40 pointer-events-none z-50 font-mono">
