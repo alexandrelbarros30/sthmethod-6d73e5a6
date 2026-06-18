@@ -29,6 +29,7 @@ const AdminPayments = () => {
     amount: "",
     paid_at: new Date().toISOString().split("T")[0],
     notes: "",
+    dispatch_welcome: true,
   });
 
   const { data: paymentSettings } = useQuery({
@@ -158,14 +159,35 @@ const AdminPayments = () => {
           end_date: endDate.toISOString().split("T")[0],
         });
       }
+
+      // Dispara as automações de boas-vindas (WhatsApp Comercial + Nutri +
+      // e-mails) espelhando o webhook do Mercado Pago. Best-effort — não
+      // bloqueia o registro do pagamento manual em caso de falha.
+      if (manualForm.dispatch_welcome) {
+        try {
+          const { data: dispatchRes, error: dispatchErr } =
+            await supabase.functions.invoke("dispatch-payment-welcome", {
+              body: { payment_id: payment.id },
+            });
+          if (dispatchErr) console.warn("[dispatch-payment-welcome] error", dispatchErr);
+          else console.log("[dispatch-payment-welcome] ok", dispatchRes);
+        } catch (e) {
+          console.warn("[dispatch-payment-welcome] failed", e);
+        }
+      }
     },
     onSuccess: () => {
-      toast.success("Pagamento manual registrado e assinatura ativada!");
+      toast.success(
+        manualForm.dispatch_welcome
+          ? "Pagamento manual registrado, assinatura ativada e boas-vindas disparadas!"
+          : "Pagamento manual registrado e assinatura ativada."
+      );
       qc.invalidateQueries({ queryKey: ["admin-payments-history"] });
       setManualOpen(false);
       setManualForm({
         user_id: "", user_search: "", plan_id: "", method: "pix",
         action_type: "new", amount: "", paid_at: new Date().toISOString().split("T")[0], notes: "",
+        dispatch_welcome: true,
       });
     },
     onError: (e: any) => toast.error(e?.message || "Erro ao registrar pagamento"),
@@ -704,6 +726,24 @@ const AdminPayments = () => {
                 value={manualForm.notes}
                 onChange={(e) => setManualForm((f) => ({ ...f, notes: e.target.value }))}
               />
+            </div>
+
+            <div className="flex items-start gap-3 rounded-md border border-border bg-muted/30 p-3">
+              <input
+                id="dispatch_welcome"
+                type="checkbox"
+                className="mt-1 h-4 w-4 accent-primary"
+                checked={manualForm.dispatch_welcome}
+                onChange={(e) => setManualForm((f) => ({ ...f, dispatch_welcome: e.target.checked }))}
+              />
+              <label htmlFor="dispatch_welcome" className="text-xs leading-snug cursor-pointer">
+                <span className="font-semibold">Disparar boas-vindas pós-pagamento</span>
+                <span className="block text-muted-foreground mt-0.5">
+                  Como este pagamento foi confirmado manualmente pelo admin (fora do checkout),
+                  o sistema enviará WhatsApp pelo canal Comercial + Nutri e os e-mails de
+                  boas-vindas/recibo, colocando o aluno no fluxo de atendimento padrão.
+                </span>
+              </label>
             </div>
 
             <div className="flex gap-2 pt-2">

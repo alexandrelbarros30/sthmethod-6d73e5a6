@@ -17,6 +17,7 @@ import { calculateAge, calculateMacros } from "@/lib/macro-calculator";
 import EvolutionImageHistory from "@/components/student/EvolutionImageHistory";
 import EvolutionActivityChange, { type ActivityData } from "@/components/student/EvolutionActivityChange";
 import { createEvolutionSnapshot } from "@/lib/evolution-snapshot";
+import { notifyStudentSelfUpdate } from "@/lib/notify-student-self-update";
 import { useEvolutionStatus } from "@/hooks/useEvolutionStatus";
 import { cn } from "@/lib/utils";
 
@@ -164,6 +165,7 @@ const StudentEvolution = () => {
           calf_cm: measurements.calf ? Number(measurements.calf) : null,
         });
         if (error) throw error;
+        void notifyStudentSelfUpdate(user!.id, "weight");
       }
 
       // Use activity change data if provided, otherwise use profile values

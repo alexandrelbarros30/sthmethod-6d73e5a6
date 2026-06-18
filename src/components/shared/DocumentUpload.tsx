@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { FileText, Upload, Loader2, ExternalLink } from "lucide-react";
 import SignedLink from "@/components/shared/SignedLink";
+import { notifyStudentSelfUpdate } from "@/lib/notify-student-self-update";
 
 interface DocumentUploadProps {
   userId: string;
@@ -94,6 +95,7 @@ export default function DocumentUpload({ userId, onUploaded }: DocumentUploadPro
 
       toast.success(type === "lab_exam" ? "Exame enviado!" : "Receita enviada!");
       qc.invalidateQueries({ queryKey: ["clinical-documents", userId] });
+      void notifyStudentSelfUpdate(userId, "documents");
       onUploaded?.();
     } catch (e: any) {
       toast.error(e.message || "Erro ao enviar arquivo");

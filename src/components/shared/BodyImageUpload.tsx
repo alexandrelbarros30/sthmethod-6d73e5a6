@@ -7,6 +7,7 @@ import { Camera, Upload, X, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { processAndUpload, validateImageFile } from "@/lib/image-upload";
 import SignedImage from "@/components/shared/SignedImage";
+import { notifyStudentSelfUpdate } from "@/lib/notify-student-self-update";
 
 interface BodyImageUploadProps {
   userId: string;
@@ -103,6 +104,7 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
       }
 
       toast.success("Imagens salvas! As anteriores foram preservadas no histórico.");
+      void notifyStudentSelfUpdate(userId, "photos");
       onComplete();
     } catch (err: any) {
       console.error("[body-upload] Error:", err);

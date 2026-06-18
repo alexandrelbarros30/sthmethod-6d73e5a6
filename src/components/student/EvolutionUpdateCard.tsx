@@ -11,6 +11,7 @@ import BodyImageUpload from "@/components/shared/BodyImageUpload";
 import { calculateAge, calculateMacros } from "@/lib/macro-calculator";
 import EvolutionActivityChange, { ActivityData } from "@/components/student/EvolutionActivityChange";
 import { createEvolutionSnapshot } from "@/lib/evolution-snapshot";
+import { notifyStudentSelfUpdate } from "@/lib/notify-student-self-update";
 
 interface EvolutionUpdateCardProps {
   userId: string;
@@ -48,6 +49,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
           notes: notes || "",
         });
         if (error) throw error;
+        void notifyStudentSelfUpdate(userId, "weight");
       }
 
       // Recalculate macros
