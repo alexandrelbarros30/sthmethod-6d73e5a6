@@ -159,14 +159,35 @@ const AdminPayments = () => {
           end_date: endDate.toISOString().split("T")[0],
         });
       }
+
+      // Dispara as automações de boas-vindas (WhatsApp Comercial + Nutri +
+      // e-mails) espelhando o webhook do Mercado Pago. Best-effort — não
+      // bloqueia o registro do pagamento manual em caso de falha.
+      if (manualForm.dispatch_welcome) {
+        try {
+          const { data: dispatchRes, error: dispatchErr } =
+            await supabase.functions.invoke("dispatch-payment-welcome", {
+              body: { payment_id: payment.id },
+            });
+          if (dispatchErr) console.warn("[dispatch-payment-welcome] error", dispatchErr);
+          else console.log("[dispatch-payment-welcome] ok", dispatchRes);
+        } catch (e) {
+          console.warn("[dispatch-payment-welcome] failed", e);
+        }
+      }
     },
     onSuccess: () => {
-      toast.success("Pagamento manual registrado e assinatura ativada!");
+      toast.success(
+        manualForm.dispatch_welcome
+          ? "Pagamento manual registrado, assinatura ativada e boas-vindas disparadas!"
+          : "Pagamento manual registrado e assinatura ativada."
+      );
       qc.invalidateQueries({ queryKey: ["admin-payments-history"] });
       setManualOpen(false);
       setManualForm({
         user_id: "", user_search: "", plan_id: "", method: "pix",
         action_type: "new", amount: "", paid_at: new Date().toISOString().split("T")[0], notes: "",
+        dispatch_welcome: true,
       });
     },
     onError: (e: any) => toast.error(e?.message || "Erro ao registrar pagamento"),
