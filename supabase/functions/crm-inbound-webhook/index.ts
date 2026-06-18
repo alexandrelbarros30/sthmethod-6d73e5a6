@@ -961,8 +961,10 @@ Deno.serve(async (req) => {
       }
       autoReply = { sent: false, reason: 'human_typing' };
 
-    } else if (aiMode === 'ai_only') {
-      // MODO AI GLOBAL: ignora fluxo, ausência e menus — IA responde tudo.
+    } else if (aiMode === 'ai_only' && withinHours && !todayNoticeActive) {
+      // MODO AI GLOBAL: ignora fluxo e menus — IA responde tudo DENTRO do expediente.
+      // Fora do horário, deixa cair para o bloco de ausência abaixo, senão o aluno
+      // recebe resposta de IA 24h e nunca o aviso de fora de expediente.
       try {
         const ai = await generateAiReply({ admin, conversationId: conv.id, phone, waId: conv.wa_id, queue: conv.queue_type });
         if (ai.response) {
