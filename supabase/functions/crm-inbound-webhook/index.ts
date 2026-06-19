@@ -587,6 +587,33 @@ Deno.serve(async (req) => {
       if (profile?.user_id) {
         await admin.from('profiles').update({ whatsapp_opt_out: isOptOut, whatsapp_opt_out_at: isOptOut ? new Date().toISOString() : null }).eq('user_id', profile.user_id);
       }
+
+      if (isOptOut) {
+        const optOutMsg = "Ok, entendi. Você não receberá mais lembretes automáticos de renovação da STH METHOD. Se quiser voltar a falar com a gente, é só enviar uma mensagem. 👋";
+        const { data: conv } = await admin.from('crm_conversations').select('id').eq('phone', phone).maybeSingle();
+
+        if (provider === 'zapi') {
+          const c = (zapiCfgRow?.value as any) || {};
+          const INSTANCE_ID = (c.instance_id || Deno.env.get('ZAPI_INSTANCE_ID') || '').trim();
+          const INSTANCE_TOKEN = (c.instance_token || Deno.env.get('ZAPI_INSTANCE_TOKEN') || '').trim();
+          const CLIENT_TOKEN = (c.client_token || Deno.env.get('ZAPI_CLIENT_TOKEN') || '').trim();
+          if (INSTANCE_ID && INSTANCE_TOKEN) {
+            await fetch(`https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', ...(CLIENT_TOKEN ? { 'Client-Token': CLIENT_TOKEN } : {}) },
+              body: JSON.stringify({ phone, message: optOutMsg }),
+            });
+          }
+        } else {
+          const fnName = provider === 'wapi_sucesso' ? 'send-wapi-sucesso' : 'send-wapi';
+          await admin.functions.invoke(fnName, { body: { phone, message: optOutMsg } });
+        }
+
+        if (conv?.id) {
+          await admin.from('crm_messages').insert({ conversation_id: conv.id, direction: 'out', body: optOutMsg, source: provider, status: 'sent', metadata: { type: 'opt_out_confirmation' } });
+        }
+      }
+
       return await finish({ ok: true, opt_out: isOptOut });
     }
 
