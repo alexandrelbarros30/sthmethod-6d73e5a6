@@ -1041,27 +1041,12 @@ Deno.serve(async (req) => {
         let msg = '';
         if (provider === 'zapi') {
           // Comercial (Z-API)
-          if (forceSucessoQueue) {
-            msg = "No momento estamos fora do horário de expediente no canal Comercial.\n\nPara um atendimento automatizado agora, por favor acesse nosso canal de Sucesso do Aluno: https://wa.me/5521998496289\n\nEstamos encerrando este atendimento aqui para você seguir por lá! 👋";
-            const r = await sendMessage(msg, 'away_redirect');
-            // Mantemos a sessão "aberta" por uma janela de silêncio (4h) para evitar
-            // que cada nova mensagem do contato seja tratada como nova sessão e
-            // dispare novamente a mesma mensagem de redirecionamento.
-            const silenceUntil = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
-            await admin.from('crm_conversations').update({ 
-              status: 'open', 
-              human_handoff: false, 
-              assigned_to: null,
-              flow_state: null,
-              flow_context: {},
-              session_expires_at: silenceUntil
-            }).eq('id', conv.id);
-            autoReply = { sent: r.sent, engine: 'away_redirect' };
-            msg = ''; 
+          if (identifiedAs === 'lead') {
+            msg = comAwayLead?.value?.message || "Olá! No momento estamos fora do horário de expediente no canal Comercial.\n\nPara conhecer nossos planos e fazer sua *1ª adesão* agora mesmo, de forma 100% automatizada, acesse:\n\n🌐 Cadastro e planos: https://sthmethod.com.br/cadastro\n\nResponderemos sua mensagem assim que retornarmos! 👋";
+          } else if (identifiedAs === 'aluno_ativo') {
+            msg = comAwayActive?.value?.message || "Olá! No momento estamos fora do horário de expediente no canal Comercial.\n\nDeixe sua mensagem que retornamos no próximo expediente. Se for dúvida técnica de consultoria, fale com seu Nutri pelo canal *Fale com o Nutri*.\n\nObrigado pela paciência! 👋";
           } else {
-            if (identifiedAs === 'lead') msg = comAwayLead?.value?.message || "Olá! No momento estamos fora do horário de expediente no canal Comercial.\n\nPara conhecer nossos planos e contratar agora mesmo de forma 100% automatizada, acesse nosso site:\n\n🌐 Site: https://sthmethod.com.br\n\nResponderemos sua mensagem assim que retornarmos! 👋";
-            else if (identifiedAs === 'aluno_ativo') msg = comAwayActive?.value?.message || "Olá! No momento estamos fora do horário de expediente no canal Comercial. Como você é um aluno ativo, você pode tirar dúvidas técnicas diretamente com seu Nutri ou tratar assuntos administrativos no Sucesso do Aluno:\n\n🍎 Fale com o Nutri: https://wa.me/5521998496289\n🎓 Sucesso do Aluno: https://wa.me/5521998496289\n\nResponderemos assim que retornarmos! 👋";
-            else msg = comAwayExpired?.value?.message || "Olá! No momento estamos fora do horário de expediente.\n\nLocalizamos seu cadastro e vimos que seu plano está inativo. Para renovar agora de forma 100% automatizada, utilize os links abaixo:\n\n🔗 Renovação: https://sthmethod.com.br/renovacao\n🌐 Site: https://sthmethod.com.br\n\nResponderemos sua mensagem assim que retornarmos! 👋";
+            msg = comAwayExpired?.value?.message || "Olá! No momento estamos fora do horário de expediente no canal Comercial.\n\nLocalizamos seu cadastro e vimos que seu plano está inativo. Para *renovar agora* de forma 100% automatizada:\n\n🔗 Renovação: {link_renovacao}\n🌐 Site: https://sthmethod.com.br\n\nResponderemos sua mensagem assim que retornarmos! 👋";
           }
         } else if (provider === 'wapi_sucesso') {
           // Sucesso do Aluno (W-API Sucesso)
