@@ -663,17 +663,13 @@ Deno.serve(async (req) => {
       }
     }
     
-    // Redirecionamento automático para Sucesso do Aluno quando fora do horário comercial.
-    // IMPORTANTE: não acionamos para leads em nova sessão — o menu de boas-vindas do
-    // canal Comercial deve aparecer SEMPRE no primeiro contato, mesmo fora do horário.
-    // O redirect/away continua valendo para alunos identificados e para mensagens
-    // subsequentes dentro da janela de silêncio (4h) controlada por crm_away_locks.
-    let forceSucessoQueue = false;
-    let redirectToSucessoNumber = false;
-    if (!withinHours && provider === 'zapi') {
-      forceSucessoQueue = true;
-      redirectToSucessoNumber = true;
-    }
+    // Canal Sucesso do Aluno está SUSPENSO — nunca redirecionar contatos do Comercial
+    // para lá fora do horário. Em vez disso, fora do expediente seguimos a política:
+    //   - lead → cadastro (1ª adesão)
+    //   - aluno_vencido / ex_aluno → renovação automatizada
+    //   - aluno_ativo → mensagem de ausência do Comercial (sem citar Sucesso)
+    const forceSucessoQueue = false;
+    const redirectToSucessoNumber = false;
 
     const profile = await findProfileByPhone(admin, phone, 'user_id, full_name, objective, phone', waId);
     let displayName = name || profile?.full_name || null;
