@@ -1039,8 +1039,84 @@ Deno.serve(async (req) => {
         
         if (lockErr) console.error('Error setting away lock:', lockErr);
         let msg = '';
+        // Link sempre disponível para a IA / fallback usar nas mensagens
+        const renewalLink = (identifiedAs === 'aluno_ativo' || identifiedAs === 'aluno_vencido' || identifiedAs === 'ex_aluno')
+          ? (profile?.user_id ? `https://sthmethod.com.br/renovacao?u=${profile.user_id}` : 'https://sthmethod.com.br/renovacao')
+          : 'https://sthmethod.com.br/cadastro';
+
+        // ============================================================
+        // AWAY ATIVO COM IA (STHIA) — fora do expediente, sem humano,
+        // a IA gera a mensagem persuasiva seguindo a política do canal:
+        //   - lead          → 1ª adesão (ancora plano 90D, link /cadastro)
+        //   - aluno_vencido / ex_aluno → renovação (link /renovacao)
+        //   - aluno_ativo   → ausência cordial (sem vender)
+        // Mantemos o framing "fora do expediente" e o retorno humano no
+        // próximo turno. Em caso de falha da IA, caímos no texto estático.
+        // ============================================================
+        const tryAiAway = async (queueForAi: 'comercial' | 'sucesso' | 'nutri'): Promise<string | null> => {
+          try {
+            const promptKey = queueForAi === 'sucesso' ? 'ai_prompt_sucesso'
+              : queueForAi === 'nutri' ? 'ai_prompt_nutri'
+              : 'ai_prompt_comercial';
+            const { engine, systemPrompt: basePrompt } = await loadEngineAndPrompt(admin as any, promptKey as any);
+
+            const { data: msgs } = await admin
+              .from('crm_messages')
+              .select('direction, body, created_at')
+              .eq('conversation_id', conv.id)
+              .order('created_at', { ascending: false })
+              .limit(8);
+            const history = (msgs || []).reverse()
+              .map((m: any) => `${m.direction === 'in' ? 'Contato' : 'Atendente'}: ${m.body}`)
+              .join('\n');
+
+            let ctx = '';
+            if (profile?.user_id) {
+              const dossier = await buildStudentContext(admin as any, profile.user_id);
+              if (dossier) ctx += dossier + '\n';
+            } else if (profile) {
+              ctx += `Contato: ${profile.full_name || displayName || ''} | Objetivo: ${(profile as any).objective || '—'}\n`;
+            } else if (displayName) {
+              ctx += `Contato: ${displayName}\n`;
+            }
+            if (history) ctx += `\nHistórico recente:\n${history}\n`;
+
+            const memories = await fetchAiMemories(admin as any, { phone, userId: profile?.user_id || null });
+            const systemPrompt = basePrompt + renderMemoryBlock(memories);
+
+            const intentBlock = identifiedAs === 'lead'
+              ? `INTENÇÃO: 1ª ADESÃO. Conduza com abordagem consultiva/psicanalítica do método, ancorando o Plano 90D (Trimestral) como ideal (12 semanas = ciclo biológico completo), sem esconder os demais planos. Inclua o link de cadastro: ${renewalLink}`
+              : (identifiedAs === 'aluno_ativo'
+                  ? `INTENÇÃO: AUSÊNCIA CORDIAL para aluno ATIVO. NÃO vender, NÃO oferecer plano. Apenas reconhecer fora do expediente e orientar a aguardar retorno humano no próximo turno. Se for dúvida técnica, mencionar o canal "Fale com o Nutri".`
+                  : `INTENÇÃO: RENOVAÇÃO de aluno ${identifiedAs === 'ex_aluno' ? 'EX-ALUNO' : 'COM PLANO VENCIDO'}. Reengaje com tom consultivo do método, reforçando continuidade biológica e resultado, e ofereça renovação 100% automatizada. Inclua o link: ${renewalLink}`);
+
+            const userPrompt = `${ctx}
+⚠️ MODO AUSÊNCIA (fora do horário de expediente — sem humano disponível agora).
+Você é a STHIA respondendo no canal ${queueForAi.toUpperCase()}.
+REGRAS DESTE TURNO:
+- Deixe claro, em uma linha, que estamos fora do expediente e que o time humano retorna no próximo turno.
+- Mantenha persona e tom STH METHOD (técnico, consultivo, neutro, em PT-BR).
+- ${intentBlock}
+- Máximo 5 frases curtas. Sem emojis em excesso.
+- NÃO prometa retorno imediato; enfatize a alternativa 100% automatizada quando houver link.
+- NÃO cite "Sucesso do Aluno" como canal externo (está suspenso).
+- NUNCA use a expressão "modo deus" (nem variações).
+
+Gere a mensagem final agora.`;
+
+            const reply = await callAiEngine({ engine, systemPrompt, userPrompt });
+            return (reply?.response || '').trim() || null;
+          } catch (e) {
+            console.error('away_ai_failed', e);
+            return null;
+          }
+        };
+
         if (provider === 'zapi') {
           // Comercial (Z-API)
+          const aiMsg = await tryAiAway('comercial');
+          if (aiMsg) { msg = aiMsg; }
+          else
           if (identifiedAs === 'lead') {
             msg = comAwayLead?.value?.message || "Olá! No momento estamos fora do horário de expediente no canal Comercial.\n\nPara conhecer nossos planos e fazer sua *1ª adesão* agora mesmo, de forma 100% automatizada, acesse:\n\n🌐 Cadastro e planos: https://sthmethod.com.br/cadastro\n\nResponderemos sua mensagem assim que retornarmos! 👋";
           } else if (identifiedAs === 'aluno_ativo') {
@@ -1057,17 +1133,14 @@ Deno.serve(async (req) => {
           }
         } else {
           // Fale com o Nutri (W-API)
-          if (identifiedAs === 'aluno_ativo') msg = nutriAwayActive?.value?.message || "Olá! No momento estamos fora do horário de expediente no canal Fale com o Nutri. Deixe sua dúvida técnica e responderemos assim que retornarmos! 👋";
-          else msg = nutriAwayInactive?.value?.message || "No momento estamos fora do horário de expediente no canal Fale com o Nutri.\n\nIdentificamos que seu plano não está ativo. Você pode realizar sua renovação agora mesmo de forma automática pelo link abaixo:\n\n🔗 Renovação: https://sthmethod.com.br/renovacao\n🌐 Site: https://sthmethod.com.br\n\nPara outros assuntos, acesse nosso canal de Sucesso do Aluno: https://wa.me/5521998496289";
+          const aiMsg = await tryAiAway('nutri');
+          if (aiMsg) { msg = aiMsg; }
+          else if (identifiedAs === 'aluno_ativo') msg = nutriAwayActive?.value?.message || "Olá! No momento estamos fora do horário de expediente no canal Fale com o Nutri. Deixe sua dúvida técnica e responderemos assim que retornarmos! 👋";
+          else msg = nutriAwayInactive?.value?.message || "No momento estamos fora do horário de expediente no canal Fale com o Nutri.\n\nIdentificamos que sua consultoria está inativa. Você pode realizar sua renovação agora mesmo de forma automática:\n\n🔗 Renovação: {link_renovacao}\n🌐 Site: https://sthmethod.com.br";
         }
         if (msg) { 
-          // Link de renovação baseado no perfil
-          const renewalLink = (identifiedAs === 'aluno_ativo' || identifiedAs === 'aluno_vencido' || identifiedAs === 'ex_aluno')
-            ? (profile?.user_id ? `https://sthmethod.com.br/renovacao?u=${profile.user_id}` : 'https://sthmethod.com.br/renovacao')
-            : 'https://sthmethod.com.br/cadastro';
-          
-          const r = await sendMessage(msg, 'away', null, undefined, { link_renovacao: renewalLink }); 
-          autoReply = { sent: r.sent, engine: 'away' }; 
+          const r = await sendMessage(msg, 'away', null, undefined, { link_renovacao: renewalLink });
+          autoReply = { sent: r.sent, engine: 'away_ai' };
         }
       } else {
         autoReply = { sent: false, reason: 'away_already_sent' };
