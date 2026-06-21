@@ -13,6 +13,7 @@ import trembolonaImg from "@/assets/sthnews-trembolona-hero.jpg";
 import ginecoImg from "@/assets/sthnews-gineco-hero.jpg";
 import bfAltoImg from "@/assets/sthnews-bfalto-hero.jpg";
 import tirzeImg from "@/assets/sthnews-tirzepatida-hero.jpg";
+import tirzeDesmameImg from "@/assets/sthnews-tirzepatida-desmame-hero.jpg";
 import proteinaImg from "@/assets/sthnews-proteina-hero.jpg";
 import oleosImg from "@/assets/sthnews-oleos-sementes-hero.jpg";
 import ultraImg from "@/assets/sthnews-ultraprocessados-hero.jpg";
@@ -22,6 +23,15 @@ import hipertensaoImg from "@/assets/sthnews-hipertensao-hero.jpg";
 
 const articles = [
   {
+    to: "/tendencias/tirzepatida-desmame",
+    tag: "CAPA",
+    tagClass: "bg-primary text-primary-foreground",
+    date: "Nova matéria",
+    title: "💉 O desmame da tirzepatida: quando a caneta acaba, o verdadeiro desafio começa",
+    desc: "Emagrecer é apenas a primeira etapa. A manutenção dos resultados depende dos hábitos construídos durante o tratamento.",
+    img: tirzeDesmameImg,
+  },
+  {
     to: "/tendencias/restauracao-muscular",
     tag: "CAPA",
     tagClass: "bg-primary text-primary-foreground",
@@ -29,15 +39,6 @@ const articles = [
     title: "O músculo lembra: restaurando o físico após 10 anos de hormônios",
     desc: "Memória miotonuclear, reset do eixo HPT e o caminho real para reverter atrofia crônica.",
     img: restauracaoImg,
-  },
-  {
-    to: "/tendencias/quarteto-magico",
-    tag: "CAPA",
-    tagClass: "bg-primary text-primary-foreground",
-    date: "Edição Especial 2026",
-    title: "🪄 O Quarteto Mágico: Retatrutida & Peptídeos.",
-    desc: "Por que dieta e treino sozinhos são obsoletos. A nova ciência da sinergia entre Protocolo, GH Peptides e Exames de precisão.",
-    img: triadeImg,
   },
   {
     to: "/tendencias/hipertensao-arterial",

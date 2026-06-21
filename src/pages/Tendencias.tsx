@@ -15,6 +15,7 @@ import triadeImg from "@/assets/sthnews-triade-thumb.jpg";
 import cinturaImg from "@/assets/sthnews-subq-glass-2.jpg";
 import subqImg from "@/assets/sthnews-subq-glass-1.jpg";
 import tirzeImg from "@/assets/sthnews-tirzepatida-hero.jpg";
+import tirzeDesmameImg from "@/assets/sthnews-tirzepatida-desmame-hero.jpg";
 import carbsImg from "@/assets/sthnews-carbs-hero.jpg";
 import proteinaImg from "@/assets/sthnews-proteina-hero.jpg";
 import oleosImg from "@/assets/sthnews-oleos-sementes-hero.jpg";
@@ -31,6 +32,7 @@ const fadeUp = {
 };
 
 const articles = [
+  { to: "/tendencias/tirzepatida-desmame", kicker: "Tirzepatida & manutenção", title: "💉 O desmame da tirzepatida: quando a caneta acaba, o verdadeiro desafio começa.", desc: "Emagrecer é apenas a primeira etapa. A manutenção dos resultados depende dos hábitos construídos durante o tratamento.", img: tirzeDesmameImg },
   { to: "/tendencias/clenbuterol", kicker: "Termogênese & risco", title: "🔥 Clenbuterol: o termogênico mais poderoso ou uma bomba-relógio cardiovascular?", desc: "Mecanismo beta-2 adrenérgico, perda de gordura acelerada e o preço fisiológico que o coração paga.", img: clenbuterolImg },
   { to: "/tendencias/restauracao-muscular", kicker: "Reabilitação hormonal", title: "O músculo lembra: restaurando o físico após 10 anos de hormônios", desc: "Memória miotonuclear, reset do eixo HPT e o caminho real para reverter atrofia crônica.", img: restauracaoImg },
   { to: "/tendencias/quarteto-magico", kicker: "Edição Especial 2026", title: "🪄 O Quarteto Mágico: Retatrutida & Peptídeos.", desc: "Por que dieta e treino sozinhos são obsoletos. A nova ciência da sinergia entre Protocolo, GH Peptides e Exames de precisão.", img: triadeImg },
