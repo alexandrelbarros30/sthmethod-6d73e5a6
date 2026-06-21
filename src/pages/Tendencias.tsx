@@ -15,6 +15,7 @@ import triadeImg from "@/assets/sthnews-triade-thumb.jpg";
 import cinturaImg from "@/assets/sthnews-subq-glass-2.jpg";
 import subqImg from "@/assets/sthnews-subq-glass-1.jpg";
 import tirzeImg from "@/assets/sthnews-tirzepatida-hero.jpg";
+import tirzeDesmameImg from "@/assets/sthnews-tirzepatida-desmame-hero.jpg";
 import carbsImg from "@/assets/sthnews-carbs-hero.jpg";
 import proteinaImg from "@/assets/sthnews-proteina-hero.jpg";
 import oleosImg from "@/assets/sthnews-oleos-sementes-hero.jpg";
