@@ -1,4 +1,5 @@
 import hipertensaoImg from "@/assets/sthnews-hipertensao-hero.jpg";
+import mounjaroPesoTravadoImg from "@/assets/sthnews-mounjaro-peso-travado-hero.jpg";
 import marcadoresImg from "@/assets/sthnews-marcadores-hero.jpg";
 import ultraImg from "@/assets/sthnews-ultraprocessados-hero.jpg";
 import oleosImg from "@/assets/sthnews-oleos-sementes-hero.jpg";
@@ -27,6 +28,7 @@ export const LATEST_TRENDS: TrendArticle[] = [
   { id: "clenbuterol", path: "/tendencias/clenbuterol", kicker: "Termogênese & risco", title: "Clenbuterol: o termogênico mais poderoso ou uma bomba-relógio cardiovascular?", desc: "Mecanismo beta-2 adrenérgico, perda de gordura acelerada e o preço fisiológico que o coração paga.", img: clenbuterolImg, publishedAt: "2026-06-17" },
   { id: "restauracao-muscular", path: "/tendencias/restauracao-muscular", kicker: "Reabilitação hormonal", title: "O músculo lembra: restaurando o físico após 10 anos de hormônios", desc: "Memória miotonuclear, reset do eixo HPT e o caminho real para reverter atrofia crônica.", img: restauracaoImg, publishedAt: "2026-06-12" },
   { id: "hipertensao-arterial", path: "/tendencias/hipertensao-arterial", kicker: "Cardiovascular", title: "Hipertensão Arterial: o tratado tático completo", desc: "Classificação, fisiopatologia, diagnóstico diferencial e conduta medicamentosa, suplementar e comportamental.", img: hipertensaoImg, publishedAt: "2026-05-31" },
+  { id: "mounjaro-peso-travado", path: "/tendencias/mounjaro-peso-travado", kicker: "Tirzepatida & platô", title: "Peso travado no Mounjaro? Entenda por que isso acontece", desc: "A balança não conta a história completa. Retenção hídrica, composição corporal e o que fazer na estabilização.", img: mounjaroPesoTravadoImg, publishedAt: "2026-05-22" },
   { id: "marcadores-laboratoriais", path: "/tendencias/marcadores-laboratoriais", kicker: "Guia técnico", title: "Marcadores laboratoriais: o guia técnico completo", desc: "Painéis essenciais, recomendados e avançados — leitura clínica acima do achismo.", img: marcadoresImg, publishedAt: "2026-05-15" },
   { id: "ultraprocessados-saude-mental", path: "/tendencias/ultraprocessados-saude-mental", kicker: "Mitos nutricionais", title: "Ultraprocessados não estão destruindo magicamente sua saúde mental", desc: "Existe associação. Mas associação não é causa.", img: ultraImg, publishedAt: "2026-05-05" },
   { id: "oleos-sementes", path: "/tendencias/oleos-sementes", kicker: "Mitos nutricionais", title: "Você foi enganado sobre os óleos de sementes", desc: "Sozinhos, não são automaticamente inflamatórios.", img: oleosImg, publishedAt: "2026-04-28" },
