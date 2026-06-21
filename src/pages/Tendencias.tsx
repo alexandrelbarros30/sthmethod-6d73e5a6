@@ -25,6 +25,7 @@ import ghkcuImg from "@/assets/sthnews-ghkcu-hero.jpg";
 import hipertensaoImg from "@/assets/sthnews-hipertensao-hero.jpg";
 import colateraisImg from "@/assets/sthnews-tirzepatida-colaterais-hero.jpg";
 import clenbuterolImg from "@/assets/sthnews-clenbuterol-hero.jpg";
+import mounjaroPesoTravadoImg from "@/assets/sthnews-mounjaro-peso-travado-hero.jpg";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -37,6 +38,7 @@ const articles = [
   { to: "/tendencias/restauracao-muscular", kicker: "Reabilitação hormonal", title: "O músculo lembra: restaurando o físico após 10 anos de hormônios", desc: "Memória miotonuclear, reset do eixo HPT e o caminho real para reverter atrofia crônica.", img: restauracaoImg },
   { to: "/tendencias/quarteto-magico", kicker: "Edição Especial 2026", title: "🪄 O Quarteto Mágico: Retatrutida & Peptídeos.", desc: "Por que dieta e treino sozinhos são obsoletos. A nova ciência da sinergia entre Protocolo, GH Peptides e Exames de precisão.", img: triadeImg },
   { to: "/tendencias/hipertensao-arterial", kicker: "Cardiovascular", title: "🫀 Hipertensão Arterial: o tratado tático completo.", desc: "Classificação, fisiopatologia, diagnóstico diferencial e conduta medicamentosa, suplementar e comportamental.", img: hipertensaoImg },
+  { to: "/tendencias/mounjaro-peso-travado", kicker: "Tirzepatida & platô", title: "⚖️ Peso travado no Mounjaro? Entenda por que isso acontece.", desc: "A balança não conta a história completa. Retenção, composição corporal e o que fazer na estabilização.", img: mounjaroPesoTravadoImg },
   { to: "/tendencias/tirzepatida-colaterais", kicker: "Tirzepatida & manejo", title: "💊 Tirzepatida: mapa tático completo dos colaterais.", desc: "Do arroto sulfúrico à pancreatite — cada sintoma cruzado com solução medicamentosa, suplementar e comportamental.", img: colateraisImg },
   { to: "/tendencias/ghk-cu", kicker: "Peptídeos", title: "🧬 GHK-Cu: o peptídeo-cobre sem perfume de vendedor.", desc: "O que a literatura sustenta sobre o tripeptídeo-cobre — e onde o marketing força a barra.", img: ghkcuImg },
   { to: "/tendencias/marcadores-laboratoriais", kicker: "Guia técnico", title: "🧪 Marcadores laboratoriais: o guia técnico completo.", desc: "Painéis essenciais, recomendados e avançados — leitura clínica acima do achismo.", img: marcadoresImg },

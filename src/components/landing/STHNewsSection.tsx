@@ -20,6 +20,7 @@ import ultraImg from "@/assets/sthnews-ultraprocessados-hero.jpg";
 import marcadoresImg from "@/assets/sthnews-marcadores-hero.jpg";
 import colateraisImg from "@/assets/sthnews-tirzepatida-colaterais-hero.jpg";
 import hipertensaoImg from "@/assets/sthnews-hipertensao-hero.jpg";
+import mounjaroPesoTravadoImg from "@/assets/sthnews-mounjaro-peso-travado-hero.jpg";
 
 const articles = [
   {
@@ -48,6 +49,15 @@ const articles = [
     title: "🫀 Hipertensão Arterial: o tratado tático completo",
     desc: "Classificação, fisiopatologia, diagnóstico diferencial e conduta medicamentosa, suplementar e comportamental.",
     img: hipertensaoImg,
+  },
+  {
+    to: "/tendencias/mounjaro-peso-travado",
+    tag: "CAPA",
+    tagClass: "bg-primary text-primary-foreground",
+    date: "22 Mai 2026",
+    title: "⚖️ Peso travado no Mounjaro? Entenda por que isso acontece",
+    desc: "A balança não conta a história completa. Retenção hídrica, composição corporal e o que fazer na estabilização.",
+    img: mounjaroPesoTravadoImg,
   },
   {
     to: "/tendencias/tirzepatida-colaterais",
