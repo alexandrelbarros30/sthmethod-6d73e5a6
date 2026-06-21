@@ -1091,6 +1091,52 @@ Deno.serve(async (req) => {
       } else {
         autoReply = { sent: false, reason: 'away_already_sent' };
       }
+    } else if (provider === 'wapi' && identifiedAs !== 'aluno_ativo') {
+      // BLOQUEIO DO CANAL "FALE COM O NUTRI": exclusivo para alunos ATIVOS.
+      // Leads, alunos vencidos e ex-alunos são imediatamente redirecionados
+      // para o canal Comercial, preservando a prioridade do aluno ativo.
+      const blockKey = `nutri_block_redirect_${conv.session_count || 1}`;
+      const { data: existingBlock } = await admin
+        .from('automation_logs')
+        .select('id')
+        .eq('contact_phone', phone)
+        .eq('idempotency_key', blockKey)
+        .eq('event_type', 'nutri_block_redirect')
+        .maybeSingle();
+
+      if (!existingBlock) {
+        const renewalLink = profile?.user_id
+          ? `https://sthmethod.com.br/renovacao?u=${profile.user_id}`
+          : 'https://sthmethod.com.br/cadastro';
+
+        const blockMsg = identifiedAs === 'lead'
+          ? `Olá${FIRST_NAME ? ' ' + FIRST_NAME : ''}! 👋\n\nEste canal *Fale com o Nutri* é exclusivo para alunos ATIVOS da consultoria, para garantir prioridade no atendimento técnico de quem já está em acompanhamento.\n\nComo você ainda não possui consultoria ativa, o canal correto é o *Comercial*, onde nossa equipe vai te apresentar os planos e iniciar sua jornada:\n\n👉 https://wa.me/5521998496289\n🌐 Site: https://sthmethod.com.br\n\nEstamos encerrando este atendimento por aqui para você seguir pelo Comercial. Conte Comigo!`
+          : `Olá${FIRST_NAME ? ' ' + FIRST_NAME : ''}! 👋\n\nEste canal *Fale com o Nutri* é exclusivo para alunos ATIVOS, para garantir prioridade no atendimento técnico de quem está em consultoria.\n\nIdentificamos que sua consultoria está inativa. Para renovar agora de forma 100% automatizada:\n\n🔗 Renovação: ${renewalLink}\n\nPara falar com nossa equipe, utilize o canal *Comercial*:\n👉 https://wa.me/5521998496289\n\nEstamos encerrando este atendimento por aqui para você seguir pelo Comercial. Conte Comigo!`;
+
+        const r = await sendMessage(blockMsg, 'nutri_block_redirect');
+
+        await admin.from('crm_conversations').update({
+          status: 'closed',
+          flow_state: null,
+          flow_context: { ...(conv.flow_context || {}), blocked_at: new Date().toISOString(), reason: 'inactive_on_nutri_channel' },
+          session_started_at: null,
+          session_expires_at: null,
+        }).eq('id', conv.id);
+
+        await admin.from('automation_logs').insert({
+          contact_phone: phone,
+          event_type: 'nutri_block_redirect',
+          queue_type: 'nutri',
+          action_taken: 'blocked_and_redirected',
+          idempotency_key: blockKey,
+          severity: 'info',
+          metadata: { identified_as: identifiedAs, original_message: String(body).slice(0, 500) },
+        });
+
+        autoReply = { sent: r.sent, engine: 'nutri_block_redirect' };
+      } else {
+        autoReply = { sent: false, reason: 'nutri_block_already_sent' };
+      }
     } else if (!conv.flow_state) {
       if (provider === 'wapi') {
         if (identifiedAs === 'lead') {
