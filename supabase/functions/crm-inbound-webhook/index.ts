@@ -5,6 +5,63 @@ import { encode as hexEncode } from "https://deno.land/std@0.192.0/encoding/hex.
 import { callAiEngine, loadEngineAndPrompt, fetchAiMemories, renderMemoryBlock, extractAndSaveAiMemory } from '../_shared/ai-engine.ts';
 import { buildStudentContext } from '../_shared/student-context.ts';
 
+// ===== Transcrição de áudio (WhatsApp PTT) via Lovable AI =====
+// Baixa o arquivo de áudio e envia para o endpoint OpenAI-compatible do
+// Lovable AI Gateway. Retorna o texto transcrito ou null em caso de falha.
+// Aplica-se a TODOS os canais IA (Comercial, Nutri, Sucesso do Aluno) —
+// o áudio passa a ser tratado como mensagem de texto para que a IA
+// responda normalmente e a ausência fora do expediente também dispare.
+async function transcribeAudioFromUrl(url: string): Promise<string | null> {
+  try {
+    const apiKey = Deno.env.get('LOVABLE_API_KEY');
+    if (!apiKey || !url) return null;
+
+    const audioRes = await fetch(url);
+    if (!audioRes.ok) {
+      console.error(`[transcribe] download falhou: ${audioRes.status}`);
+      return null;
+    }
+    const audioBlob = await audioRes.blob();
+    if (!audioBlob.size || audioBlob.size > 24 * 1024 * 1024) {
+      console.error(`[transcribe] tamanho inválido: ${audioBlob.size}`);
+      return null;
+    }
+
+    // WhatsApp PTT é geralmente .ogg/opus. O endpoint aceita ogg.
+    const ct = (audioBlob.type || '').toLowerCase();
+    const ext = ct.includes('mp4') || ct.includes('m4a') ? 'm4a'
+      : ct.includes('webm') ? 'webm'
+      : ct.includes('wav') ? 'wav'
+      : ct.includes('mpeg') || ct.includes('mp3') ? 'mp3'
+      : 'ogg';
+
+    const form = new FormData();
+    form.append('model', 'openai/gpt-4o-mini-transcribe');
+    form.append('file', audioBlob, `audio.${ext}`);
+    form.append('language', 'pt');
+
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 30000);
+    const res = await fetch('https://ai.gateway.lovable.dev/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}` },
+      body: form,
+      signal: ctrl.signal,
+    }).finally(() => clearTimeout(timer));
+
+    if (!res.ok) {
+      console.error(`[transcribe] gateway ${res.status}: ${await res.text().catch(() => '')}`);
+      return null;
+    }
+    const data = await res.json().catch(() => null) as any;
+    const text = typeof data?.text === 'string' ? data.text.trim() : '';
+    return text || null;
+  } catch (e) {
+    console.error('[transcribe] erro:', e);
+    return null;
+  }
+}
+
 async function generateAiReply({
   admin,
   conversationId,
