@@ -70,6 +70,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminNutriMetrics from "./pages/admin/AdminNutriMetrics";
 import AdminFixCurty from "./pages/admin/AdminFixCurty";
 import AdminStudents from "./pages/admin/AdminStudents";
+import AdminIdentityVerification from "./pages/admin/AdminIdentityVerification";
 
 import AdminPlans from "./pages/admin/AdminPlans";
 import AdminPayments from "./pages/admin/AdminPayments";
