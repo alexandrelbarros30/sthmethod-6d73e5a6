@@ -89,8 +89,8 @@ Deno.serve(async (req) => {
       const { error } = await adminClient.auth.admin.updateUserById(user_id, { password: new_password });
       if (error) {
         console.error("Error resetting password:", error.message);
-        return new Response(JSON.stringify({ error: "Erro ao alterar senha. Tente novamente." }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        return new Response(JSON.stringify({ error: `Erro ao alterar senha: ${error.message}` }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       return new Response(JSON.stringify({ success: true }), {
