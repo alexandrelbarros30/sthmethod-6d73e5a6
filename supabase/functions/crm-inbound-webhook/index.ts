@@ -5,6 +5,63 @@ import { encode as hexEncode } from "https://deno.land/std@0.192.0/encoding/hex.
 import { callAiEngine, loadEngineAndPrompt, fetchAiMemories, renderMemoryBlock, extractAndSaveAiMemory } from '../_shared/ai-engine.ts';
 import { buildStudentContext } from '../_shared/student-context.ts';
 
+// ===== Transcrição de áudio (WhatsApp PTT) via Lovable AI =====
+// Baixa o arquivo de áudio e envia para o endpoint OpenAI-compatible do
+// Lovable AI Gateway. Retorna o texto transcrito ou null em caso de falha.
+// Aplica-se a TODOS os canais IA (Comercial, Nutri, Sucesso do Aluno) —
+// o áudio passa a ser tratado como mensagem de texto para que a IA
+// responda normalmente e a ausência fora do expediente também dispare.
+async function transcribeAudioFromUrl(url: string): Promise<string | null> {
+  try {
+    const apiKey = Deno.env.get('LOVABLE_API_KEY');
+    if (!apiKey || !url) return null;
+
+    const audioRes = await fetch(url);
+    if (!audioRes.ok) {
+      console.error(`[transcribe] download falhou: ${audioRes.status}`);
+      return null;
+    }
+    const audioBlob = await audioRes.blob();
+    if (!audioBlob.size || audioBlob.size > 24 * 1024 * 1024) {
+      console.error(`[transcribe] tamanho inválido: ${audioBlob.size}`);
+      return null;
+    }
+
+    // WhatsApp PTT é geralmente .ogg/opus. O endpoint aceita ogg.
+    const ct = (audioBlob.type || '').toLowerCase();
+    const ext = ct.includes('mp4') || ct.includes('m4a') ? 'm4a'
+      : ct.includes('webm') ? 'webm'
+      : ct.includes('wav') ? 'wav'
+      : ct.includes('mpeg') || ct.includes('mp3') ? 'mp3'
+      : 'ogg';
+
+    const form = new FormData();
+    form.append('model', 'openai/gpt-4o-mini-transcribe');
+    form.append('file', audioBlob, `audio.${ext}`);
+    form.append('language', 'pt');
+
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 30000);
+    const res = await fetch('https://ai.gateway.lovable.dev/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}` },
+      body: form,
+      signal: ctrl.signal,
+    }).finally(() => clearTimeout(timer));
+
+    if (!res.ok) {
+      console.error(`[transcribe] gateway ${res.status}: ${await res.text().catch(() => '')}`);
+      return null;
+    }
+    const data = await res.json().catch(() => null) as any;
+    const text = typeof data?.text === 'string' ? data.text.trim() : '';
+    return text || null;
+  } catch (e) {
+    console.error('[transcribe] erro:', e);
+    return null;
+  }
+}
+
 async function generateAiReply({
   admin,
   conversationId,
@@ -410,7 +467,22 @@ Deno.serve(async (req) => {
     
     const connectedPhone = normalizePhone(payload?.connectedPhone || payload?.data?.connectedPhone || '');
     const audioUrl = payload?.audio?.audioUrl || payload?.audioUrl || null;
-    const rawText = payload?.data?.body || (typeof payload?.text === 'string' ? payload.text : payload?.text?.message) || payload?.message?.conversation || (typeof payload?.message === 'string' ? payload.message : '') || payload?.image?.caption || payload?.video?.caption || payload?.document?.caption || payload?.body || payload?.data?.message?.text || payload?.msgContent?.conversation || (audioUrl ? '[Áudio recebido]' : '');
+    let rawText = payload?.data?.body || (typeof payload?.text === 'string' ? payload.text : payload?.text?.message) || payload?.message?.conversation || (typeof payload?.message === 'string' ? payload.message : '') || payload?.image?.caption || payload?.video?.caption || payload?.document?.caption || payload?.body || payload?.data?.message?.text || payload?.msgContent?.conversation || '';
+    let isTranscribedAudio = false;
+    // Se veio áudio (PTT) e nenhum texto/caption, transcreve via Lovable AI
+    // e usa a transcrição como o corpo da mensagem. Assim a IA responde
+    // normalmente e a regra de ausência fora do expediente também dispara.
+    if (audioUrl && (!rawText || typeof rawText !== 'string' || !rawText.trim())) {
+      const transcript = await transcribeAudioFromUrl(audioUrl);
+      if (transcript) {
+        rawText = `[Áudio do aluno] ${transcript}`;
+        isTranscribedAudio = true;
+        console.log(`[audio] transcrição ok (${transcript.length} chars)`);
+      } else {
+        rawText = '[Áudio recebido]';
+        console.warn('[audio] transcrição falhou — usando placeholder');
+      }
+    }
     const body = typeof rawText === 'string' ? rawText : '';
     const externalId = payload?.messageId || payload?.id || null;
     const name = payload?.senderName || payload?.pushName || payload?.sender?.pushName || null;
