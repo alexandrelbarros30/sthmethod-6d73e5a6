@@ -15,3 +15,10 @@ Atendentes NUNCA confirmam ou citam e-mail/telefone/CPF/data de nascimento atuai
 **Edge function:** `admin-identity-verification` (actions: create, verify_kba, send_code, verify_code, cancel).
 **Template:** `identity-verification-code` (registry).
 **Senha:** quando trocada via fluxo, gera senha temporária e envia direto ao e-mail atual — NUNCA exibida ao admin.
+
+## Autoatendimento (fluxo automático)
+Aluno acessa **`/alterar-dados`** (link público), informa e-mail cadastrado, escolhe o que alterar e fornece o novo valor. Validação por **data nascimento + 4 dígitos CPF** (mesma KBA), código de 6 dígitos enviado para o e-mail destino, aplicação automática — sem intervenção humana.
+- Edge function: `self-service-identity` (verify_jwt=false). Actions: `start`, `verify_kba`, `send_code`, `verify_code`.
+- Mesma tabela `identity_verification_requests` com `channel='self_service'` e `self_service_token`.
+- Anti-enumeração: `start` sempre responde ok mesmo se e-mail não existir; rate-limit 3 solicitações/30min por usuário.
+- IA do CRM (Comercial/Sucesso/Nutri): quando detectar intenção do aluno trocar e-mail/telefone/senha, **enviar direto o link `https://sthmethod.com/alterar-dados`** sem pedir PII no chat. Nunca confirmar/citar e-mail/telefone/CPF atuais.
