@@ -2256,6 +2256,72 @@ export type Database = {
         }
         Relationships: []
       }
+      identity_verification_requests: {
+        Row: {
+          audit: Json
+          change_type: string
+          code_attempts: number
+          code_expires_at: string | null
+          code_hash: string | null
+          code_sent_to: string | null
+          code_verified: boolean
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          id: string
+          ip: string | null
+          kba_attempts: number
+          kba_passed: boolean
+          new_value: string | null
+          status: string
+          target_user_id: string
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          audit?: Json
+          change_type: string
+          code_attempts?: number
+          code_expires_at?: string | null
+          code_hash?: string | null
+          code_sent_to?: string | null
+          code_verified?: boolean
+          completed_at?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          ip?: string | null
+          kba_attempts?: number
+          kba_passed?: boolean
+          new_value?: string | null
+          status?: string
+          target_user_id: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          audit?: Json
+          change_type?: string
+          code_attempts?: number
+          code_expires_at?: string | null
+          code_hash?: string | null
+          code_sent_to?: string | null
+          code_verified?: boolean
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          ip?: string | null
+          kba_attempts?: number
+          kba_passed?: boolean
+          new_value?: string | null
+          status?: string
+          target_user_id?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       image_consents: {
         Row: {
           allow_tagging: boolean | null
@@ -4733,6 +4799,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      identity_kba_available: { Args: { _user_id: string }; Returns: Json }
       is_consultant_of: {
         Args: { _consultant_id: string; _student_id: string }
         Returns: boolean
@@ -4770,6 +4837,10 @@ export type Database = {
           _user_agent: string
         }
         Returns: Json
+      }
+      verify_identity_kba: {
+        Args: { _birth_date: string; _cpf_last4: string; _user_id: string }
+        Returns: boolean
       }
     }
     Enums: {

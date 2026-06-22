@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2, RotateCcw, AlertTriangle, UserX, UserCheck, Dumbbell, Pill, UtensilsCrossed, MessageCircle, MoreVertical, Activity, Microscope, Copy, Layers, ChevronDown, ChevronUp, Zap } from "lucide-react";
+import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2, RotateCcw, AlertTriangle, UserX, UserCheck, Dumbbell, Pill, UtensilsCrossed, MessageCircle, MoreVertical, Activity, Microscope, Copy, Layers, ChevronDown, ChevronUp, Zap, ShieldCheck } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
@@ -2104,6 +2104,7 @@ const AdminStudents = () => {
               { icon: Zap, label: "STH Flow", action: () => { setManageOpen(false); setFlowOpen(true); } },
               { icon: CreditCard, label: "Assinatura", action: () => { setManageOpen(false); openSub(selected); } },
               { icon: Lock, label: "Alterar Senha", action: () => { setManageOpen(false); setPasswordReset({ userId: selected?.user_id, name: selected?.full_name || selected?.email }); setNewPassword(""); } },
+              { icon: ShieldCheck, label: "Verificar Identidade", action: () => { setManageOpen(false); navigate(`/admin/verificacao-identidade?uid=${selected?.user_id}&name=${encodeURIComponent(selected?.full_name || selected?.email || "")}`); } },
               { icon: Link2, label: "Link Renovação", action: () => { navigator.clipboard.writeText(`${window.location.origin}/dashboard/renew?uid=${selected?.user_id}`); toast.success("Link copiado!"); setManageOpen(false); } },
               { icon: Link2, label: "Link 1ª Adesão", action: () => { navigator.clipboard.writeText(`${window.location.origin}/dashboard/pagar?uid=${selected?.user_id}`); toast.success("Link de pagamento copiado!"); setManageOpen(false); } },
               { icon: Trash2, label: "Excluir", action: () => { setManageOpen(false); setDeleteTarget({ userId: selected?.user_id, name: selected?.full_name || selected?.email }); }, destructive: true },
