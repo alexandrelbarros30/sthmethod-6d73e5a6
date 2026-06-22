@@ -18,6 +18,7 @@ import { template as authPreviewMagiclink } from './auth-preview-magiclink.tsx'
 import { template as authPreviewInvite } from './auth-preview-invite.tsx'
 import { template as authPreviewEmailChange } from './auth-preview-email-change.tsx'
 import { template as authPreviewReauth } from './auth-preview-reauthentication.tsx'
+import { template as identityVerificationCode } from './identity-verification-code.tsx'
 
 export interface TemplateEntry {
   component: ComponentType<any>
@@ -46,4 +47,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'auth-preview-invite': authPreviewInvite,
   'auth-preview-email-change': authPreviewEmailChange,
   'auth-preview-reauthentication': authPreviewReauth,
+  'identity-verification-code': identityVerificationCode,
 }
