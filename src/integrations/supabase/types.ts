@@ -2260,6 +2260,7 @@ export type Database = {
         Row: {
           audit: Json
           change_type: string
+          channel: string
           code_attempts: number
           code_expires_at: string | null
           code_hash: string | null
@@ -2267,12 +2268,13 @@ export type Database = {
           code_verified: boolean
           completed_at: string | null
           created_at: string
-          created_by: string
+          created_by: string | null
           id: string
           ip: string | null
           kba_attempts: number
           kba_passed: boolean
           new_value: string | null
+          self_service_token: string | null
           status: string
           target_user_id: string
           updated_at: string
@@ -2281,6 +2283,7 @@ export type Database = {
         Insert: {
           audit?: Json
           change_type: string
+          channel?: string
           code_attempts?: number
           code_expires_at?: string | null
           code_hash?: string | null
@@ -2288,12 +2291,13 @@ export type Database = {
           code_verified?: boolean
           completed_at?: string | null
           created_at?: string
-          created_by: string
+          created_by?: string | null
           id?: string
           ip?: string | null
           kba_attempts?: number
           kba_passed?: boolean
           new_value?: string | null
+          self_service_token?: string | null
           status?: string
           target_user_id: string
           updated_at?: string
@@ -2302,6 +2306,7 @@ export type Database = {
         Update: {
           audit?: Json
           change_type?: string
+          channel?: string
           code_attempts?: number
           code_expires_at?: string | null
           code_hash?: string | null
@@ -2309,12 +2314,13 @@ export type Database = {
           code_verified?: boolean
           completed_at?: string | null
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           id?: string
           ip?: string | null
           kba_attempts?: number
           kba_passed?: boolean
           new_value?: string | null
+          self_service_token?: string | null
           status?: string
           target_user_id?: string
           updated_at?: string

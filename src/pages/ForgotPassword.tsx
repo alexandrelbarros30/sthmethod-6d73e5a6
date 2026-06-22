@@ -81,6 +81,11 @@ const ForgotPassword = () => {
             </Button>
           </form>
         )}
+        <div className="mt-6 text-center">
+          <Link to="/alterar-dados" className="text-xs text-muted-foreground hover:text-foreground underline">
+            Trocou de e-mail/telefone? Atualize seus dados aqui
+          </Link>
+        </div>
       </motion.section>
     </div>
   );

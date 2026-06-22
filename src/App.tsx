@@ -78,6 +78,7 @@ import AdminPaymentLinks from "./pages/admin/AdminPaymentLinks";
 import PagarLink from "./pages/PagarLink";
 import AdminImageConsents from "./pages/admin/AdminImageConsents";
 import AutorizacaoImagem from "./pages/AutorizacaoImagem";
+import AlterarDados from "./pages/AlterarDados";
 import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminNutrition from "./pages/admin/AdminNutrition";
 import AdminTraining from "./pages/admin/AdminTraining";
@@ -310,6 +311,7 @@ const App = () => (
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/pagar/:code" element={<PagarLink />} />
             <Route path="/autorizacao-imagem/:token" element={<AutorizacaoImagem />} />
+            <Route path="/alterar-dados" element={<AlterarDados />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <div className="fixed bottom-1 right-1 text-[9px] text-muted-foreground/40 pointer-events-none z-50 font-mono">
