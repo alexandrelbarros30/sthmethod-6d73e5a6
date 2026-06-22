@@ -311,6 +311,7 @@ const App = () => (
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/pagar/:code" element={<PagarLink />} />
             <Route path="/autorizacao-imagem/:token" element={<AutorizacaoImagem />} />
+            <Route path="/alterar-dados" element={<AlterarDados />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <div className="fixed bottom-1 right-1 text-[9px] text-muted-foreground/40 pointer-events-none z-50 font-mono">
