@@ -9,6 +9,8 @@ project_id = "tthahgwkkdyvxdbhsgyb"
     verify_jwt = false
   [functions.auth-email-hook]
     verify_jwt = false
+  [functions.self-service-identity]
+    verify_jwt = false
   [functions.create-payment]
     verify_jwt = false
   [functions.create-custom-payment]
