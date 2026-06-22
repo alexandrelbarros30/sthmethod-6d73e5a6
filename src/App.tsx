@@ -242,6 +242,7 @@ const App = () => (
 
             <Route path="/admin/fix-curty" element={<ProtectedRoute allowedRoles={["admin"]}><AdminFixCurty /></ProtectedRoute>} />
             <Route path="/admin/students" element={<ProtectedRoute allowedRoles={["admin"]}><AdminStudents /></ProtectedRoute>} />
+            <Route path="/admin/verificacao-identidade" element={<ProtectedRoute allowedRoles={["admin"]}><AdminIdentityVerification /></ProtectedRoute>} />
             <Route path="/admin/plans" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPlans /></ProtectedRoute>} />
             <Route path="/admin/payments" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPayments /></ProtectedRoute>} />
             <Route path="/admin/payment-links" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPaymentLinks /></ProtectedRoute>} />
