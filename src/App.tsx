@@ -78,6 +78,7 @@ import AdminPaymentLinks from "./pages/admin/AdminPaymentLinks";
 import PagarLink from "./pages/PagarLink";
 import AdminImageConsents from "./pages/admin/AdminImageConsents";
 import AutorizacaoImagem from "./pages/AutorizacaoImagem";
+import AlterarDados from "./pages/AlterarDados";
 import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminNutrition from "./pages/admin/AdminNutrition";
 import AdminTraining from "./pages/admin/AdminTraining";
