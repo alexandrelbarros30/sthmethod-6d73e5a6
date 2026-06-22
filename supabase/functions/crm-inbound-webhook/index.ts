@@ -467,7 +467,22 @@ Deno.serve(async (req) => {
     
     const connectedPhone = normalizePhone(payload?.connectedPhone || payload?.data?.connectedPhone || '');
     const audioUrl = payload?.audio?.audioUrl || payload?.audioUrl || null;
-    const rawText = payload?.data?.body || (typeof payload?.text === 'string' ? payload.text : payload?.text?.message) || payload?.message?.conversation || (typeof payload?.message === 'string' ? payload.message : '') || payload?.image?.caption || payload?.video?.caption || payload?.document?.caption || payload?.body || payload?.data?.message?.text || payload?.msgContent?.conversation || (audioUrl ? '[Áudio recebido]' : '');
+    let rawText = payload?.data?.body || (typeof payload?.text === 'string' ? payload.text : payload?.text?.message) || payload?.message?.conversation || (typeof payload?.message === 'string' ? payload.message : '') || payload?.image?.caption || payload?.video?.caption || payload?.document?.caption || payload?.body || payload?.data?.message?.text || payload?.msgContent?.conversation || '';
+    let isTranscribedAudio = false;
+    // Se veio áudio (PTT) e nenhum texto/caption, transcreve via Lovable AI
+    // e usa a transcrição como o corpo da mensagem. Assim a IA responde
+    // normalmente e a regra de ausência fora do expediente também dispara.
+    if (audioUrl && (!rawText || typeof rawText !== 'string' || !rawText.trim())) {
+      const transcript = await transcribeAudioFromUrl(audioUrl);
+      if (transcript) {
+        rawText = `[Áudio do aluno] ${transcript}`;
+        isTranscribedAudio = true;
+        console.log(`[audio] transcrição ok (${transcript.length} chars)`);
+      } else {
+        rawText = '[Áudio recebido]';
+        console.warn('[audio] transcrição falhou — usando placeholder');
+      }
+    }
     const body = typeof rawText === 'string' ? rawText : '';
     const externalId = payload?.messageId || payload?.id || null;
     const name = payload?.senderName || payload?.pushName || payload?.sender?.pushName || null;
