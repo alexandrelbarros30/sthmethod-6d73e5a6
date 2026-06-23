@@ -3,7 +3,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
   Salad, ChevronRight, Flame, Clock, Utensils,
-  UtensilsCrossed, Beaker, Brain, Layers, Bell, Droplets, Target, Plus, Minus, Beef, CalendarDays, History
+  UtensilsCrossed, Beaker, Brain, Layers, Bell, Droplets, Target, Plus, Minus, Beef
 } from "lucide-react";
 import cardHormoniosImg from "@/assets/sthnews-subq-glass-1.jpg";
 import cardDicasImg from "@/assets/sthnews-triade-thumb.jpg";
@@ -150,37 +150,6 @@ const StudentOverview = () => {
     },
     enabled: !!user?.id,
   });
-
-  // Histórico completo de planos (entrada + renovações)
-  const { data: planHistory = [] } = useQuery({
-    queryKey: ["plan-history", user?.id],
-    queryFn: async () => {
-      const { data: subs } = await supabase
-        .from("subscriptions")
-        .select("id, plan_id, start_date, end_date, status, created_at")
-        .eq("user_id", user!.id)
-        .order("start_date", { ascending: true });
-      const list = subs || [];
-      const planIds = Array.from(new Set(list.map((s: any) => s.plan_id).filter(Boolean)));
-      let plansMap: Record<string, string> = {};
-      if (planIds.length) {
-        const { data: plans } = await supabase.from("plans").select("id, name").in("id", planIds);
-        plansMap = Object.fromEntries((plans || []).map((p: any) => [p.id, p.name]));
-      }
-      return list.map((s: any) => ({ ...s, plan_name: plansMap[s.plan_id] || "Plano" }));
-    },
-    enabled: !!user?.id,
-  });
-
-  const fmtDate = (s?: string | null) => {
-    if (!s) return "—";
-    try { return new Date(s + (s.length === 10 ? "T00:00:00" : "")).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }); }
-    catch { return "—"; }
-  };
-  const firstStart = planHistory[0]?.start_date as string | undefined;
-  const currentSub = planHistory.length
-    ? [...planHistory].sort((a: any, b: any) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())[0]
-    : null;
 
   // Latest STH News = última tendência publicada
   const latestTrend = getLatestTrend();
