@@ -62,6 +62,27 @@ async function transcribeAudioFromUrl(url: string): Promise<string | null> {
   }
 }
 
+// ===== Detecção de mídia (imagem/vídeo/documento/sticker) =====
+// Política STH METHOD: arquivos não são aceitos pelo WhatsApp em nenhum
+// canal IA (Comercial, Nutri, Sucesso). O aluno deve enviar pelo sistema
+// sthmethod.com.br para que o material entre no prontuário e seja
+// autorizado/registrado corretamente. Áudio (PTT) NÃO entra nesta regra —
+// é transcrito e respondido como texto.
+function detectIncomingMediaKind(payload: any): 'image' | 'video' | 'document' | 'sticker' | null {
+  if (!payload) return null;
+  const d = payload?.data || {};
+  if (payload?.image || d?.image) return 'image';
+  if (payload?.video || d?.video) return 'video';
+  if (payload?.document || d?.document) return 'document';
+  if (payload?.sticker || d?.sticker) return 'sticker';
+  const mt = String(payload?.messageType || payload?.type || d?.messageType || '').toLowerCase();
+  if (mt.includes('imagemessage') || mt === 'image') return 'image';
+  if (mt.includes('videomessage') || mt === 'video') return 'video';
+  if (mt.includes('documentmessage') || mt === 'document' || mt.includes('file')) return 'document';
+  if (mt.includes('stickermessage') || mt === 'sticker') return 'sticker';
+  return null;
+}
+
 async function generateAiReply({
   admin,
   conversationId,
