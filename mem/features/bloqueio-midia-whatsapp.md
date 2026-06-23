@@ -3,7 +3,7 @@ name: Bloqueio de mídia no WhatsApp (todos os canais IA)
 description: WhatsApp NÃO recebe imagens, vídeos, documentos nem stickers em nenhum canal IA (Comercial, Nutri, Sucesso). Aluno é redirecionado ao sistema sthmethod.com.br. Áudio continua transcrito.
 type: feature
 ---
-- Detecção em `crm-inbound-webhook` via `detectIncomingMediaKind(payload)` (image/video/document/sticker).
+- Detecção em `crm-inbound-webhook` via `detectIncomingMediaKind(payload)` (image/video/document/sticker). Cobre 3 formatos: Z-API (`payload.image|video|document|sticker`), W-API/Baileys (`msgContent.imageMessage|videoMessage|documentMessage|documentWithCaptionMessage|stickerMessage`) e fallback por `mimetype` (image/* | video/* | application/* | pdf).
 - Áudio (PTT) NÃO entra na regra — continua sendo transcrito e respondido como texto.
 - Quando há mídia: caption é ignorado, IA não roda, e enviamos um aviso padronizado direcionando para `https://sthmethod.com.br/dashboard` (Evolução / Documentos / Assinatura conforme o tipo).
 - Dedup: 1 aviso a cada 4h por conversa (filtrado por `metadata->>tag = 'media_blocked'`).
