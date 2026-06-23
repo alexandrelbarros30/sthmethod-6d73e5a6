@@ -504,6 +504,15 @@ Deno.serve(async (req) => {
         console.warn('[audio] transcrição falhou — usando placeholder');
       }
     }
+    // Detecta mídia (imagem/vídeo/documento/sticker). Se houver, bloqueamos
+    // o conteúdo: o WhatsApp não recebe arquivos em nenhum canal IA. O aluno
+    // será orientado a enviar pelo sistema oficial sthmethod.com.br.
+    const blockedMediaKind = detectIncomingMediaKind(payload);
+    const hasBlockedMedia = !!blockedMediaKind && !isTranscribedAudio;
+    if (hasBlockedMedia) {
+      // Ignora qualquer caption — não respondemos ao texto que acompanha o anexo.
+      rawText = '';
+    }
     const body = typeof rawText === 'string' ? rawText : '';
     const externalId = payload?.messageId || payload?.id || null;
     const name = payload?.senderName || payload?.pushName || payload?.sender?.pushName || null;
@@ -578,7 +587,8 @@ Deno.serve(async (req) => {
 
     // phone ja foi declarado acima
 
-    if (!phone || !body) return new Response(JSON.stringify({ ok: true, skipped: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    if (!phone) return new Response(JSON.stringify({ ok: true, skipped: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    if (!body && !hasBlockedMedia) return new Response(JSON.stringify({ ok: true, skipped: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
     // CRITICAL LOCK: Evitar processamento paralelo para o mesmo telefone
     // Remove locks expirados (mais de 10 segundos)
