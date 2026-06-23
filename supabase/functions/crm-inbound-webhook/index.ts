@@ -62,6 +62,27 @@ async function transcribeAudioFromUrl(url: string): Promise<string | null> {
   }
 }
 
+// ===== Detecção de mídia (imagem/vídeo/documento/sticker) =====
+// Política STH METHOD: arquivos não são aceitos pelo WhatsApp em nenhum
+// canal IA (Comercial, Nutri, Sucesso). O aluno deve enviar pelo sistema
+// sthmethod.com.br para que o material entre no prontuário e seja
+// autorizado/registrado corretamente. Áudio (PTT) NÃO entra nesta regra —
+// é transcrito e respondido como texto.
+function detectIncomingMediaKind(payload: any): 'image' | 'video' | 'document' | 'sticker' | null {
+  if (!payload) return null;
+  const d = payload?.data || {};
+  if (payload?.image || d?.image) return 'image';
+  if (payload?.video || d?.video) return 'video';
+  if (payload?.document || d?.document) return 'document';
+  if (payload?.sticker || d?.sticker) return 'sticker';
+  const mt = String(payload?.messageType || payload?.type || d?.messageType || '').toLowerCase();
+  if (mt.includes('imagemessage') || mt === 'image') return 'image';
+  if (mt.includes('videomessage') || mt === 'video') return 'video';
+  if (mt.includes('documentmessage') || mt === 'document' || mt.includes('file')) return 'document';
+  if (mt.includes('stickermessage') || mt === 'sticker') return 'sticker';
+  return null;
+}
+
 async function generateAiReply({
   admin,
   conversationId,
@@ -483,6 +504,15 @@ Deno.serve(async (req) => {
         console.warn('[audio] transcrição falhou — usando placeholder');
       }
     }
+    // Detecta mídia (imagem/vídeo/documento/sticker). Se houver, bloqueamos
+    // o conteúdo: o WhatsApp não recebe arquivos em nenhum canal IA. O aluno
+    // será orientado a enviar pelo sistema oficial sthmethod.com.br.
+    const blockedMediaKind = detectIncomingMediaKind(payload);
+    const hasBlockedMedia = !!blockedMediaKind && !isTranscribedAudio;
+    if (hasBlockedMedia) {
+      // Ignora qualquer caption — não respondemos ao texto que acompanha o anexo.
+      rawText = '';
+    }
     const body = typeof rawText === 'string' ? rawText : '';
     const externalId = payload?.messageId || payload?.id || null;
     const name = payload?.senderName || payload?.pushName || payload?.sender?.pushName || null;
@@ -557,7 +587,8 @@ Deno.serve(async (req) => {
 
     // phone ja foi declarado acima
 
-    if (!phone || !body) return new Response(JSON.stringify({ ok: true, skipped: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    if (!phone) return new Response(JSON.stringify({ ok: true, skipped: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    if (!body && !hasBlockedMedia) return new Response(JSON.stringify({ ok: true, skipped: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
     // CRITICAL LOCK: Evitar processamento paralelo para o mesmo telefone
     // Remove locks expirados (mais de 10 segundos)
@@ -602,6 +633,114 @@ Deno.serve(async (req) => {
         });
         return await finish({ ok: true, skipped: true, reason: 'duplicate_external_id' });
       }
+    }
+
+    // ============================================================
+    // BLOQUEIO DE MÍDIA — TODOS OS CANAIS (Comercial, Nutri, Sucesso)
+    // Política: WhatsApp NÃO recebe imagens, vídeos, documentos nem
+    // stickers. O aluno/cliente é orientado a enviar pelo sistema
+    // sthmethod.com.br, onde o material é registrado, autorizado e
+    // vinculado ao prontuário. Áudio continua sendo transcrito.
+    // Dedup: 1 aviso a cada 4h por conversa (evita spam se o usuário
+    // disparar várias fotos em sequência).
+    // ============================================================
+    if (hasBlockedMedia) {
+      const blockedMsg = (
+        "📎 Por aqui não recebemos *fotos, vídeos ou documentos* — eles ficam soltos e não entram no seu prontuário.\n\n" +
+        "✅ Envie pelo sistema oficial *STH METHOD*, onde tudo é registrado, autorizado e vinculado ao seu acompanhamento:\n" +
+        "👉 https://sthmethod.com.br/dashboard\n\n" +
+        "• *Fotos de evolução* → menu *Evolução*\n" +
+        "• *Exames / laudos* → menu *Documentos*\n" +
+        "• *Comprovante de pagamento* → menu *Assinatura*\n\n" +
+        "Assim seu envio chega ao time certo e fica salvo no histórico. 🙏"
+      );
+
+      // Garante uma conversa para registrar a inbound (mídia) e a outbound.
+      let { data: convRow } = await admin
+        .from('crm_conversations')
+        .select('id, queue_type')
+        .eq('phone', phone)
+        .maybeSingle();
+      if (!convRow) {
+        const ins = await admin.from('crm_conversations').insert({
+          phone,
+          wa_id: waId,
+          display_name: name || null,
+          channel: 'whatsapp',
+          status: 'open',
+          provider,
+          queue_type: provider === 'zapi' ? 'comercial' : (provider === 'wapi_sucesso' ? 'sucesso' : 'nutri'),
+          session_started_at: new Date().toISOString(),
+        }).select('id, queue_type').single();
+        convRow = ins.data as any;
+      }
+
+      // Registra a mídia recebida (placeholder no histórico).
+      try {
+        await admin.from('crm_messages').insert({
+          conversation_id: convRow!.id,
+          direction: 'in',
+          source: provider,
+          status: 'received',
+          body: `[${blockedMediaKind} bloqueado — enviar pelo sistema]`,
+          external_id: externalId,
+          metadata: { type: 'media_blocked_in', media_kind: blockedMediaKind },
+        });
+      } catch (e) {
+        console.error('media_blocked: erro ao registrar inbound', e);
+      }
+
+      // Dedup 4h: não repete o aviso se já enviado recentemente.
+      const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+      const { data: recentBlock } = await admin
+        .from('crm_messages')
+        .select('id')
+        .eq('conversation_id', convRow!.id)
+        .eq('direction', 'out')
+        .gt('created_at', fourHoursAgo)
+        .filter('metadata->>tag', 'eq', 'media_blocked')
+        .maybeSingle();
+
+      if (!recentBlock) {
+        try {
+          if (provider === 'zapi') {
+            const c = (zapiCfgRow?.value as any) || {};
+            const INSTANCE_ID = (c.instance_id || Deno.env.get('ZAPI_INSTANCE_ID') || '').trim();
+            const INSTANCE_TOKEN = (c.instance_token || Deno.env.get('ZAPI_INSTANCE_TOKEN') || '').trim();
+            const CLIENT_TOKEN = (c.client_token || Deno.env.get('ZAPI_CLIENT_TOKEN') || '').trim();
+            if (INSTANCE_ID && INSTANCE_TOKEN) {
+              await fetch(`https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...(CLIENT_TOKEN ? { 'Client-Token': CLIENT_TOKEN } : {}) },
+                body: JSON.stringify({ phone, message: blockedMsg }),
+              });
+            }
+          } else {
+            const fnName = provider === 'wapi_sucesso' ? 'send-wapi-sucesso' : 'send-wapi';
+            await admin.functions.invoke(fnName, { body: { phone, message: blockedMsg } });
+          }
+
+          await admin.from('crm_messages').insert({
+            conversation_id: convRow!.id,
+            direction: 'out',
+            source: provider,
+            status: 'sent',
+            body: blockedMsg,
+            metadata: { type: 'media_blocked', tag: 'media_blocked', media_kind: blockedMediaKind },
+          });
+        } catch (e) {
+          console.error('media_blocked: erro ao enviar aviso', e);
+        }
+      }
+
+      await admin.from('automation_logs').insert({
+        contact_phone: phone,
+        event_type: 'media_blocked',
+        reason: 'WhatsApp não recebe arquivos — direcionado ao sistema',
+        metadata: { provider, media_kind: blockedMediaKind, deduped: !!recentBlock },
+      });
+
+      return await finish({ ok: true, blocked: true, reason: 'media_not_allowed', media_kind: blockedMediaKind });
     }
 
     // LOG DE INÍCIO
