@@ -3,7 +3,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
   Salad, ChevronRight, Flame, Clock, Utensils,
-  UtensilsCrossed, Beaker, Brain, Layers, Bell, Droplets, Target, Plus, Minus, Beef
+  UtensilsCrossed, Beaker, Brain, Layers, Bell, Droplets, Target, Plus, Minus, Beef, CalendarDays, History
 } from "lucide-react";
 import cardHormoniosImg from "@/assets/sthnews-subq-glass-1.jpg";
 import cardDicasImg from "@/assets/sthnews-triade-thumb.jpg";
@@ -151,6 +151,37 @@ const StudentOverview = () => {
     enabled: !!user?.id,
   });
 
+  // Histórico completo de planos (entrada + renovações)
+  const { data: planHistory = [] } = useQuery({
+    queryKey: ["plan-history", user?.id],
+    queryFn: async () => {
+      const { data: subs } = await supabase
+        .from("subscriptions")
+        .select("id, plan_id, start_date, end_date, status, created_at")
+        .eq("user_id", user!.id)
+        .order("start_date", { ascending: true });
+      const list = subs || [];
+      const planIds = Array.from(new Set(list.map((s: any) => s.plan_id).filter(Boolean)));
+      let plansMap: Record<string, string> = {};
+      if (planIds.length) {
+        const { data: plans } = await supabase.from("plans").select("id, name").in("id", planIds);
+        plansMap = Object.fromEntries((plans || []).map((p: any) => [p.id, p.name]));
+      }
+      return list.map((s: any) => ({ ...s, plan_name: plansMap[s.plan_id] || "Plano" }));
+    },
+    enabled: !!user?.id,
+  });
+
+  const fmtDate = (s?: string | null) => {
+    if (!s) return "—";
+    try { return new Date(s + (s.length === 10 ? "T00:00:00" : "")).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }); }
+    catch { return "—"; }
+  };
+  const firstStart = planHistory[0]?.start_date as string | undefined;
+  const currentSub = planHistory.length
+    ? [...planHistory].sort((a: any, b: any) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())[0]
+    : null;
+
   // Latest STH News = última tendência publicada
   const latestTrend = getLatestTrend();
 
@@ -269,6 +300,70 @@ const StudentOverview = () => {
           </div>
         </div>
       </div>
+
+      {/* HISTÓRICO DE PLANOS */}
+      {planHistory.length > 0 && (
+        <div className="mb-10 rounded-3xl border border-border/40 bg-background overflow-hidden">
+          <div className="p-6">
+            <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5 flex items-center gap-1.5">
+              <History className="w-3 h-3" /> Sua jornada
+            </p>
+
+            <div className="grid grid-cols-2 gap-3 mb-5">
+              <div className="rounded-2xl border border-border/40 p-4">
+                <p className="text-[9px] font-medium tracking-[0.2em] uppercase text-muted-foreground flex items-center gap-1">
+                  <CalendarDays className="w-2.5 h-2.5" /> Plano atual
+                </p>
+                <p className="text-[14px] font-semibold text-foreground tracking-tight mt-2 truncate">{currentSub?.plan_name || "—"}</p>
+                <p className="text-[11px] text-muted-foreground font-light tracking-tight mt-1">
+                  Início: {fmtDate(currentSub?.start_date)}
+                </p>
+                <p className="text-[11px] text-muted-foreground font-light tracking-tight">
+                  Vence: {fmtDate(currentSub?.end_date)}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border/40 p-4">
+                <p className="text-[9px] font-medium tracking-[0.2em] uppercase text-muted-foreground flex items-center gap-1">
+                  <CalendarDays className="w-2.5 h-2.5" /> Você é STH desde
+                </p>
+                <p className="text-[14px] font-semibold text-foreground tracking-tight mt-2">{fmtDate(firstStart)}</p>
+                <p className="text-[11px] text-muted-foreground font-light tracking-tight mt-1">
+                  {planHistory.length} {planHistory.length === 1 ? "ciclo" : "ciclos"} contratados
+                </p>
+              </div>
+            </div>
+
+            <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground mb-3">Histórico</p>
+            <div className="relative pl-4">
+              <div className="absolute left-[5px] top-1 bottom-1 w-px bg-border/60" />
+              <ul className="space-y-3">
+                {[...planHistory].reverse().map((s: any, idx: number) => {
+                  const isCurrent = s.id === currentSub?.id;
+                  const isFirst = idx === planHistory.length - 1;
+                  return (
+                    <li key={s.id} className="relative">
+                      <span className={`absolute -left-4 top-1.5 w-2.5 h-2.5 rounded-full border ${isCurrent ? "bg-foreground border-foreground" : "bg-background border-border"}`} />
+                      <div className="flex items-baseline justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[13px] font-medium text-foreground tracking-tight truncate">
+                            {s.plan_name}
+                            {isCurrent && <span className="ml-2 text-[9px] uppercase tracking-[0.18em] font-semibold text-foreground/80">· atual</span>}
+                            {!isCurrent && isFirst && <span className="ml-2 text-[9px] uppercase tracking-[0.18em] font-medium text-muted-foreground">· 1ª adesão</span>}
+                            {!isCurrent && !isFirst && <span className="ml-2 text-[9px] uppercase tracking-[0.18em] font-medium text-muted-foreground">· renovação</span>}
+                          </p>
+                          <p className="text-[10.5px] text-muted-foreground font-light tracking-tight mt-0.5">
+                            {fmtDate(s.start_date)} → {fmtDate(s.end_date)}
+                          </p>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* STH NEWS — última tendência publicada (destaque grande) */}
       <Link to={latestTrend.path} className="block mb-10 group">
