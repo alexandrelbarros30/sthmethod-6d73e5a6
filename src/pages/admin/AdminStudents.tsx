@@ -28,6 +28,7 @@ import SignedImage from "@/components/shared/SignedImage";
 import { getSecureFileUrl, extractStoragePath } from "@/lib/secure-file-url";
 import AdminBodyImageUpload from "@/components/admin/AdminBodyImageUpload";
 import AdminImageHistory from "@/components/admin/AdminImageHistory";
+import StudentPlanHistory from "@/components/admin/StudentPlanHistory";
 import AnamnesisEntryItem from "@/components/shared/AnamnesisEntryItem";
 import EvolutionComparison from "@/components/shared/EvolutionComparison";
 import EvolutionUpdateHistory from "@/components/shared/EvolutionUpdateHistory";
@@ -1461,6 +1462,10 @@ const AdminStudents = () => {
                       </span>
                     </div>
                   </div>
+                </section>
+                <section>
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Histórico de Planos</h3>
+                  <StudentPlanHistory userId={selected.user_id} />
                 </section>
                 <section>
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Atividade & Objetivo</h3>
