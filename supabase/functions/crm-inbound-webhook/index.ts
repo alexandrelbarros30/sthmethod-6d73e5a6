@@ -71,15 +71,33 @@ async function transcribeAudioFromUrl(url: string): Promise<string | null> {
 function detectIncomingMediaKind(payload: any): 'image' | 'video' | 'document' | 'sticker' | null {
   if (!payload) return null;
   const d = payload?.data || {};
+  // Z-API: payload.image / payload.video / payload.document / payload.sticker
   if (payload?.image || d?.image) return 'image';
   if (payload?.video || d?.video) return 'video';
   if (payload?.document || d?.document) return 'document';
   if (payload?.sticker || d?.sticker) return 'sticker';
+  // W-API / Baileys: msgContent.{imageMessage|videoMessage|documentMessage|stickerMessage|documentWithCaptionMessage}
+  // ou aninhado em message.* (variações de provider).
+  const containers = [payload?.msgContent, d?.msgContent, payload?.message, d?.message, payload?.messageContent].filter(Boolean);
+  for (const c of containers) {
+    if (!c || typeof c !== 'object') continue;
+    if (c.imageMessage) return 'image';
+    if (c.videoMessage) return 'video';
+    if (c.documentMessage || c.documentWithCaptionMessage || c.fileMessage) return 'document';
+    if (c.stickerMessage) return 'sticker';
+    // documentWithCaptionMessage costuma envelopar outro message
+    if (c.documentWithCaptionMessage?.message?.documentMessage) return 'document';
+  }
   const mt = String(payload?.messageType || payload?.type || d?.messageType || '').toLowerCase();
   if (mt.includes('imagemessage') || mt === 'image') return 'image';
   if (mt.includes('videomessage') || mt === 'video') return 'video';
   if (mt.includes('documentmessage') || mt === 'document' || mt.includes('file')) return 'document';
   if (mt.includes('stickermessage') || mt === 'sticker') return 'sticker';
+  // Mimetype direto no payload (alguns providers expõem assim)
+  const mime = String(payload?.mimetype || d?.mimetype || payload?.mimeType || d?.mimeType || '').toLowerCase();
+  if (mime.startsWith('image/')) return mime.includes('webp') ? 'sticker' : 'image';
+  if (mime.startsWith('video/')) return 'video';
+  if (mime.startsWith('application/') || mime === 'text/plain' || mime.includes('pdf')) return 'document';
   return null;
 }
 
