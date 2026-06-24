@@ -339,7 +339,9 @@ export async function handleCasSearch(req: Request) {
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, serviceKey);
     metricsSupabase = supabase;
 
-    const geminiKey = Deno.env.get('GEMINI_API_KEY') ?? Deno.env.get('GEMINI_API_KEY_FALLBACK');
+    const primaryKey = Deno.env.get('GEMINI_API_KEY');
+    const fallbackKey = Deno.env.get('GEMINI_API_KEY_FALLBACK');
+    const geminiKey = [primaryKey, fallbackKey].filter(Boolean).join('||');
     if (!geminiKey) {
       return responseJson({ error: userMessageForStatus('config_error'), status: 'config_error', uiState: 'no_response' }, 200);
     }
