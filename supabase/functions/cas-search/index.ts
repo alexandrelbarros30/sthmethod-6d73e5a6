@@ -63,7 +63,7 @@ export async function makeCacheKey(params: {
   attachmentSignature?: string | null;
 }) {
   return sha256Hex(JSON.stringify({
-    v: 2,
+    v: 3,
     query: normalizeQuery(params.query),
     discipline: params.discipline || null,
     intent: params.intent || null,
@@ -186,21 +186,21 @@ export async function geminiAnswer(
 }
 
 export function detectIntent(q: string): { intent: string; instruction: string } {
-  const s = q.toLowerCase().trim();
+  const s = stripAccents(q).toLowerCase().trim();
   const has = (re: RegExp) => re.test(s);
-  if (has(/\b(o que (é|e|sao|são)|defina|definição de|significad[oa] de|conceito de|o que significa)\b/))
+  if (has(/(^|\s)(o que e|o que sao|defina|definicao de|significado de|conceito de|o que significa)(\s|$)/))
     return { intent: 'definicao', instruction: 'Forneça definição objetiva (1 frase) seguida de classificação/elementos.' };
-  if (has(/\b(por\s*qu[eê]|porqu[eê]|qual a (razão|causa|motivo)|finalidade de|para que serve)\b/))
+  if (has(/\b(por\s*que|porque|qual a (razao|causa|motivo)|finalidade de|para que serve)\b/))
     return { intent: 'causa_finalidade', instruction: 'Explique a razão/finalidade com fundamento normativo citado.' };
   if (has(/\b(como|de que forma|procedimento|passo a passo|etapas)\b/))
     return { intent: 'procedimento', instruction: 'Liste o passo a passo numerado conforme a apostila.' };
   if (has(/\b(qual a diferença|diferença entre|distinção entre|comparar|comparação)\b/))
     return { intent: 'comparacao', instruction: 'Use uma tabela markdown comparando os itens lado a lado.' };
-  if (has(/\b(quando|em que (caso|hipótese)|hipóteses de|prazo)\b/))
+  if (has(/\b(quando|em que (caso|hipotese)|hipoteses de|prazo)\b/))
     return { intent: 'hipoteses', instruction: 'Liste hipóteses/prazos citando dispositivo legal.' };
-  if (has(/\b(quem|competência de|atribuição|responsável por)\b/))
+  if (has(/\b(quem|competencia de|atribuicao|responsavel por)\b/))
     return { intent: 'competencia', instruction: 'Indique autoridade competente com base legal.' };
-  if (has(/\b(cite|liste|elenc[ao]|enumere|exemplos de|tipos de|espécies de|classificação)\b/))
+  if (has(/\b(cite|liste|elenc[ao]|enumere|exemplos de|tipos de|especies de|classificacao)\b/))
     return { intent: 'enumeracao', instruction: 'Use lista enumerada, sem omitir itens.' };
   if (has(/\b(verdadeiro ou falso|certo ou errado|é correto|é verdadeiro|assinale)\b/))
     return { intent: 'julgamento', instruction: 'Responda CERTO/ERRADO já na primeira frase e justifique citando [Fonte N].' };
@@ -228,6 +228,98 @@ function compactText(text: string, max = 700) {
   const normalized = text.replace(/\s+/g, ' ').trim();
   if (normalized.length <= max) return normalized;
   return `${normalized.slice(0, max).trim()}...`;
+}
+
+const QUERY_STOP_WORDS = new Set([
+  'a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas', 'de', 'da', 'do', 'das', 'dos', 'e', 'em', 'no', 'na', 'nos', 'nas',
+  'que', 'qual', 'quais', 'quem', 'quando', 'como', 'onde', 'por', 'para', 'pra', 'sobre', 'explique', 'fale', 'cite', 'liste',
+  'defina', 'definicao', 'definição', 'conceito', 'significado', 'significa', 'seria', 'sao', 'são', 'eh', 'é', 'cas', 'apostila',
+]);
+
+function normalizeSearchText(s: string) {
+  return stripAccents(s).toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+function escapeRegExp(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function extractFocusTerms(q: string) {
+  const cleaned = normalizeSearchText(q)
+    .replace(/\b(o que e|definicao de|defina|conceito de|significado de|o que significa|qual e|explique|fale sobre)\b/g, ' ')
+    .replace(/[^\p{L}\p{N}\s-]/gu, ' ');
+  const terms = cleaned
+    .split(/\s+/)
+    .map((t) => t.trim())
+    .filter((t) => t.length >= 4 && !QUERY_STOP_WORDS.has(t));
+  return Array.from(new Set(terms)).slice(0, 8);
+}
+
+function looksLikeQuestionBank(content: string) {
+  const s = normalizeSearchText(content);
+  const optionCount = (s.match(/\b[a-e]\s*[).:-]/g) ?? []).length;
+  return optionCount >= 3 || /\b(gabarito|assinale|qual alternativa|que tipo de|certo ou errado|verdadeiro ou falso)\b/.test(s);
+}
+
+export function definitionScore(row: { content: string; discipline?: string; similarity?: number }, q: string, intent: string | null) {
+  const content = normalizeSearchText(row.content);
+  const terms = extractFocusTerms(q);
+  let score = (Number(row.similarity) || 0) * 100;
+
+  for (const term of terms) {
+    const escaped = escapeRegExp(term);
+    const occurrences = content.match(new RegExp(`\\b${escaped}\\b`, 'g'))?.length ?? 0;
+    score += Math.min(occurrences, 8) * 10;
+
+    if (intent === 'definicao') {
+      const patterns = [
+        new RegExp(`\\b${escaped}\\b.{0,180}\\b(e|sao|consiste|constitui|caracteriza|significa|trata-se|define-se)\\b`),
+        new RegExp(`\\b(e|sao|constitui|consiste|caracteriza|significa|define-se)\\b.{0,180}\\b${escaped}\\b`),
+        new RegExp(`\\bconstitui crime de ${escaped}\\b`),
+        new RegExp(`\\b${escaped} se caracteriza\\b`),
+        new RegExp(`\\btermo ${escaped}\\b`),
+        /\bart\.?\s*1[ºo]?\b.{0,140}\bconstitui\b/,
+      ];
+      if (patterns.some((re) => re.test(content))) score += 140;
+      if (new RegExp(`\\b${escaped} se caracteriza como\\b`).test(content)) score += 220;
+      if (new RegExp(`\\btermo ${escaped}\\b.{0,100}\\bsignifica\\b`).test(content)) score += 180;
+      if (new RegExp(`\\be o sofrimento|\\be produzir sofrimento|\\bsofrimento fisico ou mental\\b`).test(content)) score += 120;
+    }
+  }
+
+  if (/\b(lei|art\.?|inciso|caput|constitui crime|crime de|caracteriza|significa|conceito|defini)\b/.test(content)) score += 30;
+  if (looksLikeQuestionBank(row.content)) score -= 90;
+  if (row.discipline === 'LEIS ESPECIAIS') score += 20;
+  if (row.discipline === 'DIREITO PENAL MILITAR') score += 8;
+  return score;
+}
+
+async function definitionLookup(supabase: any, q: string, discipline: string | null, intent: string, limit: number) {
+  if (intent !== 'definicao') return [];
+  const terms = extractFocusTerms(q);
+  if (terms.length === 0) return [];
+
+  const seen = new Map<number, any>();
+  for (const term of terms) {
+    const like = `%${term.replace(/[%_]/g, ' ')}%`;
+    let qb = (supabase as any)
+      .from('cas_chunks')
+      .select('id, discipline, page_start, page_end, content')
+      .ilike('content', like)
+      .limit(80);
+    if (discipline) qb = qb.eq('discipline', discipline);
+    const { data, error } = await qb;
+    if (error) throw new Error(error.message);
+    for (const row of (data ?? []) as any[]) {
+      const scored = { ...row, similarity: definitionScore(row, q, intent) / 1000 };
+      const prev = seen.get(row.id);
+      if (!prev || scored.similarity > (prev.similarity ?? 0)) seen.set(row.id, scored);
+    }
+  }
+
+  return Array.from(seen.values())
+    .sort((a, b) => definitionScore(b, q, intent) - definitionScore(a, q, intent))
+    .slice(0, Math.max(limit, 10));
 }
 
 function buildSourceFallbackAnswer(q: string, matches: Array<{ source?: string; discipline: string; page_start: number; page_end: number; content: string }>, answerError: string | null) {
@@ -279,7 +371,7 @@ function expandTokens(q: string): string[] {
   return Array.from(out);
 }
 
-async function hybridSearch(supabase: any, q: string, discipline: string | null, matchCount: number) {
+async function hybridSearch(supabase: any, q: string, discipline: string | null, matchCount: number, intent: string) {
   const queries = new Set<string>([q]);
   for (const t of expandTokens(q)) if (t.length >= 4) queries.add(t);
   const seen = new Map<number, any>();
@@ -296,6 +388,17 @@ async function hybridSearch(supabase: any, q: string, discipline: string | null,
       if (!prev || (row.similarity ?? 0) > (prev.similarity ?? 0)) seen.set(row.id, row);
     }
   }
+  // Em perguntas de definição, injeta e prioriza trechos literais que contenham
+  // padrões como "X é", "X se caracteriza", "constitui crime de X" etc.
+  try {
+    const definitionRows = await definitionLookup(supabase, q, discipline, intent, matchCount);
+    for (const row of definitionRows) {
+      const prev = seen.get(row.id);
+      if (!prev || definitionScore(row, q, intent) > definitionScore(prev, q, intent)) seen.set(row.id, row);
+    }
+  } catch (e) {
+    console.error(JSON.stringify({ event: 'cas_definition_lookup_failed', error: String((e as Error)?.message || e) }));
+  }
   // TOC lookup: inject chunks de seções cujo título do sumário casa com a query
   try {
     const tocRows = await tocLookup(supabase, q, discipline, matchCount);
@@ -307,7 +410,10 @@ async function hybridSearch(supabase: any, q: string, discipline: string | null,
     console.error(JSON.stringify({ event: 'cas_toc_lookup_failed', error: String((e as Error)?.message || e) }));
   }
   // Dedup por página/disciplina para evitar que múltiplos chunks da mesma página dominem
-  const sorted = Array.from(seen.values()).sort((a, b) => (b.similarity ?? 0) - (a.similarity ?? 0));
+  const sorted = Array.from(seen.values()).sort((a, b) => {
+    if (intent === 'definicao') return definitionScore(b, q, intent) - definitionScore(a, q, intent);
+    return (b.similarity ?? 0) - (a.similarity ?? 0);
+  });
   const pageSeen = new Set<string>();
   const deduped: any[] = [];
   for (const m of sorted) {
@@ -573,7 +679,7 @@ export async function handleCasSearch(req: Request) {
       }
     }
 
-    const matches = await hybridSearch(supabase, q, discipline || null, boundedMatchCount);
+    const matches = await hybridSearch(supabase, q, discipline || null, boundedMatchCount, intent.intent);
     metrics.matchesCount = matches.length;
     let answer: string | null = null;
     let structured: any = null;
@@ -591,6 +697,8 @@ export async function handleCasSearch(req: Request) {
       const sys = `Você é o cérebro de estudo do CAS-PMERJ — um pesquisador preciso, no estilo Brainly/Passei Direto. Sua única base de conhecimento são os trechos fornecidos da apostila oficial. Nunca invente fora deles. Cite fontes como [Fonte N] sempre que afirmar algo. Se a resposta não está nos trechos, declare honestamente que o conteúdo não foi localizado e sugira reformular.
 
 TIPO DA PERGUNTA detectado: ${intent.intent}. ${intent.instruction}
+
+REGRA DE DEFINIÇÃO EXATA: se a pergunta pedir "o que é", "defina", "conceito" ou "significado", procure primeiro nas fontes frases definidoras literais, especialmente padrões como "X é", "X se caracteriza", "constitui crime de X", "consiste em" ou "significa". A resposta curta deve abrir com essa definição da apostila, sem trocar por espécies, questões de prova ou comentários laterais quando houver definição direta nas fontes.
 
 IMPORTANTE: Cada fonte vem rotulada como APOSTILA (conteúdo teórico) ou QUESTÕES (prova oficial com gabarito). Sempre indique de qual tipo vem a citação (ex.: "[Fonte 3 — QUESTÕES]"). Quando houver questões, comente brevemente a resolução/gabarito.
 

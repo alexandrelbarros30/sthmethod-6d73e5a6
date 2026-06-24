@@ -13,6 +13,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@ai-sdk/openai-compatible": "0.2",
     "@capacitor/android": "^8.1.0",
     "@capacitor/cli": "^8.1.0",
     "@capacitor/core": "^8.1.0",
@@ -60,6 +61,7 @@
     "@tiptap/starter-kit": "^2.11.5",
     "@types/dompurify": "^3.2.0",
     "@xyflow/react": "^12.11.0",
+    "ai": "4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
