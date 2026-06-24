@@ -118,6 +118,26 @@ function splitAnswerIntoCards(markdown: string): AnswerSection[] {
 function MarkdownAnswerCards({ markdown }: { markdown: string }) {
   const sections = splitAnswerIntoCards(markdown);
 
+  const formatForReading = (text: string): string => {
+    const blocks: string[] = [];
+    let t = text.replace(/```[\s\S]*?```/g, (m) => {
+      blocks.push(m);
+      return `\u0000B${blocks.length - 1}\u0000`;
+    });
+    t = t.replace(/\?\s+(?=\S)/g, "?\n\n");
+    t = t.replace(
+      /(?:^|\s)\(?([A-Ea-e])\s*[\)\-:]\s+/g,
+      (_m, letter) => `\n\n**${String(letter).toUpperCase()})** `,
+    );
+    t = t.replace(
+      /(?:^|(?<=[.;:!?]))\s+(\d{1,2})\s*[\)\.\-]\s+/g,
+      (_m, num) => `\n\n**${num}.** `,
+    );
+    t = t.replace(/\n{3,}/g, "\n\n").trimStart();
+    t = t.replace(/\u0000B(\d+)\u0000/g, (_m, i) => blocks[Number(i)]);
+    return t;
+  };
+
   return (
     <div className="space-y-4">
       {sections.map((section, index) => (
@@ -151,7 +171,7 @@ function MarkdownAnswerCards({ markdown }: { markdown: string }) {
             }}
           >
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {section.content}
+              {formatForReading(section.content)}
             </ReactMarkdown>
           </div>
         </article>
