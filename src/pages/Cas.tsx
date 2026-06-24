@@ -79,6 +79,78 @@ type Chunk = {
 
 type Mode = "search" | "book" | "simulado" | "study";
 
+type AnswerSection = {
+  kind: "answer" | "source";
+  title?: string;
+  content: string;
+  sourceNumber?: number;
+};
+
+function splitAnswerIntoCards(markdown: string): AnswerSection[] {
+  const lines = markdown.split("\n");
+  const sections: AnswerSection[] = [];
+  let current: AnswerSection = { kind: "answer", content: "" };
+
+  const flush = () => {
+    const content = current.content.trim();
+    if (content) sections.push({ ...current, content });
+  };
+
+  for (const line of lines) {
+    const sourceMatch = line.match(/^#{2,4}\s*Fonte\s+(\d+)\s*(?:[—-]\s*(.*))?$/i);
+    if (sourceMatch) {
+      flush();
+      current = {
+        kind: "source",
+        sourceNumber: Number(sourceMatch[1]),
+        title: sourceMatch[2]?.trim() || `Fonte ${sourceMatch[1]}`,
+        content: "",
+      };
+      continue;
+    }
+    current.content += `${line}\n`;
+  }
+
+  flush();
+  return sections.length > 0 ? sections : [{ kind: "answer", content: markdown }];
+}
+
+function MarkdownAnswerCards({ markdown }: { markdown: string }) {
+  const sections = splitAnswerIntoCards(markdown);
+
+  return (
+    <div className="space-y-4">
+      {sections.map((section, index) => (
+        <article
+          key={`${section.kind}-${section.sourceNumber ?? index}`}
+          className={cn(
+            "rounded-3xl border p-7",
+            section.kind === "source" ? "bg-[#f5f5f7] border-[#d2d2d7]" : "bg-white border-[#d2d2d7]",
+          )}
+        >
+          {section.kind === "source" && (
+            <div className="mb-4 flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-[#1d1d1f] text-white">
+                Fonte {String(section.sourceNumber).padStart(2, "0")}
+              </span>
+              {section.title && (
+                <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1d1d1f]">
+                  {section.title}
+                </span>
+              )}
+            </div>
+          )}
+          <div className="prose prose-neutral max-w-none text-[#1d1d1f] leading-[1.75] prose-headings:font-semibold prose-strong:text-[#1d1d1f] prose-li:my-1 prose-p:my-3">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {section.content}
+            </ReactMarkdown>
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
 type QuizQuestion = {
   id: number;
   exam: string;
