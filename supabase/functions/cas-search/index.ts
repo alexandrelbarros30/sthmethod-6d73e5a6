@@ -1,8 +1,9 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { generateText } from 'npm:ai@4';
+import { createOpenAICompatible } from 'npm:@ai-sdk/openai-compatible@0.2';
 
-export const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-export const CHAT_MODELS = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash-lite'];
+export const CHAT_MODELS = ['google/gemini-3-flash-preview', 'google/gemini-2.5-flash', 'google/gemini-2.5-flash-lite'];
 export const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 const encoder = new TextEncoder();
@@ -89,34 +90,36 @@ function statusFromExternal(status: number): AiStatus {
 }
 
 function userMessageForStatus(status: AiStatus, externalStatus?: number | null) {
-  if (status === 'quota_exhausted') return 'Quota da API Gemini esgotada. Verifique a chave/quota no Google AI Studio.';
+  if (status === 'quota_exhausted') return 'Créditos da Lovable AI esgotados. Adicione créditos em Settings → Plans & credits.';
   if (status === 'rate_limited') return 'Limite temporário de IA atingido. Tente novamente em alguns minutos.';
   if (status === 'upstream_error') return 'Serviço de IA instável no momento. Tente novamente em instantes.';
-  if (status === 'config_error') return 'Configuração de IA indisponível no backend.';
+  if (status === 'config_error') return 'LOVABLE_API_KEY ausente no backend.';
   return `Consulta sem resposta do modelo${externalStatus ? ` (${externalStatus})` : ''}.`;
 }
 
-export async function tryOnce(model: string, systemPrompt: string, parts: Part[], apiKey: string, jsonMode: boolean, timeoutMs = 22000, fetchImpl: typeof fetch = fetch) {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), timeoutMs);
-  try {
-    return await fetchImpl(`${GEMINI_BASE}/models/${model}:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      signal: ctrl.signal,
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-        contents: [{ role: 'user', parts }],
-        generationConfig: {
-          temperature: 0.25,
-          maxOutputTokens: 4096,
-          ...(jsonMode ? { responseMimeType: 'application/json' } : {}),
-        },
-      }),
-    });
-  } finally {
-    clearTimeout(t);
-  }
+function partsToUserContent(parts: Part[]): any[] {
+  return parts.map((p) => {
+    if (p.text !== undefined) return { type: 'text', text: p.text };
+    if (p.inline_data) {
+      const { mime_type, data } = p.inline_data;
+      if (mime_type.startsWith('image/')) {
+        return { type: 'image', image: `data:${mime_type};base64,${data}` };
+      }
+      return { type: 'file', data, mediaType: mime_type };
+    }
+    return { type: 'text', text: '' };
+  });
+}
+
+function classifyAiError(err: unknown): { status: AiStatus; externalStatus: number | null; message: string } {
+  const anyErr = err as any;
+  const msg = String(anyErr?.message || err || '');
+  const status: number | undefined = anyErr?.statusCode || anyErr?.status || anyErr?.responseHeaders?.status;
+  const ext = typeof status === 'number' ? status : (/\b(\d{3})\b/.exec(msg)?.[1] ? Number(/\b(\d{3})\b/.exec(msg)![1]) : null);
+  if (ext === 429) return { status: 'rate_limited', externalStatus: 429, message: msg };
+  if (ext === 402) return { status: 'quota_exhausted', externalStatus: 402, message: msg };
+  if (ext && ext >= 500) return { status: 'upstream_error', externalStatus: ext, message: msg };
+  return { status: 'no_response', externalStatus: ext, message: msg };
 }
 
 export async function geminiAnswer(
@@ -124,51 +127,62 @@ export async function geminiAnswer(
   parts: Part[] | string,
   apiKey: string,
   jsonMode = false,
-  fetchImpl: typeof fetch = fetch,
+  _fetchImpl: typeof fetch = fetch,
 ): Promise<AiAnswer> {
   const partsArr: Part[] = typeof parts === 'string' ? [{ text: parts }] : parts;
-  let lastStatus = 0;
-  let lastBody = '';
+  if (!apiKey) {
+    return { text: null, error: userMessageForStatus('config_error'), status: 'config_error', fallbackUsed: false, fallbackProvider: null, model: null, externalStatus: null };
+  }
+  const provider = createOpenAICompatible({
+    name: 'lovable',
+    baseURL: 'https://ai.gateway.lovable.dev/v1',
+    headers: {
+      'Lovable-API-Key': apiKey,
+      'X-Lovable-AIG-SDK': 'vercel-ai-sdk',
+    },
+  });
 
-  const keys = apiKey.split('||').map((k) => k.trim()).filter(Boolean);
-  for (let keyIdx = 0; keyIdx < keys.length; keyIdx++) {
-    const key = keys[keyIdx];
-    const keyLabel = keyIdx === 0 ? 'primary' : `fallback_${keyIdx}`;
-    let keyQuotaExhausted = false;
-    for (const model of CHAT_MODELS) {
-      for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          const r = await tryOnce(model, systemPrompt, partsArr, key, jsonMode, 22000, fetchImpl);
-          if (r.ok) {
-            const j = await r.json();
-            const parts = j?.candidates?.[0]?.content?.parts ?? [];
-            const text = parts.map((p: { text?: string }) => p.text ?? '').join('').trim() || null;
-            if (text) return { text, error: null, status: 'ok', fallbackUsed: keyIdx > 0, fallbackProvider: keyIdx > 0 ? `gemini-key-${keyLabel}` : null, model, externalStatus: r.status };
-            lastStatus = r.status;
-            lastBody = 'empty_response';
-            console.error(JSON.stringify({ event: 'cas_search_gemini_empty', key: keyLabel, model, attempt: attempt + 1 }));
-            break;
-          }
-          lastStatus = r.status;
-          lastBody = await r.text();
-          console.error(JSON.stringify({ event: 'cas_search_gemini_failed', key: keyLabel, model, attempt: attempt + 1, status: r.status, body: lastBody.slice(0, 300) }));
-          if (r.status === 429) { keyQuotaExhausted = true; break; }
-          if (r.status === 404 || r.status === 400) break;
-          if (!isRetryable(r.status)) break;
-          await sleep(400 * (attempt + 1));
-        } catch (e) {
-          lastStatus = 0;
-          lastBody = String((e as Error)?.message || e);
-          console.error(JSON.stringify({ event: 'cas_search_gemini_exception', key: keyLabel, model, attempt: attempt + 1, error: lastBody.slice(0, 300) }));
-          await sleep(400 * (attempt + 1));
+  const userContent = partsToUserContent(partsArr);
+  let lastError: { status: AiStatus; externalStatus: number | null; message: string } | null = null;
+
+  for (let modelIdx = 0; modelIdx < CHAT_MODELS.length; modelIdx++) {
+    const modelId = CHAT_MODELS[modelIdx];
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const { text } = await generateText({
+          model: provider(modelId),
+          system: systemPrompt + (jsonMode ? '\n\nIMPORTANTE: responda APENAS com JSON válido, sem cercas de código nem texto fora do objeto JSON.' : ''),
+          messages: [{ role: 'user', content: userContent as any }],
+          temperature: 0.25,
+          maxTokens: 4096,
+          abortSignal: AbortSignal.timeout(28000),
+        });
+        const trimmed = (text ?? '').trim();
+        if (trimmed) {
+          return { text: trimmed, error: null, status: 'ok', fallbackUsed: modelIdx > 0, fallbackProvider: modelIdx > 0 ? `lovable-${modelId}` : null, model: modelId, externalStatus: 200 };
         }
+        lastError = { status: 'no_response', externalStatus: 200, message: 'empty_response' };
+        console.error(JSON.stringify({ event: 'cas_search_ai_empty', model: modelId, attempt: attempt + 1 }));
+        break;
+      } catch (e) {
+        const info = classifyAiError(e);
+        lastError = info;
+        console.error(JSON.stringify({ event: 'cas_search_ai_failed', model: modelId, attempt: attempt + 1, status: info.externalStatus, error: info.message.slice(0, 300) }));
+        if (info.status === 'quota_exhausted') {
+          return { text: null, error: userMessageForStatus('quota_exhausted'), status: 'quota_exhausted', fallbackUsed: false, fallbackProvider: null, model: modelId, externalStatus: 402 };
+        }
+        if (info.status === 'rate_limited') {
+          await sleep(600 * (attempt + 1));
+          continue;
+        }
+        if (info.externalStatus && info.externalStatus < 500 && info.externalStatus !== 429) break;
+        await sleep(400 * (attempt + 1));
       }
-      if (keyQuotaExhausted) break;
     }
   }
 
-  const status = statusFromExternal(lastStatus);
-  return { text: null, error: userMessageForStatus(status, lastStatus), status, fallbackUsed: false, fallbackProvider: null, model: null, externalStatus: lastStatus || null };
+  const status = lastError?.status ?? 'no_response';
+  return { text: null, error: userMessageForStatus(status, lastError?.externalStatus ?? null), status, fallbackUsed: false, fallbackProvider: null, model: null, externalStatus: lastError?.externalStatus ?? null };
 }
 
 export function detectIntent(q: string): { intent: string; instruction: string } {
