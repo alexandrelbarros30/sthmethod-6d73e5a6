@@ -52,6 +52,28 @@ Deno.test("cas-search sinaliza quota esgotada quando Gateway retorna 402", async
   else Deno.env.delete("LOVABLE_API_KEY");
 });
 
+Deno.test("cas-search trata limite 403 do Gateway como quota esgotada", async () => {
+  const oldKey = Deno.env.get("LOVABLE_API_KEY");
+  Deno.env.set("LOVABLE_API_KEY", "test-lovable-key");
+
+  const fetchMock = async (input: string | URL | Request, _init?: RequestInit): Promise<Response> => {
+    const url = String(input);
+    if (url.startsWith(LOVABLE_GATEWAY)) {
+      return new Response(JSON.stringify({ type: "credit_limit_reached", message: "Workspace credit limit reached" }), { status: 403 });
+    }
+    return new Response(JSON.stringify({ error: { message: "rate limited" } }), { status: 429 });
+  };
+
+  const result = await geminiAnswer("sistema", "pergunta", "fake-gemini-key", false, fetchMock as typeof fetch);
+
+  assertEquals(result.status, "quota_exhausted");
+  assertEquals(result.externalStatus, 403);
+  assert(result.error?.toLowerCase().includes("quota"));
+
+  if (oldKey) Deno.env.set("LOVABLE_API_KEY", oldKey);
+  else Deno.env.delete("LOVABLE_API_KEY");
+});
+
 Deno.test("cas-search cache key muda por disciplina e parâmetros", async () => {
   const base = await makeCacheKey({ query: "O que é IPM?", discipline: "DIREITO PROCESSUAL PENAL MILITAR", intent: "definicao", language: "pt-BR", matchCount: 10, requestType: "search" });
   const sameNormalized = await makeCacheKey({ query: "  o que é ipm?  ", discipline: "DIREITO PROCESSUAL PENAL MILITAR", intent: "definicao", language: "pt-BR", matchCount: 10, requestType: "search" });
