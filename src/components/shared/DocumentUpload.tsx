@@ -59,8 +59,8 @@ export default function DocumentUpload({ userId, onUploaded }: DocumentUploadPro
       toast.error("Apenas arquivos PDF são aceitos");
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Arquivo muito grande (máx. 10MB)");
+    if (file.size > 55 * 1024 * 1024) {
+      toast.error("Arquivo muito grande (máx. 55MB)");
       return;
     }
 
