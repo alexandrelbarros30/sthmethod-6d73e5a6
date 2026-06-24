@@ -336,7 +336,7 @@ function extractLocalDefinition(q: string, matches: Array<{ discipline: string; 
   const terms = extractFocusTerms(q);
   if (terms.length === 0) return null;
 
-  let best: { text: string; sourceIndex: number; score: number } | null = null;
+  const candidates: Array<{ text: string; sourceIndex: number; score: number }> = [];
   matches.forEach((m, sourceIdx) => {
     const sentences = splitDefinitionSentences(m.content);
     sentences.forEach((sentence, idx) => {
@@ -362,11 +362,11 @@ function extractLocalDefinition(q: string, matches: Array<{ discipline: string; 
           return /^(o termo|e o|e a|sao|consiste|trata-se|art\.?|i\.|i -)/.test(n) || /\b(sofrimento|dor|maus-tratos|constitui crime|violencia|grave ameaca)\b/.test(n);
         });
       const text = [sentence, ...continuation].join(' ').replace(/\s+/g, ' ').trim();
-      if (!best || score > best.score) best = { text, sourceIndex: sourceIdx + 1, score };
+      candidates.push({ text, sourceIndex: sourceIdx + 1, score });
     });
   });
 
-  return best && best.text.length > 0 ? best : null;
+  return candidates.sort((a, b) => b.score - a.score)[0] ?? null;
 }
 
 function buildSourceFallbackAnswer(q: string, matches: Array<{ source?: string; discipline: string; page_start: number; page_end: number; content: string }>, answerError: string | null, intent = 'aberta') {
