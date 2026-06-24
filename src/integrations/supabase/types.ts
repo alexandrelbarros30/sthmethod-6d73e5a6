@@ -485,6 +485,120 @@ export type Database = {
         }
         Relationships: []
       }
+      cas_search_cache: {
+        Row: {
+          cache_key: string
+          created_at: string
+          discipline: string | null
+          expires_at: string
+          hit_count: number
+          intent: string | null
+          language: string
+          match_count: number
+          query: string
+          request_type: string
+          response: Json
+          updated_at: string
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string
+          discipline?: string | null
+          expires_at?: string
+          hit_count?: number
+          intent?: string | null
+          language?: string
+          match_count?: number
+          query: string
+          request_type?: string
+          response: Json
+          updated_at?: string
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string
+          discipline?: string | null
+          expires_at?: string
+          hit_count?: number
+          intent?: string | null
+          language?: string
+          match_count?: number
+          query?: string
+          request_type?: string
+          response?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cas_search_logs: {
+        Row: {
+          cache_hit: boolean
+          cache_key: string | null
+          created_at: string
+          discipline: string | null
+          duration_ms: number
+          error_code: string | null
+          error_message: string | null
+          external_status: number | null
+          fallback_provider: string | null
+          fallback_used: boolean
+          http_status: number
+          id: string
+          intent: string | null
+          language: string
+          match_count: number
+          matches_count: number
+          model: string | null
+          query: string | null
+          request_type: string
+          status: string
+        }
+        Insert: {
+          cache_hit?: boolean
+          cache_key?: string | null
+          created_at?: string
+          discipline?: string | null
+          duration_ms?: number
+          error_code?: string | null
+          error_message?: string | null
+          external_status?: number | null
+          fallback_provider?: string | null
+          fallback_used?: boolean
+          http_status?: number
+          id?: string
+          intent?: string | null
+          language?: string
+          match_count?: number
+          matches_count?: number
+          model?: string | null
+          query?: string | null
+          request_type?: string
+          status?: string
+        }
+        Update: {
+          cache_hit?: boolean
+          cache_key?: string | null
+          created_at?: string
+          discipline?: string | null
+          duration_ms?: number
+          error_code?: string | null
+          error_message?: string | null
+          external_status?: number | null
+          fallback_provider?: string | null
+          fallback_used?: boolean
+          http_status?: number
+          id?: string
+          intent?: string | null
+          language?: string
+          match_count?: number
+          matches_count?: number
+          model?: string | null
+          query?: string | null
+          request_type?: string
+          status?: string
+        }
+        Relationships: []
+      }
       clinical_documents: {
         Row: {
           created_at: string
@@ -4847,7 +4961,21 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      cas_search_metrics_hourly: {
+        Row: {
+          avg_duration_ms: number | null
+          cache_hits: number | null
+          failed_count: number | null
+          failure_rate_pct: number | null
+          fallback_uses: number | null
+          hour: string | null
+          p95_duration_ms: number | null
+          rate_limited_count: number | null
+          total_requests: number | null
+          upstream_5xx_count: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       crm_expire_idle_conversations: { Args: never; Returns: number }
