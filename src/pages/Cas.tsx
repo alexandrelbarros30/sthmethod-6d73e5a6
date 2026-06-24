@@ -59,7 +59,19 @@ type Chunk = {
   content: string;
 };
 
-type Mode = "search" | "book";
+type Mode = "search" | "book" | "simulado";
+
+type QuizQuestion = {
+  id: number;
+  exam: string;
+  discipline: string;
+  statement: string;
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  option_d: string;
+  correct_answer: "A" | "B" | "C" | "D";
+};
 
 export default function Cas() {
   const [mode, setMode] = useState<Mode>("search");
@@ -167,6 +179,15 @@ export default function Cas() {
               >
                 Disciplinas
               </button>
+              <button
+                onClick={() => setMode("simulado")}
+                className={cn(
+                  "px-4 py-1.5 rounded-full text-[12px] font-medium transition",
+                  mode === "simulado" ? "bg-white text-[#1d1d1f] shadow-sm" : "text-[#6e6e73] hover:text-[#1d1d1f]",
+                )}
+              >
+                Simulado
+              </button>
             </div>
             <a
               href={pdfAsset.url}
@@ -198,7 +219,7 @@ export default function Cas() {
             onSubmit={runSearch}
             onOpenDiscipline={(d) => { setMode("book"); openDiscipline(d); }}
           />
-        ) : (
+        ) : mode === "book" ? (
           <BookPanel
             selectedDisc={selectedDisc}
             chunks={chunks}
@@ -206,6 +227,8 @@ export default function Cas() {
             onSelect={openDiscipline}
             onBack={() => setSelectedDisc(null)}
           />
+        ) : (
+          <SimuladoPanel />
         )}
       </main>
     </div>
@@ -638,4 +661,209 @@ function shortName(d: string) {
     .replace("INTELIGÊNCIA POLICIAL", "Inteligência")
     .replace("PRÁTICA PROCESSUAL", "Prática Proc.")
     .replace("CHEFIA E LIDERANÇA", "Chefia/Liderança");
+}
+
+// ─────────────────────────────────────────────────────────────
+// Simulado: 40 questões aleatórias com gabarito no final
+// ─────────────────────────────────────────────────────────────
+function SimuladoPanel() {
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [answers, setAnswers] = useState<Record<number, "A" | "B" | "C" | "D">>({});
+  const [submitted, setSubmitted] = useState(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  async function load() {
+    setLoading(true);
+    setError(null);
+    setSubmitted(false);
+    setAnswers({});
+    try {
+      // Busca um pool amplo e amostra 40 client-side respeitando proporção de disciplinas
+      const { data, error } = await supabase
+        .from("cas_quiz_questions")
+        .select("id,exam,discipline,statement,option_a,option_b,option_c,option_d,correct_answer");
+      if (error) throw error;
+      const pool = (data ?? []) as QuizQuestion[];
+      // Agrupa por disciplina e amostra proporcionalmente até 40
+      const byDisc = new Map<string, QuizQuestion[]>();
+      pool.forEach((q) => {
+        const arr = byDisc.get(q.discipline) ?? [];
+        arr.push(q);
+        byDisc.set(q.discipline, arr);
+      });
+      const total = pool.length;
+      const picks: QuizQuestion[] = [];
+      byDisc.forEach((arr, _disc) => {
+        const target = Math.max(1, Math.round((arr.length / total) * 40));
+        const shuffled = [...arr].sort(() => Math.random() - 0.5);
+        picks.push(...shuffled.slice(0, target));
+      });
+      // Ajusta para exatamente 40
+      let final = picks.sort(() => Math.random() - 0.5);
+      if (final.length > 40) final = final.slice(0, 40);
+      while (final.length < 40 && pool.length > final.length) {
+        const candidate = pool[Math.floor(Math.random() * pool.length)];
+        if (!final.find((q) => q.id === candidate.id)) final.push(candidate);
+      }
+      setQuestions(final);
+    } catch (e: any) {
+      setError(e?.message ?? "Erro ao carregar simulado");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { load(); }, []);
+
+  const acertos = questions.filter((q) => answers[q.id] === q.correct_answer).length;
+
+  function handleSubmit() {
+    setSubmitted(true);
+    setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-[#6e6e73]">
+        <Loader2 className="h-4 w-4 animate-spin" /> Montando simulado…
+      </div>
+    );
+  }
+  if (error) return <div className="text-sm text-red-600">{error}</div>;
+
+  const respondidas = Object.keys(answers).length;
+
+  return (
+    <div className="space-y-6">
+      {/* Cabeçalho */}
+      <div className="bg-white rounded-2xl border border-[#d2d2d7] p-6 flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h2 className="text-[22px] font-semibold tracking-tight text-[#1d1d1f]">Simulado CAS</h2>
+          <p className="text-[13px] text-[#6e6e73] mt-1">
+            40 questões aleatórias misturando provas e anos, proporcionais às disciplinas.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="text-[12px] text-[#6e6e73]">
+            Respondidas <span className="font-semibold text-[#1d1d1f]">{respondidas}/40</span>
+          </div>
+          <Button variant="outline" size="sm" onClick={load} className="rounded-full">
+            Novo simulado
+          </Button>
+          {!submitted && (
+            <Button size="sm" onClick={handleSubmit} disabled={respondidas === 0} className="rounded-full bg-[#0071e3] hover:bg-[#0077ed]">
+              Finalizar e ver gabarito
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Resultado */}
+      {submitted && (
+        <div ref={resultsRef} className="bg-[#1d1d1f] text-white rounded-2xl p-6">
+          <div className="text-[11px] tracking-[0.2em] uppercase text-[#86868b] mb-2">Resultado</div>
+          <div className="flex items-baseline gap-3">
+            <div className="text-[44px] font-semibold tracking-tight">{acertos}/40</div>
+            <div className="text-[14px] text-[#a1a1a6]">
+              {((acertos / 40) * 100).toFixed(0)}% de aproveitamento
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Questões */}
+      <ol className="space-y-4">
+        {questions.map((q, idx) => {
+          const userAns = answers[q.id];
+          const opts: Array<["A" | "B" | "C" | "D", string]> = [
+            ["A", q.option_a], ["B", q.option_b], ["C", q.option_c], ["D", q.option_d],
+          ];
+          return (
+            <li key={q.id} className="bg-white rounded-2xl border border-[#d2d2d7] p-6">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-[10px] tracking-[0.2em] uppercase text-[#86868b]">
+                  Questão {idx + 1} · {shortName(q.discipline)} · {q.exam}
+                </div>
+                {submitted && (
+                  <div className={cn(
+                    "text-[11px] font-semibold px-2 py-0.5 rounded-full",
+                    userAns === q.correct_answer ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700",
+                  )}>
+                    {userAns === q.correct_answer ? "Correta" : userAns ? "Errada" : "Em branco"}
+                  </div>
+                )}
+              </div>
+              <p className="text-[15px] leading-[1.6] text-[#1d1d1f] mb-4 whitespace-pre-wrap">{q.statement}</p>
+              <div className="space-y-2">
+                {opts.map(([letter, text]) => {
+                  const isCorrect = submitted && letter === q.correct_answer;
+                  const isWrongPick = submitted && userAns === letter && letter !== q.correct_answer;
+                  const isSelected = userAns === letter;
+                  return (
+                    <label
+                      key={letter}
+                      className={cn(
+                        "flex gap-3 p-3 rounded-xl border cursor-pointer transition text-[14px] leading-snug",
+                        isCorrect ? "border-emerald-500 bg-emerald-50 text-emerald-900" :
+                        isWrongPick ? "border-red-400 bg-red-50 text-red-900" :
+                        isSelected ? "border-[#0071e3] bg-[#0071e3]/5" :
+                        "border-[#d2d2d7] hover:border-[#86868b]",
+                        submitted && "cursor-default",
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name={`q-${q.id}`}
+                        value={letter}
+                        checked={isSelected}
+                        disabled={submitted}
+                        onChange={() => setAnswers((p) => ({ ...p, [q.id]: letter }))}
+                        className="mt-1"
+                      />
+                      <span className="font-semibold w-5">{letter})</span>
+                      <span className="flex-1">{text}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+
+      {!submitted && (
+        <div className="flex justify-end">
+          <Button onClick={handleSubmit} disabled={respondidas === 0} className="rounded-full bg-[#0071e3] hover:bg-[#0077ed]">
+            Finalizar e ver gabarito
+          </Button>
+        </div>
+      )}
+
+      {/* Gabarito final */}
+      {submitted && (
+        <div className="bg-white rounded-2xl border border-[#d2d2d7] p-6">
+          <h3 className="text-[15px] font-semibold tracking-tight text-[#1d1d1f] mb-4">Gabarito</h3>
+          <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+            {questions.map((q, idx) => {
+              const userAns = answers[q.id];
+              const ok = userAns === q.correct_answer;
+              return (
+                <div key={q.id} className={cn(
+                  "rounded-lg border px-2 py-1.5 text-center",
+                  ok ? "border-emerald-500 bg-emerald-50" :
+                  userAns ? "border-red-400 bg-red-50" :
+                  "border-[#d2d2d7] bg-[#f5f5f7]",
+                )}>
+                  <div className="text-[10px] text-[#6e6e73]">Q{idx + 1}</div>
+                  <div className="text-[13px] font-semibold text-[#1d1d1f]">{q.correct_answer}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

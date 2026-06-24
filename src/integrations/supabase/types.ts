@@ -440,6 +440,51 @@ export type Database = {
         }
         Relationships: []
       }
+      cas_quiz_questions: {
+        Row: {
+          correct_answer: string
+          created_at: string
+          discipline: string
+          exam: string
+          id: number
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          page_ref: number | null
+          question_num: number
+          statement: string
+        }
+        Insert: {
+          correct_answer: string
+          created_at?: string
+          discipline: string
+          exam: string
+          id?: number
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          page_ref?: number | null
+          question_num: number
+          statement: string
+        }
+        Update: {
+          correct_answer?: string
+          created_at?: string
+          discipline?: string
+          exam?: string
+          id?: number
+          option_a?: string
+          option_b?: string
+          option_c?: string
+          option_d?: string
+          page_ref?: number | null
+          question_num?: number
+          statement?: string
+        }
+        Relationships: []
+      }
       clinical_documents: {
         Row: {
           created_at: string
