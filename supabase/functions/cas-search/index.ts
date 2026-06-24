@@ -2,9 +2,9 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-const CHAT_MODEL = 'gemini-2.5-pro';
+const CHAT_MODEL = 'gemini-2.5-flash';
 
-async function geminiAnswer(systemPrompt: string, userPrompt: string, apiKey: string): Promise<string | null> {
+async function geminiAnswer(systemPrompt: string, userPrompt: string, apiKey: string): Promise<{ text: string | null; error: string | null }> {
   const r = await fetch(`${GEMINI_BASE}/models/${CHAT_MODEL}:generateContent?key=${apiKey}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -15,12 +15,16 @@ async function geminiAnswer(systemPrompt: string, userPrompt: string, apiKey: st
     }),
   });
   if (!r.ok) {
-    console.error('gemini chat failed', r.status, await r.text());
-    return null;
+    const body = await r.text();
+    console.error('gemini chat failed', r.status, body);
+    let msg = `Gemini ${r.status}`;
+    if (r.status === 429) msg = 'Limite de uso da IA atingido. Tente novamente em alguns minutos ou contate o admin para aumentar a cota.';
+    return { text: null, error: msg };
   }
   const j = await r.json();
   const parts = j?.candidates?.[0]?.content?.parts ?? [];
-  return parts.map((p: { text?: string }) => p.text ?? '').join('').trim() || null;
+  const text = parts.map((p: { text?: string }) => p.text ?? '').join('').trim() || null;
+  return { text, error: null };
 }
 
 Deno.serve(async (req) => {
@@ -46,16 +50,19 @@ Deno.serve(async (req) => {
     if (error) throw new Error(error.message);
 
     let answer: string | null = null;
+    let answerError: string | null = null;
     if (withAnswer && matches && matches.length > 0) {
       const context = (matches as Array<{ discipline: string; page_start: number; page_end: number; content: string }>)
         .map((m, i) => `[Fonte ${i + 1} • ${m.discipline} • p.${m.page_start}-${m.page_end}]\n${m.content}`)
         .join('\n\n---\n\n');
       const sys = `Você é um tutor especializado nas apostilas do Curso de Aperfeiçoamento de Sargentos (CAS) da PMERJ. Responda APENAS com base nos trechos fornecidos. Cite as fontes no formato [Fonte N]. Seja didático, objetivo e estruturado (use tópicos quando ajudar). Se a resposta não estiver nos trechos, diga "Não encontrei esse conteúdo na apostila".`;
       const usr = `Pergunta do aluno:\n${q}\n\nTrechos da apostila:\n${context}\n\nResponda em português, com citações [Fonte N].`;
-      answer = await geminiAnswer(sys, usr, geminiKey);
+      const result = await geminiAnswer(sys, usr, geminiKey);
+      answer = result.text;
+      answerError = result.error;
     }
 
-    return new Response(JSON.stringify({ answer, matches }), {
+    return new Response(JSON.stringify({ answer, answerError, matches }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (e) {
