@@ -281,6 +281,16 @@ async function hybridSearch(supabase: any, q: string, discipline: string | null,
       if (!prev || (row.similarity ?? 0) > (prev.similarity ?? 0)) seen.set(row.id, row);
     }
   }
+  // TOC lookup: inject chunks de seções cujo título do sumário casa com a query
+  try {
+    const tocRows = await tocLookup(supabase, q, discipline, matchCount);
+    for (const row of tocRows) {
+      const prev = seen.get(row.id);
+      if (!prev || (row.similarity ?? 0) > (prev.similarity ?? 0)) seen.set(row.id, row);
+    }
+  } catch (e) {
+    console.error(JSON.stringify({ event: 'cas_toc_lookup_failed', error: String((e as Error)?.message || e) }));
+  }
   const apostila = Array.from(seen.values())
     .sort((a, b) => (b.similarity ?? 0) - (a.similarity ?? 0))
     .slice(0, matchCount)
@@ -295,6 +305,72 @@ async function hybridSearch(supabase: any, q: string, discipline: string | null,
     }));
   // Tela Pesquisar consulta APENAS a apostila (PDF). Questões ficam em outra aba.
   return apostila;
+}
+
+function stripAccents(s: string) {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function parseTocEntries(content: string): Array<{ title: string; page: number }> {
+  const out: Array<{ title: string; page: number }> = [];
+  const re = /([A-Za-zÁÉÍÓÚÂÊÔÃÕÇÜáéíóúâêôãõçü0-9][^\n]*?)\s*\.{3,}\s*(\d{1,4})\b/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(content))) {
+    const title = m[1].replace(/\s+/g, ' ').trim();
+    const page = Number(m[2]);
+    if (title.length >= 3 && title.length <= 120 && Number.isFinite(page)) {
+      out.push({ title, page });
+    }
+  }
+  return out;
+}
+
+async function tocLookup(supabase: any, q: string, discipline: string | null, matchCount: number) {
+  const tokens = expandTokens(q).filter((t) => t.length >= 4);
+  if (tokens.length === 0) return [];
+  const normTokens = tokens.map((t) => stripAccents(t).toLowerCase());
+  let qb = (supabase as any)
+    .from('cas_chunks')
+    .select('id, discipline, page_start, page_end, content')
+    .lte('page_start', 12)
+    .ilike('content', '%SUM%RIO%')
+    .limit(40);
+  if (discipline) qb = qb.eq('discipline', discipline);
+  const { data, error } = await qb;
+  if (error) throw new Error(error.message);
+
+  const targetRanges: Array<{ discipline: string; from: number; to: number }> = [];
+  for (const row of (data ?? []) as any[]) {
+    const entries = parseTocEntries(row.content as string);
+    if (entries.length === 0) continue;
+    entries.sort((a, b) => a.page - b.page);
+    for (let i = 0; i < entries.length; i++) {
+      const titleNorm = stripAccents(entries[i].title).toLowerCase();
+      const hits = normTokens.some((tok) => new RegExp(`\\b${tok}\\b`).test(titleNorm));
+      if (!hits) continue;
+      const from = Math.max(1, entries[i].page - 2);
+      const next = entries.slice(i + 1).find((e) => e.page > entries[i].page);
+      const to = next ? Math.max(from, next.page - 1) : entries[i].page + 6;
+      targetRanges.push({ discipline: row.discipline, from, to });
+    }
+  }
+  if (targetRanges.length === 0) return [];
+
+  const results: any[] = [];
+  for (const range of targetRanges.slice(0, 4)) {
+    const { data: chunks } = await (supabase as any)
+      .from('cas_chunks')
+      .select('id, discipline, page_start, page_end, content')
+      .eq('discipline', range.discipline)
+      .gte('page_start', range.from)
+      .lte('page_start', range.to)
+      .order('page_start', { ascending: true })
+      .limit(Math.max(4, matchCount));
+    for (const c of (chunks ?? []) as any[]) {
+      results.push({ ...c, similarity: 0.95 });
+    }
+  }
+  return results;
 }
 
 async function searchQuizQuestions(supabase: any, q: string, discipline: string | null, limit: number) {
