@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Search, Loader2, BookOpen, FileDown, Sparkles, ArrowLeft, FileText } from "lucide-react";
+import { Search, Loader2, BookOpen, FileDown, Sparkles, ArrowLeft, FileText, Brain, ListChecks, Lightbulb, HelpCircle, ShieldCheck } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import pdfAsset from "@/assets/apostilas-provas-cas.pdf.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -40,6 +42,16 @@ type Match = {
   similarity: number;
 };
 
+type StructuredAnswer = {
+  resposta_curta?: string;
+  resposta_completa?: string;
+  pontos_chave?: string[];
+  conceitos?: { termo: string; definicao: string }[];
+  questoes_relacionadas?: string[];
+  confianca?: "alta" | "media" | "baixa";
+  encontrado?: boolean;
+};
+
 type Chunk = {
   id: number;
   page_start: number;
@@ -55,6 +67,7 @@ export default function Cas() {
   const [filterDisc, setFilterDisc] = useState<string | "">("");
   const [loading, setLoading] = useState(false);
   const [answer, setAnswer] = useState<string | null>(null);
+  const [structured, setStructured] = useState<StructuredAnswer | null>(null);
   const [answerError, setAnswerError] = useState<string | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -75,15 +88,17 @@ export default function Cas() {
     setLoading(true);
     setError(null);
     setAnswer(null);
+    setStructured(null);
     setAnswerError(null);
     setMatches([]);
     try {
       const { data, error } = await supabase.functions.invoke("cas-search", {
-        body: { query: q, discipline: filterDisc || undefined, withAnswer: true, matchCount: 6 },
+        body: { query: q, discipline: filterDisc || undefined, withAnswer: true, matchCount: 10 },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       setAnswer((data as any)?.answer ?? null);
+      setStructured(((data as any)?.structured ?? null) as StructuredAnswer | null);
       setAnswerError((data as any)?.answerError ?? null);
       setMatches(((data as any)?.matches ?? []) as Match[]);
     } catch (err: any) {
@@ -161,7 +176,7 @@ export default function Cas() {
           <SearchPanel
             query={query} setQuery={setQuery}
             filterDisc={filterDisc} setFilterDisc={setFilterDisc}
-          loading={loading} answer={answer} answerError={answerError} matches={matches} error={error}
+          loading={loading} answer={answer} structured={structured} answerError={answerError} matches={matches} error={error}
             onSubmit={runSearch}
             onOpenDiscipline={(d) => { setMode("book"); openDiscipline(d); }}
           />
@@ -182,11 +197,12 @@ export default function Cas() {
 function SearchPanel(props: {
   query: string; setQuery: (v: string) => void;
   filterDisc: string; setFilterDisc: (v: string) => void;
-  loading: boolean; answer: string | null; answerError: string | null; matches: Match[]; error: string | null;
+  loading: boolean; answer: string | null; structured: StructuredAnswer | null; answerError: string | null; matches: Match[]; error: string | null;
   onSubmit: (e?: React.FormEvent) => void;
   onOpenDiscipline: (d: string) => void;
 }) {
-  const { query, setQuery, filterDisc, setFilterDisc, loading, answer, answerError, matches, error, onSubmit } = props;
+  const { query, setQuery, filterDisc, setFilterDisc, loading, answer, structured, answerError, matches, error, onSubmit } = props;
+  const setQueryAndScroll = (q: string) => { setQuery(q); window.scrollTo({ top: 0, behavior: "smooth" }); };
   return (
     <div className="space-y-6">
       <Card className="p-5">
@@ -244,23 +260,120 @@ function SearchPanel(props: {
       {loading && (
         <Card className="p-6 flex items-center gap-3">
           <Loader2 className="h-4 w-4 animate-spin text-primary" />
-          <span className="text-sm text-muted-foreground">Buscando na apostila e gerando resposta…</span>
+          <span className="text-sm text-muted-foreground">Pesquisando na apostila e estruturando a resposta…</span>
         </Card>
       )}
 
-      {answer && (
-        <Card className="p-5 border-primary/30">
-          <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-semibold">Resposta da IA</h2>
-          </div>
-          <div className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap leading-relaxed">
-            {answer}
-          </div>
-          <p className="mt-3 text-[11px] text-muted-foreground">
-            Resposta baseada apenas em trechos da apostila CAS. Confira as fontes abaixo.
+      {(structured || answer) && (
+        <div className="space-y-4">
+          {/* Header card: short answer + confidence */}
+          <Card className="p-5 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
+            <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+              <div className="flex items-center gap-2">
+                <Brain className="h-4 w-4 text-primary" />
+                <h2 className="text-sm font-semibold">Resposta direta</h2>
+              </div>
+              {structured?.confianca && (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-[10px] gap-1",
+                    structured.confianca === "alta" && "border-emerald-500/50 text-emerald-600 dark:text-emerald-400",
+                    structured.confianca === "media" && "border-amber-500/50 text-amber-600 dark:text-amber-400",
+                    structured.confianca === "baixa" && "border-rose-500/50 text-rose-600 dark:text-rose-400",
+                  )}
+                >
+                  <ShieldCheck className="h-3 w-3" />
+                  confiança {structured.confianca}
+                </Badge>
+              )}
+            </div>
+            <p className="text-base font-medium leading-relaxed text-foreground">
+              {structured?.resposta_curta ?? (answer ? answer.slice(0, 240) + (answer.length > 240 ? "…" : "") : "")}
+            </p>
+            {structured?.encontrado === false && (
+              <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                Conteúdo não localizado diretamente na apostila — tente reformular ou filtrar por disciplina.
+              </p>
+            )}
+          </Card>
+
+          {/* Full explanation */}
+          {(structured?.resposta_completa || answer) && (
+            <Card className="p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold">Explicação completa</h3>
+              </div>
+              <div className="prose prose-sm dark:prose-invert max-w-none leading-relaxed prose-headings:font-semibold prose-strong:text-foreground prose-li:my-0.5">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {structured?.resposta_completa ?? answer ?? ""}
+                </ReactMarkdown>
+              </div>
+            </Card>
+          )}
+
+          {/* Key points */}
+          {structured?.pontos_chave && structured.pontos_chave.length > 0 && (
+            <Card className="p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <ListChecks className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold">Pontos-chave para a prova</h3>
+              </div>
+              <ul className="space-y-2">
+                {structured.pontos_chave.map((p, i) => (
+                  <li key={i} className="flex gap-2 text-sm leading-relaxed">
+                    <span className="text-primary font-semibold shrink-0">{i + 1}.</span>
+                    <span>{p}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+
+          {/* Concepts glossary */}
+          {structured?.conceitos && structured.conceitos.length > 0 && (
+            <Card className="p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Lightbulb className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold">Conceitos essenciais</h3>
+              </div>
+              <dl className="space-y-3">
+                {structured.conceitos.map((c, i) => (
+                  <div key={i} className="border-l-2 border-primary/40 pl-3">
+                    <dt className="text-sm font-semibold text-foreground">{c.termo}</dt>
+                    <dd className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{c.definicao}</dd>
+                  </div>
+                ))}
+              </dl>
+            </Card>
+          )}
+
+          {/* Related questions */}
+          {structured?.questoes_relacionadas && structured.questoes_relacionadas.length > 0 && (
+            <Card className="p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <HelpCircle className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold">Aprofunde — perguntas relacionadas</h3>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {structured.questoes_relacionadas.map((q, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setQueryAndScroll(q)}
+                    className="text-xs text-left px-3 py-2 rounded-full border border-border hover:border-primary/60 hover:bg-primary/5 transition"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          <p className="text-[11px] text-muted-foreground px-1">
+            Resposta gerada apenas com base nos trechos da apostila CAS-PMERJ. Sempre confira as fontes abaixo.
           </p>
-        </Card>
+        </div>
       )}
 
       {!answer && answerError && matches.length > 0 && (
