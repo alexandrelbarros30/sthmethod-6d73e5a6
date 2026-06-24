@@ -124,7 +124,20 @@ function MarkdownAnswerCards({ markdown }: { markdown: string }) {
       blocks.push(m);
       return `\u0000B${blocks.length - 1}\u0000`;
     });
-    t = t.replace(/\?\s+(?=\S)/g, "?\n\n");
+    t = t.replace(/^\s*\d{1,4}\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ])/, "");
+    t = t.replace(/([?!])\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ"(])/g, "$1\n\n");
+    t = t.replace(
+      /(^|[.;:!?]\s+|\n)([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]{4,}[A-ZÁÉÍÓÚÂÊÔÃÕÇ])(?=\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9"(])/g,
+      (_m, pre, title) => `${pre === "\n" ? "" : pre}\n\n### ${title.trim()}\n\n`,
+    );
+    {
+      const parts = t.split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ"(])/);
+      const grouped: string[] = [];
+      for (let i = 0; i < parts.length; i += 2) {
+        grouped.push(parts.slice(i, i + 2).join(" "));
+      }
+      t = grouped.join("\n\n");
+    }
     t = t.replace(
       /(?:^|\s)\(?([A-Ea-e])\s*[\)\-:]\s+/g,
       (_m, letter) => `\n\n**${String(letter).toUpperCase()})** `,
@@ -161,13 +174,13 @@ function MarkdownAnswerCards({ markdown }: { markdown: string }) {
             </div>
           )}
           <div
-            className="prose prose-neutral max-w-none text-[#1d1d1f] prose-headings:font-semibold prose-strong:text-[#1d1d1f] prose-p:text-justify prose-p:indent-[1.25cm] prose-p:my-0 prose-p:mb-4 prose-li:my-2 prose-headings:mt-6 prose-headings:mb-3"
+            className="prose prose-neutral max-w-none text-[#1d1d1f] prose-headings:font-semibold prose-strong:text-[#1d1d1f] prose-p:text-left prose-p:my-0 prose-p:mb-4 prose-li:my-2 prose-headings:mt-6 prose-headings:mb-3 prose-h3:text-[13pt] prose-h3:uppercase prose-h3:tracking-wide"
             style={{
               fontFamily: '"Times New Roman", Times, serif',
               fontSize: "12pt",
-              lineHeight: 1.5,
-              padding: "3cm 2cm 2cm 3cm",
-              textAlign: "justify",
+              lineHeight: 1.6,
+              padding: "2rem 2.5rem",
+              textAlign: "left",
             }}
           >
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
