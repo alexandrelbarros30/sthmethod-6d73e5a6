@@ -52,6 +52,17 @@ type StructuredAnswer = {
   encontrado?: boolean;
 };
 
+type SearchUiState = "idle" | "loading" | "success" | "no_response" | "quota_exhausted" | "fallback_active" | "cache_hit";
+
+type SearchMeta = {
+  cacheHit?: boolean;
+  fallbackUsed?: boolean;
+  fallbackProvider?: string | null;
+  externalStatus?: number | null;
+  durationMs?: number;
+  status?: string;
+};
+
 type Chunk = {
   id: number;
   page_start: number;
@@ -85,6 +96,8 @@ export default function Cas() {
   const [error, setError] = useState<string | null>(null);
   const [attachment, setAttachment] = useState<{ name: string; mime: string; data: string; preview?: string } | null>(null);
   const [extracted, setExtracted] = useState<string | null>(null);
+  const [searchState, setSearchState] = useState<SearchUiState>("idle");
+  const [searchMeta, setSearchMeta] = useState<SearchMeta | null>(null);
 
   // Book mode
   const [selectedDisc, setSelectedDisc] = useState<string | null>(null);
@@ -106,6 +119,8 @@ export default function Cas() {
     setAnswerError(null);
     setMatches([]);
     setExtracted(null);
+    setSearchState("loading");
+    setSearchMeta(null);
     try {
       const { data, error } = await supabase.functions.invoke("cas-search", {
         body: {
@@ -117,15 +132,31 @@ export default function Cas() {
         },
       });
       if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      setAnswer((data as any)?.answer ?? null);
-      setStructured(((data as any)?.structured ?? null) as StructuredAnswer | null);
-      setAnswerError((data as any)?.answerError ?? null);
-      setMatches(((data as any)?.matches ?? []) as Match[]);
+      const payload = (data ?? {}) as any;
+      const nextAnswer = payload?.answer ?? null;
+      const nextStructured = (payload?.structured ?? null) as StructuredAnswer | null;
+      const nextMatches = ((payload?.matches ?? []) as Match[]);
+      const meta: SearchMeta = {
+        ...(payload?.metrics ?? {}),
+        cacheHit: Boolean(payload?.cacheHit || payload?.metrics?.cacheHit),
+        fallbackUsed: Boolean(payload?.fallbackUsed || payload?.metrics?.fallbackUsed),
+        fallbackProvider: payload?.fallbackProvider ?? null,
+        status: payload?.status,
+      };
+      setAnswer(nextAnswer);
+      setStructured(nextStructured);
+      setAnswerError(payload?.answerError ?? payload?.error ?? null);
+      setError(payload?.error && !nextAnswer && !nextStructured ? payload.error : null);
+      setMatches(nextMatches);
+      setSearchMeta(meta);
+      const uiState = (payload?.uiState ?? "success") as SearchUiState;
+      setSearchState(meta.cacheHit ? "cache_hit" : uiState);
       const ex = (data as any)?.extractedQuery as string | null;
       if (ex) { setExtracted(ex); setQuery(ex); }
     } catch (err: any) {
       setError(err?.message ?? "Falha na busca");
+      setAnswerError(err?.message ?? "Falha na busca");
+      setSearchState("no_response");
     } finally {
       setLoading(false);
     }
@@ -223,7 +254,8 @@ export default function Cas() {
           <SearchPanel
             query={query} setQuery={setQuery}
             filterDisc={filterDisc} setFilterDisc={setFilterDisc}
-          loading={loading} answer={answer} structured={structured} answerError={answerError} matches={matches} error={error}
+            loading={loading} answer={answer} structured={structured} answerError={answerError} matches={matches} error={error}
+            searchState={searchState} searchMeta={searchMeta}
             attachment={attachment} setAttachment={setAttachment} extracted={extracted}
             onSubmit={runSearch}
             onOpenDiscipline={(d) => { setMode("book"); openDiscipline(d); }}
