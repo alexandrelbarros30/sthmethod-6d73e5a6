@@ -55,6 +55,7 @@ export default function Cas() {
   const [filterDisc, setFilterDisc] = useState<string | "">("");
   const [loading, setLoading] = useState(false);
   const [answer, setAnswer] = useState<string | null>(null);
+  const [answerError, setAnswerError] = useState<string | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,6 +75,7 @@ export default function Cas() {
     setLoading(true);
     setError(null);
     setAnswer(null);
+    setAnswerError(null);
     setMatches([]);
     try {
       const { data, error } = await supabase.functions.invoke("cas-search", {
@@ -82,6 +84,7 @@ export default function Cas() {
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       setAnswer((data as any)?.answer ?? null);
+      setAnswerError((data as any)?.answerError ?? null);
       setMatches(((data as any)?.matches ?? []) as Match[]);
     } catch (err: any) {
       setError(err?.message ?? "Falha na busca");
@@ -158,7 +161,7 @@ export default function Cas() {
           <SearchPanel
             query={query} setQuery={setQuery}
             filterDisc={filterDisc} setFilterDisc={setFilterDisc}
-            loading={loading} answer={answer} matches={matches} error={error}
+          loading={loading} answer={answer} answerError={answerError} matches={matches} error={error}
             onSubmit={runSearch}
             onOpenDiscipline={(d) => { setMode("book"); openDiscipline(d); }}
           />
@@ -179,11 +182,11 @@ export default function Cas() {
 function SearchPanel(props: {
   query: string; setQuery: (v: string) => void;
   filterDisc: string; setFilterDisc: (v: string) => void;
-  loading: boolean; answer: string | null; matches: Match[]; error: string | null;
+  loading: boolean; answer: string | null; answerError: string | null; matches: Match[]; error: string | null;
   onSubmit: (e?: React.FormEvent) => void;
   onOpenDiscipline: (d: string) => void;
 }) {
-  const { query, setQuery, filterDisc, setFilterDisc, loading, answer, matches, error, onSubmit } = props;
+  const { query, setQuery, filterDisc, setFilterDisc, loading, answer, answerError, matches, error, onSubmit } = props;
   return (
     <div className="space-y-6">
       <Card className="p-5">
@@ -256,6 +259,17 @@ function SearchPanel(props: {
           </div>
           <p className="mt-3 text-[11px] text-muted-foreground">
             Resposta baseada apenas em trechos da apostila CAS. Confira as fontes abaixo.
+          </p>
+        </Card>
+      )}
+
+      {!answer && answerError && matches.length > 0 && (
+        <Card className="p-4 border-amber-500/40 bg-amber-500/5">
+          <p className="text-xs text-amber-600 dark:text-amber-400">
+            <strong>IA indisponível no momento:</strong> {answerError}
+          </p>
+          <p className="text-[11px] text-muted-foreground mt-2">
+            Os trechos relevantes da apostila estão listados abaixo — use-os como referência direta.
           </p>
         </Card>
       )}
