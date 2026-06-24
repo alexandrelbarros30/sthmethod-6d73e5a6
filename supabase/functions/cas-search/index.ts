@@ -2,10 +2,13 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-const CHAT_MODEL = 'gemini-2.5-flash';
+// Cascata de modelos: tenta o mais capaz primeiro, cai para alternativas se sobrecarregado.
+const CHAT_MODELS = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
 
-async function geminiAnswer(systemPrompt: string, userPrompt: string, apiKey: string, jsonMode = false): Promise<{ text: string | null; error: string | null }> {
-  const r = await fetch(`${GEMINI_BASE}/models/${CHAT_MODEL}:generateContent?key=${apiKey}`, {
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function tryOnce(model: string, systemPrompt: string, userPrompt: string, apiKey: string, jsonMode: boolean) {
+  return await fetch(`${GEMINI_BASE}/models/${model}:generateContent?key=${apiKey}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -18,17 +21,32 @@ async function geminiAnswer(systemPrompt: string, userPrompt: string, apiKey: st
       },
     }),
   });
-  if (!r.ok) {
-    const body = await r.text();
-    console.error('gemini chat failed', r.status, body);
-    let msg = `Gemini ${r.status}`;
-    if (r.status === 429) msg = 'Limite de uso da IA atingido. Tente novamente em alguns minutos ou contate o admin para aumentar a cota.';
-    return { text: null, error: msg };
+}
+
+async function geminiAnswer(systemPrompt: string, userPrompt: string, apiKey: string, jsonMode = false): Promise<{ text: string | null; error: string | null }> {
+  let lastStatus = 0;
+  let lastBody = '';
+  for (const model of CHAT_MODELS) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const r = await tryOnce(model, systemPrompt, userPrompt, apiKey, jsonMode);
+      if (r.ok) {
+        const j = await r.json();
+        const parts = j?.candidates?.[0]?.content?.parts ?? [];
+        const text = parts.map((p: { text?: string }) => p.text ?? '').join('').trim() || null;
+        return { text, error: null };
+      }
+      lastStatus = r.status;
+      lastBody = await r.text();
+      console.error(`gemini ${model} failed (attempt ${attempt + 1})`, r.status, lastBody.slice(0, 200));
+      // retry só vale a pena em 503/429/500
+      if (![429, 500, 503].includes(r.status)) break;
+      await sleep(400 * (attempt + 1));
+    }
   }
-  const j = await r.json();
-  const parts = j?.candidates?.[0]?.content?.parts ?? [];
-  const text = parts.map((p: { text?: string }) => p.text ?? '').join('').trim() || null;
-  return { text, error: null };
+  let msg = `Consulta indisponível (${lastStatus}).`;
+  if (lastStatus === 429) msg = 'Limite de uso atingido. Tente novamente em alguns minutos.';
+  else if (lastStatus === 503) msg = 'Servidor de consulta sobrecarregado. Tente novamente em instantes.';
+  return { text: null, error: msg };
 }
 
 // Expand query: original + per-token (>3 chars) to broaden recall, then dedup by id.
