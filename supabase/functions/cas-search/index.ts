@@ -216,7 +216,7 @@ function compactText(text: string, max = 700) {
   return `${normalized.slice(0, max).trim()}...`;
 }
 
-function buildSourceFallbackAnswer(q: string, matches: Array<{ discipline: string; page_start: number; page_end: number; content: string }>, answerError: string | null) {
+function buildSourceFallbackAnswer(q: string, matches: Array<{ source?: string; discipline: string; page_start: number; page_end: number; content: string }>, answerError: string | null) {
   const top = matches.slice(0, 3);
   const respostaCurta = `Localizei conteúdo sobre "${q.replace(/\s+/g, ' ').trim()}" na apostila. A síntese automática pelo Gemini não foi concluída${answerError ? ` (${answerError})` : ''}, então estou exibindo a resposta técnica baseada diretamente nas fontes encontradas.`;
   const respostaCompleta = [
@@ -225,7 +225,7 @@ function buildSourceFallbackAnswer(q: string, matches: Array<{ discipline: strin
     answerError ? `> Gemini não concluiu a síntese agora: ${answerError}` : '> A resposta abaixo usa apenas os trechos localizados na base do CAS.',
     '',
     ...top.flatMap((m, i) => [
-      `### Fonte ${i + 1} — ${m.discipline} · p.${m.page_start}-${m.page_end}`,
+      `### Fonte ${i + 1} — ${(m.source === 'questoes' ? 'QUESTÕES' : 'APOSTILA')} · ${m.discipline} · ${m.source === 'questoes' ? 'prova oficial' : `p.${m.page_start}-${m.page_end}`}`,
       compactText(m.content),
       '',
     ]),
@@ -235,8 +235,13 @@ function buildSourceFallbackAnswer(q: string, matches: Array<{ discipline: strin
   return {
     resposta_curta: respostaCurta,
     resposta_completa: respostaCompleta,
-    pontos_chave: top.map((m, i) => `Fonte ${i + 1}: ${m.discipline}, páginas ${m.page_start}-${m.page_end}.`),
+    pontos_chave: top.map((m, i) => `Fonte ${i + 1} (${m.source === 'questoes' ? 'questões' : 'apostila'}): ${m.discipline}${m.source === 'questoes' ? '' : `, páginas ${m.page_start}-${m.page_end}`}.`),
     conceitos: [{ termo: q.replace(/\s+/g, ' ').trim(), definicao: compactText(top[0]?.content ?? 'Conteúdo localizado na apostila.', 260) }],
+    analise_por_fonte: top.map((m, i) => ({
+      fonte_index: i + 1,
+      tipo: m.source === 'questoes' ? 'questoes' : 'apostila',
+      resumo: compactText(m.content, 220),
+    })),
     questoes_relacionadas: [
       `O que a apostila diz sobre ${q}?`,
       `Quais são os pontos principais de ${q}?`,
