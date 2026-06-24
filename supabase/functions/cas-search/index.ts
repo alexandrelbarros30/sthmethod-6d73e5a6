@@ -98,11 +98,11 @@ function userMessageForStatus(status: AiStatus, externalStatus?: number | null) 
   return `Consulta sem resposta do modelo${externalStatus ? ` (${externalStatus})` : ''}.`;
 }
 
-export async function tryOnce(model: string, systemPrompt: string, parts: Part[], apiKey: string, jsonMode: boolean, timeoutMs = 22000) {
+export async function tryOnce(model: string, systemPrompt: string, parts: Part[], apiKey: string, jsonMode: boolean, timeoutMs = 22000, fetchImpl: typeof fetch = fetch) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    return await fetch(`${GEMINI_BASE}/models/${model}:generateContent?key=${apiKey}`, {
+    return await fetchImpl(`${GEMINI_BASE}/models/${model}:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       signal: ctrl.signal,
@@ -144,10 +144,7 @@ export async function geminiAnswer(
   for (const model of CHAT_MODELS) {
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        const oldFetch = globalThis.fetch;
-        if (fetchImpl !== fetch) (globalThis as any).fetch = fetchImpl;
-        const r = await tryOnce(model, systemPrompt, partsArr, apiKey, jsonMode);
-        if (fetchImpl !== fetch) (globalThis as any).fetch = oldFetch;
+        const r = await tryOnce(model, systemPrompt, partsArr, apiKey, jsonMode, 22000, fetchImpl);
         if (r.ok) {
           const j = await r.json();
           const parts = j?.candidates?.[0]?.content?.parts ?? [];
@@ -384,10 +381,6 @@ Deno.serve(async (req) => {
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, serviceKey);
     metricsSupabase = supabase;
 
-    if (!q && !attachment?.data) {
-      return responseJson({ error: 'query ou anexo obrigatório', status: 'no_response', uiState: 'no_response' }, 400);
-    }
-
     const geminiKey = Deno.env.get('GEMINI_API_KEY') ?? Deno.env.get('GEMINI_API_KEY_FALLBACK');
     if (!geminiKey) {
       return responseJson({ error: userMessageForStatus('config_error'), status: 'config_error', uiState: 'no_response' }, 200);
@@ -407,6 +400,10 @@ Deno.serve(async (req) => {
       if (!extractedFromFile && r.status !== 'ok') {
         return responseJson({ error: r.error, answerError: r.error, status: r.status, uiState: r.status === 'quota_exhausted' ? 'quota_exhausted' : 'no_response', fallbackUsed: r.fallbackUsed }, 200);
       }
+    }
+
+    if (!q) {
+      return responseJson({ error: 'query ou anexo obrigatório', status: 'no_response', uiState: 'no_response' }, 400);
     }
 
     const intent = detectIntent(q);
