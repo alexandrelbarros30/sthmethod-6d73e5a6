@@ -1,72 +1,191 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-// Cascata de modelos: tenta o mais capaz primeiro, cai para alternativas se sobrecarregado.
-const CHAT_MODELS = ['gemini-2.0-flash', 'gemini-2.5-flash'];
-const LOVABLE_GATEWAY = 'https://ai.gateway.lovable.dev/v1/chat/completions';
-const LOVABLE_MODELS = ['google/gemini-2.5-flash', 'google/gemini-2.5-flash-lite'];
+export const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
+export const CHAT_MODELS = ['gemini-2.0-flash', 'gemini-2.5-flash'];
+export const LOVABLE_GATEWAY = 'https://ai.gateway.lovable.dev/v1/chat/completions';
+export const LOVABLE_MODELS = ['google/gemini-3-flash-preview', 'google/gemini-2.5-flash-lite'];
+export const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
+const encoder = new TextEncoder();
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 type Part = { text?: string; inline_data?: { mime_type: string; data: string } };
+type AiStatus = 'ok' | 'quota_exhausted' | 'rate_limited' | 'upstream_error' | 'no_response' | 'config_error';
+type RequestType = 'search' | 'attachment_extract';
 
-async function tryOnce(model: string, systemPrompt: string, parts: Part[], apiKey: string, jsonMode: boolean) {
-  return await fetch(`${GEMINI_BASE}/models/${model}:generateContent?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: systemPrompt }] },
-      contents: [{ role: 'user', parts }],
-      generationConfig: {
-        temperature: 0.25,
-        maxOutputTokens: 4096,
-        ...(jsonMode ? { responseMimeType: 'application/json' } : {}),
-      },
-    }),
-  });
+type AiAnswer = {
+  text: string | null;
+  error: string | null;
+  status: AiStatus;
+  fallbackUsed: boolean;
+  fallbackProvider: string | null;
+  model: string | null;
+  externalStatus: number | null;
+};
+
+type SearchMetrics = {
+  cacheKey: string;
+  query: string;
+  discipline: string | null;
+  intent: string | null;
+  language: string;
+  matchCount: number;
+  requestType: RequestType;
+  startedAt: number;
+  status: AiStatus;
+  httpStatus: number;
+  cacheHit: boolean;
+  fallbackUsed: boolean;
+  fallbackProvider: string | null;
+  model: string | null;
+  externalStatus: number | null;
+  errorCode: string | null;
+  errorMessage: string | null;
+  matchesCount: number;
+};
+
+export function normalizeQuery(q: string) {
+  return q.normalize('NFKC').replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
-async function geminiAnswer(systemPrompt: string, parts: Part[] | string, apiKey: string, jsonMode = false): Promise<{ text: string | null; error: string | null }> {
+export async function sha256Hex(input: string) {
+  const digest = await crypto.subtle.digest('SHA-256', encoder.encode(input));
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+export async function makeCacheKey(params: {
+  query: string;
+  discipline?: string | null;
+  intent?: string | null;
+  language?: string;
+  matchCount?: number;
+  requestType?: RequestType;
+  attachmentSignature?: string | null;
+}) {
+  return sha256Hex(JSON.stringify({
+    v: 2,
+    query: normalizeQuery(params.query),
+    discipline: params.discipline || null,
+    intent: params.intent || null,
+    language: params.language || 'pt-BR',
+    matchCount: params.matchCount ?? 10,
+    requestType: params.requestType || 'search',
+    attachmentSignature: params.attachmentSignature || null,
+  }));
+}
+
+async function safeJson(req: Request) {
+  try { return await req.json(); } catch { return {}; }
+}
+
+function isRetryable(status: number) {
+  return status === 0 || status === 429 || status === 500 || status === 502 || status === 503 || status === 504;
+}
+
+function statusFromExternal(status: number): AiStatus {
+  if (status === 402) return 'quota_exhausted';
+  if (status === 429) return 'rate_limited';
+  if (status >= 500 || status === 0) return 'upstream_error';
+  return 'no_response';
+}
+
+function userMessageForStatus(status: AiStatus, externalStatus?: number | null) {
+  if (status === 'quota_exhausted') return 'Quota de IA esgotada. Recarregue os créditos do workspace para continuar.';
+  if (status === 'rate_limited') return 'Limite temporário de IA atingido. Tente novamente em alguns minutos.';
+  if (status === 'upstream_error') return 'Serviço de IA instável no momento. Tente novamente em instantes.';
+  if (status === 'config_error') return 'Configuração de IA indisponível no backend.';
+  return `Consulta sem resposta do modelo${externalStatus ? ` (${externalStatus})` : ''}.`;
+}
+
+export async function tryOnce(model: string, systemPrompt: string, parts: Part[], apiKey: string, jsonMode: boolean, timeoutMs = 22000, fetchImpl: typeof fetch = fetch) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    return await fetchImpl(`${GEMINI_BASE}/models/${model}:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: ctrl.signal,
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ role: 'user', parts }],
+        generationConfig: {
+          temperature: 0.25,
+          maxOutputTokens: 4096,
+          ...(jsonMode ? { responseMimeType: 'application/json' } : {}),
+        },
+      }),
+    });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+function partsToGatewayContent(partsArr: Part[]) {
+  const userContent = partsArr.map((p) => {
+    if (p.text) return { type: 'text', text: p.text };
+    if (p.inline_data) return { type: 'image_url', image_url: { url: `data:${p.inline_data.mime_type};base64,${p.inline_data.data}` } };
+    return null;
+  }).filter(Boolean);
+  return userContent.length === 1 && (userContent[0] as any).type === 'text' ? (userContent[0] as any).text : userContent;
+}
+
+export async function geminiAnswer(
+  systemPrompt: string,
+  parts: Part[] | string,
+  apiKey: string,
+  jsonMode = false,
+  fetchImpl: typeof fetch = fetch,
+): Promise<AiAnswer> {
   const partsArr: Part[] = typeof parts === 'string' ? [{ text: parts }] : parts;
   let lastStatus = 0;
   let lastBody = '';
+
   for (const model of CHAT_MODELS) {
     for (let attempt = 0; attempt < 2; attempt++) {
-      const r = await tryOnce(model, systemPrompt, partsArr, apiKey, jsonMode);
-      if (r.ok) {
-        const j = await r.json();
-        const parts = j?.candidates?.[0]?.content?.parts ?? [];
-        const text = parts.map((p: { text?: string }) => p.text ?? '').join('').trim() || null;
-        return { text, error: null };
+      try {
+        const r = await tryOnce(model, systemPrompt, partsArr, apiKey, jsonMode, 22000, fetchImpl);
+        if (r.ok) {
+          const j = await r.json();
+          const parts = j?.candidates?.[0]?.content?.parts ?? [];
+          const text = parts.map((p: { text?: string }) => p.text ?? '').join('').trim() || null;
+          if (text) return { text, error: null, status: 'ok', fallbackUsed: false, fallbackProvider: null, model, externalStatus: r.status };
+          lastStatus = r.status;
+          lastBody = 'empty_response';
+          console.error(JSON.stringify({ event: 'cas_search_gemini_empty', model, attempt: attempt + 1, status: r.status }));
+          break;
+        }
+        lastStatus = r.status;
+        lastBody = await r.text();
+        console.error(JSON.stringify({ event: 'cas_search_gemini_failed', model, attempt: attempt + 1, status: r.status, body: lastBody.slice(0, 300) }));
+        if (!isRetryable(r.status)) break;
+        await sleep(400 * (attempt + 1));
+      } catch (e) {
+        lastStatus = 0;
+        lastBody = String((e as Error)?.message || e);
+        console.error(JSON.stringify({ event: 'cas_search_gemini_exception', model, attempt: attempt + 1, error: lastBody.slice(0, 300) }));
+        await sleep(400 * (attempt + 1));
       }
-      lastStatus = r.status;
-      lastBody = await r.text();
-      console.error(`gemini ${model} failed (attempt ${attempt + 1})`, r.status, lastBody.slice(0, 200));
-      // retry só vale a pena em 503/429/500
-      if (![429, 500, 503].includes(r.status)) break;
-      await sleep(400 * (attempt + 1));
     }
   }
-  // Fallback: Lovable AI Gateway (quando Gemini direto está esgotado)
+
   const lovableKey = Deno.env.get('LOVABLE_API_KEY');
   if (lovableKey) {
-    // Converte partes Gemini → mensagens OpenAI-style
-    const userContent: any[] = partsArr.map((p) => {
-      if (p.text) return { type: 'text', text: p.text };
-      if (p.inline_data) return { type: 'image_url', image_url: { url: `data:${p.inline_data.mime_type};base64,${p.inline_data.data}` } };
-      return null;
-    }).filter(Boolean);
+    const userContent = partsToGatewayContent(partsArr);
     for (const model of LOVABLE_MODELS) {
       try {
-        const r = await fetch(LOVABLE_GATEWAY, {
+        const r = await fetchImpl(LOVABLE_GATEWAY, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${lovableKey}` },
+          headers: {
+            'Content-Type': 'application/json',
+            'Lovable-API-Key': lovableKey,
+            'X-Lovable-AIG-SDK': 'manual-edge-function',
+          },
           body: JSON.stringify({
             model,
             messages: [
               { role: 'system', content: systemPrompt },
-              { role: 'user', content: userContent.length === 1 && userContent[0].type === 'text' ? userContent[0].text : userContent },
+              { role: 'user', content: userContent },
             ],
             ...(jsonMode ? { response_format: { type: 'json_object' } } : {}),
           }),
@@ -74,28 +193,31 @@ async function geminiAnswer(systemPrompt: string, parts: Part[] | string, apiKey
         if (r.ok) {
           const j = await r.json();
           const text = j?.choices?.[0]?.message?.content?.trim() || null;
-          if (text) return { text, error: null };
+          if (text) return { text, error: null, status: 'ok', fallbackUsed: true, fallbackProvider: 'lovable-gateway', model, externalStatus: lastStatus || r.status };
         } else {
           const body = await r.text();
-          console.error(`lovable ${model} failed`, r.status, body.slice(0, 200));
+          console.error(JSON.stringify({ event: 'cas_search_lovable_failed', model, status: r.status, body: body.slice(0, 300) }));
           lastStatus = r.status;
-          if (r.status === 402) {
-            return { text: null, error: 'Créditos de IA esgotados. Recarregue no painel para continuar.' };
+          lastBody = body;
+          if (r.status === 402 || (r.status === 403 && /credit|quota|limit/i.test(body))) {
+            const status = 'quota_exhausted';
+            return { text: null, error: userMessageForStatus(status), status, fallbackUsed: true, fallbackProvider: 'lovable-gateway', model, externalStatus: r.status };
           }
+          if (!isRetryable(r.status)) break;
         }
       } catch (e) {
-        console.error('lovable gateway error', e);
+        lastStatus = 0;
+        lastBody = String((e as Error)?.message || e);
+        console.error(JSON.stringify({ event: 'cas_search_lovable_exception', model, error: lastBody.slice(0, 300) }));
       }
     }
   }
-  let msg = `Consulta indisponível (${lastStatus}).`;
-  if (lastStatus === 429) msg = 'Limite de uso atingido. Tente novamente em alguns minutos.';
-  else if (lastStatus === 503) msg = 'Servidor de consulta sobrecarregado. Tente novamente em instantes.';
-  return { text: null, error: msg };
+
+  const status = statusFromExternal(lastStatus);
+  return { text: null, error: userMessageForStatus(status, lastStatus), status, fallbackUsed: Boolean(lovableKey), fallbackProvider: lovableKey ? 'lovable-gateway' : null, model: null, externalStatus: lastStatus || null };
 }
 
-// Detecta a intenção/tipo da pergunta a partir das "variáveis" linguísticas comuns.
-function detectIntent(q: string): { intent: string; instruction: string } {
+export function detectIntent(q: string): { intent: string; instruction: string } {
   const s = q.toLowerCase().trim();
   const has = (re: RegExp) => re.test(s);
   if (has(/\b(o que (é|e|sao|são)|defina|definição de|significad[oa] de|conceito de|o que significa)\b/))
@@ -117,7 +239,6 @@ function detectIntent(q: string): { intent: string; instruction: string } {
   return { intent: 'aberta', instruction: 'Responda de forma objetiva e didática.' };
 }
 
-// Sinônimos/variáveis para expansão de recall na busca FTS.
 const SYNONYMS: Record<string, string[]> = {
   pm: ['pmerj', 'polícia militar'],
   pmerj: ['pm', 'polícia militar'],
@@ -146,18 +267,12 @@ function expandTokens(q: string): string[] {
   return Array.from(out);
 }
 
-// Expand query: original + per-token (>3 chars) to broaden recall, then dedup by id.
-async function hybridSearch(
-  supabase: ReturnType<typeof createClient>,
-  q: string,
-  discipline: string | null,
-  matchCount: number,
-) {
+async function hybridSearch(supabase: any, q: string, discipline: string | null, matchCount: number) {
   const queries = new Set<string>([q]);
   for (const t of expandTokens(q)) if (t.length >= 4) queries.add(t);
   const seen = new Map<number, any>();
   for (const qq of queries) {
-    const { data, error } = await supabase.rpc('search_cas_chunks_fts', {
+    const { data, error } = await (supabase as any).rpc('search_cas_chunks_fts', {
       q: qq,
       match_count: matchCount,
       filter_discipline: discipline || null,
@@ -168,23 +283,117 @@ async function hybridSearch(
       if (!prev || (row.similarity ?? 0) > (prev.similarity ?? 0)) seen.set(row.id, row);
     }
   }
-  return Array.from(seen.values())
-    .sort((a, b) => (b.similarity ?? 0) - (a.similarity ?? 0))
-    .slice(0, matchCount);
+  return Array.from(seen.values()).sort((a, b) => (b.similarity ?? 0) - (a.similarity ?? 0)).slice(0, matchCount);
 }
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+async function logMetrics(supabase: any, m: SearchMetrics) {
+  const durationMs = Math.max(0, Math.round(performance.now() - m.startedAt));
+  console.info(JSON.stringify({
+    event: 'cas_search_metrics',
+    duration_ms: durationMs,
+    status: m.status,
+    cache_hit: m.cacheHit,
+    fallback_used: m.fallbackUsed,
+    external_status: m.externalStatus,
+    matches_count: m.matchesCount,
+    intent: m.intent,
+  }));
   try {
-    const { query, discipline, withAnswer = true, matchCount = 10, attachment } = await req.json();
+    await (supabase as any).from('cas_search_logs').insert({
+      cache_key: m.cacheKey,
+      query: m.query.slice(0, 1000),
+      discipline: m.discipline,
+      intent: m.intent,
+      language: m.language,
+      match_count: m.matchCount,
+      request_type: m.requestType,
+      duration_ms: durationMs,
+      status: m.status,
+      http_status: m.httpStatus,
+      cache_hit: m.cacheHit,
+      fallback_used: m.fallbackUsed,
+      fallback_provider: m.fallbackProvider,
+      model: m.model,
+      external_status: m.externalStatus,
+      error_code: m.errorCode,
+      error_message: m.errorMessage?.slice(0, 1000) ?? null,
+      matches_count: m.matchesCount,
+    });
+  } catch (e) {
+    console.error(JSON.stringify({ event: 'cas_search_log_insert_failed', error: String((e as Error)?.message || e) }));
+  }
+}
+
+async function readCache(supabase: any, cacheKey: string) {
+  const { data, error } = await (supabase as any)
+    .from('cas_search_cache')
+    .select('response, hit_count, expires_at')
+    .eq('cache_key', cacheKey)
+    .maybeSingle();
+  if (error) {
+    console.error(JSON.stringify({ event: 'cas_search_cache_read_failed', error: error.message }));
+    return null;
+  }
+  if (!data || new Date(data.expires_at).getTime() < Date.now()) return null;
+  await (supabase as any).from('cas_search_cache').update({ hit_count: (data.hit_count ?? 0) + 1, updated_at: new Date().toISOString() }).eq('cache_key', cacheKey);
+  return data.response;
+}
+
+async function writeCache(supabase: any, payload: {
+  cacheKey: string;
+  query: string;
+  discipline: string | null;
+  intent: string;
+  language: string;
+  matchCount: number;
+  requestType: RequestType;
+  response: Record<string, unknown>;
+}) {
+  try {
+    await (supabase as any).from('cas_search_cache').upsert({
+      cache_key: payload.cacheKey,
+      query: payload.query.slice(0, 2000),
+      discipline: payload.discipline,
+      intent: payload.intent,
+      language: payload.language,
+      match_count: payload.matchCount,
+      request_type: payload.requestType,
+      response: payload.response,
+      expires_at: new Date(Date.now() + CACHE_TTL_MS).toISOString(),
+    }, { onConflict: 'cache_key' });
+  } catch (e) {
+    console.error(JSON.stringify({ event: 'cas_search_cache_write_failed', error: String((e as Error)?.message || e) }));
+  }
+}
+
+function responseJson(body: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+}
+
+export async function handleCasSearch(req: Request) {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const startedAt = performance.now();
+  let metricsSupabase: any = null;
+  let metrics: SearchMetrics | null = null;
+  try {
+    const body = await safeJson(req);
+    const { query, discipline, withAnswer = true, matchCount = 10, attachment, type = 'search', language = 'pt-BR', bypassCache = false } = body;
     let q = String(query ?? '').trim();
+    const boundedMatchCount = Math.min(Math.max(Number(matchCount) || 10, 1), 20);
+    const requestType: RequestType = type === 'attachment_extract' ? 'attachment_extract' : 'search';
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, serviceKey);
+    metricsSupabase = supabase;
 
     const geminiKey = Deno.env.get('GEMINI_API_KEY') ?? Deno.env.get('GEMINI_API_KEY_FALLBACK');
-    if (!geminiKey) throw new Error('GEMINI_API_KEY ausente');
+    if (!geminiKey) {
+      return responseJson({ error: userMessageForStatus('config_error'), status: 'config_error', uiState: 'no_response' }, 200);
+    }
 
-    // Se veio um anexo (imagem/PDF), extrai a pergunta dele primeiro.
     let extractedFromFile: string | null = null;
+    let attachmentSignature: string | null = null;
     if (attachment?.data && attachment?.mime) {
+      attachmentSignature = await sha256Hex(`${attachment.mime}:${String(attachment.data).slice(0, 6000)}`);
       const sys = 'Você extrai o ENUNCIADO da questão presente na imagem/PDF. Devolva APENAS o texto da pergunta, sem alternativas, sem prefácio, sem comentários. Se houver alternativas A/B/C/D/E, inclua-as ao final como "Alternativas: A) ... B) ...". Português.';
       const r = await geminiAnswer(sys, [
         { text: 'Transcreva o enunciado da questão:' },
@@ -192,23 +401,37 @@ Deno.serve(async (req) => {
       ], geminiKey, false);
       extractedFromFile = (r.text ?? '').trim() || null;
       if (extractedFromFile) q = q ? `${q}\n\n${extractedFromFile}` : extractedFromFile;
+      if (!extractedFromFile && r.status !== 'ok') {
+        return responseJson({ error: r.error, answerError: r.error, status: r.status, uiState: r.status === 'quota_exhausted' ? 'quota_exhausted' : 'no_response', fallbackUsed: r.fallbackUsed }, 200);
+      }
     }
 
     if (!q) {
-      return new Response(JSON.stringify({ error: 'query ou anexo obrigatório' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return responseJson({ error: 'query ou anexo obrigatório', status: 'no_response', uiState: 'no_response' }, 400);
     }
 
-    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!);
-    const matches = await hybridSearch(supabase, q, discipline || null, matchCount);
-
     const intent = detectIntent(q);
+    const cacheKey = await makeCacheKey({ query: q, discipline: discipline || null, intent: intent.intent, language, matchCount: boundedMatchCount, requestType, attachmentSignature });
+    metrics = { cacheKey, query: q, discipline: discipline || null, intent: intent.intent, language, matchCount: boundedMatchCount, requestType, startedAt, status: 'ok', httpStatus: 200, cacheHit: false, fallbackUsed: false, fallbackProvider: null, model: null, externalStatus: null, errorCode: null, errorMessage: null, matchesCount: 0 };
 
+    if (!bypassCache && withAnswer) {
+      const cached = await readCache(supabase, cacheKey);
+      if (cached) {
+        metrics.cacheHit = true;
+        metrics.matchesCount = Array.isArray((cached as any).matches) ? (cached as any).matches.length : 0;
+        await logMetrics(supabase, metrics);
+        return responseJson({ ...(cached as Record<string, unknown>), cacheHit: true, metrics: { cacheHit: true, fallbackUsed: false, durationMs: Math.round(performance.now() - startedAt) } });
+      }
+    }
+
+    const matches = await hybridSearch(supabase, q, discipline || null, boundedMatchCount);
+    metrics.matchesCount = matches.length;
     let answer: string | null = null;
     let structured: any = null;
     let answerError: string | null = null;
-    if (withAnswer && matches && matches.length > 0) {
+    let aiResult: AiAnswer | null = null;
+
+    if (withAnswer && matches.length > 0) {
       const context = (matches as Array<{ discipline: string; page_start: number; page_end: number; content: string }>)
         .map((m, i) => `[Fonte ${i + 1} • ${m.discipline} • p.${m.page_start}-${m.page_end}]\n${m.content}`)
         .join('\n\n---\n\n');
@@ -226,26 +449,76 @@ Retorne SEMPRE um JSON válido com este schema exato:
   "confianca": "alta" | "media" | "baixa",
   "encontrado": true | false
 }`;
-      const usr = `PERGUNTA DO ALUNO:\n${q}\n\nTRECHOS DA APOSTILA CAS:\n${context}\n\nResponda em português técnico-didático. Use markdown na resposta_completa (negrito, listas, parágrafos curtos). Cite [Fonte N] inline. Se nada nos trechos responder, devolva "encontrado": false e explique em resposta_curta.`;
-      const result = await geminiAnswer(sys, usr, geminiKey, true);
-      answerError = result.error;
-      if (result.text) {
+      const usr = `PERGUNTA DO ALUNO:\n${q}\n\nTRECHOS DA APOSTILA CAS:\n${context}\n\nResponda em ${language === 'pt-BR' ? 'português técnico-didático' : language}. Use markdown na resposta_completa (negrito, listas, parágrafos curtos). Cite [Fonte N] inline. Se nada nos trechos responder, devolva "encontrado": false e explique em resposta_curta.`;
+      aiResult = await geminiAnswer(sys, usr, geminiKey, true);
+      answerError = aiResult.error;
+      metrics.status = aiResult.status;
+      metrics.fallbackUsed = aiResult.fallbackUsed;
+      metrics.fallbackProvider = aiResult.fallbackProvider;
+      metrics.model = aiResult.model;
+      metrics.externalStatus = aiResult.externalStatus;
+      metrics.errorCode = aiResult.status !== 'ok' ? aiResult.status : null;
+      metrics.errorMessage = aiResult.error;
+      if (aiResult.text) {
         try {
-          structured = JSON.parse(result.text);
+          structured = JSON.parse(aiResult.text);
           answer = structured?.resposta_completa ?? null;
         } catch {
-          answer = result.text; // fallback raw
+          answer = aiResult.text;
         }
       }
     }
 
-    return new Response(JSON.stringify({ answer, structured, answerError, matches, extractedQuery: extractedFromFile, intent: intent.intent }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    const uiState = metrics.status === 'quota_exhausted'
+      ? 'quota_exhausted'
+      : metrics.fallbackUsed && answer
+        ? 'fallback_active'
+        : !answer && !structured && matches.length === 0
+          ? 'no_response'
+          : !answer && answerError
+            ? 'no_response'
+            : 'success';
+
+    const responseBody = {
+      answer,
+      structured,
+      answerError,
+      matches,
+      extractedQuery: extractedFromFile,
+      intent: intent.intent,
+      status: metrics.status,
+      uiState,
+      cacheHit: false,
+      fallbackUsed: metrics.fallbackUsed,
+      fallbackProvider: metrics.fallbackProvider,
+      metrics: {
+        cacheHit: false,
+        fallbackUsed: metrics.fallbackUsed,
+        externalStatus: metrics.externalStatus,
+        durationMs: Math.round(performance.now() - startedAt),
+      },
+    };
+
+    if (withAnswer && (answer || structured)) {
+      await writeCache(supabase, { cacheKey, query: q, discipline: discipline || null, intent: intent.intent, language, matchCount: boundedMatchCount, requestType, response: responseBody });
+    }
+
+    await logMetrics(supabase, metrics);
+    return responseJson(responseBody);
   } catch (e) {
-    console.error('cas-search', e);
-    return new Response(JSON.stringify({ error: String(e) }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    const message = String((e as Error)?.message || e);
+    console.error(JSON.stringify({ event: 'cas_search_unhandled', error: message }));
+    if (metrics && metricsSupabase) {
+      metrics.status = 'upstream_error';
+      metrics.httpStatus = 200;
+      metrics.errorCode = 'INTERNAL_ERROR';
+      metrics.errorMessage = message;
+      await logMetrics(metricsSupabase, metrics);
+    }
+    return responseJson({ error: 'Falha interna na consulta. Tente novamente em instantes.', answerError: message, status: 'upstream_error', uiState: 'no_response', fallbackUsed: false }, 200);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve(handleCasSearch);
+}

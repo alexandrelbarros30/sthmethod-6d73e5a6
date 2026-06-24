@@ -52,6 +52,17 @@ type StructuredAnswer = {
   encontrado?: boolean;
 };
 
+type SearchUiState = "idle" | "loading" | "success" | "no_response" | "quota_exhausted" | "fallback_active" | "cache_hit";
+
+type SearchMeta = {
+  cacheHit?: boolean;
+  fallbackUsed?: boolean;
+  fallbackProvider?: string | null;
+  externalStatus?: number | null;
+  durationMs?: number;
+  status?: string;
+};
+
 type Chunk = {
   id: number;
   page_start: number;
@@ -85,6 +96,8 @@ export default function Cas() {
   const [error, setError] = useState<string | null>(null);
   const [attachment, setAttachment] = useState<{ name: string; mime: string; data: string; preview?: string } | null>(null);
   const [extracted, setExtracted] = useState<string | null>(null);
+  const [searchState, setSearchState] = useState<SearchUiState>("idle");
+  const [searchMeta, setSearchMeta] = useState<SearchMeta | null>(null);
 
   // Book mode
   const [selectedDisc, setSelectedDisc] = useState<string | null>(null);
@@ -106,6 +119,8 @@ export default function Cas() {
     setAnswerError(null);
     setMatches([]);
     setExtracted(null);
+    setSearchState("loading");
+    setSearchMeta(null);
     try {
       const { data, error } = await supabase.functions.invoke("cas-search", {
         body: {
@@ -117,15 +132,31 @@ export default function Cas() {
         },
       });
       if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      setAnswer((data as any)?.answer ?? null);
-      setStructured(((data as any)?.structured ?? null) as StructuredAnswer | null);
-      setAnswerError((data as any)?.answerError ?? null);
-      setMatches(((data as any)?.matches ?? []) as Match[]);
+      const payload = (data ?? {}) as any;
+      const nextAnswer = payload?.answer ?? null;
+      const nextStructured = (payload?.structured ?? null) as StructuredAnswer | null;
+      const nextMatches = ((payload?.matches ?? []) as Match[]);
+      const meta: SearchMeta = {
+        ...(payload?.metrics ?? {}),
+        cacheHit: Boolean(payload?.cacheHit || payload?.metrics?.cacheHit),
+        fallbackUsed: Boolean(payload?.fallbackUsed || payload?.metrics?.fallbackUsed),
+        fallbackProvider: payload?.fallbackProvider ?? null,
+        status: payload?.status,
+      };
+      setAnswer(nextAnswer);
+      setStructured(nextStructured);
+      setAnswerError(payload?.answerError ?? payload?.error ?? null);
+      setError(payload?.error && !nextAnswer && !nextStructured ? payload.error : null);
+      setMatches(nextMatches);
+      setSearchMeta(meta);
+      const uiState = (payload?.uiState ?? "success") as SearchUiState;
+      setSearchState(meta.cacheHit ? "cache_hit" : uiState);
       const ex = (data as any)?.extractedQuery as string | null;
       if (ex) { setExtracted(ex); setQuery(ex); }
     } catch (err: any) {
       setError(err?.message ?? "Falha na busca");
+      setAnswerError(err?.message ?? "Falha na busca");
+      setSearchState("no_response");
     } finally {
       setLoading(false);
     }
@@ -223,7 +254,8 @@ export default function Cas() {
           <SearchPanel
             query={query} setQuery={setQuery}
             filterDisc={filterDisc} setFilterDisc={setFilterDisc}
-          loading={loading} answer={answer} structured={structured} answerError={answerError} matches={matches} error={error}
+            loading={loading} answer={answer} structured={structured} answerError={answerError} matches={matches} error={error}
+            searchState={searchState} searchMeta={searchMeta}
             attachment={attachment} setAttachment={setAttachment} extracted={extracted}
             onSubmit={runSearch}
             onOpenDiscipline={(d) => { setMode("book"); openDiscipline(d); }}
@@ -250,13 +282,14 @@ function SearchPanel(props: {
   query: string; setQuery: (v: string) => void;
   filterDisc: string; setFilterDisc: (v: string) => void;
   loading: boolean; answer: string | null; structured: StructuredAnswer | null; answerError: string | null; matches: Match[]; error: string | null;
+  searchState: SearchUiState; searchMeta: SearchMeta | null;
   attachment: { name: string; mime: string; data: string; preview?: string } | null;
   setAttachment: (v: { name: string; mime: string; data: string; preview?: string } | null) => void;
   extracted: string | null;
   onSubmit: (e?: React.FormEvent) => void;
   onOpenDiscipline: (d: string) => void;
 }) {
-  const { query, setQuery, filterDisc, setFilterDisc, loading, answer, structured, answerError, matches, error, attachment, setAttachment, extracted, onSubmit } = props;
+  const { query, setQuery, filterDisc, setFilterDisc, loading, answer, structured, answerError, matches, error, searchState, searchMeta, attachment, setAttachment, extracted, onSubmit } = props;
   const setQueryAndScroll = (q: string) => { setQuery(q); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const [openSource, setOpenSource] = useState<{ match: Match; index: number } | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -264,6 +297,10 @@ function SearchPanel(props: {
   const [tab, setTab] = useState<"direta" | "aprofundar" | "pontos" | "conceitos" | "fontes">("direta");
   const [recent, setRecent] = useState<string[]>([]);
   const [loadingStep, setLoadingStep] = useState(0);
+  const [metrics, setMetrics] = useState<{
+    hourly: Array<{ total_requests: number; avg_duration_ms: number; failure_rate_pct: number; fallback_uses: number; cache_hits: number; rate_limited_count: number; upstream_5xx_count: number }>;
+    logs: Array<{ id: string; created_at: string; duration_ms: number; status: string; cache_hit: boolean; fallback_used: boolean; external_status: number | null }>;
+  } | null>(null);
 
   // Recent searches (localStorage)
   useEffect(() => {
@@ -304,6 +341,18 @@ function SearchPanel(props: {
     return () => clearInterval(id);
   }, [loading]);
 
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const [{ data: hourly }, { data: logs }] = await Promise.all([
+        (supabase as any).from("cas_search_metrics_hourly").select("total_requests,avg_duration_ms,failure_rate_pct,fallback_uses,cache_hits,rate_limited_count,upstream_5xx_count").limit(1),
+        (supabase as any).from("cas_search_logs").select("id,created_at,duration_ms,status,cache_hit,fallback_used,external_status").order("created_at", { ascending: false }).limit(5),
+      ]);
+      if (alive && ((hourly?.length ?? 0) > 0 || (logs?.length ?? 0) > 0)) setMetrics({ hourly: hourly ?? [], logs: logs ?? [] });
+    })().catch(() => {});
+    return () => { alive = false; };
+  }, [searchState]);
+
   const INTENTS: Array<{ key: string; label: string; icon: React.ReactNode; prefix: string }> = [
     { key: "def", label: "Definir", icon: <BookOpen className="h-3.5 w-3.5" />, prefix: "O que é " },
     { key: "cmp", label: "Comparar", icon: <GitCompare className="h-3.5 w-3.5" />, prefix: "Qual a diferença entre " },
@@ -319,6 +368,45 @@ function SearchPanel(props: {
     "Princípios da administração pública",
     "Hipóteses de transgressão disciplinar grave",
   ];
+
+  const statusNotice = (() => {
+    if (loading) {
+      return {
+        tone: "blue",
+        title: "Carregando consulta EAD",
+        text: "O sistema está pesquisando a apostila, sintetizando a resposta e validando as fontes.",
+      };
+    }
+    if (searchState === "quota_exhausted") {
+      return {
+        tone: "red",
+        title: "Quota de IA esgotada",
+        text: answerError || error || "Os créditos de IA acabaram; o backend registrou o evento e interrompeu a síntese externa.",
+      };
+    }
+    if (searchState === "fallback_active") {
+      return {
+        tone: "amber",
+        title: "Fallback ativo",
+        text: `Gemini não respondeu como esperado e o Gateway assumiu a consulta${searchMeta?.durationMs ? ` em ${searchMeta.durationMs}ms` : ""}.`,
+      };
+    }
+    if (searchState === "cache_hit") {
+      return {
+        tone: "green",
+        title: "Resposta servida do cache",
+        text: `A resposta já existia para esta disciplina e parâmetros${searchMeta?.durationMs ? `; retorno em ${searchMeta.durationMs}ms` : ""}.`,
+      };
+    }
+    if (searchState === "no_response") {
+      return {
+        tone: "red",
+        title: "Sem resposta final",
+        text: answerError || error || "A consulta não retornou síntese. Verifique os trechos localizados ou tente reformular a pergunta.",
+      };
+    }
+    return null;
+  })();
 
   const onFile = async (f: File | null) => {
     if (!f) return;
@@ -477,6 +565,33 @@ function SearchPanel(props: {
       {error && (
         <div className="max-w-3xl mx-auto p-4 rounded-2xl border border-red-200 bg-red-50">
           <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
+
+      {statusNotice && !loading && (
+        <div className={cn(
+          "max-w-3xl mx-auto p-4 rounded-2xl border",
+          statusNotice.tone === "red" && "border-red-200 bg-red-50 text-red-800",
+          statusNotice.tone === "amber" && "border-amber-200 bg-amber-50 text-amber-800",
+          statusNotice.tone === "green" && "border-emerald-200 bg-emerald-50 text-emerald-800",
+          statusNotice.tone === "blue" && "border-[#0071e3]/20 bg-[#0071e3]/5 text-[#1d1d1f]",
+        )}>
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5">
+              {statusNotice.tone === "green" ? <Check className="h-4 w-4" /> : <Zap className="h-4 w-4" />}
+            </div>
+            <div className="space-y-1">
+              <p className="text-[13px] font-semibold">{statusNotice.title}</p>
+              <p className="text-[12px] leading-relaxed opacity-85">{statusNotice.text}</p>
+              {searchMeta && (
+                <div className="flex flex-wrap gap-1.5 pt-1 text-[10px] font-mono uppercase tracking-wider opacity-75">
+                  {searchMeta.status && <span>status:{searchMeta.status}</span>}
+                  {typeof searchMeta.externalStatus === "number" && <span>externo:{searchMeta.externalStatus}</span>}
+                  {searchMeta.fallbackUsed && <span>fallback:{searchMeta.fallbackProvider || "ativo"}</span>}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -682,7 +797,7 @@ function SearchPanel(props: {
         </div>
       )}
 
-      {!loading && !answer && !structured && matches.length === 0 && (
+      {!loading && searchState === "idle" && !answer && !structured && matches.length === 0 && (
         <div className="max-w-3xl mx-auto grid gap-5 md:grid-cols-2">
           <div className="bg-white rounded-3xl border border-[#d2d2d7] p-6">
             <div className="flex items-center gap-2 mb-4">
@@ -740,6 +855,38 @@ function SearchPanel(props: {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {metrics && (
+        <div className="max-w-3xl mx-auto bg-white rounded-3xl border border-[#d2d2d7] p-5 space-y-4">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.2em] text-[#86868b]">Métricas do endpoint cas-search</div>
+              <div className="text-[13px] text-[#1d1d1f] mt-1">Tempo, falhas, cache e fallback das últimas consultas.</div>
+            </div>
+            {metrics.hourly[0] && (
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div className="rounded-xl bg-[#f5f5f7] px-3 py-2"><div className="text-[15px] font-mono text-[#1d1d1f]">{metrics.hourly[0].avg_duration_ms || 0}ms</div><div className="text-[9px] uppercase text-[#86868b]">média</div></div>
+                <div className="rounded-xl bg-[#f5f5f7] px-3 py-2"><div className="text-[15px] font-mono text-[#1d1d1f]">{metrics.hourly[0].failure_rate_pct || 0}%</div><div className="text-[9px] uppercase text-[#86868b]">falha</div></div>
+                <div className="rounded-xl bg-[#f5f5f7] px-3 py-2"><div className="text-[15px] font-mono text-[#1d1d1f]">{metrics.hourly[0].fallback_uses || 0}</div><div className="text-[9px] uppercase text-[#86868b]">fallback</div></div>
+                <div className="rounded-xl bg-[#f5f5f7] px-3 py-2"><div className="text-[15px] font-mono text-[#1d1d1f]">{metrics.hourly[0].cache_hits || 0}</div><div className="text-[9px] uppercase text-[#86868b]">cache</div></div>
+              </div>
+            )}
+          </div>
+          {metrics.logs.length > 0 && (
+            <div className="divide-y divide-[#e8e8ed]">
+              {metrics.logs.map((l) => (
+                <div key={l.id} className="py-2 flex items-center justify-between gap-3 text-[11px] font-mono text-[#6e6e73]">
+                  <span>{new Date(l.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+                  <span>{l.duration_ms}ms</span>
+                  <span className={cn("px-2 py-0.5 rounded-full", l.status === "ok" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700")}>{l.status}</span>
+                  {l.external_status ? <span>HTTP {l.external_status}</span> : <span>local</span>}
+                  <span>{l.cache_hit ? "cache" : l.fallback_used ? "fallback" : "direto"}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
