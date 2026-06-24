@@ -129,40 +129,38 @@ export default function Cas() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Header */}
-      <header className="sticky top-0 z-30 bg-background/80 backdrop-blur border-b border-border">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3 flex-wrap">
+      {/* Header — Apple style */}
+      <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-[#d2d2d7]">
+        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-primary" />
-            <h1 className="text-base font-semibold tracking-tight">CAS · Estudo Avançado</h1>
+            <BookMarked className="h-4 w-4 text-[#1d1d1f]" />
+            <h1 className="text-[15px] font-semibold tracking-tight text-[#1d1d1f]">CAS · Consulta Avançada</h1>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <div className="inline-flex rounded-full border border-border p-0.5 bg-card">
+            <div className="inline-flex rounded-full bg-[#f5f5f7] p-0.5">
               <button
                 onClick={() => setMode("search")}
                 className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-medium transition",
-                  mode === "search" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                  "px-4 py-1.5 rounded-full text-[12px] font-medium transition",
+                  mode === "search" ? "bg-white text-[#1d1d1f] shadow-sm" : "text-[#6e6e73] hover:text-[#1d1d1f]",
                 )}
               >
-                <Sparkles className="inline h-3.5 w-3.5 mr-1" />
                 Pesquisar
               </button>
               <button
                 onClick={() => { setMode("book"); setSelectedDisc(null); }}
                 className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-medium transition",
-                  mode === "book" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                  "px-4 py-1.5 rounded-full text-[12px] font-medium transition",
+                  mode === "book" ? "bg-white text-[#1d1d1f] shadow-sm" : "text-[#6e6e73] hover:text-[#1d1d1f]",
                 )}
               >
-                <BookOpen className="inline h-3.5 w-3.5 mr-1" />
-                Livro
+                Disciplinas
               </button>
             </div>
             <a
               href={pdfAsset.url}
               download="apostilas-provas-cas.pdf"
-              className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-border hover:bg-accent transition"
+              className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#0071e3] hover:underline"
             >
               <FileDown className="h-3.5 w-3.5" />
               PDF
@@ -171,7 +169,7 @@ export default function Cas() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-6">
+      <main className="max-w-5xl mx-auto px-6 py-10">
         {mode === "search" ? (
           <SearchPanel
             query={query} setQuery={setQuery}
