@@ -140,7 +140,16 @@ function MarkdownAnswerCards({ markdown }: { markdown: string }) {
               )}
             </div>
           )}
-          <div className="prose prose-neutral max-w-none text-[#1d1d1f] leading-[1.75] prose-headings:font-semibold prose-strong:text-[#1d1d1f] prose-li:my-1 prose-p:my-3">
+          <div
+            className="prose prose-neutral max-w-none text-[#1d1d1f] prose-headings:font-semibold prose-strong:text-[#1d1d1f] prose-p:text-justify prose-p:indent-[1.25cm] prose-p:my-0 prose-p:mb-4 prose-li:my-2 prose-headings:mt-6 prose-headings:mb-3"
+            style={{
+              fontFamily: '"Times New Roman", Times, serif',
+              fontSize: "12pt",
+              lineHeight: 1.5,
+              padding: "3cm 2cm 2cm 3cm",
+              textAlign: "justify",
+            }}
+          >
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {section.content}
             </ReactMarkdown>
