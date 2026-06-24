@@ -149,7 +149,11 @@ export async function geminiAnswer(
           const j = await r.json();
           const parts = j?.candidates?.[0]?.content?.parts ?? [];
           const text = parts.map((p: { text?: string }) => p.text ?? '').join('').trim() || null;
-          return { text, error: text ? null : 'Modelo retornou vazio.', status: text ? 'ok' : 'no_response', fallbackUsed: false, fallbackProvider: null, model, externalStatus: r.status };
+          if (text) return { text, error: null, status: 'ok', fallbackUsed: false, fallbackProvider: null, model, externalStatus: r.status };
+          lastStatus = r.status;
+          lastBody = 'empty_response';
+          console.error(JSON.stringify({ event: 'cas_search_gemini_empty', model, attempt: attempt + 1, status: r.status }));
+          break;
         }
         lastStatus = r.status;
         lastBody = await r.text();
