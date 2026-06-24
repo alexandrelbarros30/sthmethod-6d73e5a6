@@ -195,7 +195,7 @@ export async function geminiAnswer(
           console.error(JSON.stringify({ event: 'cas_search_lovable_failed', model, status: r.status, body: body.slice(0, 300) }));
           lastStatus = r.status;
           lastBody = body;
-          if (r.status === 402) {
+          if (r.status === 402 || (r.status === 403 && /credit|quota|limit/i.test(body))) {
             const status = 'quota_exhausted';
             return { text: null, error: userMessageForStatus(status), status, fallbackUsed: true, fallbackProvider: 'lovable-gateway', model, externalStatus: r.status };
           }
