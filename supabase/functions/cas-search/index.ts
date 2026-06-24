@@ -1,8 +1,45 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-const EMBED_MODEL = 'openai/text-embedding-3-small';
-const CHAT_MODEL = 'google/gemini-3-flash-preview';
+const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
+const EMBED_MODEL = 'gemini-embedding-001';
+const CHAT_MODEL = 'gemini-2.5-pro';
+const EMBED_DIM = 1536;
+
+async function geminiEmbed(text: string, apiKey: string): Promise<number[]> {
+  const r = await fetch(`${GEMINI_BASE}/models/${EMBED_MODEL}:embedContent?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: `models/${EMBED_MODEL}`,
+      content: { parts: [{ text }] },
+      taskType: 'RETRIEVAL_QUERY',
+      outputDimensionality: EMBED_DIM,
+    }),
+  });
+  if (!r.ok) throw new Error(`gemini embed ${r.status}: ${await r.text()}`);
+  const j = await r.json();
+  return j.embedding.values as number[];
+}
+
+async function geminiAnswer(systemPrompt: string, userPrompt: string, apiKey: string): Promise<string | null> {
+  const r = await fetch(`${GEMINI_BASE}/models/${CHAT_MODEL}:generateContent?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: systemPrompt }] },
+      contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+      generationConfig: { temperature: 0.3, maxOutputTokens: 2048 },
+    }),
+  });
+  if (!r.ok) {
+    console.error('gemini chat failed', r.status, await r.text());
+    return null;
+  }
+  const j = await r.json();
+  const parts = j?.candidates?.[0]?.content?.parts ?? [];
+  return parts.map((p: { text?: string }) => p.text ?? '').join('').trim() || null;
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -15,29 +52,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    const apiKey = Deno.env.get('LOVABLE_API_KEY');
-    if (!apiKey) throw new Error('LOVABLE_API_KEY ausente');
+    const geminiKey = Deno.env.get('GEMINI_API_KEY') ?? Deno.env.get('GEMINI_API_KEY_FALLBACK');
+    if (!geminiKey) throw new Error('GEMINI_API_KEY ausente');
 
-    // 1) embed query
-    const embResp = await fetch('https://ai.gateway.lovable.dev/v1/embeddings', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: EMBED_MODEL, input: q, dimensions: 1536 }),
-    });
-    if (!embResp.ok) {
-      const t = await embResp.text();
-      return new Response(JSON.stringify({ error: `embed: ${embResp.status} ${t}` }), {
-        status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    const embJson = await embResp.json();
-    const queryEmbedding = embJson.data[0].embedding as number[];
+    const queryEmbedding = await geminiEmbed(q, geminiKey);
 
-    // 2) match
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-    );
+    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!);
     const { data: matches, error } = await supabase.rpc('match_cas_chunks', {
       query_embedding: queryEmbedding as unknown as string,
       match_count: matchCount,
@@ -50,25 +70,9 @@ Deno.serve(async (req) => {
       const context = (matches as Array<{ discipline: string; page_start: number; page_end: number; content: string }>)
         .map((m, i) => `[Fonte ${i + 1} • ${m.discipline} • p.${m.page_start}-${m.page_end}]\n${m.content}`)
         .join('\n\n---\n\n');
-      const sys = `Você é um tutor especializado nas apostilas do Curso de Aperfeiçoamento de Sargentos (CAS) da PMERJ. Responda APENAS com base nos trechos fornecidos. Cite as fontes no formato [Fonte N] ao final de cada afirmação. Seja didático, objetivo e estruturado (use tópicos quando ajudar). Se a resposta não estiver nos trechos, diga "Não encontrei esse conteúdo na apostila".`;
+      const sys = `Você é um tutor especializado nas apostilas do Curso de Aperfeiçoamento de Sargentos (CAS) da PMERJ. Responda APENAS com base nos trechos fornecidos. Cite as fontes no formato [Fonte N]. Seja didático, objetivo e estruturado (use tópicos quando ajudar). Se a resposta não estiver nos trechos, diga "Não encontrei esse conteúdo na apostila".`;
       const usr = `Pergunta do aluno:\n${q}\n\nTrechos da apostila:\n${context}\n\nResponda em português, com citações [Fonte N].`;
-      const chat = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: CHAT_MODEL,
-          messages: [
-            { role: 'system', content: sys },
-            { role: 'user', content: usr },
-          ],
-        }),
-      });
-      if (chat.ok) {
-        const cj = await chat.json();
-        answer = cj.choices?.[0]?.message?.content ?? null;
-      } else {
-        console.error('chat failed', chat.status, await chat.text());
-      }
+      answer = await geminiAnswer(sys, usr, geminiKey);
     }
 
     return new Response(JSON.stringify({ answer, matches }), {
