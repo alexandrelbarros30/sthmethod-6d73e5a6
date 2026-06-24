@@ -89,7 +89,7 @@ function statusFromExternal(status: number): AiStatus {
 }
 
 function userMessageForStatus(status: AiStatus, externalStatus?: number | null) {
-  if (status === 'quota_exhausted') return 'Quota de IA esgotada. Recarregue os créditos do workspace para continuar.';
+  if (status === 'quota_exhausted') return 'Quota da API Gemini esgotada. Verifique a chave/quota no Google AI Studio.';
   if (status === 'rate_limited') return 'Limite temporário de IA atingido. Tente novamente em alguns minutos.';
   if (status === 'upstream_error') return 'Serviço de IA instável no momento. Tente novamente em instantes.';
   if (status === 'config_error') return 'Configuração de IA indisponível no backend.';
