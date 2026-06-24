@@ -518,7 +518,7 @@ export async function handleCasSearch(req: Request) {
     const body = await safeJson(req);
     const { query, discipline, withAnswer = true, matchCount = 10, attachment, type = 'search', language = 'pt-BR', bypassCache = false } = body;
     let q = String(query ?? '').trim();
-    const boundedMatchCount = Math.min(Math.max(Number(matchCount) || 10, 1), 20);
+    const boundedMatchCount = Math.min(Math.max(Number(matchCount) || 10, 1), 30);
     const requestType: RequestType = type === 'attachment_extract' ? 'attachment_extract' : 'search';
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, serviceKey);
