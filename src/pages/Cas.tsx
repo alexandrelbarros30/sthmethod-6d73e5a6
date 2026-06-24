@@ -143,8 +143,8 @@ function MarkdownAnswerCards({ markdown }: { markdown: string }) {
       (_m, letter) => `\n\n**${String(letter).toUpperCase()})** `,
     );
     t = t.replace(
-      /(?:^|(?<=[.;:!?]))\s+(\d{1,2})\s*[\)\.\-]\s+/g,
-      (_m, num) => `\n\n**${num}.** `,
+      /(^|\s)(\d{1,2})\s*[\)\.\-]\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ"(])/g,
+      (_m, _pre, num) => `\n\n**${num}.** `,
     );
     t = t.replace(/\n{3,}/g, "\n\n").trimStart();
     t = t.replace(/\u0000B(\d+)\u0000/g, (_m, i) => blocks[Number(i)]);
