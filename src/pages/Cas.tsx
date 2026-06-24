@@ -774,13 +774,7 @@ function SearchPanel(props: {
           </div>
 
           {tab === "direta" && (structured?.resposta_completa || answer) && (
-            <article className="bg-white rounded-3xl border border-[#d2d2d7] p-7">
-              <div className="prose prose-neutral max-w-none text-[#1d1d1f] leading-[1.75] prose-headings:font-semibold prose-strong:text-[#1d1d1f] prose-li:my-1 prose-p:my-3">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {structured?.resposta_completa ?? answer ?? ""}
-                </ReactMarkdown>
-              </div>
-            </article>
+            <MarkdownAnswerCards markdown={structured?.resposta_completa ?? answer ?? ""} />
           )}
 
           {tab === "pontos" && structured?.pontos_chave && structured.pontos_chave.length > 0 && (
