@@ -6,8 +6,6 @@ import pdfAsset from "@/assets/apostilas-provas-cas.pdf.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 const DISCIPLINES = [
