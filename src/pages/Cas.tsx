@@ -35,11 +35,17 @@ const DISCIPLINES = [
 
 type Match = {
   id: number;
+  source?: "apostila" | "questoes";
   discipline: string;
   page_start: number;
   page_end: number;
   content: string;
   similarity: number;
+  exam?: string;
+  question_num?: number;
+  statement?: string;
+  options?: { A: string; B: string; C: string; D: string };
+  correct_answer?: "A" | "B" | "C" | "D";
 };
 
 type StructuredAnswer = {
@@ -47,6 +53,7 @@ type StructuredAnswer = {
   resposta_completa?: string;
   pontos_chave?: string[];
   conceitos?: { termo: string; definicao: string }[];
+  analise_por_fonte?: { fonte_index: number; tipo?: "apostila" | "questoes"; resumo: string }[];
   questoes_relacionadas?: string[];
   confianca?: "alta" | "media" | "baixa";
   encontrado?: boolean;
