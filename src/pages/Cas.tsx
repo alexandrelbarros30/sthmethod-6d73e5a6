@@ -6,6 +6,7 @@ import pdfAsset from "@/assets/apostilas-provas-cas.pdf.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 const DISCIPLINES = [
@@ -199,6 +200,7 @@ function SearchPanel(props: {
 }) {
   const { query, setQuery, filterDisc, setFilterDisc, loading, answer, structured, answerError, matches, error, onSubmit } = props;
   const setQueryAndScroll = (q: string) => { setQuery(q); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const [openSource, setOpenSource] = useState<{ match: Match; index: number } | null>(null);
   return (
     <div className="space-y-10">
       {/* Hero search — Apple search style */}
@@ -382,14 +384,32 @@ function SearchPanel(props: {
 
       {matches.length > 0 && (
         <div className="max-w-3xl mx-auto space-y-3">
-          <h3 className="text-[10px] tracking-[0.2em] uppercase text-[#86868b]">Fontes na apostila</h3>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <h3 className="text-[10px] tracking-[0.2em] uppercase text-[#86868b]">Fontes na apostila</h3>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {matches.map((m, i) => (
+                <button
+                  key={`chip-${m.id}`}
+                  onClick={() => setOpenSource({ match: m, index: i })}
+                  className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-[#f5f5f7] text-[#1d1d1f] hover:bg-[#1d1d1f] hover:text-white transition"
+                  title={`${m.discipline} · p. ${m.page_start}`}
+                >
+                  [Fonte {String(i + 1).padStart(2, "0")}]
+                </button>
+              ))}
+            </div>
+          </div>
           {matches.map((m, i) => (
-            <article key={m.id} className="bg-white rounded-2xl border border-[#d2d2d7] p-5">
+            <article
+              key={m.id}
+              className="bg-white rounded-2xl border border-[#d2d2d7] p-5 hover:border-[#1d1d1f] transition cursor-pointer"
+              onClick={() => setOpenSource({ match: m, index: i })}
+            >
               <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#f5f5f7] text-[#6e6e73]">Fonte {String(i + 1).padStart(2, "0")}</span>
                   <button
-                    onClick={() => props.onOpenDiscipline(m.discipline)}
+                    onClick={(e) => { e.stopPropagation(); props.onOpenDiscipline(m.discipline); }}
                     className="text-[12px] font-semibold uppercase tracking-wide text-[#1d1d1f] hover:text-[#0071e3] text-left"
                   >
                     {m.discipline}
@@ -415,6 +435,37 @@ function SearchPanel(props: {
           </p>
         </div>
       )}
+
+      <Dialog open={!!openSource} onOpenChange={(o) => !o && setOpenSource(null)}>
+        <DialogContent className="max-w-2xl bg-white border-[#d2d2d7] text-[#1d1d1f]">
+          <DialogHeader>
+            <DialogTitle className="text-[11px] tracking-[0.2em] uppercase text-[#86868b] font-medium">
+              Fonte {openSource ? String(openSource.index + 1).padStart(2, "0") : ""}
+            </DialogTitle>
+          </DialogHeader>
+          {openSource && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => { props.onOpenDiscipline(openSource.match.discipline); setOpenSource(null); }}
+                  className="text-[14px] font-semibold uppercase tracking-wide text-[#1d1d1f] hover:text-[#0071e3]"
+                >
+                  {openSource.match.discipline}
+                </button>
+                <span className="text-[12px] text-[#86868b]">
+                  página {openSource.match.page_start}
+                  {openSource.match.page_end !== openSource.match.page_start ? `–${openSource.match.page_end}` : ""}
+                </span>
+              </div>
+              <div className="max-h-[60vh] overflow-y-auto bg-[#f5f5f7] rounded-2xl p-5">
+                <p className="text-[14px] leading-[1.7] whitespace-pre-wrap text-[#1d1d1f]">
+                  {openSource.match.content}
+                </p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
