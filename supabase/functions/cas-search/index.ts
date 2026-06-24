@@ -206,7 +206,46 @@ const SYNONYMS: Record<string, string[]> = {
   praça: ['praças', 'praca'],
   flagrante: ['prisão em flagrante'],
   inquerito: ['inquérito policial militar', 'ipm'],
+  ferias: ['férias', 'controle de férias', 'calendário de férias', 'afastamentos temporários'],
+  férias: ['ferias', 'controle de férias', 'calendário de férias', 'afastamentos temporários'],
 };
+
+function compactText(text: string, max = 700) {
+  const normalized = text.replace(/\s+/g, ' ').trim();
+  if (normalized.length <= max) return normalized;
+  return `${normalized.slice(0, max).trim()}...`;
+}
+
+function buildSourceFallbackAnswer(q: string, matches: Array<{ discipline: string; page_start: number; page_end: number; content: string }>, answerError: string | null) {
+  const top = matches.slice(0, 3);
+  const respostaCurta = `Localizei conteúdo sobre "${q.replace(/\s+/g, ' ').trim()}" na apostila. A síntese automática pelo Gemini não foi concluída${answerError ? ` (${answerError})` : ''}, então estou exibindo a resposta técnica baseada diretamente nas fontes encontradas.`;
+  const respostaCompleta = [
+    `**Resultado localizado na apostila para:** ${q.replace(/\s+/g, ' ').trim()}`,
+    '',
+    answerError ? `> Gemini não concluiu a síntese agora: ${answerError}` : '> A resposta abaixo usa apenas os trechos localizados na base do CAS.',
+    '',
+    ...top.flatMap((m, i) => [
+      `### Fonte ${i + 1} — ${m.discipline} · p.${m.page_start}-${m.page_end}`,
+      compactText(m.content),
+      '',
+    ]),
+    '**Como estudar:** use essas fontes como base, revise o tópico na disciplina indicada e refaça a pergunta de forma mais específica se precisar de prazo, conceito, procedimento ou hipótese.',
+  ].join('\n');
+
+  return {
+    resposta_curta: respostaCurta,
+    resposta_completa: respostaCompleta,
+    pontos_chave: top.map((m, i) => `Fonte ${i + 1}: ${m.discipline}, páginas ${m.page_start}-${m.page_end}.`),
+    conceitos: [{ termo: q.replace(/\s+/g, ' ').trim(), definicao: compactText(top[0]?.content ?? 'Conteúdo localizado na apostila.', 260) }],
+    questoes_relacionadas: [
+      `O que a apostila diz sobre ${q}?`,
+      `Quais são os pontos principais de ${q}?`,
+      `Em qual disciplina o tema ${q} aparece?`,
+    ],
+    confianca: 'media',
+    encontrado: true,
+  };
+}
 
 function expandTokens(q: string): string[] {
   const out = new Set<string>();
@@ -423,6 +462,15 @@ Retorne SEMPRE um JSON válido com este schema exato:
           answer = aiResult.text;
         }
       }
+    }
+
+    if (!answer && !structured && matches.length > 0) {
+      structured = buildSourceFallbackAnswer(q, matches, answerError);
+      answer = structured.resposta_completa;
+      metrics.fallbackUsed = true;
+      metrics.fallbackProvider = 'fonte-local';
+      metrics.errorCode = metrics.status !== 'ok' ? metrics.status : 'GEMINI_EMPTY_WITH_MATCHES';
+      metrics.errorMessage = answerError || 'Gemini não retornou síntese; resposta montada com fontes locais.';
     }
 
     const uiState = metrics.status === 'quota_exhausted'
