@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Search, Loader2, FileDown, ArrowLeft, FileText, ListChecks, Lightbulb, HelpCircle, ShieldCheck, BookMarked, Paperclip, X as XIcon, Camera, GraduationCap, Check, ChevronRight, Sparkles } from "lucide-react";
+import { Search, Loader2, FileDown, ArrowLeft, FileText, ListChecks, Lightbulb, HelpCircle, ShieldCheck, BookMarked, Paperclip, X as XIcon, Camera, GraduationCap, Check, ChevronRight, Sparkles, Command, History, Zap, BookOpen, GitCompare, ListOrdered, Scale, Clock, Quote, ArrowUpRight, CornerDownLeft } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import pdfAsset from "@/assets/apostilas-provas-cas.pdf.asset.json";
@@ -260,6 +260,65 @@ function SearchPanel(props: {
   const setQueryAndScroll = (q: string) => { setQuery(q); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const [openSource, setOpenSource] = useState<{ match: Match; index: number } | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [tab, setTab] = useState<"direta" | "aprofundar" | "pontos" | "conceitos" | "fontes">("direta");
+  const [recent, setRecent] = useState<string[]>([]);
+  const [loadingStep, setLoadingStep] = useState(0);
+
+  // Recent searches (localStorage)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("cas_recent_v1");
+      if (raw) setRecent(JSON.parse(raw));
+    } catch {}
+  }, []);
+  useEffect(() => {
+    if (!loading && (structured || answer) && query.trim()) {
+      setRecent((prev) => {
+        const next = [query.trim(), ...prev.filter((q) => q !== query.trim())].slice(0, 6);
+        try { localStorage.setItem("cas_recent_v1", JSON.stringify(next)); } catch {}
+        return next;
+      });
+      setTab("direta");
+    }
+  }, [loading, structured, answer]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ⌘K / Ctrl+K focus
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Streaming-feel loader steps
+  useEffect(() => {
+    if (!loading) { setLoadingStep(0); return; }
+    setLoadingStep(0);
+    const id = setInterval(() => setLoadingStep((s) => Math.min(s + 1, 3)), 900);
+    return () => clearInterval(id);
+  }, [loading]);
+
+  const INTENTS: Array<{ key: string; label: string; icon: React.ReactNode; prefix: string }> = [
+    { key: "def", label: "Definir", icon: <BookOpen className="h-3.5 w-3.5" />, prefix: "O que é " },
+    { key: "cmp", label: "Comparar", icon: <GitCompare className="h-3.5 w-3.5" />, prefix: "Qual a diferença entre " },
+    { key: "proc", label: "Procedimento", icon: <ListOrdered className="h-3.5 w-3.5" />, prefix: "Como se procede " },
+    { key: "hip", label: "Hipóteses", icon: <Clock className="h-3.5 w-3.5" />, prefix: "Em que hipóteses " },
+    { key: "vf", label: "Verdadeiro/Falso", icon: <Scale className="h-3.5 w-3.5" />, prefix: "É correto afirmar que " },
+  ];
+  const SUGGESTIONS = [
+    "O que é poder disciplinar?",
+    "Diferença entre IPM e sindicância",
+    "Quando cabe prisão em flagrante?",
+    "Como instaurar inquérito policial militar?",
+    "Princípios da administração pública",
+    "Hipóteses de transgressão disciplinar grave",
+  ];
 
   const onFile = async (f: File | null) => {
     if (!f) return;
@@ -273,48 +332,84 @@ function SearchPanel(props: {
   };
 
   return (
-    <div className="space-y-10">
-      {/* Hero search — Apple search style */}
-      <section className="text-center space-y-6 pt-4">
-        <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight text-[#1d1d1f]">
-          O que você quer consultar?
-        </h2>
-        <p className="text-[15px] text-[#6e6e73] max-w-xl mx-auto">
-          Digite a pergunta ou envie a foto/PDF da questão. Respostas diretas, citadas e prontas para a prova.
-        </p>
-        <form onSubmit={onSubmit} className="max-w-2xl mx-auto">
-          <div className="relative flex items-center bg-[#f5f5f7] rounded-full border border-transparent focus-within:border-[#0071e3] focus-within:bg-white transition shadow-sm">
-            <Search className="absolute left-5 h-4 w-4 text-[#6e6e73]" />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Ex.: o que é poder disciplinar? · por que existe IPM? · como instaurar..."
-              className="pl-12 pr-44 h-14 text-[15px] bg-transparent border-0 rounded-full focus-visible:ring-0 placeholder:text-[#86868b]"
-            />
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              className="absolute right-[7.5rem] h-9 w-9 inline-flex items-center justify-center rounded-full text-[#6e6e73] hover:bg-[#e8e8ed] hover:text-[#1d1d1f] transition"
-              title="Anexar imagem ou PDF da questão"
-            >
-              <Paperclip className="h-4 w-4" />
-            </button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*,application/pdf"
-              className="hidden"
-              onChange={(e) => { onFile(e.target.files?.[0] ?? null); e.target.value = ""; }}
-            />
-            <Button
-              type="submit"
-              disabled={loading || (!query.trim() && !attachment)}
-              className="absolute right-1.5 h-11 px-6 rounded-full bg-[#1d1d1f] hover:bg-[#0071e3] text-white text-[13px] font-medium"
-            >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Consultar"}
-            </Button>
+    <div className="space-y-8">
+      {/* Hero EAD command center */}
+      <section className="relative overflow-hidden rounded-[28px] border border-[#d2d2d7] bg-gradient-to-br from-white via-white to-[#f5f5f7] p-8 sm:p-12">
+        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-[#0071e3]/8 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-32 -left-16 h-72 w-72 rounded-full bg-[#a78bfa]/10 blur-3xl pointer-events-none" />
+        <div className="relative space-y-7">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-[#d2d2d7] text-[11px] uppercase tracking-[0.18em] text-[#6e6e73]">
+            <Zap className="h-3 w-3 text-[#0071e3]" /> EAD CAS · núcleo de consulta inteligente
           </div>
-        </form>
+          <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight text-[#1d1d1f] leading-[1.05]">
+            Pergunte. <span className="text-[#86868b]">A apostila responde.</span>
+          </h2>
+          <p className="text-[15px] text-[#6e6e73] max-w-xl">
+            Motor técnico-didático que lê 1.297 trechos oficiais da apostila CAS-PMERJ e devolve resposta citada, com aprofundamento, conceitos-chave e fontes rastreáveis.
+          </p>
+
+          <form onSubmit={onSubmit} className="max-w-3xl">
+            <div className="relative flex items-center bg-white rounded-2xl border border-[#d2d2d7] focus-within:border-[#0071e3] focus-within:ring-4 focus-within:ring-[#0071e3]/10 transition shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+              <Search className="absolute left-5 h-4 w-4 text-[#6e6e73]" />
+              <Input
+                ref={inputRef}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Pergunte qualquer coisa do CAS — definição, comparação, procedimento, hipóteses…"
+                className="pl-12 pr-56 h-16 text-[15px] bg-transparent border-0 rounded-2xl focus-visible:ring-0 placeholder:text-[#86868b]"
+              />
+              <div className="absolute right-2 flex items-center gap-1.5">
+                <kbd className="hidden md:inline-flex items-center gap-1 h-7 px-2 rounded-md bg-[#f5f5f7] border border-[#e8e8ed] text-[10px] font-mono text-[#86868b]">
+                  <Command className="h-3 w-3" />K
+                </kbd>
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="h-10 w-10 inline-flex items-center justify-center rounded-xl text-[#6e6e73] hover:bg-[#f5f5f7] hover:text-[#1d1d1f] transition"
+                  title="Anexar imagem ou PDF da questão"
+                >
+                  <Paperclip className="h-4 w-4" />
+                </button>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*,application/pdf"
+                  className="hidden"
+                  onChange={(e) => { onFile(e.target.files?.[0] ?? null); e.target.value = ""; }}
+                />
+                <Button
+                  type="submit"
+                  disabled={loading || (!query.trim() && !attachment)}
+                  className="h-12 px-5 rounded-xl bg-[#1d1d1f] hover:bg-[#0071e3] text-white text-[13px] font-medium gap-1.5"
+                >
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Consultar <CornerDownLeft className="h-3.5 w-3.5 opacity-70" /></>}
+                </Button>
+              </div>
+            </div>
+
+            {/* Intent quick actions */}
+            <div className="flex flex-wrap gap-1.5 mt-4">
+              {INTENTS.map((it) => (
+                <button
+                  key={it.key}
+                  type="button"
+                  onClick={() => {
+                    setQuery(it.prefix);
+                    setTimeout(() => {
+                      inputRef.current?.focus();
+                      const v = it.prefix;
+                      inputRef.current?.setSelectionRange(v.length, v.length);
+                    }, 0);
+                  }}
+                  className="inline-flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-full bg-white border border-[#d2d2d7] text-[#1d1d1f] hover:border-[#1d1d1f] transition"
+                >
+                  {it.icon} {it.label}
+                </button>
+              ))}
+            </div>
+          </form>
+        </div>
+      </section>
 
         {attachment && (
           <div className="max-w-2xl mx-auto flex items-center gap-3 bg-white border border-[#d2d2d7] rounded-2xl p-3 text-left">
@@ -341,7 +436,7 @@ function SearchPanel(props: {
         )}
 
         {extracted && (
-          <div className="max-w-2xl mx-auto text-left bg-[#f5f5f7] rounded-2xl p-4">
+        <div className="max-w-3xl mx-auto text-left bg-[#f5f5f7] rounded-2xl p-4">
             <div className="text-[10px] tracking-[0.2em] uppercase text-[#86868b] mb-1 flex items-center gap-1.5">
               <Camera className="h-3 w-3" /> Enunciado lido do arquivo
             </div>
@@ -349,8 +444,10 @@ function SearchPanel(props: {
           </div>
         )}
 
-        {/* Discipline filter chips */}
-        <div className="flex items-center justify-center gap-1.5 flex-wrap max-w-4xl mx-auto pt-2">
+      {/* Discipline filter */}
+      <div className="flex items-start gap-3 flex-wrap">
+        <div className="text-[10px] tracking-[0.2em] uppercase text-[#86868b] pt-2 shrink-0">Filtro</div>
+        <div className="flex items-center gap-1.5 flex-wrap">
           <button
             type="button"
             onClick={() => setFilterDisc("")}
@@ -359,7 +456,7 @@ function SearchPanel(props: {
               filterDisc === "" ? "bg-[#1d1d1f] text-white" : "bg-[#f5f5f7] text-[#6e6e73] hover:text-[#1d1d1f]",
             )}
           >
-            Todas
+            Todas as 20
           </button>
           {DISCIPLINES.map((d) => (
             <button
@@ -375,7 +472,7 @@ function SearchPanel(props: {
             </button>
           ))}
         </div>
-      </section>
+      </div>
 
       {error && (
         <div className="max-w-3xl mx-auto p-4 rounded-2xl border border-red-200 bg-red-50">
@@ -384,36 +481,63 @@ function SearchPanel(props: {
       )}
 
       {loading && (
-        <div className="max-w-3xl mx-auto p-6 rounded-2xl bg-[#f5f5f7] flex items-center gap-3">
-          <Loader2 className="h-4 w-4 animate-spin text-[#1d1d1f]" />
-          <span className="text-sm text-[#6e6e73]">Consultando a apostila…</span>
+        <div className="max-w-3xl mx-auto rounded-3xl border border-[#d2d2d7] bg-white p-6 space-y-4">
+          <div className="flex items-center gap-2 text-[12px] uppercase tracking-[0.2em] text-[#86868b]">
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-[#0071e3]" /> Processando consulta
+          </div>
+          <ol className="space-y-2 text-[13px]">
+            {[
+              "Indexando termos e sinônimos jurídicos",
+              "Buscando trechos relevantes na apostila oficial",
+              "Sintetizando resposta técnico-didática",
+              "Citando fontes e organizando conceitos",
+            ].map((label, i) => (
+              <li key={i} className={cn(
+                "flex items-center gap-2 transition-colors",
+                i < loadingStep ? "text-[#1d1d1f]" : i === loadingStep ? "text-[#0071e3]" : "text-[#c7c7cc]",
+              )}>
+                {i < loadingStep ? <Check className="h-3.5 w-3.5 text-emerald-600" /> :
+                  i === loadingStep ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> :
+                  <span className="h-3.5 w-3.5 rounded-full border border-current opacity-40" />}
+                {label}
+              </li>
+            ))}
+          </ol>
+          <div className="space-y-2 pt-2">
+            <div className="h-3 w-full bg-[#f5f5f7] rounded animate-pulse" />
+            <div className="h-3 w-11/12 bg-[#f5f5f7] rounded animate-pulse" />
+            <div className="h-3 w-9/12 bg-[#f5f5f7] rounded animate-pulse" />
+          </div>
         </div>
       )}
 
       {(structured || answer) && (
-        <div className="max-w-3xl mx-auto space-y-6">
-          {/* Q + Direct answer — Apple card */}
-          <article className="bg-white rounded-3xl border border-[#d2d2d7] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-            <div className="text-[10px] tracking-[0.2em] uppercase text-[#86868b] mb-2">Pergunta</div>
-            <h3 className="text-[22px] font-semibold text-[#1d1d1f] leading-snug mb-6">{query}</h3>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="text-[10px] tracking-[0.2em] uppercase text-[#86868b]">Resposta</div>
-              {structured?.confianca && (
-                <span
-                  className={cn(
+        <div className="max-w-3xl mx-auto space-y-5">
+          {/* Question header */}
+          <article className="bg-white rounded-3xl border border-[#d2d2d7] p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+            <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+              <div className="text-[10px] tracking-[0.2em] uppercase text-[#86868b] flex items-center gap-1.5">
+                <Quote className="h-3 w-3" /> Pergunta
+              </div>
+              <div className="flex items-center gap-2">
+                {structured?.confianca && (
+                  <span className={cn(
                     "inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full",
                     structured.confianca === "alta" && "bg-emerald-50 text-emerald-700",
                     structured.confianca === "media" && "bg-amber-50 text-amber-700",
                     structured.confianca === "baixa" && "bg-rose-50 text-rose-700",
-                  )}
-                >
-                  <ShieldCheck className="h-3 w-3" /> {structured.confianca}
-                </span>
-              )}
+                  )}>
+                    <ShieldCheck className="h-3 w-3" /> confiança {structured.confianca}
+                  </span>
+                )}
+                {matches.length > 0 && (
+                  <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#f5f5f7] text-[#6e6e73]">
+                    {matches.length} fontes
+                  </span>
+                )}
+              </div>
             </div>
-            <p className="text-[19px] font-medium leading-relaxed text-[#1d1d1f]">
-              {structured?.resposta_curta ?? (answer ? answer.slice(0, 240) + (answer.length > 240 ? "…" : "") : "")}
-            </p>
+            <h3 className="text-[22px] font-semibold text-[#1d1d1f] leading-snug">{query}</h3>
             {structured?.encontrado === false && (
               <p className="mt-3 text-[12px] text-amber-700">
                 Conteúdo não localizado diretamente — tente reformular ou filtrar por disciplina.
@@ -421,10 +545,43 @@ function SearchPanel(props: {
             )}
           </article>
 
-          {(structured?.resposta_completa || answer) && (
-            <article className="bg-white rounded-3xl border border-[#d2d2d7] p-8">
-              <div className="text-[10px] tracking-[0.2em] uppercase text-[#86868b] mb-4">Aprofundamento</div>
-              <div className="prose prose-neutral max-w-none text-[#1d1d1f] leading-[1.7] prose-headings:font-semibold prose-strong:text-[#1d1d1f] prose-li:my-1 prose-p:my-3">
+          {/* Direct answer — destaque */}
+          {structured?.resposta_curta && (
+            <article className="rounded-3xl bg-gradient-to-br from-[#1d1d1f] to-[#2d2d33] text-white p-7">
+              <div className="text-[10px] tracking-[0.2em] uppercase text-[#86868b] mb-3">Resposta direta</div>
+              <p className="text-[19px] font-medium leading-[1.55]">{structured.resposta_curta}</p>
+            </article>
+          )}
+
+          {/* Tabs */}
+          <div className="sticky top-[57px] z-10 -mx-2 px-2 py-2 bg-white/85 backdrop-blur-xl rounded-2xl border border-[#d2d2d7]">
+            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
+              {([
+                { k: "direta", label: "Aprofundamento", icon: <BookOpen className="h-3.5 w-3.5" /> },
+                { k: "pontos", label: "Pontos-chave", icon: <ListChecks className="h-3.5 w-3.5" />, count: structured?.pontos_chave?.length },
+                { k: "conceitos", label: "Conceitos", icon: <Lightbulb className="h-3.5 w-3.5" />, count: structured?.conceitos?.length },
+                { k: "fontes", label: "Fontes", icon: <Quote className="h-3.5 w-3.5" />, count: matches.length },
+              ] as const).map((t) => (
+                <button
+                  key={t.k}
+                  onClick={() => setTab(t.k as any)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-medium whitespace-nowrap transition",
+                    tab === t.k ? "bg-[#1d1d1f] text-white" : "text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-[#f5f5f7]",
+                  )}
+                >
+                  {t.icon}{t.label}
+                  {"count" in t && t.count ? (
+                    <span className={cn("ml-0.5 text-[10px] font-mono px-1.5 py-0.5 rounded", tab === t.k ? "bg-white/15" : "bg-[#f5f5f7]")}>{t.count}</span>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {tab === "direta" && (structured?.resposta_completa || answer) && (
+            <article className="bg-white rounded-3xl border border-[#d2d2d7] p-7">
+              <div className="prose prose-neutral max-w-none text-[#1d1d1f] leading-[1.75] prose-headings:font-semibold prose-strong:text-[#1d1d1f] prose-li:my-1 prose-p:my-3">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {structured?.resposta_completa ?? answer ?? ""}
                 </ReactMarkdown>
@@ -432,16 +589,12 @@ function SearchPanel(props: {
             </article>
           )}
 
-          {structured?.pontos_chave && structured.pontos_chave.length > 0 && (
-            <article className="bg-[#f5f5f7] rounded-3xl p-8">
-              <div className="flex items-center gap-2 mb-4">
-                <ListChecks className="h-4 w-4 text-[#1d1d1f]" />
-                <div className="text-[13px] font-semibold uppercase tracking-wider text-[#1d1d1f]">Pontos-chave</div>
-              </div>
+          {tab === "pontos" && structured?.pontos_chave && structured.pontos_chave.length > 0 && (
+            <article className="bg-[#f5f5f7] rounded-3xl p-7">
               <ul className="space-y-3">
                 {structured.pontos_chave.map((p, i) => (
                   <li key={i} className="flex gap-3 text-[15px] leading-relaxed text-[#1d1d1f]">
-                    <span className="text-[#0071e3] font-semibold shrink-0 tabular-nums">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="text-[#0071e3] font-mono font-semibold shrink-0 tabular-nums">{String(i + 1).padStart(2, "0")}</span>
                     <span>{p}</span>
                   </li>
                 ))}
@@ -449,16 +602,12 @@ function SearchPanel(props: {
             </article>
           )}
 
-          {structured?.conceitos && structured.conceitos.length > 0 && (
-            <article className="bg-white rounded-3xl border border-[#d2d2d7] p-8">
-              <div className="flex items-center gap-2 mb-4">
-                <Lightbulb className="h-4 w-4 text-[#1d1d1f]" />
-                <div className="text-[13px] font-semibold uppercase tracking-wider text-[#1d1d1f]">Conceitos</div>
-              </div>
+          {tab === "conceitos" && structured?.conceitos && structured.conceitos.length > 0 && (
+            <article className="bg-white rounded-3xl border border-[#d2d2d7] p-7">
               <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-5">
                 {structured.conceitos.map((c, i) => (
-                  <div key={i}>
-                    <dt className="text-[14px] font-semibold text-[#1d1d1f] uppercase tracking-wide">{c.termo}</dt>
+                  <div key={i} className="border-l-2 border-[#0071e3] pl-3">
+                    <dt className="text-[13px] font-semibold text-[#1d1d1f] uppercase tracking-wide">{c.termo}</dt>
                     <dd className="text-[13px] text-[#6e6e73] mt-1 leading-relaxed">{c.definicao}</dd>
                   </div>
                 ))}
@@ -466,8 +615,40 @@ function SearchPanel(props: {
             </article>
           )}
 
+          {tab === "fontes" && matches.length > 0 && (
+            <div className="space-y-3">
+              {matches.map((m, i) => (
+                <article
+                  key={m.id}
+                  className="bg-white rounded-2xl border border-[#d2d2d7] p-5 hover:border-[#1d1d1f] transition cursor-pointer"
+                  onClick={() => setOpenSource({ match: m, index: i })}
+                >
+                  <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-[#1d1d1f] text-white">F{String(i + 1).padStart(2, "0")}</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); props.onOpenDiscipline(m.discipline); }}
+                        className="text-[12px] font-semibold uppercase tracking-wide text-[#1d1d1f] hover:text-[#0071e3] text-left"
+                      >
+                        {m.discipline}
+                      </button>
+                      <span className="text-[11px] text-[#86868b] font-mono">
+                        p.{m.page_start}{m.page_end !== m.page_start ? `–${m.page_end}` : ""}
+                      </span>
+                    </div>
+                    <ArrowUpRight className="h-3.5 w-3.5 text-[#86868b]" />
+                  </div>
+                  <p className="text-[13px] text-[#6e6e73] leading-relaxed whitespace-pre-wrap line-clamp-6">
+                    {m.content}
+                  </p>
+                </article>
+              ))}
+            </div>
+          )}
+
+          {/* Continue estudando */}
           {structured?.questoes_relacionadas && structured.questoes_relacionadas.length > 0 && (
-            <article className="bg-white rounded-3xl border border-[#d2d2d7] p-8">
+            <article className="bg-white rounded-3xl border border-[#d2d2d7] p-7">
               <div className="flex items-center gap-2 mb-4">
                 <HelpCircle className="h-4 w-4 text-[#1d1d1f]" />
                 <div className="text-[13px] font-semibold uppercase tracking-wider text-[#1d1d1f]">Continue estudando</div>
@@ -480,15 +661,15 @@ function SearchPanel(props: {
                     className="text-left py-3 text-[15px] text-[#1d1d1f] hover:text-[#0071e3] transition flex items-center justify-between gap-3 group"
                   >
                     <span>{q}</span>
-                    <span className="text-[#86868b] group-hover:text-[#0071e3] group-hover:translate-x-0.5 transition">→</span>
+                    <ChevronRight className="h-4 w-4 text-[#86868b] group-hover:text-[#0071e3] group-hover:translate-x-0.5 transition" />
                   </button>
                 ))}
               </div>
             </article>
           )}
 
-          <p className="text-[11px] text-[#86868b] text-center">
-            Conteúdo extraído integralmente da apostila oficial CAS-PMERJ.
+          <p className="text-[11px] text-[#86868b] text-center font-mono">
+            CAS-PMERJ · 1.297 trechos indexados · resposta rastreável às fontes
           </p>
         </div>
       )}
@@ -501,57 +682,64 @@ function SearchPanel(props: {
         </div>
       )}
 
-      {matches.length > 0 && (
-        <div className="max-w-3xl mx-auto space-y-3">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <h3 className="text-[10px] tracking-[0.2em] uppercase text-[#86868b]">Fontes na apostila</h3>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {matches.map((m, i) => (
-                <button
-                  key={`chip-${m.id}`}
-                  onClick={() => setOpenSource({ match: m, index: i })}
-                  className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-[#f5f5f7] text-[#1d1d1f] hover:bg-[#1d1d1f] hover:text-white transition"
-                  title={`${m.discipline} · p. ${m.page_start}`}
-                >
-                  [Fonte {String(i + 1).padStart(2, "0")}]
-                </button>
+      {!loading && !answer && !structured && matches.length === 0 && (
+        <div className="max-w-3xl mx-auto grid gap-5 md:grid-cols-2">
+          <div className="bg-white rounded-3xl border border-[#d2d2d7] p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="h-4 w-4 text-[#0071e3]" />
+              <div className="text-[11px] uppercase tracking-[0.18em] font-semibold text-[#1d1d1f]">Sugestões para começar</div>
+            </div>
+            <ul className="space-y-1">
+              {SUGGESTIONS.map((s) => (
+                <li key={s}>
+                  <button
+                    onClick={() => { setQuery(s); inputRef.current?.focus(); }}
+                    className="w-full text-left py-2 px-3 rounded-xl text-[13px] text-[#1d1d1f] hover:bg-[#f5f5f7] transition flex items-center justify-between gap-2 group"
+                  >
+                    <span>{s}</span>
+                    <ArrowUpRight className="h-3.5 w-3.5 text-[#86868b] opacity-0 group-hover:opacity-100 transition" />
+                  </button>
+                </li>
               ))}
+            </ul>
+          </div>
+          <div className="bg-white rounded-3xl border border-[#d2d2d7] p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <History className="h-4 w-4 text-[#1d1d1f]" />
+              <div className="text-[11px] uppercase tracking-[0.18em] font-semibold text-[#1d1d1f]">Suas últimas buscas</div>
+            </div>
+            {recent.length === 0 ? (
+              <p className="text-[13px] text-[#86868b] py-2">Suas perguntas recentes aparecem aqui para revisão rápida.</p>
+            ) : (
+              <ul className="space-y-1">
+                {recent.map((s) => (
+                  <li key={s}>
+                    <button
+                      onClick={() => { setQuery(s); inputRef.current?.focus(); }}
+                      className="w-full text-left py-2 px-3 rounded-xl text-[13px] text-[#1d1d1f] hover:bg-[#f5f5f7] transition flex items-center gap-2"
+                    >
+                      <Search className="h-3.5 w-3.5 text-[#86868b]" />
+                      <span className="truncate">{s}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="mt-4 pt-4 border-t border-[#e8e8ed] grid grid-cols-3 gap-3 text-center">
+              <div>
+                <div className="text-[20px] font-semibold tracking-tight text-[#1d1d1f] font-mono">20</div>
+                <div className="text-[10px] uppercase tracking-wider text-[#86868b]">disciplinas</div>
+              </div>
+              <div>
+                <div className="text-[20px] font-semibold tracking-tight text-[#1d1d1f] font-mono">1.297</div>
+                <div className="text-[10px] uppercase tracking-wider text-[#86868b]">trechos</div>
+              </div>
+              <div>
+                <div className="text-[20px] font-semibold tracking-tight text-[#1d1d1f] font-mono">479</div>
+                <div className="text-[10px] uppercase tracking-wider text-[#86868b]">questões</div>
+              </div>
             </div>
           </div>
-          {matches.map((m, i) => (
-            <article
-              key={m.id}
-              className="bg-white rounded-2xl border border-[#d2d2d7] p-5 hover:border-[#1d1d1f] transition cursor-pointer"
-              onClick={() => setOpenSource({ match: m, index: i })}
-            >
-              <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#f5f5f7] text-[#6e6e73]">Fonte {String(i + 1).padStart(2, "0")}</span>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); props.onOpenDiscipline(m.discipline); }}
-                    className="text-[12px] font-semibold uppercase tracking-wide text-[#1d1d1f] hover:text-[#0071e3] text-left"
-                  >
-                    {m.discipline}
-                  </button>
-                  <span className="text-[11px] text-[#86868b]">
-                    p. {m.page_start}{m.page_end !== m.page_start ? `–${m.page_end}` : ""}
-                  </span>
-                </div>
-              </div>
-              <p className="text-[13px] text-[#6e6e73] leading-relaxed whitespace-pre-wrap line-clamp-6">
-                {m.content}
-              </p>
-            </article>
-          ))}
-        </div>
-      )}
-
-      {!loading && !answer && matches.length === 0 && (
-        <div className="max-w-3xl mx-auto p-10 text-center">
-          <FileText className="h-8 w-8 text-[#86868b] mx-auto mb-3" />
-          <p className="text-[14px] text-[#6e6e73]">
-            Pesquise sobre qualquer uma das 20 disciplinas do CAS.
-          </p>
         </div>
       )}
 
