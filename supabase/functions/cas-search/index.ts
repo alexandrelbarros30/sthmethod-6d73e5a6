@@ -283,10 +283,11 @@ async function hybridSearch(supabase: any, q: string, discipline: string | null,
   const queries = new Set<string>([q]);
   for (const t of expandTokens(q)) if (t.length >= 4) queries.add(t);
   const seen = new Map<number, any>();
+  const perQueryCap = Math.max(matchCount, 20);
   for (const qq of queries) {
     const { data, error } = await (supabase as any).rpc('search_cas_chunks_fts', {
       q: qq,
-      match_count: matchCount,
+      match_count: perQueryCap,
       filter_discipline: discipline || null,
     });
     if (error) throw new Error(error.message);
@@ -305,9 +306,18 @@ async function hybridSearch(supabase: any, q: string, discipline: string | null,
   } catch (e) {
     console.error(JSON.stringify({ event: 'cas_toc_lookup_failed', error: String((e as Error)?.message || e) }));
   }
-  const apostila = Array.from(seen.values())
-    .sort((a, b) => (b.similarity ?? 0) - (a.similarity ?? 0))
-    .slice(0, matchCount)
+  // Dedup por página/disciplina para evitar que múltiplos chunks da mesma página dominem
+  const sorted = Array.from(seen.values()).sort((a, b) => (b.similarity ?? 0) - (a.similarity ?? 0));
+  const pageSeen = new Set<string>();
+  const deduped: any[] = [];
+  for (const m of sorted) {
+    const key = `${m.discipline}::${m.page_start}`;
+    if (pageSeen.has(key)) continue;
+    pageSeen.add(key);
+    deduped.push(m);
+    if (deduped.length >= matchCount) break;
+  }
+  const apostila = deduped
     .map((m) => ({
       id: m.id,
       source: 'apostila' as const,
