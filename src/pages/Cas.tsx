@@ -202,226 +202,220 @@ function SearchPanel(props: {
   const { query, setQuery, filterDisc, setFilterDisc, loading, answer, structured, answerError, matches, error, onSubmit } = props;
   const setQueryAndScroll = (q: string) => { setQuery(q); window.scrollTo({ top: 0, behavior: "smooth" }); };
   return (
-    <div className="space-y-6">
-      <Card className="p-5">
-        <form onSubmit={onSubmit} className="space-y-3">
-          <label className="text-xs font-medium text-muted-foreground">Pergunte qualquer coisa sobre a apostila CAS</label>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Ex: O que diferencia poder disciplinar de poder hierárquico?"
-                className="pl-9 h-11 text-sm"
-              />
-            </div>
-            <Button type="submit" disabled={loading || !query.trim()} className="h-11 px-5">
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Buscar"}
+    <div className="space-y-10">
+      {/* Hero search — Apple search style */}
+      <section className="text-center space-y-6 pt-4">
+        <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight text-[#1d1d1f]">
+          O que você quer consultar?
+        </h2>
+        <p className="text-[15px] text-[#6e6e73] max-w-xl mx-auto">
+          Pesquise qualquer tema das 20 disciplinas. Respostas diretas, citadas e prontas para a prova.
+        </p>
+        <form onSubmit={onSubmit} className="max-w-2xl mx-auto">
+          <div className="relative flex items-center bg-[#f5f5f7] rounded-full border border-transparent focus-within:border-[#0071e3] focus-within:bg-white transition shadow-sm">
+            <Search className="absolute left-5 h-4 w-4 text-[#6e6e73]" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Ex.: poder disciplinar vs. poder hierárquico"
+              className="pl-12 pr-32 h-14 text-[15px] bg-transparent border-0 rounded-full focus-visible:ring-0 placeholder:text-[#86868b]"
+            />
+            <Button
+              type="submit"
+              disabled={loading || !query.trim()}
+              className="absolute right-1.5 h-11 px-6 rounded-full bg-[#1d1d1f] hover:bg-[#0071e3] text-white text-[13px] font-medium"
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Consultar"}
             </Button>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[11px] text-muted-foreground">Disciplina:</span>
+        </form>
+
+        {/* Discipline filter chips */}
+        <div className="flex items-center justify-center gap-1.5 flex-wrap max-w-4xl mx-auto pt-2">
+          <button
+            type="button"
+            onClick={() => setFilterDisc("")}
+            className={cn(
+              "text-[11px] tracking-wider uppercase px-3 py-1.5 rounded-full transition",
+              filterDisc === "" ? "bg-[#1d1d1f] text-white" : "bg-[#f5f5f7] text-[#6e6e73] hover:text-[#1d1d1f]",
+            )}
+          >
+            Todas
+          </button>
+          {DISCIPLINES.map((d) => (
             <button
+              key={d}
               type="button"
-              onClick={() => setFilterDisc("")}
+              onClick={() => setFilterDisc(filterDisc === d ? "" : d)}
               className={cn(
-                "text-[11px] px-2.5 py-1 rounded-full border transition",
-                filterDisc === "" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:text-foreground",
+                "text-[11px] tracking-wider uppercase px-3 py-1.5 rounded-full transition",
+                filterDisc === d ? "bg-[#1d1d1f] text-white" : "bg-[#f5f5f7] text-[#6e6e73] hover:text-[#1d1d1f]",
               )}
             >
-              Todas
+              {shortName(d).toUpperCase()}
             </button>
-            {DISCIPLINES.map((d) => (
-              <button
-                key={d}
-                type="button"
-                onClick={() => setFilterDisc(filterDisc === d ? "" : d)}
-                className={cn(
-                  "text-[11px] px-2.5 py-1 rounded-full border transition",
-                  filterDisc === d ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {shortName(d)}
-              </button>
-            ))}
-          </div>
-        </form>
-      </Card>
+          ))}
+        </div>
+      </section>
 
       {error && (
-        <Card className="p-4 border-destructive/40">
-          <p className="text-sm text-destructive">{error}</p>
-        </Card>
+        <div className="max-w-3xl mx-auto p-4 rounded-2xl border border-red-200 bg-red-50">
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
       )}
 
       {loading && (
-        <Card className="p-6 flex items-center gap-3">
-          <Loader2 className="h-4 w-4 animate-spin text-primary" />
-          <span className="text-sm text-muted-foreground">Pesquisando na apostila e estruturando a resposta…</span>
-        </Card>
+        <div className="max-w-3xl mx-auto p-6 rounded-2xl bg-[#f5f5f7] flex items-center gap-3">
+          <Loader2 className="h-4 w-4 animate-spin text-[#1d1d1f]" />
+          <span className="text-sm text-[#6e6e73]">Consultando a apostila…</span>
+        </div>
       )}
 
       {(structured || answer) && (
-        <div className="space-y-4">
-          {/* Header card: short answer + confidence */}
-          <Card className="p-5 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
-            <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
-              <div className="flex items-center gap-2">
-                <Brain className="h-4 w-4 text-primary" />
-                <h2 className="text-sm font-semibold">Resposta direta</h2>
-              </div>
+        <div className="max-w-3xl mx-auto space-y-6">
+          {/* Q + Direct answer — Apple card */}
+          <article className="bg-white rounded-3xl border border-[#d2d2d7] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+            <div className="text-[10px] tracking-[0.2em] uppercase text-[#86868b] mb-2">Pergunta</div>
+            <h3 className="text-[22px] font-semibold text-[#1d1d1f] leading-snug mb-6">{query}</h3>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="text-[10px] tracking-[0.2em] uppercase text-[#86868b]">Resposta</div>
               {structured?.confianca && (
-                <Badge
-                  variant="outline"
+                <span
                   className={cn(
-                    "text-[10px] gap-1",
-                    structured.confianca === "alta" && "border-emerald-500/50 text-emerald-600 dark:text-emerald-400",
-                    structured.confianca === "media" && "border-amber-500/50 text-amber-600 dark:text-amber-400",
-                    structured.confianca === "baixa" && "border-rose-500/50 text-rose-600 dark:text-rose-400",
+                    "inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full",
+                    structured.confianca === "alta" && "bg-emerald-50 text-emerald-700",
+                    structured.confianca === "media" && "bg-amber-50 text-amber-700",
+                    structured.confianca === "baixa" && "bg-rose-50 text-rose-700",
                   )}
                 >
-                  <ShieldCheck className="h-3 w-3" />
-                  confiança {structured.confianca}
-                </Badge>
+                  <ShieldCheck className="h-3 w-3" /> {structured.confianca}
+                </span>
               )}
             </div>
-            <p className="text-base font-medium leading-relaxed text-foreground">
+            <p className="text-[19px] font-medium leading-relaxed text-[#1d1d1f]">
               {structured?.resposta_curta ?? (answer ? answer.slice(0, 240) + (answer.length > 240 ? "…" : "") : "")}
             </p>
             {structured?.encontrado === false && (
-              <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                Conteúdo não localizado diretamente na apostila — tente reformular ou filtrar por disciplina.
+              <p className="mt-3 text-[12px] text-amber-700">
+                Conteúdo não localizado diretamente — tente reformular ou filtrar por disciplina.
               </p>
             )}
-          </Card>
+          </article>
 
-          {/* Full explanation */}
           {(structured?.resposta_completa || answer) && (
-            <Card className="p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-semibold">Explicação completa</h3>
-              </div>
-              <div className="prose prose-sm dark:prose-invert max-w-none leading-relaxed prose-headings:font-semibold prose-strong:text-foreground prose-li:my-0.5">
+            <article className="bg-white rounded-3xl border border-[#d2d2d7] p-8">
+              <div className="text-[10px] tracking-[0.2em] uppercase text-[#86868b] mb-4">Aprofundamento</div>
+              <div className="prose prose-neutral max-w-none text-[#1d1d1f] leading-[1.7] prose-headings:font-semibold prose-strong:text-[#1d1d1f] prose-li:my-1 prose-p:my-3">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {structured?.resposta_completa ?? answer ?? ""}
                 </ReactMarkdown>
               </div>
-            </Card>
+            </article>
           )}
 
-          {/* Key points */}
           {structured?.pontos_chave && structured.pontos_chave.length > 0 && (
-            <Card className="p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <ListChecks className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-semibold">Pontos-chave para a prova</h3>
+            <article className="bg-[#f5f5f7] rounded-3xl p-8">
+              <div className="flex items-center gap-2 mb-4">
+                <ListChecks className="h-4 w-4 text-[#1d1d1f]" />
+                <div className="text-[13px] font-semibold uppercase tracking-wider text-[#1d1d1f]">Pontos-chave</div>
               </div>
-              <ul className="space-y-2">
+              <ul className="space-y-3">
                 {structured.pontos_chave.map((p, i) => (
-                  <li key={i} className="flex gap-2 text-sm leading-relaxed">
-                    <span className="text-primary font-semibold shrink-0">{i + 1}.</span>
+                  <li key={i} className="flex gap-3 text-[15px] leading-relaxed text-[#1d1d1f]">
+                    <span className="text-[#0071e3] font-semibold shrink-0 tabular-nums">{String(i + 1).padStart(2, "0")}</span>
                     <span>{p}</span>
                   </li>
                 ))}
               </ul>
-            </Card>
+            </article>
           )}
 
-          {/* Concepts glossary */}
           {structured?.conceitos && structured.conceitos.length > 0 && (
-            <Card className="p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <Lightbulb className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-semibold">Conceitos essenciais</h3>
+            <article className="bg-white rounded-3xl border border-[#d2d2d7] p-8">
+              <div className="flex items-center gap-2 mb-4">
+                <Lightbulb className="h-4 w-4 text-[#1d1d1f]" />
+                <div className="text-[13px] font-semibold uppercase tracking-wider text-[#1d1d1f]">Conceitos</div>
               </div>
-              <dl className="space-y-3">
+              <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-5">
                 {structured.conceitos.map((c, i) => (
-                  <div key={i} className="border-l-2 border-primary/40 pl-3">
-                    <dt className="text-sm font-semibold text-foreground">{c.termo}</dt>
-                    <dd className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{c.definicao}</dd>
+                  <div key={i}>
+                    <dt className="text-[14px] font-semibold text-[#1d1d1f] uppercase tracking-wide">{c.termo}</dt>
+                    <dd className="text-[13px] text-[#6e6e73] mt-1 leading-relaxed">{c.definicao}</dd>
                   </div>
                 ))}
               </dl>
-            </Card>
+            </article>
           )}
 
-          {/* Related questions */}
           {structured?.questoes_relacionadas && structured.questoes_relacionadas.length > 0 && (
-            <Card className="p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <HelpCircle className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-semibold">Aprofunde — perguntas relacionadas</h3>
+            <article className="bg-white rounded-3xl border border-[#d2d2d7] p-8">
+              <div className="flex items-center gap-2 mb-4">
+                <HelpCircle className="h-4 w-4 text-[#1d1d1f]" />
+                <div className="text-[13px] font-semibold uppercase tracking-wider text-[#1d1d1f]">Continue estudando</div>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col divide-y divide-[#e8e8ed]">
                 {structured.questoes_relacionadas.map((q, i) => (
                   <button
                     key={i}
                     onClick={() => setQueryAndScroll(q)}
-                    className="text-xs text-left px-3 py-2 rounded-full border border-border hover:border-primary/60 hover:bg-primary/5 transition"
+                    className="text-left py-3 text-[15px] text-[#1d1d1f] hover:text-[#0071e3] transition flex items-center justify-between gap-3 group"
                   >
-                    {q}
+                    <span>{q}</span>
+                    <span className="text-[#86868b] group-hover:text-[#0071e3] group-hover:translate-x-0.5 transition">→</span>
                   </button>
                 ))}
               </div>
-            </Card>
+            </article>
           )}
 
-          <p className="text-[11px] text-muted-foreground px-1">
-            Resposta gerada apenas com base nos trechos da apostila CAS-PMERJ. Sempre confira as fontes abaixo.
+          <p className="text-[11px] text-[#86868b] text-center">
+            Conteúdo extraído integralmente da apostila oficial CAS-PMERJ.
           </p>
         </div>
       )}
 
       {!answer && answerError && matches.length > 0 && (
-        <Card className="p-4 border-amber-500/40 bg-amber-500/5">
-          <p className="text-xs text-amber-600 dark:text-amber-400">
-            <strong>IA indisponível no momento:</strong> {answerError}
+        <div className="max-w-3xl mx-auto p-4 rounded-2xl bg-amber-50 border border-amber-200">
+          <p className="text-[12px] text-amber-800">
+            Consulta sintetizada temporariamente indisponível. Os trechos da apostila abaixo respondem diretamente à sua pergunta.
           </p>
-          <p className="text-[11px] text-muted-foreground mt-2">
-            Os trechos relevantes da apostila estão listados abaixo — use-os como referência direta.
-          </p>
-        </Card>
+        </div>
       )}
 
       {matches.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fontes na apostila</h3>
+        <div className="max-w-3xl mx-auto space-y-3">
+          <h3 className="text-[10px] tracking-[0.2em] uppercase text-[#86868b]">Fontes na apostila</h3>
           {matches.map((m, i) => (
-            <Card key={m.id} className="p-4">
-              <div className="flex items-center justify-between gap-2 mb-2">
+            <article key={m.id} className="bg-white rounded-2xl border border-[#d2d2d7] p-5">
+              <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <Badge variant="outline" className="text-[10px]">Fonte {i + 1}</Badge>
+                  <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#f5f5f7] text-[#6e6e73]">Fonte {String(i + 1).padStart(2, "0")}</span>
                   <button
                     onClick={() => props.onOpenDiscipline(m.discipline)}
-                    className="text-xs font-semibold text-primary hover:underline text-left"
+                    className="text-[12px] font-semibold uppercase tracking-wide text-[#1d1d1f] hover:text-[#0071e3] text-left"
                   >
                     {m.discipline}
                   </button>
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-[11px] text-[#86868b]">
                     p. {m.page_start}{m.page_end !== m.page_start ? `–${m.page_end}` : ""}
                   </span>
                 </div>
-                <span className="text-[10px] text-muted-foreground">
-                  {(m.similarity * 100).toFixed(0)}% relevância
-                </span>
               </div>
-              <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap line-clamp-6">
+              <p className="text-[13px] text-[#6e6e73] leading-relaxed whitespace-pre-wrap line-clamp-6">
                 {m.content}
               </p>
-            </Card>
+            </article>
           ))}
         </div>
       )}
 
       {!loading && !answer && matches.length === 0 && (
-        <Card className="p-6 text-center">
-          <FileText className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">
-            Faça uma pergunta sobre as 20 disciplinas do CAS. A IA usa apenas o conteúdo da apostila para responder.
+        <div className="max-w-3xl mx-auto p-10 text-center">
+          <FileText className="h-8 w-8 text-[#86868b] mx-auto mb-3" />
+          <p className="text-[14px] text-[#6e6e73]">
+            Pesquise sobre qualquer uma das 20 disciplinas do CAS.
           </p>
-        </Card>
+        </div>
       )}
     </div>
   );
@@ -438,17 +432,24 @@ function BookPanel(props: {
 
   if (!selectedDisc) {
     return (
-      <div>
-        <h2 className="text-sm font-semibold mb-4">20 disciplinas — escolha um capítulo</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="space-y-8">
+        <div className="text-center space-y-3">
+          <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight text-[#1d1d1f]">As 20 Disciplinas.</h2>
+          <p className="text-[15px] text-[#6e6e73]">Selecione um capítulo para ler na íntegra.</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {DISCIPLINES.map((d, idx) => (
             <button
               key={d}
               onClick={() => onSelect(d)}
-              className="text-left p-4 rounded-2xl border border-border bg-card hover:border-primary/50 hover:bg-accent/30 transition group"
+              className="text-left p-6 rounded-2xl bg-white border border-[#d2d2d7] hover:border-[#1d1d1f] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition group min-h-[140px] flex flex-col justify-between"
             >
-              <div className="text-[10px] text-muted-foreground mb-1">Capítulo {String(idx + 1).padStart(2, "0")}</div>
-              <div className="text-sm font-semibold group-hover:text-primary transition">{d}</div>
+              <div className="text-[10px] tracking-[0.2em] uppercase text-[#86868b]">
+                Capítulo {String(idx + 1).padStart(2, "0")}
+              </div>
+              <div className="text-[15px] font-semibold uppercase tracking-wide text-[#1d1d1f] leading-snug">
+                {d}
+              </div>
             </button>
           ))}
         </div>
@@ -457,30 +458,30 @@ function BookPanel(props: {
   }
 
   return (
-    <div>
+    <div className="max-w-3xl mx-auto">
       <button
         onClick={onBack}
-        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-[12px] text-[#0071e3] hover:underline mb-6 transition"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         Todas as disciplinas
       </button>
-      <h2 className="text-xl font-semibold mb-1">{selectedDisc}</h2>
-      <p className="text-xs text-muted-foreground mb-6">{chunks.length} trechos · use Ctrl/Cmd+F para localizar termos</p>
+      <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-[#1d1d1f] uppercase mb-2">{selectedDisc}</h2>
+      <p className="text-[12px] text-[#86868b] mb-8">{chunks.length} trechos · Ctrl/Cmd+F para localizar termos</p>
 
       {loading ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-sm text-[#6e6e73]">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Carregando conteúdo…
+          Carregando…
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {chunks.map((c) => (
-            <article key={c.id} className="border-l-2 border-border pl-4 py-1">
-              <div className="text-[10px] text-muted-foreground mb-1">
-                página {c.page_start}{c.page_end !== c.page_start ? `–${c.page_end}` : ""}
+            <article key={c.id} className="bg-white rounded-2xl border border-[#d2d2d7] p-6">
+              <div className="text-[10px] tracking-[0.2em] uppercase text-[#86868b] mb-2">
+                Página {c.page_start}{c.page_end !== c.page_start ? `–${c.page_end}` : ""}
               </div>
-              <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">{c.content}</p>
+              <p className="text-[15px] leading-[1.7] whitespace-pre-wrap text-[#1d1d1f]">{c.content}</p>
             </article>
           ))}
         </div>
