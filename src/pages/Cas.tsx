@@ -387,8 +387,8 @@ function SearchPanel(props: {
     if (searchState === "fallback_active") {
       return {
         tone: "amber",
-        title: "Fallback ativo",
-        text: `Gemini não respondeu como esperado e o Gateway assumiu a consulta${searchMeta?.durationMs ? ` em ${searchMeta.durationMs}ms` : ""}.`,
+        title: "Resposta por fonte local",
+        text: `Gemini não concluiu a síntese, então o EAD retornou automaticamente os trechos encontrados na apostila${searchMeta?.durationMs ? ` em ${searchMeta.durationMs}ms` : ""}.`,
       };
     }
     if (searchState === "cache_hit") {
