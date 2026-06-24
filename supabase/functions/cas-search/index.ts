@@ -818,7 +818,7 @@ Retorne SEMPRE um JSON válido com este schema exato:
     }
 
     if (!answer && !structured && matches.length > 0) {
-      structured = buildSourceFallbackAnswer(q, matches, answerError);
+      structured = buildSourceFallbackAnswer(q, matches, answerError, intent.intent);
       answer = structured.resposta_completa;
       metrics.fallbackUsed = true;
       metrics.fallbackProvider = 'fonte-local';
