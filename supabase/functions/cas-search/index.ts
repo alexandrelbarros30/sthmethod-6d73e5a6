@@ -594,6 +594,8 @@ TIPO DA PERGUNTA detectado: ${intent.intent}. ${intent.instruction}
 
 IMPORTANTE: Cada fonte vem rotulada como APOSTILA (conteúdo teórico) ou QUESTÕES (prova oficial com gabarito). Sempre indique de qual tipo vem a citação (ex.: "[Fonte 3 — QUESTÕES]"). Quando houver questões, comente brevemente a resolução/gabarito.
 
+FORMATAÇÃO OBRIGATÓRIA: nunca cole itens numerados ou alternativas no final do parágrafo anterior. Antes de qualquer item "1.", "2)", "A)", "B)", "C)" ou "D)", pule uma linha. Escreva o marcador do item em destaque e continue o conteúdo em novo parágrafo curto, para leitura pausada. Se a fonte vier condensada, reorganize visualmente sem alterar o sentido.
+
 Retorne SEMPRE um JSON válido com este schema exato:
 {
   "resposta_curta": "1-2 frases diretas respondendo a pergunta (com [Fonte N])",

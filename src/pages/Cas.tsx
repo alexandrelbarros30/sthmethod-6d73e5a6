@@ -124,7 +124,30 @@ function MarkdownAnswerCards({ markdown }: { markdown: string }) {
       blocks.push(m);
       return `\u0000B${blocks.length - 1}\u0000`;
     });
-    t = t.replace(/^\s*\d{1,4}\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ])/, "");
+    const citations: string[] = [];
+    t = t.replace(/\[Fonte\s+\d+[^\]]*\]/gi, (m) => {
+      citations.push(m);
+      return `\u0000F${citations.length - 1}\u0000`;
+    });
+
+    // Força itens de prova/apostila a nascerem em novo parágrafo, mesmo quando a IA
+    // devolve tudo condensado: "texto anterior 1) item", "texto A) opção", "2 - tópico".
+    t = t.replace(/([^\n])\s+(?=(?:\(?[A-Ea-e]\)?\s*[).:\-]\s+))/g, "$1\n\n");
+    t = t.replace(/([^\n])\s+(?=(?:\d{1,2}\s*[).:\-]\s+))/g, "$1\n\n");
+    t = t.replace(/([^\n])\s+(?=(?:\d{1,2}\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ][\p{L}\p{M}]{2,})))/gu, "$1\n\n");
+    t = t.replace(
+      /(^|\n\n|\n)\s*\(?([A-Ea-e])\)?\s*[).:\-]\s+/g,
+      (_m, pre, letter) => `${pre || "\n\n"}**${String(letter).toUpperCase()})**\n\n`,
+    );
+    t = t.replace(
+      /(^|\n\n|\n)\s*(\d{1,2})\s*[).:\-]\s+/g,
+      (_m, pre, num) => `${pre || "\n\n"}**${num}.**\n\n`,
+    );
+    t = t.replace(
+      /(^|\n\n|\n)\s*(\d{1,2})\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ][\p{L}\p{M}]{2,})/gu,
+      (_m, pre, num) => `${pre || "\n\n"}**${num}.**\n\n`,
+    );
+
     t = t.replace(/([?!])\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ"(])/g, "$1\n\n");
     t = t.replace(
       /(^|[.;:!?]\s+|\n)([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]{4,}[A-ZÁÉÍÓÚÂÊÔÃÕÇ])(?=\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9"(])/g,
@@ -138,15 +161,8 @@ function MarkdownAnswerCards({ markdown }: { markdown: string }) {
       }
       t = grouped.join("\n\n");
     }
-    t = t.replace(
-      /(?:^|\s)\(?([A-Ea-e])\s*[\)\-:]\s+/g,
-      (_m, letter) => `\n\n**${String(letter).toUpperCase()})** `,
-    );
-    t = t.replace(
-      /(^|\s)(\d{1,2})\s*[\)\.\-]\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ"(])/g,
-      (_m, _pre, num) => `\n\n**${num}.** `,
-    );
     t = t.replace(/\n{3,}/g, "\n\n").trimStart();
+    t = t.replace(/\u0000F(\d+)\u0000/g, (_m, i) => citations[Number(i)]);
     t = t.replace(/\u0000B(\d+)\u0000/g, (_m, i) => blocks[Number(i)]);
     return t;
   };
