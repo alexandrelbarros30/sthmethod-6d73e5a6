@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Search, Loader2, FileDown, ArrowLeft, FileText, ListChecks, Lightbulb, HelpCircle, ShieldCheck, BookMarked, Paperclip, X as XIcon, Camera } from "lucide-react";
+import { Search, Loader2, FileDown, ArrowLeft, FileText, ListChecks, Lightbulb, HelpCircle, ShieldCheck, BookMarked, Paperclip, X as XIcon, Camera, GraduationCap, Check, ChevronRight, Sparkles } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import pdfAsset from "@/assets/apostilas-provas-cas.pdf.asset.json";
@@ -59,7 +59,7 @@ type Chunk = {
   content: string;
 };
 
-type Mode = "search" | "book" | "simulado";
+type Mode = "search" | "book" | "simulado" | "study";
 
 type QuizQuestion = {
   id: number;
@@ -188,6 +188,15 @@ export default function Cas() {
               >
                 Simulado
               </button>
+              <button
+                onClick={() => setMode("study")}
+                className={cn(
+                  "px-4 py-1.5 rounded-full text-[12px] font-medium transition",
+                  mode === "study" ? "bg-white text-[#1d1d1f] shadow-sm" : "text-[#6e6e73] hover:text-[#1d1d1f]",
+                )}
+              >
+                Estudar
+              </button>
             </div>
             <a
               href={pdfAsset.url}
@@ -227,8 +236,10 @@ export default function Cas() {
             onSelect={openDiscipline}
             onBack={() => setSelectedDisc(null)}
           />
-        ) : (
+        ) : mode === "simulado" ? (
           <SimuladoPanel />
+        ) : (
+          <StudyPanel />
         )}
       </main>
     </div>
