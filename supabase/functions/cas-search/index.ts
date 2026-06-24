@@ -268,7 +268,7 @@ async function hybridSearch(supabase: ReturnType<typeof createClient>, q: string
   for (const t of expandTokens(q)) if (t.length >= 4) queries.add(t);
   const seen = new Map<number, any>();
   for (const qq of queries) {
-    const { data, error } = await supabase.rpc('search_cas_chunks_fts', {
+    const { data, error } = await (supabase as any).rpc('search_cas_chunks_fts', {
       q: qq,
       match_count: matchCount,
       filter_discipline: discipline || null,
@@ -295,7 +295,7 @@ async function logMetrics(supabase: ReturnType<typeof createClient>, m: SearchMe
     intent: m.intent,
   }));
   try {
-    await supabase.from('cas_search_logs').insert({
+    await (supabase as any).from('cas_search_logs').insert({
       cache_key: m.cacheKey,
       query: m.query.slice(0, 1000),
       discipline: m.discipline,
@@ -321,7 +321,7 @@ async function logMetrics(supabase: ReturnType<typeof createClient>, m: SearchMe
 }
 
 async function readCache(supabase: ReturnType<typeof createClient>, cacheKey: string) {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('cas_search_cache')
     .select('response, hit_count, expires_at')
     .eq('cache_key', cacheKey)
@@ -331,7 +331,7 @@ async function readCache(supabase: ReturnType<typeof createClient>, cacheKey: st
     return null;
   }
   if (!data || new Date(data.expires_at).getTime() < Date.now()) return null;
-  await supabase.from('cas_search_cache').update({ hit_count: (data.hit_count ?? 0) + 1, updated_at: new Date().toISOString() }).eq('cache_key', cacheKey);
+  await (supabase as any).from('cas_search_cache').update({ hit_count: (data.hit_count ?? 0) + 1, updated_at: new Date().toISOString() }).eq('cache_key', cacheKey);
   return data.response;
 }
 
@@ -346,7 +346,7 @@ async function writeCache(supabase: ReturnType<typeof createClient>, payload: {
   response: Record<string, unknown>;
 }) {
   try {
-    await supabase.from('cas_search_cache').upsert({
+    await (supabase as any).from('cas_search_cache').upsert({
       cache_key: payload.cacheKey,
       query: payload.query.slice(0, 2000),
       discipline: payload.discipline,
