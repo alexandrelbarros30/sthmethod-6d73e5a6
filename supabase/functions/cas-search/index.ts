@@ -3,7 +3,9 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 // Cascata de modelos: tenta o mais capaz primeiro, cai para alternativas se sobrecarregado.
-const CHAT_MODELS = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
+const CHAT_MODELS = ['gemini-2.0-flash', 'gemini-2.5-flash'];
+const LOVABLE_GATEWAY = 'https://ai.gateway.lovable.dev/v1/chat/completions';
+const LOVABLE_MODELS = ['google/gemini-2.5-flash', 'google/gemini-2.5-flash-lite'];
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -44,6 +46,46 @@ async function geminiAnswer(systemPrompt: string, parts: Part[] | string, apiKey
       // retry só vale a pena em 503/429/500
       if (![429, 500, 503].includes(r.status)) break;
       await sleep(400 * (attempt + 1));
+    }
+  }
+  // Fallback: Lovable AI Gateway (quando Gemini direto está esgotado)
+  const lovableKey = Deno.env.get('LOVABLE_API_KEY');
+  if (lovableKey) {
+    // Converte partes Gemini → mensagens OpenAI-style
+    const userContent: any[] = partsArr.map((p) => {
+      if (p.text) return { type: 'text', text: p.text };
+      if (p.inline_data) return { type: 'image_url', image_url: { url: `data:${p.inline_data.mime_type};base64,${p.inline_data.data}` } };
+      return null;
+    }).filter(Boolean);
+    for (const model of LOVABLE_MODELS) {
+      try {
+        const r = await fetch(LOVABLE_GATEWAY, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${lovableKey}` },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userContent.length === 1 && userContent[0].type === 'text' ? userContent[0].text : userContent },
+            ],
+            ...(jsonMode ? { response_format: { type: 'json_object' } } : {}),
+          }),
+        });
+        if (r.ok) {
+          const j = await r.json();
+          const text = j?.choices?.[0]?.message?.content?.trim() || null;
+          if (text) return { text, error: null };
+        } else {
+          const body = await r.text();
+          console.error(`lovable ${model} failed`, r.status, body.slice(0, 200));
+          lastStatus = r.status;
+          if (r.status === 402) {
+            return { text: null, error: 'Créditos de IA esgotados. Recarregue no painel para continuar.' };
+          }
+        }
+      } catch (e) {
+        console.error('lovable gateway error', e);
+      }
     }
   }
   let msg = `Consulta indisponível (${lastStatus}).`;
