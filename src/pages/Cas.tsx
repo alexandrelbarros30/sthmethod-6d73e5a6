@@ -282,13 +282,14 @@ function SearchPanel(props: {
   query: string; setQuery: (v: string) => void;
   filterDisc: string; setFilterDisc: (v: string) => void;
   loading: boolean; answer: string | null; structured: StructuredAnswer | null; answerError: string | null; matches: Match[]; error: string | null;
+  searchState: SearchUiState; searchMeta: SearchMeta | null;
   attachment: { name: string; mime: string; data: string; preview?: string } | null;
   setAttachment: (v: { name: string; mime: string; data: string; preview?: string } | null) => void;
   extracted: string | null;
   onSubmit: (e?: React.FormEvent) => void;
   onOpenDiscipline: (d: string) => void;
 }) {
-  const { query, setQuery, filterDisc, setFilterDisc, loading, answer, structured, answerError, matches, error, attachment, setAttachment, extracted, onSubmit } = props;
+  const { query, setQuery, filterDisc, setFilterDisc, loading, answer, structured, answerError, matches, error, searchState, searchMeta, attachment, setAttachment, extracted, onSubmit } = props;
   const setQueryAndScroll = (q: string) => { setQuery(q); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const [openSource, setOpenSource] = useState<{ match: Match; index: number } | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
