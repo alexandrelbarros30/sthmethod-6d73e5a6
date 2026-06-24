@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Search, Loader2, BookOpen, FileDown, ArrowLeft, FileText, ListChecks, Lightbulb, HelpCircle, ShieldCheck, BookMarked } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Search, Loader2, FileDown, ArrowLeft, FileText, ListChecks, Lightbulb, HelpCircle, ShieldCheck, BookMarked, Paperclip, X as XIcon, Camera } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import pdfAsset from "@/assets/apostilas-provas-cas.pdf.asset.json";
@@ -70,6 +70,8 @@ export default function Cas() {
   const [answerError, setAnswerError] = useState<string | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [attachment, setAttachment] = useState<{ name: string; mime: string; data: string; preview?: string } | null>(null);
+  const [extracted, setExtracted] = useState<string | null>(null);
 
   // Book mode
   const [selectedDisc, setSelectedDisc] = useState<string | null>(null);
@@ -83,16 +85,23 @@ export default function Cas() {
   async function runSearch(e?: React.FormEvent) {
     e?.preventDefault();
     const q = query.trim();
-    if (!q) return;
+    if (!q && !attachment) return;
     setLoading(true);
     setError(null);
     setAnswer(null);
     setStructured(null);
     setAnswerError(null);
     setMatches([]);
+    setExtracted(null);
     try {
       const { data, error } = await supabase.functions.invoke("cas-search", {
-        body: { query: q, discipline: filterDisc || undefined, withAnswer: true, matchCount: 10 },
+        body: {
+          query: q,
+          discipline: filterDisc || undefined,
+          withAnswer: true,
+          matchCount: 10,
+          attachment: attachment ? { mime: attachment.mime, data: attachment.data } : undefined,
+        },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
@@ -100,6 +109,8 @@ export default function Cas() {
       setStructured(((data as any)?.structured ?? null) as StructuredAnswer | null);
       setAnswerError((data as any)?.answerError ?? null);
       setMatches(((data as any)?.matches ?? []) as Match[]);
+      const ex = (data as any)?.extractedQuery as string | null;
+      if (ex) { setExtracted(ex); setQuery(ex); }
     } catch (err: any) {
       setError(err?.message ?? "Falha na busca");
     } finally {
@@ -174,6 +185,7 @@ export default function Cas() {
             query={query} setQuery={setQuery}
             filterDisc={filterDisc} setFilterDisc={setFilterDisc}
           loading={loading} answer={answer} structured={structured} answerError={answerError} matches={matches} error={error}
+            attachment={attachment} setAttachment={setAttachment} extracted={extracted}
             onSubmit={runSearch}
             onOpenDiscipline={(d) => { setMode("book"); openDiscipline(d); }}
           />
