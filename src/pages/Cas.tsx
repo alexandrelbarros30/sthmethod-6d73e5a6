@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Search, Loader2, BookOpen, FileDown, Sparkles, ArrowLeft, FileText, Brain, ListChecks, Lightbulb, HelpCircle, ShieldCheck } from "lucide-react";
+import { Search, Loader2, BookOpen, FileDown, ArrowLeft, FileText, ListChecks, Lightbulb, HelpCircle, ShieldCheck, BookMarked } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import pdfAsset from "@/assets/apostilas-provas-cas.pdf.asset.json";
