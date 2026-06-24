@@ -4877,6 +4877,17 @@ export type Database = {
           read_ct: number
         }[]
       }
+      search_cas_chunks_fts: {
+        Args: { filter_discipline?: string; match_count?: number; q: string }
+        Returns: {
+          content: string
+          discipline: string
+          id: number
+          page_end: number
+          page_start: number
+          similarity: number
+        }[]
+      }
       submit_image_consent: {
         Args: {
           _allow_tagging: boolean
