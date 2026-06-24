@@ -3,6 +3,7 @@ import { Search, Loader2, FileDown, ArrowLeft, FileText, ListChecks, Lightbulb, 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import pdfAsset from "@/assets/apostilas-provas-cas.pdf.asset.json";
+import questoesAsset from "@/assets/questoes-prova-cas.pdf.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -173,7 +174,15 @@ export default function Cas() {
               className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#0071e3] hover:underline"
             >
               <FileDown className="h-3.5 w-3.5" />
-              PDF
+              Apostila
+            </a>
+            <a
+              href={questoesAsset.url}
+              download="questoes-prova-cas.pdf"
+              className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#0071e3] hover:underline"
+            >
+              <FileDown className="h-3.5 w-3.5" />
+              Questões
             </a>
           </div>
         </div>
