@@ -276,7 +276,58 @@ async function hybridSearch(supabase: any, q: string, discipline: string | null,
       if (!prev || (row.similarity ?? 0) > (prev.similarity ?? 0)) seen.set(row.id, row);
     }
   }
-  return Array.from(seen.values()).sort((a, b) => (b.similarity ?? 0) - (a.similarity ?? 0)).slice(0, matchCount);
+  const apostila = Array.from(seen.values())
+    .sort((a, b) => (b.similarity ?? 0) - (a.similarity ?? 0))
+    .slice(0, matchCount)
+    .map((m) => ({
+      id: m.id,
+      source: 'apostila' as const,
+      discipline: m.discipline,
+      page_start: m.page_start,
+      page_end: m.page_end,
+      content: m.content,
+      similarity: m.similarity ?? 0,
+    }));
+  const questoes = await searchQuizQuestions(supabase, q, discipline, Math.min(5, matchCount));
+  return [...apostila, ...questoes];
+}
+
+async function searchQuizQuestions(supabase: any, q: string, discipline: string | null, limit: number) {
+  const tokens = expandTokens(q).filter((t) => t.length >= 4).slice(0, 6);
+  const terms = new Set<string>([q, ...tokens]);
+  const seen = new Map<number, any>();
+  for (const term of terms) {
+    const like = `%${term.replace(/[%_]/g, ' ')}%`;
+    let qb = (supabase as any)
+      .from('cas_quiz_questions')
+      .select('id, exam, discipline, question_num, statement, option_a, option_b, option_c, option_d, correct_answer, page_ref')
+      .or(`statement.ilike.${like},option_a.ilike.${like},option_b.ilike.${like},option_c.ilike.${like},option_d.ilike.${like}`)
+      .limit(limit);
+    if (discipline) qb = qb.eq('discipline', discipline);
+    const { data, error } = await qb;
+    if (error) {
+      console.error(JSON.stringify({ event: 'cas_quiz_questions_search_failed', error: error.message }));
+      continue;
+    }
+    for (const row of (data ?? []) as any[]) {
+      if (!seen.has(row.id)) seen.set(row.id, row);
+    }
+    if (seen.size >= limit) break;
+  }
+  return Array.from(seen.values()).slice(0, limit).map((row) => ({
+    id: row.id,
+    source: 'questoes' as const,
+    discipline: row.discipline,
+    page_start: row.page_ref ?? 0,
+    page_end: row.page_ref ?? 0,
+    exam: row.exam,
+    question_num: row.question_num,
+    statement: row.statement,
+    options: { A: row.option_a, B: row.option_b, C: row.option_c, D: row.option_d },
+    correct_answer: row.correct_answer,
+    content: `[${row.exam} • Q${row.question_num}] ${row.statement}\nA) ${row.option_a}\nB) ${row.option_b}\nC) ${row.option_c}\nD) ${row.option_d}\nGabarito: ${row.correct_answer}`,
+    similarity: 0.5,
+  }));
 }
 
 async function logMetrics(supabase: any, m: SearchMetrics) {
@@ -427,12 +478,18 @@ export async function handleCasSearch(req: Request) {
     let aiResult: AiAnswer | null = null;
 
     if (withAnswer && matches.length > 0) {
-      const context = (matches as Array<{ discipline: string; page_start: number; page_end: number; content: string }>)
-        .map((m, i) => `[Fonte ${i + 1} • ${m.discipline} • p.${m.page_start}-${m.page_end}]\n${m.content}`)
+      const context = (matches as Array<{ source: string; discipline: string; page_start: number; page_end: number; content: string }>)
+        .map((m, i) => {
+          const tag = m.source === 'questoes' ? 'QUESTÕES (prova oficial)' : 'APOSTILA';
+          const ref = m.source === 'questoes' ? `Q${(m as any).question_num ?? ''} • ${(m as any).exam ?? ''}` : `p.${m.page_start}-${m.page_end}`;
+          return `[Fonte ${i + 1} • ${tag} • ${m.discipline} • ${ref}]\n${m.content}`;
+        })
         .join('\n\n---\n\n');
       const sys = `Você é o cérebro de estudo do CAS-PMERJ — um pesquisador preciso, no estilo Brainly/Passei Direto. Sua única base de conhecimento são os trechos fornecidos da apostila oficial. Nunca invente fora deles. Cite fontes como [Fonte N] sempre que afirmar algo. Se a resposta não está nos trechos, declare honestamente que o conteúdo não foi localizado e sugira reformular.
 
 TIPO DA PERGUNTA detectado: ${intent.intent}. ${intent.instruction}
+
+IMPORTANTE: Cada fonte vem rotulada como APOSTILA (conteúdo teórico) ou QUESTÕES (prova oficial com gabarito). Sempre indique de qual tipo vem a citação (ex.: "[Fonte 3 — QUESTÕES]"). Quando houver questões, comente brevemente a resolução/gabarito.
 
 Retorne SEMPRE um JSON válido com este schema exato:
 {
@@ -440,6 +497,7 @@ Retorne SEMPRE um JSON válido com este schema exato:
   "resposta_completa": "explicação didática em markdown, estruturada, com [Fonte N] inline",
   "pontos_chave": ["bullet 1", "bullet 2", "..."],
   "conceitos": [{"termo":"X","definicao":"... [Fonte N]"}],
+  "analise_por_fonte": [{"fonte_index": 1, "tipo": "apostila|questoes", "resumo": "o que esta fonte específica contribui para a resposta, 1-3 frases"}],
   "questoes_relacionadas": ["pergunta de estudo 1", "pergunta 2", "pergunta 3"],
   "confianca": "alta" | "media" | "baixa",
   "encontrado": true | false
