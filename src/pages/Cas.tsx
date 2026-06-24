@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Search, Loader2, BookOpen, FileDown, ArrowLeft, FileText, ListChecks, Lightbulb, HelpCircle, ShieldCheck, BookMarked } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Search, Loader2, FileDown, ArrowLeft, FileText, ListChecks, Lightbulb, HelpCircle, ShieldCheck, BookMarked, Paperclip, X as XIcon, Camera } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import pdfAsset from "@/assets/apostilas-provas-cas.pdf.asset.json";
@@ -70,6 +70,8 @@ export default function Cas() {
   const [answerError, setAnswerError] = useState<string | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [attachment, setAttachment] = useState<{ name: string; mime: string; data: string; preview?: string } | null>(null);
+  const [extracted, setExtracted] = useState<string | null>(null);
 
   // Book mode
   const [selectedDisc, setSelectedDisc] = useState<string | null>(null);
@@ -83,16 +85,23 @@ export default function Cas() {
   async function runSearch(e?: React.FormEvent) {
     e?.preventDefault();
     const q = query.trim();
-    if (!q) return;
+    if (!q && !attachment) return;
     setLoading(true);
     setError(null);
     setAnswer(null);
     setStructured(null);
     setAnswerError(null);
     setMatches([]);
+    setExtracted(null);
     try {
       const { data, error } = await supabase.functions.invoke("cas-search", {
-        body: { query: q, discipline: filterDisc || undefined, withAnswer: true, matchCount: 10 },
+        body: {
+          query: q,
+          discipline: filterDisc || undefined,
+          withAnswer: true,
+          matchCount: 10,
+          attachment: attachment ? { mime: attachment.mime, data: attachment.data } : undefined,
+        },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
@@ -100,6 +109,8 @@ export default function Cas() {
       setStructured(((data as any)?.structured ?? null) as StructuredAnswer | null);
       setAnswerError((data as any)?.answerError ?? null);
       setMatches(((data as any)?.matches ?? []) as Match[]);
+      const ex = (data as any)?.extractedQuery as string | null;
+      if (ex) { setExtracted(ex); setQuery(ex); }
     } catch (err: any) {
       setError(err?.message ?? "Falha na busca");
     } finally {
@@ -174,6 +185,7 @@ export default function Cas() {
             query={query} setQuery={setQuery}
             filterDisc={filterDisc} setFilterDisc={setFilterDisc}
           loading={loading} answer={answer} structured={structured} answerError={answerError} matches={matches} error={error}
+            attachment={attachment} setAttachment={setAttachment} extracted={extracted}
             onSubmit={runSearch}
             onOpenDiscipline={(d) => { setMode("book"); openDiscipline(d); }}
           />
@@ -195,12 +207,28 @@ function SearchPanel(props: {
   query: string; setQuery: (v: string) => void;
   filterDisc: string; setFilterDisc: (v: string) => void;
   loading: boolean; answer: string | null; structured: StructuredAnswer | null; answerError: string | null; matches: Match[]; error: string | null;
+  attachment: { name: string; mime: string; data: string; preview?: string } | null;
+  setAttachment: (v: { name: string; mime: string; data: string; preview?: string } | null) => void;
+  extracted: string | null;
   onSubmit: (e?: React.FormEvent) => void;
   onOpenDiscipline: (d: string) => void;
 }) {
-  const { query, setQuery, filterDisc, setFilterDisc, loading, answer, structured, answerError, matches, error, onSubmit } = props;
+  const { query, setQuery, filterDisc, setFilterDisc, loading, answer, structured, answerError, matches, error, attachment, setAttachment, extracted, onSubmit } = props;
   const setQueryAndScroll = (q: string) => { setQuery(q); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const [openSource, setOpenSource] = useState<{ match: Match; index: number } | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+
+  const onFile = async (f: File | null) => {
+    if (!f) return;
+    if (f.size > 8 * 1024 * 1024) { alert("Arquivo muito grande (máx 8MB)."); return; }
+    const buf = await f.arrayBuffer();
+    let bin = ""; const bytes = new Uint8Array(buf);
+    for (let i = 0; i < bytes.byteLength; i++) bin += String.fromCharCode(bytes[i]);
+    const b64 = btoa(bin);
+    const preview = f.type.startsWith("image/") ? URL.createObjectURL(f) : undefined;
+    setAttachment({ name: f.name, mime: f.type || "application/octet-stream", data: b64, preview });
+  };
+
   return (
     <div className="space-y-10">
       {/* Hero search — Apple search style */}
@@ -209,7 +237,7 @@ function SearchPanel(props: {
           O que você quer consultar?
         </h2>
         <p className="text-[15px] text-[#6e6e73] max-w-xl mx-auto">
-          Pesquise qualquer tema das 20 disciplinas. Respostas diretas, citadas e prontas para a prova.
+          Digite a pergunta ou envie a foto/PDF da questão. Respostas diretas, citadas e prontas para a prova.
         </p>
         <form onSubmit={onSubmit} className="max-w-2xl mx-auto">
           <div className="relative flex items-center bg-[#f5f5f7] rounded-full border border-transparent focus-within:border-[#0071e3] focus-within:bg-white transition shadow-sm">
@@ -217,18 +245,66 @@ function SearchPanel(props: {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Ex.: poder disciplinar vs. poder hierárquico"
-              className="pl-12 pr-32 h-14 text-[15px] bg-transparent border-0 rounded-full focus-visible:ring-0 placeholder:text-[#86868b]"
+              placeholder="Ex.: o que é poder disciplinar? · por que existe IPM? · como instaurar..."
+              className="pl-12 pr-44 h-14 text-[15px] bg-transparent border-0 rounded-full focus-visible:ring-0 placeholder:text-[#86868b]"
+            />
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="absolute right-[7.5rem] h-9 w-9 inline-flex items-center justify-center rounded-full text-[#6e6e73] hover:bg-[#e8e8ed] hover:text-[#1d1d1f] transition"
+              title="Anexar imagem ou PDF da questão"
+            >
+              <Paperclip className="h-4 w-4" />
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*,application/pdf"
+              className="hidden"
+              onChange={(e) => { onFile(e.target.files?.[0] ?? null); e.target.value = ""; }}
             />
             <Button
               type="submit"
-              disabled={loading || !query.trim()}
+              disabled={loading || (!query.trim() && !attachment)}
               className="absolute right-1.5 h-11 px-6 rounded-full bg-[#1d1d1f] hover:bg-[#0071e3] text-white text-[13px] font-medium"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Consultar"}
             </Button>
           </div>
         </form>
+
+        {attachment && (
+          <div className="max-w-2xl mx-auto flex items-center gap-3 bg-white border border-[#d2d2d7] rounded-2xl p-3 text-left">
+            {attachment.preview ? (
+              <img src={attachment.preview} alt="" className="h-14 w-14 rounded-lg object-cover border border-[#e8e8ed]" />
+            ) : (
+              <div className="h-14 w-14 rounded-lg bg-[#f5f5f7] flex items-center justify-center">
+                <FileText className="h-5 w-5 text-[#6e6e73]" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="text-[13px] font-medium text-[#1d1d1f] truncate">{attachment.name}</div>
+              <div className="text-[11px] text-[#86868b]">Será lido pelo sistema para extrair o enunciado.</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAttachment(null)}
+              className="h-8 w-8 inline-flex items-center justify-center rounded-full text-[#6e6e73] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]"
+              title="Remover anexo"
+            >
+              <XIcon className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
+        {extracted && (
+          <div className="max-w-2xl mx-auto text-left bg-[#f5f5f7] rounded-2xl p-4">
+            <div className="text-[10px] tracking-[0.2em] uppercase text-[#86868b] mb-1 flex items-center gap-1.5">
+              <Camera className="h-3 w-3" /> Enunciado lido do arquivo
+            </div>
+            <p className="text-[13px] text-[#1d1d1f] whitespace-pre-wrap">{extracted}</p>
+          </div>
+        )}
 
         {/* Discipline filter chips */}
         <div className="flex items-center justify-center gap-1.5 flex-wrap max-w-4xl mx-auto pt-2">
