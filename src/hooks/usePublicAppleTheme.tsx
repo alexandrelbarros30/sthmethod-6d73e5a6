@@ -22,6 +22,7 @@ const PUBLIC_PREFIXES = [
   "/promo",
   "/evolucao",
   "/fila",
+  "/cas",
 ];
 
 const isPublic = (pathname: string) => {
