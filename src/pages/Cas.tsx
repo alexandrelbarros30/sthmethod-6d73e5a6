@@ -35,11 +35,17 @@ const DISCIPLINES = [
 
 type Match = {
   id: number;
+  source?: "apostila" | "questoes";
   discipline: string;
   page_start: number;
   page_end: number;
   content: string;
   similarity: number;
+  exam?: string;
+  question_num?: number;
+  statement?: string;
+  options?: { A: string; B: string; C: string; D: string };
+  correct_answer?: "A" | "B" | "C" | "D";
 };
 
 type StructuredAnswer = {
@@ -47,6 +53,7 @@ type StructuredAnswer = {
   resposta_completa?: string;
   pontos_chave?: string[];
   conceitos?: { termo: string; definicao: string }[];
+  analise_por_fonte?: { fonte_index: number; tipo?: "apostila" | "questoes"; resumo: string }[];
   questoes_relacionadas?: string[];
   confianca?: "alta" | "media" | "baixa";
   encontrado?: boolean;
@@ -732,32 +739,76 @@ function SearchPanel(props: {
 
           {tab === "fontes" && matches.length > 0 && (
             <div className="space-y-3">
-              {matches.map((m, i) => (
-                <article
-                  key={m.id}
-                  className="bg-white rounded-2xl border border-[#d2d2d7] p-5 hover:border-[#1d1d1f] transition cursor-pointer"
-                  onClick={() => setOpenSource({ match: m, index: i })}
-                >
-                  <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-[#1d1d1f] text-white">F{String(i + 1).padStart(2, "0")}</span>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); props.onOpenDiscipline(m.discipline); }}
-                        className="text-[12px] font-semibold uppercase tracking-wide text-[#1d1d1f] hover:text-[#0071e3] text-left"
-                      >
-                        {m.discipline}
-                      </button>
-                      <span className="text-[11px] text-[#86868b] font-mono">
-                        p.{m.page_start}{m.page_end !== m.page_start ? `–${m.page_end}` : ""}
-                      </span>
+              {matches.map((m, i) => {
+                const isQuiz = m.source === "questoes";
+                const analise = structured?.analise_por_fonte?.find((a) => a.fonte_index === i + 1);
+                return (
+                  <article
+                    key={`${m.source ?? "apostila"}-${m.id}`}
+                    className={cn(
+                      "rounded-2xl border p-5 hover:border-[#1d1d1f] transition cursor-pointer",
+                      isQuiz ? "bg-[#fffaf0] border-[#f0e0bf]" : "bg-white border-[#d2d2d7]",
+                    )}
+                    onClick={() => setOpenSource({ match: m, index: i })}
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-[#1d1d1f] text-white">F{String(i + 1).padStart(2, "0")}</span>
+                        <span className={cn(
+                          "text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded",
+                          isQuiz ? "bg-amber-600 text-white" : "bg-[#0071e3] text-white",
+                        )}>
+                          {isQuiz ? "Questões" : "Apostila"}
+                        </span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); props.onOpenDiscipline(m.discipline); }}
+                          className="text-[12px] font-semibold uppercase tracking-wide text-[#1d1d1f] hover:text-[#0071e3] text-left"
+                        >
+                          {m.discipline}
+                        </button>
+                        <span className="text-[11px] text-[#86868b] font-mono">
+                          {isQuiz
+                            ? `${m.exam ?? "Prova"} · Q${m.question_num ?? "?"}`
+                            : `p.${m.page_start}${m.page_end !== m.page_start ? `–${m.page_end}` : ""}`}
+                        </span>
+                      </div>
+                      <ArrowUpRight className="h-3.5 w-3.5 text-[#86868b]" />
                     </div>
-                    <ArrowUpRight className="h-3.5 w-3.5 text-[#86868b]" />
-                  </div>
-                  <p className="text-[13px] text-[#6e6e73] leading-relaxed whitespace-pre-wrap line-clamp-6">
-                    {m.content}
-                  </p>
-                </article>
-              ))}
+                    {isQuiz && m.statement ? (
+                      <div className="space-y-2">
+                        <p className="text-[13px] text-[#1d1d1f] leading-relaxed line-clamp-4">{m.statement}</p>
+                        {m.options && (
+                          <ul className="text-[12px] text-[#6e6e73] space-y-0.5">
+                            {(["A", "B", "C", "D"] as const).map((k) => (
+                              <li
+                                key={k}
+                                className={cn(
+                                  "flex gap-2 px-2 py-1 rounded",
+                                  m.correct_answer === k && "bg-emerald-50 text-emerald-800 font-medium",
+                                )}
+                              >
+                                <span className="font-mono font-semibold">{k})</span>
+                                <span className="line-clamp-1">{m.options![k]}</span>
+                                {m.correct_answer === k && <Check className="h-3 w-3 ml-auto shrink-0" />}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-[13px] text-[#6e6e73] leading-relaxed whitespace-pre-wrap line-clamp-6">
+                        {m.content}
+                      </p>
+                    )}
+                    {analise?.resumo && (
+                      <div className="mt-3 pt-3 border-t border-dashed border-[#e8e8ed]">
+                        <div className="text-[9px] uppercase tracking-[0.2em] text-[#86868b] mb-1">Como esta fonte responde</div>
+                        <p className="text-[12px] text-[#1d1d1f] leading-relaxed">{analise.resumo}</p>
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
             </div>
           )}
 
@@ -900,6 +951,12 @@ function SearchPanel(props: {
           {openSource && (
             <div className="space-y-3">
               <div className="flex items-center gap-2 flex-wrap">
+                <span className={cn(
+                  "text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded text-white",
+                  openSource.match.source === "questoes" ? "bg-amber-600" : "bg-[#0071e3]",
+                )}>
+                  {openSource.match.source === "questoes" ? "Questões" : "Apostila"}
+                </span>
                 <button
                   onClick={() => { props.onOpenDiscipline(openSource.match.discipline); setOpenSource(null); }}
                   className="text-[14px] font-semibold uppercase tracking-wide text-[#1d1d1f] hover:text-[#0071e3]"
@@ -907,14 +964,44 @@ function SearchPanel(props: {
                   {openSource.match.discipline}
                 </button>
                 <span className="text-[12px] text-[#86868b]">
-                  página {openSource.match.page_start}
-                  {openSource.match.page_end !== openSource.match.page_start ? `–${openSource.match.page_end}` : ""}
+                  {openSource.match.source === "questoes"
+                    ? `${openSource.match.exam ?? "Prova oficial"} · Questão ${openSource.match.question_num ?? "?"}`
+                    : `página ${openSource.match.page_start}${openSource.match.page_end !== openSource.match.page_start ? `–${openSource.match.page_end}` : ""}`}
                 </span>
               </div>
-              <div className="max-h-[60vh] overflow-y-auto bg-[#f5f5f7] rounded-2xl p-5">
-                <p className="text-[14px] leading-[1.7] whitespace-pre-wrap text-[#1d1d1f]">
-                  {openSource.match.content}
-                </p>
+              <div className="max-h-[60vh] overflow-y-auto bg-[#f5f5f7] rounded-2xl p-5 space-y-3">
+                {openSource.match.source === "questoes" && openSource.match.statement ? (
+                  <>
+                    <p className="text-[14px] leading-[1.7] text-[#1d1d1f] font-medium">
+                      {openSource.match.statement}
+                    </p>
+                    {openSource.match.options && (
+                      <ul className="space-y-1.5">
+                        {(["A", "B", "C", "D"] as const).map((k) => (
+                          <li
+                            key={k}
+                            className={cn(
+                              "flex gap-2 px-3 py-2 rounded-lg text-[13px]",
+                              openSource.match.correct_answer === k
+                                ? "bg-emerald-100 text-emerald-900 font-medium"
+                                : "bg-white text-[#1d1d1f]",
+                            )}
+                          >
+                            <span className="font-mono font-semibold">{k})</span>
+                            <span>{openSource.match.options![k]}</span>
+                            {openSource.match.correct_answer === k && (
+                              <span className="ml-auto text-[10px] uppercase tracking-wider">Gabarito</span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-[14px] leading-[1.7] whitespace-pre-wrap text-[#1d1d1f]">
+                    {openSource.match.content}
+                  </p>
+                )}
               </div>
             </div>
           )}
