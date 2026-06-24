@@ -407,6 +407,39 @@ export type Database = {
         }
         Relationships: []
       }
+      cas_chunks: {
+        Row: {
+          chunk_index: number
+          content: string
+          created_at: string
+          discipline: string
+          embedding: string | null
+          id: number
+          page_end: number
+          page_start: number
+        }
+        Insert: {
+          chunk_index: number
+          content: string
+          created_at?: string
+          discipline: string
+          embedding?: string | null
+          id?: number
+          page_end: number
+          page_start: number
+        }
+        Update: {
+          chunk_index?: number
+          content?: string
+          created_at?: string
+          discipline?: string
+          embedding?: string | null
+          id?: number
+          page_end?: number
+          page_start?: number
+        }
+        Relationships: []
+      }
       clinical_documents: {
         Row: {
           created_at: string
@@ -4812,6 +4845,21 @@ export type Database = {
       }
       is_crm_staff: { Args: { _user_id: string }; Returns: boolean }
       is_phone_opted_out: { Args: { _phone: string }; Returns: boolean }
+      match_cas_chunks: {
+        Args: {
+          filter_discipline?: string
+          match_count?: number
+          query_embedding: string
+        }
+        Returns: {
+          content: string
+          discipline: string
+          id: number
+          page_end: number
+          page_start: number
+          similarity: number
+        }[]
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
