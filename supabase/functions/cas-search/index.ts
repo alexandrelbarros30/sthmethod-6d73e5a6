@@ -323,8 +323,89 @@ async function definitionLookup(supabase: any, q: string, discipline: string | n
     .slice(0, Math.max(limit, 10));
 }
 
-function buildSourceFallbackAnswer(q: string, matches: Array<{ source?: string; discipline: string; page_start: number; page_end: number; content: string }>, answerError: string | null) {
+function splitDefinitionSentences(text: string) {
+  return text
+    .replace(/\s+/g, ' ')
+    .replace(/([.!?])\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ])/g, '$1\n')
+    .split('\n')
+    .map((s) => s.trim())
+    .filter((s) => s.length >= 25);
+}
+
+function extractLocalDefinition(q: string, matches: Array<{ discipline: string; page_start: number; page_end: number; content: string }>) {
+  const terms = extractFocusTerms(q);
+  if (terms.length === 0) return null;
+
+  let best: { text: string; sourceIndex: number; score: number } | null = null;
+  matches.forEach((m, sourceIdx) => {
+    const sentences = splitDefinitionSentences(m.content);
+    sentences.forEach((sentence, idx) => {
+      const norm = normalizeSearchText(sentence);
+      let score = 0;
+      for (const term of terms) {
+        const escaped = escapeRegExp(term);
+        if (!new RegExp(`\\b${escaped}\\b`).test(norm)) continue;
+        score += 20;
+        if (new RegExp(`\\b${escaped}\\b.{0,120}\\b(e|sao|consiste|constitui|caracteriza|significa|define-se)\\b`).test(norm)) score += 100;
+        if (new RegExp(`\\b${escaped} se caracteriza\\b`).test(norm)) score += 160;
+        if (new RegExp(`\\btermo ${escaped}\\b.{0,100}\\bsignifica\\b`).test(norm)) score += 130;
+        if (/\bsofrimento fisico ou mental\b|\bsofrimento ou a dor\b|\bproduzir sofrimento\b/.test(norm)) score += 80;
+        if (/\bart\.?\s*1[ºo]?\b|\bconstitui crime\b|\blei\b/.test(norm)) score += 35;
+      }
+      if (looksLikeQuestionBank(sentence)) score -= 80;
+      if (score <= 0) return;
+
+      const continuation = sentences
+        .slice(idx + 1, idx + 3)
+        .filter((next) => {
+          const n = normalizeSearchText(next);
+          return /^(o termo|e o|e a|sao|consiste|trata-se|art\.?|i\.|i -)/.test(n) || /\b(sofrimento|dor|maus-tratos|constitui crime|violencia|grave ameaca)\b/.test(n);
+        });
+      const text = [sentence, ...continuation].join(' ').replace(/\s+/g, ' ').trim();
+      if (!best || score > best.score) best = { text, sourceIndex: sourceIdx + 1, score };
+    });
+  });
+
+  return best && best.text.length > 0 ? best : null;
+}
+
+function buildSourceFallbackAnswer(q: string, matches: Array<{ source?: string; discipline: string; page_start: number; page_end: number; content: string }>, answerError: string | null, intent = 'aberta') {
   const top = matches.slice(0, 3);
+  const localDefinition = intent === 'definicao' ? extractLocalDefinition(q, top) : null;
+  if (localDefinition) {
+    const src = top[localDefinition.sourceIndex - 1];
+    const term = extractFocusTerms(q)[0] ?? q.replace(/\s+/g, ' ').trim();
+    const respostaCurta = `${localDefinition.text} [Fonte ${localDefinition.sourceIndex}]`;
+    const respostaCompleta = [
+      '**Definição localizada na apostila**',
+      '',
+      `${localDefinition.text} [Fonte ${localDefinition.sourceIndex}]`,
+      '',
+      `### Fonte ${localDefinition.sourceIndex} — APOSTILA · ${src.discipline} · p.${src.page_start}-${src.page_end}`,
+      compactText(src.content, 900),
+    ].join('\n');
+    return {
+      resposta_curta: respostaCurta,
+      resposta_completa: respostaCompleta,
+      pontos_chave: [
+        `Definição direta encontrada em ${src.discipline}, páginas ${src.page_start}-${src.page_end}.`,
+        'A resposta foi montada diretamente do trecho da apostila, sem conteúdo externo.',
+      ],
+      conceitos: [{ termo: term, definicao: respostaCurta }],
+      analise_por_fonte: top.map((m, i) => ({
+        fonte_index: i + 1,
+        tipo: m.source === 'questoes' ? 'questoes' : 'apostila',
+        resumo: i + 1 === localDefinition.sourceIndex ? 'Fonte principal: contém a definição literal solicitada.' : compactText(m.content, 220),
+      })),
+      questoes_relacionadas: [
+        `Quais são as espécies de ${term}?`,
+        `Qual é a previsão legal de ${term}?`,
+        `Qual a diferença entre ${term} e maus-tratos?`,
+      ],
+      confianca: 'alta',
+      encontrado: true,
+    };
+  }
   const respostaCurta = `Localizei conteúdo sobre "${q.replace(/\s+/g, ' ').trim()}" na apostila. A síntese automática pelo Gemini não foi concluída${answerError ? ` (${answerError})` : ''}, então estou exibindo a resposta técnica baseada diretamente nas fontes encontradas.`;
   const respostaCompleta = [
     `**Resultado localizado na apostila para:** ${q.replace(/\s+/g, ' ').trim()}`,
