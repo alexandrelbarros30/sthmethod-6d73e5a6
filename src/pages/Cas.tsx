@@ -738,11 +738,15 @@ function SearchPanel(props: {
           )}
 
           {tab === "fontes" && matches.length > 0 && (
-            <div className="space-y-3">
-              {matches.map((m, i) => {
-                const isQuiz = m.source === "questoes";
-                const analise = structured?.analise_por_fonte?.find((a) => a.fonte_index === i + 1);
-                return (
+            <div className="space-y-6">
+              {(() => {
+                const apostilaMatches = matches.map((m, i) => ({ m, i })).filter(({ m }) => m.source !== "questoes");
+                const quizMatches = matches.map((m, i) => ({ m, i })).filter(({ m }) => m.source === "questoes");
+                const renderCard = ({ m, i }: { m: Match; i: number }) => {
+                  const isQuiz = m.source === "questoes";
+                  const analise = structured?.analise_por_fonte?.find((a) => a.fonte_index === i + 1);
+                  const correctText = isQuiz && m.correct_answer && m.options ? m.options[m.correct_answer] : null;
+                  return (
                   <article
                     key={`${m.source ?? "apostila"}-${m.id}`}
                     className={cn(
@@ -776,7 +780,16 @@ function SearchPanel(props: {
                     </div>
                     {isQuiz && m.statement ? (
                       <div className="space-y-2">
-                        <p className="text-[13px] text-[#1d1d1f] leading-relaxed line-clamp-4">{m.statement}</p>
+                        {correctText && (
+                          <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 flex items-start gap-2">
+                            <Check className="h-4 w-4 text-emerald-700 mt-0.5 shrink-0" />
+                            <div className="text-[13px] text-emerald-900 leading-snug">
+                              <span className="font-semibold uppercase tracking-wider text-[10px] text-emerald-700 block mb-0.5">Gabarito oficial · alternativa {m.correct_answer}</span>
+                              {correctText}
+                            </div>
+                          </div>
+                        )}
+                        <p className="text-[13px] text-[#1d1d1f] leading-relaxed whitespace-pre-wrap">{m.statement}</p>
                         {m.options && (
                           <ul className="text-[12px] text-[#6e6e73] space-y-0.5">
                             {(["A", "B", "C", "D"] as const).map((k) => (
@@ -788,7 +801,7 @@ function SearchPanel(props: {
                                 )}
                               >
                                 <span className="font-mono font-semibold">{k})</span>
-                                <span className="line-clamp-1">{m.options![k]}</span>
+                                <span>{m.options![k]}</span>
                                 {m.correct_answer === k && <Check className="h-3 w-3 ml-auto shrink-0" />}
                               </li>
                             ))}
@@ -807,8 +820,33 @@ function SearchPanel(props: {
                       </div>
                     )}
                   </article>
+                  );
+                };
+                return (
+                  <>
+                    {apostilaMatches.length > 0 && (
+                      <section className="space-y-3">
+                        <header className="flex items-center gap-2">
+                          <span className="h-1.5 w-1.5 rounded-full bg-[#0071e3]" />
+                          <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1d1d1f]">Apostila oficial</h3>
+                          <span className="text-[11px] text-[#86868b] font-mono">{apostilaMatches.length}</span>
+                        </header>
+                        <div className="space-y-3">{apostilaMatches.map(renderCard)}</div>
+                      </section>
+                    )}
+                    {quizMatches.length > 0 && (
+                      <section className="space-y-3">
+                        <header className="flex items-center gap-2">
+                          <span className="h-1.5 w-1.5 rounded-full bg-amber-600" />
+                          <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1d1d1f]">Questões de provas anteriores · com gabarito</h3>
+                          <span className="text-[11px] text-[#86868b] font-mono">{quizMatches.length}</span>
+                        </header>
+                        <div className="space-y-3">{quizMatches.map(renderCard)}</div>
+                      </section>
+                    )}
+                  </>
                 );
-              })}
+              })()}
             </div>
           )}
 
