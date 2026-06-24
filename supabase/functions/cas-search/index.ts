@@ -2,9 +2,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 export const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-export const CHAT_MODELS = ['gemini-2.0-flash', 'gemini-2.5-flash'];
-export const LOVABLE_GATEWAY = 'https://ai.gateway.lovable.dev/v1/chat/completions';
-export const LOVABLE_MODELS = ['google/gemini-3-flash-preview', 'google/gemini-2.5-flash-lite'];
+export const CHAT_MODELS = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
 export const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 const encoder = new TextEncoder();
@@ -121,15 +119,6 @@ export async function tryOnce(model: string, systemPrompt: string, parts: Part[]
   }
 }
 
-function partsToGatewayContent(partsArr: Part[]) {
-  const userContent = partsArr.map((p) => {
-    if (p.text) return { type: 'text', text: p.text };
-    if (p.inline_data) return { type: 'image_url', image_url: { url: `data:${p.inline_data.mime_type};base64,${p.inline_data.data}` } };
-    return null;
-  }).filter(Boolean);
-  return userContent.length === 1 && (userContent[0] as any).type === 'text' ? (userContent[0] as any).text : userContent;
-}
-
 export async function geminiAnswer(
   systemPrompt: string,
   parts: Part[] | string,
@@ -169,52 +158,8 @@ export async function geminiAnswer(
     }
   }
 
-  const lovableKey = Deno.env.get('LOVABLE_API_KEY');
-  if (lovableKey) {
-    const userContent = partsToGatewayContent(partsArr);
-    for (const model of LOVABLE_MODELS) {
-      try {
-        const r = await fetchImpl(LOVABLE_GATEWAY, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Lovable-API-Key': lovableKey,
-            'X-Lovable-AIG-SDK': 'manual-edge-function',
-          },
-          body: JSON.stringify({
-            model,
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: userContent },
-            ],
-            ...(jsonMode ? { response_format: { type: 'json_object' } } : {}),
-          }),
-        });
-        if (r.ok) {
-          const j = await r.json();
-          const text = j?.choices?.[0]?.message?.content?.trim() || null;
-          if (text) return { text, error: null, status: 'ok', fallbackUsed: true, fallbackProvider: 'lovable-gateway', model, externalStatus: lastStatus || r.status };
-        } else {
-          const body = await r.text();
-          console.error(JSON.stringify({ event: 'cas_search_lovable_failed', model, status: r.status, body: body.slice(0, 300) }));
-          lastStatus = r.status;
-          lastBody = body;
-          if (r.status === 402 || (r.status === 403 && /credit|quota|limit/i.test(body))) {
-            const status = 'quota_exhausted';
-            return { text: null, error: userMessageForStatus(status), status, fallbackUsed: true, fallbackProvider: 'lovable-gateway', model, externalStatus: r.status };
-          }
-          if (!isRetryable(r.status)) break;
-        }
-      } catch (e) {
-        lastStatus = 0;
-        lastBody = String((e as Error)?.message || e);
-        console.error(JSON.stringify({ event: 'cas_search_lovable_exception', model, error: lastBody.slice(0, 300) }));
-      }
-    }
-  }
-
   const status = statusFromExternal(lastStatus);
-  return { text: null, error: userMessageForStatus(status, lastStatus), status, fallbackUsed: Boolean(lovableKey), fallbackProvider: lovableKey ? 'lovable-gateway' : null, model: null, externalStatus: lastStatus || null };
+  return { text: null, error: userMessageForStatus(status, lastStatus), status, fallbackUsed: false, fallbackProvider: null, model: null, externalStatus: lastStatus || null };
 }
 
 export function detectIntent(q: string): { intent: string; instruction: string } {
