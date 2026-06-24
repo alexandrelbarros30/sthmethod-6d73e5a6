@@ -658,6 +658,314 @@ function BookPanel(props: {
   );
 }
 
+// ─────────────────────────────────────────────────────────────
+// EAD: Sessão de estudo (questão + micro-lição da apostila)
+// ─────────────────────────────────────────────────────────────
+type StudyChunk = { id: number; discipline: string; page_start: number; page_end: number; content: string };
+
+function StudyPanel() {
+  const [step, setStep] = useState<"setup" | "session" | "done">("setup");
+  const [discipline, setDiscipline] = useState<string>(""); // "" = misto
+  const [sessionSize, setSessionSize] = useState<number>(10);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [queue, setQueue] = useState<QuizQuestion[]>([]);
+  const [idx, setIdx] = useState(0);
+  const [picked, setPicked] = useState<"A" | "B" | "C" | "D" | null>(null);
+  const [revealed, setRevealed] = useState(false);
+  const [score, setScore] = useState({ ok: 0, wrong: 0 });
+  const [related, setRelated] = useState<StudyChunk[]>([]);
+  const [loadingRelated, setLoadingRelated] = useState(false);
+  const [counts, setCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from("cas_quiz_questions").select("discipline");
+      const c: Record<string, number> = {};
+      (data ?? []).forEach((r: any) => { c[r.discipline] = (c[r.discipline] ?? 0) + 1; });
+      setCounts(c);
+    })();
+  }, []);
+
+  async function startSession() {
+    setLoading(true);
+    setError(null);
+    try {
+      let q = supabase
+        .from("cas_quiz_questions")
+        .select("id,exam,discipline,statement,option_a,option_b,option_c,option_d,correct_answer");
+      if (discipline) q = q.eq("discipline", discipline);
+      const { data, error } = await q;
+      if (error) throw error;
+      const pool = (data ?? []) as QuizQuestion[];
+      if (pool.length === 0) throw new Error("Nenhuma questão disponível para esta disciplina.");
+      const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, sessionSize);
+      setQueue(shuffled);
+      setIdx(0);
+      setPicked(null);
+      setRevealed(false);
+      setScore({ ok: 0, wrong: 0 });
+      setStep("session");
+      await loadRelated(shuffled[0]);
+    } catch (e: any) {
+      setError(e?.message ?? "Erro ao iniciar sessão");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadRelated(q: QuizQuestion) {
+    if (!q) return;
+    setLoadingRelated(true);
+    setRelated([]);
+    try {
+      // Extrai palavras-chave (>4 letras, sem stopwords óbvias)
+      const stop = new Set(["sobre","quando","qual","quais","como","para","entre","pode","podem","deve","devem","seja","sejam","esta","este","essa","esse","aquele","aquela","mesmo","mesma","onde","ainda","então","pelas","pelos","pela","pelo","das","dos","uma","uns","umas","das","com","sem","por","que","não","sim","mais","menos","todo","toda","todos","todas"]);
+      const words = q.statement
+        .toLowerCase()
+        .replace(/[^\p{L}\s]/gu, " ")
+        .split(/\s+/)
+        .filter((w) => w.length > 4 && !stop.has(w));
+      const top = Array.from(new Set(words)).slice(0, 6).join(" ");
+      const { data, error } = await supabase.rpc("search_cas_chunks_fts", {
+        q: top || q.statement.slice(0, 80),
+        match_count: 3,
+        filter_discipline: q.discipline,
+      });
+      if (error) throw error;
+      setRelated((data ?? []) as StudyChunk[]);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingRelated(false);
+    }
+  }
+
+  function choose(letter: "A" | "B" | "C" | "D") {
+    if (revealed) return;
+    setPicked(letter);
+    setRevealed(true);
+    const current = queue[idx];
+    if (letter === current.correct_answer) setScore((s) => ({ ...s, ok: s.ok + 1 }));
+    else setScore((s) => ({ ...s, wrong: s.wrong + 1 }));
+  }
+
+  async function next() {
+    if (idx + 1 >= queue.length) {
+      setStep("done");
+      return;
+    }
+    const ni = idx + 1;
+    setIdx(ni);
+    setPicked(null);
+    setRevealed(false);
+    await loadRelated(queue[ni]);
+  }
+
+  // ─── SETUP ───
+  if (step === "setup") {
+    return (
+      <div className="space-y-8 max-w-4xl mx-auto">
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f5f5f7] text-[11px] uppercase tracking-wider text-[#6e6e73]">
+            <GraduationCap className="h-3.5 w-3.5" /> EAD · Preparação para o simulado
+          </div>
+          <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight text-[#1d1d1f]">Sessão de estudo</h2>
+          <p className="text-[15px] text-[#6e6e73] max-w-xl mx-auto">
+            Questão por questão com correção imediata e o trecho da apostila que ensina o tema. Aprenda fazendo.
+          </p>
+        </div>
+
+        <div className="bg-white rounded-3xl border border-[#d2d2d7] p-8 space-y-6">
+          <div>
+            <div className="text-[11px] uppercase tracking-wider text-[#86868b] mb-3">Disciplina</div>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                onClick={() => setDiscipline("")}
+                className={cn(
+                  "text-[12px] px-3 py-1.5 rounded-full transition",
+                  discipline === "" ? "bg-[#1d1d1f] text-white" : "bg-[#f5f5f7] text-[#6e6e73] hover:text-[#1d1d1f]",
+                )}
+              >
+                Misto (todas)
+              </button>
+              {DISCIPLINES.map((d) => {
+                const n = counts[d] ?? 0;
+                const disabled = n === 0;
+                return (
+                  <button
+                    key={d}
+                    onClick={() => !disabled && setDiscipline(d)}
+                    disabled={disabled}
+                    className={cn(
+                      "text-[12px] px-3 py-1.5 rounded-full transition",
+                      disabled && "opacity-40 cursor-not-allowed",
+                      discipline === d ? "bg-[#1d1d1f] text-white" : "bg-[#f5f5f7] text-[#6e6e73] hover:text-[#1d1d1f]",
+                    )}
+                  >
+                    {shortName(d)} {n > 0 && <span className="text-[10px] opacity-70">· {n}</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <div className="text-[11px] uppercase tracking-wider text-[#86868b] mb-3">Tamanho da sessão</div>
+            <div className="flex gap-2">
+              {[5, 10, 20, 40].map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setSessionSize(n)}
+                  className={cn(
+                    "px-4 py-2 rounded-full text-[13px] font-medium transition",
+                    sessionSize === n ? "bg-[#0071e3] text-white" : "bg-[#f5f5f7] text-[#6e6e73] hover:text-[#1d1d1f]",
+                  )}
+                >
+                  {n} questões
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {error && <p className="text-[13px] text-red-600">{error}</p>}
+
+          <Button
+            onClick={startSession}
+            disabled={loading}
+            className="w-full h-12 rounded-full bg-[#1d1d1f] hover:bg-[#0071e3] text-white text-[14px] font-medium"
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Sparkles className="h-4 w-4 mr-2" /> Iniciar estudo</>}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── DONE ───
+  if (step === "done") {
+    const total = queue.length;
+    const pct = total > 0 ? Math.round((score.ok / total) * 100) : 0;
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div className="bg-[#1d1d1f] text-white rounded-3xl p-10 text-center">
+          <div className="text-[11px] tracking-[0.2em] uppercase text-[#86868b] mb-2">Sessão concluída</div>
+          <div className="text-[64px] font-semibold tracking-tight leading-none">{score.ok}/{total}</div>
+          <div className="text-[14px] text-[#a1a1a6] mt-2">{pct}% de acerto</div>
+        </div>
+        <div className="flex gap-3">
+          <Button onClick={() => setStep("setup")} variant="outline" className="flex-1 rounded-full">Nova sessão</Button>
+          <Button onClick={startSession} className="flex-1 rounded-full bg-[#0071e3] hover:bg-[#0077ed]">Repetir configuração</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── SESSION ───
+  const current = queue[idx];
+  const opts: Array<["A" | "B" | "C" | "D", string]> = [
+    ["A", current.option_a], ["B", current.option_b], ["C", current.option_c], ["D", current.option_d],
+  ];
+  const progress = ((idx + 1) / queue.length) * 100;
+
+  return (
+    <div className="max-w-3xl mx-auto space-y-5">
+      {/* Top bar */}
+      <div className="flex items-center justify-between gap-3">
+        <button onClick={() => setStep("setup")} className="inline-flex items-center gap-1.5 text-[12px] text-[#6e6e73] hover:text-[#1d1d1f]">
+          <ArrowLeft className="h-3.5 w-3.5" /> Sair
+        </button>
+        <div className="flex items-center gap-3 text-[12px] text-[#6e6e73]">
+          <span className="text-emerald-600 font-semibold">✓ {score.ok}</span>
+          <span className="text-red-500 font-semibold">✗ {score.wrong}</span>
+          <span className="font-medium text-[#1d1d1f]">{idx + 1}/{queue.length}</span>
+        </div>
+      </div>
+      <div className="h-1 bg-[#f5f5f7] rounded-full overflow-hidden">
+        <div className="h-full bg-[#0071e3] transition-all" style={{ width: `${progress}%` }} />
+      </div>
+
+      {/* Questão */}
+      <article className="bg-white rounded-3xl border border-[#d2d2d7] p-6 sm:p-8">
+        <div className="text-[10px] tracking-[0.2em] uppercase text-[#86868b] mb-3">
+          {shortName(current.discipline)} · {current.exam}
+        </div>
+        <p className="text-[16px] leading-[1.65] text-[#1d1d1f] mb-5 whitespace-pre-wrap">{current.statement}</p>
+        <div className="space-y-2">
+          {opts.map(([letter, text]) => {
+            const isCorrect = revealed && letter === current.correct_answer;
+            const isWrong = revealed && picked === letter && letter !== current.correct_answer;
+            const isSelected = picked === letter;
+            return (
+              <button
+                key={letter}
+                onClick={() => choose(letter)}
+                disabled={revealed}
+                className={cn(
+                  "w-full text-left flex gap-3 p-3 rounded-xl border transition text-[14px] leading-snug",
+                  isCorrect ? "border-emerald-500 bg-emerald-50 text-emerald-900" :
+                  isWrong ? "border-red-400 bg-red-50 text-red-900" :
+                  isSelected ? "border-[#0071e3] bg-[#0071e3]/5" :
+                  "border-[#d2d2d7] hover:border-[#86868b]",
+                  revealed && "cursor-default",
+                )}
+              >
+                <span className="font-semibold w-5 shrink-0">{letter})</span>
+                <span className="flex-1">{text}</span>
+                {isCorrect && <Check className="h-4 w-4 text-emerald-600 shrink-0" />}
+              </button>
+            );
+          })}
+        </div>
+      </article>
+
+      {/* Explicação / micro-lição */}
+      {revealed && (
+        <article className="bg-[#f5f5f7] rounded-3xl p-6 sm:p-8 space-y-4">
+          <div className="flex items-center gap-2">
+            <Lightbulb className="h-4 w-4 text-[#1d1d1f]" />
+            <div className="text-[11px] uppercase tracking-wider font-semibold text-[#1d1d1f]">
+              Estude este tema na apostila
+            </div>
+          </div>
+          {loadingRelated ? (
+            <div className="flex items-center gap-2 text-[13px] text-[#6e6e73]">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Buscando trechos…
+            </div>
+          ) : related.length === 0 ? (
+            <p className="text-[13px] text-[#6e6e73]">Sem trechos diretos — use a aba Pesquisar para aprofundar.</p>
+          ) : (
+            <div className="space-y-3">
+              {related.map((c) => (
+                <div key={c.id} className="bg-white rounded-2xl border border-[#d2d2d7] p-4">
+                  <div className="text-[10px] uppercase tracking-wider text-[#86868b] mb-1.5">
+                    {c.discipline} · p. {c.page_start}{c.page_end !== c.page_start ? `–${c.page_end}` : ""}
+                  </div>
+                  <p className="text-[13px] leading-[1.6] text-[#1d1d1f] whitespace-pre-wrap line-clamp-[8]">
+                    {c.content}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </article>
+      )}
+
+      {/* Ações */}
+      <div className="flex justify-end">
+        {revealed ? (
+          <Button onClick={next} className="rounded-full bg-[#1d1d1f] hover:bg-[#0071e3] text-white">
+            {idx + 1 >= queue.length ? "Ver resultado" : "Próxima questão"}
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        ) : (
+          <span className="text-[12px] text-[#86868b]">Escolha uma alternativa para revelar a resposta e a explicação.</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function shortName(d: string) {
   return d
     .replace("DIREITO ", "Dir. ")
