@@ -263,7 +263,7 @@ function expandTokens(q: string): string[] {
   return Array.from(out);
 }
 
-async function hybridSearch(supabase: ReturnType<typeof createClient>, q: string, discipline: string | null, matchCount: number) {
+async function hybridSearch(supabase: any, q: string, discipline: string | null, matchCount: number) {
   const queries = new Set<string>([q]);
   for (const t of expandTokens(q)) if (t.length >= 4) queries.add(t);
   const seen = new Map<number, any>();
@@ -282,7 +282,7 @@ async function hybridSearch(supabase: ReturnType<typeof createClient>, q: string
   return Array.from(seen.values()).sort((a, b) => (b.similarity ?? 0) - (a.similarity ?? 0)).slice(0, matchCount);
 }
 
-async function logMetrics(supabase: ReturnType<typeof createClient>, m: SearchMetrics) {
+async function logMetrics(supabase: any, m: SearchMetrics) {
   const durationMs = Math.max(0, Math.round(performance.now() - m.startedAt));
   console.info(JSON.stringify({
     event: 'cas_search_metrics',
@@ -320,7 +320,7 @@ async function logMetrics(supabase: ReturnType<typeof createClient>, m: SearchMe
   }
 }
 
-async function readCache(supabase: ReturnType<typeof createClient>, cacheKey: string) {
+async function readCache(supabase: any, cacheKey: string) {
   const { data, error } = await (supabase as any)
     .from('cas_search_cache')
     .select('response, hit_count, expires_at')
@@ -335,7 +335,7 @@ async function readCache(supabase: ReturnType<typeof createClient>, cacheKey: st
   return data.response;
 }
 
-async function writeCache(supabase: ReturnType<typeof createClient>, payload: {
+async function writeCache(supabase: any, payload: {
   cacheKey: string;
   query: string;
   discipline: string | null;
@@ -369,7 +369,7 @@ function responseJson(body: Record<string, unknown>, status = 200) {
 export async function handleCasSearch(req: Request) {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   const startedAt = performance.now();
-  let metricsSupabase: ReturnType<typeof createClient> | null = null;
+  let metricsSupabase: any = null;
   let metrics: SearchMetrics | null = null;
   try {
     const body = await safeJson(req);
