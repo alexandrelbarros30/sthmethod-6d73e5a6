@@ -48,6 +48,7 @@ import Promo from "./pages/Promo";
 import EvolucaoPublica from "./pages/EvolucaoPublica";
 import FilaPublica from "./pages/FilaPublica";
 import FilaAberta from "./pages/FilaAberta";
+import Cas from "./pages/Cas";
 import PreviewTemaVerde from "./pages/PreviewTemaVerde";
 import StudentOverview from "./pages/student/StudentOverview";
 import StudentHub from "./pages/student/StudentHub";
@@ -218,6 +219,7 @@ const App = () => (
             <Route path="/preview-tema-verde" element={<PreviewTemaVerde />} />
             <Route path="/diario-alimentar" element={<DiarioAlimentar />} />
             <Route path="/n" element={<NutriRedirect />} />
+            <Route path="/cas" element={<Cas />} />
             {/* Student routes */}
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["student"]}><StudentOverview /></ProtectedRoute>} />
             <Route path="/dashboard/hub" element={<ProtectedRoute allowedRoles={["student"]}><StudentHub /></ProtectedRoute>} />
