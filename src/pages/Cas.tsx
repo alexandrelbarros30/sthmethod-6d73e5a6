@@ -353,6 +353,45 @@ function SearchPanel(props: {
     "Hipóteses de transgressão disciplinar grave",
   ];
 
+  const statusNotice = (() => {
+    if (loading) {
+      return {
+        tone: "blue",
+        title: "Carregando consulta EAD",
+        text: "O sistema está pesquisando a apostila, sintetizando a resposta e validando as fontes.",
+      };
+    }
+    if (searchState === "quota_exhausted") {
+      return {
+        tone: "red",
+        title: "Quota de IA esgotada",
+        text: answerError || error || "Os créditos de IA acabaram; o backend registrou o evento e interrompeu a síntese externa.",
+      };
+    }
+    if (searchState === "fallback_active") {
+      return {
+        tone: "amber",
+        title: "Fallback ativo",
+        text: `Gemini não respondeu como esperado e o Gateway assumiu a consulta${searchMeta?.durationMs ? ` em ${searchMeta.durationMs}ms` : ""}.`,
+      };
+    }
+    if (searchState === "cache_hit") {
+      return {
+        tone: "green",
+        title: "Resposta servida do cache",
+        text: `A resposta já existia para esta disciplina e parâmetros${searchMeta?.durationMs ? `; retorno em ${searchMeta.durationMs}ms` : ""}.`,
+      };
+    }
+    if (searchState === "no_response") {
+      return {
+        tone: "red",
+        title: "Sem resposta final",
+        text: answerError || error || "A consulta não retornou síntese. Verifique os trechos localizados ou tente reformular a pergunta.",
+      };
+    }
+    return null;
+  })();
+
   const onFile = async (f: File | null) => {
     if (!f) return;
     if (f.size > 8 * 1024 * 1024) { alert("Arquivo muito grande (máx 8MB)."); return; }
@@ -510,6 +549,33 @@ function SearchPanel(props: {
       {error && (
         <div className="max-w-3xl mx-auto p-4 rounded-2xl border border-red-200 bg-red-50">
           <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
+
+      {statusNotice && !loading && (
+        <div className={cn(
+          "max-w-3xl mx-auto p-4 rounded-2xl border",
+          statusNotice.tone === "red" && "border-red-200 bg-red-50 text-red-800",
+          statusNotice.tone === "amber" && "border-amber-200 bg-amber-50 text-amber-800",
+          statusNotice.tone === "green" && "border-emerald-200 bg-emerald-50 text-emerald-800",
+          statusNotice.tone === "blue" && "border-[#0071e3]/20 bg-[#0071e3]/5 text-[#1d1d1f]",
+        )}>
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5">
+              {statusNotice.tone === "green" ? <Check className="h-4 w-4" /> : <Zap className="h-4 w-4" />}
+            </div>
+            <div className="space-y-1">
+              <p className="text-[13px] font-semibold">{statusNotice.title}</p>
+              <p className="text-[12px] leading-relaxed opacity-85">{statusNotice.text}</p>
+              {searchMeta && (
+                <div className="flex flex-wrap gap-1.5 pt-1 text-[10px] font-mono uppercase tracking-wider opacity-75">
+                  {searchMeta.status && <span>status:{searchMeta.status}</span>}
+                  {typeof searchMeta.externalStatus === "number" && <span>externo:{searchMeta.externalStatus}</span>}
+                  {searchMeta.fallbackUsed && <span>fallback:{searchMeta.fallbackProvider || "ativo"}</span>}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -715,7 +781,7 @@ function SearchPanel(props: {
         </div>
       )}
 
-      {!loading && !answer && !structured && matches.length === 0 && (
+      {!loading && searchState === "idle" && !answer && !structured && matches.length === 0 && (
         <div className="max-w-3xl mx-auto grid gap-5 md:grid-cols-2">
           <div className="bg-white rounded-3xl border border-[#d2d2d7] p-6">
             <div className="flex items-center gap-2 mb-4">
