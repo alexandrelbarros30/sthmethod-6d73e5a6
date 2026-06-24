@@ -3,19 +3,6 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 const CHAT_MODEL = 'gemini-2.5-pro';
-const OPENAI_EMBED_MODEL = 'text-embedding-3-small';
-const EMBED_DIM = 1536;
-
-async function openaiEmbed(text: string, apiKey: string): Promise<number[]> {
-  const r = await fetch('https://api.openai.com/v1/embeddings', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: OPENAI_EMBED_MODEL, input: text, dimensions: EMBED_DIM }),
-  });
-  if (!r.ok) throw new Error(`openai embed ${r.status}: ${await r.text()}`);
-  const j = await r.json();
-  return j.data[0].embedding as number[];
-}
 
 async function geminiAnswer(systemPrompt: string, userPrompt: string, apiKey: string): Promise<string | null> {
   const r = await fetch(`${GEMINI_BASE}/models/${CHAT_MODEL}:generateContent?key=${apiKey}`, {
@@ -48,15 +35,11 @@ Deno.serve(async (req) => {
     }
 
     const geminiKey = Deno.env.get('GEMINI_API_KEY') ?? Deno.env.get('GEMINI_API_KEY_FALLBACK');
-    const openaiKey = Deno.env.get('OPENAI_API_KEY');
     if (!geminiKey) throw new Error('GEMINI_API_KEY ausente');
-    if (!openaiKey) throw new Error('OPENAI_API_KEY ausente');
-
-    const queryEmbedding = await openaiEmbed(q, openaiKey);
 
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!);
-    const { data: matches, error } = await supabase.rpc('match_cas_chunks', {
-      query_embedding: queryEmbedding as unknown as string,
+    const { data: matches, error } = await supabase.rpc('search_cas_chunks_fts', {
+      q,
       match_count: matchCount,
       filter_discipline: discipline || null,
     });
