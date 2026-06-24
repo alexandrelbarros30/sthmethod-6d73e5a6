@@ -1,77 +1,46 @@
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { geminiAnswer, LOVABLE_GATEWAY, makeCacheKey } from "./index.ts";
+import { geminiAnswer, makeCacheKey } from "./index.ts";
 
-Deno.test("cas-search aciona fallback do Gateway quando Gemini retorna 429 e entrega resposta final", async () => {
-  const oldKey = Deno.env.get("LOVABLE_API_KEY");
-  Deno.env.set("LOVABLE_API_KEY", "test-lovable-key");
-
-  let geminiCalls = 0;
-  let gatewayCalls = 0;
+Deno.test("cas-search tenta chave Gemini fallback quando a principal retorna 429", async () => {
+  let primaryCalls = 0;
+  let fallbackCalls = 0;
   const fetchMock = async (input: string | URL | Request, _init?: RequestInit): Promise<Response> => {
     const url = String(input);
-    if (url.startsWith(LOVABLE_GATEWAY)) {
-      gatewayCalls += 1;
-      return Response.json({ choices: [{ message: { content: "{\"resposta_completa\":\"Resposta final via fallback\"}" } }] });
+    if (url.includes("key=primary-key")) {
+      primaryCalls += 1;
+      return new Response(JSON.stringify({ error: { message: "rate limited" } }), { status: 429 });
     }
-    geminiCalls += 1;
-    return new Response(JSON.stringify({ error: { message: "rate limited" } }), { status: 429 });
+    if (url.includes("key=fallback-key")) {
+      fallbackCalls += 1;
+      return Response.json({ candidates: [{ content: { parts: [{ text: "{\"resposta_completa\":\"Resposta final via Gemini fallback\"}" }] } }] });
+    }
+    return new Response(JSON.stringify({ error: { message: "unexpected key" } }), { status: 400 });
   };
 
-  const result = await geminiAnswer("sistema", "pergunta", "fake-gemini-key", true, fetchMock as typeof fetch);
+  const result = await geminiAnswer("sistema", "pergunta", "primary-key||fallback-key", true, fetchMock as typeof fetch);
 
   assertEquals(result.status, "ok");
   assertEquals(result.fallbackUsed, true);
-  assertEquals(result.fallbackProvider, "lovable-gateway");
-  assert(result.text?.includes("Resposta final via fallback"));
-  assert(geminiCalls >= 1);
-  assertEquals(gatewayCalls, 1);
-
-  if (oldKey) Deno.env.set("LOVABLE_API_KEY", oldKey);
-  else Deno.env.delete("LOVABLE_API_KEY");
+  assertEquals(result.fallbackProvider, "gemini-key-fallback_1");
+  assert(result.text?.includes("Resposta final via Gemini fallback"));
+  assertEquals(primaryCalls, 1);
+  assertEquals(fallbackCalls, 1);
 });
 
-Deno.test("cas-search sinaliza quota esgotada quando Gateway retorna 402", async () => {
-  const oldKey = Deno.env.get("LOVABLE_API_KEY");
-  Deno.env.set("LOVABLE_API_KEY", "test-lovable-key");
-
+Deno.test("cas-search sinaliza rate limit quando todas as chaves Gemini retornam 429", async () => {
+  let calls = 0;
   const fetchMock = async (input: string | URL | Request, _init?: RequestInit): Promise<Response> => {
-    const url = String(input);
-    if (url.startsWith(LOVABLE_GATEWAY)) {
-      return new Response(JSON.stringify({ error: { message: "credits exhausted" } }), { status: 402 });
-    }
+    await String(input);
+    calls += 1;
     return new Response(JSON.stringify({ error: { message: "rate limited" } }), { status: 429 });
   };
 
-  const result = await geminiAnswer("sistema", "pergunta", "fake-gemini-key", false, fetchMock as typeof fetch);
+  const result = await geminiAnswer("sistema", "pergunta", "key-a||key-b", false, fetchMock as typeof fetch);
 
-  assertEquals(result.status, "quota_exhausted");
-  assertEquals(result.fallbackUsed, true);
-  assert(result.error?.toLowerCase().includes("quota"));
-
-  if (oldKey) Deno.env.set("LOVABLE_API_KEY", oldKey);
-  else Deno.env.delete("LOVABLE_API_KEY");
-});
-
-Deno.test("cas-search trata limite 403 do Gateway como quota esgotada", async () => {
-  const oldKey = Deno.env.get("LOVABLE_API_KEY");
-  Deno.env.set("LOVABLE_API_KEY", "test-lovable-key");
-
-  const fetchMock = async (input: string | URL | Request, _init?: RequestInit): Promise<Response> => {
-    const url = String(input);
-    if (url.startsWith(LOVABLE_GATEWAY)) {
-      return new Response(JSON.stringify({ type: "credit_limit_reached", message: "Workspace credit limit reached" }), { status: 403 });
-    }
-    return new Response(JSON.stringify({ error: { message: "rate limited" } }), { status: 429 });
-  };
-
-  const result = await geminiAnswer("sistema", "pergunta", "fake-gemini-key", false, fetchMock as typeof fetch);
-
-  assertEquals(result.status, "quota_exhausted");
-  assertEquals(result.externalStatus, 403);
-  assert(result.error?.toLowerCase().includes("quota"));
-
-  if (oldKey) Deno.env.set("LOVABLE_API_KEY", oldKey);
-  else Deno.env.delete("LOVABLE_API_KEY");
+  assertEquals(result.status, "rate_limited");
+  assertEquals(result.fallbackUsed, false);
+  assert(result.error?.toLowerCase().includes("limite"));
+  assertEquals(calls, 2);
 });
 
 Deno.test("cas-search cache key muda por disciplina e parâmetros", async () => {
