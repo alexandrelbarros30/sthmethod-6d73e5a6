@@ -90,7 +90,7 @@ function statusFromExternal(status: number): AiStatus {
 }
 
 function userMessageForStatus(status: AiStatus, externalStatus?: number | null) {
-  if (status === 'quota_exhausted') return 'Créditos da Lovable AI esgotados. Adicione créditos em Settings → Plans & credits.';
+  if (status === 'quota_exhausted') return 'Créditos da Lovable AI esgotados ou limite do workspace atingido. A resposta local continuará usando os trechos da apostila.';
   if (status === 'rate_limited') return 'Limite temporário de IA atingido. Tente novamente em alguns minutos.';
   if (status === 'upstream_error') return 'Serviço de IA instável no momento. Tente novamente em instantes.';
   if (status === 'config_error') return 'LOVABLE_API_KEY ausente no backend.';
@@ -116,6 +116,7 @@ function classifyAiError(err: unknown): { status: AiStatus; externalStatus: numb
   const msg = String(anyErr?.message || err || '');
   const status: number | undefined = anyErr?.statusCode || anyErr?.status || anyErr?.responseHeaders?.status;
   const ext = typeof status === 'number' ? status : (/\b(\d{3})\b/.exec(msg)?.[1] ? Number(/\b(\d{3})\b/.exec(msg)![1]) : null);
+  if (ext === 403 && /credit_limit|credit limit|credits?/i.test(msg)) return { status: 'quota_exhausted', externalStatus: 403, message: msg };
   if (ext === 429) return { status: 'rate_limited', externalStatus: 429, message: msg };
   if (ext === 402) return { status: 'quota_exhausted', externalStatus: 402, message: msg };
   if (ext && ext >= 500) return { status: 'upstream_error', externalStatus: ext, message: msg };
