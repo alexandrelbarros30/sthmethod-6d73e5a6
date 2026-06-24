@@ -293,8 +293,8 @@ async function hybridSearch(supabase: any, q: string, discipline: string | null,
       content: m.content,
       similarity: m.similarity ?? 0,
     }));
-  const questoes = await searchQuizQuestions(supabase, q, discipline, Math.min(5, matchCount));
-  return [...apostila, ...questoes];
+  // Tela Pesquisar consulta APENAS a apostila (PDF). Questões ficam em outra aba.
+  return apostila;
 }
 
 async function searchQuizQuestions(supabase: any, q: string, discipline: string | null, limit: number) {
