@@ -2,7 +2,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 export const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-export const CHAT_MODELS = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
+export const CHAT_MODELS = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash-lite'];
 export const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 const encoder = new TextEncoder();
@@ -130,31 +130,40 @@ export async function geminiAnswer(
   let lastStatus = 0;
   let lastBody = '';
 
-  for (const model of CHAT_MODELS) {
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const r = await tryOnce(model, systemPrompt, partsArr, apiKey, jsonMode, 22000, fetchImpl);
-        if (r.ok) {
-          const j = await r.json();
-          const parts = j?.candidates?.[0]?.content?.parts ?? [];
-          const text = parts.map((p: { text?: string }) => p.text ?? '').join('').trim() || null;
-          if (text) return { text, error: null, status: 'ok', fallbackUsed: false, fallbackProvider: null, model, externalStatus: r.status };
+  const keys = apiKey.split('||').map((k) => k.trim()).filter(Boolean);
+  for (let keyIdx = 0; keyIdx < keys.length; keyIdx++) {
+    const key = keys[keyIdx];
+    const keyLabel = keyIdx === 0 ? 'primary' : `fallback_${keyIdx}`;
+    let keyQuotaExhausted = false;
+    for (const model of CHAT_MODELS) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const r = await tryOnce(model, systemPrompt, partsArr, key, jsonMode, 22000, fetchImpl);
+          if (r.ok) {
+            const j = await r.json();
+            const parts = j?.candidates?.[0]?.content?.parts ?? [];
+            const text = parts.map((p: { text?: string }) => p.text ?? '').join('').trim() || null;
+            if (text) return { text, error: null, status: 'ok', fallbackUsed: keyIdx > 0, fallbackProvider: keyIdx > 0 ? `gemini-key-${keyLabel}` : null, model, externalStatus: r.status };
+            lastStatus = r.status;
+            lastBody = 'empty_response';
+            console.error(JSON.stringify({ event: 'cas_search_gemini_empty', key: keyLabel, model, attempt: attempt + 1 }));
+            break;
+          }
           lastStatus = r.status;
-          lastBody = 'empty_response';
-          console.error(JSON.stringify({ event: 'cas_search_gemini_empty', model, attempt: attempt + 1, status: r.status }));
-          break;
+          lastBody = await r.text();
+          console.error(JSON.stringify({ event: 'cas_search_gemini_failed', key: keyLabel, model, attempt: attempt + 1, status: r.status, body: lastBody.slice(0, 300) }));
+          if (r.status === 429) { keyQuotaExhausted = true; break; }
+          if (r.status === 404 || r.status === 400) break;
+          if (!isRetryable(r.status)) break;
+          await sleep(400 * (attempt + 1));
+        } catch (e) {
+          lastStatus = 0;
+          lastBody = String((e as Error)?.message || e);
+          console.error(JSON.stringify({ event: 'cas_search_gemini_exception', key: keyLabel, model, attempt: attempt + 1, error: lastBody.slice(0, 300) }));
+          await sleep(400 * (attempt + 1));
         }
-        lastStatus = r.status;
-        lastBody = await r.text();
-        console.error(JSON.stringify({ event: 'cas_search_gemini_failed', model, attempt: attempt + 1, status: r.status, body: lastBody.slice(0, 300) }));
-        if (!isRetryable(r.status)) break;
-        await sleep(400 * (attempt + 1));
-      } catch (e) {
-        lastStatus = 0;
-        lastBody = String((e as Error)?.message || e);
-        console.error(JSON.stringify({ event: 'cas_search_gemini_exception', model, attempt: attempt + 1, error: lastBody.slice(0, 300) }));
-        await sleep(400 * (attempt + 1));
       }
+      if (keyQuotaExhausted) break;
     }
   }
 
