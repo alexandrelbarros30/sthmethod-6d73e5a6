@@ -297,6 +297,10 @@ function SearchPanel(props: {
   const [tab, setTab] = useState<"direta" | "aprofundar" | "pontos" | "conceitos" | "fontes">("direta");
   const [recent, setRecent] = useState<string[]>([]);
   const [loadingStep, setLoadingStep] = useState(0);
+  const [metrics, setMetrics] = useState<{
+    hourly: Array<{ total_requests: number; avg_duration_ms: number; failure_rate_pct: number; fallback_uses: number; cache_hits: number; rate_limited_count: number; upstream_5xx_count: number }>;
+    logs: Array<{ id: string; created_at: string; duration_ms: number; status: string; cache_hit: boolean; fallback_used: boolean; external_status: number | null }>;
+  } | null>(null);
 
   // Recent searches (localStorage)
   useEffect(() => {
@@ -336,6 +340,18 @@ function SearchPanel(props: {
     const id = setInterval(() => setLoadingStep((s) => Math.min(s + 1, 3)), 900);
     return () => clearInterval(id);
   }, [loading]);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const [{ data: hourly }, { data: logs }] = await Promise.all([
+        (supabase as any).from("cas_search_metrics_hourly").select("total_requests,avg_duration_ms,failure_rate_pct,fallback_uses,cache_hits,rate_limited_count,upstream_5xx_count").limit(1),
+        (supabase as any).from("cas_search_logs").select("id,created_at,duration_ms,status,cache_hit,fallback_used,external_status").order("created_at", { ascending: false }).limit(5),
+      ]);
+      if (alive && ((hourly?.length ?? 0) > 0 || (logs?.length ?? 0) > 0)) setMetrics({ hourly: hourly ?? [], logs: logs ?? [] });
+    })().catch(() => {});
+    return () => { alive = false; };
+  }, [searchState]);
 
   const INTENTS: Array<{ key: string; label: string; icon: React.ReactNode; prefix: string }> = [
     { key: "def", label: "Definir", icon: <BookOpen className="h-3.5 w-3.5" />, prefix: "O que é " },
@@ -839,6 +855,38 @@ function SearchPanel(props: {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {metrics && (
+        <div className="max-w-3xl mx-auto bg-white rounded-3xl border border-[#d2d2d7] p-5 space-y-4">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.2em] text-[#86868b]">Métricas do endpoint cas-search</div>
+              <div className="text-[13px] text-[#1d1d1f] mt-1">Tempo, falhas, cache e fallback das últimas consultas.</div>
+            </div>
+            {metrics.hourly[0] && (
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div className="rounded-xl bg-[#f5f5f7] px-3 py-2"><div className="text-[15px] font-mono text-[#1d1d1f]">{metrics.hourly[0].avg_duration_ms || 0}ms</div><div className="text-[9px] uppercase text-[#86868b]">média</div></div>
+                <div className="rounded-xl bg-[#f5f5f7] px-3 py-2"><div className="text-[15px] font-mono text-[#1d1d1f]">{metrics.hourly[0].failure_rate_pct || 0}%</div><div className="text-[9px] uppercase text-[#86868b]">falha</div></div>
+                <div className="rounded-xl bg-[#f5f5f7] px-3 py-2"><div className="text-[15px] font-mono text-[#1d1d1f]">{metrics.hourly[0].fallback_uses || 0}</div><div className="text-[9px] uppercase text-[#86868b]">fallback</div></div>
+                <div className="rounded-xl bg-[#f5f5f7] px-3 py-2"><div className="text-[15px] font-mono text-[#1d1d1f]">{metrics.hourly[0].cache_hits || 0}</div><div className="text-[9px] uppercase text-[#86868b]">cache</div></div>
+              </div>
+            )}
+          </div>
+          {metrics.logs.length > 0 && (
+            <div className="divide-y divide-[#e8e8ed]">
+              {metrics.logs.map((l) => (
+                <div key={l.id} className="py-2 flex items-center justify-between gap-3 text-[11px] font-mono text-[#6e6e73]">
+                  <span>{new Date(l.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+                  <span>{l.duration_ms}ms</span>
+                  <span className={cn("px-2 py-0.5 rounded-full", l.status === "ok" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700")}>{l.status}</span>
+                  {l.external_status ? <span>HTTP {l.external_status}</span> : <span>local</span>}
+                  <span>{l.cache_hit ? "cache" : l.fallback_used ? "fallback" : "direto"}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
