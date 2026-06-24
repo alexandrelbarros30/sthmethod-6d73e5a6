@@ -259,6 +259,48 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "update_email") {
+      const { user_id, new_email } = payload;
+      if (!user_id || !new_email || !new_email.includes("@")) {
+        return new Response(JSON.stringify({ error: "user_id e novo email válido são obrigatórios" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const normalized = new_email.trim().toLowerCase();
+      // Detect collision in auth
+      let conflictUserId: string | null = null;
+      try {
+        let page = 1;
+        const perPage = 500;
+        while (true) {
+          const { data: listData, error: listError } = await adminClient.auth.admin.listUsers({ page, perPage });
+          if (listError) break;
+          const f = listData.users.find((u: any) => (u.email || "").toLowerCase() === normalized);
+          if (f) { conflictUserId = f.id; break; }
+          if (listData.users.length < perPage) break;
+          page++;
+        }
+      } catch { /* noop */ }
+      if (conflictUserId && conflictUserId !== user_id) {
+        return new Response(JSON.stringify({ error: "Este email já está em uso por outra conta no sistema." }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { error: authErr } = await adminClient.auth.admin.updateUserById(user_id, {
+        email: normalized, email_confirm: true,
+      });
+      if (authErr) {
+        console.error("update_email auth error:", authErr.message);
+        return new Response(JSON.stringify({ error: `Falha ao atualizar email no login: ${authErr.message}` }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      await adminClient.from("profiles").update({ email: normalized }).eq("user_id", user_id);
+      return new Response(JSON.stringify({ success: true, email: normalized }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify({ error: "Ação inválida" }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
