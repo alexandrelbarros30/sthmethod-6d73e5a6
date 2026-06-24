@@ -487,6 +487,15 @@ const AdminStudents = () => {
   const editMutation = useMutation({
     mutationFn: async () => {
       if (!validateForm(false)) throw new Error("Validação falhou");
+      const currentEmail = (selected as any)?.email?.toLowerCase?.() || "";
+      const newEmail = form.email.trim().toLowerCase();
+      if (newEmail && newEmail !== currentEmail) {
+        const { data: emailRes, error: emailErr } = await supabase.functions.invoke("admin-manage-students", {
+          body: { action: "update_email", user_id: selected.user_id, new_email: newEmail },
+        });
+        if (emailErr) throw new Error("Erro ao atualizar email de login.");
+        if (emailRes?.error) throw new Error(emailRes.error);
+      }
       await supabase.from("profiles").update(profilePayload()).eq("user_id", selected.user_id);
     },
     onSuccess: () => {
