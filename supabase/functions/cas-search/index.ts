@@ -366,7 +366,7 @@ function responseJson(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 }
 
-Deno.serve(async (req) => {
+export async function handleCasSearch(req: Request) {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   const startedAt = performance.now();
   let metricsSupabase: ReturnType<typeof createClient> | null = null;
@@ -513,4 +513,8 @@ Retorne SEMPRE um JSON válido com este schema exato:
     }
     return responseJson({ error: 'Falha interna na consulta. Tente novamente em instantes.', answerError: message, status: 'upstream_error', uiState: 'no_response', fallbackUsed: false }, 200);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve(handleCasSearch);
+}
