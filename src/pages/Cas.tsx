@@ -171,7 +171,7 @@ function MarkdownAnswerCards({ markdown }: { markdown: string }) {
             }}
           >
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {section.content}
+              {formatForReading(section.content)}
             </ReactMarkdown>
           </div>
         </article>
