@@ -3,6 +3,8 @@ project_id = "tthahgwkkdyvxdbhsgyb"
 [functions]
   [functions.admin-manage-students]
     verify_jwt = false
+  [functions.admin-update-bucket]
+    verify_jwt = false
   [functions.analyze-diet]
     verify_jwt = false
   [functions.analyze-evolution-public]
