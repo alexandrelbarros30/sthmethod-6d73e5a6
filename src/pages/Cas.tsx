@@ -59,7 +59,19 @@ type Chunk = {
   content: string;
 };
 
-type Mode = "search" | "book";
+type Mode = "search" | "book" | "simulado";
+
+type QuizQuestion = {
+  id: number;
+  exam: string;
+  discipline: string;
+  statement: string;
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  option_d: string;
+  correct_answer: "A" | "B" | "C" | "D";
+};
 
 export default function Cas() {
   const [mode, setMode] = useState<Mode>("search");
@@ -167,6 +179,15 @@ export default function Cas() {
               >
                 Disciplinas
               </button>
+              <button
+                onClick={() => setMode("simulado")}
+                className={cn(
+                  "px-4 py-1.5 rounded-full text-[12px] font-medium transition",
+                  mode === "simulado" ? "bg-white text-[#1d1d1f] shadow-sm" : "text-[#6e6e73] hover:text-[#1d1d1f]",
+                )}
+              >
+                Simulado
+              </button>
             </div>
             <a
               href={pdfAsset.url}
@@ -198,7 +219,7 @@ export default function Cas() {
             onSubmit={runSearch}
             onOpenDiscipline={(d) => { setMode("book"); openDiscipline(d); }}
           />
-        ) : (
+        ) : mode === "book" ? (
           <BookPanel
             selectedDisc={selectedDisc}
             chunks={chunks}
@@ -206,6 +227,8 @@ export default function Cas() {
             onSelect={openDiscipline}
             onBack={() => setSelectedDisc(null)}
           />
+        ) : (
+          <SimuladoPanel />
         )}
       </main>
     </div>
