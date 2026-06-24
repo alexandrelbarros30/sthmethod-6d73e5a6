@@ -248,7 +248,7 @@ export default function Cas() {
           query: q,
           discipline: filterDisc || undefined,
           withAnswer: true,
-          matchCount: 10,
+          matchCount: 18,
           attachment: attachment ? { mime: attachment.mime, data: attachment.data } : undefined,
         },
       });
