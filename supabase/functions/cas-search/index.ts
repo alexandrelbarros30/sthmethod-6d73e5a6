@@ -116,7 +116,7 @@ function classifyAiError(err: unknown): { status: AiStatus; externalStatus: numb
   const msg = String(anyErr?.message || err || '');
   const status: number | undefined = anyErr?.statusCode || anyErr?.status || anyErr?.responseHeaders?.status;
   const ext = typeof status === 'number' ? status : (/\b(\d{3})\b/.exec(msg)?.[1] ? Number(/\b(\d{3})\b/.exec(msg)![1]) : null);
-  if (ext === 403 && /credit_limit|credit limit|credits?/i.test(msg)) return { status: 'quota_exhausted', externalStatus: 403, message: msg };
+  if (ext === 403) return { status: 'quota_exhausted', externalStatus: 403, message: msg };
   if (ext === 429) return { status: 'rate_limited', externalStatus: 429, message: msg };
   if (ext === 402) return { status: 'quota_exhausted', externalStatus: 402, message: msg };
   if (ext && ext >= 500) return { status: 'upstream_error', externalStatus: ext, message: msg };
