@@ -124,7 +124,20 @@ function MarkdownAnswerCards({ markdown }: { markdown: string }) {
       blocks.push(m);
       return `\u0000B${blocks.length - 1}\u0000`;
     });
-    t = t.replace(/\?\s+(?=\S)/g, "?\n\n");
+    t = t.replace(/^\s*\d{1,4}\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ])/, "");
+    t = t.replace(/([?!])\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ"(])/g, "$1\n\n");
+    t = t.replace(
+      /(^|[.;:!?]\s+|\n)([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]{4,}[A-ZÁÉÍÓÚÂÊÔÃÕÇ])(?=\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9"(])/g,
+      (_m, pre, title) => `${pre === "\n" ? "" : pre}\n\n### ${title.trim()}\n\n`,
+    );
+    {
+      const parts = t.split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ"(])/);
+      const grouped: string[] = [];
+      for (let i = 0; i < parts.length; i += 2) {
+        grouped.push(parts.slice(i, i + 2).join(" "));
+      }
+      t = grouped.join("\n\n");
+    }
     t = t.replace(
       /(?:^|\s)\(?([A-Ea-e])\s*[\)\-:]\s+/g,
       (_m, letter) => `\n\n**${String(letter).toUpperCase()})** `,
