@@ -124,8 +124,8 @@ function MarkdownAnswerCards({ markdown }: { markdown: string }) {
         <article
           key={`${section.kind}-${section.sourceNumber ?? index}`}
           className={cn(
-            "rounded-3xl border p-7",
-            section.kind === "source" ? "bg-[#f5f5f7] border-[#d2d2d7]" : "bg-white border-[#d2d2d7]",
+            "rounded-3xl border overflow-hidden",
+            section.kind === "source" ? "bg-[#f5f5f7] border-[#d2d2d7] p-7" : "bg-white border-[#d2d2d7]",
           )}
         >
           {section.kind === "source" && (
