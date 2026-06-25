@@ -12,6 +12,8 @@ export type CasUser = {
   rg?: string | null;
   last_login_at?: string | null;
   created_at?: string;
+  is_admin?: boolean;
+  is_active?: boolean;
 };
 
 export function getCasToken(): string | null {
@@ -79,4 +81,23 @@ export const casAuthApi = {
   historyAdd: (p: { query: string; discipline?: string | null; has_answer?: boolean }) =>
     call<{ ok: true }>({ action: "history_add", ...p }),
   historyClear: () => call<{ ok: true }>({ action: "history_clear" }),
+  // ===== Admin =====
+  adminMetrics: () => call<{
+    users_total: number; users_active: number; users_logged_30d: number;
+    searches_total: number; searches_7d: number;
+  }>({ action: "admin_metrics" }),
+  adminListUsers: (p: { q?: string; limit?: number } = {}) =>
+    call<{ users: Array<CasUser & { searches_count: number }> }>({ action: "admin_list_users", ...p }),
+  adminUserDetail: (id: string) =>
+    call<{
+      user: CasUser;
+      history: { id: string; query: string; discipline: string | null; has_answer: boolean; created_at: string }[];
+      sessions: { id: string; user_agent: string | null; ip_address: string | null; created_at: string; expires_at: string; revoked_at: string | null }[];
+    }>({ action: "admin_user_detail", id }),
+  adminUpdateUser: (p: { id: string } & Partial<Pick<CasUser, "full_name" | "email" | "phone" | "rg" | "birth_date" | "is_active" | "is_admin">>) =>
+    call<{ user: CasUser }>({ action: "admin_update_user", ...p }),
+  adminResetPassword: (p: { id: string; new_password: string }) =>
+    call<{ ok: true }>({ action: "admin_reset_password", ...p }),
+  adminDeleteUser: (id: string) =>
+    call<{ ok: true }>({ action: "admin_delete_user", id }),
 };

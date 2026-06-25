@@ -721,6 +721,7 @@ export type Database = {
           full_name: string
           id: string
           is_active: boolean
+          is_admin: boolean
           last_login_at: string | null
           password_hash: string
           phone: string | null
@@ -734,6 +735,7 @@ export type Database = {
           full_name: string
           id?: string
           is_active?: boolean
+          is_admin?: boolean
           last_login_at?: string | null
           password_hash: string
           phone?: string | null
@@ -747,6 +749,7 @@ export type Database = {
           full_name?: string
           id?: string
           is_active?: boolean
+          is_admin?: boolean
           last_login_at?: string | null
           password_hash?: string
           phone?: string | null

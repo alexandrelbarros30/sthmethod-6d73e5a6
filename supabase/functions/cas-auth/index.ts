@@ -107,6 +107,8 @@ function publicUser(u: any) {
     rg: u.rg,
     last_login_at: u.last_login_at,
     created_at: u.created_at,
+    is_admin: !!u.is_admin,
+    is_active: u.is_active !== false,
   }
 }
 
@@ -303,12 +305,118 @@ Deno.serve(async (req) => {
       return ok({ ok: true })
     }
 
+    // ===================== ADMIN =====================
+    async function requireAdmin(): Promise<string> {
+      const token = getBearer(req) || String(body.token || '')
+      const { userId } = await authenticate(token)
+      const { data: u } = await supabase.from('cas_users').select('is_admin, is_active').eq('id', userId).maybeSingle()
+      if (!u || !u.is_active || !u.is_admin) throw new Error('forbidden')
+      return userId
+    }
+
+    if (action === 'admin_metrics') {
+      await requireAdmin()
+      const since30 = new Date(Date.now() - 30 * 86400_000).toISOString()
+      const since7 = new Date(Date.now() - 7 * 86400_000).toISOString()
+      const [{ count: total }, { count: actives }, { count: last30 }, { count: searches7 }, { count: searchesTotal }] = await Promise.all([
+        supabase.from('cas_users').select('*', { count: 'exact', head: true }),
+        supabase.from('cas_users').select('*', { count: 'exact', head: true }).eq('is_active', true),
+        supabase.from('cas_users').select('*', { count: 'exact', head: true }).gte('last_login_at', since30),
+        supabase.from('cas_search_history').select('*', { count: 'exact', head: true }).gte('created_at', since7),
+        supabase.from('cas_search_history').select('*', { count: 'exact', head: true }),
+      ])
+      return ok({
+        users_total: total ?? 0,
+        users_active: actives ?? 0,
+        users_logged_30d: last30 ?? 0,
+        searches_total: searchesTotal ?? 0,
+        searches_7d: searches7 ?? 0,
+      })
+    }
+
+    if (action === 'admin_list_users') {
+      await requireAdmin()
+      const q = String(body.q || '').trim().toLowerCase()
+      const limit = Math.min(Math.max(Number(body.limit) || 100, 1), 500)
+      let query = supabase.from('cas_users')
+        .select('id, full_name, email, phone, rg, birth_date, is_active, is_admin, last_login_at, created_at')
+        .order('created_at', { ascending: false })
+        .limit(limit)
+      if (q) query = query.or(`email.ilike.%${q}%,full_name.ilike.%${q}%`)
+      const { data, error } = await query
+      if (error) return err(error.message, 500)
+      // Compute per-user search counts in one query
+      const ids = (data ?? []).map((u: any) => u.id)
+      const counts: Record<string, number> = {}
+      if (ids.length) {
+        const { data: rows } = await supabase
+          .from('cas_search_history').select('user_id').in('user_id', ids)
+        for (const r of rows ?? []) counts[r.user_id] = (counts[r.user_id] || 0) + 1
+      }
+      return ok({ users: (data ?? []).map((u: any) => ({ ...u, searches_count: counts[u.id] || 0 })) })
+    }
+
+    if (action === 'admin_user_detail') {
+      await requireAdmin()
+      const id = String(body.id || '')
+      if (!id) return err('id obrigatório', 400)
+      const { data: user } = await supabase.from('cas_users').select('*').eq('id', id).maybeSingle()
+      if (!user) return err('Usuário não encontrado', 404)
+      const { data: history } = await supabase
+        .from('cas_search_history').select('id, query, discipline, has_answer, created_at')
+        .eq('user_id', id).order('created_at', { ascending: false }).limit(50)
+      const { data: sessions } = await supabase
+        .from('cas_sessions').select('id, user_agent, ip_address, created_at, expires_at, revoked_at')
+        .eq('user_id', id).order('created_at', { ascending: false }).limit(10)
+      return ok({ user: publicUser(user), history: history ?? [], sessions: sessions ?? [] })
+    }
+
+    if (action === 'admin_update_user') {
+      await requireAdmin()
+      const id = String(body.id || '')
+      if (!id) return err('id obrigatório', 400)
+      const patch: Record<string, any> = {}
+      if (typeof body.full_name === 'string') patch.full_name = body.full_name.trim()
+      if (typeof body.email === 'string' && isEmail(body.email)) patch.email = body.email.trim().toLowerCase()
+      if (typeof body.phone === 'string') patch.phone = body.phone.trim()
+      if (typeof body.rg === 'string') patch.rg = body.rg.trim()
+      if (typeof body.birth_date === 'string' && isValidDate(body.birth_date)) patch.birth_date = body.birth_date
+      if (typeof body.is_active === 'boolean') patch.is_active = body.is_active
+      if (typeof body.is_admin === 'boolean') patch.is_admin = body.is_admin
+      if (!Object.keys(patch).length) return err('Nada para atualizar.', 400)
+      const { data, error } = await supabase.from('cas_users').update(patch).eq('id', id).select('*').single()
+      if (error) return err(error.message, 400)
+      return ok({ user: publicUser(data) })
+    }
+
+    if (action === 'admin_reset_password') {
+      await requireAdmin()
+      const id = String(body.id || '')
+      const new_password = String(body.new_password || '')
+      if (!id || new_password.length < 8) return err('Senha precisa ter ao menos 8 caracteres.', 400)
+      const password_hash = await bcrypt.hash(new_password, 10)
+      await supabase.from('cas_users').update({ password_hash }).eq('id', id)
+      await supabase.from('cas_sessions').update({ revoked_at: new Date().toISOString() })
+        .eq('user_id', id).is('revoked_at', null)
+      return ok({ ok: true })
+    }
+
+    if (action === 'admin_delete_user') {
+      await requireAdmin()
+      const id = String(body.id || '')
+      if (!id) return err('id obrigatório', 400)
+      const { error } = await supabase.from('cas_users').delete().eq('id', id)
+      if (error) return err(error.message, 400)
+      return ok({ ok: true })
+    }
+
     return err('Ação desconhecida.', 400)
   } catch (e: any) {
     const msg = e?.message || String(e)
     if (msg === 'missing token' || msg === 'invalid session' || msg.includes('JWT')) {
       return err('Sessão expirada. Faça login novamente.', 401)
     }
+    if (msg === 'forbidden') return err('Acesso restrito a administradores.', 403)
     console.error('[cas-auth] error', msg)
     return err('Erro interno.', 500)
   }
