@@ -54,6 +54,7 @@ import CasRegister from "./pages/cas/CasRegister";
 import CasForgotPassword from "./pages/cas/CasForgotPassword";
 import CasResetPassword from "./pages/cas/CasResetPassword";
 import CasProfile from "./pages/cas/CasProfile";
+import CasAdmin from "./pages/cas/CasAdmin";
 import { CasAuthProvider } from "@/contexts/CasAuthContext";
 import CasProtectedRoute from "@/components/cas/CasProtectedRoute";
 import PreviewTemaVerde from "./pages/PreviewTemaVerde";
@@ -231,6 +232,7 @@ const App = () => (
             <Route path="/cas/esqueci-senha" element={<CasAuthProvider><CasForgotPassword /></CasAuthProvider>} />
             <Route path="/cas/reset-password" element={<CasAuthProvider><CasResetPassword /></CasAuthProvider>} />
             <Route path="/cas/perfil" element={<CasAuthProvider><CasProtectedRoute><CasProfile /></CasProtectedRoute></CasAuthProvider>} />
+            <Route path="/cas/admin" element={<CasAuthProvider><CasProtectedRoute><CasAdmin /></CasProtectedRoute></CasAuthProvider>} />
             <Route path="/cas" element={<CasAuthProvider><CasProtectedRoute><Cas /></CasProtectedRoute></CasAuthProvider>} />
             {/* MEAD aliases — landing oficial */}
             <Route path="/mead/login" element={<CasAuthProvider><CasLogin /></CasAuthProvider>} />
@@ -238,6 +240,7 @@ const App = () => (
             <Route path="/mead/esqueci-senha" element={<CasAuthProvider><CasForgotPassword /></CasAuthProvider>} />
             <Route path="/mead/reset-password" element={<CasAuthProvider><CasResetPassword /></CasAuthProvider>} />
             <Route path="/mead/perfil" element={<CasAuthProvider><CasProtectedRoute><CasProfile /></CasProtectedRoute></CasAuthProvider>} />
+            <Route path="/mead/admin" element={<CasAuthProvider><CasProtectedRoute><CasAdmin /></CasProtectedRoute></CasAuthProvider>} />
             <Route path="/mead" element={<CasAuthProvider><CasProtectedRoute><Cas /></CasProtectedRoute></CasAuthProvider>} />
             {/* Student routes */}
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["student"]}><StudentOverview /></ProtectedRoute>} />
