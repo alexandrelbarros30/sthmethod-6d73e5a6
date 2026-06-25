@@ -752,29 +752,25 @@ function SearchPanel(props: {
 
   return (
     <div className="space-y-8">
-      {/* Hero EAD command center */}
-      <section className="relative overflow-hidden rounded-[28px] border border-[#d2d2d7] bg-gradient-to-br from-white via-white to-[#f5f5f7] p-8 sm:p-12">
-        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-[#0071e3]/8 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-32 -left-16 h-72 w-72 rounded-full bg-[#a78bfa]/10 blur-3xl pointer-events-none" />
-        <div className="relative space-y-7">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-[#d2d2d7] text-[11px] uppercase tracking-[0.18em] text-[#6e6e73]">
-            <Zap className="h-3 w-3 text-[#0071e3]" /> MEAD · CAS · núcleo de consulta inteligente
-          </div>
-          <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight text-[#1d1d1f] leading-[1.05]">
-            Pergunte. <span className="text-[#86868b]">A apostila responde.</span>
-          </h2>
-          <p className="text-[15px] text-[#6e6e73] max-w-xl">
-            Motor técnico-didático que lê 1.297 trechos oficiais da apostila CAS-PMERJ e devolve resposta citada, com aprofundamento, conceitos-chave e fontes rastreáveis.
-          </p>
+      {/* Hero — Apple Fitness direction: split search + activity rings */}
+      <section className="rounded-[32px] border border-[#d2d2d7] bg-white p-6 sm:p-10 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+        <div className="grid lg:grid-cols-[1.15fr_1fr] gap-10 items-center">
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f5f5f7] border border-[#d2d2d7] text-[10px] font-bold tracking-[0.18em] uppercase text-[#1d1d1f]">
+              <Zap className="h-3 w-3 text-[#0071e3]" /> MEAD · CAS · núcleo de consulta inteligente
+            </div>
+            <h2 className="text-5xl sm:text-6xl font-bold tracking-tight text-[#1d1d1f] leading-[1.02]">
+              Pergunte.<br /><span className="text-[#86868b]">A apostila responde.</span>
+            </h2>
 
-          <form onSubmit={onSubmit} className="max-w-3xl">
-            <div className="relative flex items-center bg-white rounded-2xl border border-[#d2d2d7] focus-within:border-[#0071e3] focus-within:ring-4 focus-within:ring-[#0071e3]/10 transition shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+            <form onSubmit={onSubmit}>
+            <div className="relative flex items-center bg-white rounded-2xl border-2 border-[#d2d2d7] focus-within:border-[#0071e3] focus-within:ring-4 focus-within:ring-[#0071e3]/10 transition shadow-sm">
               <Search className="absolute left-5 h-4 w-4 text-[#6e6e73]" />
               <Input
                 ref={inputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Pergunte qualquer coisa do CAS — definição, comparação, procedimento, hipóteses…"
+                placeholder="O que você quer aprender hoje?"
                 className="pl-12 pr-56 h-16 text-[15px] bg-transparent border-0 rounded-2xl focus-visible:ring-0 placeholder:text-[#86868b]"
               />
               <div className="absolute right-2 flex items-center gap-1.5">
@@ -799,7 +795,7 @@ function SearchPanel(props: {
                 <Button
                   type="submit"
                   disabled={loading || (!query.trim() && !attachment)}
-                  className="h-12 px-5 rounded-xl bg-[#1d1d1f] hover:bg-[#0071e3] text-white text-[13px] font-medium gap-1.5"
+                  className="h-12 px-5 rounded-xl bg-black hover:bg-[#1d1d1f] text-white text-[13px] font-medium gap-1.5"
                 >
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Consultar <CornerDownLeft className="h-3.5 w-3.5 opacity-70" /></>}
                 </Button>
@@ -820,13 +816,53 @@ function SearchPanel(props: {
                       inputRef.current?.setSelectionRange(v.length, v.length);
                     }, 0);
                   }}
-                  className="inline-flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-full bg-white border border-[#d2d2d7] text-[#1d1d1f] hover:border-[#1d1d1f] transition"
+                  className="inline-flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-full bg-[#f5f5f7] border border-[#d2d2d7] text-[#1d1d1f] hover:border-[#1d1d1f] hover:bg-white transition"
                 >
                   {it.icon} {it.label}
                 </button>
               ))}
             </div>
-          </form>
+            </form>
+          </div>
+
+          {/* Right — Activity Rings */}
+          <div className="bg-[#f5f5f7] rounded-[28px] p-6 sm:p-8 border border-[#d2d2d7] flex items-center justify-center gap-6 sm:gap-8">
+            <div className="relative w-40 h-40 sm:w-48 sm:h-48 shrink-0">
+              <svg viewBox="0 0 192 192" className="w-full h-full -rotate-90">
+                <circle cx="96" cy="96" r="80" stroke="#d2d2d7" strokeOpacity="0.4" strokeWidth="16" fill="transparent" />
+                <circle cx="96" cy="96" r="80" stroke="#0071e3" strokeWidth="16" fill="transparent" strokeDasharray="502" strokeDashoffset="125" strokeLinecap="round" />
+                <circle cx="96" cy="96" r="58" stroke="#d2d2d7" strokeOpacity="0.4" strokeWidth="16" fill="transparent" />
+                <circle cx="96" cy="96" r="58" stroke="#1d1d1f" strokeWidth="16" fill="transparent" strokeDasharray="365" strokeDashoffset="110" strokeLinecap="round" />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-[9px] font-bold text-[#86868b] uppercase tracking-[0.18em]">Cobertura</span>
+                <span className="text-2xl font-bold tracking-tight text-[#1d1d1f]">CAS</span>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-[#0071e3]" />
+                  <div className="text-[9px] font-bold text-[#0071e3] uppercase tracking-[0.18em]">Trechos indexados</div>
+                </div>
+                <div className="text-3xl font-bold tracking-tight text-[#1d1d1f] mt-1">1.297</div>
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-[#1d1d1f]" />
+                  <div className="text-[9px] font-bold text-[#1d1d1f] uppercase tracking-[0.18em]">Questões CAS</div>
+                </div>
+                <div className="text-3xl font-bold tracking-tight text-[#1d1d1f] mt-1">479</div>
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-[#86868b]" />
+                  <div className="text-[9px] font-bold text-[#86868b] uppercase tracking-[0.18em]">Disciplinas</div>
+                </div>
+                <div className="text-3xl font-bold tracking-tight text-[#1d1d1f] mt-1">20</div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
