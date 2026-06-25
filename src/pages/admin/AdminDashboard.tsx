@@ -312,6 +312,9 @@ const AdminDashboard = () => {
         </div>
       </section>
 
+      {/* 1. Alunos Recentes */}
+      <RecentStudents profiles={profiles} subscriptions={subscriptions} navigate={navigate} queryClient={queryClient} activeSubUserIds={activeSubUserIds} />
+
       {/* Search + quick action */}
       <div className="grid grid-cols-2 gap-2.5 mb-8 lg:grid-cols-4">
         {metrics.map((m, i) => (
@@ -378,10 +381,7 @@ const AdminDashboard = () => {
       </Card>
 
       <div className="space-y-3">
-        {/* 1. Alunos Recentes (moved up) */}
-        <RecentStudents profiles={profiles} subscriptions={subscriptions} navigate={navigate} queryClient={queryClient} activeSubUserIds={activeSubUserIds} />
-
-        {/* 2. Leads Free */}
+        {/* Leads Free */}
         {(freeLeads?.length || 0) > 0 && (
           <CollapsiblePanel
             title="Leads Free"
