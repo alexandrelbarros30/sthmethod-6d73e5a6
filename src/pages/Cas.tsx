@@ -882,7 +882,15 @@ function SearchPanel(props: {
           </div>
 
           {tab === "direta" && (structured?.resposta_completa || answer) && (
-            <MarkdownAnswerCards markdown={structured?.resposta_completa ?? answer ?? ""} />
+            <>
+              <MarkdownAnswerCards
+                markdown={structured?.resposta_completa ?? answer ?? ""}
+                highlightTerms={extractHighlightTerms(query)}
+              />
+              <p className="text-[11px] text-[#86868b] italic px-2 pt-2">
+                Esta consulta é um apoio de estudo e <strong className="not-italic font-semibold text-[#1d1d1f]">não substitui a leitura integral das apostilas</strong>.
+              </p>
+            </>
           )}
 
           {tab === "pontos" && structured?.pontos_chave && structured.pontos_chave.length > 0 && (
