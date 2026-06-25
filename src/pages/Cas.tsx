@@ -536,16 +536,16 @@ export default function Cas() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
       {/* Header — Apple style */}
       <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-[#d2d2d7]">
-        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center gap-4 flex-wrap">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2.5 sm:py-3 flex items-center gap-3 sm:gap-4">
           <Link to="/cas" className="flex items-center gap-2.5 shrink-0">
-            <img src={meadLogo.url} alt="MEAD — Assistente de Aprendizagem" className="h-12 md:h-14 w-auto object-contain" />
+            <img src={meadLogo.url} alt="MEAD — Assistente de Aprendizagem" className="h-9 sm:h-12 md:h-14 w-auto object-contain" />
             <span className="hidden sm:inline text-[12px] text-[#86868b] font-medium tracking-[0.18em] uppercase">· CAS</span>
           </Link>
-          <div className="ml-auto flex items-center gap-2">
-            <div className="inline-flex rounded-full bg-[#f5f5f7] p-0.5">
+          <div className="ml-auto flex items-center gap-2 min-w-0">
+            <div className="hidden md:inline-flex rounded-full bg-[#f5f5f7] p-0.5">
               <button
                 onClick={() => setMode("search")}
                 className={cn(
@@ -587,8 +587,32 @@ export default function Cas() {
             <ProfileMenu />
           </div>
         </div>
+        {/* Mobile tabs — horizontal scroll */}
+        <div className="md:hidden border-t border-[#ececef] bg-white/60">
+          <div className="max-w-6xl mx-auto px-4 py-2 flex gap-1.5 overflow-x-auto no-scrollbar">
+            {([
+              ["search", "Pesquisar"],
+              ["book", "Disciplinas"],
+              ["simulado", "Simulado"],
+              ["study", "Estudar"],
+            ] as const).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => { setMode(key as Mode); if (key === "book") setSelectedDisc(null); }}
+                className={cn(
+                  "shrink-0 px-3.5 py-1.5 rounded-full text-[12px] font-medium transition border",
+                  mode === key
+                    ? "bg-[#1d1d1f] text-white border-[#1d1d1f]"
+                    : "bg-white text-[#6e6e73] border-[#e6e6e8] hover:text-[#1d1d1f]",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
         {/* Breadcrumb persistente — MEAD › CAS › Modo */}
-        <div className="max-w-6xl mx-auto px-6 pb-2 -mt-1">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-2 pt-1">
           <nav aria-label="Trilha de navegação" className="flex items-center gap-1.5 text-[11px] text-[#86868b] font-medium">
             <span className="text-[#1d1d1f]/70">MEAD</span>
             <span className="text-[#d2d2d7]">/</span>
