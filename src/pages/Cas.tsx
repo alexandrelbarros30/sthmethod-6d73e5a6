@@ -9,6 +9,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { useCasAuth } from "@/contexts/CasAuthContext";
+import { casAuthApi } from "@/lib/casAuthClient";
+import pdfAssetApostila from "@/assets/apostilas-provas-cas.pdf.asset.json";
+import pdfAssetQuestoes from "@/assets/questoes-prova-cas.pdf.asset.json";
+
+function openSourceInPdf(m: Match) {
+  const isQuiz = m.source === "questoes";
+  const base = isQuiz ? pdfAssetQuestoes.url : pdfAssetApostila.url;
+  const page = !isQuiz && m.page_start ? `#page=${m.page_start}` : "";
+  window.open(`${base}${page}`, "_blank", "noopener,noreferrer");
+}
 
 const DISCIPLINES = [
   "ADMINISTRAÇÃO APLICADA A PMERJ",
