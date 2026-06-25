@@ -582,6 +582,28 @@ export default function Cas() {
             <ProfileMenu />
           </div>
         </div>
+        {/* Breadcrumb persistente — MEAD › CAS › Modo */}
+        <div className="max-w-6xl mx-auto px-6 pb-2 -mt-1">
+          <nav aria-label="Trilha de navegação" className="flex items-center gap-1.5 text-[11px] text-[#86868b] font-medium">
+            <span className="text-[#1d1d1f]/70">MEAD</span>
+            <span className="text-[#d2d2d7]">/</span>
+            <span className="text-[#1d1d1f]/70">CAS</span>
+            <span className="text-[#d2d2d7]">/</span>
+            <span className="text-[#1d1d1f] font-semibold uppercase tracking-[0.18em]">
+              {mode === "search" ? "Pesquisar" : mode === "book" ? (selectedDisc ?? "Disciplinas") : mode === "simulado" ? "Simulado" : "Estudar"}
+            </span>
+            {mode === "book" && selectedDisc && (
+              <>
+                <button
+                  onClick={() => setSelectedDisc(null)}
+                  className="ml-2 text-[10px] uppercase tracking-wider text-[#0071e3] hover:underline"
+                >
+                  ← voltar
+                </button>
+              </>
+            )}
+          </nav>
+        </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-10">
