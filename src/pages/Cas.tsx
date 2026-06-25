@@ -306,6 +306,7 @@ export default function Cas() {
   const [extracted, setExtracted] = useState<string | null>(null);
   const [searchState, setSearchState] = useState<SearchUiState>("idle");
   const [searchMeta, setSearchMeta] = useState<SearchMeta | null>(null);
+  const [occurrences, setOccurrences] = useState<{ term: string; isPhrase: boolean; total: number; chunks: number } | null>(null);
 
   // Book mode
   const [selectedDisc, setSelectedDisc] = useState<string | null>(null);
@@ -329,6 +330,7 @@ export default function Cas() {
     setExtracted(null);
     setSearchState("loading");
     setSearchMeta(null);
+    setOccurrences(null);
     try {
       const { data, error } = await supabase.functions.invoke("cas-search", {
         body: {
@@ -357,6 +359,7 @@ export default function Cas() {
       setError(payload?.error && !nextAnswer && !nextStructured ? payload.error : null);
       setMatches(nextMatches);
       setSearchMeta(meta);
+      setOccurrences((payload?.occurrences ?? null) as any);
       const uiState = (payload?.uiState ?? "success") as SearchUiState;
       setSearchState(meta.cacheHit ? "cache_hit" : uiState);
       const ex = (data as any)?.extractedQuery as string | null;
@@ -464,6 +467,7 @@ export default function Cas() {
             filterDisc={filterDisc} setFilterDisc={setFilterDisc}
             loading={loading} answer={answer} structured={structured} answerError={answerError} matches={matches} error={error}
             searchState={searchState} searchMeta={searchMeta}
+            occurrences={occurrences}
             attachment={attachment} setAttachment={setAttachment} extracted={extracted}
             onSubmit={runSearch}
             onOpenDiscipline={(d) => { setMode("book"); openDiscipline(d); }}
@@ -491,13 +495,14 @@ function SearchPanel(props: {
   filterDisc: string; setFilterDisc: (v: string) => void;
   loading: boolean; answer: string | null; structured: StructuredAnswer | null; answerError: string | null; matches: Match[]; error: string | null;
   searchState: SearchUiState; searchMeta: SearchMeta | null;
+  occurrences: { term: string; isPhrase: boolean; total: number; chunks: number } | null;
   attachment: { name: string; mime: string; data: string; preview?: string } | null;
   setAttachment: (v: { name: string; mime: string; data: string; preview?: string } | null) => void;
   extracted: string | null;
   onSubmit: (e?: React.FormEvent) => void;
   onOpenDiscipline: (d: string) => void;
 }) {
-  const { query, setQuery, filterDisc, setFilterDisc, loading, answer, structured, answerError, matches, error, searchState, searchMeta, attachment, setAttachment, extracted, onSubmit } = props;
+  const { query, setQuery, filterDisc, setFilterDisc, loading, answer, structured, answerError, matches, error, searchState, searchMeta, occurrences, attachment, setAttachment, extracted, onSubmit } = props;
   const setQueryAndScroll = (q: string) => { setQuery(q); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const [openSource, setOpenSource] = useState<{ match: Match; index: number } | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -829,6 +834,14 @@ function SearchPanel(props: {
                 {matches.length > 0 && (
                   <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#f5f5f7] text-[#6e6e73]">
                     {matches.length} fontes
+                  </span>
+                )}
+                {occurrences && occurrences.total > 0 && (
+                  <span
+                    className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#f5f5f7] text-[#6e6e73]"
+                    title={`${occurrences.isPhrase ? "Frase" : "Termo"} "${occurrences.term}" — ${occurrences.total} ocorrência(s) em ${occurrences.chunks} trecho(s) da apostila (ignora acentos e pontuação).`}
+                  >
+                    {occurrences.isPhrase ? "frase" : "termo"} · {occurrences.total}× em {occurrences.chunks} trechos
                   </span>
                 )}
               </div>

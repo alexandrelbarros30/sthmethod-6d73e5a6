@@ -4978,6 +4978,13 @@ export type Database = {
       }
     }
     Functions: {
+      cas_term_match: {
+        Args: { is_phrase?: boolean; q: string }
+        Returns: {
+          id: number
+          occurrences: number
+        }[]
+      }
       crm_expire_idle_conversations: { Args: never; Returns: number }
       delete_email: {
         Args: { message_id: number; queue_name: string }
