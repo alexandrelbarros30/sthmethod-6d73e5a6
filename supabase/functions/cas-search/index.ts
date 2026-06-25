@@ -193,8 +193,11 @@ export function detectIntent(q: string): { intent: string; instruction: string }
     return { intent: 'definicao', instruction: 'Forneça definição objetiva (1 frase) seguida de classificação/elementos.' };
   const focusTerms = extractFocusTerms(q);
   const cleanedWords = s.replace(/[^\p{L}\p{N}\s-]/gu, ' ').split(/\s+/).filter(Boolean);
-  if (focusTerms.length >= 1 && cleanedWords.length <= 3)
-    return { intent: 'definicao', instruction: 'A pergunta veio curta/por palavra-chave. Trate como: "o que é / conceito / definição / como cai em prova" e abra com a definição literal mais relevante da apostila.' };
+  // Heurística ampliada: se a pergunta NÃO tem marcador interrogativo/verbal e é um termo/expressão
+  // (até 6 palavras), trate como pedido de conceito/definição. Ex.: "dignidade da pessoa humana".
+  const hasQuestionMarker = /\b(por\s*que|porque|como|quando|onde|quem|qual|quais|diferen[cç]a|comparar|cite|liste|enumere|exemplos?|tipos?|procedimento|passo|prazo|hipotese|finalidade|para que|de que forma|verdadeiro|falso|certo|errado|assinale|competencia)\b/.test(s);
+  if (focusTerms.length >= 1 && cleanedWords.length <= 6 && !hasQuestionMarker)
+    return { intent: 'definicao', instruction: 'A pergunta veio como termo/expressão. Trate como: "o que é / conceito / definição / como cai em prova" e abra com a definição literal mais relevante da apostila.' };
   if (has(/\b(por\s*que|porque|qual a (razao|causa|motivo)|finalidade de|para que serve)\b/))
     return { intent: 'causa_finalidade', instruction: 'Explique a razão/finalidade com fundamento normativo citado.' };
   if (has(/\b(como|de que forma|procedimento|passo a passo|etapas)\b/))
@@ -506,6 +509,20 @@ async function hybridSearch(supabase: any, q: string, discipline: string | null,
     if (/\b(e o|e a|sao os|sao as)\b.{0,40}\b(ato|processo|conjunto|estado|crime|princ(i|í)pio|direito|dever|institui(c|ç)ao)\b/.test(c)) b += 60;
     if (/\b(art\.?\s*\d+|lei\s+n[ºo]?\s*\d+|inciso|caput|par(a|á)grafo)\b/.test(c)) b += 40;
     if (looksLikeQuestionBank(row.content)) b -= 120;
+    // Boost forte quando o chunk contém a FRASE EXATA da consulta logo após um marcador
+    // de definição (ex.: "conceito de dignidade da pessoa humana", "definição de tortura").
+    const phrase = stripAccents(String(q || '').toLowerCase()).replace(/[^\p{L}\p{N}\s-]/gu, ' ').replace(/\s+/g, ' ').trim();
+    if (phrase) {
+      const escPhrase = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+      try {
+        const reDefOf = new RegExp(`\\b(conceito|significado|defini[cç]ao|no[cç]ao|ideia|principio|fundamento)\\s+(de|da|do|das|dos)\\s+${escPhrase}\\b`);
+        if (reDefOf.test(c)) b += 500;
+        const rePhraseIs = new RegExp(`\\b${escPhrase}\\b\\s*(e|sao|consiste|constitui|caracteriza|significa|trata-se|define-se|denomina-se|chama-se)\\b`);
+        if (rePhraseIs.test(c)) b += 280;
+        const rePhrase = new RegExp(`\\b${escPhrase}\\b`);
+        if (rePhrase.test(c)) b += 120; // contém a frase literal
+      } catch (_e) { /* regex fail-safe */ }
+    }
     return b;
   };
   const sorted = Array.from(seen.values()).sort((a, b) => {
@@ -794,7 +811,10 @@ export async function handleCasSearch(req: Request) {
           .select('id, discipline, page_start, page_end, content')
           .in('id', missingIds);
         for (const c of (extra ?? []) as any[]) {
-          (matches as any[]).unshift({
+          // Append (não unshift): a ordenação por conceito/definição já foi feita
+          // em hybridSearch. Apenas garantimos que os trechos com mais ocorrências
+          // literais fiquem disponíveis ao final, sem desbancar a Fonte 1 conceitual.
+          (matches as any[]).push({
             id: c.id,
             source: 'apostila',
             discipline: c.discipline,
