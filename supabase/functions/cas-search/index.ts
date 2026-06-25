@@ -193,8 +193,11 @@ export function detectIntent(q: string): { intent: string; instruction: string }
     return { intent: 'definicao', instruction: 'Forneça definição objetiva (1 frase) seguida de classificação/elementos.' };
   const focusTerms = extractFocusTerms(q);
   const cleanedWords = s.replace(/[^\p{L}\p{N}\s-]/gu, ' ').split(/\s+/).filter(Boolean);
-  if (focusTerms.length >= 1 && cleanedWords.length <= 3)
-    return { intent: 'definicao', instruction: 'A pergunta veio curta/por palavra-chave. Trate como: "o que é / conceito / definição / como cai em prova" e abra com a definição literal mais relevante da apostila.' };
+  // Heurística ampliada: se a pergunta NÃO tem marcador interrogativo/verbal e é um termo/expressão
+  // (até 6 palavras), trate como pedido de conceito/definição. Ex.: "dignidade da pessoa humana".
+  const hasQuestionMarker = /\b(por\s*que|porque|como|quando|onde|quem|qual|quais|diferen[cç]a|comparar|cite|liste|enumere|exemplos?|tipos?|procedimento|passo|prazo|hipotese|finalidade|para que|de que forma|verdadeiro|falso|certo|errado|assinale|competencia)\b/.test(s);
+  if (focusTerms.length >= 1 && cleanedWords.length <= 6 && !hasQuestionMarker)
+    return { intent: 'definicao', instruction: 'A pergunta veio como termo/expressão. Trate como: "o que é / conceito / definição / como cai em prova" e abra com a definição literal mais relevante da apostila.' };
   if (has(/\b(por\s*que|porque|qual a (razao|causa|motivo)|finalidade de|para que serve)\b/))
     return { intent: 'causa_finalidade', instruction: 'Explique a razão/finalidade com fundamento normativo citado.' };
   if (has(/\b(como|de que forma|procedimento|passo a passo|etapas)\b/))
