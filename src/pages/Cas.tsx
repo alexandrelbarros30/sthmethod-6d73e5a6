@@ -306,6 +306,7 @@ export default function Cas() {
   const [extracted, setExtracted] = useState<string | null>(null);
   const [searchState, setSearchState] = useState<SearchUiState>("idle");
   const [searchMeta, setSearchMeta] = useState<SearchMeta | null>(null);
+  const [occurrences, setOccurrences] = useState<{ term: string; isPhrase: boolean; total: number; chunks: number } | null>(null);
 
   // Book mode
   const [selectedDisc, setSelectedDisc] = useState<string | null>(null);
@@ -329,6 +330,7 @@ export default function Cas() {
     setExtracted(null);
     setSearchState("loading");
     setSearchMeta(null);
+    setOccurrences(null);
     try {
       const { data, error } = await supabase.functions.invoke("cas-search", {
         body: {
@@ -357,6 +359,7 @@ export default function Cas() {
       setError(payload?.error && !nextAnswer && !nextStructured ? payload.error : null);
       setMatches(nextMatches);
       setSearchMeta(meta);
+      setOccurrences((payload?.occurrences ?? null) as any);
       const uiState = (payload?.uiState ?? "success") as SearchUiState;
       setSearchState(meta.cacheHit ? "cache_hit" : uiState);
       const ex = (data as any)?.extractedQuery as string | null;
