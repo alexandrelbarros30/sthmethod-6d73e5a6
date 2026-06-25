@@ -77,9 +77,9 @@ export default function CasRegister() {
         </div>
         <div>
           <label className={labelCls}>RG</label>
-          <input className={fieldCls} value={form.rg}
+          <input className={fieldCls} value={form.rg} inputMode="numeric" maxLength={7}
             onChange={(e) => setForm((f) => ({ ...f, rg: formatRG(e.target.value) }))}
-            placeholder="00.000.000-0" />
+            placeholder="88.876 ou 102.252" />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
