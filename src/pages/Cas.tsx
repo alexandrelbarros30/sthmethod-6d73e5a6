@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Search, Loader2, FileDown, ArrowLeft, FileText, ListChecks, Lightbulb, HelpCircle, ShieldCheck, BookMarked, Paperclip, X as XIcon, Camera, GraduationCap, Check, ChevronRight, Sparkles, Command, History, Zap, BookOpen, GitCompare, ListOrdered, Scale, Clock, Quote, ArrowUpRight, CornerDownLeft } from "lucide-react";
+import { Search, Loader2, FileDown, ArrowLeft, FileText, ListChecks, Lightbulb, HelpCircle, ShieldCheck, BookMarked, Paperclip, X as XIcon, Camera, GraduationCap, Check, ChevronRight, Sparkles, Command, History, Zap, BookOpen, GitCompare, ListOrdered, Scale, Clock, Quote, ArrowUpRight, CornerDownLeft, User as UserIcon, LogOut, IdCard } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useNavigate } from "react-router-dom";
 import pdfAsset from "@/assets/apostilas-provas-cas.pdf.asset.json";
 import questoesAsset from "@/assets/questoes-prova-cas.pdf.asset.json";
 import { supabase } from "@/integrations/supabase/client";
