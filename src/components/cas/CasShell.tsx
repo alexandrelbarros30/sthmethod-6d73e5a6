@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import meadLogo from "@/assets/mead-logo.png.asset.json";
+import { useMeadManifest } from "@/hooks/useMeadManifest";
 
 export default function CasShell({ title, subtitle, children, footer }: {
   title: string;
@@ -7,33 +8,37 @@ export default function CasShell({ title, subtitle, children, footer }: {
   children: React.ReactNode;
   footer?: React.ReactNode;
 }) {
+  useMeadManifest();
   return (
-    <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] antialiased">
+    <div
+      className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] antialiased"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
       <header className="border-b border-[#e6e6e8] bg-white/70 backdrop-blur">
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center">
           <Link to="/cas" className="flex items-center gap-2.5">
-            <img src={meadLogo.url} alt="MEAD" className="h-10 w-auto object-contain" />
+            <img src={meadLogo.url} alt="MEAD" className="h-8 sm:h-10 w-auto object-contain" />
             <span className="text-[11px] tracking-[0.22em] font-semibold text-[#86868b]">· CAS</span>
           </Link>
         </div>
       </header>
-      <main className="max-w-md mx-auto px-6 py-12">
-        <div className="mb-10 flex flex-col items-center text-center">
-          <div className="relative mb-8">
+      <main className="max-w-md mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div className="mb-8 sm:mb-10 flex flex-col items-center text-center">
+          <div className="relative mb-6 sm:mb-8">
             <div className="absolute inset-0 -m-12 rounded-full bg-gradient-to-b from-white to-[#e8e8ed] blur-3xl opacity-80" aria-hidden />
             <img
               src={meadLogo.url}
               alt="MEAD · Assistente de Aprendizagem"
-              className="relative h-44 md:h-52 w-auto object-contain drop-shadow-[0_12px_32px_rgba(0,0,0,0.15)]"
+              className="relative h-28 sm:h-40 md:h-52 w-auto object-contain drop-shadow-[0_12px_32px_rgba(0,0,0,0.15)]"
             />
           </div>
-          <div className="text-[10px] tracking-[0.32em] font-semibold text-[#86868b] uppercase mb-3">
+          <div className="text-[10px] tracking-[0.28em] sm:tracking-[0.32em] font-semibold text-[#86868b] uppercase mb-3 px-2">
             MEAD · Assistente de Aprendizagem
           </div>
-          <h1 className="text-[32px] font-semibold tracking-tight leading-tight">{title}</h1>
-          {subtitle && <p className="mt-2 text-[15px] text-[#6e6e73] max-w-sm">{subtitle}</p>}
+          <h1 className="text-[26px] sm:text-[32px] font-semibold tracking-tight leading-tight">{title}</h1>
+          {subtitle && <p className="mt-2 text-[14px] sm:text-[15px] text-[#6e6e73] max-w-sm">{subtitle}</p>}
         </div>
-        <div className="rounded-2xl bg-white border border-[#e6e6e8] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+        <div className="rounded-2xl bg-white border border-[#e6e6e8] p-5 sm:p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
           {children}
         </div>
         {footer && <div className="mt-6 text-center text-[13px] text-[#6e6e73]">{footer}</div>}
