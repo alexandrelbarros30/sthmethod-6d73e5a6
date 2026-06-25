@@ -823,7 +823,10 @@ export async function handleCasSearch(req: Request) {
           .select('id, discipline, page_start, page_end, content')
           .in('id', missingIds);
         for (const c of (extra ?? []) as any[]) {
-          (matches as any[]).unshift({
+          // Append (não unshift): a ordenação por conceito/definição já foi feita
+          // em hybridSearch. Apenas garantimos que os trechos com mais ocorrências
+          // literais fiquem disponíveis ao final, sem desbancar a Fonte 1 conceitual.
+          (matches as any[]).push({
             id: c.id,
             source: 'apostila',
             discipline: c.discipline,
