@@ -49,6 +49,13 @@ import EvolucaoPublica from "./pages/EvolucaoPublica";
 import FilaPublica from "./pages/FilaPublica";
 import FilaAberta from "./pages/FilaAberta";
 import Cas from "./pages/Cas";
+import CasLogin from "./pages/cas/CasLogin";
+import CasRegister from "./pages/cas/CasRegister";
+import CasForgotPassword from "./pages/cas/CasForgotPassword";
+import CasResetPassword from "./pages/cas/CasResetPassword";
+import CasProfile from "./pages/cas/CasProfile";
+import { CasAuthProvider } from "@/contexts/CasAuthContext";
+import CasProtectedRoute from "@/components/cas/CasProtectedRoute";
 import PreviewTemaVerde from "./pages/PreviewTemaVerde";
 import StudentOverview from "./pages/student/StudentOverview";
 import StudentHub from "./pages/student/StudentHub";
@@ -219,7 +226,12 @@ const App = () => (
             <Route path="/preview-tema-verde" element={<PreviewTemaVerde />} />
             <Route path="/diario-alimentar" element={<DiarioAlimentar />} />
             <Route path="/n" element={<NutriRedirect />} />
-            <Route path="/cas" element={<Cas />} />
+            <Route path="/cas/login" element={<CasAuthProvider><CasLogin /></CasAuthProvider>} />
+            <Route path="/cas/cadastro" element={<CasAuthProvider><CasRegister /></CasAuthProvider>} />
+            <Route path="/cas/esqueci-senha" element={<CasAuthProvider><CasForgotPassword /></CasAuthProvider>} />
+            <Route path="/cas/reset-password" element={<CasAuthProvider><CasResetPassword /></CasAuthProvider>} />
+            <Route path="/cas/perfil" element={<CasAuthProvider><CasProtectedRoute><CasProfile /></CasProtectedRoute></CasAuthProvider>} />
+            <Route path="/cas" element={<CasAuthProvider><CasProtectedRoute><Cas /></CasProtectedRoute></CasAuthProvider>} />
             {/* Student routes */}
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["student"]}><StudentOverview /></ProtectedRoute>} />
             <Route path="/dashboard/hub" element={<ProtectedRoute allowedRoles={["student"]}><StudentHub /></ProtectedRoute>} />
