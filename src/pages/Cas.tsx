@@ -836,6 +836,14 @@ function SearchPanel(props: {
                     {matches.length} fontes
                   </span>
                 )}
+                {occurrences && occurrences.total > 0 && (
+                  <span
+                    className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#f5f5f7] text-[#6e6e73]"
+                    title={`${occurrences.isPhrase ? "Frase" : "Termo"} "${occurrences.term}" — ${occurrences.total} ocorrência(s) em ${occurrences.chunks} trecho(s) da apostila (ignora acentos e pontuação).`}
+                  >
+                    {occurrences.isPhrase ? "frase" : "termo"} · {occurrences.total}× em {occurrences.chunks} trechos
+                  </span>
+                )}
               </div>
             </div>
             <h3 className="text-[22px] font-semibold text-[#1d1d1f] leading-snug">{query}</h3>
