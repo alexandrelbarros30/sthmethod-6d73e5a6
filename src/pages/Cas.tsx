@@ -308,7 +308,7 @@ function useHighlight(ref: React.RefObject<HTMLElement>, terms: string[], deps: 
   }, deps);
 }
 
-function MarkdownAnswerCards({ markdown, highlightTerms = [] }: { markdown: string; highlightTerms?: string[] }) {
+function MarkdownAnswerCards({ markdown, highlightTerms = [], readingMode = false }: { markdown: string; highlightTerms?: string[]; readingMode?: boolean }) {
   const sections = splitAnswerIntoCards(markdown);
 
   const formatForReading = (text: string): string => {
@@ -374,14 +374,16 @@ function MarkdownAnswerCards({ markdown, highlightTerms = [] }: { markdown: stri
   );
 }
 
-function AnswerSectionCard({ section, formatted, highlightTerms }: { section: { kind: "answer" | "source"; sourceNumber?: number; title?: string; content: string }; formatted: string; highlightTerms: string[] }) {
+function AnswerSectionCard({ section, formatted, highlightTerms, readingMode = false }: { section: { kind: "answer" | "source"; sourceNumber?: number; title?: string; content: string }; formatted: string; highlightTerms: string[]; readingMode?: boolean }) {
   const ref = useRef<HTMLDivElement | null>(null);
   useHighlight(ref, highlightTerms, [formatted, highlightTerms.join("|")]);
   return (
     <article
       className={cn(
-        "rounded-3xl border overflow-hidden",
+        "rounded-3xl border overflow-hidden relative",
         section.kind === "source" ? "bg-[#f5f5f7] border-[#d2d2d7] p-7" : "bg-white border-[#d2d2d7]",
+        // Apple Fitness — blue lateral bar no card de resposta
+        section.kind === "answer" && "before:content-[''] before:absolute before:left-0 before:top-6 before:bottom-6 before:w-[3px] before:rounded-r-full before:bg-[#0071e3]",
       )}
     >
       {section.kind === "source" && (
@@ -400,10 +402,14 @@ function AnswerSectionCard({ section, formatted, highlightTerms }: { section: { 
         ref={ref}
         className="prose prose-neutral max-w-none text-[#1d1d1f] prose-headings:font-semibold prose-strong:text-[#1d1d1f] prose-p:text-left prose-p:my-0 prose-p:mb-4 prose-li:my-2 prose-headings:mt-6 prose-headings:mb-3 prose-h3:text-[13pt] prose-h3:uppercase prose-h3:tracking-wide"
         style={{
-          fontFamily: '"Times New Roman", Times, serif',
-          fontSize: "12pt",
-          lineHeight: 1.6,
-          padding: "2rem 2.5rem",
+          fontFamily: readingMode
+            ? '"New York", "Iowan Old Style", "Charter", "Times New Roman", serif'
+            : '"Times New Roman", Times, serif',
+          fontSize: readingMode ? "14pt" : "12pt",
+          lineHeight: readingMode ? 1.85 : 1.6,
+          padding: readingMode ? "2.5rem 3rem" : "2rem 2.5rem",
+          maxWidth: readingMode ? "68ch" : undefined,
+          margin: readingMode ? "0 auto" : undefined,
           textAlign: "left",
         }}
       >
