@@ -774,6 +774,42 @@ export async function handleCasSearch(req: Request) {
 
     const matches = await hybridSearch(supabase, q, discipline || null, boundedMatchCount, intent.intent);
     metrics.matchesCount = matches.length;
+
+    // Contagem literal/exata na apostila — ignora apenas acentos e pontuação.
+    // Palavra isolada => contagem por ocorrência da palavra inteira (\m...\M).
+    // Frase (>= 2 palavras) => força casamento exato da frase normalizada.
+    let occurrencesInfo: { term: string; isPhrase: boolean; total: number; chunks: number } | null = null;
+    try {
+      const isPhrase = /\s/.test(q.trim());
+      const { data: occRows } = await (supabase as any).rpc('cas_term_match', { q, is_phrase: isPhrase });
+      const list = ((occRows ?? []) as Array<{ id: number; occurrences: number }>)
+        .sort((a, b) => (b.occurrences ?? 0) - (a.occurrences ?? 0));
+      const total = list.reduce((s, r) => s + (r.occurrences ?? 0), 0);
+      occurrencesInfo = { term: q, isPhrase, total, chunks: list.length };
+      const existingIds = new Set<number>(matches.map((m: any) => m.id));
+      const missingIds = list.slice(0, 6).map((r) => r.id).filter((id) => !existingIds.has(id));
+      if (missingIds.length > 0) {
+        const { data: extra } = await (supabase as any)
+          .from('cas_chunks')
+          .select('id, discipline, page_start, page_end, content')
+          .in('id', missingIds);
+        for (const c of (extra ?? []) as any[]) {
+          (matches as any[]).unshift({
+            id: c.id,
+            source: 'apostila',
+            discipline: c.discipline,
+            page_start: c.page_start,
+            page_end: c.page_end,
+            content: c.content,
+            similarity: 1,
+          });
+        }
+        metrics.matchesCount = matches.length;
+      }
+    } catch (e) {
+      console.error(JSON.stringify({ event: 'cas_term_match_failed', error: String((e as Error)?.message || e) }));
+    }
+
     let answer: string | null = null;
     let structured: any = null;
     let answerError: string | null = null;
@@ -867,6 +903,7 @@ Retorne SEMPRE um JSON válido com este schema exato:
       cacheHit: false,
       fallbackUsed: metrics.fallbackUsed,
       fallbackProvider: metrics.fallbackProvider,
+      occurrences: occurrencesInfo,
       metrics: {
         cacheHit: false,
         fallbackUsed: metrics.fallbackUsed,
