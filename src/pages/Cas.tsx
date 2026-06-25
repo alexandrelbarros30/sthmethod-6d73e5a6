@@ -368,6 +368,7 @@ function MarkdownAnswerCards({ markdown, highlightTerms = [], readingMode = fals
           section={section}
           formatted={formatForReading(section.content)}
           highlightTerms={highlightTerms}
+          readingMode={readingMode}
         />
       ))}
     </div>
