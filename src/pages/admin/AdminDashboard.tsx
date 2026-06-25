@@ -312,6 +312,9 @@ const AdminDashboard = () => {
         </div>
       </section>
 
+      {/* 1. Alunos Recentes */}
+      <RecentStudents profiles={profiles} subscriptions={subscriptions} navigate={navigate} queryClient={queryClient} activeSubUserIds={activeSubUserIds} />
+
       {/* Search + quick action */}
       <div className="grid grid-cols-2 gap-2.5 mb-8 lg:grid-cols-4">
         {metrics.map((m, i) => (
