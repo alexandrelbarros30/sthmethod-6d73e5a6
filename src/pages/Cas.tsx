@@ -49,6 +49,100 @@ function openSourceInPdf(m: Match) {
   window.open(`${base}${page}`, "_blank", "noopener,noreferrer");
 }
 
+function ProfileMenu() {
+  const { user, logout } = useCasAuth();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+
+  if (!user) return null;
+
+  const initials = (user.full_name || user.email || "?")
+    .split(/\s+/).filter(Boolean).slice(0, 2).map(s => s[0]?.toUpperCase()).join("");
+
+  const formatDate = (iso?: string | null) => {
+    if (!iso) return "—";
+    try { return new Date(iso).toLocaleDateString("pt-BR"); } catch { return iso; }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/cas/login", { replace: true });
+  };
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger className="inline-flex items-center gap-2 rounded-full border border-[#d2d2d7] bg-white pl-1 pr-3 py-1 text-[12px] font-medium text-[#1d1d1f] hover:bg-[#f5f5f7] transition">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#0071e3] text-[10px] font-semibold text-white">
+            {initials || <UserIcon className="h-3 w-3" />}
+          </span>
+          <span className="hidden sm:inline max-w-[140px] truncate">{user.full_name?.split(" ")[0] || "Perfil"}</span>
+          <ChevronRight className="h-3 w-3 rotate-90 opacity-60" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-64">
+          <DropdownMenuLabel className="pb-1">
+            <div className="text-[13px] font-semibold text-[#1d1d1f] truncate">{user.full_name}</div>
+            <div className="text-[11px] font-normal text-[#86868b] truncate">{user.email}</div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => setOpen(true)} className="cursor-pointer">
+            <IdCard className="h-3.5 w-3.5 text-[#0071e3] mr-2" />
+            <span className="flex-1">Meu cadastro</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={handleLogout} className="cursor-pointer text-red-600 focus:text-red-700">
+            <LogOut className="h-3.5 w-3.5 mr-2" />
+            <span className="flex-1">Sair do sistema</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-md bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-[#1d1d1f]">Meu cadastro</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center gap-3 pb-3 border-b border-[#e8e8ed]">
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#0071e3] text-[15px] font-semibold text-white">
+                {initials}
+              </span>
+              <div className="min-w-0">
+                <div className="text-[15px] font-semibold text-[#1d1d1f] truncate">{user.full_name}</div>
+                <div className="text-[12px] text-[#86868b] truncate">{user.email}</div>
+              </div>
+            </div>
+            {[
+              { label: "Nome completo", value: user.full_name },
+              { label: "E-mail", value: user.email },
+              { label: "Data de nascimento", value: formatDate(user.birth_date) },
+              { label: "Telefone", value: user.phone || "—" },
+              { label: "RG", value: user.rg || "—" },
+              { label: "Último acesso", value: user.last_login_at ? new Date(user.last_login_at).toLocaleString("pt-BR") : "—" },
+              { label: "Cadastro criado em", value: formatDate(user.created_at) },
+            ].map((f) => (
+              <div key={f.label} className="flex items-start justify-between gap-3 text-[13px]">
+                <span className="text-[#86868b] uppercase text-[10px] tracking-[0.14em] pt-0.5">{f.label}</span>
+                <span className="text-[#1d1d1f] font-medium text-right break-words max-w-[60%]">{f.value}</span>
+              </div>
+            ))}
+            <div className="pt-3 border-t border-[#e8e8ed] flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLogout}
+                className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+              >
+                <LogOut className="h-3.5 w-3.5 mr-1.5" /> Sair do sistema
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 const DISCIPLINES = [
   "ADMINISTRAÇÃO APLICADA A PMERJ",
   "ARMAMENTO I",
