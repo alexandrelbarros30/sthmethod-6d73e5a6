@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { cn } from "@/lib/utils";
 import { useCasAuth } from "@/contexts/CasAuthContext";
 import { casAuthApi } from "@/lib/casAuthClient";
+import meadLogo from "@/assets/mead-logo.jpeg.asset.json";
 
 function PdfsMenu() {
   return (
@@ -538,13 +539,8 @@ export default function Cas() {
       <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-[#d2d2d7]">
         <div className="max-w-6xl mx-auto px-6 py-3 flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
-            <BookMarked className="h-4 w-4 text-[#1d1d1f]" />
-            <h1 className="text-[15px] font-semibold tracking-tight text-[#1d1d1f]">
-              <span className="text-[#0071e3]">MEAD</span>
-              <span className="text-[#86868b] mx-1.5">·</span>
-              CAS
-              <span className="hidden sm:inline text-[#86868b] font-normal ml-2">| Assistente de Aprendizagem</span>
-            </h1>
+            <img src={meadLogo.url} alt="MEAD — Assistente de Aprendizagem" className="h-9 w-auto object-contain" />
+            <span className="hidden sm:inline text-[12px] text-[#86868b] font-medium tracking-[0.18em] uppercase ml-1">· CAS</span>
           </div>
           <div className="ml-auto flex items-center gap-2">
             <div className="inline-flex rounded-full bg-[#f5f5f7] p-0.5">

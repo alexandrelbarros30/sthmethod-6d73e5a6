@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import meadLogo from "@/assets/mead-logo.jpeg.asset.json";
 
 export default function CasShell({ title, subtitle, children, footer }: {
   title: string;
@@ -10,7 +11,10 @@ export default function CasShell({ title, subtitle, children, footer }: {
     <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] antialiased">
       <header className="border-b border-[#e6e6e8] bg-white/70 backdrop-blur">
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link to="/cas" className="text-[13px] tracking-[0.22em] font-semibold text-[#1d1d1f]">MEAD · CAS</Link>
+          <Link to="/cas" className="flex items-center gap-2">
+            <img src={meadLogo.url} alt="MEAD" className="h-8 w-auto object-contain" />
+            <span className="text-[11px] tracking-[0.22em] font-semibold text-[#86868b]">· CAS</span>
+          </Link>
           <Link to="/cas" className="text-[12px] text-[#6e6e73] hover:text-[#1d1d1f]">Voltar ao núcleo</Link>
         </div>
       </header>
