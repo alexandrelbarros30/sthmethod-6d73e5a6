@@ -941,10 +941,11 @@ function SearchPanel(props: {
                   <article
                     key={`${m.source ?? "apostila"}-${m.id}`}
                     className={cn(
-                      "rounded-2xl border p-5 hover:border-[#1d1d1f] transition cursor-pointer",
+                      "rounded-2xl border p-5 hover:border-[#1d1d1f] transition cursor-pointer group",
                       isQuiz ? "bg-[#fffaf0] border-[#f0e0bf]" : "bg-white border-[#d2d2d7]",
                     )}
-                    onClick={() => setOpenSource({ match: m, index: i })}
+                    onClick={() => openSourceInPdf(m)}
+                    title={isQuiz ? "Abrir caderno de questões em nova aba" : `Abrir apostila na página ${m.page_start}`}
                   >
                     <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -967,7 +968,9 @@ function SearchPanel(props: {
                             : `p.${m.page_start}${m.page_end !== m.page_start ? `–${m.page_end}` : ""}`}
                         </span>
                       </div>
-                      <ArrowUpRight className="h-3.5 w-3.5 text-[#86868b]" />
+                      <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-[#0071e3] opacity-70 group-hover:opacity-100">
+                        Abrir apostila <ArrowUpRight className="h-3.5 w-3.5" />
+                      </span>
                     </div>
                     {isQuiz && m.statement ? (
                       <div className="space-y-2">
@@ -1010,6 +1013,17 @@ function SearchPanel(props: {
                         <p className="text-[12px] text-[#1d1d1f] leading-relaxed">{analise.resumo}</p>
                       </div>
                     )}
+                    <div className="mt-3 pt-3 border-t border-dashed border-[#e8e8ed] flex items-center justify-between">
+                      <span className="text-[10px] uppercase tracking-[0.2em] text-[#86868b]">
+                        {isQuiz ? "Caderno oficial de questões" : `Apostila CAS-PMERJ · página ${m.page_start}`}
+                      </span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setOpenSource({ match: m, index: i }); }}
+                        className="text-[10px] uppercase tracking-wider text-[#6e6e73] hover:text-[#1d1d1f]"
+                      >
+                        Pré-visualizar trecho
+                      </button>
+                    </div>
                   </article>
                   );
                 };
