@@ -661,6 +661,12 @@ function SearchPanel(props: {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [tab, setTab] = useState<"direta" | "aprofundar" | "pontos" | "conceitos" | "fontes">("direta");
+  const [readingMode, setReadingMode] = useState<boolean>(() => {
+    try { return localStorage.getItem("cas:reading-mode") === "1"; } catch { return false; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("cas:reading-mode", readingMode ? "1" : "0"); } catch {}
+  }, [readingMode]);
   const { user: casUser } = useCasAuth();
   const [recent, setRecent] = useState<string[]>([]);
   const [history, setHistory] = useState<{ id: string; query: string; discipline: string | null; has_answer: boolean; created_at: string }[]>([]);
