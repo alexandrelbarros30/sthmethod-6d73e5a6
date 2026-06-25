@@ -1073,7 +1073,7 @@ function SearchPanel(props: {
           )}
 
           {/* Tabs */}
-          <div className="sticky top-[57px] z-10 -mx-2 px-2 py-2 bg-white/85 backdrop-blur-xl rounded-2xl border border-[#d2d2d7]">
+          <div className="sticky top-[80px] z-10 -mx-2 px-2 py-2 bg-white/85 backdrop-blur-xl rounded-2xl border border-[#d2d2d7]">
             <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
               {([
                 { k: "direta", label: "Aprofundamento", icon: <BookOpen className="h-3.5 w-3.5" /> },
@@ -1095,6 +1095,19 @@ function SearchPanel(props: {
                   ) : null}
                 </button>
               ))}
+              <button
+                onClick={() => setReadingMode((v) => !v)}
+                title={readingMode ? "Sair do modo leitura (Apple Books)" : "Ativar modo leitura (Apple Books)"}
+                className={cn(
+                  "ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-medium whitespace-nowrap transition border",
+                  readingMode
+                    ? "bg-[#1d1d1f] text-white border-[#1d1d1f]"
+                    : "text-[#6e6e73] border-[#d2d2d7] hover:text-[#1d1d1f] hover:border-[#1d1d1f]",
+                )}
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                Leitura
+              </button>
             </div>
           </div>
 
@@ -1103,6 +1116,7 @@ function SearchPanel(props: {
               <MarkdownAnswerCards
                 markdown={structured?.resposta_completa ?? answer ?? ""}
                 highlightTerms={extractHighlightTerms(query)}
+                readingMode={readingMode}
               />
               <p className="text-[11px] text-[#86868b] italic px-2 pt-2">
                 Esta consulta é um apoio de estudo e <strong className="not-italic font-semibold text-[#1d1d1f]">não substitui a leitura integral das apostilas</strong>.
