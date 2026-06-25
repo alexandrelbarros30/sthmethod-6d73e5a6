@@ -1,0 +1,34 @@
+import { Link } from "react-router-dom";
+
+export default function CasShell({ title, subtitle, children, footer }: {
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+}) {
+  return (
+    <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] antialiased">
+      <header className="border-b border-[#e6e6e8] bg-white/70 backdrop-blur">
+        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+          <Link to="/cas" className="text-[13px] tracking-[0.22em] font-semibold text-[#1d1d1f]">EAD CAS</Link>
+          <Link to="/cas" className="text-[12px] text-[#6e6e73] hover:text-[#1d1d1f]">Voltar ao núcleo</Link>
+        </div>
+      </header>
+      <main className="max-w-md mx-auto px-6 py-12">
+        <div className="mb-8">
+          <h1 className="text-[28px] font-semibold tracking-tight leading-tight">{title}</h1>
+          {subtitle && <p className="mt-2 text-[15px] text-[#6e6e73]">{subtitle}</p>}
+        </div>
+        <div className="rounded-2xl bg-white border border-[#e6e6e8] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+          {children}
+        </div>
+        {footer && <div className="mt-6 text-center text-[13px] text-[#6e6e73]">{footer}</div>}
+      </main>
+    </div>
+  );
+}
+
+export const fieldCls = "w-full h-11 rounded-xl border border-[#d2d2d7] bg-white px-3 text-[15px] text-[#1d1d1f] placeholder:text-[#a1a1a6] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition";
+export const labelCls = "block text-[12px] font-medium tracking-[0.08em] uppercase text-[#6e6e73] mb-1.5";
+export const btnPrimaryCls = "w-full h-11 rounded-xl bg-[#1d1d1f] text-white text-[15px] font-medium hover:bg-black transition disabled:opacity-50 disabled:cursor-not-allowed";
+export const linkCls = "text-[#0071e3] hover:underline";
