@@ -585,32 +585,11 @@ function SearchPanel(props: {
         text: "O sistema está pesquisando a apostila, sintetizando a resposta e validando as fontes.",
       };
     }
-    if (searchState === "quota_exhausted") {
-      return {
-        tone: "red",
-        title: "Quota de IA esgotada",
-        text: answerError || error || "Os créditos de IA acabaram; o backend registrou o evento e interrompeu a síntese externa.",
-      };
-    }
-    if (searchState === "fallback_active") {
+    if (searchState === "quota_exhausted" || searchState === "fallback_active" || searchState === "no_response") {
       return {
         tone: "amber",
-        title: "Resposta por fonte local",
-        text: `Gemini não concluiu a síntese, então o EAD retornou automaticamente os trechos encontrados na apostila${searchMeta?.durationMs ? ` em ${searchMeta.durationMs}ms` : ""}.`,
-      };
-    }
-    if (searchState === "cache_hit") {
-      return {
-        tone: "green",
-        title: "Resposta servida do cache",
-        text: `A resposta já existia para esta disciplina e parâmetros${searchMeta?.durationMs ? `; retorno em ${searchMeta.durationMs}ms` : ""}.`,
-      };
-    }
-    if (searchState === "no_response") {
-      return {
-        tone: "red",
-        title: "Sem resposta final",
-        text: answerError || error || "A consulta não retornou síntese. Verifique os trechos localizados ou tente reformular a pergunta.",
+        title: "Resposta parcial",
+        text: "Apresentamos abaixo o conteúdo mais próximo do correto encontrado na apostila. Reformule a pergunta para refinar o resultado.",
       };
     }
     return null;
