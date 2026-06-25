@@ -280,12 +280,16 @@ const DynamicCheckoutDialog = ({
               <p className="text-xs text-muted-foreground mt-1">Preço no PIX</p>
               {selectedPlan.card_price && (
                 <div className="text-xs text-muted-foreground space-y-0.5">
-                  <p>Cartão: {selectedPlan.card_price}
-                    {selectedPlan.duration_days >= 180
-                      ? " em até 6x de R$ 88,31"
-                      : selectedPlan.duration_days >= 90
-                        ? " em até 3x de R$ 96,63"
-                        : " à vista"}
+                  <p>
+                    {/projeto\s*ver[ãa]o\s*180/i.test(String(selectedPlan?.name || ""))
+                      ? "Cartão: 6× (2× R$ 49,50 + 4× R$ 94,50) = R$ 477,00"
+                      : `Cartão: ${selectedPlan.card_price}${
+                          selectedPlan.duration_days >= 180
+                            ? " em até 6x de R$ 88,31"
+                            : selectedPlan.duration_days >= 90
+                              ? " em até 3x de R$ 96,63"
+                              : " à vista"
+                        }`}
                   </p>
                 </div>
               )}
