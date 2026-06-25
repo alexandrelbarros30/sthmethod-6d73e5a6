@@ -3252,6 +3252,74 @@ export type Database = {
         }
         Relationships: []
       }
+      mp_subscriptions: {
+        Row: {
+          charges_done: number
+          created_at: string
+          end_date: string | null
+          id: string
+          init_point: string | null
+          mp_preapproval_id: string | null
+          next_payment_date: string | null
+          phase: number
+          phase1_amount: number
+          phase1_charges: number
+          phase2_amount: number
+          phase2_charges: number
+          plan_id: string
+          status: string
+          total_amount_paid: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          charges_done?: number
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          init_point?: string | null
+          mp_preapproval_id?: string | null
+          next_payment_date?: string | null
+          phase?: number
+          phase1_amount?: number
+          phase1_charges?: number
+          phase2_amount?: number
+          phase2_charges?: number
+          plan_id: string
+          status?: string
+          total_amount_paid?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          charges_done?: number
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          init_point?: string | null
+          mp_preapproval_id?: string | null
+          next_payment_date?: string | null
+          phase?: number
+          phase1_amount?: number
+          phase1_charges?: number
+          phase2_amount?: number
+          phase2_charges?: number
+          plan_id?: string
+          status?: string
+          total_amount_paid?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mp_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_gateway_details: {
         Row: {
           ai_verification_notes: string | null
