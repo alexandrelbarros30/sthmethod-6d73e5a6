@@ -6,17 +6,12 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 function formatRG(v: string) {
-  const digits = v.replace(/\D/g, "").slice(0, 9);
-  // ##.###.###-#  (best effort; user said "##.###" — we render the standard mask)
-  const p1 = digits.slice(0, 2);
-  const p2 = digits.slice(2, 5);
-  const p3 = digits.slice(5, 8);
-  const p4 = digits.slice(8, 9);
-  let out = p1;
-  if (p2) out += "." + p2;
-  if (p3) out += "." + p3;
-  if (p4) out += "-" + p4;
-  return out;
+  // RG: 5 ou 6 algarismos (ex.: 88.876 ou 102.252)
+  const digits = v.replace(/\D/g, "").slice(0, 6);
+  if (digits.length <= 3) return digits;
+  const head = digits.slice(0, digits.length - 3);
+  const tail = digits.slice(-3);
+  return `${head}.${tail}`;
 }
 function formatPhone(v: string) {
   const d = v.replace(/\D/g, "").slice(0, 11);
@@ -82,9 +77,9 @@ export default function CasRegister() {
         </div>
         <div>
           <label className={labelCls}>RG</label>
-          <input className={fieldCls} value={form.rg}
+          <input className={fieldCls} value={form.rg} inputMode="numeric" maxLength={7}
             onChange={(e) => setForm((f) => ({ ...f, rg: formatRG(e.target.value) }))}
-            placeholder="00.000.000-0" />
+            placeholder="88.876 ou 102.252" />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>

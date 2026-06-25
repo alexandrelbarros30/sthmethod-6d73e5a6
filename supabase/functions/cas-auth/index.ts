@@ -270,6 +270,39 @@ Deno.serve(async (req) => {
       return ok({ ok: true })
     }
 
+    if (action === 'history_list') {
+      const token = getBearer(req) || String(body.token || '')
+      const { userId } = await authenticate(token)
+      const limit = Math.min(Math.max(Number(body.limit) || 30, 1), 100)
+      const { data } = await supabase
+        .from('cas_search_history')
+        .select('id, query, discipline, has_answer, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(limit)
+      return ok({ items: data ?? [] })
+    }
+
+    if (action === 'history_add') {
+      const token = getBearer(req) || String(body.token || '')
+      const { userId } = await authenticate(token)
+      const query = String(body.query || '').trim()
+      if (!query) return err('Pergunta vazia.', 400)
+      const discipline = body.discipline ? String(body.discipline).trim() : null
+      const has_answer = Boolean(body.has_answer)
+      await supabase.from('cas_search_history').insert({
+        user_id: userId, query: query.slice(0, 500), discipline, has_answer,
+      })
+      return ok({ ok: true })
+    }
+
+    if (action === 'history_clear') {
+      const token = getBearer(req) || String(body.token || '')
+      const { userId } = await authenticate(token)
+      await supabase.from('cas_search_history').delete().eq('user_id', userId)
+      return ok({ ok: true })
+    }
+
     return err('Ação desconhecida.', 400)
   } catch (e: any) {
     const msg = e?.message || String(e)

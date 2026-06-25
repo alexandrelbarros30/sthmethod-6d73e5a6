@@ -74,4 +74,9 @@ export const casAuthApi = {
     call<{ user: CasUser }>({ action: "update_profile", ...p }),
   changePassword: (p: { current_password: string; new_password: string }) =>
     call<{ ok: true }>({ action: "change_password", ...p }),
+  historyList: (limit = 30) =>
+    call<{ items: { id: string; query: string; discipline: string | null; has_answer: boolean; created_at: string }[] }>({ action: "history_list", limit }),
+  historyAdd: (p: { query: string; discipline?: string | null; has_answer?: boolean }) =>
+    call<{ ok: true }>({ action: "history_add", ...p }),
+  historyClear: () => call<{ ok: true }>({ action: "history_clear" }),
 };

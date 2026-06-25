@@ -568,6 +568,41 @@ export type Database = {
         }
         Relationships: []
       }
+      cas_search_history: {
+        Row: {
+          created_at: string
+          discipline: string | null
+          has_answer: boolean
+          id: string
+          query: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          discipline?: string | null
+          has_answer?: boolean
+          id?: string
+          query: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          discipline?: string | null
+          has_answer?: boolean
+          id?: string
+          query?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cas_search_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "cas_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cas_search_logs: {
         Row: {
           cache_hit: boolean

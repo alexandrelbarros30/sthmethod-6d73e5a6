@@ -9,6 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { useCasAuth } from "@/contexts/CasAuthContext";
+import { casAuthApi } from "@/lib/casAuthClient";
+
+function openSourceInPdf(m: Match) {
+  const isQuiz = m.source === "questoes";
+  const base = isQuiz ? questoesAsset.url : pdfAsset.url;
+  const page = !isQuiz && m.page_start ? `#page=${m.page_start}` : "";
+  window.open(`${base}${page}`, "_blank", "noopener,noreferrer");
+}
 
 const DISCIPLINES = [
   "ADMINISTRAÇÃO APLICADA A PMERJ",
@@ -508,20 +517,35 @@ function SearchPanel(props: {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [tab, setTab] = useState<"direta" | "aprofundar" | "pontos" | "conceitos" | "fontes">("direta");
+  const { user: casUser } = useCasAuth();
   const [recent, setRecent] = useState<string[]>([]);
+  const [history, setHistory] = useState<{ id: string; query: string; discipline: string | null; has_answer: boolean; created_at: string }[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [metrics, setMetrics] = useState<{
     hourly: Array<{ total_requests: number; avg_duration_ms: number; failure_rate_pct: number; fallback_uses: number; cache_hits: number; rate_limited_count: number; upstream_5xx_count: number }>;
     logs: Array<{ id: string; created_at: string; duration_ms: number; status: string; cache_hit: boolean; fallback_used: boolean; external_status: number | null }>;
   } | null>(null);
 
-  // Recent searches (localStorage)
+  // Recent searches (localStorage) — fallback quando não autenticado
   useEffect(() => {
     try {
       const raw = localStorage.getItem("cas_recent_v1");
       if (raw) setRecent(JSON.parse(raw));
     } catch {}
   }, []);
+
+  // Histórico server-side por aluno autenticado
+  const loadHistory = async () => {
+    if (!casUser) { setHistory([]); return; }
+    setHistoryLoading(true);
+    try {
+      const { items } = await casAuthApi.historyList(30);
+      setHistory(items);
+    } catch {} finally { setHistoryLoading(false); }
+  };
+  useEffect(() => { loadHistory(); /* eslint-disable-next-line */ }, [casUser?.id]);
+
   useEffect(() => {
     if (!loading && (structured || answer) && query.trim()) {
       setRecent((prev) => {
@@ -530,6 +554,13 @@ function SearchPanel(props: {
         return next;
       });
       setTab("direta");
+      if (casUser) {
+        casAuthApi.historyAdd({
+          query: query.trim(),
+          discipline: filterDisc || null,
+          has_answer: Boolean(structured || answer),
+        }).then(loadHistory).catch(() => {});
+      }
     }
   }, [loading, structured, answer]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -588,13 +619,6 @@ function SearchPanel(props: {
         tone: "blue",
         title: "Carregando consulta EAD",
         text: "O sistema está pesquisando a apostila, sintetizando a resposta e validando as fontes.",
-      };
-    }
-    if (searchState === "quota_exhausted" || searchState === "fallback_active" || searchState === "no_response") {
-      return {
-        tone: "amber",
-        title: "Resposta parcial",
-        text: "Apresentamos abaixo o conteúdo mais próximo do correto encontrado na apostila. Reformule a pergunta para refinar o resultado.",
       };
     }
     return null;
@@ -939,10 +963,11 @@ function SearchPanel(props: {
                   <article
                     key={`${m.source ?? "apostila"}-${m.id}`}
                     className={cn(
-                      "rounded-2xl border p-5 hover:border-[#1d1d1f] transition cursor-pointer",
+                      "rounded-2xl border p-5 hover:border-[#1d1d1f] transition cursor-pointer group",
                       isQuiz ? "bg-[#fffaf0] border-[#f0e0bf]" : "bg-white border-[#d2d2d7]",
                     )}
-                    onClick={() => setOpenSource({ match: m, index: i })}
+                    onClick={() => openSourceInPdf(m)}
+                    title={isQuiz ? "Abrir caderno de questões em nova aba" : `Abrir apostila na página ${m.page_start}`}
                   >
                     <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -965,7 +990,9 @@ function SearchPanel(props: {
                             : `p.${m.page_start}${m.page_end !== m.page_start ? `–${m.page_end}` : ""}`}
                         </span>
                       </div>
-                      <ArrowUpRight className="h-3.5 w-3.5 text-[#86868b]" />
+                      <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-[#0071e3] opacity-70 group-hover:opacity-100">
+                        Abrir apostila <ArrowUpRight className="h-3.5 w-3.5" />
+                      </span>
                     </div>
                     {isQuiz && m.statement ? (
                       <div className="space-y-2">
@@ -1008,6 +1035,17 @@ function SearchPanel(props: {
                         <p className="text-[12px] text-[#1d1d1f] leading-relaxed">{analise.resumo}</p>
                       </div>
                     )}
+                    <div className="mt-3 pt-3 border-t border-dashed border-[#e8e8ed] flex items-center justify-between">
+                      <span className="text-[10px] uppercase tracking-[0.2em] text-[#86868b]">
+                        {isQuiz ? "Caderno oficial de questões" : `Apostila CAS-PMERJ · página ${m.page_start}`}
+                      </span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setOpenSource({ match: m, index: i }); }}
+                        className="text-[10px] uppercase tracking-wider text-[#6e6e73] hover:text-[#1d1d1f]"
+                      >
+                        Pré-visualizar trecho
+                      </button>
+                    </div>
                   </article>
                   );
                 };
@@ -1067,13 +1105,7 @@ function SearchPanel(props: {
         </div>
       )}
 
-      {!answer && answerError && matches.length > 0 && (
-        <div className="max-w-3xl mx-auto p-4 rounded-2xl bg-amber-50 border border-amber-200">
-          <p className="text-[12px] text-amber-800">
-            Consulta sintetizada temporariamente indisponível. Os trechos da apostila abaixo respondem diretamente à sua pergunta.
-          </p>
-        </div>
-      )}
+      {/* Painel de "Resposta parcial" removido a pedido — apresentamos apenas as fontes encontradas. */}
 
       {!loading && searchState === "idle" && !answer && !structured && matches.length === 0 && (
         <div className="max-w-3xl mx-auto grid gap-5 md:grid-cols-2">
@@ -1100,8 +1132,40 @@ function SearchPanel(props: {
             <div className="flex items-center gap-2 mb-4">
               <History className="h-4 w-4 text-[#1d1d1f]" />
               <div className="text-[11px] uppercase tracking-[0.18em] font-semibold text-[#1d1d1f]">Suas últimas buscas</div>
+              {casUser && history.length > 0 && (
+                <button
+                  onClick={async () => { if (confirm("Limpar histórico de consultas?")) { await casAuthApi.historyClear(); setHistory([]); } }}
+                  className="ml-auto text-[10px] uppercase tracking-wider text-[#86868b] hover:text-[#1d1d1f]"
+                >Limpar</button>
+              )}
             </div>
-            {recent.length === 0 ? (
+            {casUser ? (
+              historyLoading ? (
+                <p className="text-[13px] text-[#86868b] py-2">Carregando histórico…</p>
+              ) : history.length === 0 ? (
+                <p className="text-[13px] text-[#86868b] py-2">Você ainda não fez consultas. Pergunte algo e seu histórico aparecerá aqui.</p>
+              ) : (
+                <ul className="space-y-1 max-h-[260px] overflow-y-auto pr-1">
+                  {history.map((h) => (
+                    <li key={h.id}>
+                      <button
+                        onClick={() => { setQuery(h.query); inputRef.current?.focus(); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                        className="w-full text-left py-2 px-3 rounded-xl text-[13px] text-[#1d1d1f] hover:bg-[#f5f5f7] transition flex items-start gap-2"
+                      >
+                        <Search className="h-3.5 w-3.5 text-[#86868b] mt-0.5 shrink-0" />
+                        <span className="flex-1 min-w-0">
+                          <span className="block truncate">{h.query}</span>
+                          <span className="block text-[10px] text-[#86868b] mt-0.5 uppercase tracking-wider">
+                            {new Date(h.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                            {h.discipline ? ` · ${h.discipline}` : ""}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )
+            ) : recent.length === 0 ? (
               <p className="text-[13px] text-[#86868b] py-2">Suas perguntas recentes aparecem aqui para revisão rápida.</p>
             ) : (
               <ul className="space-y-1">
@@ -1195,6 +1259,12 @@ function SearchPanel(props: {
                     ? `${openSource.match.exam ?? "Prova oficial"} · Questão ${openSource.match.question_num ?? "?"}`
                     : `página ${openSource.match.page_start}${openSource.match.page_end !== openSource.match.page_start ? `–${openSource.match.page_end}` : ""}`}
                 </span>
+                <button
+                  onClick={() => openSourceInPdf(openSource.match)}
+                  className="ml-auto inline-flex items-center gap-1 text-[11px] uppercase tracking-wider text-[#0071e3] hover:underline"
+                >
+                  Abrir apostila <ArrowUpRight className="h-3 w-3" />
+                </button>
               </div>
               <div className="max-h-[60vh] overflow-y-auto bg-[#f5f5f7] rounded-2xl p-5 space-y-3">
                 {openSource.match.source === "questoes" && openSource.match.statement ? (

@@ -69,7 +69,18 @@ export default function CasProfile() {
         </div>
         <div>
           <label className={labelCls}>RG</label>
-          <input className={fieldCls} value={form.rg ?? ""} onChange={(e) => setForm({ ...form, rg: e.target.value })} />
+          <input
+            className={fieldCls}
+            value={form.rg ?? ""}
+            inputMode="numeric"
+            maxLength={7}
+            placeholder="88.876 ou 102.252"
+            onChange={(e) => {
+              const d = e.target.value.replace(/\D/g, "").slice(0, 6);
+              const formatted = d.length <= 3 ? d : `${d.slice(0, d.length - 3)}.${d.slice(-3)}`;
+              setForm({ ...form, rg: formatted });
+            }}
+          />
         </div>
         <button disabled={savingProfile} className={btnPrimaryCls}>
           {savingProfile ? <Loader2 className="h-4 w-4 animate-spin inline" /> : "Salvar perfil"}
