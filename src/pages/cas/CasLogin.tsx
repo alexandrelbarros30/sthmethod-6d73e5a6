@@ -26,7 +26,7 @@ export default function CasLogin() {
   }
 
   return (
-    <CasShell title="Entrar no EAD CAS" subtitle="Acesse seu núcleo de estudos."
+    <CasShell title="Entrar no MEAD · CAS" subtitle="Acesse seu núcleo de estudos."
       footer={<>Novo por aqui? <Link to="/cas/cadastro" className={linkCls}>Criar conta</Link></>}>
       <form onSubmit={submit} className="space-y-4">
         <div>

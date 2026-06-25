@@ -52,7 +52,7 @@ export default function CasRegister() {
   }
 
   return (
-    <CasShell title="Criar conta no EAD CAS" subtitle="Preencha seus dados para acessar o núcleo de estudos."
+    <CasShell title="Criar conta no MEAD · CAS" subtitle="Preencha seus dados para acessar o núcleo de estudos."
       footer={<>Já tem conta? <Link to="/cas/login" className={linkCls}>Entrar</Link></>}>
       <form onSubmit={submit} className="space-y-4">
         <div>
