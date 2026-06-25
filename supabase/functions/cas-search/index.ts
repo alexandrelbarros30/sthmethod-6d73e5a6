@@ -531,18 +531,6 @@ async function hybridSearch(supabase: any, q: string, discipline: string | null,
     const baseB = scoringIntent === 'definicao' ? definitionScore(b, q, scoringIntent) : (b.similarity ?? 0) * 100;
     return (baseB + conceptBoost(b)) - (baseA + conceptBoost(a));
   });
-  // DEBUG temporário: log top scores
-  try {
-    const dbg = Array.from(seen.values()).map((r: any) => ({
-      id: r.id, disc: r.discipline, page: r.page_start, sim: r.similarity,
-      base: (intent === 'definicao' || extractFocusTerms(q).length === 1)
-        ? definitionScore(r, q, 'definicao')
-        : (r.similarity ?? 0) * 100,
-      boost: conceptBoost(r),
-    })).map((x) => ({ ...x, total: x.base + x.boost }))
-      .sort((a, b) => b.total - a.total).slice(0, 6);
-    console.log(JSON.stringify({ event: 'cas_scoring_debug', q, intent, top: dbg }));
-  } catch (_e) { /* ignore */ }
   const pageSeen = new Set<string>();
   const deduped: any[] = [];
   for (const m of sorted) {
