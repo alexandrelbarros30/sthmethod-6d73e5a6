@@ -8,9 +8,38 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { useCasAuth } from "@/contexts/CasAuthContext";
 import { casAuthApi } from "@/lib/casAuthClient";
+
+function PdfsMenu() {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className="inline-flex items-center gap-1.5 rounded-full border border-[#d2d2d7] bg-white px-3 py-1.5 text-[12px] font-medium text-[#1d1d1f] hover:bg-[#f5f5f7] transition">
+        <FileDown className="h-3.5 w-3.5" />
+        PDFs
+        <ChevronRight className="h-3 w-3 rotate-90 opacity-60" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel className="text-[10px] uppercase tracking-[0.18em] text-[#86868b]">Materiais oficiais</DropdownMenuLabel>
+        <DropdownMenuItem asChild>
+          <a href={pdfAsset.url} download="apostilas-provas-cas.pdf" className="flex items-center gap-2 cursor-pointer">
+            <BookOpen className="h-3.5 w-3.5 text-[#0071e3]" />
+            <span className="flex-1">Apostila CAS-PMERJ</span>
+          </a>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <a href={questoesAsset.url} download="questoes-prova-cas.pdf" className="flex items-center gap-2 cursor-pointer">
+            <ListChecks className="h-3.5 w-3.5 text-amber-600" />
+            <span className="flex-1">Questões de provas</span>
+          </a>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 function openSourceInPdf(m: Match) {
   const isQuiz = m.source === "questoes";
@@ -449,22 +478,7 @@ export default function Cas() {
                 Estudar
               </button>
             </div>
-            <a
-              href={pdfAsset.url}
-              download="apostilas-provas-cas.pdf"
-              className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#0071e3] hover:underline"
-            >
-              <FileDown className="h-3.5 w-3.5" />
-              Apostila
-            </a>
-            <a
-              href={questoesAsset.url}
-              download="questoes-prova-cas.pdf"
-              className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#0071e3] hover:underline"
-            >
-              <FileDown className="h-3.5 w-3.5" />
-              Questões
-            </a>
+            <PdfsMenu />
           </div>
         </div>
       </header>
