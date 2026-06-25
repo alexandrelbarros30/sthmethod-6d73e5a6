@@ -63,7 +63,7 @@ export async function makeCacheKey(params: {
   attachmentSignature?: string | null;
 }) {
   return sha256Hex(JSON.stringify({
-    v: 4,
+    v: 5,
     query: normalizeQuery(params.query),
     discipline: params.discipline || null,
     intent: params.intent || null,
@@ -191,6 +191,10 @@ export function detectIntent(q: string): { intent: string; instruction: string }
   const has = (re: RegExp) => re.test(s);
   if (has(/(^|\s)(o que e|o que sao|defina|definicao de|significado de|conceito de|o que significa)(\s|$)/))
     return { intent: 'definicao', instruction: 'Forneça definição objetiva (1 frase) seguida de classificação/elementos.' };
+  const focusTerms = extractFocusTerms(q);
+  const cleanedWords = s.replace(/[^\p{L}\p{N}\s-]/gu, ' ').split(/\s+/).filter(Boolean);
+  if (focusTerms.length >= 1 && cleanedWords.length <= 3)
+    return { intent: 'definicao', instruction: 'A pergunta veio curta/por palavra-chave. Trate como: "o que é / conceito / definição / como cai em prova" e abra com a definição literal mais relevante da apostila.' };
   if (has(/\b(por\s*que|porque|qual a (razao|causa|motivo)|finalidade de|para que serve)\b/))
     return { intent: 'causa_finalidade', instruction: 'Explique a razão/finalidade com fundamento normativo citado.' };
   if (has(/\b(como|de que forma|procedimento|passo a passo|etapas)\b/))
@@ -470,13 +474,14 @@ async function hybridSearch(supabase: any, q: string, discipline: string | null,
       if (!prev || (row.similarity ?? 0) > (prev.similarity ?? 0)) seen.set(row.id, row);
     }
   }
-  // Em perguntas de definição, injeta e prioriza trechos literais que contenham
+  // Em perguntas de definição ou termo isolado, injeta e prioriza trechos literais que contenham
   // padrões como "X é", "X se caracteriza", "constitui crime de X" etc.
   try {
-    const definitionRows = await definitionLookup(supabase, q, discipline, intent, matchCount);
+    const definitionIntent = intent === 'definicao' || extractFocusTerms(q).length === 1 ? 'definicao' : intent;
+    const definitionRows = await definitionLookup(supabase, q, discipline, definitionIntent, Math.max(matchCount, 12));
     for (const row of definitionRows) {
       const prev = seen.get(row.id);
-      if (!prev || definitionScore(row, q, intent) > definitionScore(prev, q, intent)) seen.set(row.id, row);
+      if (!prev || definitionScore(row, q, definitionIntent) > definitionScore(prev, q, definitionIntent)) seen.set(row.id, row);
     }
   } catch (e) {
     console.error(JSON.stringify({ event: 'cas_definition_lookup_failed', error: String((e as Error)?.message || e) }));
@@ -493,7 +498,8 @@ async function hybridSearch(supabase: any, q: string, discipline: string | null,
   }
   // Dedup por página/disciplina para evitar que múltiplos chunks da mesma página dominem
   const sorted = Array.from(seen.values()).sort((a, b) => {
-    if (intent === 'definicao') return definitionScore(b, q, intent) - definitionScore(a, q, intent);
+    const scoringIntent = intent === 'definicao' || extractFocusTerms(q).length === 1 ? 'definicao' : intent;
+    if (scoringIntent === 'definicao') return definitionScore(b, q, scoringIntent) - definitionScore(a, q, scoringIntent);
     return (b.similarity ?? 0) - (a.similarity ?? 0);
   });
   const pageSeen = new Set<string>();
