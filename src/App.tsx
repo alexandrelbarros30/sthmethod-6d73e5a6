@@ -232,6 +232,13 @@ const App = () => (
             <Route path="/cas/reset-password" element={<CasAuthProvider><CasResetPassword /></CasAuthProvider>} />
             <Route path="/cas/perfil" element={<CasAuthProvider><CasProtectedRoute><CasProfile /></CasProtectedRoute></CasAuthProvider>} />
             <Route path="/cas" element={<CasAuthProvider><CasProtectedRoute><Cas /></CasProtectedRoute></CasAuthProvider>} />
+            {/* MEAD aliases — landing oficial */}
+            <Route path="/mead/login" element={<CasAuthProvider><CasLogin /></CasAuthProvider>} />
+            <Route path="/mead/cadastro" element={<CasAuthProvider><CasRegister /></CasAuthProvider>} />
+            <Route path="/mead/esqueci-senha" element={<CasAuthProvider><CasForgotPassword /></CasAuthProvider>} />
+            <Route path="/mead/reset-password" element={<CasAuthProvider><CasResetPassword /></CasAuthProvider>} />
+            <Route path="/mead/perfil" element={<CasAuthProvider><CasProtectedRoute><CasProfile /></CasProtectedRoute></CasAuthProvider>} />
+            <Route path="/mead" element={<CasAuthProvider><CasProtectedRoute><Cas /></CasProtectedRoute></CasAuthProvider>} />
             {/* Student routes */}
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["student"]}><StudentOverview /></ProtectedRoute>} />
             <Route path="/dashboard/hub" element={<ProtectedRoute allowedRoles={["student"]}><StudentHub /></ProtectedRoute>} />
