@@ -435,6 +435,7 @@ type QuizQuestion = {
 };
 
 export default function Cas() {
+  useMeadManifest();
   const [mode, setMode] = useState<Mode>("search");
   const [query, setQuery] = useState("");
   const [filterDisc, setFilterDisc] = useState<string | "">("");
