@@ -63,7 +63,7 @@ export async function makeCacheKey(params: {
   attachmentSignature?: string | null;
 }) {
   return sha256Hex(JSON.stringify({
-    v: 3,
+    v: 4,
     query: normalizeQuery(params.query),
     discipline: params.discipline || null,
     intent: params.intent || null,
