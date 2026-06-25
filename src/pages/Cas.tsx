@@ -1168,6 +1168,8 @@ function SearchPanel(props: {
                 markdown={structured?.resposta_completa ?? answer ?? ""}
                 highlightTerms={extractHighlightTerms(query)}
                 readingMode={readingMode}
+                matches={matches}
+                onOpenSource={(m, i) => setOpenSource({ match: m, index: i })}
               />
               <p className="text-[11px] text-[#86868b] italic px-2 pt-2">
                 Esta consulta é um apoio de estudo e <strong className="not-italic font-semibold text-[#1d1d1f]">não substitui a leitura integral das apostilas</strong>.
