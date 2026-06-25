@@ -115,7 +115,67 @@ function splitAnswerIntoCards(markdown: string): AnswerSection[] {
   return sections.length > 0 ? sections : [{ kind: "answer", content: markdown }];
 }
 
-function MarkdownAnswerCards({ markdown }: { markdown: string }) {
+function extractHighlightTerms(query: string): string[] {
+  if (!query) return [];
+  const STOP = new Set([
+    "o","a","os","as","de","da","do","das","dos","e","ou","que","qual","quais","quando","como","onde","por","para","pra","em","no","na","nos","nas","um","uma","uns","umas","se","sao","são","é","eh","ser","com","sem","ao","aos","à","às","sobre","tem","têm","ter","ha","há","mais","menos","entre","cada","quanto","quanta","qto","qtos","seu","sua","seus","suas","este","esta","isso","aquilo","esse","essa","pode","podem","deve","devem","ate","até","apenas","tambem","também"
+  ]);
+  const cleaned = query.replace(/[¿?!.,;:()"']/g, " ").toLowerCase();
+  const tokens = cleaned.split(/\s+/).filter(Boolean);
+  const out = new Set<string>();
+  for (const t of tokens) {
+    if (t.length < 4) continue;
+    if (STOP.has(t)) continue;
+    out.add(t);
+  }
+  return [...out].sort((a, b) => b.length - a.length);
+}
+
+function useHighlight(ref: React.RefObject<HTMLElement>, terms: string[], deps: any[]) {
+  useEffect(() => {
+    const root = ref.current;
+    if (!root || terms.length === 0) return;
+    const escaped = terms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    const re = new RegExp(`(${escaped.join("|")})`, "giu");
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode: (n) => {
+        const p = (n as Text).parentElement;
+        if (!p) return NodeFilter.FILTER_REJECT;
+        const tag = p.tagName;
+        if (tag === "MARK" || tag === "CODE" || tag === "PRE" || tag === "SCRIPT" || tag === "STYLE") return NodeFilter.FILTER_REJECT;
+        if (!(n as Text).nodeValue?.trim()) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      },
+    });
+    const targets: Text[] = [];
+    let cur: Node | null;
+    while ((cur = walker.nextNode())) targets.push(cur as Text);
+    for (const node of targets) {
+      const text = node.nodeValue ?? "";
+      if (!re.test(text)) { re.lastIndex = 0; continue; }
+      re.lastIndex = 0;
+      const frag = document.createDocumentFragment();
+      let lastIdx = 0;
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(text))) {
+        if (m.index > lastIdx) frag.appendChild(document.createTextNode(text.slice(lastIdx, m.index)));
+        const mark = document.createElement("mark");
+        mark.textContent = m[0];
+        mark.style.background = "#fff3a8";
+        mark.style.color = "#1d1d1f";
+        mark.style.padding = "0 2px";
+        mark.style.borderRadius = "3px";
+        frag.appendChild(mark);
+        lastIdx = m.index + m[0].length;
+      }
+      if (lastIdx < text.length) frag.appendChild(document.createTextNode(text.slice(lastIdx)));
+      node.parentNode?.replaceChild(frag, node);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+}
+
+function MarkdownAnswerCards({ markdown, highlightTerms = [] }: { markdown: string; highlightTerms?: string[] }) {
   const sections = splitAnswerIntoCards(markdown);
 
   const formatForReading = (text: string): string => {
