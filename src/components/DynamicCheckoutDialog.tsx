@@ -90,6 +90,22 @@ const DynamicCheckoutDialog = ({
     if (!selectedPlan || !userId) return;
     setCreatingPayment(true);
     try {
+      // Plano Projeto Verão 180 no cartão usa assinatura escalonada (preapproval MP):
+      // 2× R$ 49,50 + 4× R$ 94,50 = R$ 477,00.
+      const isVerao180 = /projeto\s*ver[ãa]o\s*180/i.test(String(selectedPlan?.name || ""));
+      if (isVerao180 && method === "credit") {
+        const { data, error } = await supabase.functions.invoke("create-mp-subscription", {
+          body: { plan_id: selectedPlan.id },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        if (data?.init_point) {
+          window.location.href = data.init_point;
+          return;
+        }
+        throw new Error("URL de assinatura não disponível");
+      }
+
       const { data, error } = await supabase.functions.invoke("create-payment", {
         body: {
           plan_id: selectedPlan.id,
