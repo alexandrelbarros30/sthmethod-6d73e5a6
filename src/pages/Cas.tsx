@@ -11,12 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { cn } from "@/lib/utils";
 import { useCasAuth } from "@/contexts/CasAuthContext";
 import { casAuthApi } from "@/lib/casAuthClient";
-import pdfAssetApostila from "@/assets/apostilas-provas-cas.pdf.asset.json";
-import pdfAssetQuestoes from "@/assets/questoes-prova-cas.pdf.asset.json";
 
 function openSourceInPdf(m: Match) {
   const isQuiz = m.source === "questoes";
-  const base = isQuiz ? pdfAssetQuestoes.url : pdfAssetApostila.url;
+  const base = isQuiz ? questoesAsset.url : pdfAsset.url;
   const page = !isQuiz && m.page_start ? `#page=${m.page_start}` : "";
   window.open(`${base}${page}`, "_blank", "noopener,noreferrer");
 }
