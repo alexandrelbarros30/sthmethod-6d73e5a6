@@ -36,7 +36,7 @@ export default function CasResetPassword() {
   }
 
   return (
-    <CasShell title="Criar nova senha" subtitle="Defina uma senha forte para seu acesso ao EAD CAS.">
+    <CasShell title="Criar nova senha" subtitle="Defina uma senha forte para seu acesso ao MEAD · CAS.">
       <form onSubmit={submit} className="space-y-4">
         <div>
           <label className={labelCls}>Nova senha</label>
