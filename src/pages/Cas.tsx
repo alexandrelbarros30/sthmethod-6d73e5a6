@@ -810,34 +810,34 @@ function SearchPanel(props: {
   return (
     <div className="space-y-8">
       {/* Hero — Apple Fitness direction: split search + activity rings */}
-      <section className="rounded-[32px] border border-[#d2d2d7] bg-white p-6 sm:p-10 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
-        <div className="grid lg:grid-cols-[1.15fr_1fr] gap-10 items-center">
-          <div className="space-y-6">
+      <section className="rounded-3xl sm:rounded-[32px] border border-[#d2d2d7] bg-white p-5 sm:p-10 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+        <div className="grid lg:grid-cols-[1.15fr_1fr] gap-8 lg:gap-10 items-center">
+          <div className="space-y-5 sm:space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f5f5f7] border border-[#d2d2d7] text-[10px] font-bold tracking-[0.18em] uppercase text-[#1d1d1f]">
               <Zap className="h-3 w-3 text-[#0071e3]" /> MEAD · CAS · núcleo de consulta inteligente
             </div>
-            <h2 className="text-5xl sm:text-6xl font-bold tracking-tight text-[#1d1d1f] leading-[1.02]">
+            <h2 className="text-[34px] sm:text-5xl md:text-6xl font-bold tracking-tight text-[#1d1d1f] leading-[1.02]">
               Pergunte.<br /><span className="text-[#86868b]">A apostila responde.</span>
             </h2>
 
             <form onSubmit={onSubmit}>
             <div className="relative flex items-center bg-white rounded-2xl border-2 border-[#d2d2d7] focus-within:border-[#0071e3] focus-within:ring-4 focus-within:ring-[#0071e3]/10 transition shadow-sm">
-              <Search className="absolute left-5 h-4 w-4 text-[#6e6e73]" />
+              <Search className="absolute left-4 sm:left-5 h-4 w-4 text-[#6e6e73]" />
               <Input
                 ref={inputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="O que você quer aprender hoje?"
-                className="pl-12 pr-56 h-16 text-[15px] bg-transparent border-0 rounded-2xl focus-visible:ring-0 placeholder:text-[#86868b]"
+                className="pl-11 sm:pl-12 pr-28 sm:pr-56 h-14 sm:h-16 text-[15px] bg-transparent border-0 rounded-2xl focus-visible:ring-0 placeholder:text-[#86868b]"
               />
-              <div className="absolute right-2 flex items-center gap-1.5">
+              <div className="absolute right-1.5 sm:right-2 flex items-center gap-1 sm:gap-1.5">
                 <kbd className="hidden md:inline-flex items-center gap-1 h-7 px-2 rounded-md bg-[#f5f5f7] border border-[#e8e8ed] text-[10px] font-mono text-[#86868b]">
                   <Command className="h-3 w-3" />K
                 </kbd>
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
-                  className="h-10 w-10 inline-flex items-center justify-center rounded-xl text-[#6e6e73] hover:bg-[#f5f5f7] hover:text-[#1d1d1f] transition"
+                  className="h-9 w-9 sm:h-10 sm:w-10 inline-flex items-center justify-center rounded-xl text-[#6e6e73] hover:bg-[#f5f5f7] hover:text-[#1d1d1f] transition"
                   title="Anexar imagem ou PDF da questão"
                 >
                   <Paperclip className="h-4 w-4" />
@@ -852,7 +852,7 @@ function SearchPanel(props: {
                 <Button
                   type="submit"
                   disabled={loading || (!query.trim() && !attachment)}
-                  className="h-12 px-5 rounded-xl bg-black hover:bg-[#1d1d1f] text-white text-[13px] font-medium gap-1.5"
+                  className="h-10 sm:h-12 px-3 sm:px-5 rounded-xl bg-black hover:bg-[#1d1d1f] text-white text-[13px] font-medium gap-1.5"
                 >
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Consultar <CornerDownLeft className="h-3.5 w-3.5 opacity-70" /></>}
                 </Button>
