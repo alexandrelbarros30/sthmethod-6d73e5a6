@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { casAuthApi } from "@/lib/casAuthClient";
 import CasShell, { fieldCls, labelCls, btnPrimaryCls, linkCls } from "@/components/cas/CasShell";
+import PasswordField from "@/components/cas/PasswordField";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -40,12 +41,12 @@ export default function CasResetPassword() {
       <form onSubmit={submit} className="space-y-4">
         <div>
           <label className={labelCls}>Nova senha</label>
-          <input type="password" required minLength={8} className={fieldCls}
+          <PasswordField required minLength={8}
             value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
         <div>
           <label className={labelCls}>Confirmar senha</label>
-          <input type="password" required minLength={8} className={fieldCls}
+          <PasswordField required minLength={8}
             value={confirm} onChange={(e) => setConfirm(e.target.value)} />
         </div>
         <button type="submit" disabled={loading} className={btnPrimaryCls}>

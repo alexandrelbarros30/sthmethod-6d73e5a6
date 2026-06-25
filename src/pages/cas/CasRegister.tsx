@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCasAuth } from "@/contexts/CasAuthContext";
 import CasShell, { fieldCls, labelCls, btnPrimaryCls, linkCls } from "@/components/cas/CasShell";
+import PasswordField from "@/components/cas/PasswordField";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -84,12 +85,12 @@ export default function CasRegister() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className={labelCls}>Senha</label>
-            <input type="password" required minLength={8} autoComplete="new-password" className={fieldCls}
+            <PasswordField required minLength={8} autoComplete="new-password"
               value={form.password} onChange={set("password")} />
           </div>
           <div>
             <label className={labelCls}>Confirmar senha</label>
-            <input type="password" required minLength={8} autoComplete="new-password" className={fieldCls}
+            <PasswordField required minLength={8} autoComplete="new-password"
               value={form.confirm} onChange={set("confirm")} />
           </div>
         </div>
