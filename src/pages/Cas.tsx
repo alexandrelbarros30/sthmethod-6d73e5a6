@@ -579,6 +579,7 @@ export default function Cas() {
               </button>
             </div>
             <PdfsMenu />
+            <ProfileMenu />
           </div>
         </div>
       </header>
