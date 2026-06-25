@@ -538,10 +538,10 @@ export default function Cas() {
       {/* Header — Apple style */}
       <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-[#d2d2d7]">
         <div className="max-w-6xl mx-auto px-6 py-3 flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-2">
-            <img src={meadLogo.url} alt="MEAD — Assistente de Aprendizagem" className="h-9 w-auto object-contain" />
-            <span className="hidden sm:inline text-[12px] text-[#86868b] font-medium tracking-[0.18em] uppercase ml-1">· CAS</span>
-          </div>
+          <Link to="/cas" className="flex items-center gap-2.5 shrink-0">
+            <img src={meadLogo.url} alt="MEAD — Assistente de Aprendizagem" className="h-12 md:h-14 w-auto object-contain" />
+            <span className="hidden sm:inline text-[12px] text-[#86868b] font-medium tracking-[0.18em] uppercase">· CAS</span>
+          </Link>
           <div className="ml-auto flex items-center gap-2">
             <div className="inline-flex rounded-full bg-[#f5f5f7] p-0.5">
               <button
