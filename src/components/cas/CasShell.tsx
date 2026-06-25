@@ -10,9 +10,9 @@ export default function CasShell({ title, subtitle, children, footer }: {
   return (
     <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] antialiased">
       <header className="border-b border-[#e6e6e8] bg-white/70 backdrop-blur">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link to="/cas" className="flex items-center gap-2">
-            <img src={meadLogo.url} alt="MEAD" className="h-8 w-auto object-contain" />
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link to="/cas" className="flex items-center gap-2.5">
+            <img src={meadLogo.url} alt="MEAD" className="h-10 w-auto object-contain" />
             <span className="text-[11px] tracking-[0.22em] font-semibold text-[#86868b]">· CAS</span>
           </Link>
           <Link to="/cas" className="text-[12px] text-[#6e6e73] hover:text-[#1d1d1f]">Voltar ao núcleo</Link>
@@ -20,12 +20,12 @@ export default function CasShell({ title, subtitle, children, footer }: {
       </header>
       <main className="max-w-md mx-auto px-6 py-12">
         <div className="mb-10 flex flex-col items-center text-center">
-          <div className="relative mb-6">
-            <div className="absolute inset-0 -m-8 rounded-full bg-gradient-to-b from-white to-[#e8e8ed] blur-2xl opacity-70" aria-hidden />
+          <div className="relative mb-8">
+            <div className="absolute inset-0 -m-12 rounded-full bg-gradient-to-b from-white to-[#e8e8ed] blur-3xl opacity-80" aria-hidden />
             <img
               src={meadLogo.url}
               alt="MEAD · Assistente de Aprendizagem"
-              className="relative h-24 w-auto object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
+              className="relative h-44 md:h-52 w-auto object-contain drop-shadow-[0_12px_32px_rgba(0,0,0,0.15)]"
             />
           </div>
           <div className="text-[10px] tracking-[0.32em] font-semibold text-[#86868b] uppercase mb-3">
