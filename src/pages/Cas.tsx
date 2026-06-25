@@ -1205,6 +1205,12 @@ function SearchPanel(props: {
                     ? `${openSource.match.exam ?? "Prova oficial"} · Questão ${openSource.match.question_num ?? "?"}`
                     : `página ${openSource.match.page_start}${openSource.match.page_end !== openSource.match.page_start ? `–${openSource.match.page_end}` : ""}`}
                 </span>
+                <button
+                  onClick={() => openSourceInPdf(openSource.match)}
+                  className="ml-auto inline-flex items-center gap-1 text-[11px] uppercase tracking-wider text-[#0071e3] hover:underline"
+                >
+                  Abrir apostila <ArrowUpRight className="h-3 w-3" />
+                </button>
               </div>
               <div className="max-h-[60vh] overflow-y-auto bg-[#f5f5f7] rounded-2xl p-5 space-y-3">
                 {openSource.match.source === "questoes" && openSource.match.statement ? (
