@@ -1069,13 +1069,7 @@ function SearchPanel(props: {
         </div>
       )}
 
-      {!answer && answerError && matches.length > 0 && (
-        <div className="max-w-3xl mx-auto p-4 rounded-2xl bg-amber-50 border border-amber-200">
-          <p className="text-[12px] text-amber-800">
-            Consulta sintetizada temporariamente indisponível. Os trechos da apostila abaixo respondem diretamente à sua pergunta.
-          </p>
-        </div>
-      )}
+      {/* Painel de "Resposta parcial" removido a pedido — apresentamos apenas as fontes encontradas. */}
 
       {!loading && searchState === "idle" && !answer && !structured && matches.length === 0 && (
         <div className="max-w-3xl mx-auto grid gap-5 md:grid-cols-2">
