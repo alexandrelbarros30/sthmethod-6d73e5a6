@@ -230,42 +230,53 @@ function MarkdownAnswerCards({ markdown, highlightTerms = [] }: { markdown: stri
   return (
     <div className="space-y-4">
       {sections.map((section, index) => (
-        <article
+        <AnswerSectionCard
           key={`${section.kind}-${section.sourceNumber ?? index}`}
-          className={cn(
-            "rounded-3xl border overflow-hidden",
-            section.kind === "source" ? "bg-[#f5f5f7] border-[#d2d2d7] p-7" : "bg-white border-[#d2d2d7]",
-          )}
-        >
-          {section.kind === "source" && (
-            <div className="mb-4 flex items-center gap-2 flex-wrap">
-              <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-[#1d1d1f] text-white">
-                Fonte {String(section.sourceNumber).padStart(2, "0")}
-              </span>
-              {section.title && (
-                <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1d1d1f]">
-                  {section.title}
-                </span>
-              )}
-            </div>
-          )}
-          <div
-            className="prose prose-neutral max-w-none text-[#1d1d1f] prose-headings:font-semibold prose-strong:text-[#1d1d1f] prose-p:text-left prose-p:my-0 prose-p:mb-4 prose-li:my-2 prose-headings:mt-6 prose-headings:mb-3 prose-h3:text-[13pt] prose-h3:uppercase prose-h3:tracking-wide"
-            style={{
-              fontFamily: '"Times New Roman", Times, serif',
-              fontSize: "12pt",
-              lineHeight: 1.6,
-              padding: "2rem 2.5rem",
-              textAlign: "left",
-            }}
-          >
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {formatForReading(section.content)}
-            </ReactMarkdown>
-          </div>
-        </article>
+          section={section}
+          formatted={formatForReading(section.content)}
+          highlightTerms={highlightTerms}
+        />
       ))}
     </div>
+  );
+}
+
+function AnswerSectionCard({ section, formatted, highlightTerms }: { section: { kind: "answer" | "source"; sourceNumber?: number; title?: string; content: string }; formatted: string; highlightTerms: string[] }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  useHighlight(ref, highlightTerms, [formatted, highlightTerms.join("|")]);
+  return (
+    <article
+      className={cn(
+        "rounded-3xl border overflow-hidden",
+        section.kind === "source" ? "bg-[#f5f5f7] border-[#d2d2d7] p-7" : "bg-white border-[#d2d2d7]",
+      )}
+    >
+      {section.kind === "source" && (
+        <div className="mb-4 flex items-center gap-2 flex-wrap">
+          <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-[#1d1d1f] text-white">
+            Fonte {String(section.sourceNumber).padStart(2, "0")}
+          </span>
+          {section.title && (
+            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1d1d1f]">
+              {section.title}
+            </span>
+          )}
+        </div>
+      )}
+      <div
+        ref={ref}
+        className="prose prose-neutral max-w-none text-[#1d1d1f] prose-headings:font-semibold prose-strong:text-[#1d1d1f] prose-p:text-left prose-p:my-0 prose-p:mb-4 prose-li:my-2 prose-headings:mt-6 prose-headings:mb-3 prose-h3:text-[13pt] prose-h3:uppercase prose-h3:tracking-wide"
+        style={{
+          fontFamily: '"Times New Roman", Times, serif',
+          fontSize: "12pt",
+          lineHeight: 1.6,
+          padding: "2rem 2.5rem",
+          textAlign: "left",
+        }}
+      >
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{formatted}</ReactMarkdown>
+      </div>
+    </article>
   );
 }
 
