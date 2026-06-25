@@ -496,11 +496,23 @@ async function hybridSearch(supabase: any, q: string, discipline: string | null,
   } catch (e) {
     console.error(JSON.stringify({ event: 'cas_toc_lookup_failed', error: String((e as Error)?.message || e) }));
   }
-  // Dedup por página/disciplina para evitar que múltiplos chunks da mesma página dominem
+  // Boost universal por presença de definição/conceito/significado — garante que a
+  // resposta MAIS CORRETA (com conceito) apareça primeiro (Fonte 1), seguida pelas
+  // demais em ordem crescente de relevância conceitual.
+  const conceptBoost = (row: any) => {
+    const c = stripAccents(String(row.content || '').toLowerCase());
+    let b = 0;
+    if (/\b(conceito|conceitua|significa|significado|defini(c|ç)ao|define-se|entende-se por|consiste em|caracteriza-se|trata-se de|denomina-se|chama-se)\b/.test(c)) b += 180;
+    if (/\b(e o|e a|sao os|sao as)\b.{0,40}\b(ato|processo|conjunto|estado|crime|princ(i|í)pio|direito|dever|institui(c|ç)ao)\b/.test(c)) b += 60;
+    if (/\b(art\.?\s*\d+|lei\s+n[ºo]?\s*\d+|inciso|caput|par(a|á)grafo)\b/.test(c)) b += 40;
+    if (looksLikeQuestionBank(row.content)) b -= 120;
+    return b;
+  };
   const sorted = Array.from(seen.values()).sort((a, b) => {
     const scoringIntent = intent === 'definicao' || extractFocusTerms(q).length === 1 ? 'definicao' : intent;
-    if (scoringIntent === 'definicao') return definitionScore(b, q, scoringIntent) - definitionScore(a, q, scoringIntent);
-    return (b.similarity ?? 0) - (a.similarity ?? 0);
+    const baseA = scoringIntent === 'definicao' ? definitionScore(a, q, scoringIntent) : (a.similarity ?? 0) * 100;
+    const baseB = scoringIntent === 'definicao' ? definitionScore(b, q, scoringIntent) : (b.similarity ?? 0) * 100;
+    return (baseB + conceptBoost(b)) - (baseA + conceptBoost(a));
   });
   const pageSeen = new Set<string>();
   const deduped: any[] = [];
