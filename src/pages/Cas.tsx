@@ -517,20 +517,35 @@ function SearchPanel(props: {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [tab, setTab] = useState<"direta" | "aprofundar" | "pontos" | "conceitos" | "fontes">("direta");
+  const { user: casUser } = useCasAuth();
   const [recent, setRecent] = useState<string[]>([]);
+  const [history, setHistory] = useState<{ id: string; query: string; discipline: string | null; has_answer: boolean; created_at: string }[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [metrics, setMetrics] = useState<{
     hourly: Array<{ total_requests: number; avg_duration_ms: number; failure_rate_pct: number; fallback_uses: number; cache_hits: number; rate_limited_count: number; upstream_5xx_count: number }>;
     logs: Array<{ id: string; created_at: string; duration_ms: number; status: string; cache_hit: boolean; fallback_used: boolean; external_status: number | null }>;
   } | null>(null);
 
-  // Recent searches (localStorage)
+  // Recent searches (localStorage) — fallback quando não autenticado
   useEffect(() => {
     try {
       const raw = localStorage.getItem("cas_recent_v1");
       if (raw) setRecent(JSON.parse(raw));
     } catch {}
   }, []);
+
+  // Histórico server-side por aluno autenticado
+  const loadHistory = async () => {
+    if (!casUser) { setHistory([]); return; }
+    setHistoryLoading(true);
+    try {
+      const { items } = await casAuthApi.historyList(30);
+      setHistory(items);
+    } catch {} finally { setHistoryLoading(false); }
+  };
+  useEffect(() => { loadHistory(); /* eslint-disable-next-line */ }, [casUser?.id]);
+
   useEffect(() => {
     if (!loading && (structured || answer) && query.trim()) {
       setRecent((prev) => {
@@ -539,6 +554,13 @@ function SearchPanel(props: {
         return next;
       });
       setTab("direta");
+      if (casUser) {
+        casAuthApi.historyAdd({
+          query: query.trim(),
+          discipline: filterDisc || null,
+          has_answer: Boolean(structured || answer),
+        }).then(loadHistory).catch(() => {});
+      }
     }
   }, [loading, structured, answer]); // eslint-disable-line react-hooks/exhaustive-deps
 
