@@ -769,15 +769,8 @@ export async function handleCasSearch(req: Request) {
     const cacheKey = await makeCacheKey({ query: q, discipline: discipline || null, intent: intent.intent, language, matchCount: boundedMatchCount, requestType, attachmentSignature });
     metrics = { cacheKey, query: q, discipline: discipline || null, intent: intent.intent, language, matchCount: boundedMatchCount, requestType, startedAt, status: 'ok', httpStatus: 200, cacheHit: false, fallbackUsed: false, fallbackProvider: null, model: null, externalStatus: null, errorCode: null, errorMessage: null, matchesCount: 0 };
 
-    if (!bypassCache && withAnswer) {
-      const cached = await readCache(supabase, cacheKey);
-      if (cached) {
-        metrics.cacheHit = true;
-        metrics.matchesCount = Array.isArray((cached as any).matches) ? (cached as any).matches.length : 0;
-        await logMetrics(supabase, metrics);
-        return responseJson({ ...(cached as Record<string, unknown>), cacheHit: true, metrics: { cacheHit: true, fallbackUsed: false, durationMs: Math.round(performance.now() - startedAt) } });
-      }
-    }
+    // Cache de resposta desativado a pedido: cada consulta é processada do zero
+    // para garantir resposta sempre fresca e adaptada à pergunta atual.
 
     const matches = await hybridSearch(supabase, q, discipline || null, boundedMatchCount, intent.intent);
     metrics.matchesCount = matches.length;
