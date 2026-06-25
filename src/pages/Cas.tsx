@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { useCasAuth } from "@/contexts/CasAuthContext";
 import { casAuthApi } from "@/lib/casAuthClient";
 import meadLogo from "@/assets/mead-logo.png.asset.json";
+import { useMeadManifest } from "@/hooks/useMeadManifest";
 
 function PdfsMenu() {
   return (
