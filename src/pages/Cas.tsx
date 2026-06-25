@@ -352,7 +352,7 @@ export default function Cas() {
   const [chunkLoading, setChunkLoading] = useState(false);
 
   useEffect(() => {
-    document.title = "CAS — Estudo Avançado";
+    document.title = "MEAD · CAS — Assistente de Aprendizagem";
   }, []);
 
   async function runSearch(e?: React.FormEvent) {
@@ -437,7 +437,12 @@ export default function Cas() {
         <div className="max-w-6xl mx-auto px-6 py-3 flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <BookMarked className="h-4 w-4 text-[#1d1d1f]" />
-            <h1 className="text-[15px] font-semibold tracking-tight text-[#1d1d1f]">CAS · Consulta Avançada</h1>
+            <h1 className="text-[15px] font-semibold tracking-tight text-[#1d1d1f]">
+              <span className="text-[#0071e3]">MEAD</span>
+              <span className="text-[#86868b] mx-1.5">·</span>
+              CAS
+              <span className="hidden sm:inline text-[#86868b] font-normal ml-2">| Assistente de Aprendizagem</span>
+            </h1>
           </div>
           <div className="ml-auto flex items-center gap-2">
             <div className="inline-flex rounded-full bg-[#f5f5f7] p-0.5">
@@ -657,7 +662,7 @@ function SearchPanel(props: {
         <div className="absolute -bottom-32 -left-16 h-72 w-72 rounded-full bg-[#a78bfa]/10 blur-3xl pointer-events-none" />
         <div className="relative space-y-7">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-[#d2d2d7] text-[11px] uppercase tracking-[0.18em] text-[#6e6e73]">
-            <Zap className="h-3 w-3 text-[#0071e3]" /> EAD CAS · núcleo de consulta inteligente
+            <Zap className="h-3 w-3 text-[#0071e3]" /> MEAD · CAS · núcleo de consulta inteligente
           </div>
           <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight text-[#1d1d1f] leading-[1.05]">
             Pergunte. <span className="text-[#86868b]">A apostila responde.</span>
