@@ -449,22 +449,7 @@ export default function Cas() {
                 Estudar
               </button>
             </div>
-            <a
-              href={pdfAsset.url}
-              download="apostilas-provas-cas.pdf"
-              className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#0071e3] hover:underline"
-            >
-              <FileDown className="h-3.5 w-3.5" />
-              Apostila
-            </a>
-            <a
-              href={questoesAsset.url}
-              download="questoes-prova-cas.pdf"
-              className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#0071e3] hover:underline"
-            >
-              <FileDown className="h-3.5 w-3.5" />
-              Questões
-            </a>
+            <PdfsMenu />
           </div>
         </div>
       </header>
