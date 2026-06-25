@@ -321,7 +321,7 @@ function useHighlight(ref: React.RefObject<HTMLElement>, terms: string[], deps: 
   }, deps);
 }
 
-function MarkdownAnswerCards({ markdown, highlightTerms = [], readingMode = false }: { markdown: string; highlightTerms?: string[]; readingMode?: boolean }) {
+function MarkdownAnswerCards({ markdown, highlightTerms = [], readingMode = false, matches = [], onOpenSource }: { markdown: string; highlightTerms?: string[]; readingMode?: boolean; matches?: Match[]; onOpenSource?: (match: Match, index: number) => void }) {
   const sections = splitAnswerIntoCards(markdown);
 
   const formatForReading = (text: string): string => {
@@ -382,20 +382,31 @@ function MarkdownAnswerCards({ markdown, highlightTerms = [], readingMode = fals
           formatted={formatForReading(section.content)}
           highlightTerms={highlightTerms}
           readingMode={readingMode}
+          match={section.kind === "source" && section.sourceNumber ? matches[section.sourceNumber - 1] : undefined}
+          onOpen={section.kind === "source" && section.sourceNumber && matches[section.sourceNumber - 1] && onOpenSource
+            ? () => onOpenSource(matches[section.sourceNumber! - 1], section.sourceNumber! - 1)
+            : undefined}
         />
       ))}
     </div>
   );
 }
 
-function AnswerSectionCard({ section, formatted, highlightTerms, readingMode = false }: { section: { kind: "answer" | "source"; sourceNumber?: number; title?: string; content: string }; formatted: string; highlightTerms: string[]; readingMode?: boolean }) {
+function AnswerSectionCard({ section, formatted, highlightTerms, readingMode = false, match, onOpen }: { section: { kind: "answer" | "source"; sourceNumber?: number; title?: string; content: string }; formatted: string; highlightTerms: string[]; readingMode?: boolean; match?: Match; onOpen?: () => void }) {
   const ref = useRef<HTMLDivElement | null>(null);
   useHighlight(ref, highlightTerms, [formatted, highlightTerms.join("|")]);
+  const clickable = section.kind === "source" && !!onOpen;
   return (
     <article
+      onClick={clickable ? onOpen : undefined}
+      role={clickable ? "button" : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onKeyDown={clickable ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen?.(); } } : undefined}
+      title={clickable ? "Abrir leitura completa da fonte" : undefined}
       className={cn(
         "rounded-3xl border overflow-hidden relative",
         section.kind === "source" ? "bg-[#f5f5f7] border-[#d2d2d7] p-7" : "bg-white border-[#d2d2d7]",
+        clickable && "cursor-pointer transition hover:border-[#0071e3] hover:shadow-apple focus:outline-none focus:ring-2 focus:ring-[#0071e3]/40",
         // Apple Fitness — blue lateral bar no card de resposta
         section.kind === "answer" && "before:content-[''] before:absolute before:left-0 before:top-6 before:bottom-6 before:w-[3px] before:rounded-r-full before:bg-[#0071e3]",
       )}
@@ -408,6 +419,13 @@ function AnswerSectionCard({ section, formatted, highlightTerms, readingMode = f
           {section.title && (
             <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1d1d1f]">
               {section.title}
+            </span>
+          )}
+          {match && (
+            <span className="text-[10px] uppercase tracking-wider text-[#0071e3] font-semibold ml-auto">
+              {match.source === "questoes"
+                ? `${match.exam ?? "Questões"} · Q${match.question_num ?? "?"} ›`
+                : `${match.discipline} · p.${match.page_start} ›`}
             </span>
           )}
         </div>
