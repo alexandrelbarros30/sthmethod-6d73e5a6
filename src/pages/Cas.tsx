@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Search, Loader2, FileDown, ArrowLeft, FileText, ListChecks, Lightbulb, HelpCircle, ShieldCheck, BookMarked, Paperclip, X as XIcon, Camera, GraduationCap, Check, ChevronRight, Sparkles, Command, History, Zap, BookOpen, GitCompare, ListOrdered, Scale, Clock, Quote, ArrowUpRight, CornerDownLeft, User as UserIcon, LogOut, IdCard } from "lucide-react";
+import { Search, Loader2, FileDown, ArrowLeft, FileText, ListChecks, Lightbulb, HelpCircle, ShieldCheck, BookMarked, Paperclip, X as XIcon, Camera, GraduationCap, Check, ChevronRight, Sparkles, Command, History, Zap, BookOpen, GitCompare, ListOrdered, Scale, Clock, Quote, ArrowUpRight, CornerDownLeft, User as UserIcon, LogOut, IdCard, Shield } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useNavigate, Link } from "react-router-dom";
@@ -91,6 +91,17 @@ function ProfileMenu() {
             <IdCard className="h-3.5 w-3.5 text-[#0071e3] mr-2" />
             <span className="flex-1">Meu cadastro</span>
           </DropdownMenuItem>
+          {user.is_admin && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <a href="/cas/admin" className="flex items-center w-full">
+                  <Shield className="h-3.5 w-3.5 text-emerald-600 mr-2" />
+                  <span className="flex-1">Painel administrativo</span>
+                </a>
+              </DropdownMenuItem>
+            </>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={handleLogout} className="cursor-pointer text-red-600 focus:text-red-700">
             <LogOut className="h-3.5 w-3.5 mr-2" />
