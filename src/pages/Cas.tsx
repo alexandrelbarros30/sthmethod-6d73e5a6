@@ -308,7 +308,7 @@ function useHighlight(ref: React.RefObject<HTMLElement>, terms: string[], deps: 
   }, deps);
 }
 
-function MarkdownAnswerCards({ markdown, highlightTerms = [] }: { markdown: string; highlightTerms?: string[] }) {
+function MarkdownAnswerCards({ markdown, highlightTerms = [], readingMode = false }: { markdown: string; highlightTerms?: string[]; readingMode?: boolean }) {
   const sections = splitAnswerIntoCards(markdown);
 
   const formatForReading = (text: string): string => {
@@ -368,20 +368,23 @@ function MarkdownAnswerCards({ markdown, highlightTerms = [] }: { markdown: stri
           section={section}
           formatted={formatForReading(section.content)}
           highlightTerms={highlightTerms}
+          readingMode={readingMode}
         />
       ))}
     </div>
   );
 }
 
-function AnswerSectionCard({ section, formatted, highlightTerms }: { section: { kind: "answer" | "source"; sourceNumber?: number; title?: string; content: string }; formatted: string; highlightTerms: string[] }) {
+function AnswerSectionCard({ section, formatted, highlightTerms, readingMode = false }: { section: { kind: "answer" | "source"; sourceNumber?: number; title?: string; content: string }; formatted: string; highlightTerms: string[]; readingMode?: boolean }) {
   const ref = useRef<HTMLDivElement | null>(null);
   useHighlight(ref, highlightTerms, [formatted, highlightTerms.join("|")]);
   return (
     <article
       className={cn(
-        "rounded-3xl border overflow-hidden",
+        "rounded-3xl border overflow-hidden relative",
         section.kind === "source" ? "bg-[#f5f5f7] border-[#d2d2d7] p-7" : "bg-white border-[#d2d2d7]",
+        // Apple Fitness — blue lateral bar no card de resposta
+        section.kind === "answer" && "before:content-[''] before:absolute before:left-0 before:top-6 before:bottom-6 before:w-[3px] before:rounded-r-full before:bg-[#0071e3]",
       )}
     >
       {section.kind === "source" && (
@@ -400,10 +403,14 @@ function AnswerSectionCard({ section, formatted, highlightTerms }: { section: { 
         ref={ref}
         className="prose prose-neutral max-w-none text-[#1d1d1f] prose-headings:font-semibold prose-strong:text-[#1d1d1f] prose-p:text-left prose-p:my-0 prose-p:mb-4 prose-li:my-2 prose-headings:mt-6 prose-headings:mb-3 prose-h3:text-[13pt] prose-h3:uppercase prose-h3:tracking-wide"
         style={{
-          fontFamily: '"Times New Roman", Times, serif',
-          fontSize: "12pt",
-          lineHeight: 1.6,
-          padding: "2rem 2.5rem",
+          fontFamily: readingMode
+            ? '"New York", "Iowan Old Style", "Charter", "Times New Roman", serif'
+            : '"Times New Roman", Times, serif',
+          fontSize: readingMode ? "14pt" : "12pt",
+          lineHeight: readingMode ? 1.85 : 1.6,
+          padding: readingMode ? "2.5rem 3rem" : "2rem 2.5rem",
+          maxWidth: readingMode ? "68ch" : undefined,
+          margin: readingMode ? "0 auto" : undefined,
           textAlign: "left",
         }}
       >
@@ -582,6 +589,28 @@ export default function Cas() {
             <ProfileMenu />
           </div>
         </div>
+        {/* Breadcrumb persistente — MEAD › CAS › Modo */}
+        <div className="max-w-6xl mx-auto px-6 pb-2 -mt-1">
+          <nav aria-label="Trilha de navegação" className="flex items-center gap-1.5 text-[11px] text-[#86868b] font-medium">
+            <span className="text-[#1d1d1f]/70">MEAD</span>
+            <span className="text-[#d2d2d7]">/</span>
+            <span className="text-[#1d1d1f]/70">CAS</span>
+            <span className="text-[#d2d2d7]">/</span>
+            <span className="text-[#1d1d1f] font-semibold uppercase tracking-[0.18em]">
+              {mode === "search" ? "Pesquisar" : mode === "book" ? (selectedDisc ?? "Disciplinas") : mode === "simulado" ? "Simulado" : "Estudar"}
+            </span>
+            {mode === "book" && selectedDisc && (
+              <>
+                <button
+                  onClick={() => setSelectedDisc(null)}
+                  className="ml-2 text-[10px] uppercase tracking-wider text-[#0071e3] hover:underline"
+                >
+                  ← voltar
+                </button>
+              </>
+            )}
+          </nav>
+        </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-10">
@@ -632,6 +661,12 @@ function SearchPanel(props: {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [tab, setTab] = useState<"direta" | "aprofundar" | "pontos" | "conceitos" | "fontes">("direta");
+  const [readingMode, setReadingMode] = useState<boolean>(() => {
+    try { return localStorage.getItem("cas:reading-mode") === "1"; } catch { return false; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("cas:reading-mode", readingMode ? "1" : "0"); } catch {}
+  }, [readingMode]);
   const { user: casUser } = useCasAuth();
   const [recent, setRecent] = useState<string[]>([]);
   const [history, setHistory] = useState<{ id: string; query: string; discipline: string | null; has_answer: boolean; created_at: string }[]>([]);
@@ -1038,7 +1073,7 @@ function SearchPanel(props: {
           )}
 
           {/* Tabs */}
-          <div className="sticky top-[57px] z-10 -mx-2 px-2 py-2 bg-white/85 backdrop-blur-xl rounded-2xl border border-[#d2d2d7]">
+          <div className="sticky top-[80px] z-10 -mx-2 px-2 py-2 bg-white/85 backdrop-blur-xl rounded-2xl border border-[#d2d2d7]">
             <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
               {([
                 { k: "direta", label: "Aprofundamento", icon: <BookOpen className="h-3.5 w-3.5" /> },
@@ -1060,6 +1095,19 @@ function SearchPanel(props: {
                   ) : null}
                 </button>
               ))}
+              <button
+                onClick={() => setReadingMode((v) => !v)}
+                title={readingMode ? "Sair do modo leitura (Apple Books)" : "Ativar modo leitura (Apple Books)"}
+                className={cn(
+                  "ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-medium whitespace-nowrap transition border",
+                  readingMode
+                    ? "bg-[#1d1d1f] text-white border-[#1d1d1f]"
+                    : "text-[#6e6e73] border-[#d2d2d7] hover:text-[#1d1d1f] hover:border-[#1d1d1f]",
+                )}
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                Leitura
+              </button>
             </div>
           </div>
 
@@ -1068,6 +1116,7 @@ function SearchPanel(props: {
               <MarkdownAnswerCards
                 markdown={structured?.resposta_completa ?? answer ?? ""}
                 highlightTerms={extractHighlightTerms(query)}
+                readingMode={readingMode}
               />
               <p className="text-[11px] text-[#86868b] italic px-2 pt-2">
                 Esta consulta é um apoio de estudo e <strong className="not-italic font-semibold text-[#1d1d1f]">não substitui a leitura integral das apostilas</strong>.
@@ -1141,8 +1190,15 @@ function SearchPanel(props: {
                             : `p.${m.page_start}${m.page_end !== m.page_start ? `–${m.page_end}` : ""}`}
                         </span>
                       </div>
-                      <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-[#0071e3] opacity-70 group-hover:opacity-100">
-                        Abrir apostila <ArrowUpRight className="h-3.5 w-3.5" />
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] font-semibold px-2.5 py-1 rounded-full transition",
+                          isQuiz
+                            ? "bg-amber-900 text-white group-hover:bg-amber-950"
+                            : "bg-[#1d1d1f] text-white group-hover:bg-black",
+                        )}
+                      >
+                        Abrir PDF <ArrowUpRight className="h-3 w-3" />
                       </span>
                     </div>
                     {isQuiz && m.statement ? (
