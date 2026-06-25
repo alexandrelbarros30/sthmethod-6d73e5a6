@@ -1,0 +1,17 @@
+{
+  "id": "/mead",
+  "name": "MEAD · Assistente de Aprendizagem",
+  "short_name": "MEAD",
+  "description": "MEAD — núcleo de consulta inteligente para estudo do CAS.",
+  "start_url": "/mead?pwa=1",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5f5f7",
+  "theme_color": "#f5f5f7",
+  "icons": [
+    { "src": "/__l5e/assets-v1/0c5a2aa3-bb25-4d3b-9291-d4d337cccf15/mead-logo.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/__l5e/assets-v1/0c5a2aa3-bb25-4d3b-9291-d4d337cccf15/mead-logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/__l5e/assets-v1/0c5a2aa3-bb25-4d3b-9291-d4d337cccf15/mead-logo.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

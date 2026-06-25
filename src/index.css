@@ -1218,3 +1218,7 @@ html, body {
 
 .ProseMirror:focus { outline: none; }
 .ProseMirror { min-height: 180px; }
+
+/* Hide scrollbars on horizontal tab rows (mobile MEAD) */
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
