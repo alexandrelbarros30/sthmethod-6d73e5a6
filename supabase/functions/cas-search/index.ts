@@ -509,6 +509,20 @@ async function hybridSearch(supabase: any, q: string, discipline: string | null,
     if (/\b(e o|e a|sao os|sao as)\b.{0,40}\b(ato|processo|conjunto|estado|crime|princ(i|í)pio|direito|dever|institui(c|ç)ao)\b/.test(c)) b += 60;
     if (/\b(art\.?\s*\d+|lei\s+n[ºo]?\s*\d+|inciso|caput|par(a|á)grafo)\b/.test(c)) b += 40;
     if (looksLikeQuestionBank(row.content)) b -= 120;
+    // Boost forte quando o chunk contém a FRASE EXATA da consulta logo após um marcador
+    // de definição (ex.: "conceito de dignidade da pessoa humana", "definição de tortura").
+    const phrase = stripAccents(String(q || '').toLowerCase()).replace(/[^\p{L}\p{N}\s-]/gu, ' ').replace(/\s+/g, ' ').trim();
+    if (phrase) {
+      const escPhrase = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+      try {
+        const reDefOf = new RegExp(`\\b(conceito|significado|defini[cç]ao|no[cç]ao|ideia|principio|fundamento)\\s+(de|da|do|das|dos)\\s+${escPhrase}\\b`);
+        if (reDefOf.test(c)) b += 500;
+        const rePhraseIs = new RegExp(`\\b${escPhrase}\\b\\s*(e|sao|consiste|constitui|caracteriza|significa|trata-se|define-se|denomina-se|chama-se)\\b`);
+        if (rePhraseIs.test(c)) b += 280;
+        const rePhrase = new RegExp(`\\b${escPhrase}\\b`);
+        if (rePhrase.test(c)) b += 120; // contém a frase literal
+      } catch (_e) { /* regex fail-safe */ }
+    }
     return b;
   };
   const sorted = Array.from(seen.values()).sort((a, b) => {
