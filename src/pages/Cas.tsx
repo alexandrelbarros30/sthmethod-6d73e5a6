@@ -1132,8 +1132,40 @@ function SearchPanel(props: {
             <div className="flex items-center gap-2 mb-4">
               <History className="h-4 w-4 text-[#1d1d1f]" />
               <div className="text-[11px] uppercase tracking-[0.18em] font-semibold text-[#1d1d1f]">Suas últimas buscas</div>
+              {casUser && history.length > 0 && (
+                <button
+                  onClick={async () => { if (confirm("Limpar histórico de consultas?")) { await casAuthApi.historyClear(); setHistory([]); } }}
+                  className="ml-auto text-[10px] uppercase tracking-wider text-[#86868b] hover:text-[#1d1d1f]"
+                >Limpar</button>
+              )}
             </div>
-            {recent.length === 0 ? (
+            {casUser ? (
+              historyLoading ? (
+                <p className="text-[13px] text-[#86868b] py-2">Carregando histórico…</p>
+              ) : history.length === 0 ? (
+                <p className="text-[13px] text-[#86868b] py-2">Você ainda não fez consultas. Pergunte algo e seu histórico aparecerá aqui.</p>
+              ) : (
+                <ul className="space-y-1 max-h-[260px] overflow-y-auto pr-1">
+                  {history.map((h) => (
+                    <li key={h.id}>
+                      <button
+                        onClick={() => { setQuery(h.query); inputRef.current?.focus(); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                        className="w-full text-left py-2 px-3 rounded-xl text-[13px] text-[#1d1d1f] hover:bg-[#f5f5f7] transition flex items-start gap-2"
+                      >
+                        <Search className="h-3.5 w-3.5 text-[#86868b] mt-0.5 shrink-0" />
+                        <span className="flex-1 min-w-0">
+                          <span className="block truncate">{h.query}</span>
+                          <span className="block text-[10px] text-[#86868b] mt-0.5 uppercase tracking-wider">
+                            {new Date(h.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                            {h.discipline ? ` · ${h.discipline}` : ""}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )
+            ) : recent.length === 0 ? (
               <p className="text-[13px] text-[#86868b] py-2">Suas perguntas recentes aparecem aqui para revisão rápida.</p>
             ) : (
               <ul className="space-y-1">
