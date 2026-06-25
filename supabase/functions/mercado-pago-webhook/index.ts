@@ -112,6 +112,191 @@ function isPaymentNotification(body: any): boolean {
     || body?.topic === "payment";
 }
 
+function isPreapprovalNotification(body: any): boolean {
+  const t = body?.type || body?.topic || "";
+  const a = body?.action || "";
+  return t === "subscription_preapproval"
+    || t === "preapproval"
+    || t === "subscription_authorized_payment"
+    || t === "authorized_payment"
+    || a.startsWith("subscription_preapproval")
+    || a.startsWith("subscription_authorized_payment");
+}
+
+function extractResourceId(body: any): string | null {
+  if (body?.data?.id) return String(body.data.id);
+  if (body?.resource) {
+    const m = String(body.resource).match(/(\w+)(?:\/?$)/);
+    return m?.[1] ?? String(body.resource);
+  }
+  return null;
+}
+
+async function handleMpSubscriptionEvent(
+  supabase: any,
+  MP_ACCESS_TOKEN: string,
+  body: any,
+): Promise<Response | null> {
+  const t = body?.type || body?.topic || "";
+  const a = body?.action || "";
+  const isAuthorizedPayment = t.includes("authorized_payment") || a.includes("authorized_payment");
+  const isPreapprovalUpdate = !isAuthorizedPayment && (t.includes("preapproval") || a.includes("preapproval"));
+
+  const resourceId = extractResourceId(body);
+  if (!resourceId) return null;
+
+  let preapprovalId: string | null = null;
+  let chargeAmount = 0;
+  let chargeStatus = "";
+
+  if (isAuthorizedPayment) {
+    const r = await fetch(`https://api.mercadopago.com/authorized_payments/${resourceId}`, {
+      headers: { Authorization: `Bearer ${MP_ACCESS_TOKEN}` },
+    });
+    const ap = await r.json();
+    if (!r.ok) {
+      console.error("MP authorized_payment fetch failed", r.status, ap);
+      return new Response(JSON.stringify({ received: true, note: "authorized_payment fetch failed" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    preapprovalId = ap?.preapproval_id ? String(ap.preapproval_id) : null;
+    chargeAmount = Number(ap?.transaction_amount || 0);
+    chargeStatus = String(ap?.status || "");
+  } else if (isPreapprovalUpdate) {
+    preapprovalId = resourceId;
+  }
+
+  if (!preapprovalId) return null;
+
+  const { data: sub } = await supabase
+    .from("mp_subscriptions")
+    .select("*, plans(*)")
+    .eq("mp_preapproval_id", preapprovalId)
+    .maybeSingle();
+
+  if (!sub) {
+    console.warn("mp_subscriptions not found for preapproval", preapprovalId);
+    return new Response(JSON.stringify({ received: true, note: "mp_subscription not found" }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+
+  // Preapproval status update (authorized / cancelled / paused).
+  if (isPreapprovalUpdate) {
+    const r = await fetch(`https://api.mercadopago.com/preapproval/${preapprovalId}`, {
+      headers: { Authorization: `Bearer ${MP_ACCESS_TOKEN}` },
+    });
+    const pa = await r.json();
+    if (r.ok && pa?.status) {
+      await supabase.from("mp_subscriptions").update({
+        status: pa.status,
+        next_payment_date: pa.next_payment_date || sub.next_payment_date,
+      }).eq("id", sub.id);
+    }
+    return new Response(JSON.stringify({ received: true, preapproval_status: pa?.status }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+
+  // authorized_payment: só processa quando aprovado.
+  if (chargeStatus !== "approved" && chargeStatus !== "accredited") {
+    return new Response(JSON.stringify({ received: true, charge_status: chargeStatus }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+
+  const newChargesDone = sub.charges_done + 1;
+  const newTotal = Number(sub.total_amount_paid) + chargeAmount;
+
+  await supabase.from("mp_subscriptions").update({
+    charges_done: newChargesDone,
+    total_amount_paid: newTotal,
+  }).eq("id", sub.id);
+
+  // Insere histórico em payments para recibo/painel admin.
+  try {
+    await supabase.from("payments").insert({
+      user_id: sub.user_id,
+      plan_id: sub.plan_id,
+      amount: chargeAmount,
+      original_amount: chargeAmount,
+      method: "credit",
+      action_type: newChargesDone === 1 ? "new" : "subscription",
+      status: "approved",
+      installments: 1,
+    });
+  } catch (e) {
+    console.error("[mp-sub] payments insert failed", e);
+  }
+
+  // Na 1ª cobrança aprovada → ativa a assinatura de 180 dias.
+  if (newChargesDone === 1) {
+    await activateSubscriptionForPayment(supabase, {
+      user_id: sub.user_id,
+      plan_id: sub.plan_id,
+      plans: sub.plans,
+    });
+    try {
+      await supabase.from("profiles")
+        .update({ onboarding_complete: true })
+        .eq("user_id", sub.user_id)
+        .eq("onboarding_complete", false);
+    } catch {}
+  }
+
+  // Transição Fase 1 → Fase 2 após 2 cobranças.
+  if (sub.phase === 1 && newChargesDone >= sub.phase1_charges) {
+    const phase2End = new Date();
+    phase2End.setDate(phase2End.getDate() + (30 * sub.phase2_charges + 5));
+    const upd = await fetch(`https://api.mercadopago.com/preapproval/${preapprovalId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${MP_ACCESS_TOKEN}`,
+      },
+      body: JSON.stringify({
+        reason: `${sub.plans?.name || "Plano"} — Fase 2 (4× R$ ${Number(sub.phase2_amount).toFixed(2)})`,
+        auto_recurring: {
+          frequency: 1,
+          frequency_type: "months",
+          transaction_amount: Number(sub.phase2_amount),
+          currency_id: "BRL",
+          end_date: phase2End.toISOString(),
+        },
+      }),
+    });
+    const updJson = await upd.json().catch(() => ({}));
+    if (!upd.ok) {
+      console.error("[mp-sub] phase2 PUT failed", upd.status, updJson);
+    } else {
+      await supabase.from("mp_subscriptions").update({
+        phase: 2,
+        end_date: phase2End.toISOString(),
+      }).eq("id", sub.id);
+      console.log("[mp-sub] advanced to phase 2", sub.id);
+    }
+  }
+
+  // Encerramento ao concluir Fase 2.
+  if (sub.phase === 2 && newChargesDone >= (sub.phase1_charges + sub.phase2_charges)) {
+    await fetch(`https://api.mercadopago.com/preapproval/${preapprovalId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${MP_ACCESS_TOKEN}`,
+      },
+      body: JSON.stringify({ status: "cancelled" }),
+    }).catch((e) => console.error("[mp-sub] cancel failed", e));
+    await supabase.from("mp_subscriptions").update({
+      status: "finished",
+    }).eq("id", sub.id);
+  }
+
+  return new Response(JSON.stringify({
+    received: true,
+    mp_subscription_id: sub.id,
+    charges_done: newChargesDone,
+    phase: sub.phase,
+  }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+}
+
 function renderTemplate(content: string, ctx: Record<string, any>): string {
   const firstName = (ctx.full_name as string | undefined)?.split(" ")[0] || "Aluno";
   let msg = content;
@@ -379,6 +564,12 @@ serve(async (req) => {
     const rawBody = await req.text();
     const body = JSON.parse(rawBody);
     console.log("Webhook received:", rawBody);
+
+    // Eventos de assinatura escalonada (Projeto Verão 180 etc.)
+    if (isPreapprovalNotification(body)) {
+      const handled = await handleMpSubscriptionEvent(supabase, MP_ACCESS_TOKEN, body);
+      if (handled) return handled;
+    }
 
     // MP sends different notification types
     if (!isPaymentNotification(body)) {
