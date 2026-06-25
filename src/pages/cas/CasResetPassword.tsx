@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { casAuthApi } from "@/lib/casAuthClient";
 import CasShell, { fieldCls, labelCls, btnPrimaryCls, linkCls } from "@/components/cas/CasShell";
+import PasswordField from "@/components/cas/PasswordField";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
