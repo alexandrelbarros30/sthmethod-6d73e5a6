@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useCasAuth } from "@/contexts/CasAuthContext";
 import CasShell, { fieldCls, labelCls, btnPrimaryCls, linkCls } from "@/components/cas/CasShell";
+import PasswordField from "@/components/cas/PasswordField";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -36,7 +37,7 @@ export default function CasLogin() {
         </div>
         <div>
           <label className={labelCls}>Senha</label>
-          <input type="password" required autoComplete="current-password" className={fieldCls}
+          <PasswordField required autoComplete="current-password"
             value={password} onChange={(e) => setPassword(e.target.value)} />
           <div className="mt-2 text-right">
             <Link to="/cas/esqueci-senha" className={`text-[13px] ${linkCls}`}>Esqueci minha senha</Link>

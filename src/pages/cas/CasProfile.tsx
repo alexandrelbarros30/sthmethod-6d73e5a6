@@ -93,16 +93,16 @@ export default function CasProfile() {
       <form onSubmit={savePassword} className="space-y-4">
         <div>
           <label className={labelCls}>Senha atual</label>
-          <input type="password" required className={fieldCls} value={pwd.current} onChange={(e) => setPwd({ ...pwd, current: e.target.value })} />
+          <PasswordField required value={pwd.current} onChange={(e) => setPwd({ ...pwd, current: e.target.value })} />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className={labelCls}>Nova senha</label>
-            <input type="password" required minLength={8} className={fieldCls} value={pwd.next} onChange={(e) => setPwd({ ...pwd, next: e.target.value })} />
+            <PasswordField required minLength={8} value={pwd.next} onChange={(e) => setPwd({ ...pwd, next: e.target.value })} />
           </div>
           <div>
             <label className={labelCls}>Confirmar</label>
-            <input type="password" required minLength={8} className={fieldCls} value={pwd.confirm} onChange={(e) => setPwd({ ...pwd, confirm: e.target.value })} />
+            <PasswordField required minLength={8} value={pwd.confirm} onChange={(e) => setPwd({ ...pwd, confirm: e.target.value })} />
           </div>
         </div>
         <button disabled={savingPwd} className={btnPrimaryCls}>
