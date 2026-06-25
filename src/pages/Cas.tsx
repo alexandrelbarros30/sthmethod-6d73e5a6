@@ -770,13 +770,7 @@ function SearchPanel(props: {
             <div className="space-y-1">
               <p className="text-[13px] font-semibold">{statusNotice.title}</p>
               <p className="text-[12px] leading-relaxed opacity-85">{statusNotice.text}</p>
-              {searchMeta && (
-                <div className="flex flex-wrap gap-1.5 pt-1 text-[10px] font-mono uppercase tracking-wider opacity-75">
-                  {searchMeta.status && <span>status:{searchMeta.status}</span>}
-                  {typeof searchMeta.externalStatus === "number" && <span>externo:{searchMeta.externalStatus}</span>}
-                  {searchMeta.fallbackUsed && <span>fallback:{searchMeta.fallbackProvider || "ativo"}</span>}
-                </div>
-              )}
+              {/* metadados técnicos ocultos do usuário final */}
             </div>
           </div>
         </div>
