@@ -19,9 +19,20 @@ export default function CasShell({ title, subtitle, children, footer }: {
         </div>
       </header>
       <main className="max-w-md mx-auto px-6 py-12">
-        <div className="mb-8">
-          <h1 className="text-[28px] font-semibold tracking-tight leading-tight">{title}</h1>
-          {subtitle && <p className="mt-2 text-[15px] text-[#6e6e73]">{subtitle}</p>}
+        <div className="mb-10 flex flex-col items-center text-center">
+          <div className="relative mb-6">
+            <div className="absolute inset-0 -m-8 rounded-full bg-gradient-to-b from-white to-[#e8e8ed] blur-2xl opacity-70" aria-hidden />
+            <img
+              src={meadLogo.url}
+              alt="MEAD · Assistente de Aprendizagem"
+              className="relative h-24 w-auto object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
+            />
+          </div>
+          <div className="text-[10px] tracking-[0.32em] font-semibold text-[#86868b] uppercase mb-3">
+            MEAD · Assistente de Aprendizagem
+          </div>
+          <h1 className="text-[32px] font-semibold tracking-tight leading-tight">{title}</h1>
+          {subtitle && <p className="mt-2 text-[15px] text-[#6e6e73] max-w-sm">{subtitle}</p>}
         </div>
         <div className="rounded-2xl bg-white border border-[#e6e6e8] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
           {children}
