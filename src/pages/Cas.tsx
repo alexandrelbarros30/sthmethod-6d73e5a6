@@ -599,13 +599,6 @@ function SearchPanel(props: {
         text: "O sistema está pesquisando a apostila, sintetizando a resposta e validando as fontes.",
       };
     }
-    if (searchState === "quota_exhausted" || searchState === "fallback_active" || searchState === "no_response") {
-      return {
-        tone: "amber",
-        title: "Resposta parcial",
-        text: "Apresentamos abaixo o conteúdo mais próximo do correto encontrado na apostila. Reformule a pergunta para refinar o resultado.",
-      };
-    }
     return null;
   })();
 
