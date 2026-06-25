@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import meadLogo from "@/assets/mead-logo.jpeg.asset.json";
+import meadLogo from "@/assets/mead-logo.png.asset.json";
 
 export default function CasShell({ title, subtitle, children, footer }: {
   title: string;

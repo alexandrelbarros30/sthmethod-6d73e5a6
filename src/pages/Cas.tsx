@@ -13,7 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { cn } from "@/lib/utils";
 import { useCasAuth } from "@/contexts/CasAuthContext";
 import { casAuthApi } from "@/lib/casAuthClient";
-import meadLogo from "@/assets/mead-logo.jpeg.asset.json";
+import meadLogo from "@/assets/mead-logo.png.asset.json";
 
 function PdfsMenu() {
   return (
