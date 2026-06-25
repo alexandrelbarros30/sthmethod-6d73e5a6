@@ -1190,8 +1190,15 @@ function SearchPanel(props: {
                             : `p.${m.page_start}${m.page_end !== m.page_start ? `–${m.page_end}` : ""}`}
                         </span>
                       </div>
-                      <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-[#0071e3] opacity-70 group-hover:opacity-100">
-                        Abrir apostila <ArrowUpRight className="h-3.5 w-3.5" />
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] font-semibold px-2.5 py-1 rounded-full transition",
+                          isQuiz
+                            ? "bg-amber-900 text-white group-hover:bg-amber-950"
+                            : "bg-[#1d1d1f] text-white group-hover:bg-black",
+                        )}
+                      >
+                        Abrir PDF <ArrowUpRight className="h-3 w-3" />
                       </span>
                     </div>
                     {isQuiz && m.statement ? (
