@@ -5,6 +5,7 @@ const PUBLIC_PREFIXES = [
   "/login", "/forgot-password", "/reset-password", "/cadastro",
   "/questionario", "/install", "/como-funciona", "/free",
   "/tendencias", "/promo", "/evolucao", "/fila",
+  "/cas", "/mead",
 ];
 
 const isPublicPath = (p: string) => {

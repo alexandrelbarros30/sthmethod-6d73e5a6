@@ -23,6 +23,7 @@ const PUBLIC_PREFIXES = [
   "/evolucao",
   "/fila",
   "/cas",
+  "/mead",
 ];
 
 const isPublic = (pathname: string) => {
