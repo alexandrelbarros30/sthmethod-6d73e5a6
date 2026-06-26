@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,27 @@ const STEPS = [
   { id: 4, label: "Confirmar", icon: ClipboardCheck },
 ] as const;
 
+const emptyMeasurements = { waist: "", hip: "", chest: "", arm: "", thigh: "", calf: "" };
+
+const hasDraftContent = (draft: {
+  weight: string;
+  notes: string;
+  studentMessage: string;
+  measurements: typeof emptyMeasurements;
+  activityChange: ActivityData | null;
+  imagesSaved: boolean;
+  step: number;
+}) =>
+  Boolean(
+    draft.weight ||
+      draft.notes.trim() ||
+      draft.studentMessage.trim() ||
+      Object.values(draft.measurements).some((v) => v.trim()) ||
+      draft.activityChange ||
+      draft.imagesSaved ||
+      draft.step > 1
+  );
+
 const StudentEvolution = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -41,17 +62,59 @@ const StudentEvolution = () => {
     arm: string;
     thigh: string;
     calf: string;
-  }>({ waist: "", hip: "", chest: "", arm: "", thigh: "", calf: "" });
+  }>(emptyMeasurements);
   const [saving, setSaving] = useState(false);
   const [imagesSaved, setImagesSaved] = useState(false);
   const [activityChange, setActivityChange] = useState<ActivityData | null>(null);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [draftReady, setDraftReady] = useState(false);
+  const draftKey = user?.id ? `sth:evolution-draft:v2:${user.id}` : null;
+  const imageDraftKey = user?.id ? `sth:evolution-images:v2:${user.id}` : undefined;
   const hasMeasurements = Object.values(measurements).some((v) => v.trim() !== "");
   const canSubmitUpdate = Boolean(
     weight || activityChange || imagesSaved || notes.trim() || studentMessage.trim() || hasMeasurements
   );
 
   const { data: status } = useEvolutionStatus();
+
+  useEffect(() => {
+    if (!draftKey) return;
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (raw) {
+        const draft = JSON.parse(raw);
+        setWeight(draft.weight || "");
+        setNotes(draft.notes || "");
+        setStudentMessage(draft.studentMessage || "");
+        setMeasurements({ ...emptyMeasurements, ...(draft.measurements || {}) });
+        setActivityChange(draft.activityChange || null);
+        setImagesSaved(Boolean(draft.imagesSaved));
+        if ([1, 2, 3, 4].includes(Number(draft.step))) setStep(Number(draft.step) as 1 | 2 | 3 | 4);
+        if (hasDraftContent({
+          weight: draft.weight || "",
+          notes: draft.notes || "",
+          studentMessage: draft.studentMessage || "",
+          measurements: { ...emptyMeasurements, ...(draft.measurements || {}) },
+          activityChange: draft.activityChange || null,
+          imagesSaved: Boolean(draft.imagesSaved),
+          step: Number(draft.step) || 1,
+        })) {
+          toast.info("Rascunho da evolução restaurado.");
+        }
+      }
+    } catch (err) {
+      console.warn("[evolution-draft] restore failed", err);
+    } finally {
+      setDraftReady(true);
+    }
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (!draftKey || !draftReady) return;
+    const draft = { weight, notes, studentMessage, measurements, activityChange, imagesSaved, step, updatedAt: new Date().toISOString() };
+    if (hasDraftContent(draft)) localStorage.setItem(draftKey, JSON.stringify(draft));
+    else localStorage.removeItem(draftKey);
+  }, [draftKey, draftReady, weight, notes, studentMessage, measurements, activityChange, imagesSaved, step]);
 
   const { data: fullProfile } = useQuery({
     queryKey: ["student-profile-evo", user?.id],
@@ -309,10 +372,11 @@ const StudentEvolution = () => {
       }
 
       toast.success("Evolução registrada com sucesso! Macros atualizados.");
+      if (draftKey) localStorage.removeItem(draftKey);
       setWeight("");
       setNotes("");
       setStudentMessage("");
-      setMeasurements({ waist: "", hip: "", chest: "", arm: "", thigh: "", calf: "" });
+      setMeasurements(emptyMeasurements);
       setImagesSaved(false);
       setActivityChange(null);
       qc.invalidateQueries({ queryKey: ["student-weight-logs"] });
@@ -405,6 +469,7 @@ const StudentEvolution = () => {
           <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground">
             Etapa {step} de {STEPS.length}
           </p>
+          <p className="text-[11px] text-muted-foreground mt-1">Salvo automaticamente neste aparelho.</p>
           <h2 className="text-[22px] font-semibold text-foreground tracking-[-0.03em] leading-tight mt-1.5 flex items-center gap-2">
             <currentStep.icon className="w-5 h-5" strokeWidth={1.8} />
             {currentStep.label}
@@ -505,6 +570,7 @@ const StudentEvolution = () => {
               existingImages={currentImages || []}
               canDeleteExisting={false}
               required={false}
+              draftKey={imageDraftKey}
               onComplete={() => {
                 setImagesSaved(true);
                 refetchImages();
@@ -526,7 +592,7 @@ const StudentEvolution = () => {
 
         {/* STEP 3 — ROTINA */}
         {step === 3 && fullProfile && (
-          <EvolutionActivityChange profile={fullProfile} onChange={setActivityChange} />
+          <EvolutionActivityChange profile={fullProfile} value={activityChange} onChange={setActivityChange} />
         )}
 
         {/* STEP 4 — CONFIRMAÇÃO */}

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { processAndUpload, validateImageFile } from "@/lib/image-upload";
 import SignedImage from "@/components/shared/SignedImage";
 import { notifyStudentSelfUpdate } from "@/lib/notify-student-self-update";
+import { clearFileDrafts, loadFileDrafts, saveFileDrafts } from "@/lib/file-draft-storage";
 
 interface BodyImageUploadProps {
   userId: string;
@@ -15,6 +16,7 @@ interface BodyImageUploadProps {
   onComplete: () => void;
   required?: boolean;
   canDeleteExisting?: boolean;
+  draftKey?: string;
 }
 
 const IMAGE_TYPES = [
@@ -23,7 +25,7 @@ const IMAGE_TYPES = [
   { key: "profile", label: "Lado", icon: "👤" },
 ] as const;
 
-const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = false, canDeleteExisting = true }: BodyImageUploadProps) => {
+const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = false, canDeleteExisting = true, draftKey }: BodyImageUploadProps) => {
   const [images, setImages] = useState<Record<string, { file?: File; preview?: string; url?: string; storagePath?: string | null }>>(() => {
     const initial: Record<string, any> = {};
     IMAGE_TYPES.forEach(({ key }) => {
@@ -33,7 +35,54 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
     return initial;
   });
   const [uploading, setUploading] = useState(false);
+  const [draftReady, setDraftReady] = useState(!draftKey);
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!draftKey) {
+      setDraftReady(true);
+      return;
+    }
+
+    setDraftReady(false);
+    loadFileDrafts(draftKey)
+      .then((files) => {
+        if (cancelled) return;
+        const restored = Object.entries(files).reduce<Record<string, { file: File; preview: string }>>((acc, [type, file]) => {
+          acc[type] = { file, preview: URL.createObjectURL(file) };
+          return acc;
+        }, {});
+        if (Object.keys(restored).length > 0) {
+          setImages((prev) => ({ ...prev, ...restored }));
+        }
+      })
+      .catch((err) => console.warn("[body-upload-draft] restore failed", err))
+      .finally(() => {
+        if (!cancelled) setDraftReady(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (!draftKey || !draftReady) return;
+    const files = Object.fromEntries(
+      IMAGE_TYPES.flatMap(({ key }) => (images[key]?.file ? [[key, images[key].file as File]] : []))
+    );
+    saveFileDrafts(draftKey, files).catch((err) => console.warn("[body-upload-draft] save failed", err));
+  }, [draftKey, draftReady, images]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(images).forEach((img) => {
+        if (img?.preview) URL.revokeObjectURL(img.preview);
+      });
+    };
+  }, []);
 
   const handleFileSelect = (type: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -80,6 +129,7 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
     try {
       // Upload new images WITHOUT deleting previous ones
       // Old images are sempre preservadas no histórico
+      const uploadedImages: Record<string, { url: string; storagePath: string | null }> = {};
       for (const { key } of IMAGE_TYPES) {
         const img = images[key];
         if (img?.file) {
@@ -90,6 +140,7 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
           toast.info(`Enviando imagem: ${key}...`);
           const path = `${userId}/${key}_${Date.now()}.jpg`;
           const publicUrl = await processAndUpload(img.file, "body-images", path);
+          uploadedImages[key] = { url: publicUrl, storagePath: path };
 
           const { error } = await supabase.from("body_images").insert({
             user_id: userId,
@@ -103,6 +154,15 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
         // Existing images that weren't replaced keep their is_current status
       }
 
+      if (draftKey) await clearFileDrafts(draftKey);
+      setImages((prev) => {
+        const next = { ...prev };
+        Object.entries(uploadedImages).forEach(([key, uploaded]) => {
+          if (next[key]?.preview) URL.revokeObjectURL(next[key].preview!);
+          next[key] = { url: uploaded.url, storagePath: uploaded.storagePath };
+        });
+        return next;
+      });
       toast.success("Imagens salvas! As anteriores foram preservadas no histórico.");
       void notifyStudentSelfUpdate(userId, "photos");
       onComplete();
