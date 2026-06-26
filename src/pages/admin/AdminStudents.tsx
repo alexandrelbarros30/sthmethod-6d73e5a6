@@ -1787,6 +1787,9 @@ const AdminStudents = () => {
                     phone={(selected as any).phone}
                   />
                 )}
+                {selected.user_id && (
+                  <EvolutionArtsGallery userId={selected.user_id} studentName={selected.full_name} />
+                )}
               </div>
             </ScrollArea>
           )}
