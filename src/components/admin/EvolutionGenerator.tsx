@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ImagePlus, Download, Loader2, ZoomIn, RotateCcw, Move, Link2, Crop, EyeOff, X, Send } from "lucide-react";
+import { ImagePlus, Download, Loader2, ZoomIn, RotateCcw, Move, Link2, Crop, EyeOff, X, Send, Database } from "lucide-react";
 import evolutionFrame from "@/assets/evolution-frame.png";
 import { getSecureFileUrl, extractStoragePath } from "@/lib/secure-file-url";
 import { supabase } from "@/integrations/supabase/client";
