@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ImagePlus, Download, Loader2, ZoomIn, RotateCcw, Move, Link2, Crop, EyeOff, X, Send } from "lucide-react";
+import { ImagePlus, Download, Loader2, ZoomIn, RotateCcw, Move, Link2, Crop, EyeOff, X, Send, Database } from "lucide-react";
 import evolutionFrame from "@/assets/evolution-frame.png";
 import { getSecureFileUrl, extractStoragePath } from "@/lib/secure-file-url";
 import { supabase } from "@/integrations/supabase/client";
@@ -168,6 +168,7 @@ const EvolutionGenerator = ({ allImages, studentName, userId, phone }: Evolution
   const [previews, setPreviews] = useState<string[]>([]);
   const [previewLabels, setPreviewLabels] = useState<ImageType[]>([]);
   const [sending, setSending] = useState(false);
+  const [archiving, setArchiving] = useState(false);
   const [transforms, setTransforms] = useState<TransformMap>({} as TransformMap);
   const [loadedImages, setLoadedImages] = useState<Partial<Record<TransformKey, HTMLImageElement>>>({});
   // Mantemos referência da imagem ORIGINAL (URL inicial) por posição, para que
@@ -548,6 +549,61 @@ const EvolutionGenerator = ({ allImages, studentName, userId, phone }: Evolution
       }
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleArchive = async () => {
+    if (previews.length === 0) {
+      toast.error("Gere a evolução primeiro.");
+      return;
+    }
+    if (!userId) {
+      toast.error("Aluno sem ID — não é possível arquivar.");
+      return;
+    }
+    setArchiving(true);
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const createdBy = auth?.user?.id || null;
+      const ts = Date.now();
+      let success = 0;
+      let failed = 0;
+      for (let i = 0; i < previews.length; i++) {
+        const dataUrl = previews[i];
+        const labelType = previewLabels[i] || IMAGE_TYPES[i] || `img_${i}`;
+        const path = `${userId}/${ts}_${labelType}.jpg`;
+        try {
+          const blob = dataUrlToBlob(dataUrl);
+          const { error: upErr } = await supabase.storage
+            .from("evolution-arts")
+            .upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+          if (upErr) throw upErr;
+          const { error: insErr } = await supabase.from("evolution_arts").insert({
+            user_id: userId,
+            student_name: studentName,
+            art_type: labelType,
+            storage_path: path,
+            before_date: oldDate || null,
+            after_date: newDate || null,
+            created_by: createdBy,
+          });
+          if (insErr) throw insErr;
+          success++;
+        } catch (err: any) {
+          console.warn("[EvolutionGenerator] archive failed", err);
+          failed++;
+        }
+      }
+      if (success > 0 && failed === 0) {
+        toast.success(`${success} arte(s) salva(s) no banco de evoluções.`);
+      } else if (success > 0) {
+        toast.message(`Arquivadas: ${success} • Falharam: ${failed}`);
+      } else {
+        toast.error("Não foi possível arquivar as artes.");
+      }
+      window.dispatchEvent(new CustomEvent("evolution-arts:changed", { detail: { userId } }));
+    } finally {
+      setArchiving(false);
     }
   };
 
@@ -1033,6 +1089,19 @@ const EvolutionGenerator = ({ allImages, studentName, userId, phone }: Evolution
               <div className="flex items-center gap-1.5">
                 <Button variant="outline" size="sm" onClick={handleDownloadAll}>
                   <Download className="w-3 h-3 mr-1" /> Baixar
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleArchive}
+                  disabled={archiving || !userId}
+                  title="Salvar as artes geradas no banco de evoluções deste aluno"
+                >
+                  {archiving ? (
+                    <><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Salvando...</>
+                  ) : (
+                    <><Database className="w-3 h-3 mr-1" /> Salvar no banco</>
+                  )}
                 </Button>
                 <Button
                   size="sm"

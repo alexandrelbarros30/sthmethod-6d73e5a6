@@ -33,6 +33,7 @@ import AnamnesisEntryItem from "@/components/shared/AnamnesisEntryItem";
 import EvolutionComparison from "@/components/shared/EvolutionComparison";
 import EvolutionUpdateHistory from "@/components/shared/EvolutionUpdateHistory";
 import EvolutionGenerator from "@/components/admin/EvolutionGenerator";
+import EvolutionArtsGallery from "@/components/admin/EvolutionArtsGallery";
 import AdminEvolutionUpdate from "@/components/admin/AdminEvolutionUpdate";
 import ExcelJS from "exceljs";
 import AdminBioimpedance from "@/components/admin/AdminBioimpedance";
@@ -1786,6 +1787,9 @@ const AdminStudents = () => {
                     phone={(selected as any).phone}
                   />
                 )}
+                {selected.user_id && (
+                  <EvolutionArtsGallery userId={selected.user_id} studentName={selected.full_name} />
+                )}
               </div>
             </ScrollArea>
           )}
@@ -1859,6 +1863,9 @@ const AdminStudents = () => {
                     userId={selected.user_id}
                     phone={(selected as any).phone}
                   />
+                )}
+                {selected.user_id && (
+                  <EvolutionArtsGallery userId={selected.user_id} studentName={selected.full_name} />
                 )}
 
                 {/* Image History with editable dates */}
