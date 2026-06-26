@@ -462,40 +462,15 @@ const EvolutionGenerator = ({ allImages, studentName, userId, phone }: Evolution
   };
 
   const handleDownload = (dataUrl: string, index: number) => {
+    const link = document.createElement("a");
     const labelType = previewLabels[index] || IMAGE_TYPES[index] || `img_${index}`;
-    const filename = `evolucao_${studentName.replace(/\s+/g, "_")}_${labelType}.jpg`;
-    try {
-      const blob = dataUrlToBlob(dataUrl);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      link.rel = "noopener";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(url), 4000);
-    } catch {
-      const link = document.createElement("a");
-      link.href = dataUrl;
-      link.download = filename;
-      link.click();
-    }
+    link.download = `evolucao_${studentName.replace(/\s+/g, "_")}_${labelType}.jpg`;
+    link.href = dataUrl;
+    link.click();
   };
 
-  const handleDownloadAll = async () => {
-    // Mobile browsers (Samsung Internet, Chrome Android) bloqueiam múltiplos
-    // downloads disparados em sequência síncrona — só a 1ª imagem desce.
-    // Espaçamos cada download por 800ms para que cada um seja tratado como
-    // gesto separado pelo navegador.
-    for (let i = 0; i < previews.length; i++) {
-      handleDownload(previews[i], i);
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise((r) => setTimeout(r, 800));
-    }
-    if (previews.length > 1) {
-      toast.success(`${previews.length} imagens baixadas.`);
-    }
+  const handleDownloadAll = () => {
+    previews.forEach((p, i) => handleDownload(p, i));
   };
 
   const dataUrlToBlob = (dataUrl: string): Blob => {
