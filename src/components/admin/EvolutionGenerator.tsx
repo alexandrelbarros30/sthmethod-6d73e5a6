@@ -552,6 +552,61 @@ const EvolutionGenerator = ({ allImages, studentName, userId, phone }: Evolution
     }
   };
 
+  const handleArchive = async () => {
+    if (previews.length === 0) {
+      toast.error("Gere a evolução primeiro.");
+      return;
+    }
+    if (!userId) {
+      toast.error("Aluno sem ID — não é possível arquivar.");
+      return;
+    }
+    setArchiving(true);
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const createdBy = auth?.user?.id || null;
+      const ts = Date.now();
+      let success = 0;
+      let failed = 0;
+      for (let i = 0; i < previews.length; i++) {
+        const dataUrl = previews[i];
+        const labelType = previewLabels[i] || IMAGE_TYPES[i] || `img_${i}`;
+        const path = `${userId}/${ts}_${labelType}.jpg`;
+        try {
+          const blob = dataUrlToBlob(dataUrl);
+          const { error: upErr } = await supabase.storage
+            .from("evolution-arts")
+            .upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+          if (upErr) throw upErr;
+          const { error: insErr } = await supabase.from("evolution_arts").insert({
+            user_id: userId,
+            student_name: studentName,
+            art_type: labelType,
+            storage_path: path,
+            before_date: oldDate || null,
+            after_date: newDate || null,
+            created_by: createdBy,
+          });
+          if (insErr) throw insErr;
+          success++;
+        } catch (err: any) {
+          console.warn("[EvolutionGenerator] archive failed", err);
+          failed++;
+        }
+      }
+      if (success > 0 && failed === 0) {
+        toast.success(`${success} arte(s) salva(s) no banco de evoluções.`);
+      } else if (success > 0) {
+        toast.message(`Arquivadas: ${success} • Falharam: ${failed}`);
+      } else {
+        toast.error("Não foi possível arquivar as artes.");
+      }
+      window.dispatchEvent(new CustomEvent("evolution-arts:changed", { detail: { userId } }));
+    } finally {
+      setArchiving(false);
+    }
+  };
+
   return (
     <Card className="overflow-hidden">
       <CardHeader className="pb-3">
