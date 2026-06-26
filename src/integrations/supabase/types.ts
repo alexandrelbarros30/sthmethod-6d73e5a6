@@ -2175,6 +2175,48 @@ export type Database = {
         }
         Relationships: []
       }
+      evolution_arts: {
+        Row: {
+          after_date: string | null
+          art_type: string
+          before_date: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          storage_path: string
+          student_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          after_date?: string | null
+          art_type: string
+          before_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          storage_path: string
+          student_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          after_date?: string | null
+          art_type?: string
+          before_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          storage_path?: string
+          student_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       evolution_notifications: {
         Row: {
           arm_cm: number | null
