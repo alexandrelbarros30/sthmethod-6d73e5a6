@@ -26,11 +26,12 @@ export interface ActivityData {
 interface Props {
   profile: any;
   onChange: (data: ActivityData | null) => void;
+  value?: ActivityData | null;
 }
 
-const EvolutionActivityChange = ({ profile, onChange }: Props) => {
-  const [changed, setChanged] = useState(false);
-  const [data, setData] = useState<ActivityData>({
+const EvolutionActivityChange = ({ profile, onChange, value }: Props) => {
+  const [changed, setChanged] = useState(() => Boolean(value));
+  const [data, setData] = useState<ActivityData>(() => value || {
     physicalActivityLevel: profile?.physical_activity_level || "sedentario",
     activityType: profile?.activity_type || "nenhuma",
     trainingDaysPerWeek: profile?.training_days_per_week ?? null,
@@ -41,6 +42,12 @@ const EvolutionActivityChange = ({ profile, onChange }: Props) => {
     cardioDurationMinutes: profile?.cardio_duration_minutes ?? null,
     cardioIntensity: profile?.cardio_intensity ?? null,
   });
+
+  useEffect(() => {
+    if (!value) return;
+    setChanged(true);
+    setData(value);
+  }, [value]);
 
   useEffect(() => {
     onChange(changed ? data : null);
