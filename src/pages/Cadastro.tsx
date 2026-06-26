@@ -153,6 +153,7 @@ const Cadastro = () => {
   useEffect(() => {
     const draft = {
       step,
+      userId,
       email,
       fullName,
       phoneVal,
@@ -279,6 +280,8 @@ const Cadastro = () => {
             setStep(2);
           }
         });
+      } else if (step > 1) {
+        setStep(1);
       }
     });
   }, []);

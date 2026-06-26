@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,38 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
   const [saving, setSaving] = useState(false);
   const [imagesSaved, setImagesSaved] = useState(false);
   const [activityChange, setActivityChange] = useState<ActivityData | null>(null);
+  const [draftReady, setDraftReady] = useState(false);
+  const draftKey = `sth:evolution-card-draft:v2:${userId}`;
+  const imageDraftKey = `sth:evolution-card-images:v2:${userId}`;
   const canSubmitUpdate = Boolean(weight || activityChange || notes.trim() || imagesSaved);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (raw) {
+        const draft = JSON.parse(raw);
+        setExpanded(Boolean(draft.expanded));
+        setWeight(draft.weight || "");
+        setNotes(draft.notes || "");
+        setImagesSaved(Boolean(draft.imagesSaved));
+        setActivityChange(draft.activityChange || null);
+        if (draft.weight || draft.notes || draft.imagesSaved || draft.activityChange) {
+          toast.info("Rascunho da evolução restaurado.");
+        }
+      }
+    } catch (err) {
+      console.warn("[evolution-card-draft] restore failed", err);
+    } finally {
+      setDraftReady(true);
+    }
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (!draftReady) return;
+    const draft = { expanded, weight, notes, imagesSaved, activityChange, updatedAt: new Date().toISOString() };
+    if (expanded || canSubmitUpdate) localStorage.setItem(draftKey, JSON.stringify(draft));
+    else localStorage.removeItem(draftKey);
+  }, [draftKey, draftReady, expanded, weight, notes, imagesSaved, activityChange, canSubmitUpdate]);
 
   const handleSaveWeight = async () => {
     if (!weight && !activityChange && !notes.trim() && !imagesSaved) {
@@ -169,6 +200,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
       await createEvolutionSnapshot(userId, "student", anamnesisNote);
 
       toast.success("Evolução registrada! Macros atualizados.");
+      localStorage.removeItem(draftKey);
       setWeight("");
       setNotes("");
       setImagesSaved(false);
@@ -214,7 +246,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
             />
           </div>
 
-          <EvolutionActivityChange profile={profile} onChange={setActivityChange} />
+          <EvolutionActivityChange profile={profile} value={activityChange} onChange={setActivityChange} />
 
           <div className="space-y-2">
             <Label className="font-body text-sm">Observações (opcional)</Label>
@@ -253,6 +285,7 @@ const EvolutionUpdateCard = ({ userId, currentWeight, existingImages, onComplete
               existingImages={existingImages}
               canDeleteExisting={false}
               required={false}
+              draftKey={imageDraftKey}
               onComplete={() => {
                 setImagesSaved(true);
                 toast.success("Fotos salvas! Toque em 'Registrar Evolução' para enviar suas observações ao seu consultor.");
