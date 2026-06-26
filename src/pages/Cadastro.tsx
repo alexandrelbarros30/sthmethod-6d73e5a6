@@ -86,11 +86,48 @@ const steps = [
   { n: 4, label: "Plano" },
 ];
 
+const CADASTRO_DRAFT_KEY = "sth:cadastro-draft:v2";
+
+const getCadastroDraft = () => {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(CADASTRO_DRAFT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const defaultProfileForm = (quizData?: any, draft?: any) => ({
+  cpf: draft?.cpf || "",
+  birth_date: draft?.birth_date || quizData?.birth_date || "",
+  height: draft?.height || quizData?.height || "",
+  weight: draft?.weight || quizData?.weight || "",
+  gender: draft?.gender || quizData?.gender || "",
+  activity_type: draft?.activity_type || quizData?.activity_type || "",
+  does_cardio: draft?.does_cardio || quizData?.does_cardio || "",
+  physical_activity_level: draft?.physical_activity_level || quizData?.physical_activity_level || "",
+  objective: draft?.objective || quizData?.objective || "",
+  current_protocol: draft?.current_protocol || "",
+  comorbidities: draft?.comorbidities || "",
+  additional_info: draft?.additional_info || "",
+  training_days_per_week: draft?.training_days_per_week || quizData?.training_days_per_week || "",
+  training_duration_minutes: draft?.training_duration_minutes || quizData?.training_duration_minutes || "",
+  training_intensity: draft?.training_intensity || quizData?.training_intensity || "",
+  cardio_days_per_week: draft?.cardio_days_per_week || quizData?.cardio_days_per_week || "",
+  cardio_duration_minutes: draft?.cardio_duration_minutes || quizData?.cardio_duration_minutes || "",
+  cardio_intensity: draft?.cardio_intensity || quizData?.cardio_intensity || "",
+});
+
 const Cadastro = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const quizData = (location.state as any)?.quizData || null;
-  const [step, setStep] = useState(1);
+  const cadastroDraft = getCadastroDraft();
+  const [step, setStep] = useState(() => {
+    const savedStep = Number(cadastroDraft?.step || 1);
+    return [1, 2, 3, 4].includes(savedStep) ? savedStep : 1;
+  });
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -99,49 +136,34 @@ const Cadastro = () => {
 
   // Step 1 - Account — pre-fill from URL params (admin-shared promo links)
   const initialParams = new URLSearchParams(location.search);
-  const [email, setEmail] = useState(initialParams.get("email") || "");
+  const [email, setEmail] = useState(initialParams.get("email") || cadastroDraft?.email || "");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState(initialParams.get("name") || "");
+  const [fullName, setFullName] = useState(initialParams.get("name") || cadastroDraft?.fullName || "");
   const [phoneVal, setPhoneVal] = useState(
-    initialParams.get("phone") ? phoneMask(initialParams.get("phone")!) : ""
+    initialParams.get("phone") ? phoneMask(initialParams.get("phone")!) : cadastroDraft?.phoneVal || ""
   );
   const [showPassword, setShowPassword] = useState(false);
 
   // Step 2 - Profile
-  const [profileForm, setProfileForm] = useState(() => {
-    if (quizData) {
-      return {
-        cpf: "",
-        birth_date: quizData.birth_date || "",
-        height: quizData.height || "",
-        weight: quizData.weight || "",
-        gender: quizData.gender || "",
-        activity_type: quizData.activity_type || "",
-        does_cardio: quizData.does_cardio || "",
-        physical_activity_level: quizData.physical_activity_level || "",
-        objective: quizData.objective || "",
-        current_protocol: "", comorbidities: "", additional_info: "",
-        training_days_per_week: quizData.training_days_per_week || "",
-        training_duration_minutes: quizData.training_duration_minutes || "",
-        training_intensity: quizData.training_intensity || "",
-        cardio_days_per_week: quizData.cardio_days_per_week || "",
-        cardio_duration_minutes: quizData.cardio_duration_minutes || "",
-        cardio_intensity: quizData.cardio_intensity || "",
-      };
-    }
-    return {
-      cpf: "",
-      birth_date: "", height: "", weight: "",
-      gender: "", activity_type: "", does_cardio: "",
-      physical_activity_level: "",
-      objective: "", current_protocol: "", comorbidities: "", additional_info: "",
-      training_days_per_week: "", training_duration_minutes: "", training_intensity: "",
-      cardio_days_per_week: "", cardio_duration_minutes: "", cardio_intensity: "",
-    };
-  });
+  const [profileForm, setProfileForm] = useState(() => defaultProfileForm(quizData, cadastroDraft?.profileForm));
 
   // Step 3 - Body images
   const [imagesComplete, setImagesComplete] = useState(false);
+
+  useEffect(() => {
+    const draft = {
+      step,
+      email,
+      fullName,
+      phoneVal,
+      profileForm,
+      imagesComplete,
+      updatedAt: new Date().toISOString(),
+    };
+    const hasDraft = Boolean(email || fullName || phoneVal || Object.values(profileForm).some(Boolean) || step > 1 || imagesComplete);
+    if (hasDraft) localStorage.setItem(CADASTRO_DRAFT_KEY, JSON.stringify(draft));
+    else localStorage.removeItem(CADASTRO_DRAFT_KEY);
+  }, [step, email, fullName, phoneVal, profileForm, imagesComplete]);
 
   // Auto-calculate age
   const age = profileForm.birth_date ? calculateAge(profileForm.birth_date) : null;
@@ -208,7 +230,8 @@ const Cadastro = () => {
             setFullName(p.full_name || "");
             setPhoneVal(p.phone || "");
             if (p.email) setEmail(p.email);
-            setProfileForm({
+            const savedProfileDraft = getCadastroDraft()?.profileForm;
+            setProfileForm(savedProfileDraft ? { ...defaultProfileForm(null), ...savedProfileDraft } : {
               cpf: p.cpf ? cpfMask(p.cpf) : "",
               birth_date: p.birth_date || "",
               height: p.height?.toString() || "",
@@ -1092,6 +1115,7 @@ const Cadastro = () => {
         overrideUserId={userId || undefined}
         onPaymentSuccess={() => {
           toast.success("Pagamento registrado! Seu acesso será liberado após confirmação.");
+          localStorage.removeItem(CADASTRO_DRAFT_KEY);
           setTimeout(() => navigate("/login"), 2000);
         }}
       />
