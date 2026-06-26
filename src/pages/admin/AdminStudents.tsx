@@ -33,6 +33,7 @@ import AnamnesisEntryItem from "@/components/shared/AnamnesisEntryItem";
 import EvolutionComparison from "@/components/shared/EvolutionComparison";
 import EvolutionUpdateHistory from "@/components/shared/EvolutionUpdateHistory";
 import EvolutionGenerator from "@/components/admin/EvolutionGenerator";
+import EvolutionArtsGallery from "@/components/admin/EvolutionArtsGallery";
 import AdminEvolutionUpdate from "@/components/admin/AdminEvolutionUpdate";
 import ExcelJS from "exceljs";
 import AdminBioimpedance from "@/components/admin/AdminBioimpedance";
