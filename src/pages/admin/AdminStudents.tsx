@@ -1864,6 +1864,9 @@ const AdminStudents = () => {
                     phone={(selected as any).phone}
                   />
                 )}
+                {selected.user_id && (
+                  <EvolutionArtsGallery userId={selected.user_id} studentName={selected.full_name} />
+                )}
 
                 {/* Image History with editable dates */}
                 {anamneseBodyImages && anamneseBodyImages.length > 0 && (
