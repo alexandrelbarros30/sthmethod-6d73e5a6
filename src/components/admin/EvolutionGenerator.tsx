@@ -168,6 +168,7 @@ const EvolutionGenerator = ({ allImages, studentName, userId, phone }: Evolution
   const [previews, setPreviews] = useState<string[]>([]);
   const [previewLabels, setPreviewLabels] = useState<ImageType[]>([]);
   const [sending, setSending] = useState(false);
+  const [archiving, setArchiving] = useState(false);
   const [transforms, setTransforms] = useState<TransformMap>({} as TransformMap);
   const [loadedImages, setLoadedImages] = useState<Partial<Record<TransformKey, HTMLImageElement>>>({});
   // Mantemos referência da imagem ORIGINAL (URL inicial) por posição, para que
