@@ -1091,6 +1091,19 @@ const EvolutionGenerator = ({ allImages, studentName, userId, phone }: Evolution
                   <Download className="w-3 h-3 mr-1" /> Baixar
                 </Button>
                 <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleArchive}
+                  disabled={archiving || !userId}
+                  title="Salvar as artes geradas no banco de evoluções deste aluno"
+                >
+                  {archiving ? (
+                    <><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Salvando...</>
+                  ) : (
+                    <><Database className="w-3 h-3 mr-1" /> Salvar no banco</>
+                  )}
+                </Button>
+                <Button
                   size="sm"
                   onClick={handleSendWhatsApp}
                   disabled={sending}
