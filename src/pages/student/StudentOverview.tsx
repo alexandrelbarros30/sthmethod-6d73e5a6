@@ -175,6 +175,7 @@ const StudentOverview = () => {
   return (
     <DashboardLayout role="student" title="" subtitle="">
       <SubscriptionAlerts subscription={subscription ? { ...subscription, plans: (subscription as any)?.plans } : null} />
+      <LegalTermsBanner />
       <AdAutoPopup />
       <PreviewUnlockPopup />
       <WelcomeTour />
