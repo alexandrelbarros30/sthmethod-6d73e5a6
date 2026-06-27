@@ -208,7 +208,7 @@ export const SYSTEM_TEMPLATE_DEFINITIONS: Array<{
     label: "Boas-vindas após pagamento aprovado",
     description: "Aberto automaticamente quando um pagamento é aprovado (via webhook ou confirmação manual).",
     defaultContent:
-      "Olá {nome}! 🎉\n\nSeu pagamento foi aprovado e seu acesso à STH Method está liberado.\n\nVamos juntos nessa jornada! 💪",
+      "Olá {nome}! 🎉\n\nSeu pagamento foi aprovado e seu acesso ao *Programa de Acompanhamento STH METHOD* está liberado pelo prazo determinado do *{plano}* (até {vencimento}).\n\nDurante esse período, sua equipe técnica acompanha sua evolução pela plataforma.\n\nBora começar! 💪",
   },
   {
     key: "student_update_received",
@@ -235,14 +235,14 @@ export const SYSTEM_TEMPLATE_DEFINITIONS: Array<{
     label: "Renovação com link seguro",
     description: "Lembrete de renovação enviado via central de mensagens / lembretes inteligentes.",
     defaultContent:
-      "Olá {nome}! ⏰\n\nSeu plano vence em {dias_restantes} dias ({vencimento}). Renove agora pelo link: {link}",
+      "Olá {nome}! ⏰\n\nSeu Programa de Acompanhamento STH METHOD encerra em {dias_restantes} dias ({vencimento}).\n\nPara manter o acesso à plataforma após a vigência, inicie um novo ciclo pelo link seguro:\n👉 {link}",
   },
   {
     key: "renewal_reminder",
     label: "Lembrete de Renovação (3 dias antes)",
     description: "Sugerido pelos Lembretes Inteligentes quando faltam 3 dias para o vencimento.",
     defaultContent:
-      "{nome},\n\n👀 *Seu plano está encerrando…*\n\nPra não perder o ritmo e continuar evoluindo:\n\n👉 *Renove agora:*\n{link_renovacao}\n\n---\n\nSeu resultado depende da continuidade.\nParar agora é retroceder.\n\nBora manter o progresso ativo. 🚀",
+      "{nome},\n\n👀 *Seu Programa está encerrando…*\n\nO prazo determinado do seu plano termina em {dias_restantes} dias ({vencimento}). Encerrada a vigência, o acesso à plataforma é encerrado automaticamente.\n\n👉 *Renove o ciclo agora:*\n{link_renovacao}\n\nBora manter o progresso ativo. 🚀",
   },
   {
     key: "diet_adjustment_reminder",
@@ -256,7 +256,7 @@ export const SYSTEM_TEMPLATE_DEFINITIONS: Array<{
     label: "Cadastro completo aguardando pagamento",
     description: "Para alunos com cadastro completo mas sem pagamento confirmado.",
     defaultContent:
-      "Olá {nome}! Recebi seu cadastro 👍 Estamos aguardando a confirmação do pagamento para liberar seu acesso à plataforma.",
+      "Olá {nome}! Recebi seu cadastro 👍\n\nAssim que o pagamento do Programa de Acompanhamento for confirmado, libero seu acesso à plataforma pelo prazo determinado do plano escolhido.",
   },
   {
     key: "diet_updated",
@@ -306,7 +306,7 @@ export const SYSTEM_TEMPLATE_DEFINITIONS: Array<{
     label: "1ª cobrança — Amigável (D+0)",
     description: "Primeiro contato de renovação. Tom leve, acolhedor. Sempre com link de renovação.",
     defaultContent:
-      "Oi {nome}! 👋\n\nSeu plano STH METHOD venceu há {dias_vencido} dias e quero te ajudar a não perder o ritmo da sua evolução. 💪\n\n👉 Renove agora pelo link seguro:\n{link_renovacao}\n\nQualquer dúvida, estou por aqui.",
+      "Oi {nome}! 👋\n\nO prazo determinado do seu Programa STH METHOD chegou ao fim há {dias_vencido} dias e o acesso à plataforma foi encerrado conforme o Termo de Adesão.\n\nQuer iniciar um novo ciclo e retomar o acompanhamento? 💪\n\n👉 Link seguro:\n{link_renovacao}",
   },
   {
     key: "renewal_objective",

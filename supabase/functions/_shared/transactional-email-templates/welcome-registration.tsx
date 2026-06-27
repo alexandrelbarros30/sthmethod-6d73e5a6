@@ -26,7 +26,7 @@ const Email = ({ name = '', loginUrl = 'https://sthmethod.com.br/login' }: Props
             Seu cadastro na plataforma <strong>STH METHOD</strong> foi concluído com sucesso.
           </Text>
           <Text style={text}>
-            Agora é só acessar a plataforma para começar sua jornada de evolução com acompanhamento técnico.
+            Após a contratação de um plano, seu acesso ao Programa de Acompanhamento STH METHOD será liberado pelo prazo determinado escolhido.
           </Text>
           <Section style={{ textAlign: 'center', margin: '32px 0' }}>
             <Button href={loginUrl} style={button}>Acessar plataforma</Button>
