@@ -505,21 +505,42 @@ Deno.serve(async (req) => {
     const waId = String(phoneRaw || '').split('@')[0]; // Usamos o ID puramente numérico como waId
     
     const connectedPhone = normalizePhone(payload?.connectedPhone || payload?.data?.connectedPhone || '');
-    const audioUrl = payload?.audio?.audioUrl || payload?.audioUrl || null;
+    // Detecta áudio em múltiplos formatos: Z-API (payload.audio.audioUrl),
+    // W-API/Baileys (payload.msgContent.audioMessage.URL) e fallbacks.
+    const audioMsg = payload?.msgContent?.audioMessage || payload?.message?.audioMessage || null;
+    const audioUrl: string | null =
+      payload?.audio?.audioUrl ||
+      payload?.audioUrl ||
+      audioMsg?.URL ||
+      audioMsg?.url ||
+      payload?.audio?.url ||
+      null;
+    const hasAudio = !!audioUrl || !!audioMsg ||
+      String(payload?.audio?.mimeType || audioMsg?.mimetype || '').toLowerCase().startsWith('audio/');
     let rawText = payload?.data?.body || (typeof payload?.text === 'string' ? payload.text : payload?.text?.message) || payload?.message?.conversation || (typeof payload?.message === 'string' ? payload.message : '') || payload?.image?.caption || payload?.video?.caption || payload?.document?.caption || payload?.body || payload?.data?.message?.text || payload?.msgContent?.conversation || '';
     let isTranscribedAudio = false;
-    // Se veio áudio (PTT) e nenhum texto/caption, transcreve via Lovable AI
+    // Se veio áudio (PTT) e nenhum texto/caption, tenta transcrever via Lovable AI
     // e usa a transcrição como o corpo da mensagem. Assim a IA responde
     // normalmente e a regra de ausência fora do expediente também dispara.
-    if (audioUrl && (!rawText || typeof rawText !== 'string' || !rawText.trim())) {
-      const transcript = await transcribeAudioFromUrl(audioUrl);
-      if (transcript) {
-        rawText = `[Áudio do aluno] ${transcript}`;
-        isTranscribedAudio = true;
-        console.log(`[audio] transcrição ok (${transcript.length} chars)`);
+    // Importante: mesmo se a URL estiver criptografada (W-API .enc) ou faltar,
+    // setamos placeholder para que o fluxo continue (sem placeholder o webhook
+    // abortaria em "!body" e a ausência fora do expediente NÃO dispararia).
+    if (hasAudio && (!rawText || typeof rawText !== 'string' || !rawText.trim())) {
+      if (audioUrl) {
+        const transcript = await transcribeAudioFromUrl(audioUrl);
+        if (transcript) {
+          rawText = `[Áudio do aluno] ${transcript}`;
+          isTranscribedAudio = true;
+          console.log(`[audio] transcrição ok (${transcript.length} chars)`);
+        } else {
+          rawText = '[Áudio recebido]';
+          isTranscribedAudio = true;
+          console.warn('[audio] transcrição falhou — usando placeholder (fluxo segue)');
+        }
       } else {
         rawText = '[Áudio recebido]';
-        console.warn('[audio] transcrição falhou — usando placeholder');
+        isTranscribedAudio = true;
+        console.warn('[audio] sem URL acessível (provavelmente criptografado) — usando placeholder');
       }
     }
     // Detecta mídia (imagem/vídeo/documento/sticker). Se houver, bloqueamos
