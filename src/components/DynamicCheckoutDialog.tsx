@@ -8,6 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import LegalAcceptanceBlock, {
+  recordLegalAcceptances,
+  type LegalAcceptanceState,
+} from "@/components/legal/LegalAcceptanceBlock";
 
 interface CheckoutDialogProps {
   open: boolean;
@@ -20,6 +24,8 @@ interface CheckoutDialogProps {
   overrideUserId?: string;
   /** Force PIX-only checkout (hides credit/debit buttons regardless of global settings) */
   forcePixOnly?: boolean;
+  /** Override email when user is not yet in AuthContext (e.g. Cadastro) */
+  overrideEmail?: string;
 }
 
 const DynamicCheckoutDialog = ({
@@ -31,9 +37,11 @@ const DynamicCheckoutDialog = ({
   onPaymentSuccess,
   overrideUserId,
   forcePixOnly = false,
+  overrideEmail,
 }: CheckoutDialogProps) => {
   const { user } = useAuth();
   const userId = overrideUserId || user?.id;
+  const userEmail = overrideEmail || user?.email || null;
 
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [pixCopied, setPixCopied] = useState(false);
@@ -43,6 +51,30 @@ const DynamicCheckoutDialog = ({
   const [verifying, setVerifying] = useState(false);
   const [verificationResult, setVerificationResult] = useState<{ status: string; notes: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [legalState, setLegalState] = useState<LegalAcceptanceState | null>(null);
+  const legalReady = !!legalState?.isComplete;
+
+  const persistLegal = async (context: string) => {
+    if (!legalState) return;
+    try {
+      await recordLegalAcceptances({
+        state: legalState,
+        userId: userId ?? null,
+        email: userEmail,
+        context,
+      });
+    } catch (e) {
+      console.error("[legal] persist failed", e);
+    }
+  };
+
+  const requireLegal = () => {
+    if (!legalReady) {
+      toast.error("Para prosseguir, confirme os aceites do Programa.");
+      return false;
+    }
+    return true;
+  };
 
   // Check if dynamic payments are enabled
   const { data: paymentSettings } = useQuery({
@@ -88,6 +120,8 @@ const DynamicCheckoutDialog = ({
   // Dynamic payment via Mercado Pago API
   const handleDynamicPayment = async (method: "pix" | "credit" | "debit") => {
     if (!selectedPlan || !userId) return;
+    if (!requireLegal()) return;
+    await persistLegal(`checkout:${method}`);
     setCreatingPayment(true);
     try {
       // Plano Projeto Verão 180 no cartão usa assinatura escalonada (preapproval MP):
@@ -135,6 +169,8 @@ const DynamicCheckoutDialog = ({
   // Manual payment - create pending record
   const handleManualPaymentNotified = async () => {
     if (!selectedPlan || !userId) return;
+    if (!requireLegal()) return;
+    await persistLegal("checkout:manual_notified");
     try {
       const priceStr = selectedPlan.price.replace(/[^\d,\.]/g, "").replace(",", ".");
       const origAmount = parseFloat(priceStr) || 0;
@@ -204,6 +240,8 @@ const DynamicCheckoutDialog = ({
 
   const handleReceiptUpload = async (file: File) => {
     if (!userId || !selectedPlan) return;
+    if (!requireLegal()) return;
+    await persistLegal("checkout:pix_receipt");
     setUploading(true);
     try {
       const ext = file.name.split(".").pop() || "jpg";
@@ -302,6 +340,18 @@ const DynamicCheckoutDialog = ({
               onCouponApplied={setAppliedCoupon}
             />
 
+            {/* Aceites legais — obrigatórios antes do pagamento */}
+            <LegalAcceptanceBlock
+              email={userEmail || undefined}
+              context="dynamic_checkout"
+              onChange={setLegalState}
+            />
+            {!legalReady && (
+              <p className="text-[11px] text-muted-foreground text-center">
+                Marque os aceites obrigatórios para liberar os botões de pagamento.
+              </p>
+            )}
+
             {isPixOnlyCoupon && (
               <div className="flex items-start gap-2 p-3 rounded-lg border border-primary/30 bg-primary/5 text-xs text-foreground">
                 <QrCode className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
@@ -318,7 +368,7 @@ const DynamicCheckoutDialog = ({
                   <Button
                     className="w-full"
                     variant="outline"
-                    disabled={creatingPayment}
+                    disabled={creatingPayment || !legalReady}
                     onClick={() => handleDynamicPayment("pix")}
                   >
                     {creatingPayment ? (
@@ -332,7 +382,7 @@ const DynamicCheckoutDialog = ({
                 {creditEnabled && (
                   <Button
                     className="w-full"
-                    disabled={creatingPayment}
+                    disabled={creatingPayment || !legalReady}
                     onClick={() => handleDynamicPayment("credit")}
                   >
                     {creatingPayment ? (
@@ -347,7 +397,7 @@ const DynamicCheckoutDialog = ({
                   <Button
                     className="w-full"
                     variant="outline"
-                    disabled={creatingPayment}
+                    disabled={creatingPayment || !legalReady}
                     onClick={() => handleDynamicPayment("debit")}
                   >
                     {creatingPayment ? (
@@ -408,11 +458,23 @@ const DynamicCheckoutDialog = ({
                     </div>
                   )}
                   {hasPix && (
-                    <Button className="w-full" onClick={() => setReceiptStep("upload")}>
+                    <Button
+                      className="w-full"
+                      disabled={!legalReady}
+                      onClick={() => {
+                        if (!requireLegal()) return;
+                        setReceiptStep("upload");
+                      }}
+                    >
                       <Upload className="w-4 h-4 mr-2" />Já paguei — Enviar comprovante
                     </Button>
                   )}
-                  <Button variant="outline" className="w-full" onClick={handleManualPaymentNotified}>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    disabled={!legalReady}
+                    onClick={handleManualPaymentNotified}
+                  >
                     ✅ Já realizei o pagamento
                   </Button>
                 </div>
