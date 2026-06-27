@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import SubscriptionAlerts from "@/components/student/SubscriptionAlerts";
+import LegalTermsBanner from "@/components/legal/LegalTermsBanner";
 import AdAutoPopup from "@/components/student/AdAutoPopup";
 import PreviewUnlockPopup from "@/components/student/PreviewUnlockPopup";
 import WelcomeTour from "@/components/student/WelcomeTour";
