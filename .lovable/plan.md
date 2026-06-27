@@ -1,56 +1,61 @@
-## Projeto Verão 180 — Plano + Assinatura escalonada MP
+## Princípio condutor
 
-### 1. Banco — novo plano e tabela de assinatura
-**Migration:**
+Em todos os pontos de contato, o cliente contrata um **Programa de Acompanhamento em Saúde e Performance por prazo determinado** — nunca compra dieta, treino ou protocolo. Toda copy passa a refletir isso, com termos como "acesso durante a vigência", "ao término do plano o acesso é encerrado", "não há garantia de resultado".
 
-a) **Insert do plano** `Projeto Verão 180`:
-- `name`: "Projeto Verão 180"
-- `subtitle`: "Comece em julho. Chegue ao verão com resultados."
-- `headline` (benefício #1): "Comece em julho. Chegue ao verão com resultados."
-- `price`: "R$ 477,00" (total cartão)
-- `card_price`: "R$ 477,00"
-- `duration`: "180 dias" / `duration_days`: 180
-- `visibility`: 'public', `active`: true
-- `benefits`: lista de benefícios (mesma estrutura do 6M) + destaque "6× no cartão: 2× R$ 49,50 + 4× R$ 94,50"
+Como o escopo é muito grande (toca landing, checkout, área do aluno, e-mails, automações WhatsApp, FAQ, autorização de imagem, jurídico), preciso confirmar prioridades antes de mexer em ~30 arquivos.
 
-b) **Nova tabela `mp_subscriptions`** (preapproval MP escalonado):
-```
-id, user_id, plan_id, mp_preapproval_id, status,
-phase (1|2), charges_done, total_amount_paid,
-phase1_amount (49.50), phase1_charges (2),
-phase2_amount (94.50), phase2_charges (4),
-next_payment_date, end_date, created_at, updated_at
-```
-+ RLS (user vê o próprio; service_role total) + GRANTs.
+---
 
-### 2. Edge function `create-mp-subscription`
-- Recebe `plan_id` do aluno autenticado.
-- Cria preapproval no MP em fase 1: `auto_recurring.transaction_amount=49.50`, frequency mensal, `end_date = hoje+60d` (cobra 2× R$49,50).
-- `back_url`: `/dashboard/subscription?status=approved`.
-- `external_reference`: `mpsub:{mp_subscriptions.id}`.
-- Salva registro `mp_subscriptions` (phase=1, charges_done=0).
-- Retorna `init_point` para o aluno autorizar o cartão.
+## O que será entregue por etapa
 
-### 3. Webhook `mercado-pago-webhook` — handler de preapproval
-- Aceita topic `preapproval` e `authorized_payment`.
-- Para cada cobrança aprovada:
-  - Incrementa `charges_done` e `total_amount_paid`.
-  - Se `phase=1` e `charges_done >= 2`: faz `PUT /preapproval/{id}` no MP atualizando `auto_recurring.transaction_amount=94.50` e `end_date = hoje+120d`, marca `phase=2`.
-  - Se `phase=2` e `charges_done >= 4`: faz `PUT /preapproval/{id}` com `status='cancelled'`.
-  - Cria/atualiza `subscriptions` do aluno (start = primeira cobrança, end = +180d) e marca plano ativo na 1ª aprovação.
-  - Insere registro em `payments` (action_type='subscription') para histórico/recibo.
+**1. Página de Vendas (`/programa` nova rota, ou refazer `src/pages/Landing.tsx`)**
+Hero "Programa de Acompanhamento", benefícios, como funciona, o que está incluso/não está incluso, vigência, planos (30D/90D/6M/Selected/Projeto Verão 180 com valores exatos do Termo), FAQ resumido, avisos jurídicos discretos, CTA único.
 
-### 4. Frontend — `/dashboard/subscription` (StudentSubscription)
-- No card do plano "Projeto Verão 180" exibir badge "6× no cartão (2× R$49,50 + 4× R$94,50)".
-- Botão "Assinar no cartão" chama `create-mp-subscription` em vez de `create-payment`.
-- Demais planos seguem fluxo atual de `create-payment` (PIX/cartão à vista/parcelado padrão).
+**2. Checkout (`DynamicCheckoutDialog.tsx` + `Cadastro.tsx`)**
+- Bloco "Resumo do Programa" descrevendo que é acompanhamento por prazo determinado.
+- 3 checkboxes obrigatórios: Termo, Política de Privacidade, Ciência da natureza temporária.
+- 1 checkbox opcional: comunicações comerciais.
+- Bloco de **Autorização de Imagem com 3 opções rádio** (não autorizo / sem identificação / com identificação) salvo em `profiles.image_consent`.
+- Persistir aceites em nova tabela `legal_acceptances` (versão do termo, IP, timestamp).
 
-### 5. Landing `/` (PlansSection)
-- Renderiza automaticamente porque é `visibility=public` — sem mudança de código.
-- Mostra subtitle como headline.
+**3. Página "Compra Concluída" (`src/pages/PaymentSuccess.tsx` nova)**
+Parabéns + próximos passos + prazo de liberação + como acessar + canal de suporte + link do Termo.
 
-### Notas técnicas
-- `MERCADO_PAGO_ACCESS_TOKEN` já configurado.
-- Endpoint MP preapproval: `POST/PUT https://api.mercadopago.com/preapproval`.
-- Reaproveita `mercado-pago-webhook` existente; só adiciona um branch para `topic=preapproval`/`authorized_payment` antes do branch de `payment`.
-- Não altera fluxo dos demais planos.
+**4. E-mail de Boas-vindas (template `welcome-program` em `_shared/transactional-email-templates/`)**
+Confirmação do plano, vigência (data início/fim), como acessar, links Termo + Política, reforço de prazo determinado.
+
+**5. Onboarding (`src/pages/Cadastro.tsx` — adicionar telas)**
+Boas-vindas → avaliação → objetivo → tela de responsabilidade do cliente → autorização de imagem → confirmação → final.
+
+**6. Área do Aluno (`StudentOverview.tsx`, `StudentSubscription.tsx`)**
+Banner "Plano ativo · X dias restantes", aviso de renovação D-15/D-7/D-3, aviso de encerramento D-1, tela "Plano expirado" com CTA renovar.
+
+**7. Comunicação Automática (WhatsApp + e-mail)**
+Reescrever templates em `crm-templates.ts` + criar novos templates de e-mail para: confirmação, liberação, ativo, D-15/D-7/D-3/D-1, encerrado, renovação, recuperação de pagamento, cobrança recusada, atualização de protocolo, solicitação de fotos/peso/medidas.
+
+**8. FAQ (`src/pages/FAQ.tsx` nova ou seção na landing)**
+Respostas alinhadas ao Termo para as 10 perguntas listadas + 5 extras.
+
+**9. Jornada de Uso de Imagem (`src/pages/AutorizacaoImagem.tsx` + componente reutilizável)**
+Tela inicial, convite, mensagem pós-recusa, reconvite após evolução, alteração, agradecimento.
+
+**10. Blindagem jurídica**
+Auditoria automática (script `rg`) varrendo a base por termos proibidos: "seu treino para sempre", "sua dieta", "garantia de resultado", "vai emagrecer", "compre seu protocolo" etc. Lista para revisão + substituições.
+
+---
+
+## Detalhes técnicos
+
+- Nova migração SQL: `legal_acceptances` (user_id, term_version, accepted_at, ip, document_type) + coluna `profiles.image_consent` enum `('nao_autorizo','sem_identificacao','com_identificacao')`.
+- Versão do Termo armazenada em constante `src/lib/legal-version.ts` (`"v2026.06"`).
+- Páginas estáticas do Termo e Política servidas em `/termo` e `/privacidade` a partir do conteúdo já parseado.
+- Reaproveitar `email_domain--scaffold_transactional_email` apenas se necessário (infra já existe).
+
+---
+
+## Antes de implementar — preciso de 2 confirmações
+
+1. **Escopo prioritário**: É urgente entregar tudo de uma vez ou começamos pelos itens jurídicos críticos (Checkout com aceites + Termo/Privacidade + Boas-vindas + FAQ) e os demais em uma 2ª leva?
+2. **Landing**: substituo a `Landing.tsx` atual (cheia de seções comerciais) por uma versão alinhada ao Termo, OU crio uma rota nova `/programa` mantendo a atual?
+
+Responda essas 2 e eu sigo executando.

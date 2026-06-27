@@ -3009,6 +3009,51 @@ export type Database = {
         }
         Relationships: []
       }
+      legal_acceptances: {
+        Row: {
+          accepted: boolean
+          accepted_at: string
+          context: string | null
+          created_at: string
+          document_type: string
+          document_version: string
+          email: string | null
+          id: string
+          ip: string | null
+          option_value: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          accepted?: boolean
+          accepted_at?: string
+          context?: string | null
+          created_at?: string
+          document_type: string
+          document_version: string
+          email?: string | null
+          id?: string
+          ip?: string | null
+          option_value?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          accepted?: boolean
+          accepted_at?: string
+          context?: string | null
+          created_at?: string
+          document_type?: string
+          document_version?: string
+          email?: string | null
+          id?: string
+          ip?: string | null
+          option_value?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       meal_completions: {
         Row: {
           completed_at: string
@@ -3714,7 +3759,10 @@ export type Database = {
           gender: string | null
           height: number | null
           id: string
+          image_consent_choice: string | null
+          image_consent_updated_at: string | null
           lab_exam_url: string | null
+          marketing_opt_in: boolean | null
           medical_prescription_url: string | null
           notify_on_updates: boolean
           objective: string | null
@@ -3760,7 +3808,10 @@ export type Database = {
           gender?: string | null
           height?: number | null
           id?: string
+          image_consent_choice?: string | null
+          image_consent_updated_at?: string | null
           lab_exam_url?: string | null
+          marketing_opt_in?: boolean | null
           medical_prescription_url?: string | null
           notify_on_updates?: boolean
           objective?: string | null
@@ -3806,7 +3857,10 @@ export type Database = {
           gender?: string | null
           height?: number | null
           id?: string
+          image_consent_choice?: string | null
+          image_consent_updated_at?: string | null
           lab_exam_url?: string | null
+          marketing_opt_in?: boolean | null
           medical_prescription_url?: string | null
           notify_on_updates?: boolean
           objective?: string | null
