@@ -23,16 +23,17 @@ const Email = ({
   return (
     <Html lang="pt-BR" dir="ltr">
       <Head />
-      <Preview>Sua consultoria vence {urgency}</Preview>
+      <Preview>Seu Programa STH METHOD vence {urgency}</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={brandRow}>
             <Text style={brand}>STH METHOD</Text>
             <Text style={badge}>RENOVAÇÃO</Text>
           </Section>
-          <Heading style={h1}>Sua consultoria vence {urgency}</Heading>
+          <Heading style={h1}>Seu Programa vence {urgency}</Heading>
           <Text style={text}>
-            Olá{first ? `, ${first}` : ''}! Para não interromper seu acompanhamento e manter sua evolução, renove sua consultoria antes do vencimento.
+            Olá{first ? `, ${first}` : ''}! Seu Programa de Acompanhamento STH METHOD possui prazo determinado e encerra {urgency}.
+            Para manter o acesso à plataforma e a continuidade do acompanhamento, renove antes do vencimento.
           </Text>
 
           <Section style={card}>
@@ -45,7 +46,9 @@ const Email = ({
           </Section>
 
           <Hr style={hr} />
-          <Text style={footer}>Renovando antes do vencimento você garante continuidade no protocolo e nos dados de evolução.</Text>
+          <Text style={footer}>
+            Encerrada a vigência, o acesso à plataforma é encerrado automaticamente. A renovação reinicia um novo ciclo do Programa.
+          </Text>
           <Text style={footer}>STH METHOD · sthmethod.com.br</Text>
         </Container>
       </Body>
@@ -57,9 +60,9 @@ export const template = {
   component: Email,
   subject: ({ daysLeft }: Props) => {
     const d = Number(daysLeft ?? 7)
-    if (d <= 0) return 'Sua consultoria vence hoje — STH METHOD'
-    if (d === 1) return 'Sua consultoria vence amanhã — STH METHOD'
-    return `Sua consultoria vence em ${d} dias — STH METHOD`
+    if (d <= 0) return 'Seu Programa STH METHOD vence hoje'
+    if (d === 1) return 'Seu Programa STH METHOD vence amanhã'
+    return `Seu Programa STH METHOD vence em ${d} dias`
   },
   displayName: 'Lembrete de renovação',
   previewData: {
