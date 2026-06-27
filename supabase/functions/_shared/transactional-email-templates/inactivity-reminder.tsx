@@ -28,10 +28,10 @@ const Email = ({
           </Section>
           <Heading style={h1}>Sentimos sua falta 💪</Heading>
           <Text style={text}>
-            Olá{first ? `, ${first}` : ''}, faz {daysInactive} dias que você não acessa a plataforma. Sua consultoria continua ativa e te esperando.
+            Olá{first ? `, ${first}` : ''}, faz {daysInactive} dias que você não acessa a plataforma. Seu Programa de Acompanhamento STH METHOD segue ativo dentro da vigência contratada.
           </Text>
           <Text style={text}>
-            Volte para registrar sua evolução, conferir sua dieta e manter a constância do protocolo.
+            Aproveite o prazo do seu Programa: volte para registrar sua evolução, conferir sua dieta e manter a constância do protocolo.
           </Text>
 
           <Section style={{ textAlign: 'center', margin: '28px 0' }}>

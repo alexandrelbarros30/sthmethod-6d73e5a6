@@ -35,7 +35,7 @@ const Email = ({
           </Section>
           <Heading style={h1}>Estamos aguardando seu pagamento ⏳</Heading>
           <Text style={text}>
-            Olá{first ? `, ${first}` : ''}! Recebemos sua solicitação e estamos aguardando a confirmação do pagamento para liberar seu acesso.
+            Olá{first ? `, ${first}` : ''}! Recebemos sua solicitação de contratação do Programa de Acompanhamento STH METHOD e aguardamos a confirmação do pagamento para liberar o acesso pelo prazo determinado.
           </Text>
 
           <Section style={card}>

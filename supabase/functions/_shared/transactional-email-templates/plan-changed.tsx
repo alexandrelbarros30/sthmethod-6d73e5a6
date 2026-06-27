@@ -39,7 +39,7 @@ const Email = ({
           </Section>
           <Heading style={h1}>Plano atualizado ✅</Heading>
           <Text style={text}>
-            Olá{first ? `, ${first}` : ''}! Confirmamos a alteração do seu plano.
+            Olá{first ? `, ${first}` : ''}! Confirmamos a alteração do seu Programa de Acompanhamento, com nova vigência por prazo determinado conforme abaixo.
           </Text>
 
           <Section style={card}>
@@ -55,6 +55,9 @@ const Email = ({
 
           <Hr style={hr} />
           <Text style={footer}>Dúvidas sobre a cobrança? Responda este e-mail.</Text>
+          <Text style={footer}>
+            Programa por prazo determinado. Encerrada a vigência, o acesso à plataforma é encerrado automaticamente.
+          </Text>
           <Text style={footer}>STH METHOD · sthmethod.com.br</Text>
         </Container>
       </Body>
