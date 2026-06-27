@@ -240,6 +240,8 @@ const DynamicCheckoutDialog = ({
 
   const handleReceiptUpload = async (file: File) => {
     if (!userId || !selectedPlan) return;
+    if (!requireLegal()) return;
+    await persistLegal("checkout:pix_receipt");
     setUploading(true);
     try {
       const ext = file.name.split(".").pop() || "jpg";
@@ -338,6 +340,18 @@ const DynamicCheckoutDialog = ({
               onCouponApplied={setAppliedCoupon}
             />
 
+            {/* Aceites legais — obrigatórios antes do pagamento */}
+            <LegalAcceptanceBlock
+              email={userEmail || undefined}
+              context="dynamic_checkout"
+              onChange={setLegalState}
+            />
+            {!legalReady && (
+              <p className="text-[11px] text-muted-foreground text-center">
+                Marque os aceites obrigatórios para liberar os botões de pagamento.
+              </p>
+            )}
+
             {isPixOnlyCoupon && (
               <div className="flex items-start gap-2 p-3 rounded-lg border border-primary/30 bg-primary/5 text-xs text-foreground">
                 <QrCode className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
@@ -354,7 +368,7 @@ const DynamicCheckoutDialog = ({
                   <Button
                     className="w-full"
                     variant="outline"
-                    disabled={creatingPayment}
+                    disabled={creatingPayment || !legalReady}
                     onClick={() => handleDynamicPayment("pix")}
                   >
                     {creatingPayment ? (
@@ -368,7 +382,7 @@ const DynamicCheckoutDialog = ({
                 {creditEnabled && (
                   <Button
                     className="w-full"
-                    disabled={creatingPayment}
+                    disabled={creatingPayment || !legalReady}
                     onClick={() => handleDynamicPayment("credit")}
                   >
                     {creatingPayment ? (
@@ -383,7 +397,7 @@ const DynamicCheckoutDialog = ({
                   <Button
                     className="w-full"
                     variant="outline"
-                    disabled={creatingPayment}
+                    disabled={creatingPayment || !legalReady}
                     onClick={() => handleDynamicPayment("debit")}
                   >
                     {creatingPayment ? (
@@ -444,11 +458,23 @@ const DynamicCheckoutDialog = ({
                     </div>
                   )}
                   {hasPix && (
-                    <Button className="w-full" onClick={() => setReceiptStep("upload")}>
+                    <Button
+                      className="w-full"
+                      disabled={!legalReady}
+                      onClick={() => {
+                        if (!requireLegal()) return;
+                        setReceiptStep("upload");
+                      }}
+                    >
                       <Upload className="w-4 h-4 mr-2" />Já paguei — Enviar comprovante
                     </Button>
                   )}
-                  <Button variant="outline" className="w-full" onClick={handleManualPaymentNotified}>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    disabled={!legalReady}
+                    onClick={handleManualPaymentNotified}
+                  >
                     ✅ Já realizei o pagamento
                   </Button>
                 </div>
