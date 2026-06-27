@@ -46,6 +46,11 @@ import MarcadoresLaboratoriais from "./pages/MarcadoresLaboratoriais";
 import TriagemMarcadores from "./pages/TriagemMarcadores";
 import Promo from "./pages/Promo";
 import EvolucaoPublica from "./pages/EvolucaoPublica";
+import Programa from "./pages/Programa";
+import Faq from "./pages/Faq";
+import CompraConcluida from "./pages/CompraConcluida";
+import Termo from "./pages/legal/Termo";
+import Privacidade from "./pages/legal/Privacidade";
 import FilaPublica from "./pages/FilaPublica";
 import FilaAberta from "./pages/FilaAberta";
 import Cas from "./pages/Cas";
@@ -221,6 +226,12 @@ const App = () => (
             <Route path="/triagem-marcadores" element={<TriagemMarcadores />} />
             <Route path="/promo" element={<Promo />} />
             <Route path="/promo/:slug" element={<Promo />} />
+            <Route path="/programa" element={<Programa />} />
+            <Route path="/faq" element={<Faq />} />
+            <Route path="/compra-concluida" element={<CompraConcluida />} />
+            <Route path="/termo" element={<Termo />} />
+            <Route path="/termos" element={<Termo />} />
+            <Route path="/privacidade" element={<Privacidade />} />
             <Route path="/evolucao" element={<EvolucaoPublica />} />
             <Route path="/fila/:token" element={<FilaPublica />} />
             <Route path="/fila" element={<FilaAberta />} />
