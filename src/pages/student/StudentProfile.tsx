@@ -18,6 +18,8 @@ import ChangePasswordDialog from "@/components/student/ChangePasswordDialog";
 import StudentProfileForm, { profileFromDb, getPendingFields, type ProfileFormData } from "@/components/student/StudentProfileForm";
 import AccessibilityThemeCard from "@/components/student/AccessibilityThemeCard";
 import DocumentUpload from "@/components/shared/DocumentUpload";
+import ImageConsentChoice from "@/components/legal/ImageConsentChoice";
+import type { ImageConsent } from "@/components/legal/LegalAcceptanceBlock";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import SignedImage from "@/components/shared/SignedImage";
@@ -474,6 +476,18 @@ const StudentProfile = () => {
 
       {/* ===== ACESSIBILIDADE VISUAL ===== */}
       <AccessibilityThemeCard />
+
+      {/* ===== AUTORIZAÇÃO DE IMAGEM ===== */}
+      {user?.id && (
+        <div className="mt-4">
+          <ImageConsentChoice
+            userId={user.id}
+            email={(fullProfile as any)?.email || null}
+            initialValue={((fullProfile as any)?.image_consent_choice as ImageConsent) || "nao_autorizo"}
+            onSaved={() => refetchProfile()}
+          />
+        </div>
+      )}
     </DashboardLayout>
   );
 };
