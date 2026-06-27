@@ -28,6 +28,8 @@ import { toast } from "sonner";
 const DISMISS_KEY = `mead:legal-banner-dismiss:${LEGAL.termsVersion}`;
 // Dismiss curto: 24h. Quando termina a carência, o componente força modal.
 const DISMISS_TTL_MS = 24 * 60 * 60 * 1000;
+// Chave de sessão para auto-abrir o popup uma vez por sessão durante a carência.
+const SESSION_POPUP_KEY = `mead:legal-popup-shown:${LEGAL.termsVersion}`;
 
 const LegalTermsBanner = () => {
   const [userId, setUserId] = useState<string | null>(null);
@@ -79,7 +81,20 @@ const LegalTermsBanner = () => {
 
       if (!cancelled) {
         setNeedsAcceptance(true);
-        if (left <= 0) setOpen(true);
+        if (left <= 0) {
+          setOpen(true);
+        } else {
+          // Auto-abre o popup como lembrete uma vez por sessão.
+          try {
+            const shown = sessionStorage.getItem(SESSION_POPUP_KEY);
+            if (!shown) {
+              sessionStorage.setItem(SESSION_POPUP_KEY, "1");
+              setOpen(true);
+            }
+          } catch {
+            setOpen(true);
+          }
+        }
       }
     })();
     return () => {
