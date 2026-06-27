@@ -11,7 +11,30 @@ export const LEGAL = {
     "Programa de Acompanhamento em Saúde e Performance por prazo determinado.",
   supportWhatsapp: "5521998496289",
   supportEmail: "contato@sthmethod.com.br",
+  /**
+   * Data em que a nova versão entra em vigor para alunos JÁ ATIVOS.
+   * A partir dessa data, conta-se o período de carência (graceDays)
+   * para que registrem o aceite. Após o prazo, o acesso é bloqueado
+   * até que o Termo seja aceito.
+   */
+  termsEffectiveAt: "2026-06-27T00:00:00-03:00",
+  graceDays: 7,
 } as const;
+
+/** Deadline = termsEffectiveAt + graceDays. */
+export function getTermsGraceDeadline(): Date {
+  const start = new Date(LEGAL.termsEffectiveAt);
+  const d = new Date(start);
+  d.setDate(d.getDate() + LEGAL.graceDays);
+  return d;
+}
+
+/** Dias restantes da carência (>=0). 0 = já bloqueia. */
+export function getTermsGraceDaysLeft(now: Date = new Date()): number {
+  const deadline = getTermsGraceDeadline();
+  const ms = deadline.getTime() - now.getTime();
+  return Math.max(0, Math.ceil(ms / (1000 * 60 * 60 * 24)));
+}
 
 export const LEGAL_DISCLAIMER_SHORT =
   "O cliente contrata um Programa de Acompanhamento por prazo determinado — não a aquisição definitiva de dietas, treinos ou protocolos. Encerrada a vigência do plano, o acesso à plataforma é encerrado. Resultados não são garantidos.";

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { LEGAL } from "@/lib/legal-version";
+import { LEGAL, getTermsGraceDaysLeft } from "@/lib/legal-version";
 import LegalAcceptanceBlock, {
   recordLegalAcceptances,
   type LegalAcceptanceState,
@@ -26,7 +26,8 @@ import { toast } from "sonner";
  * - Some assim que o aceite for registrado para a versão atual.
  */
 const DISMISS_KEY = `mead:legal-banner-dismiss:${LEGAL.termsVersion}`;
-const DISMISS_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+// Dismiss curto: 24h. Quando termina a carência, o componente força modal.
+const DISMISS_TTL_MS = 24 * 60 * 60 * 1000;
 
 const LegalTermsBanner = () => {
   const [userId, setUserId] = useState<string | null>(null);
@@ -35,6 +36,8 @@ const LegalTermsBanner = () => {
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<LegalAcceptanceState | null>(null);
   const [saving, setSaving] = useState(false);
+  const [daysLeft, setDaysLeft] = useState<number>(getTermsGraceDaysLeft());
+  const blocking = needsAcceptance && daysLeft <= 0;
 
   useEffect(() => {
     let cancelled = false;
@@ -59,16 +62,25 @@ const LegalTermsBanner = () => {
 
       if (accepted) return;
 
-      // Respeita o dismiss temporário do aluno (7 dias)
-      try {
-        const raw = localStorage.getItem(DISMISS_KEY);
-        if (raw) {
-          const ts = Number(raw);
-          if (Number.isFinite(ts) && Date.now() - ts < DISMISS_TTL_MS) return;
-        }
-      } catch {}
+      const left = getTermsGraceDaysLeft();
+      if (!cancelled) setDaysLeft(left);
 
-      if (!cancelled) setNeedsAcceptance(true);
+      // Se ainda há carência, respeita o dismiss curto (24h).
+      // Se a carência acabou, ignora dismiss e força aceite.
+      if (left > 0) {
+        try {
+          const raw = localStorage.getItem(DISMISS_KEY);
+          if (raw) {
+            const ts = Number(raw);
+            if (Number.isFinite(ts) && Date.now() - ts < DISMISS_TTL_MS) return;
+          }
+        } catch {}
+      }
+
+      if (!cancelled) {
+        setNeedsAcceptance(true);
+        if (left <= 0) setOpen(true);
+      }
     })();
     return () => {
       cancelled = true;
@@ -110,7 +122,8 @@ const LegalTermsBanner = () => {
 
   return (
     <>
-      <div className="mb-4 rounded-2xl border border-border bg-card/80 backdrop-blur p-4 flex items-start gap-3">
+      {!blocking && (
+      <div className="mb-4 rounded-2xl border border-amber-500/30 bg-amber-500/5 backdrop-blur p-4 flex items-start gap-3">
         <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
           <ShieldCheck className="w-4 h-4 text-primary" />
         </div>
@@ -119,8 +132,12 @@ const LegalTermsBanner = () => {
             Atualizamos o Termo de Adesão e a Política de Privacidade
           </p>
           <p className="text-[12px] text-muted-foreground mt-1 leading-relaxed">
-            Seu acesso atual <strong>continua liberado normalmente</strong>. Quando puder,
-            leia e registre seu aceite da versão vigente — leva menos de 1 minuto.
+            Seu acesso atual <strong>continua liberado normalmente</strong>. Você tem{" "}
+            <strong className="text-amber-600 dark:text-amber-400">
+              {daysLeft} {daysLeft === 1 ? "dia" : "dias"}
+            </strong>{" "}
+            para registrar o aceite da versão vigente. Após esse prazo, o acesso ficará
+            suspenso até o aceite ser concluído.
           </p>
           <div className="flex flex-wrap gap-2 mt-3">
             <Button size="sm" className="rounded-full h-8 px-4 text-[12px]" onClick={() => setOpen(true)}>
@@ -132,7 +149,7 @@ const LegalTermsBanner = () => {
               className="rounded-full h-8 px-3 text-[12px] text-muted-foreground"
               onClick={dismiss}
             >
-              Mais tarde
+              Lembrar amanhã
             </Button>
           </div>
         </div>
@@ -144,14 +161,35 @@ const LegalTermsBanner = () => {
           <X className="w-4 h-4" />
         </button>
       </div>
+      )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <Dialog
+        open={open || blocking}
+        onOpenChange={(v) => {
+          // Se acabou a carência, não permite fechar.
+          if (blocking) return;
+          setOpen(v);
+        }}
+      >
+        <DialogContent
+          className="max-w-2xl max-h-[90vh] overflow-y-auto"
+          onInteractOutside={(e) => {
+            if (blocking) e.preventDefault();
+          }}
+          onEscapeKeyDown={(e) => {
+            if (blocking) e.preventDefault();
+          }}
+        >
           <DialogHeader>
-            <DialogTitle>Termo de Adesão e Política de Privacidade</DialogTitle>
+            <DialogTitle>
+              {blocking
+                ? "Aceite obrigatório para continuar"
+                : "Termo de Adesão e Política de Privacidade"}
+            </DialogTitle>
             <DialogDescription>
-              Versão vigente {LEGAL.termsVersion}. Seu acesso já está ativo — este aceite mantém seu
-              cadastro em conformidade com a nova redação.
+              {blocking
+                ? `O período de carência de ${LEGAL.graceDays} dias terminou. Para retomar o acesso à plataforma, registre o aceite da versão vigente (${LEGAL.termsVersion}).`
+                : `Versão vigente ${LEGAL.termsVersion}. Seu acesso já está ativo — este aceite mantém seu cadastro em conformidade com a nova redação.`}
             </DialogDescription>
           </DialogHeader>
 
@@ -162,15 +200,21 @@ const LegalTermsBanner = () => {
           />
 
           <DialogFooter className="gap-2">
-            <Button variant="ghost" onClick={() => setOpen(false)} disabled={saving}>
-              Fechar
-            </Button>
+            {!blocking && (
+              <Button variant="ghost" onClick={() => setOpen(false)} disabled={saving}>
+                Fechar
+              </Button>
+            )}
             <Button onClick={handleAccept} disabled={!state?.isComplete || saving}>
               {saving ? "Registrando..." : "Confirmar aceite"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {blocking && (
+        <div className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm pointer-events-auto" />
+      )}
     </>
   );
 };
