@@ -1116,6 +1116,7 @@ const Cadastro = () => {
         calculateFinalPrice={calculateFinalPrice}
         actionType="new"
         overrideUserId={userId || undefined}
+        overrideEmail={email || undefined}
         onPaymentSuccess={() => {
           toast.success("Pagamento registrado! Seu acesso será liberado após confirmação.");
           localStorage.removeItem(CADASTRO_DRAFT_KEY);
