@@ -92,31 +92,26 @@ const SubscriptionAlerts = ({ subscription }: SubscriptionAlertsProps) => {
   const s = styles[tier];
 
   return (
-    <Card className={`mb-6 animate-fade-in ${
-      variant === "expired" 
-        ? "border-destructive/30 bg-destructive/5" 
-        : "border-warning/30 bg-warning/5"
-    }`}>
+    <Card className={`mb-6 animate-fade-in ${s.border} ${s.bg}`}>
       <CardContent className="py-4">
         <div className="flex items-start gap-3">
-          {variant === "expired" ? (
-            <AlertCircle className="w-5 h-5 text-destructive mt-0.5 shrink-0" />
-          ) : (
-            <Sparkles className="w-5 h-5 text-warning mt-0.5 shrink-0" />
-          )}
+          {s.icon}
           <div className="flex-1">
             <p className="font-semibold text-foreground font-body">{title}</p>
             <p className="text-sm text-muted-foreground font-body mt-1">{message}</p>
-            {isExpiring && (
-              <p className="text-xs text-muted-foreground mt-1">
-                {planName} • Vence em {daysLeft} {daysLeft === 1 ? "dia" : "dias"}
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground mt-2">
+              {planName} ·{" "}
+              {isExpired
+                ? `Encerrado em ${endDate.toLocaleDateString("pt-BR")}`
+                : daysLeft === 0
+                ? "Encerra hoje"
+                : `Faltam ${daysLeft} ${daysLeft === 1 ? "dia" : "dias"} de vigência`}
+            </p>
             <div className="flex gap-2 mt-3">
               <Link to="/dashboard/subscription">
-                <Button size="sm" variant={variant === "expired" ? "default" : "outline"}>
+                <Button size="sm" variant={s.cta}>
                   <ArrowRight className="w-3 h-3 mr-1" />
-                  {isExpired ? "Renovar agora" : "Ver planos"}
+                  {isExpired ? "Renovar Programa" : "Renovar agora"}
                 </Button>
               </Link>
             </div>
