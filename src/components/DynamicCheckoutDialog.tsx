@@ -8,6 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import LegalAcceptanceBlock, {
+  recordLegalAcceptances,
+  type LegalAcceptanceState,
+} from "@/components/legal/LegalAcceptanceBlock";
 
 interface CheckoutDialogProps {
   open: boolean;
@@ -20,6 +24,8 @@ interface CheckoutDialogProps {
   overrideUserId?: string;
   /** Force PIX-only checkout (hides credit/debit buttons regardless of global settings) */
   forcePixOnly?: boolean;
+  /** Override email when user is not yet in AuthContext (e.g. Cadastro) */
+  overrideEmail?: string;
 }
 
 const DynamicCheckoutDialog = ({
@@ -31,9 +37,11 @@ const DynamicCheckoutDialog = ({
   onPaymentSuccess,
   overrideUserId,
   forcePixOnly = false,
+  overrideEmail,
 }: CheckoutDialogProps) => {
   const { user } = useAuth();
   const userId = overrideUserId || user?.id;
+  const userEmail = overrideEmail || user?.email || null;
 
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [pixCopied, setPixCopied] = useState(false);
@@ -43,6 +51,30 @@ const DynamicCheckoutDialog = ({
   const [verifying, setVerifying] = useState(false);
   const [verificationResult, setVerificationResult] = useState<{ status: string; notes: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [legalState, setLegalState] = useState<LegalAcceptanceState | null>(null);
+  const legalReady = !!legalState?.isComplete;
+
+  const persistLegal = async (context: string) => {
+    if (!legalState) return;
+    try {
+      await recordLegalAcceptances({
+        state: legalState,
+        userId: userId ?? null,
+        email: userEmail,
+        context,
+      });
+    } catch (e) {
+      console.error("[legal] persist failed", e);
+    }
+  };
+
+  const requireLegal = () => {
+    if (!legalReady) {
+      toast.error("Para prosseguir, confirme os aceites do Programa.");
+      return false;
+    }
+    return true;
+  };
 
   // Check if dynamic payments are enabled
   const { data: paymentSettings } = useQuery({
@@ -88,6 +120,8 @@ const DynamicCheckoutDialog = ({
   // Dynamic payment via Mercado Pago API
   const handleDynamicPayment = async (method: "pix" | "credit" | "debit") => {
     if (!selectedPlan || !userId) return;
+    if (!requireLegal()) return;
+    await persistLegal(`checkout:${method}`);
     setCreatingPayment(true);
     try {
       // Plano Projeto Verão 180 no cartão usa assinatura escalonada (preapproval MP):
@@ -135,6 +169,8 @@ const DynamicCheckoutDialog = ({
   // Manual payment - create pending record
   const handleManualPaymentNotified = async () => {
     if (!selectedPlan || !userId) return;
+    if (!requireLegal()) return;
+    await persistLegal("checkout:manual_notified");
     try {
       const priceStr = selectedPlan.price.replace(/[^\d,\.]/g, "").replace(",", ".");
       const origAmount = parseFloat(priceStr) || 0;
