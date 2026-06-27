@@ -34,7 +34,7 @@ const Email = ({
           </Section>
           <Heading style={h1}>Pagamento aprovado ✅</Heading>
           <Text style={text}>
-            Olá{first ? `, ${first}` : ''}! Seu pagamento foi confirmado e seu acesso à plataforma já está liberado.
+            Olá{first ? `, ${first}` : ''}! Seu pagamento foi confirmado e seu acesso ao Programa de Acompanhamento STH METHOD está liberado pelo prazo determinado abaixo.
           </Text>
 
           <Section style={card}>
@@ -51,7 +51,10 @@ const Email = ({
           </Section>
 
           <Hr style={hr} />
-          <Text style={footer}>Este e-mail serve como comprovante do seu pagamento.</Text>
+          <Text style={footer}>Este e-mail serve como comprovante de pagamento.</Text>
+          <Text style={footer}>
+            Programa de Acompanhamento por prazo determinado. Encerrada a vigência, o acesso à plataforma é encerrado automaticamente.
+          </Text>
           <Text style={footer}>STH METHOD · sthmethod.com.br</Text>
         </Container>
       </Body>
