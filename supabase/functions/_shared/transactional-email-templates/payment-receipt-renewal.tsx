@@ -34,7 +34,7 @@ const Email = ({
           </Section>
           <Heading style={h1}>Renovação confirmada 🔄</Heading>
           <Text style={text}>
-            Obrigado por continuar com a gente{first ? `, ${first}` : ''}! Seu acesso à plataforma foi renovado.
+            Obrigado por iniciar um novo ciclo{first ? `, ${first}` : ''}! Seu Programa de Acompanhamento STH METHOD foi renovado pelo novo prazo determinado abaixo.
           </Text>
 
           <Section style={card}>
@@ -51,7 +51,10 @@ const Email = ({
           </Section>
 
           <Hr style={hr} />
-          <Text style={footer}>Este e-mail serve como comprovante da sua renovação.</Text>
+          <Text style={footer}>Este e-mail serve como comprovante de renovação.</Text>
+          <Text style={footer}>
+            Programa de Acompanhamento por prazo determinado. Encerrada a nova vigência, o acesso à plataforma é encerrado automaticamente.
+          </Text>
           <Text style={footer}>STH METHOD · sthmethod.com.br</Text>
         </Container>
       </Body>
