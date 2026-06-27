@@ -13,6 +13,7 @@ import { Microscope, UtensilsCrossed, PartyPopper, Megaphone, Dumbbell, FileText
 import NotificationCenter from "./admin/NotificationCenter";
 import { useEvolutionReminders } from "@/hooks/useEvolutionReminders";
 import { usePaymentReconciliation } from "@/hooks/usePaymentReconciliation";
+import LegalTermsBanner from "@/components/legal/LegalTermsBanner";
 
 const BIRTHDAY_MESSAGES = [
   "🎉 Feliz Aniversário! Que este novo ciclo traga muita saúde, energia e conquistas. Você merece!",
@@ -353,6 +354,7 @@ const DashboardLayout = ({ children, role, title, subtitle }: DashboardLayoutPro
             </div>
           )}
           <div className="w-full min-w-0">{children}</div>
+          {isStudent && <LegalTermsBanner />}
         </div>
       </main>
       {showDock && <FloatingDock />}
