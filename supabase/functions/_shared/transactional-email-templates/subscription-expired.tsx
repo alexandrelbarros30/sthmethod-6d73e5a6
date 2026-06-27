@@ -20,27 +20,28 @@ const Email = ({
   return (
     <Html lang="pt-BR" dir="ltr">
       <Head />
-      <Preview>Sua consultoria foi encerrada</Preview>
+      <Preview>Seu Programa STH METHOD foi encerrado</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={brandRow}>
             <Text style={brand}>STH METHOD</Text>
-            <Text style={badge}>CONSULTORIA ENCERRADA</Text>
+            <Text style={badge}>PROGRAMA ENCERRADO</Text>
           </Section>
-          <Heading style={h1}>Sua consultoria foi encerrada</Heading>
+          <Heading style={h1}>Seu Programa foi encerrado</Heading>
           <Text style={text}>
-            Olá{first ? `, ${first}` : ''}, o período do seu plano <strong>{planName}</strong> terminou em {expiredOn} e o acesso à plataforma foi suspenso.
+            Olá{first ? `, ${first}` : ''}, o prazo determinado do seu <strong>{planName}</strong> chegou ao fim em {expiredOn}.
+            Conforme previsto no Termo de Adesão, o acesso à plataforma foi encerrado automaticamente.
           </Text>
           <Text style={text}>
-            Você ainda pode retomar de onde parou — seus dados e histórico de evolução continuam salvos.
+            Você pode contratar um novo ciclo do Programa a qualquer momento. Seus dados de evolução permanecem armazenados conforme a Política de Privacidade.
           </Text>
 
           <Section style={{ textAlign: 'center', margin: '28px 0' }}>
-            <Button href={renewUrl} style={button}>Renovar consultoria</Button>
+            <Button href={renewUrl} style={button}>Contratar novo ciclo</Button>
           </Section>
 
           <Hr style={hr} />
-          <Text style={footer}>Foi um prazer acompanhar sua jornada. Estamos aqui quando quiser continuar.</Text>
+          <Text style={footer}>Foi um prazer acompanhar sua jornada. Estamos aqui quando quiser iniciar um novo ciclo.</Text>
           <Text style={footer}>STH METHOD · sthmethod.com.br</Text>
         </Container>
       </Body>
@@ -50,8 +51,8 @@ const Email = ({
 
 export const template = {
   component: Email,
-  subject: 'Sua consultoria foi encerrada — STH METHOD',
-  displayName: 'Consultoria expirada',
+  subject: 'Seu Programa STH METHOD foi encerrado',
+  displayName: 'Programa encerrado (vigência)',
   previewData: {
     name: 'João Silva', planName: 'Plano Premium',
     expiredOn: '14/06/2026', renewUrl: 'https://sthmethod.com.br/dashboard/pagar',
