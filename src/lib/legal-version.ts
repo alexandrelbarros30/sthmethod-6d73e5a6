@@ -5,7 +5,7 @@
  */
 
 export const LEGAL = {
-  termsVersion: "v2026.06",
+  termsVersion: "v2026.06.29",
   privacyVersion: "v2026.06",
   programNature:
     "Programa de Acompanhamento em Saúde e Performance por prazo determinado.",
@@ -17,7 +17,7 @@ export const LEGAL = {
    * para que registrem o aceite. Após o prazo, o acesso é bloqueado
    * até que o Termo seja aceito.
    */
-  termsEffectiveAt: "2026-06-27T00:00:00-03:00",
+  termsEffectiveAt: "2026-06-29T00:00:00-03:00",
   graceDays: 7,
 } as const;
 
