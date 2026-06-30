@@ -1,4 +1,4 @@
-import { ImgHTMLAttributes, ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { ImgHTMLAttributes, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
 import { ImageOff, Loader2 } from "lucide-react";
 import { resolveDisplayableImageFromUrl } from "@/lib/displayable-image";
@@ -60,17 +60,7 @@ export const SignedImage = ({
     };
   }, []);
 
-  useEffect(() => {
-    if (!url || convertedUrl || imageFailed || nativeLoadedRef.current) return;
-    const timer = window.setTimeout(() => {
-      if (!nativeLoadedRef.current && !conversionInFlightRef.current && !conversionAttemptedRef.current) {
-        void resolveBlobImage(url);
-      }
-    }, 10000);
-    return () => window.clearTimeout(timer);
-  }, [url, convertedUrl, imageFailed]);
-
-  const resolveBlobImage = async (signedUrl: string) => {
+  const resolveBlobImage = useCallback(async (signedUrl: string) => {
     if (conversionInFlightRef.current || conversionAttemptedRef.current || convertedUrlRef.current) return;
     conversionInFlightRef.current = true;
     conversionAttemptedRef.current = true;
@@ -104,7 +94,17 @@ export const SignedImage = ({
       setConverting(false);
       conversionInFlightRef.current = false;
     }
-  };
+  }, [bucket, storagePath]);
+
+  useEffect(() => {
+    if (!url || convertedUrl || imageFailed || nativeLoadedRef.current) return;
+    const timer = window.setTimeout(() => {
+      if (!nativeLoadedRef.current && !conversionInFlightRef.current && !conversionAttemptedRef.current) {
+        void resolveBlobImage(url);
+      }
+    }, 10000);
+    return () => window.clearTimeout(timer);
+  }, [url, convertedUrl, imageFailed, resolveBlobImage]);
 
   const placeholder = (
     <div
