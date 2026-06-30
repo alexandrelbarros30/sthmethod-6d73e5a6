@@ -1,6 +1,8 @@
 import { ImgHTMLAttributes, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
 import { ImageOff, Loader2 } from "lucide-react";
+import { resolveDisplayableImageFromUrl } from "@/lib/displayable-image";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Props extends Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> {
   bucket: "body-images" | "documents";
@@ -29,16 +31,30 @@ export const SignedImage = ({
   const [converting, setConverting] = useState(false);
   const [convertedUrl, setConvertedUrl] = useState<string | null>(null);
   const convertedUrlRef = useRef<string | null>(null);
+  const nativeLoadedRef = useRef(false);
+  const conversionInFlightRef = useRef(false);
   const signedExpiresIn = useMemo(() => expiresIn ?? 3600, [expiresIn]);
   const { url, loading, error } = useSignedUrl(bucket, storagePath, publicUrl, expiresIn);
   useEffect(() => {
     setReloadToken(0);
     setImageFailed(false);
     setConverting(false);
+    nativeLoadedRef.current = false;
+    conversionInFlightRef.current = false;
     if (convertedUrlRef.current) URL.revokeObjectURL(convertedUrlRef.current);
     convertedUrlRef.current = null;
     setConvertedUrl(null);
   }, [url]);
+
+  useEffect(() => {
+    if (!url || convertedUrl) return;
+    const timer = window.setTimeout(() => {
+      if (!nativeLoadedRef.current && !conversionInFlightRef.current) {
+        void resolveBlobImage(url);
+      }
+    }, 2200);
+    return () => window.clearTimeout(timer);
+  }, [url, convertedUrl]);
 
   useEffect(() => {
     return () => {
@@ -48,36 +64,32 @@ export const SignedImage = ({
   }, []);
 
   const resolveBlobImage = async (signedUrl: string) => {
-    if (converting || convertedUrl) return;
+    if (conversionInFlightRef.current || convertedUrlRef.current) return;
+    conversionInFlightRef.current = true;
     setConverting(true);
     try {
-      const res = await fetch(signedUrl, { cache: "no-store" });
-      if (!res.ok) throw new Error("download_failed");
-      const blob = await res.blob();
-      let objectUrl = URL.createObjectURL(blob);
-      try {
-        await new Promise<void>((resolve, reject) => {
-          const probe = new Image();
-          probe.onload = () => resolve();
-          probe.onerror = () => reject(new Error("blob_decode_failed"));
-          probe.src = objectUrl;
-        });
-      } catch {
-        URL.revokeObjectURL(objectUrl);
-        const { default: heic2any } = await import("heic2any");
-        const result = await heic2any({ blob, toType: "image/jpeg", quality: 0.9 });
-        const jpeg = Array.isArray(result) ? result[0] : result;
-        objectUrl = URL.createObjectURL(jpeg);
-      }
+      const result = await resolveDisplayableImageFromUrl(signedUrl);
+      const objectUrl = result.objectUrl;
       if (convertedUrlRef.current) URL.revokeObjectURL(convertedUrlRef.current);
       convertedUrlRef.current = objectUrl;
       setConvertedUrl(objectUrl);
       setImageFailed(false);
+
+      if (result.converted && storagePath) {
+        void supabase.storage.from(bucket).update(storagePath, result.blob, {
+          contentType: "image/jpeg",
+          cacheControl: "3600",
+          upsert: true,
+        }).then(({ error }) => {
+          if (error) console.warn("[SignedImage] auto-repair upload failed", error.message);
+        });
+      }
     } catch (err) {
       console.warn("[SignedImage] secure image conversion failed", err);
       setImageFailed(true);
     } finally {
       setConverting(false);
+      conversionInFlightRef.current = false;
     }
   };
 
@@ -106,13 +118,11 @@ export const SignedImage = ({
         className={className}
         loading="lazy"
         decoding="async"
-        onError={() => setReloadToken((v) => {
-          if (v >= 1) {
-            void resolveBlobImage(url);
-            return v;
-          }
-          return v + 1;
-        })}
+        onLoad={() => { nativeLoadedRef.current = true; }}
+        onError={() => {
+          if (reloadToken < 1) setReloadToken((v) => v + 1);
+          void resolveBlobImage(url);
+        }}
         {...rest}
       />
     );

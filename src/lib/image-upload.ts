@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { convertHeicBlobToJpeg, hasHeicSignature } from "@/lib/displayable-image";
 
 const MAX_SIZE_MB = 1;
 const MAX_DIMENSION = 1000;
@@ -20,9 +21,7 @@ function isHeic(file: File): boolean {
  */
 async function convertHeicToJpeg(file: File): Promise<File> {
   console.log("[image-upload] Converting HEIC → JPEG…");
-  const { default: heic2any } = await import("heic2any");
-  const result = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 });
-  const blob = Array.isArray(result) ? result[0] : result;
+  const blob = await convertHeicBlobToJpeg(file, 0.9);
   return new File([blob], file.name.replace(/\.(heic|heif)$/i, ".jpg"), {
     type: "image/jpeg",
     lastModified: Date.now(),
@@ -95,7 +94,7 @@ export async function compressImage(
   maxDim = MAX_DIMENSION,
 ): Promise<Blob> {
   // iPhone HEIC/HEIF: convert to JPEG first (browsers cannot decode HEIC natively)
-  if (isHeic(file)) {
+  if (isHeic(file) || await hasHeicSignature(file)) {
     try {
       file = await convertHeicToJpeg(file);
     } catch (err) {

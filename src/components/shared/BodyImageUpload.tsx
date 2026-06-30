@@ -9,6 +9,7 @@ import { processAndUpload, validateImageFile } from "@/lib/image-upload";
 import SignedImage from "@/components/shared/SignedImage";
 import { notifyStudentSelfUpdate } from "@/lib/notify-student-self-update";
 import { clearFileDrafts, loadFileDrafts, saveFileDrafts } from "@/lib/file-draft-storage";
+import { createDisplayableImageObjectUrl } from "@/lib/displayable-image";
 
 interface BodyImageUploadProps {
   userId: string;
@@ -94,6 +95,12 @@ const BodyImageUpload = ({ userId, existingImages = [], onComplete, required = f
 
     const preview = URL.createObjectURL(file);
     setImages((prev) => ({ ...prev, [type]: { file, preview } }));
+    createDisplayableImageObjectUrl(file, file.name)
+      .then((displayPreview) => {
+        URL.revokeObjectURL(preview);
+        setImages((prev) => ({ ...prev, [type]: { file, preview: displayPreview } }));
+      })
+      .catch(() => {});
   };
 
   const removeImage = (type: string) => {
