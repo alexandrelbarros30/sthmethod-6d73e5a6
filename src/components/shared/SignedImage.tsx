@@ -1,4 +1,4 @@
-import { ImgHTMLAttributes, useEffect, useMemo, useState } from "react";
+import { ImgHTMLAttributes, ReactNode, useEffect, useMemo, useState } from "react";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
 import { ImageOff, Loader2 } from "lucide-react";
 
@@ -7,7 +7,7 @@ interface Props extends Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> {
   storagePath?: string | null;
   publicUrl?: string | null;
   expiresIn?: number;
-  fallback?: React.ReactNode;
+  fallback?: ReactNode;
 }
 
 /**
