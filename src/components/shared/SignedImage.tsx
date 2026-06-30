@@ -1,5 +1,6 @@
 import { ImgHTMLAttributes } from "react";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
+import { ImageOff, Loader2 } from "lucide-react";
 
 interface Props extends Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> {
   bucket: "body-images" | "documents";
@@ -20,11 +21,24 @@ export const SignedImage = ({
   expiresIn,
   fallback,
   alt = "",
+  className,
   ...rest
 }: Props) => {
-  const { url } = useSignedUrl(bucket, storagePath, publicUrl, expiresIn);
-  if (!url) return <>{fallback ?? null}</>;
-  return <img src={url} alt={alt} {...rest} />;
+  const { url, loading, error } = useSignedUrl(bucket, storagePath, publicUrl, expiresIn);
+  if (url) return <img src={url} alt={alt} className={className} {...rest} />;
+  if (fallback) return <>{fallback}</>;
+  return (
+    <div
+      className={
+        (className || "") +
+        " flex flex-col items-center justify-center bg-muted text-muted-foreground text-[10px] gap-1 p-1"
+      }
+      title={error ? `Imagem indisponível (${error})` : "Carregando imagem..."}
+    >
+      {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <ImageOff className="w-3 h-3" />}
+      <span>{loading ? "..." : "indisponível"}</span>
+    </div>
+  );
 };
 
 export default SignedImage;
