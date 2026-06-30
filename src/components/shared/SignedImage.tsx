@@ -1,4 +1,4 @@
-import { ImgHTMLAttributes, useMemo, useState } from "react";
+import { ImgHTMLAttributes, useEffect, useMemo, useState } from "react";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
 import { ImageOff, Loader2 } from "lucide-react";
 
@@ -25,9 +25,27 @@ export const SignedImage = ({
   ...rest
 }: Props) => {
   const [reloadToken, setReloadToken] = useState(0);
+  const [imageFailed, setImageFailed] = useState(false);
   const signedExpiresIn = useMemo(() => expiresIn ?? 3600, [expiresIn]);
   const { url, loading, error } = useSignedUrl(bucket, storagePath, publicUrl, expiresIn);
+  useEffect(() => {
+    setReloadToken(0);
+    setImageFailed(false);
+  }, [url]);
+  const placeholder = (
+    <div
+      className={
+        (className || "") +
+        " flex flex-col items-center justify-center bg-muted text-muted-foreground text-[10px] gap-1 p-1"
+      }
+      title={error || imageFailed ? `Imagem indisponível (${error || "load_failed"})` : `Carregando imagem segura (${signedExpiresIn}s)...`}
+    >
+      {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <ImageOff className="w-3 h-3" />}
+      <span>{loading ? "..." : "indisponível"}</span>
+    </div>
+  );
   if (url) {
+    if (imageFailed) return fallback ? <>{fallback}</> : placeholder;
     return (
       <img
         src={reloadToken ? `${url}${url.includes("?") ? "&" : "?"}r=${reloadToken}` : url}
@@ -35,24 +53,19 @@ export const SignedImage = ({
         className={className}
         loading="lazy"
         decoding="async"
-        onError={() => setReloadToken((v) => (v < 2 ? v + 1 : v))}
+        onError={() => setReloadToken((v) => {
+          if (v >= 2) {
+            setImageFailed(true);
+            return v;
+          }
+          return v + 1;
+        })}
         {...rest}
       />
     );
   }
   if (fallback && !loading && error) return <>{fallback}</>;
-  return (
-    <div
-      className={
-        (className || "") +
-        " flex flex-col items-center justify-center bg-muted text-muted-foreground text-[10px] gap-1 p-1"
-      }
-      title={error ? `Imagem indisponível (${error})` : `Carregando imagem segura (${signedExpiresIn}s)...`}
-    >
-      {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <ImageOff className="w-3 h-3" />}
-      <span>{loading ? "..." : "indisponível"}</span>
-    </div>
-  );
+  return placeholder;
 };
 
 export default SignedImage;
