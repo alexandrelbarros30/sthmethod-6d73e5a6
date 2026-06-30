@@ -72,7 +72,9 @@ export function extractStoragePath(
   const marker = `/storage/v1/object/`;
   const idx = clean.indexOf(marker);
   if (idx === -1) {
-    return clean.startsWith(`${bucket}/`) ? clean.slice(bucket.length + 1) : clean;
+    if (clean.startsWith(`${bucket}/`)) return clean.slice(bucket.length + 1);
+    if (!/^https?:\/\//i.test(clean) && !clean.startsWith("blob:") && clean.includes("/")) return clean;
+    return null;
   }
 
   const objectPath = clean.slice(idx + marker.length);
