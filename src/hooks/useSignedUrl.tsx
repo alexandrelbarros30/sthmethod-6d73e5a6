@@ -15,7 +15,9 @@ export function useSignedUrl(
   publicUrl?: string | null,
   expiresIn = 3600
 ) {
-  const [url, setUrl] = useState<string | null>(publicUrl ?? null);
+  // Start with null to avoid trying to load the (private/expired) public URL.
+  // The effect below resolves a fresh signed URL before rendering the image.
+  const [url, setUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
