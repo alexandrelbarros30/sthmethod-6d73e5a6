@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { getSecureFileUrl, extractStoragePath } from "@/lib/secure-file-url";
+import { extractStoragePath } from "@/lib/secure-file-url";
+import { supabase } from "@/integrations/supabase/client";
 
 type Bucket = "body-images" | "documents";
 
@@ -15,10 +16,9 @@ export function useSignedUrl(
   publicUrl?: string | null,
   expiresIn = 3600
 ) {
-  // Start with null to avoid trying to load the (private/expired) public URL.
-  // The effect below resolves a fresh signed URL before rendering the image.
   const [url, setUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -29,19 +29,42 @@ export function useSignedUrl(
       return;
     }
 
+    const sign = async () => {
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .createSignedUrl(path, expiresIn);
+      return { data, error };
+    };
+
     setLoading(true);
-    getSecureFileUrl({ bucket, storagePath: path, fallbackUrl: publicUrl, expiresIn })
-      .then((u) => {
-        if (!cancelled) setUrl(u);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+    setError(null);
+    (async () => {
+      let res = await sign();
+      // Retry once after refreshing the auth session — handles stale tokens
+      // on long PWA sessions where storage RLS denies and returns 404.
+      if (res.error || !res.data?.signedUrl) {
+        try { await supabase.auth.refreshSession(); } catch {}
+        res = await sign();
+      }
+      if (cancelled) return;
+      if (res.data?.signedUrl) {
+        setUrl(res.data.signedUrl);
+      } else {
+        // Do NOT fall back to the (now private) public URL — it would render
+        // as a broken image. Surface null so callers can show a placeholder.
+        setUrl(null);
+        setError(res.error?.message || "not_found");
+        if (typeof console !== "undefined") {
+          console.warn("[useSignedUrl] failed to sign", { bucket, path, error: res.error });
+        }
+      }
+      setLoading(false);
+    })();
 
     return () => {
       cancelled = true;
     };
   }, [bucket, storagePath, publicUrl, expiresIn]);
 
-  return { url, loading };
+  return { url, loading, error };
 }
