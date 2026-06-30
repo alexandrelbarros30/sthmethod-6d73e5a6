@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { extractStoragePath } from "@/lib/secure-file-url";
+import { extractStoragePath, getSecureFileUrl, isStorageObjectUrl } from "@/lib/secure-file-url";
 import { supabase } from "@/integrations/supabase/client";
 
 type Bucket = "body-images" | "documents";
@@ -8,7 +8,8 @@ type Bucket = "body-images" | "documents";
  * Hook que resolve uma URL segura (signed URL) a partir de um `storage_path`
  * ou, como fallback, extrai o path de uma URL pública antiga.
  *
- * Mantém compatibilidade total: se nenhum dos dois funcionar, devolve a URL original.
+ * Mantém compatibilidade com URLs externas, mas nunca renderiza URL pública antiga
+ * de bucket privado como fallback, pois isso gera ícone de imagem quebrada.
  */
 export function useSignedUrl(
   bucket: Bucket,
@@ -25,37 +26,22 @@ export function useSignedUrl(
     const path = storagePath || extractStoragePath(publicUrl, bucket);
 
     if (!path) {
-      setUrl(publicUrl ?? null);
+      setUrl(publicUrl && !isStorageObjectUrl(publicUrl) ? publicUrl : null);
       return;
     }
-
-    const sign = async () => {
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .createSignedUrl(path, expiresIn);
-      return { data, error };
-    };
 
     setLoading(true);
     setError(null);
     (async () => {
-      let res = await sign();
-      // Retry once after refreshing the auth session — handles stale tokens
-      // on long PWA sessions where storage RLS denies and returns 404.
-      if (res.error || !res.data?.signedUrl) {
-        try { await supabase.auth.refreshSession(); } catch {}
-        res = await sign();
-      }
+      const signedUrl = await getSecureFileUrl({ bucket, storagePath: path, fallbackUrl: publicUrl, expiresIn });
       if (cancelled) return;
-      if (res.data?.signedUrl) {
-        setUrl(res.data.signedUrl);
+      if (signedUrl) {
+        setUrl(signedUrl);
       } else {
-        // Do NOT fall back to the (now private) public URL — it would render
-        // as a broken image. Surface null so callers can show a placeholder.
         setUrl(null);
-        setError(res.error?.message || "not_found");
+        setError("not_found");
         if (typeof console !== "undefined") {
-          console.warn("[useSignedUrl] failed to sign", { bucket, path, error: res.error });
+          console.warn("[useSignedUrl] failed to sign", { bucket, path });
         }
       }
       setLoading(false);
