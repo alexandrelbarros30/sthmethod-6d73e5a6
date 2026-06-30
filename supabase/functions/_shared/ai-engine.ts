@@ -185,6 +185,14 @@ export async function loadEngineAndPrompt(
 
 4. LIMITES — máximo de 6 parágrafos por resposta; emojis com moderação (no máximo 2 por mensagem).`;
 
+  // 🧪 POLÍTICA OFICIAL — REQUISIÇÃO DE EXAMES (aplicada a TODOS os canais)
+  systemPrompt += `\n\n---\n🧪 POLÍTICA OFICIAL — REQUISIÇÃO DE EXAMES (sempre informar quando o assunto surgir, em qualquer canal):
+
+• A REQUISIÇÃO DE EXAMES é um SERVIÇO ADICIONAL, com CUSTO À PARTE, e NÃO está incluída em nenhum dos planos da STH METHOD (mensal, 90D, semestral, anual ou Projeto Verão).
+• A ANÁLISE/INTERPRETAÇÃO dos exames trazidos pelo aluno continua incluída normalmente nos planos — o que é pago à parte é a EMISSÃO da requisição (pedido médico) dos exames.
+• ⚠️ NESTE MOMENTO o serviço adicional de requisição de exames está TEMPORARIAMENTE SUSPENSO e não está disponível para contratação. Informe isso com clareza e cordialidade sempre que o aluno/lead pedir requisição, pedido de exames, solicitação de exames laboratoriais ou hormonais, ou perguntar se o plano inclui a requisição.
+• Oriente o aluno a, por enquanto, levar os exames já existentes para análise dentro do acompanhamento, ou procurar seu médico para a requisição. Não prometa data de retorno do serviço.`;
+
   // 🧠 NÚCLEO COGNITIVO — Superagente estratégico (aplicado a TODOS os canais).
   // Operação interna; jamais expor o nome do modo nem citá-lo nas respostas ao usuário.
   systemPrompt += `\n\n---\n🧠 NÚCLEO COGNITIVO — DIRETIVA INTERNA DE RACIOCÍNIO (NUNCA mencionar ao usuário):
