@@ -34,7 +34,12 @@ export function useSignedUrl(
     setLoading(true);
     setError(null);
     (async () => {
-      const signedUrl = await getSecureFileUrl({ bucket, storagePath: path, fallbackUrl: publicUrl, expiresIn });
+      let signedUrl: string | null = null;
+      try {
+        signedUrl = await getSecureFileUrl({ bucket, storagePath: path, fallbackUrl: publicUrl, expiresIn });
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : "sign_failed");
+      }
       if (cancelled) return;
       if (signedUrl) {
         setUrl(signedUrl);
