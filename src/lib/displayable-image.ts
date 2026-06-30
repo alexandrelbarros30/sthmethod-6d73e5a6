@@ -4,6 +4,19 @@
  */
 
 const HEIC_BRANDS = ["heic", "heix", "hevc", "hevx", "heim", "heis", "mif1", "msf1"];
+const IMAGE_PROBE_TIMEOUT_MS = 8000;
+const IMAGE_FETCH_TIMEOUT_MS = 12000;
+const HEIC_CONVERSION_TIMEOUT_MS = 18000;
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(new Error(`${label}_timeout`)), timeoutMs);
+    promise
+      .then(resolve)
+      .catch(reject)
+      .finally(() => window.clearTimeout(timer));
+  });
+}
 
 export async function hasHeicSignature(blob: Blob): Promise<boolean> {
   try {
@@ -31,17 +44,21 @@ export async function isHeicLikeBlob(blob: Blob, sourceNameOrUrl = ""): Promise<
 
 export async function convertHeicBlobToJpeg(blob: Blob, quality = 0.9): Promise<Blob> {
   const { default: heic2any } = await import("heic2any");
-  const converted = await heic2any({ blob, toType: "image/jpeg", quality });
+  const converted = await withTimeout(
+    heic2any({ blob, toType: "image/jpeg", quality }) as Promise<Blob | Blob[]>,
+    HEIC_CONVERSION_TIMEOUT_MS,
+    "heic_conversion"
+  );
   return Array.isArray(converted) ? converted[0] : converted;
 }
 
 function probeImage(objectUrl: string): Promise<void> {
-  return new Promise((resolve, reject) => {
+  return withTimeout(new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve();
     img.onerror = () => reject(new Error("image_decode_failed"));
     img.src = objectUrl;
-  });
+  }), IMAGE_PROBE_TIMEOUT_MS, "image_probe");
 }
 
 export async function createDisplayableImageObjectUrl(blob: Blob, sourceNameOrUrl = ""): Promise<string> {
@@ -77,8 +94,15 @@ export async function createDisplayableImageObjectUrlFromUrl(url: string): Promi
 export async function resolveDisplayableImageFromUrl(
   url: string,
 ): Promise<{ objectUrl: string; blob: Blob; converted: boolean }> {
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error(`image_download_failed_${res.status}`);
-  const blob = await res.blob();
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), IMAGE_FETCH_TIMEOUT_MS);
+  let blob: Blob;
+  try {
+    const res = await fetch(url, { cache: "no-store", signal: controller.signal });
+    if (!res.ok) throw new Error(`image_download_failed_${res.status}`);
+    blob = await res.blob();
+  } finally {
+    window.clearTimeout(timeout);
+  }
   return resolveDisplayableImage(blob, url);
 }
