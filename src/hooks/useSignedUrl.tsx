@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { extractStoragePath, getSecureFileUrl, isStorageObjectUrl } from "@/lib/secure-file-url";
+import { extractStoragePath, getSecureFileUrl, isStorageObjectUrl, normalizeStoragePath } from "@/lib/secure-file-url";
 
 type Bucket = "body-images" | "documents";
 
@@ -22,7 +22,7 @@ export function useSignedUrl(
 
   useEffect(() => {
     let cancelled = false;
-    const path = storagePath || extractStoragePath(publicUrl, bucket);
+    const path = normalizeStoragePath(storagePath, bucket) || extractStoragePath(publicUrl, bucket);
 
     if (!path) {
       setUrl(publicUrl && !isStorageObjectUrl(publicUrl) ? publicUrl : null);

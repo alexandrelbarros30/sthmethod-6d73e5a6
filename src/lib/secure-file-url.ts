@@ -26,7 +26,7 @@ export async function getSecureFileUrl({
   fallbackUrl,
   expiresIn = DEFAULT_EXPIRES_IN,
 }: SecureUrlOptions): Promise<string | null> {
-  const path = storagePath || extractStoragePath(fallbackUrl, bucket);
+  const path = normalizeStoragePath(storagePath, bucket) || extractStoragePath(fallbackUrl, bucket);
   if (path) {
     const { data, error } = await supabase.storage
       .from(bucket)
@@ -53,6 +53,31 @@ export async function getSecureFileUrl({
   }
 
   return fallbackUrl && !isStorageObjectUrl(fallbackUrl) ? fallbackUrl : null;
+}
+
+export function normalizeStoragePath(
+  storagePath: string | null | undefined,
+  bucket: string
+): string | null {
+  if (!storagePath) return null;
+
+  const fromUrl = extractStoragePath(storagePath, bucket);
+  if (fromUrl) return fromUrl;
+
+  let clean = storagePath.split("?")[0].trim();
+  if (!clean || clean.startsWith("blob:")) return null;
+  if (/^https?:\/\//i.test(clean)) return null;
+
+  clean = clean.replace(/^\/+/, "");
+  if (clean.startsWith(`${bucket}/`)) clean = clean.slice(bucket.length + 1);
+
+  try {
+    clean = decodeURIComponent(clean);
+  } catch {
+    // mantém o valor original se houver encoding inválido
+  }
+
+  return clean || null;
 }
 
 /**

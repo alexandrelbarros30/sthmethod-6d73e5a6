@@ -1,7 +1,8 @@
-import { ImgHTMLAttributes, ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { ImgHTMLAttributes, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
 import { ImageOff, Loader2 } from "lucide-react";
 import { resolveDisplayableImageFromUrl } from "@/lib/displayable-image";
+import { normalizeStoragePath } from "@/lib/secure-file-url";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Props extends Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> {
@@ -24,6 +25,8 @@ export const SignedImage = ({
   fallback,
   alt = "",
   className,
+  onLoad,
+  onError,
   ...rest
 }: Props) => {
   const [reloadToken, setReloadToken] = useState(0);
@@ -33,28 +36,22 @@ export const SignedImage = ({
   const convertedUrlRef = useRef<string | null>(null);
   const nativeLoadedRef = useRef(false);
   const conversionInFlightRef = useRef(false);
+  const conversionAttemptedRef = useRef(false);
+  const activeUrlRef = useRef<string | null>(null);
   const signedExpiresIn = useMemo(() => expiresIn ?? 3600, [expiresIn]);
   const { url, loading, error } = useSignedUrl(bucket, storagePath, publicUrl, expiresIn);
   useEffect(() => {
+    activeUrlRef.current = url;
     setReloadToken(0);
     setImageFailed(false);
     setConverting(false);
     nativeLoadedRef.current = false;
     conversionInFlightRef.current = false;
+    conversionAttemptedRef.current = false;
     if (convertedUrlRef.current) URL.revokeObjectURL(convertedUrlRef.current);
     convertedUrlRef.current = null;
     setConvertedUrl(null);
   }, [url]);
-
-  useEffect(() => {
-    if (!url || convertedUrl) return;
-    const timer = window.setTimeout(() => {
-      if (!nativeLoadedRef.current && !conversionInFlightRef.current) {
-        void resolveBlobImage(url);
-      }
-    }, 2200);
-    return () => window.clearTimeout(timer);
-  }, [url, convertedUrl]);
 
   useEffect(() => {
     return () => {
@@ -63,20 +60,26 @@ export const SignedImage = ({
     };
   }, []);
 
-  const resolveBlobImage = async (signedUrl: string) => {
-    if (conversionInFlightRef.current || convertedUrlRef.current) return;
+  const resolveBlobImage = useCallback(async (signedUrl: string) => {
+    if (conversionInFlightRef.current || conversionAttemptedRef.current || convertedUrlRef.current) return;
     conversionInFlightRef.current = true;
+    conversionAttemptedRef.current = true;
     setConverting(true);
     try {
       const result = await resolveDisplayableImageFromUrl(signedUrl);
+      if (activeUrlRef.current !== signedUrl) {
+        URL.revokeObjectURL(result.objectUrl);
+        return;
+      }
       const objectUrl = result.objectUrl;
       if (convertedUrlRef.current) URL.revokeObjectURL(convertedUrlRef.current);
       convertedUrlRef.current = objectUrl;
       setConvertedUrl(objectUrl);
       setImageFailed(false);
 
-      if (result.converted && storagePath) {
-        void supabase.storage.from(bucket).update(storagePath, result.blob, {
+      const path = normalizeStoragePath(storagePath, bucket);
+      if (result.converted && path) {
+        void supabase.storage.from(bucket).update(path, result.blob, {
           contentType: "image/jpeg",
           cacheControl: "3600",
           upsert: true,
@@ -91,7 +94,17 @@ export const SignedImage = ({
       setConverting(false);
       conversionInFlightRef.current = false;
     }
-  };
+  }, [bucket, storagePath]);
+
+  useEffect(() => {
+    if (!url || convertedUrl || imageFailed || nativeLoadedRef.current) return;
+    const timer = window.setTimeout(() => {
+      if (!nativeLoadedRef.current && !conversionInFlightRef.current && !conversionAttemptedRef.current) {
+        void resolveBlobImage(url);
+      }
+    }, 10000);
+    return () => window.clearTimeout(timer);
+  }, [url, convertedUrl, imageFailed, resolveBlobImage]);
 
   const placeholder = (
     <div
@@ -118,9 +131,16 @@ export const SignedImage = ({
         className={className}
         loading="lazy"
         decoding="async"
-        onLoad={() => { nativeLoadedRef.current = true; }}
-        onError={() => {
-          if (reloadToken < 1) setReloadToken((v) => v + 1);
+        onLoad={(event) => {
+          nativeLoadedRef.current = true;
+          onLoad?.(event);
+        }}
+        onError={(event) => {
+          onError?.(event);
+          if (reloadToken < 1) {
+            setReloadToken((v) => Math.max(v + 1, 1));
+            return;
+          }
           void resolveBlobImage(url);
         }}
         {...rest}
