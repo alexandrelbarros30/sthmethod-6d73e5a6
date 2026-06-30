@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
  * Estratégia:
  * - Se receber um `storage_path` (caminho puro tipo "userId/arquivo.jpg"),
  *   gera uma signed URL com validade configurável.
- * - Se receber apenas a URL pública antiga, retorna como está (compatibilidade).
+ * - Se receber apenas uma URL antiga do Storage, extrai o caminho e assina.
  *
  * Quando os buckets virarem privados (Fase 3), apenas o caminho puro funcionará.
  */
@@ -26,13 +26,33 @@ export async function getSecureFileUrl({
   fallbackUrl,
   expiresIn = DEFAULT_EXPIRES_IN,
 }: SecureUrlOptions): Promise<string | null> {
-  if (storagePath) {
+  const path = storagePath || extractStoragePath(fallbackUrl, bucket);
+  if (path) {
     const { data, error } = await supabase.storage
       .from(bucket)
-      .createSignedUrl(storagePath, expiresIn);
+      .createSignedUrl(path, expiresIn);
     if (!error && data?.signedUrl) return data.signedUrl;
+
+    try {
+      await supabase.auth.refreshSession();
+      const retry = await supabase.storage.from(bucket).createSignedUrl(path, expiresIn);
+      if (!retry.error && retry.data?.signedUrl) return retry.data.signedUrl;
+    } catch {
+      // keep fallback below
+    }
+
+    try {
+      const { data: fnData, error: fnError } = await supabase.functions.invoke("admin-sign-files", {
+        body: { bucket, paths: [path], expiresIn },
+      });
+      const signedUrl = fnData?.data?.[0]?.signedUrl || fnData?.data?.[0]?.signedURL;
+      if (!fnError && signedUrl) return signedUrl;
+    } catch {
+      // keep fallback below
+    }
   }
-  return fallbackUrl ?? null;
+
+  return fallbackUrl && !isStorageObjectUrl(fallbackUrl) ? fallbackUrl : null;
 }
 
 /**
@@ -47,8 +67,23 @@ export function extractStoragePath(
   bucket: string
 ): string | null {
   if (!publicUrl) return null;
-  const marker = `/storage/v1/object/public/${bucket}/`;
-  const idx = publicUrl.indexOf(marker);
-  if (idx === -1) return null;
-  return decodeURIComponent(publicUrl.slice(idx + marker.length));
+
+  const clean = publicUrl.split("?")[0];
+  const marker = `/storage/v1/object/`;
+  const idx = clean.indexOf(marker);
+  if (idx === -1) {
+    if (clean.startsWith(`${bucket}/`)) return clean.slice(bucket.length + 1);
+    if (!/^https?:\/\//i.test(clean) && !clean.startsWith("blob:") && clean.includes("/")) return clean;
+    return null;
+  }
+
+  const objectPath = clean.slice(idx + marker.length);
+  const bucketMarker = `/${bucket}/`;
+  const bucketIdx = objectPath.indexOf(bucketMarker);
+  if (bucketIdx === -1) return null;
+  return decodeURIComponent(objectPath.slice(bucketIdx + bucketMarker.length));
+}
+
+export function isStorageObjectUrl(url: string | null | undefined): boolean {
+  return !!url && url.includes("/storage/v1/object/");
 }

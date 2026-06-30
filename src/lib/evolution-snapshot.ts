@@ -23,7 +23,7 @@ export async function createEvolutionSnapshot(
         .maybeSingle(),
       supabase
         .from("body_images")
-        .select("type, image_url, uploaded_at")
+        .select("type, image_url, storage_path, uploaded_at")
         .eq("user_id", userId)
         .eq("is_current", true),
       supabase
@@ -35,9 +35,12 @@ export async function createEvolutionSnapshot(
         .maybeSingle(),
     ]);
 
-    const front = images?.find((i) => i.type === "front")?.image_url ?? null;
-    const back = images?.find((i) => i.type === "back")?.image_url ?? null;
-    const profilePic = images?.find((i) => i.type === "profile")?.image_url ?? null;
+    const frontImg = images?.find((i) => i.type === "front");
+    const backImg = images?.find((i) => i.type === "back");
+    const profileImg = images?.find((i) => i.type === "profile");
+    const front = frontImg?.storage_path || frontImg?.image_url || null;
+    const back = backImg?.storage_path || backImg?.image_url || null;
+    const profilePic = profileImg?.storage_path || profileImg?.image_url || null;
 
     const payload = {
       user_id: userId,

@@ -69,7 +69,7 @@ function groupByDate(images: BodyImage[]): { date: string; label: string; images
     }));
 }
 
-function loadImage(url: string): Promise<HTMLImageElement> {
+function loadImageElement(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     // crossOrigin não deve ser definido para data: URLs ou blob: URLs —
@@ -82,6 +82,44 @@ function loadImage(url: string): Promise<HTMLImageElement> {
     img.onerror = () => reject(new Error("Falha ao carregar imagem"));
     img.src = url;
   });
+}
+
+async function loadImage(url: string): Promise<HTMLImageElement> {
+  try {
+    return await loadImageElement(url);
+  } catch (firstError) {
+    // Alguns uploads antigos do iPhone foram gravados como HEIC, mas com
+    // extensão .jpg. O navegador não renderiza HEIC em <img>/canvas; então,
+    // quando a URL assinada falha, baixamos o blob e convertemos para JPEG.
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw firstError;
+      const blob = await res.blob();
+      const isHeic = /hei[cf]/i.test(blob.type || "") || /\.hei[cf](\?|$)/i.test(url);
+      if (!isHeic) {
+        const objectUrl = URL.createObjectURL(blob);
+        try {
+          return await loadImageElement(objectUrl);
+        } catch {
+          URL.revokeObjectURL(objectUrl);
+          // Se o metadata veio errado (ex.: application/octet-stream ou .jpg),
+          // ainda tentamos conversão HEIC antes de desistir.
+        }
+      }
+
+      try {
+        const { default: heic2any } = await import("heic2any");
+        const converted = await heic2any({ blob, toType: "image/jpeg", quality: 0.92 });
+        const displayBlob = Array.isArray(converted) ? converted[0] : converted;
+        const objectUrl = URL.createObjectURL(displayBlob);
+        return await loadImageElement(objectUrl);
+      } catch {
+        throw firstError;
+      }
+    } catch {
+      throw firstError;
+    }
+  }
 }
 
 /**

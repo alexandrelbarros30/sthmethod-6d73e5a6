@@ -10,6 +10,8 @@ import type { EvolutionSnapshot } from "@/lib/evolution-snapshot";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import EvolutionCharts from "./EvolutionCharts";
+import SignedImage from "./SignedImage";
+import { extractStoragePath } from "@/lib/secure-file-url";
 
 interface Props {
   userId: string;
@@ -46,11 +48,12 @@ function Delta({ before, after, suffix = "", invertColor = false }: { before: nu
 }
 
 function PhotoCell({ url, label }: { url: string | null; label: string }) {
+  const storagePath = extractStoragePath(url, "body-images");
   return (
     <div className="flex flex-col items-center gap-1">
       <div className="aspect-[3/4] w-full rounded-md overflow-hidden bg-muted/40 border border-border/50 flex items-center justify-center">
         {url ? (
-          <img src={url} alt={label} className="w-full h-full object-cover" loading="lazy" />
+          <SignedImage bucket="body-images" storagePath={storagePath} publicUrl={url} alt={label} className="w-full h-full object-cover" />
         ) : (
           <ImageOff className="w-6 h-6 text-muted-foreground" />
         )}
@@ -86,7 +89,7 @@ const EvolutionComparison = ({ userId }: Props) => {
           .maybeSingle(),
         supabase
           .from("body_images")
-          .select("type, image_url")
+          .select("type, image_url, storage_path")
           .eq("user_id", userId)
           .eq("is_current", true),
         supabase
@@ -104,9 +107,12 @@ const EvolutionComparison = ({ userId }: Props) => {
       const w: any = weightRes.data || {};
       const imgs: any[] = imagesRes.data || [];
       const bio: any = bioRes.data || {};
-      const front = imgs.find((i) => i.type === "front")?.image_url ?? null;
-      const back = imgs.find((i) => i.type === "back")?.image_url ?? null;
-      const profilePic = imgs.find((i) => i.type === "profile")?.image_url ?? null;
+      const frontImg = imgs.find((i) => i.type === "front");
+      const backImg = imgs.find((i) => i.type === "back");
+      const profileImg = imgs.find((i) => i.type === "profile");
+      const front = frontImg?.storage_path || frontImg?.image_url || null;
+      const back = backImg?.storage_path || backImg?.image_url || null;
+      const profilePic = profileImg?.storage_path || profileImg?.image_url || null;
 
       const currentWeight = w.weight ?? p.weight ?? null;
       const hasAnyCurrent =
