@@ -69,7 +69,7 @@ function groupByDate(images: BodyImage[]): { date: string; label: string; images
     }));
 }
 
-function loadImage(url: string): Promise<HTMLImageElement> {
+function loadImageElement(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     // crossOrigin não deve ser definido para data: URLs ou blob: URLs —
@@ -82,6 +82,38 @@ function loadImage(url: string): Promise<HTMLImageElement> {
     img.onerror = () => reject(new Error("Falha ao carregar imagem"));
     img.src = url;
   });
+}
+
+async function loadImage(url: string): Promise<HTMLImageElement> {
+  try {
+    return await loadImageElement(url);
+  } catch (firstError) {
+    // Alguns uploads antigos do iPhone foram gravados como HEIC, mas com
+    // extensão .jpg. O navegador não renderiza HEIC em <img>/canvas; então,
+    // quando a URL assinada falha, baixamos o blob e convertemos para JPEG.
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw firstError;
+      const blob = await res.blob();
+      const isHeic = /hei[cf]/i.test(blob.type || "") || /\.hei[cf](\?|$)/i.test(url);
+      const displayBlob = isHeic
+        ? (() => null as Blob | null)()
+        : blob;
+
+      let objectUrl: string;
+      if (displayBlob) {
+        objectUrl = URL.createObjectURL(displayBlob);
+      } else {
+        const { default: heic2any } = await import("heic2any");
+        const converted = await heic2any({ blob, toType: "image/jpeg", quality: 0.92 });
+        const jpeg = Array.isArray(converted) ? converted[0] : converted;
+        objectUrl = URL.createObjectURL(jpeg);
+      }
+      return await loadImageElement(objectUrl);
+    } catch {
+      throw firstError;
+    }
+  }
 }
 
 /**
