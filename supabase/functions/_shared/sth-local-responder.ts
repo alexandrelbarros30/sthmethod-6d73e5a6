@@ -91,7 +91,9 @@ function planosBlock(): string {
     "• *90D* — Estrutura mais ampla para evolução contínua.",
     "• *6M* — Transformação completa com estratégia por fases.",
     "",
-    "Todos incluem: dieta, treino guiado, protocolo, suporte ativo e análise de exames.",
+    "Todos incluem: dieta, treino guiado, protocolo, suporte ativo e análise de exames trazidos pelo aluno.",
+    "",
+    "⚠️ A *requisição (pedido) de exames* é um serviço adicional com custo à parte — não está incluída em nenhum plano e, no momento, está *temporariamente suspensa*.",
     "",
     `Acesse e contrate em: ${SITE}`,
   ].join("\n");
@@ -190,7 +192,7 @@ const RULES: Rule[] = [
     intent: "exames",
     match: (t) => /\b(exame|exames|laboratorio|sangue|resultado|hormonio|hormonios)\b/.test(t),
     reply: () =>
-      `Os exames podem ser enviados pela própria plataforma:\n\n${SITE} → *Atualização* → *Dados Clínicos* (PDF)\n\nAguarde o exame ficar completo antes do envio.`,
+      `Sobre exames:\n\n• *Análise dos seus exames* — incluída no plano. Envie em ${SITE} → *Atualização* → *Dados Clínicos* (PDF), com o laudo completo.\n• *Requisição (pedido) de exames* — é um *serviço adicional*, com *custo à parte*, e *não* faz parte de nenhum plano.\n\n⚠️ No momento, o serviço adicional de *requisição de exames está temporariamente suspenso* e não está disponível para contratação. Sem previsão de retorno — assim que reabrir, avisaremos por aqui.`,
   },
   {
     intent: "treino",
