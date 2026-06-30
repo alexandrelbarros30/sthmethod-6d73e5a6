@@ -1,4 +1,4 @@
-import { ImgHTMLAttributes, ReactNode, useEffect, useMemo, useState } from "react";
+import { ImgHTMLAttributes, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
 import { ImageOff, Loader2 } from "lucide-react";
 
@@ -28,24 +28,22 @@ export const SignedImage = ({
   const [imageFailed, setImageFailed] = useState(false);
   const [converting, setConverting] = useState(false);
   const [convertedUrl, setConvertedUrl] = useState<string | null>(null);
+  const convertedUrlRef = useRef<string | null>(null);
   const signedExpiresIn = useMemo(() => expiresIn ?? 3600, [expiresIn]);
   const { url, loading, error } = useSignedUrl(bucket, storagePath, publicUrl, expiresIn);
   useEffect(() => {
     setReloadToken(0);
     setImageFailed(false);
     setConverting(false);
-    setConvertedUrl((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return null;
-    });
+    if (convertedUrlRef.current) URL.revokeObjectURL(convertedUrlRef.current);
+    convertedUrlRef.current = null;
+    setConvertedUrl(null);
   }, [url]);
 
   useEffect(() => {
     return () => {
-      setConvertedUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
-        return null;
-      });
+      if (convertedUrlRef.current) URL.revokeObjectURL(convertedUrlRef.current);
+      convertedUrlRef.current = null;
     };
   }, []);
 
@@ -60,10 +58,9 @@ export const SignedImage = ({
       const result = await heic2any({ blob, toType: "image/jpeg", quality: 0.9 });
       const jpeg = Array.isArray(result) ? result[0] : result;
       const objectUrl = URL.createObjectURL(jpeg);
-      setConvertedUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
-        return objectUrl;
-      });
+      if (convertedUrlRef.current) URL.revokeObjectURL(convertedUrlRef.current);
+      convertedUrlRef.current = objectUrl;
+      setConvertedUrl(objectUrl);
       setImageFailed(false);
     } catch (err) {
       console.warn("[SignedImage] HEIC conversion failed", err);
