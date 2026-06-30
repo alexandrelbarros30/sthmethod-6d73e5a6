@@ -26,12 +26,53 @@ export const SignedImage = ({
 }: Props) => {
   const [reloadToken, setReloadToken] = useState(0);
   const [imageFailed, setImageFailed] = useState(false);
+  const [converting, setConverting] = useState(false);
+  const [convertedUrl, setConvertedUrl] = useState<string | null>(null);
   const signedExpiresIn = useMemo(() => expiresIn ?? 3600, [expiresIn]);
   const { url, loading, error } = useSignedUrl(bucket, storagePath, publicUrl, expiresIn);
   useEffect(() => {
     setReloadToken(0);
     setImageFailed(false);
+    setConverting(false);
+    setConvertedUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
   }, [url]);
+
+  useEffect(() => {
+    return () => {
+      setConvertedUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+    };
+  }, []);
+
+  const convertHeicSignedUrl = async (signedUrl: string) => {
+    if (converting || convertedUrl) return;
+    setConverting(true);
+    try {
+      const res = await fetch(signedUrl, { cache: "no-store" });
+      if (!res.ok) throw new Error("download_failed");
+      const blob = await res.blob();
+      const { default: heic2any } = await import("heic2any");
+      const result = await heic2any({ blob, toType: "image/jpeg", quality: 0.9 });
+      const jpeg = Array.isArray(result) ? result[0] : result;
+      const objectUrl = URL.createObjectURL(jpeg);
+      setConvertedUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return objectUrl;
+      });
+      setImageFailed(false);
+    } catch (err) {
+      console.warn("[SignedImage] HEIC conversion failed", err);
+      setImageFailed(true);
+    } finally {
+      setConverting(false);
+    }
+  };
+
   const placeholder = (
     <div
       className={
@@ -40,11 +81,15 @@ export const SignedImage = ({
       }
       title={error || imageFailed ? `Imagem indisponível (${error || "load_failed"})` : `Carregando imagem segura (${signedExpiresIn}s)...`}
     >
-      {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <ImageOff className="w-3 h-3" />}
-      <span>{loading ? "..." : "indisponível"}</span>
+      {loading || converting ? <Loader2 className="w-3 h-3 animate-spin" /> : <ImageOff className="w-3 h-3" />}
+      <span>{loading || converting ? "..." : "indisponível"}</span>
     </div>
   );
+  if (convertedUrl) {
+    return <img src={convertedUrl} alt={alt} className={className} loading="lazy" decoding="async" {...rest} />;
+  }
   if (url) {
+    if (converting) return placeholder;
     if (imageFailed) return fallback ? <>{fallback}</> : placeholder;
     return (
       <img
@@ -54,8 +99,8 @@ export const SignedImage = ({
         loading="lazy"
         decoding="async"
         onError={() => setReloadToken((v) => {
-          if (v >= 2) {
-            setImageFailed(true);
+          if (v >= 1) {
+            void convertHeicSignedUrl(url);
             return v;
           }
           return v + 1;
