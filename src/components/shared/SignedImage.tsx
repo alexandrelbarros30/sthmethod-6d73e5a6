@@ -2,6 +2,7 @@ import { ImgHTMLAttributes, ReactNode, useEffect, useMemo, useRef, useState } fr
 import { useSignedUrl } from "@/hooks/useSignedUrl";
 import { ImageOff, Loader2 } from "lucide-react";
 import { resolveDisplayableImageFromUrl } from "@/lib/displayable-image";
+import { normalizeStoragePath } from "@/lib/secure-file-url";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Props extends Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> {
@@ -59,6 +60,16 @@ export const SignedImage = ({
     };
   }, []);
 
+  useEffect(() => {
+    if (!url || convertedUrl || imageFailed || nativeLoadedRef.current) return;
+    const timer = window.setTimeout(() => {
+      if (!nativeLoadedRef.current && !conversionInFlightRef.current && !conversionAttemptedRef.current) {
+        void resolveBlobImage(url);
+      }
+    }, 10000);
+    return () => window.clearTimeout(timer);
+  }, [url, convertedUrl, imageFailed]);
+
   const resolveBlobImage = async (signedUrl: string) => {
     if (conversionInFlightRef.current || conversionAttemptedRef.current || convertedUrlRef.current) return;
     conversionInFlightRef.current = true;
@@ -76,8 +87,9 @@ export const SignedImage = ({
       setConvertedUrl(objectUrl);
       setImageFailed(false);
 
-      if (result.converted && storagePath) {
-        void supabase.storage.from(bucket).update(storagePath, result.blob, {
+      const path = normalizeStoragePath(storagePath, bucket);
+      if (result.converted && path) {
+        void supabase.storage.from(bucket).update(path, result.blob, {
           contentType: "image/jpeg",
           cacheControl: "3600",
           upsert: true,
