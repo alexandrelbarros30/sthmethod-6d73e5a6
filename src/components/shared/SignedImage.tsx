@@ -1,7 +1,8 @@
 import { ImgHTMLAttributes, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
 import { ImageOff, Loader2 } from "lucide-react";
-import { createDisplayableImageObjectUrlFromUrl } from "@/lib/displayable-image";
+import { resolveDisplayableImageFromUrl } from "@/lib/displayable-image";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Props extends Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> {
   bucket: "body-images" | "documents";
@@ -67,11 +68,22 @@ export const SignedImage = ({
     conversionInFlightRef.current = true;
     setConverting(true);
     try {
-      const objectUrl = await createDisplayableImageObjectUrlFromUrl(signedUrl);
+      const result = await resolveDisplayableImageFromUrl(signedUrl);
+      const objectUrl = result.objectUrl;
       if (convertedUrlRef.current) URL.revokeObjectURL(convertedUrlRef.current);
       convertedUrlRef.current = objectUrl;
       setConvertedUrl(objectUrl);
       setImageFailed(false);
+
+      if (result.converted && storagePath) {
+        void supabase.storage.from(bucket).update(storagePath, result.blob, {
+          contentType: "image/jpeg",
+          cacheControl: "3600",
+          upsert: true,
+        }).then(({ error }) => {
+          if (error) console.warn("[SignedImage] auto-repair upload failed", error.message);
+        });
+      }
     } catch (err) {
       console.warn("[SignedImage] secure image conversion failed", err);
       setImageFailed(true);

@@ -45,25 +45,40 @@ function probeImage(objectUrl: string): Promise<void> {
 }
 
 export async function createDisplayableImageObjectUrl(blob: Blob, sourceNameOrUrl = ""): Promise<string> {
+  const { objectUrl } = await resolveDisplayableImage(blob, sourceNameOrUrl);
+  return objectUrl;
+}
+
+export async function resolveDisplayableImage(
+  blob: Blob,
+  sourceNameOrUrl = "",
+): Promise<{ objectUrl: string; blob: Blob; converted: boolean }> {
   if (await isHeicLikeBlob(blob, sourceNameOrUrl)) {
     const jpeg = await convertHeicBlobToJpeg(blob);
-    return URL.createObjectURL(jpeg);
+    return { objectUrl: URL.createObjectURL(jpeg), blob: jpeg, converted: true };
   }
 
   const objectUrl = URL.createObjectURL(blob);
   try {
     await probeImage(objectUrl);
-    return objectUrl;
+    return { objectUrl, blob, converted: false };
   } catch {
     URL.revokeObjectURL(objectUrl);
     const jpeg = await convertHeicBlobToJpeg(blob);
-    return URL.createObjectURL(jpeg);
+    return { objectUrl: URL.createObjectURL(jpeg), blob: jpeg, converted: true };
   }
 }
 
 export async function createDisplayableImageObjectUrlFromUrl(url: string): Promise<string> {
+  const { objectUrl } = await resolveDisplayableImageFromUrl(url);
+  return objectUrl;
+}
+
+export async function resolveDisplayableImageFromUrl(
+  url: string,
+): Promise<{ objectUrl: string; blob: Blob; converted: boolean }> {
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`image_download_failed_${res.status}`);
   const blob = await res.blob();
-  return createDisplayableImageObjectUrl(blob, url);
+  return resolveDisplayableImage(blob, url);
 }
