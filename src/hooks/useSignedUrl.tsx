@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { extractStoragePath, getSecureFileUrl, isStorageObjectUrl } from "@/lib/secure-file-url";
-import { supabase } from "@/integrations/supabase/client";
 
 type Bucket = "body-images" | "documents";
 
@@ -27,6 +26,8 @@ export function useSignedUrl(
 
     if (!path) {
       setUrl(publicUrl && !isStorageObjectUrl(publicUrl) ? publicUrl : null);
+      setLoading(false);
+      setError(null);
       return;
     }
 
