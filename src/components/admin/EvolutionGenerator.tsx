@@ -96,19 +96,13 @@ async function loadImage(url: string): Promise<HTMLImageElement> {
       if (!res.ok) throw firstError;
       const blob = await res.blob();
       const isHeic = /hei[cf]/i.test(blob.type || "") || /\.hei[cf](\?|$)/i.test(url);
-      const displayBlob = isHeic
-        ? (() => null as Blob | null)()
-        : blob;
-
-      let objectUrl: string;
-      if (displayBlob) {
-        objectUrl = URL.createObjectURL(displayBlob);
-      } else {
+      let displayBlob = blob;
+      if (isHeic) {
         const { default: heic2any } = await import("heic2any");
         const converted = await heic2any({ blob, toType: "image/jpeg", quality: 0.92 });
-        const jpeg = Array.isArray(converted) ? converted[0] : converted;
-        objectUrl = URL.createObjectURL(jpeg);
+        displayBlob = Array.isArray(converted) ? converted[0] : converted;
       }
+      const objectUrl = URL.createObjectURL(displayBlob);
       return await loadImageElement(objectUrl);
     } catch {
       throw firstError;
