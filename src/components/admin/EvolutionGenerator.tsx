@@ -96,14 +96,26 @@ async function loadImage(url: string): Promise<HTMLImageElement> {
       if (!res.ok) throw firstError;
       const blob = await res.blob();
       const isHeic = /hei[cf]/i.test(blob.type || "") || /\.hei[cf](\?|$)/i.test(url);
-      let displayBlob = blob;
-      if (isHeic) {
+      if (!isHeic) {
+        const objectUrl = URL.createObjectURL(blob);
+        try {
+          return await loadImageElement(objectUrl);
+        } catch {
+          URL.revokeObjectURL(objectUrl);
+          // Se o metadata veio errado (ex.: application/octet-stream ou .jpg),
+          // ainda tentamos conversão HEIC antes de desistir.
+        }
+      }
+
+      try {
         const { default: heic2any } = await import("heic2any");
         const converted = await heic2any({ blob, toType: "image/jpeg", quality: 0.92 });
-        displayBlob = Array.isArray(converted) ? converted[0] : converted;
+        const displayBlob = Array.isArray(converted) ? converted[0] : converted;
+        const objectUrl = URL.createObjectURL(displayBlob);
+        return await loadImageElement(objectUrl);
+      } catch {
+        throw firstError;
       }
-      const objectUrl = URL.createObjectURL(displayBlob);
-      return await loadImageElement(objectUrl);
     } catch {
       throw firstError;
     }
