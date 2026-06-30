@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import SignedImage from "@/components/shared/SignedImage";
 import { getSecureFileUrl, extractStoragePath } from "@/lib/secure-file-url";
+import { resolveDisplayableImageFromUrl } from "@/lib/displayable-image";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,6 +33,7 @@ const AdminImageHistory = ({ allImages, onUpdate }: Props) => {
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "group"; groupKey: string; imgs: any[] } | { type: "single"; img: any } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [repairing, setRepairing] = useState(false);
 
   // Agrupa uploads por "sessão": fotos enviadas dentro de uma janela curta
   // (10 min) entram no mesmo grupo, mesmo que tenham segundos/minutos
@@ -114,13 +116,50 @@ const AdminImageHistory = ({ allImages, onUpdate }: Props) => {
     setDeleting(false);
   };
 
+  const repairLegacyHeicImages = async () => {
+    setRepairing(true);
+    let repaired = 0;
+    let checked = 0;
+    try {
+      for (const img of allImages) {
+        const path = img.storage_path || extractStoragePath(img.image_url, "body-images");
+        if (!path) continue;
+        const signed = await getSecureFileUrl({ bucket: "body-images", storagePath: path, fallbackUrl: img.image_url, expiresIn: 600 });
+        if (!signed) continue;
+        checked += 1;
+        const result = await resolveDisplayableImageFromUrl(signed);
+        URL.revokeObjectURL(result.objectUrl);
+        if (!result.converted) continue;
+        const { error } = await supabase.storage.from("body-images").update(path, result.blob, {
+          contentType: "image/jpeg",
+          cacheControl: "3600",
+          upsert: true,
+        });
+        if (error) throw error;
+        repaired += 1;
+      }
+      toast.success(repaired > 0 ? `${repaired} foto(s) reparada(s) para JPEG.` : `${checked} foto(s) conferida(s). Nenhuma correção pendente.`);
+      onUpdate();
+    } catch (err: any) {
+      console.error("[repair-heic-images]", err);
+      toast.error("Não foi possível reparar todas as fotos. Tente novamente com a sessão ativa.");
+    } finally {
+      setRepairing(false);
+    }
+  };
+
   return (
     <>
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-display flex items-center gap-2">
-            <History className="w-4 h-4" /> Galeria de Imagens
-          </CardTitle>
+          <div className="flex items-start justify-between gap-2">
+            <CardTitle className="text-sm font-display flex items-center gap-2">
+              <History className="w-4 h-4" /> Galeria de Imagens
+            </CardTitle>
+            <Button size="sm" variant="outline" className="h-7 px-2 text-[10px]" onClick={repairLegacyHeicImages} disabled={repairing}>
+              {repairing ? "Reparando…" : "Reparar fotos"}
+            </Button>
+          </div>
           <p className="text-[10px] text-muted-foreground">Clique no ícone de edição para alterar a data/hora. Use a lixeira para excluir imagens com erro.</p>
         </CardHeader>
         <CardContent>
