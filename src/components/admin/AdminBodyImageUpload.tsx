@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Camera, Upload, X, CheckCircle2, CalendarClock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { processAndUpload, validateImageFile } from "@/lib/image-upload";
+import { createDisplayableImageObjectUrl } from "@/lib/displayable-image";
 
 interface AdminBodyImageUploadProps {
   userId: string;
@@ -39,7 +40,21 @@ const AdminBodyImageUpload = ({ userId, onComplete }: AdminBodyImageUploadProps)
 
     const preview = URL.createObjectURL(file);
     setImages((prev) => ({ ...prev, [type]: { file, preview } }));
+    createDisplayableImageObjectUrl(file, file.name)
+      .then((displayPreview) => {
+        URL.revokeObjectURL(preview);
+        setImages((prev) => ({ ...prev, [type]: { file, preview: displayPreview } }));
+      })
+      .catch(() => {});
   };
+
+  useEffect(() => {
+    return () => {
+      Object.values(images).forEach((img) => {
+        if (img.preview) URL.revokeObjectURL(img.preview);
+      });
+    };
+  }, []);
 
   const removeImage = (type: string) => {
     if (images[type]?.preview) URL.revokeObjectURL(images[type].preview);
