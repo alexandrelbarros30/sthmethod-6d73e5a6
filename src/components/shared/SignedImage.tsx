@@ -47,23 +47,34 @@ export const SignedImage = ({
     };
   }, []);
 
-  const convertHeicSignedUrl = async (signedUrl: string) => {
+  const resolveBlobImage = async (signedUrl: string) => {
     if (converting || convertedUrl) return;
     setConverting(true);
     try {
       const res = await fetch(signedUrl, { cache: "no-store" });
       if (!res.ok) throw new Error("download_failed");
       const blob = await res.blob();
-      const { default: heic2any } = await import("heic2any");
-      const result = await heic2any({ blob, toType: "image/jpeg", quality: 0.9 });
-      const jpeg = Array.isArray(result) ? result[0] : result;
-      const objectUrl = URL.createObjectURL(jpeg);
+      let objectUrl = URL.createObjectURL(blob);
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const probe = new Image();
+          probe.onload = () => resolve();
+          probe.onerror = () => reject(new Error("blob_decode_failed"));
+          probe.src = objectUrl;
+        });
+      } catch {
+        URL.revokeObjectURL(objectUrl);
+        const { default: heic2any } = await import("heic2any");
+        const result = await heic2any({ blob, toType: "image/jpeg", quality: 0.9 });
+        const jpeg = Array.isArray(result) ? result[0] : result;
+        objectUrl = URL.createObjectURL(jpeg);
+      }
       if (convertedUrlRef.current) URL.revokeObjectURL(convertedUrlRef.current);
       convertedUrlRef.current = objectUrl;
       setConvertedUrl(objectUrl);
       setImageFailed(false);
     } catch (err) {
-      console.warn("[SignedImage] HEIC conversion failed", err);
+      console.warn("[SignedImage] secure image conversion failed", err);
       setImageFailed(true);
     } finally {
       setConverting(false);
@@ -97,7 +108,7 @@ export const SignedImage = ({
         decoding="async"
         onError={() => setReloadToken((v) => {
           if (v >= 1) {
-            void convertHeicSignedUrl(url);
+            void resolveBlobImage(url);
             return v;
           }
           return v + 1;
