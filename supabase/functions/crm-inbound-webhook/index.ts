@@ -148,7 +148,11 @@ async function generateAiReply({
   const memories = await fetchAiMemories(admin as any, { phone, userId: profile?.user_id || null });
   const systemPrompt = basePrompt + renderMemoryBlock(memories);
 
-  const userPrompt = `${context}\nCom base no contexto acima, responda a última mensagem do aluno de forma curta, cordial e profissional (tom STH METHOD, neutro e técnico, em português do Brasil). Não use emojis em excesso. Máximo 4 frases.`;
+  const contactFirstName = (profile?.full_name || '').toString().trim().split(/\s+/)[0] || '';
+  const nameGuard = queue !== 'nutri'
+    ? `\n⚠️ REGRA DE NOME: ${contactFirstName ? `o interlocutor se chama "${contactFirstName}" — use APENAS este primeiro nome ao se dirigir a ele.` : 'não há nome confirmado no contexto — trate por "você".'} NUNCA chame o interlocutor de "Alexandre" (esse nome pertence ao Nutri, não ao lead/aluno) nem invente qualquer outro nome.`
+    : '';
+  const userPrompt = `${context}${nameGuard}\nCom base no contexto acima, responda a última mensagem do aluno de forma curta, cordial e profissional (tom STH METHOD, neutro e técnico, em português do Brasil). Não use emojis em excesso. Máximo 4 frases.`;
 
   const reply = await callAiEngine({ engine, systemPrompt, userPrompt });
 
