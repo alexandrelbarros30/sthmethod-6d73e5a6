@@ -206,7 +206,7 @@ Deno.serve(async (req) => {
     let resent = 0;
     let failed = 0;
     for (const c of conversations || []) {
-      const firstName = String(c.display_name || '').split(' ')[0] || '';
+      const firstName = await resolveStudentFirstName(c.phone, c.display_name);
       const farewell = buildFarewell(firstName, c.provider || 'wapi');
       const { ok, error } = await sendViaCrm(c.phone, farewell, c.id, c.provider || 'wapi');
       await admin.from('automation_logs').insert({
