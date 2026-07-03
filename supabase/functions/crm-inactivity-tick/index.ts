@@ -85,9 +85,15 @@ Deno.serve(async (req) => {
     } else if (c.inactivity_warned_at) {
       const sinceWarn = now - new Date(c.inactivity_warned_at).getTime();
       if (sinceWarn >= FIVE_MIN) {
-        // Encerramento silencioso: o fluxo de atendimento já cuida da comunicação.
+        // Encerramento informativo (10 min total sem resposta do cliente).
+        const farewell = `Olá${nomeSep}${firstName}.\n\nEstamos encerrando este atendimento por inatividade (mais de 10 minutos sem resposta). O atendimento humano também foi encerrado.\n\nSe precisar de algo, é só nos chamar novamente por aqui que retomamos na hora. Um abraço da equipe STH Method. 🙏`;
+        await sendViaCrm(c.phone, farewell, c.id, c.provider || 'zapi');
         await admin.from('crm_conversations').update({
           status: 'closed',
+          human_handoff: false,
+          assigned_to: null,
+          human_intro_sent: false,
+          ai_paused_until: null,
           flow_state: null,
           flow_context: {},
           inactivity_warned_at: null,
@@ -95,6 +101,12 @@ Deno.serve(async (req) => {
           session_started_at: null,
           session_expires_at: null,
         }).eq('id', c.id);
+        await admin.from('automation_logs').insert({
+          contact_phone: c.phone,
+          event_type: 'conversation_auto_closed',
+          reason: '10 min sem resposta do cliente após última mensagem do bot',
+          metadata: { conversation_id: c.id },
+        });
         closed++;
       }
     }
