@@ -125,6 +125,7 @@ import AdminCrmAi from "./pages/admin/AdminCrmAi";
 import AdminCrmPipeline from "./pages/admin/AdminCrmPipeline";
 import AdminCrmSettings from "./pages/admin/AdminCrmSettings";
 import AdminCrmTemplates from "./pages/admin/AdminCrmTemplates";
+import AdminCrmNutriBloqueios from "./pages/admin/AdminCrmNutriBloqueios";
 import AdminCrmFlow from "./pages/admin/AdminCrmFlow";
 import AdminSuperCoach from "./pages/admin/AdminSuperCoach";
 import StudentConsultas from "./pages/student/StudentConsultas";
@@ -317,6 +318,7 @@ const App = () => (
             <Route path="/admin/crm/pipeline" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrmPipeline /></ProtectedRoute>} />
             <Route path="/admin/crm/configuracoes" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrmSettings /></ProtectedRoute>} />
             <Route path="/admin/crm/templates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrmTemplates /></ProtectedRoute>} />
+            <Route path="/admin/crm/nutri-bloqueios" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrmNutriBloqueios /></ProtectedRoute>} />
             <Route path="/admin/crm/supercoach" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSuperCoach /></ProtectedRoute>} />
             <Route path="/admin/crm/fluxo" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCrmFlow /></ProtectedRoute>} />
             {/* Consultor routes */}
