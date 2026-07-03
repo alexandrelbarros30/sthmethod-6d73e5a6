@@ -107,7 +107,7 @@ export default function AdminCrmNutriBloqueios() {
   }
 
   return (
-    <DashboardLayout>
+    <DashboardLayout role="admin" title="Bloqueios Nutri">
       <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
