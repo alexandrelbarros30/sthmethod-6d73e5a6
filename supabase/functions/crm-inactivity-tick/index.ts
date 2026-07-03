@@ -16,6 +16,51 @@ Deno.serve(async (req) => {
 
   const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
+  // ---- Horário de expediente por canal ----
+  function spNow() {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Sao_Paulo',
+      weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false,
+    }).formatToParts(new Date());
+    const wd = parts.find(p => p.type === 'weekday')?.value || '';
+    const h = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10);
+    const m = parseInt(parts.find(p => p.type === 'minute')?.value || '0', 10);
+    const map: Record<string, number> = { Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 };
+    return { dow: map[wd] ?? 0, minutes: h * 60 + m };
+  }
+  function hhmmToMin(s: string): number {
+    const [h, m] = String(s || '0:0').split(':').map(n => parseInt(n, 10) || 0);
+    return h * 60 + m;
+  }
+  function isWithinBusinessHours(cfg: any): boolean {
+    if (!cfg) return true;
+    const { dow, minutes } = spNow();
+    let win: any = null;
+    if (dow >= 1 && dow <= 5) win = cfg.mon_fri;
+    else if (dow === 6) win = cfg.sat;
+    else win = cfg.sun;
+    if (!win || !win.start || !win.end) return false;
+    return minutes >= hhmmToMin(win.start) && minutes < hhmmToMin(win.end);
+  }
+  const [{ data: hoursComCfg }, { data: hoursNutriCfg }, { data: hoursSucessoCfg }] = await Promise.all([
+    admin.from('crm_settings').select('value').eq('key', 'business_hours_comercial').maybeSingle(),
+    admin.from('crm_settings').select('value').eq('key', 'business_hours_nutri').maybeSingle(),
+    admin.from('crm_settings').select('value').eq('key', 'business_hours_sucesso').maybeSingle(),
+  ]);
+  const hoursByProvider = (provider: string) => provider === 'wapi_sucesso' ? hoursSucessoCfg?.value
+    : provider === 'wapi' ? hoursNutriCfg?.value : hoursComCfg?.value;
+  const channelLabel = (provider: string) => provider === 'wapi' ? 'Fale com o Nutri'
+    : provider === 'wapi_sucesso' ? 'Sucesso do Aluno' : 'Comercial';
+  const buildFarewell = (firstName: string, provider: string) => {
+    const nomeSep = firstName ? ' ' : '';
+    const inHours = isWithinBusinessHours(hoursByProvider(provider));
+    const canal = channelLabel(provider);
+    const humanLine = inHours
+      ? `O atendimento humano deste canal (${canal}) também foi encerrado.`
+      : `O atendimento humano do canal ${canal} já está encerrado conforme horário de expediente.`;
+    return `Olá${nomeSep}${firstName}.\n\nEstamos encerrando este atendimento por inatividade (mais de 10 minutos sem resposta).\n\n${humanLine}\n\nSe precisar de algo, é só nos chamar novamente por aqui que retomamos assim que possível. Um abraço da equipe STH Method. 🙏`;
+  };
+
   const sendViaCrm = async (phone: string, body: string, conversation_id: string, provider: string) => {
     try {
       const r = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/crm-send-whatsapp`, {
@@ -86,7 +131,7 @@ Deno.serve(async (req) => {
       const sinceWarn = now - new Date(c.inactivity_warned_at).getTime();
       if (sinceWarn >= FIVE_MIN) {
         // Encerramento informativo (10 min total sem resposta do cliente).
-        const farewell = `Olá${nomeSep}${firstName}.\n\nEstamos encerrando este atendimento por inatividade (mais de 10 minutos sem resposta). O atendimento humano também foi encerrado.\n\nSe precisar de algo, é só nos chamar novamente por aqui que retomamos na hora. Um abraço da equipe STH Method. 🙏`;
+        const farewell = buildFarewell(firstName, c.provider || 'zapi');
         await sendViaCrm(c.phone, farewell, c.id, c.provider || 'zapi');
         await admin.from('crm_conversations').update({
           status: 'closed',
@@ -140,8 +185,7 @@ Deno.serve(async (req) => {
     if (sinceLast < TEN_MIN) continue;
 
     const firstName = String(c.display_name || '').split(' ')[0] || '';
-    const nomeSep = firstName ? ' ' : '';
-    const farewell = `Olá${nomeSep}${firstName}.\n\nEstamos encerrando este atendimento por inatividade. Se precisar de algo, é só nos chamar novamente por aqui. Um abraço da equipe STH Method. 🙏`;
+    const farewell = buildFarewell(firstName, c.provider || 'wapi');
 
     const { ok } = await sendViaCrm(c.phone, farewell, c.id, c.provider || 'wapi');
 
