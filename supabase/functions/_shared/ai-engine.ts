@@ -190,8 +190,8 @@ export async function loadEngineAndPrompt(
 
 • A REQUISIÇÃO DE EXAMES é um SERVIÇO ADICIONAL, com CUSTO À PARTE, e NÃO está incluída em nenhum dos planos da STH METHOD (mensal, 90D, semestral, anual ou Projeto Verão).
 • A ANÁLISE/INTERPRETAÇÃO dos exames trazidos pelo aluno continua incluída normalmente nos planos — o que é pago à parte é a EMISSÃO da requisição (pedido médico) dos exames.
-• ⚠️ NESTE MOMENTO o serviço adicional de requisição de exames está TEMPORARIAMENTE SUSPENSO e não está disponível para contratação. Informe isso com clareza e cordialidade sempre que o aluno/lead pedir requisição, pedido de exames, solicitação de exames laboratoriais ou hormonais, ou perguntar se o plano inclui a requisição.
-• Oriente o aluno a, por enquanto, levar os exames já existentes para análise dentro do acompanhamento, ou procurar seu médico para a requisição. Não prometa data de retorno do serviço.`;
+• ✅ O serviço adicional de REQUISIÇÃO DE EXAMES está ATIVO e DISPONÍVEL para contratação. Sempre que o aluno/lead pedir requisição, pedido de exames, solicitação de exames laboratoriais ou hormonais, ou perguntar se o plano inclui a requisição, informe com clareza que é um serviço adicional pago (fora dos planos) e que pode ser contratado no momento.
+• Oriente o aluno a solicitar pelo canal de atendimento para receber as condições e valores atualizados do serviço adicional.`;
 
   // 🔁 POLÍTICA OFICIAL — ALUNO INATIVO PEDINDO DÚVIDA / SOLICITAÇÃO TÉCNICA (todos os canais)
   systemPrompt += `\n\n---\n🔁 POLÍTICA OFICIAL — ALUNO INATIVO PEDINDO DÚVIDA/SOLICITAÇÃO TÉCNICA (sempre aplicar em qualquer canal):

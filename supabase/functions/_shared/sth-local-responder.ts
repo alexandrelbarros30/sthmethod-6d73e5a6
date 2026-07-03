@@ -93,7 +93,7 @@ function planosBlock(): string {
     "",
     "Todos incluem: dieta, treino guiado, protocolo, suporte ativo e análise de exames trazidos pelo aluno.",
     "",
-    "⚠️ A *requisição (pedido) de exames* é um serviço adicional com custo à parte — não está incluída em nenhum plano e, no momento, está *temporariamente suspensa*.",
+    "ℹ️ A *requisição (pedido) de exames* é um serviço adicional com custo à parte — não está incluída em nenhum plano, mas está *disponível para contratação* a qualquer momento.",
     "",
     `Acesse e contrate em: ${SITE}`,
   ].join("\n");
@@ -192,7 +192,7 @@ const RULES: Rule[] = [
     intent: "exames",
     match: (t) => /\b(exame|exames|laboratorio|sangue|resultado|hormonio|hormonios)\b/.test(t),
     reply: () =>
-      `Sobre exames:\n\n• *Análise dos seus exames* — incluída no plano. Envie em ${SITE} → *Atualização* → *Dados Clínicos* (PDF), com o laudo completo.\n• *Requisição (pedido) de exames* — é um *serviço adicional*, com *custo à parte*, e *não* faz parte de nenhum plano.\n\n⚠️ No momento, o serviço adicional de *requisição de exames está temporariamente suspenso* e não está disponível para contratação. Sem previsão de retorno — assim que reabrir, avisaremos por aqui.`,
+      `Sobre exames:\n\n• *Análise dos seus exames* — incluída no plano. Envie em ${SITE} → *Atualização* → *Dados Clínicos* (PDF), com o laudo completo.\n• *Requisição (pedido) de exames* — é um *serviço adicional*, com *custo à parte*, e *não* faz parte de nenhum plano.\n\n✅ O serviço está *ativo e disponível para contratação*. Me chame por aqui que passo as condições e valores atualizados.`,
   },
   {
     intent: "treino",
