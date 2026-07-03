@@ -68,6 +68,27 @@ Deno.serve(async (req) => {
     return digits.startsWith('55') ? digits : `55${digits}`;
   };
 
+  // Resolve o nome real do aluno pelo telefone (evita usar push name do WhatsApp,
+  // ex.: "Inefável💎" no lugar de "Danielle M D S Gil"). Fallback = display_name.
+  const resolveStudentFirstName = async (phone: string, fallbackDisplayName?: string | null) => {
+    try {
+      const digits = String(phone || '').replace(/\D/g, '');
+      const normalized = digits.startsWith('55') ? digits.slice(2) : digits;
+      if (normalized.length >= 10) {
+        const { data: prof } = await admin
+          .from('profiles')
+          .select('full_name, phone')
+          .filter('phone', 'ilike', `%${normalized}%`)
+          .not('full_name', 'is', null)
+          .limit(1)
+          .maybeSingle();
+        const full = String(prof?.full_name || '').trim();
+        if (full) return full.split(/\s+/)[0] || '';
+      }
+    } catch (_) { /* ignore */ }
+    return String(fallbackDisplayName || '').split(/\s+/)[0] || '';
+  };
+
   const sendViaCrm = async (phone: string, body: string, conversation_id: string, provider: string) => {
     const resolvedProvider = provider === 'zapi' ? 'zapi' : (provider === 'wapi_sucesso' ? 'wapi_sucesso' : 'wapi');
     const source = resolvedProvider;
@@ -185,7 +206,7 @@ Deno.serve(async (req) => {
     let resent = 0;
     let failed = 0;
     for (const c of conversations || []) {
-      const firstName = String(c.display_name || '').split(' ')[0] || '';
+      const firstName = await resolveStudentFirstName(c.phone, c.display_name);
       const farewell = buildFarewell(firstName, c.provider || 'wapi');
       const { ok, error } = await sendViaCrm(c.phone, farewell, c.id, c.provider || 'wapi');
       await admin.from('automation_logs').insert({
@@ -241,7 +262,10 @@ Deno.serve(async (req) => {
     const nomeSep = firstName ? ' ' : '';
 
     if (!c.inactivity_warned_at && sinceBot >= FIVE_MIN) {
-      const msg = `Olá${nomeSep}${firstName}.\n\nPercebi que você não respondeu à nossa última mensagem.\n\nSe ainda precisar de ajuda, basta responder esta conversa. 🙂`;
+      const resolvedName = await resolveStudentFirstName(c.phone, c.display_name);
+      const nomeFinal = resolvedName || firstName;
+      const sep = nomeFinal ? ' ' : '';
+      const msg = `Olá${sep}${nomeFinal}.\n\nPercebi que você não respondeu à nossa última mensagem.\n\nSe ainda precisar de ajuda, basta responder esta conversa. 🙂`;
       const { ok } = await sendViaCrm(c.phone, msg, c.id, c.provider || 'zapi');
       
       if (ok) {
@@ -255,7 +279,8 @@ Deno.serve(async (req) => {
       const sinceWarn = now - new Date(c.inactivity_warned_at).getTime();
       if (sinceWarn >= FIVE_MIN) {
         // Encerramento informativo (10 min total sem resposta do cliente).
-        const farewell = buildFarewell(firstName, c.provider || 'zapi');
+        const resolvedName = await resolveStudentFirstName(c.phone, c.display_name);
+        const farewell = buildFarewell(resolvedName || firstName, c.provider || 'zapi');
         await sendViaCrm(c.phone, farewell, c.id, c.provider || 'zapi');
         await admin.from('crm_conversations').update({
           status: 'closed',
@@ -308,7 +333,7 @@ Deno.serve(async (req) => {
     const sinceLast = now - new Date(lastMsg.created_at).getTime();
     if (sinceLast < TEN_MIN) continue;
 
-    const firstName = String(c.display_name || '').split(' ')[0] || '';
+    const firstName = await resolveStudentFirstName(c.phone, c.display_name);
     const farewell = buildFarewell(firstName, c.provider || 'wapi');
 
     const { ok } = await sendViaCrm(c.phone, farewell, c.id, c.provider || 'wapi');
@@ -349,7 +374,7 @@ Deno.serve(async (req) => {
 
   let staleClosed = 0;
   for (const c of staleConvs || []) {
-    const firstName = String(c.display_name || '').split(' ')[0] || '';
+    const firstName = await resolveStudentFirstName(c.phone, c.display_name);
     const farewell = buildFarewell(firstName, c.provider || 'wapi');
     const { ok } = await sendViaCrm(c.phone, farewell, c.id, c.provider || 'wapi');
 
