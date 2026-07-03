@@ -212,7 +212,47 @@ Deno.serve(async (req) => {
     humanClosed++;
   }
 
-  return new Response(JSON.stringify({ ok: true, warned, closed, humanClosed, checked: convs?.length || 0, humanChecked: humanConvs?.length || 0 }), {
+  // ===== Catch-all: qualquer conversa aberta parada há >10 min =====
+  // Cobre casos em que last_bot_message_at nunca foi setado (fluxo antigo,
+  // handoff que não passou pelo bot, etc). Envia farewell e fecha.
+  const cutoffIso = new Date(now - TEN_MIN).toISOString();
+  const { data: staleConvs } = await admin
+    .from('crm_conversations')
+    .select('id, phone, display_name, provider, last_message_at, human_handoff, assigned_to')
+    .eq('status', 'open')
+    .lt('last_message_at', cutoffIso)
+    .limit(500);
+
+  let staleClosed = 0;
+  for (const c of staleConvs || []) {
+    const firstName = String(c.display_name || '').split(' ')[0] || '';
+    const farewell = buildFarewell(firstName, c.provider || 'wapi');
+    const { ok } = await sendViaCrm(c.phone, farewell, c.id, c.provider || 'wapi');
+
+    await admin.from('crm_conversations').update({
+      status: 'closed',
+      human_handoff: false,
+      assigned_to: null,
+      human_intro_sent: false,
+      ai_paused_until: null,
+      flow_state: null,
+      flow_context: {},
+      inactivity_warned_at: null,
+      last_bot_message_at: null,
+      session_started_at: null,
+      session_expires_at: null,
+    }).eq('id', c.id);
+
+    await admin.from('automation_logs').insert({
+      contact_phone: c.phone,
+      event_type: 'conversation_stale_auto_closed',
+      reason: 'Conversa aberta parada há mais de 10 minutos (catch-all)',
+      metadata: { conversation_id: c.id, sent: ok, last_message_at: c.last_message_at },
+    });
+    staleClosed++;
+  }
+
+  return new Response(JSON.stringify({ ok: true, warned, closed, humanClosed, staleClosed, checked: convs?.length || 0, humanChecked: humanConvs?.length || 0, staleChecked: staleConvs?.length || 0 }), {
     status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 });
