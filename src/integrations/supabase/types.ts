@@ -1461,6 +1461,33 @@ export type Database = {
           },
         ]
       }
+      crm_nutri_whitelist: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          note: string | null
+          phone: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          phone: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          phone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       crm_queue_items: {
         Row: {
           closed_at: string | null

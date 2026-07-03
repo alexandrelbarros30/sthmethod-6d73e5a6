@@ -942,6 +942,21 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Whitelist manual do canal Fale com o Nutri: números listados aqui
+    // são atendidos como aluno_ativo (parceiros, jornalistas, casos especiais),
+    // pulando o bloqueio automático. Só faz sentido para o provider WAPI (Nutri).
+    if (provider === 'wapi' && identifiedAs !== 'aluno_ativo') {
+      const phoneDigitsForWL = String(phone || '').replace(/\D/g, '');
+      const { data: whitelistHit } = await admin
+        .from('crm_nutri_whitelist')
+        .select('id')
+        .eq('phone', phoneDigitsForWL)
+        .maybeSingle();
+      if (whitelistHit) {
+        identifiedAs = 'aluno_ativo';
+      }
+    }
+
     const cls = classify(body);
     let finalQueue = cls.queue || (provider === 'zapi' ? 'comercial' : 'nutri');
     if ((identifiedAs !== 'lead' && provider === 'zapi') || forceSucessoQueue) finalQueue = 'sucesso';
@@ -1399,6 +1414,13 @@ Gere a mensagem final agora.`;
       // BLOQUEIO DO CANAL "FALE COM O NUTRI": exclusivo para alunos ATIVOS.
       // Leads, alunos vencidos e ex-alunos são imediatamente redirecionados
       // para o canal Comercial, preservando a prioridade do aluno ativo.
+      // Modo silencioso opcional — configurável em crm_settings.key='nutri_block_mode' ({ silent: true })
+      const { data: modeRow } = await admin
+        .from('crm_settings')
+        .select('value')
+        .eq('key', 'nutri_block_mode')
+        .maybeSingle();
+      const silentMode = !!(modeRow?.value as any)?.silent;
       const blockKey = `nutri_block_redirect_${conv.session_count || 1}`;
       const { data: existingBlock } = await admin
         .from('automation_logs')
@@ -1417,7 +1439,9 @@ Gere a mensagem final agora.`;
           ? `Olá${FIRST_NAME ? ' ' + FIRST_NAME : ''}! 👋\n\nEste canal *Fale com o Nutri* é exclusivo para alunos ATIVOS da consultoria, para garantir prioridade no atendimento técnico de quem já está em acompanhamento.\n\nComo você ainda não possui consultoria ativa, o canal correto é o *Comercial*, onde nossa equipe vai te apresentar os planos e iniciar sua jornada:\n\n👉 https://wa.me/5521998496289\n🌐 Site: https://sthmethod.com.br\n\nEstamos encerrando este atendimento por aqui para você seguir pelo Comercial. Conte Comigo!`
           : `Olá${FIRST_NAME ? ' ' + FIRST_NAME : ''}! 👋\n\nEste canal *Fale com o Nutri* é exclusivo para alunos *ATIVOS* na consultoria — é o que garante o atendimento direto e o acompanhamento personalizado do *Nutri Alexandre*, com prioridade técnica para quem está em acompanhamento.\n\nIdentificamos que sua consultoria está *inativa* no momento. Para que suas dúvidas, ajustes e solicitações sejam respondidas pelo Nutri Alexandre de forma personalizada e dentro deste canal, é necessário estar com a consultoria ativa.\n\nPara reativar agora, de forma 100% automatizada:\n🔗 Renovação: ${renewalLink}\n\nAssim que sua consultoria for reativada, você volta a ser atendido(a) diretamente aqui no *Fale com o Nutri*, com acompanhamento personalizado.\n\nEnquanto isso, dúvidas comerciais (planos, valores, pagamento) seguem pelo canal *Comercial*:\n👉 https://wa.me/5521998496289\n\nConte Comigo! Bora pra cima.`;
 
-        const r = await sendMessage(blockMsg, 'nutri_block_redirect');
+        const r = silentMode
+          ? { sent: false }
+          : await sendMessage(blockMsg, 'nutri_block_redirect');
 
         await admin.from('crm_conversations').update({
           status: 'closed',
@@ -1431,13 +1455,13 @@ Gere a mensagem final agora.`;
           contact_phone: phone,
           event_type: 'nutri_block_redirect',
           queue_type: 'nutri',
-          action_taken: 'blocked_and_redirected',
+          action_taken: silentMode ? 'blocked_silent' : 'blocked_and_redirected',
           idempotency_key: blockKey,
           severity: 'info',
-          metadata: { identified_as: identifiedAs, original_message: String(body).slice(0, 500) },
+          metadata: { identified_as: identifiedAs, original_message: String(body).slice(0, 500), silent: silentMode },
         });
 
-        autoReply = { sent: r.sent, engine: 'nutri_block_redirect' };
+        autoReply = { sent: r.sent, engine: silentMode ? 'nutri_block_silent' : 'nutri_block_redirect' };
       } else {
         autoReply = { sent: false, reason: 'nutri_block_already_sent' };
       }
