@@ -91,6 +91,19 @@ const StudentRenew = () => {
 
   return (
     <DashboardLayout role="student" title="Renovação de Plano" subtitle={`Olá, ${profile?.full_name || ""}! Escolha seu plano para renovar.`}>
+      <div className="max-w-4xl mx-auto mb-4">
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="py-4 text-sm font-body text-foreground/90 leading-relaxed">
+            <p className="font-medium text-foreground mb-1">Antes de renovar: atualize peso e fotos</p>
+            <p>
+              Para que o próximo ciclo seja calibrado com precisão, o envio de <span className="font-medium text-foreground">peso atualizado</span> e <span className="font-medium text-foreground">novas fotos corporais</span> não é obrigatório, mas é altamente recomendado. As fotos permitem reler sua composição estética, identificar avanços, pontos a corrigir e ajustar o <span className="font-medium text-foreground">treino de musculação</span> ao seu momento atual — sem elas, o novo protocolo trabalha só com números do ciclo anterior.
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Você pode atualizar em <span className="font-medium text-foreground">Plataforma → Atualização de Rotina</span> antes ou logo após confirmar a renovação.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
         {plans?.map((plan: any, i: number) => {
           const finalPrice = calculateFinalPrice(plan);
