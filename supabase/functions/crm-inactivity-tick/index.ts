@@ -6,6 +6,10 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 //  - 5 min após a última msg do bot sem resposta → envia 1º aviso.
 //  - 5 min depois (10 min total) → envia encerramento e fecha sessão.
 // Suspenso quando human_handoff = true.
+//
+// Adicional: para conversas em ATENDIMENTO HUMANO (human_handoff=true ou assigned_to),
+// se ficarem MUDAS por 10 minutos após a última mensagem (do atendente OU do cliente),
+// envia mensagem de encerramento e fecha a conversa, resetando o handoff.
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -45,6 +49,7 @@ Deno.serve(async (req) => {
 
   let warned = 0;
   let closed = 0;
+  let humanClosed = 0;
 
   for (const c of convs || []) {
     if (!c.last_bot_message_at) continue;
@@ -95,7 +100,63 @@ Deno.serve(async (req) => {
     }
   }
 
-  return new Response(JSON.stringify({ ok: true, warned, closed, checked: convs?.length || 0 }), {
+  // ===== Encerramento pós-atendimento humano (10 min de silêncio) =====
+  const TEN_MIN = 10 * 60 * 1000;
+  const { data: humanConvs } = await admin
+    .from('crm_conversations')
+    .select('id, phone, display_name, provider, human_handoff, assigned_to')
+    .eq('status', 'open')
+    .or('human_handoff.eq.true,assigned_to.not.is.null')
+    .limit(500);
+
+  for (const c of humanConvs || []) {
+    // Pega a última mensagem (in ou out) da conversa
+    const { data: lastMsg } = await admin
+      .from('crm_messages')
+      .select('created_at, direction, sent_by')
+      .eq('conversation_id', c.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!lastMsg?.created_at) continue;
+
+    // Só encerra se a ÚLTIMA mensagem foi de um atendente humano (out com sent_by)
+    // — se o cliente respondeu por último, o atendente ainda pode voltar.
+    if (lastMsg.direction !== 'out' || !lastMsg.sent_by) continue;
+
+    const sinceLast = now - new Date(lastMsg.created_at).getTime();
+    if (sinceLast < TEN_MIN) continue;
+
+    const firstName = String(c.display_name || '').split(' ')[0] || '';
+    const nomeSep = firstName ? ' ' : '';
+    const farewell = `Olá${nomeSep}${firstName}.\n\nEstamos encerrando este atendimento por inatividade. Se precisar de algo, é só nos chamar novamente por aqui. Um abraço da equipe STH Method. 🙏`;
+
+    const { ok } = await sendViaCrm(c.phone, farewell, c.id, c.provider || 'wapi');
+
+    await admin.from('crm_conversations').update({
+      status: 'closed',
+      human_handoff: false,
+      assigned_to: null,
+      human_intro_sent: false,
+      ai_paused_until: null,
+      flow_state: null,
+      flow_context: {},
+      inactivity_warned_at: null,
+      last_bot_message_at: null,
+      session_started_at: null,
+      session_expires_at: null,
+    }).eq('id', c.id);
+
+    await admin.from('automation_logs').insert({
+      contact_phone: c.phone,
+      event_type: 'human_handoff_auto_closed',
+      reason: '10 min sem resposta do cliente após última mensagem do atendente',
+      metadata: { conversation_id: c.id, sent: ok },
+    });
+    humanClosed++;
+  }
+
+  return new Response(JSON.stringify({ ok: true, warned, closed, humanClosed, checked: convs?.length || 0, humanChecked: humanConvs?.length || 0 }), {
     status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 });
