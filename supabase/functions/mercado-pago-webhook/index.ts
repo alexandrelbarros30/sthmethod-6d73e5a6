@@ -615,7 +615,7 @@ serve(async (req) => {
 
       const { data: prev } = await supabase
         .from("custom_payments")
-        .select("status, link_id")
+        .select("status, link_id, amount, payer_name, payer_user_id")
         .eq("id", cpId)
         .maybeSingle();
       if (!prev) {
@@ -629,13 +629,40 @@ serve(async (req) => {
       if (newStatus === "approved" && prev.status !== "approved" && prev.link_id) {
         const { data: link } = await supabase
           .from("custom_payment_links")
-          .select("current_uses")
+          .select("current_uses, student_user_id, label")
           .eq("id", prev.link_id)
           .maybeSingle();
         if (link) {
           await supabase.from("custom_payment_links")
             .update({ current_uses: (link.current_uses || 0) + 1 })
             .eq("id", prev.link_id);
+
+          // 🔔 Se o link avulso está endereçado a um aluno, gera notificação
+          // para o admin ver o pagamento no painel em tempo real (evita
+          // pagamentos "invisíveis" que exigem reconciliação manual sem aviso).
+          const studentId = link.student_user_id || prev.payer_user_id;
+          if (studentId) {
+            try {
+              const { data: prof } = await supabase
+                .from("profiles")
+                .select("full_name")
+                .eq("id", studentId)
+                .maybeSingle();
+              await supabase.from("payment_notifications").insert({
+                payment_id: null,
+                student_user_id: studentId,
+                student_name: prof?.full_name || prev.payer_name || "Aluno",
+                plan_name: `Link avulso — ${link.label || "Pagamento direto"}`,
+                amount: prev.amount,
+                method: "pix",
+                action_type: "custom_link",
+                payment_status: "approved",
+                seen: false,
+              });
+            } catch (e) {
+              console.error("custom_payment notify failed", e);
+            }
+          }
         }
       }
 
