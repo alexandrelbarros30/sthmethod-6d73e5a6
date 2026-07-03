@@ -1414,19 +1414,7 @@ Gere a mensagem final agora.`;
       // BLOQUEIO DO CANAL "FALE COM O NUTRI": exclusivo para alunos ATIVOS.
       // Leads, alunos vencidos e ex-alunos são imediatamente redirecionados
       // para o canal Comercial, preservando a prioridade do aluno ativo.
-      // 1) Whitelist manual — números listados aqui pulam o bloqueio e são atendidos normalmente.
-      const phoneDigits = String(phone || '').replace(/\D/g, '');
-      const { data: whitelistHit } = await admin
-        .from('crm_nutri_whitelist')
-        .select('id')
-        .eq('phone', phoneDigits)
-        .maybeSingle();
-      if (whitelistHit) {
-        // Segue o fluxo normal: cai no `else` do menu de recepção do Nutri abaixo.
-        // Truque: reatribui identifiedAs para 'aluno_ativo' apenas localmente para os próximos passos.
-        identifiedAs = 'aluno_ativo';
-      } else {
-      // 2) Modo silencioso opcional — configurável em crm_settings.key='nutri_block_mode'
+      // Modo silencioso opcional — configurável em crm_settings.key='nutri_block_mode' ({ silent: true })
       const { data: modeRow } = await admin
         .from('crm_settings')
         .select('value')
@@ -1476,10 +1464,6 @@ Gere a mensagem final agora.`;
         autoReply = { sent: r.sent, engine: silentMode ? 'nutri_block_silent' : 'nutri_block_redirect' };
       } else {
         autoReply = { sent: false, reason: 'nutri_block_already_sent' };
-      }
-      } // end else (não é whitelist)
-      if (!whitelistHit) {
-        // já processado acima — evita cair no menu de recepção
       }
     } else if (!conv.flow_state) {
       if (provider === 'wapi') {
