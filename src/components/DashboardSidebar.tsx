@@ -74,6 +74,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
         { to: "/admin/crm/ia", icon: Sparkles, label: "IA" },
         { to: "/admin/crm/supercoach", icon: Zap, label: "SuperCoach" },
         { to: "/admin/crm/fluxo", icon: Workflow, label: "Fluxo Atendimento" },
+        { to: "/admin/crm/nutri-bloqueios", icon: ShieldOff, label: "Bloqueios Nutri" },
         { to: "/admin/crm/configuracoes", icon: PanelTop, label: "Configurações WhatsApp" },
       ],
     },
