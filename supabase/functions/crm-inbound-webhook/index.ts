@@ -148,7 +148,11 @@ async function generateAiReply({
   const memories = await fetchAiMemories(admin as any, { phone, userId: profile?.user_id || null });
   const systemPrompt = basePrompt + renderMemoryBlock(memories);
 
-  const userPrompt = `${context}\nCom base no contexto acima, responda a última mensagem do aluno de forma curta, cordial e profissional (tom STH METHOD, neutro e técnico, em português do Brasil). Não use emojis em excesso. Máximo 4 frases.`;
+  const contactFirstName = (profile?.full_name || '').toString().trim().split(/\s+/)[0] || '';
+  const nameGuard = queue !== 'nutri'
+    ? `\n⚠️ REGRA DE NOME: ${contactFirstName ? `o interlocutor se chama "${contactFirstName}" — use APENAS este primeiro nome ao se dirigir a ele.` : 'não há nome confirmado no contexto — trate por "você".'} NUNCA chame o interlocutor de "Alexandre" (esse nome pertence ao Nutri, não ao lead/aluno) nem invente qualquer outro nome.`
+    : '';
+  const userPrompt = `${context}${nameGuard}\nCom base no contexto acima, responda a última mensagem do aluno de forma curta, cordial e profissional (tom STH METHOD, neutro e técnico, em português do Brasil). Não use emojis em excesso. Máximo 4 frases.`;
 
   const reply = await callAiEngine({ engine, systemPrompt, userPrompt });
 
@@ -1355,7 +1359,11 @@ Deno.serve(async (req) => {
                   ? `INTENÇÃO: AUSÊNCIA CORDIAL para aluno ATIVO. NÃO vender, NÃO oferecer plano. Apenas reconhecer fora do expediente e orientar a aguardar retorno humano no próximo turno. Se for dúvida técnica, mencionar o canal "Fale com o Nutri".`
                   : `INTENÇÃO: RENOVAÇÃO de aluno ${identifiedAs === 'ex_aluno' ? 'EX-ALUNO' : 'COM PLANO VENCIDO'}. Reengaje com tom consultivo do método, reforçando continuidade biológica e resultado, e ofereça renovação 100% automatizada. Inclua o link: ${renewalLink}`);
 
-            const userPrompt = `${ctx}
+            const awayFirstName = ((profile?.full_name as string) || displayName || '').toString().trim().split(/\s+/)[0] || '';
+            const awayNameGuard = queueForAi !== 'nutri'
+              ? `\n⚠️ REGRA DE NOME: ${awayFirstName ? `o interlocutor se chama "${awayFirstName}" — use APENAS este primeiro nome.` : 'sem nome no contexto — trate por "você".'} NUNCA chame o interlocutor de "Alexandre" (nome exclusivo do Nutri) nem invente outro nome.`
+              : '';
+            const userPrompt = `${ctx}${awayNameGuard}
 ⚠️ MODO AUSÊNCIA (fora do horário de expediente — sem humano disponível agora).
 Você é a STHIA respondendo no canal ${queueForAi.toUpperCase()}.
 REGRAS DESTE TURNO:
