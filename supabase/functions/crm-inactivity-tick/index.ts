@@ -61,23 +61,147 @@ Deno.serve(async (req) => {
     return `Olá${nomeSep}${firstName}.\n\nEstamos encerrando este atendimento por inatividade (mais de 10 minutos sem resposta).\n\n${humanLine}\n\nSe precisar de algo, é só nos chamar novamente por aqui que retomamos assim que possível. Um abraço da equipe STH Method. 🙏`;
   };
 
+  const normalizeWhatsappTarget = (phone: string) => {
+    const raw = String(phone || '').trim();
+    if (raw.includes('@g.us') || raw.includes('-group')) return raw;
+    const digits = raw.replace(/\D/g, '');
+    return digits.startsWith('55') ? digits : `55${digits}`;
+  };
+
   const sendViaCrm = async (phone: string, body: string, conversation_id: string, provider: string) => {
+    const resolvedProvider = provider === 'zapi' ? 'zapi' : (provider === 'wapi_sucesso' ? 'wapi_sucesso' : 'wapi');
+    const source = resolvedProvider;
+
     try {
-      const r = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/crm-send-whatsapp`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
-        },
-        body: JSON.stringify({ phone, body, conversation_id, provider }),
+      const { data: cfgRow } = await admin
+        .from('crm_settings')
+        .select('value')
+        .eq('key', resolvedProvider)
+        .maybeSingle();
+      const cfg: any = cfgRow?.value || {};
+      if (cfg.enabled !== true) {
+        const error = `Canal ${resolvedProvider.toUpperCase()} inativo`;
+        console.warn('inactivity send blocked', { provider: resolvedProvider, conversation_id, error });
+        return { ok: false, error };
+      }
+
+      const fullPhone = normalizeWhatsappTarget(phone);
+      let resp: Response;
+      let sendData: any = {};
+
+      if (resolvedProvider === 'zapi') {
+        const id = (cfg.instance_id || '').trim() || Deno.env.get('ZAPI_INSTANCE_ID');
+        const tok = (cfg.instance_token || '').trim() || Deno.env.get('ZAPI_INSTANCE_TOKEN');
+        const client = (cfg.client_token || '').trim() || Deno.env.get('ZAPI_CLIENT_TOKEN');
+        if (!id || !tok || !client) return { ok: false, error: 'Credenciais Z-API ausentes' };
+
+        resp = await fetch(`https://api.z-api.io/instances/${id}/token/${tok}/send-text`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Client-Token': client },
+          body: JSON.stringify({ phone: fullPhone, message: body }),
+        });
+        sendData = await resp.json().catch(() => ({}));
+      } else {
+        const serverUrl = ((cfg.server_url || '').trim() || 'https://api.w-api.app').replace(/\/$/, '');
+        const id = (cfg.instance_id || '').trim() || Deno.env.get('WAPI_INSTANCE_ID');
+        const tok = (cfg.token || '').trim() || Deno.env.get('WAPI_TOKEN');
+        const client = (cfg.client_token || '').trim() || Deno.env.get('WAPI_CLIENT_TOKEN');
+        if (!id || !tok) return { ok: false, error: 'Credenciais W-API ausentes' };
+
+        const headers: Record<string, string> = { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` };
+        if (client) headers['Client-Token'] = client;
+        resp = await fetch(`${serverUrl}/v1/message/send-text?instanceId=${id}`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ phone: fullPhone, message: body }),
+        });
+        sendData = await resp.json().catch(() => ({}));
+      }
+
+      const ok = resp.ok && !sendData?.error;
+      const externalId = sendData?.messageId || sendData?.id || sendData?.zaapId || null;
+
+      await admin.from('crm_messages').insert({
+        conversation_id,
+        direction: 'out',
+        body,
+        source,
+        status: ok ? 'sent' : 'failed',
+        external_id: externalId,
       });
-      const data = await r.json().catch(() => ({}));
-      return { ok: r.ok && data?.ok, error: data?.error };
+
+      if (!ok) {
+        console.error('inactivity whatsapp send failed', {
+          provider: resolvedProvider,
+          conversation_id,
+          status: resp.status,
+          error: sendData?.error || sendData?.message || 'Falha no envio',
+        });
+      }
+
+      return { ok, error: sendData?.error || sendData?.message || (ok ? null : `HTTP ${resp.status}`) };
     } catch (e) {
       console.error('inactivity send failed', provider, e);
       return { ok: false, error: String(e) };
     }
   };
+
+  const requestBody = await req.clone().json().catch(() => ({}));
+  const mode = String(requestBody?.mode || 'tick');
+
+  if (mode === 'resend_failed_closures') {
+    const sinceHours = Math.min(Math.max(Number(requestBody?.since_hours || 12), 1), 48);
+    const sinceIso = new Date(Date.now() - sinceHours * 60 * 60 * 1000).toISOString();
+    const closureEvents = ['conversation_auto_closed', 'human_handoff_auto_closed', 'conversation_stale_auto_closed'];
+
+    const [{ data: failedLogs }, { data: resentLogs }] = await Promise.all([
+      admin.from('automation_logs')
+        .select('metadata, created_at')
+        .in('event_type', closureEvents)
+        .gte('created_at', sinceIso)
+        .order('created_at', { ascending: false })
+        .limit(500),
+      admin.from('automation_logs')
+        .select('metadata')
+        .eq('event_type', 'conversation_closure_message_resent')
+        .gte('created_at', sinceIso)
+        .limit(500),
+    ]);
+
+    const alreadyResent = new Set((resentLogs || [])
+      .map((l: any) => l.metadata?.conversation_id)
+      .filter(Boolean));
+    const ids = Array.from(new Set((failedLogs || [])
+      .filter((l: any) => l.metadata?.sent === false || l.metadata?.sent === 'false')
+      .map((l: any) => l.metadata?.conversation_id)
+      .filter((id: string) => id && !alreadyResent.has(id))));
+
+    const { data: conversations } = ids.length ? await admin
+      .from('crm_conversations')
+      .select('id, phone, display_name, provider, last_message_at')
+      .in('id', ids)
+      .limit(500) : { data: [] } as any;
+
+    let resent = 0;
+    let failed = 0;
+    for (const c of conversations || []) {
+      const firstName = String(c.display_name || '').split(' ')[0] || '';
+      const farewell = buildFarewell(firstName, c.provider || 'wapi');
+      const { ok, error } = await sendViaCrm(c.phone, farewell, c.id, c.provider || 'wapi');
+      await admin.from('automation_logs').insert({
+        contact_phone: c.phone,
+        event_type: 'conversation_closure_message_resent',
+        reason: 'Reenvio de mensagem de encerramento que havia falhado',
+        metadata: { conversation_id: c.id, sent: ok, error: error || null, last_message_at: c.last_message_at },
+      });
+      if (ok) resent++; else failed++;
+    }
+
+    return new Response(JSON.stringify({ ok: true, checkedFailedClosures: ids.length, resent, failed }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
 
   const now = Date.now();
   const FIVE_MIN = 5 * 60 * 1000;
