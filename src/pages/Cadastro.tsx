@@ -990,6 +990,12 @@ const Cadastro = () => {
                 </p>
               </CardHeader>
               <CardContent>
+                <div className="mb-4 rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs font-body text-foreground/90 leading-relaxed">
+                  <p className="font-medium text-foreground mb-1">Por que enviar suas fotos?</p>
+                  <p>
+                    O envio não é obrigatório, mas é <span className="font-medium text-foreground">altamente recomendado</span>. As fotos permitem a leitura da sua composição estética — identificamos pontos fortes, assimetrias e áreas a priorizar para montar o <span className="font-medium text-foreground">treino de musculação mais adequado ao seu corpo</span>. Sem elas, o protocolo trabalha só com números.
+                  </p>
+                </div>
                 <BodyImageUpload
                   userId={userId}
                   existingImages={bodyImages || []}
