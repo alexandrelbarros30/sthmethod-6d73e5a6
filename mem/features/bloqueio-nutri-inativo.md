@@ -8,3 +8,5 @@ No `crm-inbound-webhook`, quando uma mensagem chega no canal "Fale com o Nutri" 
 Motivo: o Nutri é canal técnico de prioridade para aluno ativo. Inativos consumindo o canal atrasam atendimento de quem está pagando consultoria.
 
 Encerramento mantém marca de fala "Conte Comigo!" do Nutri Alexandre.
+
+**REGRA ABSOLUTA (reforço diário):** No canal Fale com o Nutri, se o contato NÃO É CLIENTE ATIVO (lead que nunca foi cliente, aluno vencido ou ex-aluno), NÃO HAVERÁ ATENDIMENTO com o Nutri em hipótese alguma. Deve ser encaminhado imediatamente para o canal Comercial (https://wa.me/5521998496289) — 1ª adesão para leads, renovação para vencidos/ex-alunos. Sem exceção, sem "só dessa vez", sem responder a dúvida técnica antes de redirecionar.
