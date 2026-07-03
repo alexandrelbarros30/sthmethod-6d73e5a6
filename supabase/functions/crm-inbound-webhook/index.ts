@@ -942,6 +942,21 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Whitelist manual do canal Fale com o Nutri: números listados aqui
+    // são atendidos como aluno_ativo (parceiros, jornalistas, casos especiais),
+    // pulando o bloqueio automático. Só faz sentido para o provider WAPI (Nutri).
+    if (provider === 'wapi' && identifiedAs !== 'aluno_ativo') {
+      const phoneDigitsForWL = String(phone || '').replace(/\D/g, '');
+      const { data: whitelistHit } = await admin
+        .from('crm_nutri_whitelist')
+        .select('id')
+        .eq('phone', phoneDigitsForWL)
+        .maybeSingle();
+      if (whitelistHit) {
+        identifiedAs = 'aluno_ativo';
+      }
+    }
+
     const cls = classify(body);
     let finalQueue = cls.queue || (provider === 'zapi' ? 'comercial' : 'nutri');
     if ((identifiedAs !== 'lead' && provider === 'zapi') || forceSucessoQueue) finalQueue = 'sucesso';
