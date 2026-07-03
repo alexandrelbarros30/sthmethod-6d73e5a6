@@ -201,6 +201,29 @@ const RULES: Rule[] = [
       `O treino fica disponível no *app com execução guiada e vídeos*. Acesse em *Plataforma → Treino*.`,
   },
   {
+    intent: "stcoach_erro",
+    match: (t) =>
+      /\b(st ?coach|stcoach|app de treino|app do treino|app treino)\b/.test(t) &&
+      /\b(nao abre|não abre|nao funciona|não funciona|erro|travand|travou|bug|problema|nao carreg|não carreg|fecha sozinho|crash)\b/.test(t),
+    reply: () =>
+      [
+        `Vamos resolver isso rapidinho 👇`,
+        ``,
+        `*Se você usa iPhone (iOS):*`,
+        `1. *Desinstale* o app *ST Coach* do seu celular`,
+        `2. *Reinstale* pela App Store`,
+        `3. Faça login novamente`,
+        ``,
+        `*Se você usa Android:*`,
+        `1. Vá em *Configurações → Apps → ST Coach*`,
+        `2. Toque em *Armazenamento → Limpar cache*`,
+        `3. Abra o app novamente`,
+        `4. Se persistir, *desinstale e reinstale* pela Play Store`,
+        ``,
+        `Após isso o treino volta a abrir normalmente. Me avisa se resolveu!`,
+      ].join("\n"),
+  },
+  {
     intent: "dieta",
     match: (t) => /\b(dieta|cardapio|alimentacao|refeicao|refeicoes|nutricao|nutri)\b/.test(t),
     reply: () =>
