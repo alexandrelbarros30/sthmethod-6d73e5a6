@@ -1359,7 +1359,11 @@ Deno.serve(async (req) => {
                   ? `INTENÇÃO: AUSÊNCIA CORDIAL para aluno ATIVO. NÃO vender, NÃO oferecer plano. Apenas reconhecer fora do expediente e orientar a aguardar retorno humano no próximo turno. Se for dúvida técnica, mencionar o canal "Fale com o Nutri".`
                   : `INTENÇÃO: RENOVAÇÃO de aluno ${identifiedAs === 'ex_aluno' ? 'EX-ALUNO' : 'COM PLANO VENCIDO'}. Reengaje com tom consultivo do método, reforçando continuidade biológica e resultado, e ofereça renovação 100% automatizada. Inclua o link: ${renewalLink}`);
 
-            const userPrompt = `${ctx}
+            const awayFirstName = ((profile?.full_name as string) || displayName || '').toString().trim().split(/\s+/)[0] || '';
+            const awayNameGuard = queueForAi !== 'nutri'
+              ? `\n⚠️ REGRA DE NOME: ${awayFirstName ? `o interlocutor se chama "${awayFirstName}" — use APENAS este primeiro nome.` : 'sem nome no contexto — trate por "você".'} NUNCA chame o interlocutor de "Alexandre" (nome exclusivo do Nutri) nem invente outro nome.`
+              : '';
+            const userPrompt = `${ctx}${awayNameGuard}
 ⚠️ MODO AUSÊNCIA (fora do horário de expediente — sem humano disponível agora).
 Você é a STHIA respondendo no canal ${queueForAi.toUpperCase()}.
 REGRAS DESTE TURNO:
