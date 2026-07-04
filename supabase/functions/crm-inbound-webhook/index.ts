@@ -1037,6 +1037,25 @@ Deno.serve(async (req) => {
           originalMessage: `[${blockedMediaKind} bloqueado]`,
           messageSent: !recentBlock,
         });
+        // Bloqueio REAL no WhatsApp Nutri (W-API) — mídia de inativo.
+        try {
+          await admin.functions.invoke('wapi-contact-block', {
+            body: {
+              phone,
+              action: 'block',
+              reason: nutriBlockTemplate?.reason || `nutri_block:${mediaIdentifiedAs}:media`,
+              metadata: {
+                identified_as: mediaIdentifiedAs,
+                entry: 'media',
+                media_kind: blockedMediaKind,
+                commercial_conversation_id: convRow.id,
+                rule: 'nutri_channel_active_only',
+              },
+            },
+          });
+        } catch (e) {
+          console.error('wapi-contact-block block (media) failed', e);
+        }
       }
 
       return await finish({ ok: true, blocked: true, reason: 'media_not_allowed', media_kind: blockedMediaKind });
