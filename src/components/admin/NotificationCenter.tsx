@@ -279,14 +279,19 @@ const NotificationCenter = () => {
                       ? (Number(n.new_weight) - Number(n.previous_weight)).toFixed(1)
                       : null;
                     const diffLabel = diff ? (Number(diff) > 0 ? `+${diff} kg` : `${diff} kg`) : null;
+                    const hasWeight = n.new_weight != null;
+                    const subtitleParts: string[] = [];
+                    if (hasWeight) subtitleParts.push(`Peso ${Number(n.new_weight).toFixed(1)} kg`);
+                    if (n.has_photos) subtitleParts.push("Novas fotos de evolução");
+                    if (!subtitleParts.length) subtitleParts.push("Atualização recebida");
                     return (
                       <NotificationRow
                         key={`e-${n.id}`}
                         icon={<TrendingUp className="w-4 h-4" strokeWidth={1.8} />}
-                        accent="bg-sky-500/10 text-sky-500"
+                        accent={n.has_photos && !hasWeight ? "bg-amber-500/10 text-amber-500" : "bg-sky-500/10 text-sky-500"}
                         title={n.student_name}
-                        statusIcon="📊"
-                        subtitle={`Peso ${Number(n.new_weight).toFixed(1)} kg`}
+                        statusIcon={n.has_photos && !hasWeight ? "📸" : "📊"}
+                        subtitle={subtitleParts.join(" • ")}
                         chips={[diffLabel, n.has_photos ? "📸 Fotos" : null].filter(Boolean) as string[]}
                         time={n.created_at}
                         actions={
