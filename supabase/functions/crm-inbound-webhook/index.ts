@@ -1009,6 +1009,10 @@ Deno.serve(async (req) => {
             deduped: !!recentBlock,
             identified_as: mediaIdentifiedAs,
             session_count: sessionCount,
+            rule: 'nutri_channel_active_only',
+            commercial_conversation_id: convRow?.id || null,
+            destination_provider: 'zapi',
+            destination_queue: 'comercial',
           },
         });
       } else {
