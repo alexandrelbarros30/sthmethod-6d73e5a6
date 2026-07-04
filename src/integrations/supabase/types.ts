@@ -4109,51 +4109,6 @@ export type Database = {
         }
         Relationships: []
       }
-      purchase_message_sends: {
-        Row: {
-          created_at: string
-          id: string
-          message_body: string
-          notes: string | null
-          payment_id: string
-          phone: string
-          sent_at: string
-          sent_by: string | null
-          status: string
-          template_id: string | null
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          message_body: string
-          notes?: string | null
-          payment_id: string
-          phone: string
-          sent_at?: string
-          sent_by?: string | null
-          status?: string
-          template_id?: string | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          message_body?: string
-          notes?: string | null
-          payment_id?: string
-          phone?: string
-          sent_at?: string
-          sent_by?: string | null
-          status?: string
-          template_id?: string | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       queue_join_requests: {
         Row: {
           called_at: string | null
