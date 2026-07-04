@@ -29,6 +29,18 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'conversation_id, phone and body required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    // Política STH Method: WhatsApp NÃO envia imagens nem vídeos por nenhum canal.
+    // Apenas texto e documentos (PDF, ex.: treinos) são permitidos. Fotos ficam
+    // no sistema (sthmethod.com.br) para preservar prontuário e autorizações.
+    const isVideoDoc = /\.(mp4|mov|avi|mkv|webm|m4v|3gp)(\?|$)/i.test(String(document_url || ''));
+    if (image_url || isVideoDoc) {
+      return new Response(JSON.stringify({
+        ok: false,
+        blocked: true,
+        error: 'Envio de imagens e vídeos pelo WhatsApp está bloqueado. Compartilhe o link do sistema (sthmethod.com.br) com o aluno.',
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
     // Resolve provider: explicit → conversation.provider → queue_type → default
