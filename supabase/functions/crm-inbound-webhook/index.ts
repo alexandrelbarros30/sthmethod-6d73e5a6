@@ -1260,6 +1260,14 @@ Deno.serve(async (req) => {
     let finalQueue = cls.queue || (provider === 'zapi' ? 'comercial' : 'nutri');
     if ((identifiedAs !== 'lead' && provider === 'zapi') || forceSucessoQueue) finalQueue = 'sucesso';
 
+    // HARD BLOCK: Nutri é exclusivo para aluno ATIVO. Qualquer inbound wapi
+    // (Fale com o Nutri) de lead/vencido/ex-aluno é forçado para o Comercial —
+    // a conversa é imediatamente reatribuída para queue_type='comercial' e
+    // provider='zapi' para nunca aparecer no painel Nutri.
+    const forceNutriToComercial = provider === 'wapi' && identifiedAs !== 'aluno_ativo';
+    const storedProvider = forceNutriToComercial ? 'zapi' : provider;
+    if (forceNutriToComercial) finalQueue = 'comercial';
+
     const [{ data: sessionTimeoutCfg }, { data: farewellMsgCfg }] = await Promise.all([
       admin.from('crm_settings').select('value').eq('key', 'session_timeout_minutes').maybeSingle(),
       admin.from('crm_settings').select('value').eq('key', 'farewell_message').maybeSingle(),
@@ -1310,12 +1318,13 @@ Deno.serve(async (req) => {
         display_name: displayName, 
         channel: 'whatsapp', 
         status: 'open', 
-        provider, 
+        provider: storedProvider, 
         queue_type: finalQueue, 
         nutri_category: cls.nutriCategory, 
         is_lead: identifiedAs === 'lead', 
         user_id: profile?.user_id, 
         identified_as: identifiedAs, 
+        pipeline_stage: forceNutriToComercial ? (identifiedAs === 'lead' ? 'lead_nutri_bloqueado' : 'renovacao_pendente') : null,
         session_started_at: now.toISOString(), 
         session_expires_at: sessionExpiresAt.toISOString(), 
         session_count: 1 
@@ -1332,7 +1341,7 @@ Deno.serve(async (req) => {
       }
 
       const upd: any = { 
-        provider, 
+        provider: storedProvider, 
         wa_id: waId,
         queue_type: finalQueue, 
         nutri_category: cls.nutriCategory, 
@@ -1342,6 +1351,9 @@ Deno.serve(async (req) => {
         user_id: profile?.user_id, 
         identified_as: identifiedAs 
       };
+      if (forceNutriToComercial) {
+        upd.pipeline_stage = identifiedAs === 'lead' ? 'lead_nutri_bloqueado' : 'renovacao_pendente';
+      }
       
       if (isNewSession) { 
 
