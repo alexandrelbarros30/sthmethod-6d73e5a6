@@ -794,6 +794,8 @@ Deno.serve(async (req) => {
         reason,
         metadata: {
           conversation_id: conversationId,
+          commercial_conversation_id: conversationId,
+          rule: 'nutri_channel_active_only',
           identified_as: identifiedAs,
           entry,
           original_provider: provider,
