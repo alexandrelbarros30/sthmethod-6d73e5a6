@@ -1527,6 +1527,12 @@ Deno.serve(async (req) => {
     const isChannelEnabled = channelEnabled;
     const aiMode = String((aiModeCfg?.value as any)?.mode || 'auto'); // off | auto | ai_only
 
+    // HARD RULE: bloqueio do canal Nutri para não-ativos tem PRECEDÊNCIA sobre
+    // qualquer resposta automática (IA, today_notice, away). Assim, mesmo fora
+    // do expediente, um lead/vencido/ex-aluno é imediatamente redirecionado
+    // para o Comercial em vez de receber mensagem via canal Nutri.
+    const nutriHardBlock = provider === 'wapi' && identifiedAs !== 'aluno_ativo';
+
     if (!isChannelEnabled) {
       autoReply = { sent: false, reason: 'disabled' };
     } else if (conv.human_handoff === true || !!conv.assigned_to) {
@@ -1566,7 +1572,7 @@ Deno.serve(async (req) => {
       }
       autoReply = { sent: false, reason: 'human_typing' };
 
-    } else if (aiMode === 'ai_only' && withinHours && !todayNoticeActive) {
+    } else if (!nutriHardBlock && aiMode === 'ai_only' && withinHours && !todayNoticeActive) {
       // MODO AI GLOBAL: ignora fluxo e menus — IA responde tudo DENTRO do expediente.
       // Fora do horário, deixa cair para o bloco de ausência abaixo, senão o aluno
       // recebe resposta de IA 24h e nunca o aviso de fora de expediente.
@@ -1582,7 +1588,7 @@ Deno.serve(async (req) => {
         console.error('ai_only failed', e);
         autoReply = { sent: false, reason: 'ai_error', error: String(e) };
       }
-    } else if (todayNoticeActive) {
+    } else if (!nutriHardBlock && todayNoticeActive) {
       // Dedup: 1x por sessão / 4h, como o away.
       const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
       const { data: lastNotice } = await admin.from('crm_messages')
@@ -1598,7 +1604,7 @@ Deno.serve(async (req) => {
       } else {
         autoReply = { sent: false, reason: 'today_notice_already_sent' };
       }
-    } else if (!withinHours) {
+    } else if (!nutriHardBlock && !withinHours) {
       // Fora do horário de expediente: SEMPRE enviar mensagem de ausência,
       // independente de canal, identificação (lead/ativo/vencido) ou estado
       // da conversa (nova sessão, fluxo em andamento, etc.). Dedup por 4h
