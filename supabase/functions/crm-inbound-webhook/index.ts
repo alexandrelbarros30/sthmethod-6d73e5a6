@@ -1037,6 +1037,25 @@ Deno.serve(async (req) => {
           originalMessage: `[${blockedMediaKind} bloqueado]`,
           messageSent: !recentBlock,
         });
+        // Bloqueio REAL no WhatsApp Nutri (W-API) — mídia de inativo.
+        try {
+          await admin.functions.invoke('wapi-contact-block', {
+            body: {
+              phone,
+              action: 'block',
+              reason: nutriBlockTemplate?.reason || `nutri_block:${mediaIdentifiedAs}:media`,
+              metadata: {
+                identified_as: mediaIdentifiedAs,
+                entry: 'media',
+                media_kind: blockedMediaKind,
+                commercial_conversation_id: convRow.id,
+                rule: 'nutri_channel_active_only',
+              },
+            },
+          });
+        } catch (e) {
+          console.error('wapi-contact-block block (media) failed', e);
+        }
       }
 
       return await finish({ ok: true, blocked: true, reason: 'media_not_allowed', media_kind: blockedMediaKind });
@@ -1255,6 +1274,19 @@ Deno.serve(async (req) => {
                 identified_as: identifiedAs,
               },
             });
+            // Desbloqueio real no WhatsApp da linha Nutri (W-API).
+            try {
+              await admin.functions.invoke('wapi-contact-block', {
+                body: {
+                  phone,
+                  action: 'unblock',
+                  reason: 'contact_reactivated',
+                  metadata: { previous_block_at: lastBlock.created_at, identified_as: identifiedAs },
+                },
+              });
+            } catch (e) {
+              console.error('wapi-contact-block unblock failed', e);
+            }
           }
         }
       } catch (e) {
@@ -1831,6 +1863,27 @@ Gere a mensagem final agora.`;
             original_provider: provider,
           },
         });
+
+        // Bloqueio REAL do contato no WhatsApp da linha "Fale com o Nutri" (W-API).
+        // Impede que futuras mensagens do inativo cheguem até o dispositivo.
+        // Auto-desbloqueio ocorre quando ele voltar a ser aluno ativo.
+        try {
+          await admin.functions.invoke('wapi-contact-block', {
+            body: {
+              phone,
+              action: 'block',
+              reason: nutriBlockTpl.reason,
+              metadata: {
+                identified_as: identifiedAs,
+                entry: 'text',
+                commercial_conversation_id: conv.id,
+                rule: 'nutri_channel_active_only',
+              },
+            },
+          });
+        } catch (e) {
+          console.error('wapi-contact-block block failed', e);
+        }
 
         autoReply = {
           sent: r.sent,
