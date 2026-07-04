@@ -4,6 +4,7 @@ import { crypto } from "https://deno.land/std@0.192.0/crypto/mod.ts";
 import { encode as hexEncode } from "https://deno.land/std@0.192.0/encoding/hex.ts";
 import { callAiEngine, loadEngineAndPrompt, fetchAiMemories, renderMemoryBlock, extractAndSaveAiMemory } from '../_shared/ai-engine.ts';
 import { buildStudentContext } from '../_shared/student-context.ts';
+import { buildNutriBlockPayload, type NutriBlockIdentity } from './nutri-block-template.ts';
 
 // ===== Transcrição de áudio (WhatsApp PTT) via Lovable AI =====
 // Baixa o arquivo de áudio e envia para o endpoint OpenAI-compatible do
@@ -692,9 +693,11 @@ Deno.serve(async (req) => {
       // atendidos aqui — devem ser encaminhados imediatamente ao Comercial.
       // Determina identidade antes do envio para escolher a mensagem correta.
       let mediaIdentifiedAs: 'aluno_ativo' | 'aluno_vencido' | 'lead' | 'ex_aluno' = 'lead';
+      let mediaProfile: any = null;
       if (provider === 'wapi') {
         try {
           const prof = await findProfileByPhone(admin, phone, 'user_id, full_name, phone', waId);
+          mediaProfile = prof;
           if (prof) {
             const { data: subs } = await admin.from('subscriptions')
               .select('end_date, status').eq('user_id', prof.user_id)
@@ -721,30 +724,10 @@ Deno.serve(async (req) => {
       }
 
       const isNutriInactive = provider === 'wapi' && mediaIdentifiedAs !== 'aluno_ativo';
-      const comercialLink = 'https://wa.me/5521998496289';
-      const blockedMsg = isNutriInactive
-        ? (
-          "📎 Não recebemos *fotos, vídeos ou documentos* por aqui — e o canal *Fale com o Nutri* é exclusivo para *alunos ativos*.\n\n" +
-          (mediaIdentifiedAs === 'lead'
-            ? "Para iniciar sua consultoria e ter acesso ao Nutri, fale com nosso Comercial:\n"
-            : "Para renovar sua consultoria e voltar a ser atendido pelo Nutri, fale com nosso Comercial:\n") +
-          `👉 ${comercialLink}\n\n` +
-          "Assim que seu plano estiver ativo, você poderá enviar seus documentos pelo sistema oficial *STH METHOD* (https://sthmethod.com.br/dashboard). 🙏"
-        )
-        : (
-        "📎 Por aqui não recebemos *fotos, vídeos ou documentos* — eles ficam soltos e não entram no seu prontuário.\n\n" +
-        "✅ Envie pelo sistema oficial *STH METHOD*, onde tudo é registrado, autorizado e vinculado ao seu acompanhamento:\n" +
-        "👉 https://sthmethod.com.br/dashboard\n\n" +
-        "• *Fotos de evolução* → menu *Evolução*\n" +
-        "• *Exames / laudos* → menu *Documentos*\n" +
-        "• *Comprovante de pagamento* → menu *Assinatura*\n\n" +
-        "Assim seu envio chega ao time certo e fica salvo no histórico. 🙏"
-        );
-
       // Garante uma conversa para registrar a inbound (mídia) e a outbound.
       let { data: convRow } = await admin
         .from('crm_conversations')
-        .select('id, queue_type')
+        .select('id, queue_type, session_count')
         .eq('phone', phone)
         .maybeSingle();
       if (!convRow) {
@@ -757,9 +740,35 @@ Deno.serve(async (req) => {
           provider,
           queue_type: provider === 'zapi' ? 'comercial' : (provider === 'wapi_sucesso' ? 'sucesso' : 'nutri'),
           session_started_at: new Date().toISOString(),
-        }).select('id, queue_type').single();
+        }).select('id, queue_type, session_count').single();
         convRow = ins.data as any;
       }
+
+      // Mensagem: para Nutri+inativo/lead usa template padronizado
+      // (mesmo do fluxo de texto). Para demais casos mantém o aviso
+      // genérico apontando para sthmethod.com.br.
+      const firstNameForBlock = String(mediaProfile?.full_name || name || '').split(' ')[0] || '';
+      const renewalLinkForBlock = mediaProfile?.user_id
+        ? `https://sthmethod.com.br/renovacao?u=${mediaProfile.user_id}`
+        : 'https://sthmethod.com.br/cadastro';
+      const nutriBlockTemplate = isNutriInactive
+        ? buildNutriBlockPayload({
+            identifiedAs: mediaIdentifiedAs as NutriBlockIdentity,
+            firstName: firstNameForBlock,
+            renewalLink: renewalLinkForBlock,
+            entry: 'media',
+            mediaKind: blockedMediaKind,
+          })
+        : null;
+      const blockedMsg = nutriBlockTemplate?.message ?? (
+        "📎 Por aqui não recebemos *fotos, vídeos ou documentos* — eles ficam soltos e não entram no seu prontuário.\n\n" +
+        "✅ Envie pelo sistema oficial *STH METHOD*, onde tudo é registrado, autorizado e vinculado ao seu acompanhamento:\n" +
+        "👉 https://sthmethod.com.br/dashboard\n\n" +
+        "• *Fotos de evolução* → menu *Evolução*\n" +
+        "• *Exames / laudos* → menu *Documentos*\n" +
+        "• *Comprovante de pagamento* → menu *Assinatura*\n\n" +
+        "Assim seu envio chega ao time certo e fica salvo no histórico. 🙏"
+      );
 
       // Registra a mídia recebida (placeholder no histórico).
       try {
@@ -776,16 +785,35 @@ Deno.serve(async (req) => {
         console.error('media_blocked: erro ao registrar inbound', e);
       }
 
-      // Dedup 4h: não repete o aviso se já enviado recentemente.
-      const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
-      const { data: recentBlock } = await admin
-        .from('crm_messages')
-        .select('id')
-        .eq('conversation_id', convRow!.id)
-        .eq('direction', 'out')
-        .gt('created_at', fourHoursAgo)
-        .filter('metadata->>tag', 'eq', 'media_blocked')
-        .maybeSingle();
+      // Dedup:
+      //  - Nutri + inativo/lead: 1 aviso POR SESSÃO (idempotência via
+    //    automation_logs.idempotency_key). Se o contato mandar 5 mídias
+    //    seguidas na mesma sessão, envia só uma vez.
+      //  - Demais casos: 1 aviso a cada 4h por conversa.
+      const sessionCount = (convRow as any)?.session_count || 1;
+      const nutriBlockKey = isNutriInactive ? `nutri_block_redirect_${sessionCount}` : null;
+      let recentBlock: { id: string } | null = null;
+      if (isNutriInactive) {
+        const { data: existingBlock } = await admin
+          .from('automation_logs')
+          .select('id')
+          .eq('contact_phone', phone)
+          .eq('idempotency_key', nutriBlockKey!)
+          .eq('event_type', 'nutri_block_redirect')
+          .maybeSingle();
+        recentBlock = (existingBlock as any) || null;
+      } else {
+        const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+        const { data: recent } = await admin
+          .from('crm_messages')
+          .select('id')
+          .eq('conversation_id', convRow!.id)
+          .eq('direction', 'out')
+          .gt('created_at', fourHoursAgo)
+          .filter('metadata->>tag', 'eq', 'media_blocked')
+          .maybeSingle();
+        recentBlock = (recent as any) || null;
+      }
 
       if (!recentBlock) {
         try {
@@ -812,19 +840,47 @@ Deno.serve(async (req) => {
             source: provider,
             status: 'sent',
             body: blockedMsg,
-            metadata: { type: 'media_blocked', tag: 'media_blocked', media_kind: blockedMediaKind },
+            metadata: {
+              type: isNutriInactive ? 'nutri_block_redirect' : 'media_blocked',
+              tag: 'media_blocked',
+              media_kind: blockedMediaKind,
+              identified_as: mediaIdentifiedAs,
+            },
           });
         } catch (e) {
           console.error('media_blocked: erro ao enviar aviso', e);
         }
       }
 
-      await admin.from('automation_logs').insert({
-        contact_phone: phone,
-        event_type: 'media_blocked',
-        reason: 'WhatsApp não recebe arquivos — direcionado ao sistema',
-        metadata: { provider, media_kind: blockedMediaKind, deduped: !!recentBlock, identified_as: mediaIdentifiedAs, nutri_redirected: isNutriInactive },
-      });
+      // Log de auditoria — usa event_type específico para Nutri+inativo
+      // e inclui `identified_as` explícito (lead / aluno_vencido / ex_aluno)
+      // como motivo do redirecionamento.
+      if (isNutriInactive) {
+        await admin.from('automation_logs').insert({
+          contact_phone: phone,
+          event_type: 'nutri_block_redirect',
+          reason: nutriBlockTemplate?.reason || `nutri_block:${mediaIdentifiedAs}:media`,
+          queue_type: 'nutri',
+          action_taken: 'blocked_and_redirected',
+          idempotency_key: nutriBlockKey,
+          severity: 'info',
+          metadata: {
+            provider,
+            entry: 'media',
+            media_kind: blockedMediaKind,
+            deduped: !!recentBlock,
+            identified_as: mediaIdentifiedAs,
+            session_count: sessionCount,
+          },
+        });
+      } else {
+        await admin.from('automation_logs').insert({
+          contact_phone: phone,
+          event_type: 'media_blocked',
+          reason: 'WhatsApp não recebe arquivos — direcionado ao sistema',
+          metadata: { provider, media_kind: blockedMediaKind, deduped: !!recentBlock, identified_as: mediaIdentifiedAs, nutri_redirected: false },
+        });
+      }
 
       // No canal Nutri, se inativo/lead: encerra a conversa (o atendimento
       // ocorre no Comercial). Evita que a IA do Nutri responda depois.
@@ -1019,6 +1075,51 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (whitelistHit) {
         identifiedAs = 'aluno_ativo';
+      }
+    }
+
+    // ===== Auto-unblock do canal Nutri =====
+    // Se o contato voltou a ser aluno ativo (renovou ou fez 1ª adesão),
+    // qualquer bloqueio anterior perde efeito automaticamente — o próximo
+    // nutri_block_redirect só ocorreria se ele ficar inativo de novo.
+    // Aqui apenas registramos o "lifting" em automation_logs para auditoria
+    // e ficamos com o log de reativação claro no histórico.
+    if (provider === 'wapi' && identifiedAs === 'aluno_ativo') {
+      try {
+        const { data: lastBlock } = await admin
+          .from('automation_logs')
+          .select('id, created_at')
+          .eq('contact_phone', phone)
+          .eq('event_type', 'nutri_block_redirect')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (lastBlock?.id) {
+          const { data: existingLift } = await admin
+            .from('automation_logs')
+            .select('id')
+            .eq('contact_phone', phone)
+            .eq('event_type', 'nutri_block_lifted')
+            .gte('created_at', lastBlock.created_at)
+            .limit(1)
+            .maybeSingle();
+          if (!existingLift) {
+            await admin.from('automation_logs').insert({
+              contact_phone: phone,
+              event_type: 'nutri_block_lifted',
+              queue_type: 'nutri',
+              action_taken: 'unblocked',
+              severity: 'info',
+              reason: 'contact_reactivated',
+              metadata: {
+                previous_block_at: lastBlock.created_at,
+                identified_as: identifiedAs,
+              },
+            });
+          }
+        }
+      } catch (e) {
+        console.error('nutri_block_lifted: falha ao registrar', e);
       }
     }
 
@@ -1504,9 +1605,15 @@ Gere a mensagem final agora.`;
           ? `https://sthmethod.com.br/renovacao?u=${profile.user_id}`
           : 'https://sthmethod.com.br/cadastro';
 
-        const blockMsg = identifiedAs === 'lead'
-          ? `Olá${FIRST_NAME ? ' ' + FIRST_NAME : ''}! 👋\n\nEste canal *Fale com o Nutri* é exclusivo para alunos ATIVOS da consultoria, para garantir prioridade no atendimento técnico de quem já está em acompanhamento.\n\nComo você ainda não possui consultoria ativa, o canal correto é o *Comercial*, onde nossa equipe vai te apresentar os planos e iniciar sua jornada:\n\n👉 https://wa.me/5521998496289\n🌐 Site: https://sthmethod.com.br\n\nEstamos encerrando este atendimento por aqui para você seguir pelo Comercial. Conte Comigo!`
-          : `Olá${FIRST_NAME ? ' ' + FIRST_NAME : ''}! 👋\n\nEste canal *Fale com o Nutri* é exclusivo para alunos *ATIVOS* na consultoria — é o que garante o atendimento direto e o acompanhamento personalizado do *Nutri Alexandre*, com prioridade técnica para quem está em acompanhamento.\n\nIdentificamos que sua consultoria está *inativa* no momento. Para que suas dúvidas, ajustes e solicitações sejam respondidas pelo Nutri Alexandre de forma personalizada e dentro deste canal, é necessário estar com a consultoria ativa.\n\nPara reativar agora, de forma 100% automatizada:\n🔗 Renovação: ${renewalLink}\n\nAssim que sua consultoria for reativada, você volta a ser atendido(a) diretamente aqui no *Fale com o Nutri*, com acompanhamento personalizado.\n\nEnquanto isso, dúvidas comerciais (planos, valores, pagamento) seguem pelo canal *Comercial*:\n👉 https://wa.me/5521998496289\n\nConte Comigo! Bora pra cima.`;
+        // Template padronizado (mesmo do fluxo de mídia) para garantir
+        // consistência absoluta na comunicação de bloqueio do Nutri.
+        const nutriBlockTpl = buildNutriBlockPayload({
+          identifiedAs: identifiedAs as NutriBlockIdentity,
+          firstName: FIRST_NAME,
+          renewalLink,
+          entry: 'text',
+        });
+        const blockMsg = nutriBlockTpl.message;
 
         const r = silentMode
           ? { sent: false }
@@ -1527,7 +1634,14 @@ Gere a mensagem final agora.`;
           action_taken: silentMode ? 'blocked_silent' : 'blocked_and_redirected',
           idempotency_key: blockKey,
           severity: 'info',
-          metadata: { identified_as: identifiedAs, original_message: String(body).slice(0, 500), silent: silentMode },
+          reason: nutriBlockTpl.reason,
+          metadata: {
+            identified_as: identifiedAs,
+            entry: 'text',
+            original_message: String(body).slice(0, 500),
+            silent: silentMode,
+            session_count: conv.session_count || 1,
+          },
         });
 
         autoReply = { sent: r.sent, engine: silentMode ? 'nutri_block_silent' : 'nutri_block_redirect' };
