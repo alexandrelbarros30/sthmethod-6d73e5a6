@@ -1255,6 +1255,19 @@ Deno.serve(async (req) => {
                 identified_as: identifiedAs,
               },
             });
+            // Desbloqueio real no WhatsApp da linha Nutri (W-API).
+            try {
+              await admin.functions.invoke('wapi-contact-block', {
+                body: {
+                  phone,
+                  action: 'unblock',
+                  reason: 'contact_reactivated',
+                  metadata: { previous_block_at: lastBlock.created_at, identified_as: identifiedAs },
+                },
+              });
+            } catch (e) {
+              console.error('wapi-contact-block unblock failed', e);
+            }
           }
         }
       } catch (e) {
