@@ -688,7 +688,50 @@ Deno.serve(async (req) => {
     // disparar várias fotos em sequência).
     // ============================================================
     if (hasBlockedMedia) {
-      const blockedMsg = (
+      // Para o canal Fale com o Nutri (wapi), inativos/leads NÃO devem ser
+      // atendidos aqui — devem ser encaminhados imediatamente ao Comercial.
+      // Determina identidade antes do envio para escolher a mensagem correta.
+      let mediaIdentifiedAs: 'aluno_ativo' | 'aluno_vencido' | 'lead' | 'ex_aluno' = 'lead';
+      if (provider === 'wapi') {
+        try {
+          const prof = await findProfileByPhone(admin, phone, 'user_id, full_name, phone', waId);
+          if (prof) {
+            const { data: subs } = await admin.from('subscriptions')
+              .select('end_date, status').eq('user_id', prof.user_id)
+              .order('end_date', { ascending: false }).limit(1);
+            const sub = subs?.[0];
+            if (sub) {
+              const isFuture = new Date(sub.end_date).getTime() > Date.now();
+              if (sub.status === 'active' || isFuture) mediaIdentifiedAs = 'aluno_ativo';
+              else {
+                const days = Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86400000);
+                mediaIdentifiedAs = days < -365 ? 'ex_aluno' : 'aluno_vencido';
+              }
+            }
+          }
+          if (mediaIdentifiedAs !== 'aluno_ativo') {
+            const phoneDigitsForWL = String(phone || '').replace(/\D/g, '');
+            const { data: whitelistHit } = await admin.from('crm_nutri_whitelist')
+              .select('id').eq('phone', phoneDigitsForWL).maybeSingle();
+            if (whitelistHit) mediaIdentifiedAs = 'aluno_ativo';
+          }
+        } catch (e) {
+          console.error('media_blocked: falha ao classificar identidade', e);
+        }
+      }
+
+      const isNutriInactive = provider === 'wapi' && mediaIdentifiedAs !== 'aluno_ativo';
+      const comercialLink = 'https://wa.me/5521998496289';
+      const blockedMsg = isNutriInactive
+        ? (
+          "📎 Não recebemos *fotos, vídeos ou documentos* por aqui — e o canal *Fale com o Nutri* é exclusivo para *alunos ativos*.\n\n" +
+          (mediaIdentifiedAs === 'lead'
+            ? "Para iniciar sua consultoria e ter acesso ao Nutri, fale com nosso Comercial:\n"
+            : "Para renovar sua consultoria e voltar a ser atendido pelo Nutri, fale com nosso Comercial:\n") +
+          `👉 ${comercialLink}\n\n` +
+          "Assim que seu plano estiver ativo, você poderá enviar seus documentos pelo sistema oficial *STH METHOD* (https://sthmethod.com.br/dashboard). 🙏"
+        )
+        : (
         "📎 Por aqui não recebemos *fotos, vídeos ou documentos* — eles ficam soltos e não entram no seu prontuário.\n\n" +
         "✅ Envie pelo sistema oficial *STH METHOD*, onde tudo é registrado, autorizado e vinculado ao seu acompanhamento:\n" +
         "👉 https://sthmethod.com.br/dashboard\n\n" +
@@ -696,7 +739,7 @@ Deno.serve(async (req) => {
         "• *Exames / laudos* → menu *Documentos*\n" +
         "• *Comprovante de pagamento* → menu *Assinatura*\n\n" +
         "Assim seu envio chega ao time certo e fica salvo no histórico. 🙏"
-      );
+        );
 
       // Garante uma conversa para registrar a inbound (mídia) e a outbound.
       let { data: convRow } = await admin
@@ -780,8 +823,26 @@ Deno.serve(async (req) => {
         contact_phone: phone,
         event_type: 'media_blocked',
         reason: 'WhatsApp não recebe arquivos — direcionado ao sistema',
-        metadata: { provider, media_kind: blockedMediaKind, deduped: !!recentBlock },
+        metadata: { provider, media_kind: blockedMediaKind, deduped: !!recentBlock, identified_as: mediaIdentifiedAs, nutri_redirected: isNutriInactive },
       });
+
+      // No canal Nutri, se inativo/lead: encerra a conversa (o atendimento
+      // ocorre no Comercial). Evita que a IA do Nutri responda depois.
+      if (isNutriInactive && convRow?.id) {
+        await admin.from('crm_conversations').update({
+          status: 'closed',
+          human_handoff: false,
+          assigned_to: null,
+          human_intro_sent: false,
+          ai_paused_until: null,
+          flow_state: null,
+          flow_context: {},
+          inactivity_warned_at: null,
+          last_bot_message_at: null,
+          session_started_at: null,
+          session_expires_at: null,
+        }).eq('id', convRow.id);
+      }
 
       return await finish({ ok: true, blocked: true, reason: 'media_not_allowed', media_kind: blockedMediaKind });
     }
