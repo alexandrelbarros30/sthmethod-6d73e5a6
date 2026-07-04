@@ -659,6 +659,151 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify(payload), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     };
 
+    const sendImmediateText = async (targetProvider: 'zapi' | 'wapi' | 'wapi_sucesso', message: string) => {
+      let sent = false;
+      let messageId: string | null = null;
+      let data: any = null;
+      let error: any = null;
+
+      try {
+        if (targetProvider === 'zapi') {
+          const c = (zapiCfgRow?.value as any) || {};
+          const INSTANCE_ID = (c.instance_id || Deno.env.get('ZAPI_INSTANCE_ID') || '').trim();
+          const INSTANCE_TOKEN = (c.instance_token || Deno.env.get('ZAPI_INSTANCE_TOKEN') || '').trim();
+          const CLIENT_TOKEN = (c.client_token || Deno.env.get('ZAPI_CLIENT_TOKEN') || '').trim();
+          if (!INSTANCE_ID || !INSTANCE_TOKEN) {
+            error = 'Z-API credentials missing';
+          } else {
+            const resp = await fetch(`https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', ...(CLIENT_TOKEN ? { 'Client-Token': CLIENT_TOKEN } : {}) },
+              body: JSON.stringify({ phone, message }),
+            });
+            data = await resp.json().catch(() => ({}));
+            sent = resp.ok && !data?.error;
+            messageId = data?.messageId || data?.id || data?.zaapId || null;
+            if (!sent) error = data?.error || `Z-API status ${resp.status}`;
+          }
+        } else {
+          const fnName = targetProvider === 'wapi_sucesso' ? 'send-wapi-sucesso' : 'send-wapi';
+          const result = await admin.functions.invoke(fnName, { body: { phone, message } });
+          data = result.data;
+          error = result.error;
+          sent = !result.error && (result.data?.ok || result.data?.messageId || result.data?.id);
+          messageId = result.data?.messageId || result.data?.id || null;
+        }
+      } catch (e) {
+        error = String(e);
+      }
+
+      return { sent, messageId, data, error };
+    };
+
+    const ensureCommercialTicket = async ({
+      conversationId,
+      convSnapshot,
+      identifiedAs,
+      entry,
+      reason,
+      originalMessage,
+      messageSent,
+    }: {
+      conversationId: string;
+      convSnapshot?: any;
+      identifiedAs: 'lead' | 'aluno_vencido' | 'ex_aluno' | 'aluno_ativo';
+      entry: 'text' | 'media';
+      reason: string;
+      originalMessage?: string;
+      messageSent?: boolean;
+    }) => {
+      const nowIso = new Date().toISOString();
+      const stage = identifiedAs === 'lead' ? 'lead_nutri_bloqueado' : 'renovacao_pendente';
+      const context = {
+        ...((convSnapshot?.flow_context && typeof convSnapshot.flow_context === 'object') ? convSnapshot.flow_context : {}),
+        transferred_from: 'nutri',
+        transferred_to: 'comercial',
+        transferred_at: nowIso,
+        block_reason: reason,
+        identified_as: identifiedAs,
+        entry,
+      };
+      const preview = `[Nutri bloqueado → Comercial] ${identifiedAs === 'lead' ? 'Lead sem consultoria ativa' : identifiedAs === 'ex_aluno' ? 'Ex-aluno' : 'Aluno inativo/vencido'} redirecionado para atendimento comercial.`;
+
+      await admin.from('crm_conversations').update({
+        provider: 'zapi',
+        queue_type: 'comercial',
+        status: 'open',
+        pipeline_stage: stage,
+        human_handoff: false,
+        assigned_to: null,
+        human_intro_sent: false,
+        ai_paused_until: null,
+        flow_state: null,
+        flow_context: context,
+        session_started_at: convSnapshot?.session_started_at || nowIso,
+        session_expires_at: convSnapshot?.session_expires_at || new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+        unread_count: Math.max(Number(convSnapshot?.unread_count || 0), 1),
+        last_message_at: nowIso,
+        last_message_preview: preview,
+        last_direction: 'in',
+        updated_at: nowIso,
+      }).eq('id', conversationId);
+
+      const { data: commercialQueue } = await admin
+        .from('crm_queues')
+        .select('id')
+        .eq('name', 'Atendimento Comercial')
+        .maybeSingle();
+
+      if (commercialQueue?.id) {
+        await admin
+          .from('crm_queue_items')
+          .update({ closed_at: nowIso, notes: 'Fechado automaticamente: contato transferido para Atendimento Comercial.' })
+          .eq('conversation_id', conversationId)
+          .is('closed_at', null)
+          .neq('queue_id', commercialQueue.id);
+
+        const { data: openCommercialItem } = await admin
+          .from('crm_queue_items')
+          .select('id')
+          .eq('conversation_id', conversationId)
+          .eq('queue_id', commercialQueue.id)
+          .is('closed_at', null)
+          .maybeSingle();
+
+        const notes = `${identifiedAs === 'lead' ? 'Lead' : identifiedAs === 'ex_aluno' ? 'Ex-aluno' : 'Aluno inativo/vencido'} tentou atendimento no Fale com o Nutri. Bloqueado e aberto no Comercial.${originalMessage ? ` Mensagem: ${originalMessage.slice(0, 240)}` : ''}`;
+        if (openCommercialItem?.id) {
+          await admin.from('crm_queue_items').update({ priority: 5, notes }).eq('id', openCommercialItem.id);
+        } else {
+          await admin.from('crm_queue_items').insert({
+            queue_id: commercialQueue.id,
+            conversation_id: conversationId,
+            phone,
+            priority: 5,
+            notes,
+          });
+        }
+      }
+
+      await admin.from('automation_logs').insert({
+        contact_phone: phone,
+        event_type: 'nutri_to_comercial_transfer',
+        queue_type: 'comercial',
+        action_taken: 'opened_comercial_ticket',
+        severity: 'info',
+        reason,
+        metadata: {
+          conversation_id: conversationId,
+          identified_as: identifiedAs,
+          entry,
+          original_provider: provider,
+          destination_provider: 'zapi',
+          message_sent_from_comercial: !!messageSent,
+          original_message: originalMessage ? originalMessage.slice(0, 500) : null,
+        },
+      });
+    };
+
     if (externalId) {
       const { data: existingByExternalId } = await admin
         .from('crm_messages')
@@ -727,7 +872,7 @@ Deno.serve(async (req) => {
       // Garante uma conversa para registrar a inbound (mídia) e a outbound.
       let { data: convRow } = await admin
         .from('crm_conversations')
-        .select('id, queue_type, session_count')
+        .select('id, queue_type, session_count, session_started_at, session_expires_at, unread_count, flow_context')
         .eq('phone', phone)
         .maybeSingle();
       if (!convRow) {
@@ -737,10 +882,11 @@ Deno.serve(async (req) => {
           display_name: name || null,
           channel: 'whatsapp',
           status: 'open',
-          provider,
-          queue_type: provider === 'zapi' ? 'comercial' : (provider === 'wapi_sucesso' ? 'sucesso' : 'nutri'),
+          provider: isNutriInactive ? 'zapi' : provider,
+          queue_type: isNutriInactive ? 'comercial' : (provider === 'zapi' ? 'comercial' : (provider === 'wapi_sucesso' ? 'sucesso' : 'nutri')),
+          pipeline_stage: isNutriInactive ? (mediaIdentifiedAs === 'lead' ? 'lead_nutri_bloqueado' : 'renovacao_pendente') : null,
           session_started_at: new Date().toISOString(),
-        }).select('id, queue_type, session_count').single();
+        }).select('id, queue_type, session_count, session_started_at, session_expires_at, unread_count, flow_context').single();
         convRow = ins.data as any;
       }
 
@@ -817,34 +963,24 @@ Deno.serve(async (req) => {
 
       if (!recentBlock) {
         try {
-          if (provider === 'zapi') {
-            const c = (zapiCfgRow?.value as any) || {};
-            const INSTANCE_ID = (c.instance_id || Deno.env.get('ZAPI_INSTANCE_ID') || '').trim();
-            const INSTANCE_TOKEN = (c.instance_token || Deno.env.get('ZAPI_INSTANCE_TOKEN') || '').trim();
-            const CLIENT_TOKEN = (c.client_token || Deno.env.get('ZAPI_CLIENT_TOKEN') || '').trim();
-            if (INSTANCE_ID && INSTANCE_TOKEN) {
-              await fetch(`https://api.z-api.io/instances/${INSTANCE_ID}/token/${INSTANCE_TOKEN}/send-text`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...(CLIENT_TOKEN ? { 'Client-Token': CLIENT_TOKEN } : {}) },
-                body: JSON.stringify({ phone, message: blockedMsg }),
-              });
-            }
-          } else {
-            const fnName = provider === 'wapi_sucesso' ? 'send-wapi-sucesso' : 'send-wapi';
-            await admin.functions.invoke(fnName, { body: { phone, message: blockedMsg } });
-          }
+          const outboundProvider = isNutriInactive ? 'zapi' : provider;
+          const immediate = await sendImmediateText(outboundProvider as 'zapi' | 'wapi' | 'wapi_sucesso', blockedMsg);
 
           await admin.from('crm_messages').insert({
             conversation_id: convRow!.id,
             direction: 'out',
-            source: provider,
-            status: 'sent',
+            source: outboundProvider,
+            status: immediate.sent ? 'sent' : 'failed',
             body: blockedMsg,
+            external_id: immediate.messageId,
             metadata: {
               type: isNutriInactive ? 'nutri_block_redirect' : 'media_blocked',
               tag: 'media_blocked',
               media_kind: blockedMediaKind,
               identified_as: mediaIdentifiedAs,
+              original_provider: provider,
+              destination_provider: outboundProvider,
+              error: immediate.error || null,
             },
           });
         } catch (e) {
@@ -882,22 +1018,19 @@ Deno.serve(async (req) => {
         });
       }
 
-      // No canal Nutri, se inativo/lead: encerra a conversa (o atendimento
-      // ocorre no Comercial). Evita que a IA do Nutri responda depois.
+      // No canal Nutri, se inativo/lead: abre/garante o chamado no Comercial
+      // e evita que a IA do Nutri responda depois. A mensagem de orientação
+      // sai pelo número Comercial (Z-API), não pelo Nutri.
       if (isNutriInactive && convRow?.id) {
-        await admin.from('crm_conversations').update({
-          status: 'closed',
-          human_handoff: false,
-          assigned_to: null,
-          human_intro_sent: false,
-          ai_paused_until: null,
-          flow_state: null,
-          flow_context: {},
-          inactivity_warned_at: null,
-          last_bot_message_at: null,
-          session_started_at: null,
-          session_expires_at: null,
-        }).eq('id', convRow.id);
+        await ensureCommercialTicket({
+          conversationId: convRow.id,
+          convSnapshot: convRow,
+          identifiedAs: mediaIdentifiedAs,
+          entry: 'media',
+          reason: nutriBlockTemplate?.reason || `nutri_block:${mediaIdentifiedAs}:media`,
+          originalMessage: `[${blockedMediaKind} bloqueado]`,
+          messageSent: !recentBlock,
+        });
       }
 
       return await finish({ ok: true, blocked: true, reason: 'media_not_allowed', media_kind: blockedMediaKind });
@@ -1616,21 +1749,40 @@ Gere a mensagem final agora.`;
         const blockMsg = nutriBlockTpl.message;
 
         const r = silentMode
-          ? { sent: false }
-          : await sendMessage(blockMsg, 'nutri_block_redirect');
+          ? { sent: false, messageId: null, error: null }
+          : await sendImmediateText('zapi', blockMsg);
 
-        await admin.from('crm_conversations').update({
-          status: 'closed',
-          flow_state: null,
-          flow_context: { ...(conv.flow_context || {}), blocked_at: new Date().toISOString(), reason: 'inactive_on_nutri_channel' },
-          session_started_at: null,
-          session_expires_at: null,
-        }).eq('id', conv.id);
+        await admin.from('crm_messages').insert({
+          conversation_id: conv.id,
+          direction: 'out',
+          source: 'zapi',
+          status: r.sent ? 'sent' : 'failed',
+          body: blockMsg,
+          external_id: r.messageId,
+          metadata: {
+            tag: 'nutri_block_redirect',
+            type: 'nutri_block_redirect',
+            identified_as: identifiedAs,
+            original_provider: provider,
+            destination_provider: 'zapi',
+            error: (r as any).error || null,
+          },
+        });
+
+        await ensureCommercialTicket({
+          conversationId: conv.id,
+          convSnapshot: conv,
+          identifiedAs,
+          entry: 'text',
+          reason: nutriBlockTpl.reason,
+          originalMessage: String(body),
+          messageSent: !!r.sent,
+        });
 
         await admin.from('automation_logs').insert({
           contact_phone: phone,
           event_type: 'nutri_block_redirect',
-          queue_type: 'nutri',
+          queue_type: 'comercial',
           action_taken: silentMode ? 'blocked_silent' : 'blocked_and_redirected',
           idempotency_key: blockKey,
           severity: 'info',
@@ -1641,11 +1793,22 @@ Gere a mensagem final agora.`;
             original_message: String(body).slice(0, 500),
             silent: silentMode,
             session_count: conv.session_count || 1,
+            destination_provider: 'zapi',
+            commercial_opened: true,
           },
         });
 
-        autoReply = { sent: r.sent, engine: silentMode ? 'nutri_block_silent' : 'nutri_block_redirect' };
+        autoReply = { sent: r.sent, engine: silentMode ? 'nutri_block_silent' : 'nutri_to_comercial_transfer', transfer: 'nutri->comercial' };
       } else {
+        await ensureCommercialTicket({
+          conversationId: conv.id,
+          convSnapshot: conv,
+          identifiedAs,
+          entry: 'text',
+          reason: `nutri_block:${identifiedAs}:text`,
+          originalMessage: String(body),
+          messageSent: false,
+        });
         autoReply = { sent: false, reason: 'nutri_block_already_sent' };
       }
     } else if (!conv.flow_state) {

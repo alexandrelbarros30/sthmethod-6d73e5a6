@@ -48,8 +48,10 @@ Deno.test("template: lead recebe redirecionamento para o Comercial (texto)", () 
     entry: "text",
   });
   assertStringIncludes(message, "Marcos");
+  assertStringIncludes(message, "Vanessa");
   assertStringIncludes(message, "https://wa.me/5521998496289");
   assertStringIncludes(message, "Comercial");
+  assertStringIncludes(message, "abrindo seu atendimento");
   assertEquals(reason, "nutri_block:lead:text");
 });
 
