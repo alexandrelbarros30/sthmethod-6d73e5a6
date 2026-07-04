@@ -61,6 +61,11 @@ Deno.serve(async (req) => {
     return `Olá${nomeSep}${firstName}.\n\nEstamos encerrando este atendimento por inatividade (mais de 10 minutos sem resposta).\n\n${humanLine}\n\nSe precisar de algo, é só nos chamar novamente por aqui que retomamos assim que possível. Um abraço da equipe STH Method. 🙏`;
   };
 
+  const buildClosureRequest = (firstName: string) => {
+    const sep = firstName ? ' ' : '';
+    return `Olá${sep}${firstName}.\n\nNotamos que você não respondeu à nossa última mensagem. Ainda precisa de ajuda por aqui?\n\nSe não houver resposta nos próximos 5 minutos, vamos encerrar este atendimento — mas fique tranquilo, é só nos chamar de volta a qualquer momento. 🙂`;
+  };
+
   const normalizeWhatsappTarget = (phone: string) => {
     const raw = String(phone || '').trim();
     if (raw.includes('@g.us') || raw.includes('-group')) return raw;
@@ -350,34 +355,59 @@ Deno.serve(async (req) => {
     if (!isHumanOut) continue;
 
     const sinceLast = now - new Date(lastMsg.created_at).getTime();
-    if (sinceLast < TEN_MIN) continue;
 
-    const firstName = await resolveStudentFirstName(c.phone, c.display_name);
-    const farewell = buildFarewell(firstName, c.provider || 'wapi');
+    // Busca estado de aviso separadamente (não estava no SELECT inicial).
+    const { data: convState } = await admin
+      .from('crm_conversations')
+      .select('inactivity_warned_at')
+      .eq('id', c.id)
+      .maybeSingle();
+    const warnedAt = convState?.inactivity_warned_at
+      ? new Date(convState.inactivity_warned_at).getTime()
+      : 0;
 
-    const { ok } = await sendViaCrm(c.phone, farewell, c.id, c.provider || 'wapi');
+    // Etapa 1 — pedido de encerramento após 5 min de silêncio do cliente
+    if (!warnedAt && sinceLast >= FIVE_MIN) {
+      const firstName = await resolveStudentFirstName(c.phone, c.display_name);
+      const msg = buildClosureRequest(firstName);
+      const { ok } = await sendViaCrm(c.phone, msg, c.id, c.provider || 'wapi');
+      if (ok) {
+        await admin.from('crm_conversations').update({
+          inactivity_warned_at: new Date().toISOString(),
+        }).eq('id', c.id);
+        warned++;
+      }
+      continue;
+    }
 
-    await admin.from('crm_conversations').update({
-      status: 'closed',
-      human_handoff: false,
-      assigned_to: null,
-      human_intro_sent: false,
-      ai_paused_until: null,
-      flow_state: null,
-      flow_context: {},
-      inactivity_warned_at: null,
-      last_bot_message_at: null,
-      session_started_at: null,
-      session_expires_at: null,
-    }).eq('id', c.id);
+    // Etapa 2 — encerramento após +5 min sem resposta ao pedido (≥10 min total)
+    if (warnedAt && (now - warnedAt) >= FIVE_MIN) {
+      const firstName = await resolveStudentFirstName(c.phone, c.display_name);
+      const farewell = buildFarewell(firstName, c.provider || 'wapi');
+      const { ok } = await sendViaCrm(c.phone, farewell, c.id, c.provider || 'wapi');
 
-    await admin.from('automation_logs').insert({
-      contact_phone: c.phone,
-      event_type: 'human_handoff_auto_closed',
-      reason: '10 min sem resposta do cliente após última mensagem do atendente',
-      metadata: { conversation_id: c.id, sent: ok },
-    });
-    humanClosed++;
+      await admin.from('crm_conversations').update({
+        status: 'closed',
+        human_handoff: false,
+        assigned_to: null,
+        human_intro_sent: false,
+        ai_paused_until: null,
+        flow_state: null,
+        flow_context: {},
+        inactivity_warned_at: null,
+        last_bot_message_at: null,
+        session_started_at: null,
+        session_expires_at: null,
+      }).eq('id', c.id);
+
+      await admin.from('automation_logs').insert({
+        contact_phone: c.phone,
+        event_type: 'human_handoff_auto_closed',
+        reason: '10 min sem resposta do cliente após pedido de encerramento',
+        metadata: { conversation_id: c.id, sent: ok },
+      });
+      humanClosed++;
+    }
   }
 
   // ===== Catch-all: qualquer conversa aberta parada há >10 min =====
@@ -393,6 +423,31 @@ Deno.serve(async (req) => {
 
   let staleClosed = 0;
   for (const c of staleConvs || []) {
+    const { data: convState } = await admin
+      .from('crm_conversations')
+      .select('inactivity_warned_at')
+      .eq('id', c.id)
+      .maybeSingle();
+    const warnedAt = convState?.inactivity_warned_at
+      ? new Date(convState.inactivity_warned_at).getTime()
+      : 0;
+
+    // Etapa 1 — pedido de encerramento
+    if (!warnedAt) {
+      const firstName = await resolveStudentFirstName(c.phone, c.display_name);
+      const msg = buildClosureRequest(firstName);
+      const { ok } = await sendViaCrm(c.phone, msg, c.id, c.provider || 'wapi');
+      if (ok) {
+        await admin.from('crm_conversations').update({
+          inactivity_warned_at: new Date().toISOString(),
+        }).eq('id', c.id);
+      }
+      continue;
+    }
+
+    // Etapa 2 — encerramento após +5 min do pedido sem resposta
+    if ((now - warnedAt) < FIVE_MIN) continue;
+
     const firstName = await resolveStudentFirstName(c.phone, c.display_name);
     const farewell = buildFarewell(firstName, c.provider || 'wapi');
     const { ok } = await sendViaCrm(c.phone, farewell, c.id, c.provider || 'wapi');
@@ -414,7 +469,7 @@ Deno.serve(async (req) => {
     await admin.from('automation_logs').insert({
       contact_phone: c.phone,
       event_type: 'conversation_stale_auto_closed',
-      reason: 'Conversa aberta parada há mais de 10 minutos (catch-all)',
+      reason: 'Conversa parada, encerrada após pedido de encerramento sem resposta',
       metadata: { conversation_id: c.id, sent: ok, last_message_at: c.last_message_at },
     });
     staleClosed++;
