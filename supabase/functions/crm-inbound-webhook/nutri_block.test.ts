@@ -1,6 +1,6 @@
 import "https://deno.land/std@0.224.0/dotenv/load.ts";
 import { assert, assertEquals, assertStringIncludes } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { buildNutriBlockPayload } from "./index.ts";
+import { buildNutriBlockPayload } from "./nutri-block-template.ts";
 
 const SUPABASE_URL = Deno.env.get("VITE_SUPABASE_URL") || Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("VITE_SUPABASE_PUBLISHABLE_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
