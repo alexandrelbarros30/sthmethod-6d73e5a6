@@ -71,6 +71,16 @@ Deno.serve(async (req) => {
   // Resolve o nome real do aluno pelo telefone (evita usar push name do WhatsApp,
   // ex.: "Inefável💎" no lugar de "Danielle M D S Gil"). Fallback = display_name.
   const resolveStudentFirstName = async (phone: string, fallbackDisplayName?: string | null) => {
+    // Filtra tokens ruins do push name do WhatsApp (ex.: "~~ Marcos", "💎 Nome", "🧚🏻").
+    const pickFirstNameToken = (raw: string): string => {
+      const cleaned = String(raw || '')
+        // remove emojis / símbolos, mantém letras (inclui acentuadas) e espaços
+        .replace(/[^\p{L}\s'-]/gu, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      const tokens = cleaned.split(' ').filter(t => /^\p{L}/u.test(t) && t.length >= 2);
+      return tokens[0] || '';
+    };
     try {
       const digits = String(phone || '').replace(/\D/g, '');
       const normalized = digits.startsWith('55') ? digits.slice(2) : digits;
@@ -83,10 +93,13 @@ Deno.serve(async (req) => {
           .limit(1)
           .maybeSingle();
         const full = String(prof?.full_name || '').trim();
-        if (full) return full.split(/\s+/)[0] || '';
+        if (full) {
+          const t = pickFirstNameToken(full);
+          if (t) return t;
+        }
       }
     } catch (_) { /* ignore */ }
-    return String(fallbackDisplayName || '').split(/\s+/)[0] || '';
+    return pickFirstNameToken(String(fallbackDisplayName || ''));
   };
 
   const sendViaCrm = async (phone: string, body: string, conversation_id: string, provider: string) => {
