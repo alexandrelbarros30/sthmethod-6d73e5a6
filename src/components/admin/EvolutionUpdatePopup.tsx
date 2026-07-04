@@ -87,6 +87,7 @@ const EvolutionUpdatePopup = () => {
         <ScrollArea className="max-h-[60vh]">
           <div className="space-y-2 pr-2">
             {unseen.map((n: any) => {
+              const hasWeight = n.new_weight != null;
               const diff = n.previous_weight && n.new_weight
                 ? (Number(n.new_weight) - Number(n.previous_weight)).toFixed(1)
                 : null;
@@ -95,18 +96,27 @@ const EvolutionUpdatePopup = () => {
               return (
                 <div key={n.id} className="flex items-start justify-between gap-2 p-3 rounded-lg bg-foreground/5 border border-foreground/15">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium">📊 {n.student_name}</p>
+                    <p className="text-sm font-medium">
+                      {n.has_photos && !hasWeight ? "📸" : "📊"} {n.student_name}
+                    </p>
                     <div className="flex gap-1 mt-1 flex-wrap">
-                      <Badge variant="secondary" className="text-[10px]">
-                        ⚖️ {Number(n.new_weight).toFixed(1)} kg
-                      </Badge>
+                      {hasWeight && (
+                        <Badge variant="secondary" className="text-[10px]">
+                          ⚖️ {Number(n.new_weight).toFixed(1)} kg
+                        </Badge>
+                      )}
                       {diffLabel && (
                         <Badge variant="outline" className="text-[10px]">
                           {diffLabel} kg
                         </Badge>
                       )}
                       {n.has_photos && (
-                        <Badge variant="outline" className="text-[10px]">📸 Fotos</Badge>
+                        <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-600">
+                          📸 Novas fotos de evolução
+                        </Badge>
+                      )}
+                      {!hasWeight && !n.has_photos && (
+                        <Badge variant="outline" className="text-[10px]">Atualização recebida</Badge>
                       )}
                     </div>
                     <p className="text-[10px] text-muted-foreground mt-1">
