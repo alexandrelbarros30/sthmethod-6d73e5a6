@@ -1748,13 +1748,19 @@ Gere a mensagem final agora.`;
         .eq('key', 'nutri_block_mode')
         .maybeSingle();
       const silentMode = !!(modeRow?.value as any)?.silent;
-      const blockKey = `nutri_block_redirect_${conv.session_count || 1}`;
+      // Dedup por JANELA DE TEMPO (30 min) em vez de por sessão:
+      // regra do canal Nutri é bloqueio TOTAL para inativos, então cada nova
+      // tentativa após 30 min recebe o redirect novamente. Assim o contato
+      // não fica sem resposta na 2ª/3ª mensagem da mesma sessão.
+      const dedupWindowMs = 30 * 60 * 1000;
+      const dedupSince = new Date(Date.now() - dedupWindowMs).toISOString();
+      const blockKey = `nutri_block_redirect_${conv.session_count || 1}_${Math.floor(Date.now() / dedupWindowMs)}`;
       const { data: existingBlock } = await admin
         .from('automation_logs')
         .select('id')
         .eq('contact_phone', phone)
-        .eq('idempotency_key', blockKey)
         .eq('event_type', 'nutri_block_redirect')
+        .gt('created_at', dedupSince)
         .maybeSingle();
 
       if (!existingBlock) {
