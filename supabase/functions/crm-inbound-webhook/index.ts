@@ -1845,6 +1845,27 @@ Gere a mensagem final agora.`;
           },
         });
 
+        // Bloqueio REAL do contato no WhatsApp da linha "Fale com o Nutri" (W-API).
+        // Impede que futuras mensagens do inativo cheguem até o dispositivo.
+        // Auto-desbloqueio ocorre quando ele voltar a ser aluno ativo.
+        try {
+          await admin.functions.invoke('wapi-contact-block', {
+            body: {
+              phone,
+              action: 'block',
+              reason: nutriBlockTpl.reason,
+              metadata: {
+                identified_as: identifiedAs,
+                entry: 'text',
+                commercial_conversation_id: conv.id,
+                rule: 'nutri_channel_active_only',
+              },
+            },
+          });
+        } catch (e) {
+          console.error('wapi-contact-block block failed', e);
+        }
+
         autoReply = {
           sent: r.sent,
           engine: silentMode ? 'nutri_block_silent' : 'nutri_to_comercial_transfer',
