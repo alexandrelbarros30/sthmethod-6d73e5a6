@@ -1813,10 +1813,21 @@ Gere a mensagem final agora.`;
             session_count: conv.session_count || 1,
             destination_provider: 'zapi',
             commercial_opened: true,
+            rule: 'nutri_channel_active_only',
+            commercial_conversation_id: conv.id,
+            destination_queue: 'comercial',
+            original_provider: provider,
           },
         });
 
-        autoReply = { sent: r.sent, engine: silentMode ? 'nutri_block_silent' : 'nutri_to_comercial_transfer', transfer: 'nutri->comercial' };
+        autoReply = {
+          sent: r.sent,
+          engine: silentMode ? 'nutri_block_silent' : 'nutri_to_comercial_transfer',
+          transfer: 'nutri->comercial',
+          rule: 'nutri_channel_active_only',
+          identified_as: identifiedAs,
+          commercial_conversation_id: conv.id,
+        };
       } else {
         await ensureCommercialTicket({
           conversationId: conv.id,
@@ -1827,7 +1838,14 @@ Gere a mensagem final agora.`;
           originalMessage: String(body),
           messageSent: false,
         });
-        autoReply = { sent: false, reason: 'nutri_block_already_sent' };
+        autoReply = {
+          sent: false,
+          reason: 'nutri_block_already_sent',
+          transfer: 'nutri->comercial',
+          rule: 'nutri_channel_active_only',
+          identified_as: identifiedAs,
+          commercial_conversation_id: conv.id,
+        };
       }
     } else if (!conv.flow_state) {
       if (provider === 'wapi') {
