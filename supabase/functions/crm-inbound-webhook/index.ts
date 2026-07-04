@@ -1117,6 +1117,51 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ===== Auto-unblock do canal Nutri =====
+    // Se o contato voltou a ser aluno ativo (renovou ou fez 1ª adesão),
+    // qualquer bloqueio anterior perde efeito automaticamente — o próximo
+    // nutri_block_redirect só ocorreria se ele ficar inativo de novo.
+    // Aqui apenas registramos o "lifting" em automation_logs para auditoria
+    // e ficamos com o log de reativação claro no histórico.
+    if (provider === 'wapi' && identifiedAs === 'aluno_ativo') {
+      try {
+        const { data: lastBlock } = await admin
+          .from('automation_logs')
+          .select('id, created_at')
+          .eq('contact_phone', phone)
+          .eq('event_type', 'nutri_block_redirect')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (lastBlock?.id) {
+          const { data: existingLift } = await admin
+            .from('automation_logs')
+            .select('id')
+            .eq('contact_phone', phone)
+            .eq('event_type', 'nutri_block_lifted')
+            .gte('created_at', lastBlock.created_at)
+            .limit(1)
+            .maybeSingle();
+          if (!existingLift) {
+            await admin.from('automation_logs').insert({
+              contact_phone: phone,
+              event_type: 'nutri_block_lifted',
+              queue_type: 'nutri',
+              action_taken: 'unblocked',
+              severity: 'info',
+              reason: 'contact_reactivated',
+              metadata: {
+                previous_block_at: lastBlock.created_at,
+                identified_as: identifiedAs,
+              },
+            });
+          }
+        }
+      } catch (e) {
+        console.error('nutri_block_lifted: falha ao registrar', e);
+      }
+    }
+
     const cls = classify(body);
     let finalQueue = cls.queue || (provider === 'zapi' ? 'comercial' : 'nutri');
     if ((identifiedAs !== 'lead' && provider === 'zapi') || forceSucessoQueue) finalQueue = 'sucesso';
