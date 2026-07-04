@@ -518,19 +518,16 @@ export default function AdminCrm({ forcedProvider }: { forcedProvider?: Provider
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-40 p-1.5" side="top" align="start">
-                        <button onClick={() => fileRef.current?.click()}
-                          className="w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded hover:bg-accent">
-                          <ImageIcon className="w-4 h-4 text-emerald-400" /> Imagem
-                        </button>
                         <button onClick={() => docRef.current?.click()}
                           className="w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded hover:bg-accent">
                           <FileText className="w-4 h-4 text-blue-400" /> Documento
                         </button>
+                        <p className="px-2 pt-1 pb-0.5 text-[10px] text-muted-foreground">
+                          Envio de imagens/vídeos bloqueado. Compartilhe pelo sistema.
+                        </p>
                       </PopoverContent>
                     </Popover>
-                    <input ref={fileRef} type="file" accept="image/*" hidden
-                      onChange={(e) => handleAttachImage(e.target.files?.[0] || null)} />
-                    <input ref={docRef} type="file" hidden
+                    <input ref={docRef} type="file" accept="application/pdf" hidden
                       onChange={(e) => handleAttachDoc(e.target.files?.[0] || null)} />
 
                     {/* Templates */}
