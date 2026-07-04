@@ -332,7 +332,7 @@ Deno.serve(async (req) => {
     // Pega a última mensagem (in ou out) da conversa
     const { data: lastMsg } = await admin
       .from('crm_messages')
-      .select('created_at, direction, sent_by')
+      .select('created_at, direction, sent_by, metadata')
       .eq('conversation_id', c.id)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -341,7 +341,13 @@ Deno.serve(async (req) => {
 
     // Só encerra se a ÚLTIMA mensagem foi de um atendente humano (out com sent_by)
     // — se o cliente respondeu por último, o atendente ainda pode voltar.
-    if (lastMsg.direction !== 'out' || !lastMsg.sent_by) continue;
+    // Considera tanto envios pelo painel (sent_by preenchido) quanto respostas
+    // manuais do atendente pelo próprio WhatsApp (metadata.type='manual_human',
+    // inserido pelo crm-inbound-webhook em eventos fromMe/SendCallback).
+    const isHumanOut =
+      lastMsg.direction === 'out' &&
+      (!!lastMsg.sent_by || (lastMsg.metadata as any)?.type === 'manual_human');
+    if (!isHumanOut) continue;
 
     const sinceLast = now - new Date(lastMsg.created_at).getTime();
     if (sinceLast < TEN_MIN) continue;
