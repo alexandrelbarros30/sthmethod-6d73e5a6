@@ -136,3 +136,54 @@ Deno.test("E2E: envios repetidos na mesma sessão continuam retornando 200", asy
   assertEquals(first.status, 200);
   assertEquals(second.status, 200);
 });
+
+// ============================================================
+// 5) E2E — resposta do webhook expõe transferência + regra de bloqueio
+//    (auditoria observável sem depender de leitura direta do banco)
+// ============================================================
+Deno.test("E2E: lead TEXTO recebe autoReply com transfer=nutri->comercial e rule=nutri_channel_active_only", async () => {
+  const phone = "5599999900010";
+  const res = await postWebhook(nutriPayload(phone, {
+    text: { message: "quero informações sobre a consultoria" },
+  }));
+  assertEquals(res.status, 200);
+  const ar = res.json?.autoReply;
+  assert(ar, `esperava autoReply na resposta, veio: ${res.text}`);
+  assertEquals(ar.transfer, "nutri->comercial");
+  assertEquals(ar.rule, "nutri_channel_active_only");
+  assertEquals(ar.identified_as, "lead");
+  assert(
+    ar.engine === "nutri_to_comercial_transfer" || ar.engine === "nutri_block_silent",
+    `engine inesperado: ${ar.engine}`,
+  );
+  assert(typeof ar.commercial_conversation_id === "string" && ar.commercial_conversation_id.length > 0,
+    "esperava commercial_conversation_id preenchido");
+});
+
+Deno.test("E2E: segundo envio na mesma sessão mantém transfer e rule (deduplicado)", async () => {
+  const phone = "5599999900011";
+  await postWebhook(nutriPayload(phone, { text: { message: "primeira" } }));
+  const res = await postWebhook(nutriPayload(phone, { text: { message: "segunda" } }));
+  assertEquals(res.status, 200);
+  const ar = res.json?.autoReply;
+  assert(ar, `esperava autoReply, veio: ${res.text}`);
+  assertEquals(ar.transfer, "nutri->comercial");
+  assertEquals(ar.rule, "nutri_channel_active_only");
+  // Segundo envio deve estar deduplicado (não reenvia mensagem)
+  assertEquals(ar.sent, false);
+  assertEquals(ar.reason, "nutri_block_already_sent");
+});
+
+Deno.test("E2E: lead enviando MÍDIA no Nutri retorna blocked=true e media_not_allowed", async () => {
+  const phone = "5599999900012";
+  const res = await postWebhook(nutriPayload(phone, {
+    image: {
+      mimeType: "image/jpeg",
+      imageUrl: "https://example.com/fake.jpg",
+      caption: "meu exame",
+    },
+  }));
+  assertEquals(res.status, 200);
+  assertEquals(res.json?.blocked, true);
+  assertEquals(res.json?.reason, "media_not_allowed");
+});
