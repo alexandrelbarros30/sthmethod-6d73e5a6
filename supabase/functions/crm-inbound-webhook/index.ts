@@ -1650,7 +1650,23 @@ Deno.serve(async (req) => {
         .gt('last_sent_at', fourHoursAgo)
         .maybeSingle();
 
-      if (!awayLock) {
+      // Nova sessão SEMPRE recebe away novo, mesmo que exista lock de 4h
+      // remanescente (evita silêncio quando o mesmo contato migra de canal
+      // ou reabre a conversa depois de encerramento por inatividade).
+      if (!awayLock || isNewSession) {
+        if (awayLock && isNewSession) {
+          await admin.from('automation_logs').insert({
+            contact_phone: phone,
+            event_type: 'away_lock_bypassed_new_session',
+            reason: 'Nova sessão iniciada: away lock anterior ignorado',
+            metadata: {
+              conversation_id: conv.id,
+              provider,
+              previous_lock_at: awayLock.last_sent_at,
+              session_count: conv.session_count,
+            },
+          });
+        }
         // Se não houver lock ativo, marcamos ou atualizamos o lock ANTES de enviar para evitar race conditions
         const { error: lockErr } = await admin.from('crm_away_locks').upsert({ 
           conversation_id: conv.id, 
