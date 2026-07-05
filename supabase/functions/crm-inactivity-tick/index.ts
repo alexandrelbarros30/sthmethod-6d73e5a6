@@ -374,6 +374,10 @@ Deno.serve(async (req) => {
       if (ok) {
         await admin.from('crm_conversations').update({
           inactivity_warned_at: new Date().toISOString(),
+          // Estende sessão para cobrir a janela do fluxo de encerramento (+15 min).
+          // Evita que o webhook considere a sessão expirada quando o cliente responder
+          // ao pedido de encerramento, disparando um farewell duplicado.
+          session_expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
         }).eq('id', c.id);
         warned++;
       }
@@ -453,6 +457,7 @@ Deno.serve(async (req) => {
       if (ok) {
         await admin.from('crm_conversations').update({
           inactivity_warned_at: new Date().toISOString(),
+          session_expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
         }).eq('id', c.id);
       }
       continue;
