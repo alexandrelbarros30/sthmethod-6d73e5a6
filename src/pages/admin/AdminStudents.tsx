@@ -44,6 +44,7 @@ import AdminFlowStatusDialog from "@/components/admin/AdminFlowStatusDialog";
 import PreviewUnlockToggle from "@/components/admin/PreviewUnlockToggle";
 import StudentProgramAssignDialog from "@/components/admin/StudentProgramAssignDialog";
 import StudentImageConsentCard from "@/components/admin/StudentImageConsentCard";
+import StudentImageAuthSummary from "@/components/admin/StudentImageAuthSummary";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
 import { normalizePhone } from "@/lib/phone";
 import {
