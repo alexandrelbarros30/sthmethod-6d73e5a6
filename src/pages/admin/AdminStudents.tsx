@@ -1577,6 +1577,10 @@ const AdminStudents = () => {
                 </section>
                 {/* Body Images in View */}
                 <section>
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Autorização de Imagem</h3>
+                  <div className="mb-4">
+                    <StudentImageAuthSummary userId={selected.user_id} />
+                  </div>
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Imagens Corporais</h3>
                   {selectedBodyImages && selectedBodyImages.length > 0 ? (
                     <div className="grid grid-cols-3 gap-3">
