@@ -423,6 +423,19 @@ Deno.serve(async (req) => {
 
   let staleClosed = 0;
   for (const c of staleConvs || []) {
+    // Só aplica o catch-all se a conversa tem histórico de resposta do bot/atendente.
+    // Caso contrário, deixa o fluxo principal do webhook responder (away/AI) —
+    // mandar farewell direto numa conversa sem interação gera silêncio total
+    // para o cliente e induz a erro de auditoria.
+    const { data: hadOut } = await admin
+      .from('crm_messages')
+      .select('id')
+      .eq('conversation_id', c.id)
+      .eq('direction', 'out')
+      .limit(1)
+      .maybeSingle();
+    if (!hadOut) continue;
+
     const { data: convState } = await admin
       .from('crm_conversations')
       .select('inactivity_warned_at')
