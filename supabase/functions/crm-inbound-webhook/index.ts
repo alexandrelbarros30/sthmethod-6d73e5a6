@@ -1370,12 +1370,37 @@ Deno.serve(async (req) => {
       conv = ins.data;
     } else {
       if (isExpired && conv.status === 'open' && !isHumanActive) {
-        // Enviar despedida por timeout se estava aberto e não é atendimento humano
-        const fnName = provider === 'wapi_sucesso' ? 'send-wapi-sucesso' : (provider === 'zapi' ? null : 'send-wapi');
-        if (fnName) {
-          await admin.functions.invoke(fnName, { body: { phone, message: farewellMessage } });
+        // Enviar despedida por timeout se estava aberto e não é atendimento humano.
+        // IMPORTANTE: se já existe fluxo de inatividade em curso (inactivity_warned_at
+        // recente) OU o bot enviou mensagem nos últimos 10 min, o encerramento já está
+        // sendo tratado pela crm-inactivity-tick — não duplicar farewell aqui, pois
+        // isso gera mensagens conflitantes (ex.: pedido de encerramento seguido de
+        // "conversa encerrada" no mesmo minuto em que o cliente responde).
+        const RECENT_MS = 10 * 60 * 1000;
+        const nowMs = now.getTime();
+        const warnedRecently = conv.inactivity_warned_at
+          && (nowMs - new Date(conv.inactivity_warned_at).getTime()) < RECENT_MS;
+        const botRecentlySpoke = conv.last_bot_message_at
+          && (nowMs - new Date(conv.last_bot_message_at).getTime()) < RECENT_MS;
+        if (warnedRecently || botRecentlySpoke) {
+          await admin.from('automation_logs').insert({
+            contact_phone: phone,
+            event_type: 'timeout_farewell_suppressed',
+            reason: 'Fluxo de inatividade em curso — evita farewell duplicado',
+            metadata: {
+              conversation_id: conv.id,
+              provider,
+              inactivity_warned_at: conv.inactivity_warned_at,
+              last_bot_message_at: conv.last_bot_message_at,
+            },
+          });
+        } else {
+          const fnName = provider === 'wapi_sucesso' ? 'send-wapi-sucesso' : (provider === 'zapi' ? null : 'send-wapi');
+          if (fnName) {
+            await admin.functions.invoke(fnName, { body: { phone, message: farewellMessage } });
+          }
+          await admin.from('crm_messages').insert({ conversation_id: conv.id, direction: 'out', body: farewellMessage, source: provider, status: 'sent', metadata: { type: 'timeout_farewell' } });
         }
-        await admin.from('crm_messages').insert({ conversation_id: conv.id, direction: 'out', body: farewellMessage, source: provider, status: 'sent', metadata: { type: 'timeout_farewell' } });
       }
 
       const upd: any = { 
