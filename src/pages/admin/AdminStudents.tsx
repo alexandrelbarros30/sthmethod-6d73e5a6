@@ -44,6 +44,7 @@ import AdminFlowStatusDialog from "@/components/admin/AdminFlowStatusDialog";
 import PreviewUnlockToggle from "@/components/admin/PreviewUnlockToggle";
 import StudentProgramAssignDialog from "@/components/admin/StudentProgramAssignDialog";
 import StudentImageConsentCard from "@/components/admin/StudentImageConsentCard";
+import StudentImageAuthSummary from "@/components/admin/StudentImageAuthSummary";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
 import { normalizePhone } from "@/lib/phone";
 import {
@@ -1577,6 +1578,10 @@ const AdminStudents = () => {
                 </section>
                 {/* Body Images in View */}
                 <section>
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Autorização de Imagem</h3>
+                  <div className="mb-4">
+                    <StudentImageAuthSummary userId={selected.user_id} />
+                  </div>
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Imagens Corporais</h3>
                   {selectedBodyImages && selectedBodyImages.length > 0 ? (
                     <div className="grid grid-cols-3 gap-3">
