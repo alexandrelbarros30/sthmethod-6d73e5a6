@@ -236,6 +236,8 @@ const WelcomeTour = () => {
 
         {/* Botão Fechar sempre visível e acima de tudo */}
         <button
+          type="button"
+          onPointerDown={close}
           onClick={close}
           className="absolute z-[10000] top-4 right-4 h-10 px-4 rounded-full flex items-center gap-1.5 bg-white text-black text-[12px] font-semibold shadow-lg active:scale-95 transition"
           style={{ top: `calc(1rem + env(safe-area-inset-top, 0px))` }}
@@ -317,6 +319,8 @@ const WelcomeTour = () => {
 
             <div className="mt-6 flex items-center justify-between gap-3">
               <button
+                type="button"
+                onPointerDown={close}
                 onClick={close}
                 className="text-[12px] font-medium text-white/55 hover:text-white/80 tracking-tight transition"
               >
