@@ -85,7 +85,7 @@ const Spotlight = ({ dockIndex }: { dockIndex: number | null }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-black/82 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/82 backdrop-blur-[2px] pointer-events-none"
       />
       {/* Spotlight ring sobre o dock */}
       {cx !== null && (
