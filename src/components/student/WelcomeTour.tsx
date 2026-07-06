@@ -194,22 +194,24 @@ const WelcomeTour = () => {
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[9999] overflow-hidden"
       >
-        {/* Backdrop click also closes the tour, para não travar o aluno */}
-        <div className="absolute inset-0" onClick={close} aria-hidden />
         <Spotlight dockIndex={step.dockIndex} />
 
-        {/* Skip */}
+        {/* Botão Fechar sempre visível e acima de tudo */}
         <button
           onClick={close}
-          className="absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center bg-white/8 backdrop-blur border border-white/15 text-white/80 hover:text-white active:scale-95 transition"
+          className="absolute z-[10000] top-4 right-4 h-10 px-4 rounded-full flex items-center gap-1.5 bg-white text-black text-[12px] font-semibold shadow-lg active:scale-95 transition"
           style={{ top: `calc(1rem + env(safe-area-inset-top, 0px))` }}
-          aria-label="Pular tour"
+          aria-label="Fechar tour"
         >
-          <X className="w-4 h-4" strokeWidth={2} />
+          <X className="w-4 h-4" strokeWidth={2.4} />
+          Fechar tour
         </button>
 
-        {/* Card central — rolável para nunca esconder os botões em telas baixas */}
-        <div className="absolute inset-0 flex items-center justify-center px-5 py-6 overflow-y-auto">
+        {/* Card central — clicando fora fecha; scroll interno para telas baixas */}
+        <div
+          className="absolute inset-0 flex items-center justify-center px-5 py-6 overflow-y-auto"
+          onClick={close}
+        >
           <motion.div
             key={i}
             initial={{ y: 24, opacity: 0, scale: 0.96 }}
