@@ -138,12 +138,29 @@ const WelcomeTour = () => {
   useEffect(() => {
     try {
       const done = localStorage.getItem(STORAGE_KEY);
-      if (!done) {
-        // Pequeno delay para o dock terminar de animar
-        const t = setTimeout(() => setOpen(true), 700);
-        return () => clearTimeout(t);
-      }
+      if (done) return;
     } catch {}
+
+    // Não abrir o tour enquanto houver qualquer diálogo modal aberto
+    // (ex.: aceite obrigatório de contrato). Reavaliamos a cada 800ms
+    // até que a tela esteja livre.
+    let cancelled = false;
+    const tryOpen = () => {
+      if (cancelled) return;
+      const blocker = document.querySelector(
+        '[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]'
+      );
+      if (blocker) {
+        setTimeout(tryOpen, 800);
+        return;
+      }
+      setOpen(true);
+    };
+    const t = setTimeout(tryOpen, 700);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
   }, []);
 
   // Listener global para reabrir o tour de qualquer lugar
