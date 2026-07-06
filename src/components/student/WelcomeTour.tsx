@@ -175,7 +175,7 @@ const WelcomeTour = () => {
 
   useEffect(() => {
     if (isSuppressedStudent) return;
-    if (user?.id && !profile?.full_name) return;
+    if (!profile?.full_name) return;
 
     try {
       const done = localStorage.getItem(STORAGE_KEY);
