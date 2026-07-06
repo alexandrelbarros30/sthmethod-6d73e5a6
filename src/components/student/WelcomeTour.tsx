@@ -177,6 +177,8 @@ const WelcomeTour = () => {
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[9999] overflow-hidden"
       >
+        {/* Backdrop click also closes the tour, para não travar o aluno */}
+        <div className="absolute inset-0" onClick={close} aria-hidden />
         <Spotlight dockIndex={step.dockIndex} />
 
         {/* Skip */}
@@ -189,15 +191,16 @@ const WelcomeTour = () => {
           <X className="w-4 h-4" strokeWidth={2} />
         </button>
 
-        {/* Card central */}
-        <div className="absolute inset-0 flex items-center justify-center px-5">
+        {/* Card central — rolável para nunca esconder os botões em telas baixas */}
+        <div className="absolute inset-0 flex items-center justify-center px-5 py-6 overflow-y-auto">
           <motion.div
             key={i}
             initial={{ y: 24, opacity: 0, scale: 0.96 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: -16, opacity: 0 }}
             transition={{ type: "spring", stiffness: 320, damping: 26 }}
-            className="relative w-full max-w-sm rounded-3xl border border-white/12 bg-white/[0.04] backdrop-blur-2xl p-6 sm:p-7 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-sm rounded-3xl border border-white/12 bg-white/[0.04] backdrop-blur-2xl p-6 sm:p-7 shadow-2xl my-auto max-h-[90vh] overflow-y-auto"
             style={{ boxShadow: "0 30px 80px -20px rgba(20,183,128,0.35), inset 0 1px 0 rgba(255,255,255,0.06)" }}
           >
             {/* Stepper */}
