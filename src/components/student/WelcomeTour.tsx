@@ -152,7 +152,7 @@ const Spotlight = ({ dockIndex }: { dockIndex: number | null }) => {
 };
 
 const WelcomeTour = () => {
-  const { profile, user } = useAuth();
+  const { profile } = useAuth();
   const [open, setOpen] = useState(false);
   const [i, setI] = useState(0);
   const isSuppressedStudent = useMemo(
