@@ -1,9 +1,29 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ChevronRight, X, PartyPopper } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const STORAGE_KEY = "sth_welcome_tour_v2_done";
+const SUPPRESSED_STUDENT_NAMES = [
+  "lindemberg bernardo",
+  "lindemberg bernardino",
+  "lilndembrg bernardo",
+  "lindembrg bernardo",
+];
+
+const normalizeName = (value?: string | null) =>
+  (value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+
+const isTourSuppressedStudent = (fullName?: string | null) => {
+  const normalized = normalizeName(fullName);
+  return SUPPRESSED_STUDENT_NAMES.some((name) => normalized.includes(name));
+};
 
 type Step = {
   emoji: string;
@@ -132,10 +152,31 @@ const Spotlight = ({ dockIndex }: { dockIndex: number | null }) => {
 };
 
 const WelcomeTour = () => {
+  const { profile } = useAuth();
   const [open, setOpen] = useState(false);
   const [i, setI] = useState(0);
+  const isSuppressedStudent = useMemo(
+    () => isTourSuppressedStudent(profile?.full_name),
+    [profile?.full_name]
+  );
+
+  const close = () => {
+    try {
+      localStorage.setItem(STORAGE_KEY, new Date().toISOString());
+    } catch {}
+    setOpen(false);
+  };
 
   useEffect(() => {
+    if (!isSuppressedStudent) return;
+    close();
+    setI(0);
+  }, [isSuppressedStudent]);
+
+  useEffect(() => {
+    if (isSuppressedStudent) return;
+    if (!profile?.full_name) return;
+
     try {
       const done = localStorage.getItem(STORAGE_KEY);
       if (done) return;
@@ -161,24 +202,21 @@ const WelcomeTour = () => {
       cancelled = true;
       clearTimeout(t);
     };
-  }, []);
+  }, [isSuppressedStudent, profile?.full_name]);
 
   // Listener global para reabrir o tour de qualquer lugar
   useEffect(() => {
     const handler = () => {
+      if (isSuppressedStudent) {
+        close();
+        return;
+      }
       setI(0);
       setOpen(true);
     };
     window.addEventListener("sth:open-welcome-tour", handler);
     return () => window.removeEventListener("sth:open-welcome-tour", handler);
-  }, []);
-
-  const close = () => {
-    try {
-      localStorage.setItem(STORAGE_KEY, new Date().toISOString());
-    } catch {}
-    setOpen(false);
-  };
+  }, [isSuppressedStudent]);
 
   if (!open) return null;
   const step = STEPS[i];
@@ -198,6 +236,8 @@ const WelcomeTour = () => {
 
         {/* Botão Fechar sempre visível e acima de tudo */}
         <button
+          type="button"
+          onPointerDown={close}
           onClick={close}
           className="absolute z-[10000] top-4 right-4 h-10 px-4 rounded-full flex items-center gap-1.5 bg-white text-black text-[12px] font-semibold shadow-lg active:scale-95 transition"
           style={{ top: `calc(1rem + env(safe-area-inset-top, 0px))` }}
@@ -279,6 +319,8 @@ const WelcomeTour = () => {
 
             <div className="mt-6 flex items-center justify-between gap-3">
               <button
+                type="button"
+                onPointerDown={close}
                 onClick={close}
                 className="text-[12px] font-medium text-white/55 hover:text-white/80 tracking-tight transition"
               >
