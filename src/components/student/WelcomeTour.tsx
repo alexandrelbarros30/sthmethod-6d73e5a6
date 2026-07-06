@@ -202,7 +202,7 @@ const WelcomeTour = () => {
       cancelled = true;
       clearTimeout(t);
     };
-  }, [isSuppressedStudent, profile?.full_name, user?.id]);
+  }, [isSuppressedStudent, profile?.full_name]);
 
   // Listener global para reabrir o tour de qualquer lugar
   useEffect(() => {
