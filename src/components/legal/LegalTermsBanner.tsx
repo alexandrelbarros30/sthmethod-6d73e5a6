@@ -51,6 +51,15 @@ const LegalTermsBanner = () => {
       setUserId(uid);
       setEmail(u?.user?.email ?? null);
 
+      // Se o usuário autenticado for staff (admin/consultor/etc.), NÃO exibe o aceite.
+      // Isso cobre o caso do admin usando "preview como aluno" para ver dieta/protocolo.
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", uid);
+      const staffRoles = new Set(["admin", "admin_viewer", "consultor", "assistente", "financeiro"]);
+      if ((roles || []).some((r: any) => staffRoles.has(r.role))) return;
+
       // Verifica se já existe aceite da versão vigente do TERMO
       const { data: accepted } = await supabase
         .from("legal_acceptances")
