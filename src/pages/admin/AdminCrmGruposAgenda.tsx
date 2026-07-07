@@ -13,6 +13,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { RefreshCw, Check } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ShieldAlert } from "lucide-react";
+import { Eye, Megaphone } from "lucide-react";
+
+const ONESHOT_DEFAULT_MESSAGE = `🔬 Requisição de Exames Laboratoriais
+
+O acompanhamento por exames é uma etapa fundamental para quem utiliza protocolos personalizados, permitindo decisões mais seguras e precisas.
+
+A requisição de exames auxilia em:
+• Controle de danos e segurança biológica;
+• Calibração e ajuste do protocolo, conforme sua evolução;
+• Monitoramento da resposta aos peptídeos e demais estratégias terapêuticas;
+• Planejamento de TPC (Terapia Pós Ciclo) ou Cruises, quando aplicável.
+
+💳 Valor promocional: R$ 120,00
+• Pagamento via Pix ou em até 2x sem juros.
+
+📲 Para solicitar sua requisição de exames, entre em contato pelo WhatsApp (21) 99144-6811.`;
+
+const ONESHOT_DEFAULT_IMAGE = "https://api.freelovable.com.br/storage/v1/object/public/anexos/577e938d-582a-4522-9e6c-ec4509b052b6.png";
 
 interface Row {
   id: string;
@@ -45,6 +63,69 @@ export default function AdminCrmGruposAgenda() {
   const [search, setSearch] = useState("");
   const [killSwitch, setKillSwitch] = useState<boolean>(true);
   const [killBusy, setKillBusy] = useState(false);
+
+  // Envio único (ad-hoc) para todos os grupos
+  const [oneshotOpen, setOneshotOpen] = useState(false);
+  const [oneshotMessage, setOneshotMessage] = useState<string>(ONESHOT_DEFAULT_MESSAGE);
+  const [oneshotImage, setOneshotImage] = useState<string>(ONESHOT_DEFAULT_IMAGE);
+  const [oneshotTextFirst, setOneshotTextFirst] = useState<boolean>(false);
+  const [oneshotGroups, setOneshotGroups] = useState<ZapiGroup[]>([]);
+  const [oneshotSelected, setOneshotSelected] = useState<Set<string>>(new Set());
+  const [oneshotLoading, setOneshotLoading] = useState(false);
+  const [oneshotSending, setOneshotSending] = useState(false);
+  const [oneshotPreview, setOneshotPreview] = useState(false);
+  const [oneshotResult, setOneshotResult] = useState<any>(null);
+
+  async function openOneshot() {
+    setOneshotOpen(true);
+    setOneshotResult(null);
+    if (oneshotGroups.length === 0) {
+      setOneshotLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("crm-zapi-list-groups");
+        if (error) throw error;
+        if (!data?.ok) throw new Error(data?.error || "Falha ao listar grupos");
+        const gs: ZapiGroup[] = data.groups || [];
+        setOneshotGroups(gs);
+        setOneshotSelected(new Set(gs.map((g) => g.id)));
+      } catch (e: any) {
+        toast({ title: "Erro ao listar grupos", description: e?.message || String(e) });
+      } finally { setOneshotLoading(false); }
+    }
+  }
+
+  function toggleOneshotGroup(id: string) {
+    setOneshotSelected((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  }
+
+  async function dispatchOneshot() {
+    const ids = Array.from(oneshotSelected);
+    if (ids.length === 0) { toast({ title: "Selecione ao menos 1 grupo" }); return; }
+    if (!confirm(`Confirmar disparo para ${ids.length} grupo(s)? Esta ação é imediata e não pode ser desfeita.`)) return;
+    setOneshotSending(true);
+    setOneshotResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("crm-group-broadcast-oneshot", {
+        body: {
+          message: oneshotMessage,
+          image_url: oneshotImage || undefined,
+          group_ids: ids,
+          text_first: oneshotTextFirst,
+        },
+      });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || "Falha no disparo");
+      setOneshotResult(data);
+      const totalOk = (data.results || []).filter((r: any) => (r.steps || []).every((s: any) => s.ok !== false)).length;
+      toast({ title: "Disparo enviado", description: `${totalOk}/${data.total} grupos concluídos.` });
+    } catch (e: any) {
+      toast({ title: "Erro no disparo", description: e?.message || String(e) });
+    } finally { setOneshotSending(false); }
+  }
 
   async function fetchGroups(force = false) {
     if (!force && groupsCache) return;
@@ -174,6 +255,21 @@ export default function AdminCrmGruposAgenda() {
             <span className="text-[11px] text-muted-foreground">{killSwitch ? "Ligado" : "Parado"}</span>
             <Switch checked={killSwitch} disabled={killBusy} onCheckedChange={toggleKillSwitch} />
           </div>
+        </div>
+      </Card>
+
+      <Card className="p-4 mb-4 bg-primary/5 border-primary/40">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            <Megaphone className="w-5 h-5 text-primary" />
+            <div>
+              <p className="font-semibold text-sm">Envio único em massa</p>
+              <p className="text-[11px] text-muted-foreground">Compose uma mensagem (com imagem opcional) e dispare AGORA para todos os grupos cadastrados. Preview obrigatório antes do envio.</p>
+            </div>
+          </div>
+          <Button size="sm" onClick={openOneshot}>
+            <Megaphone className="w-3.5 h-3.5 mr-1" /> Abrir envio único
+          </Button>
         </div>
       </Card>
 
@@ -392,6 +488,106 @@ export default function AdminCrmGruposAgenda() {
               })}
           </div>
           <p className="text-[10px] text-muted-foreground">Não esqueça de clicar em <b>Salvar alterações</b> depois de escolher.</p>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={oneshotOpen} onOpenChange={(v) => { if (!oneshotSending) setOneshotOpen(v); }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Megaphone className="w-4 h-4" /> Envio único em massa — Grupos WhatsApp
+            </DialogTitle>
+          </DialogHeader>
+
+          {!oneshotPreview ? (
+            <div className="space-y-4">
+              <div>
+                <label className="text-[11px] uppercase tracking-wide text-muted-foreground">Mensagem</label>
+                <Textarea rows={14} value={oneshotMessage} onChange={(e) => setOneshotMessage(e.target.value)} className="text-sm mt-1" />
+              </div>
+              <div>
+                <label className="text-[11px] uppercase tracking-wide text-muted-foreground">URL da imagem (opcional)</label>
+                <Input value={oneshotImage} onChange={(e) => setOneshotImage(e.target.value)} placeholder="https://…" className="mt-1 text-xs" />
+                {oneshotImage && (
+                  <img src={oneshotImage} alt="Prévia" className="mt-2 max-h-48 rounded border border-border object-contain bg-muted/30" />
+                )}
+              </div>
+              <label className="flex items-center gap-2 text-xs">
+                <Switch checked={oneshotTextFirst} onCheckedChange={setOneshotTextFirst} />
+                Enviar texto sozinho primeiro e depois a imagem (sem legenda). Desmarcado: imagem já vai com a legenda.
+              </label>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[11px] uppercase tracking-wide text-muted-foreground flex items-center gap-1">
+                    <Users className="w-3 h-3" /> Grupos ({oneshotSelected.size}/{oneshotGroups.length})
+                  </label>
+                  <div className="flex gap-1">
+                    <Button size="sm" variant="ghost" onClick={() => setOneshotSelected(new Set(oneshotGroups.map((g) => g.id)))}>Todos</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setOneshotSelected(new Set())}>Nenhum</Button>
+                    <Button size="sm" variant="ghost" onClick={openOneshot} disabled={oneshotLoading}>
+                      {oneshotLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                    </Button>
+                  </div>
+                </div>
+                <div className="max-h-64 overflow-y-auto space-y-1 border border-border rounded p-2">
+                  {oneshotLoading && <div className="text-center text-xs text-muted-foreground py-4"><Loader2 className="w-4 h-4 animate-spin mx-auto mb-1" />Carregando grupos…</div>}
+                  {!oneshotLoading && oneshotGroups.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Nenhum grupo encontrado.</p>}
+                  {oneshotGroups.map((g) => (
+                    <label key={g.id} className="flex items-center gap-2 text-xs px-2 py-1 hover:bg-muted/40 rounded cursor-pointer">
+                      <input type="checkbox" checked={oneshotSelected.has(g.id)} onChange={() => toggleOneshotGroup(g.id)} />
+                      <span className="flex-1 truncate">{g.name}</span>
+                      <code className="text-[10px] text-muted-foreground truncate max-w-[140px]">{g.id}</code>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-border/50">
+                <Button variant="ghost" onClick={() => setOneshotOpen(false)}>Cancelar</Button>
+                <Button onClick={() => setOneshotPreview(true)} disabled={oneshotSelected.size === 0 || (!oneshotMessage.trim() && !oneshotImage)}>
+                  <Eye className="w-3.5 h-3.5 mr-1" /> Visualizar antes de enviar
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-xs text-muted-foreground">
+                Prévia de como a mensagem chegará no WhatsApp. Confira antes de disparar para <strong>{oneshotSelected.size}</strong> grupo(s).
+              </p>
+              <div className="rounded-lg p-4" style={{ background: "#0b141a" }}>
+                <div className="max-w-sm mx-auto rounded-lg overflow-hidden shadow-xl" style={{ background: "#005c4b" }}>
+                  {oneshotImage && (
+                    <img src={oneshotImage} alt="" className="w-full max-h-80 object-cover" />
+                  )}
+                  {oneshotMessage && (
+                    <div className="px-3 py-2 text-white text-[13px] whitespace-pre-wrap font-sans leading-snug">
+                      {oneshotMessage}
+                    </div>
+                  )}
+                  <div className="px-3 pb-2 text-[10px] text-white/60 text-right">agora ✓✓</div>
+                </div>
+                {oneshotImage && oneshotTextFirst && (
+                  <p className="text-center text-[10px] text-white/60 mt-2">A imagem chegará em uma segunda mensagem, sem legenda.</p>
+                )}
+              </div>
+
+              {oneshotResult && (
+                <div className="rounded border border-border p-3 max-h-48 overflow-y-auto">
+                  <p className="text-xs font-semibold mb-1">Resultado do disparo</p>
+                  <pre className="text-[10px] whitespace-pre-wrap">{JSON.stringify(oneshotResult, null, 2)}</pre>
+                </div>
+              )}
+
+              <div className="flex justify-between gap-2 pt-2 border-t border-border/50">
+                <Button variant="ghost" onClick={() => setOneshotPreview(false)} disabled={oneshotSending}>← Voltar e editar</Button>
+                <Button onClick={dispatchOneshot} disabled={oneshotSending}>
+                  {oneshotSending ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Send className="w-3.5 h-3.5 mr-1" />}
+                  Confirmar e enviar agora ({oneshotSelected.size})
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </DashboardLayout>
