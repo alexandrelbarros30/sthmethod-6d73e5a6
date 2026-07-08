@@ -157,6 +157,48 @@ const EvolutionComparison = ({ userId }: Props) => {
     enabled: !!userId,
   });
 
+  // Fotos "Antes/Depois" vêm SEMPRE da galeria real de fotos corporais,
+  // agrupadas por sessão de upload (janela de 10 min). A última sessão é
+  // "Depois" (atual) e a penúltima é "Antes" (envio anterior).
+  const { data: gallerySessions = [] } = useQuery({
+    queryKey: ["evolution-photo-sessions", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("body_images")
+        .select("type, image_url, storage_path, uploaded_at")
+        .eq("user_id", userId)
+        .order("uploaded_at", { ascending: false });
+      if (error) throw error;
+      const SESSION_WINDOW_MS = 10 * 60 * 1000;
+      const sessions: { anchor: number; images: any[] }[] = [];
+      for (const img of data || []) {
+        const t = new Date(img.uploaded_at).getTime();
+        const last = sessions[sessions.length - 1];
+        if (!last || Math.abs(last.anchor - t) > SESSION_WINDOW_MS) {
+          sessions.push({ anchor: t, images: [img] });
+        } else {
+          last.images.push(img);
+        }
+      }
+      return sessions.map((s) => {
+        const pick = (type: string) => {
+          const i = s.images.find((x: any) => x.type === type);
+          return i?.storage_path || i?.image_url || null;
+        };
+        return {
+          uploaded_at: new Date(s.anchor).toISOString(),
+          front: pick("front"),
+          back: pick("back"),
+          profile: pick("profile"),
+        };
+      });
+    },
+  });
+
+  const latestSession = gallerySessions[0] ?? null;
+  const previousSession = gallerySessions[1] ?? null;
+
   const [beforeId, setBeforeId] = useState<string | null>(null);
   const [afterId, setAfterId] = useState<string | null>(null);
 
@@ -332,24 +374,32 @@ const EvolutionComparison = ({ userId }: Props) => {
           <Card>
             <CardContent className="p-3 space-y-2">
               <p className="text-xs font-display uppercase tracking-wide text-muted-foreground">Fotos Corporais</p>
+              <p className="text-[10px] text-muted-foreground">Antes = envio anterior · Depois = último envio da galeria.</p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <p className="text-[10px] text-center text-muted-foreground">Antes</p>
+                  <p className="text-[10px] text-center text-muted-foreground">
+                    Antes {previousSession ? `· ${format(new Date(previousSession.uploaded_at), "dd/MM/yyyy", { locale: ptBR })}` : ""}
+                  </p>
                   <div className="grid grid-cols-3 gap-1">
-                    <PhotoCell url={before.body_image_front_url} label="Frente" />
-                    <PhotoCell url={before.body_image_back_url} label="Costas" />
-                    <PhotoCell url={before.body_image_profile_url} label="Perfil" />
+                    <PhotoCell url={previousSession?.front ?? null} label="Frente" />
+                    <PhotoCell url={previousSession?.back ?? null} label="Costas" />
+                    <PhotoCell url={previousSession?.profile ?? null} label="Perfil" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-[10px] text-center text-muted-foreground">Depois</p>
+                  <p className="text-[10px] text-center text-muted-foreground">
+                    Depois {latestSession ? `· ${format(new Date(latestSession.uploaded_at), "dd/MM/yyyy", { locale: ptBR })}` : ""}
+                  </p>
                   <div className="grid grid-cols-3 gap-1">
-                    <PhotoCell url={after.body_image_front_url} label="Frente" />
-                    <PhotoCell url={after.body_image_back_url} label="Costas" />
-                    <PhotoCell url={after.body_image_profile_url} label="Perfil" />
+                    <PhotoCell url={latestSession?.front ?? null} label="Frente" />
+                    <PhotoCell url={latestSession?.back ?? null} label="Costas" />
+                    <PhotoCell url={latestSession?.profile ?? null} label="Perfil" />
                   </div>
                 </div>
               </div>
+              {!previousSession && latestSession && (
+                <p className="text-[10px] text-muted-foreground text-center">Apenas um envio de fotos registrado até agora.</p>
+              )}
             </CardContent>
           </Card>
         </div>
