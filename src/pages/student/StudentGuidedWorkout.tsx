@@ -22,6 +22,16 @@ const getVideoSource = (url: string): { kind: "embed" | "file" | "image"; url: s
   return { kind: "file", url };
 };
 
+const isImageUrl = (url?: string | null) =>
+  !!url && /\.(gif|png|jpe?g|webp|avif)(\?.*)?$/i.test(url);
+
+const pickBestMediaUrl = (...candidates: (string | null | undefined)[]): string => {
+  const list = candidates.filter((u): u is string => !!u && u.trim().length > 0);
+  // Prefer any non-image (real video / YouTube / Vimeo / mp4) over images (GIFs).
+  const nonImage = list.find((u) => !isImageUrl(u));
+  return nonImage || list[0] || "";
+};
+
 type View =
   | { kind: "programs" }
   | { kind: "program"; programId: string | "_solo" }
