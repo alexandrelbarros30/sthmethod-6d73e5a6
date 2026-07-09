@@ -1792,14 +1792,29 @@ const AdminStudents = () => {
                   />
                 )}
 
+                {/* Shortcut: jump to Evolution Generator */}
+                {allBodyImages && allBodyImages.length > 0 && (
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      document.getElementById("evolution-generator-anchor")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
+                  >
+                    <Sparkles className="w-4 h-4 mr-1" /> Gerar Evolução
+                  </Button>
+                )}
+
                 {/* Evolution Generator */}
                 {allBodyImages && allBodyImages.length > 0 && (
-                  <EvolutionGenerator
-                    allImages={allBodyImages}
-                    studentName={selected.full_name}
-                    userId={selected.user_id}
-                    phone={(selected as any).phone}
-                  />
+                  <div id="evolution-generator-anchor">
+                    <EvolutionGenerator
+                      allImages={allBodyImages}
+                      studentName={selected.full_name}
+                      userId={selected.user_id}
+                      phone={(selected as any).phone}
+                    />
+                  </div>
                 )}
                 {selected.user_id && (
                   <EvolutionArtsGallery userId={selected.user_id} studentName={selected.full_name} />
