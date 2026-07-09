@@ -18,7 +18,7 @@ import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } 
 import { CSS } from "@dnd-kit/utilities";
 import SortableExerciseRow, { ExerciseRow } from "@/components/admin/SortableExerciseRow";
 import LibraryMultiSelectDialog from "@/components/admin/LibraryMultiSelectDialog";
-import ExerciseMediaPreview from "@/components/admin/ExerciseMediaPreview";
+import ExerciseMediaPreview, { getExerciseMediaSource } from "@/components/admin/ExerciseMediaPreview";
 
 const GROUP_COLOR_PRESETS = [
   { name: "Biset", color: "#f59e0b" },
@@ -124,16 +124,10 @@ const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onTog
             <div className="mt-3 border-t pt-3 space-y-2">
               {exs.map((ex: any, i: number) => {
                 const lib = (libraryExercises || []).find((item: any) => item.id === ex.exercise_id);
+                const media = getExerciseMediaSource({ videoUrl: ex.video_url || lib?.video_url, imageUrl: lib?.image_url });
                 return (
-                  <div key={ex.id} className="flex items-start gap-2 text-sm">
+                  <div key={ex.id} className="grid gap-3 rounded-lg border border-border/60 bg-background/60 p-3 text-sm sm:grid-cols-[auto_minmax(0,1fr)_minmax(220px,320px)]">
                     <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold shrink-0 mt-0.5">{i + 1}</span>
-                    <ExerciseMediaPreview
-                      videoUrl={ex.video_url || lib?.video_url}
-                      imageUrl={lib?.image_url}
-                      alt={ex.custom_name || lib?.name || "Exercício"}
-                      className="w-14 h-14 shrink-0"
-                      showBadge
-                    />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="font-semibold text-foreground truncate">{ex.custom_name || lib?.name || "Sem nome"}</span>
@@ -146,6 +140,16 @@ const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onTog
                         <div className="text-[11px] text-muted-foreground/60 mt-0.5">Int: {ex.rest_interval}</div>
                       )}
                     </div>
+                    {media && (
+                      <ExerciseMediaPreview
+                        videoUrl={ex.video_url || lib?.video_url}
+                        imageUrl={lib?.image_url}
+                        alt={ex.custom_name || lib?.name || "Exercício"}
+                        mode="player"
+                        className="w-full aspect-video"
+                        showBadge
+                      />
+                    )}
                   </div>
                 );
               })}
