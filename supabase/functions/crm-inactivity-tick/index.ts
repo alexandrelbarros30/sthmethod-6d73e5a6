@@ -189,54 +189,8 @@ Deno.serve(async (req) => {
   const mode = String(requestBody?.mode || 'tick');
 
   if (mode === 'resend_failed_closures') {
-    const sinceHours = Math.min(Math.max(Number(requestBody?.since_hours || 12), 1), 48);
-    const sinceIso = new Date(Date.now() - sinceHours * 60 * 60 * 1000).toISOString();
-    const closureEvents = ['conversation_auto_closed', 'human_handoff_auto_closed', 'conversation_stale_auto_closed'];
-
-    const [{ data: failedLogs }, { data: resentLogs }] = await Promise.all([
-      admin.from('automation_logs')
-        .select('metadata, created_at')
-        .in('event_type', closureEvents)
-        .gte('created_at', sinceIso)
-        .order('created_at', { ascending: false })
-        .limit(500),
-      admin.from('automation_logs')
-        .select('metadata')
-        .eq('event_type', 'conversation_closure_message_resent')
-        .gte('created_at', sinceIso)
-        .limit(500),
-    ]);
-
-    const alreadyResent = new Set((resentLogs || [])
-      .map((l: any) => l.metadata?.conversation_id)
-      .filter(Boolean));
-    const ids = Array.from(new Set((failedLogs || [])
-      .filter((l: any) => l.metadata?.sent === false || l.metadata?.sent === 'false')
-      .map((l: any) => l.metadata?.conversation_id)
-      .filter((id: string) => id && !alreadyResent.has(id))));
-
-    const { data: conversations } = ids.length ? await admin
-      .from('crm_conversations')
-      .select('id, phone, display_name, provider, last_message_at')
-      .in('id', ids)
-      .limit(500) : { data: [] } as any;
-
-    let resent = 0;
-    let failed = 0;
-    for (const c of conversations || []) {
-      const firstName = await resolveStudentFirstName(c.phone, c.display_name);
-      const farewell = buildFarewell(firstName, c.provider || 'wapi');
-      const { ok, error } = await sendViaCrm(c.phone, farewell, c.id, c.provider || 'wapi');
-      await admin.from('automation_logs').insert({
-        contact_phone: c.phone,
-        event_type: 'conversation_closure_message_resent',
-        reason: 'Reenvio de mensagem de encerramento que havia falhado',
-        metadata: { conversation_id: c.id, sent: ok, error: error || null, last_message_at: c.last_message_at },
-      });
-      if (ok) resent++; else failed++;
-    }
-
-    return new Response(JSON.stringify({ ok: true, checkedFailedClosures: ids.length, resent, failed }), {
+    // Encerramentos são silenciosos — não há mensagem para reenviar.
+    return new Response(JSON.stringify({ ok: true, disabled: true, reason: 'Encerramentos silenciosos ativos' }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -280,48 +234,29 @@ Deno.serve(async (req) => {
     const firstName = String(c.display_name || '').split(' ')[0] || '';
     const nomeSep = firstName ? ' ' : '';
 
-    if (!c.inactivity_warned_at && sinceBot >= FIVE_MIN) {
-      const resolvedName = await resolveStudentFirstName(c.phone, c.display_name);
-      const nomeFinal = resolvedName || firstName;
-      const sep = nomeFinal ? ' ' : '';
-      const msg = `Olá${sep}${nomeFinal}.\n\nPercebi que você não respondeu à nossa última mensagem.\n\nSe ainda precisar de ajuda, basta responder esta conversa. 🙂`;
-      const { ok } = await sendViaCrm(c.phone, msg, c.id, c.provider || 'zapi');
-      
-      if (ok) {
-        await admin.from('crm_conversations').update({
-          inactivity_warned_at: new Date().toISOString(),
-          last_bot_message_at: new Date().toISOString(),
-        }).eq('id', c.id);
-        warned++;
-      }
-    } else if (c.inactivity_warned_at) {
-      const sinceWarn = now - new Date(c.inactivity_warned_at).getTime();
-      if (sinceWarn >= FIVE_MIN) {
-        // Encerramento informativo (30 min total sem resposta do cliente).
-        const resolvedName = await resolveStudentFirstName(c.phone, c.display_name);
-        const farewell = buildFarewell(resolvedName || firstName, c.provider || 'zapi');
-        await sendViaCrm(c.phone, farewell, c.id, c.provider || 'zapi');
-        await admin.from('crm_conversations').update({
-          status: 'closed',
-          human_handoff: false,
-          assigned_to: null,
-          human_intro_sent: false,
-          ai_paused_until: null,
-          flow_state: null,
-          flow_context: {},
-          inactivity_warned_at: null,
-          last_bot_message_at: null,
-          session_started_at: null,
-          session_expires_at: null,
-        }).eq('id', c.id);
-        await admin.from('automation_logs').insert({
-          contact_phone: c.phone,
-          event_type: 'conversation_auto_closed',
-          reason: '30 min sem resposta do cliente após última mensagem do bot',
-          metadata: { conversation_id: c.id },
-        });
-        closed++;
-      }
+    // Encerramento SILENCIOSO após 30 min sem resposta do cliente.
+    // Nenhuma mensagem é enviada — apenas a conversa é fechada.
+    if (sinceBot >= 2 * FIVE_MIN) {
+      await admin.from('crm_conversations').update({
+        status: 'closed',
+        human_handoff: false,
+        assigned_to: null,
+        human_intro_sent: false,
+        ai_paused_until: null,
+        flow_state: null,
+        flow_context: {},
+        inactivity_warned_at: null,
+        last_bot_message_at: null,
+        session_started_at: null,
+        session_expires_at: null,
+      }).eq('id', c.id);
+      await admin.from('automation_logs').insert({
+        contact_phone: c.phone,
+        event_type: 'conversation_auto_closed',
+        reason: '30 min sem resposta do cliente após última mensagem do bot (encerramento silencioso)',
+        metadata: { conversation_id: c.id, silent: true },
+      });
+      closed++;
     }
   }
 
@@ -367,30 +302,8 @@ Deno.serve(async (req) => {
       ? new Date(convState.inactivity_warned_at).getTime()
       : 0;
 
-    // Etapa 1 — pedido de encerramento após 5 min de silêncio do cliente
-    if (!warnedAt && sinceLast >= FIVE_MIN) {
-      const firstName = await resolveStudentFirstName(c.phone, c.display_name);
-      const msg = buildClosureRequest(firstName);
-      const { ok } = await sendViaCrm(c.phone, msg, c.id, c.provider || 'wapi');
-      if (ok) {
-        await admin.from('crm_conversations').update({
-          inactivity_warned_at: new Date().toISOString(),
-          // Estende sessão para cobrir a janela do fluxo de encerramento (+15 min).
-          // Evita que o webhook considere a sessão expirada quando o cliente responder
-          // ao pedido de encerramento, disparando um farewell duplicado.
-          session_expires_at: new Date(Date.now() + 45 * 60 * 1000).toISOString(),
-        }).eq('id', c.id);
-        warned++;
-      }
-      continue;
-    }
-
-    // Etapa 2 — encerramento após +15 min sem resposta ao pedido (≥30 min total)
-    if (warnedAt && (now - warnedAt) >= FIVE_MIN) {
-      const firstName = await resolveStudentFirstName(c.phone, c.display_name);
-      const farewell = buildFarewell(firstName, c.provider || 'wapi');
-      const { ok } = await sendViaCrm(c.phone, farewell, c.id, c.provider || 'wapi');
-
+    // Encerramento SILENCIOSO após 30 min sem resposta do cliente pós-atendimento humano.
+    if (sinceLast >= TEN_MIN) {
       await admin.from('crm_conversations').update({
         status: 'closed',
         human_handoff: false,
@@ -408,8 +321,8 @@ Deno.serve(async (req) => {
       await admin.from('automation_logs').insert({
         contact_phone: c.phone,
         event_type: 'human_handoff_auto_closed',
-        reason: '30 min sem resposta do cliente após pedido de encerramento',
-        metadata: { conversation_id: c.id, sent: ok },
+        reason: '30 min sem resposta do cliente após atendimento humano (encerramento silencioso)',
+        metadata: { conversation_id: c.id, silent: true },
       });
       humanClosed++;
     }
@@ -441,36 +354,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (!hadOut) continue;
 
-    const { data: convState } = await admin
-      .from('crm_conversations')
-      .select('inactivity_warned_at')
-      .eq('id', c.id)
-      .maybeSingle();
-    const warnedAt = convState?.inactivity_warned_at
-      ? new Date(convState.inactivity_warned_at).getTime()
-      : 0;
-
-    // Etapa 1 — pedido de encerramento
-    if (!warnedAt) {
-      const firstName = await resolveStudentFirstName(c.phone, c.display_name);
-      const msg = buildClosureRequest(firstName);
-      const { ok } = await sendViaCrm(c.phone, msg, c.id, c.provider || 'wapi');
-      if (ok) {
-        await admin.from('crm_conversations').update({
-          inactivity_warned_at: new Date().toISOString(),
-        session_expires_at: new Date(Date.now() + 45 * 60 * 1000).toISOString(),
-        }).eq('id', c.id);
-      }
-      continue;
-    }
-
-    // Etapa 2 — encerramento após +15 min do pedido sem resposta
-    if ((now - warnedAt) < FIVE_MIN) continue;
-
-    const firstName = await resolveStudentFirstName(c.phone, c.display_name);
-    const farewell = buildFarewell(firstName, c.provider || 'wapi');
-    const { ok } = await sendViaCrm(c.phone, farewell, c.id, c.provider || 'wapi');
-
+    // Encerramento SILENCIOSO — sem envio de mensagem.
     await admin.from('crm_conversations').update({
       status: 'closed',
       human_handoff: false,
@@ -488,8 +372,8 @@ Deno.serve(async (req) => {
     await admin.from('automation_logs').insert({
       contact_phone: c.phone,
       event_type: 'conversation_stale_auto_closed',
-      reason: 'Conversa parada, encerrada após pedido de encerramento sem resposta',
-      metadata: { conversation_id: c.id, sent: ok, last_message_at: c.last_message_at },
+      reason: 'Conversa parada há mais de 30 min — encerramento silencioso',
+      metadata: { conversation_id: c.id, silent: true, last_message_at: c.last_message_at },
     });
     staleClosed++;
   }
