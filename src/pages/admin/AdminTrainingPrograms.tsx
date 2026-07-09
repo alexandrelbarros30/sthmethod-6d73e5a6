@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import ProgramWorkouts from "@/components/admin/ProgramWorkouts";
 import { processAndUpload, validateImageFile } from "@/lib/image-upload";
 import ReleaseNotifyButton from "@/components/admin/ReleaseNotifyButton";
+import { normalizeSearch } from "@/lib/utils";
 
 const OBJECTIVES = [
   { value: "hypertrophy", label: "Hipertrofia" },
@@ -594,8 +595,8 @@ const AdminTrainingPrograms = () => {
                   {(students || [])
                     .filter((s: any) => {
                       if (!studentSearch) return true;
-                      const q = studentSearch.toLowerCase();
-                      return (s.full_name || "").toLowerCase().includes(q) || (s.email || "").toLowerCase().includes(q);
+                      const q = normalizeSearch(studentSearch);
+                      return normalizeSearch(s.full_name).includes(q) || normalizeSearch(s.email).includes(q);
                     })
                     .map((s: any) => {
                       const checked = selectedStudents.includes(s.user_id);
