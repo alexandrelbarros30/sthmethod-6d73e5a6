@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { normalizeSearch } from "@/lib/utils";
 import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff, BookOpen, Save, Download, ClipboardCopy, Copy, ClipboardPaste, FileText as FileTextIcon } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -619,8 +620,8 @@ const AdminProtocol = () => {
   const filteredStudents = search.trim().length < 2
     ? []
     : (students || []).filter((s: any) => {
-        const q = search.toLowerCase();
-        return s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q);
+        const q = normalizeSearch(search);
+        return normalizeSearch(s.full_name).includes(q) || normalizeSearch(s.email).includes(q);
       });
 
   return (
