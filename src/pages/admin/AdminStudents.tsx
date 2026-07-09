@@ -30,6 +30,7 @@ import { getSecureFileUrl, extractStoragePath } from "@/lib/secure-file-url";
 import AdminBodyImageUpload from "@/components/admin/AdminBodyImageUpload";
 import AdminImageHistory from "@/components/admin/AdminImageHistory";
 import StudentPlanHistory from "@/components/admin/StudentPlanHistory";
+import StudentWorkoutAlertCard from "@/components/admin/StudentWorkoutAlertCard";
 import AnamnesisEntryItem from "@/components/shared/AnamnesisEntryItem";
 import EvolutionComparison from "@/components/shared/EvolutionComparison";
 import EvolutionUpdateHistory from "@/components/shared/EvolutionUpdateHistory";
