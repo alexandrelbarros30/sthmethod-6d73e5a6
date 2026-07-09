@@ -336,20 +336,24 @@ const AdminWorkoutTemplates = () => {
                     </div>
                     {isExpanded && exs.length > 0 && (
                       <div className="mt-3 border-t pt-3 space-y-2">
-                        {exs.map((ex: any, i: number) => (
-                          <div key={ex.id} className="flex items-center gap-2 text-sm">
-                            <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold">{i + 1}</span>
-                            <ExerciseMediaPreview
-                              videoUrl={ex.video_url}
-                              alt={ex.custom_name || "Exercício"}
-                              className="w-14 h-14 shrink-0"
-                              showBadge
-                            />
-                            <span className="font-medium">{ex.custom_name || "Sem nome"}</span>
-                            {ex.sets && ex.reps && <span className="text-muted-foreground">{ex.sets}x{ex.reps}</span>}
-                            {ex.video_url && <Video className="w-3.5 h-3.5 text-primary" />}
-                          </div>
-                        ))}
+                        {exs.map((ex: any, i: number) => {
+                          const lib = (libraryExercises || []).find((item: any) => item.id === ex.exercise_id);
+                          return (
+                            <div key={ex.id} className="flex items-center gap-2 text-sm">
+                              <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold">{i + 1}</span>
+                              <ExerciseMediaPreview
+                                videoUrl={ex.video_url || lib?.video_url}
+                                imageUrl={lib?.image_url}
+                                alt={ex.custom_name || lib?.name || "Exercício"}
+                                className="w-14 h-14 shrink-0"
+                                showBadge
+                              />
+                              <span className="font-medium">{ex.custom_name || lib?.name || "Sem nome"}</span>
+                              {ex.sets && ex.reps && <span className="text-muted-foreground">{ex.sets}x{ex.reps}</span>}
+                              {(ex.video_url || lib?.video_url || lib?.image_url) && <Video className="w-3.5 h-3.5 text-primary" />}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </CardContent>
