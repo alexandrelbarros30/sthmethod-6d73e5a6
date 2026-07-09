@@ -3,12 +3,12 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 
 // Roda a cada 1 min via pg_cron.
 // Para todos os canais (Z-API e W-API):
-//  - 5 min após a última msg do bot sem resposta → envia 1º aviso.
-//  - 5 min depois (10 min total) → envia encerramento e fecha sessão.
+//  - 15 min após a última msg do bot sem resposta → envia 1º aviso.
+//  - 15 min depois (30 min total) → envia encerramento e fecha sessão.
 // Suspenso quando human_handoff = true.
 //
 // Adicional: para conversas em ATENDIMENTO HUMANO (human_handoff=true ou assigned_to),
-// se ficarem MUDAS por 10 minutos após a última mensagem (do atendente OU do cliente),
+// se ficarem MUDAS por 30 minutos após a última mensagem (do atendente OU do cliente),
 // envia mensagem de encerramento e fecha a conversa, resetando o handoff.
 
 Deno.serve(async (req) => {
@@ -58,12 +58,12 @@ Deno.serve(async (req) => {
     const humanLine = inHours
       ? `O atendimento humano deste canal (${canal}) também foi encerrado.`
       : `O atendimento humano do canal ${canal} já está encerrado conforme horário de expediente.`;
-    return `Olá${nomeSep}${firstName}.\n\nEstamos encerrando este atendimento por inatividade (mais de 10 minutos sem resposta).\n\n${humanLine}\n\nSe precisar de algo, é só nos chamar novamente por aqui que retomamos assim que possível. Um abraço da equipe STH Method. 🙏`;
+    return `Olá${nomeSep}${firstName}.\n\nEstamos encerrando este atendimento por inatividade (mais de 30 minutos sem resposta).\n\n${humanLine}\n\nSe precisar de algo, é só nos chamar novamente por aqui que retomamos assim que possível. Um abraço da equipe STH Method. 🙏`;
   };
 
   const buildClosureRequest = (firstName: string) => {
     const sep = firstName ? ' ' : '';
-    return `Olá${sep}${firstName}.\n\nNotamos que você não respondeu à nossa última mensagem. Ainda precisa de ajuda por aqui?\n\nSe não houver resposta nos próximos 5 minutos, vamos encerrar este atendimento — mas fique tranquilo, é só nos chamar de volta a qualquer momento. 🙂`;
+    return `Olá${sep}${firstName}.\n\nNotamos que você não respondeu à nossa última mensagem. Ainda precisa de ajuda por aqui?\n\nSe não houver resposta nos próximos 15 minutos, vamos encerrar este atendimento — mas fique tranquilo, é só nos chamar de volta a qualquer momento. 🙂`;
   };
 
   const normalizeWhatsappTarget = (phone: string) => {
@@ -243,7 +243,8 @@ Deno.serve(async (req) => {
   }
 
   const now = Date.now();
-  const FIVE_MIN = 5 * 60 * 1000;
+  // Janela de cada etapa (aviso e encerramento). 15 min + 15 min = 30 min totais.
+  const FIVE_MIN = 15 * 60 * 1000;
 
   // Conversas elegíveis: bot já respondeu, está ativo, sem handoff
   const { data: convs } = await admin
@@ -296,7 +297,7 @@ Deno.serve(async (req) => {
     } else if (c.inactivity_warned_at) {
       const sinceWarn = now - new Date(c.inactivity_warned_at).getTime();
       if (sinceWarn >= FIVE_MIN) {
-        // Encerramento informativo (10 min total sem resposta do cliente).
+        // Encerramento informativo (30 min total sem resposta do cliente).
         const resolvedName = await resolveStudentFirstName(c.phone, c.display_name);
         const farewell = buildFarewell(resolvedName || firstName, c.provider || 'zapi');
         await sendViaCrm(c.phone, farewell, c.id, c.provider || 'zapi');
@@ -316,7 +317,7 @@ Deno.serve(async (req) => {
         await admin.from('automation_logs').insert({
           contact_phone: c.phone,
           event_type: 'conversation_auto_closed',
-          reason: '10 min sem resposta do cliente após última mensagem do bot',
+          reason: '30 min sem resposta do cliente após última mensagem do bot',
           metadata: { conversation_id: c.id },
         });
         closed++;
@@ -324,8 +325,8 @@ Deno.serve(async (req) => {
     }
   }
 
-  // ===== Encerramento pós-atendimento humano (10 min de silêncio) =====
-  const TEN_MIN = 10 * 60 * 1000;
+  // ===== Encerramento pós-atendimento humano (30 min de silêncio) =====
+  const TEN_MIN = 30 * 60 * 1000;
   const { data: humanConvs } = await admin
     .from('crm_conversations')
     .select('id, phone, display_name, provider, human_handoff, assigned_to')
@@ -377,14 +378,14 @@ Deno.serve(async (req) => {
           // Estende sessão para cobrir a janela do fluxo de encerramento (+15 min).
           // Evita que o webhook considere a sessão expirada quando o cliente responder
           // ao pedido de encerramento, disparando um farewell duplicado.
-          session_expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+          session_expires_at: new Date(Date.now() + 45 * 60 * 1000).toISOString(),
         }).eq('id', c.id);
         warned++;
       }
       continue;
     }
 
-    // Etapa 2 — encerramento após +5 min sem resposta ao pedido (≥10 min total)
+    // Etapa 2 — encerramento após +15 min sem resposta ao pedido (≥30 min total)
     if (warnedAt && (now - warnedAt) >= FIVE_MIN) {
       const firstName = await resolveStudentFirstName(c.phone, c.display_name);
       const farewell = buildFarewell(firstName, c.provider || 'wapi');
@@ -407,14 +408,14 @@ Deno.serve(async (req) => {
       await admin.from('automation_logs').insert({
         contact_phone: c.phone,
         event_type: 'human_handoff_auto_closed',
-        reason: '10 min sem resposta do cliente após pedido de encerramento',
+        reason: '30 min sem resposta do cliente após pedido de encerramento',
         metadata: { conversation_id: c.id, sent: ok },
       });
       humanClosed++;
     }
   }
 
-  // ===== Catch-all: qualquer conversa aberta parada há >10 min =====
+  // ===== Catch-all: qualquer conversa aberta parada há >30 min =====
   // Cobre casos em que last_bot_message_at nunca foi setado (fluxo antigo,
   // handoff que não passou pelo bot, etc). Envia farewell e fecha.
   const cutoffIso = new Date(now - TEN_MIN).toISOString();
@@ -457,13 +458,13 @@ Deno.serve(async (req) => {
       if (ok) {
         await admin.from('crm_conversations').update({
           inactivity_warned_at: new Date().toISOString(),
-          session_expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+        session_expires_at: new Date(Date.now() + 45 * 60 * 1000).toISOString(),
         }).eq('id', c.id);
       }
       continue;
     }
 
-    // Etapa 2 — encerramento após +5 min do pedido sem resposta
+    // Etapa 2 — encerramento após +15 min do pedido sem resposta
     if ((now - warnedAt) < FIVE_MIN) continue;
 
     const firstName = await resolveStudentFirstName(c.phone, c.display_name);
