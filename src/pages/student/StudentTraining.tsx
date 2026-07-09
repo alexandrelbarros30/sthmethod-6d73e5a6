@@ -120,6 +120,22 @@ const StudentTraining = () => {
     enabled: !!user?.id,
   });
 
+  const { data: libraryByName = {} } = useQuery({
+    queryKey: ["student-training-library-by-name"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("exercise_library")
+        .select("name, video_url, image_url");
+      const map: Record<string, { video_url?: string | null; image_url?: string | null }> = {};
+      (data || []).forEach((row: any) => {
+        const key = String(row.name || "").trim().toLowerCase();
+        if (key) map[key] = { video_url: row.video_url, image_url: row.image_url };
+      });
+      return map;
+    },
+    enabled: !!user?.id && isActive && !hasGuidedAssignments,
+  });
+
   const isLoading = subLoading || guidedAssignmentsLoading || weeksLoading || exLoading;
 
   if (hasGuidedAssignments) {
