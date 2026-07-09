@@ -24,6 +24,15 @@ const getMediaSource = (url: string): { kind: "embed" | "image" | "file"; url: s
   return { kind: "file", url };
 };
 
+const isImageUrl = (url?: string | null) =>
+  !!url && /\.(gif|png|jpe?g|webp|avif)(\?.*)?$/i.test(url);
+
+const pickBestMediaUrl = (...candidates: (string | null | undefined)[]): string => {
+  const list = candidates.filter((u): u is string => !!u && u.trim().length > 0);
+  const nonImage = list.find((u) => !isImageUrl(u));
+  return nonImage || list[0] || "";
+};
+
 const StudentTraining = () => {
   const { user } = useAuth();
   const { isActive, isLoading: subLoading } = useSubscriptionGuard();
