@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Video, Search, Dumbbell, ImageIcon, Upload, X } from "lucide-react";
 import { toast } from "sonner";
+import ExerciseMediaPreview from "@/components/admin/ExerciseMediaPreview";
 
 const MUSCLE_GROUPS = [
   "Peito", "Costas", "Ombros", "Bíceps", "Tríceps", "Quadríceps",
@@ -191,12 +192,27 @@ const AdminExerciseLibrary = () => {
                   <Label>URL do Vídeo</Label>
                   <Input value={form.video_url} onChange={e => setForm(p => ({ ...p, video_url: e.target.value }))} placeholder="https://youtube.com/watch?v=..." />
                 </div>
+                {form.video_url && (
+                  <ExerciseMediaPreview
+                    videoUrl={form.video_url}
+                    alt={form.name || "Prévia do vídeo"}
+                    mode="player"
+                    className="w-full aspect-video"
+                    showBadge
+                  />
+                )}
                 <div>
                   <Label>Imagem ilustrativa (fallback do vídeo)</Label>
                   <div className="space-y-2 mt-1">
                     {form.image_url && (
                       <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-border bg-muted">
-                        <img src={form.image_url} alt="preview" className="w-full h-full object-cover" />
+                        <ExerciseMediaPreview
+                          imageUrl={form.image_url}
+                          alt="preview"
+                          mode="player"
+                          className="w-full h-full border-0 rounded-none"
+                          showBadge
+                        />
                         <Button
                           type="button"
                           size="icon"
@@ -260,13 +276,13 @@ const AdminExerciseLibrary = () => {
             {filtered.map((ex: any) => (
               <Card key={ex.id} className="hover:shadow-sm transition-shadow">
                 <CardContent className="flex items-center gap-4 py-4">
-                  {ex.image_url ? (
-                    <img src={ex.image_url} alt={ex.name} className="w-14 h-14 rounded-lg object-cover shrink-0 border border-border" loading="lazy" />
-                  ) : (
-                    <div className="flex items-center justify-center w-14 h-14 rounded-lg bg-primary/10 shrink-0">
-                      <Dumbbell className="w-5 h-5 text-primary" />
-                    </div>
-                  )}
+                  <ExerciseMediaPreview
+                    videoUrl={ex.video_url}
+                    imageUrl={ex.image_url}
+                    alt={ex.name}
+                    className="w-16 h-16 shrink-0"
+                    showBadge
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm">{ex.name}</p>
                     <div className="flex gap-2 mt-1 items-center">

@@ -18,6 +18,7 @@ import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } 
 import { CSS } from "@dnd-kit/utilities";
 import SortableExerciseRow, { ExerciseRow } from "@/components/admin/SortableExerciseRow";
 import LibraryMultiSelectDialog from "@/components/admin/LibraryMultiSelectDialog";
+import ExerciseMediaPreview from "@/components/admin/ExerciseMediaPreview";
 
 const GROUP_COLOR_PRESETS = [
   { name: "Biset", color: "#f59e0b" },
@@ -48,7 +49,7 @@ const emptyWorkout: WorkoutForm = {
 };
 
 /* ---------- sortable workout card ---------- */
-const SortableWorkoutCard = ({ w, wIdx, exs, isExpanded, onToggle, onEdit, onDelete, onDuplicate, onToggleReleased }: any) => {
+const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onToggle, onEdit, onDelete, onDuplicate, onToggleReleased }: any) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: w.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
 
@@ -121,23 +122,33 @@ const SortableWorkoutCard = ({ w, wIdx, exs, isExpanded, onToggle, onEdit, onDel
           </div>
           {isExpanded && exs.length > 0 && (
             <div className="mt-3 border-t pt-3 space-y-2">
-              {exs.map((ex: any, i: number) => (
-                <div key={ex.id} className="flex items-start gap-2 text-sm">
-                  <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold shrink-0 mt-0.5">{i + 1}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-semibold text-foreground truncate">{ex.custom_name || "Sem nome"}</span>
-                      {ex.video_url && <Video className="w-3.5 h-3.5 text-primary shrink-0" />}
+              {exs.map((ex: any, i: number) => {
+                const lib = (libraryExercises || []).find((item: any) => item.id === ex.exercise_id);
+                return (
+                  <div key={ex.id} className="flex items-start gap-2 text-sm">
+                    <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold shrink-0 mt-0.5">{i + 1}</span>
+                    <ExerciseMediaPreview
+                      videoUrl={ex.video_url || lib?.video_url}
+                      imageUrl={lib?.image_url}
+                      alt={ex.custom_name || lib?.name || "Exercício"}
+                      className="w-14 h-14 shrink-0"
+                      showBadge
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-foreground truncate">{ex.custom_name || lib?.name || "Sem nome"}</span>
+                        {(ex.video_url || lib?.video_url || lib?.image_url) && <Video className="w-3.5 h-3.5 text-primary shrink-0" />}
+                      </div>
+                      {ex.sets && ex.reps && (
+                        <div className="text-xs text-muted-foreground/90 mt-0.5">{ex.sets}×{ex.reps}</div>
+                      )}
+                      {ex.rest_interval && (
+                        <div className="text-[11px] text-muted-foreground/60 mt-0.5">Int: {ex.rest_interval}</div>
+                      )}
                     </div>
-                    {ex.sets && ex.reps && (
-                      <div className="text-xs text-muted-foreground/90 mt-0.5">{ex.sets}×{ex.reps}</div>
-                    )}
-                    {ex.rest_interval && (
-                      <div className="text-[11px] text-muted-foreground/60 mt-0.5">Int: {ex.rest_interval}</div>
-                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -476,6 +487,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
                   w={w}
                   wIdx={wIdx}
                   exs={templateExercisesMap?.[w.id] || []}
+                  libraryExercises={libraryExercises || []}
                   isExpanded={expandedId === w.id}
                   onToggle={() => setExpandedId(expandedId === w.id ? null : w.id)}
                   onEdit={() => openEditWorkout(w)}

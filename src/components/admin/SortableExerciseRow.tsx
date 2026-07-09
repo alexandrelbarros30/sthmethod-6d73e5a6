@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Trash2, GripVertical, ChevronsUpDown, Check, Video, ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ExerciseMediaPreview, { getExerciseMediaSource } from "@/components/admin/ExerciseMediaPreview";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,16 +57,6 @@ const MUSCLE_GROUPS = [
   "Posterior", "Glúteos", "Panturrilha", "Abdômen", "Cardio", "Outro"
 ];
 
-const getEmbedUrl = (url: string) => {
-  if (!url) return null;
-  const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-  if (yt) return { kind: "embed" as const, url: `https://www.youtube.com/embed/${yt[1]}` };
-  const v = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-  if (v) return { kind: "embed" as const, url: `https://player.vimeo.com/video/${v[1]}` };
-  if (/\.(mp4|webm|ogg|mov)(\?|$)/i.test(url)) return { kind: "file" as const, url };
-  return { kind: "embed" as const, url };
-};
-
 const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, onSelectFromLibrary, selected, onToggleSelected }: Props) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row._uid });
   const [libGroup, setLibGroup] = useState("all");
@@ -90,8 +81,10 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
     [libraryExercises, row.exercise_id]
   );
 
-  const previewVideoUrl = row.video_url || selectedExercise?.video_url || "";
-  const videoSource = getEmbedUrl(previewVideoUrl);
+  const mediaSource = getExerciseMediaSource({
+    videoUrl: row.video_url || selectedExercise?.video_url,
+    imageUrl: selectedExercise?.image_url,
+  });
 
   const displayName = row.custom_name || selectedExercise?.name || "Sem nome";
 
@@ -161,6 +154,13 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
         className="w-full flex items-start gap-2 text-left hover:bg-muted/30 rounded-md p-2 -m-1 transition-colors"
       >
         {expanded ? <ChevronDown className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />}
+        <ExerciseMediaPreview
+          videoUrl={row.video_url || selectedExercise?.video_url}
+          imageUrl={selectedExercise?.image_url}
+          alt={displayName}
+          className="w-14 h-14 shrink-0"
+          showBadge
+        />
         <div className="flex-1 min-w-0">
           <div className="text-sm font-semibold text-foreground truncate">{displayName}</div>
           {(row.sets || row.reps) && (
@@ -219,16 +219,23 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
                           setPickerOpen(false);
                         }}
                         className={cn(
-                          "text-xs",
+                          "text-xs gap-2 py-2",
                           row.exercise_id === e.id && "bg-primary/15 text-primary data-[selected=true]:bg-primary/20"
                         )}
                       >
-                        <Check className={cn("mr-2 h-3.5 w-3.5", row.exercise_id === e.id ? "opacity-100" : "opacity-0")} />
+                        <Check className={cn("h-3.5 w-3.5 shrink-0", row.exercise_id === e.id ? "opacity-100" : "opacity-0")} />
+                        <ExerciseMediaPreview
+                          videoUrl={e.video_url}
+                          imageUrl={e.image_url}
+                          alt={e.name}
+                          className="w-12 h-12 shrink-0"
+                          showBadge
+                        />
                         <span className="flex-1 truncate">{e.name}</span>
                         {e.muscle_group && (
                           <span className="ml-2 text-[10px] text-muted-foreground shrink-0">{e.muscle_group}</span>
                         )}
-                        {e.video_url && <Video className="ml-1.5 h-3 w-3 text-primary shrink-0" />}
+                        {(e.video_url || e.image_url) && <Video className="ml-1.5 h-3 w-3 text-primary shrink-0" />}
                       </CommandItem>
                     ))}
                   </CommandGroup>
@@ -241,21 +248,15 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
         )}
 
         {/* Video preview */}
-        {videoSource && (
-          <div className="rounded-lg overflow-hidden border border-border/60 bg-black">
-            {videoSource.kind === "embed" ? (
-              <div className="aspect-video w-full">
-                <iframe
-                  src={videoSource.url}
-                  className="w-full h-full"
-                  allowFullScreen
-                  title={`Vídeo - ${selectedExercise?.name || row.custom_name || "Exercício"}`}
-                />
-              </div>
-            ) : (
-              <video src={videoSource.url} controls className="w-full aspect-video" />
-            )}
-          </div>
+        {mediaSource && (
+          <ExerciseMediaPreview
+            videoUrl={row.video_url || selectedExercise?.video_url}
+            imageUrl={selectedExercise?.image_url}
+            alt={selectedExercise?.name || row.custom_name || "Exercício"}
+            mode="player"
+            className="w-full aspect-video"
+            showBadge
+          />
         )}
       </div>
       <div>
