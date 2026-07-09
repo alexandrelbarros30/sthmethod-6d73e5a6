@@ -38,6 +38,9 @@ const StudentTraining = () => {
   const { isActive, isLoading: subLoading } = useSubscriptionGuard();
   const [expandedExercises, setExpandedExercises] = useState<Set<string>>(new Set());
 
+  // Auto-expand all exercises so the student sees details highlighted immediately
+  // (no need to click to open — media + reps + notes are visible by default).
+
   const { data: guidedAssignmentsCount = 0, isLoading: guidedAssignmentsLoading } = useQuery({
     queryKey: ["student-guided-assignment-count", user?.id],
     queryFn: async () => {
@@ -106,6 +109,12 @@ const StudentTraining = () => {
     },
     enabled: !!weeks?.length && !hasGuidedAssignments,
   });
+
+  useEffect(() => {
+    if (exercises && exercises.length > 0) {
+      setExpandedExercises(new Set((exercises as any[]).map((e: any) => e.id)));
+    }
+  }, [exercises]);
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -254,7 +263,7 @@ const StudentTraining = () => {
                     return (
                       <div
                         key={ex.id}
-                        className={`rounded-3xl border bg-background overflow-hidden transition-all ${isExpanded ? "border-foreground/40" : "border-border/40"}`}
+                        className={`rounded-3xl border bg-background overflow-hidden transition-all ${isExpanded ? "border-foreground/50 shadow-[0_8px_28px_-14px_rgba(0,0,0,0.35)] ring-1 ring-foreground/10" : "border-border/40"}`}
                       >
                         {/* Exercise header */}
                         <button
