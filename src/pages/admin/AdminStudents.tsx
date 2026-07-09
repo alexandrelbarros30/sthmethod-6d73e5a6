@@ -1792,7 +1792,7 @@ const AdminStudents = () => {
                   />
                 )}
 
-                {/* Shortcut: jump to Evolution Generator */}
+                {/* Shortcut: jump to Evolution Generator (after edit card) */}
                 {allBodyImages && allBodyImages.length > 0 && (
                   <Button
                     size="sm"
@@ -1907,6 +1907,23 @@ const AdminStudents = () => {
                       refetchAnamnese();
                     }}
                   />
+                )}
+
+                {/* Shortcut: Gerar Evolução após o card de edição */}
+                {anamneseBodyImages && anamneseBodyImages.length > 0 && (
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      setAnamneseOpen(false);
+                      setImagesOpen(true);
+                      setTimeout(() => {
+                        document.getElementById("evolution-generator-anchor")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }, 300);
+                    }}
+                  >
+                    <Sparkles className="w-4 h-4 mr-1" /> Gerar Evolução
+                  </Button>
                 )}
 
                 {/* Weight History */}
