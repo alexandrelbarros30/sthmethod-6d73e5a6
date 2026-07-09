@@ -263,7 +263,7 @@ const StudentTraining = () => {
                     return (
                       <div
                         key={ex.id}
-                        className={`rounded-3xl border bg-background overflow-hidden transition-all ${isExpanded ? "border-foreground/40" : "border-border/40"}`}
+                        className={`rounded-3xl border bg-background overflow-hidden transition-all ${isExpanded ? "border-foreground/50 shadow-[0_8px_28px_-14px_rgba(0,0,0,0.35)] ring-1 ring-foreground/10" : "border-border/40"}`}
                       >
                         {/* Exercise header */}
                         <button
