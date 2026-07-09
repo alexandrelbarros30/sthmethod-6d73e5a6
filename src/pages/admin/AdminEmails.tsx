@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Mail, Send, Save, Edit3, Search, RefreshCw, Plus, Trash2, Calendar as CalendarIcon, Zap, X, Eye, Power, PowerOff } from "lucide-react";
+import { normalizeSearch } from "@/lib/utils";
 
 interface Settings {
   template_key: string;
@@ -322,13 +323,13 @@ export default function AdminEmails() {
   }, [search]);
 
   const filteredStudents = useMemo(() => {
-    const q = studentSearch.trim().toLowerCase();
+    const q = normalizeSearch(studentSearch.trim());
     if (!q) return students.slice(0, 50);
     return students
       .filter(
         (s) =>
-          (s.full_name || "").toLowerCase().includes(q) ||
-          (s.email || "").toLowerCase().includes(q),
+          normalizeSearch(s.full_name).includes(q) ||
+          normalizeSearch(s.email).includes(q),
       )
       .slice(0, 50);
   }, [students, studentSearch]);
