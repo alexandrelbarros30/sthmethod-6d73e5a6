@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { normalizeSearch } from "@/lib/utils";
 
 interface BudgetItem {
   name: string;
@@ -461,9 +462,10 @@ const AdminBudgets = () => {
     toast.success("Orçamento copiado!");
   };
 
-  const filtered = students?.filter((s: any) =>
-    s.full_name?.toLowerCase().includes(search.toLowerCase()) || s.email?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = students?.filter((s: any) => {
+    const q = normalizeSearch(search);
+    return normalizeSearch(s.full_name).includes(q) || normalizeSearch(s.email).includes(q);
+  });
 
   const filteredBudgets = budgets || [];
 
