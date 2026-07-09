@@ -126,7 +126,7 @@ const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onTog
                 const lib = (libraryExercises || []).find((item: any) => item.id === ex.exercise_id);
                 const media = getExerciseMediaSource({ videoUrl: ex.video_url || lib?.video_url, imageUrl: lib?.image_url });
                 return (
-                  <div key={ex.id} className="grid gap-3 rounded-lg border border-border/60 bg-background/60 p-3 text-sm sm:grid-cols-[auto_minmax(0,1fr)_minmax(220px,320px)]">
+                  <div key={ex.id} className="grid grid-cols-[auto_minmax(0,1fr)] gap-3 rounded-lg border border-border/60 bg-background/60 p-3 text-sm sm:grid-cols-[auto_minmax(0,1fr)_minmax(220px,320px)]">
                     <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold shrink-0 mt-0.5">{i + 1}</span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
@@ -146,7 +146,7 @@ const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onTog
                         imageUrl={lib?.image_url}
                         alt={ex.custom_name || lib?.name || "Exercício"}
                         mode="player"
-                        className="w-full aspect-video"
+                        className="col-span-2 w-full aspect-video sm:col-span-1"
                         showBadge
                       />
                     )}
