@@ -210,6 +210,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
   const [groupDialogOpen, setGroupDialogOpen] = useState(false);
   const [selectedRowUids, setSelectedRowUids] = useState<Set<string>>(new Set());
   const [groupForm, setGroupForm] = useState({ name: "Biset", color: "#f59e0b" });
+  const [quickEditEx, setQuickEditEx] = useState<any | null>(null);
 
   const { data: workouts, isLoading } = useQuery({
     queryKey: ["program-workouts", programId],
@@ -535,6 +536,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
                   onDelete={() => deleteWorkoutMutation.mutate(w.id)}
                   onDuplicate={() => duplicateWorkoutMutation.mutate(w.id)}
                   onToggleReleased={(checked: boolean) => toggleReleasedMutation.mutate({ id: w.id, released: checked })}
+                  onEditExercise={(ex: any) => setQuickEditEx(ex)}
                 />
               ))}
             </div>
@@ -649,6 +651,13 @@ const ProgramWorkouts = ({ programId }: Props) => {
         onOpenChange={setLibraryDialogOpen}
         libraryExercises={libraryExercises || []}
         onAdd={addFromLibrary}
+      />
+
+      <QuickExerciseEditDialog
+        open={!!quickEditEx}
+        onOpenChange={(v) => { if (!v) setQuickEditEx(null); }}
+        exercise={quickEditEx}
+        invalidateKeys={[["template-exercises-program", programId]]}
       />
 
       <Dialog open={groupDialogOpen} onOpenChange={setGroupDialogOpen}>
