@@ -189,54 +189,8 @@ Deno.serve(async (req) => {
   const mode = String(requestBody?.mode || 'tick');
 
   if (mode === 'resend_failed_closures') {
-    const sinceHours = Math.min(Math.max(Number(requestBody?.since_hours || 12), 1), 48);
-    const sinceIso = new Date(Date.now() - sinceHours * 60 * 60 * 1000).toISOString();
-    const closureEvents = ['conversation_auto_closed', 'human_handoff_auto_closed', 'conversation_stale_auto_closed'];
-
-    const [{ data: failedLogs }, { data: resentLogs }] = await Promise.all([
-      admin.from('automation_logs')
-        .select('metadata, created_at')
-        .in('event_type', closureEvents)
-        .gte('created_at', sinceIso)
-        .order('created_at', { ascending: false })
-        .limit(500),
-      admin.from('automation_logs')
-        .select('metadata')
-        .eq('event_type', 'conversation_closure_message_resent')
-        .gte('created_at', sinceIso)
-        .limit(500),
-    ]);
-
-    const alreadyResent = new Set((resentLogs || [])
-      .map((l: any) => l.metadata?.conversation_id)
-      .filter(Boolean));
-    const ids = Array.from(new Set((failedLogs || [])
-      .filter((l: any) => l.metadata?.sent === false || l.metadata?.sent === 'false')
-      .map((l: any) => l.metadata?.conversation_id)
-      .filter((id: string) => id && !alreadyResent.has(id))));
-
-    const { data: conversations } = ids.length ? await admin
-      .from('crm_conversations')
-      .select('id, phone, display_name, provider, last_message_at')
-      .in('id', ids)
-      .limit(500) : { data: [] } as any;
-
-    let resent = 0;
-    let failed = 0;
-    for (const c of conversations || []) {
-      const firstName = await resolveStudentFirstName(c.phone, c.display_name);
-      const farewell = buildFarewell(firstName, c.provider || 'wapi');
-      const { ok, error } = await sendViaCrm(c.phone, farewell, c.id, c.provider || 'wapi');
-      await admin.from('automation_logs').insert({
-        contact_phone: c.phone,
-        event_type: 'conversation_closure_message_resent',
-        reason: 'Reenvio de mensagem de encerramento que havia falhado',
-        metadata: { conversation_id: c.id, sent: ok, error: error || null, last_message_at: c.last_message_at },
-      });
-      if (ok) resent++; else failed++;
-    }
-
-    return new Response(JSON.stringify({ ok: true, checkedFailedClosures: ids.length, resent, failed }), {
+    // Encerramentos são silenciosos — não há mensagem para reenviar.
+    return new Response(JSON.stringify({ ok: true, disabled: true, reason: 'Encerramentos silenciosos ativos' }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
