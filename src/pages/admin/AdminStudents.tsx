@@ -30,6 +30,7 @@ import { getSecureFileUrl, extractStoragePath } from "@/lib/secure-file-url";
 import AdminBodyImageUpload from "@/components/admin/AdminBodyImageUpload";
 import AdminImageHistory from "@/components/admin/AdminImageHistory";
 import StudentPlanHistory from "@/components/admin/StudentPlanHistory";
+import StudentWorkoutAlertCard from "@/components/admin/StudentWorkoutAlertCard";
 import AnamnesisEntryItem from "@/components/shared/AnamnesisEntryItem";
 import EvolutionComparison from "@/components/shared/EvolutionComparison";
 import EvolutionUpdateHistory from "@/components/shared/EvolutionUpdateHistory";
@@ -1488,6 +1489,13 @@ const AdminStudents = () => {
                 <section>
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Histórico de Planos</h3>
                   <StudentPlanHistory userId={selected.user_id} />
+                </section>
+                <section>
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Treino atribuído</h3>
+                  <StudentWorkoutAlertCard
+                    userId={selected.user_id}
+                    onOpenAssign={() => { setViewOpen(false); setProgramsOpen(true); }}
+                  />
                 </section>
                 <section>
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Atividade & Objetivo</h3>
