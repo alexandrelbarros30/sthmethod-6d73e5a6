@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import SortableExerciseRow, { ExerciseRow } from "@/components/admin/SortableExerciseRow";
+import { normalizeSearch } from "@/lib/utils";
 
 interface TemplateForm {
   title: string;
@@ -371,8 +372,8 @@ const AdminWorkoutTemplates = () => {
                     {(students || [])
                       .filter((s: any) => {
                         if (!studentSearch) return true;
-                        const q = studentSearch.toLowerCase();
-                        return (s.full_name || "").toLowerCase().includes(q) || (s.email || "").toLowerCase().includes(q);
+                        const q = normalizeSearch(studentSearch);
+                        return normalizeSearch(s.full_name).includes(q) || normalizeSearch(s.email).includes(q);
                       })
                       .map((s: any) => (
                         <SelectItem key={s.user_id} value={s.user_id}>{s.full_name || s.email}</SelectItem>
