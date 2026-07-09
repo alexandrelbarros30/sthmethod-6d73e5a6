@@ -18,6 +18,7 @@ import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } 
 import { CSS } from "@dnd-kit/utilities";
 import SortableExerciseRow, { ExerciseRow } from "@/components/admin/SortableExerciseRow";
 import LibraryMultiSelectDialog from "@/components/admin/LibraryMultiSelectDialog";
+import ExerciseMediaPreview from "@/components/admin/ExerciseMediaPreview";
 
 const GROUP_COLOR_PRESETS = [
   { name: "Biset", color: "#f59e0b" },
@@ -124,6 +125,12 @@ const SortableWorkoutCard = ({ w, wIdx, exs, isExpanded, onToggle, onEdit, onDel
               {exs.map((ex: any, i: number) => (
                 <div key={ex.id} className="flex items-start gap-2 text-sm">
                   <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold shrink-0 mt-0.5">{i + 1}</span>
+                  <ExerciseMediaPreview
+                    url={ex.video_url}
+                    alt={ex.custom_name || "Exercício"}
+                    className="w-14 h-14 shrink-0"
+                    showBadge
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="font-semibold text-foreground truncate">{ex.custom_name || "Sem nome"}</span>
