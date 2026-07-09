@@ -125,12 +125,16 @@ const ExerciseMediaPreview = ({
         />
       ) : media.kind === "embed" && media.thumbUrl ? (
         <img src={media.thumbUrl} alt={alt} className={mediaClass} loading="lazy" draggable={false} />
+      ) : media.kind === "embed" ? (
+        <div className="flex h-full w-full items-center justify-center bg-muted">
+          <Video className="h-5 w-5 text-primary" />
+        </div>
       ) : media.kind === "image" ? (
         <img src={media.url} alt={alt} className={mediaClass} loading="lazy" draggable={false} />
       ) : isPlayer ? (
         <video src={media.url} controls playsInline preload="metadata" className="w-full h-full object-contain" />
       ) : (
-        <video src={media.url} muted playsInline preload="metadata" className="w-full h-full object-cover" />
+        <video src={media.url} muted playsInline autoPlay loop preload="metadata" className="w-full h-full object-cover" />
       )}
 
       {showBadge && (
