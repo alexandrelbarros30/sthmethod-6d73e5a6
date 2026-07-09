@@ -12,12 +12,13 @@ import { Dumbbell, ChevronLeft, ChevronDown, History, Play, Calendar, ChevronsDo
 import StCoachButton from "@/components/student/StCoachButton";
 import { toast } from "sonner";
 
-const getVideoSource = (url: string): { kind: "embed" | "file"; url: string } | null => {
+const getVideoSource = (url: string): { kind: "embed" | "file" | "image"; url: string } | null => {
   if (!url) return null;
   const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
   if (yt) return { kind: "embed", url: `https://www.youtube.com/embed/${yt[1]}` };
   const v = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
   if (v) return { kind: "embed", url: `https://player.vimeo.com/video/${v[1]}` };
+  if (/\.(gif|png|jpe?g|webp|avif)(\?.*)?$/i.test(url)) return { kind: "image", url };
   return { kind: "file", url };
 };
 
@@ -367,7 +368,9 @@ const StudentGuidedWorkout = () => {
         <div className="space-y-6">
           {exList.map((ex: any, idx: number) => {
             const libraryMeta = ex.exercise_id ? exerciseLibraryMap[ex.exercise_id] : null;
-            const videoSource = getVideoSource(ex.video_url || libraryMeta?.video_url || "");
+            const videoSource = getVideoSource(
+              ex.video_url || libraryMeta?.video_url || libraryMeta?.image_url || ""
+            );
             const exerciseDescription = ex.custom_description || libraryMeta?.description || "";
             const fallbackImage = "";
             const last = lastLog(ex.id);
@@ -406,6 +409,18 @@ const StudentGuidedWorkout = () => {
                 {videoSource?.kind === "file" && (
                   <div className="aspect-video rounded-2xl overflow-hidden border border-border/40 bg-black/30">
                     <video src={videoSource.url} className="w-full h-full" controls playsInline preload="metadata" />
+                  </div>
+                )}
+
+                {videoSource?.kind === "image" && (
+                  <div className="aspect-video rounded-2xl overflow-hidden border border-border/40 bg-black/30">
+                    <img
+                      src={videoSource.url}
+                      alt={ex.custom_name || "Exercício"}
+                      className="w-full h-full object-contain"
+                      loading="lazy"
+                      draggable={false}
+                    />
                   </div>
                 )}
 
