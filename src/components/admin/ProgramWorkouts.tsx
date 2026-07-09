@@ -367,7 +367,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
         custom_name: lib.name,
         custom_description: lib.description || "",
         sets: "", reps: "", rest_interval: "", load_suggestion: "",
-        video_url: lib.video_url || "",
+        video_url: lib.video_url || lib.image_url || "",
         sort_order: prev.length + i,
         _uid: crypto.randomUUID(),
         group_id: null, group_name: "", group_color: "",
@@ -446,7 +446,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
     if (!lib) return;
     setExerciseRows(prev => prev.map((r, i) => i === idx ? {
       ...r, exercise_id: exerciseId, custom_name: lib.name,
-      custom_description: lib.description || "", video_url: lib.video_url || "",
+      custom_description: lib.description || "", video_url: lib.video_url || lib.image_url || "",
     } : r));
   };
 
