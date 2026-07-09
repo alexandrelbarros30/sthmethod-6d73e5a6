@@ -126,7 +126,7 @@ const SortableWorkoutCard = ({ w, wIdx, exs, isExpanded, onToggle, onEdit, onDel
                 <div key={ex.id} className="flex items-start gap-2 text-sm">
                   <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold shrink-0 mt-0.5">{i + 1}</span>
                   <ExerciseMediaPreview
-                    url={ex.video_url}
+                    videoUrl={ex.video_url}
                     alt={ex.custom_name || "Exercício"}
                     className="w-14 h-14 shrink-0"
                     showBadge
