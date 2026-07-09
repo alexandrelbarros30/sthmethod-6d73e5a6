@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2, RotateCcw, AlertTriangle, UserX, UserCheck, Dumbbell, Pill, UtensilsCrossed, MessageCircle, MoreVertical, Activity, Microscope, Copy, Layers, ChevronDown, ChevronUp, Zap, ShieldCheck } from "lucide-react";
+import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera, Image, Search, ClipboardList, Download, Calculator, Check, Lock, Link2, RotateCcw, AlertTriangle, UserX, UserCheck, Dumbbell, Pill, UtensilsCrossed, MessageCircle, MoreVertical, Activity, Microscope, Copy, Layers, ChevronDown, ChevronUp, Zap, ShieldCheck, Sparkles } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
@@ -1792,14 +1792,29 @@ const AdminStudents = () => {
                   />
                 )}
 
+                {/* Shortcut: jump to Evolution Generator */}
+                {allBodyImages && allBodyImages.length > 0 && (
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      document.getElementById("evolution-generator-anchor")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
+                  >
+                    <Sparkles className="w-4 h-4 mr-1" /> Gerar Evolução
+                  </Button>
+                )}
+
                 {/* Evolution Generator */}
                 {allBodyImages && allBodyImages.length > 0 && (
-                  <EvolutionGenerator
-                    allImages={allBodyImages}
-                    studentName={selected.full_name}
-                    userId={selected.user_id}
-                    phone={(selected as any).phone}
-                  />
+                  <div id="evolution-generator-anchor">
+                    <EvolutionGenerator
+                      allImages={allBodyImages}
+                      studentName={selected.full_name}
+                      userId={selected.user_id}
+                      phone={(selected as any).phone}
+                    />
+                  </div>
                 )}
                 {selected.user_id && (
                   <EvolutionArtsGallery userId={selected.user_id} studentName={selected.full_name} />
