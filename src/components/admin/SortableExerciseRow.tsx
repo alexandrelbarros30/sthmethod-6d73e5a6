@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Trash2, GripVertical, ChevronsUpDown, Check, Video, ChevronDown, ChevronRight } from "lucide-react";
+import { Trash2, GripVertical, ChevronsUpDown, Check, Video, ChevronDown, ChevronRight, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ExerciseMediaPreview, { getExerciseMediaSource } from "@/components/admin/ExerciseMediaPreview";
 import {
@@ -122,6 +122,16 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
             </Badge>
           )}
         </div>
+        <div className="flex items-center gap-0.5">
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-8 w-8"
+          onClick={() => setExpanded(v => !v)}
+          title={expanded ? "Fechar edição" : "Editar exercício"}
+        >
+          <Pencil className={cn("w-3.5 h-3.5", expanded && "text-primary")} />
+        </Button>
         <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
           <AlertDialogTrigger asChild>
             <Button size="icon" variant="ghost">
@@ -146,6 +156,7 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        </div>
       </div>
       {/* Collapsed summary */}
       <button
