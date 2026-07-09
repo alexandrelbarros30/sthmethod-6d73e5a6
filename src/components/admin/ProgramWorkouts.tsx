@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Dumbbell, Video, ChevronDown, ChevronUp, Copy, GripVertical, Library, Layers, Unlink } from "lucide-react";
+import { Plus, Pencil, Trash2, Dumbbell, Video, ChevronDown, ChevronUp, Copy, GripVertical, Library, Layers, Unlink, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } from "@dnd-kit/sortable";
@@ -125,13 +125,35 @@ const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onTog
               {exs.map((ex: any, i: number) => {
                 const lib = (libraryExercises || []).find((item: any) => item.id === ex.exercise_id);
                 const media = getExerciseMediaSource({ videoUrl: ex.video_url || lib?.video_url, imageUrl: lib?.image_url });
+                const prev = i > 0 ? exs[i - 1] : null;
+                const next = i < exs.length - 1 ? exs[i + 1] : null;
+                const linkedTop = prev && ex.group_id && prev.group_id === ex.group_id;
+                const linkedBottom = next && ex.group_id && next.group_id === ex.group_id;
                 return (
-                  <div key={ex.id} className="grid grid-cols-[auto_minmax(0,1fr)] gap-3 rounded-lg border border-border/60 bg-background/60 p-3 text-sm sm:grid-cols-[auto_minmax(0,1fr)_minmax(220px,320px)]">
+                  <div
+                    key={ex.id}
+                    className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-3 rounded-lg border border-border/60 bg-background/60 p-3 text-sm sm:grid-cols-[auto_minmax(0,1fr)_minmax(220px,320px)_auto] relative"
+                    style={{ borderLeft: ex.group_color ? `4px solid ${ex.group_color}` : undefined }}
+                  >
+                    {linkedTop && (
+                      <span className="absolute -top-1.5 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold" style={{ backgroundColor: ex.group_color || "#8b5cf6", color: "#fff" }}>
+                        <Link2 className="w-2.5 h-2.5" />
+                      </span>
+                    )}
                     <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold shrink-0 mt-0.5">{i + 1}</span>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="font-semibold text-foreground truncate">{ex.custom_name || lib?.name || "Sem nome"}</span>
                         {(ex.video_url || lib?.video_url || lib?.image_url) && <Video className="w-3.5 h-3.5 text-primary shrink-0" />}
+                        {ex.group_name && (
+                          <Badge
+                            variant="outline"
+                            className="text-[9px] px-1.5 py-0"
+                            style={{ backgroundColor: ex.group_color ? `${ex.group_color}22` : undefined, borderColor: ex.group_color || undefined, color: ex.group_color || undefined }}
+                          >
+                            {ex.group_name}
+                          </Badge>
+                        )}
                       </div>
                       {ex.sets && ex.reps && (
                         <div className="text-xs text-muted-foreground/90 mt-0.5">{ex.sets}×{ex.reps}</div>
@@ -146,9 +168,23 @@ const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onTog
                         imageUrl={lib?.image_url}
                         alt={ex.custom_name || lib?.name || "Exercício"}
                         mode="player"
-                        className="col-span-2 w-full aspect-video sm:col-span-1"
+                        className="col-span-3 w-full aspect-video sm:col-span-1"
                         showBadge
                       />
+                    )}
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 shrink-0 self-start"
+                      onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                      title="Editar exercício"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
+                    {linkedBottom && (
+                      <span className="absolute -bottom-1.5 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold" style={{ backgroundColor: ex.group_color || "#8b5cf6", color: "#fff" }}>
+                        <Link2 className="w-2.5 h-2.5" />
+                      </span>
                     )}
                   </div>
                 );
