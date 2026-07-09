@@ -743,6 +743,11 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
                         </div>
                       </div>
                     </div>
+                    <div className="flex justify-end">
+                      <Button size="sm" onClick={() => { if (confirmDietValidation(newContent, null)) saveMutation.mutate(); }} disabled={saveMutation.isPending}>
+                        {saveMutation.isPending ? "Salvando..." : "Salvar"}
+                      </Button>
+                    </div>
                      <div>
                       <Label className="font-body">Conteúdo</Label>
                       <RichTextEditor value={newContent} onChange={setNewContent} placeholder="Escreva o conteúdo da dieta aqui..." />
@@ -847,6 +852,11 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
                                   <Input type="number" step="0.1" placeholder="0" value={editHydrationL} onChange={(e) => setEditHydrationL(e.target.value)} />
                                 </div>
                               </div>
+                            </div>
+                            <div className="flex justify-end">
+                              <Button size="sm" onClick={() => { if (confirmDietValidation(editContent, editCreatedAt)) editMutation.mutate(); }} disabled={editMutation.isPending}>
+                                {editMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                              </Button>
                             </div>
                             <div>
                               <Label className="font-body text-xs">Conteúdo</Label>
