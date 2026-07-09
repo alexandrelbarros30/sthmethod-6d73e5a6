@@ -18,6 +18,7 @@ import { Plus, Pencil, Trash2, CreditCard, Eye, EyeOff, FileText, Upload, Camera
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
+import { normalizeSearch } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -230,9 +231,9 @@ const AdminStudents = () => {
   const filteredStudents = searchTerm.trim().length < 2
     ? []
     : students?.filter((s: any) => {
-        const term = searchTerm.toLowerCase();
-        if (s.full_name?.toLowerCase().includes(term)) return true;
-        if (s.email?.toLowerCase().includes(term)) return true;
+        const term = normalizeSearch(searchTerm);
+        if (normalizeSearch(s.full_name).includes(term)) return true;
+        if (normalizeSearch(s.email).includes(term)) return true;
         const termDigits = term.replace(/\D/g, "");
         if (termDigits.length >= 3) {
           const phoneDigits = normalizePhone(s.phone);
