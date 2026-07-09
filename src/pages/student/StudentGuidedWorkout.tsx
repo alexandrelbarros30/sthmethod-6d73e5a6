@@ -398,10 +398,13 @@ const StudentGuidedWorkout = () => {
         <div className="space-y-6">
           {exList.map((ex: any, idx: number) => {
             const libraryMeta = ex.exercise_id ? exerciseLibraryMap[ex.exercise_id] : null;
+            const nameKey = String(ex.custom_name || "").trim().toLowerCase();
+            const libraryByName = !libraryMeta && nameKey ? exerciseLibraryByName[nameKey] : null;
+            const meta = libraryMeta || libraryByName;
             const videoSource = getVideoSource(
-              ex.video_url || libraryMeta?.video_url || libraryMeta?.image_url || ""
+              ex.video_url || meta?.video_url || meta?.image_url || ""
             );
-            const exerciseDescription = ex.custom_description || libraryMeta?.description || "";
+            const exerciseDescription = ex.custom_description || meta?.description || "";
             const fallbackImage = "";
             const last = lastLog(ex.id);
             const key = `${assignment.id}-${ex.id}`;
