@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import NutritionMealBuilder, { type MealData, computeTotalsFromMeals } from "@/components/nutrition/NutritionMealBuilder";
 import NutritionSummaryPanel, { type NutritionTotals } from "@/components/nutrition/NutritionSummaryPanel";
 import NutritionPdfPreview from "@/components/nutrition/NutritionPdfPreview";
+import { normalizeSearch } from "@/lib/utils";
 
 const AdminNutrition = () => {
   const { role, user } = useAuth();
@@ -61,8 +62,8 @@ const AdminNutrition = () => {
   const filtered = search.trim().length < 2
     ? []
     : students.filter((s: any) => {
-        const q = search.toLowerCase();
-        return s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q);
+        const q = normalizeSearch(search);
+        return normalizeSearch(s.full_name).includes(q) || normalizeSearch(s.email).includes(q);
       });
 
   if (selectedStudent) {

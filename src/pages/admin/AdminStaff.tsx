@@ -13,6 +13,7 @@ import { Search, Plus, Pencil, Trash2, ShieldCheck, UserCog, Shield, Mail, Lock,
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { normalizeSearch } from "@/lib/utils";
 
 type StaffRole = "admin" | "consultor" | "assistente" | "financeiro";
 
@@ -154,7 +155,8 @@ const AdminStaff = () => {
   });
 
   const filtered = staffUsers?.filter((u) => {
-    const matchSearch = !searchTerm.trim() || u.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) || u.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const q = normalizeSearch(searchTerm);
+    const matchSearch = !q || normalizeSearch(u.full_name).includes(q) || normalizeSearch(u.email).includes(q);
     const matchRole = filterRole === "all" || u.role === filterRole;
     return matchSearch && matchRole;
   });

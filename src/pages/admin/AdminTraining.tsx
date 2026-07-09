@@ -13,6 +13,7 @@ import StudentProgramAssignDialog from "@/components/admin/StudentProgramAssignD
 import ReleaseNotifyButton from "@/components/admin/ReleaseNotifyButton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { normalizeSearch } from "@/lib/utils";
 
 const AdminTraining = () => {
   const navigate = useNavigate();
@@ -141,10 +142,10 @@ const AdminTraining = () => {
               <TableBody>
                 {students
                   ?.filter((s: any) => {
-                    const q = search.toLowerCase();
+                    const q = normalizeSearch(search);
                     return (
-                      s.full_name?.toLowerCase().includes(q) ||
-                      s.email?.toLowerCase().includes(q)
+                      normalizeSearch(s.full_name).includes(q) ||
+                      normalizeSearch(s.email).includes(q)
                     );
                   })
                   .map((s: any) => (

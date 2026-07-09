@@ -15,6 +15,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import PaymentLinksTab from "@/components/admin/PaymentLinksTab";
+import { normalizeSearch } from "@/lib/utils";
 
 const AdminPayments = () => {
   const qc = useQueryClient();
@@ -631,8 +632,8 @@ const AdminPayments = () => {
                 <div className="max-h-40 overflow-y-auto border border-border rounded-md divide-y divide-border">
                   {(profiles || [])
                     .filter((p: any) => {
-                      const q = manualForm.user_search.toLowerCase();
-                      return (p.full_name || "").toLowerCase().includes(q) || (p.email || "").toLowerCase().includes(q);
+                      const q = normalizeSearch(manualForm.user_search);
+                      return normalizeSearch(p.full_name).includes(q) || normalizeSearch(p.email).includes(q);
                     })
                     .slice(0, 10)
                     .map((p: any) => (

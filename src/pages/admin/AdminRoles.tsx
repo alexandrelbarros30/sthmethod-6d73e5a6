@@ -15,6 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { normalizeSearch } from "@/lib/utils";
 
 type AppRole = "admin" | "admin_viewer" | "consultor" | "assistente" | "financeiro" | "student";
 
@@ -89,7 +90,8 @@ const RolesTab = () => {
   });
 
   const filtered = users?.filter((u) => {
-    const matchSearch = !searchTerm.trim() || u.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) || u.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const q = normalizeSearch(searchTerm);
+    const matchSearch = !q || normalizeSearch(u.full_name).includes(q) || normalizeSearch(u.email).includes(q);
     const matchRole = filterRole === "all" || u.role === filterRole;
     const matchStatus = filterStatus === "all" || u.subStatus === filterStatus;
     return matchSearch && matchRole && matchStatus;
@@ -303,8 +305,8 @@ const ConsultantLinksTab = () => {
   const availableStudents = allStudents?.filter((s) => !alreadyLinkedIds.has(s.user_id)) || [];
   const filteredAvailable = availableStudents.filter((s) => {
     if (!studentSearch.trim()) return true;
-    const term = studentSearch.toLowerCase();
-    return s.full_name?.toLowerCase().includes(term) || s.email?.toLowerCase().includes(term);
+    const term = normalizeSearch(studentSearch);
+    return normalizeSearch(s.full_name).includes(term) || normalizeSearch(s.email).includes(term);
   });
 
   const toggleStudent = (id: string) => {

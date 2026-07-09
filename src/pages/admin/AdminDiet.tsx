@@ -18,6 +18,7 @@ import { Pencil, Trash2, FileText, Search, Plus, Clock, Eye, EyeOff, ToggleLeft,
 import DietAIAnalysis from "@/components/admin/DietAIAnalysis";
 import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { normalizeSearch } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { notifyStudentContentUpdate } from "@/lib/notify-student-update";
@@ -526,8 +527,8 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
   const filteredStudents = search.trim().length < 2
     ? []
     : (students || []).filter((s: any) => {
-        const q = search.toLowerCase();
-        return s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q);
+        const q = normalizeSearch(search);
+        return normalizeSearch(s.full_name).includes(q) || normalizeSearch(s.email).includes(q);
       });
 
   return (

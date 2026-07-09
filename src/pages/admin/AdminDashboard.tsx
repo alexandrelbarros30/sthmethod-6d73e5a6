@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
 import { normalizePhone } from "@/lib/phone";
+import { normalizeSearch } from "@/lib/utils";
 
 const getEffectiveSubscriptionMap = (subscriptions: any[] | undefined) => {
   const map = new Map<string, any>();
@@ -237,11 +238,11 @@ const AdminDashboard = () => {
 
   const filteredProfiles = useMemo(() => {
     if (!searchTerm.trim() || !profiles) return null;
-    const term = searchTerm.toLowerCase();
+    const term = normalizeSearch(searchTerm);
     const termDigits = term.replace(/\D/g, "");
     return profiles.filter((p: any) => {
-      if (p.full_name?.toLowerCase().includes(term)) return true;
-      if (p.email?.toLowerCase().includes(term)) return true;
+      if (normalizeSearch(p.full_name).includes(term)) return true;
+      if (normalizeSearch(p.email).includes(term)) return true;
       if (termDigits.length >= 3) {
         const phoneDigits = normalizePhone(p.phone);
         if (phoneDigits.includes(termDigits)) return true;
