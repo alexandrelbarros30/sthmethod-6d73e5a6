@@ -278,7 +278,7 @@ const StudentTraining = () => {
                             )}
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
-                            {ex.video_url && (
+                            {media && (
                               <Play className="w-4 h-4 text-foreground/60" strokeWidth={1.8} />
                             )}
                             {isExpanded
@@ -303,7 +303,7 @@ const StudentTraining = () => {
                               </div>
                             )}
                             {media?.kind === "image" && (
-                              <div className="aspect-video rounded-2xl overflow-hidden border border-border/40 bg-black/30">
+                              <div className="aspect-video rounded-2xl overflow-hidden border border-border/40 bg-black relative">
                                 <img
                                   src={media.url}
                                   alt={ex.name}
@@ -311,6 +311,9 @@ const StudentTraining = () => {
                                   loading="lazy"
                                   draggable={false}
                                 />
+                                <div className="absolute bottom-2 left-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide bg-black/70 text-white px-2 py-0.5 rounded-full">
+                                  <Play className="w-3 h-3" strokeWidth={2} /> Vídeo
+                                </div>
                               </div>
                             )}
                             {media?.kind === "file" && (
