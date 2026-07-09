@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Video, Dumbbell, Eraser } from "lucide-react";
+import ExerciseMediaPreview from "@/components/admin/ExerciseMediaPreview";
 
 const MUSCLE_GROUPS = [
   "Peito", "Costas", "Ombros", "Bíceps", "Tríceps", "Quadríceps",
@@ -97,14 +98,18 @@ const LibraryMultiSelectDialog = ({ open, onOpenChange, libraryExercises, onAdd,
                   className={`w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-muted/40 transition-colors ${checked ? "bg-primary/5" : ""}`}
                 >
                   <Checkbox checked={checked} onCheckedChange={() => toggle(e.id)} />
-                  <div className="flex items-center justify-center w-8 h-8 rounded bg-primary/10 shrink-0">
-                    <Dumbbell className="w-4 h-4 text-primary" />
-                  </div>
+                  <ExerciseMediaPreview
+                    videoUrl={e.video_url}
+                    imageUrl={e.image_url}
+                    alt={e.name}
+                    className="w-16 h-16 shrink-0"
+                    showBadge
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{e.name}</p>
                     <div className="flex gap-1.5 items-center mt-0.5">
                       {e.muscle_group && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{e.muscle_group}</Badge>}
-                      {e.video_url && <Video className="w-3 h-3 text-primary" />}
+                      {(e.video_url || e.image_url) && <Video className="w-3 h-3 text-primary" />}
                     </div>
                   </div>
                 </button>

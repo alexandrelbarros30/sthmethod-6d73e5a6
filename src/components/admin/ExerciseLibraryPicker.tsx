@@ -7,15 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-
-const isImageUrl = (url?: string | null) =>
-  !!url && /\.(gif|png|jpe?g|webp|avif)(\?.*)?$/i.test(url);
-
-const getYoutubeThumb = (url?: string | null) => {
-  if (!url) return null;
-  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-  return m ? `https://img.youtube.com/vi/${m[1]}/mqdefault.jpg` : null;
-};
+import ExerciseMediaPreview from "@/components/admin/ExerciseMediaPreview";
 
 const MUSCLE_GROUPS = [
   "Peito", "Costas", "Ombros", "Bíceps", "Tríceps", "Quadríceps",
@@ -93,13 +85,6 @@ const ExerciseLibraryPicker = ({ onSelect }: ExerciseLibraryPickerProps) => {
             <p className="text-xs text-muted-foreground text-center py-4">Nenhum exercício encontrado.</p>
           ) : (
             filtered.slice(0, 20).map((ex: any) => {
-              const preview = isImageUrl(ex.image_url)
-                ? { kind: "image" as const, url: ex.image_url }
-                : isImageUrl(ex.video_url)
-                ? { kind: "image" as const, url: ex.video_url }
-                : getYoutubeThumb(ex.video_url)
-                ? { kind: "image" as const, url: getYoutubeThumb(ex.video_url)! }
-                : null;
               return (
               <button
                 key={ex.id}
@@ -116,19 +101,13 @@ const ExerciseLibraryPicker = ({ onSelect }: ExerciseLibraryPickerProps) => {
                   setSearch("");
                 }}
               >
-                <div className="flex items-center justify-center w-16 h-16 rounded-md bg-muted overflow-hidden shrink-0 border border-border">
-                  {preview ? (
-                    <img
-                      src={preview.url}
-                      alt={ex.name}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                      draggable={false}
-                    />
-                  ) : (
-                    <Dumbbell className="w-4 h-4 text-muted-foreground" />
-                  )}
-                </div>
+                <ExerciseMediaPreview
+                  videoUrl={ex.video_url}
+                  imageUrl={ex.image_url}
+                  alt={ex.name}
+                  className="w-16 h-16 shrink-0"
+                  showBadge
+                />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium truncate">{ex.name}</p>
                   <div className="flex gap-1.5 items-center mt-0.5">
