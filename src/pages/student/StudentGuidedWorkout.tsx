@@ -456,7 +456,7 @@ const StudentGuidedWorkout = () => {
                 )}
 
                 {videoSource?.kind === "image" && (
-                  <div className="aspect-video rounded-2xl overflow-hidden border border-border/40 bg-black/30">
+                  <div className="aspect-video rounded-2xl overflow-hidden border border-border/40 bg-black relative">
                     <img
                       src={videoSource.url}
                       alt={ex.custom_name || "Exercício"}
@@ -464,6 +464,9 @@ const StudentGuidedWorkout = () => {
                       loading="lazy"
                       draggable={false}
                     />
+                    <div className="absolute bottom-2 left-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide bg-black/70 text-white px-2 py-0.5 rounded-full">
+                      ▶ Vídeo
+                    </div>
                   </div>
                 )}
 
