@@ -14,13 +14,14 @@ import StudentInfoHeader from "@/components/student/StudentInfoHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import StudentGuidedWorkout from "@/pages/student/StudentGuidedWorkout";
 
-const getEmbedUrl = (url: string) => {
+const getMediaSource = (url: string): { kind: "embed" | "image" | "file"; url: string } | null => {
   if (!url) return null;
   const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+  if (ytMatch) return { kind: "embed", url: `https://www.youtube.com/embed/${ytMatch[1]}` };
   const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
-  return url;
+  if (vimeoMatch) return { kind: "embed", url: `https://player.vimeo.com/video/${vimeoMatch[1]}` };
+  if (/\.(gif|png|jpe?g|webp|avif)(\?.*)?$/i.test(url)) return { kind: "image", url };
+  return { kind: "file", url };
 };
 
 const StudentTraining = () => {
@@ -218,7 +219,7 @@ const StudentTraining = () => {
 
                 <div className="space-y-3">
                   {weekExercises.map((ex: any, idx: number) => {
-                    const embedUrl = getEmbedUrl(ex.video_url || "");
+                    const media = getMediaSource(ex.video_url || ex.image_url || "");
                     const isExpanded = expandedExercises.has(ex.id);
 
                     return (
@@ -262,14 +263,30 @@ const StudentTraining = () => {
                         {isExpanded && (
                           <div className="border-t border-border/40 p-5 space-y-4">
                             {/* Video embed */}
-                            {embedUrl && (
+                            {media?.kind === "embed" && (
                               <div className="aspect-video rounded-2xl overflow-hidden border border-border/40">
                                 <iframe
-                                  src={embedUrl}
+                                  src={media.url}
                                   className="w-full h-full"
                                   allowFullScreen
                                   title={`Vídeo - ${ex.name}`}
                                 />
+                              </div>
+                            )}
+                            {media?.kind === "image" && (
+                              <div className="aspect-video rounded-2xl overflow-hidden border border-border/40 bg-black/30">
+                                <img
+                                  src={media.url}
+                                  alt={ex.name}
+                                  className="w-full h-full object-contain"
+                                  loading="lazy"
+                                  draggable={false}
+                                />
+                              </div>
+                            )}
+                            {media?.kind === "file" && (
+                              <div className="aspect-video rounded-2xl overflow-hidden border border-border/40 bg-black/30">
+                                <video src={media.url} className="w-full h-full" controls playsInline preload="metadata" />
                               </div>
                             )}
 

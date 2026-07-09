@@ -92,7 +92,7 @@ const ExerciseLibraryPicker = ({ onSelect }: ExerciseLibraryPickerProps) => {
                   onSelect({
                     name: ex.name,
                     description: ex.description || "",
-                    video_url: ex.video_url || "",
+                    video_url: ex.video_url || ex.image_url || "",
                     muscle_group: ex.muscle_group || "",
                   });
                   setOpen(false);
