@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { TrendingUp, Scale, ChevronDown, ChevronUp } from "lucide-react";
+import { TrendingUp, Scale, ChevronDown, ChevronUp, Calendar as CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { calculateAge, calculateMacros } from "@/lib/macro-calculator";
@@ -25,6 +25,7 @@ const AdminEvolutionUpdate = ({ userId, studentName, currentWeight, profile, onC
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [activityChange, setActivityChange] = useState<ActivityData | null>(null);
+  const [recordDate, setRecordDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
 
   const handleSave = async () => {
     if (!weight && !activityChange && !notes.trim()) {
@@ -38,11 +39,22 @@ const AdminEvolutionUpdate = ({ userId, studentName, currentWeight, profile, onC
       const currentStoredWeight = profile?.weight ? Number(profile.weight) : (currentWeight ? Number(currentWeight) : null);
       const newWeight = hasNewWeight ? Number(weight) : currentStoredWeight;
 
+      // Combina a data escolhida com o horário atual, preservando fuso local
+      let recordTimestamp = new Date().toISOString();
+      if (recordDate) {
+        const now = new Date();
+        const [y, m, d] = recordDate.split("-").map(Number);
+        const dt = new Date(y, (m || 1) - 1, d || 1, now.getHours(), now.getMinutes(), now.getSeconds());
+        recordTimestamp = dt.toISOString();
+      }
+
       if (hasNewWeight) {
         const { error } = await supabase.from("weight_logs").insert({
           user_id: userId,
           weight: newWeight,
           notes: notes || "",
+          logged_at: recordTimestamp,
+          created_at: recordTimestamp,
         });
         if (error) throw error;
       }
@@ -155,14 +167,16 @@ const AdminEvolutionUpdate = ({ userId, studentName, currentWeight, profile, onC
       await supabase.from("anamnesis_entries").insert({
         user_id: userId,
         notes: anamnesisNote,
+        created_at: recordTimestamp,
       });
 
-      await createEvolutionSnapshot(userId, "admin", anamnesisNote);
+      await createEvolutionSnapshot(userId, "admin", anamnesisNote, recordTimestamp);
 
       toast.success("Evolução registrada e macros atualizados!");
       setWeight("");
       setNotes("");
       setActivityChange(null);
+      setRecordDate(new Date().toISOString().slice(0, 10));
       setExpanded(false);
       onComplete();
     } catch (err: any) {
@@ -190,6 +204,22 @@ const AdminEvolutionUpdate = ({ userId, studentName, currentWeight, profile, onC
 
       {expanded && (
         <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <CalendarIcon className="w-4 h-4 text-primary" />
+              <Label className="font-body font-medium text-sm">Data do registro</Label>
+            </div>
+            <Input
+              type="date"
+              value={recordDate}
+              max={new Date().toISOString().slice(0, 10)}
+              onChange={(e) => setRecordDate(e.target.value)}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Use datas passadas para registrar evoluções atrasadas do aluno.
+            </p>
+          </div>
+
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Scale className="w-4 h-4 text-primary" />
