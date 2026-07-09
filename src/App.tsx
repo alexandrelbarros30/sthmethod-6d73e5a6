@@ -301,6 +301,7 @@ const App = () => (
             <Route path="/admin/protocol-library" element={<ProtectedRoute allowedRoles={["admin"]}><AdminProtocolLibrary /></ProtectedRoute>} />
             <Route path="/admin/popups" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPopups /></ProtectedRoute>} />
             <Route path="/admin/notifications" element={<ProtectedRoute allowedRoles={["admin"]}><AdminNotifications /></ProtectedRoute>} />
+            <Route path="/admin/release-log" element={<ProtectedRoute allowedRoles={["admin"]}><AdminReleaseLog /></ProtectedRoute>} />
             <Route path="/admin/budgets" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBudgets /></ProtectedRoute>} />
             <Route path="/admin/ads" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAds /></ProtectedRoute>} />
             <Route path="/admin/queue" element={<ProtectedRoute allowedRoles={["admin"]}><AdminQueue /></ProtectedRoute>} />
