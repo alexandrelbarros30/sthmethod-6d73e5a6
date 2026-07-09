@@ -10,7 +10,8 @@ export type SnapshotSource = "student" | "admin" | "consultor";
 export async function createEvolutionSnapshot(
   userId: string,
   source: SnapshotSource,
-  notes: string = ""
+  notes: string = "",
+  overrideCreatedAt?: string
 ): Promise<string | null> {
   try {
     const [{ data: profile }, { data: images }, { data: bio }] = await Promise.all([
@@ -42,7 +43,7 @@ export async function createEvolutionSnapshot(
     const back = backImg?.storage_path || backImg?.image_url || null;
     const profilePic = profileImg?.storage_path || profileImg?.image_url || null;
 
-    const payload = {
+    const payload: any = {
       user_id: userId,
       source,
       notes,
@@ -70,6 +71,7 @@ export async function createEvolutionSnapshot(
       lean_mass_kg: bio?.lean_mass_kg ?? null,
       fat_mass_kg: bio?.fat_mass_kg ?? null,
     };
+    if (overrideCreatedAt) payload.created_at = overrideCreatedAt;
 
     const { data, error } = await supabase
       .from("evolution_snapshots")
