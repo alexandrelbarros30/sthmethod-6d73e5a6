@@ -576,11 +576,36 @@ Deno.serve(async (req) => {
       if (phone) {
         console.log(`Atendente respondeu manualmente para ${phone} via ${provider} (type=${evtType||'-'}, fromMe=${isFromMe}, fromApi=${isFromApi}). Ativando handoff humano e silenciando o bot por 24h.`);
         // Atualiza TODAS as conversas desse telefone (vale para canal comercial, sucesso e nutri).
-        await admin.from('crm_conversations').update({
+        const upd = await admin.from('crm_conversations').update({
           human_handoff: true,
           status: 'open',
           updated_at: new Date().toISOString(),
-        }).eq('phone', phone);
+        }).eq('phone', phone).select('id');
+
+        // Se ainda não existe conversa para esse telefone (humano iniciou o contato
+        // "do zero"), cria uma já em handoff para bloquear a IA quando o cliente responder.
+        if (!upd.data || upd.data.length === 0) {
+          const nowIso = new Date().toISOString();
+          try {
+            await admin.from('crm_conversations').insert({
+              phone,
+              wa_id: waId,
+              display_name: name || null,
+              channel: 'whatsapp',
+              provider,
+              queue_type: provider === 'zapi' ? 'comercial' : (provider === 'wapi_sucesso' ? 'sucesso' : 'nutri'),
+              status: 'open',
+              human_handoff: true,
+              last_message_at: nowIso,
+              last_direction: 'out',
+              last_message_preview: (body || '[Mensagem manual]').slice(0, 200),
+              session_started_at: nowIso,
+              session_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+            });
+          } catch (e) {
+            console.error('Falha ao criar conversa inicial em handoff humano:', e);
+          }
+        }
 
         // Registra a mensagem no histórico (quando vier conteúdo) para o painel mostrar o que o humano enviou.
         try {
