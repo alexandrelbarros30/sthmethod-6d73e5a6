@@ -243,8 +243,12 @@ const StudentTraining = () => {
                 </div>
 
                 <div className="space-y-3">
-                  {weekExercises.map((ex: any, idx: number) => {
-                    const media = getMediaSource(ex.video_url || ex.image_url || "");
+                   {weekExercises.map((ex: any, idx: number) => {
+                     const nameKey = String(ex.name || "").trim().toLowerCase();
+                     const libMeta = nameKey ? (libraryByName as any)[nameKey] : null;
+                     const media = getMediaSource(
+                       pickBestMediaUrl(libMeta?.video_url, ex.video_url, ex.image_url, libMeta?.image_url)
+                     );
                     const isExpanded = expandedExercises.has(ex.id);
 
                     return (
