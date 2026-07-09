@@ -1605,6 +1605,31 @@ Deno.serve(async (req) => {
     let autoReply: any;
     const channelEnabled = provider === 'wapi' ? (wapiCfg?.value as any)?.enabled === true : (provider === 'wapi_sucesso' ? (wapiSucessoCfg?.value as any)?.enabled === true : (zapiCfg?.value as any)?.enabled === true);
 
+    // SALVAGUARDA: se a última mensagem enviada nesta conversa foi manual (humano
+    // pelo painel ou pelo próprio WhatsApp do atendente), tratamos como handoff
+    // ativo mesmo que a flag ainda não tenha sido persistida. Isso cobre o cenário
+    // em que o humano INICIA a conversa e a IA ainda "não sabe".
+    try {
+      const { data: lastOut } = await admin
+        .from('crm_messages')
+        .select('sent_by, metadata, created_at')
+        .eq('conversation_id', conv.id)
+        .eq('direction', 'out')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const lastOutIsManual =
+        !!lastOut &&
+        (lastOut.sent_by != null || String((lastOut.metadata as any)?.type || '') === 'manual_human');
+      if (lastOutIsManual && conv.human_handoff !== true) {
+        console.log(`Última saída em ${conv.id} foi manual — forçando handoff humano.`);
+        await admin.from('crm_conversations').update({ human_handoff: true }).eq('id', conv.id);
+        (conv as any).human_handoff = true;
+      }
+    } catch (e) {
+      console.error('salvaguarda manual-out falhou:', e);
+    }
+
     // Se houver atendente humano ou flag de handoff, ignoramos mensagens automáticas de fluxo e ausência.
     const isChannelEnabled = channelEnabled;
     const aiMode = String((aiModeCfg?.value as any)?.mode || 'auto'); // off | auto | ai_only
