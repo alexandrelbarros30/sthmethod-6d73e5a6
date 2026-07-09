@@ -1491,6 +1491,13 @@ const AdminStudents = () => {
                   <StudentPlanHistory userId={selected.user_id} />
                 </section>
                 <section>
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Treino atribuído</h3>
+                  <StudentWorkoutAlertCard
+                    userId={selected.user_id}
+                    onOpenAssign={() => { setViewOpen(false); setProgramsOpen(true); }}
+                  />
+                </section>
+                <section>
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Atividade & Objetivo</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                     <div className="col-span-1 sm:col-span-2"><span className="text-muted-foreground">Nível atividade (NEAT):</span> <span className="font-medium">{physicalActivityLevelOptions.find(o => o.value === selectedMerged.physical_activity_level)?.label || "—"}</span></div>
