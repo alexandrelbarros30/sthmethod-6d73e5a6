@@ -103,6 +103,36 @@ const StudentGuidedWorkout = () => {
     enabled: exerciseIds.length > 0,
   });
 
+  // Nome -> metadata (fallback quando exercise_id não está setado no template)
+  const exerciseNames = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (exercises || [])
+            .filter((e: any) => !e.exercise_id && e.custom_name)
+            .map((e: any) => String(e.custom_name).trim().toLowerCase())
+        )
+      ),
+    [exercises]
+  );
+
+  const { data: exerciseLibraryByName = {} } = useQuery({
+    queryKey: ["sgw-exercise-library-by-name", exerciseNames],
+    queryFn: async () => {
+      if (!exerciseNames.length) return {};
+      const { data } = await supabase
+        .from("exercise_library")
+        .select("name, description, video_url, image_url");
+      const map: Record<string, any> = {};
+      (data || []).forEach((item: any) => {
+        const key = String(item.name || "").trim().toLowerCase();
+        if (key && !map[key]) map[key] = item;
+      });
+      return map;
+    },
+    enabled: exerciseNames.length > 0,
+  });
+
   const { data: myLogs } = useQuery({
     queryKey: ["sgw-logs", user?.id],
     queryFn: async () => {
