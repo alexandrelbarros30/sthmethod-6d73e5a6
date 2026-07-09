@@ -293,7 +293,7 @@ const StudentTraining = () => {
                           <div className="border-t border-border/40 p-5 space-y-4">
                             {/* Video embed */}
                             {media?.kind === "embed" && (
-                              <div className="aspect-video rounded-2xl overflow-hidden border border-border/40">
+                              <div className="aspect-[4/3] sm:aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40">
                                 <iframe
                                   src={media.url}
                                   className="w-full h-full"
@@ -303,7 +303,7 @@ const StudentTraining = () => {
                               </div>
                             )}
                             {media?.kind === "image" && (
-                              <div className="aspect-video rounded-2xl overflow-hidden border border-border/40 bg-black relative">
+                              <div className="aspect-[4/3] sm:aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40 bg-black relative">
                                 <img
                                   src={media.url}
                                   alt={ex.name}
@@ -317,7 +317,7 @@ const StudentTraining = () => {
                               </div>
                             )}
                             {media?.kind === "file" && (
-                              <div className="aspect-video rounded-2xl overflow-hidden border border-border/40 bg-black/30">
+                              <div className="aspect-[4/3] sm:aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40 bg-black/30">
                                 <video src={media.url} className="w-full h-full" controls playsInline preload="metadata" />
                               </div>
                             )}
