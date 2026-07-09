@@ -412,7 +412,7 @@ const StudentGuidedWorkout = () => {
             const libraryByName = !libraryMeta && nameKey ? exerciseLibraryByName[nameKey] : null;
             const meta = libraryMeta || libraryByName;
             const videoSource = getVideoSource(
-              pickBestMediaUrl(meta?.video_url, ex.video_url, meta?.image_url)
+              pickBestMediaUrl(meta?.video_url, ex.video_url, ex.image_url, meta?.image_url)
             );
             const exerciseDescription = ex.custom_description || meta?.description || "";
             const fallbackImage = "";
