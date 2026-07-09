@@ -108,6 +108,7 @@ import AdminProtocolLibrary from "./pages/admin/AdminProtocolLibrary";
 import AdminPopups from "./pages/admin/AdminPopups";
 import AdminAds from "./pages/admin/AdminAds";
 import AdminNotifications from "./pages/admin/AdminNotifications";
+import AdminReleaseLog from "./pages/admin/AdminReleaseLog";
 import AdminBudgets from "./pages/admin/AdminBudgets";
 import AdminQueue from "./pages/admin/AdminQueue";
 import AdminUpdates from "./pages/admin/AdminUpdates";
