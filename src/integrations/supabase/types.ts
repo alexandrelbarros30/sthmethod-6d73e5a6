@@ -4631,12 +4631,17 @@ export type Database = {
       }
       student_trainings: {
         Row: {
+          alert_silenced_at: string | null
+          alert_silenced_by: string | null
           content: string | null
           created_at: string
           end_date: string | null
           id: string
           is_active: boolean
           pdf_url: string | null
+          replaced_at: string | null
+          replaced_by: string | null
+          replaced_reason: string | null
           seen_by_student: boolean
           start_date: string | null
           title: string
@@ -4645,12 +4650,17 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
+          alert_silenced_at?: string | null
+          alert_silenced_by?: string | null
           content?: string | null
           created_at?: string
           end_date?: string | null
           id?: string
           is_active?: boolean
           pdf_url?: string | null
+          replaced_at?: string | null
+          replaced_by?: string | null
+          replaced_reason?: string | null
           seen_by_student?: boolean
           start_date?: string | null
           title?: string
@@ -4659,12 +4669,17 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
+          alert_silenced_at?: string | null
+          alert_silenced_by?: string | null
           content?: string | null
           created_at?: string
           end_date?: string | null
           id?: string
           is_active?: boolean
           pdf_url?: string | null
+          replaced_at?: string | null
+          replaced_by?: string | null
+          replaced_reason?: string | null
           seen_by_student?: boolean
           start_date?: string | null
           title?: string
@@ -4677,27 +4692,42 @@ export type Database = {
       student_workout_assignments: {
         Row: {
           active: boolean | null
+          alert_silenced_at: string | null
+          alert_silenced_by: string | null
           assigned_at: string
           assigned_by: string
           id: string
+          replaced_at: string | null
+          replaced_by: string | null
+          replaced_reason: string | null
           seen_by_student: boolean
           template_id: string
           user_id: string
         }
         Insert: {
           active?: boolean | null
+          alert_silenced_at?: string | null
+          alert_silenced_by?: string | null
           assigned_at?: string
           assigned_by: string
           id?: string
+          replaced_at?: string | null
+          replaced_by?: string | null
+          replaced_reason?: string | null
           seen_by_student?: boolean
           template_id: string
           user_id: string
         }
         Update: {
           active?: boolean | null
+          alert_silenced_at?: string | null
+          alert_silenced_by?: string | null
           assigned_at?: string
           assigned_by?: string
           id?: string
+          replaced_at?: string | null
+          replaced_by?: string | null
+          replaced_reason?: string | null
           seen_by_student?: boolean
           template_id?: string
           user_id?: string
