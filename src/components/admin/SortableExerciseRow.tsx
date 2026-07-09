@@ -188,9 +188,10 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
       {expanded && (
       <>
       <div className="space-y-2">
-        {!selectedExercise && (
-          <>
-            <Label className="text-xs">Da Biblioteca</Label>
+        <>
+            <Label className="text-xs">
+              {selectedExercise ? "Trocar exercício da Biblioteca" : "Da Biblioteca"}
+            </Label>
             <div className="flex flex-col sm:flex-row gap-2">
           <Select value={libGroup} onValueChange={setLibGroup}>
             <SelectTrigger className="w-full sm:w-32 h-9 text-xs">
@@ -255,8 +256,26 @@ const SortableExerciseRow = ({ row, idx, libraryExercises, onRemove, onUpdate, o
             </PopoverContent>
           </Popover>
             </div>
+            {selectedExercise && (
+              <div className="flex items-center justify-between gap-2 rounded-md bg-primary/5 border border-primary/20 px-2 py-1.5">
+                <span className="text-[11px] text-primary truncate">
+                  Vinculado: <strong>{selectedExercise.name}</strong>
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 text-[11px]"
+                  onClick={() => {
+                    onUpdate(idx, "exercise_id", null);
+                    onUpdate(idx, "video_url", "");
+                  }}
+                >
+                  Desvincular
+                </Button>
+              </div>
+            )}
           </>
-        )}
 
         {/* Video preview */}
         {mediaSource && (
