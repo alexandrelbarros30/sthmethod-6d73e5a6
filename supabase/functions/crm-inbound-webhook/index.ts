@@ -576,11 +576,36 @@ Deno.serve(async (req) => {
       if (phone) {
         console.log(`Atendente respondeu manualmente para ${phone} via ${provider} (type=${evtType||'-'}, fromMe=${isFromMe}, fromApi=${isFromApi}). Ativando handoff humano e silenciando o bot por 24h.`);
         // Atualiza TODAS as conversas desse telefone (vale para canal comercial, sucesso e nutri).
-        await admin.from('crm_conversations').update({
+        const upd = await admin.from('crm_conversations').update({
           human_handoff: true,
           status: 'open',
           updated_at: new Date().toISOString(),
-        }).eq('phone', phone);
+        }).eq('phone', phone).select('id');
+
+        // Se ainda não existe conversa para esse telefone (humano iniciou o contato
+        // "do zero"), cria uma já em handoff para bloquear a IA quando o cliente responder.
+        if (!upd.data || upd.data.length === 0) {
+          const nowIso = new Date().toISOString();
+          try {
+            await admin.from('crm_conversations').insert({
+              phone,
+              wa_id: waId,
+              display_name: name || null,
+              channel: 'whatsapp',
+              provider,
+              queue_type: provider === 'zapi' ? 'comercial' : (provider === 'wapi_sucesso' ? 'sucesso' : 'nutri'),
+              status: 'open',
+              human_handoff: true,
+              last_message_at: nowIso,
+              last_direction: 'out',
+              last_message_preview: (body || '[Mensagem manual]').slice(0, 200),
+              session_started_at: nowIso,
+              session_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+            });
+          } catch (e) {
+            console.error('Falha ao criar conversa inicial em handoff humano:', e);
+          }
+        }
 
         // Registra a mensagem no histórico (quando vier conteúdo) para o painel mostrar o que o humano enviou.
         try {
@@ -1579,6 +1604,31 @@ Deno.serve(async (req) => {
 
     let autoReply: any;
     const channelEnabled = provider === 'wapi' ? (wapiCfg?.value as any)?.enabled === true : (provider === 'wapi_sucesso' ? (wapiSucessoCfg?.value as any)?.enabled === true : (zapiCfg?.value as any)?.enabled === true);
+
+    // SALVAGUARDA: se a última mensagem enviada nesta conversa foi manual (humano
+    // pelo painel ou pelo próprio WhatsApp do atendente), tratamos como handoff
+    // ativo mesmo que a flag ainda não tenha sido persistida. Isso cobre o cenário
+    // em que o humano INICIA a conversa e a IA ainda "não sabe".
+    try {
+      const { data: lastOut } = await admin
+        .from('crm_messages')
+        .select('sent_by, metadata, created_at')
+        .eq('conversation_id', conv.id)
+        .eq('direction', 'out')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const lastOutIsManual =
+        !!lastOut &&
+        (lastOut.sent_by != null || String((lastOut.metadata as any)?.type || '') === 'manual_human');
+      if (lastOutIsManual && conv.human_handoff !== true) {
+        console.log(`Última saída em ${conv.id} foi manual — forçando handoff humano.`);
+        await admin.from('crm_conversations').update({ human_handoff: true }).eq('id', conv.id);
+        (conv as any).human_handoff = true;
+      }
+    } catch (e) {
+      console.error('salvaguarda manual-out falhou:', e);
+    }
 
     // Se houver atendente humano ou flag de handoff, ignoramos mensagens automáticas de fluxo e ausência.
     const isChannelEnabled = channelEnabled;
