@@ -22,6 +22,16 @@ const getVideoSource = (url: string): { kind: "embed" | "file" | "image"; url: s
   return { kind: "file", url };
 };
 
+const isImageUrl = (url?: string | null) =>
+  !!url && /\.(gif|png|jpe?g|webp|avif)(\?.*)?$/i.test(url);
+
+const pickBestMediaUrl = (...candidates: (string | null | undefined)[]): string => {
+  const list = candidates.filter((u): u is string => !!u && u.trim().length > 0);
+  // Prefer any non-image (real video / YouTube / Vimeo / mp4) over images (GIFs).
+  const nonImage = list.find((u) => !isImageUrl(u));
+  return nonImage || list[0] || "";
+};
+
 type View =
   | { kind: "programs" }
   | { kind: "program"; programId: string | "_solo" }
@@ -402,7 +412,7 @@ const StudentGuidedWorkout = () => {
             const libraryByName = !libraryMeta && nameKey ? exerciseLibraryByName[nameKey] : null;
             const meta = libraryMeta || libraryByName;
             const videoSource = getVideoSource(
-              ex.video_url || meta?.video_url || meta?.image_url || ""
+              pickBestMediaUrl(meta?.video_url, ex.video_url, meta?.image_url)
             );
             const exerciseDescription = ex.custom_description || meta?.description || "";
             const fallbackImage = "";

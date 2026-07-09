@@ -24,6 +24,15 @@ const getMediaSource = (url: string): { kind: "embed" | "image" | "file"; url: s
   return { kind: "file", url };
 };
 
+const isImageUrl = (url?: string | null) =>
+  !!url && /\.(gif|png|jpe?g|webp|avif)(\?.*)?$/i.test(url);
+
+const pickBestMediaUrl = (...candidates: (string | null | undefined)[]): string => {
+  const list = candidates.filter((u): u is string => !!u && u.trim().length > 0);
+  const nonImage = list.find((u) => !isImageUrl(u));
+  return nonImage || list[0] || "";
+};
+
 const StudentTraining = () => {
   const { user } = useAuth();
   const { isActive, isLoading: subLoading } = useSubscriptionGuard();
@@ -109,6 +118,22 @@ const StudentTraining = () => {
       return data;
     },
     enabled: !!user?.id,
+  });
+
+  const { data: libraryByName = {} } = useQuery({
+    queryKey: ["student-training-library-by-name"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("exercise_library")
+        .select("name, video_url, image_url");
+      const map: Record<string, { video_url?: string | null; image_url?: string | null }> = {};
+      (data || []).forEach((row: any) => {
+        const key = String(row.name || "").trim().toLowerCase();
+        if (key) map[key] = { video_url: row.video_url, image_url: row.image_url };
+      });
+      return map;
+    },
+    enabled: !!user?.id && isActive && !hasGuidedAssignments,
   });
 
   const isLoading = subLoading || guidedAssignmentsLoading || weeksLoading || exLoading;
@@ -218,8 +243,12 @@ const StudentTraining = () => {
                 </div>
 
                 <div className="space-y-3">
-                  {weekExercises.map((ex: any, idx: number) => {
-                    const media = getMediaSource(ex.video_url || ex.image_url || "");
+                   {weekExercises.map((ex: any, idx: number) => {
+                     const nameKey = String(ex.name || "").trim().toLowerCase();
+                     const libMeta = nameKey ? (libraryByName as any)[nameKey] : null;
+                     const media = getMediaSource(
+                       pickBestMediaUrl(libMeta?.video_url, ex.video_url, ex.image_url, libMeta?.image_url)
+                     );
                     const isExpanded = expandedExercises.has(ex.id);
 
                     return (
