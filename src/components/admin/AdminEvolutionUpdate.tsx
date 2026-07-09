@@ -206,6 +206,22 @@ const AdminEvolutionUpdate = ({ userId, studentName, currentWeight, profile, onC
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
+              <CalendarIcon className="w-4 h-4 text-primary" />
+              <Label className="font-body font-medium text-sm">Data do registro</Label>
+            </div>
+            <Input
+              type="date"
+              value={recordDate}
+              max={new Date().toISOString().slice(0, 10)}
+              onChange={(e) => setRecordDate(e.target.value)}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Use datas passadas para registrar evoluções atrasadas do aluno.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
               <Scale className="w-4 h-4 text-primary" />
               <Label className="font-body font-medium text-sm">Peso Atual (kg) *</Label>
             </div>
