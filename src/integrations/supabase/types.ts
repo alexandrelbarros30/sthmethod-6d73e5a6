@@ -220,6 +220,7 @@ export type Database = {
           created_at: string
           holder_name: string
           id: string
+          identity_verified_at: string | null
           phone: string
           reason: string | null
           relationship: string
@@ -227,13 +228,21 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           status: string
+          student_confirmed_at: string | null
+          student_ip: string | null
+          student_user_agent: string | null
+          terms_version: string | null
           updated_at: string
           user_id: string
+          verification_expires_at: string | null
+          verification_sent_at: string | null
+          verification_token: string | null
         }
         Insert: {
           created_at?: string
           holder_name: string
           id?: string
+          identity_verified_at?: string | null
           phone: string
           reason?: string | null
           relationship: string
@@ -241,13 +250,21 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          student_confirmed_at?: string | null
+          student_ip?: string | null
+          student_user_agent?: string | null
+          terms_version?: string | null
           updated_at?: string
           user_id: string
+          verification_expires_at?: string | null
+          verification_sent_at?: string | null
+          verification_token?: string | null
         }
         Update: {
           created_at?: string
           holder_name?: string
           id?: string
+          identity_verified_at?: string | null
           phone?: string
           reason?: string | null
           relationship?: string
@@ -255,8 +272,15 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          student_confirmed_at?: string | null
+          student_ip?: string | null
+          student_user_agent?: string | null
+          terms_version?: string | null
           updated_at?: string
           user_id?: string
+          verification_expires_at?: string | null
+          verification_sent_at?: string | null
+          verification_token?: string | null
         }
         Relationships: []
       }
@@ -5464,6 +5488,17 @@ export type Database = {
         }
         Returns: Json
       }
+      confirm_authorized_contact: {
+        Args: {
+          _authorized: boolean
+          _ip: string
+          _signature_name: string
+          _terms_version: string
+          _token: string
+          _user_agent: string
+        }
+        Returns: Json
+      }
       crm_expire_idle_conversations: { Args: never; Returns: number }
       delete_email: {
         Args: { message_id: number; queue_name: string }
@@ -5472,6 +5507,10 @@ export type Database = {
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
+      }
+      get_authorized_contact_by_token: {
+        Args: { _token: string }
+        Returns: Json
       }
       get_image_consent_by_token: {
         Args: { _token: string }

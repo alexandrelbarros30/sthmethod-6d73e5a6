@@ -93,6 +93,7 @@ import AdminPaymentLinks from "./pages/admin/AdminPaymentLinks";
 import PagarLink from "./pages/PagarLink";
 import AdminImageConsents from "./pages/admin/AdminImageConsents";
 import AutorizacaoImagem from "./pages/AutorizacaoImagem";
+import AutorizarTelefone from "./pages/AutorizarTelefone";
 import AlterarDados from "./pages/AlterarDados";
 import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminNutrition from "./pages/admin/AdminNutrition";
@@ -352,6 +353,7 @@ const App = () => (
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/pagar/:code" element={<PagarLink />} />
             <Route path="/autorizacao-imagem/:token" element={<AutorizacaoImagem />} />
+            <Route path="/autorizar-telefone" element={<AutorizarTelefone />} />
             <Route path="/alterar-dados" element={<AlterarDados />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
