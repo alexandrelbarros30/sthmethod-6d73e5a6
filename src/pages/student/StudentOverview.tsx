@@ -159,7 +159,7 @@ const StudentOverview = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("authorized_contacts")
-        .select("id, holder_name, phone, relationship, status, created_at")
+        .select("id, holder_name, phone, relationship, status, created_at, identity_verified_at")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
       return data || [];
@@ -234,10 +234,12 @@ const StudentOverview = () => {
               {authorizedContacts.map((c: any) => {
                 const label =
                   c.status === "approved" ? "Autorizado"
-                  : c.status === "pending" ? "Aguardando sua confirmação"
+                  : c.status === "awaiting_student" ? "Aguardando você confirmar por e-mail"
+                  : c.status === "pending" ? "Em análise"
                   : "Rejeitado";
                 const color =
                   c.status === "approved" ? "text-emerald-500"
+                  : c.status === "awaiting_student" ? "text-sky-500"
                   : c.status === "pending" ? "text-amber-500"
                   : "text-rose-500";
                 return (
@@ -246,6 +248,7 @@ const StudentOverview = () => {
                       <p className="font-medium truncate">{c.holder_name}</p>
                       <p className="text-[11px] text-muted-foreground truncate">
                         {formatPhoneBR(c.phone)} · {c.relationship}
+                        {c.identity_verified_at ? " · verificado por e-mail" : ""}
                       </p>
                     </div>
                     <span className={`text-[11px] font-medium ${color}`}>{label}</span>
@@ -254,7 +257,7 @@ const StudentOverview = () => {
               })}
             </div>
             <p className="text-[10.5px] text-muted-foreground mt-3 leading-relaxed">
-              Estes contatos foram autorizados por você (manualmente via WhatsApp) a tratar do seu acompanhamento com a equipe STH METHOD.
+              Estes contatos foram autorizados por você (por e-mail ou WhatsApp) a tratar do seu acompanhamento com a equipe STH METHOD.
             </p>
           </div>
         </div>
