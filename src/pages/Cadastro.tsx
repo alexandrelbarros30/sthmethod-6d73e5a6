@@ -150,6 +150,38 @@ const Cadastro = () => {
   // Step 3 - Body images
   const [imagesComplete, setImagesComplete] = useState(false);
 
+  // Telefone adicional autorizado (opcional) — item 3
+  const [authContact, setAuthContact] = useState({
+    holder_name: "",
+    phone: "",
+    relationship: "",
+    reason: "",
+  });
+  const [authContactSubmitted, setAuthContactSubmitted] = useState(false);
+
+  // WhatsApp de suporte para casos de duplicidade
+  const supportWaLink = (msg: string) =>
+    `https://wa.me/5521998496289?text=${encodeURIComponent(msg)}`;
+  const showDuplicateBlock = (kind: "email" | "cpf" | "phone", value: string) => {
+    const labels: Record<string, string> = { email: "e-mail", cpf: "CPF", phone: "telefone" };
+    toast.error(
+      `Este ${labels[kind]} já está cadastrado. Fale com o suporte para resolver.`,
+      {
+        duration: 8000,
+        action: {
+          label: "Falar no WhatsApp",
+          onClick: () =>
+            window.open(
+              supportWaLink(
+                `Olá! Estou tentando me cadastrar no STH METHOD e recebi aviso de ${labels[kind]} duplicado (${value}). Podem me ajudar?`
+              ),
+              "_blank"
+            ),
+        },
+      }
+    );
+  };
+
   useEffect(() => {
     const draft = {
       step,
