@@ -22,6 +22,8 @@ import STHFlowCard from "@/components/student/STHFlowCard";
 import PaymentTourPopup from "@/components/student/PaymentTourPopup";
 import NewTrendNotification from "@/components/student/NewTrendNotification";
 import EvolutionUpdateStatusCard from "@/components/student/EvolutionUpdateStatusCard";
+import { ShieldCheck } from "lucide-react";
+import { formatPhoneBR } from "@/lib/phone";
 import { getLatestTrend } from "@/data/latest-trends";
 import recipeMousseWhey from "@/assets/recipe-mousse-whey.jpg";
 import recipePatinho from "@/assets/recipe-patinho-grelhado.jpg";
@@ -151,6 +153,19 @@ const StudentOverview = () => {
     enabled: !!user?.id,
   });
 
+  const { data: authorizedContacts = [] } = useQuery({
+    queryKey: ["my-authorized-contacts", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("authorized_contacts")
+        .select("id, holder_name, phone, relationship, status, created_at")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false });
+      return data || [];
+    },
+  });
+
   // Latest STH News = última tendência publicada
   const latestTrend = getLatestTrend();
 
@@ -207,6 +222,43 @@ const StudentOverview = () => {
 
       {/* CICLO DE ATUALIZAÇÃO — só aparece quando há ação pendente */}
       <EvolutionUpdateStatusCard />
+
+      {/* TELEFONES AUTORIZADOS */}
+      {authorizedContacts.length > 0 && (
+        <div className="mb-6 rounded-3xl border border-border/40 bg-background overflow-hidden">
+          <div className="p-5">
+            <div className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-3 flex items-center gap-1.5">
+              <ShieldCheck className="w-3 h-3" /> Telefones autorizados
+            </div>
+            <div className="space-y-2">
+              {authorizedContacts.map((c: any) => {
+                const label =
+                  c.status === "approved" ? "Autorizado"
+                  : c.status === "pending" ? "Aguardando sua confirmação"
+                  : "Rejeitado";
+                const color =
+                  c.status === "approved" ? "text-emerald-500"
+                  : c.status === "pending" ? "text-amber-500"
+                  : "text-rose-500";
+                return (
+                  <div key={c.id} className="flex items-center justify-between gap-3 text-[13px]">
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{c.holder_name}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">
+                        {formatPhoneBR(c.phone)} · {c.relationship}
+                      </p>
+                    </div>
+                    <span className={`text-[11px] font-medium ${color}`}>{label}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-[10.5px] text-muted-foreground mt-3 leading-relaxed">
+              Estes contatos foram autorizados por você (manualmente via WhatsApp) a tratar do seu acompanhamento com a equipe STH METHOD.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* AÇÃO PRIMÁRIA: próxima refeição + progresso */}
       <DailyMealWidget
