@@ -503,6 +503,23 @@ const Cadastro = () => {
 
     setLoading(true);
     try {
+      // Duplicidade: CPF/telefone não podem pertencer a outro aluno
+      const { data: dup } = await supabase.rpc("check_registration_duplicate", {
+        _cpf: profileForm.cpf,
+        _phone: phoneVal,
+        _exclude_user_id: userId,
+      });
+      if (dup && (dup as any).cpf) {
+        showDuplicateBlock("cpf", profileForm.cpf);
+        setLoading(false);
+        return;
+      }
+      if (dup && (dup as any).phone) {
+        showDuplicateBlock("phone", phoneVal);
+        setLoading(false);
+        return;
+      }
+
       const updateData: any = {
         cpf: profileForm.cpf.replace(/\D/g, ""),
         phone: phoneVal || undefined,
