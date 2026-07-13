@@ -68,7 +68,25 @@ const ImageConsentChoice = ({ userId, initialValue, email, onSaved, compact }: P
         user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
       }] as any);
 
-      toast.success("Preferência de imagem atualizada.");
+      // Cascata: atualiza registros anteriores em image_consents deste aluno
+      // para refletir a nova decisão (revogação/atualização).
+      const nowIso = new Date().toISOString();
+      const cascadePayload =
+        value === "nao_autorizo"
+          ? { authorized: false, allow_tagging: false, responded_at: nowIso, notes: "Revogado pelo aluno via painel" }
+          : value === "sem_identificacao"
+          ? { authorized: true, allow_tagging: false, responded_at: nowIso, notes: "Atualizado pelo aluno via painel" }
+          : { authorized: true, allow_tagging: true, responded_at: nowIso, notes: "Atualizado pelo aluno via painel" };
+      await supabase
+        .from("image_consents")
+        .update(cascadePayload as any)
+        .eq("user_id", userId);
+
+      toast.success(
+        value === "nao_autorizo"
+          ? "Autorização de imagem revogada."
+          : "Preferência de imagem atualizada."
+      );
       setDirty(false);
       onSaved?.(value);
     } catch (e: any) {
