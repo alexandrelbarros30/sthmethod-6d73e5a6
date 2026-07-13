@@ -146,11 +146,30 @@ const AdminAuthorizedContacts = () => {
         status: "pending",
       });
       if (error) throw error;
+
+      const studentMsg = `Olá ${selectedStudent.full_name || ""}! Aqui é da STH METHOD.\n\nRecebemos uma solicitação para autorizar o telefone adicional *${formatPhoneBR(reqPhone)}* (${reqHolder} - ${relLabels[reqRel] || reqRel}) a tratar do seu acompanhamento com nossa equipe.\n\nVocê autoriza? Responda *SIM* ou *NÃO* por aqui.`;
+      const holderMsg = `Olá ${reqHolder}! Aqui é da STH METHOD.\n\nO(a) aluno(a) *${selectedStudent.full_name || ""}* solicitou autorizar este número como contato adicional para tratar do acompanhamento dele(a).\n\nVocê confirma que aceita ser esse contato autorizado? Responda *SIM* ou *NÃO*.`;
+
+      const results: { target: string; ok: boolean; error?: string }[] = [];
+      if (selectedStudent.phone) {
+        const { data, error: e1 } = await supabase.functions.invoke("send-wapi", {
+          body: { phone: selectedStudent.phone, message: studentMsg },
+        });
+        results.push({ target: "aluno", ok: !e1 && (data as any)?.ok !== false, error: e1?.message || (data as any)?.error });
+      } else {
+        results.push({ target: "aluno", ok: false, error: "Aluno sem telefone cadastrado" });
+      }
+      const { data: d2, error: e2 } = await supabase.functions.invoke("send-wapi", {
+        body: { phone: reqPhone.replace(/\D/g, ""), message: holderMsg },
+      });
+      results.push({ target: "titular", ok: !e2 && (d2 as any)?.ok !== false, error: e2?.message || (d2 as any)?.error });
+      return results;
     },
-    onSuccess: () => {
-      toast.success("Solicitação criada. Enviando WhatsApp ao aluno...");
-      const msg = `Olá ${selectedStudent.full_name || ""}! Aqui é da STH METHOD. Precisamos da sua autorização para que o telefone ${formatPhoneBR(reqPhone)} (${reqHolder} - ${relLabels[reqRel] || reqRel}) possa tratar do seu acompanhamento com nossa equipe.\n\nVocê autoriza? Responda SIM ou NÃO por aqui.`;
-      openWa(selectedStudent.phone || "", msg);
+    onSuccess: (results) => {
+      const oks = results.filter((r) => r.ok).map((r) => r.target);
+      const fails = results.filter((r) => !r.ok);
+      if (oks.length) toast.success(`WhatsApp enviado para: ${oks.join(", ")}`);
+      fails.forEach((f) => toast.error(`Falha ao enviar para ${f.target}: ${f.error || "erro desconhecido"}`));
       qc.invalidateQueries({ queryKey: ["admin-authorized-contacts"] });
       setReqOpen(false);
       setSelectedStudent(null);
