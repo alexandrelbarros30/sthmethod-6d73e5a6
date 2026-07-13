@@ -15,7 +15,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const emptyForm = { name: "", subtitle: "", price: "", duration: "", duration_days: 30, benefits: "", active: true, discount_type: "none", discount_value: 0, visibility: "public" };
+const emptyForm = {
+  name: "", subtitle: "", price: "", duration: "", duration_days: 30, benefits: "",
+  active: true, discount_type: "none", discount_value: 0, visibility: "public",
+  module_image: true, module_phone: true,
+};
 
 const AdminPlans = () => {
   const qc = useQueryClient();
@@ -44,6 +48,10 @@ const AdminPlans = () => {
         discount_type: form.discount_type,
         discount_value: Number(form.discount_value),
         visibility: form.visibility,
+        modules: {
+          image_authorization: !!form.module_image,
+          phone_authorization: !!form.module_phone,
+        } as any,
       };
       if (editing) {
         await supabase.from("plans").update(payload).eq("id", editing.id);
@@ -91,6 +99,8 @@ const AdminPlans = () => {
       discount_type: plan.discount_type || "none",
       discount_value: plan.discount_value || 0,
       visibility: plan.visibility || "public",
+      module_image: plan.modules?.image_authorization !== false,
+      module_phone: plan.modules?.phone_authorization !== false,
     });
     setDialogOpen(true);
   };
@@ -199,6 +209,20 @@ const AdminPlans = () => {
             <div className="flex items-center gap-2">
               <Switch checked={form.active} onCheckedChange={(v) => setForm({ ...form, active: v })} />
               <Label className="font-body">Plano ativo</Label>
+            </div>
+            <div className="rounded-lg border border-border p-3 space-y-2">
+              <Label className="font-body text-xs uppercase tracking-wider text-muted-foreground">Módulos habilitados neste plano</Label>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Autorização de uso de imagem</span>
+                <Switch checked={form.module_image} onCheckedChange={(v) => setForm({ ...form, module_image: v })} />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Autorização de contato por telefone</span>
+                <Switch checked={form.module_phone} onCheckedChange={(v) => setForm({ ...form, module_phone: v })} />
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Quando desabilitado, o aluno vê uma mensagem amigável de que o recurso não está incluso no plano.
+              </p>
             </div>
           </div>
           <DialogFooter>
