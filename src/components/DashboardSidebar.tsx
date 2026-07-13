@@ -88,6 +88,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
       ],
     },
     { to: "/admin/image-consents", icon: ImageIcon, label: "Autorização de Imagens" },
+    { to: "/admin/telefones-autorizados", icon: Phone, label: "Telefones Autorizados" },
     {
       group: "Nutrição",
       icon: Salad,
