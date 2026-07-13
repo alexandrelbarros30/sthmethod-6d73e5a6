@@ -148,28 +148,19 @@ const AdminAuthorizedContacts = () => {
       if (error) throw error;
 
       const studentMsg = `Olá ${selectedStudent.full_name || ""}! Aqui é da STH METHOD.\n\nRecebemos uma solicitação para autorizar o telefone adicional *${formatPhoneBR(reqPhone)}* (${reqHolder} - ${relLabels[reqRel] || reqRel}) a tratar do seu acompanhamento com nossa equipe.\n\nVocê autoriza? Responda *SIM* ou *NÃO* por aqui.`;
-      const holderMsg = `Olá ${reqHolder}! Aqui é da STH METHOD.\n\nO(a) aluno(a) *${selectedStudent.full_name || ""}* solicitou autorizar este número como contato adicional para tratar do acompanhamento dele(a).\n\nVocê confirma que aceita ser esse contato autorizado? Responda *SIM* ou *NÃO*.`;
-
-      const results: { target: string; ok: boolean; error?: string }[] = [];
+      // Fluxo 100% MANUAL (privacidade): apenas registra e abre WhatsApp
+      // pessoal do admin/consultor no canal "Fale com o Nutri".
       if (selectedStudent.phone) {
-        const { data, error: e1 } = await supabase.functions.invoke("send-wapi", {
-          body: { phone: selectedStudent.phone, message: studentMsg },
-        });
-        results.push({ target: "aluno", ok: !e1 && (data as any)?.ok !== false, error: e1?.message || (data as any)?.error });
-      } else {
-        results.push({ target: "aluno", ok: false, error: "Aluno sem telefone cadastrado" });
+        openWa(selectedStudent.phone, studentMsg);
       }
-      const { data: d2, error: e2 } = await supabase.functions.invoke("send-wapi", {
-        body: { phone: reqPhone.replace(/\D/g, ""), message: holderMsg },
-      });
-      results.push({ target: "titular", ok: !e2 && (d2 as any)?.ok !== false, error: e2?.message || (d2 as any)?.error });
-      return results;
+      return { studentPhone: selectedStudent.phone as string | null };
     },
-    onSuccess: (results) => {
-      const oks = results.filter((r) => r.ok).map((r) => r.target);
-      const fails = results.filter((r) => !r.ok);
-      if (oks.length) toast.success(`WhatsApp enviado para: ${oks.join(", ")}`);
-      fails.forEach((f) => toast.error(`Falha ao enviar para ${f.target}: ${f.error || "erro desconhecido"}`));
+    onSuccess: (res) => {
+      if (res.studentPhone) {
+        toast.success("Solicitação registrada. Envie a mensagem pelo WhatsApp aberto.");
+      } else {
+        toast.warning("Solicitação registrada, mas o aluno não tem telefone cadastrado.");
+      }
       qc.invalidateQueries({ queryKey: ["admin-authorized-contacts"] });
       setReqOpen(false);
       setSelectedStudent(null);
@@ -260,9 +251,11 @@ const AdminAuthorizedContacts = () => {
                 <Textarea rows={2} value={reqReason} onChange={(e) => setReqReason(e.target.value)} />
               </div>
               <Button className="w-full gap-2" onClick={() => createRequest.mutate()} disabled={createRequest.isPending}>
-                <MessageCircle className="w-4 h-4" /> Criar e enviar WhatsApp ao aluno
+                <MessageCircle className="w-4 h-4" /> Registrar e abrir WhatsApp do aluno
               </Button>
-              <p className="text-[10px] text-muted-foreground">A solicitação ficará pendente até o aluno confirmar. Você aprova ou rejeita depois.</p>
+              <p className="text-[10px] text-muted-foreground">
+                Fluxo manual e privado: a solicitação é registrada como pendente e o WhatsApp do aluno abre em nova aba (canal Fale com o Nutri). Envie a mensagem manualmente e, após a confirmação do aluno, aprove aqui.
+              </p>
             </div>
           </DialogContent>
         </Dialog>
