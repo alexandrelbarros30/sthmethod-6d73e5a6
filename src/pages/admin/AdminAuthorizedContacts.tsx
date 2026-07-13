@@ -117,8 +117,24 @@ const AdminAuthorizedContacts = () => {
     onError: (e: any) => toast.error(e.message || "Falha ao atualizar"),
   });
 
-  const pending = rows.filter((r) => r.status === "pending");
-  const reviewed = rows.filter((r) => r.status !== "pending");
+  const sendVerification = useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await supabase.functions.invoke(
+        "send-authorized-contact-verification",
+        { body: { authorized_contact_id: id } },
+      );
+      if (error) throw error;
+      return data as { ok: boolean; expires_at: string };
+    },
+    onSuccess: () => {
+      toast.success("E-mail de verificação enviado ao aluno.");
+      qc.invalidateQueries({ queryKey: ["admin-authorized-contacts"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Falha ao enviar verificação"),
+  });
+
+  const pending = rows.filter((r) => r.status === "pending" || r.status === "awaiting_student");
+  const reviewed = rows.filter((r) => r.status === "approved" || r.status === "rejected");
 
   const waDigits = (s: string) => {
     const d = (s || "").replace(/\D/g, "");
