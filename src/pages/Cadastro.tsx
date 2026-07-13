@@ -942,7 +942,22 @@ const Cadastro = () => {
                     Ajuda seu consultor a desenhar uma estratégia segura. Pode preencher depois, com calma, no painel.
                   </WhyTip>
                 </Label>
-                <Textarea value={profileForm.current_protocol} onChange={(e) => setProfileForm({ ...profileForm, current_protocol: e.target.value })} rows={2} placeholder="Descreva medicamentos ou suplementos que usa" />
+                <div className="mb-2 rounded-lg border-l-4 border-primary bg-primary/10 p-3 text-xs font-body leading-relaxed text-foreground/90">
+                  <p className="font-semibold text-foreground mb-1 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-primary" /> Importante — descreva as doses do seu protocolo atual
+                  </p>
+                  <p>
+                    Liste os <span className="font-semibold text-foreground">principais medicamentos, anabolizantes e peptídeos</span> com as respectivas <span className="font-semibold text-foreground">doses e frequência</span>.
+                    Exemplo: <span className="italic">"Testosterona 200mg/semana, Oxandrolona 20mg/dia, Semaglutida 0,5mg/semana, Vitamina D 5000 UI/dia"</span>.
+                    Essa informação é essencial para desenharmos um protocolo seguro e eficaz para você.
+                  </p>
+                </div>
+                <Textarea
+                  value={profileForm.current_protocol}
+                  onChange={(e) => setProfileForm({ ...profileForm, current_protocol: e.target.value })}
+                  rows={4}
+                  placeholder="Ex: Testosterona 200mg/sem, Oxandrolona 20mg/dia, Semaglutida 0,5mg/sem, Creatina 5g/dia..."
+                />
               </div>
               <div>
                 <Label className="font-body inline-flex items-center">
