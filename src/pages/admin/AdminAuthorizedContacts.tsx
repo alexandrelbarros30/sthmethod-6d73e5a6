@@ -304,14 +304,16 @@ const AdminAuthorizedContacts = () => {
         )}
         {pending.map((r) => {
           const p = profileById.get(r.user_id) as any;
+          const isAwaiting = r.status === "awaiting_student";
+          const isExpired = !!(isAwaiting && r.verification_expires_at && new Date(r.verification_expires_at) < new Date());
           return (
-            <Card key={r.id} className="border-amber-500/30">
+            <Card key={r.id} className={isAwaiting ? "border-sky-500/30" : "border-amber-500/30"}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-display flex items-center gap-2 flex-wrap">
                   <User className="w-4 h-4 text-primary" />
                   {p?.full_name || "Aluno"}
                   <Badge variant="outline" className="text-[10px]">{p?.email || "—"}</Badge>
-                  <Badge className={statusColors[r.status]}>Pendente</Badge>
+                  <Badge className={statusColors[r.status]}>{statusLabels[r.status]}</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm font-body">
@@ -326,6 +328,21 @@ const AdminAuthorizedContacts = () => {
                     <span className="text-muted-foreground">Motivo:</span> {r.reason}
                   </div>
                 )}
+                {isAwaiting && (
+                  <div className={`text-xs rounded p-2 border flex items-start gap-2 ${isExpired ? "border-rose-500/30 bg-rose-500/5 text-rose-700" : "border-sky-500/30 bg-sky-500/5 text-sky-700"}`}>
+                    <Mail className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                    <div>
+                      <div>
+                        E-mail enviado em {r.verification_sent_at ? new Date(r.verification_sent_at).toLocaleString("pt-BR") : "—"}
+                      </div>
+                      <div>
+                        {isExpired
+                          ? "Link expirado — reenvie para gerar novo."
+                          : `Expira em ${r.verification_expires_at ? new Date(r.verification_expires_at).toLocaleString("pt-BR") : "—"}`}
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <Textarea
                   placeholder="Observações da revisão (opcional)"
                   value={notes[r.id] || ""}
@@ -333,7 +350,18 @@ const AdminAuthorizedContacts = () => {
                   rows={2}
                   className="text-xs"
                 />
-                <div className="flex gap-2 justify-end">
+                <div className="flex gap-2 justify-end flex-wrap">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-sky-600 border-sky-500/40 hover:bg-sky-500/10"
+                    onClick={() => sendVerification.mutate(r.id)}
+                    disabled={sendVerification.isPending || !p?.email}
+                    title={!p?.email ? "Aluno sem e-mail cadastrado" : "Envia link único ao e-mail do cadastro"}
+                  >
+                    <Mail className="w-3.5 h-3.5 mr-1" />
+                    {isAwaiting ? "Reenviar e-mail" : "Enviar verificação por e-mail"}
+                  </Button>
                   <Button
                     size="sm"
                     variant="outline"
