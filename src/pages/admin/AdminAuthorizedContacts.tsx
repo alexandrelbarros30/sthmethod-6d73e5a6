@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Check, X, ShieldCheck, Loader2, Phone, User, Clock } from "lucide-react";
+import { Check, X, ShieldCheck, Loader2, Phone, User, Clock, Mail, MailCheck } from "lucide-react";
 import { MessageCircle, Send, Search } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -23,10 +23,14 @@ type Row = {
   phone: string;
   relationship: string;
   reason: string | null;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "awaiting_student" | "approved" | "rejected";
   review_notes: string | null;
   reviewed_at: string | null;
   created_at: string;
+  verification_sent_at?: string | null;
+  verification_expires_at?: string | null;
+  identity_verified_at?: string | null;
+  student_confirmed_at?: string | null;
 };
 
 const relLabels: Record<string, string> = {
@@ -41,8 +45,16 @@ const relLabels: Record<string, string> = {
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-500/15 text-amber-600 border-amber-500/30",
+  awaiting_student: "bg-sky-500/15 text-sky-600 border-sky-500/30",
   approved: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30",
   rejected: "bg-rose-500/15 text-rose-600 border-rose-500/30",
+};
+
+const statusLabels: Record<string, string> = {
+  pending: "Pendente",
+  awaiting_student: "Aguardando aluno",
+  approved: "Autorizado",
+  rejected: "Rejeitado",
 };
 
 const AdminAuthorizedContacts = () => {
