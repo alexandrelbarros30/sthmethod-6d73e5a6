@@ -160,34 +160,41 @@ const AdminAuthorizedContacts = () => {
   });
 
   const createRequest = useMutation({
-    mutationFn: async () => {
+    mutationFn: async ({ channel }: { channel: "whatsapp" | "email" }) => {
       if (!selectedStudent) throw new Error("Selecione o aluno");
       if (!reqHolder.trim()) throw new Error("Nome do titular obrigatório");
       if (reqPhone.replace(/\D/g, "").length < 10) throw new Error("Telefone inválido");
       if (!reqRel) throw new Error("Selecione a relação");
-      const { error } = await supabase.from("authorized_contacts").insert({
+      if (channel === "email" && !selectedStudent.email) throw new Error("Aluno sem e-mail cadastrado");
+      if (channel === "whatsapp" && !selectedStudent.phone) throw new Error("Aluno sem telefone cadastrado");
+      const { data: inserted, error } = await supabase.from("authorized_contacts").insert({
         user_id: selectedStudent.user_id,
         holder_name: reqHolder.trim(),
         phone: reqPhone.replace(/\D/g, ""),
         relationship: reqRel,
         reason: reqReason.trim() || null,
         status: "pending",
-      });
+      }).select("id").single();
       if (error) throw error;
 
-      const studentMsg = `Olá ${selectedStudent.full_name || ""}! Aqui é da STH METHOD.\n\nRecebemos uma solicitação para autorizar o telefone adicional *${formatPhoneBR(reqPhone)}* (${reqHolder} - ${relLabels[reqRel] || reqRel}) a tratar do seu acompanhamento com nossa equipe.\n\nVocê autoriza? Responda *SIM* ou *NÃO* por aqui.`;
-      // Fluxo 100% MANUAL (privacidade): apenas registra e abre WhatsApp
-      // pessoal do admin/consultor no canal "Fale com o Nutri".
-      if (selectedStudent.phone) {
+      if (channel === "whatsapp") {
+        const studentMsg = `Olá ${selectedStudent.full_name || ""}! Aqui é da STH METHOD.\n\nRecebemos uma solicitação para autorizar o telefone adicional *${formatPhoneBR(reqPhone)}* (${reqHolder} - ${relLabels[reqRel] || reqRel}) a tratar do seu acompanhamento com nossa equipe.\n\nVocê autoriza? Responda *SIM* ou *NÃO* por aqui.`;
         openWa(selectedStudent.phone, studentMsg);
+        return { channel };
       }
-      return { studentPhone: selectedStudent.phone as string | null };
+      // email
+      const { error: fnErr } = await supabase.functions.invoke(
+        "send-authorized-contact-verification",
+        { body: { authorized_contact_id: inserted.id } },
+      );
+      if (fnErr) throw fnErr;
+      return { channel };
     },
     onSuccess: (res) => {
-      if (res.studentPhone) {
+      if (res.channel === "whatsapp") {
         toast.success("Solicitação registrada. Envie a mensagem pelo WhatsApp aberto.");
       } else {
-        toast.warning("Solicitação registrada, mas o aluno não tem telefone cadastrado.");
+        toast.success("Solicitação registrada e e-mail de verificação enviado ao aluno.");
       }
       qc.invalidateQueries({ queryKey: ["admin-authorized-contacts"] });
       setReqOpen(false);
@@ -278,11 +285,27 @@ const AdminAuthorizedContacts = () => {
                 <Label className="text-xs">Motivo (opcional)</Label>
                 <Textarea rows={2} value={reqReason} onChange={(e) => setReqReason(e.target.value)} />
               </div>
-              <Button className="w-full gap-2" onClick={() => createRequest.mutate()} disabled={createRequest.isPending}>
-                <MessageCircle className="w-4 h-4" /> Registrar e abrir WhatsApp do aluno
-              </Button>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  className="w-full gap-2"
+                  onClick={() => createRequest.mutate({ channel: "whatsapp" })}
+                  disabled={createRequest.isPending || !selectedStudent?.phone}
+                  title={!selectedStudent?.phone ? "Aluno sem telefone cadastrado" : ""}
+                >
+                  <MessageCircle className="w-4 h-4" /> WhatsApp
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full gap-2 text-sky-600 border-sky-500/40 hover:bg-sky-500/10"
+                  onClick={() => createRequest.mutate({ channel: "email" })}
+                  disabled={createRequest.isPending || !selectedStudent?.email}
+                  title={!selectedStudent?.email ? "Aluno sem e-mail cadastrado" : ""}
+                >
+                  <Mail className="w-4 h-4" /> E-mail
+                </Button>
+              </div>
               <p className="text-[10px] text-muted-foreground">
-                Fluxo manual e privado: a solicitação é registrada como pendente e o WhatsApp do aluno abre em nova aba (canal Fale com o Nutri). Envie a mensagem manualmente e, após a confirmação do aluno, aprove aqui.
+                Escolha o canal: WhatsApp abre o chat do aluno para envio manual (canal Fale com o Nutri); E-mail dispara link único de verificação para o e-mail cadastrado (útil quando o aluno está sem telefone).
               </p>
             </div>
           </DialogContent>
