@@ -563,6 +563,29 @@ const Cadastro = () => {
       if (!upserted || upserted.length === 0) {
         throw new Error("Não foi possível salvar seu cadastro. Recarregue a página e tente novamente.");
       }
+
+      // Solicitação opcional de telefone adicional autorizado
+      if (
+        !authContactSubmitted &&
+        authContact.holder_name.trim() &&
+        authContact.phone.replace(/\D/g, "").length >= 10 &&
+        authContact.relationship.trim()
+      ) {
+        const { error: acErr } = await supabase.from("authorized_contacts").insert({
+          user_id: userId!,
+          holder_name: authContact.holder_name.trim(),
+          phone: authContact.phone.trim(),
+          relationship: authContact.relationship,
+          reason: authContact.reason.trim() || null,
+        });
+        if (!acErr) {
+          setAuthContactSubmitted(true);
+          toast.success(
+            "Solicitação de telefone autorizado enviada. Um consultor irá analisar e responder."
+          );
+        }
+      }
+
       toast.success("Dados salvos!");
       setStep(3);
     } catch (error: any) {
