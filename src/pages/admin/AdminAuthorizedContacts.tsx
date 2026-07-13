@@ -7,7 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Check, X, ShieldCheck, Loader2, Phone, User, Clock } from "lucide-react";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Send, Search } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatPhoneBR } from "@/lib/phone";
 
 type Row = {
@@ -42,6 +46,13 @@ const statusColors: Record<string, string> = {
 const AdminAuthorizedContacts = () => {
   const qc = useQueryClient();
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [reqOpen, setReqOpen] = useState(false);
+  const [studentSearch, setStudentSearch] = useState("");
+  const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
+  const [reqHolder, setReqHolder] = useState("");
+  const [reqPhone, setReqPhone] = useState("");
+  const [reqRel, setReqRel] = useState("");
+  const [reqReason, setReqReason] = useState("");
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["admin-authorized-contacts"],
@@ -101,6 +112,50 @@ const AdminAuthorizedContacts = () => {
     const url = `https://wa.me/${waDigits(phone)}?text=${encodeURIComponent(text)}`;
     window.open(url, "_blank", "noopener,noreferrer");
   };
+
+  const { data: searchResults = [] } = useQuery({
+    queryKey: ["admin-student-search", studentSearch],
+    enabled: reqOpen && studentSearch.trim().length >= 2,
+    queryFn: async () => {
+      const q = studentSearch.trim();
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, phone, email")
+        .or(`full_name.ilike.%${q}%,email.ilike.%${q}%,phone.ilike.%${q}%`)
+        .limit(10);
+      return data || [];
+    },
+  });
+
+  const createRequest = useMutation({
+    mutationFn: async () => {
+      if (!selectedStudent) throw new Error("Selecione o aluno");
+      if (!reqHolder.trim()) throw new Error("Nome do titular obrigatório");
+      if (reqPhone.replace(/\D/g, "").length < 10) throw new Error("Telefone inválido");
+      if (!reqRel) throw new Error("Selecione a relação");
+      const { error } = await supabase.from("authorized_contacts").insert({
+        user_id: selectedStudent.user_id,
+        holder_name: reqHolder.trim(),
+        phone: reqPhone.replace(/\D/g, ""),
+        relationship: reqRel,
+        reason: reqReason.trim() || null,
+        status: "pending",
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Solicitação criada. Enviando WhatsApp ao aluno...");
+      const msg = `Olá ${selectedStudent.full_name || ""}! Aqui é da STH METHOD. Precisamos da sua autorização para que o telefone ${formatPhoneBR(reqPhone)} (${reqHolder} - ${relLabels[reqRel] || reqRel}) possa tratar do seu acompanhamento com nossa equipe.\n\nVocê autoriza? Responda SIM ou NÃO por aqui.`;
+      openWa(selectedStudent.phone || "", msg);
+      qc.invalidateQueries({ queryKey: ["admin-authorized-contacts"] });
+      setReqOpen(false);
+      setSelectedStudent(null);
+      setStudentSearch("");
+      setReqHolder(""); setReqPhone(""); setReqRel(""); setReqReason("");
+    },
+    onError: (e: any) => toast.error(e.message || "Falha ao criar"),
+  });
+
   const msgToStudent = (r: Row, p: any) =>
     `Olá ${p?.full_name || ""}! Aqui é da STH METHOD. Recebemos uma solicitação para autorizar o telefone adicional ${formatPhoneBR(r.phone)} (${r.holder_name} - ${relLabels[r.relationship] || r.relationship}) a tratar do seu acompanhamento. Você confirma essa autorização? Responda SIM ou NÃO.`;
   const msgToHolder = (r: Row, p: any) =>
@@ -108,15 +163,85 @@ const AdminAuthorizedContacts = () => {
 
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-6">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <ShieldCheck className="w-6 h-6 text-primary" />
-        <div>
+        <div className="flex-1 min-w-[200px]">
           <h1 className="text-xl font-display font-bold">Telefones autorizados</h1>
           <p className="text-xs text-muted-foreground font-body">
             Solicitações de alunos para que outro telefone (marido, esposa, responsável) possa tratar do
             acompanhamento.
           </p>
         </div>
+        <Dialog open={reqOpen} onOpenChange={setReqOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="gap-2">
+              <Send className="w-4 h-4" /> Solicitar autorização ao aluno
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Solicitar autorização ao aluno</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Aluno</Label>
+                {selectedStudent ? (
+                  <div className="flex items-center justify-between border rounded p-2 text-sm">
+                    <div>
+                      <div className="font-semibold">{selectedStudent.full_name}</div>
+                      <div className="text-xs text-muted-foreground">{selectedStudent.phone ? formatPhoneBR(selectedStudent.phone) : "sem telefone"} · {selectedStudent.email}</div>
+                    </div>
+                    <Button size="sm" variant="ghost" onClick={() => setSelectedStudent(null)}>Trocar</Button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="relative">
+                      <Search className="w-3.5 h-3.5 absolute left-2 top-2.5 text-muted-foreground" />
+                      <Input className="pl-7" placeholder="Buscar por nome, e-mail ou telefone..." value={studentSearch} onChange={(e) => setStudentSearch(e.target.value)} />
+                    </div>
+                    {searchResults.length > 0 && (
+                      <div className="border rounded max-h-48 overflow-auto">
+                        {searchResults.map((s: any) => (
+                          <button key={s.user_id} type="button" onClick={() => setSelectedStudent(s)} className="w-full text-left px-2 py-1.5 text-sm hover:bg-muted">
+                            <div className="font-medium">{s.full_name}</div>
+                            <div className="text-xs text-muted-foreground">{s.phone ? formatPhoneBR(s.phone) : "sem telefone"} · {s.email}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">Nome do titular do outro telefone</Label>
+                  <Input value={reqHolder} onChange={(e) => setReqHolder(e.target.value)} placeholder="Ex.: Maria Silva" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Telefone adicional</Label>
+                  <Input value={reqPhone} onChange={(e) => setReqPhone(e.target.value)} placeholder="(11) 99999-9999" />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Relação</Label>
+                <Select value={reqRel} onValueChange={setReqRel}>
+                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(relLabels).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Motivo (opcional)</Label>
+                <Textarea rows={2} value={reqReason} onChange={(e) => setReqReason(e.target.value)} />
+              </div>
+              <Button className="w-full gap-2" onClick={() => createRequest.mutate()} disabled={createRequest.isPending}>
+                <MessageCircle className="w-4 h-4" /> Criar e enviar WhatsApp ao aluno
+              </Button>
+              <p className="text-[10px] text-muted-foreground">A solicitação ficará pendente até o aluno confirmar. Você aprova ou rejeita depois.</p>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {isLoading && (
