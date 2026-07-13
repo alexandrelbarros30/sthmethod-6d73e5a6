@@ -354,17 +354,6 @@ const AdminAuthorizedContacts = () => {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="text-sky-600 border-sky-500/40 hover:bg-sky-500/10"
-                    onClick={() => sendVerification.mutate(r.id)}
-                    disabled={sendVerification.isPending || !p?.email}
-                    title={!p?.email ? "Aluno sem e-mail cadastrado" : "Envia link único ao e-mail do cadastro"}
-                  >
-                    <Mail className="w-3.5 h-3.5 mr-1" />
-                    {isAwaiting ? "Reenviar e-mail" : "Enviar verificação por e-mail"}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
                     className="text-emerald-600 border-emerald-500/40 hover:bg-emerald-500/10"
                     onClick={() => openWa(p?.phone || "", msgToStudent(r, p))}
                     disabled={!p?.phone}
