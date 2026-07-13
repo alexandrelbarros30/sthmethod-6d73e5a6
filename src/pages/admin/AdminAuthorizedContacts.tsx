@@ -414,6 +414,11 @@ const AdminAuthorizedContacts = () => {
                 <Badge className={statusColors[r.status]}>
                   {r.status === "approved" ? "Autorizado" : "Rejeitado"}
                 </Badge>
+                {r.identity_verified_at && (
+                  <Badge variant="outline" className="text-[10px] gap-1 border-emerald-500/40 text-emerald-600">
+                    <MailCheck className="w-3 h-3" /> Verificado por e-mail
+                  </Badge>
+                )}
                 <span className="font-semibold">{p?.full_name || "Aluno"}</span>
                 <span className="text-muted-foreground">→ {r.holder_name} ({relLabels[r.relationship]}) · {formatPhoneBR(r.phone)}</span>
                 <span className="ml-auto text-muted-foreground flex items-center gap-1">
