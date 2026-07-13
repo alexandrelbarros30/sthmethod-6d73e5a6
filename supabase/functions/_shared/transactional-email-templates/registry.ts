@@ -21,6 +21,7 @@ import { template as authPreviewReauth } from './auth-preview-reauthentication.t
 import { template as identityVerificationCode } from './identity-verification-code.tsx'
 import { template as casPasswordReset } from './cas-password-reset.tsx'
 import { template as authorizedContactVerification } from './authorized-contact-verification.tsx'
+import { template as adminAuthorizationChange } from './admin-authorization-change.tsx'
 
 export interface TemplateEntry {
   component: ComponentType<any>
@@ -52,4 +53,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'identity-verification-code': identityVerificationCode,
   'cas-password-reset': casPasswordReset,
   'authorized-contact-verification': authorizedContactVerification,
+  'admin-authorization-change': adminAuthorizationChange,
 }

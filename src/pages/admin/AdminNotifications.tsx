@@ -6,7 +6,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Camera, CheckCheck, Eye, Filter, MessageSquare, TrendingUp } from "lucide-react";
+import { Bell, Camera, CheckCheck, Eye, Filter, MessageSquare, TrendingUp, ShieldAlert, Phone } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -90,6 +90,23 @@ const AdminNotifications = () => {
     },
   });
 
+  // Authorization change notifications (image / phone)
+  const { data: authNotifs = [], isLoading: loadingAuth } = useQuery({
+    queryKey: ["authorization-change-notifications", filter],
+    queryFn: async () => {
+      let query = (supabase as any)
+        .from("authorization_change_notifications")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (filter === "unseen") query = query.eq("seen", false);
+      if (filter === "seen") query = query.eq("seen", true);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const markPaymentSeen = useMutation({
     mutationFn: async (id: string) => {
       await supabase.from("payment_notifications").update({ seen: true }).eq("id", id);
@@ -138,6 +155,22 @@ const AdminNotifications = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["evolution-notifications"] });
       toast.success("Todas as atualizações marcadas como vistas");
+    },
+  });
+
+  const markAuthSeen = useMutation({
+    mutationFn: async (id: string) => {
+      await (supabase as any).from("authorization_change_notifications").update({ seen: true }).eq("id", id);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["authorization-change-notifications"] }),
+  });
+  const markAllAuthSeen = useMutation({
+    mutationFn: async () => {
+      await (supabase as any).from("authorization_change_notifications").update({ seen: true }).eq("seen", false);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["authorization-change-notifications"] });
+      toast.success("Todas as alterações de autorização marcadas como vistas");
     },
   });
 
@@ -200,6 +233,7 @@ const AdminNotifications = () => {
   const unseenPayment = paymentNotifs.filter((n: any) => !n.seen).length;
   const unseenEvolution = evolutionReminders.filter((n: any) => !n.seen).length;
   const unseenUpdates = evolutionUpdates.filter((n: any) => !n.seen).length;
+  const unseenAuth = (authNotifs as any[]).filter((n: any) => !n.seen).length;
 
   const actionLabel = (type: string) =>
     type === "new" ? "Novo plano" : type === "upgrade" ? "Atualização" : "Renovação";
@@ -226,7 +260,7 @@ const AdminNotifications = () => {
         </div>
 
         <Tabs defaultValue="payments" className="w-full">
-          <TabsList className="w-full grid grid-cols-3">
+          <TabsList className="w-full grid grid-cols-4">
             <TabsTrigger value="payments" className="text-xs gap-1">
               💰 Pagamentos
               {unseenPayment > 0 && <Badge variant="destructive" className="text-[10px] ml-1">{unseenPayment}</Badge>}
@@ -238,6 +272,10 @@ const AdminNotifications = () => {
             <TabsTrigger value="updates" className="text-xs gap-1">
               📊 Atualizações
               {unseenUpdates > 0 && <Badge variant="destructive" className="text-[10px] ml-1">{unseenUpdates}</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="authorizations" className="text-xs gap-1">
+              🛡️ Autorizações
+              {unseenAuth > 0 && <Badge variant="destructive" className="text-[10px] ml-1">{unseenAuth}</Badge>}
             </TabsTrigger>
           </TabsList>
 
@@ -368,6 +406,70 @@ const AdminNotifications = () => {
                       </div>
                       {!n.seen && (
                         <Button size="sm" variant="ghost" onClick={() => markUpdateSeen.mutate(n.id)} className="text-xs gap-1 shrink-0">
+                          <Eye className="w-3.5 h-3.5" /> Visto
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
+          </TabsContent>
+
+          {/* Authorization Changes Tab */}
+          <TabsContent value="authorizations" className="space-y-2 mt-3">
+            {unseenAuth > 0 && (
+              <div className="flex justify-end">
+                <Button size="sm" variant="outline" onClick={() => markAllAuthSeen.mutate()} className="text-xs gap-1.5">
+                  <CheckCheck className="w-3.5 h-3.5" /> Marcar todas como vistas
+                </Button>
+              </div>
+            )}
+            {loadingAuth ? (
+              <p className="text-sm text-muted-foreground">Carregando...</p>
+            ) : (authNotifs as any[]).length === 0 ? (
+              <Card><CardContent className="py-12 text-center text-muted-foreground text-sm">Nenhuma alteração de autorização registrada.</CardContent></Card>
+            ) : (
+              (authNotifs as any[]).map((n: any) => {
+                const kindLabel = n.kind === "image" ? "Imagem" : "Telefone";
+                const KindIcon = n.kind === "image" ? Camera : Phone;
+                const actionLabel =
+                  n.action === "granted" ? "Concedeu" :
+                  n.action === "revoked" ? "Revogou" :
+                  n.action === "rejected" ? "Recusou" : "Atualizou";
+                const actionTone =
+                  n.action === "revoked" || n.action === "rejected"
+                    ? "bg-destructive/15 text-destructive border-destructive/30"
+                    : n.action === "granted"
+                    ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/30"
+                    : "bg-sky-500/15 text-sky-600 border-sky-500/30";
+                return (
+                  <Card key={n.id} className={`transition-colors ${!n.seen ? "border-primary/40 bg-primary/5" : ""}`}>
+                    <CardContent className="py-3 px-4 flex items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <button onClick={() => openStudent(n.student_user_id)} className="text-sm font-medium hover:text-primary hover:underline text-left">
+                            <ShieldAlert className="inline w-3.5 h-3.5 mr-1 -mt-0.5" />
+                            {n.student_name}
+                          </button>
+                          <Badge variant="outline" className="text-[10px] gap-1">
+                            <KindIcon className="w-3 h-3" /> {kindLabel}
+                          </Badge>
+                          <Badge variant="outline" className={`text-[10px] ${actionTone}`}>
+                            {actionLabel}
+                          </Badge>
+                          {!n.seen && <Badge variant="destructive" className="text-[10px]">Nova</Badge>}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {(n.previous_value || "—")} → {(n.new_value || "—")}
+                          {" • "}{format(new Date(n.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                        </p>
+                        {n.reason && (
+                          <p className="text-[11px] text-muted-foreground mt-1">Motivo: “{n.reason}”</p>
+                        )}
+                      </div>
+                      {!n.seen && (
+                        <Button size="sm" variant="ghost" onClick={() => markAuthSeen.mutate(n.id)} className="text-xs gap-1 shrink-0">
                           <Eye className="w-3.5 h-3.5" /> Visto
                         </Button>
                       )}

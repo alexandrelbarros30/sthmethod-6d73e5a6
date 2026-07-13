@@ -215,6 +215,93 @@ export type Database = {
         }
         Relationships: []
       }
+      authorization_audit: {
+        Row: {
+          action: string
+          actor_role: string | null
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          ip: string | null
+          kind: string
+          metadata: Json
+          new_value: string | null
+          previous_value: string | null
+          reason: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          actor_role?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          kind: string
+          metadata?: Json
+          new_value?: string | null
+          previous_value?: string | null
+          reason?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          actor_role?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          kind?: string
+          metadata?: Json
+          new_value?: string | null
+          previous_value?: string | null
+          reason?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      authorization_change_notifications: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          kind: string
+          new_value: string | null
+          previous_value: string | null
+          reason: string | null
+          seen: boolean
+          student_name: string
+          student_user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          kind: string
+          new_value?: string | null
+          previous_value?: string | null
+          reason?: string | null
+          seen?: boolean
+          student_name?: string
+          student_user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          new_value?: string | null
+          previous_value?: string | null
+          reason?: string | null
+          seen?: boolean
+          student_name?: string
+          student_user_id?: string
+        }
+        Relationships: []
+      }
       authorized_contacts: {
         Row: {
           created_at: string
@@ -227,6 +314,8 @@ export type Database = {
           review_notes: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          revoked_at: string | null
+          revoked_reason: string | null
           status: string
           student_confirmed_at: string | null
           student_ip: string | null
@@ -249,6 +338,8 @@ export type Database = {
           review_notes?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          revoked_at?: string | null
+          revoked_reason?: string | null
           status?: string
           student_confirmed_at?: string | null
           student_ip?: string | null
@@ -271,6 +362,8 @@ export type Database = {
           review_notes?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          revoked_at?: string | null
+          revoked_reason?: string | null
           status?: string
           student_confirmed_at?: string | null
           student_ip?: string | null
@@ -3728,6 +3821,7 @@ export type Database = {
           duration: string
           duration_days: number
           id: string
+          modules: Json
           name: string
           price: string
           subtitle: string
@@ -3743,6 +3837,7 @@ export type Database = {
           duration: string
           duration_days?: number
           id?: string
+          modules?: Json
           name: string
           price: string
           subtitle?: string
@@ -3758,6 +3853,7 @@ export type Database = {
           duration?: string
           duration_days?: number
           id?: string
+          modules?: Json
           name?: string
           price?: string
           subtitle?: string
@@ -5566,6 +5662,19 @@ export type Database = {
           source_queue: string
         }
         Returns: number
+      }
+      notify_authorization_change: {
+        Args: {
+          _action: string
+          _actor_role: string
+          _actor_user: string
+          _kind: string
+          _new: string
+          _previous: string
+          _reason: string
+          _user_id: string
+        }
+        Returns: undefined
       }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }

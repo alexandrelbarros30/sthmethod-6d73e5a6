@@ -20,6 +20,9 @@ import AccessibilityThemeCard from "@/components/student/AccessibilityThemeCard"
 import DocumentUpload from "@/components/shared/DocumentUpload";
 import ImageConsentChoice from "@/components/legal/ImageConsentChoice";
 import type { ImageConsent } from "@/components/legal/LegalAcceptanceBlock";
+import AuthorizationHistoryCard from "@/components/legal/AuthorizationHistoryCard";
+import PhoneAuthorizationsCard from "@/components/legal/PhoneAuthorizationsCard";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import SignedImage from "@/components/shared/SignedImage";
@@ -480,12 +483,34 @@ const StudentProfile = () => {
       {/* ===== AUTORIZAÇÃO DE IMAGEM ===== */}
       {user?.id && (
         <div className="mt-4">
-          <ImageConsentChoice
-            userId={user.id}
-            email={(fullProfile as any)?.email || null}
-            initialValue={((fullProfile as any)?.image_consent_choice as ImageConsent) || "nao_autorizo"}
-            onSaved={() => refetchProfile()}
-          />
+          <Tabs defaultValue="autorizacoes" className="w-full">
+            <TabsList className="grid grid-cols-2 w-full">
+              <TabsTrigger value="autorizacoes">Autorizações</TabsTrigger>
+              <TabsTrigger value="historico">Histórico</TabsTrigger>
+            </TabsList>
+            <TabsContent value="autorizacoes" className="space-y-4 mt-3">
+              <ImageConsentChoice
+                userId={user.id}
+                email={(fullProfile as any)?.email || null}
+                initialValue={((fullProfile as any)?.image_consent_choice as ImageConsent) || "nao_autorizo"}
+                onSaved={() => refetchProfile()}
+                moduleEnabled={
+                  (subscription as any)?.plans?.modules?.image_authorization !== false
+                }
+                planName={(subscription as any)?.plans?.name}
+              />
+              <PhoneAuthorizationsCard
+                userId={user.id}
+                moduleEnabled={
+                  (subscription as any)?.plans?.modules?.phone_authorization !== false
+                }
+                planName={(subscription as any)?.plans?.name}
+              />
+            </TabsContent>
+            <TabsContent value="historico" className="mt-3">
+              <AuthorizationHistoryCard userId={user.id} />
+            </TabsContent>
+          </Tabs>
         </div>
       )}
     </DashboardLayout>

@@ -1,11 +1,18 @@
 import { useEffect, useState } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
-import { Loader2, Camera } from "lucide-react";
+import { Loader2, Camera, Lock, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LEGAL } from "@/lib/legal-version";
 import type { ImageConsent } from "@/components/legal/LegalAcceptanceBlock";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 /**
  * Card reutilizável de Autorização de Imagem.
@@ -18,6 +25,9 @@ interface Props {
   email?: string | null;
   onSaved?: (value: ImageConsent) => void;
   compact?: boolean;
+  /** Se o plano ativo do aluno permite este módulo. Undefined = liberado. */
+  moduleEnabled?: boolean;
+  planName?: string | null;
 }
 
 const LABELS: Record<ImageConsent, { title: string; desc: string }> = {
@@ -35,16 +45,22 @@ const LABELS: Record<ImageConsent, { title: string; desc: string }> = {
   },
 };
 
-const ImageConsentChoice = ({ userId, initialValue, email, onSaved, compact }: Props) => {
+const ImageConsentChoice = ({
+  userId, initialValue, email, onSaved, compact,
+  moduleEnabled = true, planName,
+}: Props) => {
   const [value, setValue] = useState<ImageConsent>(initialValue || "nao_autorizo");
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [acknowledge, setAcknowledge] = useState(false);
 
   useEffect(() => {
     if (initialValue) setValue(initialValue);
   }, [initialValue]);
 
-  async function save() {
+  async function persist(payloadReason: string | null) {
     if (!userId) return;
     setSaving(true);
     try {
@@ -64,7 +80,9 @@ const ImageConsentChoice = ({ userId, initialValue, email, onSaved, compact }: P
         document_version: LEGAL.termsVersion,
         accepted: value !== "nao_autorizo",
         option_value: value,
-        context: "student_profile_update",
+        context: payloadReason
+          ? `student_profile_update | motivo: ${payloadReason}`
+          : "student_profile_update",
         user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
       }] as any);
 
@@ -73,7 +91,7 @@ const ImageConsentChoice = ({ userId, initialValue, email, onSaved, compact }: P
       const nowIso = new Date().toISOString();
       const cascadePayload =
         value === "nao_autorizo"
-          ? { authorized: false, allow_tagging: false, responded_at: nowIso, notes: "Revogado pelo aluno via painel" }
+          ? { authorized: false, allow_tagging: false, responded_at: nowIso, notes: `Revogado pelo aluno via painel${payloadReason ? ` — motivo: ${payloadReason}` : ""}` }
           : value === "sem_identificacao"
           ? { authorized: true, allow_tagging: false, responded_at: nowIso, notes: "Atualizado pelo aluno via painel" }
           : { authorized: true, allow_tagging: true, responded_at: nowIso, notes: "Atualizado pelo aluno via painel" };
@@ -82,12 +100,28 @@ const ImageConsentChoice = ({ userId, initialValue, email, onSaved, compact }: P
         .update(cascadePayload as any)
         .eq("user_id", userId);
 
+      // Registra motivo explicitamente no histórico
+      if (payloadReason) {
+        await (supabase as any).from("authorization_audit").insert({
+          user_id: userId,
+          kind: "image",
+          action: value === "nao_autorizo" ? "revoked" : "updated",
+          previous_value: initialValue || null,
+          new_value: value,
+          reason: payloadReason,
+          user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+        });
+      }
+
       toast.success(
         value === "nao_autorizo"
           ? "Autorização de imagem revogada."
           : "Preferência de imagem atualizada."
       );
       setDirty(false);
+      setConfirmOpen(false);
+      setReason("");
+      setAcknowledge(false);
       onSaved?.(value);
     } catch (e: any) {
       toast.error(e?.message || "Não foi possível salvar.");
@@ -96,7 +130,38 @@ const ImageConsentChoice = ({ userId, initialValue, email, onSaved, compact }: P
     }
   }
 
+  function handleSaveClick() {
+    // Exige confirmação extra ao revogar OU ao trocar de "com identificação" para restrição
+    const requiresConfirm =
+      value === "nao_autorizo" ||
+      (initialValue === "com_identificacao" && value === "sem_identificacao");
+    if (requiresConfirm) {
+      setConfirmOpen(true);
+    } else {
+      persist(null);
+    }
+  }
+
+  if (!moduleEnabled) {
+    return (
+      <div className={`rounded-2xl border border-dashed border-border bg-muted/30 ${compact ? "p-4" : "p-5"}`} id="imagem">
+        <div className="flex items-start gap-3">
+          <Lock className="w-5 h-5 text-muted-foreground mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-foreground">Autorização de uso de imagem</p>
+            <p className="text-[12px] text-muted-foreground leading-relaxed mt-1">
+              Este recurso não está disponível no seu plano atual{planName ? ` (${planName})` : ""}.
+              A gestão de autorização de imagem faz parte de planos que incluem publicação de resultados
+              e materiais institucionais. Fale com a equipe se quiser habilitar.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
+    <>
     <div className={`rounded-2xl border border-border bg-card ${compact ? "p-4" : "p-5"}`} id="imagem">
       <div className="flex items-start gap-3 mb-3">
         <Camera className="w-5 h-5 text-primary mt-0.5" />
@@ -130,11 +195,65 @@ const ImageConsentChoice = ({ userId, initialValue, email, onSaved, compact }: P
       </RadioGroup>
 
       <div className="flex justify-end mt-4">
-        <Button size="sm" disabled={!dirty || saving} onClick={save}>
+        <Button size="sm" disabled={!dirty || saving} onClick={handleSaveClick}>
           {saving && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />} Salvar preferência
         </Button>
       </div>
     </div>
+
+    <AlertDialog open={confirmOpen} onOpenChange={(o) => !saving && setConfirmOpen(o)}>
+      <AlertDialogContent className="max-w-md">
+        <AlertDialogHeader>
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="w-5 h-5 text-destructive" />
+            <AlertDialogTitle>
+              {value === "nao_autorizo" ? "Confirmar revogação da autorização de imagem" : "Confirmar restrição da autorização"}
+            </AlertDialogTitle>
+          </div>
+          <AlertDialogDescription asChild>
+            <div className="space-y-3 text-[12.5px] leading-relaxed">
+              <p>
+                Você está prestes a {value === "nao_autorizo" ? "revogar totalmente" : "restringir"} a autorização de uso da sua imagem
+                em conteúdos da STH METHOD.
+              </p>
+              <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
+                <li>Fotos, vídeos e depoimentos com sua imagem deixam de ser publicados em novos materiais.</li>
+                <li>Materiais já publicados antes desta data podem permanecer no ar até que sejam substituídos no ciclo natural de conteúdo.</li>
+                <li>Sua evolução continua sendo acompanhada normalmente pela equipe — a mudança afeta apenas o uso externo da imagem.</li>
+                <li>Esta decisão fica registrada no seu histórico de autorizações, com data e motivo, e pode ser revertida a qualquer momento.</li>
+              </ul>
+              <div className="pt-1">
+                <Label htmlFor="revoke-reason" className="text-[12px]">Motivo (opcional, ajuda a equipe a entender)</Label>
+                <Textarea
+                  id="revoke-reason"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder="Ex.: preferência pessoal, questões profissionais…"
+                  className="mt-1 min-h-[70px] text-[12px]"
+                />
+              </div>
+              <label className="flex items-start gap-2 cursor-pointer">
+                <Checkbox checked={acknowledge} onCheckedChange={(v) => setAcknowledge(v === true)} />
+                <span className="text-[12px]">
+                  Li e compreendo os efeitos desta alteração. Autorizo o registro deste consentimento no meu histórico.
+                </span>
+              </label>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={saving}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={!acknowledge || saving}
+            onClick={(e) => { e.preventDefault(); persist(reason.trim() || null); }}
+          >
+            {saving && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
+            Confirmar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 };
 
