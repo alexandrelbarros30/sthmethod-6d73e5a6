@@ -1058,6 +1058,83 @@ const Cadastro = () => {
                 <Textarea value={profileForm.additional_info} onChange={(e) => setProfileForm({ ...profileForm, additional_info: e.target.value })} rows={2} placeholder="Informações adicionais que queira compartilhar (opcional)" />
               </div>
 
+              {/* Telefone adicional autorizado (opcional) */}
+              <Card className="border-primary/20 bg-primary/5">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-display flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-primary" /> Telefone adicional autorizado
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">opcional</span>
+                  </CardTitle>
+                  <p className="text-[11px] text-muted-foreground font-body leading-relaxed">
+                    Precisa que outro telefone (ex.: marido, esposa, responsável) fale com o consultor sobre o seu
+                    acompanhamento? Por segurança, <span className="font-semibold text-foreground">apenas você</span>{" "}
+                    pode solicitar essa autorização, e um consultor irá revisar antes de liberar o contato.
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-3 pt-0">
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label className="font-body text-xs">Nome do titular do telefone</Label>
+                      <Input
+                        value={authContact.holder_name}
+                        onChange={(e) => setAuthContact({ ...authContact, holder_name: e.target.value })}
+                        placeholder="Ex: João da Silva"
+                        disabled={authContactSubmitted}
+                      />
+                    </div>
+                    <div>
+                      <Label className="font-body text-xs">Telefone do titular</Label>
+                      <Input
+                        value={authContact.phone}
+                        onChange={(e) => setAuthContact({ ...authContact, phone: phoneMask(e.target.value) })}
+                        placeholder="(00) 00000-0000"
+                        disabled={authContactSubmitted}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label className="font-body text-xs">Relação com você</Label>
+                      <Select
+                        value={authContact.relationship}
+                        onValueChange={(v) => setAuthContact({ ...authContact, relationship: v })}
+                        disabled={authContactSubmitted}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="marido">Marido</SelectItem>
+                          <SelectItem value="esposa">Esposa</SelectItem>
+                          <SelectItem value="parceiro">Parceiro(a)</SelectItem>
+                          <SelectItem value="pai_mae">Pai / Mãe</SelectItem>
+                          <SelectItem value="filho_filha">Filho(a)</SelectItem>
+                          <SelectItem value="responsavel">Responsável legal</SelectItem>
+                          <SelectItem value="outro">Outro</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="font-body text-xs">Motivo (opcional)</Label>
+                      <Input
+                        value={authContact.reason}
+                        onChange={(e) => setAuthContact({ ...authContact, reason: e.target.value })}
+                        placeholder="Ex: meu marido cuida da minha agenda"
+                        disabled={authContactSubmitted}
+                      />
+                    </div>
+                  </div>
+                  {authContactSubmitted ? (
+                    <p className="text-[11px] text-primary font-body flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" /> Solicitação registrada. Aguardando aprovação do consultor.
+                    </p>
+                  ) : (
+                    <p className="text-[11px] text-muted-foreground font-body">
+                      A solicitação será enviada junto com o salvar dos seus dados. O consultor precisa aprovar antes
+                      que esse telefone possa tratar do seu acompanhamento.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
               {/* Document uploads — opcional */}
               <div className="rounded-lg border border-dashed border-border/60 p-3 bg-muted/20">
                 <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">
