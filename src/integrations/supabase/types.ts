@@ -215,6 +215,51 @@ export type Database = {
         }
         Relationships: []
       }
+      authorized_contacts: {
+        Row: {
+          created_at: string
+          holder_name: string
+          id: string
+          phone: string
+          reason: string | null
+          relationship: string
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          holder_name: string
+          id?: string
+          phone: string
+          reason?: string | null
+          relationship: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          holder_name?: string
+          id?: string
+          phone?: string
+          reason?: string | null
+          relationship?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       automation_logs: {
         Row: {
           action_taken: string | null
@@ -5409,6 +5454,15 @@ export type Database = {
           id: number
           occurrences: number
         }[]
+      }
+      check_registration_duplicate: {
+        Args: {
+          _cpf?: string
+          _email?: string
+          _exclude_user_id?: string
+          _phone?: string
+        }
+        Returns: Json
       }
       crm_expire_idle_conversations: { Args: never; Returns: number }
       delete_email: {

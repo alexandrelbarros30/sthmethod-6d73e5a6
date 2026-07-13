@@ -150,6 +150,38 @@ const Cadastro = () => {
   // Step 3 - Body images
   const [imagesComplete, setImagesComplete] = useState(false);
 
+  // Telefone adicional autorizado (opcional) — item 3
+  const [authContact, setAuthContact] = useState({
+    holder_name: "",
+    phone: "",
+    relationship: "",
+    reason: "",
+  });
+  const [authContactSubmitted, setAuthContactSubmitted] = useState(false);
+
+  // WhatsApp de suporte para casos de duplicidade
+  const supportWaLink = (msg: string) =>
+    `https://wa.me/5521998496289?text=${encodeURIComponent(msg)}`;
+  const showDuplicateBlock = (kind: "email" | "cpf" | "phone", value: string) => {
+    const labels: Record<string, string> = { email: "e-mail", cpf: "CPF", phone: "telefone" };
+    toast.error(
+      `Este ${labels[kind]} já está cadastrado. Fale com o suporte para resolver.`,
+      {
+        duration: 8000,
+        action: {
+          label: "Falar no WhatsApp",
+          onClick: () =>
+            window.open(
+              supportWaLink(
+                `Olá! Estou tentando me cadastrar no STH METHOD e recebi aviso de ${labels[kind]} duplicado (${value}). Podem me ajudar?`
+              ),
+              "_blank"
+            ),
+        },
+      }
+    );
+  };
+
   useEffect(() => {
     const draft = {
       step,
@@ -328,6 +360,21 @@ const Cadastro = () => {
     }
     setLoading(true);
     try {
+      // Duplicidade: bloqueia se email/telefone já pertencem a outro cadastro
+      const { data: dup } = await supabase.rpc("check_registration_duplicate", {
+        _email: email,
+        _phone: phoneVal,
+      });
+      if (dup && (dup as any).email) {
+        showDuplicateBlock("email", email);
+        setLoading(false);
+        return;
+      }
+      if (dup && (dup as any).phone) {
+        showDuplicateBlock("phone", phoneVal);
+        setLoading(false);
+        return;
+      }
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -456,6 +503,23 @@ const Cadastro = () => {
 
     setLoading(true);
     try {
+      // Duplicidade: CPF/telefone não podem pertencer a outro aluno
+      const { data: dup } = await supabase.rpc("check_registration_duplicate", {
+        _cpf: profileForm.cpf,
+        _phone: phoneVal,
+        _exclude_user_id: userId,
+      });
+      if (dup && (dup as any).cpf) {
+        showDuplicateBlock("cpf", profileForm.cpf);
+        setLoading(false);
+        return;
+      }
+      if (dup && (dup as any).phone) {
+        showDuplicateBlock("phone", phoneVal);
+        setLoading(false);
+        return;
+      }
+
       const updateData: any = {
         cpf: profileForm.cpf.replace(/\D/g, ""),
         phone: phoneVal || undefined,
@@ -499,6 +563,29 @@ const Cadastro = () => {
       if (!upserted || upserted.length === 0) {
         throw new Error("Não foi possível salvar seu cadastro. Recarregue a página e tente novamente.");
       }
+
+      // Solicitação opcional de telefone adicional autorizado
+      if (
+        !authContactSubmitted &&
+        authContact.holder_name.trim() &&
+        authContact.phone.replace(/\D/g, "").length >= 10 &&
+        authContact.relationship.trim()
+      ) {
+        const { error: acErr } = await supabase.from("authorized_contacts").insert({
+          user_id: userId!,
+          holder_name: authContact.holder_name.trim(),
+          phone: authContact.phone.trim(),
+          relationship: authContact.relationship,
+          reason: authContact.reason.trim() || null,
+        });
+        if (!acErr) {
+          setAuthContactSubmitted(true);
+          toast.success(
+            "Solicitação de telefone autorizado enviada. Um consultor irá analisar e responder."
+          );
+        }
+      }
+
       toast.success("Dados salvos!");
       setStep(3);
     } catch (error: any) {
@@ -970,6 +1057,83 @@ const Cadastro = () => {
                 <Label className="font-body">Mais informações</Label>
                 <Textarea value={profileForm.additional_info} onChange={(e) => setProfileForm({ ...profileForm, additional_info: e.target.value })} rows={2} placeholder="Informações adicionais que queira compartilhar (opcional)" />
               </div>
+
+              {/* Telefone adicional autorizado (opcional) */}
+              <Card className="border-primary/20 bg-primary/5">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-display flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-primary" /> Telefone adicional autorizado
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">opcional</span>
+                  </CardTitle>
+                  <p className="text-[11px] text-muted-foreground font-body leading-relaxed">
+                    Precisa que outro telefone (ex.: marido, esposa, responsável) fale com o consultor sobre o seu
+                    acompanhamento? Por segurança, <span className="font-semibold text-foreground">apenas você</span>{" "}
+                    pode solicitar essa autorização, e um consultor irá revisar antes de liberar o contato.
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-3 pt-0">
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label className="font-body text-xs">Nome do titular do telefone</Label>
+                      <Input
+                        value={authContact.holder_name}
+                        onChange={(e) => setAuthContact({ ...authContact, holder_name: e.target.value })}
+                        placeholder="Ex: João da Silva"
+                        disabled={authContactSubmitted}
+                      />
+                    </div>
+                    <div>
+                      <Label className="font-body text-xs">Telefone do titular</Label>
+                      <Input
+                        value={authContact.phone}
+                        onChange={(e) => setAuthContact({ ...authContact, phone: phoneMask(e.target.value) })}
+                        placeholder="(00) 00000-0000"
+                        disabled={authContactSubmitted}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label className="font-body text-xs">Relação com você</Label>
+                      <Select
+                        value={authContact.relationship}
+                        onValueChange={(v) => setAuthContact({ ...authContact, relationship: v })}
+                        disabled={authContactSubmitted}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="marido">Marido</SelectItem>
+                          <SelectItem value="esposa">Esposa</SelectItem>
+                          <SelectItem value="parceiro">Parceiro(a)</SelectItem>
+                          <SelectItem value="pai_mae">Pai / Mãe</SelectItem>
+                          <SelectItem value="filho_filha">Filho(a)</SelectItem>
+                          <SelectItem value="responsavel">Responsável legal</SelectItem>
+                          <SelectItem value="outro">Outro</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="font-body text-xs">Motivo (opcional)</Label>
+                      <Input
+                        value={authContact.reason}
+                        onChange={(e) => setAuthContact({ ...authContact, reason: e.target.value })}
+                        placeholder="Ex: meu marido cuida da minha agenda"
+                        disabled={authContactSubmitted}
+                      />
+                    </div>
+                  </div>
+                  {authContactSubmitted ? (
+                    <p className="text-[11px] text-primary font-body flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" /> Solicitação registrada. Aguardando aprovação do consultor.
+                    </p>
+                  ) : (
+                    <p className="text-[11px] text-muted-foreground font-body">
+                      A solicitação será enviada junto com o salvar dos seus dados. O consultor precisa aprovar antes
+                      que esse telefone possa tratar do seu acompanhamento.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
 
               {/* Document uploads — opcional */}
               <div className="rounded-lg border border-dashed border-border/60 p-3 bg-muted/20">
