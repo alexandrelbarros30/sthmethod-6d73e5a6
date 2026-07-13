@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Check, X, ShieldCheck, Loader2, Phone, User, Clock } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { formatPhoneBR } from "@/lib/phone";
 
 type Row = {
@@ -92,6 +93,19 @@ const AdminAuthorizedContacts = () => {
   const pending = rows.filter((r) => r.status === "pending");
   const reviewed = rows.filter((r) => r.status !== "pending");
 
+  const waDigits = (s: string) => {
+    const d = (s || "").replace(/\D/g, "");
+    return d.startsWith("55") ? d : `55${d}`;
+  };
+  const openWa = (phone: string, text: string) => {
+    const url = `https://wa.me/${waDigits(phone)}?text=${encodeURIComponent(text)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+  const msgToStudent = (r: Row, p: any) =>
+    `Olá ${p?.full_name || ""}! Aqui é da STH METHOD. Recebemos uma solicitação para autorizar o telefone adicional ${formatPhoneBR(r.phone)} (${r.holder_name} - ${relLabels[r.relationship] || r.relationship}) a tratar do seu acompanhamento. Você confirma essa autorização? Responda SIM ou NÃO.`;
+  const msgToHolder = (r: Row, p: any) =>
+    `Olá ${r.holder_name}! Aqui é da STH METHOD. O(a) aluno(a) ${p?.full_name || ""} solicitou autorizar este número como contato adicional para tratar do acompanhamento dele(a). Você confirma que aceita ser esse contato autorizado? Responda SIM ou NÃO.`;
+
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-6">
       <div className="flex items-center gap-3">
@@ -150,6 +164,23 @@ const AdminAuthorizedContacts = () => {
                   className="text-xs"
                 />
                 <div className="flex gap-2 justify-end">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-emerald-600 border-emerald-500/40 hover:bg-emerald-500/10"
+                    onClick={() => openWa(p?.phone || "", msgToStudent(r, p))}
+                    disabled={!p?.phone}
+                  >
+                    <MessageCircle className="w-3.5 h-3.5 mr-1" /> WhatsApp aluno
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-emerald-600 border-emerald-500/40 hover:bg-emerald-500/10"
+                    onClick={() => openWa(r.phone, msgToHolder(r, p))}
+                  >
+                    <MessageCircle className="w-3.5 h-3.5 mr-1" /> WhatsApp titular
+                  </Button>
                   <Button
                     size="sm"
                     variant="outline"
