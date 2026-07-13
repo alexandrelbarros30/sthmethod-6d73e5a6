@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatPhoneBR } from "@/lib/phone";
+import DashboardLayout from "@/components/DashboardLayout";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Row = {
   id: string;
@@ -45,6 +47,8 @@ const statusColors: Record<string, string> = {
 
 const AdminAuthorizedContacts = () => {
   const qc = useQueryClient();
+  const { role } = useAuth();
+  const layoutRole = (role === "consultor" ? "consultor" : "admin") as "admin" | "consultor";
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [reqOpen, setReqOpen] = useState(false);
   const [studentSearch, setStudentSearch] = useState("");
@@ -162,7 +166,8 @@ const AdminAuthorizedContacts = () => {
     `Olá ${r.holder_name}! Aqui é da STH METHOD. O(a) aluno(a) ${p?.full_name || ""} solicitou autorizar este número como contato adicional para tratar do acompanhamento dele(a). Você confirma que aceita ser esse contato autorizado? Responda SIM ou NÃO.`;
 
   return (
-    <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-6">
+    <DashboardLayout role={layoutRole} title="Telefones autorizados" subtitle="Solicitações de contato adicional (marido, esposa, responsável)">
+      <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-6">
       <div className="flex items-center gap-3 flex-wrap">
         <ShieldCheck className="w-6 h-6 text-primary" />
         <div className="flex-1 min-w-[200px]">
@@ -355,7 +360,8 @@ const AdminAuthorizedContacts = () => {
           );
         })}
       </section>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 
