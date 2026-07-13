@@ -85,6 +85,7 @@ import AdminNutriMetrics from "./pages/admin/AdminNutriMetrics";
 import AdminFixCurty from "./pages/admin/AdminFixCurty";
 import AdminStudents from "./pages/admin/AdminStudents";
 import AdminIdentityVerification from "./pages/admin/AdminIdentityVerification";
+import AdminAuthorizedContacts from "./pages/admin/AdminAuthorizedContacts";
 
 import AdminPlans from "./pages/admin/AdminPlans";
 import AdminPayments from "./pages/admin/AdminPayments";
@@ -281,6 +282,7 @@ const App = () => (
             <Route path="/admin/fix-curty" element={<ProtectedRoute allowedRoles={["admin"]}><AdminFixCurty /></ProtectedRoute>} />
             <Route path="/admin/students" element={<ProtectedRoute allowedRoles={["admin"]}><AdminStudents /></ProtectedRoute>} />
             <Route path="/admin/verificacao-identidade" element={<ProtectedRoute allowedRoles={["admin"]}><AdminIdentityVerification /></ProtectedRoute>} />
+            <Route path="/admin/telefones-autorizados" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><AdminAuthorizedContacts /></ProtectedRoute>} />
             <Route path="/admin/plans" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPlans /></ProtectedRoute>} />
             <Route path="/admin/payments" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPayments /></ProtectedRoute>} />
             <Route path="/admin/payment-links" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPaymentLinks /></ProtectedRoute>} />
