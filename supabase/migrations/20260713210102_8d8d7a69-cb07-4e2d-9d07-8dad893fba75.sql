@@ -1,0 +1,1 @@
+CREATE POLICY "Staff insert authorized contacts" ON public.authorized_contacts FOR INSERT TO authenticated WITH CHECK (is_crm_staff(auth.uid()));
