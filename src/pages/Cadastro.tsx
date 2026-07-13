@@ -360,6 +360,21 @@ const Cadastro = () => {
     }
     setLoading(true);
     try {
+      // Duplicidade: bloqueia se email/telefone já pertencem a outro cadastro
+      const { data: dup } = await supabase.rpc("check_registration_duplicate", {
+        _email: email,
+        _phone: phoneVal,
+      });
+      if (dup && (dup as any).email) {
+        showDuplicateBlock("email", email);
+        setLoading(false);
+        return;
+      }
+      if (dup && (dup as any).phone) {
+        showDuplicateBlock("phone", phoneVal);
+        setLoading(false);
+        return;
+      }
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
