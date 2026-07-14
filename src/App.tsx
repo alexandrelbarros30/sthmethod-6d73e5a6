@@ -30,6 +30,7 @@ import Gestrinona from "./pages/Gestrinona";
 import PlatoMetabolico from "./pages/PlatoMetabolico";
 import Trembolona from "./pages/Trembolona";
 import Clenbuterol from "./pages/Clenbuterol";
+import PeriodizacaoMedicamentos from "./pages/PeriodizacaoMedicamentos";
 import RestauracaoMuscular from "./pages/RestauracaoMuscular";
 import Ginecomastia from "./pages/Ginecomastia";
 import HormoniosBfAlto from "./pages/HormoniosBfAlto";
@@ -214,6 +215,7 @@ const App = () => (
             <Route path="/tendencias/plato-metabolico" element={<PlatoMetabolico />} />
             <Route path="/tendencias/trembolona" element={<Trembolona />} />
             <Route path="/tendencias/clenbuterol" element={<Clenbuterol />} />
+            <Route path="/tendencias/periodizacao-medicamentos" element={<PeriodizacaoMedicamentos />} />
             <Route path="/tendencias/restauracao-muscular" element={<RestauracaoMuscular />} />
             <Route path="/tendencias/ginecomastia" element={<Ginecomastia />} />
             <Route path="/tendencias/hormonios-bf-alto" element={<HormoniosBfAlto />} />
