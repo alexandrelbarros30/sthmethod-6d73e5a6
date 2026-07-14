@@ -26,6 +26,7 @@ import hipertensaoImg from "@/assets/sthnews-hipertensao-hero.jpg";
 import colateraisImg from "@/assets/sthnews-tirzepatida-colaterais-hero.jpg";
 import clenbuterolImg from "@/assets/sthnews-clenbuterol-hero.jpg";
 import mounjaroPesoTravadoImg from "@/assets/sthnews-mounjaro-peso-travado-hero.jpg";
+import periodizacaoImg from "@/assets/sthnews-periodizacao-hero.jpg";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -33,6 +34,7 @@ const fadeUp = {
 };
 
 const articles = [
+  { to: "/tendencias/periodizacao-medicamentos", kicker: "Estratégia farmacológica", title: "⏳ Periodização de medicamentos e peptídeos: a sofisticação que ninguém aplica.", desc: "Mais compostos não é mais resultado. Cada fase pede a intervenção certa — no momento certo.", img: periodizacaoImg },
   { to: "/tendencias/tirzepatida-desmame", kicker: "Tirzepatida & manutenção", title: "💉 O desmame da tirzepatida: quando a caneta acaba, o verdadeiro desafio começa.", desc: "Emagrecer é apenas a primeira etapa. A manutenção dos resultados depende dos hábitos construídos durante o tratamento.", img: tirzeDesmameImg },
   { to: "/tendencias/clenbuterol", kicker: "Termogênese & risco", title: "🔥 Clenbuterol: o termogênico mais poderoso ou uma bomba-relógio cardiovascular?", desc: "Mecanismo beta-2 adrenérgico, perda de gordura acelerada e o preço fisiológico que o coração paga.", img: clenbuterolImg },
   { to: "/tendencias/restauracao-muscular", kicker: "Reabilitação hormonal", title: "O músculo lembra: restaurando o físico após 10 anos de hormônios", desc: "Memória miotonuclear, reset do eixo HPT e o caminho real para reverter atrofia crônica.", img: restauracaoImg },
