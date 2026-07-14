@@ -11,6 +11,7 @@ import ginecoImg from "@/assets/sthnews-gineco-hero.jpg";
 import trembolonaImg from "@/assets/sthnews-trembolona-hero.jpg";
 import restauracaoImg from "@/assets/sthnews-atrofia-hero.jpg";
 import clenbuterolImg from "@/assets/sthnews-clenbuterol-hero.jpg";
+import periodizacaoImg from "@/assets/sthnews-periodizacao-hero.jpg";
 
 export interface TrendArticle {
   id: string;
@@ -25,6 +26,7 @@ export interface TrendArticle {
 // Ordenado do mais recente para o mais antigo.
 // Ao publicar nova tendência, adicione no topo com data atual.
 export const LATEST_TRENDS: TrendArticle[] = [
+  { id: "periodizacao-medicamentos", path: "/tendencias/periodizacao-medicamentos", kicker: "Estratégia farmacológica", title: "Periodização de medicamentos e peptídeos: a sofisticação que ninguém aplica", desc: "Mais compostos não é mais resultado. Cada fase pede a intervenção certa — no momento certo.", img: periodizacaoImg, publishedAt: "2026-07-14" },
   { id: "clenbuterol", path: "/tendencias/clenbuterol", kicker: "Termogênese & risco", title: "Clenbuterol: o termogênico mais poderoso ou uma bomba-relógio cardiovascular?", desc: "Mecanismo beta-2 adrenérgico, perda de gordura acelerada e o preço fisiológico que o coração paga.", img: clenbuterolImg, publishedAt: "2026-06-17" },
   { id: "restauracao-muscular", path: "/tendencias/restauracao-muscular", kicker: "Reabilitação hormonal", title: "O músculo lembra: restaurando o físico após 10 anos de hormônios", desc: "Memória miotonuclear, reset do eixo HPT e o caminho real para reverter atrofia crônica.", img: restauracaoImg, publishedAt: "2026-06-12" },
   { id: "hipertensao-arterial", path: "/tendencias/hipertensao-arterial", kicker: "Cardiovascular", title: "Hipertensão Arterial: o tratado tático completo", desc: "Classificação, fisiopatologia, diagnóstico diferencial e conduta medicamentosa, suplementar e comportamental.", img: hipertensaoImg, publishedAt: "2026-05-31" },
