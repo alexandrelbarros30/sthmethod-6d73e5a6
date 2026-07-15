@@ -51,9 +51,18 @@ Deno.serve(async (req) => {
     }
     const source = provider === 'zapi' ? 'zapi' : (provider === 'wapi_sucesso' ? 'wapi_sucesso' : 'wapi');
 
-    // Normaliza telefone BR
-    const digits = String(phone).replace(/\D/g, '');
-    const fullPhone = digits.startsWith('55') ? digits : `55${digits}`;
+    const normalizeWhatsappPhone = (value: unknown) => {
+      const raw = String(value || '').trim();
+      const digits = raw.replace(/\D/g, '');
+      if (!digits) return '';
+      if (raw.startsWith('+')) return digits;
+      if (digits.startsWith('00') && digits.length > 11) return digits.slice(2);
+      if (digits.startsWith('55')) return digits;
+      if (digits.length > 11 && !digits.startsWith('0')) return digits;
+      return `55${digits}`;
+    };
+
+    const fullPhone = normalizeWhatsappPhone(phone);
 
     // Carrega credenciais do banco (fallback para env)
     const cfgKey = provider === 'zapi' ? 'zapi' : (provider === 'wapi_sucesso' ? 'wapi_sucesso' : 'wapi');

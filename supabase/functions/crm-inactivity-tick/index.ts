@@ -70,7 +70,12 @@ Deno.serve(async (req) => {
     const raw = String(phone || '').trim();
     if (raw.includes('@g.us') || raw.includes('-group')) return raw;
     const digits = raw.replace(/\D/g, '');
-    return digits.startsWith('55') ? digits : `55${digits}`;
+    if (!digits) return '';
+    if (raw.startsWith('+')) return digits;
+    if (digits.startsWith('00') && digits.length > 11) return digits.slice(2);
+    if (digits.startsWith('55')) return digits;
+    if (digits.length > 11 && !digits.startsWith('0')) return digits;
+    return `55${digits}`;
   };
 
   // Resolve o nome real do aluno pelo telefone (evita usar push name do WhatsApp,

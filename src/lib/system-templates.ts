@@ -97,11 +97,20 @@ export const renderTemplate = (content: string, ctx: TemplateContext): string =>
   return msg;
 };
 
-/** Build a wa.me URL with a properly normalized BR phone number. */
+/** Build a wa.me URL with a properly normalized WhatsApp phone number. */
 export const buildWhatsAppUrl = (phone: string, message: string): string | null => {
-  const digits = phone.replace(/\D/g, "");
+  const raw = String(phone || "").trim();
+  const digits = raw.replace(/\D/g, "");
   if (!digits) return null;
-  const fullPhone = digits.startsWith("55") ? digits : `55${digits}`;
+  const fullPhone = raw.startsWith("+")
+    ? digits
+    : digits.startsWith("00") && digits.length > 11
+      ? digits.slice(2)
+      : digits.startsWith("55")
+        ? digits
+        : digits.length > 11 && !digits.startsWith("0")
+          ? digits
+          : `55${digits}`;
   return `https://wa.me/${fullPhone}?text=${encodeURIComponent(message)}`;
 };
 
