@@ -35,8 +35,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    const digits = String(phone).replace(/\D/g, '');
-    const fullPhone = digits.startsWith('55') ? digits : `55${digits}`;
+    const normalizeWhatsappPhone = (value: unknown) => {
+      const raw = String(value || '').trim();
+      const digits = raw.replace(/\D/g, '');
+      if (!digits) return '';
+      if (raw.startsWith('+')) return digits;
+      if (digits.startsWith('00') && digits.length > 11) return digits.slice(2);
+      if (digits.startsWith('55')) return digits;
+      if (digits.length > 11 && !digits.startsWith('0')) return digits;
+      return `55${digits}`;
+    };
+
+    const fullPhone = normalizeWhatsappPhone(phone);
     const serverUrl = ((cfg.server_url || '').trim() || 'https://api.w-api.app').replace(/\/$/, '');
     const value = action === 'block';
 
