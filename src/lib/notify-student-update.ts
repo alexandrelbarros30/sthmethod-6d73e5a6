@@ -10,10 +10,12 @@ const KEY_MAP: Record<StudentUpdateType, SystemTemplateKey> = {
   plan: "plan_updated",
 };
 
-// Janela para considerar dieta+treino+protocolo como um "projeto completo"
-const BATCH_WINDOW_MS = 15 * 60 * 1000; // 15 minutos
-// Delay antes de disparar individual (se o lote não completar)
-const INDIVIDUAL_DELAY_MS = 5 * 60 * 1000; // 5 minutos
+// Janela para coalescer dieta+treino+protocolo em UMA mensagem combinada.
+// Curto o suficiente para o admin salvar os três em sequência, mas curto
+// o bastante para NÃO segurar mensagem além do razoável.
+const COMBINED_WINDOW_MS = 90 * 1000; // 90 segundos
+// Dedup por tipo — evita reenvio se o mesmo release for salvo duas vezes.
+const INDIVIDUAL_DEDUP_MS = 10 * 60 * 1000; // 10 minutos
 // Lock para não duplicar combined
 const COMBINED_LOCK_MS = 24 * 60 * 60 * 1000; // 24h
 
@@ -37,12 +39,14 @@ const loadProfile = async (userId: string) => {
 
 const sendIndividual = async (userId: string, type: StudentUpdateType) => {
   const profile = await loadProfile(userId);
-  if (!profile) return;
-  // Padrão: NÃO enviar. Só dispara se o admin tiver ativado explicitamente o toggle.
-  if ((profile as any).notify_on_updates !== true) return;
-  if (!profile.phone) return;
+  if (!profile) return false;
+  // O toggle notify_on_updates só bloqueia notificações "opcionais" (plan).
+  // Releases de dieta/treino/protocolo SÃO mensagens de sistema e devem
+  // sempre chegar via canal Fale com o Nutri.
+  if (type === "plan" && (profile as any).notify_on_updates !== true) return false;
+  if (!profile.phone) return false;
 
-  await sendSystemTemplate(
+  const res = await sendSystemTemplate(
     KEY_MAP[type],
     {
       full_name: profile.full_name,
@@ -50,17 +54,17 @@ const sendIndividual = async (userId: string, type: StudentUpdateType) => {
       email: profile.email,
       user_id: userId,
     },
-    { logHistory: true, mode: "auto" },
+    { logHistory: true, mode: "auto", silent: true },
   );
+  return !!res?.ok;
 };
 
 const sendCombined = async (userId: string) => {
   const profile = await loadProfile(userId);
   if (!profile) return false;
-  if ((profile as any).notify_on_updates !== true) return false;
   if (!profile.phone) return false;
 
-  await sendSystemTemplate(
+  const res = await sendSystemTemplate(
     "content_all_ready",
     {
       full_name: profile.full_name,
@@ -68,17 +72,18 @@ const sendCombined = async (userId: string) => {
       email: profile.email,
       user_id: userId,
     },
-    { logHistory: true, mode: "auto" },
+    { logHistory: true, mode: "auto", silent: true },
   );
-  return true;
+  return !!res?.ok;
 };
 
 /**
  * Dispara mensagem ao aluno notificando atualização de dieta/treino/protocolo/plano.
  *
- * Coalescência (Projeto Completo): se dieta + treino + protocolo são salvos numa janela
- * de 15 min, envia UMA mensagem combinada ("Dieta, treino e protocolo prontos") em vez
- * de 3 isoladas. Caso fique incompleto, dispara o individual após 5 min de espera.
+ * Envio IMEDIATO ao salvar (não depende de setTimeout do navegador, que morre
+ * se o admin sai da página). Coalescência simples: se dieta + treino + protocolo
+ * ficarem prontos na janela de 90s, o 3º disparo envia a mensagem combinada;
+ * os individuais anteriores continuam válidos como confirmação parcial.
  *
  * `plan` é enviado direto (não entra no batch).
  * Falha silenciosa — não interrompe o fluxo de save.
@@ -103,11 +108,17 @@ export const notifyStudentContentUpdate = async (
       .eq("user_id", userId)
       .maybeSingle();
 
+    // Dedup: se o mesmo tipo foi enviado nos últimos INDIVIDUAL_DEDUP_MS,
+    // pula (evita duplicidade quando o admin salva várias vezes em sequência).
+    const sentMap = ((existing?.last_individual_sent || {}) as Record<string, string>);
+    const lastSentAt = sentMap[type] ? new Date(sentMap[type]).getTime() : 0;
+    const alreadySentRecently = lastSentAt > 0 && now.getTime() - lastSentAt < INDIVIDUAL_DEDUP_MS;
+
     const batchStartedAt = existing?.batch_started_at
       ? new Date(existing.batch_started_at)
       : null;
     const isExpired =
-      !batchStartedAt || now.getTime() - batchStartedAt.getTime() > BATCH_WINDOW_MS;
+      !batchStartedAt || now.getTime() - batchStartedAt.getTime() > COMBINED_WINDOW_MS;
 
     const updatePayload: Record<string, any> = { user_id: userId, [col]: nowIso };
     if (isExpired) {
@@ -161,39 +172,20 @@ export const notifyStudentContentUpdate = async (
             batch_started_at: null,
           })
           .eq("user_id", userId);
+        return;
       }
-      return;
     }
 
-    // Lote incompleto: agenda envio individual após delay (best-effort).
-    setTimeout(async () => {
-      try {
-        const { data: check } = await supabase
-          .from("student_content_batches")
-          .select("combined_sent_at, last_individual_sent, diet_ready_at, training_ready_at, protocol_ready_at")
-          .eq("user_id", userId)
-          .maybeSingle();
-        if (!check) return;
-        const sentMap = ((check.last_individual_sent || {}) as Record<string, string>);
-        const myReadyAt = (check as any)[col] as string | null;
-        if (!myReadyAt) return; // foi limpo pelo combined
-        const lastSent = sentMap[type] ? new Date(sentMap[type]).getTime() : 0;
-        if (lastSent >= new Date(myReadyAt).getTime()) return;
-        const justCombined =
-          check.combined_sent_at &&
-          Date.now() - new Date(check.combined_sent_at).getTime() < COMBINED_LOCK_MS;
-        if (justCombined) return;
-
-        await sendIndividual(userId, type);
-        sentMap[type] = new Date().toISOString();
-        await supabase
-          .from("student_content_batches")
-          .update({ last_individual_sent: sentMap })
-          .eq("user_id", userId);
-      } catch (err) {
-        console.warn(`[notifyStudentContentUpdate:delayed:${type}] failed`, err);
-      }
-    }, INDIVIDUAL_DELAY_MS);
+    // Envio individual IMEDIATO (não depende de setTimeout do navegador).
+    if (alreadySentRecently) return;
+    const ok = await sendIndividual(userId, type);
+    if (ok) {
+      const nextMap = { ...sentMap, [type]: new Date().toISOString() };
+      await supabase
+        .from("student_content_batches")
+        .update({ last_individual_sent: nextMap })
+        .eq("user_id", userId);
+    }
   } catch (err) {
     console.warn(`[notifyStudentContentUpdate:${type}] failed`, err);
   }
