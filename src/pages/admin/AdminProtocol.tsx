@@ -322,6 +322,7 @@ const AdminProtocol = () => {
       : latestStudentProtocol?.content || "";
   const showLegacyProtocolEditor = !!selected?.user_id && !latestSmartProtocol && !draftSmartProtocol;
   const showSmartProtocolPreview = !!selected?.user_id && (latestSmartProtocol || draftSmartProtocol);
+  const isEditingMode = showNewForm || !!editingId;
 
   // Copy protocol as plain text to system clipboard
   const copyAsTextMutation = useMutation({
