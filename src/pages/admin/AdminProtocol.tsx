@@ -779,6 +779,78 @@ const AdminProtocol = () => {
                 <ProtocolContinuityCard studentUserId={selected.user_id} />
               )}
 
+              {/* Semana atual do aluno + referência de datas */}
+              {!isEditingMode && selected?.user_id && (latestSub?.start_date || studentProtocols?.[0]?.created_at) && (() => {
+                const fmt = (s?: string | null) => {
+                  if (!s) return "—";
+                  try {
+                    return new Date(s + (s.length === 10 ? "T00:00:00" : "")).toLocaleDateString("pt-BR", {
+                      day: "2-digit", month: "short", year: "numeric",
+                    });
+                  } catch { return "—"; }
+                };
+                const weeksSince = (s?: string | null) => {
+                  if (!s) return null;
+                  const t = new Date(s + (s.length === 10 ? "T00:00:00" : "")).getTime();
+                  if (!Number.isFinite(t)) return null;
+                  const diff = Date.now() - t;
+                  if (diff < 0) return 0;
+                  return Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1;
+                };
+                const adhesion = latestSub?.start_date as string | undefined;
+                const protoRef = (studentProtocols?.[0] as any)?.release_date
+                  || (studentProtocols?.[0] as any)?.start_date
+                  || (studentProtocols?.[0] as any)?.created_at;
+                const weekPlan = weeksSince(adhesion);
+                const weekProto = weeksSince(protoRef);
+                const status = (latestSub?.status || "").toLowerCase();
+                const cycleLabel = status.includes("renov")
+                  ? "Renovação"
+                  : status.includes("reativ")
+                  ? "Reativação"
+                  : "Adesão";
+                return (
+                  <Card className="border-border/60 bg-muted/30">
+                    <CardContent className="py-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="rounded-lg border border-border/50 bg-background p-3">
+                          <p className="text-[9px] font-medium tracking-[0.2em] uppercase text-muted-foreground">
+                            Semana do aluno
+                          </p>
+                          <p className="text-2xl font-semibold mt-1 leading-none">
+                            {weekPlan ? `Sem ${weekPlan}` : "—"}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground mt-1.5">
+                            desde a última {cycleLabel.toLowerCase()}
+                          </p>
+                        </div>
+                        <div className="rounded-lg border border-border/50 bg-background p-3">
+                          <p className="text-[9px] font-medium tracking-[0.2em] uppercase text-muted-foreground">
+                            {cycleLabel} do plano
+                          </p>
+                          <p className="text-sm font-semibold mt-1.5">{fmt(adhesion)}</p>
+                          {latestSub?.end_date && (
+                            <p className="text-[11px] text-muted-foreground mt-1">
+                              Vence: {fmt(latestSub.end_date)}
+                            </p>
+                          )}
+                        </div>
+                        <div className="rounded-lg border border-border/50 bg-background p-3">
+                          <p className="text-[9px] font-medium tracking-[0.2em] uppercase text-muted-foreground">
+                            Protocolo publicado
+                          </p>
+                          <p className="text-sm font-semibold mt-1.5">{fmt(protoRef)}</p>
+                          <p className="text-[11px] text-muted-foreground mt-1">
+                            {weekProto ? `Semana ${weekProto} do protocolo` : "sem protocolo ativo"}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })()}
+
+
               {/* Library Buttons */}
               {!isEditingMode && selected?.user_id && (
                 <div className="flex flex-wrap gap-2">
