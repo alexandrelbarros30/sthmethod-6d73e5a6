@@ -743,7 +743,7 @@ const AdminProtocol = () => {
           <div className="flex-1 min-h-0 overflow-y-auto pr-1 sm:pr-4">
             <div className="space-y-6">
               {/* Student Info Header - like student view */}
-              {selectedProfile && (
+              {!isEditingMode && selectedProfile && (
                 <Card className="border-border bg-muted/50">
                   <CardContent className="py-4">
                     <StudentInfoHeader info={{
@@ -759,12 +759,12 @@ const AdminProtocol = () => {
                 </Card>
               )}
 
-              {selected?.user_id && (
+              {!isEditingMode && selected?.user_id && (
                 <ProtocolContinuityCard studentUserId={selected.user_id} />
               )}
 
               {/* Library Buttons */}
-              {selected?.user_id && (
+              {!isEditingMode && selected?.user_id && (
                 <div className="flex flex-wrap gap-2">
                   <Button variant="outline" size="sm" className="text-xs" onClick={() => setLibraryDialogOpen(true)}>
                     <Download className="w-3.5 h-3.5 mr-1" /> Carregar da Biblioteca
