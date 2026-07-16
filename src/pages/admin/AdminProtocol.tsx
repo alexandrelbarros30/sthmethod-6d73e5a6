@@ -338,7 +338,8 @@ const AdminProtocol = () => {
       : latestStudentProtocol?.content || "";
   const showLegacyProtocolEditor = !!selected?.user_id && !latestSmartProtocol && !draftSmartProtocol;
   const showSmartProtocolPreview = !!selected?.user_id && (latestSmartProtocol || draftSmartProtocol);
-  const isEditingMode = showNewForm || !!editingId;
+  // New/Edit protocol forms now open in popup dialogs, so the underlying dashboard stays visible.
+  const isEditingMode = false;
 
   // Copy protocol as plain text to system clipboard
   const copyAsTextMutation = useMutation({
@@ -1114,15 +1115,18 @@ Diretriz temporal obrigatória:
                 </Button>
               )}
 
-              {/* New protocol form */}
-              {showNewForm && (
-                <Card className="border-primary/30 bg-primary/5">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-display flex items-center gap-2">
+              {/* New protocol form — opens in popup */}
+              <Dialog open={showNewForm} onOpenChange={(o) => { if (!o) { setShowNewForm(false); resetNewForm(); } }}>
+                <DialogContent className={isMobile
+                  ? "!inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 !w-screen !max-w-none !h-[100dvh] !max-h-none rounded-none border-0 p-3 !flex !flex-col overflow-hidden"
+                  : "max-w-3xl max-h-[90dvh] !flex !flex-col overflow-hidden"
+                }>
+                  <DialogHeader>
+                    <DialogTitle className="font-display flex items-center gap-2">
                       <Plus className="w-4 h-4" /> Novo Protocolo
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-3">
                     <div>
                       <Label className="font-body">Título</Label>
                       <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
@@ -1178,150 +1182,176 @@ Ação: Após a maior refeição do dia.
                         </div>
                       </details>
                     </div>
-                    <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
-                      <Button variant="ghost" size="sm" onClick={() => { setShowNewForm(false); resetNewForm(); }} className="w-full sm:w-auto">
-                        Cancelar
-                      </Button>
-                      <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full sm:w-auto">
-                        {saveMutation.isPending ? "Salvando..." : "Salvar"}
-                      </Button>
+                  </div>
+                  <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end pt-3 border-t">
+                    <Button variant="ghost" size="sm" onClick={() => { setShowNewForm(false); resetNewForm(); }} className="w-full sm:w-auto">
+                      Cancelar
+                    </Button>
+                    <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full sm:w-auto">
+                      {saveMutation.isPending ? "Salvando..." : "Salvar"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              {/* Edit protocol form — opens in popup */}
+              <Dialog open={!!editingId} onOpenChange={(o) => { if (!o) cancelEdit(); }}>
+                <DialogContent className={isMobile
+                  ? "!inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 !w-screen !max-w-none !h-[100dvh] !max-h-none rounded-none border-0 p-3 !flex !flex-col overflow-hidden"
+                  : "max-w-3xl max-h-[90dvh] !flex !flex-col overflow-hidden"
+                }>
+                  <DialogHeader>
+                    <DialogTitle className="font-display flex items-center gap-2">
+                      <Pencil className="w-4 h-4" /> Editando Protocolo
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-3">
+                    <div>
+                      <Label className="font-body text-xs">Título</Label>
+                      <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <Label className="font-body text-xs">Data</Label>
+                        <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />
+                      </div>
+                      <div>
+                        <Label className="font-body text-xs">Horário</Label>
+                        <Input type="time" value={editTime} onChange={(e) => setEditTime(e.target.value)} />
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="font-body text-xs">Conteúdo</Label>
+                      <RichTextEditor value={editContent} onChange={setEditContent} />
+                    </div>
+                  </div>
+                  <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end pt-3 border-t">
+                    <Button variant="ghost" size="sm" onClick={cancelEdit} className="w-full sm:w-auto">Cancelar</Button>
+                    <Button size="sm" onClick={() => editMutation.mutate()} disabled={editMutation.isPending} className="w-full sm:w-auto">
+                      {editMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
-              {/* Edit form (shown standalone in focused editor mode) */}
-              {editingId && (
-                    <Card className="border-primary/30 bg-primary/5">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-display flex items-center gap-2">
-                          <Pencil className="w-4 h-4" /> Editando Protocolo
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div>
-                          <Label className="font-body text-xs">Título</Label>
-                          <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <Label className="font-body text-xs">Data</Label>
-                            <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />
-                          </div>
-                          <div>
-                            <Label className="font-body text-xs">Horário</Label>
-                            <Input type="time" value={editTime} onChange={(e) => setEditTime(e.target.value)} />
-                          </div>
-                        </div>
-                        <div>
-                          <Label className="font-body text-xs">Conteúdo</Label>
-                          <RichTextEditor value={editContent} onChange={setEditContent} />
-                        </div>
-                        <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
-                          <Button variant="ghost" size="sm" onClick={cancelEdit} className="w-full sm:w-auto">Cancelar</Button>
-                          <Button size="sm" onClick={() => editMutation.mutate()} disabled={editMutation.isPending} className="w-full sm:w-auto">
-                            {editMutation.isPending ? "Salvando..." : "Salvar Alterações"}
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-              {/* Protocol History - Accordion style like student view */}
+              {/* Protocol History - compact list; content opens in popup */}
               {!isEditingMode && (studentProtocols && studentProtocols.length > 0 ? (
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-muted-foreground font-display flex items-center gap-2">
                     <Clock className="w-4 h-4" /> Histórico de Protocolos ({studentProtocols.length})
                   </h3>
 
-                  <Accordion type="single" collapsible className="space-y-2">
+                  <div className="space-y-2">
                     {studentProtocols.map((protocol: any) => (
-                      <AccordionItem key={protocol.id} value={protocol.id} className="border rounded-xl overflow-hidden bg-card">
-                        <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                          <div className="flex items-center gap-2 flex-wrap text-left">
-                            {protocol.visible ? (
-                              <Eye className="w-4 h-4 text-green-500 shrink-0" />
-                            ) : (
-                              <EyeOff className="w-4 h-4 text-muted-foreground shrink-0" />
-                            )}
-                            <span className="text-base font-display font-semibold">{protocol.title}</span>
-                            <Badge variant="outline" className="text-[10px]">
-                              {new Date(protocol.created_at).toLocaleDateString("pt-BR")} às{" "}
-                              {new Date(protocol.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                      <div key={protocol.id} className="border rounded-xl bg-card px-3 py-2.5 flex items-center gap-3 flex-wrap">
+                        <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+                          {protocol.visible ? (
+                            <Eye className="w-4 h-4 text-green-500 shrink-0" />
+                          ) : (
+                            <EyeOff className="w-4 h-4 text-muted-foreground shrink-0" />
+                          )}
+                          <span className="text-sm font-display font-semibold truncate">{protocol.title}</span>
+                          <Badge variant="outline" className="text-[10px]">
+                            {new Date(protocol.created_at).toLocaleDateString("pt-BR")} às{" "}
+                            {new Date(protocol.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                          </Badge>
+                          {protocol.release_date && (
+                            <Badge variant="secondary" className="text-[10px]">
+                              Liberação: {new Date(protocol.release_date + "T12:00:00").toLocaleDateString("pt-BR")}
                             </Badge>
-                            {protocol.release_date && (
-                              <Badge variant="secondary" className="text-[10px]">
-                                Liberação: {new Date(protocol.release_date + "T12:00:00").toLocaleDateString("pt-BR")}
-                              </Badge>
-                            )}
-                            {protocol.end_date && (
-                              <Badge variant="secondary" className="text-[10px]">
-                                Encerra: {new Date(protocol.end_date + "T12:00:00").toLocaleDateString("pt-BR")}
-                              </Badge>
-                            )}
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="px-4 pb-4">
-                          <div className="space-y-3">
-                            {/* Admin action buttons */}
-                            <div className="flex flex-wrap gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-7 text-xs"
-                                onClick={async () => {
-                                  await supabase.from("student_protocols").update({ visible: !protocol.visible }).eq("id", protocol.id);
-                                  refetchProtocols();
-                                  qc.invalidateQueries({ queryKey: ["admin-students-protocols"] });
-                                  toast.success(protocol.visible ? "Protocolo ocultado" : "Protocolo visível");
-                                }}
-                              >
-                                {protocol.visible ? <EyeOff className="w-3 h-3 mr-1" /> : <Eye className="w-3 h-3 mr-1" />}
-                                {protocol.visible ? "Ocultar" : "Tornar Visível"}
-                              </Button>
-                              <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => startEdit(protocol)}>
-                                <Pencil className="w-3 h-3 mr-1" /> Editar
-                              </Button>
-                              <Button variant="outline" size="sm" className="h-7 text-xs text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => confirmDelete(protocol.id)}>
-                                <Trash2 className="w-3 h-3 mr-1" /> Excluir
-                              </Button>
-                            </div>
-
-                            {protocol.pdf_url && (
-                              <div>
-                                <p className="text-xs text-primary flex items-center gap-1 mb-2">
-                                  <FileText className="w-3 h-3" /> Documento PDF
-                                </p>
-                                <SignedPdfFrame
-                                  bucket="documents"
-                                  storagePath={(protocol as any).storage_path}
-                                  publicUrl={protocol.pdf_url}
-                                  className="w-full h-[500px] rounded-lg border border-border"
-                                  title="Protocolo PDF"
-                                />
-                              </div>
-                            )}
-                            {protocol.content && (
-                              (hasSmartProtocolStructure(protocol.content) || isSmartProtocolEra(protocol.created_at) ? (
-                                <GamifiedProtocolPanel
-                                  content={protocol.content}
-                                  userId={selected.user_id}
-                                  readOnly
-                                />
-                              ) : (
-                                <RichContentRenderer content={protocol.content} />
-                              ))
-                            )}
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
+                          )}
+                          {protocol.end_date && (
+                            <Badge variant="secondary" className="text-[10px]">
+                              Encerra: {new Date(protocol.end_date + "T12:00:00").toLocaleDateString("pt-BR")}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex gap-1.5 flex-wrap">
+                          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setPreviewProtocol(protocol)}>
+                            <Eye className="w-3 h-3 mr-1" /> Ver
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={async () => {
+                              await supabase.from("student_protocols").update({ visible: !protocol.visible }).eq("id", protocol.id);
+                              refetchProtocols();
+                              qc.invalidateQueries({ queryKey: ["admin-students-protocols"] });
+                              toast.success(protocol.visible ? "Protocolo ocultado" : "Protocolo visível");
+                            }}
+                          >
+                            {protocol.visible ? <EyeOff className="w-3 h-3 mr-1" /> : <Eye className="w-3 h-3 mr-1" />}
+                            {protocol.visible ? "Ocultar" : "Visível"}
+                          </Button>
+                          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => startEdit(protocol)}>
+                            <Pencil className="w-3 h-3 mr-1" /> Editar
+                          </Button>
+                          <Button variant="outline" size="sm" className="h-7 text-xs text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => confirmDelete(protocol.id)}>
+                            <Trash2 className="w-3 h-3 mr-1" /> Excluir
+                          </Button>
+                        </div>
+                      </div>
                     ))}
-                  </Accordion>
+                  </div>
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-6">Nenhum protocolo cadastrado ainda.</p>
               ))}
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Protocol Dialog */}
+      <Dialog open={!!previewProtocol} onOpenChange={(o) => { if (!o) setPreviewProtocol(null); }}>
+        <DialogContent className={isMobile
+          ? "!inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 !w-screen !max-w-none !h-[100dvh] !max-h-none rounded-none border-0 p-3 !flex !flex-col overflow-hidden"
+          : "max-w-3xl max-h-[90dvh] !flex !flex-col overflow-hidden"
+        }>
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2 flex-wrap">
+              <FileText className="w-4 h-4" />
+              {previewProtocol?.title}
+              {previewProtocol && (
+                <Badge variant="outline" className="text-[10px]">
+                  {new Date(previewProtocol.created_at).toLocaleDateString("pt-BR")}
+                </Badge>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-3">
+            {previewProtocol?.pdf_url && (
+              <div>
+                <p className="text-xs text-primary flex items-center gap-1 mb-2">
+                  <FileText className="w-3 h-3" /> Documento PDF
+                </p>
+                <SignedPdfFrame
+                  bucket="documents"
+                  storagePath={(previewProtocol as any).storage_path}
+                  publicUrl={previewProtocol.pdf_url}
+                  className="w-full h-[500px] rounded-lg border border-border"
+                  title="Protocolo PDF"
+                />
+              </div>
+            )}
+            {previewProtocol?.content && (
+              (hasSmartProtocolStructure(previewProtocol.content) || isSmartProtocolEra(previewProtocol.created_at) ? (
+                <GamifiedProtocolPanel
+                  content={previewProtocol.content}
+                  userId={selected?.user_id}
+                  readOnly
+                />
+              ) : (
+                <RichContentRenderer content={previewProtocol.content} />
+              ))
+            )}
+          </div>
+          <div className="flex gap-2 justify-end pt-3 border-t">
+            <Button variant="outline" size="sm" onClick={() => { const p = previewProtocol; setPreviewProtocol(null); startEdit(p); }}>
+              <Pencil className="w-3 h-3 mr-1" /> Editar
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setPreviewProtocol(null)}>Fechar</Button>
           </div>
         </DialogContent>
       </Dialog>
