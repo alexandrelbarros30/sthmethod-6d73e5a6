@@ -1102,15 +1102,8 @@ Ação: Após a maior refeição do dia.
                 </Card>
               )}
 
-              {/* Protocol History - Accordion style like student view */}
-              {studentProtocols && studentProtocols.length > 0 ? (
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-muted-foreground font-display flex items-center gap-2">
-                    <Clock className="w-4 h-4" /> Histórico de Protocolos ({studentProtocols.length})
-                  </h3>
-
-                  {/* Edit form - shown above accordion when editing */}
-                  {editingId && (
+              {/* Edit form (shown standalone in focused editor mode) */}
+              {editingId && (
                     <Card className="border-primary/30 bg-primary/5">
                       <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-display flex items-center gap-2">
@@ -1145,6 +1138,13 @@ Ação: Após a maior refeição do dia.
                       </CardContent>
                     </Card>
                   )}
+
+              {/* Protocol History - Accordion style like student view */}
+              {!isEditingMode && (studentProtocols && studentProtocols.length > 0 ? (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-muted-foreground font-display flex items-center gap-2">
+                    <Clock className="w-4 h-4" /> Histórico de Protocolos ({studentProtocols.length})
+                  </h3>
 
                   <Accordion type="single" collapsible className="space-y-2">
                     {studentProtocols.map((protocol: any) => (
@@ -1232,7 +1232,7 @@ Ação: Após a maior refeição do dia.
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-6">Nenhum protocolo cadastrado ainda.</p>
-              )}
+              ))}
             </div>
           </div>
         </DialogContent>
