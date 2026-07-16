@@ -322,6 +322,7 @@ const AdminProtocol = () => {
       : latestStudentProtocol?.content || "";
   const showLegacyProtocolEditor = !!selected?.user_id && !latestSmartProtocol && !draftSmartProtocol;
   const showSmartProtocolPreview = !!selected?.user_id && (latestSmartProtocol || draftSmartProtocol);
+  const isEditingMode = showNewForm || !!editingId;
 
   // Copy protocol as plain text to system clipboard
   const copyAsTextMutation = useMutation({
@@ -742,7 +743,7 @@ const AdminProtocol = () => {
           <div className="flex-1 min-h-0 overflow-y-auto pr-1 sm:pr-4">
             <div className="space-y-6">
               {/* Student Info Header - like student view */}
-              {selectedProfile && (
+              {!isEditingMode && selectedProfile && (
                 <Card className="border-border bg-muted/50">
                   <CardContent className="py-4">
                     <StudentInfoHeader info={{
@@ -758,12 +759,12 @@ const AdminProtocol = () => {
                 </Card>
               )}
 
-              {selected?.user_id && (
+              {!isEditingMode && selected?.user_id && (
                 <ProtocolContinuityCard studentUserId={selected.user_id} />
               )}
 
               {/* Library Buttons */}
-              {selected?.user_id && (
+              {!isEditingMode && selected?.user_id && (
                 <div className="flex flex-wrap gap-2">
                   <Button variant="outline" size="sm" className="text-xs" onClick={() => setLibraryDialogOpen(true)}>
                     <Download className="w-3.5 h-3.5 mr-1" /> Carregar da Biblioteca
@@ -993,7 +994,7 @@ Diretriz temporal obrigatória:
               )}
 
               {/* Legacy cards only stay available for legacy protocols */}
-              {showLegacyProtocolEditor && (
+              {!isEditingMode && showLegacyProtocolEditor && (
                 <>
                   <ProtocolInfoPanel protocols={protocolItems} userId={selected.user_id} editable />
                   <ProtocolExtraCategoriesManager userId={selected.user_id} />
@@ -1001,7 +1002,7 @@ Diretriz temporal obrigatória:
               )}
 
               {/* New protocols preview only in the smart card */}
-              {showSmartProtocolPreview && smartProtocolPreviewContent && (
+              {!isEditingMode && showSmartProtocolPreview && smartProtocolPreviewContent && (
                 <Card className="border-border/40 bg-muted/20">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-display">Protocolo Inteligente</CardTitle>
@@ -1016,7 +1017,7 @@ Diretriz temporal obrigatória:
                 </Card>
               )}
 
-              <hr className="border-border" />
+              {!isEditingMode && <hr className="border-border" />}
 
               {/* Add new protocol button */}
               {!showNewForm && !editingId && (
@@ -1101,15 +1102,8 @@ Ação: Após a maior refeição do dia.
                 </Card>
               )}
 
-              {/* Protocol History - Accordion style like student view */}
-              {studentProtocols && studentProtocols.length > 0 ? (
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-muted-foreground font-display flex items-center gap-2">
-                    <Clock className="w-4 h-4" /> Histórico de Protocolos ({studentProtocols.length})
-                  </h3>
-
-                  {/* Edit form - shown above accordion when editing */}
-                  {editingId && (
+              {/* Edit form (shown standalone in focused editor mode) */}
+              {editingId && (
                     <Card className="border-primary/30 bg-primary/5">
                       <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-display flex items-center gap-2">
@@ -1144,6 +1138,13 @@ Ação: Após a maior refeição do dia.
                       </CardContent>
                     </Card>
                   )}
+
+              {/* Protocol History - Accordion style like student view */}
+              {!isEditingMode && (studentProtocols && studentProtocols.length > 0 ? (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-muted-foreground font-display flex items-center gap-2">
+                    <Clock className="w-4 h-4" /> Histórico de Protocolos ({studentProtocols.length})
+                  </h3>
 
                   <Accordion type="single" collapsible className="space-y-2">
                     {studentProtocols.map((protocol: any) => (
@@ -1231,7 +1232,7 @@ Ação: Após a maior refeição do dia.
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-6">Nenhum protocolo cadastrado ainda.</p>
-              )}
+              ))}
             </div>
           </div>
         </DialogContent>
