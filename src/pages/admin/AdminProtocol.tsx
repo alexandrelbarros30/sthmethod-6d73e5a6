@@ -124,6 +124,22 @@ const AdminProtocol = () => {
     enabled: !!selected?.user_id && dialogOpen,
   });
 
+  // Última assinatura (adesão, renovação ou reativação) para calcular a semana atual do aluno
+  const { data: latestSub } = useQuery({
+    queryKey: ["admin-protocol-latest-sub", selected?.user_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("subscriptions")
+        .select("start_date, end_date, status")
+        .eq("user_id", selected!.user_id)
+        .order("start_date", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!selected?.user_id && dialogOpen,
+  });
+
   // Protocol Library
   const { data: libraryItems = [] } = useQuery({
     queryKey: ["protocol-library"],
