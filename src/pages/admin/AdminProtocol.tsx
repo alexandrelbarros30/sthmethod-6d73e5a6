@@ -338,7 +338,8 @@ const AdminProtocol = () => {
       : latestStudentProtocol?.content || "";
   const showLegacyProtocolEditor = !!selected?.user_id && !latestSmartProtocol && !draftSmartProtocol;
   const showSmartProtocolPreview = !!selected?.user_id && (latestSmartProtocol || draftSmartProtocol);
-  const isEditingMode = showNewForm || !!editingId;
+  // New/Edit protocol forms now open in popup dialogs, so the underlying dashboard stays visible.
+  const isEditingMode = false;
 
   // Copy protocol as plain text to system clipboard
   const copyAsTextMutation = useMutation({
