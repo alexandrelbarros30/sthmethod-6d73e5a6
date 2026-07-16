@@ -1115,15 +1115,18 @@ Diretriz temporal obrigatória:
                 </Button>
               )}
 
-              {/* New protocol form */}
-              {showNewForm && (
-                <Card className="border-primary/30 bg-primary/5">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-display flex items-center gap-2">
+              {/* New protocol form — opens in popup */}
+              <Dialog open={showNewForm} onOpenChange={(o) => { if (!o) { setShowNewForm(false); resetNewForm(); } }}>
+                <DialogContent className={isMobile
+                  ? "!inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 !w-screen !max-w-none !h-[100dvh] !max-h-none rounded-none border-0 p-3 !flex !flex-col overflow-hidden"
+                  : "max-w-3xl max-h-[90dvh] !flex !flex-col overflow-hidden"
+                }>
+                  <DialogHeader>
+                    <DialogTitle className="font-display flex items-center gap-2">
                       <Plus className="w-4 h-4" /> Novo Protocolo
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-3">
                     <div>
                       <Label className="font-body">Título</Label>
                       <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
@@ -1179,54 +1182,57 @@ Ação: Após a maior refeição do dia.
                         </div>
                       </details>
                     </div>
-                    <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
-                      <Button variant="ghost" size="sm" onClick={() => { setShowNewForm(false); resetNewForm(); }} className="w-full sm:w-auto">
-                        Cancelar
-                      </Button>
-                      <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full sm:w-auto">
-                        {saveMutation.isPending ? "Salvando..." : "Salvar"}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+                  </div>
+                  <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end pt-3 border-t">
+                    <Button variant="ghost" size="sm" onClick={() => { setShowNewForm(false); resetNewForm(); }} className="w-full sm:w-auto">
+                      Cancelar
+                    </Button>
+                    <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full sm:w-auto">
+                      {saveMutation.isPending ? "Salvando..." : "Salvar"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
-              {/* Edit form (shown standalone in focused editor mode) */}
-              {editingId && (
-                    <Card className="border-primary/30 bg-primary/5">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-display flex items-center gap-2">
-                          <Pencil className="w-4 h-4" /> Editando Protocolo
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div>
-                          <Label className="font-body text-xs">Título</Label>
-                          <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <Label className="font-body text-xs">Data</Label>
-                            <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />
-                          </div>
-                          <div>
-                            <Label className="font-body text-xs">Horário</Label>
-                            <Input type="time" value={editTime} onChange={(e) => setEditTime(e.target.value)} />
-                          </div>
-                        </div>
-                        <div>
-                          <Label className="font-body text-xs">Conteúdo</Label>
-                          <RichTextEditor value={editContent} onChange={setEditContent} />
-                        </div>
-                        <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
-                          <Button variant="ghost" size="sm" onClick={cancelEdit} className="w-full sm:w-auto">Cancelar</Button>
-                          <Button size="sm" onClick={() => editMutation.mutate()} disabled={editMutation.isPending} className="w-full sm:w-auto">
-                            {editMutation.isPending ? "Salvando..." : "Salvar Alterações"}
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
+              {/* Edit protocol form — opens in popup */}
+              <Dialog open={!!editingId} onOpenChange={(o) => { if (!o) cancelEdit(); }}>
+                <DialogContent className={isMobile
+                  ? "!inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 !w-screen !max-w-none !h-[100dvh] !max-h-none rounded-none border-0 p-3 !flex !flex-col overflow-hidden"
+                  : "max-w-3xl max-h-[90dvh] !flex !flex-col overflow-hidden"
+                }>
+                  <DialogHeader>
+                    <DialogTitle className="font-display flex items-center gap-2">
+                      <Pencil className="w-4 h-4" /> Editando Protocolo
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-3">
+                    <div>
+                      <Label className="font-body text-xs">Título</Label>
+                      <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <Label className="font-body text-xs">Data</Label>
+                        <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />
+                      </div>
+                      <div>
+                        <Label className="font-body text-xs">Horário</Label>
+                        <Input type="time" value={editTime} onChange={(e) => setEditTime(e.target.value)} />
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="font-body text-xs">Conteúdo</Label>
+                      <RichTextEditor value={editContent} onChange={setEditContent} />
+                    </div>
+                  </div>
+                  <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end pt-3 border-t">
+                    <Button variant="ghost" size="sm" onClick={cancelEdit} className="w-full sm:w-auto">Cancelar</Button>
+                    <Button size="sm" onClick={() => editMutation.mutate()} disabled={editMutation.isPending} className="w-full sm:w-auto">
+                      {editMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
               {/* Protocol History - compact list; content opens in popup */}
               {!isEditingMode && (studentProtocols && studentProtocols.length > 0 ? (
