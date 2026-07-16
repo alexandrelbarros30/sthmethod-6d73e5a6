@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Pencil, Check, X, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import RichContentRenderer from "@/components/shared/RichContentRenderer";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -123,7 +124,12 @@ export default function AnamnesisEntryItem({ entry, onSaved }: Props) {
       {editing ? (
         <Textarea value={text} onChange={(e) => setText(e.target.value)} rows={6} className="text-sm" />
       ) : (
-        <p className="text-sm whitespace-pre-wrap">{entry.notes}</p>
+        <RichContentRenderer
+          content={(entry.notes || "").replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")}
+          className="text-sm"
+          showParagraphBullets={false}
+          showZebra={false}
+        />
       )}
     </div>
   );
