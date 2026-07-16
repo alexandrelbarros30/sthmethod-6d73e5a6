@@ -994,7 +994,7 @@ Diretriz temporal obrigatória:
               )}
 
               {/* Legacy cards only stay available for legacy protocols */}
-              {showLegacyProtocolEditor && (
+              {!isEditingMode && showLegacyProtocolEditor && (
                 <>
                   <ProtocolInfoPanel protocols={protocolItems} userId={selected.user_id} editable />
                   <ProtocolExtraCategoriesManager userId={selected.user_id} />
@@ -1002,7 +1002,7 @@ Diretriz temporal obrigatória:
               )}
 
               {/* New protocols preview only in the smart card */}
-              {showSmartProtocolPreview && smartProtocolPreviewContent && (
+              {!isEditingMode && showSmartProtocolPreview && smartProtocolPreviewContent && (
                 <Card className="border-border/40 bg-muted/20">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-display">Protocolo Inteligente</CardTitle>
@@ -1017,7 +1017,7 @@ Diretriz temporal obrigatória:
                 </Card>
               )}
 
-              <hr className="border-border" />
+              {!isEditingMode && <hr className="border-border" />}
 
               {/* Add new protocol button */}
               {!showNewForm && !editingId && (
