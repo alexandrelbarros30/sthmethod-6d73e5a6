@@ -583,6 +583,36 @@ export default function AdminCrmGruposAgenda() {
 
           {!oneshotPreview ? (
             <div className="space-y-4">
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+                <label className="text-[11px] uppercase tracking-wide text-muted-foreground flex items-center gap-1">
+                  <FileText className="w-3 h-3" /> Escolher mensagem pronta
+                </label>
+                <div className="flex flex-wrap gap-2 items-center">
+                  <Select value={oneshotTemplateId} onValueChange={applyOneshotTemplate}>
+                    <SelectTrigger className="h-8 text-xs min-w-[220px] flex-1">
+                      <SelectValue placeholder="Selecione um template…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {oneshotTemplates.map((t) => (
+                        <SelectItem key={t.id} value={t.id} className="text-xs">{t.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" variant="outline" onClick={updateCurrentTemplate} disabled={!oneshotTemplateId} title="Salvar edições no template selecionado">
+                    <Save className="w-3.5 h-3.5 mr-1" /> Atualizar
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={createTemplateFromCurrent} title="Salvar a mensagem/imagem atuais como um novo template">
+                    <Plus className="w-3.5 h-3.5 mr-1" /> Nova
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={deleteCurrentTemplate} disabled={!oneshotTemplateId} title="Excluir template selecionado">
+                    <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                  </Button>
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Selecione uma mensagem existente para carregar, edite abaixo e clique em <b>Atualizar</b> — ou salve como <b>Nova</b> para criar um novo template.
+                </p>
+              </div>
+
               <div>
                 <label className="text-[11px] uppercase tracking-wide text-muted-foreground">Mensagem</label>
                 <Textarea rows={14} value={oneshotMessage} onChange={(e) => setOneshotMessage(e.target.value)} className="text-sm mt-1" />
