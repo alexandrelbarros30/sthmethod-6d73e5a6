@@ -444,9 +444,13 @@ const StudentGuidedWorkout = () => {
                 </div>
 
                 {videoSource?.kind === "embed" && (
-                  <div className="aspect-[4/3] sm:aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40 relative">
-                    <iframe src={videoSource.url} className="w-full h-full" allowFullScreen title={ex.custom_name} />
-                  </div>
+                  <>
+                    <div className="aspect-[4/3] sm:aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40 relative">
+                      <iframe src={videoSource.url} className="w-full h-full" allowFullScreen title={ex.custom_name} />
+                      <StCoachCredit variant="overlay" />
+                    </div>
+                    <StCoachCredit />
+                  </>
                 )}
 
                 {videoSource?.kind === "file" && (
