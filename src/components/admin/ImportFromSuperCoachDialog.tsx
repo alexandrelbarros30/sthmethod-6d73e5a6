@@ -71,6 +71,13 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
   const importMutation = useMutation({
     mutationFn: async (t: Training) => {
       if (!user) throw new Error("Sem sessão");
+      // Busca detalhes completos (video_url real do SuperCoach) antes de gravar
+      const { data: det, error: eDet } = await supabase.functions.invoke("supercoach-import-workout", {
+        body: { action: "get-training-details", programId: selectedProgram?.id, trainingId: t.id },
+      });
+      if (eDet) throw eDet;
+      if ((det as any)?.error) throw new Error((det as any).error);
+      const fullExercises: any[] = (det as any)?.exercises || [];
       const { data: tpl, error: e1 } = await supabase.from("workout_templates").insert({
         title: t.name,
         description: [selectedProgram?.name, t.subtitle, t.description].filter(Boolean).join(" • "),
@@ -81,17 +88,20 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
         ...(programId ? { program_id: programId } : {}),
       }).select("id").single();
       if (e1) throw e1;
-      const rows = t.exercises.map((ex, i) => {
+      const source = fullExercises.length > 0 ? fullExercises : t.exercises;
+      const rows = source.map((ex: any, i: number) => {
         const { sets, reps } = parseSetsReps(ex.series_repetitions);
+        // Usa SEMPRE a mídia do SuperCoach; não vincula à biblioteca local
+        const videoUrl = ex.video_url || ex.video_url_thumb || ex.cover_url || "";
         return {
           template_id: tpl.id,
-          exercise_id: findLibraryMatch(ex.name),
+          exercise_id: null,
           custom_name: ex.name,
-          custom_description: "",
+          custom_description: ex.description || "",
           sets, reps,
           rest_interval: "",
           load_suggestion: "",
-          video_url: ex.video_url_thumb || "",
+          video_url: videoUrl,
           sort_order: i,
         };
       });
@@ -99,10 +109,10 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
         const { error: e2 } = await supabase.from("workout_template_exercises").insert(rows);
         if (e2) throw e2;
       }
-      return { count: rows.length, matched: rows.filter(r => r.exercise_id).length };
+      return { count: rows.length, matched: rows.filter((r: any) => r.video_url).length };
     },
     onSuccess: (r) => {
-      toast.success(`Importado! ${r.count} exercícios (${r.matched} vinculados à biblioteca)`);
+      toast.success(`Importado! ${r.count} exercícios (${r.matched} com vídeo do SuperCoach)`);
       qc.invalidateQueries({ queryKey: ["workout-templates"] });
       qc.invalidateQueries({ queryKey: ["template-exercises-all"] });
       onImported();
