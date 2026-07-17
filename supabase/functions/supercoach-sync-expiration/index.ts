@@ -1,4 +1,5 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
+import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const LOGIN_URL = 'https://supertreinosapp.com/api/v2/user/login'
 const INDEX_URL = 'https://supertreinosapp.com/api/v2/adm/customer/index'
@@ -73,17 +74,113 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}))
-    const { action, email, name, expiresDate } = body as {
-      action: 'search' | 'update'
+    const { action, email, name, expiresDate, userId } = body as {
+      action: 'search' | 'update' | 'create'
       email?: string
       name?: string
       expiresDate?: string // YYYY-MM-DD
+      userId?: string      // for action=create
     }
 
-    if (!action) throw new Error('action é obrigatório (search | update)')
+    if (!action) throw new Error('action é obrigatório (search | update | create)')
 
     const token = await getToken()
     const auth = { ...COMMON_HEADERS, authorization: `Bearer ${token}` }
+
+    // ====== CREATE ======
+    if (action === 'create') {
+      if (!userId) throw new Error('userId é obrigatório para criar aluno')
+
+      const admin = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      )
+
+      const { data: profile, error: profErr } = await admin
+        .from('profiles')
+        .select('full_name, email, phone, gender, birth_date, height, weight, objective')
+        .eq('user_id', userId)
+        .maybeSingle()
+      if (profErr || !profile) throw new Error('Aluno não encontrado no portal')
+
+      const { data: sub } = await admin
+        .from('subscriptions')
+        .select('end_date')
+        .eq('user_id', userId)
+        .order('end_date', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      const expires = expiresDate || (sub?.end_date ? String(sub.end_date).slice(0, 10) : null)
+        || new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)
+
+      // Ensure the student is not already there
+      const listRes = await fetch(INDEX_URL, { method: 'GET', headers: auth })
+      const listText = await listRes.text()
+      if (!listRes.ok) throw new Error(`Listagem SuperCoach falhou (${listRes.status})`)
+      const list = JSON.parse(listText)
+      const arr: any[] = Array.isArray(list) ? list : (list?.data || list?.customers || [])
+      const existing = findCustomer(arr, profile.email, profile.full_name)
+      if (existing) {
+        return new Response(JSON.stringify({
+          ok: false, status: 'already_exists',
+          message: `Aluno já existe no SuperCoach: ${existing.match.name} (${existing.match.email})`,
+          customer: existing.match,
+        }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      }
+
+      // Build payload matching observed shape
+      const digits = String(profile.phone || '').replace(/\D+/g, '')
+      const ddi = digits.startsWith('55') ? '0055' : (digits.length >= 12 ? '00' + digits.slice(0, 2) : '0055')
+      const phone = digits.startsWith('55') ? digits.slice(2) : (digits.length >= 12 ? digits.slice(2) : digits)
+      const gender = (profile.gender || '').toLowerCase().startsWith('f') ? 'f' : 'm'
+      const tempPassword = Math.random().toString(36).slice(-4) + Math.floor(1000 + Math.random() * 9000)
+
+      const payload = [{
+        name: profile.full_name,
+        email: profile.email,
+        password: tempPassword,
+        goal_id: 1,
+        status: 2,
+        premium_expires_date: expires,
+        details: {
+          gender,
+          birthdate: profile.birth_date || null,
+          height: profile.height ? String(profile.height) : null,
+          weight: profile.weight ? String(profile.weight) : null,
+          phone_activation: 0,
+          ddi,
+          phone,
+        },
+      }]
+
+      // Try POST first (create pattern); fall back to PUT if server expects it
+      let created = await fetch(ACCOUNT_URL, { method: 'POST', headers: auth, body: JSON.stringify(payload) })
+      let createdText = await created.text()
+      if (!created.ok) {
+        const retry = await fetch(ACCOUNT_URL, { method: 'PUT', headers: auth, body: JSON.stringify(payload) })
+        const retryText = await retry.text()
+        if (!retry.ok) {
+          throw new Error(`Criação SuperCoach falhou (POST ${created.status} / PUT ${retry.status}): ${createdText.slice(0, 200)} | ${retryText.slice(0, 200)}`)
+        }
+        created = retry; createdText = retryText
+      }
+
+      let createdJson: any = null
+      try { createdJson = JSON.parse(createdText) } catch { /* ignore */ }
+
+      return new Response(JSON.stringify({
+        ok: true,
+        status: 'created',
+        customer: {
+          name: profile.full_name,
+          email: profile.email,
+          premium_expires_date: expires,
+          temporary_password: tempPassword,
+        },
+        raw: createdJson,
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
 
     const listRes = await fetch(INDEX_URL, { method: 'GET', headers: auth })
     const listText = await listRes.text()
