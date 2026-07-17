@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { Loader2, Camera, Lock, ShieldAlert } from "lucide-react";
+import { Ban } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LEGAL } from "@/lib/legal-version";
@@ -199,6 +200,28 @@ const ImageConsentChoice = ({
           {saving && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />} Salvar preferência
         </Button>
       </div>
+
+      {initialValue && initialValue !== "nao_autorizo" && (
+        <div className="mt-4 pt-4 border-t border-border/60">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="flex-1">
+              <p className="text-[12px] font-medium text-foreground">Mudou de ideia?</p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Você pode revogar a autorização de uso de imagem a qualquer momento, conforme previsto em contrato.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="destructive"
+              className="gap-1.5"
+              disabled={saving}
+              onClick={() => { setValue("nao_autorizo"); setDirty(true); setConfirmOpen(true); }}
+            >
+              <Ban className="w-3.5 h-3.5" /> Revogar autorização
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
 
     <AlertDialog open={confirmOpen} onOpenChange={(o) => !saving && setConfirmOpen(o)}>
