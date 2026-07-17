@@ -132,25 +132,28 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'probe-library') {
-      const urls = [
-        'https://supertreinosapp.com/api/v2/workouts?pid=',
-        'https://supertreinosapp.com/api/v2/workouts',
-        'https://supertreinosapp.com/api/v2/exercises?pid=',
-        'https://supertreinosapp.com/api/v2/exercises',
-        'https://supertreinosapp.com/api/v2/workouts/library?pid=',
-        'https://supertreinosapp.com/api/v2/workouts-library?pid=',
-        'https://supertreinosapp.com/api/v2/library/workouts?pid=',
-        'https://supertreinosapp.com/api/v2/library?pid=',
-      ]
-      const results: any[] = []
-      for (const u of urls) {
-        try {
-          const r = await fetch(u, { headers: auth })
-          const t = await r.text()
-          results.push({ url: u, status: r.status, preview: t.slice(0, 300) })
-        } catch (e: any) { results.push({ url: u, error: e?.message }) }
-      }
-      return new Response(JSON.stringify({ results }), {
+    if (action === 'list-library') {
+      const r = await fetch('https://supertreinosapp.com/api/v2/library?pid=', { headers: auth })
+      const text = await r.text()
+      if (!r.ok) throw new Error(`library (${r.status}): ${text.slice(0, 200)}`)
+      const j = JSON.parse(text)
+      const list = j?.workouts || j?.data || j?.library || []
+      const exercises = (Array.isArray(list) ? list : []).map((w: any) => ({
+        id: w.id,
+        name: w.name || '',
+        description: w.description || '',
+        series_repetitions: w.series_repetitions || '',
+        video_url: w.video_url || '',
+        video_url_thumb: w.video_url_thumb || null,
+        cover_url: w.cover_url || null,
+        gender: w.gender || null,
+        muscle_ids: w.workout_muscle_ids || [],
+        equip_ids: w.workout_equip_ids || [],
+        type_ids: w.workout_type_ids || [],
+        intervals: w.intervals ?? null,
+        weight_suggestion: w.weight_suggestion || null,
+      }))
+      return new Response(JSON.stringify({ exercises }), {
         headers: { ...corsHeaders, 'content-type': 'application/json' },
       })
     }
