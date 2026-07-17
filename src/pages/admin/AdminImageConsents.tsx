@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { Copy, Plus, MessageCircle, RefreshCcw, CheckCircle2, XCircle, Clock, ImageIcon, Pencil, Eye, Search, Download, FileText, ShieldCheck } from "lucide-react";
+import { Copy, Plus, MessageCircle, RefreshCcw, CheckCircle2, XCircle, Clock, ImageIcon, Pencil, Eye, Search, Download, FileText, ShieldCheck, Ban } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 type Consent = {
@@ -271,6 +271,22 @@ export default function AdminImageConsents() {
     window.open(`https://wa.me/${fullPhone}?text=${encodeURIComponent(msg)}`, "_blank");
   }
 
+  // Solicita ao aluno que revise/revogue a autorização de imagem (fluxo manual e privado).
+  function requestRevocation(target: { name?: string | null; phone?: string | null }) {
+    const phone = onlyDigits(target.phone || "");
+    if (!phone) { toast({ title: "Aluno sem telefone cadastrado" }); return; }
+    const fullPhone = phone.startsWith("55") || phone.startsWith("44") || phone.length > 11 ? phone : `55${phone}`;
+    const firstName = (target.name || "").split(" ")[0];
+    const url = `${window.location.origin}/dashboard/perfil#imagem`;
+    const msg =
+      `Olá${firstName ? " " + firstName : ""}! Aqui é a STH METHOD.\n\n` +
+      `Recebemos sua solicitação para revisar a *autorização de uso de imagem*.\n\n` +
+      `Para manter tudo registrado no seu histórico (com data e motivo), a alteração deve ser feita por você mesmo(a), no seu painel:\n${url}\n\n` +
+      `Você pode alterar entre: autorizar com identificação, sem identificação ou *revogar totalmente*.\n` +
+      `Qualquer dúvida, é só responder aqui. Conte comigo 🙌`;
+    window.open(`https://wa.me/${fullPhone}?text=${encodeURIComponent(msg)}`, "_blank");
+  }
+
   function openEdit(c: Consent) {
     setEditing(c);
     setEditForm({
@@ -386,9 +402,15 @@ export default function AdminImageConsents() {
                           {lastDate ? new Date(lastDate).toLocaleString("pt-BR") : "—"}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setDetail(r); }}>
-                            <Eye className="w-3.5 h-3.5" />
-                          </Button>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button size="sm" variant="ghost" title="Solicitar revogação/alteração"
+                              onClick={(e) => { e.stopPropagation(); requestRevocation({ name: r.student.full_name, phone: r.student.phone }); }}>
+                              <Ban className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setDetail(r); }}>
+                              <Eye className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -433,6 +455,12 @@ export default function AdminImageConsents() {
                   <Button size="sm" variant="ghost" onClick={() => previewUrl(c.token)} title="Pré-visualizar link"><Eye className="w-3.5 h-3.5" /></Button>
                   <Button size="sm" variant="outline" onClick={() => sendWhatsapp(c)} disabled={!(c.payer_phone || student?.phone)}>
                     <MessageCircle className="w-3.5 h-3.5 mr-1" />WhatsApp
+                  </Button>
+                  <Button size="sm" variant="outline" className="text-destructive"
+                    onClick={() => requestRevocation({ name: student?.full_name || c.payer_name, phone: c.payer_phone || student?.phone })}
+                    disabled={!(c.payer_phone || student?.phone)}
+                    title="Solicitar revogação/alteração ao aluno">
+                    <Ban className="w-3.5 h-3.5 mr-1" />Solicitar revogação
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => openEdit(c)}><Pencil className="w-3.5 h-3.5" /></Button>
                 </div>
@@ -500,6 +528,11 @@ export default function AdminImageConsents() {
             </div>
           )}
           <DialogFooter>
+            <Button variant="outline" className="text-destructive"
+              onClick={() => detail && requestRevocation({ name: detail.student.full_name, phone: detail.student.phone })}
+              disabled={!detail?.student.phone}>
+              <Ban className="w-3.5 h-3.5 mr-1" />Solicitar revogação de imagem
+            </Button>
             <Button variant="ghost" onClick={() => setDetail(null)}>Fechar</Button>
           </DialogFooter>
         </DialogContent>
