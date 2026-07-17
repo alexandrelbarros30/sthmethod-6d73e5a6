@@ -21,7 +21,7 @@ function parseSetsReps(sr: string): { sets: string; reps: string } {
   return { sets: "", reps: s };
 }
 
-export default function ImportFromSuperCoachDialog({ libraryExercises, onImported }: { libraryExercises: any[]; onImported: () => void }) {
+export default function ImportFromSuperCoachDialog({ libraryExercises, onImported, programId, buttonLabel, buttonSize, buttonVariant }: { libraryExercises: any[]; onImported: () => void; programId?: string; buttonLabel?: string; buttonSize?: "sm" | "default"; buttonVariant?: "outline" | "default" | "secondary" }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -78,6 +78,7 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
         days_per_week: t.days_per_week ? Number(t.days_per_week) : (selectedProgram?.days_per_week ? Number(selectedProgram.days_per_week) : null),
         minutes_per_day: t.minutes_per_day ? Number(t.minutes_per_day) : (selectedProgram?.minutes_per_day ? Number(selectedProgram.minutes_per_day) : null),
         created_by: user.id,
+        ...(programId ? { program_id: programId } : {}),
       }).select("id").single();
       if (e1) throw e1;
       const rows = t.exercises.map((ex, i) => {
@@ -115,7 +116,7 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v && programs.length === 0) loadPrograms(); if (!v) { setSearch(""); setStep("programs"); setSelectedProgram(null); } }}>
       <DialogTrigger asChild>
-        <Button variant="outline"><Download className="w-4 h-4 mr-1" /> Importar do SuperCoach</Button>
+        <Button variant={buttonVariant || "outline"} size={buttonSize || "default"}><Download className="w-4 h-4 mr-1" /> {buttonLabel || "Importar do SuperCoach"}</Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
