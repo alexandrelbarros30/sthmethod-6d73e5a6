@@ -21,6 +21,7 @@ import SortableExerciseRow, { ExerciseRow } from "@/components/admin/SortableExe
 import LibraryMultiSelectDialog from "@/components/admin/LibraryMultiSelectDialog";
 import ExerciseMediaPreview, { getExerciseMediaSource } from "@/components/admin/ExerciseMediaPreview";
 import QuickExerciseEditDialog from "@/components/admin/QuickExerciseEditDialog";
+import SuperCoachExercisePicker, { PickedScExercise } from "@/components/admin/SuperCoachExercisePicker";
 
 const GROUP_COLOR_PRESETS = [
   { name: "Biset", color: "#f59e0b" },
@@ -430,6 +431,25 @@ const ProgramWorkouts = ({ programId }: Props) => {
     toast.success(`${items.length} exercício(s) adicionado(s)!`);
   };
 
+  const addFromSuperCoach = (items: PickedScExercise[]) => {
+    setExerciseRows(prev => [
+      ...prev,
+      ...items.map((sc, i) => ({
+        exercise_id: null,
+        custom_name: sc.name,
+        custom_description: sc.description || "",
+        sets: sc.sets || "",
+        reps: sc.reps || "",
+        rest_interval: sc.rest_interval || "",
+        load_suggestion: sc.load_suggestion || "",
+        video_url: sc.video_url || "",
+        sort_order: prev.length + i,
+        _uid: crypto.randomUUID(),
+        group_id: null, group_name: "", group_color: "",
+      })),
+    ]);
+  };
+
   const toggleRowSelected = (idx: number) => {
     const uid = exerciseRows[idx]?._uid;
     if (!uid) return;
@@ -602,6 +622,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
                   <Button size="sm" variant="outline" onClick={() => setLibraryDialogOpen(true)}>
                     <Library className="w-3 h-3 mr-1" /> Biblioteca
                   </Button>
+                  <SuperCoachExercisePicker onAdd={addFromSuperCoach} />
                   <Button
                     size="sm"
                     variant="outline"
