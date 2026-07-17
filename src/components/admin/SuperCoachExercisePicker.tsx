@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronLeft, Loader2, Search, Video, Zap } from "lucide-react";
+import { ChevronLeft, Eye, Loader2, Search, Video, Zap } from "lucide-react";
 import { toast } from "sonner";
 
 interface ScProgram { id: number | string; name: string; subtitle?: string | null; cover_url?: string | null }
@@ -61,6 +61,18 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
   const [selectedTraining, setSelectedTraining] = useState<ScTraining | null>(null);
   const [search, setSearch] = useState("");
   const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [preview, setPreview] = useState<ScExercise | null>(null);
+
+  const toEmbed = (url: string): string => {
+    if (!url) return "";
+    // Vimeo
+    const v = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+    if (v) return `https://player.vimeo.com/video/${v[1]}?autoplay=1`;
+    // YouTube
+    const y = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
+    if (y) return `https://www.youtube.com/embed/${y[1]}?autoplay=1`;
+    return url;
+  };
 
   const loadLibrary = async () => {
     setLoading(true);
