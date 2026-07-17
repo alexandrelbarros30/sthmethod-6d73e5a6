@@ -103,15 +103,19 @@ function makeFakeSupabase(currentUserId: string, role: "admin" | "consultor") {
   return { from, rpc, _tables: tables, _audit: auditLog };
 }
 
-// Setup mock antes de importar o helper
+// Setup mock antes de importar o helper.
+// Precisa ser lazy porque vi.mock é hoisted.
 const consultorId = "consultor-42";
-const fake = makeFakeSupabase(consultorId, "consultor");
-
-vi.mock("@/integrations/supabase/client", () => ({ supabase: fake }));
+vi.mock("@/integrations/supabase/client", () => {
+  const f = makeFakeSupabase(consultorId, "consultor");
+  (globalThis as any).__fake = f;
+  return { supabase: f };
+});
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 
 import { handleLibraryWriteError } from "./library-write-guard";
 import { supabase } from "@/integrations/supabase/client";
+const fake = (globalThis as any).__fake as ReturnType<typeof makeFakeSupabase>;
 
 const TABLES: Table[] = ["training_programs", "exercise_library", "diet_library", "protocol_library"];
 
