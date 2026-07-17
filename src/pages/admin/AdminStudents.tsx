@@ -211,7 +211,7 @@ const AdminStudents = () => {
         .order("logged_at", { ascending: false });
       return data || [];
     },
-    enabled: !!selected?.user_id && anamneseOpen,
+    enabled: !!selected?.user_id && (anamneseOpen || viewOpen),
   });
 
   // Fetch full profile with new fields when editing/viewing
@@ -1490,6 +1490,47 @@ const AdminStudents = () => {
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Histórico de Planos</h3>
                   <StudentPlanHistory userId={selected.user_id} />
                 </section>
+                {/* Peso: inicial × atual × variação */}
+                <section>
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <Calculator className="w-4 h-4" /> Evolução de Peso
+                  </h3>
+                  {weightLogs && weightLogs.length > 0 ? (() => {
+                    const asc = [...weightLogs].sort((a: any, b: any) => new Date(a.logged_at).getTime() - new Date(b.logged_at).getTime());
+                    const first = asc[0];
+                    const last = asc[asc.length - 1];
+                    const initial = Number(first.weight);
+                    const current = Number(last.weight);
+                    const diff = current - initial;
+                    const sign = diff > 0 ? "+" : "";
+                    const trendColor = diff > 0 ? "text-destructive" : diff < 0 ? "text-primary" : "text-muted-foreground";
+                    return (
+                      <div className="grid grid-cols-3 gap-3 text-center">
+                        <div className="bg-muted/50 rounded-lg p-3">
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Peso Inicial</p>
+                          <p className="font-bold text-sm mt-1">{initial.toFixed(1)} kg</p>
+                          <p className="text-[10px] text-muted-foreground/70 mt-0.5">{new Date(first.logged_at).toLocaleDateString("pt-BR")}</p>
+                        </div>
+                        <div className="bg-muted/50 rounded-lg p-3">
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Peso Atual</p>
+                          <p className="font-bold text-sm mt-1">{current.toFixed(1)} kg</p>
+                          <p className="text-[10px] text-muted-foreground/70 mt-0.5">{new Date(last.logged_at).toLocaleDateString("pt-BR")}</p>
+                        </div>
+                        <div className="bg-primary/10 rounded-lg p-3 border border-primary/20">
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Variação</p>
+                          <p className={`font-bold text-sm mt-1 ${trendColor}`}>
+                            {diff === 0 ? "0.0 kg" : `${sign}${diff.toFixed(1)} kg`}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground/70 mt-0.5">{asc.length} registro(s)</p>
+                        </div>
+                      </div>
+                    );
+                  })() : (
+                    <p className="text-sm text-muted-foreground">
+                      {selectedMerged.weight ? `Peso cadastrado: ${selectedMerged.weight} kg — nenhuma atualização registrada ainda.` : "Sem registros de peso ainda."}
+                    </p>
+                  )}
+                </section>
                 <section>
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Treino atribuído</h3>
                   <StudentWorkoutAlertCard
@@ -1792,20 +1833,7 @@ const AdminStudents = () => {
                   />
                 )}
 
-                {/* Shortcut: jump to Evolution Generator (after edit card) */}
-                {allBodyImages && allBodyImages.length > 0 && (
-                  <Button
-                    size="sm"
-                    className="w-full"
-                    onClick={() => {
-                      document.getElementById("evolution-generator-anchor")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                    }}
-                  >
-                    <Sparkles className="w-4 h-4 mr-1" /> Gerar Evolução
-                  </Button>
-                )}
-
-                {/* Evolution Generator */}
+                {/* Evolution Generator — abaixo da edição das imagens */}
                 {allBodyImages && allBodyImages.length > 0 && (
                   <div id="evolution-generator-anchor">
                     <EvolutionGenerator
@@ -1884,19 +1912,6 @@ const AdminStudents = () => {
                   }}
                 />
 
-                {/* Evolution Generator */}
-                {anamneseBodyImages && anamneseBodyImages.length > 0 && (
-                  <EvolutionGenerator
-                    allImages={anamneseBodyImages}
-                    studentName={selected.full_name}
-                    userId={selected.user_id}
-                    phone={(selected as any).phone}
-                  />
-                )}
-                {selected.user_id && (
-                  <EvolutionArtsGallery userId={selected.user_id} studentName={selected.full_name} />
-                )}
-
                 {/* Image History with editable dates */}
                 {anamneseBodyImages && anamneseBodyImages.length > 0 && (
                   <AdminImageHistory
@@ -1909,21 +1924,17 @@ const AdminStudents = () => {
                   />
                 )}
 
-                {/* Shortcut: Gerar Evolução após o card de edição */}
+                {/* Evolution Generator — abaixo da edição das imagens */}
                 {anamneseBodyImages && anamneseBodyImages.length > 0 && (
-                  <Button
-                    size="sm"
-                    className="w-full"
-                    onClick={() => {
-                      setAnamneseOpen(false);
-                      setImagesOpen(true);
-                      setTimeout(() => {
-                        document.getElementById("evolution-generator-anchor")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                      }, 300);
-                    }}
-                  >
-                    <Sparkles className="w-4 h-4 mr-1" /> Gerar Evolução
-                  </Button>
+                  <EvolutionGenerator
+                    allImages={anamneseBodyImages}
+                    studentName={selected.full_name}
+                    userId={selected.user_id}
+                    phone={(selected as any).phone}
+                  />
+                )}
+                {selected.user_id && (
+                  <EvolutionArtsGallery userId={selected.user_id} studentName={selected.full_name} />
                 )}
 
                 {/* Weight History */}
