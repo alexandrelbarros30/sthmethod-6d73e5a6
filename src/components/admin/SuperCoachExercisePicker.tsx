@@ -50,15 +50,30 @@ const normalize = (v: string) =>
 
 export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", buttonVariant = "outline", buttonLabel = "ST Coach (vídeos)" }: Props) {
   const [open, setOpen] = useState(false);
-  const [step, setStep] = useState<"programs" | "trainings" | "exercises">("programs");
+  const [mode, setMode] = useState<"library" | "programs">("library");
+  const [step, setStep] = useState<"programs" | "trainings" | "exercises" | "library">("library");
   const [loading, setLoading] = useState(false);
   const [programs, setPrograms] = useState<ScProgram[]>([]);
   const [trainings, setTrainings] = useState<ScTraining[]>([]);
   const [exercises, setExercises] = useState<ScExercise[]>([]);
+  const [library, setLibrary] = useState<ScExercise[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<ScProgram | null>(null);
   const [selectedTraining, setSelectedTraining] = useState<ScTraining | null>(null);
   const [search, setSearch] = useState("");
   const [picked, setPicked] = useState<Set<string>>(new Set());
+
+  const loadLibrary = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("supercoach-import-workout", { body: { action: "list-library" } });
+      if (error) throw error;
+      setLibrary(data?.exercises || []);
+    } catch (e: any) {
+      toast.error(`Falha ao carregar biblioteca: ${e?.message || e}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadPrograms = async () => {
     setLoading(true);
@@ -109,12 +124,28 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
 
   const openDialog = async () => {
     setOpen(true);
-    setStep("programs");
+    setMode("library");
+    setStep("library");
     setSelectedProgram(null);
     setSelectedTraining(null);
     setSearch("");
     setPicked(new Set());
-    if (programs.length === 0) await loadPrograms();
+    if (library.length === 0) await loadLibrary();
+  };
+
+  const switchMode = async (m: "library" | "programs") => {
+    setMode(m);
+    setSearch("");
+    setPicked(new Set());
+    setSelectedProgram(null);
+    setSelectedTraining(null);
+    if (m === "library") {
+      setStep("library");
+      if (library.length === 0) await loadLibrary();
+    } else {
+      setStep("programs");
+      if (programs.length === 0) await loadPrograms();
+    }
   };
 
   const filteredPrograms = useMemo(() => {
@@ -132,6 +163,11 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
     if (!q) return exercises;
     return exercises.filter((e) => normalize(e.name || "").includes(q));
   }, [exercises, search]);
+  const filteredLibrary = useMemo(() => {
+    const q = normalize(search.trim());
+    if (!q) return library;
+    return library.filter((e) => normalize(e.name || "").includes(q));
+  }, [library, search]);
 
   const togglePick = (id: string) => {
     setPicked((prev) => {
@@ -142,7 +178,8 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
   };
 
   const confirmAdd = () => {
-    const chosen = exercises.filter((e) => picked.has(String(e.id)));
+    const pool = step === "library" ? library : exercises;
+    const chosen = pool.filter((e) => picked.has(String(e.id)));
     if (!chosen.length) return;
     const items: PickedScExercise[] = chosen.map((e) => {
       const sr = parseSetsReps(e.series_repetitions);
@@ -152,7 +189,7 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
       return {
         name: e.name || "",
         description: e.description || "",
-        video_url: e.video_url || e.cover_url || "",
+        video_url: e.video_url || (e as any).video_url_thumb || e.cover_url || "",
         sets: sr.sets,
         reps: sr.reps,
         rest_interval: String(interval || ""),
@@ -174,7 +211,7 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
       <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {step !== "programs" && (
+            {(step === "trainings" || step === "exercises") && (
               <Button
                 size="icon"
                 variant="ghost"
@@ -189,6 +226,7 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
               </Button>
             )}
             <span className="truncate">
+              {step === "library" && "ST Coach · Biblioteca de exercícios"}
               {step === "programs" && "ST Coach · Escolha um programa"}
               {step === "trainings" && `Treinos de: ${selectedProgram?.name || ""}`}
               {step === "exercises" && `Exercícios: ${selectedTraining?.name || ""}`}
@@ -196,12 +234,22 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
           </DialogTitle>
         </DialogHeader>
 
+        <div className="flex gap-2">
+          <Button size="sm" variant={mode === "library" ? "default" : "outline"} onClick={() => switchMode("library")}>
+            Biblioteca
+          </Button>
+          <Button size="sm" variant={mode === "programs" ? "default" : "outline"} onClick={() => switchMode("programs")}>
+            Programas / Treinos
+          </Button>
+        </div>
+
         <div className="relative">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-9"
             placeholder={
-              step === "programs" ? "Buscar programa..."
+              step === "library" ? "Buscar exercício na biblioteca..."
+              : step === "programs" ? "Buscar programa..."
               : step === "trainings" ? "Buscar treino..."
               : "Buscar exercício..."
             }
@@ -215,6 +263,38 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
             <div className="py-16 text-center text-muted-foreground">
               <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
               Carregando do ST Coach...
+            </div>
+          ) : step === "library" ? (
+            <div className="space-y-2">
+              {filteredLibrary.slice(0, 300).map((e) => {
+                const id = String(e.id);
+                const checked = picked.has(id);
+                return (
+                  <label
+                    key={id}
+                    className={`flex items-start gap-3 border rounded-lg p-3 cursor-pointer transition ${checked ? "border-primary bg-primary/5" : "hover:bg-muted"}`}
+                  >
+                    <Checkbox checked={checked} onCheckedChange={() => togglePick(id)} className="mt-0.5" />
+                    {e.cover_url && (
+                      <img src={e.cover_url} alt="" className="w-12 h-12 rounded object-cover shrink-0" onError={(ev: any) => ev.target.style.display = 'none'} />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-medium truncate">{e.name}</p>
+                        {e.video_url && (
+                          <Badge variant="outline" className="text-[10px] gap-1">
+                            <Video className="w-2.5 h-2.5" /> ST Coach
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </label>
+                );
+              })}
+              {filteredLibrary.length > 300 && (
+                <p className="text-xs text-muted-foreground text-center py-2">Mostrando 300 de {filteredLibrary.length}. Refine a busca.</p>
+              )}
+              {!filteredLibrary.length && <p className="text-sm text-muted-foreground text-center py-6">Nenhum exercício.</p>}
             </div>
           ) : step === "programs" ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -276,7 +356,7 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
           )}
         </div>
 
-        {step === "exercises" && (
+        {(step === "exercises" || step === "library") && (
           <div className="flex items-center justify-between pt-3 border-t">
             <p className="text-xs text-muted-foreground">
               {picked.size} selecionado(s) · vídeo e nome vêm do ST Coach
