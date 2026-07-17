@@ -30,7 +30,9 @@ A requisição de exames auxilia em:
 
 📲 Para solicitar sua requisição de exames, entre em contato pelo WhatsApp (21) 99144-6811.`;
 
-const ONESHOT_DEFAULT_IMAGE = "https://api.freelovable.com.br/storage/v1/object/public/anexos/577e938d-582a-4522-9e6c-ec4509b052b6.png";
+// A URL padrão anterior (api.freelovable.com.br) está retornando 400 e o WhatsApp
+// não conseguia baixar a arte. Deixamos vazio: o admin faz upload via "Enviar arquivo".
+const ONESHOT_DEFAULT_IMAGE = "";
 
 // Templates de "Envio único" salvos no navegador (localStorage).
 // Permite ao admin manter múltiplas mensagens prontas e trocar rapidamente.
@@ -57,7 +59,11 @@ function loadOneshotTemplates(): OneshotTemplate[] {
     if (!raw) return DEFAULT_TEMPLATES;
     const arr = JSON.parse(raw);
     if (!Array.isArray(arr) || arr.length === 0) return DEFAULT_TEMPLATES;
-    return arr as OneshotTemplate[];
+    // Limpa URLs quebradas de imagens antigas (freelovable) para forçar novo upload.
+    return (arr as OneshotTemplate[]).map((t) => ({
+      ...t,
+      image_url: /freelovable\.com\.br/i.test(t.image_url || "") ? "" : t.image_url,
+    }));
   } catch {
     return DEFAULT_TEMPLATES;
   }
@@ -107,6 +113,7 @@ export default function AdminCrmGruposAgenda() {
   const [oneshotSelected, setOneshotSelected] = useState<Set<string>>(new Set());
   const [oneshotLoading, setOneshotLoading] = useState(false);
   const [oneshotSending, setOneshotSending] = useState(false);
+  const [oneshotUploading, setOneshotUploading] = useState(false);
   const [oneshotPreview, setOneshotPreview] = useState(false);
   const [oneshotResult, setOneshotResult] = useState<any>(null);
 
@@ -187,6 +194,28 @@ export default function AdminCrmGruposAgenda() {
   async function dispatchOneshot() {
     const ids = Array.from(oneshotSelected);
     if (ids.length === 0) { toast({ title: "Selecione ao menos 1 grupo" }); return; }
+    // Z-API precisa baixar a imagem por HTTP público. Se a URL estiver quebrada,
+    // o envio da mídia falha silenciosamente e só chega o texto.
+    if (oneshotImage) {
+      try {
+        const head = await fetch(oneshotImage, { method: "HEAD" });
+        if (!head.ok) {
+          toast({
+            title: "Imagem inacessível",
+            description: `A URL retornou ${head.status}. Faça upload de um novo arquivo antes de disparar.`,
+            variant: "destructive" as any,
+          });
+          return;
+        }
+      } catch {
+        toast({
+          title: "Não foi possível validar a imagem",
+          description: "Verifique a URL ou faça upload de um novo arquivo.",
+          variant: "destructive" as any,
+        });
+        return;
+      }
+    }
     setOneshotSending(true);
     setOneshotResult(null);
     try {
@@ -208,6 +237,28 @@ export default function AdminCrmGruposAgenda() {
       console.error("[oneshot] erro", e);
       toast({ title: "Erro no disparo", description: e?.message || String(e), variant: "destructive" as any });
     } finally { setOneshotSending(false); }
+  }
+
+  async function uploadOneshotImage(file: File) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Arquivo inválido", description: "Selecione uma imagem.", variant: "destructive" as any });
+      return;
+    }
+    setOneshotUploading(true);
+    try {
+      const ext = (file.name.split(".").pop() || "png").toLowerCase();
+      const path = `oneshot/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("crm-media").upload(path, file, {
+        contentType: file.type, upsert: true,
+      });
+      if (error) throw error;
+      const { data: pub } = supabase.storage.from("crm-media").getPublicUrl(path);
+      setOneshotImage(pub.publicUrl);
+      toast({ title: "Imagem enviada", description: "URL pública atualizada." });
+    } catch (e: any) {
+      toast({ title: "Falha no upload", description: e?.message || String(e), variant: "destructive" as any });
+    } finally { setOneshotUploading(false); }
   }
 
   async function fetchGroups(force = false) {
@@ -620,7 +671,20 @@ export default function AdminCrmGruposAgenda() {
               </div>
               <div>
                 <label className="text-[11px] uppercase tracking-wide text-muted-foreground">URL da imagem (opcional)</label>
-                <Input value={oneshotImage} onChange={(e) => setOneshotImage(e.target.value)} placeholder="https://…" className="mt-1 text-xs" />
+                <div className="flex gap-2 mt-1">
+                  <Input value={oneshotImage} onChange={(e) => setOneshotImage(e.target.value)} placeholder="https://…" className="text-xs flex-1" />
+                  <Button size="sm" variant="outline" disabled={oneshotUploading} onClick={() => document.getElementById("oneshot-file-input")?.click()}>
+                    {oneshotUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImageIcon className="w-3.5 h-3.5 mr-1" />}
+                    Enviar arquivo
+                  </Button>
+                  <input id="oneshot-file-input" type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadOneshotImage(f); e.currentTarget.value = ""; }} />
+                  {oneshotImage && (
+                    <Button size="sm" variant="ghost" onClick={() => setOneshotImage("")} title="Remover imagem">
+                      <X className="w-3.5 h-3.5" />
+                    </Button>
+                  )}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">A URL precisa ser pública e acessível. Se estiver quebrada, o WhatsApp recebe só o texto.</p>
                 {oneshotImage && (
                   <img src={oneshotImage} alt="Prévia" className="mt-2 max-h-48 rounded border border-border object-contain bg-muted/30" />
                 )}
