@@ -523,6 +523,7 @@ const EvolutionGenerator = ({ allImages, studentName, userId, phone }: Evolution
       const ts = Date.now();
       let success = 0;
       let failed = 0;
+      let lastError = "";
 
       for (let i = 0; i < previews.length; i++) {
         const dataUrl = previews[i];
@@ -550,16 +551,17 @@ const EvolutionGenerator = ({ allImages, studentName, userId, phone }: Evolution
           success++;
         } catch (err: any) {
           console.warn("[EvolutionGenerator] send failed", err);
+          lastError = err?.message || String(err);
           failed++;
         }
       }
 
       if (success > 0 && failed === 0) {
-        toast.success(`${success} imagem(ns) enviadas pelo Fale com o Nutri!`);
+        toast.success(`${success} imagem(ns) enviadas pelo Fale com o Nutri (5521998984153)!`);
       } else if (success > 0) {
-        toast.message(`Enviadas: ${success} • Falharam: ${failed}`);
+        toast.message(`Enviadas: ${success} • Falharam: ${failed}${lastError ? ` — ${lastError}` : ""}`);
       } else {
-        toast.error("Não foi possível enviar as imagens.");
+        toast.error(`Falha no envio pelo Fale com o Nutri: ${lastError || "verifique se o canal W-API está ativo em CRM → Configurações."}`, { duration: 8000 });
       }
     } finally {
       setSending(false);
