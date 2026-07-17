@@ -131,7 +131,6 @@ Deno.serve(async (req) => {
       }), { headers: { ...corsHeaders, 'content-type': 'application/json' } })
     }
 
-    if (action === 'probe-library') {
     if (action === 'list-library') {
       const r = await fetch('https://supertreinosapp.com/api/v2/library?pid=', { headers: auth })
       const text = await r.text()
