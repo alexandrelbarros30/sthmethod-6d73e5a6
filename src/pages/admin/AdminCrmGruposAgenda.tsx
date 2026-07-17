@@ -187,7 +187,6 @@ export default function AdminCrmGruposAgenda() {
   async function dispatchOneshot() {
     const ids = Array.from(oneshotSelected);
     if (ids.length === 0) { toast({ title: "Selecione ao menos 1 grupo" }); return; }
-    if (!confirm(`Confirmar disparo para ${ids.length} grupo(s)? Esta ação é imediata e não pode ser desfeita.`)) return;
     setOneshotSending(true);
     setOneshotResult(null);
     try {
@@ -199,13 +198,15 @@ export default function AdminCrmGruposAgenda() {
           text_first: oneshotTextFirst,
         },
       });
+      console.log("[oneshot] response", { data, error });
       if (error) throw error;
       if (!data?.ok) throw new Error(data?.error || "Falha no disparo");
       setOneshotResult(data);
       const totalOk = (data.results || []).filter((r: any) => (r.steps || []).every((s: any) => s.ok !== false)).length;
       toast({ title: "Disparo enviado", description: `${totalOk}/${data.total} grupos concluídos.` });
     } catch (e: any) {
-      toast({ title: "Erro no disparo", description: e?.message || String(e) });
+      console.error("[oneshot] erro", e);
+      toast({ title: "Erro no disparo", description: e?.message || String(e), variant: "destructive" as any });
     } finally { setOneshotSending(false); }
   }
 
