@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import RichTextEditor from "@/components/shared/RichTextEditor";
+import CopyRichTextButton from "@/components/shared/CopyRichTextButton";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
 import DietContentRenderer from "@/components/student/DietContentRenderer";
 import StudentInfoHeader from "@/components/student/StudentInfoHeader";
@@ -749,7 +750,10 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
                       </Button>
                     </div>
                      <div>
-                      <Label className="font-body">Conteúdo</Label>
+                      <div className="flex items-center justify-between">
+                        <Label className="font-body">Conteúdo</Label>
+                        <CopyRichTextButton html={newContent} label="Copiar dieta" />
+                      </div>
                       <RichTextEditor value={newContent} onChange={setNewContent} placeholder="Escreva o conteúdo da dieta aqui..." />
                     </div>
                     {/* AI Analysis */}
@@ -859,7 +863,10 @@ Formato: 6 refeições (ou a quantidade necessária) com 4 opções de substitui
                               </Button>
                             </div>
                             <div>
-                              <Label className="font-body text-xs">Conteúdo</Label>
+                              <div className="flex items-center justify-between">
+                                <Label className="font-body text-xs">Conteúdo</Label>
+                                <CopyRichTextButton html={editContent} label="Copiar dieta" />
+                              </div>
                               <RichTextEditor value={editContent} onChange={setEditContent} />
                             </div>
                             {/* AI Analysis in edit mode */}
