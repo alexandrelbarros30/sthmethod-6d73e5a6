@@ -9,7 +9,10 @@ import { usePreviewAs } from "@/hooks/usePreviewAs";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Dumbbell, ChevronLeft, ChevronDown, History, Play, Calendar, ChevronsDown, Save, Eraser, VideoOff } from "lucide-react";
+import { Dumbbell, ChevronLeft, ChevronDown, History, Play, Calendar, ChevronsDown, Save, Eraser, VideoOff, Star, Trophy } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import StCoachCredit from "@/components/shared/StCoachCredit";
 import WorkoutChronometer from "@/components/student/WorkoutChronometer";
 import { toast } from "sonner";
@@ -48,6 +51,19 @@ const StudentGuidedWorkout = () => {
   const [view, setView] = useState<View>({ kind: "programs" });
   const [loadInputs, setLoadInputs] = useState<Record<string, string>>({});
   const [feedback, setFeedback] = useState("");
+  const [rDifficulty, setRDifficulty] = useState<number>(0);
+  const [rEnergy, setREnergy] = useState<number>(0);
+  const [rMood, setRMood] = useState<number>(0);
+  const [painReported, setPainReported] = useState<boolean>(false);
+  // Program feedback
+  const [progFbOpen, setProgFbOpen] = useState<null | string>(null); // programId
+  const [pfOverall, setPfOverall] = useState(0);
+  const [pfDifficulty, setPfDifficulty] = useState(0);
+  const [pfResults, setPfResults] = useState(0);
+  const [pfRepeat, setPfRepeat] = useState<boolean | null>(null);
+  const [pfHighlights, setPfHighlights] = useState("");
+  const [pfImprovements, setPfImprovements] = useState("");
+  const [pfNotes, setPfNotes] = useState("");
   const [expandedAssignment, setExpandedAssignment] = useState<string | null>(null);
   const [chronoOpen, setChronoOpen] = useState(false);
   const [chronoRest, setChronoRest] = useState(60);
@@ -185,23 +201,73 @@ const StudentGuidedWorkout = () => {
   });
 
   const finishSession = useMutation({
-    mutationFn: async (p: { assignmentId: string; templateId: string; feedback: string }) => {
+    mutationFn: async (p: {
+      assignmentId: string;
+      templateId: string;
+      feedback: string;
+      difficulty: number;
+      energy: number;
+      mood: number;
+      pain: boolean;
+    }) => {
       if (isPreviewing) { toast.info("Modo visualização — sessão não registrada."); return; }
-      const { error } = await supabase.from("student_workout_sessions").insert({
+      const { data, error } = await supabase.from("student_workout_sessions").insert({
         user_id: user!.id,
         assignment_id: p.assignmentId,
         template_id: p.templateId,
         finished_at: new Date().toISOString(),
         feedback: p.feedback,
-      });
+        difficulty_rating: p.difficulty || null,
+        energy_level: p.energy || null,
+        mood_rating: p.mood || null,
+        pain_reported: p.pain,
+      }).select("id").maybeSingle();
       if (error) throw error;
+      // Best-effort ST Coach sync
+      if (data?.id) {
+        supabase.functions.invoke("supercoach-sync-feedback", {
+          body: { scope: "workout", record_id: data.id },
+        }).catch(() => {});
+      }
     },
     onSuccess: () => {
       toast.success("Treino finalizado!");
       setFeedback("");
+      setRDifficulty(0); setREnergy(0); setRMood(0); setPainReported(false);
       setView({ kind: "programs" });
     },
     onError: () => toast.error("Erro ao finalizar treino."),
+  });
+
+  const submitProgramFeedback = useMutation({
+    mutationFn: async (p: { programId: string }) => {
+      if (isPreviewing) { toast.info("Modo visualização — feedback não registrado."); return; }
+      if (!pfOverall) throw new Error("Dê uma nota geral (1 a 5).");
+      const { data, error } = await supabase.from("student_program_feedback").insert({
+        user_id: user!.id,
+        program_id: p.programId,
+        overall_rating: pfOverall,
+        difficulty_rating: pfDifficulty || null,
+        results_rating: pfResults || null,
+        would_repeat: pfRepeat,
+        highlights: pfHighlights.trim() || null,
+        improvements: pfImprovements.trim() || null,
+        notes: pfNotes.trim() || null,
+      }).select("id").maybeSingle();
+      if (error) throw error;
+      if (data?.id) {
+        supabase.functions.invoke("supercoach-sync-feedback", {
+          body: { scope: "program", record_id: data.id },
+        }).catch(() => {});
+      }
+    },
+    onSuccess: () => {
+      toast.success("Feedback do programa enviado!");
+      setProgFbOpen(null);
+      setPfOverall(0); setPfDifficulty(0); setPfResults(0);
+      setPfRepeat(null); setPfHighlights(""); setPfImprovements(""); setPfNotes("");
+    },
+    onError: (e: any) => toast.error(e?.message || "Erro ao enviar feedback."),
   });
 
   if (subLoading || aLoading) {
@@ -364,7 +430,40 @@ const StudentGuidedWorkout = () => {
               </div>
             );
           })}
+
+          {program && view.programId !== "_solo" && (
+            <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 mt-2 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Concluiu este programa?</p>
+                  <p className="text-[11px] text-muted-foreground">Envie sua avaliação — vai pro seu histórico e pro ST Coach.</p>
+                </div>
+              </div>
+              <Button
+                onClick={() => setProgFbOpen(view.programId as string)}
+                className="rounded-full bg-primary text-primary-foreground font-bold uppercase tracking-wide text-xs px-4"
+              >
+                Avaliar Programa
+              </Button>
+            </div>
+          )}
         </div>
+
+        <ProgramFeedbackDialog
+          open={!!progFbOpen}
+          onOpenChange={(o) => !o && setProgFbOpen(null)}
+          programTitle={program?.title || ""}
+          pfOverall={pfOverall} setPfOverall={setPfOverall}
+          pfDifficulty={pfDifficulty} setPfDifficulty={setPfDifficulty}
+          pfResults={pfResults} setPfResults={setPfResults}
+          pfRepeat={pfRepeat} setPfRepeat={setPfRepeat}
+          pfHighlights={pfHighlights} setPfHighlights={setPfHighlights}
+          pfImprovements={pfImprovements} setPfImprovements={setPfImprovements}
+          pfNotes={pfNotes} setPfNotes={setPfNotes}
+          onSubmit={() => progFbOpen && submitProgramFeedback.mutate({ programId: progFbOpen })}
+          submitting={submitProgramFeedback.isPending}
+        />
       </DashboardLayout>
     );
   }
@@ -581,9 +680,20 @@ const StudentGuidedWorkout = () => {
         {/* Feedback */}
         <div className="rounded-2xl border-2 border-primary/40 bg-card p-5 mt-6">
           <p className="text-center text-sm">O que achou do treino?</p>
-          <p className="text-center font-bold text-foreground">Envie um feedback!</p>
+          <p className="text-center font-bold text-foreground">Envie seu feedback</p>
+
+          <div className="mt-4 space-y-3">
+            <RatingRow label="Dificuldade" value={rDifficulty} onChange={setRDifficulty} />
+            <RatingRow label="Energia" value={rEnergy} onChange={setREnergy} />
+            <RatingRow label="Humor" value={rMood} onChange={setRMood} />
+            <div className="flex items-center justify-between gap-3 pt-1">
+              <Label htmlFor="pain-switch" className="text-sm">Senti dor / desconforto</Label>
+              <Switch id="pain-switch" checked={painReported} onCheckedChange={setPainReported} />
+            </div>
+          </div>
+
           <Textarea
-            placeholder="Deixe aqui seu feedback"
+            placeholder="Observações (opcional)"
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}
             rows={4}
@@ -596,11 +706,17 @@ const StudentGuidedWorkout = () => {
                 assignmentId: assignment.id,
                 templateId: template.id,
                 feedback: feedback.trim(),
+                difficulty: rDifficulty,
+                energy: rEnergy,
+                mood: rMood,
+                pain: painReported,
               })
             }
             className="mt-4 w-full rounded-full bg-white text-black hover:bg-white/90 font-bold uppercase tracking-wide"
           >
-            {feedback.trim() ? "Finalizar e enviar" : "Finalizar sem feedback"}
+            {(feedback.trim() || rDifficulty || rEnergy || rMood || painReported)
+              ? "Finalizar e enviar"
+              : "Finalizar sem feedback"}
           </Button>
         </div>
       </div>
@@ -609,3 +725,88 @@ const StudentGuidedWorkout = () => {
 };
 
 export default StudentGuidedWorkout;
+
+// -------- Helpers UI --------
+function RatingRow({ label, value, onChange }: { label: string; value: number; onChange: (n: number) => void }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <div className="flex items-center gap-1">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            key={n}
+            type="button"
+            onClick={() => onChange(value === n ? 0 : n)}
+            className="p-1"
+            aria-label={`${label} ${n}`}
+          >
+            <Star
+              className={`w-5 h-5 transition-colors ${n <= value ? "fill-primary text-primary" : "text-muted-foreground/40"}`}
+            />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProgramFeedbackDialog(props: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  programTitle: string;
+  pfOverall: number; setPfOverall: (n: number) => void;
+  pfDifficulty: number; setPfDifficulty: (n: number) => void;
+  pfResults: number; setPfResults: (n: number) => void;
+  pfRepeat: boolean | null; setPfRepeat: (v: boolean | null) => void;
+  pfHighlights: string; setPfHighlights: (v: string) => void;
+  pfImprovements: string; setPfImprovements: (v: string) => void;
+  pfNotes: string; setPfNotes: (v: string) => void;
+  onSubmit: () => void;
+  submitting: boolean;
+}) {
+  const {
+    open, onOpenChange, programTitle,
+    pfOverall, setPfOverall, pfDifficulty, setPfDifficulty, pfResults, setPfResults,
+    pfRepeat, setPfRepeat, pfHighlights, setPfHighlights, pfImprovements, setPfImprovements,
+    pfNotes, setPfNotes, onSubmit, submitting,
+  } = props;
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Avaliar programa: {programTitle}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <RatingRow label="Nota geral" value={pfOverall} onChange={setPfOverall} />
+          <RatingRow label="Dificuldade" value={pfDifficulty} onChange={setPfDifficulty} />
+          <RatingRow label="Resultados percebidos" value={pfResults} onChange={setPfResults} />
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm text-muted-foreground">Repetiria este programa?</span>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant={pfRepeat === true ? "default" : "outline"} onClick={() => setPfRepeat(pfRepeat === true ? null : true)}>Sim</Button>
+              <Button size="sm" variant={pfRepeat === false ? "default" : "outline"} onClick={() => setPfRepeat(pfRepeat === false ? null : false)}>Não</Button>
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Destaques</Label>
+            <Textarea rows={2} value={pfHighlights} onChange={(e) => setPfHighlights(e.target.value)} placeholder="O que funcionou melhor?" className="mt-1" />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Melhorias</Label>
+            <Textarea rows={2} value={pfImprovements} onChange={(e) => setPfImprovements(e.target.value)} placeholder="O que pode melhorar?" className="mt-1" />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Observações</Label>
+            <Textarea rows={2} value={pfNotes} onChange={(e) => setPfNotes(e.target.value)} placeholder="Outras observações" className="mt-1" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button onClick={onSubmit} disabled={submitting || !pfOverall}>
+            {submitting ? "Enviando..." : "Enviar feedback"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
