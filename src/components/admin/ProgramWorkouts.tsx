@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Dumbbell, Video, ChevronDown, ChevronUp, Copy, GripVertical, Library, Layers, Unlink, Link2 } from "lucide-react";
+import ImportFromSuperCoachDialog from "@/components/admin/ImportFromSuperCoachDialog";
 import { toast } from "sonner";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } from "@dnd-kit/sortable";
@@ -507,9 +508,18 @@ const ProgramWorkouts = ({ programId }: Props) => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <p className="text-sm text-muted-foreground">{(workouts || []).length} treino(s)</p>
-        <Button size="sm" onClick={() => { setForm(emptyWorkout); setEditingWorkout(null); setExerciseRows([]); setWorkoutDialog(true); }}>
-          <Plus className="w-4 h-4 mr-1" /> Novo Treino
-        </Button>
+        <div className="flex gap-2">
+          <ImportFromSuperCoachDialog
+            libraryExercises={libraryExercises || []}
+            programId={programId}
+            buttonSize="sm"
+            buttonLabel="Importar do SuperCoach"
+            onImported={() => { queryClient.invalidateQueries({ queryKey: ["program-workouts", programId] }); queryClient.invalidateQueries({ queryKey: ["template-exercises-program", programId] }); }}
+          />
+          <Button size="sm" onClick={() => { setForm(emptyWorkout); setEditingWorkout(null); setExerciseRows([]); setWorkoutDialog(true); }}>
+            <Plus className="w-4 h-4 mr-1" /> Novo Treino
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
