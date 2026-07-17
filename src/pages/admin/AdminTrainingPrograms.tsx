@@ -196,7 +196,14 @@ const AdminTrainingPrograms = () => {
           expires_at: form.expires_at || null,
           updated_at: new Date().toISOString(),
         }).eq("id", editingProgram);
-        if (error) throw error;
+        if (error) {
+          const { handleLibraryWriteError } = await import("@/lib/library-write-guard");
+          await handleLibraryWriteError(error, {
+            table: "training_programs", operation: "update",
+            recordId: editingProgram, payload: form as any,
+          });
+          throw error;
+        }
       } else {
         const { error } = await supabase.from("training_programs").insert({
           title: form.title, details: form.details,
@@ -205,7 +212,13 @@ const AdminTrainingPrograms = () => {
           expires_at: form.expires_at || null,
           created_by: user!.id,
         } as any);
-        if (error) throw error;
+        if (error) {
+          const { handleLibraryWriteError } = await import("@/lib/library-write-guard");
+          await handleLibraryWriteError(error, {
+            table: "training_programs", operation: "insert", payload: form as any,
+          });
+          throw error;
+        }
       }
     },
     onSuccess: () => {
@@ -213,19 +226,26 @@ const AdminTrainingPrograms = () => {
       toast.success(editingProgram ? "Programa atualizado!" : "Programa criado!");
       closeProgramDialog();
     },
-    onError: (e: any) => toast.error(e.message || "Erro ao salvar."),
+    onError: () => {},
   });
 
   const deleteProgramMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("training_programs").delete().eq("id", id);
-      if (error) throw error;
+      if (error) {
+        const { handleLibraryWriteError } = await import("@/lib/library-write-guard");
+        await handleLibraryWriteError(error, {
+          table: "training_programs", operation: "delete", recordId: id,
+        });
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["training-programs"] });
       if (selectedProgramId) setSelectedProgramId(null);
       toast.success("Programa removido!");
     },
+    onError: () => {},
   });
 
   const duplicateProgramMutation = useMutation({
