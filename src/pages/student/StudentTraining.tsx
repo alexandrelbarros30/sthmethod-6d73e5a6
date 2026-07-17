@@ -3,6 +3,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
+import { usePreviewAs } from "@/hooks/usePreviewAs";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,6 +37,8 @@ const pickBestMediaUrl = (...candidates: (string | null | undefined)[]): string 
 
 const StudentTraining = () => {
   const { user } = useAuth();
+  const { effectiveUserId } = usePreviewAs();
+  const targetUserId = effectiveUserId || user?.id;
   const { isActive, isLoading: subLoading } = useSubscriptionGuard();
   const [expandedExercises, setExpandedExercises] = useState<Set<string>>(new Set());
 
@@ -43,18 +46,18 @@ const StudentTraining = () => {
   // (no need to click to open — media + reps + notes are visible by default).
 
   const { data: guidedAssignmentsCount = 0, isLoading: guidedAssignmentsLoading } = useQuery({
-    queryKey: ["student-guided-assignment-count", user?.id],
+    queryKey: ["student-guided-assignment-count", targetUserId],
     queryFn: async () => {
       const { count, error } = await supabase
         .from("student_workout_assignments")
         .select("id", { count: "exact", head: true })
-        .eq("user_id", user!.id)
+        .eq("user_id", targetUserId!)
         .eq("active", true);
 
       if (error) throw error;
       return count ?? 0;
     },
-    enabled: !!user?.id && isActive,
+    enabled: !!targetUserId && isActive,
   });
 
   const hasGuidedAssignments = guidedAssignmentsCount > 0;
@@ -84,16 +87,16 @@ const StudentTraining = () => {
   }, []);
 
   const { data: weeks, isLoading: weeksLoading } = useQuery({
-    queryKey: ["student-training-weeks", user?.id],
+    queryKey: ["student-training-weeks", targetUserId],
     queryFn: async () => {
       const { data } = await supabase
         .from("training_weeks")
         .select("*")
-        .eq("user_id", user!.id)
+        .eq("user_id", targetUserId!)
         .order("sort_order");
       return data || [];
     },
-    enabled: !!user?.id && isActive && !hasGuidedAssignments,
+    enabled: !!targetUserId && isActive && !hasGuidedAssignments,
   });
 
   const { data: exercises, isLoading: exLoading } = useQuery({
@@ -118,16 +121,16 @@ const StudentTraining = () => {
   }, [exercises]);
 
   const { data: profile } = useQuery({
-    queryKey: ["profile", user?.id],
+    queryKey: ["profile-training", targetUserId],
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
         .select("*")
-        .eq("user_id", user!.id)
+        .eq("user_id", targetUserId!)
         .single();
       return data;
     },
-    enabled: !!user?.id,
+    enabled: !!targetUserId,
   });
 
   const { data: libraryByName = {} } = useQuery({
@@ -143,7 +146,7 @@ const StudentTraining = () => {
       });
       return map;
     },
-    enabled: !!user?.id && isActive && !hasGuidedAssignments,
+    enabled: !!targetUserId && isActive && !hasGuidedAssignments,
   });
 
   const isLoading = subLoading || guidedAssignmentsLoading || weeksLoading || exLoading;
