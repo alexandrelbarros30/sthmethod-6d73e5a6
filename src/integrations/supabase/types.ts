@@ -3246,6 +3246,48 @@ export type Database = {
         }
         Relationships: []
       }
+      library_write_audit: {
+        Row: {
+          actor_id: string | null
+          actor_role: string | null
+          attempted_payload: Json | null
+          created_at: string
+          created_by_owner: string | null
+          id: string
+          operation: string
+          outcome: string
+          reason: string | null
+          record_id: string | null
+          table_name: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_role?: string | null
+          attempted_payload?: Json | null
+          created_at?: string
+          created_by_owner?: string | null
+          id?: string
+          operation: string
+          outcome: string
+          reason?: string | null
+          record_id?: string | null
+          table_name: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_role?: string | null
+          attempted_payload?: Json | null
+          created_at?: string
+          created_by_owner?: string | null
+          id?: string
+          operation?: string
+          outcome?: string
+          reason?: string | null
+          record_id?: string | null
+          table_name?: string
+        }
+        Relationships: []
+      }
       meal_completions: {
         Row: {
           completed_at: string
@@ -5642,6 +5684,16 @@ export type Database = {
       }
       is_crm_staff: { Args: { _user_id: string }; Returns: boolean }
       is_phone_opted_out: { Args: { _phone: string }; Returns: boolean }
+      log_library_write_denied: {
+        Args: {
+          _attempted_payload: Json
+          _operation: string
+          _reason?: string
+          _record_id: string
+          _table_name: string
+        }
+        Returns: string
+      }
       match_cas_chunks: {
         Args: {
           filter_discipline?: string
