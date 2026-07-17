@@ -1760,14 +1760,14 @@ const AdminStudents = () => {
 
       {/* Body Images Management Dialog */}
       <Dialog open={imagesOpen} onOpenChange={(o) => { setImagesOpen(o); if (!o) setManageOpen(true); }}>
-        <DialogContent className="max-w-2xl max-h-[90vh]">
+        <DialogContent className="max-w-2xl h-[92vh] sm:h-[90vh] flex flex-col p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="font-display flex items-center gap-2">
               <Camera className="w-5 h-5" /> Imagens Corporais — {selected?.full_name}
             </DialogTitle>
           </DialogHeader>
           {selected && (
-            <ScrollArea className="max-h-[75vh] pr-4">
+            <ScrollArea className="flex-1 min-h-0 -mr-2 pr-2">
               <div className="space-y-4">
                 {/* Admin append-only upload with editable date */}
                 <AdminBodyImageUpload
