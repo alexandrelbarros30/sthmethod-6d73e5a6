@@ -665,7 +665,20 @@ export default function AdminCrmGruposAgenda() {
               </div>
               <div>
                 <label className="text-[11px] uppercase tracking-wide text-muted-foreground">URL da imagem (opcional)</label>
-                <Input value={oneshotImage} onChange={(e) => setOneshotImage(e.target.value)} placeholder="https://…" className="mt-1 text-xs" />
+                <div className="flex gap-2 mt-1">
+                  <Input value={oneshotImage} onChange={(e) => setOneshotImage(e.target.value)} placeholder="https://…" className="text-xs flex-1" />
+                  <Button size="sm" variant="outline" disabled={oneshotUploading} onClick={() => document.getElementById("oneshot-file-input")?.click()}>
+                    {oneshotUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImageIcon className="w-3.5 h-3.5 mr-1" />}
+                    Enviar arquivo
+                  </Button>
+                  <input id="oneshot-file-input" type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadOneshotImage(f); e.currentTarget.value = ""; }} />
+                  {oneshotImage && (
+                    <Button size="sm" variant="ghost" onClick={() => setOneshotImage("")} title="Remover imagem">
+                      <X className="w-3.5 h-3.5" />
+                    </Button>
+                  )}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">A URL precisa ser pública e acessível. Se estiver quebrada, o WhatsApp recebe só o texto.</p>
                 {oneshotImage && (
                   <img src={oneshotImage} alt="Prévia" className="mt-2 max-h-48 rounded border border-border object-contain bg-muted/30" />
                 )}
