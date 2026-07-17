@@ -13,6 +13,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageCircle, Send, ChevronDown, AlertCircle, Search, Users, Filter } from "lucide-react";
+import { normalizeSearch } from "@/lib/utils";
 import { toast } from "sonner";
 
 const BUILTIN_TEMPLATES = [
@@ -253,9 +254,9 @@ export default function WhatsAppBulkSender({ linkedStudentIds }: Props) {
 
     // Filter by search
     if (search.trim()) {
-      const q = search.toLowerCase();
+      const q = normalizeSearch(search);
       list = list.filter(
-        (s) => s.full_name.toLowerCase().includes(q) || s.phone.includes(q) || ((s as any).email || "").toLowerCase().includes(q)
+        (s) => normalizeSearch(s.full_name).includes(q) || s.phone.includes(q) || normalizeSearch((s as any).email || "").includes(q)
       );
     }
 

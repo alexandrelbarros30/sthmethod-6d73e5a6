@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Apple, Dumbbell, FlaskConical, ClipboardList, Sparkles, ExternalLink, Download, Search } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { normalizeSearch } from "@/lib/utils";
 
 type ReleaseKey =
   | "diet_updated"
@@ -105,7 +106,7 @@ const AdminReleaseLog = () => {
   }, [profiles]);
 
   const rows = useMemo(() => {
-    const s = search.trim().toLowerCase();
+    const s = normalizeSearch(search);
     return history
       .map((h: any) => {
         const meta = templateMap.get(h.template_id);
@@ -119,8 +120,8 @@ const AdminReleaseLog = () => {
       .filter((r: any) => {
         if (!s) return true;
         return (
-          (r.full_name || "").toLowerCase().includes(s) ||
-          (r.recipient_phone || "").toLowerCase().includes(s)
+          normalizeSearch(r.full_name).includes(s) ||
+          normalizeSearch(r.recipient_phone).includes(s)
         );
       });
   }, [history, templateMap, nameMap, search]);

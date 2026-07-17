@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
+import { normalizeSearch } from "@/lib/utils";
 import { Copy, Plus, MessageCircle, RefreshCcw, CheckCircle2, XCircle, Clock, ImageIcon, Pencil, Eye, Search, Download, FileText, ShieldCheck, Ban } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -137,10 +138,10 @@ export default function AdminImageConsents() {
   }, [students, acceptances, latestConsentByUser]);
 
   const filteredReport = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = normalizeSearch(search);
     return report.filter((r) => {
       if (q) {
-        const hay = `${r.student.full_name || ""} ${r.student.email || ""} ${r.student.phone || ""}`.toLowerCase();
+        const hay = normalizeSearch(`${r.student.full_name || ""} ${r.student.email || ""} ${r.student.phone || ""}`);
         if (!hay.includes(q)) return false;
       }
       if (termsFilter === "yes" && !(r.terms?.accepted)) return false;

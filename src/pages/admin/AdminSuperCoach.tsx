@@ -31,7 +31,7 @@ import {
   RefreshCw,
   Calendar,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, normalizeSearch } from "@/lib/utils";
 
 const SUPERCOACH_URL = "https://adm.appsupercoach.com/";
 
@@ -195,10 +195,10 @@ export default function AdminSuperCoach() {
 
   const filtered = useMemo(() => {
     if (!students) return [];
-    const q = search.trim().toLowerCase();
+    const q = normalizeSearch(search);
     return students.filter((s) => {
       if (q) {
-        const hay = `${s.full_name} ${s.email} ${s.phone}`.toLowerCase();
+        const hay = normalizeSearch(`${s.full_name} ${s.email} ${s.phone}`);
         if (!hay.includes(q)) return false;
       }
       const diff = daysDiff(s.endDate);
