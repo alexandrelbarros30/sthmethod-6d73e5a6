@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { RefreshCw, Check } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ShieldAlert } from "lucide-react";
-import { Eye, Megaphone } from "lucide-react";
+import { Eye, Megaphone, FileText, Trash2 } from "lucide-react";
 
 const ONESHOT_DEFAULT_MESSAGE = `🔬 Requisição de Exames Laboratoriais
 
@@ -31,6 +31,40 @@ A requisição de exames auxilia em:
 📲 Para solicitar sua requisição de exames, entre em contato pelo WhatsApp (21) 99144-6811.`;
 
 const ONESHOT_DEFAULT_IMAGE = "https://api.freelovable.com.br/storage/v1/object/public/anexos/577e938d-582a-4522-9e6c-ec4509b052b6.png";
+
+// Templates de "Envio único" salvos no navegador (localStorage).
+// Permite ao admin manter múltiplas mensagens prontas e trocar rapidamente.
+interface OneshotTemplate {
+  id: string;
+  name: string;
+  message: string;
+  image_url: string;
+  text_first: boolean;
+}
+const ONESHOT_TEMPLATES_KEY = "crm_oneshot_templates_v1";
+const DEFAULT_TEMPLATES: OneshotTemplate[] = [
+  {
+    id: "requisicao_exames",
+    name: "🔬 Requisição de Exames",
+    message: ONESHOT_DEFAULT_MESSAGE,
+    image_url: ONESHOT_DEFAULT_IMAGE,
+    text_first: false,
+  },
+];
+function loadOneshotTemplates(): OneshotTemplate[] {
+  try {
+    const raw = localStorage.getItem(ONESHOT_TEMPLATES_KEY);
+    if (!raw) return DEFAULT_TEMPLATES;
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr) || arr.length === 0) return DEFAULT_TEMPLATES;
+    return arr as OneshotTemplate[];
+  } catch {
+    return DEFAULT_TEMPLATES;
+  }
+}
+function saveOneshotTemplates(list: OneshotTemplate[]) {
+  try { localStorage.setItem(ONESHOT_TEMPLATES_KEY, JSON.stringify(list)); } catch {}
+}
 
 interface Row {
   id: string;
