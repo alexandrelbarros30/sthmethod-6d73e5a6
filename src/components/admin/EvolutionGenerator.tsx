@@ -664,22 +664,6 @@ const EvolutionGenerator = ({ allImages, studentName, userId, phone }: Evolution
           </div>
         </div>
 
-        <Button
-          className="w-full"
-          onClick={handleGenerate}
-          disabled={generating || !oldDate || !newDate}
-        >
-          {generating ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" /> Gerando...
-            </>
-          ) : (
-            <>
-              <ImagePlus className="w-4 h-4" /> Gerar Evolução
-            </>
-          )}
-        </Button>
-
         {/* Mapeamento manual: permite escolher qual foto da galeria usar para cada posição */}
         {oldGroup && newGroup && (
           <div className="space-y-2 rounded-lg border border-border p-3 bg-muted/30">
