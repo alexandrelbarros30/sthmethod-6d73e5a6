@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { RefreshCw, Check } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ShieldAlert } from "lucide-react";
-import { Eye, Megaphone } from "lucide-react";
+import { Eye, Megaphone, FileText, Trash2 } from "lucide-react";
 
 const ONESHOT_DEFAULT_MESSAGE = `🔬 Requisição de Exames Laboratoriais
 
@@ -31,6 +31,40 @@ A requisição de exames auxilia em:
 📲 Para solicitar sua requisição de exames, entre em contato pelo WhatsApp (21) 99144-6811.`;
 
 const ONESHOT_DEFAULT_IMAGE = "https://api.freelovable.com.br/storage/v1/object/public/anexos/577e938d-582a-4522-9e6c-ec4509b052b6.png";
+
+// Templates de "Envio único" salvos no navegador (localStorage).
+// Permite ao admin manter múltiplas mensagens prontas e trocar rapidamente.
+interface OneshotTemplate {
+  id: string;
+  name: string;
+  message: string;
+  image_url: string;
+  text_first: boolean;
+}
+const ONESHOT_TEMPLATES_KEY = "crm_oneshot_templates_v1";
+const DEFAULT_TEMPLATES: OneshotTemplate[] = [
+  {
+    id: "requisicao_exames",
+    name: "🔬 Requisição de Exames",
+    message: ONESHOT_DEFAULT_MESSAGE,
+    image_url: ONESHOT_DEFAULT_IMAGE,
+    text_first: false,
+  },
+];
+function loadOneshotTemplates(): OneshotTemplate[] {
+  try {
+    const raw = localStorage.getItem(ONESHOT_TEMPLATES_KEY);
+    if (!raw) return DEFAULT_TEMPLATES;
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr) || arr.length === 0) return DEFAULT_TEMPLATES;
+    return arr as OneshotTemplate[];
+  } catch {
+    return DEFAULT_TEMPLATES;
+  }
+}
+function saveOneshotTemplates(list: OneshotTemplate[]) {
+  try { localStorage.setItem(ONESHOT_TEMPLATES_KEY, JSON.stringify(list)); } catch {}
+}
 
 interface Row {
   id: string;
@@ -75,6 +109,54 @@ export default function AdminCrmGruposAgenda() {
   const [oneshotSending, setOneshotSending] = useState(false);
   const [oneshotPreview, setOneshotPreview] = useState(false);
   const [oneshotResult, setOneshotResult] = useState<any>(null);
+
+  // Biblioteca de mensagens prontas (localStorage) para o Envio Único.
+  const [oneshotTemplates, setOneshotTemplates] = useState<OneshotTemplate[]>(() => loadOneshotTemplates());
+  const [oneshotTemplateId, setOneshotTemplateId] = useState<string>(() => loadOneshotTemplates()[0]?.id || "");
+
+  function applyOneshotTemplate(id: string) {
+    const t = oneshotTemplates.find((x) => x.id === id);
+    if (!t) return;
+    setOneshotTemplateId(id);
+    setOneshotMessage(t.message);
+    setOneshotImage(t.image_url);
+    setOneshotTextFirst(!!t.text_first);
+  }
+  function persistTemplates(list: OneshotTemplate[]) {
+    setOneshotTemplates(list);
+    saveOneshotTemplates(list);
+  }
+  function updateCurrentTemplate() {
+    if (!oneshotTemplateId) return;
+    const list = oneshotTemplates.map((t) => t.id === oneshotTemplateId
+      ? { ...t, message: oneshotMessage, image_url: oneshotImage, text_first: oneshotTextFirst }
+      : t);
+    persistTemplates(list);
+    toast({ title: "Template atualizado" });
+  }
+  function createTemplateFromCurrent() {
+    const name = window.prompt("Nome do novo template:", "Novo template")?.trim();
+    if (!name) return;
+    const id = `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+    const t: OneshotTemplate = {
+      id, name, message: oneshotMessage, image_url: oneshotImage, text_first: oneshotTextFirst,
+    };
+    const list = [...oneshotTemplates, t];
+    persistTemplates(list);
+    setOneshotTemplateId(id);
+    toast({ title: "Template salvo", description: name });
+  }
+  function deleteCurrentTemplate() {
+    if (!oneshotTemplateId) return;
+    const t = oneshotTemplates.find((x) => x.id === oneshotTemplateId);
+    if (!t) return;
+    if (!confirm(`Excluir template "${t.name}"?`)) return;
+    const list = oneshotTemplates.filter((x) => x.id !== oneshotTemplateId);
+    const fallback = list[0];
+    persistTemplates(list.length ? list : DEFAULT_TEMPLATES);
+    if (fallback) applyOneshotTemplate(fallback.id);
+    else applyOneshotTemplate(DEFAULT_TEMPLATES[0].id);
+  }
 
   async function openOneshot() {
     setOneshotOpen(true);
@@ -501,6 +583,36 @@ export default function AdminCrmGruposAgenda() {
 
           {!oneshotPreview ? (
             <div className="space-y-4">
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+                <label className="text-[11px] uppercase tracking-wide text-muted-foreground flex items-center gap-1">
+                  <FileText className="w-3 h-3" /> Escolher mensagem pronta
+                </label>
+                <div className="flex flex-wrap gap-2 items-center">
+                  <Select value={oneshotTemplateId} onValueChange={applyOneshotTemplate}>
+                    <SelectTrigger className="h-8 text-xs min-w-[220px] flex-1">
+                      <SelectValue placeholder="Selecione um template…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {oneshotTemplates.map((t) => (
+                        <SelectItem key={t.id} value={t.id} className="text-xs">{t.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" variant="outline" onClick={updateCurrentTemplate} disabled={!oneshotTemplateId} title="Salvar edições no template selecionado">
+                    <Save className="w-3.5 h-3.5 mr-1" /> Atualizar
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={createTemplateFromCurrent} title="Salvar a mensagem/imagem atuais como um novo template">
+                    <Plus className="w-3.5 h-3.5 mr-1" /> Nova
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={deleteCurrentTemplate} disabled={!oneshotTemplateId} title="Excluir template selecionado">
+                    <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                  </Button>
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Selecione uma mensagem existente para carregar, edite abaixo e clique em <b>Atualizar</b> — ou salve como <b>Nova</b> para criar um novo template.
+                </p>
+              </div>
+
               <div>
                 <label className="text-[11px] uppercase tracking-wide text-muted-foreground">Mensagem</label>
                 <Textarea rows={14} value={oneshotMessage} onChange={(e) => setOneshotMessage(e.target.value)} className="text-sm mt-1" />
