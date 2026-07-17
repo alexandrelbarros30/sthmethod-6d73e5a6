@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import RichTextEditor from "@/components/shared/RichTextEditor";
+import CopyRichTextButton from "@/components/shared/CopyRichTextButton";
 import RichContentRenderer from "@/components/shared/RichContentRenderer";
 import StudentInfoHeader from "@/components/student/StudentInfoHeader";
 import ProtocolInfoPanel from "@/components/student/ProtocolInfoPanel";
@@ -1125,7 +1126,10 @@ Diretriz temporal obrigatória:
                       </div>
                     </div>
                      <div>
-                      <Label className="font-body">Conteúdo</Label>
+                      <div className="flex items-center justify-between">
+                        <Label className="font-body">Conteúdo</Label>
+                        <CopyRichTextButton html={newContent} label="Copiar protocolo" />
+                      </div>
                       <RichTextEditor value={newContent} onChange={setNewContent} placeholder="Escreva o conteúdo do protocolo aqui..." />
                       <details className="mt-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-2">
                         <summary className="cursor-pointer text-[11px] font-medium tracking-wide uppercase text-muted-foreground">
@@ -1198,7 +1202,10 @@ Ação: Após a maior refeição do dia.
                       </div>
                     </div>
                     <div>
-                      <Label className="font-body text-xs">Conteúdo</Label>
+                      <div className="flex items-center justify-between">
+                        <Label className="font-body text-xs">Conteúdo</Label>
+                        <CopyRichTextButton html={editContent} label="Copiar protocolo" />
+                      </div>
                       <RichTextEditor value={editContent} onChange={setEditContent} />
                     </div>
                   </div>
