@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
       // Senha segue a escolha do admin/consultor/aluno; regra padrão = '123456'
       const tempPassword = (password && password.length >= 4) ? password : '123456'
 
-      const payload = [{
+      const payloadObj = {
         name: profile.full_name,
         email: profile.email,
         password: tempPassword,
@@ -154,16 +154,18 @@ Deno.serve(async (req) => {
           ddi,
           phone,
         },
-      }]
+      }
 
-      // Try POST first (create pattern); fall back to PUT if server expects it
-      let created = await fetch(ACCOUNT_URL, { method: 'POST', headers: auth, body: JSON.stringify(payload) })
+      // POST expects a single object (server reads $data['email']).
+      // PUT expects an array of existing customers (needs 'id').
+      let created = await fetch(ACCOUNT_URL, { method: 'POST', headers: auth, body: JSON.stringify(payloadObj) })
       let createdText = await created.text()
       if (!created.ok) {
-        const retry = await fetch(ACCOUNT_URL, { method: 'PUT', headers: auth, body: JSON.stringify(payload) })
+        // Fallback: some tenants accept an array on POST
+        const retry = await fetch(ACCOUNT_URL, { method: 'POST', headers: auth, body: JSON.stringify([payloadObj]) })
         const retryText = await retry.text()
         if (!retry.ok) {
-          throw new Error(`Criação SuperCoach falhou (POST ${created.status} / PUT ${retry.status}): ${createdText.slice(0, 200)} | ${retryText.slice(0, 200)}`)
+          throw new Error(`Criação SuperCoach falhou (POST obj ${created.status} / POST arr ${retry.status}): ${createdText.slice(0, 200)} | ${retryText.slice(0, 200)}`)
         }
         created = retry; createdText = retryText
       }
