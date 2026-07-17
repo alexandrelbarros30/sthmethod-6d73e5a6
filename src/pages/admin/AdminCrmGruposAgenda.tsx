@@ -107,6 +107,7 @@ export default function AdminCrmGruposAgenda() {
   const [oneshotSelected, setOneshotSelected] = useState<Set<string>>(new Set());
   const [oneshotLoading, setOneshotLoading] = useState(false);
   const [oneshotSending, setOneshotSending] = useState(false);
+  const [oneshotUploading, setOneshotUploading] = useState(false);
   const [oneshotPreview, setOneshotPreview] = useState(false);
   const [oneshotResult, setOneshotResult] = useState<any>(null);
 
@@ -187,6 +188,28 @@ export default function AdminCrmGruposAgenda() {
   async function dispatchOneshot() {
     const ids = Array.from(oneshotSelected);
     if (ids.length === 0) { toast({ title: "Selecione ao menos 1 grupo" }); return; }
+    // Z-API precisa baixar a imagem por HTTP público. Se a URL estiver quebrada,
+    // o envio da mídia falha silenciosamente e só chega o texto.
+    if (oneshotImage) {
+      try {
+        const head = await fetch(oneshotImage, { method: "HEAD" });
+        if (!head.ok) {
+          toast({
+            title: "Imagem inacessível",
+            description: `A URL retornou ${head.status}. Faça upload de um novo arquivo antes de disparar.`,
+            variant: "destructive" as any,
+          });
+          return;
+        }
+      } catch {
+        toast({
+          title: "Não foi possível validar a imagem",
+          description: "Verifique a URL ou faça upload de um novo arquivo.",
+          variant: "destructive" as any,
+        });
+        return;
+      }
+    }
     setOneshotSending(true);
     setOneshotResult(null);
     try {
@@ -208,6 +231,28 @@ export default function AdminCrmGruposAgenda() {
       console.error("[oneshot] erro", e);
       toast({ title: "Erro no disparo", description: e?.message || String(e), variant: "destructive" as any });
     } finally { setOneshotSending(false); }
+  }
+
+  async function uploadOneshotImage(file: File) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Arquivo inválido", description: "Selecione uma imagem.", variant: "destructive" as any });
+      return;
+    }
+    setOneshotUploading(true);
+    try {
+      const ext = (file.name.split(".").pop() || "png").toLowerCase();
+      const path = `oneshot/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("crm-media").upload(path, file, {
+        contentType: file.type, upsert: true,
+      });
+      if (error) throw error;
+      const { data: pub } = supabase.storage.from("crm-media").getPublicUrl(path);
+      setOneshotImage(pub.publicUrl);
+      toast({ title: "Imagem enviada", description: "URL pública atualizada." });
+    } catch (e: any) {
+      toast({ title: "Falha no upload", description: e?.message || String(e), variant: "destructive" as any });
+    } finally { setOneshotUploading(false); }
   }
 
   async function fetchGroups(force = false) {
