@@ -4720,6 +4720,42 @@ export type Database = {
           },
         ]
       }
+      student_feedback_audit: {
+        Row: {
+          after_data: Json | null
+          before_data: Json | null
+          changed_by: string | null
+          changed_fields: string[] | null
+          created_at: string
+          feedback_id: string
+          feedback_scope: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          after_data?: Json | null
+          before_data?: Json | null
+          changed_by?: string | null
+          changed_fields?: string[] | null
+          created_at?: string
+          feedback_id: string
+          feedback_scope: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          after_data?: Json | null
+          before_data?: Json | null
+          changed_by?: string | null
+          changed_fields?: string[] | null
+          created_at?: string
+          feedback_id?: string
+          feedback_scope?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       student_flow_status: {
         Row: {
           cadastro_recebido_at: string | null
@@ -4798,6 +4834,7 @@ export type Database = {
         Row: {
           created_at: string
           difficulty_rating: number | null
+          edit_deadline: string
           highlights: string | null
           id: string
           improvements: string | null
@@ -4814,6 +4851,7 @@ export type Database = {
         Insert: {
           created_at?: string
           difficulty_rating?: number | null
+          edit_deadline?: string
           highlights?: string | null
           id?: string
           improvements?: string | null
@@ -4830,6 +4868,7 @@ export type Database = {
         Update: {
           created_at?: string
           difficulty_rating?: number | null
+          edit_deadline?: string
           highlights?: string | null
           id?: string
           improvements?: string | null
@@ -5015,6 +5054,7 @@ export type Database = {
         Row: {
           assignment_id: string
           difficulty_rating: number | null
+          edit_deadline: string
           energy_level: number | null
           feedback: string | null
           finished_at: string | null
@@ -5030,6 +5070,7 @@ export type Database = {
         Insert: {
           assignment_id: string
           difficulty_rating?: number | null
+          edit_deadline?: string
           energy_level?: number | null
           feedback?: string | null
           finished_at?: string | null
@@ -5045,6 +5086,7 @@ export type Database = {
         Update: {
           assignment_id?: string
           difficulty_rating?: number | null
+          edit_deadline?: string
           energy_level?: number | null
           feedback?: string | null
           finished_at?: string | null
