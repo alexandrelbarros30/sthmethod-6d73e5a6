@@ -112,6 +112,8 @@ import AdminPopups from "./pages/admin/AdminPopups";
 import AdminAds from "./pages/admin/AdminAds";
 import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminReleaseLog from "./pages/admin/AdminReleaseLog";
+import AdminFeedback from "./pages/admin/AdminFeedback";
+import StudentFeedbackHistory from "./pages/student/StudentFeedbackHistory";
 import AdminBudgets from "./pages/admin/AdminBudgets";
 import AdminQueue from "./pages/admin/AdminQueue";
 import AdminUpdates from "./pages/admin/AdminUpdates";
@@ -278,6 +280,7 @@ const App = () => (
             <Route path="/dashboard/ads" element={<ProtectedRoute allowedRoles={["student"]}><StudentAds /></ProtectedRoute>} />
             <Route path="/dashboard/consultas" element={<ProtectedRoute allowedRoles={["student"]}><StudentConsultas /></ProtectedRoute>} />
             <Route path="/dashboard/assistente" element={<ProtectedRoute allowedRoles={["student"]}><StudentAssistant /></ProtectedRoute>} />
+            <Route path="/dashboard/feedbacks" element={<ProtectedRoute allowedRoles={["student"]}><StudentFeedbackHistory /></ProtectedRoute>} />
             {/* Admin routes */}
             <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/metrics" element={<ProtectedRoute allowedRoles={["admin"]}><AdminNutriMetrics /></ProtectedRoute>} />
@@ -307,6 +310,7 @@ const App = () => (
             <Route path="/admin/popups" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPopups /></ProtectedRoute>} />
             <Route path="/admin/notifications" element={<ProtectedRoute allowedRoles={["admin"]}><AdminNotifications /></ProtectedRoute>} />
             <Route path="/admin/release-log" element={<ProtectedRoute allowedRoles={["admin"]}><AdminReleaseLog /></ProtectedRoute>} />
+            <Route path="/admin/feedback" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><AdminFeedback /></ProtectedRoute>} />
             <Route path="/admin/budgets" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBudgets /></ProtectedRoute>} />
             <Route path="/admin/ads" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAds /></ProtectedRoute>} />
             <Route path="/admin/queue" element={<ProtectedRoute allowedRoles={["admin"]}><AdminQueue /></ProtectedRoute>} />
