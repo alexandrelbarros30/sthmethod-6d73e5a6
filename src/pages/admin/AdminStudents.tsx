@@ -211,7 +211,7 @@ const AdminStudents = () => {
         .order("logged_at", { ascending: false });
       return data || [];
     },
-    enabled: !!selected?.user_id && anamneseOpen,
+    enabled: !!selected?.user_id && (anamneseOpen || viewOpen),
   });
 
   // Fetch full profile with new fields when editing/viewing
