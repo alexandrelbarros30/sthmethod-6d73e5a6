@@ -300,6 +300,17 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
                         )}
                       </div>
                     </div>
+                    {(e.video_url || e.cover_url) && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 shrink-0"
+                        onClick={(ev) => { ev.preventDefault(); ev.stopPropagation(); setPreview(e); }}
+                      >
+                        <Eye className="w-3.5 h-3.5 mr-1" /> Ver
+                      </Button>
+                    )}
                   </label>
                 );
               })}
@@ -360,6 +371,17 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
                         <p className="text-xs text-muted-foreground mt-0.5">{e.series_repetitions}</p>
                       )}
                     </div>
+                    {(e.video_url || e.cover_url) && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 shrink-0"
+                        onClick={(ev) => { ev.preventDefault(); ev.stopPropagation(); setPreview(e); }}
+                      >
+                        <Eye className="w-3.5 h-3.5 mr-1" /> Ver
+                      </Button>
+                    )}
                   </label>
                 );
               })}
