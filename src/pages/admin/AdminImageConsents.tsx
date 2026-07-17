@@ -271,11 +271,10 @@ export default function AdminImageConsents() {
     window.open(`https://wa.me/${fullPhone}?text=${encodeURIComponent(msg)}`, "_blank");
   }
 
-  // Solicita ao aluno que revise/revogue a autorização de imagem (fluxo manual e privado).
-  function requestRevocation(target: { name?: string | null; phone?: string | null }) {
+  // Solicita ao aluno que revise/revogue a autorização de imagem via API oficial (canal "Fale com o Nutri").
+  async function requestRevocation(target: { name?: string | null; phone?: string | null }) {
     const phone = onlyDigits(target.phone || "");
     if (!phone) { toast({ title: "Aluno sem telefone cadastrado" }); return; }
-    const fullPhone = phone.startsWith("55") || phone.startsWith("44") || phone.length > 11 ? phone : `55${phone}`;
     const firstName = (target.name || "").split(" ")[0];
     const url = `${window.location.origin}/dashboard/perfil#imagem`;
     const msg =
@@ -284,7 +283,23 @@ export default function AdminImageConsents() {
       `Para manter tudo registrado no seu histórico (com data e motivo), a alteração deve ser feita por você mesmo(a), no seu painel:\n${url}\n\n` +
       `Você pode alterar entre: autorizar com identificação, sem identificação ou *revogar totalmente*.\n` +
       `Qualquer dúvida, é só responder aqui. Conte comigo 🙌`;
-    window.open(`https://wa.me/${fullPhone}?text=${encodeURIComponent(msg)}`, "_blank");
+    try {
+      const { data, error } = await supabase.functions.invoke("send-wapi", {
+        body: { phone, message: msg },
+      });
+      if (error) throw error;
+      if ((data as any)?.ok === false) {
+        toast({
+          title: "Não foi possível enviar",
+          description: (data as any)?.error || "Canal W-API indisponível.",
+          variant: "destructive",
+        });
+        return;
+      }
+      toast({ title: "Solicitação enviada", description: "Mensagem entregue pelo canal Fale com o Nutri." });
+    } catch (e: any) {
+      toast({ title: "Erro no envio", description: e?.message || String(e), variant: "destructive" });
+    }
   }
 
   function openEdit(c: Consent) {
