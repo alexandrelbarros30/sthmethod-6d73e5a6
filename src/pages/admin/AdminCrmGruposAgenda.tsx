@@ -110,6 +110,54 @@ export default function AdminCrmGruposAgenda() {
   const [oneshotPreview, setOneshotPreview] = useState(false);
   const [oneshotResult, setOneshotResult] = useState<any>(null);
 
+  // Biblioteca de mensagens prontas (localStorage) para o Envio Único.
+  const [oneshotTemplates, setOneshotTemplates] = useState<OneshotTemplate[]>(() => loadOneshotTemplates());
+  const [oneshotTemplateId, setOneshotTemplateId] = useState<string>(() => loadOneshotTemplates()[0]?.id || "");
+
+  function applyOneshotTemplate(id: string) {
+    const t = oneshotTemplates.find((x) => x.id === id);
+    if (!t) return;
+    setOneshotTemplateId(id);
+    setOneshotMessage(t.message);
+    setOneshotImage(t.image_url);
+    setOneshotTextFirst(!!t.text_first);
+  }
+  function persistTemplates(list: OneshotTemplate[]) {
+    setOneshotTemplates(list);
+    saveOneshotTemplates(list);
+  }
+  function updateCurrentTemplate() {
+    if (!oneshotTemplateId) return;
+    const list = oneshotTemplates.map((t) => t.id === oneshotTemplateId
+      ? { ...t, message: oneshotMessage, image_url: oneshotImage, text_first: oneshotTextFirst }
+      : t);
+    persistTemplates(list);
+    toast({ title: "Template atualizado" });
+  }
+  function createTemplateFromCurrent() {
+    const name = window.prompt("Nome do novo template:", "Novo template")?.trim();
+    if (!name) return;
+    const id = `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+    const t: OneshotTemplate = {
+      id, name, message: oneshotMessage, image_url: oneshotImage, text_first: oneshotTextFirst,
+    };
+    const list = [...oneshotTemplates, t];
+    persistTemplates(list);
+    setOneshotTemplateId(id);
+    toast({ title: "Template salvo", description: name });
+  }
+  function deleteCurrentTemplate() {
+    if (!oneshotTemplateId) return;
+    const t = oneshotTemplates.find((x) => x.id === oneshotTemplateId);
+    if (!t) return;
+    if (!confirm(`Excluir template "${t.name}"?`)) return;
+    const list = oneshotTemplates.filter((x) => x.id !== oneshotTemplateId);
+    const fallback = list[0];
+    persistTemplates(list.length ? list : DEFAULT_TEMPLATES);
+    if (fallback) applyOneshotTemplate(fallback.id);
+    else applyOneshotTemplate(DEFAULT_TEMPLATES[0].id);
+  }
+
   async function openOneshot() {
     setOneshotOpen(true);
     setOneshotResult(null);
