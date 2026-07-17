@@ -13,6 +13,7 @@ import StCoachButton from "@/components/student/StCoachButton";
 import StudentInfoHeader from "@/components/student/StudentInfoHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import StudentGuidedWorkout from "@/pages/student/StudentGuidedWorkout";
+import StCoachCredit from "@/components/shared/StCoachCredit";
 
 const getMediaSource = (url: string): { kind: "embed" | "image" | "file"; url: string } | null => {
   if (!url) return null;
