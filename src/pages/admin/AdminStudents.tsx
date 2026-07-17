@@ -1871,19 +1871,6 @@ const AdminStudents = () => {
                   }}
                 />
 
-                {/* Evolution Generator */}
-                {anamneseBodyImages && anamneseBodyImages.length > 0 && (
-                  <EvolutionGenerator
-                    allImages={anamneseBodyImages}
-                    studentName={selected.full_name}
-                    userId={selected.user_id}
-                    phone={(selected as any).phone}
-                  />
-                )}
-                {selected.user_id && (
-                  <EvolutionArtsGallery userId={selected.user_id} studentName={selected.full_name} />
-                )}
-
                 {/* Image History with editable dates */}
                 {anamneseBodyImages && anamneseBodyImages.length > 0 && (
                   <AdminImageHistory
@@ -1896,21 +1883,17 @@ const AdminStudents = () => {
                   />
                 )}
 
-                {/* Shortcut: Gerar Evolução após o card de edição */}
+                {/* Evolution Generator — abaixo da edição das imagens */}
                 {anamneseBodyImages && anamneseBodyImages.length > 0 && (
-                  <Button
-                    size="sm"
-                    className="w-full"
-                    onClick={() => {
-                      setAnamneseOpen(false);
-                      setImagesOpen(true);
-                      setTimeout(() => {
-                        document.getElementById("evolution-generator-anchor")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                      }, 300);
-                    }}
-                  >
-                    <Sparkles className="w-4 h-4 mr-1" /> Gerar Evolução
-                  </Button>
+                  <EvolutionGenerator
+                    allImages={anamneseBodyImages}
+                    studentName={selected.full_name}
+                    userId={selected.user_id}
+                    phone={(selected as any).phone}
+                  />
+                )}
+                {selected.user_id && (
+                  <EvolutionArtsGallery userId={selected.user_id} studentName={selected.full_name} />
                 )}
 
                 {/* Weight History */}
