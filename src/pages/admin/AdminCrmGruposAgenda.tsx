@@ -30,7 +30,9 @@ A requisição de exames auxilia em:
 
 📲 Para solicitar sua requisição de exames, entre em contato pelo WhatsApp (21) 99144-6811.`;
 
-const ONESHOT_DEFAULT_IMAGE = "https://api.freelovable.com.br/storage/v1/object/public/anexos/577e938d-582a-4522-9e6c-ec4509b052b6.png";
+// A URL padrão anterior (api.freelovable.com.br) está retornando 400 e o WhatsApp
+// não conseguia baixar a arte. Deixamos vazio: o admin faz upload via "Enviar arquivo".
+const ONESHOT_DEFAULT_IMAGE = "";
 
 // Templates de "Envio único" salvos no navegador (localStorage).
 // Permite ao admin manter múltiplas mensagens prontas e trocar rapidamente.
@@ -57,7 +59,11 @@ function loadOneshotTemplates(): OneshotTemplate[] {
     if (!raw) return DEFAULT_TEMPLATES;
     const arr = JSON.parse(raw);
     if (!Array.isArray(arr) || arr.length === 0) return DEFAULT_TEMPLATES;
-    return arr as OneshotTemplate[];
+    // Limpa URLs quebradas de imagens antigas (freelovable) para forçar novo upload.
+    return (arr as OneshotTemplate[]).map((t) => ({
+      ...t,
+      image_url: /freelovable\.com\.br/i.test(t.image_url || "") ? "" : t.image_url,
+    }));
   } catch {
     return DEFAULT_TEMPLATES;
   }
