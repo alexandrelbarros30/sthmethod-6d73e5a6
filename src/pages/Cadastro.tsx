@@ -457,7 +457,11 @@ const Cadastro = () => {
           }
         };
         await saveInitialProfile();
-        
+        // Auto-cadastro no SuperCoach (fire-and-forget) — senha = a mesma escolhida pelo aluno
+        supabase.functions.invoke("supercoach-sync-expiration", {
+          body: { action: "create", userId: data.user.id, password: password || "123456" },
+        }).catch((e) => console.warn("[SuperCoach auto-create]", e));
+
         if (quizData) {
           toast.success("Conta criada! Dados do questionário salvos. Complete seu cadastro.");
           setStep(3);

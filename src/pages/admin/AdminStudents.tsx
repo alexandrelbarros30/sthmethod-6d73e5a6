@@ -477,6 +477,10 @@ const AdminStudents = () => {
       if (error) throw new Error("Erro ao criar aluno. Tente novamente.");
       if (data?.user?.id) {
         await supabase.from("profiles").update(profilePayload()).eq("user_id", data.user.id);
+        // Auto-cadastro no SuperCoach (fire-and-forget) — senha = escolhida pelo admin/consultor (padrão 123456)
+        supabase.functions.invoke("supercoach-sync-expiration", {
+          body: { action: "create", userId: data.user.id, password: form.password || "123456" },
+        }).catch((e) => console.warn("[SuperCoach auto-create]", e));
       }
     },
     onSuccess: () => {

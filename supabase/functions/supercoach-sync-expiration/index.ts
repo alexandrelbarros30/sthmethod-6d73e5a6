@@ -74,12 +74,13 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}))
-    const { action, email, name, expiresDate, userId } = body as {
+    const { action, email, name, expiresDate, userId, password } = body as {
       action: 'search' | 'update' | 'create'
       email?: string
       name?: string
       expiresDate?: string // YYYY-MM-DD
       userId?: string      // for action=create
+      password?: string    // for action=create (fallback '123456')
     }
 
     if (!action) throw new Error('action é obrigatório (search | update | create)')
@@ -134,7 +135,8 @@ Deno.serve(async (req) => {
       const ddi = digits.startsWith('55') ? '0055' : (digits.length >= 12 ? '00' + digits.slice(0, 2) : '0055')
       const phone = digits.startsWith('55') ? digits.slice(2) : (digits.length >= 12 ? digits.slice(2) : digits)
       const gender = (profile.gender || '').toLowerCase().startsWith('f') ? 'f' : 'm'
-      const tempPassword = Math.random().toString(36).slice(-4) + Math.floor(1000 + Math.random() * 9000)
+      // Senha segue a escolha do admin/consultor/aluno; regra padrão = '123456'
+      const tempPassword = (password && password.length >= 4) ? password : '123456'
 
       const payload = [{
         name: profile.full_name,
