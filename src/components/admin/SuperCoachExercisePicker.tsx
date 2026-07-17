@@ -405,5 +405,56 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
         )}
       </DialogContent>
     </Dialog>
+
+    {preview && (
+      <Dialog open={!!preview} onOpenChange={(v) => !v && setPreview(null)}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {preview.name}
+              <Badge variant="outline" className="text-[10px] gap-1">
+                <Video className="w-2.5 h-2.5" /> ST Coach
+              </Badge>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="relative w-full rounded-lg overflow-hidden bg-black" style={{ aspectRatio: "16 / 9" }}>
+              {preview.video_url ? (
+                <iframe
+                  src={toEmbed(preview.video_url)}
+                  className="absolute inset-0 w-full h-full"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : preview.cover_url ? (
+                <img src={preview.cover_url} alt={preview.name} className="absolute inset-0 w-full h-full object-contain" />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">Sem mídia</div>
+              )}
+            </div>
+            {preview.series_repetitions && (
+              <p className="text-sm"><span className="text-muted-foreground">Séries × Reps:</span> {preview.series_repetitions}</p>
+            )}
+            {preview.description && (
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{preview.description}</p>
+            )}
+            <p className="text-[10px] text-muted-foreground">Vídeo de referência técnica — © ST Coach</p>
+            <div className="flex justify-end gap-2 pt-2 border-t">
+              <Button variant="outline" size="sm" onClick={() => setPreview(null)}>Fechar</Button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  togglePick(String(preview.id));
+                  setPreview(null);
+                }}
+              >
+                {picked.has(String(preview.id)) ? "Desmarcar" : "Selecionar este"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    )}
+    </>
   );
 }
