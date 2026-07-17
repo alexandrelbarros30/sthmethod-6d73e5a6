@@ -4794,6 +4794,65 @@ export type Database = {
           },
         ]
       }
+      student_program_feedback: {
+        Row: {
+          created_at: string
+          difficulty_rating: number | null
+          highlights: string | null
+          id: string
+          improvements: string | null
+          notes: string | null
+          overall_rating: number
+          program_id: string
+          results_rating: number | null
+          synced_at: string | null
+          synced_to_stcoach: boolean
+          updated_at: string
+          user_id: string
+          would_repeat: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          difficulty_rating?: number | null
+          highlights?: string | null
+          id?: string
+          improvements?: string | null
+          notes?: string | null
+          overall_rating: number
+          program_id: string
+          results_rating?: number | null
+          synced_at?: string | null
+          synced_to_stcoach?: boolean
+          updated_at?: string
+          user_id: string
+          would_repeat?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          difficulty_rating?: number | null
+          highlights?: string | null
+          id?: string
+          improvements?: string | null
+          notes?: string | null
+          overall_rating?: number
+          program_id?: string
+          results_rating?: number | null
+          synced_at?: string | null
+          synced_to_stcoach?: boolean
+          updated_at?: string
+          user_id?: string
+          would_repeat?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_program_feedback_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "training_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_protocols: {
         Row: {
           content: string | null
@@ -4955,28 +5014,46 @@ export type Database = {
       student_workout_sessions: {
         Row: {
           assignment_id: string
+          difficulty_rating: number | null
+          energy_level: number | null
           feedback: string | null
           finished_at: string | null
           id: string
+          mood_rating: number | null
+          pain_reported: boolean
           started_at: string
+          synced_at: string | null
+          synced_to_stcoach: boolean
           template_id: string
           user_id: string
         }
         Insert: {
           assignment_id: string
+          difficulty_rating?: number | null
+          energy_level?: number | null
           feedback?: string | null
           finished_at?: string | null
           id?: string
+          mood_rating?: number | null
+          pain_reported?: boolean
           started_at?: string
+          synced_at?: string | null
+          synced_to_stcoach?: boolean
           template_id: string
           user_id: string
         }
         Update: {
           assignment_id?: string
+          difficulty_rating?: number | null
+          energy_level?: number | null
           feedback?: string | null
           finished_at?: string | null
           id?: string
+          mood_rating?: number | null
+          pain_reported?: boolean
           started_at?: string
+          synced_at?: string | null
+          synced_to_stcoach?: boolean
           template_id?: string
           user_id?: string
         }
