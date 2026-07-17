@@ -1,5 +1,6 @@
 import { Dumbbell, Play, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
+import StCoachCredit, { isStCoachVideoUrl } from "@/components/shared/StCoachCredit";
 
 type MediaKind = "image" | "video" | "embed";
 
@@ -112,6 +113,7 @@ const ExerciseMediaPreview = ({
 
   const isPlayer = mode === "player";
   const mediaClass = isPlayer ? "w-full h-full object-contain" : "w-full h-full object-cover";
+  const isStCoach = isStCoachVideoUrl(media.url) || isStCoachVideoUrl(media.embedUrl);
 
   return (
     <div className={cn("relative overflow-hidden rounded-md border border-border bg-muted", className)}>
@@ -143,6 +145,7 @@ const ExerciseMediaPreview = ({
           {media.label}
         </span>
       )}
+      {isStCoach && <StCoachCredit variant="overlay" />}
     </div>
   );
 };

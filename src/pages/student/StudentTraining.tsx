@@ -13,6 +13,7 @@ import StCoachButton from "@/components/student/StCoachButton";
 import StudentInfoHeader from "@/components/student/StudentInfoHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import StudentGuidedWorkout from "@/pages/student/StudentGuidedWorkout";
+import StCoachCredit from "@/components/shared/StCoachCredit";
 
 const getMediaSource = (url: string): { kind: "embed" | "image" | "file"; url: string } | null => {
   if (!url) return null;
@@ -302,13 +303,17 @@ const StudentTraining = () => {
                           <div className="border-t border-border/40 p-5 space-y-4">
                             {/* Video embed */}
                             {media?.kind === "embed" && (
-                              <div className="aspect-[4/3] sm:aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40">
-                                <iframe
-                                  src={media.url}
-                                  className="w-full h-full"
-                                  allowFullScreen
-                                  title={`Vídeo - ${ex.name}`}
-                                />
+                              <div className="space-y-1.5">
+                                <div className="relative aspect-[4/3] sm:aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40">
+                                  <iframe
+                                    src={media.url}
+                                    className="w-full h-full"
+                                    allowFullScreen
+                                    title={`Vídeo - ${ex.name}`}
+                                  />
+                                  <StCoachCredit variant="overlay" />
+                                </div>
+                                <StCoachCredit />
                               </div>
                             )}
                             {media?.kind === "image" && (
