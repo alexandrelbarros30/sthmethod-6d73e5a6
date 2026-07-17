@@ -31,6 +31,7 @@ import {
   RefreshCw,
   Calendar,
   Zap,
+  UserPlus,
 } from "lucide-react";
 import { cn, normalizeSearch } from "@/lib/utils";
 
@@ -345,6 +346,44 @@ export default function AdminSuperCoach() {
     }
   };
 
+  const createInSuperCoach = async (row: StudentRow) => {
+    if (!confirm(`Criar cadastro no SuperCoach para ${row.full_name}?\nSerá gerada uma senha temporária.`)) return;
+    setSavingId(row.user_id);
+    try {
+      const { data, error } = await supabase.functions.invoke("supercoach-sync-expiration", {
+        body: {
+          action: "create",
+          userId: row.user_id,
+          expiresDate: row.endDate ? row.endDate.slice(0, 10) : undefined,
+        },
+      });
+      if (error) throw error;
+      if (!data?.ok) {
+        if (data?.status === "already_exists") {
+          await persistStatus(row, "updated", data.message || "Já existia no SuperCoach", "");
+          toast({ title: "Já existia no SuperCoach", description: data.message });
+          return;
+        }
+        throw new Error(data?.message || "Falha ao criar aluno");
+      }
+      const c = data.customer;
+      const obs = `Criado no SuperCoach · vence ${c.premium_expires_date} · senha temp: ${c.temporary_password}`;
+      await persistStatus(row, "updated", obs, "");
+      try {
+        await navigator.clipboard.writeText(`E-mail: ${c.email}\nSenha: ${c.temporary_password}`);
+      } catch { /* ignore */ }
+      toast({
+        title: "Aluno criado no SuperCoach",
+        description: `Senha temporária ${c.temporary_password} copiada para a área de transferência.`,
+      });
+    } catch (e: any) {
+      console.error(e);
+      toast({ title: "Erro ao criar aluno", description: e.message, variant: "destructive" });
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   const openActionDialog = (row: StudentRow, type: "not_found" | "divergent_name" | "review_manually") => {
     setActionRow(row);
     setActionType(type);
@@ -533,6 +572,18 @@ export default function AdminSuperCoach() {
                                   {savingId === row.user_id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
                                   Sincronizar
                                 </Button>
+                                {status === "not_found" && (
+                                  <Button
+                                    size="sm"
+                                    className="h-8 gap-1.5 text-xs bg-success text-success-foreground hover:bg-success/90 whitespace-nowrap shrink-0"
+                                    onClick={() => createInSuperCoach(row)}
+                                    disabled={savingId === row.user_id}
+                                    title="Cria o cadastro do aluno no SuperCoach puxando dados do portal"
+                                  >
+                                    {savingId === row.user_id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserPlus className="w-3.5 h-3.5" />}
+                                    Criar no SuperCoach
+                                  </Button>
+                                )}
                                 <Button
                                   size="sm"
                                   className="h-8 gap-1.5 text-xs bg-success text-success-foreground hover:bg-success/90 whitespace-nowrap shrink-0"
