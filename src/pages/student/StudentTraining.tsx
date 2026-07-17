@@ -10,7 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Video, Dumbbell, Timer, ChevronDown, ChevronUp, Play, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import StCoachButton from "@/components/student/StCoachButton";
 import StudentInfoHeader from "@/components/student/StudentInfoHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import StudentGuidedWorkout from "@/pages/student/StudentGuidedWorkout";
@@ -183,8 +182,6 @@ const StudentTraining = () => {
     return (
       <DashboardLayout role="student" title="Treino" subtitle="Seu plano de treino personalizado.">
         <div className="max-w-4xl training-protected space-y-4">
-          <StCoachButton />
-
           <Card><CardContent className="py-8 text-center">
             <Dumbbell className="w-10 h-10 mx-auto text-muted-foreground/40 mb-3" />
             <p className="text-muted-foreground font-body">Nenhum treino configurado ainda. Aguarde seu consultor.</p>
@@ -224,9 +221,6 @@ const StudentTraining = () => {
           <h2 className="text-[28px] font-semibold text-foreground tracking-[-0.035em] leading-tight mt-2">Treino</h2>
           <p className="text-[12px] text-muted-foreground font-light mt-2 tracking-tight">{weeks.length} treino(s) configurado(s)</p>
         </div>
-
-        {/* ST Coach App Button */}
-        <StCoachButton />
 
         {/* Tabs for each workout */}
         <Tabs defaultValue={defaultTab} className="w-full">

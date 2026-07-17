@@ -10,7 +10,6 @@ import SubscriptionBlock from "@/components/SubscriptionBlock";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dumbbell, ChevronLeft, ChevronDown, History, Play, Calendar, ChevronsDown, Save, Eraser, VideoOff } from "lucide-react";
-import StCoachButton from "@/components/student/StCoachButton";
 import StCoachCredit from "@/components/shared/StCoachCredit";
 import { toast } from "sonner";
 
@@ -233,7 +232,6 @@ const StudentGuidedWorkout = () => {
       return (
         <DashboardLayout role="student" title="Treino Guiado" subtitle="Seus treinos.">
           <div className="space-y-6 max-w-4xl">
-            <StCoachButton />
             <Card><CardContent className="py-12 text-center">
               <Dumbbell className="w-10 h-10 mx-auto text-muted-foreground/40 mb-3" />
               <p className="text-muted-foreground">Nenhum treino atribuído. Aguarde seu consultor.</p>
@@ -246,7 +244,6 @@ const StudentGuidedWorkout = () => {
     return (
       <DashboardLayout role="student" title="Treino Guiado" subtitle="Selecione seu programa.">
         <div className="space-y-4 max-w-4xl">
-          <StCoachButton />
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {groups.map((pid) => {
               const program = (programs || []).find((p: any) => p.id === pid);
