@@ -131,6 +131,30 @@ Deno.serve(async (req) => {
       }), { headers: { ...corsHeaders, 'content-type': 'application/json' } })
     }
 
+    if (action === 'probe-library') {
+      const urls = [
+        'https://supertreinosapp.com/api/v2/workouts?pid=',
+        'https://supertreinosapp.com/api/v2/workouts',
+        'https://supertreinosapp.com/api/v2/exercises?pid=',
+        'https://supertreinosapp.com/api/v2/exercises',
+        'https://supertreinosapp.com/api/v2/workouts/library?pid=',
+        'https://supertreinosapp.com/api/v2/workouts-library?pid=',
+        'https://supertreinosapp.com/api/v2/library/workouts?pid=',
+        'https://supertreinosapp.com/api/v2/library?pid=',
+      ]
+      const results: any[] = []
+      for (const u of urls) {
+        try {
+          const r = await fetch(u, { headers: auth })
+          const t = await r.text()
+          results.push({ url: u, status: r.status, preview: t.slice(0, 300) })
+        } catch (e: any) { results.push({ url: u, error: e?.message }) }
+      }
+      return new Response(JSON.stringify({ results }), {
+        headers: { ...corsHeaders, 'content-type': 'application/json' },
+      })
+    }
+
     throw new Error(`action desconhecida: ${action}`)
   } catch (e: any) {
     return new Response(JSON.stringify({ error: e?.message || String(e) }), {
