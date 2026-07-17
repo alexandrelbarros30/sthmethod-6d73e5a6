@@ -53,3 +53,5 @@ project_id = "tthahgwkkdyvxdbhsgyb"
     verify_jwt = false
   [functions.verify-pix-receipt]
     verify_jwt = false
+  [functions.supercoach-sync-expiration]
+    verify_jwt = false
