@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
+import { usePreviewAs } from "@/hooks/usePreviewAs";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -40,6 +41,8 @@ type View =
 
 const StudentGuidedWorkout = () => {
   const { user } = useAuth();
+  const { effectiveUserId, isPreviewing } = usePreviewAs();
+  const targetUserId = effectiveUserId || user?.id;
   const { isActive, isLoading: subLoading } = useSubscriptionGuard();
   const qc = useQueryClient();
   const [view, setView] = useState<View>({ kind: "programs" });
@@ -49,16 +52,16 @@ const StudentGuidedWorkout = () => {
 
   // Assignments + template (with program_id)
   const { data: assignments, isLoading: aLoading } = useQuery({
-    queryKey: ["sgw-assignments", user?.id],
+    queryKey: ["sgw-assignments", targetUserId],
     queryFn: async () => {
       const { data } = await supabase
         .from("student_workout_assignments")
         .select("*, workout_templates(*)")
-        .eq("user_id", user!.id)
+        .eq("user_id", targetUserId!)
         .eq("active", true);
       return (data || []).filter((a: any) => a.workout_templates?.released !== false);
     },
-    enabled: !!user?.id && isActive,
+    enabled: !!targetUserId && isActive,
   });
 
   const programIds = useMemo(
@@ -145,14 +148,14 @@ const StudentGuidedWorkout = () => {
   });
 
   const { data: myLogs } = useQuery({
-    queryKey: ["sgw-logs", user?.id],
+    queryKey: ["sgw-logs", targetUserId],
     queryFn: async () => {
       const ids = (assignments || []).map((a: any) => a.id);
       if (!ids.length) return [];
       const { data } = await supabase
         .from("student_exercise_logs")
         .select("*")
-        .eq("user_id", user!.id)
+        .eq("user_id", targetUserId!)
         .in("assignment_id", ids)
         .order("logged_at", { ascending: false });
       return data || [];
@@ -162,6 +165,7 @@ const StudentGuidedWorkout = () => {
 
   const saveLog = useMutation({
     mutationFn: async (p: { assignmentId: string; templateExerciseId: string; load: string }) => {
+      if (isPreviewing) { toast.info("Modo visualização — carga não salva."); return; }
       const { error } = await supabase.from("student_exercise_logs").insert({
         user_id: user!.id,
         assignment_id: p.assignmentId,
@@ -179,6 +183,7 @@ const StudentGuidedWorkout = () => {
 
   const finishSession = useMutation({
     mutationFn: async (p: { assignmentId: string; templateId: string; feedback: string }) => {
+      if (isPreviewing) { toast.info("Modo visualização — sessão não registrada."); return; }
       const { error } = await supabase.from("student_workout_sessions").insert({
         user_id: user!.id,
         assignment_id: p.assignmentId,
