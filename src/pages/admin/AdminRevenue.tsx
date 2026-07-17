@@ -126,9 +126,9 @@ const AdminRevenue = () => {
         if (to && d > new Date(to + "T23:59:59")) return false;
       }
       if (search) {
-        const q = search.toLowerCase();
-        const name = (r.profiles?.full_name || "").toLowerCase();
-        const email = (r.profiles?.email || "").toLowerCase();
+        const q = normalizeSearch(search);
+        const name = normalizeSearch(r.profiles?.full_name || "");
+        const email = normalizeSearch(r.profiles?.email || "");
         if (!name.includes(q) && !email.includes(q)) return false;
       }
       return true;
