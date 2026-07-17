@@ -63,14 +63,31 @@ const AdminExerciseLibrary = () => {
           image_url: data.image_url,
           updated_at: new Date().toISOString(),
         }).eq("id", data.id);
-        if (error) throw error;
+        if (error) {
+          const { handleLibraryWriteError } = await import("@/lib/library-write-guard");
+          await handleLibraryWriteError(error, {
+            table: "exercise_library",
+            operation: "update",
+            recordId: data.id,
+            payload: data as any,
+          });
+          throw error;
+        }
       } else {
         const { error } = await supabase.from("exercise_library").insert({
           name: data.name, description: data.description,
           muscle_group: data.muscle_group, video_url: data.video_url,
           image_url: data.image_url,
         });
-        if (error) throw error;
+        if (error) {
+          const { handleLibraryWriteError } = await import("@/lib/library-write-guard");
+          await handleLibraryWriteError(error, {
+            table: "exercise_library",
+            operation: "insert",
+            payload: data as any,
+          });
+          throw error;
+        }
       }
     },
     onSuccess: () => {
@@ -78,19 +95,27 @@ const AdminExerciseLibrary = () => {
       toast.success(editingId ? "Exercício atualizado!" : "Exercício adicionado!");
       closeDialog();
     },
-    onError: () => toast.error("Erro ao salvar exercício."),
+    onError: () => {},
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("exercise_library").delete().eq("id", id);
-      if (error) throw error;
+      if (error) {
+        const { handleLibraryWriteError } = await import("@/lib/library-write-guard");
+        await handleLibraryWriteError(error, {
+          table: "exercise_library",
+          operation: "delete",
+          recordId: id,
+        });
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["exercise-library"] });
       toast.success("Exercício removido!");
     },
-    onError: () => toast.error("Erro ao remover exercício."),
+    onError: () => {},
   });
 
   const closeDialog = () => {
