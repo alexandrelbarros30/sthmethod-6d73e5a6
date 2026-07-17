@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dumbbell, ChevronLeft, ChevronDown, History, Play, Calendar, ChevronsDown, Save, Eraser, VideoOff } from "lucide-react";
 import StCoachCredit from "@/components/shared/StCoachCredit";
+import WorkoutChronometer from "@/components/student/WorkoutChronometer";
 import { toast } from "sonner";
 
 const getVideoSource = (url: string): { kind: "embed" | "file" | "image"; url: string } | null => {
@@ -48,6 +49,9 @@ const StudentGuidedWorkout = () => {
   const [loadInputs, setLoadInputs] = useState<Record<string, string>>({});
   const [feedback, setFeedback] = useState("");
   const [expandedAssignment, setExpandedAssignment] = useState<string | null>(null);
+  const [chronoOpen, setChronoOpen] = useState(false);
+  const [chronoRest, setChronoRest] = useState(60);
+  const [chronoTitle, setChronoTitle] = useState<string>("");
 
   // Assignments + template (with program_id)
   const { data: assignments, isLoading: aLoading } = useQuery({
@@ -401,11 +405,31 @@ const StudentGuidedWorkout = () => {
           <Button
             variant="secondary"
             className="mt-4 w-full rounded-full bg-white text-black font-bold uppercase tracking-wide"
+            onClick={() => {
+              const first = exList[0];
+              const raw = String(first?.rest_interval || "").match(/(\d+)\s*(m|min|s|seg)?/i);
+              let secs = 60;
+              if (raw) {
+                const n = parseInt(raw[1], 10);
+                const unit = (raw[2] || "").toLowerCase();
+                secs = unit.startsWith("m") ? n * 60 : n;
+              }
+              setChronoRest(secs);
+              setChronoTitle(template.title);
+              setChronoOpen(true);
+            }}
           >
             Iniciar Treino
           </Button>
           <p className="text-xs mt-2 opacity-80">Aperte iniciar para começar o treino.</p>
         </div>
+
+        <WorkoutChronometer
+          open={chronoOpen}
+          onClose={() => setChronoOpen(false)}
+          workoutTitle={chronoTitle}
+          defaultRest={chronoRest}
+        />
 
         {/* Exercises list */}
         <div className="space-y-6">
