@@ -30,6 +30,7 @@ import {
   Loader2,
   RefreshCw,
   Calendar,
+  Zap,
 } from "lucide-react";
 import { cn, normalizeSearch } from "@/lib/utils";
 
@@ -305,6 +306,45 @@ export default function AdminSuperCoach() {
 
   const markUpdated = (row: StudentRow) => persistStatus(row, "updated", row.sync?.observation || "", "");
 
+  const syncSuperCoach = async (row: StudentRow) => {
+    if (!row.endDate) {
+      toast({ title: "Sem data de vencimento na STH", variant: "destructive" });
+      return;
+    }
+    setSavingId(row.user_id);
+    try {
+      const { data, error } = await supabase.functions.invoke("supercoach-sync-expiration", {
+        body: {
+          action: "update",
+          email: row.email,
+          name: row.full_name,
+          expiresDate: row.endDate.slice(0, 10),
+        },
+      });
+      if (error) throw error;
+      if (!data?.ok) {
+        if (data?.status === "not_found") {
+          await persistStatus(row, "not_found", "Não encontrado via API SuperCoach", "");
+          toast({ title: "Aluno não encontrado no SuperCoach", variant: "destructive" });
+          return;
+        }
+        throw new Error(data?.message || "Falha na sincronização");
+      }
+      const c = data.customer;
+      const obs = `API: ${c.previous_expires_date || "—"} → ${c.new_expires_date} (${data.matchedBy})`;
+      await persistStatus(row, "updated", obs, data.matchedBy === "name_partial" ? c.name : "");
+      toast({
+        title: "SuperCoach sincronizado",
+        description: `${c.name}: vencimento agora ${c.new_expires_date}`,
+      });
+    } catch (e: any) {
+      console.error(e);
+      toast({ title: "Erro ao sincronizar", description: e.message, variant: "destructive" });
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   const openActionDialog = (row: StudentRow, type: "not_found" | "divergent_name" | "review_manually") => {
     setActionRow(row);
     setActionType(type);
@@ -482,6 +522,16 @@ export default function AdminSuperCoach() {
                                 </Button>
                                 <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs whitespace-nowrap shrink-0" onClick={() => row.endDate && copyText(formatDate(row.endDate), "Vencimento")} disabled={!row.endDate}>
                                   <Calendar className="w-3.5 h-3.5" /> Vencimento
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className="h-8 gap-1.5 text-xs bg-primary text-primary-foreground hover:bg-primary/90 whitespace-nowrap shrink-0"
+                                  onClick={() => syncSuperCoach(row)}
+                                  disabled={savingId === row.user_id || !row.endDate}
+                                  title="Atualiza automaticamente a data de vencimento no SuperCoach via API"
+                                >
+                                  {savingId === row.user_id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
+                                  Sincronizar
                                 </Button>
                                 <Button
                                   size="sm"
