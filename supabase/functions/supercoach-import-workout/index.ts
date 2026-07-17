@@ -131,6 +131,32 @@ Deno.serve(async (req) => {
       }), { headers: { ...corsHeaders, 'content-type': 'application/json' } })
     }
 
+    if (action === 'list-library') {
+      const r = await fetch('https://supertreinosapp.com/api/v2/library?pid=', { headers: auth })
+      const text = await r.text()
+      if (!r.ok) throw new Error(`library (${r.status}): ${text.slice(0, 200)}`)
+      const j = JSON.parse(text)
+      const list = j?.workouts || j?.data || j?.library || []
+      const exercises = (Array.isArray(list) ? list : []).map((w: any) => ({
+        id: w.id,
+        name: w.name || '',
+        description: w.description || '',
+        series_repetitions: w.series_repetitions || '',
+        video_url: w.video_url || '',
+        video_url_thumb: w.video_url_thumb || null,
+        cover_url: w.cover_url || null,
+        gender: w.gender || null,
+        muscle_ids: w.workout_muscle_ids || [],
+        equip_ids: w.workout_equip_ids || [],
+        type_ids: w.workout_type_ids || [],
+        intervals: w.intervals ?? null,
+        weight_suggestion: w.weight_suggestion || null,
+      }))
+      return new Response(JSON.stringify({ exercises }), {
+        headers: { ...corsHeaders, 'content-type': 'application/json' },
+      })
+    }
+
     throw new Error(`action desconhecida: ${action}`)
   } catch (e: any) {
     return new Response(JSON.stringify({ error: e?.message || String(e) }), {
