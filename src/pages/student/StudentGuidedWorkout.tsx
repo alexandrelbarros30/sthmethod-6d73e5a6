@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dumbbell, ChevronLeft, ChevronDown, History, Play, Calendar, ChevronsDown, Save, Eraser, VideoOff } from "lucide-react";
 import StCoachButton from "@/components/student/StCoachButton";
+import StCoachCredit from "@/components/shared/StCoachCredit";
 import { toast } from "sonner";
 
 const getVideoSource = (url: string): { kind: "embed" | "file" | "image"; url: string } | null => {
