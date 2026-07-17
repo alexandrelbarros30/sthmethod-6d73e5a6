@@ -22,6 +22,7 @@ import WhatsAppBulkSender from "@/components/shared/WhatsAppBulkSender";
 import AdminEvolutionUpdate from "@/components/admin/AdminEvolutionUpdate";
 import AdminBioimpedance from "@/components/admin/AdminBioimpedance";
 import ServiceQueue from "@/components/admin/ServiceQueue";
+import { normalizeSearch } from "@/lib/utils";
 
 const ConsultorDashboard = () => {
   const { user } = useAuth();
@@ -54,9 +55,9 @@ const ConsultorDashboard = () => {
 
   const filteredStudents = useMemo(() => {
     if (!searchTerm.trim()) return linkedStudents;
-    const term = searchTerm.toLowerCase();
+    const term = normalizeSearch(searchTerm);
     return linkedStudents.filter((s: any) =>
-      s.full_name?.toLowerCase().includes(term) || s.email?.toLowerCase().includes(term)
+      normalizeSearch(s.full_name).includes(term) || normalizeSearch(s.email).includes(term)
     );
   }, [searchTerm, linkedStudents]);
 
