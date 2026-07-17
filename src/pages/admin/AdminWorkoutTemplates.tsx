@@ -18,6 +18,7 @@ import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-ki
 import SortableExerciseRow, { ExerciseRow } from "@/components/admin/SortableExerciseRow";
 import { normalizeSearch } from "@/lib/utils";
 import ExerciseMediaPreview from "@/components/admin/ExerciseMediaPreview";
+import ImportFromSuperCoachDialog from "@/components/admin/ImportFromSuperCoachDialog";
 
 interface TemplateForm {
   title: string;
@@ -222,6 +223,8 @@ const AdminWorkoutTemplates = () => {
       <div className="space-y-4 max-w-5xl">
         <div className="flex justify-between items-center">
           <p className="text-sm text-muted-foreground">{(templates || []).length} modelo(s)</p>
+          <div className="flex gap-2">
+          <ImportFromSuperCoachDialog libraryExercises={libraryExercises || []} onImported={() => queryClient.invalidateQueries({ queryKey: ["workout-templates"] })} />
           <Dialog open={templateDialog} onOpenChange={v => { if (!v) closeTemplateDialog(); else { setForm(emptyTemplate); setEditingTemplate(null); setExerciseRows([]); setTemplateDialog(true); } }}>
             <DialogTrigger asChild>
               <Button><Plus className="w-4 h-4 mr-1" /> Novo Modelo</Button>
@@ -293,6 +296,7 @@ const AdminWorkoutTemplates = () => {
               </div>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {/* Template List */}
