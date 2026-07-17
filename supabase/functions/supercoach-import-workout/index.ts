@@ -3,6 +3,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 const LOGIN_URL = 'https://supertreinosapp.com/api/v2/user/login'
 const PROGRAMS_URL = 'https://supertreinosapp.com/api/v2/programs?pid='
 const TRAININGS_URL = (pid: number | string) => `https://supertreinosapp.com/api/v2/trainings?pid=${pid}`
+const WORKOUT_URL = (wid: number | string) => `https://supertreinosapp.com/api/v2/workouts/${wid}`
 
 const COMMON_HEADERS = {
   'accept': 'application/json, text/plain, */*',
@@ -83,6 +84,51 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ trainings }), {
         headers: { ...corsHeaders, 'content-type': 'application/json' },
       })
+    }
+
+    if (action === 'get-training-details') {
+      const { trainingId } = body as { trainingId?: number | string }
+      if (!trainingId) throw new Error('trainingId obrigatório')
+      // Descobre lista de workouts do training via listing do program
+      const { programId: pid } = body as { programId?: number | string }
+      if (!pid) throw new Error('programId obrigatório')
+      const rl = await fetch(TRAININGS_URL(pid), { headers: auth })
+      const jl = JSON.parse(await rl.text())
+      const list = jl?.trainings || jl?.data || []
+      const t = (Array.isArray(list) ? list : []).find((x: any) => String(x.id) === String(trainingId))
+      if (!t) throw new Error('training não encontrado')
+      const lite = (t.workouts_lite || []) as any[]
+      // Busca detalhes de cada workout em paralelo para obter video_url real
+      const details = await Promise.all(lite.map(async (w) => {
+        try {
+          const rd = await fetch(WORKOUT_URL(w.id), { headers: auth })
+          if (!rd.ok) return null
+          const jd = JSON.parse(await rd.text())
+          return jd?.workout || jd?.data || null
+        } catch { return null }
+      }))
+      const exercises = lite.map((w, i) => {
+        const d = details[i] || {}
+        return {
+          id: w.id,
+          name: d.name || w.name || '',
+          series_repetitions: d.series_repetitions || w.series_repetitions || '',
+          description: d.description || '',
+          video_url: d.video_url || w.video_url_thumb || '',
+          cover_url: d.cover_url || w.cover_url || null,
+          intervals: d.intervals ?? null,
+          weight_suggestion: d.weight_suggestion || null,
+        }
+      })
+      return new Response(JSON.stringify({
+        training: {
+          id: t.id, name: t.name, subtitle: t.subtitle || null,
+          description: t.description || null,
+          weeks: t.weeks || null, days_per_week: t.days_per_week || null,
+          minutes_per_day: t.minutes_per_day || null,
+        },
+        exercises,
+      }), { headers: { ...corsHeaders, 'content-type': 'application/json' } })
     }
 
     throw new Error(`action desconhecida: ${action}`)
