@@ -214,6 +214,7 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(v) => (v ? openDialog() : setOpen(false))}>
       <DialogTrigger asChild>
         <Button size={buttonSize} variant={buttonVariant}>
