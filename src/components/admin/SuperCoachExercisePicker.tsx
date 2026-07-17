@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronLeft, Loader2, Search, Video, Zap } from "lucide-react";
+import { ChevronLeft, Eye, Loader2, Search, Video, Zap } from "lucide-react";
 import { toast } from "sonner";
 
 interface ScProgram { id: number | string; name: string; subtitle?: string | null; cover_url?: string | null }
@@ -61,6 +61,18 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
   const [selectedTraining, setSelectedTraining] = useState<ScTraining | null>(null);
   const [search, setSearch] = useState("");
   const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [preview, setPreview] = useState<ScExercise | null>(null);
+
+  const toEmbed = (url: string): string => {
+    if (!url) return "";
+    // Vimeo
+    const v = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+    if (v) return `https://player.vimeo.com/video/${v[1]}?autoplay=1`;
+    // YouTube
+    const y = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
+    if (y) return `https://www.youtube.com/embed/${y[1]}?autoplay=1`;
+    return url;
+  };
 
   const loadLibrary = async () => {
     setLoading(true);
@@ -202,6 +214,7 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(v) => (v ? openDialog() : setOpen(false))}>
       <DialogTrigger asChild>
         <Button size={buttonSize} variant={buttonVariant}>
@@ -288,6 +301,17 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
                         )}
                       </div>
                     </div>
+                    {(e.video_url || e.cover_url) && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 shrink-0"
+                        onClick={(ev) => { ev.preventDefault(); ev.stopPropagation(); setPreview(e); }}
+                      >
+                        <Eye className="w-3.5 h-3.5 mr-1" /> Ver
+                      </Button>
+                    )}
                   </label>
                 );
               })}
@@ -348,6 +372,17 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
                         <p className="text-xs text-muted-foreground mt-0.5">{e.series_repetitions}</p>
                       )}
                     </div>
+                    {(e.video_url || e.cover_url) && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 shrink-0"
+                        onClick={(ev) => { ev.preventDefault(); ev.stopPropagation(); setPreview(e); }}
+                      >
+                        <Eye className="w-3.5 h-3.5 mr-1" /> Ver
+                      </Button>
+                    )}
                   </label>
                 );
               })}
@@ -371,5 +406,56 @@ export default function SuperCoachExercisePicker({ onAdd, buttonSize = "sm", but
         )}
       </DialogContent>
     </Dialog>
+
+    {preview && (
+      <Dialog open={!!preview} onOpenChange={(v) => !v && setPreview(null)}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {preview.name}
+              <Badge variant="outline" className="text-[10px] gap-1">
+                <Video className="w-2.5 h-2.5" /> ST Coach
+              </Badge>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="relative w-full rounded-lg overflow-hidden bg-black" style={{ aspectRatio: "16 / 9" }}>
+              {preview.video_url ? (
+                <iframe
+                  src={toEmbed(preview.video_url)}
+                  className="absolute inset-0 w-full h-full"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : preview.cover_url ? (
+                <img src={preview.cover_url} alt={preview.name} className="absolute inset-0 w-full h-full object-contain" />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">Sem mídia</div>
+              )}
+            </div>
+            {preview.series_repetitions && (
+              <p className="text-sm"><span className="text-muted-foreground">Séries × Reps:</span> {preview.series_repetitions}</p>
+            )}
+            {preview.description && (
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{preview.description}</p>
+            )}
+            <p className="text-[10px] text-muted-foreground">Vídeo de referência técnica — © ST Coach</p>
+            <div className="flex justify-end gap-2 pt-2 border-t">
+              <Button variant="outline" size="sm" onClick={() => setPreview(null)}>Fechar</Button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  togglePick(String(preview.id));
+                  setPreview(null);
+                }}
+              >
+                {picked.has(String(preview.id)) ? "Desmarcar" : "Selecionar este"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    )}
+    </>
   );
 }
