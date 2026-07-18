@@ -46,6 +46,15 @@ async function validateMpSignature(req: Request, rawBody: string, dataId: string
   return ok;
 }
 
+// Amount tolerance in BRL for MP vs internal payment comparison.
+// 1 cent covers MP's internal rounding on installments/pix conversions.
+const AMOUNT_TOLERANCE_BRL = 0.01;
+
+function amountMatches(expected: number, actual: number): boolean {
+  if (!Number.isFinite(expected) || !Number.isFinite(actual)) return false;
+  return Math.abs(Number(expected) - Number(actual)) <= AMOUNT_TOLERANCE_BRL;
+}
+
 function extractPaymentId(body: any): string | null {
   if (body?.data?.id) return String(body.data.id);
 
