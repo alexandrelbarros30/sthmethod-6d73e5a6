@@ -9,6 +9,8 @@ import { toast } from "sonner";
 
 const ChangePasswordDialog = () => {
   const [open, setOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNew, setShowNew] = useState(false);
@@ -17,6 +19,10 @@ const ChangePasswordDialog = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentPassword) {
+      toast.error("Informe sua senha atual para confirmar");
+      return;
+    }
     if (newPassword.length < 6) {
       toast.error("A senha deve ter no mínimo 6 caracteres");
       return;
@@ -25,11 +31,27 @@ const ChangePasswordDialog = () => {
       toast.error("As senhas não coincidem");
       return;
     }
+    if (currentPassword === newPassword) {
+      toast.error("A nova senha deve ser diferente da atual");
+      return;
+    }
     setLoading(true);
     try {
+      // Reauth: re-verify current password before allowing the change.
+      const { data: userData } = await supabase.auth.getUser();
+      const email = userData?.user?.email;
+      if (!email) throw new Error("Sessão inválida. Faça login novamente.");
+      const { error: reauthError } = await supabase.auth.signInWithPassword({
+        email,
+        password: currentPassword,
+      });
+      if (reauthError) {
+        throw new Error("Senha atual incorreta");
+      }
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
       toast.success("Senha alterada com sucesso!");
+      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
       setOpen(false);
@@ -54,6 +76,25 @@ const ChangePasswordDialog = () => {
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          <div className="space-y-2">
+            <Label htmlFor="current-pw">Senha atual</Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                id="current-pw"
+                type={showCurrent ? "text" : "password"}
+                placeholder="Confirme sua senha atual"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="pl-10 pr-10"
+                required
+                autoComplete="current-password"
+              />
+              <button type="button" onClick={() => setShowCurrent(!showCurrent)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="new-pw">Nova senha</Label>
             <div className="relative">
