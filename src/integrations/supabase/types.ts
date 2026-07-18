@@ -2007,6 +2007,39 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_checkins: {
+        Row: {
+          checkin_date: string
+          created_at: string
+          energy: number
+          id: string
+          mood: number
+          note: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          checkin_date?: string
+          created_at?: string
+          energy: number
+          id?: string
+          mood: number
+          note?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          checkin_date?: string
+          created_at?: string
+          energy?: number
+          id?: string
+          mood?: number
+          note?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       diet_foods: {
         Row: {
           carbs_g: number
