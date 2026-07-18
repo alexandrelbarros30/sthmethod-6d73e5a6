@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Database, Download, Play, RefreshCw, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -23,7 +24,19 @@ type BackupProgress = {
 async function invokeBackup(action: "run" | "table" | "manifest" | "list" | "download", params: Record<string, string> = {}) {
   const qs = new URLSearchParams({ action, ...params }).toString();
   const { data, error } = await supabase.functions.invoke(`daily-backup?${qs}`, { method: "POST" });
-  if (error) throw error;
+  if (error) {
+    if (error instanceof FunctionsHttpError) {
+      const raw = await error.context.text();
+      try {
+        const parsed = JSON.parse(raw);
+        throw new Error(parsed?.error || parsed?.details || raw);
+      } catch (parseError) {
+        if (parseError instanceof SyntaxError) throw new Error(raw || error.message);
+        throw parseError;
+      }
+    }
+    throw error;
+  }
   return data as any;
 }
 
