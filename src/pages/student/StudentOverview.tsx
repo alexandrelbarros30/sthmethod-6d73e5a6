@@ -22,6 +22,9 @@ import STHFlowCard from "@/components/student/STHFlowCard";
 import PaymentTourPopup from "@/components/student/PaymentTourPopup";
 import NewTrendNotification from "@/components/student/NewTrendNotification";
 import EvolutionUpdateStatusCard from "@/components/student/EvolutionUpdateStatusCard";
+import DailyHeroCard from "@/components/student/DailyHeroCard";
+import DailyRingsCard from "@/components/student/DailyRingsCard";
+import StreakCard from "@/components/student/StreakCard";
 import { ShieldCheck } from "lucide-react";
 import { formatPhoneBR } from "@/lib/phone";
 import { getLatestTrend } from "@/data/latest-trends";
@@ -166,6 +169,19 @@ const StudentOverview = () => {
     },
   });
 
+  // Existe treino atribuído ativo? — usado pela ação-do-dia.
+  const { data: hasTraining = false } = useQuery({
+    queryKey: ["has-training", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("student_workout_assignments")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user!.id);
+      return (count || 0) > 0;
+    },
+  });
+
   // Latest STH News = última tendência publicada
   const latestTrend = getLatestTrend();
 
@@ -222,6 +238,28 @@ const StudentOverview = () => {
 
       {/* CICLO DE ATUALIZAÇÃO — só aparece quando há ação pendente */}
       <EvolutionUpdateStatusCard />
+
+      {/* AÇÃO DO DIA — card contextual acima de tudo */}
+      <DailyHeroCard
+        nextMeal={nextMeal as any}
+        isMealCompleted={isMealCompleted}
+        waterConsumedMl={dayWaterMl}
+        waterGoalL={dayHydrationGoalL}
+        hasTraining={hasTraining}
+      />
+
+      {/* ANÉIS DO DIA — estilo Apple Activity */}
+      <DailyRingsCard
+        kcalConsumed={dayMacros?.kcal || 0}
+        kcalGoal={dayTargetMacros?.kcal || 0}
+        proteinConsumed={dayMacros?.protein || 0}
+        proteinGoal={dayTargetMacros?.protein || 0}
+        waterMl={dayWaterMl}
+        waterGoalL={dayHydrationGoalL}
+      />
+
+      {/* STREAK — dias consecutivos com refeição registrada */}
+      <StreakCard />
 
       {/* TELEFONES AUTORIZADOS */}
       {authorizedContacts.length > 0 && (
