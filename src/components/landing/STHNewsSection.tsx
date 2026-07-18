@@ -332,7 +332,7 @@ const STHNewsSection = () => {
                 </div>
                 <div className="p-5 sm:p-6">
                   <p className="text-[10px] font-semibold tracking-[0.2em] text-muted-foreground uppercase mb-2">
-                    {a.tag === "CAPA" ? "Nova matéria" : a.tag === "EXCLUSIVO" ? "Exclusivo" : a.date}
+                    {a.tag === "EXCLUSIVO" ? `Exclusivo · ${a.date}` : a.date}
                   </p>
                   <h3 className="text-base sm:text-lg font-display font-semibold text-foreground leading-snug tracking-tight mb-2 group-hover:text-primary transition-colors">
                     {a.title}
