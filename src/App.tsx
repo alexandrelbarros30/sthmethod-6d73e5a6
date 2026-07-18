@@ -155,6 +155,7 @@ import { APP_RELEASE_VERSION } from "@/lib/app-version";
 import AccessibilityThemeButton from "@/components/student/AccessibilityThemeButton";
 import { useAccessibilityTheme } from "@/hooks/useAccessibilityTheme";
 import PullToRefresh from "@/components/PullToRefresh";
+import LaunchAppPopup from "@/components/LaunchAppPopup";
 import NativeUpdateBanner from "@/components/NativeUpdateBanner";
 
 // Lazy load pages that use Tiptap editor to avoid blocking the app
@@ -202,6 +203,7 @@ const App = () => (
           <AccessibilityThemeButton />
           <PullToRefresh />
           <NativeUpdateBanner />
+          <LaunchAppPopup scope="site" />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
