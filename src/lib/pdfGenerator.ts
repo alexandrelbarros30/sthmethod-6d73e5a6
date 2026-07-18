@@ -3,6 +3,7 @@ import { parseProtocolPhases, type ProtocolPhase } from './protocol-phase-parser
 
 interface StudentInfo {
   name: string;
+  cpf?: string;
   age?: number;
   weight?: number;
   height?: number;
