@@ -50,6 +50,54 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_access_audit: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_id: string
+          actor_role: string | null
+          created_at: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          reauth_used: boolean | null
+          resource_type: string
+          target_label: string | null
+          target_user_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_id: string
+          actor_role?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          reauth_used?: boolean | null
+          resource_type: string
+          target_label?: string | null
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_id?: string
+          actor_role?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          reauth_used?: boolean | null
+          resource_type?: string
+          target_label?: string | null
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       admin_reminders: {
         Row: {
           created_at: string
@@ -5872,6 +5920,17 @@ export type Database = {
       }
       is_crm_staff: { Args: { _user_id: string }; Returns: boolean }
       is_phone_opted_out: { Args: { _phone: string }; Returns: boolean }
+      log_admin_access: {
+        Args: {
+          _action: string
+          _metadata?: Json
+          _reauth_used?: boolean
+          _resource_type: string
+          _target_label?: string
+          _target_user_id?: string
+        }
+        Returns: string
+      }
       log_library_write_denied: {
         Args: {
           _attempted_payload: Json

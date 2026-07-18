@@ -49,6 +49,7 @@ import StudentImageConsentCard from "@/components/admin/StudentImageConsentCard"
 import StudentImageAuthSummary from "@/components/admin/StudentImageAuthSummary";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
 import { normalizePhone } from "@/lib/phone";
+import { useAdminReauth, logAdminAccess } from "@/hooks/useAdminReauth";
 import {
   objectiveLabels, activityLabels,
   trainingIntensityOptions, cardioIntensityOptions,
@@ -92,6 +93,7 @@ const AdminStudents = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const qc = useQueryClient();
+  const { requireReauth } = useAdminReauth();
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [subOpen, setSubOpen] = useState(false);
@@ -369,11 +371,25 @@ const AdminStudents = () => {
         const currentEmail = (selected as any)?.email?.toLowerCase?.() || "";
         const newEmail = form.email.trim().toLowerCase();
         if (newEmail && newEmail !== currentEmail) {
+          const ok = await requireReauth({
+            reason: `Você está alterando o e-mail de login de "${selected?.full_name || currentEmail}". Confirme sua senha para prosseguir.`,
+            action: "update_student_email",
+            targetLabel: selected?.full_name,
+          });
+          if (!ok) throw new Error("Alteração de e-mail cancelada.");
           const { data: emailRes, error: emailErr } = await supabase.functions.invoke("admin-manage-students", {
             body: { action: "update_email", user_id: selected.user_id, new_email: newEmail },
           });
           if (emailErr) throw new Error("Erro ao atualizar email de login. Tente novamente.");
           if (emailRes?.error) throw new Error(emailRes.error);
+          await logAdminAccess({
+            action: "update_student_email",
+            resourceType: "profiles",
+            targetUserId: selected.user_id,
+            targetLabel: selected?.full_name,
+            metadata: { from: currentEmail, to: newEmail },
+            reauthUsed: true,
+          });
         }
         await supabase.from("profiles").update(profilePayload()).eq("user_id", selected.user_id);
         qc.invalidateQueries({ queryKey: ["admin-students-list"] });
@@ -497,14 +513,52 @@ const AdminStudents = () => {
       if (!validateForm(false)) throw new Error("Validação falhou");
       const currentEmail = (selected as any)?.email?.toLowerCase?.() || "";
       const newEmail = form.email.trim().toLowerCase();
+      const currentCpf = (selected as any)?.cpf?.replace?.(/\D/g, "") || "";
+      const newCpf = form.cpf.replace(/\D/g, "");
+      const currentPhone = (selected as any)?.phone || "";
+      const newPhone = form.phone;
+      const sensitiveChanged =
+        (newEmail && newEmail !== currentEmail) ||
+        (newCpf && newCpf !== currentCpf) ||
+        (newPhone && newPhone !== currentPhone);
+      if (sensitiveChanged) {
+        const ok = await requireReauth({
+          reason: `Você está alterando dados sensíveis (e-mail, CPF ou telefone) de "${selected?.full_name || "aluno"}". Confirme sua senha.`,
+          action: "update_student_pii",
+          targetLabel: selected?.full_name,
+        });
+        if (!ok) throw new Error("Alteração cancelada.");
+      }
       if (newEmail && newEmail !== currentEmail) {
         const { data: emailRes, error: emailErr } = await supabase.functions.invoke("admin-manage-students", {
           body: { action: "update_email", user_id: selected.user_id, new_email: newEmail },
         });
         if (emailErr) throw new Error("Erro ao atualizar email de login.");
         if (emailRes?.error) throw new Error(emailRes.error);
+        await logAdminAccess({
+          action: "update_student_email",
+          resourceType: "profiles",
+          targetUserId: selected.user_id,
+          targetLabel: selected?.full_name,
+          metadata: { from: currentEmail, to: newEmail },
+          reauthUsed: true,
+        });
       }
       await supabase.from("profiles").update(profilePayload()).eq("user_id", selected.user_id);
+      if (sensitiveChanged) {
+        await logAdminAccess({
+          action: "update_student_pii",
+          resourceType: "profiles",
+          targetUserId: selected.user_id,
+          targetLabel: selected?.full_name,
+          metadata: {
+            cpf_changed: newCpf !== currentCpf,
+            phone_changed: newPhone !== currentPhone,
+            email_changed: newEmail !== currentEmail,
+          },
+          reauthUsed: true,
+        });
+      }
     },
     onSuccess: () => {
       toast.success("Aluno atualizado!");
@@ -512,16 +566,30 @@ const AdminStudents = () => {
       qc.invalidateQueries({ queryKey: ["admin-full-profile", selected?.user_id] });
       setEditOpen(false);
     },
-    onError: (e: any) => { if (e.message !== "Validação falhou") toast.error("Erro ao atualizar"); },
+    onError: (e: any) => { if (e.message !== "Validação falhou") toast.error(e.message || "Erro ao atualizar"); },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (userId: string) => {
+      const target = students?.find((s: any) => s.user_id === userId);
+      const ok = await requireReauth({
+        reason: `Você está excluindo permanentemente "${target?.full_name || "aluno"}". Confirme sua senha.`,
+        action: "delete_student",
+        targetLabel: target?.full_name,
+      });
+      if (!ok) throw new Error("Exclusão cancelada.");
       const { data, error } = await supabase.functions.invoke("admin-manage-students", {
         body: { action: "delete", user_id: userId },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
+      await logAdminAccess({
+        action: "delete_student",
+        resourceType: "profiles",
+        targetUserId: userId,
+        targetLabel: target?.full_name,
+        reauthUsed: true,
+      });
     },
     onSuccess: () => { toast.success("Aluno excluído!"); qc.invalidateQueries({ queryKey: ["admin-students-list"] }); },
     onError: (e: any) => toast.error(e.message || "Erro ao excluir"),
@@ -530,11 +598,24 @@ const AdminStudents = () => {
   const resetPasswordMutation = useMutation({
     mutationFn: async () => {
       if (!passwordReset || newPassword.length < 6) throw new Error("Senha deve ter no mínimo 6 caracteres");
+      const ok = await requireReauth({
+        reason: `Você está redefinindo a senha de "${passwordReset.name}". Confirme sua senha.`,
+        action: "reset_student_password",
+        targetLabel: passwordReset.name,
+      });
+      if (!ok) throw new Error("Reset cancelado.");
       const { data, error } = await supabase.functions.invoke("admin-manage-students", {
         body: { action: "reset_password", user_id: passwordReset.userId, new_password: newPassword },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
+      await logAdminAccess({
+        action: "reset_student_password",
+        resourceType: "auth.users",
+        targetUserId: passwordReset.userId,
+        targetLabel: passwordReset.name,
+        reauthUsed: true,
+      });
     },
     onSuccess: () => {
       toast.success("Senha alterada com sucesso!");
@@ -743,7 +824,16 @@ const AdminStudents = () => {
     }
   }, [students, searchParams]);
 
-  const openView = (s: any) => { setSelected(s); setViewOpen(true); };
+  const openView = (s: any) => {
+    setSelected(s);
+    setViewOpen(true);
+    logAdminAccess({
+      action: "view_student_profile",
+      resourceType: "profiles",
+      targetUserId: s?.user_id,
+      targetLabel: s?.full_name,
+    });
+  };
 
   const openSub = (s: any) => {
     setSelected(s);
