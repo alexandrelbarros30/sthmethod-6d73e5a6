@@ -540,6 +540,27 @@ export const generateStudentPDF = async (options: PDFContentOptions): Promise<Bl
   const totalPages = pdf.getNumberOfPages();
   for (let p = 1; p <= totalPages; p++) {
     pdf.setPage(p);
+    // --- Diagonal watermark (name + CPF) ---
+    const wmParts = [studentInfo.name?.toUpperCase() || 'ALUNO'];
+    if (studentInfo.cpf) {
+      const masked = studentInfo.cpf.replace(/\D/g, '').replace(/^(\d{3})(\d{3})(\d{3})(\d{2}).*/, '$1.***.***-$4');
+      wmParts.push(masked);
+    }
+    wmParts.push(new Date().toLocaleDateString('pt-BR'));
+    const wmText = wmParts.join(' • ');
+    pdf.saveGraphicsState();
+    // @ts-ignore - jsPDF GState is available
+    pdf.setGState(new (pdf as any).GState({ opacity: 0.08 }));
+    pdf.setFont('times', 'bold');
+    pdf.setFontSize(28);
+    pdf.setTextColor('#000000');
+    for (let row = 0; row < 6; row++) {
+      for (let col = 0; col < 3; col++) {
+        pdf.text(wmText, 20 + col * 80, 40 + row * 50, { angle: 30 });
+      }
+    }
+    pdf.restoreGraphicsState();
+
     pdf.setFont('times', 'normal');
     pdf.setFontSize(8);
     pdf.setTextColor('#6b7280');
