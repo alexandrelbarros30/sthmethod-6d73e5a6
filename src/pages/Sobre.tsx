@@ -1,9 +1,27 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Download, RefreshCw, CheckCircle2, Smartphone, Info, ShieldCheck } from "lucide-react";
+import { Download, RefreshCw, CheckCircle2, Smartphone, Info, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { APP_RELEASE_VERSION, APP_BUILD_ID } from "@/lib/app-version";
 import { compareVersions } from "@/lib/version-bump";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+
+type PlatformUpdate = {
+  id: string;
+  version: string;
+  impact: "patch" | "minor" | "major";
+  title: string;
+  description: string;
+  released_at: string;
+  published: boolean;
+};
+
+const impactStyle = {
+  major: "bg-green-500/15 text-green-400 border-green-500/30",
+  minor: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+  patch: "bg-white/10 text-white/70 border-white/20",
+} as const;
 
 const APK_URL =
   "https://github.com/alexandrelbarros30/sthmethod-6d73e5a6/releases/latest/download/sthmethod.apk";
@@ -23,6 +41,20 @@ export default function Sobre() {
   const [status, setStatus] = useState<Status>("checking");
   const [checkedAt, setCheckedAt] = useState<Date | null>(null);
   const localRelease = getReleaseVersion(APP_RELEASE_VERSION);
+
+  const { data: updates = [] } = useQuery({
+    queryKey: ["platform_updates", "public"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("platform_updates")
+        .select("id, version, impact, title, description, released_at, published")
+        .eq("published", true)
+        .order("released_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return (data || []) as PlatformUpdate[];
+    },
+  });
 
   const check = async () => {
     setStatus("checking");
@@ -153,6 +185,44 @@ export default function Sobre() {
             As atualizações são hospedadas no repositório oficial da STH METHOD no GitHub e
             assinadas com o mesmo certificado do app instalado.
           </p>
+        </div>
+
+        {/* Novidades / Changelog */}
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold">Novidades da plataforma</h2>
+          </div>
+          {updates.length === 0 ? (
+            <p className="text-sm text-white/50">Nenhuma novidade publicada ainda.</p>
+          ) : (
+            <ul className="space-y-4">
+              {updates.map((u) => (
+                <li
+                  key={u.id}
+                  className="rounded-xl border border-white/5 bg-black/30 p-4 space-y-2"
+                >
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded-full border uppercase tracking-wider ${impactStyle[u.impact]}`}
+                    >
+                      {u.impact}
+                    </span>
+                    <span className="text-xs text-white/50">v{u.version}</span>
+                    <span className="text-xs text-white/30 ml-auto">
+                      {new Date(u.released_at).toLocaleDateString("pt-BR")}
+                    </span>
+                  </div>
+                  <p className="text-sm font-semibold">{u.title}</p>
+                  {u.description && (
+                    <p className="text-xs text-white/60 whitespace-pre-line leading-relaxed">
+                      {u.description}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div className="flex items-center justify-between text-sm">
