@@ -824,7 +824,16 @@ const AdminStudents = () => {
     }
   }, [students, searchParams]);
 
-  const openView = (s: any) => { setSelected(s); setViewOpen(true); };
+  const openView = (s: any) => {
+    setSelected(s);
+    setViewOpen(true);
+    logAdminAccess({
+      action: "view_student_profile",
+      resourceType: "profiles",
+      targetUserId: s?.user_id,
+      targetLabel: s?.full_name,
+    });
+  };
 
   const openSub = (s: any) => {
     setSelected(s);
