@@ -17,6 +17,16 @@ const config: CapacitorConfig = {
     // (algumas thumbs de treino ainda podem vir sem https)
     allowMixedContent: true,
   },
+  // Deixa o app rodar edge-to-edge (fullscreen) para não competir com a barra
+  // de status/notificações do celular. A StatusBar continua transparente por
+  // cima do conteúdo do app.
+  plugins: {
+    StatusBar: {
+      overlaysWebView: true,
+      style: 'DARK',
+      backgroundColor: '#00000000',
+    },
+  },
   ...(isProduction
     ? {}
     : {

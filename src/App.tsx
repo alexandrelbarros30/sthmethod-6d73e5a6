@@ -151,6 +151,7 @@ import { APP_RELEASE_VERSION } from "@/lib/app-version";
 import AccessibilityThemeButton from "@/components/student/AccessibilityThemeButton";
 import { useAccessibilityTheme } from "@/hooks/useAccessibilityTheme";
 import PullToRefresh from "@/components/PullToRefresh";
+import NativeUpdateBanner from "@/components/NativeUpdateBanner";
 
 // Lazy load pages that use Tiptap editor to avoid blocking the app
 const AdminDiet = lazy(() => import("./pages/admin/AdminDiet"));
@@ -195,6 +196,7 @@ const App = () => (
           {/* UpdateBanner removido a pedido: sem popup de atualização ao entrar */}
           <AccessibilityThemeButton />
           <PullToRefresh />
+          <NativeUpdateBanner />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />

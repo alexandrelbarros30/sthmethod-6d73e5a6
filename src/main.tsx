@@ -3,6 +3,7 @@ import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import "./index.css";
 import { APP_RELEASE_VERSION, APP_VERSION, VERSION_KEY, VERSION_URL } from "./lib/app-version";
+import { enableNativeFullscreen } from "./lib/native-fullscreen";
 
 const MAX_BOOT_RELOADS = 2;
 const getBootReloadKey = (version: string) => `sth-boot-update-attempts:${version}`;
@@ -32,6 +33,8 @@ if (isNativeApp()) {
   if (rootLike) {
     window.history.replaceState(null, "", "/login");
   }
+  // Ativa modo edge-to-edge (tela cheia) no app nativo.
+  void enableNativeFullscreen();
 }
 
 const forceRefreshToVersion = (version: string) => {
