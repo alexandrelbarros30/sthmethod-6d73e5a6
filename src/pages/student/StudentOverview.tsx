@@ -28,6 +28,7 @@ import DailyRingsCard from "@/components/student/DailyRingsCard";
 import StreakCard from "@/components/student/StreakCard";
 import DailyCheckinCard from "@/components/student/DailyCheckinCard";
 import QuickActionsFab from "@/components/student/QuickActionsFab";
+import NextWorkoutCard from "@/components/student/NextWorkoutCard";
 import { ShieldCheck } from "lucide-react";
 import { formatPhoneBR } from "@/lib/phone";
 import { getLatestTrend } from "@/data/latest-trends";
@@ -292,6 +293,9 @@ const StudentOverview = () => {
         waterMl={dayWaterMl}
         waterGoalL={dayHydrationGoalL}
       />
+
+      {/* PRÓXIMO TREINO — pareia com a próxima refeição da Ação do dia */}
+      <NextWorkoutCard />
 
       {/* STREAK — dias consecutivos com refeição registrada */}
       <StreakCard />
