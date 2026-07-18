@@ -224,6 +224,7 @@ const StudentDiet = () => {
         content,
         studentInfo: {
           name: profileData?.full_name || (user?.user_metadata?.full_name as string) || user?.email || "Aluno",
+          cpf: (profileData as any)?.cpf || undefined,
           age,
           weight: profileData?.weight ?? undefined,
           height: profileData?.height ?? undefined,
