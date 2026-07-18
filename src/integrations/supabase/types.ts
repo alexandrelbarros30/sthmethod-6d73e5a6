@@ -5879,6 +5879,12 @@ export type Database = {
       }
     }
     Functions: {
+      backup_list_public_tables: {
+        Args: never
+        Returns: {
+          table_name: string
+        }[]
+      }
       cas_term_match: {
         Args: { is_phrase?: boolean; q: string }
         Returns: {
