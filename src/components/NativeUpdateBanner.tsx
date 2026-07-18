@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { APP_RELEASE_VERSION, VERSION_URL } from "@/lib/app-version";
 import { compareVersions } from "@/lib/version-bump";
-
-const APK_URL =
-  "https://github.com/alexandrelbarros30/sthmethod-6d73e5a6/releases/latest/download/sthmethod.apk";
 
 const CHECK_INTERVAL_MS = 5 * 60_000; // 5min
 const DISMISS_KEY = "sth-native-update-dismissed";
@@ -43,6 +41,7 @@ const fetchRemoteVersion = async (): Promise<string | null> => {
 const NativeUpdateBanner = () => {
   const [show, setShow] = useState(false);
   const [remote, setRemote] = useState<string>("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!isNativeApp()) return;
@@ -68,17 +67,10 @@ const NativeUpdateBanner = () => {
     };
   }, []);
 
-  const handleDownload = () => {
-    try {
-      const w = window as any;
-      if (w.Capacitor?.Plugins?.Browser?.open) {
-        w.Capacitor.Plugins.Browser.open({ url: APK_URL });
-      } else {
-        window.open(APK_URL, "_system");
-      }
-    } catch {
-      window.location.href = APK_URL;
-    }
+  const handleOpenSobre = () => {
+    if (remote) localStorage.setItem(DISMISS_KEY, remote);
+    setShow(false);
+    navigate("/sobre");
   };
 
   const handleDismiss = () => {
@@ -116,15 +108,15 @@ const NativeUpdateBanner = () => {
                 Nova versão do app
               </p>
               <p className="text-[11px] truncate" style={{ color: "hsl(0 0% 55%)" }}>
-                v{remote} — toque para baixar o APK
+                v{remote} — veja detalhes em Sobre
               </p>
             </div>
             <button
-              onClick={handleDownload}
+              onClick={handleOpenSobre}
               className="px-3 py-1.5 rounded-lg text-[11px] font-semibold flex-shrink-0 transition-transform active:scale-95"
               style={{ background: "hsl(145 60% 42%)", color: "hsl(0 0% 100%)" }}
             >
-              Baixar
+              Ver
             </button>
             <button
               onClick={handleDismiss}
