@@ -336,7 +336,7 @@ const StudentGuidedWorkout = () => {
               const program = (programs || []).find((p: any) => p.id === pid);
               const list = groupedByProgram[pid];
               const title = program?.title || "Treinos";
-              const poster = program?.poster_url;
+              const poster = safeImgUrl(program?.poster_url);
               return (
                 <button
                   key={pid}
@@ -344,9 +344,27 @@ const StudentGuidedWorkout = () => {
                   className="group relative aspect-[3/4] rounded-2xl overflow-hidden border border-border/40 bg-muted text-left"
                 >
                   {poster ? (
-                    <img src={poster} alt={title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                  ) : (
+                    <img
+                      src={poster}
+                      alt={title}
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        // Fallback: esconde a img e revela o placeholder abaixo
+                        (e.currentTarget as HTMLImageElement).style.display = "none";
+                        const ph = (e.currentTarget.nextElementSibling as HTMLElement | null);
+                        if (ph) ph.style.display = "flex";
+                      }}
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    />
+                  ) : null}
+                  {!poster && (
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-background flex items-center justify-center">
+                      <Dumbbell className="w-10 h-10 text-foreground/40" />
+                    </div>
+                  )}
+                  {poster && (
+                    <div style={{ display: "none" }} className="absolute inset-0 bg-gradient-to-br from-primary/30 to-background items-center justify-center">
                       <Dumbbell className="w-10 h-10 text-foreground/40" />
                     </div>
                   )}
