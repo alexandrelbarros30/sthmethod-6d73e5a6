@@ -25,7 +25,7 @@ const AccessibilityThemeButton = () => {
           size="icon"
           className="fixed z-50 rounded-full h-11 w-11 shadow-apple-lg border-2 border-white/20 text-white hover:opacity-90"
           style={{
-            bottom: "calc(env(safe-area-inset-bottom) + 88px)",
+            bottom: "calc(env(safe-area-inset-bottom) + 164px)",
             right: "calc(env(safe-area-inset-right) + 12px)",
             backgroundColor: "#0A84FF",
           }}
