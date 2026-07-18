@@ -63,7 +63,7 @@ export default function AdminAccessAudit() {
   }, [data]);
 
   return (
-    <DashboardLayout>
+    <DashboardLayout role="admin" title="Auditoria de Acesso">
       <div className="space-y-6">
         <div className="flex items-center gap-3">
           <ShieldCheck className="w-6 h-6 text-primary" />
