@@ -18,6 +18,7 @@ import DietDateNav from "@/components/student/DietDateNav";
 import HydrationTracker from "@/components/student/HydrationTracker";
 import DietSelector from "@/components/student/DietSelector";
 import DietContentRenderer from "@/components/student/DietContentRenderer";
+import ScreenWatermark from "@/components/student/ScreenWatermark";
 import DietPlanningPanel from "@/components/student/DietPlanningPanel";
 import DietMealGuide from "@/components/student/DietMealGuide";
 import DietUpdatedBanner from "@/components/student/DietUpdatedBanner";
