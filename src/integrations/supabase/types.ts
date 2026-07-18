@@ -263,6 +263,36 @@ export type Database = {
         }
         Relationships: []
       }
+      auth_rate_limits: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          ip_address: string | null
+          reason: string | null
+          success: boolean
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          ip_address?: string | null
+          reason?: string | null
+          success?: boolean
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          ip_address?: string | null
+          reason?: string | null
+          success?: boolean
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       authorization_audit: {
         Row: {
           action: string
@@ -5856,6 +5886,15 @@ export type Database = {
           occurrences: number
         }[]
       }
+      check_auth_rate_limit: {
+        Args: {
+          _email: string
+          _ip: string
+          _max_attempts?: number
+          _window_minutes?: number
+        }
+        Returns: Json
+      }
       check_registration_duplicate: {
         Args: {
           _cpf?: string
@@ -5985,6 +6024,16 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      record_auth_attempt: {
+        Args: {
+          _email: string
+          _ip: string
+          _reason?: string
+          _success: boolean
+          _user_agent: string
+        }
+        Returns: undefined
       }
       search_cas_chunks_fts: {
         Args: { filter_discipline?: string; match_count?: number; q: string }
