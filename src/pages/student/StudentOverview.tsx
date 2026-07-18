@@ -493,6 +493,8 @@ const StudentOverview = () => {
           ))}
         </div>
       </div>
+        </>
+      )}
 
     </DashboardLayout>
   );
