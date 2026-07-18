@@ -373,6 +373,14 @@ Deno.serve(async (req) => {
       return jsonResp(200, { path, content: bytesToBase64(bytes), encoding: "base64", source: "internal_private_storage" });
     }
 
+    if (action === "install-cron") {
+      if (!CRON_TOKEN) return jsonResp(500, { error: "BACKUP_CRON_TOKEN não configurado" });
+      const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
+      const { data, error } = await supabase.rpc("install_backup_cron", { _token: CRON_TOKEN });
+      if (error) return jsonResp(500, { error: error.message });
+      return jsonResp(200, { ok: true, status: "scheduled", job: data, cron: "0 3 * * * (UTC diariamente)" });
+    }
+
     return jsonResp(400, { error: "unknown action" });
   } catch (e) {
     console.error("daily-backup error", e);
