@@ -450,16 +450,24 @@ const StudentGuidedWorkout = () => {
                   </p>
                 )}
                 {isExpanded && allExercises.length > 0 && (
-                  <ul className="mt-3 space-y-1.5 border-t border-border/50 pt-3">
+                  <ul className="mt-3 space-y-2 border-t border-border/50 pt-3">
                     {allExercises.map((ex: any, i: number) => {
                       const series = ex.sets && ex.reps ? `${ex.sets}x${ex.reps}` : (ex.sets || ex.reps || "");
                       return (
-                        <li key={ex.id} className="flex items-baseline justify-between gap-3 text-sm">
-                          <span className="text-foreground">
-                            <span className="text-muted-foreground mr-1.5">{i + 1}.</span>
-                            {ex.custom_name || "Exercício"}
-                          </span>
-                          {series && <span className="text-primary font-semibold text-xs whitespace-nowrap">{series}</span>}
+                        <li key={ex.id} className="text-sm">
+                          <div className="flex items-start gap-2">
+                            <span className="text-muted-foreground shrink-0 pt-0.5">{i + 1}.</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-foreground font-medium leading-snug">
+                                {ex.custom_name || "Exercício"}
+                              </p>
+                              {series && (
+                                <p className="text-primary font-semibold text-xs mt-0.5 tabular-nums tracking-tight">
+                                  {series}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </li>
                       );
                     })}
