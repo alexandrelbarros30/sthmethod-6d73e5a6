@@ -214,6 +214,7 @@ const StudentOverview = () => {
       <PaymentTourPopup />
 
       <NewTrendNotification />
+      <QuickActionsFab />
 
       {/* HEADER */}
       <div className="flex items-start justify-between mb-10 relative">
