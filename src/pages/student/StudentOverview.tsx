@@ -149,6 +149,15 @@ const StudentOverview = () => {
   const { profile, user } = useAuth();
   const navigate = useNavigate();
   const [greeting] = useState(getGreeting);
+  const [activeTab, setActiveTab] = useState<"home" | "discover">(() => {
+    if (typeof window === "undefined") return "home";
+    return (localStorage.getItem("student-home-tab") as "home" | "discover") || "home";
+  });
+
+  const switchTab = (t: "home" | "discover") => {
+    setActiveTab(t);
+    try { localStorage.setItem("student-home-tab", t); } catch {}
+  };
 
   const { data: subscription } = useQuery({
     queryKey: ["subscription", user?.id],
