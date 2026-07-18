@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import heroBgFallback from "@/assets/hero-clients.jpg";
+import marketingLaunchHero from "@/assets/marketing-launch-hero.png";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Calculator, Sparkles } from "lucide-react";
 import { FlaskConical, ArrowUpRight } from "lucide-react";
