@@ -4756,9 +4756,43 @@ export type Database = {
         }
         Relationships: []
       }
+      student_flow_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          message: string | null
+          seen: boolean
+          seen_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          message?: string | null
+          seen?: boolean
+          seen_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          message?: string | null
+          seen?: boolean
+          seen_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       student_flow_status: {
         Row: {
           cadastro_recebido_at: string | null
+          completed_dismissed_at: string | null
           created_at: string
           dados_em_analise_at: string | null
           estrategia_estruturando_at: string | null
@@ -4771,6 +4805,7 @@ export type Database = {
         }
         Insert: {
           cadastro_recebido_at?: string | null
+          completed_dismissed_at?: string | null
           created_at?: string
           dados_em_analise_at?: string | null
           estrategia_estruturando_at?: string | null
@@ -4783,6 +4818,7 @@ export type Database = {
         }
         Update: {
           cadastro_recebido_at?: string | null
+          completed_dismissed_at?: string | null
           created_at?: string
           dados_em_analise_at?: string | null
           estrategia_estruturando_at?: string | null
