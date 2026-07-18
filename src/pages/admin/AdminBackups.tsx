@@ -11,7 +11,16 @@ import { useAdminReauth } from "@/hooks/useAdminReauth";
 
 type FileEntry = { name: string; size: number; path: string };
 
-async function invokeBackup(action: "run" | "list" | "download", params: Record<string, string> = {}) {
+type BackupProgress = {
+  running: boolean;
+  day: string | null;
+  current: number;
+  total: number;
+  table: string | null;
+  errors: number;
+};
+
+async function invokeBackup(action: "run" | "table" | "manifest" | "list" | "download", params: Record<string, string> = {}) {
   const qs = new URLSearchParams({ action, ...params }).toString();
   const { data, error } = await supabase.functions.invoke(`daily-backup?${qs}`, { method: "POST" });
   if (error) throw error;
@@ -28,6 +37,14 @@ export default function AdminBackups() {
   const qc = useQueryClient();
   const { requireReauth } = useAdminReauth();
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [progress, setProgress] = useState<BackupProgress>({
+    running: false,
+    day: null,
+    current: 0,
+    total: 0,
+    table: null,
+    errors: 0,
+  });
 
   const listQuery = useQuery({
     queryKey: ["backups-list", selectedDay],
@@ -41,20 +58,41 @@ export default function AdminBackups() {
         action: "run_manual_backup",
       });
       if (!ok) throw new Error("Reautenticação necessária");
-      return invokeBackup("run");
+      const prepared = await invokeBackup("run");
+      const tables = Array.isArray(prepared?.tables) ? prepared.tables as string[] : [];
+      const day = prepared?.day as string | undefined;
+      if (!day || tables.length === 0) throw new Error("Nenhuma tabela disponível para backup.");
+
+      let errors = 0;
+      setSelectedDay(day);
+      setProgress({ running: true, day, current: 0, total: tables.length, table: null, errors: 0 });
+
+      for (let i = 0; i < tables.length; i += 1) {
+        const table = tables[i];
+        setProgress({ running: true, day, current: i + 1, total: tables.length, table, errors });
+        try {
+          await invokeBackup("table", { day, table });
+        } catch (e) {
+          errors += 1;
+          setProgress({ running: true, day, current: i + 1, total: tables.length, table, errors });
+          console.error("Falha no backup da tabela", table, e);
+        }
+      }
+
+      const manifest = await invokeBackup("manifest", { day });
+      setProgress({ running: false, day, current: tables.length, total: tables.length, table: null, errors });
+      return { ...manifest, day, total: tables.length, errors };
     },
     onSuccess: (data) => {
-      if (data?.status === "started") {
-        toast.success("Backup iniciado em background. A lista atualiza em ~1-2 min.");
-        setTimeout(() => qc.invalidateQueries({ queryKey: ["backups-list"] }), 90_000);
-      } else {
-        const summary = data?.manifest?.summary ?? [];
-        const errors = summary.filter((s: any) => s.error).length;
-        toast.success(`Backup executado: ${summary.length - errors} tabelas${errors ? ` (${errors} falhas)` : ""}`);
-        qc.invalidateQueries({ queryKey: ["backups-list"] });
-      }
+      const total = data?.total ?? 0;
+      const errors = data?.errors ?? 0;
+      toast.success(`Backup concluído: ${total - errors}/${total} tabelas salvas${errors ? ` (${errors} falhas)` : ""}`);
+      qc.invalidateQueries({ queryKey: ["backups-list"] });
     },
-    onError: (e: any) => toast.error(`Falha no backup: ${e.message ?? e}`),
+    onError: (e: any) => {
+      setProgress((prev) => ({ ...prev, running: false }));
+      toast.error(`Falha no backup: ${e.message ?? e}`);
+    },
   });
 
   const downloadMutation = useMutation({
@@ -97,13 +135,41 @@ export default function AdminBackups() {
           </div>
           <Button
             onClick={() => runMutation.mutate()}
-            disabled={runMutation.isPending}
+            disabled={runMutation.isPending || progress.running}
             className="gap-2"
           >
-            {runMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-            Executar backup agora
+            {runMutation.isPending || progress.running ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+            {progress.running ? "Executando backup..." : "Executar backup agora"}
           </Button>
         </div>
+
+        {(progress.running || progress.total > 0) && (
+          <Card>
+            <CardContent className="pt-6 space-y-3">
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <span className="font-medium">
+                  {progress.running ? "Backup em andamento" : "Último backup manual"}
+                </span>
+                <Badge variant={progress.errors ? "destructive" : "secondary"}>
+                  {progress.current}/{progress.total} tabelas
+                </Badge>
+              </div>
+              <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-full bg-primary transition-all"
+                  style={{ width: `${progress.total ? Math.round((progress.current / progress.total) * 100) : 0}%` }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {progress.running && progress.table
+                  ? `Salvando: ${progress.table}`
+                  : progress.day
+                    ? `Dia: ${progress.day}${progress.errors ? ` · Falhas: ${progress.errors}` : ""}`
+                    : "Preparando backup..."}
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6">
           <Card>
