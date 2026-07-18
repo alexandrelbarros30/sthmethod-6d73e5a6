@@ -10,7 +10,7 @@ import { Database, Download, Play, RefreshCw, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAdminReauth } from "@/hooks/useAdminReauth";
 
-type FileEntry = { name: string; size: number; path: string };
+type FileEntry = { name: string; size: number; path: string; source?: string };
 
 type BackupProgress = {
   running: boolean;
@@ -72,6 +72,9 @@ export default function AdminBackups() {
       });
       if (!ok) throw new Error("Reautenticação necessária");
       const prepared = await invokeBackup("run");
+      if (prepared?.github_mirror?.available === false && prepared.github_mirror?.warning) {
+        toast.warning(prepared.github_mirror.warning);
+      }
       const tables = Array.isArray(prepared?.tables) ? prepared.tables as string[] : [];
       const day = prepared?.day as string | undefined;
       if (!day || tables.length === 0) throw new Error("Nenhuma tabela disponível para backup.");
@@ -99,7 +102,7 @@ export default function AdminBackups() {
     onSuccess: (data) => {
       const total = data?.total ?? 0;
       const errors = data?.errors ?? 0;
-      toast.success(`Backup concluído: ${total - errors}/${total} tabelas salvas${errors ? ` (${errors} falhas)` : ""}`);
+      toast.success(`Backup interno concluído: ${total - errors}/${total} tabelas salvas${errors ? ` (${errors} falhas)` : ""}`);
       qc.invalidateQueries({ queryKey: ["backups-list"] });
     },
     onError: (e: any) => {
@@ -135,7 +138,7 @@ export default function AdminBackups() {
   const files: FileEntry[] = listQuery.data?.files ?? [];
 
   return (
-    <DashboardLayout role="admin" title="Backups do Banco" subtitle="Snapshots diários no GitHub">
+    <DashboardLayout role="admin" title="Backups do Banco" subtitle="Snapshots internos privados">
       <div className="container mx-auto p-4 md:p-8 space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
@@ -143,7 +146,7 @@ export default function AdminBackups() {
               <Database className="w-7 h-7" /> Backups do Banco
             </h1>
             <p className="text-muted-foreground mt-1">
-              Snapshots diários commitados em <code className="text-xs">alexandrelbarros30/sthmethod-backups</code> (repositório privado no GitHub). Rodam automaticamente às 03:00 BRT.
+              Snapshots diários salvos em armazenamento interno privado. Quando o conector permitir, também são espelhados em <code className="text-xs">alexandrelbarros30/sthmethod-backups</code>.
             </p>
           </div>
           <Button
@@ -236,6 +239,11 @@ export default function AdminBackups() {
                         <Badge variant="secondary" className="text-xs mt-0.5">
                           {formatSize(f.size)}
                         </Badge>
+                        {f.source === "internal_private_storage" && (
+                          <Badge variant="outline" className="text-xs mt-0.5 ml-1">
+                            interno privado
+                          </Badge>
+                        )}
                       </div>
                       <Button
                         size="sm"
