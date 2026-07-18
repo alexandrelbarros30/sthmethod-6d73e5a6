@@ -303,6 +303,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "list") {
+      await ensureBackupRepositoryReady();
       const root = (await ghGetJson("")) as Array<{ name: string; type: string }> | null;
       const days = (root ?? [])
         .filter((e) => e.type === "dir" && /^\d{4}-\d{2}-\d{2}$/.test(e.name))
