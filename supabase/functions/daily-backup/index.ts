@@ -24,6 +24,20 @@ const REPO_NAME = "sthmethod-backups";
 const GATEWAY = "https://connector-gateway.lovable.dev/github";
 const TABLE_NAME_RE = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 
+class UserFacingError extends Error {
+  status: number;
+  code: string;
+  details?: string;
+
+  constructor(status: number, code: string, message: string, details?: string) {
+    super(message);
+    this.name = "UserFacingError";
+    this.status = status;
+    this.code = code;
+    this.details = details;
+  }
+}
+
 // Tables to skip (auth-managed, high-churn logs, ephemeral throttles)
 const SKIP_TABLES = new Set([
   "cas_search_cache",
@@ -113,6 +127,43 @@ async function ghGetJson(path: string) {
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`github get ${path} [${res.status}]: ${await res.text()}`);
   return await res.json();
+}
+
+async function ensureBackupRepositoryReady() {
+  const repoRes = await fetch(`${GATEWAY}/repos/${REPO_OWNER}/${REPO_NAME}`, {
+    headers: ghHeaders(),
+  });
+
+  if (repoRes.status === 404) {
+    const details = await repoRes.text();
+    throw new UserFacingError(
+      409,
+      "backup_repo_not_found",
+      `Repositório privado ${REPO_OWNER}/${REPO_NAME} não encontrado ou sem permissão de acesso para o token conectado.`,
+      details,
+    );
+  }
+
+  if (!repoRes.ok) {
+    const details = await repoRes.text();
+    throw new UserFacingError(
+      repoRes.status,
+      "backup_repo_access_denied",
+      `Não foi possível acessar o repositório de backup ${REPO_OWNER}/${REPO_NAME}.`,
+      details,
+    );
+  }
+
+  const repo = await repoRes.json();
+  if (!repo?.private) {
+    throw new UserFacingError(
+      409,
+      "backup_repo_not_private",
+      `O repositório ${REPO_OWNER}/${REPO_NAME} precisa ser privado para receber backups do banco.`,
+    );
+  }
+
+  return repo;
 }
 
 async function assertAdmin(req: Request): Promise<{ ok: boolean; error?: string }> {
@@ -220,6 +271,8 @@ Deno.serve(async (req) => {
       const tables = await backupTables(supabase);
       const day = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
+      await ensureBackupRepositoryReady();
+
       if (isCronRequest(req)) {
         // @ts-ignore EdgeRuntime is provided by Supabase edge runtime
         EdgeRuntime.waitUntil(dispatchCronBackup(req, day, tables));
@@ -250,6 +303,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "list") {
+      await ensureBackupRepositoryReady();
       const root = (await ghGetJson("")) as Array<{ name: string; type: string }> | null;
       const days = (root ?? [])
         .filter((e) => e.type === "dir" && /^\d{4}-\d{2}-\d{2}$/.test(e.name))
@@ -276,6 +330,9 @@ Deno.serve(async (req) => {
     return jsonResp(400, { error: "unknown action" });
   } catch (e) {
     console.error("daily-backup error", e);
+    if (e instanceof UserFacingError) {
+      return jsonResp(e.status, { error: e.message, code: e.code, details: e.details });
+    }
     return jsonResp(500, { error: String(e) });
   }
 });
