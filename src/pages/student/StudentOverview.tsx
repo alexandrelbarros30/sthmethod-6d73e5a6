@@ -247,6 +247,28 @@ const StudentOverview = () => {
         </button>
       </div>
 
+      {/* TABS — Jornada (acionável) | Descobrir (conteúdo) */}
+      <div className="mb-6 -mx-1 flex items-center gap-1 p-1 rounded-full bg-muted/40 border border-border/40 sticky top-2 z-30 backdrop-blur-md">
+        <button
+          onClick={() => switchTab("home")}
+          className={`flex-1 h-10 rounded-full text-[12.5px] font-medium tracking-tight flex items-center justify-center gap-1.5 transition-colors ${
+            activeTab === "home" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <HomeIcon className="w-3.5 h-3.5" strokeWidth={2} /> Jornada
+        </button>
+        <button
+          onClick={() => switchTab("discover")}
+          className={`flex-1 h-10 rounded-full text-[12.5px] font-medium tracking-tight flex items-center justify-center gap-1.5 transition-colors ${
+            activeTab === "discover" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Compass className="w-3.5 h-3.5" strokeWidth={2} /> Descobrir
+        </button>
+      </div>
+
+      {activeTab === "home" && (
+        <>
       <STHFlowCard />
 
       {/* CICLO DE ATUALIZAÇÃO — só aparece quando há ação pendente */}
