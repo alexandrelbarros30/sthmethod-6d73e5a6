@@ -10,8 +10,8 @@ interface Props {
 }
 
 // Anéis concêntricos estilo Apple Activity — 3 métricas empilhadas visualmente.
-const RING_SIZE = 168;
-const STROKE = 12;
+const RING_SIZE = 140;
+const STROKE = 11;
 const GAP = 4;
 
 const Ring = ({ radius, pct, color }: { radius: number; pct: number; color: string }) => {
@@ -62,9 +62,9 @@ const DailyRingsCard = ({ kcalConsumed, kcalGoal, proteinConsumed, proteinGoal, 
   ];
 
   return (
-    <div className="mb-6 rounded-3xl border border-border/40 bg-background p-6">
-      <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5">Anéis do dia</p>
-      <div className="flex items-center gap-6">
+    <div className="mb-6 rounded-3xl border border-border/40 bg-background p-4 sm:p-6">
+      <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-4">Anéis do dia</p>
+      <div className="flex items-center gap-3 sm:gap-6">
         <div className="relative shrink-0" style={{ width: RING_SIZE, height: RING_SIZE }}>
           <svg width={RING_SIZE} height={RING_SIZE} className="-rotate-90">
             <Ring radius={r1} pct={kcalPct} color={rows[0].color} />
@@ -72,22 +72,24 @@ const DailyRingsCard = ({ kcalConsumed, kcalGoal, proteinConsumed, proteinGoal, 
             <Ring radius={r3} pct={waterPct} color={rows[2].color} />
           </svg>
         </div>
-        <div className="flex-1 min-w-0 space-y-3">
+        <div className="flex-1 min-w-0 space-y-2.5">
           {rows.map((r) => {
             const Icon = r.icon;
             return (
-              <div key={r.label} className="flex items-center gap-2.5">
+              <div key={r.label} className="flex items-center gap-2 min-w-0">
                 <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: r.color }} strokeWidth={2} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium">{r.label}</p>
-                  <p className="text-[14px] font-semibold text-foreground tabular-nums tracking-tight leading-tight">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-medium truncate">{r.label}</p>
+                    <span className="text-[11px] font-semibold tabular-nums shrink-0" style={{ color: r.color }}>
+                      {Math.round(r.pct)}%
+                    </span>
+                  </div>
+                  <p className="text-[13px] font-semibold text-foreground tabular-nums tracking-tight leading-tight whitespace-nowrap">
                     {r.value}
                     <span className="text-muted-foreground/60 font-light"> / {r.goal}{r.unit}</span>
                   </p>
                 </div>
-                <span className="text-[12px] font-semibold tabular-nums" style={{ color: r.color }}>
-                  {Math.round(r.pct)}%
-                </span>
               </div>
             );
           })}
