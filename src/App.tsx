@@ -145,7 +145,7 @@ import { useDynamicFavicon } from "@/hooks/useDynamicFavicon";
 import { useAdminTheme } from "@/hooks/useAdminTheme";
 import { useAccessLog } from "@/hooks/useAccessLog";
 import { usePublicAppleTheme } from "@/hooks/usePublicAppleTheme";
-import UpdateBanner from "@/components/shared/UpdateBanner";
+// UpdateBanner removido — sem popup de atualização automático no portal/app
 import { APP_RELEASE_VERSION } from "@/lib/app-version";
 import AccessibilityThemeButton from "@/components/student/AccessibilityThemeButton";
 import { useAccessibilityTheme } from "@/hooks/useAccessibilityTheme";
@@ -191,7 +191,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <DynamicHead />
-          <UpdateBanner />
+          {/* UpdateBanner removido a pedido: sem popup de atualização ao entrar */}
           <AccessibilityThemeButton />
           <PullToRefresh />
           <Routes>
