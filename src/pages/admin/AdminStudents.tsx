@@ -49,6 +49,7 @@ import StudentImageConsentCard from "@/components/admin/StudentImageConsentCard"
 import StudentImageAuthSummary from "@/components/admin/StudentImageAuthSummary";
 import { calculateAge, calculateMacros, type MacroResult } from "@/lib/macro-calculator";
 import { normalizePhone } from "@/lib/phone";
+import { useAdminReauth, logAdminAccess } from "@/hooks/useAdminReauth";
 import {
   objectiveLabels, activityLabels,
   trainingIntensityOptions, cardioIntensityOptions,
@@ -92,6 +93,7 @@ const AdminStudents = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const qc = useQueryClient();
+  const { requireReauth } = useAdminReauth();
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [subOpen, setSubOpen] = useState(false);
