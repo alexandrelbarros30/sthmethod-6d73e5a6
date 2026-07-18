@@ -17,6 +17,23 @@ import StCoachCredit from "@/components/shared/StCoachCredit";
 import WorkoutChronometer from "@/components/student/WorkoutChronometer";
 import { toast } from "sonner";
 
+// Encodes URL path segments containing spaces/parens/etc while preserving the
+// scheme + query. Alguns WebViews (Android) e navegadores mais restritivos
+// falham silenciosamente com <img src=".../file (1).jpg"> se caracteres não
+// forem escapados. Reforça a compatibilidade sem quebrar URLs já corretas.
+const safeImgUrl = (raw?: string | null): string => {
+  if (!raw) return "";
+  try {
+    const u = new URL(raw);
+    u.pathname = u.pathname.split("/").map((seg) => {
+      try { return encodeURIComponent(decodeURIComponent(seg)); } catch { return encodeURIComponent(seg); }
+    }).join("/");
+    return u.toString();
+  } catch {
+    return raw;
+  }
+};
+
 const getVideoSource = (url: string): { kind: "embed" | "file" | "image"; url: string } | null => {
   if (!url) return null;
   const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
