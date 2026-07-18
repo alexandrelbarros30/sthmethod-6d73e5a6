@@ -18,6 +18,7 @@ import DietDateNav from "@/components/student/DietDateNav";
 import HydrationTracker from "@/components/student/HydrationTracker";
 import DietSelector from "@/components/student/DietSelector";
 import DietContentRenderer from "@/components/student/DietContentRenderer";
+import ScreenWatermark from "@/components/student/ScreenWatermark";
 import DietPlanningPanel from "@/components/student/DietPlanningPanel";
 import DietMealGuide from "@/components/student/DietMealGuide";
 import DietUpdatedBanner from "@/components/student/DietUpdatedBanner";
@@ -224,6 +225,7 @@ const StudentDiet = () => {
         content,
         studentInfo: {
           name: profileData?.full_name || (user?.user_metadata?.full_name as string) || user?.email || "Aluno",
+          cpf: (profileData as any)?.cpf || undefined,
           age,
           weight: profileData?.weight ?? undefined,
           height: profileData?.height ?? undefined,
@@ -256,6 +258,7 @@ const StudentDiet = () => {
 
   return (
     <DashboardLayout role="student" title="Seu plano hoje" subtitle="Acompanhe suas refeições do dia.">
+      <ScreenWatermark fixed />
       <PreviewAsBanner />
       <div className="space-y-5 max-w-lg mx-auto">
         {/* Identity Header — alinhado ao Protocolo */}

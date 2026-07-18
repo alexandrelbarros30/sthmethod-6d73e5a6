@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
 import { usePreviewAs } from "@/hooks/usePreviewAs";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
+import ScreenWatermark from "@/components/student/ScreenWatermark";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dumbbell, ChevronLeft, ChevronDown, History, Play, Calendar, ChevronsDown, Save, Eraser, VideoOff, Star, Trophy } from "lucide-react";
@@ -545,6 +546,7 @@ const StudentGuidedWorkout = () => {
 
   return (
     <DashboardLayout role="student" title={template.title} subtitle={program?.title || ""}>
+      <ScreenWatermark fixed />
       <div className="space-y-4 max-w-3xl">
         <button
           onClick={() => setView({ kind: "program", programId })}

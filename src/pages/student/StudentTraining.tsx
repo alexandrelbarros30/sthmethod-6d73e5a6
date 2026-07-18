@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
 import { usePreviewAs } from "@/hooks/usePreviewAs";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
+import ScreenWatermark from "@/components/student/ScreenWatermark";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Video, Dumbbell, Timer, ChevronDown, ChevronUp, Play, Info } from "lucide-react";
@@ -195,6 +196,7 @@ const StudentTraining = () => {
 
   return (
     <DashboardLayout role="student" title="Treino" subtitle="Seu plano de treino personalizado.">
+      <ScreenWatermark fixed />
       <style>{`
         @media print { .training-protected { display: none !important; } body::after { content: "Impressão não permitida"; display: flex; align-items: center; justify-content: center; font-size: 2rem; height: 100vh; } }
         .training-protected { user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; -webkit-touch-callout: none; }
