@@ -115,6 +115,7 @@ import AdminAds from "./pages/admin/AdminAds";
 import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminReleaseLog from "./pages/admin/AdminReleaseLog";
 import AdminFeedback from "./pages/admin/AdminFeedback";
+import AdminAccessAudit from "./pages/admin/AdminAccessAudit";
 import StudentFeedbackHistory from "./pages/student/StudentFeedbackHistory";
 import AdminBudgets from "./pages/admin/AdminBudgets";
 import AdminQueue from "./pages/admin/AdminQueue";
