@@ -18,9 +18,7 @@ const getReleaseVersion = (version: string) => version.split("+")[0] || version;
 
 const fetchRemoteVersion = async (): Promise<string | null> => {
   try {
-    // No app nativo o WebView carrega o HTML remoto (preview) OU os assets
-    // empacotados. version.json é sempre buscado do domínio publicado.
-    const res = await fetch(`https://sthmethod.com/version.json?t=${Date.now()}`, {
+    const res = await fetch(`${VERSION_URL}?t=${Date.now()}`, {
       cache: "no-store",
       headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
     });

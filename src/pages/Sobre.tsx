@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Download, RefreshCw, CheckCircle2, Smartphone, Info, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { APP_RELEASE_VERSION, APP_BUILD_ID } from "@/lib/app-version";
+import { APP_RELEASE_VERSION, APP_BUILD_ID, VERSION_URL } from "@/lib/app-version";
 import { compareVersions } from "@/lib/version-bump";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -59,7 +59,7 @@ export default function Sobre() {
   const check = async () => {
     setStatus("checking");
     try {
-      const res = await fetch(`https://sthmethod.com/version.json?t=${Date.now()}`, {
+      const res = await fetch(`${VERSION_URL}?t=${Date.now()}`, {
         cache: "no-store",
         headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
       });
