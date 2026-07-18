@@ -12,6 +12,11 @@ const config: CapacitorConfig = {
   appId: 'app.lovable.b584eea6c8424d9386ab554e2c58d9fb',
   appName: 'sthconsultoria',
   webDir: 'dist',
+  android: {
+    // Permite carregar imagens/recursos http legados dentro do WebView
+    // (algumas thumbs de treino ainda podem vir sem https)
+    allowMixedContent: true,
+  },
   ...(isProduction
     ? {}
     : {
