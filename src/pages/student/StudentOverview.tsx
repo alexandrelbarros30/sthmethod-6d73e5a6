@@ -26,6 +26,7 @@ import DailyHeroCard from "@/components/student/DailyHeroCard";
 import DailyRingsCard from "@/components/student/DailyRingsCard";
 import StreakCard from "@/components/student/StreakCard";
 import DailyCheckinCard from "@/components/student/DailyCheckinCard";
+import QuickActionsFab from "@/components/student/QuickActionsFab";
 import { ShieldCheck } from "lucide-react";
 import { formatPhoneBR } from "@/lib/phone";
 import { getLatestTrend } from "@/data/latest-trends";
