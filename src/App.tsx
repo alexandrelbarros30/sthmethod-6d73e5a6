@@ -13,6 +13,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Cadastro from "./pages/Cadastro";
 import Questionario from "./pages/Questionario";
 import Install from "./pages/Install";
+import BaixarApp from "./pages/BaixarApp";
 import Free from "./pages/Free";
 import ComoFunciona from "./pages/ComoFunciona";
 import Tendencias from "./pages/Tendencias";
