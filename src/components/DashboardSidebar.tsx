@@ -136,6 +136,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
       children: [
         { to: "/admin/roles", icon: Users, label: "Permissões" },
         { to: "/admin/staff", icon: ClipboardList, label: "Equipe" },
+        { to: "/admin/access-audit", icon: ShieldCheck, label: "Auditoria de Acesso" },
       ],
     },
     { to: "/admin/coupons", icon: Ticket, label: "Cupons" },
