@@ -371,11 +371,25 @@ const AdminStudents = () => {
         const currentEmail = (selected as any)?.email?.toLowerCase?.() || "";
         const newEmail = form.email.trim().toLowerCase();
         if (newEmail && newEmail !== currentEmail) {
+          const ok = await requireReauth({
+            reason: `Você está alterando o e-mail de login de "${selected?.full_name || currentEmail}". Confirme sua senha para prosseguir.`,
+            action: "update_student_email",
+            targetLabel: selected?.full_name,
+          });
+          if (!ok) throw new Error("Alteração de e-mail cancelada.");
           const { data: emailRes, error: emailErr } = await supabase.functions.invoke("admin-manage-students", {
             body: { action: "update_email", user_id: selected.user_id, new_email: newEmail },
           });
           if (emailErr) throw new Error("Erro ao atualizar email de login. Tente novamente.");
           if (emailRes?.error) throw new Error(emailRes.error);
+          await logAdminAccess({
+            action: "update_student_email",
+            resourceType: "profiles",
+            targetUserId: selected.user_id,
+            targetLabel: selected?.full_name,
+            metadata: { from: currentEmail, to: newEmail },
+            reauthUsed: true,
+          });
         }
         await supabase.from("profiles").update(profilePayload()).eq("user_id", selected.user_id);
         qc.invalidateQueries({ queryKey: ["admin-students-list"] });
