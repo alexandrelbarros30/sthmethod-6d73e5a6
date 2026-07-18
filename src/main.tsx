@@ -57,6 +57,9 @@ const killServiceWorkers = async () => {
 
 const syncLatestBuild = async () => {
   if (typeof window === "undefined" || isPreviewHost()) return;
+  // Nunca fazer auto-reload por versão dentro do app nativo (APK/iOS):
+  // o WebView pode travar ou entrar em loop de reload após 3-5 min.
+  if (isNativeApp()) return;
 
   const storedVersion = localStorage.getItem(VERSION_KEY);
   if (storedVersion !== APP_VERSION) {
@@ -99,9 +102,14 @@ try {
   document.documentElement.classList.remove("theme-90d", "theme-180d");
 } catch (_) {}
 
-// Always kill any leftover SW/caches in production (do not block render)
+// Always kill any leftover SW/caches in production (do not block render).
+// Dentro do app nativo apenas mata SWs (não há version-sync).
 if (import.meta.env.PROD && !isPreviewHost()) {
-  void killServiceWorkers().then(syncLatestBuild);
+  if (isNativeApp()) {
+    void killServiceWorkers();
+  } else {
+    void killServiceWorkers().then(syncLatestBuild);
+  }
 }
 
 createRoot(document.getElementById("root")!).render(

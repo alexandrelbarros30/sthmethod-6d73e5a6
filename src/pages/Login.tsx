@@ -118,9 +118,13 @@ const Login = () => {
                 }
               } catch {}
               // Auto-recover: reload once to clear stale SW/cache. Use a session flag to avoid loops.
+              // Dentro do app nativo (Capacitor) NÃO fazemos reload — o WebView pode travar.
+              const isNative =
+                (window as any).Capacitor?.isNativePlatform?.() ||
+                window.location.protocol === "capacitor:";
               const RELOAD_KEY = "sth-login-auto-recover";
               const alreadyTried = sessionStorage.getItem(RELOAD_KEY) === "1";
-              if (!alreadyTried) {
+              if (!isNative && !alreadyTried) {
                 sessionStorage.setItem(RELOAD_KEY, "1");
                 toast.message("Reconectando…", { duration: 2000 });
                 const url = new URL(window.location.href);
