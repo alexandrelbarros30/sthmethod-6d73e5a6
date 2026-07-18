@@ -44,10 +44,15 @@ export default function AdminBackups() {
       return invokeBackup("run");
     },
     onSuccess: (data) => {
-      const summary = data?.manifest?.summary ?? [];
-      const errors = summary.filter((s: any) => s.error).length;
-      toast.success(`Backup executado: ${summary.length - errors} tabelas${errors ? ` (${errors} falhas)` : ""}`);
-      qc.invalidateQueries({ queryKey: ["backups-list"] });
+      if (data?.status === "started") {
+        toast.success("Backup iniciado em background. A lista atualiza em ~1-2 min.");
+        setTimeout(() => qc.invalidateQueries({ queryKey: ["backups-list"] }), 90_000);
+      } else {
+        const summary = data?.manifest?.summary ?? [];
+        const errors = summary.filter((s: any) => s.error).length;
+        toast.success(`Backup executado: ${summary.length - errors} tabelas${errors ? ` (${errors} falhas)` : ""}`);
+        qc.invalidateQueries({ queryKey: ["backups-list"] });
+      }
     },
     onError: (e: any) => toast.error(`Falha no backup: ${e.message ?? e}`),
   });
