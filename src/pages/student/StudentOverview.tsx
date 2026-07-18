@@ -29,6 +29,7 @@ import StreakCard from "@/components/student/StreakCard";
 import DailyCheckinCard from "@/components/student/DailyCheckinCard";
 import QuickActionsFab from "@/components/student/QuickActionsFab";
 import NextWorkoutCard from "@/components/student/NextWorkoutCard";
+import WeeklyInsightCard from "@/components/student/WeeklyInsightCard";
 import { ShieldCheck } from "lucide-react";
 import { formatPhoneBR } from "@/lib/phone";
 import { getLatestTrend } from "@/data/latest-trends";
@@ -274,6 +275,9 @@ const StudentOverview = () => {
 
       {/* CICLO DE ATUALIZAÇÃO — só aparece quando há ação pendente */}
       <EvolutionUpdateStatusCard />
+
+      {/* INSIGHT SEMANAL — resumo dos últimos 7 dias (destaque nas segundas) */}
+      <WeeklyInsightCard />
 
       {/* AÇÃO DO DIA — card contextual acima de tudo */}
       <DailyHeroCard
