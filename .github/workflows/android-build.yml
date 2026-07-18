@@ -45,6 +45,11 @@ jobs:
             npx cap add android
           fi
 
+      - name: Generate app icons & splash
+        run: |
+          npm install --no-save --legacy-peer-deps @capacitor/assets@^3
+          npx @capacitor/assets generate --android --iconBackgroundColor '#000000' --iconBackgroundColorDark '#000000' --splashBackgroundColor '#000000' --splashBackgroundColorDark '#000000'
+
       - name: Sync Capacitor
         run: npx cap sync android
 
