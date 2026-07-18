@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered, RefreshCw, NotebookPen, ChevronDown, DollarSign, Inbox, Send, Sparkles, CheckSquare, Zap, Workflow, Mail, ImageIcon, Brain, ShieldOff, History, Phone } from "lucide-react";
+import { Salad, Dumbbell, FlaskConical, BookOpen, LayoutDashboard, LogOut, User, CreditCard, Palette, PanelTop, Wallet, MessageSquare, Menu, Users, ClipboardList, TrendingUp, ListChecks, Apple, Ticket, Activity, Microscope, Megaphone, Bell, Receipt, Newspaper, ListOrdered, RefreshCw, NotebookPen, ChevronDown, DollarSign, Inbox, Send, Sparkles, CheckSquare, Zap, Workflow, Mail, ImageIcon, Brain, ShieldOff, History, Phone, Download } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -55,6 +55,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
       ],
     },
     { to: "/dashboard/subscription", icon: CreditCard, label: "Assinatura" },
+    { to: "/baixar-app", icon: Download, label: "Baixar App" },
   ],
   admin: [
     { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
