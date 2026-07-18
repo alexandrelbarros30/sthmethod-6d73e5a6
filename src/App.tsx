@@ -116,6 +116,7 @@ import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminReleaseLog from "./pages/admin/AdminReleaseLog";
 import AdminFeedback from "./pages/admin/AdminFeedback";
 import AdminAccessAudit from "./pages/admin/AdminAccessAudit";
+import AdminBackups from "./pages/admin/AdminBackups";
 import StudentFeedbackHistory from "./pages/student/StudentFeedbackHistory";
 import AdminBudgets from "./pages/admin/AdminBudgets";
 import AdminQueue from "./pages/admin/AdminQueue";
@@ -322,6 +323,7 @@ const App = () => (
             <Route path="/admin/release-log" element={<ProtectedRoute allowedRoles={["admin"]}><AdminReleaseLog /></ProtectedRoute>} />
             <Route path="/admin/feedback" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><AdminFeedback /></ProtectedRoute>} />
             <Route path="/admin/access-audit" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAccessAudit /></ProtectedRoute>} />
+            <Route path="/admin/backups" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBackups /></ProtectedRoute>} />
             <Route path="/admin/budgets" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBudgets /></ProtectedRoute>} />
             <Route path="/admin/ads" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAds /></ProtectedRoute>} />
             <Route path="/admin/queue" element={<ProtectedRoute allowedRoles={["admin"]}><AdminQueue /></ProtectedRoute>} />

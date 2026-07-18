@@ -137,6 +137,7 @@ const linksByRole: Record<AppRole, NavItem[]> = {
         { to: "/admin/roles", icon: Users, label: "Permissões" },
         { to: "/admin/staff", icon: ClipboardList, label: "Equipe" },
         { to: "/admin/access-audit", icon: ShieldCheck, label: "Auditoria de Acesso" },
+        { to: "/admin/backups", icon: Database, label: "Backups do Banco" },
       ],
     },
     { to: "/admin/coupons", icon: Ticket, label: "Cupons" },
