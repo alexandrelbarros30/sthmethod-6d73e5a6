@@ -46,6 +46,7 @@ export interface StudentDossier {
     body_images: number;
     weight_logs: number;
   };
+  checkins: Array<{ checkin_date: string; mood: number; energy: number }>;
 }
 
 export function useStudentDossier(phone: string | null | undefined) {
@@ -62,6 +63,7 @@ export function useStudentDossier(phone: string | null | undefined) {
         lastWeight: null,
         lastUpdates: { diet_at: null, training_at: null, protocol_at: null },
         counts: { documents: 0, body_images: 0, weight_logs: 0 },
+        checkins: [],
       };
       if (!candidates.length) return empty;
 
@@ -92,7 +94,8 @@ export function useStudentDossier(phone: string | null | undefined) {
       const uid = profile.user_id;
 
       // 2. parallel fetches
-      const [subRes, payRes, weightRes, dietRes, trainRes, protRes, docCount, imgCount, wlCount] = await Promise.all([
+      const since = new Date(Date.now() - 14 * 86400000).toISOString().slice(0, 10);
+      const [subRes, payRes, weightRes, dietRes, trainRes, protRes, docCount, imgCount, wlCount, checkinsRes] = await Promise.all([
         supabase.from("subscriptions").select("id, plan_id, start_date, end_date, status").eq("user_id", uid).order("end_date", { ascending: false }).limit(1),
         supabase.from("payments").select("id, amount, status, method, action_type, created_at").eq("user_id", uid).order("created_at", { ascending: false }).limit(1),
         supabase.from("weight_logs").select("weight, logged_at").eq("user_id", uid).order("logged_at", { ascending: false }).limit(1),
@@ -102,6 +105,7 @@ export function useStudentDossier(phone: string | null | undefined) {
         supabase.from("clinical_documents").select("id", { count: "exact", head: true }).eq("user_id", uid),
         supabase.from("body_images").select("id", { count: "exact", head: true }).eq("user_id", uid),
         supabase.from("weight_logs").select("id", { count: "exact", head: true }).eq("user_id", uid),
+        supabase.from("daily_checkins").select("checkin_date, mood, energy").eq("user_id", uid).gte("checkin_date", since).order("checkin_date", { ascending: true }),
       ]);
 
       const sub = subRes.data?.[0];
@@ -137,6 +141,7 @@ export function useStudentDossier(phone: string | null | undefined) {
           body_images: imgCount.count ?? 0,
           weight_logs: wlCount.count ?? 0,
         },
+        checkins: (checkinsRes.data as any[]) ?? [],
       };
     },
   });
