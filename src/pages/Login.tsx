@@ -182,6 +182,11 @@ const Login = () => {
         return;
       }
     } catch (error: any) {
+      if (!isSignUp && email) {
+        supabase.functions.invoke("auth-gate", {
+          body: { action: "record", email, success: false, reason: error?.message?.slice(0, 200) },
+        }).catch(() => {});
+      }
       toast.error(error.message || "Erro ao processar");
     } finally {
       setLoading(false);
