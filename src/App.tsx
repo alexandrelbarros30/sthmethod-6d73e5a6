@@ -13,6 +13,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Cadastro from "./pages/Cadastro";
 import Questionario from "./pages/Questionario";
 import Install from "./pages/Install";
+import BaixarApp from "./pages/BaixarApp";
 import Free from "./pages/Free";
 import ComoFunciona from "./pages/ComoFunciona";
 import Tendencias from "./pages/Tendencias";
@@ -202,6 +203,8 @@ const App = () => (
             <Route path="/cadastro" element={<Cadastro />} />
             <Route path="/questionario" element={<Questionario />} />
             <Route path="/install" element={<Install />} />
+            <Route path="/baixar-app" element={<BaixarApp />} />
+            <Route path="/download" element={<BaixarApp />} />
             <Route path="/como-funciona" element={<ComoFunciona />} />
             <Route path="/free" element={<Free />} />
             <Route path="/tendencias" element={<Tendencias />} />
