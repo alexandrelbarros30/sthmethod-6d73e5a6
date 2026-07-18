@@ -227,6 +227,7 @@ const StudentProtocol = () => {
         content: protocol.content || 'Conteúdo não disponível',
         studentInfo: {
           name: profile?.full_name || 'Aluno',
+          cpf: (profile as any)?.cpf || undefined,
           age: profile?.birth_date ? Math.floor((Date.now() - new Date(profile.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : undefined,
           weight: profile?.weight || undefined,
           height: profile?.height ? (profile.height / 100) : undefined,
