@@ -36,7 +36,10 @@ export default function AdminBackups() {
 
   const runMutation = useMutation({
     mutationFn: async () => {
-      const ok = await requireReauth("Executar backup manual do banco");
+      const ok = await requireReauth({
+        reason: "Executar backup manual do banco",
+        action: "run_manual_backup",
+      });
       if (!ok) throw new Error("Reautenticação necessária");
       return invokeBackup("run");
     },
@@ -51,7 +54,11 @@ export default function AdminBackups() {
 
   const downloadMutation = useMutation({
     mutationFn: async (path: string) => {
-      const ok = await requireReauth("Baixar arquivo de backup");
+      const ok = await requireReauth({
+        reason: "Baixar arquivo de backup",
+        action: "download_backup",
+        targetLabel: path,
+      });
       if (!ok) throw new Error("Reautenticação necessária");
       const res = await invokeBackup("download", { path });
       const bin = atob(res.content.replace(/\n/g, ""));
@@ -72,7 +79,7 @@ export default function AdminBackups() {
   const files: FileEntry[] = listQuery.data?.files ?? [];
 
   return (
-    <DashboardLayout>
+    <DashboardLayout role="admin" title="Backups do Banco" subtitle="Snapshots diários no GitHub">
       <div className="container mx-auto p-4 md:p-8 space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
