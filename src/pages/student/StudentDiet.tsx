@@ -258,6 +258,7 @@ const StudentDiet = () => {
 
   return (
     <DashboardLayout role="student" title="Seu plano hoje" subtitle="Acompanhe suas refeições do dia.">
+      <ScreenWatermark fixed />
       <PreviewAsBanner />
       <div className="space-y-5 max-w-lg mx-auto">
         {/* Identity Header — alinhado ao Protocolo */}

@@ -7,6 +7,7 @@ import { usePreviewAs } from "@/hooks/usePreviewAs";
 import PreviewAsBanner from "@/components/student/PreviewAsBanner";
 import SubscriptionBlock from "@/components/SubscriptionBlock";
 import PreviewLockedCard from "@/components/student/PreviewLockedCard";
+import ScreenWatermark from "@/components/student/ScreenWatermark";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, FileText, Clock, Download } from "lucide-react";
@@ -308,6 +309,7 @@ const StudentProtocol = () => {
 
   return (
     <DashboardLayout role="student" title="Protocolo" subtitle="Suplementação e medicamentos prescritos.">
+      <ScreenWatermark fixed />
       <PreviewAsBanner />
       <style>{`
         @media print { .content-protected { display: none !important; } body::after { content: "Impressão não permitida"; display: flex; align-items: center; justify-content: center; font-size: 2rem; height: 100vh; } }
