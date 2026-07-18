@@ -1,6 +1,8 @@
 project_id = "tthahgwkkdyvxdbhsgyb"
 
 [functions]
+  [functions.auth-gate]
+    verify_jwt = false
   [functions.admin-manage-students]
     verify_jwt = false
   [functions.admin-update-bucket]
