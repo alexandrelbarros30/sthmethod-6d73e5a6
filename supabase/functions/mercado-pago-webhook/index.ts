@@ -590,10 +590,23 @@ serve(async (req) => {
       return new Response(JSON.stringify({ received: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Validate signature when present. If it fails, fall back to provider-side verification.
-    const valid = await validateMpSignature(req, rawBody, String(paymentId));
-    if (!valid) {
-      console.warn("Invalid MP webhook signature — continuing with provider verification fallback");
+    // Validate signature. When MP_WEBHOOK_SECRET is set, invalid signatures are
+    // hard-rejected (401). When not set, validateMpSignature returns true.
+    const sigOk = await validateMpSignature(req, rawBody, String(paymentId));
+    if (!sigOk) {
+      try {
+        await supabase.from("automation_logs").insert({
+          event_type: "mp_webhook_signature_invalid",
+          contact_phone: "",
+          reason: "Invalid HMAC signature",
+          metadata: { payment_id: paymentId },
+          severity: "warn",
+        });
+      } catch {}
+      return new Response(JSON.stringify({ error: "invalid signature" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Fetch payment details from MP
@@ -680,7 +693,7 @@ serve(async (req) => {
 
     const { data: existingPayment, error: existingPaymentError } = await supabase
       .from("payments")
-      .select("status")
+      .select("status, amount, user_id, plan_id")
       .eq("id", internalPaymentId)
       .single();
 
@@ -692,6 +705,66 @@ serve(async (req) => {
     }
 
     const previousStatus = existingPayment.status;
+
+    // Idempotency: if this exact MP payment id was already recorded for this
+    // internal payment with the same final status, skip re-processing.
+    try {
+      const { data: gwPrev } = await supabase
+        .from("payment_gateway_details")
+        .select("payment_id, mp_payment_id")
+        .eq("payment_id", internalPaymentId)
+        .maybeSingle();
+      if (
+        gwPrev?.mp_payment_id === String(paymentId) &&
+        previousStatus === (({
+          approved: "approved", pending: "pending", in_process: "pending",
+          rejected: "rejected", cancelled: "cancelled", refunded: "refunded",
+        } as Record<string, string>)[mpPayment.status] || mpPayment.status)
+      ) {
+        return new Response(JSON.stringify({ received: true, idempotent: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } catch {}
+
+    // Amount validation: never trust the notification body. Compare MP's
+    // authoritative transaction_amount against our stored expected amount
+    // before ever transitioning to approved. Mismatch → freeze in
+    // manual_review and alert admins; do NOT activate the subscription.
+    if (mpPayment.status === "approved") {
+      const mpAmount = Number(mpPayment.transaction_amount ?? 0);
+      const expected = Number(existingPayment.amount ?? 0);
+      if (!amountMatches(expected, mpAmount)) {
+        console.error("[mp-webhook] amount mismatch", {
+          internalPaymentId, mpAmount, expected, mp_payment_id: paymentId,
+        });
+        await supabase.from("payments")
+          .update({ status: "manual_review" })
+          .eq("id", internalPaymentId);
+        await supabase.from("payment_gateway_details").upsert({
+          payment_id: internalPaymentId,
+          mp_payment_id: String(paymentId),
+        }, { onConflict: "payment_id" });
+        try {
+          await supabase.from("automation_logs").insert({
+            event_type: "mp_amount_mismatch",
+            contact_phone: "",
+            reason: `Amount mismatch: expected ${expected} got ${mpAmount}`,
+            metadata: {
+              payment_id: internalPaymentId,
+              mp_payment_id: String(paymentId),
+              expected, actual: mpAmount,
+              user_id: existingPayment.user_id,
+              plan_id: existingPayment.plan_id,
+            },
+            severity: "critical",
+          });
+        } catch {}
+        return new Response(JSON.stringify({ received: true, note: "amount mismatch — manual review" }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     // Map MP status
     const statusMap: Record<string, string> = {
