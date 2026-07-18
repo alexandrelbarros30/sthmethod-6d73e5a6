@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { notifyStudentSelfUpdate } from "@/lib/notify-student-update";
 
 /**
  * Floating quick actions on the student home.
@@ -39,7 +38,6 @@ const QuickActionsFab = () => {
         notes: notes || "Registro rápido",
       });
       if (error) throw error;
-      void notifyStudentSelfUpdate(user.id, "weight");
       toast.success("Peso registrado.");
       setWeight("");
       setNotes("");
