@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Salad, FlaskConical, Activity, User, Dumbbell, TrendingUp, BookOpen, CreditCard, ListChecks, LogOut, FileText, Shield, Microscope, Megaphone, Newspaper, Sparkles } from "lucide-react";
+import { LayoutDashboard, Salad, FlaskConical, Activity, User, Dumbbell, TrendingUp, BookOpen, CreditCard, ListChecks, LogOut, FileText, Microscope, Megaphone, Newspaper, Sparkles, Download, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,6 +23,8 @@ const menuItems = [
   { to: "/dashboard/guided-workout", icon: ListChecks, label: "Treino Guiado" },
   { to: "/dashboard/ads", icon: Megaphone, label: "Propagandas" },
   { to: "/dashboard/subscription", icon: CreditCard, label: "Assinatura" },
+  { to: "/baixar-app", icon: Download, label: "Baixar App" },
+  { to: "/sobre", icon: Info, label: "Novidades & Versão" },
 ];
 
 const FloatingDock = () => {

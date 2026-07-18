@@ -187,6 +187,7 @@ const Landing = () => {
             <Link to="/triagem-marcadores" className="hover:text-foreground transition-colors">Triagem</Link>
             <Link to="/diario-alimentar" className="hover:text-foreground transition-colors">Diário</Link>
             <Link to="/baixar-app" className="hover:text-foreground transition-colors">Baixar App</Link>
+            <Link to="/sobre" className="hover:text-foreground transition-colors">Novidades</Link>
           </div>
 
           {/* Right side: CTA + hamburger */}
@@ -230,6 +231,7 @@ const Landing = () => {
                   { href: "/tendencias", label: "STH News" },
                   { href: "/diario-alimentar", label: "Diário Alimentar" },
                   { href: "/baixar-app", label: "Baixar App" },
+                  { href: "/sobre", label: "Novidades & Versão" },
                 ].map((item) => (
                   <LinkOrA
                     key={item.href}
