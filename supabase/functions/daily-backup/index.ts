@@ -1,5 +1,7 @@
 // Daily backup edge function
-// - action=run: dumps all public tables to gzipped JSON and commits to GitHub
+// - action=run: prepares a manual table-by-table backup or dispatches cron jobs
+// - action=table: dumps one public table to gzipped JSON and commits to GitHub
+// - action=manifest: writes a lightweight manifest after table files exist
 // - action=list: lists backups (admin only)
 // - action=download: returns file content (admin only)
 // Auth: shared token (cron) OR admin JWT
@@ -20,6 +22,7 @@ const CRON_TOKEN = Deno.env.get("BACKUP_CRON_TOKEN")!;
 const REPO_OWNER = "alexandrelbarros30";
 const REPO_NAME = "sthmethod-backups";
 const GATEWAY = "https://connector-gateway.lovable.dev/github";
+const TABLE_NAME_RE = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 
 // Tables to skip (auth-managed, high-churn logs, ephemeral throttles)
 const SKIP_TABLES = new Set([
@@ -67,6 +70,11 @@ async function listPublicTables(supabase: ReturnType<typeof createClient>): Prom
   return (data as { table_name: string }[]).map((r) => r.table_name);
 }
 
+async function backupTables(supabase: ReturnType<typeof createClient>): Promise<string[]> {
+  const tables = await listPublicTables(supabase);
+  return tables.filter((table) => !SKIP_TABLES.has(table));
+}
+
 async function dumpTable(supabase: ReturnType<typeof createClient>, table: string): Promise<unknown[]> {
   const rows: unknown[] = [];
   const pageSize = 1000;
@@ -86,10 +94,11 @@ async function dumpTable(supabase: ReturnType<typeof createClient>, table: strin
 }
 
 async function ghPutFile(path: string, contentBase64: string, message: string) {
+  const existing = await ghGetJson(path) as { sha?: string } | null;
   const res = await fetch(`${GATEWAY}/repos/${REPO_OWNER}/${REPO_NAME}/contents/${path}`, {
     method: "PUT",
     headers: ghHeaders(),
-    body: JSON.stringify({ message, content: contentBase64 }),
+    body: JSON.stringify({ message, content: contentBase64, ...(existing?.sha ? { sha: existing.sha } : {}) }),
   });
   if (!res.ok) {
     const t = await res.text();
@@ -124,40 +133,76 @@ async function assertAdmin(req: Request): Promise<{ ok: boolean; error?: string 
   return { ok: true };
 }
 
-async function runBackup() {
+function isCronRequest(req: Request) {
+  return req.headers.get("x-backup-token") === CRON_TOKEN;
+}
+
+async function dumpSingleTable(table: string, day: string) {
+  if (!TABLE_NAME_RE.test(table)) throw new Error("invalid table");
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
-  const tables = await listPublicTables(supabase);
-  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-  const started = new Date().toISOString();
+  const allowedTables = await backupTables(supabase);
+  if (!allowedTables.includes(table)) throw new Error("table not allowed for backup");
 
-  const summary: Array<{ table: string; rows: number; bytes: number; error?: string }> = [];
+  const rows = await dumpTable(supabase, table);
+  const gz = await gzipBytes(JSON.stringify(rows));
+  await ghPutFile(
+    `${day}/${table}.json.gz`,
+    bytesToBase64(gz),
+    `backup ${day} ${table} (${rows.length} rows)`,
+  );
+  return { table, rows: rows.length, bytes: gz.length };
+}
 
+async function writeManifest(day: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Error("invalid day");
+  const files = (await ghGetJson(day)) as Array<{ name: string; size: number; path: string }> | null;
+  const summary = (files ?? [])
+    .filter((file) => file.name.endsWith(".json.gz") && file.name !== "_manifest.json.gz")
+    .map((file) => ({ file: file.name, path: file.path, bytes: file.size }));
+
+  const manifest = {
+    date: day,
+    finished: new Date().toISOString(),
+    files: summary,
+    file_count: summary.length,
+  };
+  const manifestGz = await gzipBytes(JSON.stringify(manifest, null, 2));
+  await ghPutFile(`${day}/_manifest.json.gz`, bytesToBase64(manifestGz), `manifest ${day}`);
+  return manifest;
+}
+
+async function dispatchCronBackup(req: Request, day: string, tables: string[]) {
+  const base = new URL(req.url);
+  let ok = 0;
+  let failed = 0;
+
+  // Keep server-side cron lightweight: each invocation dumps exactly one table.
   for (const table of tables) {
-    if (SKIP_TABLES.has(table)) continue;
+    const next = new URL(base);
+    next.searchParams.set("action", "table");
+    next.searchParams.set("day", day);
+    next.searchParams.set("table", table);
     try {
-      const rows = await dumpTable(supabase, table);
-      const gz = await gzipBytes(JSON.stringify(rows));
-      const b64 = bytesToBase64(gz);
-      await ghPutFile(
-        `${today}/${table}.json.gz`,
-        b64,
-        `backup ${today} ${table} (${rows.length} rows)`,
-      );
-      summary.push({ table, rows: rows.length, bytes: gz.length });
+      const res = await fetch(next.toString(), {
+        method: "POST",
+        headers: { "x-backup-token": CRON_TOKEN, "Content-Type": "application/json" },
+      });
+      await res.text();
+      if (res.ok) ok += 1;
+      else failed += 1;
     } catch (e) {
-      summary.push({ table, rows: 0, bytes: 0, error: String(e) });
+      failed += 1;
+      console.error("cron table dispatch failed", table, e);
     }
   }
 
-  // Manifest
-  const manifest = { date: today, started, finished: new Date().toISOString(), summary };
-  const manifestGz = await gzipBytes(JSON.stringify(manifest, null, 2));
-  await ghPutFile(
-    `${today}/_manifest.json.gz`,
-    bytesToBase64(manifestGz),
-    `manifest ${today}`,
-  );
-  return manifest;
+  try {
+    await writeManifest(day);
+  } catch (e) {
+    console.error("cron manifest failed", e);
+  }
+
+  console.log("cron backup dispatch finished", { day, ok, failed });
 }
 
 Deno.serve(async (req) => {
@@ -171,14 +216,37 @@ Deno.serve(async (req) => {
     if (!gate.ok) return jsonResp(401, { error: gate.error });
 
     if (action === "run") {
-      // Run in background — full dump exceeds per-request CPU budget.
-      // @ts-ignore EdgeRuntime is provided by Supabase edge runtime
-      EdgeRuntime.waitUntil(
-        runBackup()
-          .then((m) => console.log("backup done", m.date, m.summary.length, "tables"))
-          .catch((e) => console.error("backup failed", e)),
-      );
-      return jsonResp(202, { ok: true, status: "started", message: "Backup rodando em background. Atualize a lista em ~1-2 min." });
+      const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
+      const tables = await backupTables(supabase);
+      const day = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+      if (isCronRequest(req)) {
+        // @ts-ignore EdgeRuntime is provided by Supabase edge runtime
+        EdgeRuntime.waitUntil(dispatchCronBackup(req, day, tables));
+        return jsonResp(202, { ok: true, status: "started", day, total: tables.length });
+      }
+
+      return jsonResp(200, {
+        ok: true,
+        status: "ready",
+        day,
+        tables,
+        total: tables.length,
+        message: "Backup preparado. O portal salvará uma tabela por vez para evitar limite de CPU.",
+      });
+    }
+
+    if (action === "table") {
+      const table = url.searchParams.get("table") ?? "";
+      const day = url.searchParams.get("day") ?? new Date().toISOString().slice(0, 10);
+      const result = await dumpSingleTable(table, day);
+      return jsonResp(200, { ok: true, status: "table_done", day, ...result });
+    }
+
+    if (action === "manifest") {
+      const day = url.searchParams.get("day") ?? new Date().toISOString().slice(0, 10);
+      const manifest = await writeManifest(day);
+      return jsonResp(200, { ok: true, status: "completed", manifest });
     }
 
     if (action === "list") {
