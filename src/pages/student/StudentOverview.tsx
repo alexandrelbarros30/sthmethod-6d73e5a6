@@ -346,7 +346,11 @@ const StudentOverview = () => {
         onAdd={(ml) => addWater.mutate(ml)}
         onRemove={() => removeLastWater.mutate()}
       />
+        </>
+      )}
 
+      {activeTab === "discover" && (
+        <>
       {/* STH NEWS — última tendência publicada (destaque grande) */}
       <Link to={latestTrend.path} className="block mb-10 group">
         <div className="rounded-3xl border border-border/40 hover:border-border transition-colors overflow-hidden relative">
