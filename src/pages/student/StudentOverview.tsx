@@ -3,7 +3,8 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
   Salad, ChevronRight, Flame, Clock, Utensils,
-  UtensilsCrossed, Beaker, Brain, Layers, Bell, Droplets, Target, Plus, Minus, Beef
+  UtensilsCrossed, Beaker, Brain, Layers, Bell, Droplets, Target, Plus, Minus, Beef,
+  Home as HomeIcon, Compass
 } from "lucide-react";
 import cardHormoniosImg from "@/assets/sthnews-subq-glass-1.jpg";
 import cardDicasImg from "@/assets/sthnews-triade-thumb.jpg";
@@ -148,6 +149,15 @@ const StudentOverview = () => {
   const { profile, user } = useAuth();
   const navigate = useNavigate();
   const [greeting] = useState(getGreeting);
+  const [activeTab, setActiveTab] = useState<"home" | "discover">(() => {
+    if (typeof window === "undefined") return "home";
+    return (localStorage.getItem("student-home-tab") as "home" | "discover") || "home";
+  });
+
+  const switchTab = (t: "home" | "discover") => {
+    setActiveTab(t);
+    try { localStorage.setItem("student-home-tab", t); } catch {}
+  };
 
   const { data: subscription } = useQuery({
     queryKey: ["subscription", user?.id],
@@ -237,6 +247,28 @@ const StudentOverview = () => {
         </button>
       </div>
 
+      {/* TABS — Jornada (acionável) | Descobrir (conteúdo) */}
+      <div className="mb-6 -mx-1 flex items-center gap-1 p-1 rounded-full bg-muted/40 border border-border/40 sticky top-2 z-30 backdrop-blur-md">
+        <button
+          onClick={() => switchTab("home")}
+          className={`flex-1 h-10 rounded-full text-[12.5px] font-medium tracking-tight flex items-center justify-center gap-1.5 transition-colors ${
+            activeTab === "home" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <HomeIcon className="w-3.5 h-3.5" strokeWidth={2} /> Jornada
+        </button>
+        <button
+          onClick={() => switchTab("discover")}
+          className={`flex-1 h-10 rounded-full text-[12.5px] font-medium tracking-tight flex items-center justify-center gap-1.5 transition-colors ${
+            activeTab === "discover" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Compass className="w-3.5 h-3.5" strokeWidth={2} /> Descobrir
+        </button>
+      </div>
+
+      {activeTab === "home" && (
+        <>
       <STHFlowCard />
 
       {/* CICLO DE ATUALIZAÇÃO — só aparece quando há ação pendente */}
@@ -314,7 +346,11 @@ const StudentOverview = () => {
         onAdd={(ml) => addWater.mutate(ml)}
         onRemove={() => removeLastWater.mutate()}
       />
+        </>
+      )}
 
+      {activeTab === "discover" && (
+        <>
       {/* STH NEWS — última tendência publicada (destaque grande) */}
       <Link to={latestTrend.path} className="block mb-10 group">
         <div className="rounded-3xl border border-border/40 hover:border-border transition-colors overflow-hidden relative">
@@ -457,6 +493,8 @@ const StudentOverview = () => {
           ))}
         </div>
       </div>
+        </>
+      )}
 
     </DashboardLayout>
   );
