@@ -12,6 +12,28 @@ const isPreviewHost = () =>
   (window.location.hostname.includes("lovableproject.com") ||
     window.location.hostname.includes("preview--"));
 
+// Detecta se o app está rodando dentro do wrapper nativo do Capacitor
+// (APK/AAB Android ou app iOS). Nesse caso, ao abrir na raiz "/" mandamos
+// direto para a tela de login (não faz sentido mostrar a landing pública
+// dentro do app instalado).
+const isNativeApp = () => {
+  if (typeof window === "undefined") return false;
+  const w = window as any;
+  if (w.Capacitor?.isNativePlatform?.()) return true;
+  const proto = window.location.protocol;
+  const host = window.location.hostname;
+  // Capacitor Android default: https://localhost | capacitor://localhost
+  return (proto === "capacitor:") || (host === "localhost" && (proto === "https:" || proto === "capacitor:"));
+};
+
+if (isNativeApp()) {
+  const path = window.location.pathname;
+  const rootLike = path === "/" || path === "/index.html" || path === "";
+  if (rootLike) {
+    window.history.replaceState(null, "", "/login");
+  }
+}
+
 const forceRefreshToVersion = (version: string) => {
   const url = new URL(window.location.href);
   url.searchParams.set("_v", version.replace(/\+/g, "-"));
