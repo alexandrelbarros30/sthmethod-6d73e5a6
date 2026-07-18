@@ -20,14 +20,61 @@ export default function STHFlowCard() {
   const { data, isLoading } = useQuery({
     queryKey: ["sth-flow-status", targetId],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      // Base manual (definida por admin/consultor)
+      const manualPromise = (supabase as any)
         .from("student_flow_status")
         .select("*")
         .eq("user_id", targetId!)
         .maybeSingle();
-      return data;
+
+      // Fontes reais para derivar automaticamente
+      const [
+        manualRes,
+        bodyImgs,
+        weightLogs,
+        subs,
+        diets,
+        protocols,
+        trainings,
+      ] = await Promise.all([
+        manualPromise,
+        (supabase as any).from("body_images").select("id", { count: "exact", head: true }).eq("user_id", targetId!),
+        (supabase as any).from("weight_logs").select("id", { count: "exact", head: true }).eq("user_id", targetId!),
+        (supabase as any).from("subscriptions").select("id,status,end_date").eq("user_id", targetId!),
+        (supabase as any).from("student_diets").select("id", { count: "exact", head: true }).eq("user_id", targetId!),
+        (supabase as any).from("student_protocols").select("id", { count: "exact", head: true }).eq("user_id", targetId!),
+        (supabase as any).from("student_workout_assignments").select("id", { count: "exact", head: true }).eq("user_id", targetId!),
+      ]);
+
+      const manual = manualRes?.data || {};
+      const nowIso = new Date().toISOString();
+      const has = (r: any) => (r?.count ?? 0) > 0;
+      const hasSub = Array.isArray(subs?.data) && subs.data.some((s: any) =>
+        ["active", "approved", "trialing"].includes(String(s.status || "").toLowerCase()) ||
+        (s.end_date && new Date(s.end_date) > new Date())
+      );
+      const hasDiet = has(diets);
+      const hasProt = has(protocols);
+      const hasTrain = has(trainings);
+      const hasAnalysis = has(bodyImgs) || has(weightLogs);
+      const platformReleased = hasDiet || hasProt || hasTrain;
+      const advancedReady = hasDiet && hasProt && hasTrain;
+
+      return {
+        cadastro_recebido_at: manual.cadastro_recebido_at || nowIso,
+        dados_em_analise_at:
+          manual.dados_em_analise_at || (hasAnalysis || hasSub ? nowIso : null),
+        estrategia_estruturando_at:
+          manual.estrategia_estruturando_at || (hasSub || platformReleased ? nowIso : null),
+        plataforma_liberada_at:
+          manual.plataforma_liberada_at || (platformReleased ? nowIso : null),
+        plano_avancado_pronto_at:
+          manual.plano_avancado_pronto_at || (advancedReady ? nowIso : null),
+      };
     },
     enabled: !!targetId,
+    staleTime: 60_000,
+    refetchOnMount: "always",
   });
 
   if (isLoading || !data) return null;
