@@ -6,14 +6,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Layers, FolderCog, Eye, Dumbbell } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { Search, Layers, FolderCog, Eye, Dumbbell, X, Loader2 } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import StudentProgramAssignDialog from "@/components/admin/StudentProgramAssignDialog";
 import ReleaseNotifyButton from "@/components/admin/ReleaseNotifyButton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { normalizeSearch } from "@/lib/utils";
+import { toast } from "sonner";
 
 const AdminTraining = () => {
   const navigate = useNavigate();
@@ -24,6 +26,8 @@ const AdminTraining = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [returnToManage, setReturnToManage] = useState<string | null>(null);
   const isMobile = useIsMobile();
+  const qc = useQueryClient();
+  const [confirmUnassign, setConfirmUnassign] = useState<{ userId: string; programId: string; programTitle: string; userName: string } | null>(null);
 
   const { data: students } = useQuery({
     queryKey: ["admin-students-training-assign-list"],
@@ -58,7 +62,9 @@ const AdminTraining = () => {
       });
       return (profiles || []).map((p: any) => ({
         ...p,
-        assignedPrograms: Array.from(studentPrograms[p.user_id] || []).map((id) => progTitle[id]).filter(Boolean),
+        assignedPrograms: Array.from(studentPrograms[p.user_id] || [])
+          .map((id) => ({ id, title: progTitle[id] }))
+          .filter((x) => x.title),
         initials:
           p.full_name
             ?.split(" ")
@@ -68,6 +74,31 @@ const AdminTraining = () => {
             .toUpperCase() || "?",
       }));
     },
+  });
+
+  const unassignMutation = useMutation({
+    mutationFn: async ({ userId, programId }: { userId: string; programId: string }) => {
+      const { data: tpls, error: tErr } = await supabase
+        .from("workout_templates")
+        .select("id")
+        .eq("program_id", programId);
+      if (tErr) throw tErr;
+      const tIds = (tpls || []).map((t: any) => t.id);
+      if (!tIds.length) return;
+      const { error } = await supabase
+        .from("student_workout_assignments")
+        .delete()
+        .eq("user_id", userId)
+        .in("template_id", tIds);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Programa desatribuído do aluno.");
+      qc.invalidateQueries({ queryKey: ["admin-students-training-assign-list"] });
+      qc.invalidateQueries({ queryKey: ["student-assignments"] });
+      setConfirmUnassign(null);
+    },
+    onError: (e: any) => toast.error(e.message || "Erro ao desatribuir."),
   });
 
   useEffect(() => {
@@ -164,8 +195,19 @@ const AdminTraining = () => {
                       <TableCell>
                         {s.assignedPrograms.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
-                            {s.assignedPrograms.map((title: string) => (
-                              <Badge key={title} variant="secondary" className="text-xs">{title}</Badge>
+                            {s.assignedPrograms.map((p: any) => (
+                              <Badge key={p.id} variant="secondary" className="text-xs pl-2 pr-1 gap-1 flex items-center">
+                                <span className="truncate max-w-[160px]">{p.title}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmUnassign({ userId: s.user_id, programId: p.id, programTitle: p.title, userName: s.full_name || s.email })}
+                                  className="ml-0.5 rounded-full hover:bg-destructive/20 hover:text-destructive p-0.5 transition"
+                                  title="Desatribuir"
+                                  aria-label={`Desatribuir ${p.title}`}
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </Badge>
                             ))}
                           </div>
                         ) : (
@@ -232,8 +274,19 @@ const AdminTraining = () => {
               <p className="text-xs text-muted-foreground mb-1.5">Programa(s) atribuído(s)</p>
               {selectedStudent?.assignedPrograms?.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
-                  {selectedStudent.assignedPrograms.map((title: string) => (
-                    <Badge key={title} variant="secondary" className="text-xs">{title}</Badge>
+                  {selectedStudent.assignedPrograms.map((p: any) => (
+                    <Badge key={p.id} variant="secondary" className="text-xs pl-2 pr-1 gap-1 flex items-center">
+                      <span className="truncate max-w-[180px]">{p.title}</span>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmUnassign({ userId: selectedStudent.user_id, programId: p.id, programTitle: p.title, userName: selectedStudent.full_name || selectedStudent.email })}
+                        className="ml-0.5 rounded-full hover:bg-destructive/20 hover:text-destructive p-0.5 transition"
+                        title="Desatribuir"
+                        aria-label={`Desatribuir ${p.title}`}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
                   ))}
                 </div>
               ) : (
@@ -264,6 +317,31 @@ const AdminTraining = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!confirmUnassign} onOpenChange={(o) => !o && setConfirmUnassign(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desatribuir programa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Remover <strong>{confirmUnassign?.programTitle}</strong> do aluno <strong>{confirmUnassign?.userName}</strong>? O aluno deixará de ver esse treino.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={unassignMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                if (confirmUnassign) unassignMutation.mutate({ userId: confirmUnassign.userId, programId: confirmUnassign.programId });
+              }}
+              disabled={unassignMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {unassignMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+              Desatribuir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
