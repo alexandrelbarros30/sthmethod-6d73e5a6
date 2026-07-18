@@ -2,7 +2,7 @@ import { useStudentDossier } from "@/hooks/useStudentDossier";
 import { formatPhoneBR } from "@/lib/phone";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, User, Phone, Target, CreditCard, Activity, FileText, Image as ImageIcon, Scale } from "lucide-react";
+import { Loader2, User, Phone, Target, CreditCard, Activity, FileText, Image as ImageIcon, Scale, Heart } from "lucide-react";
 
 function fmtDate(s: string | null | undefined): string {
   if (!s) return "—";
@@ -117,6 +117,84 @@ export default function StudentDossier({ phone }: { phone: string | null }) {
         <div><ImageIcon className="w-3.5 h-3.5 mx-auto mb-1 text-muted-foreground" /><div className="font-semibold">{data.counts.body_images}</div><div className="text-[10px] text-muted-foreground">Fotos</div></div>
         <div><Scale className="w-3.5 h-3.5 mx-auto mb-1 text-muted-foreground" /><div className="font-semibold">{data.counts.weight_logs}</div><div className="text-[10px] text-muted-foreground">Pesos</div></div>
       </Card>
+
+      <CheckinsTrendCard checkins={data.checkins} />
     </div>
+  );
+}
+
+const MOOD_EMOJI = ["", "😞", "😕", "😐", "🙂", "😄"];
+const ENERGY_EMOJI = ["", "🔋", "🪫", "⚡", "💪", "🚀"];
+
+function CheckinsTrendCard({ checkins }: { checkins: Array<{ checkin_date: string; mood: number; energy: number }> }) {
+  if (!checkins.length) {
+    return (
+      <Card className="p-3 text-xs">
+        <div className="flex items-center gap-2 mb-1"><Heart className="w-3 h-3 text-muted-foreground" /> <span className="font-medium">Humor & Energia (14d)</span></div>
+        <div className="text-[11px] text-muted-foreground">Sem check-ins recentes.</div>
+      </Card>
+    );
+  }
+  const byDate = new Map(checkins.map((c) => [c.checkin_date, c]));
+  const days: Array<{ date: string; c: any }> = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+    days.push({ date: d, c: byDate.get(d) });
+  }
+  const avg = (k: "mood" | "energy") => {
+    const vals = checkins.map((c) => c[k]);
+    return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length) : 0;
+  };
+  const moodAvg = avg("mood");
+  const energyAvg = avg("energy");
+  const last = checkins[checkins.length - 1];
+
+  const bar = (v: number | undefined, hue: string) => {
+    const h = v ? 6 + v * 4 : 3;
+    const bg = v ? hue : "hsl(var(--muted))";
+    return <div style={{ height: h, background: bg, opacity: v ? 1 : 0.3 }} className="rounded-sm w-full" />;
+  };
+
+  return (
+    <Card className="p-3 text-xs space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2"><Heart className="w-3 h-3 text-muted-foreground" /> <span className="font-medium">Humor & Energia (14d)</span></div>
+        <span className="text-[10px] text-muted-foreground">{checkins.length} registros</span>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
+          <span>Humor</span>
+          <span>média {moodAvg.toFixed(1)}/5</span>
+        </div>
+        <div className="grid grid-cols-14 gap-0.5 items-end h-6" style={{ gridTemplateColumns: "repeat(14, minmax(0,1fr))" }}>
+          {days.map((d) => (
+            <div key={"m" + d.date} title={`${d.date} · ${d.c ? MOOD_EMOJI[d.c.mood] : "sem check-in"}`} className="flex items-end h-full">
+              {bar(d.c?.mood, "hsl(160 70% 45%)")}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
+          <span>Energia</span>
+          <span>média {energyAvg.toFixed(1)}/5</span>
+        </div>
+        <div className="grid gap-0.5 items-end h-6" style={{ gridTemplateColumns: "repeat(14, minmax(0,1fr))" }}>
+          {days.map((d) => (
+            <div key={"e" + d.date} title={`${d.date} · ${d.c ? ENERGY_EMOJI[d.c.energy] : "sem check-in"}`} className="flex items-end h-full">
+              {bar(d.c?.energy, "hsl(45 95% 55%)")}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {last && (
+        <div className="text-[11px] text-muted-foreground pt-1 border-t border-border/40">
+          Último: {MOOD_EMOJI[last.mood]} {ENERGY_EMOJI[last.energy]} em {fmtDate(last.checkin_date)}
+        </div>
+      )}
+    </Card>
   );
 }
