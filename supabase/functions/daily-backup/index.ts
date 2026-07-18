@@ -1,6 +1,6 @@
 // Daily backup edge function
 // - action=run: prepares a manual table-by-table backup or dispatches cron jobs
-// - action=table: dumps one public table to gzipped JSON and commits to GitHub
+// - action=table: dumps one public table to gzipped JSON into private storage and mirrors to GitHub when available
 // - action=manifest: writes a lightweight manifest after table files exist
 // - action=list: lists backups (admin only)
 // - action=download: returns file content (admin only)
@@ -22,6 +22,7 @@ const CRON_TOKEN = Deno.env.get("BACKUP_CRON_TOKEN")!;
 const REPO_OWNER = "alexandrelbarros30";
 const REPO_NAME = "sthmethod-backups";
 const GATEWAY = "https://connector-gateway.lovable.dev/github";
+const BACKUP_BUCKET = "database-backups";
 const TABLE_NAME_RE = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 
 class UserFacingError extends Error {
@@ -120,6 +121,30 @@ async function ghPutFile(path: string, contentBase64: string, message: string) {
   }
 }
 
+async function storagePutFile(supabase: ReturnType<typeof createClient>, path: string, bytes: Uint8Array) {
+  const { error } = await supabase.storage
+    .from(BACKUP_BUCKET)
+    .upload(path, new Blob([bytes], { type: "application/gzip" }), {
+      contentType: "application/gzip",
+      upsert: true,
+    });
+
+  if (error) throw new Error(`storage put ${path}: ${error.message}`);
+}
+
+async function tryMirrorToGitHub(path: string, bytes: Uint8Array, message: string) {
+  try {
+    const status = await getBackupRepositoryStatus();
+    if (!status.available) return { mirrored: false, warning: status.warning };
+    await ghPutFile(path, bytesToBase64(bytes), message);
+    return { mirrored: true };
+  } catch (e) {
+    const warning = e instanceof Error ? e.message : String(e);
+    console.warn("github mirror skipped", { path, warning });
+    return { mirrored: false, warning };
+  }
+}
+
 async function ghGetJson(path: string) {
   const res = await fetch(`${GATEWAY}/repos/${REPO_OWNER}/${REPO_NAME}/contents/${path}`, {
     headers: ghHeaders(),
@@ -129,41 +154,45 @@ async function ghGetJson(path: string) {
   return await res.json();
 }
 
-async function ensureBackupRepositoryReady() {
+async function getBackupRepositoryStatus() {
+  if (!LOVABLE_API_KEY || !GITHUB_API_KEY) {
+    return {
+      available: false,
+      warning: "Espelho GitHub indisponível: credenciais do conector não estão disponíveis.",
+    };
+  }
+
   const repoRes = await fetch(`${GATEWAY}/repos/${REPO_OWNER}/${REPO_NAME}`, {
     headers: ghHeaders(),
   });
 
   if (repoRes.status === 404) {
     const details = await repoRes.text();
-    throw new UserFacingError(
-      409,
-      "backup_repo_not_found",
-      `Repositório privado ${REPO_OWNER}/${REPO_NAME} não encontrado ou sem permissão de acesso para o token conectado.`,
+    return {
+      available: false,
+      warning: `Espelho GitHub indisponível: ${REPO_OWNER}/${REPO_NAME} não encontrado ou sem permissão para o token conectado.`,
       details,
-    );
+    };
   }
 
   if (!repoRes.ok) {
     const details = await repoRes.text();
-    throw new UserFacingError(
-      repoRes.status,
-      "backup_repo_access_denied",
-      `Não foi possível acessar o repositório de backup ${REPO_OWNER}/${REPO_NAME}.`,
+    return {
+      available: false,
+      warning: `Espelho GitHub indisponível: falha ${repoRes.status} ao acessar ${REPO_OWNER}/${REPO_NAME}.`,
       details,
-    );
+    };
   }
 
   const repo = await repoRes.json();
   if (!repo?.private) {
-    throw new UserFacingError(
-      409,
-      "backup_repo_not_private",
-      `O repositório ${REPO_OWNER}/${REPO_NAME} precisa ser privado para receber backups do banco.`,
-    );
+    return {
+      available: false,
+      warning: `Espelho GitHub indisponível: ${REPO_OWNER}/${REPO_NAME} precisa ser privado.`,
+    };
   }
 
-  return repo;
+  return { available: true, repo };
 }
 
 async function assertAdmin(req: Request): Promise<{ ok: boolean; error?: string }> {
@@ -196,30 +225,35 @@ async function dumpSingleTable(table: string, day: string) {
 
   const rows = await dumpTable(supabase, table);
   const gz = await gzipBytes(JSON.stringify(rows));
-  await ghPutFile(
-    `${day}/${table}.json.gz`,
-    bytesToBase64(gz),
-    `backup ${day} ${table} (${rows.length} rows)`,
-  );
-  return { table, rows: rows.length, bytes: gz.length };
+  const path = `${day}/${table}.json.gz`;
+  await storagePutFile(supabase, path, gz);
+  const mirror = await tryMirrorToGitHub(path, gz, `backup ${day} ${table} (${rows.length} rows)`);
+  return { table, rows: rows.length, bytes: gz.length, storage: "internal", github_mirror: mirror };
 }
 
 async function writeManifest(day: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Error("invalid day");
-  const files = (await ghGetJson(day)) as Array<{ name: string; size: number; path: string }> | null;
+  const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
+  const { data: files, error } = await supabase.storage.from(BACKUP_BUCKET).list(day, { limit: 1000 });
+  if (error) throw new Error(`storage list ${day}: ${error.message}`);
+
   const summary = (files ?? [])
     .filter((file) => file.name.endsWith(".json.gz") && file.name !== "_manifest.json.gz")
-    .map((file) => ({ file: file.name, path: file.path, bytes: file.size }));
+    .map((file) => ({ file: file.name, path: `${day}/${file.name}`, bytes: file.metadata?.size ?? 0 }));
 
   const manifest = {
     date: day,
     finished: new Date().toISOString(),
+    primary_storage: "internal_private_storage",
+    github_repository: `${REPO_OWNER}/${REPO_NAME}`,
     files: summary,
     file_count: summary.length,
   };
   const manifestGz = await gzipBytes(JSON.stringify(manifest, null, 2));
-  await ghPutFile(`${day}/_manifest.json.gz`, bytesToBase64(manifestGz), `manifest ${day}`);
-  return manifest;
+  const path = `${day}/_manifest.json.gz`;
+  await storagePutFile(supabase, path, manifestGz);
+  const mirror = await tryMirrorToGitHub(path, manifestGz, `manifest ${day}`);
+  return { ...manifest, github_mirror: mirror };
 }
 
 async function dispatchCronBackup(req: Request, day: string, tables: string[]) {
@@ -271,7 +305,7 @@ Deno.serve(async (req) => {
       const tables = await backupTables(supabase);
       const day = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
-      await ensureBackupRepositoryReady();
+      const github = await getBackupRepositoryStatus();
 
       if (isCronRequest(req)) {
         // @ts-ignore EdgeRuntime is provided by Supabase edge runtime
@@ -285,7 +319,11 @@ Deno.serve(async (req) => {
         day,
         tables,
         total: tables.length,
-        message: "Backup preparado. O portal salvará uma tabela por vez para evitar limite de CPU.",
+        primary_storage: "internal_private_storage",
+        github_mirror: github,
+        message: github.available
+          ? "Backup preparado. O portal salvará no armazenamento interno privado e espelhará no GitHub."
+          : "Backup preparado. O portal salvará no armazenamento interno privado; o espelho GitHub está indisponível.",
       });
     }
 
@@ -303,28 +341,40 @@ Deno.serve(async (req) => {
     }
 
     if (action === "list") {
-      await ensureBackupRepositoryReady();
-      const root = (await ghGetJson("")) as Array<{ name: string; type: string }> | null;
+      const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
+      const { data: root, error: rootError } = await supabase.storage.from(BACKUP_BUCKET).list("", { limit: 1000 });
+      if (rootError) throw new Error(`storage list root: ${rootError.message}`);
       const days = (root ?? [])
-        .filter((e) => e.type === "dir" && /^\d{4}-\d{2}-\d{2}$/.test(e.name))
+        .filter((e) => /^\d{4}-\d{2}-\d{2}$/.test(e.name))
         .map((e) => e.name)
         .sort()
         .reverse();
       const day = url.searchParams.get("day");
       if (day) {
-        const files = (await ghGetJson(day)) as Array<{ name: string; size: number; path: string }> | null;
-        return jsonResp(200, { days, files: files ?? [] });
+        const { data: files, error: filesError } = await supabase.storage.from(BACKUP_BUCKET).list(day, { limit: 1000 });
+        if (filesError) throw new Error(`storage list ${day}: ${filesError.message}`);
+        return jsonResp(200, {
+          days,
+          source: "internal_private_storage",
+          files: (files ?? []).map((file) => ({
+            name: file.name,
+            size: file.metadata?.size ?? 0,
+            path: `${day}/${file.name}`,
+            source: "internal_private_storage",
+          })),
+        });
       }
-      return jsonResp(200, { days, files: [] });
+      return jsonResp(200, { days, files: [], source: "internal_private_storage" });
     }
 
     if (action === "download") {
       const path = url.searchParams.get("path");
       if (!path) return jsonResp(400, { error: "missing path" });
-      const file = (await ghGetJson(path)) as { content?: string; encoding?: string } | null;
-      if (!file?.content) return jsonResp(404, { error: "not found" });
-      // Return base64 as-is; frontend decodes and downloads
-      return jsonResp(200, { path, content: file.content, encoding: file.encoding });
+      const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
+      const { data, error } = await supabase.storage.from(BACKUP_BUCKET).download(path);
+      if (error || !data) return jsonResp(404, { error: "not found" });
+      const bytes = new Uint8Array(await data.arrayBuffer());
+      return jsonResp(200, { path, content: bytesToBase64(bytes), encoding: "base64", source: "internal_private_storage" });
     }
 
     return jsonResp(400, { error: "unknown action" });
