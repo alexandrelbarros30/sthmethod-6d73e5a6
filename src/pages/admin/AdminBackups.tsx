@@ -21,7 +21,7 @@ type BackupProgress = {
   errors: number;
 };
 
-async function invokeBackup(action: "run" | "table" | "manifest" | "list" | "download", params: Record<string, string> = {}) {
+async function invokeBackup(action: "run" | "table" | "manifest" | "list" | "download" | "install-cron", params: Record<string, string> = {}) {
   const qs = new URLSearchParams({ action, ...params }).toString();
   const { data, error } = await supabase.functions.invoke(`daily-backup?${qs}`, { method: "POST" });
   if (error) {
@@ -156,6 +156,20 @@ export default function AdminBackups() {
           >
             {runMutation.isPending || progress.running ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
             {progress.running ? "Executando backup..." : "Executar backup agora"}
+          </Button>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={async () => {
+              try {
+                const res = await invokeBackup("install-cron");
+                toast.success(`Backup diário automático agendado (${res?.cron ?? "03:00 UTC"}).`);
+              } catch (e: any) {
+                toast.error(`Falha ao agendar: ${e?.message ?? String(e)}`);
+              }
+            }}
+          >
+            Ativar backup automático diário
           </Button>
         </div>
 
