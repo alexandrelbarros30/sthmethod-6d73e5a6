@@ -171,8 +171,14 @@ Deno.serve(async (req) => {
     if (!gate.ok) return jsonResp(401, { error: gate.error });
 
     if (action === "run") {
-      const manifest = await runBackup();
-      return jsonResp(200, { ok: true, manifest });
+      // Run in background — full dump exceeds per-request CPU budget.
+      // @ts-ignore EdgeRuntime is provided by Supabase edge runtime
+      EdgeRuntime.waitUntil(
+        runBackup()
+          .then((m) => console.log("backup done", m.date, m.summary.length, "tables"))
+          .catch((e) => console.error("backup failed", e)),
+      );
+      return jsonResp(202, { ok: true, status: "started", message: "Backup rodando em background. Atualize a lista em ~1-2 min." });
     }
 
     if (action === "list") {
