@@ -67,6 +67,21 @@ const Login = () => {
         navigate("/cadastro", { replace: true });
         return;
       } else {
+        // Rate-limit gate: check before attempting to sign in
+        try {
+          const { data: gate } = await supabase.functions.invoke("auth-gate", {
+            body: { action: "check", email },
+          });
+          if (gate?.blocked) {
+            const mins = Math.ceil((gate.retry_after_seconds || 900) / 60);
+            toast.error(`Muitas tentativas. Tente novamente em ~${mins} min.`, { duration: 6000 });
+            setLoading(false);
+            return;
+          }
+        } catch (gateErr) {
+          console.warn("[Login] auth-gate check failed (permitindo):", gateErr);
+        }
+
         let signInData: any = null;
         let error: any = null;
         for (let attempt = 0; attempt < 3; attempt++) {
@@ -142,6 +157,10 @@ const Login = () => {
 
         // Successful login path — clear recovery flag
         try { sessionStorage.removeItem("sth-login-auto-recover"); } catch {}
+        // Record success (non-blocking)
+        supabase.functions.invoke("auth-gate", {
+          body: { action: "record", email, success: true },
+        }).catch(() => {});
 
         const userId = signInData.user?.id;
         if (!userId) { toast.error("Não foi possível autenticar. Tente novamente."); setLoading(false); return; }
