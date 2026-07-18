@@ -1,4 +1,5 @@
 import { StatusBar, Style } from "@capacitor/status-bar";
+import { EdgeToEdge } from "@capawesome/capacitor-android-edge-to-edge-support";
 
 const isNativeApp = () => {
   if (typeof window === "undefined") return false;
@@ -19,5 +20,14 @@ export const enableNativeFullscreen = async () => {
     await StatusBar.setBackgroundColor({ color: "#00000000" });
   } catch (_) {
     // Plugin ausente em preview web — ignorar
+  }
+  try {
+    // Torna a barra de navegação do Android transparente e ativa modo
+    // edge-to-edge de verdade. Sem isso, no Android 10+ o app fica com uma
+    // faixa preta ou branca embaixo competindo com a navegação nativa.
+    await EdgeToEdge.enable();
+    await EdgeToEdge.setBackgroundColor({ color: "#00000000" });
+  } catch (_) {
+    // Plugin ausente / iOS — ignorar
   }
 };
