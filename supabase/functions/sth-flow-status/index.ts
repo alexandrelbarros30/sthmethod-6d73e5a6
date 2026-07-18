@@ -24,25 +24,41 @@ Deno.serve(async (req) => {
       });
     }
 
+    const url = new URL(req.url);
+    const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
+
     let targetId = caller.id;
-    try {
-      const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
-      const url = new URL(req.url);
-      const requested = body?.user_id ?? url.searchParams.get("user_id");
-      if (requested && requested !== caller.id) {
-        // Só admin ou consultor vinculado pode consultar outro aluno
-        const [{ data: isAdmin }, { data: link }] = await Promise.all([
-          admin.rpc("has_admin_view", { _user_id: caller.id }),
-          admin
-            .from("consultant_students")
-            .select("id")
-            .eq("consultant_id", caller.id)
-            .eq("student_id", requested)
-            .maybeSingle(),
-        ]);
-        if (isAdmin || link) targetId = requested;
-      }
-    } catch (_) { /* ignore */ }
+    const requested = body?.user_id ?? url.searchParams.get("user_id");
+    if (requested && requested !== caller.id) {
+      // Só admin ou consultor vinculado pode consultar outro aluno
+      const [{ data: isAdmin }, { data: link }] = await Promise.all([
+        admin.rpc("has_admin_view", { _user_id: caller.id }),
+        admin
+          .from("consultant_students")
+          .select("id")
+          .eq("consultant_id", caller.id)
+          .eq("student_id", requested)
+          .maybeSingle(),
+      ]);
+      if (isAdmin || link) targetId = requested;
+    }
+
+    if (body?.action === "dismiss_completed" || url.searchParams.get("action") === "dismiss_completed") {
+      const dismissedAt = new Date().toISOString();
+      const { error } = await admin
+        .from("student_flow_status")
+        .upsert(
+          { user_id: targetId, completed_dismissed_at: dismissedAt, updated_at: dismissedAt },
+          { onConflict: "user_id" },
+        );
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ ok: true, completed_dismissed_at: dismissedAt }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     const [
       manualRes,

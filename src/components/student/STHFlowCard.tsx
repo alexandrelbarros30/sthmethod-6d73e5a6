@@ -99,13 +99,14 @@ export default function STHFlowCard() {
   const dismissCompleted = async () => {
     if (!targetId) return;
     setDismissing(true);
-    await (supabase as any)
-      .from("student_flow_status")
-      .upsert(
-        { user_id: targetId, completed_dismissed_at: new Date().toISOString() },
-        { onConflict: "user_id" },
-      );
+    const { error } = await supabase.functions.invoke("sth-flow-status", {
+      body: { user_id: targetId, action: "dismiss_completed" },
+    });
     setDismissing(false);
+    if (error) {
+      toast.error("Não foi possível fechar o STH Flow agora.");
+      return;
+    }
     qc.invalidateQueries({ queryKey: ["sth-flow-status-v2", targetId] });
   };
 
