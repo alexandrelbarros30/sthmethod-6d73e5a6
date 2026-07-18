@@ -133,16 +133,12 @@ async function storagePutFile(supabase: ReturnType<typeof createClient>, path: s
 }
 
 async function tryMirrorToGitHub(path: string, bytes: Uint8Array, message: string) {
-  try {
-    const status = await getBackupRepositoryStatus();
-    if (!status.available) return { mirrored: false, warning: status.warning };
-    await ghPutFile(path, bytesToBase64(bytes), message);
-    return { mirrored: true };
-  } catch (e) {
-    const warning = e instanceof Error ? e.message : String(e);
-    console.warn("github mirror skipped", { path, warning });
-    return { mirrored: false, warning };
+  const status = await getBackupRepositoryStatus();
+  if (!status.available) {
+    throw new Error(status.warning ?? "Espelho GitHub indisponível.");
   }
+  await ghPutFile(path, bytesToBase64(bytes), message);
+  return { mirrored: true };
 }
 
 async function ghGetJson(path: string) {
