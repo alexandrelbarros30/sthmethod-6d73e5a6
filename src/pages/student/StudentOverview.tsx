@@ -25,6 +25,7 @@ import EvolutionUpdateStatusCard from "@/components/student/EvolutionUpdateStatu
 import DailyHeroCard from "@/components/student/DailyHeroCard";
 import DailyRingsCard from "@/components/student/DailyRingsCard";
 import StreakCard from "@/components/student/StreakCard";
+import DailyCheckinCard from "@/components/student/DailyCheckinCard";
 import { ShieldCheck } from "lucide-react";
 import { formatPhoneBR } from "@/lib/phone";
 import { getLatestTrend } from "@/data/latest-trends";
@@ -301,16 +302,8 @@ const StudentOverview = () => {
         </div>
       )}
 
-      {/* AÇÃO PRIMÁRIA: próxima refeição + progresso */}
-      <DailyMealWidget
-        completedCount={completedCount}
-        totalMeals={totalMeals}
-        progressPercent={progressPercent}
-        nextMeal={nextMeal}
-        isLoading={mealsLoading}
-        isMealCompleted={isMealCompleted}
-        mealsCount={meals.length}
-      />
+      {/* CHECK-IN DIÁRIO — humor + energia (1 tap) */}
+      <DailyCheckinCard />
 
       {/* HIDRATAÇÃO ACIONÁVEL */}
       <HydrationWidget
@@ -319,49 +312,6 @@ const StudentOverview = () => {
         onAdd={(ml) => addWater.mutate(ml)}
         onRemove={() => removeLastWater.mutate()}
       />
-
-      {/* RESUMO MACROS DO DIA */}
-      <div className="mb-10 rounded-3xl border border-border/40 bg-background overflow-hidden">
-        <div className="p-6">
-          <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground mb-5 flex items-center gap-1.5">
-            <Target className="w-3 h-3" /> Resumo do dia
-          </p>
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              {
-                icon: Flame,
-                value: mealsLoading ? "—" : (dayMacros?.kcal ? Math.round(dayMacros.kcal).toLocaleString("pt-BR") : (dayTargetMacros?.kcal ? Math.round(dayTargetMacros.kcal).toLocaleString("pt-BR") : "—")),
-                unit: "kcal",
-                label: "calorias",
-              },
-              {
-                icon: Beef,
-                value: mealsLoading ? "—" : (dayMacros?.protein ? Math.round(dayMacros.protein).toString() : (dayTargetMacros?.protein ? Math.round(dayTargetMacros.protein).toString() : "—")),
-                unit: "g",
-                label: "proteína",
-              },
-              {
-                icon: Droplets,
-                value: mealsLoading ? "—" : (dayWaterMl / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
-                unit: "L",
-                label: dayHydrationGoalL > 0 ? `de ${dayHydrationGoalL}L` : "água",
-              },
-            ].map((s, i) => {
-              const Icon = s.icon;
-              return (
-                <div key={i} className="text-center">
-                  <Icon className="w-4 h-4 text-foreground mx-auto mb-3" strokeWidth={1.8} />
-                  <div className="flex items-baseline justify-center gap-0.5">
-                    <span className="text-[22px] font-semibold text-foreground tabular-nums tracking-[-0.03em] leading-none">{s.value}</span>
-                    <span className="text-[10px] text-muted-foreground font-light">{s.unit}</span>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground font-light mt-2 tracking-tight">{s.label}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
 
       {/* STH NEWS — última tendência publicada (destaque grande) */}
       <Link to={latestTrend.path} className="block mb-10 group">
