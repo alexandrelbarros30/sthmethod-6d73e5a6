@@ -399,6 +399,21 @@ const StudentGuidedWorkout = () => {
             <ChevronLeft className="w-4 h-4" /> Voltar
           </button>
 
+          {program?.poster_url && (
+            <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden border border-border/40 bg-muted">
+              <img
+                src={safeImgUrl(program.poster_url)}
+                alt={program?.title || "Programa"}
+                referrerPolicy="no-referrer"
+                className="absolute inset-0 w-full h-full object-cover"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+              />
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-3">
+                <p className="text-white font-semibold text-sm tracking-tight">{program?.title}</p>
+              </div>
+            </div>
+          )}
+
           {program?.expires_at && (
             <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-2.5 py-1 rounded-full">
               <Calendar className="w-3 h-3" /> Vence em {new Date(program.expires_at).toLocaleDateString("pt-BR")}
