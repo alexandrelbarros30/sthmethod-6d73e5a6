@@ -194,6 +194,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <AdminReauthProvider>
           <DynamicHead />
           {/* UpdateBanner removido a pedido: sem popup de atualização ao entrar */}
           <AccessibilityThemeButton />
@@ -320,6 +321,7 @@ const App = () => (
             <Route path="/admin/notifications" element={<ProtectedRoute allowedRoles={["admin"]}><AdminNotifications /></ProtectedRoute>} />
             <Route path="/admin/release-log" element={<ProtectedRoute allowedRoles={["admin"]}><AdminReleaseLog /></ProtectedRoute>} />
             <Route path="/admin/feedback" element={<ProtectedRoute allowedRoles={["admin","consultor"]}><AdminFeedback /></ProtectedRoute>} />
+            <Route path="/admin/access-audit" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAccessAudit /></ProtectedRoute>} />
             <Route path="/admin/budgets" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBudgets /></ProtectedRoute>} />
             <Route path="/admin/ads" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAds /></ProtectedRoute>} />
             <Route path="/admin/queue" element={<ProtectedRoute allowedRoles={["admin"]}><AdminQueue /></ProtectedRoute>} />
@@ -375,6 +377,7 @@ const App = () => (
           <div className="fixed bottom-1 right-1 text-[9px] text-muted-foreground/40 pointer-events-none z-50 font-mono">
             Versão Beta {APP_RELEASE_VERSION}
           </div>
+          </AdminReauthProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
