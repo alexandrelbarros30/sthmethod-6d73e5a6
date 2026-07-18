@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import heroBgFallback from "@/assets/hero-clients.jpg";
+import marketingLaunchHero from "@/assets/marketing-launch-hero.png";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Calculator, Sparkles } from "lucide-react";
 import { FlaskConical, ArrowUpRight } from "lucide-react";
@@ -358,6 +359,41 @@ const Landing = () => {
       </section>
 
       {/* Apple-style highlights — preço/CTA bar + carrossel */}
+      {/* App launch banner */}
+      <section className="relative bg-black py-16 sm:py-24 px-4 overflow-hidden">
+        <div className="max-w-6xl mx-auto text-center space-y-8">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/40 bg-primary/10 text-primary text-xs tracking-[0.2em] uppercase">
+            <Sparkles className="w-3.5 h-3.5" /> Novo · App STH METHOD
+          </div>
+          <h2 className="text-3xl sm:text-5xl md:text-6xl font-semibold tracking-[-0.03em] text-white">
+            Dieta. Protocolo. Treino.
+          </h2>
+          <p className="text-white/60 max-w-2xl mx-auto text-base sm:text-lg">
+            Acompanhamento completo em um só app. Baixe agora e treine, controle sua dieta e siga seu protocolo em qualquer lugar.
+          </p>
+          <img
+            src={marketingLaunchHero}
+            alt="STH METHOD app — Dieta, Protocolo e Treino"
+            width={1280}
+            height={720}
+            loading="lazy"
+            className="w-full max-w-5xl mx-auto rounded-3xl border border-white/10 shadow-[0_0_120px_-30px_rgba(57,255,20,0.45)]"
+          />
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <Link to="/baixar-app">
+              <Button size="lg" className="rounded-full px-8 h-12 text-[15px] font-medium">
+                Baixar Android
+              </Button>
+            </Link>
+            <Link to="/baixar-app">
+              <Button size="lg" variant="outline" className="rounded-full px-8 h-12 text-[15px] font-medium border-white/20 text-white hover:bg-white/5">
+                Instalar iPhone
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <AppleHighlightsSection />
 
       {/* Dynamic Sections */}

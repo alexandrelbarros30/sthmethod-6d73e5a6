@@ -1,6 +1,7 @@
 import { Download, Smartphone, ShieldCheck, Apple } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import marketingHero from "@/assets/marketing-launch-hero.png";
 
 const APK_URL =
   "https://github.com/alexandrelbarros30/sthmethod-6d73e5a6/releases/latest/download/sthmethod.apk";
@@ -9,6 +10,13 @@ export default function BaixarApp() {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-6 py-16">
       <div className="max-w-xl w-full space-y-8 text-center">
+        <img
+          src={marketingHero}
+          alt="STH METHOD — Dieta, Protocolo e Treino em um só app"
+          width={1280}
+          height={720}
+          className="w-full rounded-2xl border border-white/10 shadow-[0_0_60px_-20px_rgba(57,255,20,0.4)]"
+        />
         <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary/10 border border-primary/30">
           <Smartphone className="w-10 h-10 text-primary" />
         </div>
