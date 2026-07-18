@@ -3,7 +3,8 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
   Salad, ChevronRight, Flame, Clock, Utensils,
-  UtensilsCrossed, Beaker, Brain, Layers, Bell, Droplets, Target, Plus, Minus, Beef
+  UtensilsCrossed, Beaker, Brain, Layers, Bell, Droplets, Target, Plus, Minus, Beef,
+  Home as HomeIcon, Compass
 } from "lucide-react";
 import cardHormoniosImg from "@/assets/sthnews-subq-glass-1.jpg";
 import cardDicasImg from "@/assets/sthnews-triade-thumb.jpg";
