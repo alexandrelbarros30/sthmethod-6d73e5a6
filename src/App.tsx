@@ -149,6 +149,7 @@ import UpdateBanner from "@/components/shared/UpdateBanner";
 import { APP_RELEASE_VERSION } from "@/lib/app-version";
 import AccessibilityThemeButton from "@/components/student/AccessibilityThemeButton";
 import { useAccessibilityTheme } from "@/hooks/useAccessibilityTheme";
+import RefreshButton from "@/components/RefreshButton";
 
 // Lazy load pages that use Tiptap editor to avoid blocking the app
 const AdminDiet = lazy(() => import("./pages/admin/AdminDiet"));
@@ -192,6 +193,7 @@ const App = () => (
           <DynamicHead />
           <UpdateBanner />
           <AccessibilityThemeButton />
+          <RefreshButton />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
