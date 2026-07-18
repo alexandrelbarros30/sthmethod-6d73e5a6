@@ -42,6 +42,8 @@ export default function Sobre() {
   const [checkedAt, setCheckedAt] = useState<Date | null>(null);
   const localRelease = getReleaseVersion(APP_RELEASE_VERSION);
 
+  const forbiddenRegex = /(intelig[êe]ncia\s+artificial|\bIA\b|\bA\.?I\.?\b|github)/i;
+
   const { data: updates = [] } = useQuery({
     queryKey: ["platform_updates", "public"],
     queryFn: async () => {
@@ -52,7 +54,9 @@ export default function Sobre() {
         .order("released_at", { ascending: false })
         .limit(20);
       if (error) throw error;
-      return (data || []) as PlatformUpdate[];
+      return ((data || []) as PlatformUpdate[]).filter(
+        (u) => !forbiddenRegex.test(u.title || "")
+      );
     },
   });
 
@@ -178,15 +182,6 @@ export default function Sobre() {
           )}
         </div>
 
-        {/* Segurança */}
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 flex items-start gap-3">
-          <ShieldCheck className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-          <p className="text-xs text-white/60">
-            As atualizações são hospedadas no repositório oficial da STH METHOD no GitHub e
-            assinadas com o mesmo certificado do app instalado.
-          </p>
-        </div>
-
         {/* Novidades / Changelog */}
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 space-y-4">
           <div className="flex items-center gap-2">
@@ -214,11 +209,6 @@ export default function Sobre() {
                     </span>
                   </div>
                   <p className="text-sm font-semibold">{u.title}</p>
-                  {u.description && (
-                    <p className="text-xs text-white/60 whitespace-pre-line leading-relaxed">
-                      {u.description}
-                    </p>
-                  )}
                 </li>
               ))}
             </ul>
