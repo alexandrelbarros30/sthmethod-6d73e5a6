@@ -109,6 +109,17 @@ export default function STHFlowCard() {
     qc.invalidateQueries({ queryKey: ["sth-flow-status-v2", targetId] });
   };
 
+  // Auto-dispensa o card quando o fluxo chega a 100% — mostra o aviso por
+  // ~6s e some sozinho (fechamento persistido em student_flow_status).
+  useEffect(() => {
+    if (!data?.all_done || data?.completed_dismissed_at || !targetId) return;
+    const t = window.setTimeout(() => {
+      void dismissCompleted();
+    }, 6000);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.all_done, data?.completed_dismissed_at, targetId]);
+
   if (isLoading || !data) return null;
 
   // 100% + já fechado → oculta
