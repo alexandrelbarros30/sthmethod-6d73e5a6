@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Layers, FolderCog, Eye, Dumbbell, X, Loader2 } from "lucide-react";
+import { Search, Layers, FolderCog, Eye, Dumbbell, X, Loader2, Target, Gauge, Calendar } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import StudentProgramAssignDialog from "@/components/admin/StudentProgramAssignDialog";
@@ -28,6 +28,49 @@ const AdminTraining = () => {
   const isMobile = useIsMobile();
   const qc = useQueryClient();
   const [confirmUnassign, setConfirmUnassign] = useState<{ userId: string; programId: string; programTitle: string; userName: string } | null>(null);
+
+  const todayISO = () => new Date().toISOString().slice(0, 10);
+  const fmtDate = (iso?: string | null) => {
+    if (!iso) return "—";
+    try { return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }); } catch { return "—"; }
+  };
+
+  const { data: dialogAssigned } = useQuery({
+    queryKey: ["admin-training-dialog-assigned", selectedStudent?.user_id],
+    enabled: dialogOpen && !!selectedStudent?.user_id,
+    queryFn: async () => {
+      const uid = selectedStudent.user_id;
+      const { data: assigns } = await supabase
+        .from("student_workout_assignments")
+        .select("id, template_id, active, start_date, end_date, visible, created_at")
+        .eq("user_id", uid)
+        .eq("active", true);
+      const tplIds = Array.from(new Set((assigns || []).map((a: any) => a.template_id))).filter(Boolean);
+      if (!tplIds.length) return [] as any[];
+      const { data: tpls } = await supabase
+        .from("workout_templates")
+        .select("id, title, program_id")
+        .in("id", tplIds as string[]);
+      const progIds = Array.from(new Set((tpls || []).map((t: any) => t.program_id))).filter(Boolean);
+      const { data: progs } = progIds.length
+        ? await supabase
+            .from("training_programs")
+            .select("id, title, subtitle, objective, difficulty, poster_url, status")
+            .in("id", progIds as string[])
+        : { data: [] as any[] };
+      const groups: Record<string, { program: any; items: any[]; firstAssignedAt: string }> = {};
+      (assigns || []).forEach((a: any) => {
+        const tpl = (tpls || []).find((t: any) => t.id === a.template_id);
+        if (!tpl?.program_id) return;
+        const prog = (progs || []).find((p: any) => p.id === tpl.program_id);
+        if (!prog) return;
+        if (!groups[prog.id]) groups[prog.id] = { program: prog, items: [], firstAssignedAt: a.created_at };
+        groups[prog.id].items.push({ ...a, templateTitle: tpl.title });
+        if (a.created_at < groups[prog.id].firstAssignedAt) groups[prog.id].firstAssignedAt = a.created_at;
+      });
+      return Object.values(groups).sort((a, b) => (a.firstAssignedAt < b.firstAssignedAt ? -1 : 1));
+    },
+  });
 
   const { data: students } = useQuery({
     queryKey: ["admin-students-training-assign-list"],
@@ -272,22 +315,64 @@ const AdminTraining = () => {
           <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pt-2">
             <div>
               <p className="text-xs text-muted-foreground mb-1.5">Programa(s) atribuído(s)</p>
-              {selectedStudent?.assignedPrograms?.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5">
-                  {selectedStudent.assignedPrograms.map((p: any) => (
-                    <Badge key={p.id} variant="secondary" className="text-xs pl-2 pr-1 gap-1 flex items-center">
-                      <span className="truncate max-w-[180px]">{p.title}</span>
-                      <button
-                        type="button"
-                        onClick={() => setConfirmUnassign({ userId: selectedStudent.user_id, programId: p.id, programTitle: p.title, userName: selectedStudent.full_name || selectedStudent.email })}
-                        className="ml-0.5 rounded-full hover:bg-destructive/20 hover:text-destructive p-0.5 transition"
-                        title="Desatribuir"
-                        aria-label={`Desatribuir ${p.title}`}
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </Badge>
-                  ))}
+              {(dialogAssigned?.length ?? 0) > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {dialogAssigned!.map((g: any, idx: number) => {
+                    const p = g.program;
+                    const t = todayISO();
+                    let active = 0, scheduled = 0, expired = 0, hidden = 0;
+                    g.items.forEach((a: any) => {
+                      if (a.visible === false) hidden++;
+                      else if (a.start_date && a.start_date > t) scheduled++;
+                      else if (a.end_date && a.end_date < t) expired++;
+                      else active++;
+                    });
+                    return (
+                      <div key={p.id} className="relative rounded-xl border bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                        <div className="absolute top-2 left-2 z-10 flex items-center justify-center w-6 h-6 rounded-full bg-black/70 text-white text-[10px] font-semibold">
+                          {idx + 1}
+                        </div>
+                        <div className="absolute top-2 right-2 z-10">
+                          <Button
+                            size="icon"
+                            variant="destructive"
+                            className="h-7 w-7"
+                            onClick={() => setConfirmUnassign({ userId: selectedStudent.user_id, programId: p.id, programTitle: p.title, userName: selectedStudent.full_name || selectedStudent.email })}
+                            title="Remover programa"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                        {p.poster_url ? (
+                          <div className="h-24 w-full bg-muted overflow-hidden">
+                            <img src={p.poster_url} alt={p.title} className="w-full h-full object-cover" loading="lazy" />
+                          </div>
+                        ) : (
+                          <div className="h-16 w-full bg-gradient-to-br from-primary/20 via-primary/5 to-transparent flex items-center justify-center">
+                            <Dumbbell className="w-7 h-7 text-primary/40" />
+                          </div>
+                        )}
+                        <div className="p-2.5 space-y-1.5">
+                          <p className="text-sm font-semibold leading-tight line-clamp-2">{p.title}</p>
+                          {p.subtitle && <p className="text-[11px] text-muted-foreground line-clamp-1">{p.subtitle}</p>}
+                          <div className="flex flex-wrap gap-1">
+                            {p.objective && <Badge variant="outline" className="text-[10px] gap-1"><Target className="w-2.5 h-2.5" />{p.objective}</Badge>}
+                            {p.difficulty && <Badge variant="outline" className="text-[10px] gap-1"><Gauge className="w-2.5 h-2.5" />{p.difficulty}</Badge>}
+                            <Badge variant="outline" className="text-[10px] gap-1"><Dumbbell className="w-2.5 h-2.5" />{g.items.length}</Badge>
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {active > 0 && <Badge className="text-[9px] px-1.5 py-0 h-4 bg-emerald-500/15 text-emerald-600 border-emerald-500/30" variant="outline">{active} ativo</Badge>}
+                            {scheduled > 0 && <Badge className="text-[9px] px-1.5 py-0 h-4 bg-amber-500/15 text-amber-600 border-amber-500/30" variant="outline">{scheduled} agendado</Badge>}
+                            {expired > 0 && <Badge className="text-[9px] px-1.5 py-0 h-4 bg-red-500/15 text-red-600 border-red-500/30" variant="outline">{expired} expirado</Badge>}
+                            {hidden > 0 && <Badge className="text-[9px] px-1.5 py-0 h-4" variant="outline">{hidden} oculto</Badge>}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground pt-0.5">
+                            <Calendar className="w-3 h-3" /> Atribuído em <span className="font-medium text-foreground">{fmtDate(g.firstAssignedAt)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <Badge variant="outline" className="text-xs">Sem atribuição</Badge>
