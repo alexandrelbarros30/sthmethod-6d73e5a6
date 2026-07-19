@@ -62,11 +62,14 @@ const LovableCreditsPanel = () => {
                 Lovable AI Cloud
               </p>
               <p className="text-[15px] font-display font-medium tracking-tight text-foreground">
-                Saldo & consumo de créditos
+                Créditos de IA (Cloud) — separados do plano
               </p>
               <p className="mt-1 text-xs text-muted-foreground max-w-md">
-                O saldo em tempo real fica no painel oficial da Lovable. Aqui você vê a
-                estimativa de consumo interno dos últimos 30 dias.
+                Créditos usados para <strong>contagem de calorias/macros</strong> e
+                <strong> elaboração de programas de treino</strong> pela IA. Estes créditos
+                são <strong>diferentes</strong> dos créditos mensais do plano Free/Pro —
+                consulte o saldo real no painel oficial. Abaixo, estimativa de consumo
+                interno dos últimos 30 dias.
               </p>
             </div>
           </div>
