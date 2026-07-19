@@ -128,6 +128,20 @@ Regras:
     const dpw = Number.isFinite(parsed.days_per_week) ? parsed.days_per_week : parsed.workouts.length;
     const mpd = Number.isFinite(parsed.minutes_per_day) ? parsed.minutes_per_day : null;
 
+    // 0) Detecta gênero do aluno (se houver) para escolher faixa rosa/azul
+    let studentGender: 'F' | 'M' = 'M';
+    if (body.studentId) {
+      try {
+        const { data: prof } = await admin
+          .from('profiles')
+          .select('gender')
+          .eq('id', body.studentId)
+          .maybeSingle();
+        const g = String(prof?.gender || '').toLowerCase();
+        if (g.startsWith('f') || g.includes('mulher') || g.includes('fem')) studentGender = 'F';
+      } catch (_) { /* ignore */ }
+    }
+
     // 1) Cria programa
     const { data: prog, error: progErr } = await admin.from('training_programs').insert({
       title, subtitle, objective, difficulty, details,
@@ -135,6 +149,23 @@ Regras:
     }).select('id').single();
     if (progErr) throw progErr;
     const programId = prog!.id as string;
+
+    // 1b) Geração da capa oficial STH METHOD (assíncrona ao fluxo — falha silenciosa)
+    try {
+      const posterUrl = await generateProgramCover({
+        apiKey,
+        title,
+        gender: studentGender,
+        supabaseUrl: Deno.env.get('SUPABASE_URL')!,
+        admin,
+        programId,
+      });
+      if (posterUrl) {
+        await admin.from('training_programs').update({ poster_url: posterUrl }).eq('id', programId);
+      }
+    } catch (e) {
+      console.error('cover generation failed', e);
+    }
 
     // 2) Carrega biblioteca para tentar matchear exercícios pelo nome
     const { data: lib } = await admin.from('exercise_library').select('id, name, image_url, video_url');
