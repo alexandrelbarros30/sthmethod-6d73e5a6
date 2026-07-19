@@ -385,7 +385,7 @@ export default function AiWorkoutCoachDialog({ triggerLabel, defaultStudentId, s
                 </p>
                 <div className="mt-2 flex gap-2 flex-wrap">
                   <Button asChild size="sm" variant="outline" className="h-7 text-xs">
-                    <Link to={`/admin/training-programs`}>Abrir em Programas</Link>
+                    <Link to={`/admin/workout-templates`}>Abrir em Programas</Link>
                   </Button>
                 </div>
               </div>
