@@ -71,6 +71,7 @@ Deno.serve(async (req) => {
       "exercises": [
         {
           "name": string,                // nome do exercício
+          "sc_id": string|null,          // id oficial do ST Coach quando o texto trouxer o tag [SC:<id>] — copie exatamente o número
           "sets": string,                // ex.: "4"
           "reps": string,                // ex.: "8-12"
           "rest_interval": string,       // ex.: "90s"
@@ -87,7 +88,8 @@ Regras:
 - Sempre retorne JSON válido, apenas o objeto (sem markdown, sem comentários).
 - Se o texto tiver mais de um treino (A/B/C), gere um workout por treino.
 - Se não houver campo, use null (para números) ou string vazia.
-- Não crie exercícios que não estejam no texto.`;
+- Não crie exercícios que não estejam no texto.
+- Se o nome vier com sufixo tipo "[SC:1234]", REMOVA esse sufixo do campo "name" e coloque o número em "sc_id".`;
 
     const model = 'google/gemini-3-flash-preview';
     const resp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -140,10 +142,15 @@ Regras:
     for (const e of (lib || [])) libIndex.set(norm(e.name), e);
 
     // 2b) Índice do catálogo ST Coach (fonte oficial de vídeos/capas)
-    const scIndex = new Map<string, { name: string; video_url?: string; cover_url?: string | null }>();
+    const scByName = new Map<string, { id: string | number; name: string; video_url?: string; cover_url?: string | null }>();
+    const scById = new Map<string, { id: string | number; name: string; video_url?: string; cover_url?: string | null }>();
     try {
       const sc = await getSuperCoachLibrary();
-      for (const e of sc) scIndex.set(normalizeExName(e.name), { name: e.name, video_url: e.video_url, cover_url: e.cover_url });
+      for (const e of sc) {
+        const entry = { id: e.id, name: e.name, video_url: e.video_url, cover_url: e.cover_url };
+        scByName.set(normalizeExName(e.name), entry);
+        scById.set(String(e.id), entry);
+      }
     } catch (e) {
       console.error('materialize: sc library fetch failed', e);
     }
@@ -167,13 +174,18 @@ Regras:
 
       const exs = Array.isArray(w.exercises) ? w.exercises : [];
       const rows = exs.map((ex: any, i: number) => {
-        const key = norm(ex?.name || '');
+        // 1º prioridade: sc_id explícito devolvido pela IA (tag [SC:xxx])
+        let rawName = String(ex?.name || '');
+        let scIdHint = ex?.sc_id ? String(ex.sc_id) : '';
+        const tagMatch = rawName.match(/\[SC:(\d+)\]/i);
+        if (tagMatch) { scIdHint = scIdHint || tagMatch[1]; rawName = rawName.replace(/\s*\[SC:\d+\]\s*/i, '').trim(); }
+        const sc = (scIdHint && scById.get(scIdHint)) || scByName.get(normalizeExName(rawName));
+        const key = norm(sc?.name || rawName);
         const match = libIndex.get(key);
-        const sc = scIndex.get(key);
         return {
           template_id: templateId,
           exercise_id: match?.id || null,
-          custom_name: match ? null : String(sc?.name || ex?.name || '').slice(0, 200),
+          custom_name: match ? null : String(sc?.name || rawName).slice(0, 200),
           image_url: match?.image_url || sc?.cover_url || null,
           video_url: match?.video_url || sc?.video_url || null,
           sets: String(ex?.sets ?? '').slice(0, 60) || null,

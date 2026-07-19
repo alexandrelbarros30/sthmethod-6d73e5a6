@@ -114,27 +114,51 @@ Deno.serve(async (req) => {
         ? 'MODO: COPILOTO. Responda de forma cirúrgica a instrução do treinador (sugerir progressão, trocar exercício, ajustar volume, redistribuir semana, corrigir ponto fraco, etc.). Seja direto, técnico e prático, com justificativa curta. Não repita o programa inteiro se não for pedido.'
         : 'MODO: ANÁLISE VISUAL. Faça a avaliação estética corporal com base nas imagens fornecidas: proporções, desenvolvimento por grupo muscular (escala Muito abaixo/Abaixo/Adequado/Bom/Excelente), pontos fortes e fracos, estimativas visuais (deixando claro que são visuais), e estratégia recomendada. Se houver mais de uma imagem de momentos distintos, faça também a comparação evolutiva. Fundamente APENAS no que é visível.';
 
-    // Catálogo obrigatório de exercícios (ST Coach) — a IA deve usar SOMENTE nomes desta lista.
+    // Catálogo obrigatório de exercícios (ST Coach) — a IA deve usar SOMENTE itens desta lista.
     let libraryBlock = '';
+    let libraryCount = 0;
     try {
       const lib = await getSuperCoachLibrary();
       if (lib.length) {
-        const names = Array.from(new Set(lib.map((e) => e.name.trim()).filter(Boolean))).sort();
-        // Limita para não estourar contexto (nomes são curtos; 1200 costuma caber com folga)
-        const capped = names.slice(0, 1200);
+        // Dedup por nome, preservando o primeiro id.
+        const seen = new Set<string>();
+        const unique: { id: string | number; name: string }[] = [];
+        for (const e of lib) {
+          const key = e.name.trim();
+          if (!key || seen.has(key.toLowerCase())) continue;
+          seen.add(key.toLowerCase());
+          unique.push({ id: e.id, name: key });
+        }
+        unique.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+        const capped = unique.slice(0, 1200);
+        libraryCount = capped.length;
         libraryBlock = [
           '',
-          '=== CATÁLOGO OFICIAL DE EXERCÍCIOS (ST Coach) — USO OBRIGATÓRIO ===',
-          'Regra inegociável: ao montar/ajustar treinos você DEVE escolher exclusivamente exercícios cujo nome apareça EXATAMENTE nesta lista (mesma grafia, incluindo acentos). NÃO invente exercícios, NÃO traduza, NÃO adapte nomes. Se um estímulo desejado não existir no catálogo, escolha a alternativa mais próxima que EXISTA na lista e explique brevemente a substituição.',
-          `Total disponível: ${names.length}${capped.length < names.length ? ` (exibindo os primeiros ${capped.length} por limite de contexto)` : ''}.`,
-          'Lista (um por linha):',
-          capped.join('\n'),
+          '=== CATÁLOGO OFICIAL DE EXERCÍCIOS (ST Coach) — FONTE ÚNICA E OBRIGATÓRIA ===',
+          'REGRA INEGOCIÁVEL (não há exceção):',
+          '1) Você SÓ pode prescrever exercícios cujo nome apareça EXATAMENTE nesta lista (mesma grafia, incluindo acentos e maiúsculas).',
+          '2) É PROIBIDO inventar, traduzir, abreviar, adaptar, combinar ou "criar variação nova" de exercício. Nada fora deste catálogo pode ir para o treino final.',
+          '3) Ao citar um exercício no plano final, SEMPRE anexe o tag do ST Coach no formato `[SC:<id>]` logo após o nome. Exemplo: `Supino reto com barra [SC:1234] — 4x8 — 90s`.',
+          '4) Se o estímulo ideal não existir no catálogo, escolha a alternativa mais próxima QUE EXISTA na lista e justifique a substituição em uma linha.',
+          '5) Se por algum motivo você não conseguir localizar um exercício adequado na lista, diga explicitamente "sem correspondente no ST Coach" — NUNCA fabrique um nome.',
+          `Total disponível nesta chamada: ${libraryCount}${unique.length > libraryCount ? ` (de ${unique.length}, limitado por contexto)` : ''}.`,
+          'Formato de cada linha: `<id> | <nome oficial>`',
+          capped.map((e) => `${e.id} | ${e.name}`).join('\n'),
           '=== FIM DO CATÁLOGO ===',
         ].join('\n');
       }
     } catch (e) {
       console.error('supercoach library fetch failed', e);
     }
+
+    // Reforço no system prompt — a IA precisa entender que a fonte é o banco do ST Coach.
+    const reinforcedSystem = [
+      systemPrompt,
+      '',
+      'FONTE DE EXERCÍCIOS: banco de dados oficial do ST Coach (injetado a cada turno).',
+      'Você NUNCA prescreve exercício que não venha desse banco. Sempre anexe `[SC:<id>]` após o nome do exercício no plano final para permitir vinculação automática com vídeo/gif oficial.',
+      libraryCount ? `Catálogo desta sessão contém ${libraryCount} exercícios do ST Coach.` : 'ATENÇÃO: catálogo do ST Coach indisponível nesta chamada — avise o treinador e não invente exercícios.',
+    ].join('\n');
 
     const userText = [
       dossier,
@@ -145,7 +169,7 @@ Deno.serve(async (req) => {
     ].filter(Boolean).join('\n\n');
 
     // Monta mensagens (multimodal para modo analyze)
-    const messages: any[] = [{ role: 'system', content: systemPrompt }];
+    const messages: any[] = [{ role: 'system', content: reinforcedSystem }];
     if (Array.isArray(body.history)) {
       for (const h of body.history.slice(-8)) {
         if (h?.role && h?.content) messages.push({ role: h.role, content: h.content });
