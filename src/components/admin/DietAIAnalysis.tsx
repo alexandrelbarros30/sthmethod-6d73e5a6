@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Brain, Check, Loader2, Pencil, RotateCcw } from "lucide-react";
 import AICreditsDialog from "./AICreditsDialog";
 import AICreditUsage from "@/components/shared/AICreditUsage";
+import AICreditBalanceBadge from "@/components/shared/AICreditBalanceBadge";
 
 type AnalyzeErrorInfo = {
   message: string;
@@ -199,10 +200,13 @@ const DietAIAnalysis = ({ dietContent, onConfirm }: Props) => {
             <Brain className="w-4 h-4 text-primary" />
             Análise Nutricional por IA
           </CardTitle>
-          <Button variant="ghost" size="sm" onClick={analyze} disabled={loading} className="h-7 gap-1 text-xs">
-            {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
-            Reanalisar
-          </Button>
+          <div className="flex items-center gap-2">
+            <AICreditBalanceBadge compact />
+            <Button variant="ghost" size="sm" onClick={analyze} disabled={loading} className="h-7 gap-1 text-xs">
+              {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
+              Reanalisar
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
