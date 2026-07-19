@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { normalizeSearch } from "@/lib/utils";
 import AICreditUsage from "@/components/shared/AICreditUsage";
+import AICreditBalanceBadge from "@/components/shared/AICreditBalanceBadge";
 import { Link } from "react-router-dom";
 
 type Mode = "generate" | "copilot" | "analyze";
@@ -345,14 +346,17 @@ export default function AiWorkoutCoachDialog({ triggerLabel, defaultStudentId, s
             <span className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" /> STHIA — Elite Coach AI
             </span>
-            {hasConversation && !streaming && (
-              <Button variant="ghost" size="sm" onClick={resetChat} className="gap-1 text-xs">
-                <RotateCcw className="w-3 h-3" /> Nova conversa
+            <div className="flex items-center gap-2">
+              <AICreditBalanceBadge compact />
+              {hasConversation && !streaming && (
+                <Button variant="ghost" size="sm" onClick={resetChat} className="gap-1 text-xs">
+                  <RotateCcw className="w-3 h-3" /> Nova conversa
+                </Button>
+              )}
+              <Button variant="ghost" size="sm" onClick={() => setShowHistory(v => !v)} className="gap-1 text-xs">
+                <History className="w-3 h-3" /> Histórico {history?.length ? `(${history.length})` : ""}
               </Button>
-            )}
-            <Button variant="ghost" size="sm" onClick={() => setShowHistory(v => !v)} className="gap-1 text-xs">
-              <History className="w-3 h-3" /> Histórico {history?.length ? `(${history.length})` : ""}
-            </Button>
+            </div>
           </DialogTitle>
         </DialogHeader>
 
