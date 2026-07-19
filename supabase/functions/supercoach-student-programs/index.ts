@@ -125,6 +125,8 @@ Deno.serve(async (req) => {
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
+    const customerKeys = customer && typeof customer === 'object' ? Object.keys(customer) : []
+
     // Try programs already embedded in the customer object first
     let programs = extractPrograms(customer.programs || customer.trainings || customer)
 
