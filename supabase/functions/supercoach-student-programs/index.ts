@@ -169,6 +169,8 @@ Deno.serve(async (req) => {
       ok: true,
       status: programs.length ? 'ok' : 'empty',
       customer: { id: customer.id, name: customer.name, email: customer.email },
+      customerKeys,
+      customerRaw: customer,
       programs,
       debug,
     }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
