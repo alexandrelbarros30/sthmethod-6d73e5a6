@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import StCoachCredit from "@/components/shared/StCoachCredit";
+import SuperCoachAssignedPrograms from "@/components/shared/SuperCoachAssignedPrograms";
 import WorkoutChronometer from "@/components/student/WorkoutChronometer";
 import { toast } from "sonner";
 
