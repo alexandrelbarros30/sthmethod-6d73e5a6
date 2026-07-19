@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import marketingHero from "@/assets/marketing-launch-hero.png";
 
-const APK_URL =
-  "https://github.com/alexandrelbarros30/sthmethod-6d73e5a6/releases/latest/download/sthmethod.apk";
+import apkAsset from "@/assets/sthmethod.apk.asset.json";
+const APK_URL = apkAsset.url;
 
 export default function BaixarApp() {
   return (
