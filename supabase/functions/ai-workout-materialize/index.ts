@@ -16,6 +16,66 @@ function norm(s: string) {
   return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 }
 
+// Gera capa oficial STH METHOD para o programa (faixa rosa=feminino, azul=masculino)
+// e faz upload no bucket público 'ai-training-media'. Retorna URL pública ou null.
+async function generateProgramCover(opts: {
+  apiKey: string;
+  title: string;
+  gender: 'F' | 'M';
+  supabaseUrl: string;
+  admin: any;
+  programId: string;
+}): Promise<string | null> {
+  const { apiKey, title, gender, supabaseUrl, admin, programId } = opts;
+  const bandHex = gender === 'F' ? '#ff2d87' : '#0a84ff';
+  const bandColor = gender === 'F' ? 'vibrant pink magenta (#ff2d87)' : 'electric royal blue (#0a84ff)';
+  const feminineTraits = gender === 'F'
+    ? 'subtle feminine styling: soft rose glow accents, elegant curves, refined ornamental details'
+    : 'strong masculine styling: sharp geometric edges, metallic steel accents, powerful athletic energy';
+
+  const prompt = [
+    'Vertical fitness program cover art, premium Apple-style dark aesthetic on pure black background (#000000).',
+    'At the top center: the wordmark "STH METHOD" in bold clean modern sans-serif, glowing neon green (#39ff14), high legibility, generous letter-spacing.',
+    `In the middle-lower third: a solid ${bandColor} horizontal band spanning full width, with the exact workout name "${title}" written INSIDE the band in bold uppercase white sans-serif, perfectly centered, high contrast, no typos, no extra words.`,
+    `Overall vibe: cinematic minimal fitness poster, subtle particle/light-ray texture, ${feminineTraits}.`,
+    'No people, no photos of bodies, no other logos, no additional text anywhere. Only the STH METHOD wordmark on top and the workout name in the colored band.',
+    `Color band exact hex: ${bandHex}. Neon green exact hex: #39ff14. Background pure black.`,
+  ].join(' ');
+
+  const resp = await fetch('https://ai.gateway.lovable.dev/v1/images/generations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: 'openai/gpt-image-2',
+      prompt,
+      size: '1024x1024',
+      quality: 'low',
+      n: 1,
+    }),
+  });
+  if (!resp.ok) {
+    const t = await resp.text().catch(() => '');
+    console.error('image gen failed', resp.status, t);
+    return null;
+  }
+  const data = await resp.json().catch(() => ({} as any));
+  const b64 = data?.data?.[0]?.b64_json;
+  if (!b64) return null;
+
+  // decode base64 → bytes
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+
+  const path = `program-covers/${programId}.png`;
+  const { error: upErr } = await admin.storage
+    .from('ai-training-media')
+    .upload(path, bytes, { contentType: 'image/png', upsert: true });
+  if (upErr) { console.error('storage upload failed', upErr); return null; }
+  const { data: pub } = admin.storage.from('ai-training-media').getPublicUrl(path);
+  return pub?.publicUrl || `${supabaseUrl}/storage/v1/object/public/ai-training-media/${path}`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
@@ -128,6 +188,20 @@ Regras:
     const dpw = Number.isFinite(parsed.days_per_week) ? parsed.days_per_week : parsed.workouts.length;
     const mpd = Number.isFinite(parsed.minutes_per_day) ? parsed.minutes_per_day : null;
 
+    // 0) Detecta gênero do aluno (se houver) para escolher faixa rosa/azul
+    let studentGender: 'F' | 'M' = 'M';
+    if (body.studentId) {
+      try {
+        const { data: prof } = await admin
+          .from('profiles')
+          .select('gender')
+          .eq('id', body.studentId)
+          .maybeSingle();
+        const g = String(prof?.gender || '').toLowerCase();
+        if (g.startsWith('f') || g.includes('mulher') || g.includes('fem')) studentGender = 'F';
+      } catch (_) { /* ignore */ }
+    }
+
     // 1) Cria programa
     const { data: prog, error: progErr } = await admin.from('training_programs').insert({
       title, subtitle, objective, difficulty, details,
@@ -135,6 +209,23 @@ Regras:
     }).select('id').single();
     if (progErr) throw progErr;
     const programId = prog!.id as string;
+
+    // 1b) Geração da capa oficial STH METHOD (assíncrona ao fluxo — falha silenciosa)
+    try {
+      const posterUrl = await generateProgramCover({
+        apiKey,
+        title,
+        gender: studentGender,
+        supabaseUrl: Deno.env.get('SUPABASE_URL')!,
+        admin,
+        programId,
+      });
+      if (posterUrl) {
+        await admin.from('training_programs').update({ poster_url: posterUrl }).eq('id', programId);
+      }
+    } catch (e) {
+      console.error('cover generation failed', e);
+    }
 
     // 2) Carrega biblioteca para tentar matchear exercícios pelo nome
     const { data: lib } = await admin.from('exercise_library').select('id, name, image_url, video_url');
