@@ -3,6 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const LOGIN_URL = 'https://supertreinosapp.com/api/v2/user/login'
 const INDEX_URL = 'https://supertreinosapp.com/api/v2/adm/customer/index'
+const PROGRAMS_URL = 'https://supertreinosapp.com/api/v2/programs?pid='
 
 const COMMON_HEADERS = {
   'accept': 'application/json, text/plain, */*',
@@ -125,54 +126,40 @@ Deno.serve(async (req) => {
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
-    const customerKeys = customer && typeof customer === 'object' ? Object.keys(customer) : []
+    // 1) Extract assigned program_id list from the customer's assignments
+    const assignments: any[] = Array.isArray(customer.programs) ? customer.programs : []
+    const assignedIds = Array.from(new Set(
+      assignments.map((a: any) => a?.program_id ?? a?.id).filter((x: any) => x != null),
+    ))
 
-    // Try programs already embedded in the customer object first
-    let programs = extractPrograms(customer.programs || customer.trainings || customer)
-
-    // Then try likely endpoints
-    const cid = customer.id || customer.user_id
-    const attempts = [
-      `https://supertreinosapp.com/api/v2/adm/customer/show/${cid}`,
-      `https://supertreinosapp.com/api/v2/adm/customer/edit/${cid}`,
-      `https://supertreinosapp.com/api/v2/adm/customer/${cid}`,
-      `https://supertreinosapp.com/api/v2/adm/program/customer/${cid}`,
-      `https://supertreinosapp.com/api/v2/adm/program?user_id=${cid}`,
-      `https://supertreinosapp.com/api/v2/adm/program?customer_id=${cid}`,
-      `https://supertreinosapp.com/api/v2/adm/program/index?user_id=${cid}`,
-      `https://supertreinosapp.com/api/v2/adm/program/list?user_id=${cid}`,
-      `https://supertreinosapp.com/api/v2/adm/customer/plans/${cid}`,
-      `https://supertreinosapp.com/api/v2/adm/customer/trainings/${cid}`,
-      `https://supertreinosapp.com/api/v2/programs?user_id=${cid}`,
-      `https://supertreinosapp.com/api/v2/programs?user_id=0`,
-    ]
-    const debug: Array<{ url: string; status: number; keys?: string[]; count?: number; sample?: any }> = []
-    for (const url of attempts) {
-      try {
-        const r = await fetch(url, { headers: auth })
-        const t = await r.text()
-        let j: any = null
-        try { j = JSON.parse(t) } catch { /* ignore */ }
-        const p = r.ok && j ? extractPrograms(j) : []
-        debug.push({
-          url, status: r.status,
-          keys: j && typeof j === 'object' ? Object.keys(j).slice(0, 12) : undefined,
-          count: p.length,
-          sample: p[0]?.id,
-        })
-      } catch (e) {
-        debug.push({ url, status: -1 })
-      }
+    if (!assignedIds.length) {
+      return new Response(JSON.stringify({
+        ok: true, status: 'empty', programs: [],
+        customer: { id: customer.id, name: customer.name, email: customer.email },
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
+
+    // 2) Fetch the trainer's program library once and filter by assigned ids
+    const libRes = await fetch(PROGRAMS_URL, { headers: auth })
+    const libText = await libRes.text()
+    if (!libRes.ok) throw new Error(`Biblioteca de programas SC falhou (${libRes.status})`)
+    const libJson = JSON.parse(libText)
+    const libArr: any[] = libJson?.programs || libJson?.data || (Array.isArray(libJson) ? libJson : [])
+    const byId = new Map<any, any>()
+    for (const p of libArr) if (p && p.id != null) byId.set(p.id, p)
+
+    const programs = assignedIds
+      .map((id) => byId.get(id))
+      .filter(Boolean)
+      .map((p: any) => normalizeProgram(p))
+      .filter(Boolean)
 
     return new Response(JSON.stringify({
       ok: true,
       status: programs.length ? 'ok' : 'empty',
       customer: { id: customer.id, name: customer.name, email: customer.email },
-      customerKeys,
-      customerRaw: customer,
+      assignedIds,
       programs,
-      debug,
     }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
