@@ -170,9 +170,14 @@ Deno.serve(async (req) => {
       assignments: { upserted: assignmentsCreated },
     }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    console.error('[supercoach-full-sync]', msg)
-    return new Response(JSON.stringify({ ok: false, message: msg }),
+    let msg: string
+    if (err instanceof Error) msg = err.message
+    else if (err && typeof err === 'object') {
+      const e = err as any
+      msg = e.message || e.error_description || e.error || e.hint || e.details || e.code || JSON.stringify(err)
+    } else msg = String(err)
+    console.error('[supercoach-full-sync]', msg, JSON.stringify(err))
+    return new Response(JSON.stringify({ ok: false, message: msg, raw: err }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   }
 })
