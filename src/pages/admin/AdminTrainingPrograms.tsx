@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,6 +59,7 @@ const emptyForm: ProgramForm = { title: "", details: "", objective: "general", d
 const AdminTrainingPrograms = () => {
   const { user, role } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
   const [programDialog, setProgramDialog] = useState(false);
   const [editingProgram, setEditingProgram] = useState<string | null>(null);
@@ -67,6 +69,20 @@ const AdminTrainingPrograms = () => {
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [studentSearch, setStudentSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Deep-link: /admin/workout-templates?program=<id> abre direto o programa
+  useEffect(() => {
+    const pid = searchParams.get("program");
+    if (pid && pid !== selectedProgramId) setSelectedProgramId(pid);
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!selectedProgramId && searchParams.get("program")) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("program");
+      setSearchParams(next, { replace: true });
+    }
+  }, [selectedProgramId]);
 
   const { data: programs, isLoading } = useQuery({
     queryKey: ["training-programs"],

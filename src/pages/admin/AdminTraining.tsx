@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Layers, FolderCog, Eye, Dumbbell, X, Loader2, Target, Gauge, Calendar } from "lucide-react";
+import { Search, Layers, FolderCog, Eye, Dumbbell, X, Loader2, Target, Gauge, Calendar, ExternalLink } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import StudentProgramAssignDialog from "@/components/admin/StudentProgramAssignDialog";
@@ -368,6 +368,20 @@ const AdminTraining = () => {
                           </div>
                           <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground pt-0.5">
                             <Calendar className="w-3 h-3" /> Atribuído em <span className="font-medium text-foreground">{fmtDate(g.firstAssignedAt)}</span>
+                          </div>
+                          <div className="flex gap-1.5 pt-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 h-7 text-[11px]"
+                              onClick={() => {
+                                const base = window.location.pathname.startsWith("/consultor") ? "/consultor" : "/admin";
+                                window.open(`${base}/workout-templates?program=${p.id}`, "_blank", "noopener,noreferrer");
+                              }}
+                              title="Abrir o programa em nova aba"
+                            >
+                              <ExternalLink className="w-3 h-3 mr-1" /> Ver treino
+                            </Button>
                           </div>
                         </div>
                       </div>
