@@ -42,7 +42,7 @@ const AdminTraining = () => {
       const uid = selectedStudent.user_id;
       const { data: assigns } = await supabase
         .from("student_workout_assignments")
-        .select("id, template_id, active, start_date, end_date, visible, created_at")
+        .select("id, template_id, active, start_date, end_date, visible, assigned_at")
         .eq("user_id", uid)
         .eq("active", true);
       const tplIds = Array.from(new Set((assigns || []).map((a: any) => a.template_id))).filter(Boolean);
@@ -64,9 +64,9 @@ const AdminTraining = () => {
         if (!tpl?.program_id) return;
         const prog = (progs || []).find((p: any) => p.id === tpl.program_id);
         if (!prog) return;
-        if (!groups[prog.id]) groups[prog.id] = { program: prog, items: [], firstAssignedAt: a.created_at };
+        if (!groups[prog.id]) groups[prog.id] = { program: prog, items: [], firstAssignedAt: a.assigned_at };
         groups[prog.id].items.push({ ...a, templateTitle: tpl.title });
-        if (a.created_at < groups[prog.id].firstAssignedAt) groups[prog.id].firstAssignedAt = a.created_at;
+        if (a.assigned_at < groups[prog.id].firstAssignedAt) groups[prog.id].firstAssignedAt = a.assigned_at;
       });
       return Object.values(groups).sort((a, b) => (a.firstAssignedAt < b.firstAssignedAt ? -1 : 1));
     },
