@@ -60,10 +60,50 @@ Deno.serve(async (req) => {
 
     // Dossiê do aluno (se informado)
     let dossier = '';
+    // Imagens corporais do aluno (atuais + históricas para comparação evolutiva)
+    const studentImageUrls: string[] = [];
+    let imagesSummary = '';
     if (body.studentId) {
       try {
         dossier = await buildStudentContext(admin, body.studentId);
       } catch (_) { /* silencioso */ }
+      try {
+        const { data: imgs } = await admin
+          .from('body_images')
+          .select('type, storage_path, image_url, uploaded_at, is_current')
+          .eq('user_id', body.studentId)
+          .order('uploaded_at', { ascending: false })
+          .limit(24);
+        if (Array.isArray(imgs) && imgs.length) {
+          // Assina URLs do bucket body-images quando houver storage_path
+          const signed = await Promise.all(imgs.map(async (im: any) => {
+            let url: string | null = null;
+            if (im.storage_path) {
+              const { data: s } = await admin.storage
+                .from('body-images')
+                .createSignedUrl(im.storage_path, 60 * 60);
+              url = s?.signedUrl ?? null;
+            }
+            if (!url && typeof im.image_url === 'string' && im.image_url.startsWith('http')) {
+              url = im.image_url;
+            }
+            return url ? { ...im, _url: url } : null;
+          }));
+          const valid = signed.filter(Boolean) as any[];
+
+          // Seleciona: até 3 atuais (front/back/profile) + até 3 mais antigas para comparação
+          const current = valid.filter((v) => v.is_current);
+          const older = valid.filter((v) => !v.is_current);
+          const picked = [...current.slice(0, 3), ...older.slice(0, 3)];
+          for (const p of picked) studentImageUrls.push(p._url);
+
+          const fmt = (d: string) => new Date(d).toLocaleDateString('pt-BR');
+          const lines = picked.map((p) => `- ${p.type} · ${p.is_current ? 'ATUAL' : 'anterior'} · ${fmt(p.uploaded_at)}`);
+          imagesSummary = `\nImagens corporais anexadas para análise (${picked.length}):\n${lines.join('\n')}\n(Use as ATUAIS para o estado presente e as anteriores para comparação evolutiva.)`;
+        }
+      } catch (e) {
+        console.error('body_images fetch error', e);
+      }
     }
 
     // Instrução específica por modo
@@ -75,6 +115,7 @@ Deno.serve(async (req) => {
 
     const userText = [
       dossier,
+      imagesSummary,
       modeInstr,
       instruction ? `\nInstrução do treinador:\n${instruction}` : '',
     ].filter(Boolean).join('\n\n');
@@ -87,12 +128,17 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (mode === 'analyze' && Array.isArray(body.imageUrls) && body.imageUrls.length) {
+    // Combina imagens enviadas manualmente + imagens automáticas do dossiê do aluno
+    const allImages: string[] = [];
+    if (Array.isArray(body.imageUrls)) {
+      for (const u of body.imageUrls) if (typeof u === 'string' && u.trim()) allImages.push(u.trim());
+    }
+    for (const u of studentImageUrls) if (!allImages.includes(u)) allImages.push(u);
+
+    if (allImages.length) {
       const content: any[] = [{ type: 'text', text: userText }];
-      for (const url of body.imageUrls.slice(0, 8)) {
-        if (typeof url === 'string' && url.trim()) {
-          content.push({ type: 'image_url', image_url: { url: url.trim() } });
-        }
+      for (const url of allImages.slice(0, 8)) {
+        content.push({ type: 'image_url', image_url: { url } });
       }
       messages.push({ role: 'user', content });
     } else {
