@@ -33,6 +33,7 @@ import {
   Zap,
   UserPlus,
 } from "lucide-react";
+import { Layers } from "lucide-react";
 import { cn, normalizeSearch } from "@/lib/utils";
 
 const SUPERCOACH_URL = "https://adm.appsupercoach.com/";
@@ -150,6 +151,27 @@ export default function AdminSuperCoach() {
   const [obs, setObs] = useState("");
   const [divergentName, setDivergentName] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [fullSyncing, setFullSyncing] = useState(false);
+
+  const runFullSync = async () => {
+    if (!confirm("Importar todos os programas do ST Coach para a STH e espelhar as atribuições dos alunos? Essa ação pode levar alguns segundos.")) return;
+    setFullSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("supercoach-full-sync", { body: {} });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.message || "Falha ao sincronizar");
+      const p = data.programs, c = data.customers, a = data.assignments;
+      toast({
+        title: "Sincronização concluída",
+        description: `Programas: ${p.created} criados, ${p.updated} atualizados (${p.total} no ST Coach) • Alunos casados: ${c.matched}/${c.total} • Atribuições gravadas: ${a.upserted}`,
+      });
+      qc.invalidateQueries();
+    } catch (e: any) {
+      toast({ title: "Erro na sincronização", description: e.message, variant: "destructive" });
+    } finally {
+      setFullSyncing(false);
+    }
+  };
 
   const { data: students, isLoading, refetch } = useQuery({
     queryKey: ["supercoach-students"],
@@ -424,6 +446,10 @@ export default function AdminSuperCoach() {
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2">
               <RefreshCw className="w-4 h-4" /> Recarregar
+            </Button>
+            <Button onClick={runFullSync} disabled={fullSyncing} className="gap-2">
+              {fullSyncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Layers className="w-4 h-4" />}
+              Sincronizar programas + atribuições
             </Button>
             <Button onClick={openSuperCoach} className="gap-2 bg-success text-success-foreground hover:bg-success/90">
               <ExternalLink className="w-4 h-4" /> Abrir SuperCoach Admin
