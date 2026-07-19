@@ -256,7 +256,7 @@ Regras:
         subtitle: String(w.subtitle || '').slice(0, 200),
         sort_order: Number.isFinite(w.sort_order) ? w.sort_order : wi + 1,
         weeks, days_per_week: dpw, minutes_per_day: mpd,
-        released: false,
+        released: true,
         created_by: userId,
       }).select('id').single();
       if (tErr) throw tErr;
