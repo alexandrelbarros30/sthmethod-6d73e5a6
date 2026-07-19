@@ -92,11 +92,15 @@ const StudentGuidedWorkout = () => {
   const { data: assignments, isLoading: aLoading } = useQuery({
     queryKey: ["sgw-assignments", targetUserId],
     queryFn: async () => {
+      const today = new Date().toISOString().slice(0, 10);
       const { data } = await supabase
         .from("student_workout_assignments")
         .select("*, workout_templates(*)")
         .eq("user_id", targetUserId!)
-        .eq("active", true);
+        .eq("active", true)
+        .eq("visible", true)
+        .or(`start_date.is.null,start_date.lte.${today}`)
+        .or(`end_date.is.null,end_date.gte.${today}`);
       return (data || []).filter((a: any) => a.workout_templates?.released !== false);
     },
     enabled: !!targetUserId && isActive,

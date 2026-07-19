@@ -5069,25 +5069,34 @@ export type Database = {
           active: boolean
           assigned_at: string
           assigned_by: string
+          end_date: string | null
           id: string
           program_id: string
+          start_date: string | null
           user_id: string
+          visible: boolean
         }
         Insert: {
           active?: boolean
           assigned_at?: string
           assigned_by: string
+          end_date?: string | null
           id?: string
           program_id: string
+          start_date?: string | null
           user_id: string
+          visible?: boolean
         }
         Update: {
           active?: boolean
           assigned_at?: string
           assigned_by?: string
+          end_date?: string | null
           id?: string
           program_id?: string
+          start_date?: string | null
           user_id?: string
+          visible?: boolean
         }
         Relationships: [
           {
@@ -5273,13 +5282,16 @@ export type Database = {
           alert_silenced_by: string | null
           assigned_at: string
           assigned_by: string
+          end_date: string | null
           id: string
           replaced_at: string | null
           replaced_by: string | null
           replaced_reason: string | null
           seen_by_student: boolean
+          start_date: string | null
           template_id: string
           user_id: string
+          visible: boolean
         }
         Insert: {
           active?: boolean | null
@@ -5287,13 +5299,16 @@ export type Database = {
           alert_silenced_by?: string | null
           assigned_at?: string
           assigned_by: string
+          end_date?: string | null
           id?: string
           replaced_at?: string | null
           replaced_by?: string | null
           replaced_reason?: string | null
           seen_by_student?: boolean
+          start_date?: string | null
           template_id: string
           user_id: string
+          visible?: boolean
         }
         Update: {
           active?: boolean | null
@@ -5301,13 +5316,16 @@ export type Database = {
           alert_silenced_by?: string | null
           assigned_at?: string
           assigned_by?: string
+          end_date?: string | null
           id?: string
           replaced_at?: string | null
           replaced_by?: string | null
           replaced_reason?: string | null
           seen_by_student?: boolean
+          start_date?: string | null
           template_id?: string
           user_id?: string
+          visible?: boolean
         }
         Relationships: [
           {

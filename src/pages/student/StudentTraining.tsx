@@ -16,6 +16,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import StudentGuidedWorkout from "@/pages/student/StudentGuidedWorkout";
 import StCoachCredit from "@/components/shared/StCoachCredit";
 import SuperCoachAssignedPrograms from "@/components/shared/SuperCoachAssignedPrograms";
+import { applyAssignmentWindow } from "@/lib/assignment-window";
 
 const getMediaSource = (url: string): { kind: "embed" | "image" | "file"; url: string } | null => {
   if (!url) return null;
@@ -49,11 +50,11 @@ const StudentTraining = () => {
   const { data: guidedAssignmentsCount = 0, isLoading: guidedAssignmentsLoading } = useQuery({
     queryKey: ["student-guided-assignment-count", targetUserId],
     queryFn: async () => {
-      const { count, error } = await supabase
+      const { count, error } = await applyAssignmentWindow(supabase
         .from("student_workout_assignments")
         .select("id", { count: "exact", head: true })
         .eq("user_id", targetUserId!)
-        .eq("active", true);
+        .eq("active", true));
 
       if (error) throw error;
       return count ?? 0;
