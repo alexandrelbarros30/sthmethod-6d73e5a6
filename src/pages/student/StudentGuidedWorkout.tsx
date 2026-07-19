@@ -333,6 +333,10 @@ const StudentGuidedWorkout = () => {
     return (
       <DashboardLayout role="student" title="Treino Guiado" subtitle="Selecione seu programa.">
         <div className="space-y-4 max-w-4xl">
+          <SuperCoachAssignedPrograms
+            userId={targetUserId}
+            title="Seus programas no ST Coach"
+          />
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {groups.map((pid) => {
               const program = (programs || []).find((p: any) => p.id === pid);
