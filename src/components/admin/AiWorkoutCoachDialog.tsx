@@ -94,7 +94,8 @@ export default function AiWorkoutCoachDialog({ triggerLabel, defaultStudentId, s
   // Auto-abre o histórico do aluno se houver conversas ao selecionar
   useEffect(() => {
     if (!open) return;
-    if (studentId && !hasConversation && (history?.length || 0) > 0) setShowHistory(true);
+    const empty = messages.length === 0 && !streamText;
+    if (studentId && empty && (history?.length || 0) > 0) setShowHistory(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studentId, history?.length, open]);
 
