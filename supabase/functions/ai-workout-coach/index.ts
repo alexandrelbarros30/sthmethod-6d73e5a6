@@ -13,6 +13,7 @@ interface Body {
   instruction?: string;
   imageUrls?: string[]; // https URLs ou data URLs (base64)
   history?: { role: 'user' | 'assistant'; content: string }[];
+  stream?: boolean;
 }
 
 const DEFAULT_PROMPT = 'Você é o STH METHOD ELITE COACH. Monte respostas técnicas e humanas em português do Brasil, formatadas em Markdown.';
@@ -101,6 +102,35 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get('LOVABLE_API_KEY');
     if (!apiKey) throw new Error('LOVABLE_API_KEY missing');
     const model = 'google/gemini-3-flash-preview';
+    const wantStream = body.stream === true;
+
+    if (wantStream) {
+      const upstream = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({ model, messages, stream: true }),
+      });
+      if (upstream.status === 429) {
+        return new Response(JSON.stringify({ error: 'Limite de uso da IA atingido. Aguarde alguns instantes e tente novamente.' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      if (upstream.status === 402) {
+        return new Response(JSON.stringify({ error: 'Créditos de IA esgotados no workspace. Adicione créditos para continuar.' }), { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      if (!upstream.ok || !upstream.body) {
+        const t = await upstream.text().catch(() => '');
+        return new Response(JSON.stringify({ error: `AI gateway error: ${t}` }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      return new Response(upstream.body, {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+          'X-Model': model,
+        },
+      });
+    }
 
     const resp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
