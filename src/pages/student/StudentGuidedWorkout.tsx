@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import StCoachCredit from "@/components/shared/StCoachCredit";
+import SuperCoachAssignedPrograms from "@/components/shared/SuperCoachAssignedPrograms";
 import WorkoutChronometer from "@/components/student/WorkoutChronometer";
 import { toast } from "sonner";
 
@@ -332,6 +333,10 @@ const StudentGuidedWorkout = () => {
     return (
       <DashboardLayout role="student" title="Treino Guiado" subtitle="Selecione seu programa.">
         <div className="space-y-4 max-w-4xl">
+          <SuperCoachAssignedPrograms
+            userId={targetUserId}
+            title="Seus programas no ST Coach"
+          />
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {groups.map((pid) => {
               const program = (programs || []).find((p: any) => p.id === pid);
