@@ -60,9 +60,10 @@ export default function AICreditBalanceBadge({ className = "", compact = false }
             "inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-[11px] font-medium text-foreground hover:bg-primary/10 transition " +
             className
           }
+          title="Créditos Lovable AI Cloud — separados dos créditos do plano Free/Pro"
         >
           <Sparkles className="h-3 w-3 text-primary" />
-          <span>{compact ? "Saldo AI" : "Lovable AI"}</span>
+          <span>{compact ? "Créd. AI Cloud" : "AI Cloud (≠ plano)"}</span>
           <span className="text-muted-foreground">·</span>
           <span className="text-primary">{label}</span>
         </button>
@@ -76,7 +77,12 @@ export default function AICreditBalanceBadge({ className = "", compact = false }
             <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
               Lovable AI Cloud
             </p>
-            <p className="text-sm font-display font-medium">Saldo & consumo</p>
+            <p className="text-sm font-display font-medium">Créditos de IA (consumo)</p>
+            <p className="mt-1 text-[10px] leading-snug text-muted-foreground">
+              Créditos usados para <strong>contagem de calorias/macros</strong> e
+              <strong> geração de treinos</strong>. São <strong>separados</strong> dos
+              créditos mensais do plano Free/Pro.
+            </p>
           </div>
         </div>
         <div className="mt-3 grid grid-cols-3 gap-2 text-center">
