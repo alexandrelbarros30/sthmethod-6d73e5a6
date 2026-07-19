@@ -4,6 +4,7 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { buildStudentContext } from '../_shared/student-context.ts';
+import { getSuperCoachLibrary } from '../_shared/supercoach-library.ts';
 
 type Mode = 'generate' | 'copilot' | 'analyze';
 
@@ -113,9 +114,32 @@ Deno.serve(async (req) => {
         ? 'MODO: COPILOTO. Responda de forma cirúrgica a instrução do treinador (sugerir progressão, trocar exercício, ajustar volume, redistribuir semana, corrigir ponto fraco, etc.). Seja direto, técnico e prático, com justificativa curta. Não repita o programa inteiro se não for pedido.'
         : 'MODO: ANÁLISE VISUAL. Faça a avaliação estética corporal com base nas imagens fornecidas: proporções, desenvolvimento por grupo muscular (escala Muito abaixo/Abaixo/Adequado/Bom/Excelente), pontos fortes e fracos, estimativas visuais (deixando claro que são visuais), e estratégia recomendada. Se houver mais de uma imagem de momentos distintos, faça também a comparação evolutiva. Fundamente APENAS no que é visível.';
 
+    // Catálogo obrigatório de exercícios (ST Coach) — a IA deve usar SOMENTE nomes desta lista.
+    let libraryBlock = '';
+    try {
+      const lib = await getSuperCoachLibrary();
+      if (lib.length) {
+        const names = Array.from(new Set(lib.map((e) => e.name.trim()).filter(Boolean))).sort();
+        // Limita para não estourar contexto (nomes são curtos; 1200 costuma caber com folga)
+        const capped = names.slice(0, 1200);
+        libraryBlock = [
+          '',
+          '=== CATÁLOGO OFICIAL DE EXERCÍCIOS (ST Coach) — USO OBRIGATÓRIO ===',
+          'Regra inegociável: ao montar/ajustar treinos você DEVE escolher exclusivamente exercícios cujo nome apareça EXATAMENTE nesta lista (mesma grafia, incluindo acentos). NÃO invente exercícios, NÃO traduza, NÃO adapte nomes. Se um estímulo desejado não existir no catálogo, escolha a alternativa mais próxima que EXISTA na lista e explique brevemente a substituição.',
+          `Total disponível: ${names.length}${capped.length < names.length ? ` (exibindo os primeiros ${capped.length} por limite de contexto)` : ''}.`,
+          'Lista (um por linha):',
+          capped.join('\n'),
+          '=== FIM DO CATÁLOGO ===',
+        ].join('\n');
+      }
+    } catch (e) {
+      console.error('supercoach library fetch failed', e);
+    }
+
     const userText = [
       dossier,
       imagesSummary,
+      libraryBlock,
       modeInstr,
       instruction ? `\nInstrução do treinador:\n${instruction}` : '',
     ].filter(Boolean).join('\n\n');
