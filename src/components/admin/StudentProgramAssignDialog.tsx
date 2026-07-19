@@ -9,7 +9,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Layers, Check, X, Loader2, Calendar, Save } from "lucide-react";
+import { Layers, Check, X, Loader2, Calendar, Save, Dumbbell, Target, Gauge, ChevronDown, ChevronUp } from "lucide-react";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const getWindowStatus = (start?: string | null, end?: string | null, visible?: boolean | null) => {
@@ -34,13 +34,14 @@ const StudentProgramAssignDialog = ({ open, onOpenChange, userId, userName }: Pr
   const [startDate, setStartDate] = useState<string>(today);
   const [endDate, setEndDate] = useState<string>("");
   const [editingWindows, setEditingWindows] = useState<Record<string, { start: string; end: string }>>({});
+  const [expandedProgram, setExpandedProgram] = useState<Record<string, boolean>>({});
 
   const { data: programs } = useQuery({
     queryKey: ["all-programs-for-student-assign"],
     queryFn: async () => {
       const { data } = await supabase
         .from("training_programs")
-        .select("id, title, status, objective, difficulty")
+        .select("id, title, status, objective, difficulty, poster_url, subtitle")
         .order("created_at", { ascending: false });
       return data || [];
     },
@@ -62,7 +63,7 @@ const StudentProgramAssignDialog = ({ open, onOpenChange, userId, userName }: Pr
       if (!userId) return [];
       const { data } = await supabase
         .from("student_workout_assignments")
-        .select("id, template_id, active, start_date, end_date, visible")
+        .select("id, template_id, active, start_date, end_date, visible, created_at")
         .eq("user_id", userId);
       return data || [];
     },
@@ -138,9 +139,32 @@ const StudentProgramAssignDialog = ({ open, onOpenChange, userId, userName }: Pr
   const pending = assignMutation.isPending || unassignMutation.isPending;
   const activeAssignments = (assignments || []).filter((a: any) => a.active);
 
+  // Agrupa por programa (via template.program_id) e ordena por data de atribuição (mais antiga → mais recente)
+  const assignedGroups = (() => {
+    if (!templates || !programs) return [] as any[];
+    const byProgram: Record<string, { program: any; items: any[]; firstAssignedAt: string }> = {};
+    activeAssignments.forEach((a: any) => {
+      const tpl = templates.find((t: any) => t.id === a.template_id);
+      if (!tpl?.program_id) return;
+      const prog = programs.find((p: any) => p.id === tpl.program_id);
+      if (!prog) return;
+      if (!byProgram[prog.id]) byProgram[prog.id] = { program: prog, items: [], firstAssignedAt: a.created_at };
+      byProgram[prog.id].items.push({ ...a, templateTitle: tpl.title });
+      if (a.created_at < byProgram[prog.id].firstAssignedAt) byProgram[prog.id].firstAssignedAt = a.created_at;
+    });
+    return Object.values(byProgram).sort((a, b) =>
+      a.firstAssignedAt < b.firstAssignedAt ? -1 : 1
+    );
+  })();
+
+  const fmtDate = (iso?: string | null) => {
+    if (!iso) return "—";
+    try { return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }); } catch { return "—"; }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Layers className="w-4 h-4" /> Programas de Treino
@@ -201,38 +225,113 @@ const StudentProgramAssignDialog = ({ open, onOpenChange, userId, userName }: Pr
           <>
             <Separator />
             <div>
-              <h4 className="text-xs font-semibold mb-2 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5" /> Programação individual dos treinos atribuídos
-              </h4>
-              <div className="border rounded-lg divide-y max-h-[35vh] overflow-y-auto">
-                {activeAssignments.map((a: any) => {
-                  const w = editingWindows[a.id] || { start: a.start_date || "", end: a.end_date || "" };
-                  const dirty = w.start !== (a.start_date || "") || w.end !== (a.end_date || "");
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-xs font-semibold flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5" /> Programas atribuídos
+                  <Badge variant="secondary" className="text-[10px]">{assignedGroups.length}</Badge>
+                </h4>
+                <span className="text-[10px] text-muted-foreground">ordenado por data (antigo → recente)</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[45vh] overflow-y-auto pr-1">
+                {assignedGroups.map((g: any, idx: number) => {
+                  const p = g.program;
+                  const expanded = !!expandedProgram[p.id];
+                  const agg = (() => {
+                    const t = todayISO();
+                    let active = 0, scheduled = 0, expired = 0, hidden = 0;
+                    g.items.forEach((a: any) => {
+                      if (a.visible === false) hidden++;
+                      else if (a.start_date && a.start_date > t) scheduled++;
+                      else if (a.end_date && a.end_date < t) expired++;
+                      else active++;
+                    });
+                    return { active, scheduled, expired, hidden };
+                  })();
                   return (
-                    <div key={a.id} className="p-2 flex flex-wrap items-end gap-2">
-                      <div className="flex-1 min-w-[140px]">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <p className="text-xs font-medium truncate">{templateTitle(a.template_id)}</p>
-                          {(() => {
-                            const s = getWindowStatus(a.start_date, a.end_date, a.visible);
-                            return <Badge variant="outline" className={`text-[9px] px-1.5 py-0 h-4 ${s.cls}`}>{s.label}</Badge>;
-                          })()}
+                    <div key={p.id} className="relative rounded-xl border bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                      <div className="absolute top-2 left-2 z-10 flex items-center justify-center w-6 h-6 rounded-full bg-black/70 text-white text-[10px] font-semibold">
+                        {idx + 1}
+                      </div>
+                      <div className="absolute top-2 right-2 z-10">
+                        <Button size="icon" variant="destructive" className="h-7 w-7" disabled={pending}
+                          onClick={() => unassignMutation.mutate(p.id)} title="Remover programa">
+                          {pending ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3.5 h-3.5" />}
+                        </Button>
+                      </div>
+                      {p.poster_url ? (
+                        <div className="h-28 w-full bg-muted overflow-hidden">
+                          <img src={p.poster_url} alt={p.title} className="w-full h-full object-cover" loading="lazy" />
                         </div>
+                      ) : (
+                        <div className="h-20 w-full bg-gradient-to-br from-primary/20 via-primary/5 to-transparent flex items-center justify-center">
+                          <Dumbbell className="w-8 h-8 text-primary/40" />
+                        </div>
+                      )}
+                      <div className="p-3 space-y-2">
+                        <div>
+                          <p className="text-sm font-semibold leading-tight line-clamp-2">{p.title}</p>
+                          {p.subtitle && <p className="text-[11px] text-muted-foreground line-clamp-1">{p.subtitle}</p>}
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {p.objective && (
+                            <Badge variant="outline" className="text-[10px] gap-1"><Target className="w-2.5 h-2.5" />{p.objective}</Badge>
+                          )}
+                          {p.difficulty && (
+                            <Badge variant="outline" className="text-[10px] gap-1"><Gauge className="w-2.5 h-2.5" />{p.difficulty}</Badge>
+                          )}
+                          <Badge variant="outline" className="text-[10px] gap-1"><Dumbbell className="w-2.5 h-2.5" />{g.items.length} treino(s)</Badge>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {agg.active > 0 && <Badge className="text-[9px] px-1.5 py-0 h-4 bg-emerald-500/15 text-emerald-600 border-emerald-500/30" variant="outline">{agg.active} ativo</Badge>}
+                          {agg.scheduled > 0 && <Badge className="text-[9px] px-1.5 py-0 h-4 bg-amber-500/15 text-amber-600 border-amber-500/30" variant="outline">{agg.scheduled} agendado</Badge>}
+                          {agg.expired > 0 && <Badge className="text-[9px] px-1.5 py-0 h-4 bg-red-500/15 text-red-600 border-red-500/30" variant="outline">{agg.expired} expirado</Badge>}
+                          {agg.hidden > 0 && <Badge className="text-[9px] px-1.5 py-0 h-4" variant="outline">{agg.hidden} oculto</Badge>}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                          <Calendar className="w-3 h-3" /> Atribuído em <span className="font-medium text-foreground">{fmtDate(g.firstAssignedAt)}</span>
+                        </div>
+                        <Button size="sm" variant="ghost" className="w-full h-7 text-[11px]"
+                          onClick={() => setExpandedProgram((prev) => ({ ...prev, [p.id]: !prev[p.id] }))}>
+                          {expanded ? <><ChevronUp className="w-3 h-3 mr-1" /> Ocultar treinos</> : <><ChevronDown className="w-3 h-3 mr-1" /> Editar janelas ({g.items.length})</>}
+                        </Button>
+                        {expanded && (
+                          <div className="border-t pt-2 space-y-2">
+                            {g.items
+                              .slice()
+                              .sort((a: any, b: any) => (a.created_at < b.created_at ? -1 : 1))
+                              .map((a: any) => {
+                                const w = editingWindows[a.id] || { start: a.start_date || "", end: a.end_date || "" };
+                                const dirty = w.start !== (a.start_date || "") || w.end !== (a.end_date || "");
+                                const s = getWindowStatus(a.start_date, a.end_date, a.visible);
+                                return (
+                                  <div key={a.id} className="rounded-md border bg-muted/30 p-2 space-y-1.5">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <p className="text-[11px] font-medium truncate flex-1">{a.templateTitle}</p>
+                                      <Badge variant="outline" className={`text-[9px] px-1.5 py-0 h-4 ${s.cls}`}>{s.label}</Badge>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-1.5">
+                                      <div>
+                                        <Label className="text-[9px]">Início</Label>
+                                        <Input type="date" value={w.start} className="h-7 text-[11px]"
+                                          onChange={(e) => setEditingWindows((pp) => ({ ...pp, [a.id]: { ...w, start: e.target.value } }))} />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[9px]">Fim</Label>
+                                        <Input type="date" value={w.end} className="h-7 text-[11px]"
+                                          onChange={(e) => setEditingWindows((pp) => ({ ...pp, [a.id]: { ...w, end: e.target.value } }))} />
+                                      </div>
+                                    </div>
+                                    <Button size="sm" variant={dirty ? "default" : "outline"} disabled={!dirty || updateWindow.isPending}
+                                      className="w-full h-7 text-[10px]"
+                                      onClick={() => updateWindow.mutate({ id: a.id, start: w.start, end: w.end })}>
+                                      <Save className="w-3 h-3 mr-1" /> Salvar janela
+                                    </Button>
+                                  </div>
+                                );
+                              })}
+                          </div>
+                        )}
                       </div>
-                      <div>
-                        <Label className="text-[10px]">Início</Label>
-                        <Input type="date" value={w.start} className="h-7 w-[130px]"
-                          onChange={(e) => setEditingWindows((p) => ({ ...p, [a.id]: { ...w, start: e.target.value } }))} />
-                      </div>
-                      <div>
-                        <Label className="text-[10px]">Fim</Label>
-                        <Input type="date" value={w.end} className="h-7 w-[130px]"
-                          onChange={(e) => setEditingWindows((p) => ({ ...p, [a.id]: { ...w, end: e.target.value } }))} />
-                      </div>
-                      <Button size="sm" variant={dirty ? "default" : "outline"} disabled={!dirty || updateWindow.isPending}
-                        onClick={() => updateWindow.mutate({ id: a.id, start: w.start, end: w.end })}>
-                        <Save className="w-3 h-3 mr-1" /> Salvar
-                      </Button>
                     </div>
                   );
                 })}
