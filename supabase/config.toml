@@ -59,5 +59,7 @@ project_id = "tthahgwkkdyvxdbhsgyb"
     verify_jwt = false
   [functions.supercoach-import-workout]
     verify_jwt = false
+  [functions.supercoach-student-programs]
+    verify_jwt = false
   [functions.daily-backup]
     verify_jwt = false
