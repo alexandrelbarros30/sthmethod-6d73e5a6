@@ -188,10 +188,14 @@ const StudentOverview = () => {
     queryKey: ["has-training", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
+      const today = new Date().toISOString().slice(0, 10);
       const { count } = await supabase
         .from("student_workout_assignments")
         .select("id", { count: "exact", head: true })
-        .eq("user_id", user!.id);
+        .eq("user_id", user!.id)
+        .eq("visible", true)
+        .or(`start_date.is.null,start_date.lte.${today}`)
+        .or(`end_date.is.null,end_date.gte.${today}`);
       return (count || 0) > 0;
     },
   });
