@@ -5573,6 +5573,7 @@ export type Database = {
           poster_url: string | null
           status: string
           subtitle: string | null
+          supercoach_program_id: number | null
           title: string
           updated_at: string
           video_url: string | null
@@ -5588,6 +5589,7 @@ export type Database = {
           poster_url?: string | null
           status?: string
           subtitle?: string | null
+          supercoach_program_id?: number | null
           title: string
           updated_at?: string
           video_url?: string | null
@@ -5603,6 +5605,7 @@ export type Database = {
           poster_url?: string | null
           status?: string
           subtitle?: string | null
+          supercoach_program_id?: number | null
           title?: string
           updated_at?: string
           video_url?: string | null
@@ -5814,6 +5817,7 @@ export type Database = {
           released: boolean
           sort_order: number | null
           subtitle: string | null
+          supercoach_program_id: number | null
           title: string
           updated_at: string
           weeks: number | null
@@ -5830,6 +5834,7 @@ export type Database = {
           released?: boolean
           sort_order?: number | null
           subtitle?: string | null
+          supercoach_program_id?: number | null
           title: string
           updated_at?: string
           weeks?: number | null
@@ -5846,6 +5851,7 @@ export type Database = {
           released?: boolean
           sort_order?: number | null
           subtitle?: string | null
+          supercoach_program_id?: number | null
           title?: string
           updated_at?: string
           weeks?: number | null
