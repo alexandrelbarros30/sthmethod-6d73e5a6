@@ -1,0 +1,1 @@
+DELETE FROM public.platform_updates WHERE version LIKE '3.%' OR version LIKE '2.%' OR version LIKE '0.%';
