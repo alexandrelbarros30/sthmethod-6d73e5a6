@@ -4767,6 +4767,42 @@ export type Database = {
         }
         Relationships: []
       }
+      sthia_workout_conversations: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          messages: Json
+          mode: string
+          student_id: string | null
+          summary: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          messages?: Json
+          mode?: string
+          student_id?: string | null
+          summary?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          messages?: Json
+          mode?: string
+          student_id?: string | null
+          summary?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       student_content_batches: {
         Row: {
           batch_started_at: string | null

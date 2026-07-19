@@ -8,9 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import {
   Sparkles, Loader2, Copy, Camera, Wand2, User, X,
   ArrowDown, Send, StopCircle, RotateCcw, Package, CheckCircle2,
+  History, Plus, Trash2, MessageSquare,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { normalizeSearch } from "@/lib/utils";
@@ -50,6 +51,9 @@ export default function AiWorkoutCoachDialog({ triggerLabel, defaultStudentId, s
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [materializing, setMaterializing] = useState(false);
   const [materialized, setMaterialized] = useState<{ programId: string; title: string; workouts: number; assigned: number } | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const qc = useQueryClient();
 
   const { data: students } = useQuery({
     queryKey: ["ai-coach-students"],
@@ -69,6 +73,31 @@ export default function AiWorkoutCoachDialog({ triggerLabel, defaultStudentId, s
   }, [students, studentSearch]);
 
   const selectedStudent = (students || []).find((s: any) => s.user_id === studentId);
+
+  // Histórico de conversas (por aluno se selecionado, caso contrário as suas próprias)
+  const historyKey = ["sthia-history", studentId || "avulsas"];
+  const { data: history, refetch: refetchHistory } = useQuery({
+    queryKey: historyKey,
+    enabled: open,
+    queryFn: async () => {
+      let q = (supabase as any).from("sthia_workout_conversations")
+        .select("id, student_id, title, mode, summary, updated_at, created_at")
+        .order("updated_at", { ascending: false })
+        .limit(50);
+      if (studentId) q = q.eq("student_id", studentId);
+      const { data, error } = await q;
+      if (error) { console.error(error); return []; }
+      return data || [];
+    },
+  });
+
+  // Auto-abre o histórico do aluno se houver conversas ao selecionar
+  useEffect(() => {
+    if (!open) return;
+    const empty = messages.length === 0 && !streamText;
+    if (studentId && empty && (history?.length || 0) > 0) setShowHistory(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [studentId, history?.length, open]);
 
   const handleImage = async (files: FileList | null) => {
     if (!files) return;
@@ -91,6 +120,54 @@ export default function AiWorkoutCoachDialog({ triggerLabel, defaultStudentId, s
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, streamText, streaming]);
+
+  const persistConversation = async (msgs: Msg[]) => {
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const uid = sess?.session?.user?.id;
+      if (!uid) return;
+      const firstUser = msgs.find(m => m.role === "user")?.content?.slice(0, 80) || "Nova conversa";
+      const title = firstUser.length > 60 ? firstUser.slice(0, 60) + "…" : firstUser;
+      const lastAssistant = [...msgs].reverse().find(m => m.role === "assistant")?.content || "";
+      const summary = lastAssistant.replace(/\s+/g, " ").slice(0, 400);
+      if (conversationId) {
+        await (supabase as any).from("sthia_workout_conversations")
+          .update({ messages: msgs, title, mode, summary, student_id: studentId || null })
+          .eq("id", conversationId);
+      } else {
+        const { data, error } = await (supabase as any).from("sthia_workout_conversations")
+          .insert({ messages: msgs, title, mode, summary, student_id: studentId || null, created_by: uid })
+          .select("id").single();
+        if (!error && data?.id) setConversationId(data.id);
+      }
+      qc.invalidateQueries({ queryKey: ["sthia-history"] });
+    } catch (e) { console.error("persist sthia conversation", e); }
+  };
+
+  const openConversation = async (id: string) => {
+    try {
+      const { data, error } = await (supabase as any).from("sthia_workout_conversations")
+        .select("id, student_id, mode, messages").eq("id", id).single();
+      if (error) throw error;
+      setConversationId(data.id);
+      setMode((data.mode as Mode) || "generate");
+      setStudentId(data.student_id || "");
+      setMessages(Array.isArray(data.messages) ? data.messages : []);
+      setStreamText("");
+      setUsage(null);
+      setInstruction("");
+      setMaterialized(null);
+      setShowHistory(false);
+    } catch (e: any) { toast.error(e?.message || "Falha ao abrir conversa"); }
+  };
+
+  const deleteConversation = async (id: string) => {
+    if (!confirm("Excluir esta conversa?")) return;
+    const { error } = await (supabase as any).from("sthia_workout_conversations").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    if (conversationId === id) { setConversationId(null); setMessages([]); }
+    refetchHistory();
+  };
 
   const runStream = async (userInstruction: string, opts?: { continuation?: boolean; imageUrls?: string[] }) => {
     if (streaming) return;
@@ -171,10 +248,15 @@ export default function AiWorkoutCoachDialog({ triggerLabel, defaultStudentId, s
           const clone = [...prev];
           const last = clone[clone.length - 1];
           clone[clone.length - 1] = { role: "assistant", content: last.content + acc };
+          void persistConversation(clone);
           return clone;
         });
       } else {
-        setMessages(prev => [...prev, { role: "assistant", content: acc }]);
+        setMessages(prev => {
+          const next = [...prev, { role: "assistant" as const, content: acc }];
+          void persistConversation(next);
+          return next;
+        });
       }
       setStreamText("");
       setUsage(finalUsage);
@@ -213,6 +295,8 @@ export default function AiWorkoutCoachDialog({ triggerLabel, defaultStudentId, s
     setStreamText("");
     setUsage(null);
     setInstruction("");
+    setConversationId(null);
+    setMaterialized(null);
   };
 
   const copyLast = async () => {
@@ -266,8 +350,49 @@ export default function AiWorkoutCoachDialog({ triggerLabel, defaultStudentId, s
                 <RotateCcw className="w-3 h-3" /> Nova conversa
               </Button>
             )}
+            <Button variant="ghost" size="sm" onClick={() => setShowHistory(v => !v)} className="gap-1 text-xs">
+              <History className="w-3 h-3" /> Histórico {history?.length ? `(${history.length})` : ""}
+            </Button>
           </DialogTitle>
         </DialogHeader>
+
+        {showHistory && (
+          <div className="border-b bg-muted/30 max-h-64 overflow-y-auto">
+            <div className="px-4 py-2 flex items-center justify-between">
+              <div className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                <MessageSquare className="w-3 h-3" />
+                {studentId
+                  ? `Conversas de ${selectedStudent?.full_name || selectedStudent?.email || "aluno"}`
+                  : "Suas conversas avulsas"}
+              </div>
+              <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs"
+                onClick={() => { resetChat(); setShowHistory(false); }}>
+                <Plus className="w-3 h-3" /> Nova
+              </Button>
+            </div>
+            {(history || []).length === 0 ? (
+              <p className="px-4 pb-3 text-xs text-muted-foreground">Nenhuma conversa salva ainda.</p>
+            ) : (
+              <ul className="divide-y">
+                {(history || []).map((h: any) => (
+                  <li key={h.id} className={`px-4 py-2 flex items-start gap-2 hover:bg-accent/50 ${conversationId === h.id ? "bg-accent" : ""}`}>
+                    <button onClick={() => openConversation(h.id)} className="flex-1 text-left min-w-0">
+                      <div className="text-sm font-medium truncate">{h.title}</div>
+                      <div className="text-[11px] text-muted-foreground flex items-center gap-2">
+                        <Badge variant="outline" className="text-[9px] px-1 py-0">{h.mode}</Badge>
+                        <span>{new Date(h.updated_at).toLocaleString("pt-BR")}</span>
+                      </div>
+                      {h.summary && <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{h.summary}</p>}
+                    </button>
+                    <Button size="sm" variant="ghost" onClick={() => deleteConversation(h.id)} className="h-7 w-7 p-0">
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           {!hasConversation && (
