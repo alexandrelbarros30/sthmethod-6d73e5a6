@@ -11,6 +11,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Layers, Check, X, Loader2, Calendar, Save } from "lucide-react";
 
+const todayISO = () => new Date().toISOString().slice(0, 10);
+const getWindowStatus = (start?: string | null, end?: string | null, visible?: boolean | null) => {
+  if (visible === false) return { label: "Oculto", cls: "bg-muted text-muted-foreground border-muted" };
+  const t = todayISO();
+  if (start && start > t) return { label: "Agendado", cls: "bg-amber-500/15 text-amber-600 border-amber-500/30" };
+  if (end && end < t) return { label: "Expirado", cls: "bg-red-500/15 text-red-600 border-red-500/30" };
+  return { label: "Ativo", cls: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30" };
+};
+
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -202,7 +211,13 @@ const StudentProgramAssignDialog = ({ open, onOpenChange, userId, userName }: Pr
                   return (
                     <div key={a.id} className="p-2 flex flex-wrap items-end gap-2">
                       <div className="flex-1 min-w-[140px]">
-                        <p className="text-xs font-medium truncate">{templateTitle(a.template_id)}</p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="text-xs font-medium truncate">{templateTitle(a.template_id)}</p>
+                          {(() => {
+                            const s = getWindowStatus(a.start_date, a.end_date, a.visible);
+                            return <Badge variant="outline" className={`text-[9px] px-1.5 py-0 h-4 ${s.cls}`}>{s.label}</Badge>;
+                          })()}
+                        </div>
                       </div>
                       <div>
                         <Label className="text-[10px]">Início</Label>
