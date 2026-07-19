@@ -3,6 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const LOGIN_URL = 'https://supertreinosapp.com/api/v2/user/login'
 const INDEX_URL = 'https://supertreinosapp.com/api/v2/adm/customer/index'
+const PROGRAMS_URL = 'https://supertreinosapp.com/api/v2/programs?pid='
 
 const COMMON_HEADERS = {
   'accept': 'application/json, text/plain, */*',
@@ -125,44 +126,40 @@ Deno.serve(async (req) => {
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
-    // Try programs already embedded in the customer object first
-    let programs = extractPrograms(customer.programs || customer.trainings || customer)
+    // 1) Extract assigned program_id list from the customer's assignments
+    const assignments: any[] = Array.isArray(customer.programs) ? customer.programs : []
+    const assignedIds = Array.from(new Set(
+      assignments.map((a: any) => a?.program_id ?? a?.id).filter((x: any) => x != null),
+    ))
 
-    // Then try likely endpoints
-    const cid = customer.id || customer.user_id
-    const attempts = [
-      `https://supertreinosapp.com/api/v2/adm/customer/programs?user_id=${cid}`,
-      `https://supertreinosapp.com/api/v2/adm/customer/programs?customer_id=${cid}`,
-      `https://supertreinosapp.com/api/v2/adm/customer/programs/${cid}`,
-      `https://supertreinosapp.com/api/v2/adm/customer/${cid}/programs`,
-      `https://supertreinosapp.com/api/v2/adm/customer/programs?pid=${cid}`,
-      `https://supertreinosapp.com/api/v2/programs?user_id=${cid}`,
-      `https://supertreinosapp.com/api/v2/customer/programs?user_id=${cid}`,
-    ]
-    const debug: Array<{ url: string; status: number; keys?: string[] }> = []
-    for (const url of attempts) {
-      if (programs.length) break
-      try {
-        const r = await fetch(url, { headers: auth })
-        const t = await r.text()
-        let j: any = null
-        try { j = JSON.parse(t) } catch { /* ignore */ }
-        debug.push({ url, status: r.status, keys: j && typeof j === 'object' ? Object.keys(j).slice(0, 8) : undefined })
-        if (r.ok && j) {
-          const p = extractPrograms(j)
-          if (p.length) programs = p
-        }
-      } catch (e) {
-        debug.push({ url, status: -1 })
-      }
+    if (!assignedIds.length) {
+      return new Response(JSON.stringify({
+        ok: true, status: 'empty', programs: [],
+        customer: { id: customer.id, name: customer.name, email: customer.email },
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
+
+    // 2) Fetch the trainer's program library once and filter by assigned ids
+    const libRes = await fetch(PROGRAMS_URL, { headers: auth })
+    const libText = await libRes.text()
+    if (!libRes.ok) throw new Error(`Biblioteca de programas SC falhou (${libRes.status})`)
+    const libJson = JSON.parse(libText)
+    const libArr: any[] = libJson?.programs || libJson?.data || (Array.isArray(libJson) ? libJson : [])
+    const byId = new Map<any, any>()
+    for (const p of libArr) if (p && p.id != null) byId.set(p.id, p)
+
+    const programs = assignedIds
+      .map((id) => byId.get(id))
+      .filter(Boolean)
+      .map((p: any) => normalizeProgram(p))
+      .filter(Boolean)
 
     return new Response(JSON.stringify({
       ok: true,
       status: programs.length ? 'ok' : 'empty',
       customer: { id: customer.id, name: customer.name, email: customer.email },
+      assignedIds,
       programs,
-      debug,
     }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
