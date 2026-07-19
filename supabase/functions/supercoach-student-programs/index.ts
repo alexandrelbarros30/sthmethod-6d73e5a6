@@ -131,13 +131,16 @@ Deno.serve(async (req) => {
     // Then try likely endpoints
     const cid = customer.id || customer.user_id
     const attempts = [
-      `https://supertreinosapp.com/api/v2/adm/customer/programs?user_id=${cid}`,
-      `https://supertreinosapp.com/api/v2/adm/customer/programs?customer_id=${cid}`,
-      `https://supertreinosapp.com/api/v2/adm/customer/programs/${cid}`,
-      `https://supertreinosapp.com/api/v2/adm/customer/${cid}/programs`,
-      `https://supertreinosapp.com/api/v2/adm/customer/programs?pid=${cid}`,
-      `https://supertreinosapp.com/api/v2/programs?user_id=${cid}`,
-      `https://supertreinosapp.com/api/v2/customer/programs?user_id=${cid}`,
+      `https://supertreinosapp.com/api/v2/adm/customer/show/${cid}`,
+      `https://supertreinosapp.com/api/v2/adm/customer/edit/${cid}`,
+      `https://supertreinosapp.com/api/v2/adm/customer/${cid}`,
+      `https://supertreinosapp.com/api/v2/adm/program/customer/${cid}`,
+      `https://supertreinosapp.com/api/v2/adm/program?user_id=${cid}`,
+      `https://supertreinosapp.com/api/v2/adm/program?customer_id=${cid}`,
+      `https://supertreinosapp.com/api/v2/adm/program/index?user_id=${cid}`,
+      `https://supertreinosapp.com/api/v2/adm/program/list?user_id=${cid}`,
+      `https://supertreinosapp.com/api/v2/adm/customer/plans/${cid}`,
+      `https://supertreinosapp.com/api/v2/adm/customer/trainings/${cid}`,
     ]
     const debug: Array<{ url: string; status: number; keys?: string[] }> = []
     for (const url of attempts) {
