@@ -328,6 +328,15 @@ const DietAIAnalysis = ({ dietContent, onConfirm }: Props) => {
               />
             </div>
           </div>
+          {meta?.usage && (
+            <div className="mt-2">
+              <AICreditUsage
+                model={meta.model}
+                usage={meta.usage}
+                label="Créditos Lovable AI usados nesta contagem"
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex gap-2 justify-end">
@@ -339,9 +348,6 @@ const DietAIAnalysis = ({ dietContent, onConfirm }: Props) => {
             Confirmar Valores
           </Button>
         </div>
-        {meta?.usage && (
-          <AICreditUsage model={meta.model} usage={meta.usage} label="Consumo desta análise de dieta" />
-        )}
       </CardContent>
     </Card>
     <AICreditsDialog
