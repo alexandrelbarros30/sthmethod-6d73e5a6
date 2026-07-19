@@ -18,6 +18,7 @@ const PROMPT_KEYS = [
   { key: "ai_prompt_comercial", label: "Comercial (Leads / WhatsApp Comercial)" },
   { key: "ai_prompt_sucesso", label: "Sucesso do Aluno (WhatsApp pós-venda)" },
   { key: "ai_prompt_aluno", label: "Chat dentro do App (Aluno autenticado)" },
+  { key: "ai_prompt_treino", label: "STHIA — Elite Coach (Módulo de Treinos)" },
 ] as const;
 
 export default function AdminCrmAi() {
