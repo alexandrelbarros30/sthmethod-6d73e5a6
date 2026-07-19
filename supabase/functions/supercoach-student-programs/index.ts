@@ -141,6 +141,8 @@ Deno.serve(async (req) => {
       `https://supertreinosapp.com/api/v2/adm/program/list?user_id=${cid}`,
       `https://supertreinosapp.com/api/v2/adm/customer/plans/${cid}`,
       `https://supertreinosapp.com/api/v2/adm/customer/trainings/${cid}`,
+      `https://supertreinosapp.com/api/v2/programs?user_id=${cid}`,
+      `https://supertreinosapp.com/api/v2/programs?user_id=0`,
     ]
     const debug: Array<{ url: string; status: number; keys?: string[] }> = []
     for (const url of attempts) {
