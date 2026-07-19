@@ -205,8 +205,9 @@ Retorne APENAS o JSON via tool call, sem texto adicional.`;
     }
 
     const analysis = JSON.parse(toolCall.function.arguments);
+    const usage = data?.usage || null;
 
-    return new Response(JSON.stringify(analysis), {
+    return new Response(JSON.stringify({ ...analysis, _meta: { model: "google/gemini-2.5-pro", usage } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
