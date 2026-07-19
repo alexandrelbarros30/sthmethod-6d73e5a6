@@ -41,7 +41,7 @@ export default function AICreditUsage({ model, usage, className = "", label }: P
     >
       <span className="flex items-center gap-1 font-medium text-foreground">
         <Sparkles className="h-3 w-3 text-primary" />
-        {label || "Consumo desta geração"}
+        {label || "Consumo desta geração (créditos AI Cloud ≠ plano)"}
       </span>
       {credits !== null && (
         <span>
