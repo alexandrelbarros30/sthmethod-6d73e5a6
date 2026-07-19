@@ -3,6 +3,7 @@
 // opcionalmente, atribui ao aluno.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { getSuperCoachLibrary, normalizeExName } from '../_shared/supercoach-library.ts';
 
 interface Body {
   markdown: string;
@@ -138,6 +139,15 @@ Regras:
     const libIndex = new Map<string, any>();
     for (const e of (lib || [])) libIndex.set(norm(e.name), e);
 
+    // 2b) Índice do catálogo ST Coach (fonte oficial de vídeos/capas)
+    const scIndex = new Map<string, { name: string; video_url?: string; cover_url?: string | null }>();
+    try {
+      const sc = await getSuperCoachLibrary();
+      for (const e of sc) scIndex.set(normalizeExName(e.name), { name: e.name, video_url: e.video_url, cover_url: e.cover_url });
+    } catch (e) {
+      console.error('materialize: sc library fetch failed', e);
+    }
+
     // 3) Cria templates + exercícios
     const templateIds: string[] = [];
     for (let wi = 0; wi < parsed.workouts.length; wi++) {
@@ -157,13 +167,15 @@ Regras:
 
       const exs = Array.isArray(w.exercises) ? w.exercises : [];
       const rows = exs.map((ex: any, i: number) => {
-        const match = libIndex.get(norm(ex?.name || ''));
+        const key = norm(ex?.name || '');
+        const match = libIndex.get(key);
+        const sc = scIndex.get(key);
         return {
           template_id: templateId,
           exercise_id: match?.id || null,
-          custom_name: match ? null : String(ex?.name || '').slice(0, 200),
-          image_url: match?.image_url || null,
-          video_url: match?.video_url || null,
+          custom_name: match ? null : String(sc?.name || ex?.name || '').slice(0, 200),
+          image_url: match?.image_url || sc?.cover_url || null,
+          video_url: match?.video_url || sc?.video_url || null,
           sets: String(ex?.sets ?? '').slice(0, 60) || null,
           reps: String(ex?.reps ?? '').slice(0, 60) || null,
           rest_interval: String(ex?.rest_interval ?? '').slice(0, 60) || null,
