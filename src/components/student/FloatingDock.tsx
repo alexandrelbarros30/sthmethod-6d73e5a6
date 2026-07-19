@@ -31,6 +31,15 @@ const FloatingDock = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile } = useAuth();
+  // Preserve ?preview_as=<uuid> across student navigation so admins/consultores
+  // previewing a student don't get bounced back to /admin by ProtectedRoute.
+  const previewAs = new URLSearchParams(location.search).get("preview_as");
+  const withPreview = (to: string) => {
+    if (!previewAs) return to;
+    if (to.startsWith("http")) return to;
+    return `${to}${to.includes("?") ? "&" : "?"}preview_as=${previewAs}`;
+  };
+  const go = (to: string) => navigate(withPreview(to));
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -70,7 +79,7 @@ const FloatingDock = () => {
               return (
                 <button
                   key={item.to}
-                  onClick={() => navigate(item.to)}
+                  onClick={() => go(item.to)}
                   className="relative -mt-5 flex flex-col items-center"
                 >
                   <motion.div
@@ -92,7 +101,7 @@ const FloatingDock = () => {
             return (
               <button
                 key={item.to}
-                onClick={() => navigate(item.to)}
+                onClick={() => go(item.to)}
                 className="flex flex-col items-center gap-0.5 py-1 px-1 min-w-[3rem]"
               >
                 <motion.div
@@ -152,7 +161,7 @@ const FloatingDock = () => {
                   return (
                     <button
                       key={item.to}
-                      onClick={() => { navigate(item.to); setMenuOpen(false); }}
+                      onClick={() => { go(item.to); setMenuOpen(false); }}
                       className={cn(
                         "w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-[13px] font-medium transition-colors tracking-tight",
                         active
@@ -169,7 +178,7 @@ const FloatingDock = () => {
                 <button
                   onClick={() => {
                     setMenuOpen(false);
-                    if (location.pathname !== "/dashboard") navigate("/dashboard");
+                    if (location.pathname !== "/dashboard") go("/dashboard");
                     setTimeout(() => window.dispatchEvent(new Event("sth:open-welcome-tour")), 250);
                   }}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-[13px] font-medium text-foreground/70 hover:bg-muted/60 hover:text-foreground transition-colors tracking-tight"

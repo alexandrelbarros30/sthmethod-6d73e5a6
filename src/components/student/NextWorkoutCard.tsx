@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,6 +11,9 @@ import { Dumbbell, Play, CheckCircle2 } from "lucide-react";
  */
 const NextWorkoutCard = () => {
   const { user } = useAuth();
+  const location = useLocation();
+  const previewAs = new URLSearchParams(location.search).get("preview_as");
+  const trainingHref = previewAs ? `/dashboard/training?preview_as=${previewAs}` : "/dashboard/training";
 
   const { data: assignments = [] } = useQuery({
     queryKey: ["next-workout-assignments", user?.id],
@@ -69,7 +72,7 @@ const NextWorkoutCard = () => {
 
   return (
     <Link
-      to="/dashboard/training"
+      to={trainingHref}
       className="block mb-6 rounded-3xl border border-border/40 bg-background overflow-hidden active:scale-[0.99] transition-transform"
     >
       <div className="relative">
