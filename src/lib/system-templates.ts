@@ -279,7 +279,7 @@ export const SYSTEM_TEMPLATE_DEFINITIONS: Array<{
     label: "Treino atualizado (automático)",
     description: "Disparado automaticamente quando o admin define/atualiza o treino ativo do aluno.",
     defaultContent:
-      "Olá, {nome}!\n\nSeu treino está disponível 👇\n\n🏋️ App Super Coach\n(📱 Android:\nhttps://play.google.com/store/apps/details?id=com.appsupercoach.app\n\n🍏 Apple:\nhttps://apps.apple.com/us/app/st-coach/id1537125272#?platform=iphone)\n\n🔐 Acesso (ambos):\nLogin: {email}\nSenha: 123456 ou senha cadastrada",
+      "Olá, {nome}!\n\nSeu treino de musculação já está liberado 💪\n\n📲 *App STH METHOD* — acompanhe seu treino, dieta, protocolo e evolução direto no seu celular:\n🤖 Android (APK): https://sthmethod.com.br/baixar-app\n🍏 iPhone: instale como *WebApp* pelo Safari em https://sthmethod.com.br/baixar-app (toque em *Compartilhar → Adicionar à Tela de Início*)\n\n🏋️ Para executar o treino com vídeos e cronômetro, use também o *App ST Coach*:\n📱 Android: https://play.google.com/store/apps/details?id=com.appsupercoach.app\n🍏 Apple: https://apps.apple.com/us/app/st-coach/id1537125272\n\n🔐 Acesso (todos):\nLogin: {email}\nSenha: 123456 ou a senha cadastrada\n\nConte Comigo!\nBora pra cima 🚀",
   },
   {
     key: "protocol_updated",
