@@ -3,7 +3,7 @@ import { Sparkles } from "lucide-react";
 // Estimativa aproximada de créditos Lovable AI por 1k tokens.
 // Valores baseados nas tabelas públicas dos provedores no Lovable AI Gateway.
 // Ajuste fino é feito no ledger da workspace (Settings → Plans & credits).
-const RATES: Record<string, { in: number; out: number }> = {
+export const AI_CREDIT_RATES: Record<string, { in: number; out: number }> = {
   "google/gemini-3-flash-preview": { in: 0.03, out: 0.25 },
   "google/gemini-2.5-flash": { in: 0.03, out: 0.25 },
   "google/gemini-2.5-flash-lite": { in: 0.01, out: 0.04 },
@@ -29,7 +29,7 @@ export default function AICreditUsage({ model, usage, className = "", label }: P
   const inTok = usage.prompt_tokens ?? 0;
   const outTok = usage.completion_tokens ?? 0;
   const total = usage.total_tokens ?? (inTok + outTok);
-  const rate = (model && RATES[model]) || null;
+  const rate = (model && AI_CREDIT_RATES[model]) || null;
   const credits = rate ? (inTok / 1000) * rate.in + (outTok / 1000) * rate.out : null;
 
   return (
