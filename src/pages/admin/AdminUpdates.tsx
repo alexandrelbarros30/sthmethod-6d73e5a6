@@ -67,7 +67,7 @@ const AdminUpdates = () => {
   });
 
   const latestVersion = useMemo(() => {
-    if (!updates.length) return "3.5.0";
+    if (!updates.length) return "1.0.0";
     return [...updates].sort((a, b) => compareVersions(b.version, a.version))[0].version;
   }, [updates]);
 
@@ -274,7 +274,7 @@ const AdminUpdates = () => {
                 value={version}
                 onChange={(e) => setVersion(e.target.value)}
                 className="font-mono"
-                placeholder="3.5.1"
+                placeholder="1.0.1"
               />
               <p className="text-[11px] text-muted-foreground mt-1">
                 Sugerida automaticamente. Será exibida como{" "}
