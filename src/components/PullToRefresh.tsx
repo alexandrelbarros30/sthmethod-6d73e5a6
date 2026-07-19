@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -95,6 +94,8 @@ export default function PullToRefresh() {
 
   const progress = Math.min(1, pull / THRESHOLD);
   const translate = Math.max(0, pull - 20);
+  const circumference = 2 * Math.PI * 16; // r=16
+  const dashOffset = circumference * (1 - progress);
 
   return (
     <div
@@ -108,14 +109,61 @@ export default function PullToRefresh() {
     >
       <div
         className={cn(
-          "h-10 w-10 rounded-full flex items-center justify-center",
-          "bg-background/90 backdrop-blur border border-border shadow-lg"
+          "relative h-11 w-11 rounded-full flex items-center justify-center",
+          "backdrop-blur-xl"
         )}
-        style={{ opacity: Math.max(0.4, progress) }}
+        style={{
+          opacity: refreshing ? 1 : Math.max(0.5, progress),
+          background:
+            "radial-gradient(circle at 50% 40%, hsl(0 0% 12% / 0.92), hsl(0 0% 6% / 0.9))",
+          border: "0.5px solid hsl(145 60% 42% / 0.35)",
+          boxShadow:
+            "0 8px 28px hsl(0 0% 0% / 0.45), 0 0 0 1px hsl(0 0% 100% / 0.03) inset, 0 0 18px hsl(145 60% 42% / 0.18)",
+        }}
       >
-        <RefreshCw
-          className={cn("h-5 w-5", refreshing && "animate-spin")}
-          style={{ transform: refreshing ? undefined : `rotate(${progress * 270}deg)` }}
+        <svg
+          className={cn("h-9 w-9", refreshing && "animate-spin")}
+          viewBox="0 0 40 40"
+          style={{ animationDuration: refreshing ? "900ms" : undefined }}
+        >
+          <defs>
+            <linearGradient id="ptr-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="hsl(145 80% 55%)" />
+              <stop offset="100%" stopColor="hsl(145 60% 38%)" />
+            </linearGradient>
+          </defs>
+          <circle
+            cx="20"
+            cy="20"
+            r="16"
+            fill="none"
+            stroke="hsl(0 0% 100% / 0.06)"
+            strokeWidth="2"
+          />
+          <circle
+            cx="20"
+            cy="20"
+            r="16"
+            fill="none"
+            stroke="url(#ptr-grad)"
+            strokeWidth="2.25"
+            strokeLinecap="round"
+            strokeDasharray={refreshing ? `${circumference * 0.28} ${circumference}` : circumference}
+            strokeDashoffset={refreshing ? 0 : dashOffset}
+            transform="rotate(-90 20 20)"
+            style={{
+              transition: refreshing ? "none" : "stroke-dashoffset 120ms linear",
+              filter: "drop-shadow(0 0 4px hsl(145 80% 50% / 0.55))",
+            }}
+          />
+        </svg>
+        <div
+          className="absolute h-1 w-1 rounded-full"
+          style={{
+            background: "hsl(145 90% 60%)",
+            boxShadow: "0 0 8px hsl(145 90% 55% / 0.9)",
+            opacity: refreshing ? 1 : progress,
+          }}
         />
       </div>
     </div>
