@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Brain, Check, Loader2, Pencil, RotateCcw } from "lucide-react";
 import AICreditsDialog from "./AICreditsDialog";
+import AICreditUsage from "@/components/shared/AICreditUsage";
 
 type AnalyzeErrorInfo = {
   message: string;
@@ -95,6 +96,7 @@ const DietAIAnalysis = ({ dietContent, onConfirm }: Props) => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DietAnalysisResult | null>(null);
   const [editingMeal, setEditingMeal] = useState<number | null>(null);
+  const [meta, setMeta] = useState<{ model?: string; usage?: any } | null>(null);
   const [creditsDialog, setCreditsDialog] = useState<{
     open: boolean;
     reason: "insufficient" | "rate_limit";
@@ -117,7 +119,9 @@ const DietAIAnalysis = ({ dietContent, onConfirm }: Props) => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      setResult(data as DietAnalysisResult);
+      const { _meta, ...analysis } = (data || {}) as any;
+      setResult(analysis as DietAnalysisResult);
+      setMeta(_meta || null);
       toast.success("Análise concluída! Revise e confirme os valores.");
     } catch (e: any) {
       const info = await getAnalyzeDietErrorInfo(e);
@@ -335,6 +339,9 @@ const DietAIAnalysis = ({ dietContent, onConfirm }: Props) => {
             Confirmar Valores
           </Button>
         </div>
+        {meta?.usage && (
+          <AICreditUsage model={meta.model} usage={meta.usage} label="Consumo desta análise de dieta" />
+        )}
       </CardContent>
     </Card>
     <AICreditsDialog

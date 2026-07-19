@@ -116,6 +116,7 @@ Deno.serve(async (req) => {
     }
     if (!resp.ok) throw new Error(`AI gateway error: ${JSON.stringify(data)}`);
     const response = (data as any)?.choices?.[0]?.message?.content || '';
+    const usage = (data as any)?.usage || null;
 
     // Log leve para auditoria
     try {
@@ -127,7 +128,7 @@ Deno.serve(async (req) => {
       });
     } catch (_) { /* ignore */ }
 
-    return new Response(JSON.stringify({ response, model, mode }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ response, model, mode, usage }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (err) {
     console.error('ai-workout-coach', err);
     return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
