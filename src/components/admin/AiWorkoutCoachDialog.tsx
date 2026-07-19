@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   Sparkles, Loader2, Copy, Camera, Wand2, User, X,
-  ArrowDown, Send, StopCircle, RotateCcw,
+  ArrowDown, Send, StopCircle, RotateCcw, Package, CheckCircle2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { normalizeSearch } from "@/lib/utils";
 import AICreditUsage from "@/components/shared/AICreditUsage";
+import { Link } from "react-router-dom";
 
 type Mode = "generate" | "copilot" | "analyze";
 
@@ -47,6 +48,8 @@ export default function AiWorkoutCoachDialog({ triggerLabel, defaultStudentId, s
   const [usedModel, setUsedModel] = useState<string | undefined>();
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [materializing, setMaterializing] = useState(false);
+  const [materialized, setMaterialized] = useState<{ programId: string; title: string; workouts: number; assigned: number } | null>(null);
 
   const { data: students } = useQuery({
     queryKey: ["ai-coach-students"],
@@ -218,12 +221,33 @@ export default function AiWorkoutCoachDialog({ triggerLabel, defaultStudentId, s
     try { await navigator.clipboard.writeText(last); toast.success("Copiado"); } catch { toast.error("Falha"); }
   };
 
+  const handleMaterialize = async (assign: boolean) => {
+    const last = [...messages].reverse().find(m => m.role === "assistant")?.content;
+    if (!last) { toast.error("Gere um treino primeiro"); return; }
+    if (assign && !studentId) { toast.error("Selecione um aluno para atribuir"); return; }
+    setMaterializing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-workout-materialize", {
+        body: { markdown: last, studentId: studentId || undefined, assign },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const r = data as any;
+      setMaterialized({ programId: r.programId, title: r.title, workouts: r.workouts, assigned: r.assigned || 0 });
+      toast.success(assign ? `Programa criado e atribuído (${r.workouts} treino(s))` : `Programa criado (${r.workouts} treino(s))`);
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao materializar");
+    } finally {
+      setMaterializing(false);
+    }
+  };
+
   const hasConversation = messages.length > 0 || streamText.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={(v) => {
       setOpen(v);
-      if (!v) { resetChat(); setImages([]); abortRef.current?.abort(); }
+      if (!v) { resetChat(); setImages([]); setMaterialized(null); abortRef.current?.abort(); }
     }}>
       <DialogTrigger asChild>
         <Button variant={variant} size={size} className="gap-1">
@@ -351,6 +375,22 @@ export default function AiWorkoutCoachDialog({ triggerLabel, defaultStudentId, s
           {usage && !streaming && (
             <AICreditUsage model={usedModel} usage={usage} />
           )}
+          {materialized && (
+            <div className="rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="font-medium">{materialized.title}</p>
+                <p className="text-xs text-muted-foreground">
+                  {materialized.workouts} treino(s) criado(s){materialized.assigned ? ` · atribuído ao aluno` : ""} — status rascunho.
+                </p>
+                <div className="mt-2 flex gap-2 flex-wrap">
+                  <Button asChild size="sm" variant="outline" className="h-7 text-xs">
+                    <Link to={`/admin/workout-templates`}>Abrir em Programas</Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="border-t p-3 space-y-2 bg-background">
@@ -362,6 +402,16 @@ export default function AiWorkoutCoachDialog({ triggerLabel, defaultStudentId, s
               <Button size="sm" variant="ghost" onClick={copyLast} className="gap-1 text-xs">
                 <Copy className="w-3 h-3" /> Copiar última
               </Button>
+              <Button size="sm" variant="default" onClick={() => handleMaterialize(false)} disabled={materializing} className="gap-1 text-xs">
+                {materializing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Package className="w-3 h-3" />}
+                Gerar programa
+              </Button>
+              {studentId && (
+                <Button size="sm" variant="default" onClick={() => handleMaterialize(true)} disabled={materializing} className="gap-1 text-xs">
+                  {materializing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Package className="w-3 h-3" />}
+                  Gerar e atribuir ao aluno
+                </Button>
+              )}
             </div>
           )}
           <div className="flex gap-2 items-end">
