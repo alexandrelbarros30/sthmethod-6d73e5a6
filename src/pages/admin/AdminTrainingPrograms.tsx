@@ -19,6 +19,7 @@ import ProgramWorkouts from "@/components/admin/ProgramWorkouts";
 import { processAndUpload, validateImageFile } from "@/lib/image-upload";
 import ReleaseNotifyButton from "@/components/admin/ReleaseNotifyButton";
 import { normalizeSearch } from "@/lib/utils";
+import AiWorkoutCoachDialog from "@/components/admin/AiWorkoutCoachDialog";
 
 const OBJECTIVES = [
   { value: "hypertrophy", label: "Hipertrofia" },
@@ -384,6 +385,7 @@ const AdminTrainingPrograms = () => {
               className="pl-8"
             />
           </div>
+          <AiWorkoutCoachDialog triggerLabel="STHIA · Elite Coach" variant="secondary" />
           <Button onClick={() => { setForm(emptyForm); setEditingProgram(null); setProgramDialog(true); }}>
             <Plus className="w-4 h-4 mr-1" /> Novo Programa
           </Button>
