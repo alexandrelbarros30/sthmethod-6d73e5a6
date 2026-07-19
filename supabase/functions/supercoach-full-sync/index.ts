@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
     }
 
     let assignmentsCreated = 0, matchedCustomers = 0, unmatchedCustomers = 0
-    const rowsToInsert: any[] = []
+    const rowsToInsertByKey = new Map<string, any>()
     for (const c of customers) {
       const em = (c?.email || '').toLowerCase().trim()
       const nm = normalize(c?.name || '')
@@ -150,12 +150,14 @@ Deno.serve(async (req) => {
       for (const scId of ids) {
         const tpl = tplByScId.get(scId)
         if (!tpl) continue
-        rowsToInsert.push({
+        const row = {
           user_id: userId, template_id: tpl.id,
           assigned_by: adminUserId, active: true, seen_by_student: false,
-        })
+        }
+        rowsToInsertByKey.set(`${userId}:${tpl.id}`, row)
       }
     }
+    const rowsToInsert = Array.from(rowsToInsertByKey.values())
     if (rowsToInsert.length) {
       const { error, count } = await admin.from('student_workout_assignments')
         .upsert(rowsToInsert, { onConflict: 'user_id,template_id', ignoreDuplicates: false, count: 'exact' })
