@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { getPlanTier, getPlanTierClasses } from "@/lib/plan-colors";
 import { normalizePhone } from "@/lib/phone";
 import { normalizeSearch } from "@/lib/utils";
+import LovableCreditsPanel from "@/components/admin/LovableCreditsPanel";
 
 const getEffectiveSubscriptionMap = (subscriptions: any[] | undefined) => {
   const map = new Map<string, any>();
@@ -315,6 +316,9 @@ const AdminDashboard = () => {
 
       {/* 1. Alunos Recentes */}
       <RecentStudents profiles={profiles} subscriptions={subscriptions} navigate={navigate} queryClient={queryClient} activeSubUserIds={activeSubUserIds} />
+
+      {/* Saldo Lovable AI Cloud */}
+      <LovableCreditsPanel />
 
       {/* Search + quick action */}
       <div className="grid grid-cols-2 gap-2.5 mb-8 lg:grid-cols-4">
