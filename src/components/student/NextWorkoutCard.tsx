@@ -16,11 +16,15 @@ const NextWorkoutCard = () => {
     queryKey: ["next-workout-assignments", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
+      const today = new Date().toISOString().slice(0, 10);
       const { data } = await supabase
         .from("student_workout_assignments")
-        .select("id, template_id, workout_templates(id, title, subtitle, image_url, sort_order, program_id, released)")
+        .select("id, template_id, start_date, end_date, workout_templates(id, title, subtitle, image_url, sort_order, program_id, released)")
         .eq("user_id", user!.id)
-        .eq("active", true);
+        .eq("active", true)
+        .eq("visible", true)
+        .or(`start_date.is.null,start_date.lte.${today}`)
+        .or(`end_date.is.null,end_date.gte.${today}`);
       const list = (data || []).filter((a: any) => a.workout_templates?.released !== false);
       list.sort(
         (a: any, b: any) => (a.workout_templates?.sort_order || 0) - (b.workout_templates?.sort_order || 0)
