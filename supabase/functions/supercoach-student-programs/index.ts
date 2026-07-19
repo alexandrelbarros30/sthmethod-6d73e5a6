@@ -144,19 +144,20 @@ Deno.serve(async (req) => {
       `https://supertreinosapp.com/api/v2/programs?user_id=${cid}`,
       `https://supertreinosapp.com/api/v2/programs?user_id=0`,
     ]
-    const debug: Array<{ url: string; status: number; keys?: string[] }> = []
+    const debug: Array<{ url: string; status: number; keys?: string[]; count?: number; sample?: any }> = []
     for (const url of attempts) {
-      if (programs.length) break
       try {
         const r = await fetch(url, { headers: auth })
         const t = await r.text()
         let j: any = null
         try { j = JSON.parse(t) } catch { /* ignore */ }
-        debug.push({ url, status: r.status, keys: j && typeof j === 'object' ? Object.keys(j).slice(0, 8) : undefined })
-        if (r.ok && j) {
-          const p = extractPrograms(j)
-          if (p.length) programs = p
-        }
+        const p = r.ok && j ? extractPrograms(j) : []
+        debug.push({
+          url, status: r.status,
+          keys: j && typeof j === 'object' ? Object.keys(j).slice(0, 12) : undefined,
+          count: p.length,
+          sample: p[0]?.id,
+        })
       } catch (e) {
         debug.push({ url, status: -1 })
       }
