@@ -12,6 +12,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { normalizeSearch } from "@/lib/utils";
+import AICreditUsage from "@/components/shared/AICreditUsage";
 
 type Mode = "generate" | "copilot" | "analyze";
 
@@ -36,6 +37,8 @@ export default function AiWorkoutCoachDialog({ triggerLabel, defaultStudentId, s
   const [instruction, setInstruction] = useState("");
   const [images, setImages] = useState<{ url: string; name: string }[]>([]);
   const [response, setResponse] = useState("");
+  const [usage, setUsage] = useState<any>(null);
+  const [usedModel, setUsedModel] = useState<string | undefined>();
 
   const { data: students } = useQuery({
     queryKey: ["ai-coach-students"],
@@ -86,9 +89,9 @@ export default function AiWorkoutCoachDialog({ triggerLabel, defaultStudentId, s
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      return data as { response: string };
+      return data as { response: string; usage?: any; model?: string };
     },
-    onSuccess: (d) => { setResponse(d.response || ""); },
+    onSuccess: (d) => { setResponse(d.response || ""); setUsage(d.usage || null); setUsedModel(d.model); },
     onError: (e: any) => toast.error(e.message || "Erro ao chamar IA"),
   });
 
@@ -101,7 +104,7 @@ export default function AiWorkoutCoachDialog({ triggerLabel, defaultStudentId, s
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setResponse(""); setInstruction(""); setImages([]); } }}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setResponse(""); setInstruction(""); setImages([]); setUsage(null); } }}>
       <DialogTrigger asChild>
         <Button variant={variant} size={size} className="gap-1">
           <Sparkles className="w-4 h-4" />
@@ -232,6 +235,7 @@ export default function AiWorkoutCoachDialog({ triggerLabel, defaultStudentId, s
               <div className="prose prose-sm dark:prose-invert max-w-none">
                 <ReactMarkdown>{response}</ReactMarkdown>
               </div>
+              <AICreditUsage model={usedModel} usage={usage} label="Consumo desta geração de treino" />
             </div>
           )}
         </div>
