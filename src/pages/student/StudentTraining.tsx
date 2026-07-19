@@ -218,6 +218,14 @@ const StudentTraining = () => {
           </Card>
         )}
 
+        {/* Programas vinculados no ST Coach */}
+        <SuperCoachAssignedPrograms
+          userId={targetUserId}
+          email={profile?.email}
+          name={profile?.full_name}
+          title="Seus programas no ST Coach"
+        />
+
         {/* Program header card */}
         <div className="rounded-3xl border border-border/40 bg-background p-6">
           <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-muted-foreground">Programa</p>
