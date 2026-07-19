@@ -629,6 +629,92 @@ export type Database = {
         }
         Relationships: []
       }
+      broadcast_runs: {
+        Row: {
+          audience: string
+          created_at: string
+          dry_run: boolean
+          failed: number
+          finished_at: string | null
+          id: string
+          sent: number
+          skipped: number
+          started_by: string | null
+          status: string
+          template_id: string | null
+          total: number
+        }
+        Insert: {
+          audience: string
+          created_at?: string
+          dry_run?: boolean
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          sent?: number
+          skipped?: number
+          started_by?: string | null
+          status?: string
+          template_id?: string | null
+          total?: number
+        }
+        Update: {
+          audience?: string
+          created_at?: string
+          dry_run?: boolean
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          sent?: number
+          skipped?: number
+          started_by?: string | null
+          status?: string
+          template_id?: string | null
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_runs_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "broadcast_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      broadcast_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          image_url: string | null
+          message: string
+          name: string
+          text_first: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          message: string
+          name: string
+          text_first?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          message?: string
+          name?: string
+          text_first?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       call_reject_throttle: {
         Row: {
           channel_id: string
