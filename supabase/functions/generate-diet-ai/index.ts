@@ -237,7 +237,6 @@ FORMATO OBRIGATÓRIO — HTML PURO (sem markdown, sem \`\`\`), exatamente como o
 <p><strong>Opção 2:</strong> ...</p>
 <p><strong>Opção 3:</strong> ...</p>
 <p><strong>Opção 4:</strong> ...<strong>"</strong></p>
-<p><strong>TOTAL DIÁRIO:</strong> 2500 kcal | P: 180g | C: 280g | G: 70g</p>
 
 REGRAS DE FORMATAÇÃO (obrigatórias):
 - Cada refeição começa com <p><strong>Refeição NN: Nome (Subtítulo estratégico)</strong></p> (números 01, 02, 03...). NUNCA usar <ul>/<li> no cabeçalho — o cabeçalho não pode aparecer com bolinha/marcador de lista.
