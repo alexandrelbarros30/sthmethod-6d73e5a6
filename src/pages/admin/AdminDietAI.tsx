@@ -101,23 +101,7 @@ const AdminDietAI = () => {
 
   const pickStudent = async (s: any) => {
     setSelectedStudent(s);
-    applyStudentMacros(s);
-    // Fallback: se perfil sem macros, tenta última dieta salva
-    if (!s.daily_calories || !s.protein_g) {
-      const { data: lastDiet } = await supabase
-        .from("student_diets")
-        .select("energy_kcal, protein_g, carbs_g, fat_g")
-        .eq("user_id", s.user_id)
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (lastDiet) {
-        if (!s.daily_calories && lastDiet.energy_kcal) setKcalTarget(String(Math.round(lastDiet.energy_kcal)));
-        if (!s.protein_g && lastDiet.protein_g) setProteinTarget(String(Math.round(lastDiet.protein_g)));
-        if (!s.carbs_g && lastDiet.carbs_g) setCarbsTarget(String(Math.round(lastDiet.carbs_g)));
-        if (!s.fat_g && lastDiet.fat_g) setFatTarget(String(Math.round(lastDiet.fat_g)));
-      }
-    }
+    // Não auto-preenche o briefing — o admin decide via botão "Puxar macros"
   };
 
   const saveMacrosToProfile = async () => {
