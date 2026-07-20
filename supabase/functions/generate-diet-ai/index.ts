@@ -392,7 +392,7 @@ REGRAS:
         (_m, intPart, decPart, unit) => `${Math.round(Number(`${intPart}.${decPart}`))}${unit.toLowerCase() === "g" ? "g" : " " + unit}`,
       );
     }
-    return new Response(JSON.stringify({ ...parsed, _meta: { model: "google/gemini-2.5-flash", usage: data?.usage || null, photos_used: photos.length } }), {
+    return new Response(JSON.stringify({ ...parsed, _meta: { model: "google/gemini-2.5-flash", usage: data?.usage || null, photos_used: photos.length, retries } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
