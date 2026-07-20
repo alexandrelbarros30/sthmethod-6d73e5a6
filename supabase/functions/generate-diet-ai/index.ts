@@ -232,7 +232,15 @@ REGRAS:
           },
         };
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const targetsForRetry = !isReview ? {
+      energy_kcal: Number((brief as any)?.kcal_alvo) || null,
+      protein_g: Number((brief as any)?.proteina_g_alvo) || null,
+      carbs_g: Number((brief as any)?.carboidrato_g_alvo) || null,
+      fat_g: Number((brief as any)?.lipidio_g_alvo) || null,
+    } : null;
+    const TOLERANCE_PCT = 5; // retry if any tracked target deviates more than this
+
+    const callModel = async (messages: any[]) => fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
@@ -241,14 +249,17 @@ REGRAS:
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         temperature: 0,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userContent },
-        ],
+        messages,
         tools: [tool],
         tool_choice: { type: "function", function: { name: tool.function.name } },
       }),
     });
+
+    const baseMessages: any[] = [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userContent },
+    ];
+    let response = await callModel(baseMessages);
 
     if (!response.ok) {
       if (response.status === 429) {
@@ -268,14 +279,60 @@ REGRAS:
       });
     }
 
-    const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+    let data = await response.json();
+    let toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall) {
       return new Response(JSON.stringify({ error: "IA não retornou resultado válido" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const parsed = JSON.parse(toolCall.function.arguments);
+    let parsed = JSON.parse(toolCall.function.arguments);
+    let retries = 0;
+
+    // Retry once when the total macros deviate more than TOLERANCE_PCT from the
+    // admin briefing. We feed the model back its own result and force a rebuild.
+    const computeDeviation = (total: any) => {
+      if (!targetsForRetry || !total) return { worst: 0, breakdown: {} as Record<string, number> };
+      const breakdown: Record<string, number> = {};
+      let worst = 0;
+      for (const k of Object.keys(targetsForRetry) as Array<keyof typeof targetsForRetry>) {
+        const t = targetsForRetry[k];
+        const v = Number(total[k]);
+        if (t && isFinite(v)) {
+          const pct = Math.abs(((v - t) / t) * 100);
+          breakdown[k] = Math.round(pct * 10) / 10;
+          if (pct > worst) worst = pct;
+        }
+      }
+      return { worst, breakdown };
+    };
+
+    if (!isReview && targetsForRetry) {
+      let dev = computeDeviation(parsed?.total);
+      while (dev.worst > TOLERANCE_PCT && retries < 2) {
+        retries++;
+        const currentTotal = parsed?.total || {};
+        const feedback = `Seu cardápio anterior ficou FORA das metas do admin (tolerância ±${TOLERANCE_PCT}%).\n\n` +
+          `Total gerado:  ${currentTotal.energy_kcal ?? "?"} kcal | P ${currentTotal.protein_g ?? "?"}g | C ${currentTotal.carbs_g ?? "?"}g | G ${currentTotal.fat_g ?? "?"}g\n` +
+          `Metas do admin: ${targetsForRetry.energy_kcal ?? "livre"} kcal | P ${targetsForRetry.protein_g ?? "livre"}g | C ${targetsForRetry.carbs_g ?? "livre"}g | G ${targetsForRetry.fat_g ?? "livre"}g\n` +
+          `Desvios %: ${JSON.stringify(dev.breakdown)}\n\n` +
+          `REFAÇA o cardápio inteiro agora AJUSTANDO as gramagens (aumente/diminua alimentos densos em calorias/carbo/proteína/gordura conforme necessário) até que o TOTAL bata exatamente com as metas (±${TOLERANCE_PCT}%). Some as BASES antes de responder. Mantenha o mesmo padrão de formatação HTML STH METHOD e o mesmo nº de refeições. Devolva apenas via tool call.`;
+        const retryMessages = [
+          ...baseMessages,
+          { role: "assistant", content: null, tool_calls: [toolCall] },
+          { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify(parsed) },
+          { role: "user", content: feedback },
+        ];
+        const retryResp = await callModel(retryMessages);
+        if (!retryResp.ok) break;
+        data = await retryResp.json();
+        const nextCall = data.choices?.[0]?.message?.tool_calls?.[0];
+        if (!nextCall) break;
+        toolCall = nextCall;
+        try { parsed = JSON.parse(nextCall.function.arguments); } catch { break; }
+        dev = computeDeviation(parsed?.total);
+      }
+    }
     // Enforce integer macros/kcal as a safety net (in case the model returns decimals).
     const roundInt = (v: unknown) => (typeof v === "number" && isFinite(v) ? Math.round(v) : v);
     if (Array.isArray(parsed?.meals)) {
@@ -335,7 +392,7 @@ REGRAS:
         (_m, intPart, decPart, unit) => `${Math.round(Number(`${intPart}.${decPart}`))}${unit.toLowerCase() === "g" ? "g" : " " + unit}`,
       );
     }
-    return new Response(JSON.stringify({ ...parsed, _meta: { model: "google/gemini-2.5-flash", usage: data?.usage || null, photos_used: photos.length } }), {
+    return new Response(JSON.stringify({ ...parsed, _meta: { model: "google/gemini-2.5-flash", usage: data?.usage || null, photos_used: photos.length, retries } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
