@@ -161,6 +161,7 @@ import NativeUpdateBanner from "@/components/NativeUpdateBanner";
 
 // Lazy load pages that use Tiptap editor to avoid blocking the app
 const AdminDiet = lazy(() => import("./pages/admin/AdminDiet"));
+const AdminDietAI = lazy(() => import("./pages/admin/AdminDietAI"));
 const AdminProtocol = lazy(() => import("./pages/admin/AdminProtocol"));
 
 const LazyFallback = () => <div className="flex items-center justify-center min-h-screen"><p className="text-muted-foreground text-sm">Carregando...</p></div>;
