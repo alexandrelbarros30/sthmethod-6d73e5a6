@@ -232,7 +232,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
   const pushToSuperCoach = async (templateId: string) => {
     setPushingId(templateId);
     try {
-      const { data, error } = await supabase.functions.invoke("supercoach-push-template", { body: { templateId } });
+      const { data, error } = await supabase.functions.invoke("supercoach-push-template", { body: { templateId, programId } });
       if (error) throw error;
       if (data?.ok === false) throw new Error(data?.error || "Falha ao espelhar");
       toast.success(`Treino espelhado no ST Coach (${data?.patched ?? 0} exercícios sincronizados).`);
@@ -254,7 +254,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
     for (let i = 0; i < list.length; i++) {
       const w = list[i];
       try {
-        const { data, error } = await supabase.functions.invoke("supercoach-push-template", { body: { templateId: w.id } });
+        const { data, error } = await supabase.functions.invoke("supercoach-push-template", { body: { templateId: w.id, programId } });
         if (error || data?.ok === false) throw new Error(error?.message || data?.error || "falha");
         ok++;
       } catch (e: any) {
