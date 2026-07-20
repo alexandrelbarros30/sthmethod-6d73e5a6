@@ -6,6 +6,129 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const MODEL_ID = "google/gemini-3-flash-preview";
+const TARGET_TOLERANCE_PCT = 3;
+const MAX_TARGET_RETRIES = 5;
+
+type MacroTotal = {
+  energy_kcal: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+};
+
+type MacroTargets = {
+  energy_kcal: number | null;
+  protein_g: number | null;
+  carbs_g: number | null;
+  fat_g: number | null;
+};
+
+const numericTarget = (v: unknown): number | null => {
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
+};
+
+const roundInt = (v: unknown) => (typeof v === "number" && isFinite(v) ? Math.round(v) : Number.isFinite(Number(v)) ? Math.round(Number(v)) : 0);
+
+const emptyTotal = (): MacroTotal => ({ energy_kcal: 0, protein_g: 0, carbs_g: 0, fat_g: 0 });
+
+const sumMealTotals = (meals: any[]): MacroTotal => {
+  const total = emptyTotal();
+  for (const m of meals || []) {
+    total.energy_kcal += roundInt(m?.energy_kcal);
+    total.protein_g += roundInt(m?.protein_g);
+    total.carbs_g += roundInt(m?.carbs_g);
+    total.fat_g += roundInt(m?.fat_g);
+  }
+  return total;
+};
+
+const normalizeGeneratedMacros = (parsed: any) => {
+  if (Array.isArray(parsed?.meals)) {
+    parsed.meals = parsed.meals
+      .slice()
+      .sort((a: any, b: any) => (Number(a?.meal_number) || 0) - (Number(b?.meal_number) || 0))
+      .map((m: any, idx: number) => ({
+        ...m,
+        meal_number: roundInt(m?.meal_number) || idx + 1,
+        energy_kcal: roundInt(m?.energy_kcal),
+        protein_g: roundInt(m?.protein_g),
+        carbs_g: roundInt(m?.carbs_g),
+        fat_g: roundInt(m?.fat_g),
+      }));
+    // The meal cards are the source of truth. Never trust a model-written daily total
+    // when it disagrees with the structured per-meal values shown to the student.
+    parsed.total = sumMealTotals(parsed.meals);
+  } else if (parsed?.total) {
+    parsed.total.energy_kcal = roundInt(parsed.total.energy_kcal);
+    parsed.total.protein_g = roundInt(parsed.total.protein_g);
+    parsed.total.carbs_g = roundInt(parsed.total.carbs_g);
+    parsed.total.fat_g = roundInt(parsed.total.fat_g);
+  }
+};
+
+const computeQualityGate = (parsed: any, targets: MacroTargets | null, expectedMeals: number | null) => {
+  normalizeGeneratedMacros(parsed);
+  const total = parsed?.total || emptyTotal();
+  const deviations: Record<string, number> = {};
+  const violations: string[] = [];
+  let worst = 0;
+
+  if (targets) {
+    for (const k of Object.keys(targets) as Array<keyof MacroTargets>) {
+      const target = targets[k];
+      const value = Number(total[k]);
+      if (target && isFinite(value)) {
+        const pct = Math.round(((value - target) / target) * 1000) / 10;
+        deviations[k] = pct;
+        worst = Math.max(worst, Math.abs(pct));
+        if (Math.abs(pct) > TARGET_TOLERANCE_PCT) {
+          const label = k === "energy_kcal" ? "kcal" : k === "protein_g" ? "proteína" : k === "carbs_g" ? "carboidrato" : "lipídio";
+          const unit = k === "energy_kcal" ? "kcal" : "g";
+          violations.push(`${label}: ${Math.round(value)}${unit} vs meta ${target}${unit} (${pct > 0 ? "+" : ""}${pct}%)`);
+        }
+      }
+    }
+  }
+
+  const mealCount = Array.isArray(parsed?.meals) ? parsed.meals.length : 0;
+  if (expectedMeals && mealCount !== expectedMeals) {
+    violations.push(`nº de refeições: ${mealCount || 0} vs meta ${expectedMeals}`);
+  }
+
+  return {
+    valid: violations.length === 0,
+    violations,
+    deviation_pct: deviations,
+    worst_deviation_pct: Math.round(worst * 10) / 10,
+    total,
+    meal_count: mealCount,
+    expected_meals: expectedMeals,
+  };
+};
+
+const buildMealBudget = (targets: MacroTargets, nMeals: number) => {
+  const presets: Record<number, number[]> = {
+    3: [30, 40, 30],
+    4: [25, 35, 25, 15],
+    5: [20, 10, 30, 15, 25],
+    6: [18, 10, 27, 12, 23, 10],
+    7: [16, 8, 24, 10, 18, 14, 10],
+  };
+  const weights = presets[nMeals] || Array.from({ length: nMeals }, () => 100 / nMeals);
+  const labels = Array.from({ length: nMeals }, (_v, i) => `Refeição ${String(i + 1).padStart(2, "0")}`);
+  return labels.map((label, i) => {
+    const pct = weights[i] / 100;
+    const parts = [`${label}:`];
+    if (targets.energy_kcal) parts.push(`~${Math.round(targets.energy_kcal * pct)} kcal`);
+    if (targets.protein_g) parts.push(`P ~${Math.round(targets.protein_g * pct)}g`);
+    if (targets.carbs_g) parts.push(`C ~${Math.round(targets.carbs_g * pct)}g`);
+    if (targets.fat_g) parts.push(`G ~${Math.round(targets.fat_g * pct)}g`);
+    return `- ${parts.join(" ")}`;
+  }).join("\n");
+};
+
 const TACO_REF = `TABELA TACO (por 100g/ml) — use estes valores exatos:
 - Ovo inteiro cru: 143 kcal | 13.0 P | 1.6 C | 9.5 G (1 ovo médio=50g)
 - Clara: 43 kcal | 10.9 P | 0.7 C | 0 G
