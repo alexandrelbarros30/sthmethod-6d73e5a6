@@ -423,9 +423,15 @@ const AdminTrainingPrograms = () => {
                 <Card key={p.id} className="group hover:shadow-md transition-all hover:border-primary/30 cursor-pointer" onClick={() => setSelectedProgramId(p.id)}>
                   <CardContent className="py-5">
                     <div className="flex items-start gap-3">
-                      <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-primary/10 shrink-0">
-                        <Layers className="w-5 h-5 text-primary" />
-                      </div>
+                      {p.poster_url ? (
+                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-muted shrink-0 border border-border">
+                          <img src={p.poster_url} alt={p.title} className="w-full h-full object-cover" loading="lazy" />
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center w-16 h-16 rounded-xl bg-primary/10 shrink-0">
+                          <Layers className="w-6 h-6 text-primary" />
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <p className="font-semibold text-sm truncate">{p.title}</p>
