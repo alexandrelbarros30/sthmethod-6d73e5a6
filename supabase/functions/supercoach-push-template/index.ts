@@ -59,13 +59,13 @@ Deno.serve(async (req) => {
     const { data: userRes, error: userErr } = await asUser.auth.getUser();
     if (userErr || !userRes?.user) throw new Error('Não autenticado');
     const admin = createClient(url, service);
-    const { data: role } = await admin
+    const { data: roles, error: roleErr } = await admin
       .from('user_roles')
       .select('role')
       .eq('user_id', userRes.user.id)
-      .in('role', ['admin', 'consultor'])
-      .maybeSingle();
-    if (!role) throw new Error('Apenas admin/consultor podem espelhar no ST Coach');
+      .in('role', ['admin', 'consultor']);
+    if (roleErr) throw roleErr;
+    if (!roles?.length) throw new Error('Apenas admin/consultor podem espelhar no ST Coach');
     const adminUserId = userRes.user.id;
 
     const body = (await req.json().catch(() => ({}))) as Body;
