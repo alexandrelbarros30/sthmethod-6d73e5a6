@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Dumbbell, Video, ChevronDown, ChevronUp, Copy, GripVertical, Library, Layers, Unlink, Link2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Dumbbell, Video, ChevronDown, ChevronUp, Copy, GripVertical, Library, Layers, Unlink, Link2, Upload, Loader2 } from "lucide-react";
 import ImportFromSuperCoachDialog from "@/components/admin/ImportFromSuperCoachDialog";
 import { toast } from "sonner";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
@@ -52,7 +52,7 @@ const emptyWorkout: WorkoutForm = {
 };
 
 /* ---------- sortable workout card ---------- */
-const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onToggle, onEdit, onDelete, onDuplicate, onToggleReleased, onEditExercise }: any) => {
+const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onToggle, onEdit, onDelete, onDuplicate, onToggleReleased, onEditExercise, onPushSuperCoach, pushingId }: any) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: w.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
 
@@ -78,6 +78,7 @@ const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onTog
                   <div className="flex flex-wrap gap-1.5 mt-1">
                     <Badge variant="outline" className="text-[10px]">{exs.length} ex.</Badge>
                     {w.weeks && <Badge variant="outline" className="text-[10px]">{w.weeks} sem</Badge>}
+                    {w.supercoach_training_id && <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">ST Coach</Badge>}
                   </div>
                 </div>
               </div>
@@ -104,6 +105,18 @@ const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onTog
                 </AlertDialogContent>
               </AlertDialog>
               <Button size="icon" variant="ghost" className="h-7 w-7" onClick={onEdit}><Pencil className="w-3.5 h-3.5" /></Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7"
+                title={w.supercoach_training_id ? "Re-sincronizar séries/reps no ST Coach" : "Espelhar este treino no ST Coach"}
+                onClick={(e) => { e.stopPropagation(); onPushSuperCoach?.(w.id); }}
+                disabled={pushingId === w.id}
+              >
+                {pushingId === w.id
+                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  : <Upload className="w-3.5 h-3.5 text-primary" />}
+              </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button size="icon" variant="ghost" className="h-7 w-7"><Trash2 className="w-3.5 h-3.5 text-destructive" /></Button>
