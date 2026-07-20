@@ -139,7 +139,24 @@ REGRAS:
 
     const userText = isReview
       ? `Revise este cardápio e devolva análise + sugestões:\n\n${dietContent}`
-      : `Brief estruturado:\n${JSON.stringify(brief, null, 2)}\n\nObservações livres do admin:\n${freeText || "(nenhuma)"}\n\nMonte o cardápio agora.`;
+      : (() => {
+          const kcal = Number((brief as any)?.kcal_alvo) || null;
+          const p = Number((brief as any)?.proteina_g_alvo) || null;
+          const c = Number((brief as any)?.carboidrato_g_alvo) || null;
+          const g = Number((brief as any)?.lipidio_g_alvo) || null;
+          const nMeals = Number((brief as any)?.numero_refeicoes) || 5;
+          const targetsBlock =
+            (kcal || p || c || g)
+              ? `\n\n🎯 METAS OBRIGATÓRIAS (prioridade absoluta — tolerância ±3%):\n` +
+                `- Energia total: ${kcal ?? "livre"} kcal\n` +
+                `- Proteína total: ${p ?? "livre"} g\n` +
+                `- Carboidrato total: ${c ?? "livre"} g\n` +
+                `- Lipídio total: ${g ?? "livre"} g\n` +
+                `- Nº de refeições: ${nMeals}\n\n` +
+                `Antes de fechar, SOME os macros das BASES de cada refeição e confirme que o TOTAL bate com as metas acima (±3%). Se não bater, AJUSTE as quantidades (gramagem dos alimentos) e recalcule até bater. NUNCA entregue um cardápio fora das metas do admin.`
+              : "";
+          return `Brief estruturado:\n${JSON.stringify(brief, null, 2)}${targetsBlock}\n\nObservações livres do admin:\n${freeText || "(nenhuma)"}\n\nMonte o cardápio agora respeitando as metas acima ao pé da letra.`;
+        })();
 
     // Build multimodal user content when photos are available
     const userContent: any = photos.length && !isReview
@@ -275,6 +292,23 @@ REGRAS:
       parsed.total.protein_g = roundInt(parsed.total.protein_g);
       parsed.total.carbs_g = roundInt(parsed.total.carbs_g);
       parsed.total.fat_g = roundInt(parsed.total.fat_g);
+    }
+    // Validate against admin targets and expose deviation so the client can warn.
+    if (!isReview && parsed?.total) {
+      const targets = {
+        energy_kcal: Number((brief as any)?.kcal_alvo) || null,
+        protein_g: Number((brief as any)?.proteina_g_alvo) || null,
+        carbs_g: Number((brief as any)?.carboidrato_g_alvo) || null,
+        fat_g: Number((brief as any)?.lipidio_g_alvo) || null,
+      };
+      const dev: Record<string, number> = {};
+      for (const k of Object.keys(targets) as Array<keyof typeof targets>) {
+        const t = targets[k];
+        const v = Number(parsed.total[k]);
+        if (t && isFinite(v)) dev[k] = Math.round(((v - t) / t) * 1000) / 10; // % with 1 decimal
+      }
+      parsed.targets = targets;
+      parsed.deviation_pct = dev;
     }
     if (typeof parsed?.diet_text === "string") {
       // Remove per-meal macro lines from the HTML output (they live in the structured meals array).
