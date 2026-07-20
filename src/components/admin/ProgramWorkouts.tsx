@@ -583,7 +583,18 @@ const ProgramWorkouts = ({ programId }: Props) => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <p className="text-sm text-muted-foreground">{(workouts || []).length} treino(s)</p>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-primary/40 text-primary hover:bg-primary/10"
+            onClick={pushAllToSuperCoach}
+            disabled={pushingAll || !(workouts || []).length}
+            title="Espelhar todos os treinos deste programa no ST Coach"
+          >
+            {pushingAll ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Upload className="w-4 h-4 mr-1" />}
+            Espelhar programa no ST Coach
+          </Button>
           <ImportFromSuperCoachDialog
             libraryExercises={libraryExercises || []}
             programId={programId}
