@@ -13,7 +13,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { getSuperCoachToken, getSuperCoachLibraryRaw, SC_COMMON_HEADERS, normalizeExName } from '../_shared/supercoach-library.ts';
 
-interface Body { templateId: string }
+interface Body { templateId: string; programId?: string }
 
 const SC = 'https://supertreinosapp.com/api/v2';
 
@@ -81,12 +81,46 @@ Deno.serve(async (req) => {
     if (tErr) throw tErr;
     if (!tpl) throw new Error('Template não encontrado');
 
-    const { data: prog } = await admin
-      .from('training_programs')
-      .select('id, title, subtitle, poster_url, supercoach_program_id, difficulty, objective, weeks, days_per_week, minutes_per_day')
-      .eq('id', tpl.program_id)
-      .maybeSingle();
-    if (!prog) throw new Error('Programa base não encontrado');
+    const programSelect = 'id, title, subtitle, poster_url, supercoach_program_id, difficulty, objective, weeks, days_per_week, minutes_per_day';
+    let prog: any = null;
+    const candidateProgramIds = Array.from(new Set([tpl.program_id, body.programId].filter(Boolean)));
+    for (const pid of candidateProgramIds) {
+      const { data, error } = await admin
+        .from('training_programs')
+        .select(programSelect)
+        .eq('id', pid)
+        .maybeSingle();
+      if (error) throw error;
+      if (data) { prog = data; break; }
+    }
+    if (!prog && body.programId) {
+      const { error: relinkErr } = await admin
+        .from('workout_templates')
+        .update({ program_id: body.programId })
+        .eq('id', templateId);
+      if (relinkErr) throw relinkErr;
+      const { data, error } = await admin
+        .from('training_programs')
+        .select(programSelect)
+        .eq('id', body.programId)
+        .maybeSingle();
+      if (error) throw error;
+      if (data) prog = data;
+    }
+    if (!prog) {
+      prog = {
+        id: null,
+        title: tpl.title || 'Programa STH METHOD',
+        subtitle: tpl.subtitle || '',
+        poster_url: tpl.image_url || null,
+        supercoach_program_id: tpl.supercoach_program_id || null,
+        difficulty: 'intermediario',
+        objective: 'hipertrofia',
+        weeks: tpl.weeks || '',
+        days_per_week: tpl.days_per_week || '',
+        minutes_per_day: tpl.minutes_per_day || '',
+      };
+    }
 
     const { data: exs } = await admin
       .from('workout_template_exercises')
@@ -129,7 +163,7 @@ Deno.serve(async (req) => {
       });
       scProgramId = Number(created?.program?.id);
       if (!scProgramId) throw new Error('Falha ao criar programa no ST Coach');
-      await admin.from('training_programs').update({ supercoach_program_id: scProgramId }).eq('id', prog.id);
+      if (prog.id) await admin.from('training_programs').update({ supercoach_program_id: scProgramId }).eq('id', prog.id);
       // Também marca o template
       await admin.from('workout_templates').update({ supercoach_program_id: scProgramId }).eq('id', templateId);
     }
