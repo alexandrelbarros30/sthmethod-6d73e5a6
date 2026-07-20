@@ -877,7 +877,8 @@ Deno.serve(async (req) => {
             const sub = subs?.[0];
             if (sub) {
               const isFuture = new Date(sub.end_date).getTime() > Date.now();
-              if (sub.status === 'active' || isFuture) mediaIdentifiedAs = 'aluno_ativo';
+              // Fonte de verdade: end_date. status='active' vencido NÃO é ativo.
+              if (isFuture) mediaIdentifiedAs = 'aluno_ativo';
               else {
                 const days = Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86400000);
                 mediaIdentifiedAs = days < -365 ? 'ex_aluno' : 'aluno_vencido';
@@ -1233,10 +1234,10 @@ Deno.serve(async (req) => {
       const { data: subs } = await admin.from('subscriptions').select('end_date, status').eq('user_id', profile.user_id).order('end_date', { ascending: false }).limit(1);
       const sub = subs?.[0];
       if (sub) {
-        // Se o status for explicitamente 'active', consideramos ativo independente da data (ex: planos vitalícios ou com erro de data)
-        // Ou se a data de término for no futuro
+        // Fonte de verdade: end_date. status='active' vencido NÃO é ativo
+        // (evita 27+ vencidos entrando como aluno_ativo no Nutri).
         const isFuture = new Date(sub.end_date).getTime() > Date.now();
-        if (sub.status === 'active' || isFuture) {
+        if (isFuture) {
           identifiedAs = 'aluno_ativo';
         } else {
           const days = Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86400000);

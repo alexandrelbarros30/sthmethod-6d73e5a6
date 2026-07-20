@@ -6076,6 +6076,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      expire_overdue_subscriptions: { Args: never; Returns: number }
       get_authorized_contact_by_token: {
         Args: { _token: string }
         Returns: Json
