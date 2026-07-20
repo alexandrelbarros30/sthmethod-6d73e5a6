@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -42,6 +43,8 @@ serve(async (req) => {
       brief = {},
       freeText = "",
       dietContent = "",
+      studentId = null,
+      includePhotos = true,
     } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -49,10 +52,55 @@ serve(async (req) => {
 
     const isReview = mode === "review";
 
+    // ---------- Fetch student body photos (latest per angle + previous for comparison) ----------
+    type PhotoItem = { label: string; url: string; taken_at: string };
+    const photos: PhotoItem[] = [];
+    if (includePhotos && studentId && !isReview) {
+      try {
+        const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+        const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const admin = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
+        const { data: imgs } = await admin
+          .from("body_images")
+          .select("type, image_url, storage_path, uploaded_at")
+          .eq("user_id", studentId)
+          .order("uploaded_at", { ascending: false })
+          .limit(24);
+        const byType: Record<string, any[]> = {};
+        for (const r of imgs || []) {
+          const t = String(r.type || "").toLowerCase();
+          if (!byType[t]) byType[t] = [];
+          if (byType[t].length < 2) byType[t].push(r); // latest + previous
+        }
+        for (const [t, arr] of Object.entries(byType)) {
+          for (let i = 0; i < arr.length; i++) {
+            const r = arr[i];
+            let url = r.image_url as string | null;
+            if (r.storage_path) {
+              const { data: signed } = await admin.storage
+                .from("body-images")
+                .createSignedUrl(r.storage_path, 60 * 30);
+              if (signed?.signedUrl) url = signed.signedUrl;
+            }
+            if (url) photos.push({
+              label: `${t}${i === 0 ? " (mais recente)" : " (anterior)"} — ${new Date(r.uploaded_at).toLocaleDateString("pt-BR")}`,
+              url,
+              taken_at: r.uploaded_at,
+            });
+          }
+        }
+      } catch (e) {
+        console.warn("photo fetch failed", e);
+      }
+    }
+
     const systemPrompt = isReview
       ? `Você é um nutricionista sênior revisando um cardápio brasileiro. Avalie coerência, distribuição de macros ao longo do dia, adequação ao objetivo, variedade, praticidade e possíveis melhorias. Use TACO/TBCA como referência.\n\n${TACO_REF}`
       : `Você é um nutricionista especialista em cardápios brasileiros, no estilo STH METHOD.
 Monte um cardápio no PADRÃO STH METHOD (HTML rico usado no portal do aluno). NÃO invente valores nutricionais — use TACO/TBCA. Temperatura 0.
+
+${photos.length ? `AVALIAÇÃO VISUAL DA EVOLUÇÃO CORPORAL:
+Você receberá ${photos.length} foto(s) do aluno (frente/costas/perfil, mais recente e anterior quando disponível). Observe silhueta, composição corporal aparente, retenção hídrica, distribuição de tecido adiposo e evolução entre datas. Use esta leitura visual para calibrar a estratégia do cardápio (déficit/superávit, distribuição de carbo, timing pré/pós treino, hidratação, sódio). NÃO faça diagnóstico médico. Descreva sua leitura visual no campo "notes" em 1-2 frases e ajuste o cardápio de acordo — SEMPRE respeitando o briefing do admin/consultor (kcal alvo, macros, restrições, preferências e observações livres têm prioridade absoluta sobre sua leitura visual).\n` : ""}
 
 FORMATO OBRIGATÓRIO — HTML PURO (sem markdown, sem \`\`\`), exatamente como o exemplo:
 
@@ -94,6 +142,14 @@ REGRAS:
     const userText = isReview
       ? `Revise este cardápio e devolva análise + sugestões:\n\n${dietContent}`
       : `Brief estruturado:\n${JSON.stringify(brief, null, 2)}\n\nObservações livres do admin:\n${freeText || "(nenhuma)"}\n\nMonte o cardápio agora.`;
+
+    // Build multimodal user content when photos are available
+    const userContent: any = photos.length && !isReview
+      ? [
+          { type: "text", text: userText + `\n\nFotos anexadas para leitura visual:\n` + photos.map((p, i) => `${i + 1}. ${p.label}`).join("\n") },
+          ...photos.map((p) => ({ type: "image_url", image_url: { url: p.url } })),
+        ]
+      : userText;
 
     const tool = isReview
       ? {
@@ -172,7 +228,7 @@ REGRAS:
         temperature: 0,
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: userText },
+          { role: "user", content: userContent },
         ],
         tools: [tool],
         tool_choice: { type: "function", function: { name: tool.function.name } },
@@ -229,7 +285,7 @@ REGRAS:
         (_m, intPart, decPart, unit) => `${Math.round(Number(`${intPart}.${decPart}`))}${unit.toLowerCase() === "g" ? "g" : " " + unit}`,
       );
     }
-    return new Response(JSON.stringify({ ...parsed, _meta: { model: "google/gemini-2.5-pro", usage: data?.usage || null } }), {
+    return new Response(JSON.stringify({ ...parsed, _meta: { model: "google/gemini-2.5-pro", usage: data?.usage || null, photos_used: photos.length } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
