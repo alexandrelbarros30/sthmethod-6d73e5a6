@@ -877,7 +877,8 @@ Deno.serve(async (req) => {
             const sub = subs?.[0];
             if (sub) {
               const isFuture = new Date(sub.end_date).getTime() > Date.now();
-              if (sub.status === 'active' || isFuture) mediaIdentifiedAs = 'aluno_ativo';
+              // Fonte de verdade: end_date. status='active' vencido NÃO é ativo.
+              if (isFuture) mediaIdentifiedAs = 'aluno_ativo';
               else {
                 const days = Math.floor((new Date(sub.end_date).getTime() - Date.now()) / 86400000);
                 mediaIdentifiedAs = days < -365 ? 'ex_aluno' : 'aluno_vencido';
