@@ -268,7 +268,7 @@ REGRAS:
           const p = Number((brief as any)?.proteina_g_alvo) || null;
           const c = Number((brief as any)?.carboidrato_g_alvo) || null;
           const g = Number((brief as any)?.lipidio_g_alvo) || null;
-          const nMeals = Number((brief as any)?.numero_refeicoes) || 5;
+          const nMeals = Math.max(1, Math.min(10, Math.round(Number((brief as any)?.numero_refeicoes) || 5)));
           const targetsBlock =
             (kcal || p || c || g)
               ? `\n\n🎯 METAS OBRIGATÓRIAS (prioridade absoluta — tolerância ±3%):\n` +
@@ -368,7 +368,7 @@ REGRAS:
     const callModel = async (messages: any[]) => fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Lovable-API-Key": LOVABLE_API_KEY,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
