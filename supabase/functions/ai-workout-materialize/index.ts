@@ -305,8 +305,29 @@ Regras:
       assigned = count || asRows.length;
     }
 
+    // 5) Espelhar templates no ST Coach (best-effort — falha silenciosa)
+    let scMirrored = 0;
+    for (const tid of templateIds) {
+      try {
+        const r = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/supercoach-push-template`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: authHeader,
+            apikey: Deno.env.get('SUPABASE_ANON_KEY')!,
+          },
+          body: JSON.stringify({ templateId: tid }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (j?.ok) scMirrored++;
+        else console.log('sc-push skipped', tid, j?.error);
+      } catch (e) {
+        console.error('sc-push failed', tid, e);
+      }
+    }
+
     return new Response(JSON.stringify({
-      ok: true, programId, templateIds, workouts: templateIds.length, assigned,
+      ok: true, programId, templateIds, workouts: templateIds.length, assigned, scMirrored,
       title,
     }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (err) {
