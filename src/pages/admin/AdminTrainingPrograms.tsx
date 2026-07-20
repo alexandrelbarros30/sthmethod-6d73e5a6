@@ -248,6 +248,9 @@ const AdminTrainingPrograms = () => {
 
   const deleteProgramMutation = useMutation({
     mutationFn: async (id: string) => {
+      try {
+        await supabase.functions.invoke("supercoach-delete-program", { body: { programId: id } });
+      } catch (e) { console.warn("[supercoach-delete-program]", e); }
       const { error } = await supabase.from("training_programs").delete().eq("id", id);
       if (error) {
         const { handleLibraryWriteError } = await import("@/lib/library-write-guard");
