@@ -394,6 +394,7 @@ const AdminDietAI = () => {
                     <Badge variant="outline">C {Math.round(result.total.carbs_g)}g</Badge>
                     <Badge variant="outline">G {Math.round(result.total.fat_g)}g</Badge>
                     {result.hydration_l && <Badge variant="outline">💧 {result.hydration_l}L</Badge>}
+                    {result._meta?.photos_used ? <Badge variant="outline">📷 {result._meta.photos_used} foto(s) analisada(s)</Badge> : null}
                   </div>
                 </CardHeader>
                 <CardContent>
