@@ -187,11 +187,27 @@ const AdminDietAI = () => {
     const title = name.trim() || defaultName;
     setSaving(true);
     try {
+      // Injeta os macros de cada refeição diretamente no HTML salvo,
+      // logo após o fechamento da Opção 4 (marcador <strong>"</strong></p>).
+      // O admin/rascunho continua limpo; o aluno vê os macros por refeição.
+      const macroBadge = (m: Meal) =>
+        `<p style="margin:0.25rem 0 0.75rem;padding:0.5rem 0.75rem;border-radius:0.5rem;background:hsl(var(--muted)/0.5);font-size:0.8125rem;"><strong>Macros da Refeição ${String(m.meal_number).padStart(2, "0")}:</strong> ${Math.round(m.energy_kcal)} kcal | P: ${Math.round(m.protein_g)}g | C: ${Math.round(m.carbs_g)}g | G: ${Math.round(m.fat_g)}g</p>`;
+      let injected = result.diet_text || "";
+      let mealIdx = 0;
+      injected = injected.replace(/(<strong>"<\/strong><\/p>)/gi, (match) => {
+        const meal = result.meals?.[mealIdx++];
+        return meal ? `${match}${macroBadge(meal)}` : match;
+      });
+      // Fallback: se não encontrou o marcador, apenas anexa os macros ao final da dieta.
+      if (mealIdx === 0 && Array.isArray(result.meals) && result.meals.length) {
+        injected += `<hr/>` + result.meals.map(macroBadge).join("");
+      }
+
       const { error } = await supabase.from("student_diets").insert({
         user_id: selectedStudent.user_id,
         title,
         tab_label: title,
-        content: result.diet_text,
+        content: injected,
         energy_kcal: result.total.energy_kcal,
         protein_g: result.total.protein_g,
         carbs_g: result.total.carbs_g,
