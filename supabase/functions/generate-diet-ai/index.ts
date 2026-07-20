@@ -287,6 +287,28 @@ REGRAS:
         /(\d+)[.,](\d+)\s*(kcal|g)\b/gi,
         (_m, intPart, decPart, unit) => `${Math.round(Number(`${intPart}.${decPart}`))}${unit.toLowerCase() === "g" ? "g" : " " + unit}`,
       );
+      // Inject per-meal macro badges after each meal's closing marker (<strong>"</strong></p>),
+      // so the student always sees the macros of each meal in the rendered diet.
+      if (Array.isArray(parsed?.meals) && parsed.meals.length) {
+        const badge = (m: any) => {
+          const n = String(m?.meal_number ?? "").padStart(2, "0");
+          return `<p style="margin:0.25rem 0 0.75rem;padding:0.5rem 0.75rem;border-radius:0.5rem;background:hsl(var(--muted)/0.5);font-size:0.8125rem;"><strong>Macros da Refeição ${n}:</strong> ${roundInt(m?.energy_kcal)} kcal | P: ${roundInt(m?.protein_g)}g | C: ${roundInt(m?.carbs_g)}g | G: ${roundInt(m?.fat_g)}g</p>`;
+        };
+        let idx = 0;
+        parsed.diet_text = parsed.diet_text.replace(/(<strong>"<\/strong><\/p>)/gi, (match: string) => {
+          const meal = parsed.meals[idx++];
+          return meal ? `${match}${badge(meal)}` : match;
+        });
+        // Fallback: if no closing marker matched, append all badges before TOTAL DIÁRIO (or at end).
+        if (idx === 0) {
+          const all = parsed.meals.map(badge).join("");
+          if (/TOTAL\s+DI[ÁA]RIO/i.test(parsed.diet_text)) {
+            parsed.diet_text = parsed.diet_text.replace(/(<p[^>]*>\s*<strong>\s*TOTAL\s+DI[ÁA]RIO)/i, `${all}$1`);
+          } else {
+            parsed.diet_text += `<hr/>${all}`;
+          }
+        }
+      }
     }
     return new Response(JSON.stringify({ ...parsed, _meta: { model: "google/gemini-2.5-flash", usage: data?.usage || null, photos_used: photos.length } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
