@@ -249,6 +249,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
     if (!list.length) { toast.error("Nenhum treino para espelhar"); return; }
     setPushingAll(true);
     let ok = 0, fail = 0;
+    const failures: string[] = [];
     const toastId = toast.loading(`Espelhando 0/${list.length} treinos no ST Coach...`);
     for (let i = 0; i < list.length; i++) {
       const w = list[i];
@@ -258,13 +259,15 @@ const ProgramWorkouts = ({ programId }: Props) => {
         ok++;
       } catch (e: any) {
         fail++;
-        console.error("[push-all] fail", w.title, e?.message);
+        const reason = e?.message || "falha desconhecida";
+        failures.push(`${w.title || "Treino"}: ${reason}`);
+        console.error("[push-all] fail", w.title, reason);
       }
       toast.loading(`Espelhando ${i + 1}/${list.length} treinos no ST Coach...`, { id: toastId });
     }
     toast.dismiss(toastId);
     if (fail === 0) toast.success(`Programa espelhado no ST Coach (${ok}/${list.length}).`);
-    else toast.warning(`Espelhamento parcial: ${ok} ok, ${fail} falharam.`);
+    else toast.warning(`Espelhamento parcial: ${ok} ok, ${fail} falharam. ${failures[0] || ""}`);
     queryClient.invalidateQueries({ queryKey: ["program-workouts", programId] });
     setPushingAll(false);
   };
