@@ -52,26 +52,36 @@ serve(async (req) => {
     const systemPrompt = isReview
       ? `Você é um nutricionista sênior revisando um cardápio brasileiro. Avalie coerência, distribuição de macros ao longo do dia, adequação ao objetivo, variedade, praticidade e possíveis melhorias. Use TACO/TBCA como referência.\n\n${TACO_REF}`
       : `Você é um nutricionista especialista em cardápios brasileiros, no estilo STH METHOD.
-Monte um cardápio com formatação limpa, direta e prática. NÃO invente valores nutricionais — use TACO/TBCA. Temperatura 0.
+Monte um cardápio no PADRÃO STH METHOD (HTML rico usado no portal do aluno). NÃO invente valores nutricionais — use TACO/TBCA. Temperatura 0.
 
-FORMATO OBRIGATÓRIO (texto puro, sem markdown, sem HTML):
-REFEIÇÃO 1 - CAFÉ DA MANHÃ
-- 3 ovos inteiros
-- 50g de aveia
-- 100g de mamão papaia
+FORMATO OBRIGATÓRIO — HTML PURO (sem markdown, sem \`\`\`), exatamente como o exemplo:
 
-REFEIÇÃO 2 - LANCHE DA MANHÃ
-- 1 scoop de whey
-- 1 banana
+<ul><li><p>Refeição 01: Desjejum (Ativação Metabólica)</p></li></ul>
+<p><strong>"⭐ BASE:</strong> Omelete de 1 ovo inteiro + 3 claras de ovo + 40g de farelo de aveia integral + 100g de mamão formosa.</p>
+<p><strong>Opção 2:</strong> Shake com 30g de Whey Protein + 40g de farelo de aveia + 100g de morangos.</p>
+<p><strong>Opção 3:</strong> 2 fatias de pão integral (50g) + 100g de peito de frango desfiado + 30g de queijo cottage zero.</p>
+<p><strong>Opção 4:</strong> 170g de iogurte grego zero açúcar + 25g de Whey + 25g de granola integral.<strong>"</strong></p>
+<ul><li><p>Refeição 02: Almoço (Sustentação Anabólica)</p></li></ul>
+<p><strong>"⭐ BASE:</strong> ... </p>
+<p><strong>Opção 2:</strong> ...</p>
+<p><strong>Opção 3:</strong> ...</p>
+<p><strong>Opção 4:</strong> ...<strong>"</strong></p>
 
-(uma linha em branco entre refeições, itens com "- ", quantidades explícitas em g/ml/unidades).
-Não inclua substituições nem "ou". Não inclua observações longas.
+REGRAS DE FORMATAÇÃO (obrigatórias):
+- Cada refeição começa com <ul><li><p>Refeição NN: Nome (Subtítulo estratégico)</p></li></ul> (números 01, 02, 03...).
+- Cada refeição tem SEMPRE 4 blocos: "⭐ BASE" + Opção 2 + Opção 3 + Opção 4 (substituições isocalóricas equivalentes em kcal e macros à BASE, com tolerância ±5%).
+- Rótulos entre <strong>...</strong>. Abre aspas dupla no BASE (<strong>"⭐ BASE:</strong>) e fecha aspas dupla no fim da Opção 4 (<strong>"</strong></p>).
+- Quantidades explícitas em g/ml/unidades. Nomes de alimentos em português BR.
+- Nomes de refeição típicos: Desjejum, Colação, Almoço, Lanche da Tarde, Pré-Treino, Pós-Treino, Jantar, Ceia (adaptar ao número pedido).
+- Subtítulos estratégicos entre parênteses (ex: "Ativação Metabólica", "Sustentação Anabólica", "Carga de Glicogênio", "Manutenção Nitrogenada", "Recuperação Noturna").
 
 ${TACO_REF}
 
 REGRAS:
 - Respeite kcal alvo, macros alvo (P/C/G), número de refeições e restrições/preferências informadas.
-- Calcule os macros por refeição via regra de três dos valores acima; some para o total.
+- Calcule os macros de cada refeição usando SEMPRE a opção BASE via regra de três dos valores TACO acima; some para o total.
+- Opção 2, 3 e 4 devem ser aproximadamente isocalóricas e isomacros em relação à BASE.
+- Campo diet_text DEVE conter o HTML completo pronto para renderizar no portal do aluno.
 - Retorne APENAS via tool call.`;
 
     const userText = isReview
