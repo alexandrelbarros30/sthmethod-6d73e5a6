@@ -32,6 +32,8 @@ type GenResult = {
   total: { energy_kcal: number; protein_g: number; carbs_g: number; fat_g: number };
   hydration_l?: number;
   notes?: string;
+  targets?: { energy_kcal: number | null; protein_g: number | null; carbs_g: number | null; fat_g: number | null };
+  deviation_pct?: { energy_kcal?: number; protein_g?: number; carbs_g?: number; fat_g?: number };
   _meta?: { usage?: any; photos_used?: number };
 };
 
@@ -404,10 +406,20 @@ const AdminDietAI = () => {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2 mt-3">
-                    <Badge variant="outline">{Math.round(result.total.energy_kcal)} kcal</Badge>
-                    <Badge variant="outline">P {Math.round(result.total.protein_g)}g</Badge>
-                    <Badge variant="outline">C {Math.round(result.total.carbs_g)}g</Badge>
-                    <Badge variant="outline">G {Math.round(result.total.fat_g)}g</Badge>
+                    {(["energy_kcal","protein_g","carbs_g","fat_g"] as const).map((k) => {
+                      const label = k === "energy_kcal" ? "kcal" : k === "protein_g" ? "P" : k === "carbs_g" ? "C" : "G";
+                      const val = Math.round((result.total as any)[k]);
+                      const target = result.targets?.[k] ?? null;
+                      const dev = result.deviation_pct?.[k];
+                      const off = typeof dev === "number" && Math.abs(dev) > 3;
+                      return (
+                        <Badge key={k} variant={off ? "destructive" : "outline"} title={target ? `Meta: ${target}${k === "energy_kcal" ? " kcal" : "g"} · Δ ${dev}%` : undefined}>
+                          {label === "kcal" ? `${val} kcal` : `${label} ${val}g`}
+                          {target ? ` / ${target}${k === "energy_kcal" ? "" : "g"}` : ""}
+                          {typeof dev === "number" ? ` (${dev > 0 ? "+" : ""}${dev}%)` : ""}
+                        </Badge>
+                      );
+                    })}
                     {result.hydration_l && <Badge variant="outline">💧 {result.hydration_l}L</Badge>}
                     {result._meta?.photos_used ? <Badge variant="outline">📷 {result._meta.photos_used} foto(s) analisada(s)</Badge> : null}
                   </div>
