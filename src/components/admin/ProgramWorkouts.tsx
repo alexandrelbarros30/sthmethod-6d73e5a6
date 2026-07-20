@@ -226,6 +226,22 @@ const ProgramWorkouts = ({ programId }: Props) => {
   const [selectedRowUids, setSelectedRowUids] = useState<Set<string>>(new Set());
   const [groupForm, setGroupForm] = useState({ name: "Biset", color: "#f59e0b" });
   const [quickEditEx, setQuickEditEx] = useState<any | null>(null);
+  const [pushingId, setPushingId] = useState<string | null>(null);
+
+  const pushToSuperCoach = async (templateId: string) => {
+    setPushingId(templateId);
+    try {
+      const { data, error } = await supabase.functions.invoke("supercoach-push-template", { body: { templateId } });
+      if (error) throw error;
+      if (data?.ok === false) throw new Error(data?.error || "Falha ao espelhar");
+      toast.success(`Treino espelhado no ST Coach (${data?.patched ?? 0} exercícios sincronizados).`);
+      queryClient.invalidateQueries({ queryKey: ["program-workouts", programId] });
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao espelhar no ST Coach");
+    } finally {
+      setPushingId(null);
+    }
+  };
 
   const { data: workouts, isLoading } = useQuery({
     queryKey: ["program-workouts", programId],
@@ -580,6 +596,8 @@ const ProgramWorkouts = ({ programId }: Props) => {
                   onDuplicate={() => duplicateWorkoutMutation.mutate(w.id)}
                   onToggleReleased={(checked: boolean) => toggleReleasedMutation.mutate({ id: w.id, released: checked })}
                   onEditExercise={(ex: any) => setQuickEditEx(ex)}
+                  onPushSuperCoach={pushToSuperCoach}
+                  pushingId={pushingId}
                 />
               ))}
             </div>
