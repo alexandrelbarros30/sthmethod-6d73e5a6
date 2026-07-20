@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     // Carrega template + programa + exercícios
     const { data: tpl, error: tErr } = await admin
       .from('workout_templates')
-      .select('id, title, subtitle, image_url, program_id, supercoach_training_id, supercoach_program_id')
+      .select('id, title, subtitle, image_url, program_id, supercoach_training_id, supercoach_program_id, weeks, days_per_week, minutes_per_day')
       .eq('id', templateId)
       .maybeSingle();
     if (tErr) throw tErr;
@@ -120,6 +120,13 @@ Deno.serve(async (req) => {
         days_per_week: tpl.days_per_week || '',
         minutes_per_day: tpl.minutes_per_day || '',
       };
+    }
+    if (prog.id && tpl.program_id !== prog.id) {
+      const { error: relinkErr } = await admin
+        .from('workout_templates')
+        .update({ program_id: prog.id })
+        .eq('id', templateId);
+      if (relinkErr) throw relinkErr;
     }
 
     const { data: exs } = await admin
