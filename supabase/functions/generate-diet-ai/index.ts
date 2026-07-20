@@ -253,8 +253,10 @@ REGRAS DE FORMATAÇÃO (obrigatórias):
 ${TACO_REF}
 
 REGRAS:
-- Respeite kcal alvo, macros alvo (P/C/G), número de refeições e restrições/preferências informadas.
+- Respeite kcal alvo, macros alvo (P/C/G), número de refeições e restrições/preferências informadas como CONTRATO DE ENTREGA. Se kcal alvo = 1900, total final precisa ficar entre 1843 e 1957 kcal. Se carbo alvo = 150g, total final precisa ficar entre 146g e 155g. O mesmo vale para proteína e lipídio quando informados.
+- O número de refeições é obrigatório e exato. Se o admin pedir 6 refeições, retorne exatamente 6 objetos em meals e exatamente 6 blocos no diet_text.
 - Calcule os macros de cada refeição usando SEMPRE a opção BASE via regra de três dos valores TACO acima; some para o total. Arredonde cada valor para inteiro antes de exibir.
+- O campo total deve ser a SOMA EXATA dos objetos em meals. Não invente total separado.
 - Opção 2, 3 e 4 devem ser aproximadamente isocalóricas e isomacros em relação à BASE.
 - Campo diet_text DEVE conter o HTML completo pronto para renderizar no portal do aluno.
 - Nos campos numéricos do tool call (energy_kcal, protein_g, carbs_g, fat_g), retorne SEMPRE valores inteiros (sem casas decimais).
@@ -276,7 +278,8 @@ REGRAS:
                 `- Carboidrato total: ${c ?? "livre"} g\n` +
                 `- Lipídio total: ${g ?? "livre"} g\n` +
                 `- Nº de refeições: ${nMeals}\n\n` +
-                `Antes de fechar, SOME os macros das BASES de cada refeição e confirme que o TOTAL bate com as metas acima (±3%). Se não bater, AJUSTE as quantidades (gramagem dos alimentos) e recalcule até bater. NUNCA entregue um cardápio fora das metas do admin.`
+                `DISTRIBUIÇÃO DE REFERÊNCIA POR REFEIÇÃO (use como ponto de partida e ajuste as gramagens até a soma fechar):\n${buildMealBudget({ energy_kcal: kcal, protein_g: p, carbs_g: c, fat_g: g }, nMeals)}\n\n` +
+                `Antes de fechar, SOME os macros das BASES de cada refeição e confirme que o TOTAL bate com as metas acima (±3%). Se não bater, AJUSTE as quantidades (gramagem dos alimentos) e recalcule até bater. NUNCA entregue um cardápio fora das metas do admin. Se foi pedido ${nMeals} refeições, entregue exatamente ${nMeals}.`
               : "";
           return `Brief estruturado:\n${JSON.stringify(brief, null, 2)}${targetsBlock}\n\nObservações livres do admin:\n${freeText || "(nenhuma)"}\n\nMonte o cardápio agora respeitando as metas acima ao pé da letra.`;
         })();
