@@ -227,6 +227,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
   const [groupForm, setGroupForm] = useState({ name: "Biset", color: "#f59e0b" });
   const [quickEditEx, setQuickEditEx] = useState<any | null>(null);
   const [pushingId, setPushingId] = useState<string | null>(null);
+  const [pushingAll, setPushingAll] = useState(false);
 
   const pushToSuperCoach = async (templateId: string) => {
     setPushingId(templateId);
@@ -241,6 +242,31 @@ const ProgramWorkouts = ({ programId }: Props) => {
     } finally {
       setPushingId(null);
     }
+  };
+
+  const pushAllToSuperCoach = async () => {
+    const list = (workouts || []) as any[];
+    if (!list.length) { toast.error("Nenhum treino para espelhar"); return; }
+    setPushingAll(true);
+    let ok = 0, fail = 0;
+    const toastId = toast.loading(`Espelhando 0/${list.length} treinos no ST Coach...`);
+    for (let i = 0; i < list.length; i++) {
+      const w = list[i];
+      try {
+        const { data, error } = await supabase.functions.invoke("supercoach-push-template", { body: { templateId: w.id } });
+        if (error || data?.ok === false) throw new Error(error?.message || data?.error || "falha");
+        ok++;
+      } catch (e: any) {
+        fail++;
+        console.error("[push-all] fail", w.title, e?.message);
+      }
+      toast.loading(`Espelhando ${i + 1}/${list.length} treinos no ST Coach...`, { id: toastId });
+    }
+    toast.dismiss(toastId);
+    if (fail === 0) toast.success(`Programa espelhado no ST Coach (${ok}/${list.length}).`);
+    else toast.warning(`Espelhamento parcial: ${ok} ok, ${fail} falharam.`);
+    queryClient.invalidateQueries({ queryKey: ["program-workouts", programId] });
+    setPushingAll(false);
   };
 
   const { data: workouts, isLoading } = useQuery({
@@ -557,7 +583,18 @@ const ProgramWorkouts = ({ programId }: Props) => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <p className="text-sm text-muted-foreground">{(workouts || []).length} treino(s)</p>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-primary/40 text-primary hover:bg-primary/10"
+            onClick={pushAllToSuperCoach}
+            disabled={pushingAll || !(workouts || []).length}
+            title="Espelhar todos os treinos deste programa no ST Coach"
+          >
+            {pushingAll ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Upload className="w-4 h-4 mr-1" />}
+            Espelhar programa no ST Coach
+          </Button>
           <ImportFromSuperCoachDialog
             libraryExercises={libraryExercises || []}
             programId={programId}
