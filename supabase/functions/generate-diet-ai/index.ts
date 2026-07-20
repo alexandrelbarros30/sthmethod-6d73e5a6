@@ -277,6 +277,11 @@ REGRAS:
       parsed.total.fat_g = roundInt(parsed.total.fat_g);
     }
     if (typeof parsed?.diet_text === "string") {
+      // Remove per-meal macro lines from the HTML output (they live in the structured meals array).
+      parsed.diet_text = parsed.diet_text.replace(
+        /<p[^>]*>\s*(?:<[^>]+>\s*)*Macros\s+da\s+Refei[cç][aã]o[\s\S]*?<\/p>\s*/gi,
+        "",
+      );
       // Strip decimals from numeric tokens followed by kcal/g (e.g. "419,7 kcal" -> "420 kcal", "35.2g" -> "35g")
       parsed.diet_text = parsed.diet_text.replace(
         /(\d+)[.,](\d+)\s*(kcal|g)\b/gi,
