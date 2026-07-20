@@ -232,7 +232,15 @@ REGRAS:
           },
         };
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const targetsForRetry = !isReview ? {
+      energy_kcal: Number((brief as any)?.kcal_alvo) || null,
+      protein_g: Number((brief as any)?.proteina_g_alvo) || null,
+      carbs_g: Number((brief as any)?.carboidrato_g_alvo) || null,
+      fat_g: Number((brief as any)?.lipidio_g_alvo) || null,
+    } : null;
+    const TOLERANCE_PCT = 5; // retry if any tracked target deviates more than this
+
+    const callModel = async (messages: any[]) => fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
@@ -241,14 +249,17 @@ REGRAS:
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         temperature: 0,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userContent },
-        ],
+        messages,
         tools: [tool],
         tool_choice: { type: "function", function: { name: tool.function.name } },
       }),
     });
+
+    const baseMessages: any[] = [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userContent },
+    ];
+    let response = await callModel(baseMessages);
 
     if (!response.ok) {
       if (response.status === 429) {
