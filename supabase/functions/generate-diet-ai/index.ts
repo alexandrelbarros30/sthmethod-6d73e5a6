@@ -455,7 +455,7 @@ REGRAS:
           deviation_pct: gate.deviation_pct,
           retries,
         }), {
-          status: 422,
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
