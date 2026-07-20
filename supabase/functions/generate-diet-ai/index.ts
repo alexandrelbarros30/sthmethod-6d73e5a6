@@ -65,12 +65,12 @@ serve(async (req) => {
           .select("type, image_url, storage_path, uploaded_at")
           .eq("user_id", studentId)
           .order("uploaded_at", { ascending: false })
-          .limit(24);
+          .limit(12);
         const byType: Record<string, any[]> = {};
         for (const r of imgs || []) {
           const t = String(r.type || "").toLowerCase();
           if (!byType[t]) byType[t] = [];
-          if (byType[t].length < 2) byType[t].push(r); // latest + previous
+          if (byType[t].length < 1) byType[t].push(r); // apenas a mais recente por ângulo (reduz payload)
         }
         for (const [t, arr] of Object.entries(byType)) {
           for (let i = 0; i < arr.length; i++) {
@@ -224,7 +224,7 @@ REGRAS:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
+        model: "google/gemini-2.5-flash",
         temperature: 0,
         messages: [
           { role: "system", content: systemPrompt },
@@ -285,7 +285,7 @@ REGRAS:
         (_m, intPart, decPart, unit) => `${Math.round(Number(`${intPart}.${decPart}`))}${unit.toLowerCase() === "g" ? "g" : " " + unit}`,
       );
     }
-    return new Response(JSON.stringify({ ...parsed, _meta: { model: "google/gemini-2.5-pro", usage: data?.usage || null, photos_used: photos.length } }), {
+    return new Response(JSON.stringify({ ...parsed, _meta: { model: "google/gemini-2.5-flash", usage: data?.usage || null, photos_used: photos.length } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
