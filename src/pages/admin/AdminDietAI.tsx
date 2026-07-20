@@ -340,6 +340,15 @@ const AdminDietAI = () => {
                 )}
               </Button>
               {selectedStudent && (
+                <div className="flex items-center justify-between rounded border border-border p-2 text-xs">
+                  <div>
+                    <p className="font-medium">Analisar fotos de evolução</p>
+                    <p className="text-muted-foreground">STHIA observa as últimas fotos (frente/costas/perfil) para calibrar o cardápio. Briefing tem prioridade.</p>
+                  </div>
+                  <Switch checked={usePhotos} onCheckedChange={setUsePhotos} />
+                </div>
+              )}
+              {selectedStudent && (
                 <Button variant="outline" size="sm" className="w-full" onClick={saveMacrosToProfile}>
                   <UserCog className="w-4 h-4 mr-2" /> Salvar macros no perfil do aluno
                 </Button>
