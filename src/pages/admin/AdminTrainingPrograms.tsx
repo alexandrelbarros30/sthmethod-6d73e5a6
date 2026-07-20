@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Users, ChevronRight, Layers, ArrowLeft, Copy, Target, Zap, Search, Dumbbell, ImagePlus, X, UserMinus } from "lucide-react";
+import { Plus, Pencil, Trash2, Users, ChevronRight, Layers, ArrowLeft, Copy, Target, Zap, Search, Dumbbell, ImagePlus, X, UserMinus, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import ProgramWorkouts from "@/components/admin/ProgramWorkouts";
 import { processAndUpload, validateImageFile } from "@/lib/image-upload";
@@ -423,9 +423,15 @@ const AdminTrainingPrograms = () => {
                 <Card key={p.id} className="group hover:shadow-md transition-all hover:border-primary/30 cursor-pointer" onClick={() => setSelectedProgramId(p.id)}>
                   <CardContent className="py-5">
                     <div className="flex items-start gap-3">
-                      <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-primary/10 shrink-0">
-                        <Layers className="w-5 h-5 text-primary" />
-                      </div>
+                      {p.poster_url ? (
+                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-muted shrink-0 border border-border">
+                          <img src={p.poster_url} alt={p.title} className="w-full h-full object-cover" loading="lazy" />
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center w-16 h-16 rounded-xl bg-primary/10 shrink-0">
+                          <Layers className="w-6 h-6 text-primary" />
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <p className="font-semibold text-sm truncate">{p.title}</p>
@@ -478,6 +484,20 @@ const AdminTrainingPrograms = () => {
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
+                      <Button size="sm" variant="ghost" className="text-xs h-7" onClick={async () => {
+                        try {
+                          toast.info("Gerando capa...");
+                          const { data, error } = await supabase.functions.invoke("generate-program-cover", { body: { programId: p.id } });
+                          if (error) throw error;
+                          if ((data as any)?.error) throw new Error((data as any).error);
+                          toast.success("Capa gerada!");
+                          queryClient.invalidateQueries({ queryKey: ["training-programs"] });
+                        } catch (e: any) {
+                          toast.error(e?.message || "Falha ao gerar capa");
+                        }
+                      }}>
+                        <ImageIcon className="w-3 h-3 mr-1" /> {p.poster_url ? "Regerar capa" : "Gerar capa"}
+                      </Button>
                       <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => openEditProgram(p)}>
                         <Pencil className="w-3 h-3 mr-1" /> Editar
                       </Button>
