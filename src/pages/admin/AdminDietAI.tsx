@@ -195,12 +195,16 @@ const AdminDietAI = () => {
 
   const saveToStudent = async () => {
     if (!selectedStudent || !result) return;
+    const defaultName = `Dieta IA — ${new Date().toLocaleDateString("pt-BR")}`;
+    const name = window.prompt("Nome do rascunho da dieta:", defaultName);
+    if (name === null) return; // cancelado
+    const title = name.trim() || defaultName;
     setSaving(true);
     try {
       const { error } = await supabase.from("student_diets").insert({
         user_id: selectedStudent.user_id,
-        title: "Dieta (IA)",
-        tab_label: "Cardápio IA",
+        title,
+        tab_label: title,
         content: result.diet_text,
         energy_kcal: result.total.energy_kcal,
         protein_g: result.total.protein_g,
