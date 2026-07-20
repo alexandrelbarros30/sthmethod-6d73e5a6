@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sparkles, Loader2, Save, Search, RefreshCw, ClipboardCheck, Wand2, Download, UserCog } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,7 +32,7 @@ type GenResult = {
   total: { energy_kcal: number; protein_g: number; carbs_g: number; fat_g: number };
   hydration_l?: number;
   notes?: string;
-  _meta?: { usage?: any };
+  _meta?: { usage?: any; photos_used?: number };
 };
 
 type ReviewResult = {
@@ -61,6 +62,7 @@ const AdminDietAI = () => {
   const [restrictions, setRestrictions] = useState("");
   const [preferences, setPreferences] = useState("");
   const [freeText, setFreeText] = useState("");
+  const [usePhotos, setUsePhotos] = useState(true);
 
   const [result, setResult] = useState<GenResult | null>(null);
   const [review, setReview] = useState<ReviewResult | null>(null);
@@ -140,7 +142,7 @@ const AdminDietAI = () => {
         preferencias: preferences,
       };
       const { data, error } = await supabase.functions.invoke("generate-diet-ai", {
-        body: { mode: "generate", brief, freeText },
+        body: { mode: "generate", brief, freeText, studentId: selectedStudent?.user_id || null, includePhotos: usePhotos },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
@@ -338,6 +340,15 @@ const AdminDietAI = () => {
                 )}
               </Button>
               {selectedStudent && (
+                <div className="flex items-center justify-between rounded border border-border p-2 text-xs">
+                  <div>
+                    <p className="font-medium">Analisar fotos de evolução</p>
+                    <p className="text-muted-foreground">STHIA observa as últimas fotos (frente/costas/perfil) para calibrar o cardápio. Briefing tem prioridade.</p>
+                  </div>
+                  <Switch checked={usePhotos} onCheckedChange={setUsePhotos} />
+                </div>
+              )}
+              {selectedStudent && (
                 <Button variant="outline" size="sm" className="w-full" onClick={saveMacrosToProfile}>
                   <UserCog className="w-4 h-4 mr-2" /> Salvar macros no perfil do aluno
                 </Button>
@@ -383,6 +394,7 @@ const AdminDietAI = () => {
                     <Badge variant="outline">C {Math.round(result.total.carbs_g)}g</Badge>
                     <Badge variant="outline">G {Math.round(result.total.fat_g)}g</Badge>
                     {result.hydration_l && <Badge variant="outline">💧 {result.hydration_l}L</Badge>}
+                    {result._meta?.photos_used ? <Badge variant="outline">📷 {result._meta.photos_used} foto(s) analisada(s)</Badge> : null}
                   </div>
                 </CardHeader>
                 <CardContent>
