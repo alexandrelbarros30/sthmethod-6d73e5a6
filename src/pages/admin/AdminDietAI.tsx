@@ -70,7 +70,7 @@ const AdminDietAI = () => {
     queryKey: ["diet-ai-students", displayRole, user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      let q = supabase.from("profiles").select("user_id, full_name, email, weight, height, age, objective, tdee, protein_g, carbs_g, fat_g, daily_calories");
+      let q = supabase.from("profiles").select("user_id, full_name, email, weight, height, birth_date, objective, tdee, protein_g, carbs_g, fat_g, daily_calories");
       if (displayRole === "consultor") {
         const { data: links } = await supabase.from("consultant_students").select("student_id").eq("consultant_id", user.id);
         const ids = (links || []).map((l: any) => l.student_id);
