@@ -355,13 +355,13 @@ REGRAS:
           },
         };
 
-    const targetsForRetry = !isReview ? {
-      energy_kcal: Number((brief as any)?.kcal_alvo) || null,
-      protein_g: Number((brief as any)?.proteina_g_alvo) || null,
-      carbs_g: Number((brief as any)?.carboidrato_g_alvo) || null,
-      fat_g: Number((brief as any)?.lipidio_g_alvo) || null,
+    const targetsForRetry: MacroTargets | null = !isReview ? {
+      energy_kcal: numericTarget((brief as any)?.kcal_alvo),
+      protein_g: numericTarget((brief as any)?.proteina_g_alvo),
+      carbs_g: numericTarget((brief as any)?.carboidrato_g_alvo),
+      fat_g: numericTarget((brief as any)?.lipidio_g_alvo),
     } : null;
-    const TOLERANCE_PCT = 5; // retry if any tracked target deviates more than this
+    const expectedMeals = !isReview ? Math.max(1, Math.min(10, Math.round(Number((brief as any)?.numero_refeicoes) || 5))) : null;
 
     const callModel = async (messages: any[]) => fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -370,7 +370,7 @@ REGRAS:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: MODEL_ID,
         temperature: 0,
         messages,
         tools: [tool],
@@ -412,34 +412,21 @@ REGRAS:
     let parsed = JSON.parse(toolCall.function.arguments);
     let retries = 0;
 
-    // Retry once when the total macros deviate more than TOLERANCE_PCT from the
-    // admin briefing. We feed the model back its own result and force a rebuild.
-    const computeDeviation = (total: any) => {
-      if (!targetsForRetry || !total) return { worst: 0, breakdown: {} as Record<string, number> };
-      const breakdown: Record<string, number> = {};
-      let worst = 0;
-      for (const k of Object.keys(targetsForRetry) as Array<keyof typeof targetsForRetry>) {
-        const t = targetsForRetry[k];
-        const v = Number(total[k]);
-        if (t && isFinite(v)) {
-          const pct = Math.abs(((v - t) / t) * 100);
-          breakdown[k] = Math.round(pct * 10) / 10;
-          if (pct > worst) worst = pct;
-        }
-      }
-      return { worst, breakdown };
-    };
-
+    // Hard quality gate: never deliver a generated menu if the structured totals
+    // do not match the admin briefing. The previous implementation only warned;
+    // this one retries aggressively and then blocks the response if still wrong.
     if (!isReview && targetsForRetry) {
-      let dev = computeDeviation(parsed?.total);
-      while (dev.worst > TOLERANCE_PCT && retries < 2) {
+      let gate = computeQualityGate(parsed, targetsForRetry, expectedMeals);
+      while (!gate.valid && retries < MAX_TARGET_RETRIES) {
         retries++;
-        const currentTotal = parsed?.total || {};
-        const feedback = `Seu cardápio anterior ficou FORA das metas do admin (tolerância ±${TOLERANCE_PCT}%).\n\n` +
-          `Total gerado:  ${currentTotal.energy_kcal ?? "?"} kcal | P ${currentTotal.protein_g ?? "?"}g | C ${currentTotal.carbs_g ?? "?"}g | G ${currentTotal.fat_g ?? "?"}g\n` +
+        const currentTotal = gate.total || parsed?.total || {};
+        const feedback = `REPROVADO PELO VALIDADOR STH METHOD. O cardápio anterior NÃO pode ser entregue porque ficou fora das metas do admin (tolerância máxima ±${TARGET_TOLERANCE_PCT}%) ou com nº incorreto de refeições.\n\n` +
+          `Falhas encontradas:\n- ${gate.violations.join("\n- ")}\n\n` +
+          `Total gerado pela soma das refeições: ${currentTotal.energy_kcal ?? "?"} kcal | P ${currentTotal.protein_g ?? "?"}g | C ${currentTotal.carbs_g ?? "?"}g | G ${currentTotal.fat_g ?? "?"}g\n` +
           `Metas do admin: ${targetsForRetry.energy_kcal ?? "livre"} kcal | P ${targetsForRetry.protein_g ?? "livre"}g | C ${targetsForRetry.carbs_g ?? "livre"}g | G ${targetsForRetry.fat_g ?? "livre"}g\n` +
-          `Desvios %: ${JSON.stringify(dev.breakdown)}\n\n` +
-          `REFAÇA o cardápio inteiro agora AJUSTANDO as gramagens (aumente/diminua alimentos densos em calorias/carbo/proteína/gordura conforme necessário) até que o TOTAL bata exatamente com as metas (±${TOLERANCE_PCT}%). Some as BASES antes de responder. Mantenha o mesmo padrão de formatação HTML STH METHOD e o mesmo nº de refeições. Devolva apenas via tool call.`;
+          `Nº de refeições obrigatório: ${expectedMeals}\n` +
+          `Desvios %: ${JSON.stringify(gate.deviation_pct)}\n\n` +
+          `REFAÇA do zero ajustando as GRAMAGENS dos alimentos BASE de cada refeição. Some as BASES antes de responder. O campo total deve ser exatamente a soma das refeições e deve ficar dentro de ±${TARGET_TOLERANCE_PCT}% das metas. Mantenha ${expectedMeals} refeições, cada uma com ⭐ BASE + Opção 2 + Opção 3 + Opção 4. Devolva apenas via tool call.`;
         const retryMessages = [
           ...baseMessages,
           { role: "assistant", content: null, tool_calls: [toolCall] },
@@ -453,42 +440,36 @@ REGRAS:
         if (!nextCall) break;
         toolCall = nextCall;
         try { parsed = JSON.parse(nextCall.function.arguments); } catch { break; }
-        dev = computeDeviation(parsed?.total);
+        gate = computeQualityGate(parsed, targetsForRetry, expectedMeals);
+      }
+
+      if (!gate.valid) {
+        console.error("generate-diet-ai quality gate failed", { violations: gate.violations, total: gate.total, targets: targetsForRetry, retries });
+        return new Response(JSON.stringify({
+          error: `A STHIA não entregou uma dieta dentro da meta após ${retries} tentativa(s). Nenhum cardápio incorreto foi liberado. Ajuste o briefing ou gere novamente. Falhas: ${gate.violations.join("; ")}`,
+          blocked: true,
+          total: gate.total,
+          targets: targetsForRetry,
+          deviation_pct: gate.deviation_pct,
+          retries,
+        }), {
+          status: 422,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
     }
-    // Enforce integer macros/kcal as a safety net (in case the model returns decimals).
-    const roundInt = (v: unknown) => (typeof v === "number" && isFinite(v) ? Math.round(v) : v);
-    if (Array.isArray(parsed?.meals)) {
-      parsed.meals = parsed.meals.map((m: any) => ({
-        ...m,
-        energy_kcal: roundInt(m?.energy_kcal),
-        protein_g: roundInt(m?.protein_g),
-        carbs_g: roundInt(m?.carbs_g),
-        fat_g: roundInt(m?.fat_g),
-      }));
-    }
-    if (parsed?.total) {
-      parsed.total.energy_kcal = roundInt(parsed.total.energy_kcal);
-      parsed.total.protein_g = roundInt(parsed.total.protein_g);
-      parsed.total.carbs_g = roundInt(parsed.total.carbs_g);
-      parsed.total.fat_g = roundInt(parsed.total.fat_g);
-    }
+    normalizeGeneratedMacros(parsed);
     // Validate against admin targets and expose deviation so the client can warn.
     if (!isReview && parsed?.total) {
-      const targets = {
-        energy_kcal: Number((brief as any)?.kcal_alvo) || null,
-        protein_g: Number((brief as any)?.proteina_g_alvo) || null,
-        carbs_g: Number((brief as any)?.carboidrato_g_alvo) || null,
-        fat_g: Number((brief as any)?.lipidio_g_alvo) || null,
+      const gate = computeQualityGate(parsed, targetsForRetry, expectedMeals);
+      parsed.targets = targetsForRetry;
+      parsed.deviation_pct = gate.deviation_pct;
+      parsed.validation = {
+        ok: gate.valid,
+        tolerance_pct: TARGET_TOLERANCE_PCT,
+        meal_count: gate.meal_count,
+        expected_meals: gate.expected_meals,
       };
-      const dev: Record<string, number> = {};
-      for (const k of Object.keys(targets) as Array<keyof typeof targets>) {
-        const t = targets[k];
-        const v = Number(parsed.total[k]);
-        if (t && isFinite(v)) dev[k] = Math.round(((v - t) / t) * 1000) / 10; // % with 1 decimal
-      }
-      parsed.targets = targets;
-      parsed.deviation_pct = dev;
     }
     if (typeof parsed?.diet_text === "string") {
       // Remove per-meal macro lines from the HTML output (they live in the structured meals array).
@@ -515,7 +496,7 @@ REGRAS:
         (_m, intPart, decPart, unit) => `${Math.round(Number(`${intPart}.${decPart}`))}${unit.toLowerCase() === "g" ? "g" : " " + unit}`,
       );
     }
-    return new Response(JSON.stringify({ ...parsed, _meta: { model: "google/gemini-2.5-flash", usage: data?.usage || null, photos_used: photos.length, retries } }), {
+    return new Response(JSON.stringify({ ...parsed, _meta: { model: MODEL_ID, usage: data?.usage || null, photos_used: photos.length, retries } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
