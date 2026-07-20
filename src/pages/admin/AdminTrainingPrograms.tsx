@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Users, ChevronRight, Layers, ArrowLeft, Copy, Target, Zap, Search, Dumbbell, ImagePlus, X, UserMinus } from "lucide-react";
+import { Plus, Pencil, Trash2, Users, ChevronRight, Layers, ArrowLeft, Copy, Target, Zap, Search, Dumbbell, ImagePlus, X, UserMinus, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import ProgramWorkouts from "@/components/admin/ProgramWorkouts";
 import { processAndUpload, validateImageFile } from "@/lib/image-upload";
