@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, Save, Search, RefreshCw, ClipboardCheck, Wand2 } from "lucide-react";
+import { Sparkles, Loader2, Save, Search, RefreshCw, ClipboardCheck, Wand2, Download, UserCog } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -70,7 +70,7 @@ const AdminDietAI = () => {
     queryKey: ["diet-ai-students", displayRole, user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      let q = supabase.from("profiles").select("user_id, full_name, email, weight, height, birth_date, objective, tdee, protein_g, carbs_g, fat_g, daily_calories");
+      let q = supabase.from("profiles").select("user_id, full_name, email, weight, height, birth_date, gender, objective, tdee, protein_g, carbs_g, fat_g, daily_calories");
       if (displayRole === "consultor") {
         const { data: links } = await supabase.from("consultant_students").select("student_id").eq("consultant_id", user.id);
         const ids = (links || []).map((l: any) => l.student_id);
@@ -91,13 +91,52 @@ const AdminDietAI = () => {
         return normalizeSearch(s.full_name || "").includes(q) || normalizeSearch(s.email || "").includes(q);
       });
 
-  const pickStudent = (s: any) => {
+  const applyStudentMacros = (s: any) => {
+    if (s?.daily_calories) setKcalTarget(String(Math.round(s.daily_calories)));
+    if (s?.protein_g) setProteinTarget(String(Math.round(s.protein_g)));
+    if (s?.carbs_g) setCarbsTarget(String(Math.round(s.carbs_g)));
+    if (s?.fat_g) setFatTarget(String(Math.round(s.fat_g)));
+    if (s?.objective) setObjective(s.objective);
+  };
+
+  const pickStudent = async (s: any) => {
     setSelectedStudent(s);
-    if (s.daily_calories) setKcalTarget(String(Math.round(s.daily_calories)));
-    if (s.protein_g) setProteinTarget(String(Math.round(s.protein_g)));
-    if (s.carbs_g) setCarbsTarget(String(Math.round(s.carbs_g)));
-    if (s.fat_g) setFatTarget(String(Math.round(s.fat_g)));
-    if (s.objective) setObjective(s.objective);
+    applyStudentMacros(s);
+    // Fallback: se perfil sem macros, tenta última dieta salva
+    if (!s.daily_calories || !s.protein_g) {
+      const { data: lastDiet } = await supabase
+        .from("student_diets")
+        .select("energy_kcal, protein_g, carbs_g, fat_g")
+        .eq("user_id", s.user_id)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (lastDiet) {
+        if (!s.daily_calories && lastDiet.energy_kcal) setKcalTarget(String(Math.round(lastDiet.energy_kcal)));
+        if (!s.protein_g && lastDiet.protein_g) setProteinTarget(String(Math.round(lastDiet.protein_g)));
+        if (!s.carbs_g && lastDiet.carbs_g) setCarbsTarget(String(Math.round(lastDiet.carbs_g)));
+        if (!s.fat_g && lastDiet.fat_g) setFatTarget(String(Math.round(lastDiet.fat_g)));
+      }
+    }
+  };
+
+  const saveMacrosToProfile = async () => {
+    if (!selectedStudent) return;
+    try {
+      const patch: any = {
+        daily_calories: kcalTarget ? Number(kcalTarget) : null,
+        protein_g: proteinTarget ? Number(proteinTarget) : null,
+        carbs_g: carbsTarget ? Number(carbsTarget) : null,
+        fat_g: fatTarget ? Number(fatTarget) : null,
+        objective,
+      };
+      const { error } = await supabase.from("profiles").update(patch).eq("user_id", selectedStudent.user_id);
+      if (error) throw error;
+      setSelectedStudent({ ...selectedStudent, ...patch });
+      toast.success("Macros atualizados no perfil do aluno");
+    } catch (e: any) {
+      toast.error(e.message || "Falha ao salvar macros");
+    }
   };
 
   const generateMut = useMutation({
@@ -211,15 +250,26 @@ const AdminDietAI = () => {
                 </div>
               )}
               {selectedStudent && (
-                <div className="p-3 rounded bg-primary/5 border border-primary/20 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-sm">{selectedStudent.full_name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {selectedStudent.weight ? `${selectedStudent.weight}kg` : ""} {selectedStudent.objective || ""}
-                    </p>
+                <div className="p-3 rounded bg-primary/5 border border-primary/20 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-sm">{selectedStudent.full_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {selectedStudent.weight ? `${selectedStudent.weight}kg` : ""} {selectedStudent.objective || ""}
+                      </p>
+                    </div>
+                    <Button size="sm" variant="ghost" onClick={() => { setSelectedStudent(null); setStudentSearch(""); }}>
+                      Trocar
+                    </Button>
                   </div>
-                  <Button size="sm" variant="ghost" onClick={() => { setSelectedStudent(null); setStudentSearch(""); }}>
-                    Trocar
+                  <div className="flex flex-wrap gap-2 text-[11px]">
+                    <Badge variant="outline">{selectedStudent.daily_calories ? `${Math.round(selectedStudent.daily_calories)} kcal` : "kcal —"}</Badge>
+                    <Badge variant="outline">P {selectedStudent.protein_g ? Math.round(selectedStudent.protein_g) : "—"}g</Badge>
+                    <Badge variant="outline">C {selectedStudent.carbs_g ? Math.round(selectedStudent.carbs_g) : "—"}g</Badge>
+                    <Badge variant="outline">G {selectedStudent.fat_g ? Math.round(selectedStudent.fat_g) : "—"}g</Badge>
+                  </div>
+                  <Button size="sm" variant="outline" className="w-full" onClick={() => applyStudentMacros(selectedStudent)}>
+                    <Download className="w-3 h-3 mr-1" /> Puxar macros do aluno para o briefing
                   </Button>
                 </div>
               )}
@@ -299,6 +349,11 @@ const AdminDietAI = () => {
                   <><Wand2 className="w-4 h-4 mr-2" /> Gerar cardápio com STHIA</>
                 )}
               </Button>
+              {selectedStudent && (
+                <Button variant="outline" size="sm" className="w-full" onClick={saveMacrosToProfile}>
+                  <UserCog className="w-4 h-4 mr-2" /> Salvar macros no perfil do aluno
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>
