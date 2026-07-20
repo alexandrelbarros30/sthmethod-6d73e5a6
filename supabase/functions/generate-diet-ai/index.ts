@@ -205,6 +205,30 @@ REGRAS:
       });
     }
     const parsed = JSON.parse(toolCall.function.arguments);
+    // Enforce integer macros/kcal as a safety net (in case the model returns decimals).
+    const roundInt = (v: unknown) => (typeof v === "number" && isFinite(v) ? Math.round(v) : v);
+    if (Array.isArray(parsed?.meals)) {
+      parsed.meals = parsed.meals.map((m: any) => ({
+        ...m,
+        energy_kcal: roundInt(m?.energy_kcal),
+        protein_g: roundInt(m?.protein_g),
+        carbs_g: roundInt(m?.carbs_g),
+        fat_g: roundInt(m?.fat_g),
+      }));
+    }
+    if (parsed?.total) {
+      parsed.total.energy_kcal = roundInt(parsed.total.energy_kcal);
+      parsed.total.protein_g = roundInt(parsed.total.protein_g);
+      parsed.total.carbs_g = roundInt(parsed.total.carbs_g);
+      parsed.total.fat_g = roundInt(parsed.total.fat_g);
+    }
+    if (typeof parsed?.diet_text === "string") {
+      // Strip decimals from numeric tokens followed by kcal/g (e.g. "419,7 kcal" -> "420 kcal", "35.2g" -> "35g")
+      parsed.diet_text = parsed.diet_text.replace(
+        /(\d+)[.,](\d+)\s*(kcal|g)\b/gi,
+        (_m, intPart, decPart, unit) => `${Math.round(Number(`${intPart}.${decPart}`))}${unit.toLowerCase() === "g" ? "g" : " " + unit}`,
+      );
+    }
     return new Response(JSON.stringify({ ...parsed, _meta: { model: "google/gemini-2.5-pro", usage: data?.usage || null } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
