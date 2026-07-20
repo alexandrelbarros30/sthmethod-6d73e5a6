@@ -56,19 +56,19 @@ Monte um cardápio no PADRÃO STH METHOD (HTML rico usado no portal do aluno). N
 
 FORMATO OBRIGATÓRIO — HTML PURO (sem markdown, sem \`\`\`), exatamente como o exemplo:
 
-<ul><li><p>Refeição 01: Desjejum (Ativação Metabólica)</p></li></ul>
+<p><strong>Refeição 01: Desjejum (Ativação Metabólica)</strong></p>
 <p><strong>"⭐ BASE:</strong> Omelete de 1 ovo inteiro + 3 claras de ovo + 40g de farelo de aveia integral + 100g de mamão formosa.</p>
 <p><strong>Opção 2:</strong> Shake com 30g de Whey Protein + 40g de farelo de aveia + 100g de morangos.</p>
 <p><strong>Opção 3:</strong> 2 fatias de pão integral (50g) + 100g de peito de frango desfiado + 30g de queijo cottage zero.</p>
 <p><strong>Opção 4:</strong> 170g de iogurte grego zero açúcar + 25g de Whey + 25g de granola integral.<strong>"</strong></p>
-<ul><li><p>Refeição 02: Almoço (Sustentação Anabólica)</p></li></ul>
+<p><strong>Refeição 02: Almoço (Sustentação Anabólica)</strong></p>
 <p><strong>"⭐ BASE:</strong> ... </p>
 <p><strong>Opção 2:</strong> ...</p>
 <p><strong>Opção 3:</strong> ...</p>
 <p><strong>Opção 4:</strong> ...<strong>"</strong></p>
 
 REGRAS DE FORMATAÇÃO (obrigatórias):
-- Cada refeição começa com <ul><li><p>Refeição NN: Nome (Subtítulo estratégico)</p></li></ul> (números 01, 02, 03...).
+- Cada refeição começa com <p><strong>Refeição NN: Nome (Subtítulo estratégico)</strong></p> (números 01, 02, 03...). NUNCA usar <ul>/<li> no cabeçalho — o cabeçalho não pode aparecer com bolinha/marcador de lista.
 - Cada refeição tem SEMPRE 4 blocos: "⭐ BASE" + Opção 2 + Opção 3 + Opção 4 (substituições isocalóricas equivalentes em kcal e macros à BASE, com tolerância ±5%).
 - Rótulos entre <strong>...</strong>. Abre aspas dupla no BASE (<strong>"⭐ BASE:</strong>) e fecha aspas dupla no fim da Opção 4 (<strong>"</strong></p>).
 - Quantidades explícitas em g/ml/unidades. Nomes de alimentos em português BR.
