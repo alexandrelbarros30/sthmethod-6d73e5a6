@@ -6,6 +6,129 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const MODEL_ID = "google/gemini-3-flash-preview";
+const TARGET_TOLERANCE_PCT = 3;
+const MAX_TARGET_RETRIES = 5;
+
+type MacroTotal = {
+  energy_kcal: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+};
+
+type MacroTargets = {
+  energy_kcal: number | null;
+  protein_g: number | null;
+  carbs_g: number | null;
+  fat_g: number | null;
+};
+
+const numericTarget = (v: unknown): number | null => {
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
+};
+
+const roundInt = (v: unknown) => (typeof v === "number" && isFinite(v) ? Math.round(v) : Number.isFinite(Number(v)) ? Math.round(Number(v)) : 0);
+
+const emptyTotal = (): MacroTotal => ({ energy_kcal: 0, protein_g: 0, carbs_g: 0, fat_g: 0 });
+
+const sumMealTotals = (meals: any[]): MacroTotal => {
+  const total = emptyTotal();
+  for (const m of meals || []) {
+    total.energy_kcal += roundInt(m?.energy_kcal);
+    total.protein_g += roundInt(m?.protein_g);
+    total.carbs_g += roundInt(m?.carbs_g);
+    total.fat_g += roundInt(m?.fat_g);
+  }
+  return total;
+};
+
+const normalizeGeneratedMacros = (parsed: any) => {
+  if (Array.isArray(parsed?.meals)) {
+    parsed.meals = parsed.meals
+      .slice()
+      .sort((a: any, b: any) => (Number(a?.meal_number) || 0) - (Number(b?.meal_number) || 0))
+      .map((m: any, idx: number) => ({
+        ...m,
+        meal_number: roundInt(m?.meal_number) || idx + 1,
+        energy_kcal: roundInt(m?.energy_kcal),
+        protein_g: roundInt(m?.protein_g),
+        carbs_g: roundInt(m?.carbs_g),
+        fat_g: roundInt(m?.fat_g),
+      }));
+    // The meal cards are the source of truth. Never trust a model-written daily total
+    // when it disagrees with the structured per-meal values shown to the student.
+    parsed.total = sumMealTotals(parsed.meals);
+  } else if (parsed?.total) {
+    parsed.total.energy_kcal = roundInt(parsed.total.energy_kcal);
+    parsed.total.protein_g = roundInt(parsed.total.protein_g);
+    parsed.total.carbs_g = roundInt(parsed.total.carbs_g);
+    parsed.total.fat_g = roundInt(parsed.total.fat_g);
+  }
+};
+
+const computeQualityGate = (parsed: any, targets: MacroTargets | null, expectedMeals: number | null) => {
+  normalizeGeneratedMacros(parsed);
+  const total = parsed?.total || emptyTotal();
+  const deviations: Record<string, number> = {};
+  const violations: string[] = [];
+  let worst = 0;
+
+  if (targets) {
+    for (const k of Object.keys(targets) as Array<keyof MacroTargets>) {
+      const target = targets[k];
+      const value = Number(total[k]);
+      if (target && isFinite(value)) {
+        const pct = Math.round(((value - target) / target) * 1000) / 10;
+        deviations[k] = pct;
+        worst = Math.max(worst, Math.abs(pct));
+        if (Math.abs(pct) > TARGET_TOLERANCE_PCT) {
+          const label = k === "energy_kcal" ? "kcal" : k === "protein_g" ? "proteína" : k === "carbs_g" ? "carboidrato" : "lipídio";
+          const unit = k === "energy_kcal" ? "kcal" : "g";
+          violations.push(`${label}: ${Math.round(value)}${unit} vs meta ${target}${unit} (${pct > 0 ? "+" : ""}${pct}%)`);
+        }
+      }
+    }
+  }
+
+  const mealCount = Array.isArray(parsed?.meals) ? parsed.meals.length : 0;
+  if (expectedMeals && mealCount !== expectedMeals) {
+    violations.push(`nº de refeições: ${mealCount || 0} vs meta ${expectedMeals}`);
+  }
+
+  return {
+    valid: violations.length === 0,
+    violations,
+    deviation_pct: deviations,
+    worst_deviation_pct: Math.round(worst * 10) / 10,
+    total,
+    meal_count: mealCount,
+    expected_meals: expectedMeals,
+  };
+};
+
+const buildMealBudget = (targets: MacroTargets, nMeals: number) => {
+  const presets: Record<number, number[]> = {
+    3: [30, 40, 30],
+    4: [25, 35, 25, 15],
+    5: [20, 10, 30, 15, 25],
+    6: [18, 10, 27, 12, 23, 10],
+    7: [16, 8, 24, 10, 18, 14, 10],
+  };
+  const weights = presets[nMeals] || Array.from({ length: nMeals }, () => 100 / nMeals);
+  const labels = Array.from({ length: nMeals }, (_v, i) => `Refeição ${String(i + 1).padStart(2, "0")}`);
+  return labels.map((label, i) => {
+    const pct = weights[i] / 100;
+    const parts = [`${label}:`];
+    if (targets.energy_kcal) parts.push(`~${Math.round(targets.energy_kcal * pct)} kcal`);
+    if (targets.protein_g) parts.push(`P ~${Math.round(targets.protein_g * pct)}g`);
+    if (targets.carbs_g) parts.push(`C ~${Math.round(targets.carbs_g * pct)}g`);
+    if (targets.fat_g) parts.push(`G ~${Math.round(targets.fat_g * pct)}g`);
+    return `- ${parts.join(" ")}`;
+  }).join("\n");
+};
+
 const TACO_REF = `TABELA TACO (por 100g/ml) — use estes valores exatos:
 - Ovo inteiro cru: 143 kcal | 13.0 P | 1.6 C | 9.5 G (1 ovo médio=50g)
 - Clara: 43 kcal | 10.9 P | 0.7 C | 0 G
@@ -114,7 +237,6 @@ FORMATO OBRIGATÓRIO — HTML PURO (sem markdown, sem \`\`\`), exatamente como o
 <p><strong>Opção 2:</strong> ...</p>
 <p><strong>Opção 3:</strong> ...</p>
 <p><strong>Opção 4:</strong> ...<strong>"</strong></p>
-<p><strong>TOTAL DIÁRIO:</strong> 2500 kcal | P: 180g | C: 280g | G: 70g</p>
 
 REGRAS DE FORMATAÇÃO (obrigatórias):
 - Cada refeição começa com <p><strong>Refeição NN: Nome (Subtítulo estratégico)</strong></p> (números 01, 02, 03...). NUNCA usar <ul>/<li> no cabeçalho — o cabeçalho não pode aparecer com bolinha/marcador de lista.
@@ -130,8 +252,10 @@ REGRAS DE FORMATAÇÃO (obrigatórias):
 ${TACO_REF}
 
 REGRAS:
-- Respeite kcal alvo, macros alvo (P/C/G), número de refeições e restrições/preferências informadas.
+- Respeite kcal alvo, macros alvo (P/C/G), número de refeições e restrições/preferências informadas como CONTRATO DE ENTREGA. Se kcal alvo = 1900, total final precisa ficar entre 1843 e 1957 kcal. Se carbo alvo = 150g, total final precisa ficar entre 146g e 155g. O mesmo vale para proteína e lipídio quando informados.
+- O número de refeições é obrigatório e exato. Se o admin pedir 6 refeições, retorne exatamente 6 objetos em meals e exatamente 6 blocos no diet_text.
 - Calcule os macros de cada refeição usando SEMPRE a opção BASE via regra de três dos valores TACO acima; some para o total. Arredonde cada valor para inteiro antes de exibir.
+- O campo total deve ser a SOMA EXATA dos objetos em meals. Não invente total separado.
 - Opção 2, 3 e 4 devem ser aproximadamente isocalóricas e isomacros em relação à BASE.
 - Campo diet_text DEVE conter o HTML completo pronto para renderizar no portal do aluno.
 - Nos campos numéricos do tool call (energy_kcal, protein_g, carbs_g, fat_g), retorne SEMPRE valores inteiros (sem casas decimais).
@@ -144,7 +268,7 @@ REGRAS:
           const p = Number((brief as any)?.proteina_g_alvo) || null;
           const c = Number((brief as any)?.carboidrato_g_alvo) || null;
           const g = Number((brief as any)?.lipidio_g_alvo) || null;
-          const nMeals = Number((brief as any)?.numero_refeicoes) || 5;
+          const nMeals = Math.max(1, Math.min(10, Math.round(Number((brief as any)?.numero_refeicoes) || 5)));
           const targetsBlock =
             (kcal || p || c || g)
               ? `\n\n🎯 METAS OBRIGATÓRIAS (prioridade absoluta — tolerância ±3%):\n` +
@@ -153,7 +277,8 @@ REGRAS:
                 `- Carboidrato total: ${c ?? "livre"} g\n` +
                 `- Lipídio total: ${g ?? "livre"} g\n` +
                 `- Nº de refeições: ${nMeals}\n\n` +
-                `Antes de fechar, SOME os macros das BASES de cada refeição e confirme que o TOTAL bate com as metas acima (±3%). Se não bater, AJUSTE as quantidades (gramagem dos alimentos) e recalcule até bater. NUNCA entregue um cardápio fora das metas do admin.`
+                `DISTRIBUIÇÃO DE REFERÊNCIA POR REFEIÇÃO (use como ponto de partida e ajuste as gramagens até a soma fechar):\n${buildMealBudget({ energy_kcal: kcal, protein_g: p, carbs_g: c, fat_g: g }, nMeals)}\n\n` +
+                `Antes de fechar, SOME os macros das BASES de cada refeição e confirme que o TOTAL bate com as metas acima (±3%). Se não bater, AJUSTE as quantidades (gramagem dos alimentos) e recalcule até bater. NUNCA entregue um cardápio fora das metas do admin. Se foi pedido ${nMeals} refeições, entregue exatamente ${nMeals}.`
               : "";
           return `Brief estruturado:\n${JSON.stringify(brief, null, 2)}${targetsBlock}\n\nObservações livres do admin:\n${freeText || "(nenhuma)"}\n\nMonte o cardápio agora respeitando as metas acima ao pé da letra.`;
         })();
@@ -232,22 +357,22 @@ REGRAS:
           },
         };
 
-    const targetsForRetry = !isReview ? {
-      energy_kcal: Number((brief as any)?.kcal_alvo) || null,
-      protein_g: Number((brief as any)?.proteina_g_alvo) || null,
-      carbs_g: Number((brief as any)?.carboidrato_g_alvo) || null,
-      fat_g: Number((brief as any)?.lipidio_g_alvo) || null,
+    const targetsForRetry: MacroTargets | null = !isReview ? {
+      energy_kcal: numericTarget((brief as any)?.kcal_alvo),
+      protein_g: numericTarget((brief as any)?.proteina_g_alvo),
+      carbs_g: numericTarget((brief as any)?.carboidrato_g_alvo),
+      fat_g: numericTarget((brief as any)?.lipidio_g_alvo),
     } : null;
-    const TOLERANCE_PCT = 5; // retry if any tracked target deviates more than this
+    const expectedMeals = !isReview ? Math.max(1, Math.min(10, Math.round(Number((brief as any)?.numero_refeicoes) || 5))) : null;
 
     const callModel = async (messages: any[]) => fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Lovable-API-Key": LOVABLE_API_KEY,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: MODEL_ID,
         temperature: 0,
         messages,
         tools: [tool],
@@ -289,34 +414,21 @@ REGRAS:
     let parsed = JSON.parse(toolCall.function.arguments);
     let retries = 0;
 
-    // Retry once when the total macros deviate more than TOLERANCE_PCT from the
-    // admin briefing. We feed the model back its own result and force a rebuild.
-    const computeDeviation = (total: any) => {
-      if (!targetsForRetry || !total) return { worst: 0, breakdown: {} as Record<string, number> };
-      const breakdown: Record<string, number> = {};
-      let worst = 0;
-      for (const k of Object.keys(targetsForRetry) as Array<keyof typeof targetsForRetry>) {
-        const t = targetsForRetry[k];
-        const v = Number(total[k]);
-        if (t && isFinite(v)) {
-          const pct = Math.abs(((v - t) / t) * 100);
-          breakdown[k] = Math.round(pct * 10) / 10;
-          if (pct > worst) worst = pct;
-        }
-      }
-      return { worst, breakdown };
-    };
-
+    // Hard quality gate: never deliver a generated menu if the structured totals
+    // do not match the admin briefing. The previous implementation only warned;
+    // this one retries aggressively and then blocks the response if still wrong.
     if (!isReview && targetsForRetry) {
-      let dev = computeDeviation(parsed?.total);
-      while (dev.worst > TOLERANCE_PCT && retries < 2) {
+      let gate = computeQualityGate(parsed, targetsForRetry, expectedMeals);
+      while (!gate.valid && retries < MAX_TARGET_RETRIES) {
         retries++;
-        const currentTotal = parsed?.total || {};
-        const feedback = `Seu cardápio anterior ficou FORA das metas do admin (tolerância ±${TOLERANCE_PCT}%).\n\n` +
-          `Total gerado:  ${currentTotal.energy_kcal ?? "?"} kcal | P ${currentTotal.protein_g ?? "?"}g | C ${currentTotal.carbs_g ?? "?"}g | G ${currentTotal.fat_g ?? "?"}g\n` +
+        const currentTotal = gate.total || parsed?.total || {};
+        const feedback = `REPROVADO PELO VALIDADOR STH METHOD. O cardápio anterior NÃO pode ser entregue porque ficou fora das metas do admin (tolerância máxima ±${TARGET_TOLERANCE_PCT}%) ou com nº incorreto de refeições.\n\n` +
+          `Falhas encontradas:\n- ${gate.violations.join("\n- ")}\n\n` +
+          `Total gerado pela soma das refeições: ${currentTotal.energy_kcal ?? "?"} kcal | P ${currentTotal.protein_g ?? "?"}g | C ${currentTotal.carbs_g ?? "?"}g | G ${currentTotal.fat_g ?? "?"}g\n` +
           `Metas do admin: ${targetsForRetry.energy_kcal ?? "livre"} kcal | P ${targetsForRetry.protein_g ?? "livre"}g | C ${targetsForRetry.carbs_g ?? "livre"}g | G ${targetsForRetry.fat_g ?? "livre"}g\n` +
-          `Desvios %: ${JSON.stringify(dev.breakdown)}\n\n` +
-          `REFAÇA o cardápio inteiro agora AJUSTANDO as gramagens (aumente/diminua alimentos densos em calorias/carbo/proteína/gordura conforme necessário) até que o TOTAL bata exatamente com as metas (±${TOLERANCE_PCT}%). Some as BASES antes de responder. Mantenha o mesmo padrão de formatação HTML STH METHOD e o mesmo nº de refeições. Devolva apenas via tool call.`;
+          `Nº de refeições obrigatório: ${expectedMeals}\n` +
+          `Desvios %: ${JSON.stringify(gate.deviation_pct)}\n\n` +
+          `REFAÇA do zero ajustando as GRAMAGENS dos alimentos BASE de cada refeição. Some as BASES antes de responder. O campo total deve ser exatamente a soma das refeições e deve ficar dentro de ±${TARGET_TOLERANCE_PCT}% das metas. Mantenha ${expectedMeals} refeições, cada uma com ⭐ BASE + Opção 2 + Opção 3 + Opção 4. Devolva apenas via tool call.`;
         const retryMessages = [
           ...baseMessages,
           { role: "assistant", content: null, tool_calls: [toolCall] },
@@ -330,42 +442,36 @@ REGRAS:
         if (!nextCall) break;
         toolCall = nextCall;
         try { parsed = JSON.parse(nextCall.function.arguments); } catch { break; }
-        dev = computeDeviation(parsed?.total);
+        gate = computeQualityGate(parsed, targetsForRetry, expectedMeals);
+      }
+
+      if (!gate.valid) {
+        console.error("generate-diet-ai quality gate failed", { violations: gate.violations, total: gate.total, targets: targetsForRetry, retries });
+        return new Response(JSON.stringify({
+          error: `A STHIA não entregou uma dieta dentro da meta após ${retries} tentativa(s). Nenhum cardápio incorreto foi liberado. Ajuste o briefing ou gere novamente. Falhas: ${gate.violations.join("; ")}`,
+          blocked: true,
+          total: gate.total,
+          targets: targetsForRetry,
+          deviation_pct: gate.deviation_pct,
+          retries,
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
     }
-    // Enforce integer macros/kcal as a safety net (in case the model returns decimals).
-    const roundInt = (v: unknown) => (typeof v === "number" && isFinite(v) ? Math.round(v) : v);
-    if (Array.isArray(parsed?.meals)) {
-      parsed.meals = parsed.meals.map((m: any) => ({
-        ...m,
-        energy_kcal: roundInt(m?.energy_kcal),
-        protein_g: roundInt(m?.protein_g),
-        carbs_g: roundInt(m?.carbs_g),
-        fat_g: roundInt(m?.fat_g),
-      }));
-    }
-    if (parsed?.total) {
-      parsed.total.energy_kcal = roundInt(parsed.total.energy_kcal);
-      parsed.total.protein_g = roundInt(parsed.total.protein_g);
-      parsed.total.carbs_g = roundInt(parsed.total.carbs_g);
-      parsed.total.fat_g = roundInt(parsed.total.fat_g);
-    }
+    normalizeGeneratedMacros(parsed);
     // Validate against admin targets and expose deviation so the client can warn.
     if (!isReview && parsed?.total) {
-      const targets = {
-        energy_kcal: Number((brief as any)?.kcal_alvo) || null,
-        protein_g: Number((brief as any)?.proteina_g_alvo) || null,
-        carbs_g: Number((brief as any)?.carboidrato_g_alvo) || null,
-        fat_g: Number((brief as any)?.lipidio_g_alvo) || null,
+      const gate = computeQualityGate(parsed, targetsForRetry, expectedMeals);
+      parsed.targets = targetsForRetry;
+      parsed.deviation_pct = gate.deviation_pct;
+      parsed.validation = {
+        ok: gate.valid,
+        tolerance_pct: TARGET_TOLERANCE_PCT,
+        meal_count: gate.meal_count,
+        expected_meals: gate.expected_meals,
       };
-      const dev: Record<string, number> = {};
-      for (const k of Object.keys(targets) as Array<keyof typeof targets>) {
-        const t = targets[k];
-        const v = Number(parsed.total[k]);
-        if (t && isFinite(v)) dev[k] = Math.round(((v - t) / t) * 1000) / 10; // % with 1 decimal
-      }
-      parsed.targets = targets;
-      parsed.deviation_pct = dev;
     }
     if (typeof parsed?.diet_text === "string") {
       // Remove per-meal macro lines from the HTML output (they live in the structured meals array).
@@ -392,7 +498,7 @@ REGRAS:
         (_m, intPart, decPart, unit) => `${Math.round(Number(`${intPart}.${decPart}`))}${unit.toLowerCase() === "g" ? "g" : " " + unit}`,
       );
     }
-    return new Response(JSON.stringify({ ...parsed, _meta: { model: "google/gemini-2.5-flash", usage: data?.usage || null, photos_used: photos.length, retries } }), {
+    return new Response(JSON.stringify({ ...parsed, _meta: { model: MODEL_ID, usage: data?.usage || null, photos_used: photos.length, retries } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
