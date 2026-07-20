@@ -5890,6 +5890,7 @@ export type Database = {
           rest_interval: string | null
           sets: string | null
           sort_order: number | null
+          supercoach_workout_id: number | null
           template_id: string
           video_url: string | null
         }
@@ -5907,6 +5908,7 @@ export type Database = {
           rest_interval?: string | null
           sets?: string | null
           sort_order?: number | null
+          supercoach_workout_id?: number | null
           template_id: string
           video_url?: string | null
         }
@@ -5924,6 +5926,7 @@ export type Database = {
           rest_interval?: string | null
           sets?: string | null
           sort_order?: number | null
+          supercoach_workout_id?: number | null
           template_id?: string
           video_url?: string | null
         }
@@ -5958,6 +5961,7 @@ export type Database = {
           sort_order: number | null
           subtitle: string | null
           supercoach_program_id: number | null
+          supercoach_training_id: number | null
           title: string
           updated_at: string
           weeks: number | null
@@ -5975,6 +5979,7 @@ export type Database = {
           sort_order?: number | null
           subtitle?: string | null
           supercoach_program_id?: number | null
+          supercoach_training_id?: number | null
           title: string
           updated_at?: string
           weeks?: number | null
@@ -5992,6 +5997,7 @@ export type Database = {
           sort_order?: number | null
           subtitle?: string | null
           supercoach_program_id?: number | null
+          supercoach_training_id?: number | null
           title?: string
           updated_at?: string
           weeks?: number | null

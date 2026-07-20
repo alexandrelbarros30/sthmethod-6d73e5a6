@@ -3,6 +3,7 @@
 
 const LOGIN_URL = 'https://supertreinosapp.com/api/v2/user/login';
 const LIBRARY_URL = 'https://supertreinosapp.com/api/v2/library?pid=';
+const LIBRARY_RAW_URL = 'https://supertreinosapp.com/api/v2/library?pid=';
 
 const COMMON_HEADERS = {
   'accept': 'application/json, text/plain, */*',
@@ -25,6 +26,11 @@ export interface ScLibExercise {
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
 let cachedLibrary: { list: ScLibExercise[]; expiresAt: number } | null = null;
+let cachedRawLibrary: { list: any[]; expiresAt: number } | null = null;
+
+export async function getSuperCoachToken(): Promise<string> {
+  return await getToken();
+}
 
 async function getToken(): Promise<string> {
   if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) return cachedToken.token;
@@ -64,6 +70,23 @@ export async function getSuperCoachLibrary(): Promise<ScLibExercise[]> {
   cachedLibrary = { list: exercises, expiresAt: Date.now() + 30 * 60_000 };
   return exercises;
 }
+
+// Retorna a biblioteca COMPLETA (objetos crus) — necessário para POST /library/copy
+// que exige o objeto integral da lib (muscle_ids como objetos, translations, etc.).
+export async function getSuperCoachLibraryRaw(): Promise<any[]> {
+  if (cachedRawLibrary && cachedRawLibrary.expiresAt > Date.now()) return cachedRawLibrary.list;
+  const token = await getToken();
+  const r = await fetch(LIBRARY_RAW_URL, { headers: { ...COMMON_HEADERS, authorization: `Bearer ${token}` } });
+  const text = await r.text();
+  if (!r.ok) throw new Error(`ST Coach library raw (${r.status}): ${text.slice(0, 160)}`);
+  const j = JSON.parse(text);
+  const list = j?.workouts || j?.data || j?.library || (Array.isArray(j) ? j : []);
+  const arr = Array.isArray(list) ? list : [];
+  cachedRawLibrary = { list: arr, expiresAt: Date.now() + 30 * 60_000 };
+  return arr;
+}
+
+export const SC_COMMON_HEADERS = COMMON_HEADERS;
 
 export function normalizeExName(s: string): string {
   return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
