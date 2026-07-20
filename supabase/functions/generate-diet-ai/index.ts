@@ -124,7 +124,7 @@ REGRAS DE FORMATAÇÃO (obrigatórias):
 - Nomes de refeição típicos: Desjejum, Colação, Almoço, Lanche da Tarde, Pré-Treino, Pós-Treino, Jantar, Ceia (adaptar ao número pedido).
 - Subtítulos estratégicos entre parênteses (ex: "Ativação Metabólica", "Sustentação Anabólica", "Carga de Glicogênio", "Manutenção Nitrogenada", "Recuperação Noturna").
 - NÃO inclua linha de macros por refeição no HTML (diet_text). Os macros por refeição são retornados apenas no tool call estruturado (campo meals).
-- Ao final de todas as refeições, inclua UMA linha de total no formato exato: <p><strong>TOTAL DIÁRIO:</strong> XXXX kcal | P: XXXg | C: XXXg | G: XXg</p>
+- NÃO inclua linha de TOTAL DIÁRIO no HTML (diet_text). O total é retornado apenas no tool call estruturado (campo total).
 - TODOS os valores de kcal, proteína, carboidrato e gordura DEVEM ser NÚMEROS INTEIROS (arredondados). NUNCA usar vírgula, ponto decimal ou casas decimais. Ex: use "420" e "35g", nunca "419,7" ou "35.2g".
 
 ${TACO_REF}
@@ -284,6 +284,15 @@ REGRAS:
       );
       parsed.diet_text = parsed.diet_text.replace(
         /(?:<[^>]+>\s*)*Macros\s+da\s+Refei[cç][aã]o\s*\d*\s*:\s*\d+\s*kcal\s*\|\s*P\s*:\s*\d+\s*g\s*\|\s*C\s*:\s*\d+\s*g\s*\|\s*G\s*:\s*\d+\s*g\s*(?:<[^>]+>\s*)*/gi,
+        "",
+      );
+      // Remove TOTAL DIÁRIO lines from the HTML output (kept only in structured total field).
+      parsed.diet_text = parsed.diet_text.replace(
+        /<p[^>]*>\s*(?:<[^>]+>\s*)*TOTAL\s+DI[ÁA]RIO[\s\S]*?<\/p>\s*/gi,
+        "",
+      );
+      parsed.diet_text = parsed.diet_text.replace(
+        /(?:<[^>]+>\s*)*TOTAL\s+DI[ÁA]RIO\s*:?\s*\d+\s*kcal\s*\|\s*P\s*:\s*\d+\s*g\s*\|\s*C\s*:\s*\d+\s*g\s*\|\s*G\s*:\s*\d+\s*g\s*(?:<[^>]+>\s*)*/gi,
         "",
       );
       // Strip decimals from numeric tokens followed by kcal/g (e.g. "419,7 kcal" -> "420 kcal", "35.2g" -> "35g")
