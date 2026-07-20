@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
     if (tErr) throw tErr;
     if (!tpl) throw new Error('Template não encontrado');
 
-    const programSelect = 'id, title, subtitle, poster_url, supercoach_program_id, difficulty, objective, weeks, days_per_week, minutes_per_day';
+    const programSelect = 'id, title, subtitle, poster_url, supercoach_program_id, difficulty, objective';
     let prog: any = null;
     const candidateProgramIds = Array.from(new Set([tpl.program_id, body.programId].filter(Boolean)));
     for (const pid of candidateProgramIds) {
@@ -156,9 +156,9 @@ Deno.serve(async (req) => {
         difficulty_level: prog.difficulty === 'avancado' ? 'Avançado' : prog.difficulty === 'iniciante' ? 'Iniciante' : 'Intermediário',
         video_url: 'https://player.vimeo.com/video/',
         description: '',
-        weeks: prog.weeks || '',
-        days_per_week: prog.days_per_week || '',
-        minutes_per_day: prog.minutes_per_day || '',
+        weeks: tpl.weeks || '',
+        days_per_week: tpl.days_per_week || '',
+        minutes_per_day: tpl.minutes_per_day || '',
         sort: 0, pay: 0, published: 1, premium: 0,
         cover_url: prog.poster_url || 'https://supertreinosapp.com/img/PROGRAMA-BANNER-PADRAO.jpg',
         translations: '',
