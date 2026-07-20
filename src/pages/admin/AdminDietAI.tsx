@@ -168,9 +168,7 @@ const AdminDietAI = () => {
         carbs_g: result.total.carbs_g,
         fat_g: result.total.fat_g,
         hydration_l: result.hydration_l || null,
-        created_by: user?.id,
-        released: false,
-      });
+      } as any);
       if (error) throw error;
       toast.success("Cardápio salvo como rascunho na ficha do aluno");
     } catch (e: any) {
