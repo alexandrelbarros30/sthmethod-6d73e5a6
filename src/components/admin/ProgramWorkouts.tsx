@@ -371,6 +371,9 @@ const ProgramWorkouts = ({ programId }: Props) => {
 
   const deleteWorkoutMutation = useMutation({
     mutationFn: async (id: string) => {
+      try {
+        await supabase.functions.invoke("supercoach-delete-program", { body: { templateId: id } });
+      } catch (e) { console.warn("[supercoach-delete-program] template", e); }
       const { error } = await supabase.from("workout_templates").delete().eq("id", id);
       if (error) throw error;
     },
