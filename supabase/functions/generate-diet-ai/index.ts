@@ -109,13 +109,11 @@ FORMATO OBRIGATÓRIO — HTML PURO (sem markdown, sem \`\`\`), exatamente como o
 <p><strong>Opção 2:</strong> Shake com 30g de Whey Protein + 40g de farelo de aveia + 100g de morangos.</p>
 <p><strong>Opção 3:</strong> 2 fatias de pão integral (50g) + 100g de peito de frango desfiado + 30g de queijo cottage zero.</p>
 <p><strong>Opção 4:</strong> 170g de iogurte grego zero açúcar + 25g de Whey + 25g de granola integral.<strong>"</strong></p>
-<p><strong>Macros da Refeição 01:</strong> 420 kcal | P: 35g | C: 40g | G: 12g</p>
 <p><strong>Refeição 02: Almoço (Sustentação Anabólica)</strong></p>
 <p><strong>"⭐ BASE:</strong> ... </p>
 <p><strong>Opção 2:</strong> ...</p>
 <p><strong>Opção 3:</strong> ...</p>
 <p><strong>Opção 4:</strong> ...<strong>"</strong></p>
-<p><strong>Macros da Refeição 02:</strong> 650 kcal | P: 50g | C: 70g | G: 18g</p>
 <p><strong>TOTAL DIÁRIO:</strong> 2500 kcal | P: 180g | C: 280g | G: 70g</p>
 
 REGRAS DE FORMATAÇÃO (obrigatórias):
@@ -125,7 +123,7 @@ REGRAS DE FORMATAÇÃO (obrigatórias):
 - Quantidades explícitas em g/ml/unidades. Nomes de alimentos em português BR.
 - Nomes de refeição típicos: Desjejum, Colação, Almoço, Lanche da Tarde, Pré-Treino, Pós-Treino, Jantar, Ceia (adaptar ao número pedido).
 - Subtítulos estratégicos entre parênteses (ex: "Ativação Metabólica", "Sustentação Anabólica", "Carga de Glicogênio", "Manutenção Nitrogenada", "Recuperação Noturna").
-- Logo após a Opção 4 de CADA refeição, inclua UMA linha de macros no formato exato: <p><strong>Macros da Refeição NN:</strong> XXX kcal | P: XXg | C: XXg | G: XXg</p>
+- NÃO inclua linha de macros por refeição no HTML (diet_text). Os macros por refeição são retornados apenas no tool call estruturado (campo meals).
 - Ao final de todas as refeições, inclua UMA linha de total no formato exato: <p><strong>TOTAL DIÁRIO:</strong> XXXX kcal | P: XXXg | C: XXXg | G: XXg</p>
 - TODOS os valores de kcal, proteína, carboidrato e gordura DEVEM ser NÚMEROS INTEIROS (arredondados). NUNCA usar vírgula, ponto decimal ou casas decimais. Ex: use "420" e "35g", nunca "419,7" ou "35.2g".
 
