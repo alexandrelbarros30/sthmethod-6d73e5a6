@@ -9,6 +9,8 @@ project_id = "tthahgwkkdyvxdbhsgyb"
     verify_jwt = false
   [functions.analyze-diet]
     verify_jwt = false
+  [functions.generate-diet-ai]
+    verify_jwt = false
   [functions.analyze-evolution-public]
     verify_jwt = false
   [functions.auth-email-hook]
