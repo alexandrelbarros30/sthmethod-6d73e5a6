@@ -484,6 +484,20 @@ const AdminTrainingPrograms = () => {
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
+                      <Button size="sm" variant="ghost" className="text-xs h-7" onClick={async () => {
+                        try {
+                          toast.info("Gerando capa...");
+                          const { data, error } = await supabase.functions.invoke("generate-program-cover", { body: { programId: p.id } });
+                          if (error) throw error;
+                          if ((data as any)?.error) throw new Error((data as any).error);
+                          toast.success("Capa gerada!");
+                          queryClient.invalidateQueries({ queryKey: ["training-programs"] });
+                        } catch (e: any) {
+                          toast.error(e?.message || "Falha ao gerar capa");
+                        }
+                      }}>
+                        <ImageIcon className="w-3 h-3 mr-1" /> {p.poster_url ? "Regerar capa" : "Gerar capa"}
+                      </Button>
                       <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => openEditProgram(p)}>
                         <Pencil className="w-3 h-3 mr-1" /> Editar
                       </Button>
