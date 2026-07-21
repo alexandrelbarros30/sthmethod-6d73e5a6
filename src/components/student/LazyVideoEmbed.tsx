@@ -20,12 +20,24 @@ interface LazyVideoEmbedProps {
  */
 const LazyVideoEmbed = ({ url, title, className }: LazyVideoEmbedProps) => {
   const [active, setActive] = useState(false);
+  const [thumbIdx, setThumbIdx] = useState(0);
   const ytId = getYoutubeId(url);
   // Usa nocookie + playsinline pra reduzir peso no WebView.
   const embedSrc = ytId
     ? `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&playsinline=1&rel=0&modestbranding=1`
     : url;
-  const thumbSrc = ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null;
+  // Ordem de fallback: maxres pode não existir para todos os vídeos, hq quase sempre existe.
+  // No WebView do Android, `img.youtube.com` às vezes falha por CORS/HTTPS strict — usamos
+  // `i.ytimg.com` como alternativa e sempre um fallback final.
+  const thumbCandidates = ytId
+    ? [
+        `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`,
+        `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`,
+        `https://i.ytimg.com/vi/${ytId}/mqdefault.jpg`,
+        `https://i.ytimg.com/vi/${ytId}/0.jpg`,
+      ]
+    : [];
+  const thumbSrc = thumbCandidates[thumbIdx] || null;
 
   if (active) {
     return (
@@ -53,6 +65,11 @@ const LazyVideoEmbed = ({ url, title, className }: LazyVideoEmbedProps) => {
           className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition"
           loading="lazy"
           draggable={false}
+          referrerPolicy="no-referrer"
+          crossOrigin="anonymous"
+          onError={() => {
+            if (thumbIdx < thumbCandidates.length - 1) setThumbIdx(thumbIdx + 1);
+          }}
         />
       )}
       <div className="absolute inset-0 flex items-center justify-center bg-black/30">
