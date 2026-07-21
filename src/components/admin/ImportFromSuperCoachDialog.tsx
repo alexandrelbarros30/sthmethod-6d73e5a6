@@ -120,6 +120,72 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
     onError: (e: any) => toast.error(e.message || "Erro ao importar"),
   });
 
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
+  const importAllMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Sem sessão");
+      const list = filteredTrainings.length > 0 ? filteredTrainings : trainings;
+      let ok = 0, fail = 0, totalEx = 0;
+      setBulkProgress({ done: 0, total: list.length });
+      for (let idx = 0; idx < list.length; idx++) {
+        const t = list[idx];
+        try {
+          const { data: det, error: eDet } = await supabase.functions.invoke("supercoach-import-workout", {
+            body: { action: "get-training-details", programId: selectedProgram?.id, trainingId: t.id },
+          });
+          if (eDet) throw eDet;
+          if ((det as any)?.error) throw new Error((det as any).error);
+          const fullExercises: any[] = (det as any)?.exercises || [];
+          const { data: tpl, error: e1 } = await supabase.from("workout_templates").insert({
+            title: t.name,
+            description: [selectedProgram?.name, t.subtitle, t.description].filter(Boolean).join(" • "),
+            weeks: t.weeks ? Number(t.weeks) : (selectedProgram?.weeks ? Number(selectedProgram.weeks) : null),
+            days_per_week: t.days_per_week ? Number(t.days_per_week) : (selectedProgram?.days_per_week ? Number(selectedProgram.days_per_week) : null),
+            minutes_per_day: t.minutes_per_day ? Number(t.minutes_per_day) : (selectedProgram?.minutes_per_day ? Number(selectedProgram.minutes_per_day) : null),
+            created_by: user.id,
+            ...(programId ? { program_id: programId } : {}),
+          }).select("id").single();
+          if (e1) throw e1;
+          const source = fullExercises.length > 0 ? fullExercises : t.exercises;
+          const rows = source.map((ex: any, i: number) => {
+            const { sets, reps } = parseSetsReps(ex.series_repetitions);
+            const videoUrl = ex.video_url || ex.video_url_thumb || ex.cover_url || "";
+            return {
+              template_id: tpl.id,
+              exercise_id: null,
+              custom_name: ex.name,
+              custom_description: ex.description || "",
+              sets, reps,
+              rest_interval: "",
+              load_suggestion: "",
+              video_url: videoUrl,
+              sort_order: i,
+            };
+          });
+          if (rows.length > 0) {
+            const { error: e2 } = await supabase.from("workout_template_exercises").insert(rows);
+            if (e2) throw e2;
+          }
+          totalEx += rows.length;
+          ok++;
+        } catch (err: any) {
+          console.error("[import-all]", t.name, err);
+          fail++;
+        }
+        setBulkProgress({ done: idx + 1, total: list.length });
+      }
+      return { ok, fail, totalEx, total: list.length };
+    },
+    onSuccess: (r) => {
+      toast.success(`Importados ${r.ok}/${r.total} treinos • ${r.totalEx} exercícios${r.fail ? ` • ${r.fail} falharam` : ""}`);
+      qc.invalidateQueries({ queryKey: ["workout-templates"] });
+      qc.invalidateQueries({ queryKey: ["template-exercises-all"] });
+      onImported();
+      setBulkProgress(null);
+    },
+    onError: (e: any) => { toast.error(e.message || "Erro ao importar em lote"); setBulkProgress(null); },
+  });
+
   const filteredPrograms = programs.filter(p => !search || normalizeSearch(p.name).includes(normalizeSearch(search)));
   const filteredTrainings = trainings.filter(t => !search || normalizeSearch(t.name).includes(normalizeSearch(search)));
 
@@ -166,6 +232,19 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
           {!loading && step === "trainings" && (
             <div className="space-y-2 max-h-[60vh] overflow-y-auto">
               {filteredTrainings.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">Nenhum treino neste programa.</p>}
+              {filteredTrainings.length > 0 && (
+                <div className="flex items-center justify-between gap-2 p-2 rounded-lg border bg-muted/30">
+                  <div className="text-xs text-muted-foreground">
+                    {bulkProgress
+                      ? `Importando ${bulkProgress.done}/${bulkProgress.total}...`
+                      : `${filteredTrainings.length} treino(s) prontos para importar`}
+                  </div>
+                  <Button size="sm" disabled={importAllMutation.isPending || importMutation.isPending} onClick={() => importAllMutation.mutate()}>
+                    {importAllMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Download className="w-3 h-3 mr-1" />}
+                    Importar todos
+                  </Button>
+                </div>
+              )}
               {filteredTrainings.map(t => {
                 const matched = t.exercises.filter(ex => findLibraryMatch(ex.name)).length;
                 return (
