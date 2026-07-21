@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Play } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Pause, Play } from "lucide-react";
 
 // Extrai o ID do YouTube a partir da URL de embed/watch/short.
 const getYoutubeId = (url: string) => {
@@ -52,16 +52,41 @@ interface LazyVideoEmbedProps {
  */
 const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: LazyVideoEmbedProps) => {
   const [active, setActive] = useState(false);
+  const [filePlaying, setFilePlaying] = useState(false);
+  const [fileDuration, setFileDuration] = useState(0);
+  const [fileCurrentTime, setFileCurrentTime] = useState(0);
   const [thumbIdx, setThumbIdx] = useState(0);
   const [thumbUnavailable, setThumbUnavailable] = useState(false);
   const [vimeoPoster, setVimeoPoster] = useState<string | null>(null);
+  const fileVideoRef = useRef<HTMLVideoElement | null>(null);
   const ytId = kind === "embed" ? getYoutubeId(url) : null;
   const vimeoId = kind === "embed" ? getVimeoId(url) : null;
 
   useEffect(() => {
+    setActive(false);
+    setFilePlaying(false);
+    setFileDuration(0);
+    setFileCurrentTime(0);
     setThumbIdx(0);
     setThumbUnavailable(false);
   }, [url, posterUrl]);
+
+  useEffect(() => {
+    if (!active || kind !== "file") return;
+    const video = fileVideoRef.current;
+    if (!video) return;
+
+    const play = async () => {
+      try {
+        await video.play();
+        setFilePlaying(true);
+      } catch {
+        setFilePlaying(false);
+      }
+    };
+
+    void play();
+  }, [active, kind]);
 
   useEffect(() => {
     let cancelled = false;
@@ -116,16 +141,65 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
 
   if (active) {
     if (kind === "file") {
+      const progress = fileDuration > 0 ? Math.min(100, Math.max(0, (fileCurrentTime / fileDuration) * 100)) : 0;
+      const togglePlayback = async () => {
+        const video = fileVideoRef.current;
+        if (!video) return;
+        if (video.paused) {
+          try {
+            await video.play();
+            setFilePlaying(true);
+          } catch {
+            setFilePlaying(false);
+          }
+        } else {
+          video.pause();
+          setFilePlaying(false);
+        }
+      };
+
       return (
-        <video
-          src={url}
-          className={className || "w-full h-full"}
-          controls
-          autoPlay
-          playsInline
-          preload="metadata"
-          poster={thumbSrc || undefined}
-        />
+        <div className={`relative h-full w-full overflow-hidden bg-card ${className || ""}`}>
+          <video
+            ref={fileVideoRef}
+            src={url}
+            className="absolute inset-0 h-full w-full object-cover"
+            playsInline
+            preload="metadata"
+            poster={thumbSrc || undefined}
+            onLoadedMetadata={(event) => setFileDuration(event.currentTarget.duration || 0)}
+            onTimeUpdate={(event) => setFileCurrentTime(event.currentTarget.currentTime || 0)}
+            onPlay={() => setFilePlaying(true)}
+            onPause={() => setFilePlaying(false)}
+            onEnded={() => setFilePlaying(false)}
+          />
+
+          <button
+            type="button"
+            onClick={togglePlayback}
+            className="absolute inset-0 z-10 cursor-pointer bg-transparent"
+            aria-label={filePlaying ? "Pausar vídeo" : `Reproduzir vídeo${title ? `: ${title}` : ""}`}
+          />
+
+          <div className="absolute inset-x-0 bottom-0 z-20 flex h-11 items-center gap-2 bg-background/80 px-3 text-foreground shadow-[0_-10px_28px_-18px_hsl(var(--foreground))] ring-1 ring-border/35 backdrop-blur-md sm:h-12 sm:px-4">
+            <button
+              type="button"
+              onClick={togglePlayback}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground text-background sm:h-9 sm:w-9"
+              aria-label={filePlaying ? "Pausar vídeo" : "Reproduzir vídeo"}
+            >
+              {filePlaying ? (
+                <Pause className="h-4 w-4 sm:h-4.5 sm:w-4.5" fill="currentColor" strokeWidth={1.8} />
+              ) : (
+                <Play className="ml-0.5 h-4 w-4 sm:h-4.5 sm:w-4.5" fill="currentColor" strokeWidth={1.8} />
+              )}
+            </button>
+            <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
+              <div className="h-full rounded-full bg-primary" style={{ width: `${progress || 2}%` }} />
+            </div>
+            <span className="ml-1 h-2.5 w-2.5 shrink-0 rounded-full bg-foreground/85" aria-hidden="true" />
+          </div>
+        </div>
       );
     }
     return (
