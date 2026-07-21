@@ -121,6 +121,7 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
   });
 
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
+  const [megaProgress, setMegaProgress] = useState<{ prog: number; totalProg: number; label: string; ok: number; fail: number; totalEx: number } | null>(null);
   const importAllMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Sem sessão");
@@ -186,6 +187,105 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
     onError: (e: any) => { toast.error(e.message || "Erro ao importar em lote"); setBulkProgress(null); },
   });
 
+  // Importa TODOS os programas do ST Coach: cria um training_programs local por programa (se não houver programId fixo) e importa todos os treinos.
+  const importEverythingMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Sem sessão");
+      const list = filteredPrograms.length > 0 ? filteredPrograms : programs;
+      let totalOk = 0, totalFail = 0, totalEx = 0;
+      setMegaProgress({ prog: 0, totalProg: list.length, label: "", ok: 0, fail: 0, totalEx: 0 });
+      for (let pi = 0; pi < list.length; pi++) {
+        const p = list[pi];
+        setMegaProgress({ prog: pi, totalProg: list.length, label: p.name, ok: totalOk, fail: totalFail, totalEx });
+        try {
+          // 1) Carrega treinos do programa
+          const { data: tList, error: eList } = await supabase.functions.invoke("supercoach-import-workout", { body: { action: "list-trainings", programId: p.id } });
+          if (eList) throw eList;
+          if ((tList as any)?.error) throw new Error((tList as any).error);
+          const trs: Training[] = (tList as any)?.trainings || [];
+
+          // 2) Cria (ou reusa) o training_programs local, salvo se programId prop já foi definido
+          let localProgramId = programId as string | undefined;
+          if (!localProgramId) {
+            const { data: np, error: eNp } = await supabase.from("training_programs").insert({
+              title: p.name,
+              details: p.subtitle || "",
+              objective: "hypertrophy",
+              difficulty: "intermediate",
+              status: "active",
+              poster_url: p.cover_url || null,
+              created_by: user.id,
+            } as any).select("id").single();
+            if (eNp) throw eNp;
+            localProgramId = (np as any).id;
+          }
+
+          // 3) Importa cada treino
+          for (const t of trs) {
+            try {
+              const { data: det, error: eDet } = await supabase.functions.invoke("supercoach-import-workout", {
+                body: { action: "get-training-details", programId: p.id, trainingId: t.id },
+              });
+              if (eDet) throw eDet;
+              if ((det as any)?.error) throw new Error((det as any).error);
+              const fullExercises: any[] = (det as any)?.exercises || [];
+              const { data: tpl, error: e1 } = await supabase.from("workout_templates").insert({
+                title: t.name,
+                description: [p.name, t.subtitle, t.description].filter(Boolean).join(" • "),
+                weeks: t.weeks ? Number(t.weeks) : (p.weeks ? Number(p.weeks) : null),
+                days_per_week: t.days_per_week ? Number(t.days_per_week) : (p.days_per_week ? Number(p.days_per_week) : null),
+                minutes_per_day: t.minutes_per_day ? Number(t.minutes_per_day) : (p.minutes_per_day ? Number(p.minutes_per_day) : null),
+                created_by: user.id,
+                ...(localProgramId ? { program_id: localProgramId } : {}),
+              }).select("id").single();
+              if (e1) throw e1;
+              const source = fullExercises.length > 0 ? fullExercises : t.exercises;
+              const rows = source.map((ex: any, i: number) => {
+                const { sets, reps } = parseSetsReps(ex.series_repetitions);
+                const videoUrl = ex.video_url || ex.video_url_thumb || ex.cover_url || "";
+                return {
+                  template_id: tpl.id,
+                  exercise_id: null,
+                  custom_name: ex.name,
+                  custom_description: ex.description || "",
+                  sets, reps,
+                  rest_interval: "",
+                  load_suggestion: "",
+                  video_url: videoUrl,
+                  sort_order: i,
+                };
+              });
+              if (rows.length > 0) {
+                const { error: e2 } = await supabase.from("workout_template_exercises").insert(rows);
+                if (e2) throw e2;
+              }
+              totalEx += rows.length;
+              totalOk++;
+            } catch (err: any) {
+              console.error("[import-everything] treino falhou", p.name, t.name, err);
+              totalFail++;
+            }
+            setMegaProgress({ prog: pi, totalProg: list.length, label: p.name, ok: totalOk, fail: totalFail, totalEx });
+          }
+        } catch (err: any) {
+          console.error("[import-everything] programa falhou", p.name, err);
+          totalFail++;
+        }
+      }
+      setMegaProgress({ prog: list.length, totalProg: list.length, label: "", ok: totalOk, fail: totalFail, totalEx });
+      return { ok: totalOk, fail: totalFail, totalEx, totalProg: list.length };
+    },
+    onSuccess: (r) => {
+      toast.success(`Importados ${r.totalProg} programa(s) • ${r.ok} treinos • ${r.totalEx} exercícios${r.fail ? ` • ${r.fail} falharam` : ""}`);
+      qc.invalidateQueries({ queryKey: ["workout-templates"] });
+      qc.invalidateQueries({ queryKey: ["template-exercises-all"] });
+      qc.invalidateQueries({ queryKey: ["training-programs"] });
+      onImported();
+      setTimeout(() => setMegaProgress(null), 1500);
+    },
+    onError: (e: any) => { toast.error(e.message || "Erro ao importar tudo"); setMegaProgress(null); },
+  });
+
   const filteredPrograms = programs.filter(p => !search || normalizeSearch(p.name).includes(normalizeSearch(search)));
   const filteredTrainings = trainings.filter(t => !search || normalizeSearch(t.name).includes(normalizeSearch(search)));
 
@@ -213,6 +313,19 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
           {!loading && step === "programs" && (
             <div className="space-y-2 max-h-[60vh] overflow-y-auto">
               {filteredPrograms.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">Nenhum programa encontrado.</p>}
+              {filteredPrograms.length > 0 && (
+                <div className="flex items-center justify-between gap-2 p-2 rounded-lg border bg-muted/30 sticky top-0 z-10">
+                  <div className="text-xs text-muted-foreground">
+                    {megaProgress
+                      ? `Programa ${Math.min(megaProgress.prog + 1, megaProgress.totalProg)}/${megaProgress.totalProg}${megaProgress.label ? ` • ${megaProgress.label}` : ""} • ${megaProgress.ok} treinos ok${megaProgress.fail ? ` • ${megaProgress.fail} falhas` : ""}`
+                      : `${filteredPrograms.length} programa(s) — importar TODOS de uma vez`}
+                  </div>
+                  <Button size="sm" disabled={importEverythingMutation.isPending} onClick={() => importEverythingMutation.mutate()}>
+                    {importEverythingMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Download className="w-3 h-3 mr-1" />}
+                    Importar TODOS os programas
+                  </Button>
+                </div>
+              )}
               {filteredPrograms.map(p => (
                 <button key={p.id} onClick={() => loadTrainings(p)} className="w-full text-left p-3 rounded-lg border hover:bg-accent transition-colors flex items-center gap-3">
                   {p.cover_url && <img src={p.cover_url} alt="" className="w-12 h-12 rounded object-cover shrink-0" onError={(e: any) => e.target.style.display = 'none'} />}
