@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { Pause, Play } from "lucide-react";
 
 // Extrai o ID do YouTube a partir da URL de embed/watch/short.
@@ -131,6 +132,28 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
 
   const thumbSrc = thumbCandidates[thumbIdx] || null;
 
+  const playFileVideo = async () => {
+    const video = fileVideoRef.current;
+    if (!video) return;
+    try {
+      await video.play();
+      setFilePlaying(true);
+    } catch {
+      setFilePlaying(false);
+    }
+  };
+
+  const handleActivate = () => {
+    if (kind === "file") {
+      // Android WebView só libera play confiável quando o play() acontece no
+      // mesmo gesto do usuário. O flushSync monta o <video> antes de chamar play.
+      flushSync(() => setActive(true));
+      void playFileVideo();
+      return;
+    }
+    setActive(true);
+  };
+
   const handleThumbError = () => {
     if (thumbIdx < thumbCandidates.length - 1) {
       setThumbIdx((current) => current + 1);
@@ -146,12 +169,7 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
         const video = fileVideoRef.current;
         if (!video) return;
         if (video.paused) {
-          try {
-            await video.play();
-            setFilePlaying(true);
-          } catch {
-            setFilePlaying(false);
-          }
+          await playFileVideo();
         } else {
           video.pause();
           setFilePlaying(false);
@@ -163,10 +181,14 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
           <video
             ref={fileVideoRef}
             src={url}
-            className="absolute inset-0 h-full w-full object-cover"
+            className="sth-workout-video absolute inset-0 h-full w-full object-cover"
             playsInline
+            webkit-playsinline="true"
             preload="metadata"
             poster={thumbSrc || undefined}
+            controls={false}
+            disablePictureInPicture
+            controlsList="nodownload noplaybackrate noremoteplayback"
             onLoadedMetadata={(event) => setFileDuration(event.currentTarget.duration || 0)}
             onTimeUpdate={(event) => setFileCurrentTime(event.currentTarget.currentTime || 0)}
             onPlay={() => setFilePlaying(true)}
@@ -216,7 +238,7 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
   return (
     <button
       type="button"
-      onClick={() => setActive(true)}
+      onClick={handleActivate}
       className={`group relative w-full h-full overflow-hidden bg-card ${className || ""}`}
       aria-label={`Reproduzir vídeo${title ? `: ${title}` : ""}`}
     >
