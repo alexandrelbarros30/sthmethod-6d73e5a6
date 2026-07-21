@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Play, Video } from "lucide-react";
 
 // Extrai o ID do YouTube a partir da URL de embed/watch/short.
@@ -7,10 +7,36 @@ const getYoutubeId = (url: string) => {
   return m?.[1] || null;
 };
 
+const getVimeoId = (url: string) => {
+  const m = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  return m?.[1] || null;
+};
+
+const normalizeImageUrl = (raw?: string | null) => {
+  if (!raw) return "";
+  try {
+    const u = new URL(raw);
+    u.pathname = u.pathname
+      .split("/")
+      .map((seg) => {
+        try {
+          return encodeURIComponent(decodeURIComponent(seg));
+        } catch {
+          return encodeURIComponent(seg);
+        }
+      })
+      .join("/");
+    return u.toString();
+  } catch {
+    return raw;
+  }
+};
+
 interface LazyVideoEmbedProps {
   url: string;
   title?: string;
   className?: string;
+  posterUrl?: string | null;
 }
 
 /**
@@ -18,31 +44,63 @@ interface LazyVideoEmbedProps {
  * Só então o <iframe> é montado. Evita travamentos no WebView do Android
  * quando muitos vídeos aparecem na mesma tela (tela de treino guiado).
  */
-const LazyVideoEmbed = ({ url, title, className }: LazyVideoEmbedProps) => {
+const LazyVideoEmbed = ({ url, title, className, posterUrl }: LazyVideoEmbedProps) => {
   const [active, setActive] = useState(false);
   const [thumbIdx, setThumbIdx] = useState(0);
-  const [thumbLoaded, setThumbLoaded] = useState(false);
   const [thumbUnavailable, setThumbUnavailable] = useState(false);
+  const [vimeoPoster, setVimeoPoster] = useState<string | null>(null);
   const ytId = getYoutubeId(url);
+  const vimeoId = getVimeoId(url);
+
+  useEffect(() => {
+    setThumbIdx(0);
+    setThumbUnavailable(false);
+  }, [url, posterUrl]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setVimeoPoster(null);
+    if (!vimeoId) return;
+
+    fetch(`https://vimeo.com/api/oembed.json?url=${encodeURIComponent(`https://vimeo.com/${vimeoId}`)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data?.thumbnail_url) {
+          setVimeoPoster(normalizeImageUrl(data.thumbnail_url));
+          setThumbIdx(0);
+          setThumbUnavailable(false);
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [vimeoId]);
+
   // Usa nocookie + playsinline pra reduzir peso no WebView.
   const embedSrc = ytId
     ? `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&playsinline=1&rel=0&modestbranding=1`
     : url;
-  // Ordem de fallback: `vi_webp` tende a renderizar melhor em WebView Android;
-  // se a origem remota for bloqueada, mostramos um poster local em vez de tela preta.
-  const thumbCandidates = ytId
-    ? [
-        `https://i.ytimg.com/vi_webp/${ytId}/hqdefault.webp`,
-        `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`,
-        `https://i.ytimg.com/vi/${ytId}/mqdefault.jpg`,
-        `https://i.ytimg.com/vi/${ytId}/0.jpg`,
-        `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`,
-      ]
-    : [];
+
+  // APK/WebView Android é mais estável com JPG já visível; não dependemos de
+  // onLoad nem de WebP. Para Vimeo/ST Coach, usa a capa do cadastro e oEmbed.
+  const thumbCandidates = useMemo(() => {
+    const candidates = [
+      normalizeImageUrl(posterUrl),
+      ytId ? `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg` : "",
+      ytId ? `https://i.ytimg.com/vi/${ytId}/mqdefault.jpg` : "",
+      ytId ? `https://i.ytimg.com/vi/${ytId}/0.jpg` : "",
+      ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : "",
+      vimeoPoster,
+    ].filter(Boolean) as string[];
+
+    return Array.from(new Set(candidates));
+  }, [posterUrl, vimeoPoster, ytId]);
+
   const thumbSrc = thumbCandidates[thumbIdx] || null;
 
   const handleThumbError = () => {
-    setThumbLoaded(false);
     if (thumbIdx < thumbCandidates.length - 1) {
       setThumbIdx((current) => current + 1);
       return;
@@ -90,12 +148,11 @@ const LazyVideoEmbed = ({ url, title, className }: LazyVideoEmbedProps) => {
           key={thumbSrc}
           src={thumbSrc}
           alt={title || "Vídeo"}
-          className={`relative z-10 h-full w-full object-cover transition duration-300 group-hover:scale-[1.01] ${thumbLoaded ? "opacity-90 group-hover:opacity-100" : "opacity-0"}`}
+          className="relative z-10 h-full w-full object-cover opacity-95 group-hover:opacity-100"
           loading="eager"
           decoding="async"
           draggable={false}
           referrerPolicy="no-referrer"
-          onLoad={() => setThumbLoaded(true)}
           onError={handleThumbError}
         />
       )}
