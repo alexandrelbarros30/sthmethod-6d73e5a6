@@ -17,6 +17,7 @@ import StudentGuidedWorkout from "@/pages/student/StudentGuidedWorkout";
 import StCoachCredit from "@/components/shared/StCoachCredit";
 import SuperCoachAssignedPrograms from "@/components/shared/SuperCoachAssignedPrograms";
 import { applyAssignmentWindow } from "@/lib/assignment-window";
+import LazyVideoEmbed from "@/components/student/LazyVideoEmbed";
 
 const getMediaSource = (url: string): { kind: "embed" | "image" | "file"; url: string } | null => {
   if (!url) return null;
@@ -314,12 +315,7 @@ const StudentTraining = () => {
                             {media?.kind === "embed" && (
                               <div className="space-y-1.5">
                                 <div className="relative aspect-[4/3] sm:aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40">
-                                  <iframe
-                                    src={media.url}
-                                    className="w-full h-full"
-                                    allowFullScreen
-                                    title={`Vídeo - ${ex.name}`}
-                                  />
+                                  <LazyVideoEmbed url={media.url} title={ex.name} />
                                   <StCoachCredit variant="overlay" />
                                 </div>
                                 <StCoachCredit />
@@ -341,7 +337,7 @@ const StudentTraining = () => {
                             )}
                             {media?.kind === "file" && (
                               <div className="aspect-[4/3] sm:aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40 bg-black/30">
-                                <video src={media.url} className="w-full h-full" controls playsInline preload="metadata" />
+                                <video src={media.url} className="w-full h-full" controls playsInline preload="none" />
                               </div>
                             )}
 
