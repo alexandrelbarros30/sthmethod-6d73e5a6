@@ -48,6 +48,25 @@ jobs:
             npx cap add android
           fi
 
+      - name: Set Android app version
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const pkg = require('./package.json');
+          const [major = 0, minor = 0, patch = 0] = String(pkg.version || '1.0.0').split('.').map((n) => Number.parseInt(n, 10) || 0);
+          const versionCode = Math.max(1, major * 10000 + minor * 100 + patch);
+          const versionName = String(pkg.version || '1.0.0');
+          const file = 'android/app/build.gradle';
+          let gradle = fs.readFileSync(file, 'utf8');
+          gradle = gradle.replace(/versionCode\s+\d+/g, `versionCode ${versionCode}`);
+          gradle = gradle.replace(/versionName\s+['"][^'"]+['"]/g, `versionName "${versionName}"`);
+          if (!/versionCode\s+\d+/.test(gradle)) {
+            gradle = gradle.replace(/defaultConfig\s*\{/, `defaultConfig {\n        versionCode ${versionCode}\n        versionName "${versionName}"`);
+          }
+          fs.writeFileSync(file, gradle);
+          console.log(`Android version set to ${versionName} (${versionCode})`);
+          NODE
+
       - name: Generate app icons & splash
         run: |
           npm install --no-save --legacy-peer-deps @capacitor/assets@^3
