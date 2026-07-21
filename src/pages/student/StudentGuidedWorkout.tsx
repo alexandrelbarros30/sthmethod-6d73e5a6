@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import StCoachCredit from "@/components/shared/StCoachCredit";
 import SuperCoachAssignedPrograms from "@/components/shared/SuperCoachAssignedPrograms";
 import WorkoutChronometer from "@/components/student/WorkoutChronometer";
+import LazyVideoEmbed from "@/components/student/LazyVideoEmbed";
 import { toast } from "sonner";
 
 // Encodes URL path segments containing spaces/parens/etc while preserving the
@@ -641,7 +642,7 @@ const StudentGuidedWorkout = () => {
                 {videoSource?.kind === "embed" && (
                   <>
                     <div className="aspect-[4/3] sm:aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40 relative">
-                      <iframe src={videoSource.url} className="w-full h-full" allowFullScreen title={ex.custom_name} />
+                      <LazyVideoEmbed url={videoSource.url} title={ex.custom_name} />
                       <StCoachCredit variant="overlay" />
                     </div>
                     <StCoachCredit />
@@ -650,7 +651,7 @@ const StudentGuidedWorkout = () => {
 
                 {videoSource?.kind === "file" && (
                   <div className="aspect-[4/3] sm:aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40 bg-black/30">
-                    <video src={videoSource.url} className="w-full h-full" controls playsInline preload="metadata" />
+                    <video src={videoSource.url} className="w-full h-full" controls playsInline preload="none" />
                   </div>
                 )}
 
