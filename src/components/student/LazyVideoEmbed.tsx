@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Play, Video } from "lucide-react";
+import { ChevronRight, Play } from "lucide-react";
 
 // Extrai o ID do YouTube a partir da URL de embed/watch/short.
 const getYoutubeId = (url: string) => {
@@ -127,28 +127,12 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl }: LazyVideoEmbedProp
       className={`group relative w-full h-full overflow-hidden bg-card ${className || ""}`}
       aria-label={`Reproduzir vídeo${title ? `: ${title}` : ""}`}
     >
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-muted via-background to-card p-5 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full border border-border/60 bg-background/80 text-primary shadow-sm">
-          <Video className="h-5 w-5" strokeWidth={1.8} />
-        </div>
-        <div className="space-y-1">
-          <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
-            Vídeo de referência técnica
-          </p>
-          {title && (
-            <p className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
-              {title}
-            </p>
-          )}
-        </div>
-      </div>
-
       {thumbSrc && !thumbUnavailable && (
         <img
           key={thumbSrc}
           src={thumbSrc}
           alt={title || "Vídeo"}
-          className="relative z-10 h-full w-full object-cover opacity-95 group-hover:opacity-100"
+          className="absolute inset-0 h-full w-full object-cover"
           loading="eager"
           decoding="async"
           draggable={false}
@@ -156,10 +140,23 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl }: LazyVideoEmbedProp
           onError={handleThumbError}
         />
       )}
-      <div className="absolute inset-0 z-20 flex items-center justify-center bg-foreground/20">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition group-hover:scale-105">
-          <Play className="ml-1 h-7 w-7" fill="currentColor" />
+
+      {(!thumbSrc || thumbUnavailable) && (
+        <div className="absolute inset-0 flex items-center justify-center bg-muted text-center">
+          <p className="max-w-[80%] text-sm font-semibold leading-snug text-foreground">
+            {title || "Vídeo de referência técnica"}
+          </p>
         </div>
+      )}
+
+      <div className="absolute inset-x-3 bottom-3 z-20 flex items-center gap-3 rounded-md bg-background/90 p-2 text-foreground shadow-lg ring-1 ring-border/50 backdrop-blur-sm">
+        <div className="flex h-12 w-14 shrink-0 items-center justify-center rounded-md bg-foreground text-background">
+          <Play className="ml-0.5 h-7 w-7" fill="currentColor" strokeWidth={1.8} />
+        </div>
+        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+          <div className="h-full w-[12%] rounded-full bg-primary" />
+        </div>
+        <ChevronRight className="h-7 w-7 shrink-0 text-foreground" strokeWidth={3} />
       </div>
     </button>
   );
