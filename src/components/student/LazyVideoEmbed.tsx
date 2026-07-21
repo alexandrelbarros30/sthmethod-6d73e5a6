@@ -181,7 +181,8 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
           <video
             ref={fileVideoRef}
             src={url}
-            className="sth-workout-video absolute inset-0 h-full w-full object-cover"
+            className="sth-workout-video absolute inset-0 h-full w-full object-contain"
+            style={{ objectFit: "contain" }}
             playsInline
             {...({ "webkit-playsinline": "true" } as Record<string, string>)}
             preload="metadata"
@@ -247,7 +248,8 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
           key={thumbSrc}
           src={thumbSrc}
           alt={title || "Vídeo"}
-          className="absolute inset-0 h-full w-full object-cover"
+          className="sth-workout-preview-media absolute inset-0 h-full w-full object-contain"
+          style={{ objectFit: "contain" }}
           loading="eager"
           decoding="async"
           draggable={false}

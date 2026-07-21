@@ -21,6 +21,12 @@ html, body {
   pointer-events: none !important;
 }
 
+.sth-workout-video,
+.sth-workout-preview-media {
+  object-fit: contain !important;
+  background: hsl(var(--card));
+}
+
 @layer base {
   :root {
     /* Apple-inspired light-first design */
