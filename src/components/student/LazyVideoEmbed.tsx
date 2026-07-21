@@ -37,6 +37,12 @@ interface LazyVideoEmbedProps {
   title?: string;
   className?: string;
   posterUrl?: string | null;
+  /**
+   * "embed" para YouTube/Vimeo (default) ou "file" para MP4/WebM. Em ambos os
+   * casos, exibimos o mesmo preview estilizado até o usuário tocar em play —
+   * evita o overlay verde nativo do WebView Android em <video>.
+   */
+  kind?: "embed" | "file";
 }
 
 /**
@@ -44,13 +50,13 @@ interface LazyVideoEmbedProps {
  * Só então o <iframe> é montado. Evita travamentos no WebView do Android
  * quando muitos vídeos aparecem na mesma tela (tela de treino guiado).
  */
-const LazyVideoEmbed = ({ url, title, className, posterUrl }: LazyVideoEmbedProps) => {
+const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: LazyVideoEmbedProps) => {
   const [active, setActive] = useState(false);
   const [thumbIdx, setThumbIdx] = useState(0);
   const [thumbUnavailable, setThumbUnavailable] = useState(false);
   const [vimeoPoster, setVimeoPoster] = useState<string | null>(null);
-  const ytId = getYoutubeId(url);
-  const vimeoId = getVimeoId(url);
+  const ytId = kind === "embed" ? getYoutubeId(url) : null;
+  const vimeoId = kind === "embed" ? getVimeoId(url) : null;
 
   useEffect(() => {
     setThumbIdx(0);
@@ -109,6 +115,19 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl }: LazyVideoEmbedProp
   };
 
   if (active) {
+    if (kind === "file") {
+      return (
+        <video
+          src={url}
+          className={className || "w-full h-full"}
+          controls
+          autoPlay
+          playsInline
+          preload="metadata"
+          poster={thumbSrc || undefined}
+        />
+      );
+    }
     return (
       <iframe
         src={embedSrc}
