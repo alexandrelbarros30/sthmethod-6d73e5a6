@@ -12,6 +12,15 @@ html, body {
   padding-right: env(safe-area-inset-right);
 }
 
+.sth-workout-video::-webkit-media-controls,
+.sth-workout-video::-webkit-media-controls-enclosure,
+.sth-workout-video::-webkit-media-controls-panel,
+.sth-workout-video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 @layer base {
   :root {
     /* Apple-inspired light-first design */

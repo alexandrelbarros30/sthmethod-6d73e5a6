@@ -183,7 +183,7 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
             src={url}
             className="sth-workout-video absolute inset-0 h-full w-full object-cover"
             playsInline
-            webkit-playsinline="true"
+            {...({ "webkit-playsinline": "true" } as Record<string, string>)}
             preload="metadata"
             poster={thumbSrc || undefined}
             controls={false}
