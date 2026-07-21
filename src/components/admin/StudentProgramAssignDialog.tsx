@@ -94,6 +94,16 @@ const StudentProgramAssignDialog = ({ open, onOpenChange, userId, userName }: Pr
         .from("student_workout_assignments")
         .upsert(rows as any, { onConflict: "user_id,template_id" });
       if (error) throw error;
+      // Best-effort: espelha a atribuição no ST Coach
+      supabase.functions.invoke("supercoach-assign-program", {
+        body: { userId, programId, action: "assign" },
+      }).then(({ data, error: sErr }: any) => {
+        if (sErr || data?.ok === false) {
+          toast.warning("Atribuído no STH; ST Coach falhou: " + (data?.error || sErr?.message || "erro"));
+        } else if (data?.status === "assigned") {
+          toast.success("Espelhado no ST Coach.");
+        }
+      }).catch(() => {});
     },
     onSuccess: () => {
       toast.success("Programa atribuído ao aluno!");
@@ -113,6 +123,15 @@ const StudentProgramAssignDialog = ({ open, onOpenChange, userId, userName }: Pr
         .eq("user_id", userId)
         .in("template_id", tIds);
       if (error) throw error;
+      supabase.functions.invoke("supercoach-assign-program", {
+        body: { userId, programId, action: "unassign" },
+      }).then(({ data, error: sErr }: any) => {
+        if (sErr || data?.ok === false) {
+          toast.warning("Removido no STH; ST Coach falhou: " + (data?.error || sErr?.message || "erro"));
+        } else if (data?.status === "unassigned") {
+          toast.success("Removido também do ST Coach.");
+        }
+      }).catch(() => {});
     },
     onSuccess: () => {
       toast.success("Programa removido do aluno.");
