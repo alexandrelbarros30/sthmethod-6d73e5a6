@@ -642,7 +642,7 @@ const StudentGuidedWorkout = () => {
                 {videoSource?.kind === "embed" && (
                   <>
                     <div className="aspect-[4/3] sm:aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40 relative">
-                      <LazyVideoEmbed url={videoSource.url} title={ex.custom_name} />
+                      <LazyVideoEmbed url={videoSource.url} title={ex.custom_name} posterUrl={ex.image_url || meta?.image_url} />
                       <StCoachCredit variant="overlay" />
                     </div>
                     <StCoachCredit />
