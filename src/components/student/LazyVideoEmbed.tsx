@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronRight, Play } from "lucide-react";
+import { Play } from "lucide-react";
 
 // Extrai o ID do YouTube a partir da URL de embed/watch/short.
 const getYoutubeId = (url: string) => {
@@ -168,14 +168,14 @@ const LazyVideoEmbed = ({ url, title, className, posterUrl, kind = "embed" }: La
         </div>
       )}
 
-      <div className="absolute inset-x-3 bottom-3 z-20 flex items-center gap-3 rounded-md bg-background/90 p-2 text-foreground shadow-lg ring-1 ring-border/50 backdrop-blur-sm">
-        <div className="flex h-12 w-14 shrink-0 items-center justify-center rounded-md bg-foreground text-background">
-          <Play className="ml-0.5 h-7 w-7" fill="currentColor" strokeWidth={1.8} />
+      <div className="absolute inset-x-0 bottom-0 z-20 flex h-11 items-center gap-2 bg-background/80 px-3 text-foreground shadow-[0_-10px_28px_-18px_hsl(var(--foreground))] ring-1 ring-border/35 backdrop-blur-md sm:h-12 sm:px-4">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground text-background sm:h-9 sm:w-9">
+          <Play className="ml-0.5 h-4 w-4 sm:h-4.5 sm:w-4.5" fill="currentColor" strokeWidth={1.8} />
         </div>
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-          <div className="h-full w-[12%] rounded-full bg-primary" />
+        <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
+          <div className="h-full w-[14%] rounded-full bg-primary" />
         </div>
-        <ChevronRight className="h-7 w-7 shrink-0 text-foreground" strokeWidth={3} />
+        <span className="ml-1 h-2.5 w-2.5 shrink-0 rounded-full bg-foreground/85" aria-hidden="true" />
       </div>
     </button>
   );
