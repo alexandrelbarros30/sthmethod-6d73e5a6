@@ -651,7 +651,12 @@ const StudentGuidedWorkout = () => {
 
                 {videoSource?.kind === "file" && (
                   <div className="aspect-[4/3] sm:aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40 bg-black/30">
-                    <video src={videoSource.url} className="w-full h-full" controls playsInline preload="none" />
+                    <LazyVideoEmbed
+                      url={videoSource.url}
+                      title={ex.custom_name}
+                      posterUrl={ex.image_url || meta?.image_url}
+                      kind="file"
+                    />
                   </div>
                 )}
 
