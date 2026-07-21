@@ -315,7 +315,7 @@ const StudentTraining = () => {
                             {media?.kind === "embed" && (
                               <div className="space-y-1.5">
                                 <div className="relative aspect-[4/3] sm:aspect-video sm:max-h-[70vh] rounded-2xl overflow-hidden border border-border/40">
-                                  <LazyVideoEmbed url={media.url} title={ex.name} />
+                                  <LazyVideoEmbed url={media.url} title={ex.name} posterUrl={ex.image_url || libMeta?.image_url} />
                                   <StCoachCredit variant="overlay" />
                                 </div>
                                 <StCoachCredit />
