@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { triggerSupercoachSync } from "../_shared/supercoach-sync.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -67,6 +68,12 @@ async function activateSubscriptionForPayment(supabase: any, payment: any) {
       end_date: endDate.toISOString().split("T")[0],
     });
   }
+
+  // Espelha vencimento no SuperCoach (fire-and-forget).
+  triggerSupercoachSync({
+    userId: payment.user_id,
+    expiresDate: endDate.toISOString().split("T")[0],
+  }).catch(() => {});
 }
 
 async function fetchGatewayPayment(accessToken: string, mpPaymentId: string) {

@@ -190,6 +190,16 @@ export default function AdminPaymentLinks() {
       toast({ title: "Pagamento reconciliado, mas falhou ao atualizar assinatura", description: subErr.message });
     } else {
       toast({ title: "Plano ativado", description: `Vence em ${endDate.toLocaleDateString("pt-BR")} (${durationDays} dias).` });
+      // Espelha vencimento no SuperCoach.
+      const stu = studentById.get(studentId);
+      supabase.functions.invoke("supercoach-sync-expiration", {
+        body: {
+          action: "update",
+          email: (stu as any)?.email,
+          name: (stu as any)?.full_name,
+          expiresDate: endStr,
+        },
+      }).catch((e) => console.warn("[SuperCoach sync]", e));
     }
     setReconciling(null); setReconcilePlanId(""); setReconcileNotes("");
     load();

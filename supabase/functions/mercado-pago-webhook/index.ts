@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { triggerSupercoachSync } from "../_shared/supercoach-sync.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -540,6 +541,12 @@ async function activateSubscriptionForPayment(supabase: any, payment: any) {
   }
 
   console.log(`Subscription activated for user ${payment.user_id}, plan ${payment.plan_id}, ${durationDays} days`);
+
+  // Espelha vencimento no SuperCoach.
+  triggerSupercoachSync({
+    userId: payment.user_id,
+    expiresDate: endDate.toISOString().split("T")[0],
+  }).catch(() => {});
 
   // Self-heal: mark onboarding_complete=true once the student has a paid
   // subscription. Without this, the client gate in StudentSubscription keeps

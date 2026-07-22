@@ -161,6 +161,15 @@ const AdminPayments = () => {
         });
       }
 
+      // Espelha vencimento no SuperCoach.
+      supabase.functions.invoke("supercoach-sync-expiration", {
+        body: {
+          action: "update",
+          userId: manualForm.user_id,
+          expiresDate: endDate.toISOString().split("T")[0],
+        },
+      }).catch((e) => console.warn("[SuperCoach sync]", e));
+
       // Dispara as automações de boas-vindas (WhatsApp Comercial + Nutri +
       // e-mails) espelhando o webhook do Mercado Pago. Best-effort — não
       // bloqueia o registro do pagamento manual em caso de falha.
@@ -258,6 +267,15 @@ const AdminPayments = () => {
           end_date: endDate.toISOString().split("T")[0],
         });
       }
+
+      // Espelha vencimento no SuperCoach.
+      supabase.functions.invoke("supercoach-sync-expiration", {
+        body: {
+          action: "update",
+          userId: payment.user_id,
+          expiresDate: endDate.toISOString().split("T")[0],
+        },
+      }).catch((e) => console.warn("[SuperCoach sync]", e));
     },
     onSuccess: () => {
       toast.success("Pagamento aprovado e assinatura ativada!");
