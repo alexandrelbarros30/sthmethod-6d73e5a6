@@ -256,8 +256,19 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
     mutationFn: async (t: Training) => {
       if (!user) throw new Error("Sem sessão");
       if (!selectedProgram) throw new Error("Selecione um programa do ST Coach");
-      const localProgramId = await ensureLocalProgram(selectedProgram);
-      return importTrainingFromProgram(selectedProgram, t, localProgramId);
+      const { data, error } = await supabase.functions.invoke("supercoach-import-workout", {
+        body: {
+          action: "import-training",
+          programId: selectedProgram.id,
+          program: selectedProgram,
+          training: t,
+          localProgramId: programId,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      if ((data as any)?.ok === false) throw new Error((data as any)?.failures?.[0]?.error || "Importação falhou");
+      return { count: (data as any)?.exercises || 0, matched: (data as any)?.exercises || 0 };
     },
     onSuccess: (r) => {
       toast.success(`Importado! ${r.count} exercícios (${r.matched} com vídeo do SuperCoach)`);
@@ -274,20 +285,16 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
       const list = filteredTrainings.length > 0 ? filteredTrainings : trainings;
       let ok = 0, fail = 0, totalEx = 0;
       if (!selectedProgram) throw new Error("Selecione um programa do ST Coach");
-      const localProgramId = await ensureLocalProgram(selectedProgram);
       setBulkProgress({ done: 0, total: list.length });
-      for (let idx = 0; idx < list.length; idx++) {
-        const t = list[idx];
-        try {
-          const result = await importTrainingFromProgram(selectedProgram, t, localProgramId);
-          totalEx += result.count;
-          ok++;
-        } catch (err: any) {
-          console.error("[import-all]", t.name, err);
-          fail++;
-        }
-        setBulkProgress({ done: idx + 1, total: list.length });
-      }
+      const { data, error } = await supabase.functions.invoke("supercoach-import-workout", {
+        body: { action: "import-program", programId: selectedProgram.id, program: selectedProgram, localProgramId: programId },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      ok = (data as any)?.trainings || 0;
+      fail = ((data as any)?.failures || []).length;
+      totalEx = (data as any)?.exercises || 0;
+      setBulkProgress({ done: list.length, total: list.length });
       return { ok, fail, totalEx, total: list.length };
     },
     onSuccess: (r) => {
@@ -309,27 +316,15 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
         const p = list[pi];
         setMegaProgress({ prog: pi, totalProg: list.length, label: p.name, ok: totalOk, fail: totalFail, totalEx });
         try {
-          // 1) Carrega treinos do programa
-          const { data: tList, error: eList } = await supabase.functions.invoke("supercoach-import-workout", { body: { action: "list-trainings", programId: p.id } });
-          if (eList) throw eList;
-          if ((tList as any)?.error) throw new Error((tList as any).error);
-          const trs: Training[] = (tList as any)?.trainings || [];
-
-          // 2) Cria ou reusa o programa local já sincronizado pelo ST Coach.
-          const localProgramId = await ensureLocalProgram(p);
-
-          // 3) Importa cada treino
-          for (const t of trs) {
-            try {
-              const result = await importTrainingFromProgram(p, t, localProgramId);
-              totalEx += result.count;
-              totalOk++;
-            } catch (err: any) {
-              console.error("[import-everything] treino falhou", p.name, t.name, err);
-              totalFail++;
-            }
-            setMegaProgress({ prog: pi, totalProg: list.length, label: p.name, ok: totalOk, fail: totalFail, totalEx });
-          }
+          const { data, error } = await supabase.functions.invoke("supercoach-import-workout", {
+            body: { action: "import-program", programId: p.id, program: p, localProgramId: programId },
+          });
+          if (error) throw error;
+          if ((data as any)?.error) throw new Error((data as any).error);
+          totalOk += (data as any)?.trainings || 0;
+          totalEx += (data as any)?.exercises || 0;
+          totalFail += ((data as any)?.failures || []).length;
+          setMegaProgress({ prog: pi, totalProg: list.length, label: p.name, ok: totalOk, fail: totalFail, totalEx });
         } catch (err: any) {
           console.error("[import-everything] programa falhou", p.name, err);
           totalFail++;
