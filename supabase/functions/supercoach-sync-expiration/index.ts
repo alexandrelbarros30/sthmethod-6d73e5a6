@@ -162,6 +162,7 @@ Deno.serve(async (req) => {
         name: profile.full_name,
         email: profile.email,
         password: tempPassword,
+        password_confirmation: tempPassword,
         goal_id: 1,
         status: 2,
         premium_expires_date: expires,
