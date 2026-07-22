@@ -21,6 +21,17 @@ function parseSetsReps(sr: string): { sets: string; reps: string } {
   return { sets: "", reps: s };
 }
 
+function nullableNumber(value: any): number | null {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function cleanImageUrl(value: any): string {
+  const url = String(value || "").trim();
+  if (!url || url.includes("no-video-default")) return "";
+  return url;
+}
+
 export default function ImportFromSuperCoachDialog({ libraryExercises, onImported, programId, buttonLabel, buttonSize, buttonVariant }: { libraryExercises: any[]; onImported: () => void; programId?: string; buttonLabel?: string; buttonSize?: "sm" | "default"; buttonVariant?: "outline" | "default" | "secondary" }) {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -68,54 +79,200 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
     return partial?.id || null;
   };
 
+  const invalidateImportedData = () => {
+    qc.invalidateQueries({ queryKey: ["workout-templates"] });
+    qc.invalidateQueries({ queryKey: ["template-exercises-all"] });
+    qc.invalidateQueries({ queryKey: ["training-programs"] });
+    onImported();
+  };
+
+  const ensureLocalProgram = async (p: Program): Promise<string> => {
+    const basePatch = {
+      title: p.name,
+      subtitle: p.subtitle || null,
+      details: p.subtitle || "",
+      objective: "hypertrophy",
+      difficulty: "intermediate",
+      status: "published",
+      poster_url: p.cover_url || null,
+      updated_at: new Date().toISOString(),
+    } as any;
+
+    if (programId) {
+      const { error } = await supabase
+        .from("training_programs")
+        .update({ ...basePatch, supercoach_program_id: p.id })
+        .eq("id", programId);
+      if (error && (error as any).code !== "23505") throw error;
+      if (error && (error as any).code === "23505") {
+        const { error: fallbackError } = await supabase
+          .from("training_programs")
+          .update(basePatch)
+          .eq("id", programId);
+        if (fallbackError) throw fallbackError;
+      }
+      return programId;
+    }
+
+    const { data: existing, error: existingError } = await supabase
+      .from("training_programs")
+      .select("id")
+      .eq("supercoach_program_id", p.id)
+      .maybeSingle();
+    if (existingError) throw existingError;
+
+    if (existing?.id) {
+      const { error } = await supabase
+        .from("training_programs")
+        .update(basePatch)
+        .eq("id", existing.id);
+      if (error) throw error;
+      return existing.id;
+    }
+
+    const { data: created, error: createError } = await supabase
+      .from("training_programs")
+      .insert({ ...basePatch, supercoach_program_id: p.id, created_by: user!.id })
+      .select("id")
+      .single();
+
+    if (createError) {
+      if ((createError as any).code === "23505") {
+        const { data: retry, error: retryError } = await supabase
+          .from("training_programs")
+          .select("id")
+          .eq("supercoach_program_id", p.id)
+          .maybeSingle();
+        if (retryError) throw retryError;
+        if (retry?.id) return retry.id;
+      }
+      throw createError;
+    }
+
+    return created.id;
+  };
+
+  const fetchTrainingExercises = async (p: Program, t: Training): Promise<any[]> => {
+    const { data: det, error: detailsError } = await supabase.functions.invoke("supercoach-import-workout", {
+      body: { action: "get-training-details", programId: p.id, trainingId: t.id },
+    });
+    if (detailsError) throw detailsError;
+    if ((det as any)?.error) throw new Error((det as any).error);
+    const fullExercises: any[] = (det as any)?.exercises || [];
+    const source = fullExercises.length > 0 ? fullExercises : (t.exercises || []);
+    if (!source.length) throw new Error(`Sem exercícios retornados para ${t.name}`);
+    return source;
+  };
+
+  const findReusableTemplateId = async (localProgramId: string, p: Program, t: Training): Promise<string | null> => {
+    const { data: byTraining, error: byTrainingError } = await supabase
+      .from("workout_templates")
+      .select("id")
+      .eq("program_id", localProgramId)
+      .eq("supercoach_training_id", t.id)
+      .maybeSingle();
+    if (byTrainingError) throw byTrainingError;
+    if (byTraining?.id) return byTraining.id;
+
+    const { data: placeholder, error: placeholderError } = await supabase
+      .from("workout_templates")
+      .select("id")
+      .eq("program_id", localProgramId)
+      .eq("supercoach_program_id", p.id)
+      .is("supercoach_training_id", null)
+      .limit(1)
+      .maybeSingle();
+    if (placeholderError) throw placeholderError;
+    return placeholder?.id || null;
+  };
+
+  const buildExerciseRows = (templateId: string, source: any[]) => source.map((ex: any, i: number) => {
+    const { sets, reps } = parseSetsReps(ex.series_repetitions);
+    const videoUrl = ex.video_url || ex.video_url_thumb || "";
+    return {
+      template_id: templateId,
+      exercise_id: null,
+      custom_name: ex.name || `Exercício ${i + 1}`,
+      custom_description: ex.description || "",
+      sets,
+      reps,
+      rest_interval: ex.intervals != null && Number(ex.intervals) > 0 ? `${ex.intervals}s` : "",
+      load_suggestion: ex.weight_suggestion || "",
+      video_url: videoUrl,
+      image_url: cleanImageUrl(ex.cover_url || ex.video_url_thumb),
+      supercoach_workout_id: Number.isFinite(Number(ex.id)) ? Number(ex.id) : null,
+      sort_order: i,
+    };
+  });
+
+  const importTrainingFromProgram = async (p: Program, t: Training, localProgramId: string) => {
+    const source = await fetchTrainingExercises(p, t);
+    const reusableTemplateId = await findReusableTemplateId(localProgramId, p, t);
+    const templatePatch = {
+      title: t.name,
+      subtitle: t.subtitle || null,
+      description: [p.name, t.subtitle, t.description].filter(Boolean).join(" • "),
+      image_url: t.cover_url || p.cover_url || "",
+      weeks: nullableNumber(t.weeks) ?? nullableNumber(p.weeks),
+      days_per_week: nullableNumber(t.days_per_week) ?? nullableNumber(p.days_per_week),
+      minutes_per_day: nullableNumber(t.minutes_per_day) ?? nullableNumber(p.minutes_per_day),
+      program_id: localProgramId,
+      released: true,
+      supercoach_program_id: null,
+      supercoach_training_id: Number(t.id),
+      updated_at: new Date().toISOString(),
+    } as any;
+
+    let templateId = reusableTemplateId;
+    if (templateId) {
+      const { error: updateError } = await supabase
+        .from("workout_templates")
+        .update(templatePatch)
+        .eq("id", templateId);
+      if (updateError) throw updateError;
+      const { error: deleteError } = await supabase
+        .from("workout_template_exercises")
+        .delete()
+        .eq("template_id", templateId);
+      if (deleteError) throw deleteError;
+    } else {
+      const { data: tpl, error: insertError } = await supabase
+        .from("workout_templates")
+        .insert({ ...templatePatch, created_by: user!.id })
+        .select("id")
+        .single();
+      if (insertError) throw insertError;
+      templateId = tpl.id;
+    }
+
+    const rows = buildExerciseRows(templateId, source);
+    const { error: exerciseError } = await supabase.from("workout_template_exercises").insert(rows);
+    if (exerciseError) throw exerciseError;
+
+    return { count: rows.length, matched: rows.filter((r: any) => r.video_url).length };
+  };
+
   const importMutation = useMutation({
     mutationFn: async (t: Training) => {
       if (!user) throw new Error("Sem sessão");
-      // Busca detalhes completos (video_url real do SuperCoach) antes de gravar
-      const { data: det, error: eDet } = await supabase.functions.invoke("supercoach-import-workout", {
-        body: { action: "get-training-details", programId: selectedProgram?.id, trainingId: t.id },
+      if (!selectedProgram) throw new Error("Selecione um programa do ST Coach");
+      const { data, error } = await supabase.functions.invoke("supercoach-import-workout", {
+        body: {
+          action: "import-training",
+          programId: selectedProgram.id,
+          program: selectedProgram,
+          training: t,
+          localProgramId: programId,
+        },
       });
-      if (eDet) throw eDet;
-      if ((det as any)?.error) throw new Error((det as any).error);
-      const fullExercises: any[] = (det as any)?.exercises || [];
-      const { data: tpl, error: e1 } = await supabase.from("workout_templates").insert({
-        title: t.name,
-        description: [selectedProgram?.name, t.subtitle, t.description].filter(Boolean).join(" • "),
-        weeks: t.weeks ? Number(t.weeks) : (selectedProgram?.weeks ? Number(selectedProgram.weeks) : null),
-        days_per_week: t.days_per_week ? Number(t.days_per_week) : (selectedProgram?.days_per_week ? Number(selectedProgram.days_per_week) : null),
-        minutes_per_day: t.minutes_per_day ? Number(t.minutes_per_day) : (selectedProgram?.minutes_per_day ? Number(selectedProgram.minutes_per_day) : null),
-        created_by: user.id,
-        ...(programId ? { program_id: programId } : {}),
-      }).select("id").single();
-      if (e1) throw e1;
-      const source = fullExercises.length > 0 ? fullExercises : t.exercises;
-      const rows = source.map((ex: any, i: number) => {
-        const { sets, reps } = parseSetsReps(ex.series_repetitions);
-        // Usa SEMPRE a mídia do SuperCoach; não vincula à biblioteca local
-        const videoUrl = ex.video_url || ex.video_url_thumb || ex.cover_url || "";
-        return {
-          template_id: tpl.id,
-          exercise_id: null,
-          custom_name: ex.name,
-          custom_description: ex.description || "",
-          sets, reps,
-          rest_interval: "",
-          load_suggestion: "",
-          video_url: videoUrl,
-          sort_order: i,
-        };
-      });
-      if (rows.length > 0) {
-        const { error: e2 } = await supabase.from("workout_template_exercises").insert(rows);
-        if (e2) throw e2;
-      }
-      return { count: rows.length, matched: rows.filter((r: any) => r.video_url).length };
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      if ((data as any)?.ok === false) throw new Error((data as any)?.failures?.[0]?.error || "Importação falhou");
+      return { count: (data as any)?.exercises || 0, matched: (data as any)?.exercises || 0 };
     },
     onSuccess: (r) => {
       toast.success(`Importado! ${r.count} exercícios (${r.matched} com vídeo do SuperCoach)`);
-      qc.invalidateQueries({ queryKey: ["workout-templates"] });
-      qc.invalidateQueries({ queryKey: ["template-exercises-all"] });
-      onImported();
+      invalidateImportedData();
     },
     onError: (e: any) => toast.error(e.message || "Erro ao importar"),
   });
@@ -127,61 +284,22 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
       if (!user) throw new Error("Sem sessão");
       const list = filteredTrainings.length > 0 ? filteredTrainings : trainings;
       let ok = 0, fail = 0, totalEx = 0;
+      if (!selectedProgram) throw new Error("Selecione um programa do ST Coach");
       setBulkProgress({ done: 0, total: list.length });
-      for (let idx = 0; idx < list.length; idx++) {
-        const t = list[idx];
-        try {
-          const { data: det, error: eDet } = await supabase.functions.invoke("supercoach-import-workout", {
-            body: { action: "get-training-details", programId: selectedProgram?.id, trainingId: t.id },
-          });
-          if (eDet) throw eDet;
-          if ((det as any)?.error) throw new Error((det as any).error);
-          const fullExercises: any[] = (det as any)?.exercises || [];
-          const { data: tpl, error: e1 } = await supabase.from("workout_templates").insert({
-            title: t.name,
-            description: [selectedProgram?.name, t.subtitle, t.description].filter(Boolean).join(" • "),
-            weeks: t.weeks ? Number(t.weeks) : (selectedProgram?.weeks ? Number(selectedProgram.weeks) : null),
-            days_per_week: t.days_per_week ? Number(t.days_per_week) : (selectedProgram?.days_per_week ? Number(selectedProgram.days_per_week) : null),
-            minutes_per_day: t.minutes_per_day ? Number(t.minutes_per_day) : (selectedProgram?.minutes_per_day ? Number(selectedProgram.minutes_per_day) : null),
-            created_by: user.id,
-            ...(programId ? { program_id: programId } : {}),
-          }).select("id").single();
-          if (e1) throw e1;
-          const source = fullExercises.length > 0 ? fullExercises : t.exercises;
-          const rows = source.map((ex: any, i: number) => {
-            const { sets, reps } = parseSetsReps(ex.series_repetitions);
-            const videoUrl = ex.video_url || ex.video_url_thumb || ex.cover_url || "";
-            return {
-              template_id: tpl.id,
-              exercise_id: null,
-              custom_name: ex.name,
-              custom_description: ex.description || "",
-              sets, reps,
-              rest_interval: "",
-              load_suggestion: "",
-              video_url: videoUrl,
-              sort_order: i,
-            };
-          });
-          if (rows.length > 0) {
-            const { error: e2 } = await supabase.from("workout_template_exercises").insert(rows);
-            if (e2) throw e2;
-          }
-          totalEx += rows.length;
-          ok++;
-        } catch (err: any) {
-          console.error("[import-all]", t.name, err);
-          fail++;
-        }
-        setBulkProgress({ done: idx + 1, total: list.length });
-      }
+      const { data, error } = await supabase.functions.invoke("supercoach-import-workout", {
+        body: { action: "import-program", programId: selectedProgram.id, program: selectedProgram, localProgramId: programId },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      ok = (data as any)?.trainings || 0;
+      fail = ((data as any)?.failures || []).length;
+      totalEx = (data as any)?.exercises || 0;
+      setBulkProgress({ done: list.length, total: list.length });
       return { ok, fail, totalEx, total: list.length };
     },
     onSuccess: (r) => {
       toast.success(`Importados ${r.ok}/${r.total} treinos • ${r.totalEx} exercícios${r.fail ? ` • ${r.fail} falharam` : ""}`);
-      qc.invalidateQueries({ queryKey: ["workout-templates"] });
-      qc.invalidateQueries({ queryKey: ["template-exercises-all"] });
-      onImported();
+      invalidateImportedData();
       setBulkProgress(null);
     },
     onError: (e: any) => { toast.error(e.message || "Erro ao importar em lote"); setBulkProgress(null); },
@@ -198,76 +316,15 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
         const p = list[pi];
         setMegaProgress({ prog: pi, totalProg: list.length, label: p.name, ok: totalOk, fail: totalFail, totalEx });
         try {
-          // 1) Carrega treinos do programa
-          const { data: tList, error: eList } = await supabase.functions.invoke("supercoach-import-workout", { body: { action: "list-trainings", programId: p.id } });
-          if (eList) throw eList;
-          if ((tList as any)?.error) throw new Error((tList as any).error);
-          const trs: Training[] = (tList as any)?.trainings || [];
-
-          // 2) Cria (ou reusa) o training_programs local, salvo se programId prop já foi definido
-          let localProgramId = programId as string | undefined;
-          if (!localProgramId) {
-            const { data: np, error: eNp } = await supabase.from("training_programs").insert({
-              title: p.name,
-              details: p.subtitle || "",
-              objective: "hypertrophy",
-              difficulty: "intermediate",
-              status: "published",
-              poster_url: p.cover_url || null,
-              created_by: user.id,
-              supercoach_program_id: p.id,
-            } as any).select("id").single();
-            if (eNp) throw eNp;
-            localProgramId = (np as any).id;
-          }
-
-          // 3) Importa cada treino
-          for (const t of trs) {
-            try {
-              const { data: det, error: eDet } = await supabase.functions.invoke("supercoach-import-workout", {
-                body: { action: "get-training-details", programId: p.id, trainingId: t.id },
-              });
-              if (eDet) throw eDet;
-              if ((det as any)?.error) throw new Error((det as any).error);
-              const fullExercises: any[] = (det as any)?.exercises || [];
-              const { data: tpl, error: e1 } = await supabase.from("workout_templates").insert({
-                title: t.name,
-                description: [p.name, t.subtitle, t.description].filter(Boolean).join(" • "),
-                weeks: t.weeks ? Number(t.weeks) : (p.weeks ? Number(p.weeks) : null),
-                days_per_week: t.days_per_week ? Number(t.days_per_week) : (p.days_per_week ? Number(p.days_per_week) : null),
-                minutes_per_day: t.minutes_per_day ? Number(t.minutes_per_day) : (p.minutes_per_day ? Number(p.minutes_per_day) : null),
-                created_by: user.id,
-                ...(localProgramId ? { program_id: localProgramId } : {}),
-              }).select("id").single();
-              if (e1) throw e1;
-              const source = fullExercises.length > 0 ? fullExercises : t.exercises;
-              const rows = source.map((ex: any, i: number) => {
-                const { sets, reps } = parseSetsReps(ex.series_repetitions);
-                const videoUrl = ex.video_url || ex.video_url_thumb || ex.cover_url || "";
-                return {
-                  template_id: tpl.id,
-                  exercise_id: null,
-                  custom_name: ex.name,
-                  custom_description: ex.description || "",
-                  sets, reps,
-                  rest_interval: "",
-                  load_suggestion: "",
-                  video_url: videoUrl,
-                  sort_order: i,
-                };
-              });
-              if (rows.length > 0) {
-                const { error: e2 } = await supabase.from("workout_template_exercises").insert(rows);
-                if (e2) throw e2;
-              }
-              totalEx += rows.length;
-              totalOk++;
-            } catch (err: any) {
-              console.error("[import-everything] treino falhou", p.name, t.name, err);
-              totalFail++;
-            }
-            setMegaProgress({ prog: pi, totalProg: list.length, label: p.name, ok: totalOk, fail: totalFail, totalEx });
-          }
+          const { data, error } = await supabase.functions.invoke("supercoach-import-workout", {
+            body: { action: "import-program", programId: p.id, program: p, localProgramId: programId },
+          });
+          if (error) throw error;
+          if ((data as any)?.error) throw new Error((data as any).error);
+          totalOk += (data as any)?.trainings || 0;
+          totalEx += (data as any)?.exercises || 0;
+          totalFail += ((data as any)?.failures || []).length;
+          setMegaProgress({ prog: pi, totalProg: list.length, label: p.name, ok: totalOk, fail: totalFail, totalEx });
         } catch (err: any) {
           console.error("[import-everything] programa falhou", p.name, err);
           totalFail++;
@@ -278,10 +335,7 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
     },
     onSuccess: (r) => {
       toast.success(`Importados ${r.totalProg} programa(s) • ${r.ok} treinos • ${r.totalEx} exercícios${r.fail ? ` • ${r.fail} falharam` : ""}`);
-      qc.invalidateQueries({ queryKey: ["workout-templates"] });
-      qc.invalidateQueries({ queryKey: ["template-exercises-all"] });
-      qc.invalidateQueries({ queryKey: ["training-programs"] });
-      onImported();
+      invalidateImportedData();
       setTimeout(() => setMegaProgress(null), 1500);
     },
     onError: (e: any) => { toast.error(e.message || "Erro ao importar tudo"); setMegaProgress(null); },
