@@ -326,7 +326,11 @@ const ProgramWorkouts = ({ programId }: Props) => {
       const { data, error } = await supabase.functions.invoke("supercoach-push-template", { body: { templateId, programId } });
       if (error) throw error;
       if (data?.ok === false) throw new Error(data?.error || "Falha ao espelhar");
-      toast.success(`Treino espelhado no ST Coach (${data?.patched ?? 0} exercícios sincronizados).`);
+      if (Array.isArray(data?.unmatched) && data.unmatched.length) {
+        toast.warning(`Treino espelhado parcialmente: ${data?.patched ?? 0} exercícios sincronizados, ${data.unmatched.length} pendente(s).`);
+      } else {
+        toast.success(`Treino espelhado no ST Coach (${data?.patched ?? 0} exercícios sincronizados).`);
+      }
       queryClient.invalidateQueries({ queryKey: ["program-workouts", programId] });
     } catch (e: any) {
       toast.error(e?.message || "Erro ao espelhar no ST Coach");
@@ -347,6 +351,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
       try {
         const { data, error } = await supabase.functions.invoke("supercoach-push-template", { body: { templateId: w.id, programId } });
         if (error || data?.ok === false) throw new Error(error?.message || data?.error || "falha");
+        if (Array.isArray(data?.unmatched) && data.unmatched.length) failures.push(`${w.title || "Treino"}: ${data.unmatched.length} exercício(s) pendente(s)`);
         ok++;
       } catch (e: any) {
         fail++;
