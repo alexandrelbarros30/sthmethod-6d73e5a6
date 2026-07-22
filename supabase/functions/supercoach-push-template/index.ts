@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
 
     const { data: exs } = await admin
       .from('workout_template_exercises')
-      .select('id, custom_name, exercise_id, sets, reps, rest_interval, load_suggestion, sort_order, supercoach_workout_id, exercise_library:exercise_id(name)')
+      .select('id, custom_name, custom_description, exercise_id, sets, reps, rest_interval, load_suggestion, sort_order, video_url, image_url, group_id, group_name, supercoach_workout_id, exercise_library:exercise_id(name, video_url, cover_url)')
       .eq('template_id', templateId)
       .order('sort_order', { ascending: true });
     const exercises = (exs || []) as any[];
@@ -251,11 +251,12 @@ Deno.serve(async (req) => {
       }
       const workoutsToCopy: any[] = [];
       const orderMap: { exId: string; libId: any; name: string }[] = [];
+      const unmatched: string[] = [];
       for (const ex of exercises) {
         const name = ex.custom_name || ex.exercise_library?.name || '';
         const key = normalizeExName(String(name));
         const libItem = key ? libByName.get(key) : null;
-        if (!libItem) continue;
+        if (!libItem) { unmatched.push(name); continue; }
         workoutsToCopy.push({ ...libItem, checked: true });
         orderMap.push({ exId: ex.id, libId: libItem.id, name });
       }
@@ -271,6 +272,7 @@ Deno.serve(async (req) => {
         });
         copied = workoutsToCopy.length;
       }
+      (globalThis as any).__pushUnmatched = unmatched;
 
       // 4) Buscar workouts criados e mapear pelos library_workout_id (na ordem)
       const created = await scFetch(token, `/workouts?tid=${scTrainingId}`);
@@ -299,18 +301,41 @@ Deno.serve(async (req) => {
     // 5) Atualiza séries/reps/intervalo em todos os workouts espelhados
     const { data: refreshedExs } = await admin
       .from('workout_template_exercises')
-      .select('id, custom_name, sets, reps, rest_interval, load_suggestion, supercoach_workout_id, exercise_library:exercise_id(name)')
-      .eq('template_id', templateId);
-    let patched = 0;
+      .select('id, custom_name, custom_description, sets, reps, rest_interval, load_suggestion, sort_order, video_url, image_url, group_id, group_name, supercoach_workout_id, exercise_library:exercise_id(name, video_url, cover_url)')
+      .eq('template_id', templateId)
+      .order('sort_order', { ascending: true });
+
+    // Mapeia group_id (uuid) -> índice numérico 1..N para enviar como superset ao ST Coach.
+    const groupIndexMap = new Map<string, number>();
+    let groupCounter = 0;
     for (const ex of (refreshedExs || []) as any[]) {
+      const g = ex.group_id ? String(ex.group_id) : '';
+      if (g && !groupIndexMap.has(g)) { groupCounter++; groupIndexMap.set(g, groupCounter); }
+    }
+    let patched = 0;
+    const orderedExs = (refreshedExs || []) as any[];
+    for (let idx = 0; idx < orderedExs.length; idx++) {
+      const ex = orderedExs[idx];
       const wid = ex.supercoach_workout_id;
       if (!wid) continue;
+      const supersetGroup = ex.group_id ? (groupIndexMap.get(String(ex.group_id)) || 0) : 0;
+      const description = ex.custom_description || '';
+      const videoUrl = ex.video_url || ex.exercise_library?.video_url || '';
+      const coverUrl = ex.image_url || ex.exercise_library?.cover_url || '';
       const patch = {
         id: Number(wid),
         series_repetitions: combineSetsReps(ex.sets, ex.reps),
         intervals: parseInterval(ex.rest_interval),
         weight_suggestion: ex.load_suggestion || null,
         training_id: scTrainingId,
+        sort: idx,
+        description,
+        ...(videoUrl ? { video_url: videoUrl } : {}),
+        ...(coverUrl ? { cover_url: coverUrl, cover_path: true } : {}),
+        // Biset/Triset — ST Coach agrupa por superset_group (valor 0 = sem grupo)
+        superset_group: supersetGroup,
+        group: supersetGroup,
+        group_name: ex.group_name || '',
         _method: 'PATCH',
       };
       try {
@@ -389,7 +414,10 @@ Deno.serve(async (req) => {
     }
 
     return new Response(JSON.stringify({
-      ok: true, scProgramId, scTrainingId, copied, patched, removed, assignmentsSynced, exercises: exercises.length,
+      ok: true, scProgramId, scTrainingId, copied, patched, removed, assignmentsSynced,
+      exercises: exercises.length,
+      unmatched: (globalThis as any).__pushUnmatched || [],
+      groups: groupCounter,
     }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (err) {
     const msg = (err as any)?.message || String(err);
