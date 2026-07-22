@@ -541,6 +541,12 @@ async function activateSubscriptionForPayment(supabase: any, payment: any) {
 
   console.log(`Subscription activated for user ${payment.user_id}, plan ${payment.plan_id}, ${durationDays} days`);
 
+  // Espelha vencimento no SuperCoach.
+  triggerSupercoachSync({
+    userId: payment.user_id,
+    expiresDate: endDate.toISOString().split("T")[0],
+  }).catch(() => {});
+
   // Self-heal: mark onboarding_complete=true once the student has a paid
   // subscription. Without this, the client gate in StudentSubscription keeps
   // showing the onboarding wizard even after the payment was approved
