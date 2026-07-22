@@ -1,0 +1,1 @@
+UPDATE public.training_programs SET poster_url = 'https://tthahgwkkdyvxdbhsgyb.supabase.co/storage/v1/object/public/ai-training-media/program-covers/8f889d21-1e83-4f3e-a77d-aba349ac89a8.png?v=' || extract(epoch from now())::bigint WHERE id = '8f889d21-1e83-4f3e-a77d-aba349ac89a8';
