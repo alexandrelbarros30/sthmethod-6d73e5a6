@@ -515,11 +515,11 @@ Deno.serve(async (req) => {
           .filter((item) => !item.supercoach_workout_id)
           .map((item) => [String(item.id), item]),
       );
-      for (const queued of directCreateQueue) {
-        const current = stillMissingById.get(String(queued.ex.id));
-        if (!current) continue;
+      const directReasonById = new Map(directCreateQueue.map((item) => [String(item.ex.id), item.reason]));
+      for (const current of stillMissingById.values()) {
         const sort = Number(current.sort_order ?? exercises.findIndex((item: any) => item.id === current.id));
         const supersetGroup = current.group_id ? (preGroupIndexMap.get(String(current.group_id)) || 0) : 0;
+        const reason = directReasonById.get(String(current.id)) || 'cópia da biblioteca não retornou vínculo rastreável';
         try {
           const wid = await createScWorkout(token, current, scTrainingId, Number.isFinite(sort) ? sort : 0, supersetGroup);
           await admin.from('workout_template_exercises')
@@ -529,7 +529,7 @@ Deno.serve(async (req) => {
           unmatched = unmatched.filter((item) => !item.startsWith(`${getExerciseName(current)}:`) && !item.includes(getExerciseName(current)));
         } catch (createError) {
           const msg = (createError as any)?.message || String(createError);
-          unmatched.push(`${getExerciseName(current)}: criação direta falhou após ${queued.reason}: ${msg}`);
+          unmatched.push(`${getExerciseName(current)}: criação direta falhou após ${reason}: ${msg}`);
           console.error('create workout direct failed', getExerciseName(current), msg);
         }
       }
