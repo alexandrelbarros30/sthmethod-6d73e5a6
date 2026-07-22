@@ -24,7 +24,7 @@ const impactStyle = {
 } as const;
 
 const APK_URL =
-  "https://github.com/alexandrelbarros30/sthmethod-6d73e5a6/releases/latest/download/sthmethod.apk";
+  "https://drive.google.com/uc?export=download&id=1F6snLCKJk5aVDjxcjtC5A6X3Soui8zIF";
 
 const isNativeApp = () => {
   if (typeof window === "undefined") return false;
