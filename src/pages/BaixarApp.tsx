@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import marketingHero from "@/assets/marketing-launch-hero.png";
 
-import apkAsset from "@/assets/sthmethod.apk.asset.json";
-const APK_URL = apkAsset.url;
+const APK_URL =
+  "https://drive.google.com/uc?export=download&id=1F6snLCKJk5aVDjxcjtC5A6X3Soui8zIF";
 
 export default function BaixarApp() {
   return (
@@ -40,7 +40,7 @@ export default function BaixarApp() {
             </div>
           </div>
           <Button asChild size="lg" className="w-full">
-            <a href={APK_URL} rel="noopener">
+            <a href={APK_URL} rel="noopener" target="_blank">
               <Download className="w-4 h-4 mr-2" />
               Baixar APK
             </a>
