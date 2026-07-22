@@ -34,7 +34,7 @@ async function loadTemplateExercises(admin: any, templateId: string): Promise<an
 
   const { data: libraryRows, error: libError } = await admin
     .from('exercise_library')
-    .select('id, name, video_url, cover_url')
+    .select('id, name, video_url, image_url')
     .in('id', libraryIds);
   if (libError) throw new Error(`Falha ao carregar biblioteca de exercícios: ${libError.message}`);
 
@@ -79,6 +79,53 @@ function parseInterval(rest?: string | null): string {
   if (!rest) return '';
   const m = String(rest).match(/(\d+)/);
   return m ? m[1] : '';
+}
+
+function isNotFoundError(error: unknown): boolean {
+  return String((error as any)?.message || error || '').includes('(404)');
+}
+
+function extractTrainingList(payload: any): any[] {
+  return Array.isArray(payload?.trainings) ? payload.trainings
+    : Array.isArray(payload) ? payload
+      : Array.isArray(payload?.data) ? payload.data
+        : Array.isArray(payload?.program?.trainings) ? payload.program.trainings
+          : [];
+}
+
+function buildProgramPayload(scProgramId: number | null, prog: any, tpl: any) {
+  return {
+    id: scProgramId || 0,
+    cover_path: true,
+    name: prog.title || 'Programa STH METHOD',
+    user_id: 0,
+    subtitle: prog.subtitle || '',
+    category: 1,
+    goal: 1,
+    gender: 'ambos',
+    location: 'qualquer',
+    focus: 'completo',
+    difficulty_level: prog.difficulty === 'avancado' ? 'Avançado' : prog.difficulty === 'iniciante' ? 'Iniciante' : 'Intermediário',
+    video_url: 'https://player.vimeo.com/video/',
+    description: '',
+    weeks: tpl.weeks || '',
+    days_per_week: tpl.days_per_week || '',
+    minutes_per_day: tpl.minutes_per_day || '',
+    sort: 0, pay: 0, published: 1, premium: 0,
+    cover_url: prog.poster_url || 'https://supertreinosapp.com/img/PROGRAMA-BANNER-PADRAO.jpg',
+    translations: '',
+    clone: 'original',
+  };
+}
+
+async function createScProgram(token: string, prog: any, tpl: any): Promise<number> {
+  const created = await scFetch(token, '/programs/', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(buildProgramPayload(null, prog, tpl)),
+  });
+  const scProgramId = Number(created?.program?.id);
+  if (!scProgramId) throw new Error('Falha ao criar programa no ST Coach');
+  return scProgramId;
 }
 
 Deno.serve(async (req) => {
@@ -173,37 +220,31 @@ Deno.serve(async (req) => {
 
     // 1) Garante programa no ST Coach
     let scProgramId: number | null = prog.supercoach_program_id ? Number(prog.supercoach_program_id) : null;
+    let programRecreated = false;
+    if (scProgramId) {
+      try {
+        await scFetch(token, `/programs/${scProgramId}`);
+      } catch (e) {
+        if (isNotFoundError(e)) {
+          console.warn('programa ST Coach antigo/inexistente; recriando', scProgramId);
+          scProgramId = null;
+          programRecreated = true;
+        } else {
+          console.warn('validação do programa ST Coach falhou; seguindo com id salvo', (e as any)?.message);
+        }
+      }
+    }
     if (!scProgramId) {
-      const payload = {
-        id: 0,
-        cover_path: true,
-        name: prog.title || 'Programa STH METHOD',
-        user_id: 0,
-        subtitle: prog.subtitle || '',
-        category: 1,
-        goal: 1,
-        gender: 'ambos',
-        location: 'qualquer',
-        focus: 'completo',
-        difficulty_level: prog.difficulty === 'avancado' ? 'Avançado' : prog.difficulty === 'iniciante' ? 'Iniciante' : 'Intermediário',
-        video_url: 'https://player.vimeo.com/video/',
-        description: '',
-        weeks: tpl.weeks || '',
-        days_per_week: tpl.days_per_week || '',
-        minutes_per_day: tpl.minutes_per_day || '',
-        sort: 0, pay: 0, published: 1, premium: 0,
-        cover_url: prog.poster_url || 'https://supertreinosapp.com/img/PROGRAMA-BANNER-PADRAO.jpg',
-        translations: '',
-        clone: 'original',
-      };
-      const created = await scFetch(token, '/programs/', {
-        method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      scProgramId = Number(created?.program?.id);
-      if (!scProgramId) throw new Error('Falha ao criar programa no ST Coach');
-      if (prog.id) await admin.from('training_programs').update({ supercoach_program_id: scProgramId }).eq('id', prog.id);
-      // Também marca o template
+      scProgramId = await createScProgram(token, prog, tpl);
+      programRecreated = true;
+    }
+    if (prog.id) {
+      await admin.from('training_programs').update({ supercoach_program_id: scProgramId }).eq('id', prog.id);
+      const tplPatch: Record<string, any> = { supercoach_program_id: scProgramId };
+      if (programRecreated) tplPatch.supercoach_training_id = null;
+      await admin.from('workout_templates').update(tplPatch).eq('program_id', prog.id);
+      if (programRecreated) tpl.supercoach_training_id = null;
+    } else {
       await admin.from('workout_templates').update({ supercoach_program_id: scProgramId }).eq('id', templateId);
     }
 
@@ -223,12 +264,48 @@ Deno.serve(async (req) => {
           }),
         });
       } catch (e) {
-        console.warn('sync program cover falhou', (e as any)?.message);
+        if (isNotFoundError(e)) {
+          console.warn('programa ST Coach não encontrado ao sincronizar capa; recriando', scProgramId);
+          scProgramId = await createScProgram(token, prog, tpl);
+          programRecreated = true;
+          tpl.supercoach_training_id = null;
+          if (prog.id) {
+            await admin.from('training_programs').update({ supercoach_program_id: scProgramId }).eq('id', prog.id);
+            await admin.from('workout_templates')
+              .update({ supercoach_program_id: scProgramId, supercoach_training_id: null })
+              .eq('program_id', prog.id);
+          } else {
+            await admin.from('workout_templates')
+              .update({ supercoach_program_id: scProgramId, supercoach_training_id: null })
+              .eq('id', templateId);
+          }
+        } else {
+          console.warn('sync program cover falhou', (e as any)?.message);
+        }
       }
     }
 
     // 2) Garante training
     let scTrainingId: number | null = tpl.supercoach_training_id ? Number(tpl.supercoach_training_id) : null;
+    if (scTrainingId) {
+      try {
+        const trainingsPayload = await scFetch(token, `/trainings?pid=${scProgramId}`);
+        const validTrainingIds = new Set(
+          extractTrainingList(trainingsPayload)
+            .map((t: any) => Number(t?.id))
+            .filter((n: number) => Number.isFinite(n) && n > 0),
+        );
+        if (!validTrainingIds.has(scTrainingId)) {
+          console.warn('training ST Coach antigo/inexistente neste programa; recriando', scTrainingId);
+          await admin.from('workout_templates')
+            .update({ supercoach_training_id: null })
+            .eq('id', templateId);
+          scTrainingId = null;
+        }
+      } catch (e) {
+        console.warn('validação do training ST Coach falhou; seguindo com id salvo', (e as any)?.message);
+      }
+    }
     if (!scTrainingId) {
       const trPayload = {
         name: tpl.title || 'Treino',
@@ -299,6 +376,7 @@ Deno.serve(async (req) => {
       }
       const workoutsToCopy: any[] = [];
       const orderMap: { exId: string; libId: any; name: string }[] = [];
+      const copyFailures: string[] = [];
       unmatched = [];
       for (const ex of missingExercises) {
         const name = ex.custom_name || ex.exercise_library?.name || '';
@@ -314,12 +392,31 @@ Deno.serve(async (req) => {
           name: tpl.title || 'Treino', subtitle: tpl.subtitle || '',
           published: 1, pay: 0, premium: 0,
         };
-        await scFetch(token, '/library/copy', {
-          method: 'POST', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ training, workouts: workoutsToCopy, lang: 'br' }),
-        });
-        copied = workoutsToCopy.length;
+        try {
+          await scFetch(token, '/library/copy', {
+            method: 'POST', headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ training, workouts: workoutsToCopy, lang: 'br' }),
+          });
+          copied = workoutsToCopy.length;
+        } catch (bulkError) {
+          console.warn('library/copy em lote falhou; tentando exercício por exercício', (bulkError as any)?.message);
+          for (let i = 0; i < workoutsToCopy.length; i++) {
+            try {
+              await scFetch(token, '/library/copy', {
+                method: 'POST', headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ training, workouts: [workoutsToCopy[i]], lang: 'br' }),
+              });
+              copied++;
+            } catch (singleError) {
+              const name = orderMap[i]?.name || String(workoutsToCopy[i]?.name || workoutsToCopy[i]?.id || 'exercício');
+              const msg = (singleError as any)?.message || String(singleError);
+              copyFailures.push(`${name}: ${msg}`);
+              console.error('library/copy individual falhou', name, msg);
+            }
+          }
+        }
       }
+      unmatched.push(...copyFailures);
       // 4) Buscar workouts criados e mapear pelos library_workout_id (na ordem)
       const created = await scFetch(token, `/workouts?tid=${scTrainingId}`);
       const usedRemoteIds = new Set(
@@ -365,7 +462,7 @@ Deno.serve(async (req) => {
       const supersetGroup = ex.group_id ? (groupIndexMap.get(String(ex.group_id)) || 0) : 0;
       const description = ex.custom_description || '';
       const videoUrl = ex.video_url || ex.exercise_library?.video_url || '';
-      const coverUrl = ex.image_url || ex.exercise_library?.cover_url || '';
+      const coverUrl = ex.image_url || ex.exercise_library?.image_url || '';
       const patch = {
         id: Number(wid),
         series_repetitions: combineSetsReps(ex.sets, ex.reps),
