@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Dumbbell, Video, ChevronDown, ChevronUp, Copy, GripVertical, Library, Layers, Unlink, Link2, Upload, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Dumbbell, Video, ChevronDown, ChevronUp, Copy, GripVertical, Library, Layers, Unlink, Link2, Upload, Loader2, Check } from "lucide-react";
 import ImportFromSuperCoachDialog from "@/components/admin/ImportFromSuperCoachDialog";
 import { toast } from "sonner";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
@@ -52,7 +52,7 @@ const emptyWorkout: WorkoutForm = {
 };
 
 /* ---------- sortable workout card ---------- */
-const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onToggle, onEdit, onDelete, onDuplicate, onToggleReleased, onEditExercise, onPushSuperCoach, pushingId }: any) => {
+const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onToggle, onEdit, onDelete, onDuplicate, onToggleReleased, onEditExercise, onPushSuperCoach, pushingId, inlineSelected, onToggleInlineSel, onInlineGroup, onInlineUngroup }: any) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: w.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
 
@@ -138,6 +138,39 @@ const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onTog
           </div>
           {isExpanded && exs.length > 0 && (
             <div className="mt-3 border-t pt-3 space-y-2">
+              <div className="flex flex-wrap items-center gap-1.5 mb-1" onClick={(e) => e.stopPropagation()}>
+                <span className="text-[11px] text-muted-foreground mr-1">
+                  {inlineSelected?.size || 0} selecionado(s)
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={(inlineSelected?.size || 0) < 2}
+                  onClick={(e) => { e.stopPropagation(); onInlineGroup?.(w.id, "Biset", "#f59e0b", 2); }}
+                  className="h-7 border-amber-500/60 text-amber-600 hover:bg-amber-500/10 disabled:opacity-40"
+                  title="Agrupar seleção como Biset (2+ exercícios)"
+                >
+                  <Layers className="w-3 h-3 mr-1" /> Biset
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={(inlineSelected?.size || 0) < 3}
+                  onClick={(e) => { e.stopPropagation(); onInlineGroup?.(w.id, "Triset", "#8b5cf6", 3); }}
+                  className="h-7 border-violet-500/60 text-violet-600 hover:bg-violet-500/10 disabled:opacity-40"
+                  title="Agrupar seleção como Triset (3+ exercícios)"
+                >
+                  <Layers className="w-3 h-3 mr-1" /> Triset
+                </Button>
+                {(inlineSelected?.size || 0) > 0 && (
+                  <Button size="sm" variant="ghost" className="h-7" onClick={(e) => { e.stopPropagation(); onInlineUngroup?.(w.id); }}>
+                    <Unlink className="w-3 h-3 mr-1" /> Desagrupar
+                  </Button>
+                )}
+                <span className="text-[10px] text-muted-foreground/70 ml-auto">
+                  Marque os exercícios para agrupar
+                </span>
+              </div>
               {exs.map((ex: any, i: number) => {
                 const lib = (libraryExercises || []).find((item: any) => item.id === ex.exercise_id);
                 const media = getExerciseMediaSource({ videoUrl: ex.video_url || lib?.video_url, imageUrl: lib?.image_url });
@@ -145,6 +178,7 @@ const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onTog
                 const next = i < exs.length - 1 ? exs[i + 1] : null;
                 const linkedTop = prev && ex.group_id && prev.group_id === ex.group_id;
                 const linkedBottom = next && ex.group_id && next.group_id === ex.group_id;
+                const isSel = inlineSelected?.has(ex.id);
                 return (
                   <div
                     key={ex.id}
@@ -156,7 +190,14 @@ const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onTog
                         <Link2 className="w-2.5 h-2.5" />
                       </span>
                     )}
-                    <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold shrink-0 mt-0.5">{i + 1}</span>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); onToggleInlineSel?.(w.id, ex.id); }}
+                      className={`w-6 h-6 rounded-full text-xs flex items-center justify-center font-bold shrink-0 mt-0.5 transition-colors ${isSel ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary hover:bg-primary/20"}`}
+                      title={isSel ? "Desmarcar" : "Marcar para agrupar"}
+                    >
+                      {isSel ? <Check className="w-3.5 h-3.5" /> : i + 1}
+                    </button>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="font-semibold text-foreground truncate">{ex.custom_name || lib?.name || "Sem nome"}</span>
@@ -228,6 +269,52 @@ const ProgramWorkouts = ({ programId }: Props) => {
   const [quickEditEx, setQuickEditEx] = useState<any | null>(null);
   const [pushingId, setPushingId] = useState<string | null>(null);
   const [pushingAll, setPushingAll] = useState(false);
+  const [inlineSel, setInlineSel] = useState<Record<string, Set<string>>>({});
+
+  const toggleInlineSel = (wId: string, exId: string) => {
+    setInlineSel(prev => {
+      const cur = new Set(prev[wId] || []);
+      cur.has(exId) ? cur.delete(exId) : cur.add(exId);
+      return { ...prev, [wId]: cur };
+    });
+  };
+
+  const inlineGroupMutation = useMutation({
+    mutationFn: async ({ ids, name, color }: { ids: string[]; name: string | null; color: string | null }) => {
+      const groupId = name ? crypto.randomUUID() : null;
+      const { error } = await supabase
+        .from("workout_template_exercises")
+        .update({ group_id: groupId, group_name: name || "", group_color: color || "" } as any)
+        .in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["template-exercises-program", programId] });
+    },
+    onError: (e: any) => toast.error(e?.message || "Erro ao agrupar"),
+  });
+
+  const applyInlineGroup = (wId: string, name: string, color: string, minCount: number) => {
+    const sel = inlineSel[wId] || new Set<string>();
+    if (sel.size < minCount) { toast.error(`Selecione pelo menos ${minCount} exercícios para ${name}.`); return; }
+    inlineGroupMutation.mutate({ ids: Array.from(sel), name, color }, {
+      onSuccess: () => {
+        toast.success(`${name} criado com ${sel.size} exercícios!`);
+        setInlineSel(prev => ({ ...prev, [wId]: new Set() }));
+      },
+    });
+  };
+
+  const applyInlineUngroup = (wId: string) => {
+    const sel = inlineSel[wId] || new Set<string>();
+    if (!sel.size) return;
+    inlineGroupMutation.mutate({ ids: Array.from(sel), name: null, color: null }, {
+      onSuccess: () => {
+        toast.success("Desagrupado!");
+        setInlineSel(prev => ({ ...prev, [wId]: new Set() }));
+      },
+    });
+  };
 
   const pushToSuperCoach = async (templateId: string) => {
     setPushingId(templateId);
@@ -656,6 +743,10 @@ const ProgramWorkouts = ({ programId }: Props) => {
                   onEditExercise={(ex: any) => setQuickEditEx(ex)}
                   onPushSuperCoach={pushToSuperCoach}
                   pushingId={pushingId}
+                  inlineSelected={inlineSel[w.id] || new Set<string>()}
+                  onToggleInlineSel={toggleInlineSel}
+                  onInlineGroup={applyInlineGroup}
+                  onInlineUngroup={applyInlineUngroup}
                 />
               ))}
             </div>
