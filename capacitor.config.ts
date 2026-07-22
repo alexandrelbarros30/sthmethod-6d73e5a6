@@ -9,8 +9,8 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const isProduction = process.env.CAP_ENV === 'production';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.b584eea6c8424d9386ab554e2c58d9fb',
-  appName: 'sthconsultoria',
+  appId: 'com.sthmethod.app',
+  appName: 'STH METHOD',
   webDir: 'dist',
   android: {
     // Permite carregar imagens/recursos http legados dentro do WebView
