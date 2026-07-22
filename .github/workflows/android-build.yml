@@ -37,6 +37,23 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps --no-audit --no-fund
 
+      - name: Bump app version (auto)
+        env:
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const pkg = require('./package.json');
+          const runNumber = Number.parseInt(process.env.RUN_NUMBER || '1', 10) || 1;
+          const [major = 1, minor = 0] = String(pkg.version || '1.0.0').split('.').map((n) => Number.parseInt(n, 10) || 0);
+          const versionName = `${major}.${minor}.${runNumber}`;
+          pkg.version = versionName;
+          fs.writeFileSync('./package.json', JSON.stringify(pkg, null, 2) + '\n');
+          try { fs.mkdirSync('./public', { recursive: true }); } catch (_) {}
+          fs.writeFileSync('./public/version.json', JSON.stringify({ version: versionName }) + '\n');
+          console.log(`App version bumped to ${versionName}`);
+          NODE
+
       - name: Build web (Vite)
         env:
           NODE_OPTIONS: --max-old-space-size=6144
@@ -56,15 +73,8 @@ jobs:
           const fs = require('fs');
           const pkg = require('./package.json');
           const runNumber = Number.parseInt(process.env.RUN_NUMBER || '1', 10) || 1;
-          const [major = 1, minor = 0] = String(pkg.version || '1.0.0').split('.').map((n) => Number.parseInt(n, 10) || 0);
-          // Auto-increment: versionCode = run number (monotonic per workflow run)
-          // versionName = MAJOR.MINOR.RUN (patch cresce automaticamente a cada build)
           const versionCode = Math.max(1, runNumber);
-          const versionName = `${major}.${minor}.${runNumber}`;
-          // Sync package.json + public/version.json so o app avisa "nova versão"
-          pkg.version = versionName;
-          fs.writeFileSync('./package.json', JSON.stringify(pkg, null, 2) + '\n');
-          try { fs.writeFileSync('./public/version.json', JSON.stringify({ version: versionName }) + '\n'); } catch (_) {}
+          const versionName = String(pkg.version || '1.0.0');
           const file = 'android/app/build.gradle';
           let gradle = fs.readFileSync(file, 'utf8');
           gradle = gradle.replace(/versionCode\s+\d+/g, `versionCode ${versionCode}`);
