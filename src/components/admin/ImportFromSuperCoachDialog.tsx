@@ -294,8 +294,9 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
       ok = (data as any)?.trainings || 0;
       fail = ((data as any)?.failures || []).length;
       totalEx = (data as any)?.exercises || 0;
-      setBulkProgress({ done: list.length, total: list.length });
-      return { ok, fail, totalEx, total: list.length };
+      const totalImported = Math.max(list.length, ok + fail);
+      setBulkProgress({ done: totalImported, total: totalImported });
+      return { ok, fail, totalEx, total: totalImported };
     },
     onSuccess: (r) => {
       toast.success(`Importados ${r.ok}/${r.total} treinos • ${r.totalEx} exercícios${r.fail ? ` • ${r.fail} falharam` : ""}`);
@@ -303,6 +304,31 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
       setBulkProgress(null);
     },
     onError: (e: any) => { toast.error(e.message || "Erro ao importar em lote"); setBulkProgress(null); },
+  });
+
+  const repairMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Sem sessão");
+      if (!selectedProgram) throw new Error("Selecione um programa do ST Coach");
+      setBulkProgress({ done: 0, total: Math.max(filteredTrainings.length, trainings.length, 1) });
+      const { data, error } = await supabase.functions.invoke("supercoach-import-workout", {
+        body: { action: "repair-program", programId: selectedProgram.id, program: selectedProgram, localProgramId: programId },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const ok = (data as any)?.trainings || 0;
+      const fail = ((data as any)?.failures || []).length;
+      const totalEx = (data as any)?.exercises || 0;
+      const totalImported = Math.max(ok + fail, 1);
+      setBulkProgress({ done: totalImported, total: totalImported });
+      return { ok, fail, totalEx };
+    },
+    onSuccess: (r) => {
+      toast.success(`Programa reparado: ${r.ok} treinos • ${r.totalEx} exercícios${r.fail ? ` • ${r.fail} falharam` : ""}`);
+      invalidateImportedData();
+      setBulkProgress(null);
+    },
+    onError: (e: any) => { toast.error(e.message || "Erro ao reparar programa"); setBulkProgress(null); },
   });
 
   // Importa TODOS os programas do ST Coach: cria um training_programs local por programa (se não houver programId fixo) e importa todos os treinos.
@@ -407,10 +433,16 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
                       ? `Importando ${bulkProgress.done}/${bulkProgress.total}...`
                       : `${filteredTrainings.length} treino(s) prontos para importar`}
                   </div>
-                  <Button size="sm" disabled={importAllMutation.isPending || importMutation.isPending} onClick={() => importAllMutation.mutate()}>
-                    {importAllMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Download className="w-3 h-3 mr-1" />}
-                    Importar todos
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="outline" disabled={repairMutation.isPending || importAllMutation.isPending || importMutation.isPending} onClick={() => repairMutation.mutate()}>
+                      {repairMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Download className="w-3 h-3 mr-1" />}
+                      Reparar programa
+                    </Button>
+                    <Button size="sm" disabled={importAllMutation.isPending || importMutation.isPending || repairMutation.isPending} onClick={() => importAllMutation.mutate()}>
+                      {importAllMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Download className="w-3 h-3 mr-1" />}
+                      Importar todos
+                    </Button>
+                  </div>
                 </div>
               )}
               {filteredTrainings.map(t => {
