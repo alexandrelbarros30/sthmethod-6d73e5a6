@@ -5,6 +5,7 @@ const LOGIN_URL = 'https://supertreinosapp.com/api/v2/user/login'
 const PROGRAMS_URL = 'https://supertreinosapp.com/api/v2/programs?pid='
 const TRAININGS_URL = (pid: number | string) => `https://supertreinosapp.com/api/v2/trainings?pid=${pid}`
 const WORKOUT_URL = (wid: number | string) => `https://supertreinosapp.com/api/v2/workouts/${wid}`
+const PROGRAM_URL = (pid: number | string) => `https://supertreinosapp.com/api/v2/programs/${pid}`
 
 const COMMON_HEADERS = {
   'accept': 'application/json, text/plain, */*',
@@ -86,23 +87,53 @@ async function fetchPrograms(token: string) {
   })).filter((p: any) => Number.isFinite(p.id))
 }
 
+function extractArray(json: any, keys: string[]) {
+  for (const key of keys) {
+    const value = key.split('.').reduce((acc, part) => acc?.[part], json)
+    if (Array.isArray(value)) return value
+  }
+  return []
+}
+
+function normalizeTraining(raw: any) {
+  const workouts = raw?.workouts_lite || raw?.workouts || raw?.exercises || raw?.items || []
+  return {
+    id: Number(raw.id),
+    name: raw.name || raw.title || `Treino ${raw.id}`,
+    subtitle: raw.subtitle || null,
+    description: raw.description || null,
+    weeks: raw.weeks || null,
+    days_per_week: raw.days_per_week || null,
+    minutes_per_day: raw.minutes_per_day || null,
+    cover_url: raw.cover_url || raw.image_url || null,
+    exercises: (Array.isArray(workouts) ? workouts : []).map((w: any) => ({
+      id: w.id,
+      name: w.name || w.title || '',
+      series_repetitions: w.series_repetitions || w.sets_reps || '',
+      cover_url: w.cover_url || w.image_url || null,
+      video_url_thumb: w.video_url_thumb || w.video_url || null,
+    })),
+  }
+}
+
 async function fetchTrainings(token: string, programId: number | string) {
   const auth = { ...COMMON_HEADERS, authorization: `Bearer ${token}` }
   const r = await fetch(TRAININGS_URL(programId), { headers: auth })
   const text = await r.text()
   if (!r.ok) throw new Error(`trainings (${r.status}): ${text.slice(0, 200)}`)
   const j = JSON.parse(text)
-  const list = j?.trainings || j?.data || []
-  return (Array.isArray(list) ? list : []).map((t: any) => ({
-    id: Number(t.id), name: t.name || `Treino ${t.id}`, subtitle: t.subtitle || null,
-    description: t.description || null, weeks: t.weeks || null,
-    days_per_week: t.days_per_week || null, minutes_per_day: t.minutes_per_day || null,
-    cover_url: t.cover_url || null,
-    exercises: (t.workouts_lite || []).map((w: any) => ({
-      id: w.id, name: w.name || '', series_repetitions: w.series_repetitions || '',
-      cover_url: w.cover_url || null, video_url_thumb: w.video_url_thumb || null,
-    })),
-  })).filter((t: any) => Number.isFinite(t.id))
+  let list = extractArray(j, ['trainings', 'data', 'program.trainings', 'data.trainings'])
+
+  if (list.length <= 1) {
+    const detail = await fetch(PROGRAM_URL(programId), { headers: auth }).catch(() => null)
+    if (detail?.ok) {
+      const detailJson = JSON.parse(await detail.text())
+      const detailList = extractArray(detailJson, ['trainings', 'data.trainings', 'program.trainings', 'data.program.trainings'])
+      if (detailList.length > list.length) list = detailList
+    }
+  }
+
+  return (Array.isArray(list) ? list : []).map(normalizeTraining).filter((t: any) => Number.isFinite(t.id))
 }
 
 async function fetchTrainingDetails(token: string, programId: number | string, trainingId: number | string) {
@@ -133,6 +164,16 @@ async function fetchTrainingDetails(token: string, programId: number | string, t
     }
   })
   return { training: t, exercises }
+}
+
+function uniqueTrainings(trainings: any[]) {
+  const seen = new Set<string>()
+  return trainings.filter((t) => {
+    const key = String(t.id || '')
+    if (!key || seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 }
 
 async function ensureLocalProgram(admin: any, p: any, userId: string, localProgramId?: string) {
@@ -198,6 +239,25 @@ async function findReusableTemplate(admin: any, localProgramId: string, p: any, 
   return placeholder?.id || null
 }
 
+async function removeEmptyPlaceholders(admin: any, localProgramId: string, sourceProgramId: number | string) {
+  const { data: placeholders, error } = await admin.from('workout_templates')
+    .select('id')
+    .eq('program_id', localProgramId)
+    .eq('supercoach_program_id', Number(sourceProgramId))
+    .is('supercoach_training_id', null)
+  if (error) throw error
+  for (const tpl of placeholders || []) {
+    const { count, error: countErr } = await admin.from('workout_template_exercises')
+      .select('id', { count: 'exact', head: true })
+      .eq('template_id', tpl.id)
+    if (countErr) throw countErr
+    if (!count) {
+      const { error: delErr } = await admin.from('workout_templates').delete().eq('id', tpl.id)
+      if (delErr) throw delErr
+    }
+  }
+}
+
 function buildExerciseRows(templateId: string, source: any[]) {
   return source.map((ex, i) => {
     const { sets, reps } = parseSetsReps(ex.series_repetitions)
@@ -254,8 +314,14 @@ async function importTraining(admin: any, token: string, userId: string, p: any,
   }
 
   const rows = buildExerciseRows(templateId, source)
+  if (!rows.length) throw new Error(`Nenhum exercício preparado para ${t.name || t.id}`)
   const { error: exerciseErr } = await admin.from('workout_template_exercises').insert(rows)
   if (exerciseErr) throw exerciseErr
+  const { count, error: verifyErr } = await admin.from('workout_template_exercises')
+    .select('id', { count: 'exact', head: true })
+    .eq('template_id', templateId)
+  if (verifyErr) throw verifyErr
+  if ((count || 0) !== rows.length) throw new Error(`Falha ao confirmar exercícios de ${t.name || t.id}: gravados ${count || 0}/${rows.length}`)
   return { templateId, exercises: rows.length }
 }
 
@@ -325,7 +391,9 @@ Deno.serve(async (req) => {
       const { admin, userId } = await requireWriter(req)
       const p = await resolveProgram(token, programId, (body as any).program)
       const localProgramId = await ensureLocalProgram(admin, p, userId, (body as any).localProgramId)
-      const trainings = await fetchTrainings(token, programId)
+      await removeEmptyPlaceholders(admin, localProgramId, programId)
+      const trainings = uniqueTrainings(await fetchTrainings(token, programId))
+      if (!trainings.length) throw new Error('Nenhum treino retornado pelo ST Coach para este programa')
       let imported = 0, exercises = 0
       const failures: { training: string; error: string }[] = []
       for (const t of trainings) {
@@ -338,6 +406,30 @@ Deno.serve(async (req) => {
         }
       }
       return new Response(JSON.stringify({ ok: failures.length === 0, programId: localProgramId, trainings: imported, exercises, failures }), {
+        headers: { ...corsHeaders, 'content-type': 'application/json' },
+      })
+    }
+
+    if (action === 'repair-program') {
+      if (!programId) throw new Error('programId obrigatório')
+      const { admin, userId } = await requireWriter(req)
+      const p = await resolveProgram(token, programId, (body as any).program)
+      const localProgramId = await ensureLocalProgram(admin, p, userId, (body as any).localProgramId)
+      await removeEmptyPlaceholders(admin, localProgramId, programId)
+      const trainings = uniqueTrainings(await fetchTrainings(token, programId))
+      if (!trainings.length) throw new Error('Nenhum treino retornado pelo ST Coach para reparar')
+      let imported = 0, exercises = 0
+      const failures: { training: string; error: string }[] = []
+      for (const t of trainings) {
+        try {
+          const result = await importTraining(admin, token, userId, p, t, localProgramId)
+          imported++
+          exercises += result.exercises
+        } catch (e: any) {
+          failures.push({ training: t.name || String(t.id), error: e?.message || String(e) })
+        }
+      }
+      return new Response(JSON.stringify({ ok: failures.length === 0, repaired: true, programId: localProgramId, trainings: imported, exercises, failures }), {
         headers: { ...corsHeaders, 'content-type': 'application/json' },
       })
     }
