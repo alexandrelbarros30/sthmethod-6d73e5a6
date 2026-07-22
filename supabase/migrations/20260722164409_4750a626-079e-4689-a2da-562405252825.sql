@@ -1,0 +1,1 @@
+UPDATE public.training_programs SET poster_url = '/__l5e/assets-v1/8f773d6b-c108-4218-9b12-021db9f6e7f1/elite-glute-posterior-bulk-cover.jpg', updated_at = now() WHERE id = '8f889d21-1e83-4f3e-a77d-aba349ac89a8';
