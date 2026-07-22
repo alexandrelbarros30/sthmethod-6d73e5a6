@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}))
-    const { action, email, name, expiresDate, userId, password } = body as {
+    let { action, email, name, expiresDate, userId, password } = body as {
       action: 'search' | 'update' | 'create'
       email?: string
       name?: string
@@ -84,6 +84,26 @@ Deno.serve(async (req) => {
     }
 
     if (!action) throw new Error('action é obrigatório (search | update | create)')
+
+    // Resolve email/name from profile when only userId was provided (used by
+    // automated flows: mercado-pago-webhook, verify-pix-receipt, admin manual
+    // payments/subscription edits).
+    if ((action === 'search' || action === 'update') && !email && !name && userId) {
+      try {
+        const admin = createClient(
+          Deno.env.get('SUPABASE_URL')!,
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+        )
+        const { data: prof } = await admin
+          .from('profiles')
+          .select('email, full_name')
+          .eq('user_id', userId)
+          .maybeSingle()
+        if (prof) { email = prof.email; name = prof.full_name }
+      } catch (e) {
+        console.warn('[supercoach-sync-expiration] profile lookup failed', e)
+      }
+    }
 
     const token = await getToken()
     const auth = { ...COMMON_HEADERS, authorization: `Bearer ${token}` }
