@@ -77,8 +77,62 @@ function combineSetsReps(sets?: string | null, reps?: string | null): string {
 
 function parseInterval(rest?: string | null): string {
   if (!rest) return '';
-  const m = String(rest).match(/(\d+)/);
-  return m ? m[1] : '';
+  const raw = String(rest).trim().toLowerCase().replace(',', '.');
+  const min = raw.match(/(\d+(?:\.\d+)?)\s*(min|mins|minuto|minutos|m\b)/);
+  if (min) return String(Math.round(Number(min[1]) * 60));
+  const sec = raw.match(/(\d+(?:\.\d+)?)\s*(s|seg|segs|segundo|segundos)?/);
+  return sec ? String(Math.round(Number(sec[1]))) : '';
+}
+
+function getExerciseName(ex: any, fallbackIndex = 0): string {
+  return String(ex?.custom_name || ex?.exercise_library?.name || `Exercício ${fallbackIndex + 1}`).trim();
+}
+
+function buildWorkoutPayload(ex: any, wid: number | null, scTrainingId: number | null, sort: number, supersetGroup: number, patch = true) {
+  const name = getExerciseName(ex, sort);
+  const seriesRepetitions = combineSetsReps(ex.sets, ex.reps);
+  const intervals = parseInterval(ex.rest_interval);
+  const description = ex.custom_description || '';
+  const videoUrl = ex.video_url || ex.exercise_library?.video_url || '';
+  const coverUrl = ex.image_url || ex.exercise_library?.image_url || '';
+  const payload: Record<string, any> = {
+    ...(wid ? { id: Number(wid) } : {}),
+    name,
+    title: name,
+    training_id: scTrainingId,
+    series_repetitions: seriesRepetitions,
+    sets_reps: seriesRepetitions,
+    repetitions: seriesRepetitions,
+    intervals,
+    rest_interval: intervals ? `${intervals}s` : '',
+    weight_suggestion: ex.load_suggestion || '',
+    load_suggestion: ex.load_suggestion || '',
+    sort,
+    description,
+    published: 1,
+    pay: 0,
+    premium: 0,
+    translations: '',
+    // Biset/Triset — ST Coach agrupa por superset_group (valor 0 = sem grupo)
+    superset_group: supersetGroup,
+    group: supersetGroup,
+    group_name: ex.group_name || '',
+    ...(videoUrl ? { video_url: videoUrl } : {}),
+    ...(coverUrl ? { cover_url: coverUrl, cover_path: true } : {}),
+    ...(patch ? { _method: 'PATCH' } : {}),
+  };
+  return payload;
+}
+
+async function createScWorkout(token: string, ex: any, scTrainingId: number | null, sort: number, supersetGroup: number): Promise<number> {
+  const created = await scFetch(token, '/workouts/', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(buildWorkoutPayload(ex, null, scTrainingId, sort, supersetGroup, false)),
+  });
+  const id = Number(created?.workout?.id || created?.data?.id || created?.id);
+  if (!Number.isFinite(id) || id <= 0) throw new Error('ST Coach não retornou o ID do exercício criado');
+  return id;
 }
 
 function isNotFoundError(error: unknown): boolean {
