@@ -511,8 +511,14 @@ const AdminTrainingPrograms = () => {
                       }}>
                         <ImageIcon className="w-3 h-3 mr-1" /> {p.poster_url ? "Regerar capa" : "Gerar capa"}
                       </Button>
-                      {p.poster_url && (
-                        <Button size="sm" variant="ghost" className="text-xs h-7" onClick={async () => {
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-xs h-7"
+                        disabled={!p.poster_url}
+                        title={p.poster_url ? "Baixar imagem do card" : "Gere uma capa antes de baixar"}
+                        onClick={async () => {
+                          if (!p.poster_url) { toast.info("Gere uma capa primeiro"); return; }
                           try {
                             const res = await fetch(p.poster_url, { mode: "cors" });
                             if (!res.ok) throw new Error("fetch_failed");
@@ -531,10 +537,10 @@ const AdminTrainingPrograms = () => {
                             // fallback: abre em nova aba
                             window.open(p.poster_url, "_blank", "noopener,noreferrer");
                           }
-                        }}>
-                          <Download className="w-3 h-3 mr-1" /> Baixar capa
-                        </Button>
-                      )}
+                        }}
+                      >
+                        <Download className="w-3 h-3 mr-1" /> Baixar capa
+                      </Button>
                       <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => openEditProgram(p)}>
                         <Pencil className="w-3 h-3 mr-1" /> Editar
                       </Button>
