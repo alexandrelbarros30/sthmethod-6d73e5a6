@@ -24,7 +24,7 @@ const impactStyle = {
 } as const;
 
 const APK_URL =
-  "https://drive.google.com/uc?export=download&id=1F6snLCKJk5aVDjxcjtC5A6X3Soui8zIF";
+  "https://drive.google.com/uc?export=download&id=1Dll24Nhli7bS-xR4hm8faXXCUDxsfmFu";
 
 const isNativeApp = () => {
   if (typeof window === "undefined") return false;
