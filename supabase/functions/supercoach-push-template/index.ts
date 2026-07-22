@@ -516,12 +516,16 @@ Deno.serve(async (req) => {
           .map((item) => [String(item.id), item]),
       );
       const directReasonById = new Map(directCreateQueue.map((item) => [String(item.ex.id), item.reason]));
+      // ST Coach ordena os workouts do maior para o menor valor de `sort`,
+      // então invertemos para preservar a ordem original do STH METHOD.
+      const totalForSort = (exercises as any[]).length;
       for (const current of stillMissingById.values()) {
-        const sort = Number(current.sort_order ?? exercises.findIndex((item: any) => item.id === current.id));
+        const localIdx = Number(current.sort_order ?? exercises.findIndex((item: any) => item.id === current.id));
+        const invertedSort = Number.isFinite(localIdx) ? Math.max(0, totalForSort - 1 - localIdx) : 0;
         const supersetGroup = current.group_id ? (preGroupIndexMap.get(String(current.group_id)) || 0) : 0;
         const reason = directReasonById.get(String(current.id)) || 'cópia da biblioteca não retornou vínculo rastreável';
         try {
-          const wid = await createScWorkout(token, current, scTrainingId, Number.isFinite(sort) ? sort : 0, supersetGroup);
+          const wid = await createScWorkout(token, current, scTrainingId, invertedSort, supersetGroup);
           await admin.from('workout_template_exercises')
             .update({ supercoach_workout_id: wid })
             .eq('id', current.id);
@@ -547,12 +551,16 @@ Deno.serve(async (req) => {
     }
     let patched = 0;
     const orderedExs = (refreshedExs || []) as any[];
+    // ST Coach exibe os workouts na ordem DECRESCENTE de `sort`, portanto
+    // enviamos (total - 1 - idx) para manter a mesma ordem do STH METHOD.
+    const totalOrdered = orderedExs.length;
     for (let idx = 0; idx < orderedExs.length; idx++) {
       const ex = orderedExs[idx];
       const wid = ex.supercoach_workout_id;
       if (!wid) continue;
       const supersetGroup = ex.group_id ? (groupIndexMap.get(String(ex.group_id)) || 0) : 0;
-      const patch = buildWorkoutPayload(ex, Number(wid), scTrainingId, idx, supersetGroup, true);
+      const scSort = Math.max(0, totalOrdered - 1 - idx);
+      const patch = buildWorkoutPayload(ex, Number(wid), scTrainingId, scSort, supersetGroup, true);
       try {
         await scFetch(token, `/workouts/${wid}`, {
           method: 'POST', headers: { 'content-type': 'application/json' },
