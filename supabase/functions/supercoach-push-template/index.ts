@@ -17,6 +17,34 @@ interface Body { templateId: string; programId?: string }
 
 const SC = 'https://supertreinosapp.com/api/v2';
 
+async function loadTemplateExercises(admin: any, templateId: string): Promise<any[]> {
+  const { data: rows, error } = await admin
+    .from('workout_template_exercises')
+    .select('id, custom_name, custom_description, exercise_id, sets, reps, rest_interval, load_suggestion, sort_order, video_url, image_url, group_id, group_name, supercoach_workout_id')
+    .eq('template_id', templateId)
+    .order('sort_order', { ascending: true });
+  if (error) throw new Error(`Falha ao carregar exercícios do treino: ${error.message}`);
+
+  const exercises = rows || [];
+  const libraryIds = Array.from(new Set(
+    exercises.map((e: any) => e.exercise_id).filter(Boolean),
+  ));
+
+  if (!libraryIds.length) return exercises;
+
+  const { data: libraryRows, error: libError } = await admin
+    .from('exercise_library')
+    .select('id, name, video_url, cover_url')
+    .in('id', libraryIds);
+  if (libError) throw new Error(`Falha ao carregar biblioteca de exercícios: ${libError.message}`);
+
+  const libraryById = new Map((libraryRows || []).map((item: any) => [String(item.id), item]));
+  return exercises.map((exercise: any) => ({
+    ...exercise,
+    exercise_library: exercise.exercise_id ? libraryById.get(String(exercise.exercise_id)) || null : null,
+  }));
+}
+
 async function scFetch(token: string, path: string, init: RequestInit = {}) {
   const res = await fetch(`${SC}${path}`, {
     ...init,
@@ -31,6 +59,13 @@ async function scFetch(token: string, path: string, init: RequestInit = {}) {
   try { json = JSON.parse(text); } catch { /* keep text */ }
   if (!res.ok) throw new Error(`ST Coach ${init.method || 'GET'} ${path} (${res.status}): ${text.slice(0, 220)}`);
   return json ?? {};
+}
+
+function extractWorkoutList(payload: any): any[] {
+  return Array.isArray(payload?.workouts) ? payload.workouts
+    : Array.isArray(payload) ? payload
+      : Array.isArray(payload?.data) ? payload.data
+        : [];
 }
 
 function combineSetsReps(sets?: string | null, reps?: string | null): string {
@@ -129,13 +164,10 @@ Deno.serve(async (req) => {
       if (relinkErr) throw relinkErr;
     }
 
-    const { data: exs } = await admin
-      .from('workout_template_exercises')
-      .select('id, custom_name, custom_description, exercise_id, sets, reps, rest_interval, load_suggestion, sort_order, video_url, image_url, group_id, group_name, supercoach_workout_id, exercise_library:exercise_id(name, video_url, cover_url)')
-      .eq('template_id', templateId)
-      .order('sort_order', { ascending: true });
-    const exercises = (exs || []) as any[];
-    if (!exercises.length) throw new Error('Template sem exercícios para espelhar');
+    const exercises = await loadTemplateExercises(admin, templateId);
+    if (!exercises.length) {
+      throw new Error(`Template sem exercícios para espelhar (${tpl.title || templateId}). Abra o treino e salve ao menos um exercício antes de espelhar.`);
+    }
 
     const token = await getSuperCoachToken();
 
@@ -239,10 +271,26 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 3) Se ainda não copiou os exercícios (nenhum tem supercoach_workout_id), faz /library/copy
-    const anyMirrored = exercises.some((e) => e.supercoach_workout_id);
+    // 3) Garante que cada exercício local tenha um workout remoto válido dentro DESTE training.
+    //    Isso evita o falso positivo causado por IDs copiados de outro programa/treino.
     let copied = 0;
-    if (!anyMirrored) {
+    const remoteBefore = extractWorkoutList(await scFetch(token, `/workouts?tid=${scTrainingId}`));
+    const remoteIds = new Set(
+      remoteBefore.map((w: any) => Number(w?.id)).filter((n: number) => Number.isFinite(n) && n > 0),
+    );
+    for (const ex of exercises) {
+      const localRemoteId = Number(ex.supercoach_workout_id);
+      if (Number.isFinite(localRemoteId) && localRemoteId > 0 && !remoteIds.has(localRemoteId)) {
+        await admin.from('workout_template_exercises')
+          .update({ supercoach_workout_id: null })
+          .eq('id', ex.id);
+        ex.supercoach_workout_id = null;
+      }
+    }
+
+    const missingExercises = exercises.filter((e) => !e.supercoach_workout_id);
+    let unmatched: string[] = [];
+    if (missingExercises.length) {
       const rawLib = await getSuperCoachLibraryRaw();
       const libByName = new Map<string, any>();
       for (const item of rawLib) {
@@ -251,8 +299,8 @@ Deno.serve(async (req) => {
       }
       const workoutsToCopy: any[] = [];
       const orderMap: { exId: string; libId: any; name: string }[] = [];
-      const unmatched: string[] = [];
-      for (const ex of exercises) {
+      unmatched = [];
+      for (const ex of missingExercises) {
         const name = ex.custom_name || ex.exercise_library?.name || '';
         const key = normalizeExName(String(name));
         const libItem = key ? libByName.get(key) : null;
@@ -272,12 +320,12 @@ Deno.serve(async (req) => {
         });
         copied = workoutsToCopy.length;
       }
-      (globalThis as any).__pushUnmatched = unmatched;
-
       // 4) Buscar workouts criados e mapear pelos library_workout_id (na ordem)
       const created = await scFetch(token, `/workouts?tid=${scTrainingId}`);
-      const createdList: any[] = Array.isArray(created?.workouts) ? created.workouts
-        : Array.isArray(created) ? created : (created?.data || []);
+      const usedRemoteIds = new Set(
+        exercises.map((e) => Number(e.supercoach_workout_id)).filter((n) => Number.isFinite(n) && n > 0),
+      );
+      const createdList: any[] = extractWorkoutList(created).filter((w: any) => !usedRemoteIds.has(Number(w?.id)));
       // Map libId -> lista de workouts (podem existir duplicados de execuções anteriores)
       const byLib = new Map<string, any[]>();
       for (const w of createdList) {
@@ -299,11 +347,7 @@ Deno.serve(async (req) => {
     }
 
     // 5) Atualiza séries/reps/intervalo em todos os workouts espelhados
-    const { data: refreshedExs } = await admin
-      .from('workout_template_exercises')
-      .select('id, custom_name, custom_description, sets, reps, rest_interval, load_suggestion, sort_order, video_url, image_url, group_id, group_name, supercoach_workout_id, exercise_library:exercise_id(name, video_url, cover_url)')
-      .eq('template_id', templateId)
-      .order('sort_order', { ascending: true });
+    const refreshedExs = await loadTemplateExercises(admin, templateId);
 
     // Mapeia group_id (uuid) -> índice numérico 1..N para enviar como superset ao ST Coach.
     const groupIndexMap = new Map<string, number>();
@@ -416,7 +460,7 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({
       ok: true, scProgramId, scTrainingId, copied, patched, removed, assignmentsSynced,
       exercises: exercises.length,
-      unmatched: (globalThis as any).__pushUnmatched || [],
+      unmatched,
       groups: groupCounter,
     }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (err) {
