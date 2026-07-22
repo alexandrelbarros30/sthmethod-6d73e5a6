@@ -34,7 +34,7 @@ async function loadTemplateExercises(admin: any, templateId: string): Promise<an
 
   const { data: libraryRows, error: libError } = await admin
     .from('exercise_library')
-    .select('id, name, video_url, cover_url')
+    .select('id, name, video_url, image_url')
     .in('id', libraryIds);
   if (libError) throw new Error(`Falha ao carregar biblioteca de exercícios: ${libError.message}`);
 
@@ -365,7 +365,7 @@ Deno.serve(async (req) => {
       const supersetGroup = ex.group_id ? (groupIndexMap.get(String(ex.group_id)) || 0) : 0;
       const description = ex.custom_description || '';
       const videoUrl = ex.video_url || ex.exercise_library?.video_url || '';
-      const coverUrl = ex.image_url || ex.exercise_library?.cover_url || '';
+      const coverUrl = ex.image_url || ex.exercise_library?.image_url || '';
       const patch = {
         id: Number(wid),
         series_repetitions: combineSetsReps(ex.sets, ex.reps),
