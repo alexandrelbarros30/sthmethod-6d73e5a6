@@ -175,8 +175,37 @@ Regras:
       const m = raw.match(/\{[\s\S]*\}/);
       parsed = m ? JSON.parse(m[0]) : null;
     }
-    if (!parsed || !Array.isArray(parsed.workouts) || parsed.workouts.length === 0) {
-      return new Response(JSON.stringify({ error: 'Não foi possível extrair estrutura do programa.' }), { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    // Se a IA não conseguiu extrair treinos concretos do texto (ex.: só descreveu
+    // estratégia/periodização), pedimos uma 2ª passada para GERAR a estrutura
+    // completa a partir do briefing, em vez de falhar.
+    const hasWorkouts = parsed && Array.isArray(parsed.workouts) && parsed.workouts.length > 0
+      && parsed.workouts.some((w: any) => Array.isArray(w?.exercises) && w.exercises.length > 0);
+    if (!hasWorkouts) {
+      const genPrompt = `Você recebe um BRIEFING/estratégia de programa de treino (pode conter periodização, objetivos, fase, sem lista final de exercícios). Sua tarefa: GERAR o programa COMPLETO em JSON estrito no MESMO schema já descrito, criando os treinos (A/B/C/...) com exercícios reais, séries, reps, descanso e agrupamento (biset/triset quando fizer sentido). Use nomes de exercícios usuais em português do Brasil. Nunca retorne workouts vazios.`;
+      const resp2 = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model,
+          response_format: { type: 'json_object' },
+          messages: [
+            { role: 'system', content: structurePrompt + '\n\n' + genPrompt },
+            { role: 'user', content: markdown },
+          ],
+        }),
+      });
+      const aiData2 = await resp2.json().catch(() => ({}));
+      if (!resp2.ok) throw new Error(`AI gateway error (fallback): ${JSON.stringify(aiData2)}`);
+      const raw2 = (aiData2 as any)?.choices?.[0]?.message?.content || '{}';
+      try { parsed = JSON.parse(raw2); } catch {
+        const m2 = raw2.match(/\{[\s\S]*\}/);
+        parsed = m2 ? JSON.parse(m2[0]) : null;
+      }
+      const ok2 = parsed && Array.isArray(parsed.workouts) && parsed.workouts.length > 0
+        && parsed.workouts.some((w: any) => Array.isArray(w?.exercises) && w.exercises.length > 0);
+      if (!ok2) {
+        return new Response(JSON.stringify({ error: 'O texto atual descreve apenas estratégia — peça à STHIA para detalhar os treinos (Treino A/B/C com exercícios, séries e reps) antes de gerar o programa.' }), { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
     }
 
     const title = String(body.titleHint || parsed.title || 'Programa STHIA').slice(0, 160);
