@@ -269,6 +269,52 @@ const ProgramWorkouts = ({ programId }: Props) => {
   const [quickEditEx, setQuickEditEx] = useState<any | null>(null);
   const [pushingId, setPushingId] = useState<string | null>(null);
   const [pushingAll, setPushingAll] = useState(false);
+  const [inlineSel, setInlineSel] = useState<Record<string, Set<string>>>({});
+
+  const toggleInlineSel = (wId: string, exId: string) => {
+    setInlineSel(prev => {
+      const cur = new Set(prev[wId] || []);
+      cur.has(exId) ? cur.delete(exId) : cur.add(exId);
+      return { ...prev, [wId]: cur };
+    });
+  };
+
+  const inlineGroupMutation = useMutation({
+    mutationFn: async ({ ids, name, color }: { ids: string[]; name: string | null; color: string | null }) => {
+      const groupId = name ? crypto.randomUUID() : null;
+      const { error } = await supabase
+        .from("workout_template_exercises")
+        .update({ group_id: groupId, group_name: name || "", group_color: color || "" } as any)
+        .in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["template-exercises-program", programId] });
+    },
+    onError: (e: any) => toast.error(e?.message || "Erro ao agrupar"),
+  });
+
+  const applyInlineGroup = (wId: string, name: string, color: string, minCount: number) => {
+    const sel = inlineSel[wId] || new Set<string>();
+    if (sel.size < minCount) { toast.error(`Selecione pelo menos ${minCount} exercícios para ${name}.`); return; }
+    inlineGroupMutation.mutate({ ids: Array.from(sel), name, color }, {
+      onSuccess: () => {
+        toast.success(`${name} criado com ${sel.size} exercícios!`);
+        setInlineSel(prev => ({ ...prev, [wId]: new Set() }));
+      },
+    });
+  };
+
+  const applyInlineUngroup = (wId: string) => {
+    const sel = inlineSel[wId] || new Set<string>();
+    if (!sel.size) return;
+    inlineGroupMutation.mutate({ ids: Array.from(sel), name: null, color: null }, {
+      onSuccess: () => {
+        toast.success("Desagrupado!");
+        setInlineSel(prev => ({ ...prev, [wId]: new Set() }));
+      },
+    });
+  };
 
   const pushToSuperCoach = async (templateId: string) => {
     setPushingId(templateId);
@@ -697,6 +743,10 @@ const ProgramWorkouts = ({ programId }: Props) => {
                   onEditExercise={(ex: any) => setQuickEditEx(ex)}
                   onPushSuperCoach={pushToSuperCoach}
                   pushingId={pushingId}
+                  inlineSelected={inlineSel[w.id] || new Set<string>()}
+                  onToggleInlineSel={toggleInlineSel}
+                  onInlineGroup={applyInlineGroup}
+                  onInlineUngroup={applyInlineUngroup}
                 />
               ))}
             </div>
