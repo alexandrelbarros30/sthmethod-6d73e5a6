@@ -191,8 +191,14 @@ export default function AdminPaymentLinks() {
     } else {
       toast({ title: "Plano ativado", description: `Vence em ${endDate.toLocaleDateString("pt-BR")} (${durationDays} dias).` });
       // Espelha vencimento no SuperCoach.
+      const stu = studentById.get(studentId);
       supabase.functions.invoke("supercoach-sync-expiration", {
-        body: { action: "update", email: studentEmail, name: studentName, expiresDate: endStr },
+        body: {
+          action: "update",
+          email: (stu as any)?.email,
+          name: (stu as any)?.full_name,
+          expiresDate: endStr,
+        },
       }).catch((e) => console.warn("[SuperCoach sync]", e));
     }
     setReconciling(null); setReconcilePlanId(""); setReconcileNotes("");
