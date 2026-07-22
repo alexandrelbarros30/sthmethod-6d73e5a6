@@ -716,9 +716,29 @@ const ProgramWorkouts = ({ programId }: Props) => {
                     size="sm"
                     variant="outline"
                     disabled={selectedRowUids.size < 2}
+                    onClick={() => quickGroup("Biset", "#f59e0b", 2)}
+                    className="border-amber-500/60 text-amber-600 hover:bg-amber-500/10 disabled:opacity-40"
+                    title="Agrupar seleção como Biset (2+ exercícios)"
+                  >
+                    <Layers className="w-3 h-3 mr-1" /> Biset
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={selectedRowUids.size < 3}
+                    onClick={() => quickGroup("Triset", "#8b5cf6", 3)}
+                    className="border-violet-500/60 text-violet-600 hover:bg-violet-500/10 disabled:opacity-40"
+                    title="Agrupar seleção como Triset (3+ exercícios)"
+                  >
+                    <Layers className="w-3 h-3 mr-1" /> Triset
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={selectedRowUids.size < 2}
                     onClick={() => setGroupDialogOpen(true)}
                   >
-                    <Layers className="w-3 h-3 mr-1" /> Agrupar ({selectedRowUids.size})
+                    <Layers className="w-3 h-3 mr-1" /> Outro ({selectedRowUids.size})
                   </Button>
                   {selectedRowUids.size > 0 && (
                     <Button size="sm" variant="ghost" onClick={ungroupSelected}>
