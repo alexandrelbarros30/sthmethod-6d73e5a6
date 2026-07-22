@@ -120,8 +120,9 @@ const AdminBudgets = () => {
             .from("crm_conversations")
             .select("id")
             .eq("phone", targetPhone)
-            .eq("queue_type", "nutri")
-            .maybeSingle();
+              .order("updated_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
 
           if (!conv) {
             const { data: newConv } = await supabase
@@ -210,8 +211,9 @@ const AdminBudgets = () => {
             .from("crm_conversations")
             .select("id")
             .eq("phone", targetPhone)
-            .eq("queue_type", "nutri")
-            .maybeSingle();
+              .order("updated_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
 
           if (!conv) {
             const { data: newConv } = await supabase
