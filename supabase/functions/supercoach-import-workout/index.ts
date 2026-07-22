@@ -335,7 +335,17 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   try {
     const body = await req.json().catch(() => ({}))
-    const { action, programId } = body as { action: 'list-programs' | 'list-trainings'; programId?: number | string }
+    const { action, programId } = body as {
+      action:
+        | 'list-programs'
+        | 'list-trainings'
+        | 'get-training-details'
+        | 'import-training'
+        | 'import-program'
+        | 'repair-program'
+        | 'list-library'
+      programId?: number | string
+    }
     if (!action) throw new Error('action é obrigatório')
 
     const token = await getToken()
