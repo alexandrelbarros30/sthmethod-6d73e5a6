@@ -548,6 +548,21 @@ const ProgramWorkouts = ({ programId }: Props) => {
     toast.success("Desagrupado!");
   };
 
+  const quickGroup = (name: string, color: string, minCount: number) => {
+    if (selectedRowUids.size < minCount) {
+      toast.error(`Selecione pelo menos ${minCount} exercícios para ${name}.`);
+      return;
+    }
+    const groupId = crypto.randomUUID();
+    setExerciseRows(prev => prev.map(r =>
+      selectedRowUids.has(r._uid)
+        ? { ...r, group_id: groupId, group_name: name, group_color: color }
+        : r
+    ));
+    setSelectedRowUids(new Set());
+    toast.success(`${name} criado com ${selectedRowUids.size} exercícios!`);
+  };
+
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
 
   const handleWorkoutDragEnd = (event: DragEndEvent) => {
