@@ -283,8 +283,72 @@ Deno.serve(async (req) => {
       }
     }
 
+    // 6) Limpa duplicados no ST Coach: qualquer workout do training que
+    //    não esteja rastreado localmente é removido para evitar excesso de
+    //    exercícios em relação ao STH METHOD.
+    let removed = 0;
+    try {
+      const currentIds = new Set(
+        ((refreshedExs || []) as any[])
+          .map((e) => Number(e.supercoach_workout_id))
+          .filter((n) => Number.isFinite(n) && n > 0),
+      );
+      const remote = await scFetch(token, `/workouts?tid=${scTrainingId}`);
+      const remoteList: any[] = Array.isArray(remote?.workouts) ? remote.workouts
+        : Array.isArray(remote) ? remote : (remote?.data || []);
+      for (const w of remoteList) {
+        const rid = Number(w?.id);
+        if (!Number.isFinite(rid) || rid <= 0) continue;
+        if (currentIds.has(rid)) continue;
+        try {
+          await scFetch(token, `/workouts/${rid}`, { method: 'DELETE' });
+          removed++;
+        } catch (e) {
+          console.warn('delete extra workout falhou', rid, (e as any)?.message);
+        }
+      }
+    } catch (e) {
+      console.warn('cleanup workouts falhou', (e as any)?.message);
+    }
+
+    // 7) Re-espelha atribuições: garante que todo aluno com atribuição ativa
+    //    a algum template deste programa também esteja com o programa
+    //    atribuído no ST Coach.
+    let assignmentsSynced = 0;
+    try {
+      const progIdLocal = prog?.id || tpl.program_id;
+      if (progIdLocal) {
+        const { data: tplsProg } = await admin
+          .from('workout_templates').select('id').eq('program_id', progIdLocal);
+        const tplIds = (tplsProg || []).map((t: any) => t.id);
+        if (tplIds.length) {
+          const { data: rows } = await admin
+            .from('student_workout_assignments')
+            .select('user_id')
+            .in('template_id', tplIds)
+            .eq('active', true);
+          const userIds = Array.from(new Set((rows || []).map((r: any) => r.user_id).filter(Boolean)));
+          for (const uid of userIds) {
+            try {
+              const r = await fetch(`${url}/functions/v1/supercoach-assign-program`, {
+                method: 'POST',
+                headers: { 'content-type': 'application/json', Authorization: auth },
+                body: JSON.stringify({ userId: uid, programId: progIdLocal, action: 'assign' }),
+              });
+              const j = await r.json().catch(() => ({}));
+              if (j?.ok !== false) assignmentsSynced++;
+            } catch (e) {
+              console.warn('assign sync falhou', uid, (e as any)?.message);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('assignments sync falhou', (e as any)?.message);
+    }
+
     return new Response(JSON.stringify({
-      ok: true, scProgramId, scTrainingId, copied, patched, exercises: exercises.length,
+      ok: true, scProgramId, scTrainingId, copied, patched, removed, assignmentsSynced, exercises: exercises.length,
     }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (err) {
     const msg = (err as any)?.message || String(err);
