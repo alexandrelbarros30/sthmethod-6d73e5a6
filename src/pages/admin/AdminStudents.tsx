@@ -697,6 +697,17 @@ const AdminStudents = () => {
           user_id: selected.user_id, plan_id: subForm.plan_id, start_date: subForm.start_date, end_date: subForm.end_date, status: subForm.status,
         });
       }
+      // Espelha vencimento no SuperCoach (fire-and-forget).
+      if (subForm.end_date) {
+        supabase.functions.invoke("supercoach-sync-expiration", {
+          body: {
+            action: "update",
+            email: (selected as any)?.email,
+            name: (selected as any)?.full_name,
+            expiresDate: subForm.end_date,
+          },
+        }).catch((e) => console.warn("[SuperCoach sync] falhou", e));
+      }
     },
     onSuccess: () => { toast.success("Assinatura atualizada!"); qc.invalidateQueries({ queryKey: ["admin-students-list"] }); setSubOpen(false); },
     onError: () => toast.error("Erro ao atualizar assinatura"),
