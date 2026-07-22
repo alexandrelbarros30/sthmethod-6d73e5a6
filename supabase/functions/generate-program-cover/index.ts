@@ -2,6 +2,7 @@
 // Faixa rosa (feminino) / azul (masculino). Upload em ai-training-media.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { buildProgramCoverPrompt } from '../_shared/program-cover-prompt.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -46,19 +47,7 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get('LOVABLE_API_KEY');
     if (!apiKey) return new Response(JSON.stringify({ error: 'LOVABLE_API_KEY ausente' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
-    const bandHex = gender === 'F' ? '#ff2d87' : '#0a84ff';
-    const bandColor = gender === 'F' ? 'vibrant pink magenta (#ff2d87)' : 'electric royal blue (#0a84ff)';
-    const styling = gender === 'F'
-      ? 'subtle feminine styling: soft rose glow accents, elegant curves, refined ornamental details'
-      : 'strong masculine styling: sharp geometric edges, metallic steel accents, powerful athletic energy';
-    const prompt = [
-      'Vertical fitness program cover art, premium Apple-style dark aesthetic on pure black background (#000000).',
-      'At the top center: the wordmark "STH METHOD" in bold clean modern sans-serif, glowing neon green (#39ff14), high legibility, generous letter-spacing.',
-      `In the middle-lower third: a solid ${bandColor} horizontal band spanning full width, with the exact workout name "${prog.title}" written INSIDE the band in bold uppercase white sans-serif, perfectly centered, high contrast, no typos, no extra words.`,
-      `Overall vibe: cinematic minimal fitness poster, subtle particle/light-ray texture, ${styling}.`,
-      'No people, no photos of bodies, no other logos, no additional text anywhere. Only the STH METHOD wordmark on top and the workout name in the colored band.',
-      `Color band exact hex: ${bandHex}. Neon green exact hex: #39ff14. Background pure black.`,
-    ].join(' ');
+    const prompt = buildProgramCoverPrompt(prog.title, gender);
 
     const resp = await fetch('https://ai.gateway.lovable.dev/v1/images/generations', {
       method: 'POST',
