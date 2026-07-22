@@ -362,7 +362,7 @@ const ProgramWorkouts = ({ programId }: Props) => {
       toast.loading(`Espelhando ${i + 1}/${list.length} treinos no ST Coach...`, { id: toastId });
     }
     toast.dismiss(toastId);
-    if (fail === 0) toast.success(`Programa espelhado no ST Coach (${ok}/${list.length}).`);
+    if (fail === 0 && failures.length === 0) toast.success(`Programa espelhado no ST Coach (${ok}/${list.length}).`);
     else toast.warning(`Espelhamento parcial: ${ok} ok, ${fail} falharam. ${failures[0] || ""}`);
     queryClient.invalidateQueries({ queryKey: ["program-workouts", programId] });
     setPushingAll(false);
