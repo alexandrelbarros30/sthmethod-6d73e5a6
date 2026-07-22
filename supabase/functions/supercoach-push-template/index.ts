@@ -175,6 +175,26 @@ Deno.serve(async (req) => {
       await admin.from('workout_templates').update({ supercoach_program_id: scProgramId }).eq('id', templateId);
     }
 
+    // 1.1) Sempre sincroniza a CAPA do programa no ST Coach com a poster_url atual do STH METHOD
+    if (scProgramId && prog.poster_url) {
+      try {
+        await scFetch(token, `/programs/${scProgramId}`, {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            id: scProgramId,
+            cover_url: prog.poster_url,
+            cover_path: true,
+            name: prog.title || 'Programa STH METHOD',
+            subtitle: prog.subtitle || '',
+            published: 1, pay: 0, premium: 0,
+            _method: 'PATCH',
+          }),
+        });
+      } catch (e) {
+        console.warn('sync program cover falhou', (e as any)?.message);
+      }
+    }
+
     // 2) Garante training
     let scTrainingId: number | null = tpl.supercoach_training_id ? Number(tpl.supercoach_training_id) : null;
     if (!scTrainingId) {
@@ -196,6 +216,27 @@ Deno.serve(async (req) => {
       scTrainingId = Number(trCreated?.training?.id);
       if (!scTrainingId) throw new Error('Falha ao criar treino no ST Coach');
       await admin.from('workout_templates').update({ supercoach_training_id: scTrainingId }).eq('id', templateId);
+    }
+
+    // 2.1) Sempre sincroniza a CAPA do training no ST Coach com a image_url atual
+    if (scTrainingId && tpl.image_url) {
+      try {
+        await scFetch(token, `/trainings/${scTrainingId}`, {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            id: scTrainingId,
+            cover_url: tpl.image_url,
+            cover_path: true,
+            name: tpl.title || 'Treino',
+            subtitle: tpl.subtitle || '',
+            program_id: scProgramId,
+            published: 1, pay: 0, premium: 0,
+            _method: 'PATCH',
+          }),
+        });
+      } catch (e) {
+        console.warn('sync training cover falhou', (e as any)?.message);
+      }
     }
 
     // 3) Se ainda não copiou os exercícios (nenhum tem supercoach_workout_id), faz /library/copy
