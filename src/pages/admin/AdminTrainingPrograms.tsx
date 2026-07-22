@@ -21,6 +21,7 @@ import { processAndUpload, validateImageFile } from "@/lib/image-upload";
 import ReleaseNotifyButton from "@/components/admin/ReleaseNotifyButton";
 import { normalizeSearch } from "@/lib/utils";
 import AiWorkoutCoachDialog from "@/components/admin/AiWorkoutCoachDialog";
+import ImportFromSuperCoachDialog from "@/components/admin/ImportFromSuperCoachDialog";
 
 const OBJECTIVES = [
   { value: "hypertrophy", label: "Hipertrofia" },
@@ -405,6 +406,15 @@ const AdminTrainingPrograms = () => {
             />
           </div>
           <AiWorkoutCoachDialog triggerLabel="STHIA · Elite Coach" variant="secondary" />
+          <ImportFromSuperCoachDialog
+            libraryExercises={[]}
+            buttonLabel="Importar do ST Coach"
+            buttonVariant="outline"
+            onImported={() => {
+              queryClient.invalidateQueries({ queryKey: ["training-programs"] });
+              queryClient.invalidateQueries({ queryKey: ["workout-templates"] });
+            }}
+          />
           <Button onClick={() => { setForm(emptyForm); setEditingProgram(null); setProgramDialog(true); }}>
             <Plus className="w-4 h-4 mr-1" /> Novo Programa
           </Button>

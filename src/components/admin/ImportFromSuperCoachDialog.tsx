@@ -212,9 +212,10 @@ export default function ImportFromSuperCoachDialog({ libraryExercises, onImporte
               details: p.subtitle || "",
               objective: "hypertrophy",
               difficulty: "intermediate",
-              status: "active",
+              status: "published",
               poster_url: p.cover_url || null,
               created_by: user.id,
+              supercoach_program_id: p.id,
             } as any).select("id").single();
             if (eNp) throw eNp;
             localProgramId = (np as any).id;
