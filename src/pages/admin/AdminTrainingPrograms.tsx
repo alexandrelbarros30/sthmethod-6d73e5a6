@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Users, ChevronRight, Layers, ArrowLeft, Copy, Target, Zap, Search, Dumbbell, ImagePlus, X, UserMinus, Image as ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Users, ChevronRight, Layers, ArrowLeft, Copy, Target, Zap, Search, Dumbbell, ImagePlus, X, UserMinus, Image as ImageIcon, Download } from "lucide-react";
 import { toast } from "sonner";
 import ProgramWorkouts from "@/components/admin/ProgramWorkouts";
 import { processAndUpload, validateImageFile } from "@/lib/image-upload";
@@ -511,6 +511,30 @@ const AdminTrainingPrograms = () => {
                       }}>
                         <ImageIcon className="w-3 h-3 mr-1" /> {p.poster_url ? "Regerar capa" : "Gerar capa"}
                       </Button>
+                      {p.poster_url && (
+                        <Button size="sm" variant="ghost" className="text-xs h-7" onClick={async () => {
+                          try {
+                            const res = await fetch(p.poster_url, { mode: "cors" });
+                            if (!res.ok) throw new Error("fetch_failed");
+                            const blob = await res.blob();
+                            const ext = (blob.type.split("/")[1] || "jpg").split(";")[0];
+                            const safe = (p.title || "capa-treino").toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase();
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = `${safe || "capa-treino"}.${ext}`;
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                            setTimeout(() => URL.revokeObjectURL(url), 1000);
+                          } catch {
+                            // fallback: abre em nova aba
+                            window.open(p.poster_url, "_blank", "noopener,noreferrer");
+                          }
+                        }}>
+                          <Download className="w-3 h-3 mr-1" /> Baixar capa
+                        </Button>
+                      )}
                       <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => openEditProgram(p)}>
                         <Pencil className="w-3 h-3 mr-1" /> Editar
                       </Button>
