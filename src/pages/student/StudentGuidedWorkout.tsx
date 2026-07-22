@@ -614,15 +614,64 @@ const StudentGuidedWorkout = () => {
             const fallbackImage = "";
             const last = lastLog(ex.id);
             const key = `${assignment.id}-${ex.id}`;
+            const prev = exList[idx - 1];
+            const next = exList[idx + 1];
+            const inGroup = !!ex.group_id;
+            const isGroupStart = inGroup && prev?.group_id !== ex.group_id;
+            const isGroupEnd = inGroup && next?.group_id !== ex.group_id;
+            const groupSize = inGroup
+              ? exList.filter((e: any) => e.group_id === ex.group_id).length
+              : 0;
             return (
               <div key={ex.id} className="space-y-3">
+                {isGroupStart && (
+                  <div
+                    className="relative rounded-2xl px-4 py-2.5 flex items-center gap-2 border"
+                    style={{
+                      background: "linear-gradient(90deg, rgba(57,255,20,0.15), rgba(57,255,20,0.02))",
+                      borderColor: "#39FF14",
+                      boxShadow: "0 0 20px rgba(57,255,20,0.35), inset 0 0 12px rgba(57,255,20,0.15)",
+                    }}
+                  >
+                    <span
+                      className="inline-block w-2 h-2 rounded-full"
+                      style={{ background: "#39FF14", boxShadow: "0 0 8px #39FF14" }}
+                    />
+                    <span
+                      className="font-extrabold tracking-[0.2em] uppercase text-[13px]"
+                      style={{ color: "#39FF14", textShadow: "0 0 8px rgba(57,255,20,0.7)" }}
+                    >
+                      {ex.group_name || "Conjugado"}
+                    </span>
+                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground ml-auto">
+                      {groupSize} exercícios agrupados
+                    </span>
+                  </div>
+                )}
+                <div
+                  className={inGroup ? "space-y-3 rounded-2xl p-3 -mx-1" : "space-y-3"}
+                  style={
+                    inGroup
+                      ? {
+                          borderLeft: "3px solid #39FF14",
+                          background: "rgba(57,255,20,0.04)",
+                          boxShadow: "inset 0 0 10px rgba(57,255,20,0.08)",
+                        }
+                      : undefined
+                  }
+                >
                 <div>
                   <p className="font-bold text-foreground">
                     {idx + 1}. {ex.custom_name || "Exercício"}
                     {ex.group_name && (
                       <span
                         className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full border align-middle"
-                        style={{ backgroundColor: `${ex.group_color}22`, borderColor: ex.group_color, color: ex.group_color }}
+                        style={{
+                          backgroundColor: "rgba(57,255,20,0.15)",
+                          borderColor: "#39FF14",
+                          color: "#39FF14",
+                          textShadow: "0 0 6px rgba(57,255,20,0.6)",
+                        }}
                       >
                         {ex.group_name}
                       </span>
@@ -745,6 +794,15 @@ const StudentGuidedWorkout = () => {
                 {idx < exList.length - 1 && (
                   <div className="flex justify-center pt-1 text-muted-foreground/50">
                     <ChevronsDown className="w-5 h-5" />
+                  </div>
+                )}
+                </div>
+                {isGroupEnd && (
+                  <div
+                    className="text-center text-[10px] uppercase tracking-[0.3em] py-1"
+                    style={{ color: "#39FF14", textShadow: "0 0 6px rgba(57,255,20,0.6)" }}
+                  >
+                    ▲ fim do {ex.group_name || "conjugado"} ▲
                   </div>
                 )}
               </div>
