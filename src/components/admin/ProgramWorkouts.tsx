@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Dumbbell, Video, ChevronDown, ChevronUp, Copy, GripVertical, Library, Layers, Unlink, Link2, Upload, Loader2, Check } from "lucide-react";
+import { Plus, Pencil, Trash2, Dumbbell, Video, ChevronDown, ChevronUp, Copy, GripVertical, Library, Layers, Unlink, Link2, Upload, Loader2, Check, Square, CheckSquare } from "lucide-react";
 import ImportFromSuperCoachDialog from "@/components/admin/ImportFromSuperCoachDialog";
 import { toast } from "sonner";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
@@ -168,7 +168,7 @@ const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onTog
                   </Button>
                 )}
                 <span className="text-[10px] text-muted-foreground/70 ml-auto">
-                  Marque os exercícios para agrupar
+                  Marque os checkboxes ao lado dos exercícios
                 </span>
               </div>
               {exs.map((ex: any, i: number) => {
@@ -190,14 +190,18 @@ const SortableWorkoutCard = ({ w, wIdx, exs, libraryExercises, isExpanded, onTog
                         <Link2 className="w-2.5 h-2.5" />
                       </span>
                     )}
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); onToggleInlineSel?.(w.id, ex.id); }}
-                      className={`w-6 h-6 rounded-full text-xs flex items-center justify-center font-bold shrink-0 mt-0.5 transition-colors ${isSel ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary hover:bg-primary/20"}`}
-                      title={isSel ? "Desmarcar" : "Marcar para agrupar"}
-                    >
-                      {isSel ? <Check className="w-3.5 h-3.5" /> : i + 1}
-                    </button>
+                    <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onToggleInlineSel?.(w.id, ex.id); }}
+                        className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${isSel ? "bg-primary border-primary text-primary-foreground shadow-md shadow-primary/40" : "bg-background border-primary/40 text-primary hover:border-primary hover:bg-primary/10"}`}
+                        title={isSel ? "Desmarcar" : "Marcar para agrupar como Biset/Triset"}
+                        aria-label={isSel ? "Desmarcar exercício" : "Marcar exercício"}
+                      >
+                        {isSel ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+                      </button>
+                      <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold">{i + 1}</span>
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="font-semibold text-foreground truncate">{ex.custom_name || lib?.name || "Sem nome"}</span>
