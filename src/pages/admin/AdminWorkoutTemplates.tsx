@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Dumbbell, Users, Video } from "lucide-react";
+import { Plus, Pencil, Trash2, Dumbbell, Users, Video, Layers, X } from "lucide-react";
 import { toast } from "sonner";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
@@ -38,6 +38,7 @@ const AdminWorkoutTemplates = () => {
   const [form, setForm] = useState<TemplateForm>(emptyTemplate);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [exerciseRows, setExerciseRows] = useState<ExerciseRow[]>([]);
+  const [selectedRowUids, setSelectedRowUids] = useState<Set<string>>(new Set());
   const [assignDialog, setAssignDialog] = useState<string | null>(null);
   const [selectedStudent, setSelectedStudent] = useState("");
   const [studentSearch, setStudentSearch] = useState("");
@@ -117,6 +118,9 @@ const AdminWorkoutTemplates = () => {
             custom_name: r.custom_name, custom_description: r.custom_description,
             sets: r.sets, reps: r.reps, rest_interval: r.rest_interval,
             load_suggestion: r.load_suggestion, video_url: r.video_url, sort_order: i,
+            group_id: r.group_id || null,
+            group_name: r.group_name || "",
+            group_color: r.group_color || "",
           }));
           const { error: exErr } = await supabase.from("workout_template_exercises").insert(rows);
           if (exErr) throw exErr;
@@ -164,6 +168,7 @@ const AdminWorkoutTemplates = () => {
     setEditingTemplate(null);
     setForm(emptyTemplate);
     setExerciseRows([]);
+    setSelectedRowUids(new Set());
   };
 
   const openEditTemplate = (t: any) => {
@@ -174,9 +179,11 @@ const AdminWorkoutTemplates = () => {
       custom_description: e.custom_description || "", sets: e.sets || "", reps: e.reps || "",
       rest_interval: e.rest_interval || "", load_suggestion: e.load_suggestion || "",
       video_url: e.video_url || "", sort_order: e.sort_order,
+      group_id: e.group_id || null, group_name: e.group_name || "", group_color: e.group_color || "",
       _uid: e.id || crypto.randomUUID(),
     }));
     setExerciseRows(exs);
+    setSelectedRowUids(new Set());
     setTemplateDialog(true);
   };
 
@@ -184,6 +191,7 @@ const AdminWorkoutTemplates = () => {
     setExerciseRows(prev => [...prev, {
       exercise_id: null, custom_name: "", custom_description: "",
       sets: "", reps: "", rest_interval: "", load_suggestion: "", video_url: "", sort_order: prev.length,
+      group_id: null, group_name: "", group_color: "",
       _uid: crypto.randomUUID(),
     }]);
   };
@@ -201,6 +209,43 @@ const AdminWorkoutTemplates = () => {
   };
 
   const removeExerciseRow = (idx: number) => setExerciseRows(prev => prev.filter((_, i) => i !== idx));
+
+  const toggleSelected = (idx: number) => {
+    const uid = exerciseRows[idx]?._uid;
+    if (!uid) return;
+    setSelectedRowUids(prev => {
+      const next = new Set(prev);
+      next.has(uid) ? next.delete(uid) : next.add(uid);
+      return next;
+    });
+  };
+
+  const quickGroup = (name: string, color: string, minCount: number) => {
+    if (selectedRowUids.size < minCount) {
+      toast.error(`Selecione pelo menos ${minCount} exercícios para ${name}.`);
+      return;
+    }
+    const groupId = crypto.randomUUID();
+    setExerciseRows(prev => prev.map(r =>
+      selectedRowUids.has(r._uid)
+        ? { ...r, group_id: groupId, group_name: name, group_color: color }
+        : r
+    ));
+    const count = selectedRowUids.size;
+    setSelectedRowUids(new Set());
+    toast.success(`${name} criado com ${count} exercícios!`);
+  };
+
+  const ungroupSelected = () => {
+    if (!selectedRowUids.size) return;
+    setExerciseRows(prev => prev.map(r =>
+      selectedRowUids.has(r._uid)
+        ? { ...r, group_id: null, group_name: "", group_color: "" }
+        : r
+    ));
+    setSelectedRowUids(new Set());
+    toast.success("Desagrupado!");
+  };
 
   const updateExerciseRow = (idx: number, field: keyof ExerciseRow, value: string | null) => {
     setExerciseRows(prev => prev.map((r, i) => i === idx ? { ...r, [field]: value } : r));
@@ -265,6 +310,45 @@ const AdminWorkoutTemplates = () => {
                       <Plus className="w-3 h-3 mr-1" /> Adicionar
                     </Button>
                   </div>
+                  {exerciseRows.length > 0 && (
+                    <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2">
+                      <span className="text-xs text-muted-foreground">
+                        {selectedRowUids.size > 0
+                          ? `${selectedRowUids.size} selecionado(s)`
+                          : "Marque exercícios para agrupar:"}
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs border-amber-500/60 text-amber-600 hover:bg-amber-500/10"
+                        disabled={selectedRowUids.size < 2}
+                        onClick={() => quickGroup("Biset", "#f59e0b", 2)}
+                        title="Agrupar seleção como Biset (2+ exercícios)"
+                      >
+                        <Layers className="w-3 h-3 mr-1" /> Biset
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs border-violet-500/60 text-violet-600 hover:bg-violet-500/10"
+                        disabled={selectedRowUids.size < 3}
+                        onClick={() => quickGroup("Triset", "#8b5cf6", 3)}
+                        title="Agrupar seleção como Triset (3+ exercícios)"
+                      >
+                        <Layers className="w-3 h-3 mr-1" /> Triset
+                      </Button>
+                      {selectedRowUids.size > 0 && (
+                        <>
+                          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={ungroupSelected}>
+                            Desagrupar
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setSelectedRowUids(new Set())}>
+                            <X className="w-3 h-3 mr-1" /> Limpar
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  )}
                   {exerciseRows.length === 0 && (
                     <p className="text-sm text-muted-foreground text-center py-4">Nenhum exercício. Clique em "Adicionar".</p>
                   )}
@@ -280,6 +364,8 @@ const AdminWorkoutTemplates = () => {
                             onRemove={removeExerciseRow}
                             onUpdate={updateExerciseRow}
                             onSelectFromLibrary={selectFromLibrary}
+                            selected={selectedRowUids.has(row._uid)}
+                            onToggleSelected={toggleSelected}
                           />
                         ))}
                       </div>
