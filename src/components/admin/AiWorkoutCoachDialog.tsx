@@ -315,7 +315,21 @@ export default function AiWorkoutCoachDialog({ triggerLabel, defaultStudentId, s
       const { data, error } = await supabase.functions.invoke("ai-workout-materialize", {
         body: { markdown: last, studentId: studentId || undefined, assign },
       });
-      if (error) throw error;
+      // supabase.functions.invoke sets `error` for any non-2xx, but the real
+      // server message lives in the response body — extract it before throwing.
+      if (error) {
+        let msg = error.message || "Falha ao materializar";
+        try {
+          const ctxRes: Response | undefined = (error as any)?.context;
+          if (ctxRes && typeof ctxRes.json === "function") {
+            const body = await ctxRes.clone().json().catch(() => null);
+            if (body?.error) msg = body.error;
+          } else if ((data as any)?.error) {
+            msg = (data as any).error;
+          }
+        } catch { /* ignore */ }
+        throw new Error(msg);
+      }
       if ((data as any)?.error) throw new Error((data as any).error);
       const r = data as any;
       setMaterialized({ programId: r.programId, title: r.title, workouts: r.workouts, assigned: r.assigned || 0 });
