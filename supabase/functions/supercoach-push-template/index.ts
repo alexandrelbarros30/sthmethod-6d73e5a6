@@ -264,7 +264,24 @@ Deno.serve(async (req) => {
           }),
         });
       } catch (e) {
-        console.warn('sync program cover falhou', (e as any)?.message);
+        if (isNotFoundError(e)) {
+          console.warn('programa ST Coach não encontrado ao sincronizar capa; recriando', scProgramId);
+          scProgramId = await createScProgram(token, prog, tpl);
+          programRecreated = true;
+          tpl.supercoach_training_id = null;
+          if (prog.id) {
+            await admin.from('training_programs').update({ supercoach_program_id: scProgramId }).eq('id', prog.id);
+            await admin.from('workout_templates')
+              .update({ supercoach_program_id: scProgramId, supercoach_training_id: null })
+              .eq('program_id', prog.id);
+          } else {
+            await admin.from('workout_templates')
+              .update({ supercoach_program_id: scProgramId, supercoach_training_id: null })
+              .eq('id', templateId);
+          }
+        } else {
+          console.warn('sync program cover falhou', (e as any)?.message);
+        }
       }
     }
 
