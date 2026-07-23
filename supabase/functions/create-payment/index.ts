@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { triggerSupercoachSync } from "../_shared/supercoach-sync.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -204,6 +205,14 @@ serve(async (req) => {
         .is("subscription_applied_at", null);
 
       console.log(`Free activation via coupon: user=${userId}, plan=${plan.name}, days=${durationDays}`);
+
+      // Sincroniza vencimento no ST Coach (fire-and-forget)
+      triggerSupercoachSync({
+        userId,
+        email: profile?.email ?? null,
+        name: profile?.full_name ?? null,
+        expiresDate: endDate.toISOString().split("T")[0],
+      }).catch((e) => console.error("[create-payment] supercoach sync failed", e));
 
       const origin = req.headers.get("origin") || "https://sthmethod.com.br";
       return new Response(JSON.stringify({
