@@ -277,7 +277,6 @@ const StudentProgramAssignDialog = ({ open, onOpenChange, userId, userName }: Pr
           <p className="text-[10px] text-muted-foreground">Datas em branco = ativo indefinidamente. Aplicado a todos os treinos do programa atribuído agora.</p>
         </div>
 
-        <div className="max-h-[35vh] overflow-y-auto divide-y border rounded-lg">
         <div className="relative">
           <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
