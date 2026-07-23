@@ -139,6 +139,11 @@ REGRAS ESTRITAS:
 - A fase 💊 MEDICAMENTOS DEVE ser dividida em blocos de semanas (Sem 1-4 / Sem 5-8 / Sem 9-12
   ou faixas equivalentes ao ciclo). Cada bloco tem seu próprio Ação/Horário/Foco.
 - Doses em mg/mcg/UI/ml, via (IM profunda, SC, VO, tópico), frequência (DSDN, ED, 1x/sem etc.).
+- ARREDONDAMENTO OBRIGATÓRIO PARA CLAREZA DO PACIENTE: toda dose fracionada em mg, mcg, UI ou ml
+  deve ser recalibrada para 1 casa decimal com passo de 0,1 (arredondamento padrão .5→cima).
+  Exemplos: 0,67mg → 0,7mg · 0,65ml → 0,7ml · 0,33ml → 0,3ml · 0,125mg → 0,1mg · 1,45ml → 1,5ml.
+  Comprimidos: use frações práticas (1/4, 1/2, 3/4, 1 inteiro) — nunca 0,33 comp. ou 0,67 comp.
+  Objetivo: o aluno lê e mede sem calculadora, com seringa/dosador de 0,1 em 0,1.
 - Nomes de ativos em português BR; comercial entre parênteses quando útil.
 - NÃO use <ul>/<li>, NÃO use <h1>-<h6>, NÃO use markdown. Apenas <p>, <strong>, <br>, <em>.
 - Nível de evidência quando sensível: "<em>(evidência ★★★★)</em>" ao lado da recomendação.
